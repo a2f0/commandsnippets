@@ -15,10 +15,23 @@ data "aws_route53_zone" "tearleads-zone" {
   private_zone = false
 }
 
-resource "aws_route53_record" "tearleads-beta" {
+// Do not delete this, Google periodically checks for it.
+resource "aws_route53_record" "tearleads-google-domain-verification" {
   name    = "tearleads.com"
   zone_id = data.aws_route53_zone.tearleads-zone.zone_id
   type    = "TXT"
   ttl     = "30"
   records = ["google-site-verification=-U0LmlFws7EMjM8T1_HE3JFm1yrPFBscL-MT2n7y9RY"]
+}
+
+resource "aws_route53_record" "tearleads-mx" {
+  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
+  name    = "tearleads.com"
+  type    = "MX"
+  ttl     = "600"
+  records = [ "1 ASPMX.L.GOOGLE.COM",
+              "5 ALT1.ASPMX.L.GOOGLE.COM.",
+              "5 ALT2.ASPMX.L.GOOGLE.COM.",
+              "10 ASPMX2.GOOGLEMAIL.COM.",
+              "10 ASPMX3.GOOGLEMAIL.COM." ]       
 }
