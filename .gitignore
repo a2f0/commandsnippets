@@ -1,5 +1,5 @@
-#Terraform
-#https://github.com/github/gitignore/blob/master/Terraform.gitignore
+# Terraform
+# https://github.com/github/gitignore/blob/master/Terraform.gitignore
 **/.terraform/*
 *.tfstate
 *.tfstate.*
@@ -10,3 +10,8 @@ override.tf.json
 *_override.tf.json
 *.backend
 *.tfvars
+
+# BlackBox
+/.blackbox/pubring.gpg~
+/.blackbox/pubring.kbx~
+/.blackbox/secring.gpg
