@@ -35,3 +35,15 @@ resource "aws_route53_record" "tearleads-mx" {
               "10 ASPMX2.GOOGLEMAIL.COM.",
               "10 ASPMX3.GOOGLEMAIL.COM." ]       
 }
+
+resource "aws_route53_record" "tearleads-github" {
+  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
+  name    = "tearleads.com"
+  type    = "A"
+  ttl     = "30"
+  records = [ "185.199.108.153",
+              "185.199.109.153",
+              "185.199.110.153",
+              "185.199.111.153"
+            ]
+}
