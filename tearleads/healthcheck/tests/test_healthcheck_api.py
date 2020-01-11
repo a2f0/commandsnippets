@@ -12,5 +12,6 @@ class TestHealthCheckApi(BaseTestCase):
     def setUpTestData(cls):
         super(TestHealthCheckApi, cls).setUpTestData()
     
-    def test_health_check_responds(self):
-        self.assertEqual(True, True)
+    def test_health_check(self):
+        response = self.user1_api_client.get('/healthcheck/', format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
