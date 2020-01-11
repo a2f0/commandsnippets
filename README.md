@@ -7,3 +7,7 @@ Start the Compose
 Run tests
 
     docker-compose run django python manage.py test
+
+Drop to shell
+
+    docker-compose run django python manage.py shell
