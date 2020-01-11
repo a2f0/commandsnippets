@@ -31,7 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 THIRD_PARTY_APPS = [
-    'rest_framework'
+    'rest_framework',
+    'rest_framework.authtoken'
 ]
 
 LOCAL_APPS = [
