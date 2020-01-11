@@ -1,0 +1,23 @@
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIRequestFactory, APIClient
+from rest_framework import status
+
+from tearleads.core.tests.core import BaseTestCase
+
+class TestAuthentication(BaseTestCase):
+
+    def setUp(self):
+        super(TestAuthentication, self).setUp()
+    
+    @classmethod
+    def setUpTestData(cls):
+        super(TestAuthentication, cls).setUpTestData()
+    
+    def test_successful_authentication(self):
+        payload = {
+            'username': 'user1',
+            'password': 'password'
+        }
+        response = self.user1_api_client.post('/api-token-auth/', payload, format='json')
+        self.assertEqual(response.data['token'], Token.objects.filter(user=self.user1)[0].key)
+    
