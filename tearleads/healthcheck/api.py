@@ -7,5 +7,4 @@ class HealthCheckAPIView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request):
-        print("GET")
         return Response(status=status.HTTP_200_OK)
