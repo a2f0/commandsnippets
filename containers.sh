@@ -2,7 +2,7 @@
 set -e
 START=`date +%s`
 echo "Building container."
-docker build --no-cache . -f compose/django/Dockerfile-prod -t tearleads:latest
+docker build --no-cache . -f compose/django/Dockerfile-prod -t tearleads_backend:latest
 END=`date +%s`
 RUNTIME=$((END-START))
 echo "=== runtime: $RUNTIME"
