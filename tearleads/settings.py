@@ -26,7 +26,7 @@ SECRET_KEY = '#ridx)6=92r06^kym!jhsvh=y1pdv-lt$##rqfo7nv(0(v9ug0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [ 'localhost', '*.tearleads.com' ]
 
 # Application definition
 
