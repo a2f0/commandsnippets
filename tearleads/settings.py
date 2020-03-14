@@ -37,6 +37,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'tearleads.healthcheck',
+    'tearleads.text_entries',
     'tearleads.users'
 ]
 

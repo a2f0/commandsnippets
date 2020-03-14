@@ -1,0 +1,8 @@
+- model: text_entries.TextEntry
+  pk: 1
+  fields:
+    user_id: 1
+    subject: show npm dependencies with a depth of 1
+    body: npm list --depth=0
+    date_created: "2020-03-04T22:38:00+00:00"
+    date_updated: "2020-03-04T22:38:00+00:00"
