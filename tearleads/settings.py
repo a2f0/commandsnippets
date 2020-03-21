@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [ 'localhost', '.tearleads.com' ]
 # Application definition
 
 THIRD_PARTY_APPS = [
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken'
 ]
@@ -53,6 +54,7 @@ DJANGO_APPS = [
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -82,6 +84,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tearleads.wsgi.application'
 
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:8080",
+]
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
