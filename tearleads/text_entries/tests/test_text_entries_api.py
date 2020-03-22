@@ -16,11 +16,10 @@ class TestTextEntriesApi(BaseTestCase):
     
     def test_serialization_format(self):
         entry = TextEntryFactory(user=self.user1)
-        response = self.user1_api_client.get('/api/v1/entries/', format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)
-        self.assertEqual(response.data['results'][0]['id'],entry.id)
-        self.assertEqual(response.data['results'][0]['subject'],entry.subject)
-        self.assertEqual(response.data['results'][0]['body'],entry.body)
-        self.assertEqual(response.data['results'][0]['date_created'], str(entry.date_created.isoformat()))
-        self.assertEqual(response.data['results'][0]['date_updated'], str(entry.date_updated.isoformat()))
+        response = self.user1_api_client.get('/api/v1/entries/')
+        self.assertEqual(len(response.json()['data']), 1)
+        self.assertEqual(response.json()['data'][0]['id'],str(entry.id))
+        self.assertEqual(response.json()['data'][0]['attributes']['subject'],entry.subject)
+        self.assertEqual(response.json()['data'][0]['attributes']['body'],entry.body)
+        self.assertEqual(response.json()['data'][0]['attributes']['date_created'], str(entry.date_created.isoformat()))
+        self.assertEqual(response.json()['data'][0]['attributes']['date_updated'], str(entry.date_updated.isoformat()))
