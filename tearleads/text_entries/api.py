@@ -10,3 +10,7 @@ class TextEntryViewSet(viewsets.ModelViewSet):
     serializer_class = TextEntrySerializer
     ordering_fields = '__all__'
     search_fields = ('name',)
+
+    select_for_includes = {
+        'user': ['user'],
+    }
