@@ -12,7 +12,7 @@ services:
       - postgres_backup_dev:/backups
     env_file: .env
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_DOCKER_PORT}:5432"
     # uncomment below for full statement logging to stdout
     # command: postgres -c log_statement=all
   django:
