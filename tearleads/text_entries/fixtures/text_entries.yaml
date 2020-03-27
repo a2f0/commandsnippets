@@ -6,3 +6,25 @@
     body: npm list --depth=0
     date_created: "2020-03-04T22:38:00+00:00"
     date_updated: "2020-03-04T22:38:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 2
+  fields:
+    user_id: 1
+    subject: implode - destructive cleanup of docker
+    body: |
+      docker stop $(docker ps -a -q)
+      docker system prune -a -f
+      docker system prune --volumes -f
+    date_created: "2020-03-26T18:20:00+00:00"
+    date_updated: "2020-03-26T18:20:00+00:00"
+  
+- model: text_entries.TextEntry
+  pk: 3
+  fields:
+    user_id: 1
+    subject: drop to a shell in a docker container
+    body: |
+      docker run -it ubuntu
+    date_created: "2020-03-26T18:20:00+00:00"
+    date_updated: "2020-03-26T18:20:00+00:00"
