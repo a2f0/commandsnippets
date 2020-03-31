@@ -8,8 +8,6 @@ from tearleads.text_entries.serializers import TextEntrySerializer
 class TextEntryViewSet(viewsets.ModelViewSet):
     queryset = TextEntry.objects.all()
     serializer_class = TextEntrySerializer
-    ordering_fields = '__all__'
-    search_fields = ('name',)
 
     select_for_includes = {
         'user': ['user'],

@@ -6,8 +6,29 @@
     date_updated: "2020-03-26T18:20:00+00:00"
 
 - model: tags.Tag
-  pk: 1
+  pk: 2
   fields:
     name: npm
     date_created: "2020-03-26T18:20:00+00:00"
     date_updated: "2020-03-26T18:20:00+00:00"
+
+- model: tags.Tag
+  pk: 3
+  fields:
+    name: docker-compose
+    date_created: "2020-03-26T18:20:00+00:00"
+    date_updated: "2020-03-26T18:20:00+00:00"
+
+- model: tags.Tag
+  pk: 4
+  fields:
+    name: yarn
+    date_created: "2020-03-26T18:20:00+00:00"
+    date_updated: "2020-03-26T18:20:00+00:00"
+
+- model: tags.Tag
+  pk: 5
+  fields:
+      name: azure
+      date_created: "2020-03-26T18:20:00+00:00"
+      date_updated: "2020-03-26T18:20:00+00:00"
