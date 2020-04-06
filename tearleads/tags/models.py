@@ -9,6 +9,7 @@ class Tag(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
     text_entries = models.ManyToManyField('text_entries.TextEntry', related_name='tags', blank=True, through='TagTextEntryThroughModel')
+    user = models.ForeignKey('users.User', related_name='tags', null=False, on_delete=models.CASCADE)
     class Meta:
         ordering = ['date_updated','id']
 
