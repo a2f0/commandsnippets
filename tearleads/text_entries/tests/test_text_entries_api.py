@@ -23,3 +23,7 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(response.json()['data'][0]['attributes']['body'],entry.body)
         self.assertEqual(response.json()['data'][0]['attributes']['date_created'], str(entry.date_created.isoformat()))
         self.assertEqual(response.json()['data'][0]['attributes']['date_updated'], str(entry.date_updated.isoformat()))
+        self.assertEqual(len(response.json()['included']), 1)
+        self.assertEqual(response.json()['included'][0]['type'],'User')
+        self.assertEqual(len(response.json()['included'][0]['attributes']),1)
+        self.assertEqual(response.json()['included'][0]['attributes']['username'],'user1')
