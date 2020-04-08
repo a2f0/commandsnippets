@@ -23,6 +23,10 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(response.json()['data'][0]['attributes']['name'],tag.name)
         self.assertEqual(response.json()['data'][0]['attributes']['date_created'], str(tag.date_created.isoformat()))
         self.assertEqual(response.json()['data'][0]['attributes']['date_updated'], str(tag.date_updated.isoformat()))
+        self.assertEqual(len(response.json()['included']), 1)
+        self.assertEqual(response.json()['included'][0]['type'],'User')
+        self.assertEqual(len(response.json()['included'][0]['attributes']),1)
+        self.assertEqual(response.json()['included'][0]['attributes']['username'],'user1')
 
     def test_order_filter(self):
         tag1 = TagFactory(user=self.user1, name='a')
