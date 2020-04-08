@@ -1218,3 +1218,23 @@
       conda remove --all -n tensorflow1.13.1
     date_created: "2019-08-22T18:21:00+00:00"
     date_updated: "2019-08-22T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 113
+  fields:
+    user_id: 1
+    subject: create a blank django migration
+    body: |
+      docker-compose run django python manage.py makemigrations reports --empty -n delete_bad_signature_junction
+      operations = [
+        migrations.RunSQL(
+            "CREATE INDEX i_active_posts ON posts(id) WHERE active",
+            "DROP INDEX i_active_posts"
+        )
+      ]
+    date_created: "2020-04-07T18:21:00+00:00"
+    date_updated: "2020-04-07T18:21:00+00:00"
+
+
+
+    
