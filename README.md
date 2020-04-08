@@ -8,6 +8,23 @@ Run tests
 
     docker-compose run django python manage.py test
 
+Configure a pre-commit hook for running tests
+
+1. Create the `pre-commit` file
+
+        touch ./.git/hooks/pre-commit
+
+2. Paste the following into `./.git/hooks/pre-commit`
+
+        #!/bin/bash
+        set -e
+        docker-compose run django python manage.py test
+        exit 0
+
+3. Make it executable
+
+        `chmod 700 ./.git/hooks/pre-commit`
+
 Drop to shell
 
     docker-compose run django python manage.py shell
