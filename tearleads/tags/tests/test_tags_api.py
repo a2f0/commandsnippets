@@ -16,7 +16,7 @@ class TestTagsApi(BaseTestCase):
 
     def test_serialization_format(self):
         tag = TagFactory(user=self.user1)
-        response = self.user1_api_client.get('/api/v1/tags/')
+        response = self.user1_api_client.get('/api/v1/tags')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()['data']), 1)
         self.assertEqual(response.json()['data'][0]['id'],str(tag.id))
@@ -33,19 +33,21 @@ class TestTagsApi(BaseTestCase):
         tag2 = TagFactory(user=self.user1, name='z')
 
         # invalid sort key
-        response = self.user1_api_client.get('/api/v1/tags/?sort=invalid_sort_key')
+        response = self.user1_api_client.get('/api/v1/tags?sort=invalid_sort_key')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
         # sort by name
-        response = self.user1_api_client.get('/api/v1/tags/?sort=name')
+        response = self.user1_api_client.get('/api/v1/tags?sort=name')
+        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()['data']), 2)
-        self.assertEqual(response.json()['data'][0]['id'],str(tag1.id))
-        self.assertEqual(response.json()['data'][1]['id'],str(tag2.id))
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(tag1.id))
+        self.assertEqual(json_response['data'][1]['id'],str(tag2.id))
 
         # reverse sort by name
-        response = self.user1_api_client.get('/api/v1/tags/?sort=-name')
+        response = self.user1_api_client.get('/api/v1/tags?sort=-name')
+        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()['data']), 2)
-        self.assertEqual(response.json()['data'][0]['id'],str(tag2.id))
-        self.assertEqual(response.json()['data'][1]['id'],str(tag1.id))
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(tag2.id))
+        self.assertEqual(json_response['data'][1]['id'],str(tag1.id))
