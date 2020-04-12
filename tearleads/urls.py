@@ -1,8 +1,7 @@
-from django.conf.urls import url
-from django.conf.urls import include
+from django.conf.urls import include, url
 from django.contrib import admin
-
 from rest_framework.authtoken import views
+
 from tearleads.healthcheck.api import HealthCheckAPIView
 
 from .routers import router

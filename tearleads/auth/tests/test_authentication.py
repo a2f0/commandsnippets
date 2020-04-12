@@ -1,8 +1,9 @@
-from rest_framework.authtoken.models import Token
-from rest_framework.test import APIRequestFactory, APIClient
 from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
+
 
 class TestAuthentication(BaseTestCase):
 
@@ -29,5 +30,3 @@ class TestAuthentication(BaseTestCase):
         }
         response = self.user1_api_client.post('/api-token-auth/', payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    

@@ -1,7 +1,8 @@
-from rest_framework.test import APIRequestFactory, APIClient
 from rest_framework import status
+from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
+
 
 class TestHealthCheckApi(BaseTestCase):
 

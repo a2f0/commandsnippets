@@ -1,7 +1,8 @@
 from rest_framework.authtoken.models import Token
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APIClient, APITestCase
 
 from tearleads.users.tests.factories import UserFactory
+
 
 class BaseTestCase(APITestCase):
     

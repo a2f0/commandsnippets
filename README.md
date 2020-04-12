@@ -12,6 +12,10 @@ Run black
 
     docker-compose run django black /app
 
+Run iSort
+
+    docker-compose run django isort --atomic .
+
 Configure a pre-commit hook for running tests
 
 1. Create the `pre-commit` file

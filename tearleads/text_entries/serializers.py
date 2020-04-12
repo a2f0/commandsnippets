@@ -1,11 +1,12 @@
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import ResourceRelatedField
 
-from tearleads.tags.serializers import TagSerializer
 from tearleads.tags.models import Tag
+from tearleads.tags.serializers import TagSerializer
 from tearleads.text_entries.models import TextEntry
 from tearleads.users.models import User
 from tearleads.users.serializers import UserSerializer
+
 
 class TextEntrySerializer(serializers.ModelSerializer):
 

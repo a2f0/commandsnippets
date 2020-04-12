@@ -1,8 +1,8 @@
 from django.db import models
-
 from ordered_model.models import OrderedModel
 
 from tearleads.text_entries.models import TextEntry
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=24, unique=True, null=False)

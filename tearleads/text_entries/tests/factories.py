@@ -2,6 +2,7 @@ import factory
 
 from tearleads.users.tests.factories import UserFactory
 
+
 class TextEntryFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     subject = factory.Sequence(lambda n: 'subject-{0}'.format(n))

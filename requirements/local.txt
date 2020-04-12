@@ -3,4 +3,4 @@
 -r base.txt
 factory_boy==2.12.0
 black==19.10b0
-isort==4.3.21
+isort[requirements]==4.3.21

@@ -4,6 +4,7 @@ from rest_framework_json_api.relations import ResourceRelatedField
 from tearleads.tags.models import Tag
 from tearleads.users.serializers import UserSerializer
 
+
 class TagSerializer(serializers.ModelSerializer):
 
     included_serializers = {
@@ -16,4 +17,3 @@ class TagSerializer(serializers.ModelSerializer):
 
     class JSONAPIMeta:
         included_resources = ['user']
-
