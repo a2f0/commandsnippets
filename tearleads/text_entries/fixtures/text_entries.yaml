@@ -1243,3 +1243,12 @@
     body: xcode-select --print-path
     date_created: "2020-04-10T18:21:00+00:00"
     date_updated: "2020-04-10T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 115
+  fields:
+    user_id: 1
+    subject: pip show available versions
+    body: pip install isort==
+    date_created: "2020-04-12T18:21:00+00:00"
+    date_updated: "2020-04-12T18:21:00+00:00"

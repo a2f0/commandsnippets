@@ -6,3 +6,12 @@
     order: 0
     date_created: "2020-04-11T18:20:00+00:00"
     date_updated: "2020-04-11T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 2
+  fields:
+    tag: 6
+    text_entry: 115
+    order: 1
+    date_created: "2020-04-12T18:20:00+00:00"
+    date_updated: "2020-04-12T18:20:00+00:00"
