@@ -18,5 +18,6 @@ class TextEntryViewSet(viewsets.ModelViewSet):
 
     filterset_fields = {
        'id': ('exact',),
-       'tags__name': ('exact',)
+       'tags__name': ('exact',),
+       'tags__id': ('exact',)
     }
