@@ -1252,3 +1252,13 @@
     body: pip install isort==
     date_created: "2020-04-12T18:21:00+00:00"
     date_updated: "2020-04-12T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 116
+  fields:
+    user_id: 1
+    subject: abort a git stash pop, leave pending changes and keep the stash in the list
+    body: git reset --merge
+    date_created: "2020-04-12T18:21:00+00:00"
+    date_updated: "2020-04-12T18:21:00+00:00"
+  

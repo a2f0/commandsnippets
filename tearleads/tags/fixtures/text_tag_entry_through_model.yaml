@@ -15,3 +15,13 @@
     order: 1
     date_created: "2020-04-12T18:20:00+00:00"
     date_updated: "2020-04-12T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 3
+  fields:
+    tag: 7
+    text_entry: 116
+    order: 2
+    date_created: "2020-04-12T18:20:00+00:00"
+    date_updated: "2020-04-12T18:20:00+00:00"
+
