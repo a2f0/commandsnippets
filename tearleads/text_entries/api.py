@@ -13,4 +13,9 @@ class TextEntryViewSet(viewsets.ModelViewSet):
 
     select_for_includes = {
         'user': ['user'],
+        'tags': ['tags']
+    }
+
+    filterset_fields = {
+       'id': ('exact',)
     }

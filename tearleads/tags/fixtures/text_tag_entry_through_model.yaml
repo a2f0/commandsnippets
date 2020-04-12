@@ -1,0 +1,8 @@
+- model: tags.TagTextEntryThroughModel
+  pk: 1
+  fields:
+    tag: 2
+    text_entry: 1
+    order: 0
+    date_created: "2020-04-11T18:20:00+00:00"
+    date_updated: "2020-04-11T18:20:00+00:00"
