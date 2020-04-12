@@ -2,6 +2,8 @@ from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
+from tearleads.tags.tests.factories import (TagFactory,
+                                            TagTextEntryThroughModelFactory)
 
 from .factories import TextEntryFactory
 
@@ -49,3 +51,18 @@ class TestTextEntriesApi(BaseTestCase):
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_response['data'][0]['id'],str(entry2.id))
+
+        # filter by tag name
+        entry1 = TextEntryFactory(user=self.user1)
+        tag1 = TagFactory(user=self.user1, name='zzz')
+        TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1)
+        response = self.user1_api_client.get('/api/v1/entries?filter[tags.name]={}'.format('zzz'))
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 1)
+        self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+        # make sure a tag of yyy returns no results
+        response = self.user1_api_client.get('/api/v1/entries?filter[tags.name]={}'.format('yyy'))
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 0)
