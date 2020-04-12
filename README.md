@@ -8,6 +8,10 @@ Run tests
 
     docker-compose run django python manage.py test
 
+Run black
+
+    docker-compose run django black /app
+
 Configure a pre-commit hook for running tests
 
 1. Create the `pre-commit` file

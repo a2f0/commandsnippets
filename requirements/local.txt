@@ -2,3 +2,4 @@
 # Local development dependencies go here
 -r base.txt
 factory_boy==2.12.0
+black==19.10b0
