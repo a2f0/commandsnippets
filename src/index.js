@@ -24,7 +24,7 @@ class Index extends React.Component {
 
   componentDidMount() {
     console.info('componentDidMount')
-    fetch('http://localhost:8000/api/v1/tags?sort=name')
+    fetch('http://localhost:9001/api/v1/tags?sort=name')
       .then(res => res.json())
       .then((res) => {
         this.setState({ tags: res })
@@ -35,7 +35,7 @@ class Index extends React.Component {
   // Re-run the filter whenever the user or tag changes.
   filter = memoize(
     (user, tag) => {
-      var url = 'http://localhost:8000/api/v1/entries'
+      var url = 'http://localhost:9001/api/v1/entries'
       var querystring='?';
       if (tag != undefined) {
         querystring = querystring + 'filter[tags.name]=' + tag
