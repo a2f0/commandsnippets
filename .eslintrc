@@ -1,0 +1,15 @@
+{
+    "parser": "babel-eslint",
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "settings": { 
+      "react": {
+        "version": "detect"
+      }
+    },
+    "rules": {
+      "indent": ["error", 2]
+    }
+  }

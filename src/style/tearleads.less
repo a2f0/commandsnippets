@@ -1,0 +1,80 @@
+@import "vars.less";
+
+a {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: black;
+}
+
+body {
+  background-color: white;
+  color: black;
+  margin:0;
+}
+
+.inline-block {
+  display: inline-block;
+  border: @borderpx solid red;
+}
+
+.menu-item-spacing {
+  margin-left: .3em;
+}
+
+.menu-item {
+  font-size: .80em;
+  display: inline-block;
+  border: @borderpx solid red;
+}
+
+// Navbar
+
+.navbar {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: @navbar-height;
+}
+
+.navbar-top {
+  top: 0;
+}
+
+.navbar a {
+  float: left;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.navbar a:hover {
+  color: gray;
+}
+
+.navbar-bottom {
+  bottom: 0;
+}
+
+// Top and bottom container
+.flex-container {
+  display: flex;
+  justify-content: center;
+}
+
+.flex-max-width {
+  flex: 1;
+  max-width: 60em;
+}
+
+.flex {
+  flex: 1;
+}
+  
+.flex-container-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.flex-container-left {
+  display: flex;
+  justify-content: flex-start;
+}
