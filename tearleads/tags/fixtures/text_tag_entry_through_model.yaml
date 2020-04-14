@@ -25,3 +25,39 @@
     date_created: "2020-04-12T18:20:00+00:00"
     date_updated: "2020-04-12T18:20:00+00:00"
 
+
+- model: tags.TagTextEntryThroughModel
+  pk: 4
+  fields:
+    tag: 8
+    text_entry: 101
+    order: 3
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 5
+  fields:
+    tag: 8
+    text_entry: 102
+    order: 4
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+    
+- model: tags.TagTextEntryThroughModel
+  pk: 6
+  fields:
+    tag: 8
+    text_entry: 103
+    order: 5
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 7
+  fields:
+    tag: 8
+    text_entry: 104
+    order: 6
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"

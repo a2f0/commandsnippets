@@ -54,4 +54,11 @@
       date_created: "2020-04-12T18:20:00+00:00"
       date_updated: "2020-04-12T18:20:00+00:00"
 
+- model: tags.Tag
+  pk: 8
+  fields:
+      name: nvm
+      user_id: 1
+      date_created: "2020-04-12T18:20:00+00:00"
+      date_updated: "2020-04-12T18:20:00+00:00"
       
