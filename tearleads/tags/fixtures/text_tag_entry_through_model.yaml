@@ -61,3 +61,102 @@
     order: 6
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
+#
+- model: tags.TagTextEntryThroughModel
+  pk: 8
+  fields:
+    tag: 9
+    text_entry: 21
+    order: 8
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 9
+  fields:
+    tag: 9
+    text_entry: 22
+    order: 9
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 10
+  fields:
+    tag: 9
+    text_entry: 23
+    order: 10
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 11
+  fields:
+    tag: 9
+    text_entry: 24
+    order: 11
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 12
+  fields:
+    tag: 9
+    text_entry: 25
+    order: 12
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 13
+  fields:
+    tag: 9
+    text_entry: 57
+    order: 13
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 14
+  fields:
+    tag: 9
+    text_entry: 106
+    order: 14
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 15
+  fields:
+    tag: 9
+    text_entry: 107
+    order: 15
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 16
+  fields:
+    tag: 9
+    text_entry: 108
+    order: 16
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 17
+  fields:
+    tag: 9
+    text_entry: 109
+    order: 17
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 18
+  fields:
+    tag: 7
+    text_entry: 118
+    order: 18
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"

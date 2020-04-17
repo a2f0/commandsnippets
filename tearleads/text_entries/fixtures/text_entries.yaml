@@ -1261,4 +1261,29 @@
     body: git reset --merge
     date_created: "2020-04-12T18:21:00+00:00"
     date_updated: "2020-04-12T18:21:00+00:00"
-  
+
+- model: text_entries.TextEntry
+  pk: 117
+  fields:
+    user_id: 1
+    subject: list installed nvm versions
+    body: | 
+      nvm ls
+    date_created: "2019-08-20T18:21:00+00:00"
+    date_updated: "2019-08-20T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 118
+  fields:
+    user_id: 1
+    subject: rebase / combine git commits into previous without force pushing
+    body: | 
+      git checkout -b fix/unpushed-brach
+      git rebase -i HEAD~5
+      pick -> squash
+      git push
+    date_created: "2019-08-20T18:21:00+00:00"
+    date_updated: "2019-08-20T18:21:00+00:00"
+
+
+    
