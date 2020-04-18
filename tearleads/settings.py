@@ -86,8 +86,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tearleads.wsgi.application'
 
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:8080",
+CORS_ORIGIN_REGEX_WHITELIST = [
+    r"^http://localhost:*",
 ]
 
 # Database
