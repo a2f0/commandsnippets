@@ -12,6 +12,8 @@ class Index extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      tagSort: 'name',
+      tagDescending: false,
       entries: {
         data: [],
         included: []
@@ -24,16 +26,11 @@ class Index extends React.Component {
 
   componentDidMount() {
     console.info('componentDidMount')
-    fetch('http://localhost:9001/api/v1/tags?sort=name')
-      .then(res => res.json())
-      .then((res) => {
-        this.setState({ tags: res })
-      })
-      .catch(console.log)
+    this.getTags();
   }
 
   // Re-run the filter whenever the user or tag changes.
-  filter = memoize(
+  getEntries = memoize(
     (user, tag) => {
       var url = 'http://localhost:9001/api/v1/entries'
       var querystring='?';
@@ -52,14 +49,48 @@ class Index extends React.Component {
     }
   );
 
+  getSortedTags(sort) {
+    if (sort === this.state.tagSort) {
+      this.setState({ tagDescending: !this.state.tagDescending })
+      if (this.state.tagDescending === true) {
+        sort = '-' + sort
+      }
+    } 
+    this.getTags(sort);
+  }
+
+  getTags = memoize(
+    (sort) => {
+      var url = 'http://localhost:9001/api/v1/tags'
+      var querystring = "?"
+      if (sort != undefined) {
+        querystring = querystring + 'sort=' + sort
+      } else {
+        querystring = querystring + 'sort=name'
+      }
+
+      if (querystring != '?') {
+        url = url + querystring
+      }
+      fetch(url)
+        .then(res => res.json())
+        .then((res) => {
+          this.setState({ tags: res })
+        })
+        .catch(console.log)
+    }
+  );
+
   render() {
     const { user } = this.props.match.params
     const { tag } = this.props.match.params
-    this.filter(user, tag);
+    this.getEntries(user, tag);
     return (
       <div className="flex-container-entries">
         <div  className= "flex-taglist">
-          {/* <div className="taglist-header">Tag List</div> */}
+          <div className="taglist-entry">
+            <div onClick={() => this.getSortedTags('name')}>[a-z]</div>
+          </div>
           {this.state.tags.data.map(tag => {
             const user = this.state.tags.included.filter(
               i => i.type==="User" && i.id == tag.relationships.user.data.id
