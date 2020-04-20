@@ -69,4 +69,19 @@
       user_id: 1
       date_created: "2020-04-15T18:20:00+00:00"
       date_updated: "2020-04-15T18:20:00+00:00"
-      
+
+- model: tags.Tag
+  pk: 10
+  fields:
+      name: gulp
+      user_id: 1
+      date_created: "2020-04-15T18:20:00+00:00"
+      date_updated: "2020-04-15T18:20:00+00:00"
+          
+- model: tags.Tag
+  pk: 11
+  fields:
+      name: browsersync
+      user_id: 1
+      date_created: "2020-04-15T18:20:00+00:00"
+      date_updated: "2020-04-15T18:20:00+00:00"

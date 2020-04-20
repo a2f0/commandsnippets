@@ -1285,5 +1285,18 @@
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
 
-
-    
+- model: text_entries.TextEntry
+  pk: 119
+  fields:
+    user_id: 1
+    subject: disable ghost mode in Browsersync
+    body: | 
+      browserSync.instance = browserSync.init({
+        startPath: '/',
+        server: server,
+        browser: browser,
+        port: 8080
+        ghostMode: false 
+      });
+    date_created: "2019-04-19T18:21:00+00:00"
+    date_updated: "2019-04-19T18:21:00+00:00"

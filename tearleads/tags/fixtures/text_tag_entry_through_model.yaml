@@ -160,3 +160,22 @@
     order: 18
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 19
+  fields:
+    tag: 10
+    text_entry: 119
+    order: 19
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 20
+  fields:
+    tag: 11
+    text_entry: 119
+    order: 20
+    date_created: "2020-04-13T18:20:00+00:00"
+    date_updated: "2020-04-13T18:20:00+00:00"
+  
