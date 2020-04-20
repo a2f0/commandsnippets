@@ -1300,3 +1300,14 @@
       });
     date_created: "2019-04-19T18:21:00+00:00"
     date_updated: "2019-04-19T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 120
+  fields:
+    user_id: 1
+    subject: set time zone to utc in macos
+    body: |
+      sudo ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+      changing system preferences updates symlink
+    date_created: "2019-04-19T18:21:00+00:00"
+    date_updated: "2019-04-19T18:21:00+00:00"
