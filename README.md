@@ -1,8 +1,10 @@
 # Tearleads Backend
 
-Start the Compose
+Bootstrap
 
-    docker-compose up
+    docker-compose build
+    docker-compose run django python manage.py migrate
+    ./loaddata.sh
 
 Run tests
 

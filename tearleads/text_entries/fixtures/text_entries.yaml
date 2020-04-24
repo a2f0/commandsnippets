@@ -1311,3 +1311,12 @@
       changing system preferences updates symlink
     date_created: "2019-04-19T18:21:00+00:00"
     date_updated: "2019-04-19T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 121
+  fields:
+    user_id: 1
+    subject: show running heroku dynos
+    body: heroku ps -a <app id>
+    date_created: "2019-04-19T18:21:00+00:00"
+    date_updated: "2019-04-19T18:21:00+00:00"
