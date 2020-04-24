@@ -1320,3 +1320,12 @@
     body: heroku ps -a <app id>
     date_created: "2019-04-19T18:21:00+00:00"
     date_updated: "2019-04-19T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 122
+  fields:
+    user_id: 1
+    subject: show deadlock timeout
+    body: show deadlock_timeout;
+    date_created: "2019-04-19T18:21:00+00:00"
+    date_updated: "2019-04-19T18:21:00+00:00"    

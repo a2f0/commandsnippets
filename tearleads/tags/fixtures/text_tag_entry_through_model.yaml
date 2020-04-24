@@ -196,4 +196,12 @@
     order: 22
     date_created: "2020-04-20T18:20:00+00:00"
     date_updated: "2020-04-20T18:20:00+00:00"
-    
+
+- model: tags.TagTextEntryThroughModel
+  pk: 23
+  fields:
+    tag: 14
+    text_entry: 122
+    order: 23
+    date_created: "2020-04-20T18:20:00+00:00"
+    date_updated: "2020-04-20T18:20:00+00:00"
