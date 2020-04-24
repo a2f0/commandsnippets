@@ -205,3 +205,14 @@
     order: 23
     date_created: "2020-04-20T18:20:00+00:00"
     date_updated: "2020-04-20T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 24
+  fields:
+    tag: 13
+    text_entry: 123
+    order: 24
+    date_created: "2020-04-20T18:20:00+00:00"
+    date_updated: "2020-04-20T18:20:00+00:00"
+  
+
