@@ -35,7 +35,10 @@ class TestTagsApi(BaseTestCase):
 
         # invalid sort key
         response = self.user1_api_client.get('/api/v1/tags?sort=invalid_sort_key')
+        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(json_response['errors']), 1)
+        self.assertEqual(json_response['errors'][0]['detail'], 'invalid sort parameter: invalid_sort_key')
         
         # sort by name
         response = self.user1_api_client.get('/api/v1/tags?sort=name')

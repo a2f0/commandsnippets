@@ -77,3 +77,78 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response['data']), 1)
         self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+
+    def test_order_filter(self):
+        entry1 = TextEntryFactory(user=self.user1, subject='a', body='z')
+        entry2 = TextEntryFactory(user=self.user1, subject='b', body='y')
+
+        # invalid sort key
+        response = self.user1_api_client.get('/api/v1/entries?sort=invalid_sort_key')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(json_response['errors']), 1)
+        self.assertEqual(json_response['errors'][0]['detail'], 'invalid sort parameter: invalid_sort_key')
+
+        # sort by body
+        response = self.user1_api_client.get('/api/v1/entries?sort=body')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(entry2.id))
+        self.assertEqual(json_response['data'][1]['id'],str(entry1.id))
+
+        # reverse sort by body
+        response = self.user1_api_client.get('/api/v1/entries?sort=-body')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+        self.assertEqual(json_response['data'][1]['id'],str(entry2.id))
+        
+        # sort by date_created
+        response = self.user1_api_client.get('/api/v1/entries?sort=date_created')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+        self.assertEqual(json_response['data'][1]['id'],str(entry2.id))
+
+        # reverse sort by date_created
+        response = self.user1_api_client.get('/api/v1/entries?sort=-date_created')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(entry2.id))
+        self.assertEqual(json_response['data'][1]['id'],str(entry1.id))
+
+        # sort by date_updated
+        response = self.user1_api_client.get('/api/v1/entries?sort=date_updated')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+        self.assertEqual(json_response['data'][1]['id'],str(entry2.id))
+
+        # reverse sort by date_updated
+        response = self.user1_api_client.get('/api/v1/entries?sort=-date_updated')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(entry2.id))
+        self.assertEqual(json_response['data'][1]['id'],str(entry1.id))
+
+        # sort by subject
+        response = self.user1_api_client.get('/api/v1/entries?sort=subject')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+        self.assertEqual(json_response['data'][1]['id'],str(entry2.id))
+
+        # reverse sort by subject
+        response = self.user1_api_client.get('/api/v1/entries?sort=-subject')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(entry2.id))
+        self.assertEqual(json_response['data'][1]['id'],str(entry1.id))
