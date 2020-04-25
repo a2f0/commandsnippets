@@ -21,13 +21,10 @@ body {
 }
 
 .menu-item {
-  font-size: .80em;
-  display: inline-block;
   border: @borderpx solid red;
 }
 
 // Navbar
-
 .navbar {
   overflow: hidden;
   position: fixed;
@@ -55,26 +52,36 @@ body {
 }
 
 // Top and bottom container
-.flex-container {
+.flex-main-container {
   display: flex;
-  justify-content: center;
+  // https://stackoverflow.com/questions/1417934/how-to-prevent-scrollbar-from-repositioning-web-page/7607206
+  padding-left: calc(100vw - 100%);
 }
 
-.flex-max-width {
-  flex: 1;
-  max-width: 60em;
+.flex-main-container-margin {
+  margin-top: @navbar-height;
 }
 
 .flex {
-  flex: 1;
-}
-  
-.flex-container-right {
   display: flex;
-  justify-content: flex-end;
 }
 
-.flex-container-left {
+.flex-align-left {
   display: flex;
   justify-content: flex-start;
+  flex: 1 0 0;
+}
+
+.flex-align-right {
+  display: flex;
+  justify-content: flex-end;
+  flex: 1 0 0;
+}
+
+.flex-side-column {
+  flex: 1 0 0;
+}
+
+.flex-center-column {
+  flex: 0 0 @center-column-width;
 }

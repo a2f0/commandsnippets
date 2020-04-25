@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import memoize from "memoize-one";
 import './style/border-px.less';
 import './style/entries.less';
@@ -51,11 +51,13 @@ class Index extends React.Component {
 
   getSortedTags(sort) {
     if (sort === this.state.tagSort) {
-      this.setState({ tagDescending: !this.state.tagDescending })
-      if (this.state.tagDescending === true) {
+      if (this.state.tagDescending === false) {
         sort = '-' + sort
       }
-    } 
+      this.setState({ tagDescending: !this.state.tagDescending })
+    } else {
+      this.setState({ tagSort: sort })
+    }
     this.getTags(sort);
   }
 
@@ -86,34 +88,46 @@ class Index extends React.Component {
     const { tag } = this.props.match.params
     this.getEntries(user, tag);
     return (
-      <div className="flex-container-entries">
-        <div  className= "flex-taglist">
-          <div className="taglist-entry">
-            <div onClick={() => this.getSortedTags('name')}>[a-z]</div>
-          </div>
-          {this.state.tags.data.map(tag => {
-            const user = this.state.tags.included.filter(
-              i => i.type==="User" && i.id == tag.relationships.user.data.id
-            )[0];            
-            return (
-              <div key={tag.id} className="taglist-entry">
-                <Link to={`/${user.attributes.username}/${tag.attributes.name}`}>{tag.attributes.name}</Link>
-              </div>
-            )
-          })
-          }
-        </div>
-        <div>
-          {this.state.entries.data.map(entry => (
-            <div key={entry.id}>
-              <div className="entry-subject">
-                { entry.attributes.subject }
-              </div>
-              <div className="entry-body">
-                { entry.attributes.body }
-              </div>
+      <div className="flex-center-column">
+        <div className="flex">
+          <div className="flex-taglist">
+            <div className="taglist-entry">
+              <div className="inline-block" onClick={() => this.getSortedTags('name')}>[a-z]</div>
+              <div className="inline-block" onClick={() => this.getSortedTags('date_created')}>[created]</div>
             </div>
-          ))}
+            {this.state.tags.data.map(tag => {
+              const user = this.state.tags.included.filter(
+                i => i.type==="User" && i.id == tag.relationships.user.data.id
+              )[0];
+              return (
+                <div key={tag.id} className="taglist-entry">
+                  <Link to={`/${user.attributes.username}/${tag.attributes.name}`}>{tag.attributes.name}</Link>
+                </div>
+              )
+            })
+            }
+            <div className="taglist-entry">
+              <Link to={`/`}>all entries</Link>
+            </div>
+            <div className="taglist-entry">
+              <Link to={`/`}>untagged entries</Link>
+            </div>
+            <div className="taglist-entry">
+              <Link to={`/`}>deleted entries</Link>
+            </div>
+          </div>
+          <div>
+            {this.state.entries.data.map(entry => (
+              <div key={entry.id}>
+                <div className="entry-subject">
+                  { entry.attributes.subject }
+                </div>
+                <div className="entry-body">
+                  { entry.attributes.body }
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -124,25 +138,28 @@ class Index extends React.Component {
 function NavigationTop() {
   return (
     <div className="navbar navbar-top">
-      <div className="flex-container">
-        <div className="flex-max-width">
-          <div className="flex-container">
-            <div className="flex">
-              <div className="flex-container-left">
-                <div className="menu-item inline-block">
-                  <Link to="/">Tearleads</Link>
-                </div>
+      <div className="flex-main-container">
+        <div className="flex-side-column"></div>
+        <div className="flex-center-column">
+          <div className="flex">
+            <div className="flex-align-left">
+              <div className="menu-item inline-block">
+                <Link to="/">Tearleads</Link>
               </div>
             </div>
-            <div className="flex">
-              <div className="flex-container-right">
-                <div className="inline-block menu-item menu-item-spacing">
-                  {/* <Link to="/login">Login</Link> */}
-                </div>
+            <div className="flex-align-right">
+              <div className="inline-block menu-item menu-item-spacing">
+                <Link to="/">Menu 2</Link>
               </div>
+              <div className="inline-block menu-item menu-item-spacing">
+                <Link to="/">Menu 1</Link>
+              </div>
+
+              
             </div>
           </div>
         </div>
+        <div className="flex-side-column"></div>
       </div>
     </div>
   )
@@ -151,32 +168,23 @@ function NavigationTop() {
 function NavigationBottom() {
   return (
     <div className="navbar navbar-bottom">
-      <div className="flex-container">
-        <div className="flex-max-width">
-          <div className="flex-container">
-            <div className="flex">
-              <div className="flex-container-left">
-                <div className="inline-block menu-item">
-                  {/* <Link to="/">Tearleads</Link> */}
-                </div>
+      <div className="flex-main-container">
+        <div className="flex-side-column"></div>
+        <div className="flex-center-column">
+          <div className="flex">
+            <div className="flex-align-left">
+              <div className="menu-item inline-block">
+                <Link to="/">Tearleads</Link>
               </div>
             </div>
-            <div className="flex">
-              <div className="flex-container">
-                <div className="inline-block menu-item">
-                  {/* <Link to="/">Index</Link> */}
-                </div>
-              </div>
-            </div>
-            <div className="flex">
-              <div className="flex-container-right">
-                <div className="inline-block menu-item">
-                  {/* <Link to="/">Search</Link> */}
-                </div>
+            <div className="flex-align-right">
+              <div className="inline-block menu-item menu-item-spacing">
+                <Link to="/">Tearleads</Link>
               </div>
             </div>
           </div>
         </div>
+        <div className="flex-side-column"></div>
       </div>
     </div>
   )
@@ -186,11 +194,13 @@ function AppRouter() {
   return (
     <Router>
       <NavigationTop />
-      <div className="flex-container">
-        <div className="flex-max-width">
-          <Route exact path="/"  component={Index} />
+      <div className="flex-main-container flex-main-container-margin">
+        <div className="flex-side-column"></div>
+        <Switch>
           <Route path="/:user/:tag" component={Index} />
-        </div>
+          <Route exact path="/"  component={Index} />
+        </Switch>
+        <div className="flex-side-column"></div>
       </div>
       <NavigationBottom />
     </Router>
