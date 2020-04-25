@@ -10,4 +10,4 @@ class TagViewSet(viewsets.ModelViewSet):
     filter_backends = (OrderingFilter,)
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    ordering_fields = ('name',)
+    ordering_fields = ('date_created','name',)
