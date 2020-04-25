@@ -28,7 +28,7 @@ Configure a pre-commit hook for running tests
 
         #!/bin/bash
         set -e
-        docker-compose run django python manage.py test
+        docker-compose run django python manage.py test --noinput
         exit 0
 
 3. Make it executable
