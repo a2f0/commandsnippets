@@ -12,6 +12,9 @@ class Index extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      entryDescending: true,
+      entrySort: 'date_updated',
+      tagDescending: false,
       tagSort: 'name',
       tagDescending: false,
       entries: {
@@ -29,16 +32,43 @@ class Index extends React.Component {
     this.getTags();
   }
 
-  // Re-run the filter whenever the user or tag changes.
-  getEntries = memoize(
-    (user, tag) => {
-      var url = 'http://localhost:9001/api/v1/entries'
-      var querystring='?';
-      if (tag != undefined) {
-        querystring = querystring + 'filter[tags.name]=' + tag
+  getSortedEntries(sort) {
+    if (sort === this.state.entrySort) {
+      // Then the sort attribute stayed the same, invert the order.
+      this.setState({ entryDescending: !this.state.entryDescending })
+    } else {
+      this.setState({ entrySort: sort })
+    }
+  }
+
+  getEntries() {
+    const { user } = this.props.match.params
+    const { tag } = this.props.match.params
+    var query_params = [];
+    if (tag != undefined) {
+      query_params.push('filter[tags.name]=' + tag)
+    }
+    if (this.state.entrySort != undefined) {
+      var sort = this.state.entrySort
+      if (this.state.entryDescending === false) {
+        sort = '-' + this.state.entrySort
       }
-      if (querystring != '?') {
-        url = url + querystring
+      query_params.push('sort=' + sort)
+    }
+    var querystring = undefined;
+    if (query_params.length > 0) {
+      querystring = query_params.join('&')
+    }
+    this.memoizeEntries(querystring)
+  }
+
+  // Re-run the filter whenever the user or tag changes.
+  memoizeEntries = memoize(
+    (querystring) => {
+      if (querystring == undefined) {
+        var url = 'http://localhost:9001/api/v1/entries'
+      } else {
+        var url = 'http://localhost:9001/api/v1/entries?' + querystring
       }
       fetch(url)
         .then(res => res.json())
@@ -94,9 +124,7 @@ class Index extends React.Component {
   );
 
   render() {
-    const { user } = this.props.match.params
-    const { tag } = this.props.match.params
-    this.getEntries(user, tag);
+    this.getEntries();
     return (
       <div className="flex-center-column">
         <div className="flex">
@@ -127,6 +155,12 @@ class Index extends React.Component {
             </div>
           </div>
           <div>
+            <div className="taglist-entry">
+              <div className="inline-block" onClick={() => this.getSortedEntries('subject')}>[a-z subject]</div>
+              <div className="inline-block" onClick={() => this.getSortedEntries('body')}>[a-z body]</div>
+              <div className="inline-block" onClick={() => this.getSortedEntries('date_created')}>[created]</div>
+              <div className="inline-block" onClick={() => this.getSortedEntries('date_updated')}>[updated]</div>
+            </div>
             {this.state.entries.data.map(entry => (
               <div key={entry.id}>
                 <div className="entry-subject">
@@ -164,8 +198,6 @@ function NavigationTop() {
               <div className="inline-block menu-item menu-item-spacing">
                 <Link to="/">Menu 1</Link>
               </div>
-
-              
             </div>
           </div>
         </div>
