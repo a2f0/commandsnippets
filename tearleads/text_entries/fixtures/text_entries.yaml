@@ -1368,5 +1368,6 @@
     body: |
       Sidekiq.options[:concurrency]
       Sidekiq.redis_pool
+      Sidekiq.redis_pool.size
     date_created: "2019-04-27T18:21:00+00:00"
     date_updated: "2019-04-27T18:21:00+00:00"
