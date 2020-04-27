@@ -1349,4 +1349,24 @@
       pp = pprint.PrettyPrinter(indent=4)
       pp.pprint(json_response)
     date_created: "2019-04-19T18:21:00+00:00"
-    date_updated: "2019-04-19T18:21:00+00:00"    
+    date_updated: "2019-04-19T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 125
+  fields:
+    user_id: 1
+    subject: drop to a rails console
+    body: heroku run 'bin/qgtunnel rails console' -a growitmobile-staging
+    date_created: "2019-04-27T18:21:00+00:00"
+    date_updated: "2019-04-27T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 126
+  fields:
+    user_id: 1
+    subject: get sidekiq options (rails)
+    body: |
+      Sidekiq.options[:concurrency]
+      Sidekiq.redis_pool
+    date_created: "2019-04-27T18:21:00+00:00"
+    date_updated: "2019-04-27T18:21:00+00:00"

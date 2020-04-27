@@ -223,3 +223,21 @@
     order: 25
     date_created: "2020-04-20T18:20:00+00:00"
     date_updated: "2020-04-20T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 26
+  fields:
+    tag: 13
+    text_entry: 125
+    order: 26
+    date_created: "2020-04-27T18:20:00+00:00"
+    date_updated: "2020-04-27T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 27
+  fields:
+    tag: 13
+    text_entry: 126
+    order: 27
+    date_created: "2020-04-27T18:20:00+00:00"
+    date_updated: "2020-04-27T18:20:00+00:00"
