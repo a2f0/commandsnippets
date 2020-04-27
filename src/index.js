@@ -6,6 +6,7 @@ import './style/border-px.less';
 import './style/entries.less';
 import './style/tearleads.less';
 import './style/taglist.less';
+import './style/create-entry.less';
 
 class Index extends React.Component { 
 
@@ -14,6 +15,7 @@ class Index extends React.Component {
     this.state = {
       entryDescending: true,
       entrySort: 'date_updated',
+      showNewEntry: false,
       tagDescending: false,
       tagSort: 'name',
       tagDescending: false,
@@ -123,8 +125,20 @@ class Index extends React.Component {
     }
   );
 
+  newEntry( ) {
+    this.setState({ showNewEntry: !this.state.showNewEntry });
+    console.log(this.state.showNewEntry);
+  }
+
+  saveEntry( ) {
+    console.log("saveEntry");
+  }
+
+  
+
   render() {
     this.getEntries();
+    const { showNewEntry } = this.state;
     return (
       <div className="flex-center-column">
         <div className="flex">
@@ -160,7 +174,27 @@ class Index extends React.Component {
               <div className="inline-block" onClick={() => this.getSortedEntries('body')}>[a-z body]</div>
               <div className="inline-block" onClick={() => this.getSortedEntries('date_created')}>[created]</div>
               <div className="inline-block" onClick={() => this.getSortedEntries('date_updated')}>[updated]</div>
+              <div className="inline-block" onClick={() => this.newEntry()}>[new]</div>
             </div>
+
+            {showNewEntry && (
+              <div>
+                <div>
+                  <input type="text" id="subject" name="subject"></input>
+                </div>
+                <div>
+                  <input type="text" id="body" name="body"></input>
+                </div>
+                <div>
+                  <div className="create-entry-button" onClick={() => this.saveEntry()}>
+                  Save
+                  </div>
+                  <div className="create-entry-button" onClick={() => this.newEntry()}>
+                  Cancel
+                  </div>
+                </div>
+              </div>
+            )}
             {this.state.entries.data.map(entry => (
               <div key={entry.id}>
                 <div className="entry-subject">
