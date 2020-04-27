@@ -1339,5 +1339,14 @@
     date_created: "2019-04-19T18:21:00+00:00"
     date_updated: "2019-04-19T18:21:00+00:00"
 
-
-    
+- model: text_entries.TextEntry
+  pk: 124
+  fields:
+    user_id: 1
+    subject: pretty print json
+    body: |
+      import pprint
+      pp = pprint.PrettyPrinter(indent=4)
+      pp.pprint(json_response)
+    date_created: "2019-04-19T18:21:00+00:00"
+    date_updated: "2019-04-19T18:21:00+00:00"    

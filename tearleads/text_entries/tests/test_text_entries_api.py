@@ -30,7 +30,7 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response['included']), 1)
         self.assertEqual(json_response['included'][0]['type'],'User')
         self.assertEqual(len(json_response['included'][0]['attributes']),1)
-        self.assertEqual(json_response['included'][0]['attributes']['username'],'user1')
+        self.assertEqual(json_response['included'][0]['attributes']['username'],self.user1.username)
     
     def test_bad_filter(self):
         # invalid filter
@@ -152,3 +152,23 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response['data']), 2)
         self.assertEqual(json_response['data'][0]['id'],str(entry2.id))
         self.assertEqual(json_response['data'][1]['id'],str(entry1.id))
+
+    def test_create_entry(self):
+        payload = {
+            'data': {
+                'type': 'TextEntry',
+                'attributes': {
+                    'subject': 'subject',
+                    'body': 'body',
+                }
+            }
+        }
+        response = self.user1_api_client.post('/api/v1/entries', payload, format='vnd.api+json')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(json_response['data']['attributes']['subject'],payload['data']['attributes']['subject'])
+        self.assertEqual(json_response['data']['attributes']['body'],payload['data']['attributes']['body'])
+        self.assertEqual(len(json_response['included']), 1)
+        self.assertEqual(json_response['included'][0]['type'],'User')
+        self.assertEqual(len(json_response['included'][0]['attributes']),1)
+        self.assertEqual(json_response['included'][0]['attributes']['username'],self.user1.username)

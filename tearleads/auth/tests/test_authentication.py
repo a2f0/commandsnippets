@@ -16,7 +16,7 @@ class TestAuthentication(BaseTestCase):
     
     def test_successful_authentication(self):
         payload = {
-            'username': 'user1',
+            'username': self.user1.username,
             'password': 'password'
         }
         response = self.user1_api_client.post('/api-token-auth/', payload, format='json')

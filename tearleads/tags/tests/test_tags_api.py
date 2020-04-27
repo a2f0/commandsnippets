@@ -27,7 +27,7 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(len(response.json()['included']), 1)
         self.assertEqual(response.json()['included'][0]['type'],'User')
         self.assertEqual(len(response.json()['included'][0]['attributes']),1)
-        self.assertEqual(response.json()['included'][0]['attributes']['username'],'user1')
+        self.assertEqual(response.json()['included'][0]['attributes']['username'],self.user1.username)
 
     def test_order_filter(self):
         tag1 = TagFactory(user=self.user1, name='a')

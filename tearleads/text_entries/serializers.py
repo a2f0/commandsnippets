@@ -26,3 +26,9 @@ class TextEntrySerializer(serializers.ModelSerializer):
 
     class JSONAPIMeta:
         included_resources = ['user', 'tags']
+
+class TextEntryCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TextEntry
+        fields = ('body','subject')

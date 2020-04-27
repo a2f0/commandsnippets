@@ -109,3 +109,11 @@
     user_id: 1
     date_created: "2020-04-23T18:20:00+00:00"
     date_updated: "2020-04-23T18:20:00+00:00"
+
+- model: tags.Tag
+  pk: 15
+  fields:
+    name: python3
+    user_id: 1
+    date_created: "2020-04-27T18:20:00+00:00"
+    date_updated: "2020-04-27T18:20:00+00:00"
