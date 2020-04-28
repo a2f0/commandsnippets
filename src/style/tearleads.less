@@ -27,6 +27,11 @@ body {
   border: @borderpx solid red;
 }
 
+.menu-item-small {
+  font-size: .80em;
+  border: @borderpx solid red;
+}
+
 // Navbar
 .navbar {
   overflow: hidden;
@@ -67,6 +72,13 @@ body {
 
 .flex {
   display: flex;
+}
+
+.flex-align-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - @navbar-height);
 }
 
 .flex-align-left {
