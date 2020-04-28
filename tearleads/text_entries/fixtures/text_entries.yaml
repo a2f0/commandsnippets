@@ -1380,3 +1380,12 @@
     body: docker-compose run django python manage.py changepassword dps
     date_created: "2019-04-27T18:21:00+00:00"
     date_updated: "2019-04-27T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 128
+  fields:
+    user_id: 1
+    subject: npm ls react
+    body: identify duplicate versions of react in a project
+    date_created: "2019-04-28T18:21:00+00:00"
+    date_updated: "2019-04-28T18:21:00+00:00"
