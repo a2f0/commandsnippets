@@ -1371,3 +1371,12 @@
       Sidekiq.redis_pool.size
     date_created: "2019-04-27T18:21:00+00:00"
     date_updated: "2019-04-27T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 127
+  fields:
+    user_id: 1
+    subject: change password
+    body: docker-compose run django python manage.py changepassword dps
+    date_created: "2019-04-27T18:21:00+00:00"
+    date_updated: "2019-04-27T18:21:00+00:00"

@@ -18,6 +18,10 @@ Run isort
 
     docker-compose run django isort --recursive --atomic .
 
+Change a password
+
+    docker-compose run django python manage.py changepassword dps
+
 Configure a pre-commit hook for running tests
 
 1. Create the `pre-commit` file
