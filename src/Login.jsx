@@ -24,11 +24,14 @@ class Login extends React.Component {
       headers: {
         'Content-Type': 'application/json'
       }
-    }).then(res => res.json())
-      .then(data => { 
-        console.log(data)
-      })
-      .catch(err => console.error("Error:", err));
+    }).then((response) => {
+      return response.json();
+    }).then((data) => {
+      if('token' in data) {
+        // Then authentication was successful
+        console.info('success!')
+      }
+    }).catch(err => console.error("Error:", err));
   }
 
   handleUsernameChange(event) {
