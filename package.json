@@ -49,6 +49,7 @@
     "leaflet": "^1.6.0",
     "memoize-one": "^5.1.1",
     "react": "latest",
+    "react-cookie": "^4.0.3",
     "react-dom": "latest",
     "react-leaflet": "^2.6.3",
     "react-router-dom": "^5.1.2"

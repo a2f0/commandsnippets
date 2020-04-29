@@ -1,14 +1,19 @@
 import React from "react";
-
+import { instanceOf } from 'prop-types';
+import { withCookies, Cookies } from 'react-cookie';
 class Login extends React.Component { 
+  static propTypes = {
+    cookies: instanceOf(Cookies).isRequired
+  };
 
   constructor(props) {
     super(props);
+    const { cookies } = props;
     this.state = {
       username: '',
       password: '',
+      token: cookies.get('token') || ''
     };
-
     this.handleUsernameChange = this.handleUsernameChange.bind(this);
     this.handlePasswordChange = this.handlePasswordChange.bind(this);
   }
@@ -29,7 +34,8 @@ class Login extends React.Component {
     }).then((data) => {
       if('token' in data) {
         // Then authentication was successful
-        console.info('success!')
+        const { cookies } = this.props;
+        cookies.set('token', data.token, { path: '/' });
       }
     }).catch(err => console.error("Error:", err));
   }
@@ -71,4 +77,4 @@ class Login extends React.Component {
   }
 }
 
-export default Login;
+export default withCookies(Login);

@@ -1,8 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
+import { CookiesProvider } from 'react-cookie';
 import memoize from "memoize-one";
 import Login from './Login.jsx';
+import Logout from './Logout.jsx';
 import './style/border-px.less';
 import './style/entries.less';
 import './style/tearleads.less';
@@ -227,6 +229,9 @@ function NavigationTop() {
             </div>
             <div className="flex-align-right">
               <div className="inline-block menu-item-small menu-item-spacing">
+                <Logout/>
+              </div>
+              <div className="inline-block menu-item-small menu-item-spacing">
                 <Link to="/login">Login</Link>
               </div>
             </div>
@@ -265,19 +270,21 @@ function NavigationBottom() {
 
 function AppRouter() {
   return (
-    <Router>
-      <NavigationTop />
-      <div className="flex-main-container flex-main-container-margin">
-        <div className="flex-side-column"></div>
-        <Switch>
-          <Route path="/:user/:tag" component={Index} />
-          <Route exact path="/" component={Index} />
-          <Route exact path="/login" component={Login} />
-        </Switch>
-        <div className="flex-side-column"></div>
-      </div>
-      <NavigationBottom />
-    </Router>
+    <CookiesProvider>
+      <Router>
+        <NavigationTop />
+        <div className="flex-main-container flex-main-container-margin">
+          <div className="flex-side-column"></div>
+          <Switch>
+            <Route path="/:user/:tag" component={Index} />
+            <Route exact path="/" component={Index} />
+            <Route exact path="/login" component={Login} />
+          </Switch>
+          <div className="flex-side-column"></div>
+        </div>
+        <NavigationBottom />
+      </Router>
+    </CookiesProvider>
   );
 }
 ReactDOM.render(<AppRouter />, document.getElementById("©"));
