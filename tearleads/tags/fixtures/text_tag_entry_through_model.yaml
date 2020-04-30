@@ -250,3 +250,12 @@
     order: 28
     date_created: "2020-04-27T18:20:00+00:00"
     date_updated: "2020-04-27T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 29
+  fields:
+    tag: 13
+    text_entry: 129
+    order: 29
+    date_created: "2020-04-30T18:20:00+00:00"
+    date_updated: "2020-04-30T18:20:00+00:00"

@@ -1389,3 +1389,12 @@
     body: identify duplicate versions of react in a project
     date_created: "2019-04-28T18:21:00+00:00"
     date_updated: "2019-04-28T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 129
+  fields:
+    user_id: 1
+    subject: force push heroku
+    body: heroku git:remote -a <app id> && git push --force heroku <source branch>:master
+    date_created: "2019-04-29T18:21:00+00:00"
+    date_updated: "2019-04-29T18:21:00+00:00"
