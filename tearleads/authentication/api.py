@@ -1,6 +1,9 @@
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from tearleads.authentication import utility
 
 class CustomObtainAuthToken(ObtainAuthToken):
 
@@ -13,5 +16,14 @@ class CustomObtainAuthToken(ObtainAuthToken):
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         response = Response({})
-        response.set_cookie('Authentication', token.key, httponly=True, domain='127.0.0.1')
+        response.set_cookie('Authorization', token.key, httponly=True, domain='127.0.0.1')
+        return response
+
+class CustomInvalidateAuthToken(APIView):
+
+    def post(self, request, *args, **kwargs):
+        ca = utility.CustomAuthentication()
+        ca.deauthenticate(request)
+        response = Response({})
+        response.delete_cookie('Authorization', domain='127.0.0.1')
         return response
