@@ -14,14 +14,23 @@ class TestAuthentication(BaseTestCase):
     def setUpTestData(cls):
         super(TestAuthentication, cls).setUpTestData()
     
-    def test_successful_authentication(self):
+    def test_successful_cookie_authentication(self):
         payload = {
             'username': self.user1.username,
             'password': 'password'
         }
         response = self.user1_api_client.post('/api-token-auth/', payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['token'], Token.objects.filter(user=self.user1)[0].key)
+        self.assertEqual(response.cookies['Authentication'].value, Token.objects.filter(user=self.user1)[0].key)
+
+    def test_successful_token_authentication(self):
+        payload = {
+            'username': self.user1.username,
+            'password': 'password'
+        }
+        response = self.user1_api_client.post('/api-token-auth/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
     def test_failed_authentication(self):
         payload = {

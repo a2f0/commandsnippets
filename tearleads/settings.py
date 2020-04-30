@@ -27,7 +27,7 @@ SECRET_KEY = '#ridx)6=92r06^kym!jhsvh=y1pdv-lt$##rqfo7nv(0(v9ug0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [ 'localhost', '.tearleads.com' ]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.tearleads.com' ]
 
 # Application definition
 
@@ -89,7 +89,10 @@ WSGI_APPLICATION = 'tearleads.wsgi.application'
 
 CORS_ORIGIN_REGEX_WHITELIST = [
     r"^http://localhost:*",
+    r"^http://127.0.0.1:*"
 ]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
