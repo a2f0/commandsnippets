@@ -72,11 +72,14 @@ class Index extends React.Component {
   memoizeEntries = memoize(
     (querystring) => {
       if (querystring == undefined) {
-        var url = 'http://localhost:9001/api/v1/entries'
+        var url = 'http://127.0.0.1:9001/api/v1/entries'
       } else {
-        var url = 'http://localhost:9001/api/v1/entries?' + querystring
+        var url = 'http://127.0.0.1:9001/api/v1/entries?' + querystring
       }
-      fetch(url)
+      fetch(url, {
+        method: 'GET',
+        credentials: 'include'
+      })
         .then(res => res.json())
         .then((res) => {
           this.setState({ entries: res })
@@ -120,7 +123,10 @@ class Index extends React.Component {
       if (querystring != '?') {
         url = url + querystring
       }
-      fetch(url)
+      fetch(url, {
+        method: 'GET',
+        credentials: 'include'
+      })
         .then(res => res.json())
         .then((res) => {
           this.setState({ tags: res })

@@ -17,8 +17,17 @@ class Logout extends React.Component {
   }
 
   handleLogout(event) {
-    const { cookies } = this.props;
-    cookies.remove('token', { path: '/' });
+    fetch('http://127.0.0.1:9001/api-token-deauth/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    }).then((response) => {
+      return response.json();
+    }).then((data) => {
+    }).catch(err => console.error("Error:", err));
+    
   }
 
   render() {

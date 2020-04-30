@@ -23,20 +23,18 @@ class Login extends React.Component {
       "username": this.state.username,
       "password": this.state.password,
     }
-    fetch('http://localhost:9001/api-token-auth/', {
+    fetch('http://127.0.0.1:9001/api-token-auth/', {
       method: 'POST',
       body: JSON.stringify(payload),
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      credentials: 'include'
     }).then((response) => {
-      return response.json();
-    }).then((data) => {
-      if('token' in data) {
-        // Then authentication was successful
-        const { cookies } = this.props;
-        cookies.set('token', data.token, { path: '/' });
+      if (response.status === 200) {
+        // Successful authentication
       }
+    }).then((data) => {
     }).catch(err => console.error("Error:", err));
   }
 
