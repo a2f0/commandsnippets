@@ -1398,3 +1398,13 @@
     body: heroku git:remote -a <app id> && git push --force heroku <source branch>:master
     date_created: "2019-04-29T18:21:00+00:00"
     date_updated: "2019-04-29T18:21:00+00:00"
+    - model: text_entries.TextEntry
+
+- model: text_entries.TextEntry
+  pk: 130
+  fields:
+    user_id: 1
+    subject: uninstall a dependency from package.json
+    body: npm uninstall react-cookie --save
+    date_created: "2019-04-29T18:21:00+00:00"
+    date_updated: "2019-04-29T18:21:00+00:00"
