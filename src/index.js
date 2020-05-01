@@ -254,8 +254,8 @@ function AppRouter() {
         <div className="flex-side-column"></div>
         <Switch>
           <Route exact path="/login" render={(props) => <Login {...props} user={observableUser} />} />
-          <Route path="/:user" component={Index} />
           <Route path="/:user/:tag" component={Index} />
+          <Route path="/:user" component={Index} />
           <Route exact path="/" component={Index} />
         </Switch>
         <div className="flex-side-column"></div>
