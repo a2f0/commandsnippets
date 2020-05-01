@@ -1419,3 +1419,17 @@
       psql --version
     date_created: "2019-05-01T18:21:00+00:00"
     date_updated: "2019-05-01T18:21:00+00:00"
+    
+- model: text_entries.TextEntry
+  pk: 132
+  fields:
+    user_id: 1
+    subject: show where a postgres session is originating from
+    body: |
+      select *
+      from pg_stat_activity
+      where datname = 'postgres';
+    date_created: "2019-05-01T18:21:00+00:00"
+    date_updated: "2019-05-01T18:21:00+00:00"
+
+
