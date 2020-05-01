@@ -1,22 +1,16 @@
 import React from "react";
-import { instanceOf } from 'prop-types';
-import { withCookies, Cookies } from 'react-cookie';
+import {observer} from 'mobx-react';
+
+@observer
 class Logout extends React.Component { 
-  
-  static propTypes = {
-    cookies: instanceOf(Cookies).isRequired
-  };
 
   constructor(props) {
     super(props);
-    const { cookies } = props;
-    this.state = {
-      token: cookies.get('token') || ''
-    };
     this.handleLogout = this.handleLogout.bind(this);
   }
 
   handleLogout(event) {
+    const user = this.props.user;
     fetch('http://127.0.0.1:9001/api-token-deauth/', {
       method: 'POST',
       headers: {
@@ -26,6 +20,7 @@ class Logout extends React.Component {
     }).then((response) => {
       return response.json();
     }).then((data) => {
+      user.userName = '';
     }).catch(err => console.error("Error:", err));
     
   }
@@ -39,4 +34,4 @@ class Logout extends React.Component {
   }
 }
 
-export default withCookies(Logout);
+export default Logout;

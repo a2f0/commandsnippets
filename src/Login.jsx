@@ -1,24 +1,22 @@
 import React from "react";
-import { instanceOf } from 'prop-types';
-import { withCookies, Cookies } from 'react-cookie';
+import { observer } from 'mobx-react';
+import { Redirect } from 'react-router-dom';
+
+@observer
 class Login extends React.Component { 
-  static propTypes = {
-    cookies: instanceOf(Cookies).isRequired
-  };
 
   constructor(props) {
     super(props);
-    const { cookies } = props;
     this.state = {
       username: '',
       password: '',
-      token: cookies.get('token') || ''
     };
     this.handleUsernameChange = this.handleUsernameChange.bind(this);
     this.handlePasswordChange = this.handlePasswordChange.bind(this);
   }
 
-  authenticate() {
+  handleAuthenticate() {
+    const user = this.props.user;
     const payload = {
       "username": this.state.username,
       "password": this.state.password,
@@ -33,6 +31,7 @@ class Login extends React.Component {
     }).then((response) => {
       if (response.status === 200) {
         // Successful authentication
+        user.userName=this.state.username;
       }
     }).then((data) => {
     }).catch(err => console.error("Error:", err));
@@ -47,6 +46,13 @@ class Login extends React.Component {
   }
 
   render() {
+    const user = this.props.user;
+    if(user.userName!='') {
+      return (
+        // https://blog.bitsrc.io/must-know-concepts-of-react-router-fb9c8cc3c12
+        <Redirect to="/"/>
+      )
+    }
     return (
       <div className="flex-center-column">
         <div className="flex-align-center">
@@ -64,7 +70,7 @@ class Login extends React.Component {
               <input type="password" id="password" name="password"  value={this.state.password} onChange={this.handlePasswordChange}></input>
             </div>
             <div>
-              <div className="create-entry-button" onClick={() => this.authenticate()}>
+              <div className="create-entry-button" onClick={() => this.handleAuthenticate()}>
                 Login
               </div>
             </div>
@@ -75,4 +81,4 @@ class Login extends React.Component {
   }
 }
 
-export default withCookies(Login);
+export default Login;

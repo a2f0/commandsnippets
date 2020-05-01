@@ -1,10 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
-import { CookiesProvider } from 'react-cookie';
 import memoize from "memoize-one";
+import observableUser from './user.js';
 import Login from './Login.jsx';
-import Logout from './Logout.jsx';
+import NavigationTop from './NavigationTop.jsx';
+
 import './style/border-px.less';
 import './style/entries.less';
 import './style/tearleads.less';
@@ -220,35 +221,6 @@ class Index extends React.Component {
   }
 }
 
-
-function NavigationTop() {
-  return (
-    <div className="navbar navbar-top">
-      <div className="flex-main-container">
-        <div className="flex-side-column"></div>
-        <div className="flex-center-column">
-          <div className="flex">
-            <div className="flex-align-left">
-              <div className="menu-item inline-block">
-                <Link to="/">Tearleads</Link>
-              </div>
-            </div>
-            <div className="flex-align-right">
-              <div className="inline-block menu-item-small menu-item-spacing">
-                <Logout/>
-              </div>
-              <div className="inline-block menu-item-small menu-item-spacing">
-                <Link to="/login">Login</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex-side-column"></div>
-      </div>
-    </div>
-  )
-}
-
 function NavigationBottom() {
   return (
     <div className="navbar navbar-bottom">
@@ -276,21 +248,20 @@ function NavigationBottom() {
 
 function AppRouter() {
   return (
-    <CookiesProvider>
-      <Router>
-        <NavigationTop />
-        <div className="flex-main-container flex-main-container-margin">
-          <div className="flex-side-column"></div>
-          <Switch>
-            <Route path="/:user/:tag" component={Index} />
-            <Route exact path="/" component={Index} />
-            <Route exact path="/login" component={Login} />
-          </Switch>
-          <div className="flex-side-column"></div>
-        </div>
-        <NavigationBottom />
-      </Router>
-    </CookiesProvider>
+    <Router>
+      <NavigationTop />
+      <div className="flex-main-container flex-main-container-margin">
+        <div className="flex-side-column"></div>
+        <Switch>
+          <Route exact path="/login" render={(props) => <Login {...props} user={observableUser} />} />
+          <Route path="/:user" component={Index} />
+          <Route path="/:user/:tag" component={Index} />
+          <Route exact path="/" component={Index} />
+        </Switch>
+        <div className="flex-side-column"></div>
+      </div>
+      <NavigationBottom />
+    </Router>
   );
 }
 ReactDOM.render(<AppRouter />, document.getElementById("©"));
