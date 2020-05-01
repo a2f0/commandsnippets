@@ -1408,3 +1408,14 @@
     body: npm uninstall react-cookie --save
     date_created: "2019-04-29T18:21:00+00:00"
     date_updated: "2019-04-29T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 131
+  fields:
+    user_id: 1
+    subject: obtain access to the psql interpreter of an arbitrary version
+    body: |
+      docker run -it postgres:9.5 /bin/bash
+      psql --version
+    date_created: "2019-05-01T18:21:00+00:00"
+    date_updated: "2019-05-01T18:21:00+00:00"
