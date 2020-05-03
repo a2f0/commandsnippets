@@ -1,6 +1,8 @@
 #!/bin/sh
 echo "shutting down compose"
 docker-compose down
+echo "migrating db"
+docker-compose run django python manage.py migrate
 echo "loading users"
 docker-compose run django python manage.py loaddata users users.yaml
 echo "loading text entries"
