@@ -1431,4 +1431,11 @@
     date_created: "2019-05-01T18:21:00+00:00"
     date_updated: "2019-05-01T18:21:00+00:00"
 
-
+- model: text_entries.TextEntry
+  pk: 133
+  fields:
+    user_id: 1
+    subject: get the current directory of a bash script
+    body: DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    date_created: "2019-05-01T18:21:00+00:00"
+    date_updated: "2019-05-01T18:21:00+00:00"
