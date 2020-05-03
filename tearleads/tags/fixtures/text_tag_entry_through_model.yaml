@@ -295,3 +295,12 @@
     order: 33
     date_created: "2020-05-01T18:20:00+00:00"
     date_updated: "2020-05-01T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 34
+  fields:
+    tag: 17
+    text_entry: 134
+    order: 34
+    date_created: "2020-05-02T18:20:00+00:00"
+    date_updated: "2020-05-02T18:20:00+00:00"

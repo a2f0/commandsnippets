@@ -1439,3 +1439,13 @@
     body: DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     date_created: "2019-05-01T18:21:00+00:00"
     date_updated: "2019-05-01T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 134
+  fields:
+    user_id: 1
+    subject: timestamp string with second precision
+    body: FILENAME=backup_$(date +'%Y_%m_%dT%H_%M_%S').sql
+    date_created: "2020-05-01T18:21:00+00:00"
+    date_updated: "2020-05-01T18:21:00+00:00"
+   
