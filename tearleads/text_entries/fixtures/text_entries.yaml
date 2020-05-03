@@ -1466,3 +1466,12 @@
     body: ls -t ~/backups/* | head -1
     date_created: "2020-05-01T18:21:00+00:00"
     date_updated: "2020-05-01T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 137
+  fields:
+    user_id: 1
+    subject: set the remote url
+    body: git remote set-url origin git@github.com:deepeeess/PiShrink.git
+    date_created: "2020-05-02T18:21:00+00:00"
+    date_updated: "2020-05-02T18:21:00+00:00"
