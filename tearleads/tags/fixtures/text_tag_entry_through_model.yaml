@@ -331,3 +331,21 @@
     order: 37
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 38
+  fields:
+    tag: 9
+    text_entry: 138
+    order: 38
+    date_created: "2020-05-03T18:20:00+00:00"
+    date_updated: "2020-05-03T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 39
+  fields:
+    tag: 17
+    text_entry: 139
+    order: 39
+    date_created: "2020-05-03T18:20:00+00:00"
+    date_updated: "2020-05-03T18:20:00+00:00"
