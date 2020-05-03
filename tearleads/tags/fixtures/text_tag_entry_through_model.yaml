@@ -304,3 +304,21 @@
     order: 34
     date_created: "2020-05-02T18:20:00+00:00"
     date_updated: "2020-05-02T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 35
+  fields:
+    tag: 17
+    text_entry: 135
+    order: 35
+    date_created: "2020-05-02T18:20:00+00:00"
+    date_updated: "2020-05-02T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 36
+  fields:
+    tag: 17
+    text_entry: 136
+    order: 36
+    date_created: "2020-05-02T18:20:00+00:00"
+    date_updated: "2020-05-02T18:20:00+00:00"

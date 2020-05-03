@@ -1448,4 +1448,21 @@
     body: FILENAME=backup_$(date +'%Y_%m_%dT%H_%M_%S').sql
     date_created: "2020-05-01T18:21:00+00:00"
     date_updated: "2020-05-01T18:21:00+00:00"
-   
+  
+- model: text_entries.TextEntry
+  pk: 135
+  fields:
+    user_id: 1
+    subject: remove the last component of a path
+    body: dirname /usr/local/bin
+    date_created: "2020-05-01T18:21:00+00:00"
+    date_updated: "2020-05-01T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 136
+  fields:
+    user_id: 1
+    subject: get the most recent file in a directory
+    body: ls -t ~/backups/* | head -1
+    date_created: "2020-05-01T18:21:00+00:00"
+    date_updated: "2020-05-01T18:21:00+00:00"
