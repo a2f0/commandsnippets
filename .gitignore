@@ -19,3 +19,4 @@ override.tf.json
 /container-registry/main.tfvars
 /container-registry/terraform.backend
 /staging/main.tfvars
+/staging/terraform.backend
