@@ -16,3 +16,4 @@ override.tf.json
 /.blackbox/pubring.kbx~
 /.blackbox/secring.gpg
 /dns/main.tfvars
+/container-registry/main.tfvars
