@@ -20,3 +20,4 @@ override.tf.json
 /container-registry/terraform.backend
 /staging/main.tfvars
 /staging/terraform.backend
+/dns/terraform.backend
