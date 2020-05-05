@@ -47,3 +47,11 @@ resource "aws_route53_record" "tearleads-github" {
               "185.199.111.153"
             ]
 }
+
+resource "aws_route53_record" "tearleads-caa" {
+  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
+  name    = "tearleads.com"
+  type    = "CAA"
+  ttl     = "30"
+  records = ["0 issue \"tearleads.com\""]
+}
