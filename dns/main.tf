@@ -53,5 +53,5 @@ resource "aws_route53_record" "tearleads-caa" {
   name    = "tearleads.com"
   type    = "CAA"
   ttl     = "30"
-  records = ["0 issue \"tearleads.com\""]
+  records = ["0 issue \"letsencrypt.org\""]
 }
