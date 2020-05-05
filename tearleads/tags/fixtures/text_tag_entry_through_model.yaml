@@ -367,3 +367,12 @@
     order: 41
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 42
+  fields:
+    tag: 19
+    text_entry: 142
+    order: 42
+    date_created: "2020-05-03T18:20:00+00:00"
+    date_updated: "2020-05-03T18:20:00+00:00"
