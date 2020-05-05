@@ -1493,3 +1493,52 @@
     body: basename /fully/qualified/path.sql
     date_created: "2020-05-02T18:21:00+00:00"
     date_updated: "2020-05-02T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 140
+  fields:
+    user_id: 1
+    subject: nginx-proxy hello world (docker-compose.yml)
+    body: |
+      version: '2'
+
+      services:
+        nginx-proxy:
+          image: jwilder/nginx-proxy
+          ports:
+            - "80:80"
+            - "443:443"
+          volumes:
+            - /var/run/docker.sock:/tmp/docker.sock:ro
+            - /etc/nginx/certs
+            - /etc/nginx/vhost.d
+            - /usr/share/nginx/html
+      
+        nginx-proxy-letsencrypt:
+          image: jrcs/letsencrypt-nginx-proxy-companion
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+          volumes_from:
+            - nginx-proxy
+          environment:
+            - DEFAULT_EMAIL=${LETSENCRYPT_EMAIL}
+      
+        whoami:
+          image: jwilder/whoami
+          environment:
+            - VIRTUAL_HOST=${API_FQDN}
+            - LETSENCRYPT_HOST=${API_FQDN}
+    date_created: "2020-05-05T18:21:00+00:00"
+    date_updated: "2020-05-05T18:21:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 141
+  fields:
+    user_id: 1
+    subject: nginx-proxy hello world (.env)
+    body: |
+      API_FQDN=cedar.tearleads.com
+      LETSENCRYPT_EMAIL=admin@example.com
+      LETSENCRYPT_TEST=True
+    date_created: "2020-05-05T18:22:00+00:00"
+    date_updated: "2020-05-05T18:22:00+00:00"

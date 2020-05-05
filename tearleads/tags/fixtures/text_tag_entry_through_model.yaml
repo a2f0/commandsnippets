@@ -349,3 +349,21 @@
     order: 39
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 40
+  fields:
+    tag: 18
+    text_entry: 140
+    order: 40
+    date_created: "2020-05-03T18:20:00+00:00"
+    date_updated: "2020-05-03T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 41
+  fields:
+    tag: 18
+    text_entry: 141
+    order: 41
+    date_created: "2020-05-03T18:20:00+00:00"
+    date_updated: "2020-05-03T18:20:00+00:00"

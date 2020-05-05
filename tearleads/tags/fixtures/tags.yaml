@@ -133,3 +133,11 @@
     user_id: 1
     date_created: "2020-04-27T18:20:00+00:00"
     date_updated: "2020-04-27T18:20:00+00:00"
+
+- model: tags.Tag
+  pk: 18
+  fields:
+    name: nginx-proxy
+    user_id: 1
+    date_created: "2020-04-27T18:20:00+00:00"
+    date_updated: "2020-04-27T18:20:00+00:00"
