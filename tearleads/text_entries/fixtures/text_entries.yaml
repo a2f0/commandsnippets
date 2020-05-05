@@ -1545,8 +1545,8 @@
     user_id: 1
     subject: nginx-proxy hello world (.env)
     body: |
-      API_FQDN=api-staging.tearleads.com
-      WEB_FQDN=staging.tearleads.com
-      LETSENCRYPT_EMAIL=dansullivan@gmail.com
+      API_FQDN=api.example.com
+      WEB_FQDN=web.example.com
+      LETSENCRYPT_EMAIL=admin@example.com
     date_created: "2020-05-05T18:22:00+00:00"
     date_updated: "2020-05-05T18:22:00+00:00"
