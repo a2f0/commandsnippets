@@ -1523,11 +1523,19 @@
           environment:
             - DEFAULT_EMAIL=${LETSENCRYPT_EMAIL}
       
-        whoami:
+        whoami-1:
           image: jwilder/whoami
           environment:
             - VIRTUAL_HOST=${API_FQDN}
             - LETSENCRYPT_HOST=${API_FQDN}
+            - LETSENCRYPT_TEST=true
+      
+        whoami-2:
+          image: jwilder/whoami
+          environment:
+            - VIRTUAL_HOST=${WEB_FQDN}
+            - LETSENCRYPT_HOST=${WEB_FQDN}
+            - LETSENCRYPT_TEST=true
     date_created: "2020-05-05T18:21:00+00:00"
     date_updated: "2020-05-05T18:21:00+00:00"
 
@@ -1537,8 +1545,8 @@
     user_id: 1
     subject: nginx-proxy hello world (.env)
     body: |
-      API_FQDN=cedar.tearleads.com
-      LETSENCRYPT_EMAIL=admin@example.com
-      LETSENCRYPT_TEST=True
+      API_FQDN=api-staging.tearleads.com
+      WEB_FQDN=staging.tearleads.com
+      LETSENCRYPT_EMAIL=dansullivan@gmail.com
     date_created: "2020-05-05T18:22:00+00:00"
     date_updated: "2020-05-05T18:22:00+00:00"
