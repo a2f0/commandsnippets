@@ -13,3 +13,11 @@ variable "environment" {
 variable "remote_state_bucket" {
     type = string
 }
+
+variable "staging_api" {
+    type = string
+}
+
+variable "staging_web" {
+    type = string
+}

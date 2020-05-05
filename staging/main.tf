@@ -114,3 +114,19 @@ resource "aws_route53_record" "route53-record" {
   ttl     = "30"
   records = [ aws_instance.ec2.public_ip ]
 }
+
+resource "aws_route53_record" "api" {
+  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
+  name    = "${var.staging_api}.${data.aws_route53_zone.tearleads-zone.name}"
+  type    = "A"
+  ttl     = "30"
+  records = [ aws_instance.ec2.public_ip ]
+}
+
+resource "aws_route53_record" "web" {
+  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
+  name    = "${var.staging_web}.${data.aws_route53_zone.tearleads-zone.name}"
+  type    = "A"
+  ttl     = "30"
+  records = [ aws_instance.ec2.public_ip ]
+}
