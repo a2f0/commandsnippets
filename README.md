@@ -3,8 +3,7 @@
 Bootstrap
 
     docker-compose build
-    docker-compose run django python manage.py migrate
-    ./loaddata.sh
+    docker-compose run django /app/loaddata.sh
 
 Run tests
 

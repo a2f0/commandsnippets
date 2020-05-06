@@ -1559,3 +1559,12 @@
     body: ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
     date_created: "2020-05-05T18:22:00+00:00"
     date_updated: "2020-05-05T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 143
+  fields:
+    user_id: 1
+    subject: get CAA record
+    body: dig tearleads.com CAA
+    date_created: "2020-05-05T18:22:00+00:00"
+    date_updated: "2020-05-05T18:22:00+00:00"
