@@ -385,3 +385,21 @@
     order: 43
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 44
+  fields:
+    tag: 21
+    text_entry: 144
+    order: 44
+    date_created: "2020-05-03T18:20:00+00:00"
+    date_updated: "2020-05-03T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 45
+  fields:
+    tag: 19
+    text_entry: 145
+    order: 45
+    date_created: "2020-05-03T18:20:00+00:00"
+    date_updated: "2020-05-03T18:20:00+00:00"

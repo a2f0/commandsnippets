@@ -1568,3 +1568,21 @@
     body: dig tearleads.com CAA
     date_created: "2020-05-05T18:22:00+00:00"
     date_updated: "2020-05-05T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 144
+  fields:
+    user_id: 1
+    subject: sort in place
+    body: sort -o .env-example .env-example
+    date_created: "2020-05-06T18:22:00+00:00"
+    date_updated: "2020-05-06T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 145
+  fields:
+    user_id: 1
+    subject: generate ssh key at specific path 
+    body: ssh-keygen -f ~/.ssh/tearleads-frontend_rsa
+    date_created: "2020-05-06T18:22:00+00:00"
+    date_updated: "2020-05-06T18:22:00+00:00"
