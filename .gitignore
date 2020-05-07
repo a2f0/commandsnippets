@@ -122,3 +122,9 @@ dmypy.json
 # End of https://www.gitignore.io/api/django
 
 .env
+
+# Blackbox
+
+/.blackbox/pubring.gpg~
+/.blackbox/pubring.kbx~
+/.blackbox/secring.gpg
