@@ -5,6 +5,7 @@ import memoize from "memoize-one";
 import observableUser from './user.js';
 import Login from './Login.jsx';
 import NavigationTop from './NavigationTop.jsx';
+import constructApiUrl from './api.mjs';
 
 import './style/border-px.less';
 import './style/entries.less';
@@ -72,10 +73,11 @@ class Index extends React.Component {
   // Re-run the filter whenever the user or tag changes.
   memoizeEntries = memoize(
     (querystring) => {
+      const base_url = constructApiUrl();
       if (querystring == undefined) {
-        var url = 'http://127.0.0.1:9001/api/v1/entries'
+        var url = base_url + '/api/v1/entries';
       } else {
-        var url = 'http://127.0.0.1:9001/api/v1/entries?' + querystring
+        var url = base_url + '/api/v1/entries?' + querystring;
       }
       fetch(url, {
         method: 'GET',
@@ -113,7 +115,8 @@ class Index extends React.Component {
 
   getTags = memoize(
     (sort) => {
-      var url = 'http://localhost:9001/api/v1/tags'
+      const base_url = constructApiUrl();
+      var url = base_url + '/api/v1/tags';
       var querystring = "?"
       if (sort != undefined) {
         querystring = querystring + 'sort=' + sort

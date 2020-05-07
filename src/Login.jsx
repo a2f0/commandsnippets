@@ -1,6 +1,7 @@
 import React from "react";
 import { observer } from 'mobx-react';
 import { Redirect } from 'react-router-dom';
+import constructApiUrl from './api.mjs';
 
 @observer
 class Login extends React.Component { 
@@ -21,7 +22,9 @@ class Login extends React.Component {
       "username": this.state.username,
       "password": this.state.password,
     }
-    fetch('http://127.0.0.1:9001/api-token-auth/', {
+    const base_url = constructApiUrl();
+    const url = base_url + '/api-token-auth/';
+    fetch(url, {
       method: 'POST',
       body: JSON.stringify(payload),
       headers: {

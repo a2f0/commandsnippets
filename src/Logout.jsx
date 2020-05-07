@@ -1,5 +1,6 @@
 import React from "react";
 import {observer} from 'mobx-react';
+import constructApiUrl from './api.mjs';
 
 @observer
 class Logout extends React.Component { 
@@ -11,7 +12,9 @@ class Logout extends React.Component {
 
   handleLogout(event) {
     const user = this.props.user;
-    fetch('http://127.0.0.1:9001/api-token-deauth/', {
+    const base_url = constructApiUrl();
+    var url = base_url + '/api-token-deauth/';
+    fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
