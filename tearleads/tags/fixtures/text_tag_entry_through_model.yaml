@@ -403,3 +403,12 @@
     order: 45
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 46
+  fields:
+    tag: 22
+    text_entry: 146
+    order: 46
+    date_created: "2020-05-03T18:20:00+00:00"
+    date_updated: "2020-05-03T18:20:00+00:00"

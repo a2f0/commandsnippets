@@ -1586,3 +1586,21 @@
     body: ssh-keygen -f ~/.ssh/tearleads-frontend_rsa
     date_created: "2020-05-06T18:22:00+00:00"
     date_updated: "2020-05-06T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 146
+  fields:
+    user_id: 1
+    subject: deterministic github deploy key configuration
+    body: |
+      Host github-frontend.com
+      HostName github.com
+      User git
+      PreferredAuthentications publickey
+      IdentityFile ~/.ssh/tearleads-frontend_rsa
+      Port 22
+      TCPKeepAlive yes
+      IdentitiesOnly yes
+    date_created: "2020-05-07T18:22:00+00:00"
+    date_updated: "2020-05-07T18:22:00+00:00"
+
