@@ -16,7 +16,7 @@ class CustomObtainAuthToken(ObtainAuthToken):
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         response = Response({})
-        response.set_cookie('Authorization', token.key, httponly=True, domain='127.0.0.1')
+        response.set_cookie('Authorization', token.key, httponly=True)
         return response
 
 class CustomInvalidateAuthToken(APIView):
@@ -25,5 +25,5 @@ class CustomInvalidateAuthToken(APIView):
         ca = utility.CustomAuthentication()
         ca.deauthenticate(request)
         response = Response({})
-        response.delete_cookie('Authorization', domain='127.0.0.1')
+        response.delete_cookie('Authorization')
         return response
