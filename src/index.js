@@ -6,6 +6,7 @@ import observableUser from './user.js';
 import Login from './Login.jsx';
 import NavigationTop from './NavigationTop.jsx';
 import constructApiUrl from './api.mjs';
+import NewEntry from './NewEntry.jsx';
 
 import './style/border-px.less';
 import './style/entries.less';
@@ -139,13 +140,8 @@ class Index extends React.Component {
     }
   );
 
-  newEntry( ) {
+  showNewEntry = () => {
     this.setState({ showNewEntry: !this.state.showNewEntry });
-    console.log(this.state.showNewEntry);
-  }
-
-  saveEntry( ) {
-    console.log("saveEntry");
   }
 
   render() {
@@ -186,26 +182,10 @@ class Index extends React.Component {
               <div className="inline-block" onClick={() => this.getSortedEntries('body')}>[a-z body]</div>
               <div className="inline-block" onClick={() => this.getSortedEntries('date_created')}>[created]</div>
               <div className="inline-block" onClick={() => this.getSortedEntries('date_updated')}>[updated]</div>
-              <div className="inline-block" onClick={() => this.newEntry()}>[new]</div>
+              <div className="inline-block" onClick={() => this.showNewEntry()}>[new]</div>
             </div>
-
             {showNewEntry && (
-              <div>
-                <div>
-                  <input type="text" id="subject" name="subject"></input>
-                </div>
-                <div>
-                  <input type="text" id="body" name="body"></input>
-                </div>
-                <div>
-                  <div className="create-entry-button" onClick={() => this.saveEntry()}>
-                  Save
-                  </div>
-                  <div className="create-entry-button" onClick={() => this.newEntry()}>
-                  Cancel
-                  </div>
-                </div>
-              </div>
+              <NewEntry parentShowNewEntry={this.showNewEntry}/>
             )}
             {this.state.entries.data.map(entry => (
               <div key={entry.id}>
