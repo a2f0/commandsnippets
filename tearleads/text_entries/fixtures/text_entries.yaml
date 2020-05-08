@@ -1593,6 +1593,8 @@
     user_id: 1
     subject: deterministic github deploy key configuration
     body: |
+      to ~/.ssh/config:
+
       Host github-frontend.com
       HostName github.com
       User git
@@ -1601,8 +1603,23 @@
       Port 22
       TCPKeepAlive yes
       IdentitiesOnly yes
+
+      Host github-backend.com
+      HostName github.com
+      User git
+      PreferredAuthentications publickey
+      IdentityFile ~/.ssh/tearleads-backend_rsa
+      Port 22
+      TCPKeepAlive yes
+      IdentitiesOnly yes
+
+      Then:
+
+      chmod -R 600 ~/.ssh/*
+      git clone git@github-backend.com:tearleads/tearleads-backend.git
+      git clone git@github-frontend.com:tearleads/tearleads-frontend.git
     date_created: "2020-05-07T18:22:00+00:00"
-    date_updated: "2020-05-07T18:22:00+00:00"
+    date_updated: "2020-05-08T18:22:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 147
