@@ -3,6 +3,11 @@ version: '2'
 volumes:
   postgres_data_dev: {}
   postgres_backup_dev: {}
+  conf:
+  vhost:
+  html:
+  dhparam:
+  certs:
 
 services:
   nginx-proxy:
@@ -11,21 +16,24 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - conf:/etc/nginx/conf.d
+      - certs:/etc/nginx/certs:ro
+      - dhparam:/etc/nginx/dhparam
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - /etc/nginx/certs
-      - /etc/nginx/vhost.d
-      - /usr/share/nginx/html
 
   nginx-proxy-letsencrypt:
     image: jrcs/letsencrypt-nginx-proxy-companion
     volumes:
+      - certs:/etc/nginx/certs:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
     volumes_from:
       - nginx-proxy
     environment:
       - DEFAULT_EMAIL=${LETSENCRYPT_EMAIL}
 
-  django:
+  backend:
     build:
       context: .
       dockerfile: ./compose/django/Dockerfile-dev
@@ -41,7 +49,7 @@ services:
     environment:
       - VIRTUAL_HOST=${API_FQDN}
       - LETSENCRYPT_HOST=${API_FQDN}
-      - LETSENCRYPT_TEST=false
+      - LETSENCRYPT_TEST=true
 
   frontend:
     image: tearleads-frontend
@@ -49,7 +57,7 @@ services:
     environment:
       - VIRTUAL_HOST=${WEB_FQDN}
       - LETSENCRYPT_HOST=${WEB_FQDN}
-      - LETSENCRYPT_TEST=false
+      - LETSENCRYPT_TEST=true
 
   postgres:
     build: ./compose/postgres
