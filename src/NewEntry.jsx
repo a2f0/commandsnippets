@@ -1,5 +1,5 @@
 import React from "react";
-
+import constructApiUrl from './api.mjs';
 class NewEntry extends React.Component { 
 
   constructor(props) {
@@ -13,7 +13,33 @@ class NewEntry extends React.Component {
   }
 
   saveEntry( ) {
-    console.log("saveEntry");
+    var payload = {
+      'data': {
+        'type': 'TextEntry',
+        'attributes': {
+          'subject': this.state.subject,
+          'body': this.state.body
+        }
+      }
+    }
+    const base_url = constructApiUrl();
+    var url = base_url + '/api/v1/entries';
+    fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/vnd.api+json',
+      }
+    })
+      .then(res => res.json())
+      .then((res) => {
+        console.log(res)
+        this.setState({subject: ''});
+        this.setState({body: ''});
+        this.showNewEntry();
+      })
+      .catch(console.log);
   }
 
   showNewEntry( ) {
