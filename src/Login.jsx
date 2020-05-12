@@ -60,23 +60,25 @@ class Login extends React.Component {
       <div className="flex-center-column">
         <div className="flex-align-center">
           <div className="login-box">
-            <div>
-              Username
-            </div>
-            <div>
-              <input type="text" id="username" name="username" value={this.state.username} onChange={this.handleUsernameChange}></input>
-            </div>
-            <div>
-              Password
-            </div>
-            <div>
-              <input type="password" id="password" name="password"  value={this.state.password} onChange={this.handlePasswordChange}></input>
-            </div>
-            <div>
-              <div className="create-entry-button" onClick={() => this.handleAuthenticate()}>
-                Login
+            <form>
+              <div>
+                Username
               </div>
-            </div>
+              <div>
+                <input type="text" id="username" name="username" value={this.state.username} onChange={this.handleUsernameChange} autoComplete="username"></input>
+              </div>
+              <div>
+                Password
+              </div>
+              <div>
+                <input type="password" id="password" name="password"  value={this.state.password} onChange={this.handlePasswordChange} autoComplete="current-password"></input>
+              </div>
+              <div>
+                <div className="create-entry-button" onClick={() => this.handleAuthenticate()}>
+                  Login
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
