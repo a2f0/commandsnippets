@@ -182,7 +182,10 @@ class Index extends React.Component {
               <div className="inline-block" onClick={() => this.getSortedEntries('body')}>[a-z body]</div>
               <div className="inline-block" onClick={() => this.getSortedEntries('date_created')}>[created]</div>
               <div className="inline-block" onClick={() => this.getSortedEntries('date_updated')}>[updated]</div>
-              <div className="inline-block" onClick={() => this.showNewEntry()}>[new]</div>
+              { observableUser.userName != '' && (
+                <div className="inline-block" onClick={() => this.showNewEntry()}>[new]</div>
+              )
+              }
             </div>
             {showNewEntry && (
               <NewEntry parentShowNewEntry={this.showNewEntry}/>
