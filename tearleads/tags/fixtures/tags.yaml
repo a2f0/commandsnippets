@@ -181,3 +181,11 @@
     user_id: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
+
+- model: tags.Tag
+  pk: 24
+  fields:
+    name: ubuntu
+    user_id: 1
+    date_created: "2020-05-08T18:20:00+00:00"
+    date_updated: "2020-05-08T18:20:00+00:00"

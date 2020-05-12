@@ -16,5 +16,8 @@ class BaseTestCase(APITestCase):
         C['Authorization'] = token.key
         cls.user1_api_client.cookies = C
 
+        cls.unauthenticated_user = UserFactory()
+        cls.unauthenticated_user_api_client = APIClient()
+
     def setUp(self):
         pass

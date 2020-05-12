@@ -1629,3 +1629,12 @@
     body: apt list --installed
     date_created: "2020-05-07T18:22:00+00:00"
     date_updated: "2020-05-07T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 148
+  fields:
+    user_id: 1
+    subject: ubuntu ec2 ami images
+    body: https://cloud-images.ubuntu.com/locator/ec2/
+    date_created: "2020-05-07T18:22:00+00:00"
+    date_updated: "2020-05-07T18:22:00+00:00"

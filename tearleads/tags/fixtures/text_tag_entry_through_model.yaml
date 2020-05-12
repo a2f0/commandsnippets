@@ -414,10 +414,19 @@
     date_updated: "2020-05-03T18:20:00+00:00"
 
 - model: tags.TagTextEntryThroughModel
-  pk: 147
+  pk: 47
   fields:
     tag: 23
     text_entry: 147
     order: 47
+    date_created: "2020-05-07T18:20:00+00:00"
+    date_updated: "2020-05-07T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 48
+  fields:
+    tag: 24
+    text_entry: 148
+    order: 48
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
