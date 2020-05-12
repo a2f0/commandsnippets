@@ -575,8 +575,8 @@
     user_id: 1
     subject:  check microk8s status
     body: microk8s.status
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 61
@@ -584,8 +584,8 @@
     user_id: 1
     subject:  get microk8s nodes
     body: microk8s.kubectl get nodes
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 62
@@ -593,8 +593,8 @@
     user_id: 1
     subject:  login to google cloud
     body: gcloud auth login
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 63
@@ -602,8 +602,8 @@
     user_id: 1
     subject:  list gcloud projects
     body: gcloud projects list
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 64
@@ -611,8 +611,8 @@
     user_id: 1
     subject: create a gcloud project
     body: gcloud projects create tearleads
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
     
 - model: text_entries.TextEntry
   pk: 65
@@ -620,8 +620,8 @@
     user_id: 1
     subject: set active gcloud project
     body: gcloud config set project tearleads
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 66
@@ -629,8 +629,8 @@
     user_id: 1
     subject: get active gcloud project
     body: gcloud config get-value project
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 67
@@ -640,8 +640,8 @@
     body: |
       gcloud config set compute/zone us-central1
       gcloud config get-value compute/zone
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 68
@@ -649,8 +649,8 @@
     user_id: 1
     subject: list available services gcloud
     body: gcloud services list --available
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 69
@@ -660,8 +660,8 @@
     body: |
       gcloud services enable compute.googleapis.com
       gcloud services enable container.googleapis.com
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 70
@@ -669,8 +669,8 @@
     user_id: 1
     subject:  list gke clusters (get master IP)
     body: gcloud container clusters list 
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 71
@@ -681,8 +681,8 @@
       gcloud container clusters create tear1 --num-nodes=1 --zone us-central1
       gcloud container clusters create tear1 --num-nodes=1 --zone us-central1-a
       gcloud container clusters delete tear1 --zone us-central1-a
-    date_created: "2020-05-31T18:20:00+00:00"
-    date_updated: "2020-05-31T18:20:00+00:00"
+    date_created: "2019-05-31T18:20:00+00:00"
+    date_updated: "2019-05-31T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 72
