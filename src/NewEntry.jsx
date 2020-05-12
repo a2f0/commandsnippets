@@ -4,15 +4,28 @@ class NewEntry extends React.Component {
 
   constructor(props) {
     super(props);
+    this.state = {
+      subject: '',
+      body: '',
+    };
+    this.handleSubjectChange = this.handleSubjectChange.bind(this);
+    this.handleBodyChange = this.handleBodyChange.bind(this);
   }
 
   saveEntry( ) {
     console.log("saveEntry");
   }
 
-  newEntry( ) {
-    console.log("newEntry");
+  showNewEntry( ) {
     this.props.parentShowNewEntry();
+  }
+
+  handleSubjectChange(event) {
+    this.setState({subject: event.target.value});
+  }
+
+  handleBodyChange(event) {
+    this.setState({body: event.target.value});
   }
 
   render() {
@@ -20,16 +33,16 @@ class NewEntry extends React.Component {
     return (
       <div>
         <div>
-          <input type="text" id="subject" name="subject"></input>
+          <input type="text" id="subject" name="subject"  value={this.state.subject} onChange={this.handleSubjectChange}></input>
         </div>
         <div>
-          <input type="text" id="body" name="body"></input>
+          <input type="text" id="body" name="body" value={this.state.body} onChange={this.handleBodyChange}></input>
         </div>
         <div>
           <div className="create-entry-button" onClick={() => this.saveEntry()}>
-          Save2
+          Save
           </div>
-          <div className="create-entry-button" onClick={() => this.newEntry()}>
+          <div className="create-entry-button" onClick={() => this.showNewEntry()}>
           Cancel
           </div>
         </div>
