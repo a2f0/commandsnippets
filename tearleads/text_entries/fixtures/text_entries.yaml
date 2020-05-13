@@ -1638,3 +1638,26 @@
     body: https://cloud-images.ubuntu.com/locator/ec2/
     date_created: "2020-05-07T18:22:00+00:00"
     date_updated: "2020-05-07T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 149
+  fields:
+    user_id: 1
+    subject: aws cli v2
+    body: aws ecr get-login-password --region us-east-1
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 150
+  fields:
+    user_id: 1
+    subject: associate an instance profile name with a running ec2 instance InstanceProfileName
+    body: |
+      aws iam list-instance-profiles
+      aws ec2 associate-iam-instance-profile --instance-id i-061e6e42929a99e38 --iam-instance-profile Name=tf-tearleads-iam-instance-profile
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
+
+
+   
