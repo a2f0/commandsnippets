@@ -1,0 +1,5 @@
+- name: install docker
+  package:
+    name: docker.io
+    state: present
+    force_apt_get: True

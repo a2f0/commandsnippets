@@ -1,0 +1,5 @@
+- hosts: staging
+  become: yes
+  become_user: root
+  tasks:
+    - include: tasks/install-packages-ubuntu-20.yaml
