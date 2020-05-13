@@ -21,3 +21,4 @@ override.tf.json
 /staging/main.tfvars
 /staging/terraform.backend
 /dns/terraform.backend
+/ansible/inventory.yaml
