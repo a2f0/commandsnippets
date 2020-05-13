@@ -3,3 +3,4 @@
     name: docker.io
     state: present
     force_apt_get: True
+    update_cache: yes
