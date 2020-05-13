@@ -4,3 +4,19 @@
     state: present
     force_apt_get: True
     update_cache: yes
+
+- name: install unzip
+  package:
+    name: unzip
+    state: present
+    force_apt_get: True
+
+- name: install the aws v2.0 cli
+  shell: |
+    cd /tmp
+    rm -rf aws
+    curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip -q awscliv2.zip
+    ./aws/install -b /usr/local/bin
+  args: 
+    creates: /usr/local/bin/aws
