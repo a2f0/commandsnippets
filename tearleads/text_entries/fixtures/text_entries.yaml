@@ -1659,5 +1659,20 @@
     date_created: "2020-05-12T18:22:00+00:00"
     date_updated: "2020-05-12T18:22:00+00:00"
 
+- model: text_entries.TextEntry
+  pk: 151
+  fields:
+    user_id: 1
+    subject: list ecr repositories
+    body: aws ecr describe-repositories
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
 
-   
+- model: text_entries.TextEntry
+  pk: 152
+  fields:
+    user_id: 1
+    subject: get the .env of the current directory into the shell's environment
+    body: export $(xargs < .env)
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
