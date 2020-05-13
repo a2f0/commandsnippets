@@ -21,3 +21,11 @@ variable "staging_api" {
 variable "staging_web" {
     type = string
 }
+
+variable "deployment_user" {
+    type = string
+}
+
+variable "deployment_public_key" {
+    type = string
+}

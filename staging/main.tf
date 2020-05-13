@@ -100,6 +100,19 @@ resource "aws_instance" "ec2" {
               #!/bin/bash
               echo ${var.hostname} > /etc/hostname
               hostname ${var.hostname}
+              adduser --disabled-password --gecos "" ${var.deployment_user}
+              echo "${var.deployment_user} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/91-terraform-init
+              chmod 440 /etc/sudoers.d/91-terraform-init
+              mkdir /home/${var.deployment_user}/.ssh
+              chown ${var.deployment_user}:${var.deployment_user} /home/${var.deployment_user}/.ssh
+              chmod 700 /home/${var.deployment_user}/.ssh
+              touch /home/${var.deployment_user}/.ssh/authorized_keys
+              chmod 600 /home/${var.deployment_user}/.ssh/authorized_keys
+              chown ${var.deployment_user}:${var.deployment_user} /home/${var.deployment_user}/.ssh/authorized_keys
+              echo "${var.deployment_public_key}" > /home/${var.deployment_user}/.ssh/authorized_keys
+
+              rm -rf /etc/sudoers.d/90-cloud-init-users
+              deluser --remove-home ubuntu
               EOF
 }
 
