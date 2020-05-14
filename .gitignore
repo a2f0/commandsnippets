@@ -129,3 +129,4 @@ dmypy.json
 /.blackbox/pubring.kbx~
 /.blackbox/secring.gpg
 /.env-staging
+/.env-local-development
