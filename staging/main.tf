@@ -92,7 +92,7 @@ resource "aws_instance" "ec2" {
   subnet_id = aws_subnet.aws-subnet.id
   vpc_security_group_ids = [ aws_security_group.security-group.id ]
   key_name = "dps-blackbox"
-#   iam_instance_profile = data.terraform_remote_state.container-registry.iam-profile
+  iam_instance_profile = data.terraform_remote_state.container-registry.outputs.iam-instance-profile
   tags = {
     Name = "devopsrockstars-${var.environment}"
   }
