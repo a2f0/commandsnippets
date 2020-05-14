@@ -1676,3 +1676,38 @@
     body: export $(xargs < .env)
     date_created: "2020-05-12T18:22:00+00:00"
     date_updated: "2020-05-12T18:22:00+00:00"
+
+
+- model: text_entries.TextEntry
+  pk: 153
+  fields:
+    user_id: 1
+    subject: bring up the visual studio console (MacOS)
+    body: cmd + shift + p
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 154
+  fields:
+    user_id: 1
+    subject: install the experimental langage server in Visual Studio Code (Terraform v0.12)
+    body: | 
+      cmd + shift + p (bring up the console)
+      Terraform: Install/Update Language Server
+      cmd + shift + p (bring up the console)
+      terraform: Enable/Disable Language Server
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 155
+  fields:
+    user_id: 1
+    subject: view language server and extension output in Visual Studio Code (MacOS)
+    body: | 
+      cmd + j
+      go to the OUTPUT tab
+      select Language Server from the dropdown
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
