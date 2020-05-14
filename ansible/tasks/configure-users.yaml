@@ -1,0 +1,4 @@
+- name: Add the application service account to the docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker

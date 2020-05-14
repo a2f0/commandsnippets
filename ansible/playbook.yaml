@@ -3,6 +3,7 @@
   become_user: root
   tasks:
     - include: tasks/install-packages-ubuntu-20.yaml
+    - include: tasks/configure-users.yaml
     
 - hosts: staging
   tasks:
