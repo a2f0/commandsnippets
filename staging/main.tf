@@ -107,7 +107,7 @@ resource "aws_instance" "ec2" {
               chown ${var.deployment_user}:${var.deployment_user} /home/${var.deployment_user}/.ssh
               chmod 700 /home/${var.deployment_user}/.ssh
               touch /home/${var.deployment_user}/.ssh/authorized_keys
-              chmod 600 /home/${var.deployment_user}/.ssh/authorized_keys
+              chmod 400 /home/${var.deployment_user}/.ssh/authorized_keys
               chown ${var.deployment_user}:${var.deployment_user} /home/${var.deployment_user}/.ssh/authorized_keys
               echo "${var.deployment_public_key}" > /home/${var.deployment_user}/.ssh/authorized_keys
 

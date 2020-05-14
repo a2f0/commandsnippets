@@ -2,4 +2,5 @@
   become: yes
   become_user: root
   tasks:
+    - include: tasks/copy-deploy-keys.yaml
     - include: tasks/install-packages-ubuntu-20.yaml
