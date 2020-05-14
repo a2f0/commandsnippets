@@ -7,5 +7,6 @@
     
 - hosts: staging
   tasks:
-    - include: tasks/clone-repos.yaml
     - include: tasks/copy-deploy-keys.yaml
+    - include: tasks/clone-repos.yaml
+ 
