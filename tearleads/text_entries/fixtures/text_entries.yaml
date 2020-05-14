@@ -1711,3 +1711,23 @@
       select Language Server from the dropdown
     date_created: "2020-05-12T18:22:00+00:00"
     date_updated: "2020-05-12T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 156
+  fields:
+    user_id: 1
+    subject: quick switch windows
+    body:  cmd + `
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 157
+  fields:
+    user_id: 1
+    subject: show issued letsencrypt certificates for a domain
+    body:  https://crt.sh/?Identity=tearleads.com&iCAID=16418
+    date_created: "2020-05-12T18:22:00+00:00"
+    date_updated: "2020-05-12T18:22:00+00:00"
+
+    

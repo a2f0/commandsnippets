@@ -493,3 +493,21 @@
     order: 55
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 56
+  fields:
+    tag: 26
+    text_entry: 156
+    order: 56
+    date_created: "2020-05-07T18:20:00+00:00"
+    date_updated: "2020-05-07T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 57
+  fields:
+    tag: 29
+    text_entry: 157
+    order: 57
+    date_created: "2020-05-07T18:20:00+00:00"
+    date_updated: "2020-05-07T18:20:00+00:00"
