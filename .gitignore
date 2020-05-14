@@ -23,3 +23,4 @@ override.tf.json
 /dns/terraform.backend
 /ansible/inventory.yaml
 /ssh_keys/tearleads-backend-deploy-key
+/ssh_keys/tearleads-frontend-deploy-key
