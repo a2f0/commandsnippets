@@ -1,0 +1,23 @@
+- name: ssh configuration
+  copy:
+    src: ./configs/ssh
+    dest: "/home/{{ ansible_user }}/.ssh/config"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0400'
+
+- name: Clone backend repository
+  git: 
+    repo=github-backend.com:tearleads/tearleads-backend.git
+    dest="/home/{{ ansible_user }}/tearleads-backend"
+    accept_hostkey=yes
+    force=yes
+    recursive=no
+
+- name: Clone frontend repository
+  git: 
+    repo=github-frontend.com:tearleads/tearleads-frontend.git
+    dest="/home/{{ ansible_user }}/tearleads-frontend"
+    accept_hostkey=yes
+    force=yes
+    recursive=no
