@@ -15,7 +15,7 @@ services:
     #  - "${POSTGRES_DOCKER_PORT}:5432"
     # uncomment below for full statement logging to stdout
     # command: postgres -c log_statement=all
-  django:
+  backend:
     build:
       context: .
       dockerfile: ./compose/django/Dockerfile-dev

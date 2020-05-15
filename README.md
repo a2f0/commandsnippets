@@ -3,23 +3,23 @@
 Bootstrap
 
     docker-compose build
-    docker-compose run django /app/loaddata.sh
+    docker-compose run backend /app/loaddata.sh
 
 Run tests
 
-    docker-compose run django python manage.py test
+    docker-compose run backend python manage.py test
 
 Run black
 
-    docker-compose run django black /app
+    docker-compose run backend black /app
 
 Run isort
 
-    docker-compose run django isort --recursive --atomic .
+    docker-compose run backend isort --recursive --atomic .
 
 Change a password
 
-    docker-compose run django python manage.py changepassword dps
+    docker-compose run backend python manage.py changepassword dps
 
 Configure a pre-commit hook for running tests
 
@@ -31,7 +31,7 @@ Configure a pre-commit hook for running tests
 
         #!/bin/bash
         set -e
-        docker-compose run django python manage.py test --noinput
+        docker-compose run backend python manage.py test --noinput
         exit 0
 
 3. Make it executable
@@ -40,7 +40,7 @@ Configure a pre-commit hook for running tests
 
 Drop to shell
 
-    docker-compose run django python manage.py shell
+    docker-compose run backend python manage.py shell
 
 Build an immutable container without host mounts
 
