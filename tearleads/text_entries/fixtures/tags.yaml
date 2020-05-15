@@ -209,22 +209,6 @@
 - model: tags.Tag
   pk: 27
   fields:
-    name: visual-studio-code
-    user_id: 1
-    date_created: "2020-05-12T18:20:00+00:00"
-    date_updated: "2020-05-12T18:20:00+00:00"
-
-- model: tags.Tag
-  pk: 28
-  fields:
-    name: visual-studio-code
-    user_id: 1
-    date_created: "2020-05-12T18:20:00+00:00"
-    date_updated: "2020-05-12T18:20:00+00:00"
-
-- model: tags.Tag
-  pk: 29
-  fields:
     name: certbot
     user_id: 1
     date_created: "2020-05-14T18:20:00+00:00"
