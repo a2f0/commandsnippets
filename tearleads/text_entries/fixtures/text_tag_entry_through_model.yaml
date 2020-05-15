@@ -4,6 +4,7 @@
     tag: 2
     text_entry: 1
     order: 0
+    user: 1
     date_created: "2020-04-11T18:20:00+00:00"
     date_updated: "2020-04-11T18:20:00+00:00"
 
@@ -13,6 +14,7 @@
     tag: 6
     text_entry: 115
     order: 1
+    user: 1
     date_created: "2020-04-12T18:20:00+00:00"
     date_updated: "2020-04-12T18:20:00+00:00"
 
@@ -22,6 +24,7 @@
     tag: 7
     text_entry: 116
     order: 2
+    user: 1
     date_created: "2020-04-12T18:20:00+00:00"
     date_updated: "2020-04-12T18:20:00+00:00"
 
@@ -32,6 +35,7 @@
     tag: 8
     text_entry: 101
     order: 3
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -41,6 +45,7 @@
     tag: 8
     text_entry: 102
     order: 4
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
     
@@ -50,6 +55,7 @@
     tag: 8
     text_entry: 103
     order: 5
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -59,6 +65,7 @@
     tag: 8
     text_entry: 104
     order: 6
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 #
@@ -68,6 +75,7 @@
     tag: 9
     text_entry: 21
     order: 8
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -77,6 +85,7 @@
     tag: 9
     text_entry: 22
     order: 9
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -86,6 +95,7 @@
     tag: 9
     text_entry: 23
     order: 10
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -95,6 +105,7 @@
     tag: 9
     text_entry: 24
     order: 11
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -104,6 +115,7 @@
     tag: 9
     text_entry: 25
     order: 12
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -113,6 +125,7 @@
     tag: 9
     text_entry: 57
     order: 13
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -122,6 +135,7 @@
     tag: 9
     text_entry: 106
     order: 14
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -131,6 +145,7 @@
     tag: 9
     text_entry: 107
     order: 15
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -140,6 +155,7 @@
     tag: 9
     text_entry: 108
     order: 16
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -149,6 +165,7 @@
     tag: 9
     text_entry: 109
     order: 17
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -158,6 +175,7 @@
     tag: 7
     text_entry: 118
     order: 18
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -167,6 +185,7 @@
     tag: 10
     text_entry: 119
     order: 19
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -176,6 +195,7 @@
     tag: 11
     text_entry: 119
     order: 20
+    user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
 
@@ -185,6 +205,7 @@
     tag: 12
     text_entry: 120
     order: 21
+    user: 1
     date_created: "2020-04-20T18:20:00+00:00"
     date_updated: "2020-04-20T18:20:00+00:00"
 
@@ -194,6 +215,7 @@
     tag: 13
     text_entry: 121
     order: 22
+    user: 1
     date_created: "2020-04-20T18:20:00+00:00"
     date_updated: "2020-04-20T18:20:00+00:00"
 
@@ -203,6 +225,7 @@
     tag: 14
     text_entry: 122
     order: 23
+    user: 1
     date_created: "2020-04-20T18:20:00+00:00"
     date_updated: "2020-04-20T18:20:00+00:00"
 
@@ -212,6 +235,7 @@
     tag: 13
     text_entry: 123
     order: 24
+    user: 1
     date_created: "2020-04-20T18:20:00+00:00"
     date_updated: "2020-04-20T18:20:00+00:00"
 
@@ -221,6 +245,7 @@
     tag: 15
     text_entry: 124
     order: 25
+    user: 1
     date_created: "2020-04-20T18:20:00+00:00"
     date_updated: "2020-04-20T18:20:00+00:00"
 
@@ -230,6 +255,7 @@
     tag: 13
     text_entry: 125
     order: 26
+    user: 1
     date_created: "2020-04-27T18:20:00+00:00"
     date_updated: "2020-04-27T18:20:00+00:00"
 
@@ -239,6 +265,7 @@
     tag: 13
     text_entry: 126
     order: 27
+    user: 1
     date_created: "2020-04-27T18:20:00+00:00"
     date_updated: "2020-04-27T18:20:00+00:00"
 
@@ -248,6 +275,7 @@
     tag: 16
     text_entry: 127
     order: 28
+    user: 1
     date_created: "2020-04-27T18:20:00+00:00"
     date_updated: "2020-04-27T18:20:00+00:00"
 
@@ -257,6 +285,7 @@
     tag: 13
     text_entry: 129
     order: 29
+    user: 1
     date_created: "2020-04-30T18:20:00+00:00"
     date_updated: "2020-04-30T18:20:00+00:00"
 
@@ -266,6 +295,7 @@
     tag: 2
     text_entry: 130
     order: 30
+    user: 1
     date_created: "2020-04-30T18:20:00+00:00"
     date_updated: "2020-04-30T18:20:00+00:00"
 
@@ -275,6 +305,7 @@
     tag: 14
     text_entry: 131
     order: 31
+    user: 1
     date_created: "2020-04-30T18:20:00+00:00"
     date_updated: "2020-04-30T18:20:00+00:00"
 
@@ -284,6 +315,7 @@
     tag: 14
     text_entry: 132
     order: 32
+    user: 1
     date_created: "2020-05-01T18:20:00+00:00"
     date_updated: "2020-05-01T18:20:00+00:00"
 
@@ -293,6 +325,7 @@
     tag: 17
     text_entry: 133
     order: 33
+    user: 1
     date_created: "2020-05-01T18:20:00+00:00"
     date_updated: "2020-05-01T18:20:00+00:00"
 
@@ -302,6 +335,7 @@
     tag: 17
     text_entry: 134
     order: 34
+    user: 1
     date_created: "2020-05-02T18:20:00+00:00"
     date_updated: "2020-05-02T18:20:00+00:00"
 
@@ -311,6 +345,7 @@
     tag: 17
     text_entry: 135
     order: 35
+    user: 1
     date_created: "2020-05-02T18:20:00+00:00"
     date_updated: "2020-05-02T18:20:00+00:00"
 
@@ -320,6 +355,7 @@
     tag: 17
     text_entry: 136
     order: 36
+    user: 1
     date_created: "2020-05-02T18:20:00+00:00"
     date_updated: "2020-05-02T18:20:00+00:00"
 
@@ -329,6 +365,7 @@
     tag: 7
     text_entry: 137
     order: 37
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -338,6 +375,7 @@
     tag: 9
     text_entry: 138
     order: 38
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -347,6 +385,7 @@
     tag: 17
     text_entry: 139
     order: 39
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -356,6 +395,7 @@
     tag: 18
     text_entry: 140
     order: 40
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -365,6 +405,7 @@
     tag: 18
     text_entry: 141
     order: 41
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -374,6 +415,7 @@
     tag: 19
     text_entry: 142
     order: 42
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -383,6 +425,7 @@
     tag: 20
     text_entry: 143
     order: 43
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -392,6 +435,7 @@
     tag: 21
     text_entry: 144
     order: 44
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -401,6 +445,7 @@
     tag: 19
     text_entry: 145
     order: 45
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -410,6 +455,7 @@
     tag: 22
     text_entry: 146
     order: 46
+    user: 1
     date_created: "2020-05-03T18:20:00+00:00"
     date_updated: "2020-05-03T18:20:00+00:00"
 
@@ -419,6 +465,7 @@
     tag: 23
     text_entry: 147
     order: 47
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -428,6 +475,7 @@
     tag: 24
     text_entry: 148
     order: 48
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -437,6 +485,7 @@
     tag: 9
     text_entry: 149
     order: 49
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -446,6 +495,7 @@
     tag: 9
     text_entry: 150
     order: 50
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -455,6 +505,7 @@
     tag: 9
     text_entry: 151
     order: 51
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -464,6 +515,7 @@
     tag: 25
     text_entry: 152
     order: 52
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -473,6 +525,7 @@
     tag: 26
     text_entry: 153
     order: 53
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -482,6 +535,7 @@
     tag: 26
     text_entry: 154
     order: 54
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -491,6 +545,7 @@
     tag: 26
     text_entry: 155
     order: 55
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -500,6 +555,7 @@
     tag: 26
     text_entry: 156
     order: 56
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
 
@@ -509,5 +565,16 @@
     tag: 27
     text_entry: 157
     order: 57
+    user: 1
+    date_created: "2020-05-07T18:20:00+00:00"
+    date_updated: "2020-05-07T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 58
+  fields:
+    tag: 28
+    text_entry: 158
+    order: 58
+    user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"

@@ -16,5 +16,6 @@ class Tag(models.Model):
 class TagTextEntryThroughModel(OrderedModel):
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='tag_to_text_entry')
     text_entry = models.ForeignKey(TextEntry, on_delete=models.CASCADE, related_name='text_entry_to_tag')
+    user = models.ForeignKey('users.User', related_name='tags_entries', null=False, on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)

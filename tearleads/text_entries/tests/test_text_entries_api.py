@@ -55,7 +55,7 @@ class TestTextEntriesApi(BaseTestCase):
     def test_filter_by_tag_name(self):
         entry1 = TextEntryFactory(user=self.user1)
         tag1 = TagFactory(user=self.user1, name='zzz')
-        TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1)
+        TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1, user=self.user1)
         response = self.user1_api_client.get('/api/v1/entries?filter[tags.name]={}'.format('zzz'))
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -71,7 +71,7 @@ class TestTextEntriesApi(BaseTestCase):
         entry1 = TextEntryFactory(user=self.user1)
         entry2 = TextEntryFactory(user=self.user1)
         tag1 = TagFactory(user=self.user1)
-        TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1)
+        TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1, user=self.user1)
         response = self.user1_api_client.get('/api/v1/entries?filter[tags.id]={}'.format(tag1.id))
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
