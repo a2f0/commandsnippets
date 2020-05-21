@@ -1,12 +1,40 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import memoize from "memoize-one";
 import observableUser from './user.js';
-import Login from './Login.jsx';
-import NavigationTop from './NavigationTop.jsx';
 import constructApiUrl from './api.mjs';
 import NewEntry from './NewEntry.jsx';
+
+import CssBaseline from '@material-ui/core/CssBaseline';
+import Typography from '@material-ui/core/Typography';
+
+import { makeStyles } from '@material-ui/core/styles';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import Button from '@material-ui/core/Button';
+
+
+
+import Drawer from '@material-ui/core/Drawer';
+import List from '@material-ui/core/List';
+import Divider from '@material-ui/core/Divider';
+import ListItem from '@material-ui/core/ListItem';
+
+
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import Fade from '@material-ui/core/Fade';
+
+import Link from '@material-ui/core/Link';
+
+import { withStyles } from '@material-ui/core/styles';
+
+// DND
+import { DndProvider } from 'react-dnd'
+import Backend from 'react-dnd-html5-backend'
+
+import EntryList from './EntryList.jsx'
 
 import './style/border-px.less';
 import './style/entries.less';
@@ -14,6 +42,9 @@ import './style/tearleads.less';
 import './style/taglist.less';
 import './style/create-entry.less';
 import './style/login.less';
+
+//
+import Tag from './Tag.jsx'
 
 class Index extends React.Component { 
 
@@ -232,21 +263,185 @@ function NavigationBottom() {
   )
 }
 
+const drawerWidth = 150;
+
+const useStyles = makeStyles((theme) => ({
+  button: {
+    textTransform: 'none'
+  },
+  menuButton: {
+    background: "black",
+    textTransform: 'none',
+    padding: 0,
+    minWidth: 0,
+    marginRight: 10,
+    "&:hover": {
+      backgroundColor: "#585858"
+    },
+    "&:active": {
+      backgroundColor: "#585858"
+    }
+  },
+  menu: {
+    borderRadius: 0,
+    border: 1
+  },
+  menuItem: {
+    background: "black",
+    color: 'white',
+    fontSize: 12
+  },
+  root: {
+    display: 'flex',
+    background: 'black'
+  },
+  appBar: {
+    zIndex: theme.zIndex.drawer + 1,
+  },
+  drawer: {
+    width: drawerWidth,
+    flexShrink: 0,
+  },
+  drawerPaper: {
+    width: drawerWidth,
+    background: "black",
+    color: "white"
+  },
+  drawerContainer: {
+    overflow: 'auto',
+  },
+  content: {
+    flexGrow: 1,
+    background: "black",
+    color: "white"
+  },
+  toolBar: {
+    minHeight: 27,
+    padding: 0,
+    background: "black"
+  },
+  title: {
+    flexGrow: 1,
+  },
+  svgIcon: {
+    color: "white",
+    fontSize: 12
+  },
+  list: {
+    padding: 0
+  },
+}));
+
+const StyledMenu = withStyles({
+  paper: {
+    border: '0px solid #d3d4d5',
+    borderRadius: 0,
+    margin: 0
+  },
+  list: {
+    padding: 0
+  }
+})((props) => (
+  <Menu
+    getContentAnchorEl={null}
+    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+    transformOrigin={{ vertical: "top", horizontal: "left" }}
+    keepMounted
+    elevation={0}
+    getContentAnchorEl={null}
+    {...props}
+  />
+));
+
+
 function AppRouter() {
+  const classes = useStyles();
+
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const preventDefault = (event) => event.preventDefault()
+
   return (
     <Router>
-      <NavigationTop />
-      <div className="flex-main-container flex-main-container-margin">
-        <div className="flex-side-column"></div>
-        <Switch>
-          <Route exact path="/login" render={(props) => <Login {...props} user={observableUser} />} />
-          <Route path="/:user/:tag" component={Index} />
-          <Route path="/:user" component={Index} />
-          <Route exact path="/" component={Index} />
-        </Switch>
-        <div className="flex-side-column"></div>
-      </div>
-      <NavigationBottom />
+      <DndProvider backend={Backend}>
+        <div className={classes.root}>
+          <CssBaseline />
+          <AppBar position="fixed" className={classes.appBar}>
+            <Toolbar variant="dense" className={classes.toolBar}>
+              {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+             <MenuIcon />
+           </IconButton> */}
+              <Typography className={classes.title}>
+              </Typography>
+              <Button size="small" color="inherit" className={classes.button}>Login</Button>
+            </Toolbar>
+            <Toolbar variant="dense" className={classes.toolBar}>
+              <Typography className={classes.drawer}>
+              </Typography>
+              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+            File
+              </Button>
+              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+            Edit
+              </Button>
+
+              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+            View
+              </Button>
+              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+            Help
+              </Button>
+            </Toolbar>
+            <StyledMenu
+              id="file-menu"
+              className={classes.menu}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              TransitionComponent={Fade}
+            >
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Profile</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>My account</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Logout</MenuItem>
+            </StyledMenu>
+          </AppBar>
+          <Drawer
+            className={classes.drawer}
+            variant="permanent"
+            classes={{
+              paper: classes.drawerPaper,
+            }}
+          >
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <div className={classes.drawerContainer}>
+              <Divider/>
+              <List>
+                <ListItem button>
+                  <Tag name='docker'/>
+                </ListItem>
+                <ListItem button>
+                  <Tag name='aws'/>
+                </ListItem>
+              </List>
+            </div>
+          </Drawer>
+          <main className={classes.content}>
+            <Toolbar variant="dense" className={classes.toolBar} />
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <EntryList/>
+          </main>
+        </div>
+      </DndProvider>
     </Router>
   );
 }
