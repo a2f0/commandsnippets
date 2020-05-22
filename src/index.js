@@ -426,10 +426,10 @@ function AppRouter() {
               <Divider/>
               <List>
                 <ListItem button>
-                  <Tag name='docker'/>
+                  <Tag id='233' name='docker'/>
                 </ListItem>
                 <ListItem button>
-                  <Tag name='aws'/>
+                  <Tag id='133' name='aws'/>
                 </ListItem>
               </List>
             </div>

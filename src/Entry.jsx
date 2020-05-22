@@ -16,11 +16,19 @@ const Entry = ({ id, text, moveEntry, findEntry }) => {
       isDragging: monitor.isDragging(),
     }),
     end: (dropResult, monitor) => {
-      console.log("dropped it")
+      const drop_result = monitor.getDropResult()
       const { id: droppedId, originalIndex } = monitor.getItem()
       const didDrop = monitor.didDrop()
       if (!didDrop) {
         moveEntry(droppedId, originalIndex)
+      } else {
+        if ( "type" in drop_result ) {
+          if ( drop_result.type === "Tag" ) {
+            console.info("it was dropped on a tag.")
+          }
+        } else {
+          console.log('it was not dropped on a tag.');
+        }
       }
     },
   })

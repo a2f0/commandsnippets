@@ -12,10 +12,13 @@ const style = {
   lineHeight: 'normal',
   float: 'left',
 }
-const Tag = ({ name }) => {
+const Tag = ({ name, id }) => {
   const [{ canDrop, isOver }, drop] = useDrop({
     accept: ItemTypes.ENTRY,
-    drop: () => ({ name: 'Dustbin' }),
+    drop: () => ({ 
+      name: name, 
+      id: id, 
+      type: 'Tag' }),
     collect: (monitor) => ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),

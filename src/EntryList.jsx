@@ -8,19 +8,19 @@ const style = {
 }
 const ITEMS = [
   {
-    id: 1,
+    id: 101,
     text: 'Entry1',
   },
   {
-    id: 2,
+    id: 102,
     text: 'Entry 2',
   },
   {
-    id: 3,
+    id: 103,
     text: 'Entry 3',
   },
   {
-    id: 4,
+    id: 104,
     text: 'Entry 4',
   }
 ]
