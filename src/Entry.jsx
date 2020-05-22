@@ -27,7 +27,10 @@ const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
             console.info("it was dropped on a tag.")
           }
         } else {
-          console.log('it was not dropped on a tag.');
+          // Then it was reordered in the list.
+          if (originalIndex != findEntry(id).index ) {
+            console.log("it moved")
+          }
         }
       }
     },
