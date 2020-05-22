@@ -8,7 +8,7 @@ const style = {
   backgroundColor: 'black',
   cursor: 'move',
 }
-const Entry = ({ id, text, moveEntry, findEntry }) => {
+const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
   const originalIndex = findEntry(id).index
   const [{ isDragging }, drag] = useDrag({
     item: { type: ItemTypes.ENTRY, id, originalIndex },
@@ -47,7 +47,13 @@ const Entry = ({ id, text, moveEntry, findEntry }) => {
   const opacity = isDragging ? 0 : 1
   return (
     <div ref={(node) => drag(drop(node))} style={{ ...style, opacity }}>
-      {text}
+      <div>
+        {subject}
+      </div>
+      <div>
+        {body}
+      </div>
+      
     </div>
   )
 }

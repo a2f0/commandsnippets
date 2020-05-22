@@ -8,20 +8,24 @@ const style = {
 }
 const ITEMS = [
   {
-    id: 101,
-    text: 'Entry1',
+    type: "TextEntry",
+    id: 24,
+    attributes: {
+      body: "aws rds describe-pending-maintenance-actions",
+      subject: "show pendings aws maintenance actions",
+      date_updated: "2019-03-17T18:20:00",
+      date_created: "2019-03-17T18:20:00"
+    }
   },
   {
-    id: 102,
-    text: 'Entry 2',
-  },
-  {
-    id: 103,
-    text: 'Entry 3',
-  },
-  {
-    id: 104,
-    text: 'Entry 4',
+    type: "TextEntry",
+    id: 25,
+    attributes: {
+      body: "aws rds describe-db-instances",
+      subject: "show detail about RDS instances",
+      date_updated: "2019-03-17T18:20:00",
+      date_created: "2019-03-17T18:20:00"
+    }
   }
 ]
 const EntryList = () => {
@@ -52,7 +56,8 @@ const EntryList = () => {
           <Entry
             key={entry.id}
             id={`${entry.id}`}
-            text={entry.text}
+            subject={entry.attributes.subject}
+            body={entry.attributes.body}
             moveEntry={moveEntry}
             findEntry={findEntry}
           />

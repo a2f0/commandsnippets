@@ -276,10 +276,12 @@ const useStyles = makeStyles((theme) => ({
     minWidth: 0,
     marginRight: 10,
     "&:hover": {
-      backgroundColor: "#585858"
+      borderRadius: 0,
+      color: "#FF00FF"
     },
     "&:active": {
-      backgroundColor: "#585858"
+      backgroundColor: "#585858",
+      borderRadius: 0
     }
   },
   menu: {
@@ -388,14 +390,14 @@ function AppRouter() {
               <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             File
               </Button>
-              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+              <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             Edit
               </Button>
 
-              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+              <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             View
               </Button>
-              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+              <Button size="small" color="inherit" label="Primary" aria-controls="help-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             Help
               </Button>
             </Toolbar>
@@ -411,6 +413,43 @@ function AppRouter() {
               <MenuItem className={classes.menuItem} onClick={handleClose}>My account</MenuItem>
               <MenuItem className={classes.menuItem} onClick={handleClose}>Logout</MenuItem>
             </StyledMenu>
+            <StyledMenu
+              id="edit-menu"
+              className={classes.menu}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              TransitionComponent={Fade}
+            >
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 1</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 2</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 3</MenuItem>
+            </StyledMenu>
+            <StyledMenu
+              id="view-menu"
+              className={classes.menu}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              TransitionComponent={Fade}
+            >
+              <MenuItem className={classes.menuItem} onClick={handleClose}>View 1</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>View 2</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>View 3</MenuItem>
+            </StyledMenu>
+            <StyledMenu
+              id="help-menu"
+              className={classes.menu}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              TransitionComponent={Fade}
+            >
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 1</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 2</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 3</MenuItem>
+            </StyledMenu>
+            
           </AppBar>
           <Drawer
             className={classes.drawer}
