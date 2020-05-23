@@ -7,51 +7,19 @@ import API from './api.js'
 const style = {
   width: "100%",
 }
-const ITEMS = [
-  {
-    type: "TextEntry",
-    id: 24,
-    attributes: {
-      body: "aws rds describe-pending-maintenance-actions",
-      subject: "show pendings aws maintenance actions",
-      date_updated: "2019-03-17T18:20:00",
-      date_created: "2019-03-17T18:20:00"
-    }
-  },
-  {
-    type: "TextEntry",
-    id: 25,
-    attributes: {
-      body: "aws rds describe-db-instances",
-      subject: "show detail about RDS instances",
-      date_updated: "2019-03-17T18:20:00",
-      date_created: "2019-03-17T18:20:00"
-    }
-  }
-]
-
 const EntryList = () => {
 
   useEffect(() => {
     const fetchData = async () => {
       const response = await API.get('/tags_entries');
-      console.info(response.data.data)
-      var j;
-      for(j in response.data.data) {
-        const tag = response.data.included.filter(
-          i => i.type==="Tag" && i.id == response.data.data[j].relationships.tag.data.id
-        )[0];
-
-        const entry = response.data.included.filter(
-          i => i.type==="TextEntry" && i.id == response.data.data[j].relationships.text_entry.data.id
-        )[0];
-      }
-    	setEntries(response.data.data);
+      setIncluded(response.data.included);
+      setEntries(response.data.data);      
     }
     fetchData();
   }, []);
 
   const [entries, setEntries] = useState([])
+  const [included, setIncluded] = useState([])
   const moveEntry = (id, atIndex) => {
     const { entry, index } = findEntry(id)
     setEntries(
@@ -74,16 +42,28 @@ const EntryList = () => {
   return (
     <>
       <div ref={drop} style={style}>
-        {entries.map((entry) => (
-          <Entry
-            key={entry.id}
-            id={`${entry.id}`}
-            subject={entry.attributes.subject}
-            body={entry.attributes.body}
-            moveEntry={moveEntry}
-            findEntry={findEntry}
-          />
-        ))}
+        {entries.map(entry => {
+
+          const text_entry = included.filter(
+            i => i.type=="TextEntry" && i.id == entry.relationships.text_entry.data.id
+          )[0];
+
+          const tag = included.filter(
+            i => i.type==="Tag" && i.id == entry.relationships.tag.data.id
+          )[0];
+
+          return (
+            <Entry
+              key={entry.id}
+              id={`${entry.id}`}
+              subject={text_entry.attributes.subject}
+              body={text_entry.attributes.body}
+              moveEntry={moveEntry}
+              findEntry={findEntry}
+            />
+          ) 
+        })
+        }
       </div>
     </>
   )
