@@ -35,6 +35,17 @@ const EntryList = () => {
   useEffect(() => {
     const fetchData = async () => {
       const response = await API.get('/tags_entries');
+      console.info(response.data.data)
+      var j;
+      for(j in response.data.data) {
+        const tag = response.data.included.filter(
+          i => i.type==="Tag" && i.id == response.data.data[j].relationships.tag.data.id
+        )[0];
+
+        const entry = response.data.included.filter(
+          i => i.type==="TextEntry" && i.id == response.data.data[j].relationships.text_entry.data.id
+        )[0];
+      }
     	setEntries(response.data.data);
     }
     fetchData();
