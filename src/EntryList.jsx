@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDrop } from 'react-dnd'
 import Entry from './Entry.jsx'
 import update from 'immutability-helper'
 import ItemTypes from './ItemTypes'
+import API from './api.js'
 const style = {
-  width: 400,
+  width: "100%",
 }
 const ITEMS = [
   {
@@ -28,8 +29,18 @@ const ITEMS = [
     }
   }
 ]
+
 const EntryList = () => {
-  const [entries, setEntries] = useState(ITEMS)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await API.get('/tags_entries');
+    	setEntries(response.data.data);
+    }
+    fetchData();
+  }, []);
+
+  const [entries, setEntries] = useState([])
   const moveEntry = (id, atIndex) => {
     const { entry, index } = findEntry(id)
     setEntries(

@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import memoize from "memoize-one";
 import observableUser from './user.js';
-import constructApiUrl from './api.mjs';
+import constructApiUrl from './api.js';
 import NewEntry from './NewEntry.jsx';
 
 import CssBaseline from '@material-ui/core/CssBaseline';
