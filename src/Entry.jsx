@@ -4,11 +4,25 @@ import ItemTypes from './ItemTypes'
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
+
 const useStyles = makeStyles({
+  dragIndicator: {
+    display: 'inline-block',
+    cursor: 'move'
+  },
   entry: {
+    display: 'inline-block'
+  },
+  entryWrapper: {
     backgroundColor: 'black',
-    cursor: 'move',
     marginBottom: 16,
+    "&:hover": {
+      color: "#FF00FF"
+    },
+    "&:active": {
+      color: "white"
+    },
   },
   entrySubject: {
 
@@ -64,12 +78,17 @@ const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
 
   const classes = useStyles();
   return (
-    <div ref={(node) => drag(drop(node))} style={{opacity }} className={classes.entry}  >
-      <div className={classes.entrySubject}>
-        {subject}
+    <div ref={(node) => drag(drop(node))} style={{opacity }} className={classes.entryWrapper}  >
+      <div className={classes.dragIndicator}>
+        <DragIndicatorIcon/>
       </div>
-      <div className={classes.entryBody}>
-        {body}
+      <div className={classes.entry}>
+        <div className={classes.entrySubject}>
+          {subject} 
+        </div>
+        <div className={classes.entryBody}>
+          {body}
+        </div>
       </div>
     </div>
   )
