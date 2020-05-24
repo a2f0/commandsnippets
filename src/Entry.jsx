@@ -1,13 +1,25 @@
 import React from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
-const style = {
-  border: '1px dashed gray',
-  padding: '0.5rem 1rem',
-  marginBottom: '.5rem',
-  backgroundColor: 'black',
-  cursor: 'move',
-}
+
+import { makeStyles } from '@material-ui/core/styles';
+
+const useStyles = makeStyles({
+  entry: {
+    backgroundColor: 'black',
+    cursor: 'move',
+    marginBottom: 16,
+  },
+  entrySubject: {
+
+  },
+  entryBody: {
+    fontSize: 14,
+    fontFamily: 'monospace',
+    whiteSpace: 'pre-wrap',
+  }
+});
+
 const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
   const originalIndex = findEntry(id).index
   const [{ isDragging }, drag] = useDrag({
@@ -47,16 +59,18 @@ const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
       }
     },
   })
+
   const opacity = isDragging ? 0 : 1
+
+  const classes = useStyles();
   return (
-    <div ref={(node) => drag(drop(node))} style={{ ...style, opacity }}>
-      <div>
+    <div ref={(node) => drag(drop(node))} style={{opacity }} className={classes.entry}  >
+      <div className={classes.entrySubject}>
         {subject}
       </div>
-      <div>
+      <div className={classes.entryBody}>
         {body}
       </div>
-      
     </div>
   )
 }
