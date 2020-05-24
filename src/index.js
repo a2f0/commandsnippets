@@ -14,8 +14,6 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
 
-
-
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
@@ -298,120 +296,120 @@ function AppRouter() {
     setAnchorEl(null);
   };
 
-  const preventDefault = (event) => event.preventDefault()
-
   return (
-    <Router>
-      <DndProvider backend={Backend}>
-        <div className={classes.root}>
-          <CssBaseline />
-          <AppBar position="fixed" className={classes.appBar}>
-            <Toolbar variant="dense" className={classes.toolBar}>
-              {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+    <React.StrictMode>
+      <Router>
+        <DndProvider backend={Backend}>
+          <div className={classes.root}>
+            <CssBaseline />
+            <AppBar position="fixed" className={classes.appBar}>
+              <Toolbar variant="dense" className={classes.toolBar}>
+                {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
              <MenuIcon />
            </IconButton> */}
-              <Typography className={classes.title}>
-              </Typography>
-              <Button size="small" color="inherit" className={classes.button}>Login</Button>
-            </Toolbar>
-            <Toolbar variant="dense" className={classes.toolBar}>
-              <Typography className={classes.drawer}>
-              </Typography>
-              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+                <Typography className={classes.title}>
+                </Typography>
+                <Button size="small" color="inherit" className={classes.button}>Login</Button>
+              </Toolbar>
+              <Toolbar variant="dense" className={classes.toolBar}>
+                <Typography className={classes.drawer}>
+                </Typography>
+                <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             File
-              </Button>
-              <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+                </Button>
+                <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             Edit
-              </Button>
+                </Button>
 
-              <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+                <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             View
-              </Button>
-              <Button size="small" color="inherit" label="Primary" aria-controls="help-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+                </Button>
+                <Button size="small" color="inherit" label="Primary" aria-controls="help-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             Help
-              </Button>
-            </Toolbar>
-            <StyledMenu
-              id="file-menu"
-              className={classes.menu}
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              TransitionComponent={Fade}
-            >
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Profile</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>My account</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Logout</MenuItem>
-            </StyledMenu>
-            <StyledMenu
-              id="edit-menu"
-              className={classes.menu}
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              TransitionComponent={Fade}
-            >
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 1</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 2</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 3</MenuItem>
-            </StyledMenu>
-            <StyledMenu
-              id="view-menu"
-              className={classes.menu}
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              TransitionComponent={Fade}
-            >
-              <MenuItem className={classes.menuItem} onClick={handleClose}>View 1</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>View 2</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>View 3</MenuItem>
-            </StyledMenu>
-            <StyledMenu
-              id="help-menu"
-              className={classes.menu}
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              TransitionComponent={Fade}
-            >
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 1</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 2</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 3</MenuItem>
-            </StyledMenu>
+                </Button>
+              </Toolbar>
+              <StyledMenu
+                id="file-menu"
+                className={classes.menu}
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                TransitionComponent={Fade}
+              >
+                <MenuItem className={classes.menuItem} onClick={handleClose}>Profile</MenuItem>
+                <MenuItem className={classes.menuItem} onClick={handleClose}>My account</MenuItem>
+                <MenuItem className={classes.menuItem} onClick={handleClose}>Logout</MenuItem>
+              </StyledMenu>
+              <StyledMenu
+                id="edit-menu"
+                className={classes.menu}
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                TransitionComponent={Fade}
+              >
+                <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 1</MenuItem>
+                <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 2</MenuItem>
+                <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 3</MenuItem>
+              </StyledMenu>
+              <StyledMenu
+                id="view-menu"
+                className={classes.menu}
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                TransitionComponent={Fade}
+              >
+                <MenuItem className={classes.menuItem} onClick={handleClose}>View 1</MenuItem>
+                <MenuItem className={classes.menuItem} onClick={handleClose}>View 2</MenuItem>
+                <MenuItem className={classes.menuItem} onClick={handleClose}>View 3</MenuItem>
+              </StyledMenu>
+              <StyledMenu
+                id="help-menu"
+                className={classes.menu}
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                TransitionComponent={Fade}
+              >
+                <MenuItem className={classes.menuItem} onClick={handleClose}>Help 1</MenuItem>
+                <MenuItem className={classes.menuItem} onClick={handleClose}>Help 2</MenuItem>
+                <MenuItem className={classes.menuItem} onClick={handleClose}>Help 3</MenuItem>
+              </StyledMenu>
             
-          </AppBar>
-          <Drawer
-            className={classes.drawer}
-            variant="permanent"
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-          >
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <div className={classes.drawerContainer}>
-              <Divider/>
-              <List>
-                <ListItem button>
-                  <Tag id='233' name='docker'/>
-                </ListItem>
-                <ListItem button>
-                  <Tag id='133' name='aws'/>
-                </ListItem>
-              </List>
-            </div>
-          </Drawer>
-          <main className={classes.content}>
-            <Toolbar variant="dense" className={classes.toolBar} />
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <EntryList/>
-          </main>
-        </div>
-      </DndProvider>
-    </Router>
+            </AppBar>
+            <Drawer
+              className={classes.drawer}
+              variant="permanent"
+              classes={{
+                paper: classes.drawerPaper,
+              }}
+            >
+              <Toolbar variant="dense" className={classes.toolBar}/>
+              <Toolbar variant="dense" className={classes.toolBar}/>
+              <Toolbar variant="dense" className={classes.toolBar}/>
+              <div className={classes.drawerContainer}>
+                <Divider/>
+                <List>
+                  <ListItem button>
+                    <Tag id='233' name='docker'/>
+                  </ListItem>
+                  <ListItem button>
+                    <Tag id='133' name='aws'/>
+                  </ListItem>
+                </List>
+              </div>
+            </Drawer>
+            <main className={classes.content}>
+              <Toolbar variant="dense" className={classes.toolBar} />
+              <Toolbar variant="dense" className={classes.toolBar}/>
+              <Toolbar variant="dense" className={classes.toolBar}/>
+              <EntryList/>
+            </main>
+          </div>
+        </DndProvider>
+      </Router>
+    </React.StrictMode>
   );
 }
 ReactDOM.render(<AppRouter />, document.getElementById("©"));
