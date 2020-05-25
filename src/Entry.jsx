@@ -36,7 +36,7 @@ const useStyles = makeStyles({
 
 const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
   const originalIndex = findEntry(id).index
-  const [{ isDragging }, drag] = useDrag({
+  const [{ isDragging }, drag, preview] = useDrag({
     item: { type: ItemTypes.ENTRY, id, originalIndex },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
@@ -78,8 +78,8 @@ const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
 
   const classes = useStyles();
   return (
-    <div ref={(node) => drag(drop(node))} style={{opacity }} className={classes.entryWrapper}  >
-      <div className={classes.dragIndicator}>
+    <div ref={preview} className={classes.entryWrapper}  >
+      <div ref={(node) => drag(drop(node))} style={{opacity }}  className={classes.dragIndicator}>
         <DragIndicatorIcon/>
       </div>
       <div className={classes.entry}>
