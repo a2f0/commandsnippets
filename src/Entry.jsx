@@ -9,10 +9,12 @@ import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 const useStyles = makeStyles({
   dragIndicator: {
     display: 'inline-block',
-    cursor: 'move'
+    cursor: 'move',
+    verticalAlign: 'top'
   },
   entry: {
-    display: 'inline-block'
+    display: 'inline-block',
+    verticalAlign: 'top'
   },
   entryWrapper: {
     backgroundColor: 'black',
@@ -68,6 +70,7 @@ const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
     },
     hover({ id: draggedId }) {
       if (draggedId !== id) {
+        console.log('moving entry')
         const { index: overIndex } = findEntry(id)
         moveEntry(draggedId, overIndex)
       }
@@ -78,16 +81,18 @@ const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
 
   const classes = useStyles();
   return (
-    <div ref={preview} className={classes.entryWrapper}  >
-      <div ref={(node) => drag(drop(node))} style={{opacity }}  className={classes.dragIndicator}>
-        <DragIndicatorIcon/>
-      </div>
-      <div className={classes.entry}>
-        <div className={classes.entrySubject}>
-          {subject} 
+    <div ref={(node) => drop(node)} style={{opacity }}>
+      <div ref={(preview)} className={classes.entryWrapper}>
+        <div ref={(node) => drag(node)} className={classes.dragIndicator}>
+          <DragIndicatorIcon/>
         </div>
-        <div className={classes.entryBody}>
-          {body}
+        <div className={classes.entry}>
+          <div className={classes.entrySubject}>
+            {subject} 
+          </div>
+          <div className={classes.entryBody}>
+            {body}
+          </div>
         </div>
       </div>
     </div>
