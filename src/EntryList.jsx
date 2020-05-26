@@ -4,10 +4,12 @@ import Entry from './Entry.jsx'
 import update from 'immutability-helper'
 import ItemTypes from './ItemTypes'
 import API from './api.js'
-const style = {
+
+const width = {
   width: "100%",
 }
-const EntryList = () => {
+
+const EntryList = React.memo(function EntryList(props) {
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,6 +23,7 @@ const EntryList = () => {
   const [entries, setEntries] = useState([])
   const [included, setIncluded] = useState([])
   const moveEntry = (id, atIndex) => {
+    console.info('move entry')
     const { entry, index } = findEntry(id)
     setEntries(
       update(entries, {
@@ -39,10 +42,12 @@ const EntryList = () => {
     }
   }
   const [, drop] = useDrop({ accept: ItemTypes.ENTRY })
+
   return (
     <>
-      <div ref={drop} style={style}>
+      <div ref={drop} style={width}>
         {entries.map(entry => {
+          console.log('doing this again')
 
           const text_entry = included.filter(
             i => i.type=="TextEntry" && i.id == entry.relationships.text_entry.data.id
@@ -67,5 +72,5 @@ const EntryList = () => {
       </div>
     </>
   )
-}
+})
 export default EntryList
