@@ -23,7 +23,6 @@ const EntryList = React.memo(function EntryList(props) {
   const [entries, setEntries] = useState([])
   const [included, setIncluded] = useState([])
   const moveEntry = (id, atIndex) => {
-    console.info('move entry')
     const { entry, index } = findEntry(id)
     setEntries(
       update(entries, {
@@ -46,8 +45,7 @@ const EntryList = React.memo(function EntryList(props) {
   return (
     <>
       <div ref={drop} style={width}>
-        {entries.map(entry => {
-          console.log('doing this again')
+        {entries.map((entry, i) => {
 
           const text_entry = included.filter(
             i => i.type=="TextEntry" && i.id == entry.relationships.text_entry.data.id
@@ -61,6 +59,7 @@ const EntryList = React.memo(function EntryList(props) {
             <Entry
               key={entry.id}
               id={`${entry.id}`}
+              index={i}
               subject={text_entry.attributes.subject}
               body={text_entry.attributes.body}
               moveEntry={moveEntry}

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 
@@ -20,7 +20,7 @@ const useStyles = makeStyles({
     backgroundColor: 'black',
     marginBottom: 16,
     "&:hover": {
-      color: "#FF00FF"
+      color: "white"
     },
     "&:active": {
       color: "white"
@@ -36,10 +36,12 @@ const useStyles = makeStyles({
   }
 });
 
-const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
+const Entry = ({ id, index, subject, body, moveEntry, findEntry }) => {
+  const dragRef = useRef(null)
+  const dropRef = useRef(null)
   const originalIndex = findEntry(id).index
   const [{ isDragging }, drag, preview] = useDrag({
-    item: { type: ItemTypes.ENTRY, id, originalIndex },
+    item: { type: ItemTypes.ENTRY, id, index },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -66,24 +68,56 @@ const Entry = ({ id, subject, body, moveEntry, findEntry }) => {
   const [, drop] = useDrop({
     accept: ItemTypes.ENTRY,
     canDrop: () => {
-      console.info('can drop');
     },
-    hover({ id: draggedId }) {
-      if (draggedId !== id) {
-        console.log('moving entry')
-        const { index: overIndex } = findEntry(id)
-        moveEntry(draggedId, overIndex)
+    hover(item, monitor) {
+      if (!dragRef.current) {
+        return
       }
+      const dragIndex = item.index
+      const hoverIndex = index
+      if (dragIndex === hoverIndex) {
+        return
+      }
+      // Determine rectangle on screen
+      const hoverBoundingRect = dragRef.current?.getBoundingClientRect()
+      // Get vertical middle
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+      // Determine mouse position
+      const clientOffset = monitor.getClientOffset()
+      // Get pixels to the top
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top
+
+      // Only perform the move when the mouse has crossed half of the items height
+      // When dragging downwards, only move when the cursor is below 50%
+      // When dragging upwards, only move when the cursor is above 50%
+      // Dragging downwards
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return
+      }
+      // Dragging upwards
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return
+      }
+
+      moveEntry(item.id, hoverIndex)
+      // Note: we're mutating the monitor item here!
+      // Generally it's better to avoid mutations,
+      // but it's good here for the sake of performance
+      // to avoid expensive index searches.
+      item.index = hoverIndex
     },
   })
 
   const opacity = isDragging ? 0 : 1
 
   const classes = useStyles();
+  drag(dragRef)
+  drop(dropRef)
   return (
-    <div ref={(node) => drop(node)} style={{opacity }}>
+    <div ref={(dropRef)}style={{opacity}}>
       <div ref={(preview)} className={classes.entryWrapper}>
-        <div ref={(node) => drag(node)} className={classes.dragIndicator}>
+        <div ref={(dragRef)} className={classes.dragIndicator}>
           <DragIndicatorIcon/>
         </div>
         <div className={classes.entry}>
