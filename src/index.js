@@ -286,6 +286,7 @@ const StyledMenu = withStyles({
 ));
 
 const drawerWidth = 150;
+const appBarHeight = 52;
 
 const useStyles = makeStyles((theme) => ({	
   button: {	
@@ -317,10 +318,11 @@ const useStyles = makeStyles((theme) => ({
   },
   root: {
     display: 'flex',
-    background: 'black'
+    background: 'red'
   },
   appBar: {
-    zIndex: theme.zIndex.drawer + 1,	
+    zIndex: theme.zIndex.drawer + 1,
+    height: appBarHeight
   },
   drawer: {
     width: drawerWidth,
@@ -335,12 +337,14 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
   },
   main: {
-    flexGrow: 1,
+    marginTop: appBarHeight,
     color: "white",
-    background: "red"
+    background: "purple",
+    height: 'calc(100vh - 52px)',
+    overflow: "auto"
   },	
   toolBar: {	
-    minHeight: 27,	
+    minHeight: 0,	
     padding: 0,	
     background: "black"	
   },	
@@ -472,14 +476,7 @@ function AppRouter() {
             </div>
           </Drawer>
           <main className={classes.main}>
-            <Box height="100vh" flexDirection="column" className={classes.root}>
-              <Box flex={1} overflow="auto">
-                <Toolbar variant="dense" className={classes.toolBar} />
-                <Toolbar variant="dense" className={classes.toolBar}/>
-                <Toolbar variant="dense" className={classes.toolBar}/>
-                <EntryList/>
-              </Box>
-            </Box>
+            <EntryList/>
           </main>
         </div>
       </DndProvider>

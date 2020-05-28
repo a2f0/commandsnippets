@@ -14,10 +14,10 @@ const useStyles = makeStyles({
   },
   entry: {
     display: 'inline-block',
-    verticalAlign: 'top'
+    verticalAlign: 'top',
+    color: 'white'
   },
   entryWrapper: {
-    backgroundColor: 'black',
     marginBottom: 16,
     "&:hover": {
       color: "white"
@@ -36,7 +36,7 @@ const useStyles = makeStyles({
   }
 });
 
-const Entry = ({ id, index, subject, body, moveEntry, findEntry }) => {
+const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEntry }) {
   const dragRef = useRef(null)
   const dropRef = useRef(null)
   const originalIndex = findEntry(id).index
@@ -131,5 +131,5 @@ const Entry = ({ id, index, subject, body, moveEntry, findEntry }) => {
       </div>
     </div>
   )
-}
+})
 export default Entry
