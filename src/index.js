@@ -34,17 +34,18 @@ import Backend from 'react-dnd-html5-backend'
 
 import EntryList from './EntryList.jsx'
 
-import style from './style.js'
+// import style from './style.js'
 
-import './style/border-px.less';
-import './style/entries.less';
-import './style/tearleads.less';
-import './style/taglist.less';
-import './style/create-entry.less';
-import './style/login.less';
+// import './style/border-px.less';
+// import './style/entries.less';
+// import './style/tearleads.less';
+// import './style/taglist.less';
+// import './style/create-entry.less';
+// import './style/login.less';
 
 //
 import Tag from './Tag.jsx'
+import Box from "@material-ui/core/Box";
 
 class Index extends React.Component { 
 
@@ -284,9 +285,80 @@ const StyledMenu = withStyles({
   />
 ));
 
+const drawerWidth = 150;
+
+const useStyles = makeStyles((theme) => ({	
+  button: {	
+    textTransform: 'none'	
+  },	
+  menuButton: {	
+    background: "black",	
+    textTransform: 'none',	
+    padding: 0,	
+    minWidth: 0,	
+    marginRight: 10,	
+    "&:hover": {	
+      borderRadius: 0,	
+      color: "#FF00FF"	
+    },	
+    "&:active": {	
+      backgroundColor: "#585858",	
+      borderRadius: 0	
+    }	
+  },	
+  menu: {	
+    borderRadius: 0,	
+    border: 1	
+  },	
+  menuItem: {	
+    background: "black",	
+    color: 'white',	
+    fontSize: 12
+  },
+  root: {
+    display: 'flex',
+    background: 'black'
+  },
+  appBar: {
+    zIndex: theme.zIndex.drawer + 1,	
+  },
+  drawer: {
+    width: drawerWidth,
+    flexShrink: 0,
+  },
+  drawerPaper: {
+    width: drawerWidth,
+    background: "green",
+    color: "white"
+  },
+  drawerContainer: {
+    overflow: 'auto',
+  },
+  main: {
+    flexGrow: 1,
+    color: "white",
+    background: "red"
+  },	
+  toolBar: {	
+    minHeight: 27,	
+    padding: 0,	
+    background: "black"	
+  },	
+  title: {	
+    flexGrow: 1,	
+  },
+  svgIcon: {	
+    color: "white",	
+    fontSize: 12	
+  },
+  list: {	
+    padding: 0	
+  },
+}));
+
 
 function AppRouter() {
-  const classes = style();
+  const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -297,119 +369,122 @@ function AppRouter() {
   };
 
   return (
-    <React.StrictMode>
-      <Router>
-        <DndProvider backend={Backend}>
-          <div className={classes.root}>
-            <CssBaseline />
-            <AppBar position="fixed" className={classes.appBar}>
-              <Toolbar variant="dense" className={classes.toolBar}>
-                {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+    <Router>
+      <DndProvider backend={Backend}>
+        <CssBaseline />
+        <div className={classes.root}>
+          <AppBar position="fixed" className={classes.appBar}>
+            <Toolbar variant="dense" className={classes.toolBar}>
+              {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
              <MenuIcon />
            </IconButton> */}
-                <Typography className={classes.title}>
-                </Typography>
-                <Button size="small" color="inherit" className={classes.button}>Login</Button>
-              </Toolbar>
-              <Toolbar variant="dense" className={classes.toolBar}>
-                <Typography className={classes.drawer}>
-                </Typography>
-                <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+              <Typography className={classes.title}>
+              </Typography>
+              <Button size="small" color="inherit" className={classes.button}>Login</Button>
+            </Toolbar>
+            <Toolbar variant="dense" className={classes.toolBar}>
+              <Typography className={classes.drawer}>
+              </Typography>
+              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             File
-                </Button>
-                <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+              </Button>
+              <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             Edit
-                </Button>
+              </Button>
 
-                <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+              <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             View
-                </Button>
-                <Button size="small" color="inherit" label="Primary" aria-controls="help-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+              </Button>
+              <Button size="small" color="inherit" label="Primary" aria-controls="help-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
             Help
-                </Button>
-              </Toolbar>
-              <StyledMenu
-                id="file-menu"
-                className={classes.menu}
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-                TransitionComponent={Fade}
-              >
-                <MenuItem className={classes.menuItem} onClick={handleClose}>Profile</MenuItem>
-                <MenuItem className={classes.menuItem} onClick={handleClose}>My account</MenuItem>
-                <MenuItem className={classes.menuItem} onClick={handleClose}>Logout</MenuItem>
-              </StyledMenu>
-              <StyledMenu
-                id="edit-menu"
-                className={classes.menu}
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-                TransitionComponent={Fade}
-              >
-                <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 1</MenuItem>
-                <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 2</MenuItem>
-                <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 3</MenuItem>
-              </StyledMenu>
-              <StyledMenu
-                id="view-menu"
-                className={classes.menu}
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-                TransitionComponent={Fade}
-              >
-                <MenuItem className={classes.menuItem} onClick={handleClose}>View 1</MenuItem>
-                <MenuItem className={classes.menuItem} onClick={handleClose}>View 2</MenuItem>
-                <MenuItem className={classes.menuItem} onClick={handleClose}>View 3</MenuItem>
-              </StyledMenu>
-              <StyledMenu
-                id="help-menu"
-                className={classes.menu}
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-                TransitionComponent={Fade}
-              >
-                <MenuItem className={classes.menuItem} onClick={handleClose}>Help 1</MenuItem>
-                <MenuItem className={classes.menuItem} onClick={handleClose}>Help 2</MenuItem>
-                <MenuItem className={classes.menuItem} onClick={handleClose}>Help 3</MenuItem>
-              </StyledMenu>
-            
-            </AppBar>
-            <Drawer
-              className={classes.drawer}
-              variant="permanent"
-              classes={{
-                paper: classes.drawerPaper,
-              }}
+              </Button>
+            </Toolbar>
+            <StyledMenu
+              id="file-menu"
+              className={classes.menu}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              TransitionComponent={Fade}
             >
-              <Toolbar variant="dense" className={classes.toolBar}/>
-              <Toolbar variant="dense" className={classes.toolBar}/>
-              <Toolbar variant="dense" className={classes.toolBar}/>
-              <div className={classes.drawerContainer}>
-                <Divider/>
-                <List>
-                  <ListItem button>
-                    <Tag id='233' name='docker'/>
-                  </ListItem>
-                  <ListItem button>
-                    <Tag id='133' name='aws'/>
-                  </ListItem>
-                </List>
-              </div>
-            </Drawer>
-            <main className={classes.content}>
-              <Toolbar variant="dense" className={classes.toolBar} />
-              <Toolbar variant="dense" className={classes.toolBar}/>
-              <Toolbar variant="dense" className={classes.toolBar}/>
-              <EntryList/>
-            </main>
-          </div>
-        </DndProvider>
-      </Router>
-    </React.StrictMode>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Profile</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>My account</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Logout</MenuItem>
+            </StyledMenu>
+            <StyledMenu
+              id="edit-menu"
+              className={classes.menu}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              TransitionComponent={Fade}
+            >
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 1</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 2</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 3</MenuItem>
+            </StyledMenu>
+            <StyledMenu
+              id="view-menu"
+              className={classes.menu}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              TransitionComponent={Fade}
+            >
+              <MenuItem className={classes.menuItem} onClick={handleClose}>View 1</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>View 2</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>View 3</MenuItem>
+            </StyledMenu>
+            <StyledMenu
+              id="help-menu"
+              className={classes.menu}
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              TransitionComponent={Fade}
+            >
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 1</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 2</MenuItem>
+              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 3</MenuItem>
+            </StyledMenu>
+            
+          </AppBar>
+          <Drawer
+            className={classes.drawer}
+            variant="permanent"
+            classes={{
+              paper: classes.drawerPaper,
+            }}
+          >
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <div className={classes.drawerContainer}>
+              <Divider/>
+              <List>
+                <ListItem button>
+                  <Tag id='233' name='docker'/>
+                </ListItem>
+                <ListItem button>
+                  <Tag id='133' name='aws'/>
+                </ListItem>
+              </List>
+            </div>
+          </Drawer>
+          <main className={classes.main}>
+            <Box height="100vh" flexDirection="column" className={classes.root}>
+              <Box flex={1} overflow="auto">
+                <Toolbar variant="dense" className={classes.toolBar} />
+                <Toolbar variant="dense" className={classes.toolBar}/>
+                <Toolbar variant="dense" className={classes.toolBar}/>
+                <EntryList/>
+              </Box>
+            </Box>
+          </main>
+        </div>
+      </DndProvider>
+    </Router>
+    
   );
 }
 ReactDOM.render(<AppRouter />, document.getElementById("©"));
