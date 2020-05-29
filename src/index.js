@@ -19,14 +19,9 @@ import List from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 
-
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import Fade from '@material-ui/core/Fade';
+import MenuBar from './MenuBar.jsx';
 
 import Link from '@material-ui/core/Link';
-
-import { withStyles } from '@material-ui/core/styles';
 
 // DND
 import { DndProvider } from 'react-dnd'
@@ -264,58 +259,14 @@ function NavigationBottom() {
   )
 }
 
-const StyledMenu = withStyles({
-  paper: {
-    border: '0px solid #d3d4d5',
-    borderRadius: 0,
-    margin: 0
-  },
-  list: {
-    padding: 0
-  }
-})((props) => (
-  <Menu
-    getContentAnchorEl={null}
-    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-    transformOrigin={{ vertical: "top", horizontal: "left" }}
-    keepMounted
-    elevation={0}
-    getContentAnchorEl={null}
-    {...props}
-  />
-));
-
 const drawerWidth = 150;
 const appBarHeight = 52;
 
 const useStyles = makeStyles((theme) => ({	
   button: {	
     textTransform: 'none'	
-  },	
-  menuButton: {	
-    background: "black",	
-    textTransform: 'none',	
-    padding: 0,	
-    minWidth: 0,	
-    marginRight: 10,	
-    "&:hover": {	
-      borderRadius: 0,	
-      color: "#FF00FF"	
-    },	
-    "&:active": {	
-      backgroundColor: "#585858",	
-      borderRadius: 0	
-    }	
-  },	
-  menu: {	
-    borderRadius: 0,	
-    border: 1	
-  },	
-  menuItem: {	
-    background: "black",	
-    color: 'white',	
-    fontSize: 12
   },
+
   root: {
     display: 'flex',
     background: 'red'
@@ -365,15 +316,6 @@ const useStyles = makeStyles((theme) => ({
 
 function AppRouter() {
   const classes = useStyles();
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
   return (
     <Router>
       <DndProvider backend={Backend}>
@@ -388,72 +330,7 @@ function AppRouter() {
               </Typography>
               <Button size="small" color="inherit" className={classes.button}>Login</Button>
             </Toolbar>
-            <Toolbar variant="dense" className={classes.toolBar}>
-              <Typography className={classes.drawer}>
-              </Typography>
-              <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
-            File
-              </Button>
-              <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
-            Edit
-              </Button>
-
-              <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
-            View
-              </Button>
-              <Button size="small" color="inherit" label="Primary" aria-controls="help-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
-            Help
-              </Button>
-            </Toolbar>
-            <StyledMenu
-              id="file-menu"
-              className={classes.menu}
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              TransitionComponent={Fade}
-            >
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Profile</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>My account</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Logout</MenuItem>
-            </StyledMenu>
-            <StyledMenu
-              id="edit-menu"
-              className={classes.menu}
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              TransitionComponent={Fade}
-            >
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 1</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 2</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Edit 3</MenuItem>
-            </StyledMenu>
-            <StyledMenu
-              id="view-menu"
-              className={classes.menu}
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              TransitionComponent={Fade}
-            >
-              <MenuItem className={classes.menuItem} onClick={handleClose}>View 1</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>View 2</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>View 3</MenuItem>
-            </StyledMenu>
-            <StyledMenu
-              id="help-menu"
-              className={classes.menu}
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              TransitionComponent={Fade}
-            >
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 1</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 2</MenuItem>
-              <MenuItem className={classes.menuItem} onClick={handleClose}>Help 3</MenuItem>
-            </StyledMenu>
-            
+            <MenuBar/>
           </AppBar>
           <Drawer
             className={classes.drawer}
@@ -462,11 +339,7 @@ function AppRouter() {
               paper: classes.drawerPaper,
             }}
           >
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <Toolbar variant="dense" className={classes.toolBar}/>
             <div className={classes.drawerContainer}>
-              <Divider/>
               <List>
                 <ListItem button>
                   <Tag id='233' name='docker'/>
@@ -488,13 +361,8 @@ function AppRouter() {
             }}
             anchor="right"
           >
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <Toolbar variant="dense" className={classes.toolBar}/>
-            <Toolbar variant="dense" className={classes.toolBar}/>
             <div className={classes.drawerContainer}>
-              <Divider/>
-              <List>
-              </List>
+             
             </div>
           </Drawer>
         </div>
