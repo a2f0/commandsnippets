@@ -341,7 +341,7 @@ const useStyles = makeStyles((theme) => ({
     marginTop: appBarHeight,
     color: "white",
     background: "purple",
-    height: 'calc(100vh - 52px)',
+    height: `calc(100vh - ${appBarHeight}px)`,
     overflow: "auto"
   },	
   toolBar: {	
