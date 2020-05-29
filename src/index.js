@@ -329,6 +329,7 @@ const useStyles = makeStyles((theme) => ({
     flexShrink: 0,
   },
   drawerPaper: {
+    marginTop: appBarHeight,
     width: drawerWidth,
     background: "green",
     color: "white"
