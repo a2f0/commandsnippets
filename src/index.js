@@ -337,6 +337,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
   },
   main: {
+    width: "100%",
     marginTop: appBarHeight,
     color: "white",
     background: "purple",
@@ -478,6 +479,23 @@ function AppRouter() {
           <main className={classes.main}>
             <EntryList/>
           </main>
+          <Drawer
+            className={classes.drawer}
+            variant="permanent"
+            classes={{
+              paper: classes.drawerPaper,
+            }}
+            anchor="right"
+          >
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <Toolbar variant="dense" className={classes.toolBar}/>
+            <div className={classes.drawerContainer}>
+              <Divider/>
+              <List>
+              </List>
+            </div>
+          </Drawer>
         </div>
       </DndProvider>
     </Router>
