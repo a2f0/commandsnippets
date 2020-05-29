@@ -66,15 +66,42 @@ const useStyles = makeStyles((theme) => ({
 
 
 const MenuBar = React.memo(function EntryList(props) {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
+  const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
+  const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);
+  const [helpMenuAnchorEl, setHelpMenuAnchorEl] = React.useState(null);
   const classes = useStyles();
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleFileMenuClick = (event) => {
+    setFileMenuAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  const handleFileMenuClose = () => {
+    setFileMenuAnchorEl(null);
+  };
+
+  const handleEditMenuClick = (event) => {
+    setEditMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleEditMenuClose = () => {
+    setEditMenuAnchorEl(null);
+  };
+
+  const handleViewMenuClick = (event) => {
+    setViewMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleViewMenuClose = () => {
+    setViewMenuAnchorEl(null);
+  };
+
+  const handleHelpMenuClick = (event) => {
+    setHelpMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleHelpMenuClose = () => {
+    setHelpMenuAnchorEl(null);
   };
 
   return (
@@ -82,30 +109,58 @@ const MenuBar = React.memo(function EntryList(props) {
       <Toolbar variant="dense" className={classes.toolBar}>
         <Typography className={classes.drawer}>
         </Typography>
-        <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+        <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleFileMenuClick}>
       File
         </Button>
-        <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+        <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEditMenuClick}>
       Edit
         </Button>
-
-        <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+        <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleViewMenuClick}>
       View
         </Button>
-        <Button size="small" color="inherit" label="Primary" aria-controls="help-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleClick}>
+        <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
       Help
         </Button>
       </Toolbar>
       <StyledMenu
         id="file-menu"
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
+        anchorEl={fileMenuAnchorEl}
+        open={Boolean(fileMenuAnchorEl)}
+        onClose={handleFileMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={handleClose}>Profile</MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleClose}>My account</MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleClose}>Logout</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Profile</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Logout</MenuItem>
+      </StyledMenu>
+      <StyledMenu
+        id="edit-menu"
+        anchorEl={editMenuAnchorEl}
+        open={Boolean(editMenuAnchorEl)}
+        onClose={handleEditMenuClose}
+        TransitionComponent={Fade}
+      >
+        <MenuItem className={classes.menuItem} onClick={handleEditMenuClose}>Edit 1</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleEditMenuClose}>Edit 2</MenuItem>
+      </StyledMenu>
+      <StyledMenu
+        id="view-menu"
+        anchorEl={viewMenuAnchorEl}
+        open={Boolean(viewMenuAnchorEl)}
+        onClose={handleViewMenuClose}
+        TransitionComponent={Fade}
+      >
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>View 1</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>View 2</MenuItem>
+      </StyledMenu>
+      <StyledMenu
+        id="help-menu"
+        anchorEl={helpMenuAnchorEl}
+        open={Boolean(helpMenuAnchorEl)}
+        onClose={handleHelpMenuClose}
+        TransitionComponent={Fade}
+      >
+        <MenuItem className={classes.menuItem} onClick={handleHelpMenuClose}>Help 1</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleHelpMenuClose}>Help 2</MenuItem>
       </StyledMenu>
     </>
   )
