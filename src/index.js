@@ -8,16 +8,10 @@ import NewEntry from './NewEntry.jsx';
 
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Typography from '@material-ui/core/Typography';
-
 import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
-
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import Divider from '@material-ui/core/Divider';
-import ListItem from '@material-ui/core/ListItem';
 
 import MenuBar from './MenuBar.jsx';
 
@@ -28,6 +22,8 @@ import { DndProvider } from 'react-dnd'
 import Backend from 'react-dnd-html5-backend'
 
 import EntryList from './EntryList.jsx'
+import LeftDrawer from './LeftDrawer.jsx'
+import RightDrawer from './RightDrawer.jsx'
 
 // import style from './style.js'
 
@@ -39,7 +35,7 @@ import EntryList from './EntryList.jsx'
 // import './style/login.less';
 
 //
-import Tag from './Tag.jsx'
+
 import Box from "@material-ui/core/Box";
 
 class Index extends React.Component { 
@@ -259,7 +255,6 @@ function NavigationBottom() {
   )
 }
 
-const drawerWidth = 150;
 const appBarHeight = 52;
 
 const useStyles = makeStyles((theme) => ({	
@@ -274,16 +269,6 @@ const useStyles = makeStyles((theme) => ({
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
     height: appBarHeight
-  },
-  drawer: {
-    width: drawerWidth,
-    flexShrink: 0,
-  },
-  drawerPaper: {
-    marginTop: appBarHeight,
-    width: drawerWidth,
-    background: "green",
-    color: "white"
   },
   drawerContainer: {
     overflow: 'auto',
@@ -332,39 +317,11 @@ function AppRouter() {
             </Toolbar>
             <MenuBar/>
           </AppBar>
-          <Drawer
-            className={classes.drawer}
-            variant="permanent"
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-          >
-            <div className={classes.drawerContainer}>
-              <List>
-                <ListItem button>
-                  <Tag id='233' name='docker'/>
-                </ListItem>
-                <ListItem button>
-                  <Tag id='133' name='aws'/>
-                </ListItem>
-              </List>
-            </div>
-          </Drawer>
+          <LeftDrawer/>
           <main className={classes.main}>
             <EntryList/>
           </main>
-          <Drawer
-            className={classes.drawer}
-            variant="permanent"
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-            anchor="right"
-          >
-            <div className={classes.drawerContainer}>
-             
-            </div>
-          </Drawer>
+          <RightDrawer/>
         </div>
       </DndProvider>
     </Router>
