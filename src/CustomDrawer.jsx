@@ -22,7 +22,8 @@ const useStyles = makeStyles((theme) => ({
     marginTop: appBarHeight,
     width: drawerWidth,
     background: "pink",
-    color: "white"
+    color: "white",
+    overflow: "hidden"
   },
   drawerContainer: {
     overflow: 'auto',
