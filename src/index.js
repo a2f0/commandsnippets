@@ -4,39 +4,19 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import memoize from "memoize-one";
 import observableUser from './user.js';
 import constructApiUrl from './api.js';
-import NewEntry from './NewEntry.jsx';
-
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
-
 import MenuBar from './MenuBar.jsx';
-
 import Link from '@material-ui/core/Link';
-
-// DND
 import { DndProvider } from 'react-dnd'
 import Backend from 'react-dnd-html5-backend'
-
 import EntryList from './EntryList.jsx'
 import LeftDrawer from './LeftDrawer.jsx'
 import RightDrawer from './RightDrawer.jsx'
-
-// import style from './style.js'
-
-// import './style/border-px.less';
-// import './style/entries.less';
-// import './style/tearleads.less';
-// import './style/taglist.less';
-// import './style/create-entry.less';
-// import './style/login.less';
-
-//
-
-import Box from "@material-ui/core/Box";
 
 class Index extends React.Component { 
 
