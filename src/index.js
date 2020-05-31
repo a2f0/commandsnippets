@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import memoize from "memoize-one";
 import observableUser from './user.js';
 import constructApiUrl from './api.js';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -92,54 +91,6 @@ class Index extends React.Component {
           this.setState({ entries: res })
         })
         .catch(console.log);
-    }
-  );
-
-  getSortedTags(sort) {
-    if (sort === this.state.tagSort) {
-      // Then the sort attribute stayed the same, reverse the order.
-      if (this.state.tagDescending === false) {
-        sort = '-' + sort
-      }
-      this.setState({ tagDescending: !this.state.tagDescending })
-    } else {
-      // Then the sort attribute changed.
-      this.setState({ tagSort: sort })
-      // When sorting tags by created, the most recent should be on top.
-      if (sort === 'date_created') {
-        sort = '-' + sort
-        this.setState({ tagDescending: true })
-      } else {
-        // Reset the sort order to ascending.
-        this.setState({ tagDescending: false })
-      }
-    }
-    this.getTags(sort);
-  }
-
-  getTags = memoize(
-    (sort) => {
-      const base_url = constructApiUrl();
-      var url = base_url + '/api/v1/tags';
-      var querystring = "?"
-      if (sort != undefined) {
-        querystring = querystring + 'sort=' + sort
-      } else {
-        querystring = querystring + 'sort=name'
-      }
-
-      if (querystring != '?') {
-        url = url + querystring
-      }
-      fetch(url, {
-        method: 'GET',
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then((res) => {
-          this.setState({ tags: res })
-        })
-        .catch(console.log)
     }
   );
 
@@ -257,7 +208,7 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
     marginTop: appBarHeight,
     color: "white",
-    background: "purple",
+    background: "black",
     height: `calc(100vh - ${appBarHeight}px)`,
     overflow: "auto"
   },	
@@ -277,7 +228,6 @@ const useStyles = makeStyles((theme) => ({
     padding: 0	
   },
 }));
-
 
 function AppRouter() {
   const classes = useStyles();

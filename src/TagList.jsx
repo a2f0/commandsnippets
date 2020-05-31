@@ -5,32 +5,35 @@ import Tag from './Tag.jsx'
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import memoize from "memoize-one";
+import { makeStyles } from '@material-ui/core/styles';
 
 import API from './api.js'
 
-const style = {
-  width: '100%',
-  marginRight: 0,
-  marginBottom: 0,
-  color: 'white',
-  padding: 0,
-  textAlign: 'left',
-  fontSize: '1rem',
-  lineHeight: 'normal',
-  float: 'left',
-}
+const useStyles = makeStyles({
+  root: {
+    paddingTop: 2,
+    paddingBottom: 0,
+    paddingLeft: 10,
+    paddingRight: 0
+  },
+  item: {
+    padding: 0
+  }
+});
+
 
 const TagList = React.memo(function TagList(props) {
 
   const [data, setData] = useState([]);
   const [included, setIncluded] = useState([]);
-
+  const [sort, setSort] = useState('name');
+  
   useEffect(() => {
     const fetchData = async () => {
-      const response = await API.get('/tags');
+      const sort_string = '?sort=' + sort
+      const response = await API.get('/tags' + sort_string);
       setData(response.data.data);
       setIncluded(response.data.included); 
-      console.log(response.data.data)
     }
     fetchData();
   }, []);
@@ -101,12 +104,12 @@ const TagList = React.memo(function TagList(props) {
   //   }
   // );
 
+  const classes = useStyles();
   return (
-    <List>
+    <List className={classes.root}>
       {data.map((tag, i) => {
-        console.log(tag.attributes.text)
         return (
-          <ListItem key={tag.id} button>
+          <ListItem className={classes.item} key={tag.id} button>
             <Tag id={tag.id} name={tag.attributes.name}/>
           </ListItem>
         )

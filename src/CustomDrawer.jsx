@@ -20,8 +20,10 @@ const useStyles = makeStyles((theme) => ({
   },
   drawerPaper: {
     marginTop: appBarHeight,
+    borderRight: 0,
+    borderLeft: 0,
     width: drawerWidth,
-    background: "pink",
+    background: "purple",
     color: "white",
     overflow: "hidden"
   },

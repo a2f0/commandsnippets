@@ -15,7 +15,7 @@ const EntryList = React.memo(function EntryList(props) {
     const fetchData = async () => {
       const response = await API.get('/tags_entries');
       setIncluded(response.data.included);
-      setEntries(response.data.data);      
+      setEntries(response.data.data);
     }
     fetchData();
   }, []);
@@ -43,33 +43,33 @@ const EntryList = React.memo(function EntryList(props) {
   const [, drop] = useDrop({ accept: ItemTypes.ENTRY })
 
   return (
-    <>
-      <div ref={drop} style={width}>
-        {entries.map((entry, i) => {
 
-          const text_entry = included.filter(
-            i => i.type=="TextEntry" && i.id == entry.relationships.text_entry.data.id
-          )[0];
+    <div ref={drop} style={width}>
+      {entries.map((entry, i) => {
 
-          const tag = included.filter(
-            i => i.type==="Tag" && i.id == entry.relationships.tag.data.id
-          )[0];
+        const text_entry = included.filter(
+          i => i.type=="TextEntry" && i.id == entry.relationships.text_entry.data.id
+        )[0];
 
-          return (
-            <Entry
-              key={entry.id}
-              id={`${entry.id}`}
-              index={i}
-              subject={text_entry.attributes.subject}
-              body={text_entry.attributes.body}
-              moveEntry={moveEntry}
-              findEntry={findEntry}
-            />
-          ) 
-        })
-        }
-      </div>
-    </>
+        const tag = included.filter(
+          i => i.type==="Tag" && i.id == entry.relationships.tag.data.id
+        )[0];
+
+        return (
+          <Entry
+            key={entry.id}
+            id={`${entry.id}`}
+            index={i}
+            subject={text_entry.attributes.subject}
+            body={text_entry.attributes.body}
+            moveEntry={moveEntry}
+            findEntry={findEntry}
+          />
+        ) 
+      })
+      }
+    </div>
+
   )
 })
 export default EntryList
