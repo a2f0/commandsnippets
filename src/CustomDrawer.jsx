@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
     borderRight: 0,
     borderLeft: 0,
     width: drawerWidth,
-    background: "purple",
+    background: "black",
     color: "white",
     overflow: "hidden"
   },

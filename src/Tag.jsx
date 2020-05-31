@@ -3,7 +3,6 @@ import { useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 
 const style = {
-  width: '100%',
   marginRight: 0,
   marginBottom: 0,
   color: 'white',
@@ -11,7 +10,7 @@ const style = {
   textAlign: 'left',
   fontSize: '12',
   lineHeight: 'normal',
-  float: 'left',
+  float: 'left'
 }
 const Tag = ({ name, id }) => {
   const [{ canDrop, isOver }, drop] = useDrop({
@@ -32,8 +31,13 @@ const Tag = ({ name, id }) => {
   } else if (canDrop) {
     backgroundColor = 'gray'
   }
+
+  const handleTagClick = () => {
+    console.log('handle it')
+  }
+
   return (
-    <div ref={drop} style={{ ...style, backgroundColor }}>
+    <div ref={drop} style={{ ...style, backgroundColor }} onClick={handleTagClick}>
       {isActive ? name : name}
     </div>
   )

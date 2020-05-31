@@ -251,7 +251,7 @@ function AppRouter() {
           <main className={classes.main}>
             <EntryList/>
           </main>
-          <RightDrawer/>
+          {/* <RightDrawer/> */}
         </div>
       </DndProvider>
     </Router>

@@ -17,7 +17,10 @@ const useStyles = makeStyles({
     paddingRight: 0
   },
   item: {
-    padding: 0
+    padding: 0,
+    minWidth: 0,
+    // width: 'inherit',
+    display: 'inline-block'
   }
 });
 
@@ -109,9 +112,11 @@ const TagList = React.memo(function TagList(props) {
     <List className={classes.root}>
       {data.map((tag, i) => {
         return (
-          <ListItem className={classes.item} key={tag.id} button>
-            <Tag id={tag.id} name={tag.attributes.name}/>
-          </ListItem>
+          <div className={classes.container}>
+            <ListItem className={classes.item} key={tag.id} button>
+              <Tag id={tag.id} name={tag.attributes.name}/>
+            </ListItem>
+          </div>
         )
       })}
     </List>

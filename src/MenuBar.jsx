@@ -129,7 +129,7 @@ const MenuBar = React.memo(function EntryList(props) {
         onClose={handleFileMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Profile</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create a personal tag</MenuItem>
         <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Logout</MenuItem>
       </StyledMenu>
       <StyledMenu
