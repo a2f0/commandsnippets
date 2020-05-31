@@ -19,7 +19,7 @@ const useStyles = makeStyles({
   item: {
     padding: 0,
     minWidth: 0,
-    // width: 'inherit',
+    width: 'inherit',
     display: 'inline-block'
   }
 });

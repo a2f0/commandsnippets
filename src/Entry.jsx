@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 
@@ -40,6 +40,10 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
   const dragRef = useRef(null)
   const dropRef = useRef(null)
   const originalIndex = findEntry(id).index
+  const [showDragHandle, setShowDragHandle] = useState(false)
+  const opacity = isDragging ? 0 : 1
+  const classes = useStyles();
+
   const [{ isDragging }, drag, preview] = useDrag({
     item: { type: ItemTypes.ENTRY, id, index },
     collect: (monitor) => ({
@@ -109,18 +113,29 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
     },
   })
 
-  const opacity = isDragging ? 0 : 1
-
-  const classes = useStyles();
   drag(dragRef)
   drop(dropRef)
+
+  const mouseEnter = () => {
+    setShowDragHandle(true)
+  }
+  const mouseLeave = () => {
+    setShowDragHandle(false)
+  }
+
   return (
     <div ref={(dropRef)}style={{opacity}}>
       <div ref={(preview)} className={classes.entryWrapper}>
-        <div ref={(dragRef)} className={classes.dragIndicator}>
+        <div ref={(dragRef)} 
+          className={classes.dragIndicator}
+          style={{ visibility: showDragHandle ? "visible" : "hidden" }}
+          onMouseEnter={mouseEnter} 
+          onMouseLeave={mouseLeave}>
           <DragIndicatorIcon/>
         </div>
-        <div className={classes.entry}>
+        <div className={classes.entry}
+          onMouseEnter={mouseEnter}
+          onMouseLeave={mouseLeave}>
           <div className={classes.entrySubject}>
             {subject} 
           </div>
