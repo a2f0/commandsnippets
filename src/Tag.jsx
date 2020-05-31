@@ -12,7 +12,7 @@ const style = {
   lineHeight: 'normal',
   float: 'left'
 }
-const Tag = ({ name, id }) => {
+const Tag = React.memo(function Tag({name, id}) {
   const [{ canDrop, isOver }, drop] = useDrop({
     accept: ItemTypes.ENTRY,
     drop: () => ({ 
@@ -41,5 +41,5 @@ const Tag = ({ name, id }) => {
       {isActive ? name : name}
     </div>
   )
-}
+})
 export default Tag
