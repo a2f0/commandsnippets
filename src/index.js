@@ -1,19 +1,21 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
-import memoize from "memoize-one";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import observableUser from './user.js';
-import Login from './Login.jsx';
-import NavigationTop from './NavigationTop.jsx';
-import constructApiUrl from './api.mjs';
-import NewEntry from './NewEntry.jsx';
-
-import './style/border-px.less';
-import './style/entries.less';
-import './style/tearleads.less';
-import './style/taglist.less';
-import './style/create-entry.less';
-import './style/login.less';
+import constructApiUrl from './api.js';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/core/styles';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import Button from '@material-ui/core/Button';
+import MenuBar from './MenuBar.jsx';
+import Link from '@material-ui/core/Link';
+import { DndProvider } from 'react-dnd'
+import Backend from 'react-dnd-html5-backend'
+import EntryList from './EntryList.jsx'
+import LeftDrawer from './LeftDrawer.jsx'
+import RightDrawer from './RightDrawer.jsx'
 
 class Index extends React.Component { 
 
@@ -89,54 +91,6 @@ class Index extends React.Component {
           this.setState({ entries: res })
         })
         .catch(console.log);
-    }
-  );
-
-  getSortedTags(sort) {
-    if (sort === this.state.tagSort) {
-      // Then the sort attribute stayed the same, reverse the order.
-      if (this.state.tagDescending === false) {
-        sort = '-' + sort
-      }
-      this.setState({ tagDescending: !this.state.tagDescending })
-    } else {
-      // Then the sort attribute changed.
-      this.setState({ tagSort: sort })
-      // When sorting tags by created, the most recent should be on top.
-      if (sort === 'date_created') {
-        sort = '-' + sort
-        this.setState({ tagDescending: true })
-      } else {
-        // Reset the sort order to ascending.
-        this.setState({ tagDescending: false })
-      }
-    }
-    this.getTags(sort);
-  }
-
-  getTags = memoize(
-    (sort) => {
-      const base_url = constructApiUrl();
-      var url = base_url + '/api/v1/tags';
-      var querystring = "?"
-      if (sort != undefined) {
-        querystring = querystring + 'sort=' + sort
-      } else {
-        querystring = querystring + 'sort=name'
-      }
-
-      if (querystring != '?') {
-        url = url + querystring
-      }
-      fetch(url, {
-        method: 'GET',
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then((res) => {
-          this.setState({ tags: res })
-        })
-        .catch(console.log)
     }
   );
 
@@ -232,22 +186,76 @@ function NavigationBottom() {
   )
 }
 
+const appBarHeight = 52;
+
+const useStyles = makeStyles((theme) => ({	
+  button: {	
+    textTransform: 'none'	
+  },
+
+  root: {
+    display: 'flex',
+    background: 'red'
+  },
+  appBar: {
+    zIndex: theme.zIndex.drawer + 1,
+    height: appBarHeight
+  },
+  drawerContainer: {
+    overflow: 'auto',
+  },
+  main: {
+    width: "100%",
+    marginTop: appBarHeight,
+    color: "white",
+    background: "black",
+    height: `calc(100vh - ${appBarHeight}px)`,
+    overflow: "auto"
+  },	
+  toolBar: {	
+    minHeight: 0,	
+    padding: 0,	
+    background: "black"	
+  },	
+  title: {	
+    flexGrow: 1,	
+  },
+  svgIcon: {	
+    color: "white",	
+    fontSize: 12	
+  },
+  list: {	
+    padding: 0	
+  },
+}));
+
 function AppRouter() {
+  const classes = useStyles();
   return (
     <Router>
-      <NavigationTop />
-      <div className="flex-main-container flex-main-container-margin">
-        <div className="flex-side-column"></div>
-        <Switch>
-          <Route exact path="/login" render={(props) => <Login {...props} user={observableUser} />} />
-          <Route path="/:user/:tag" component={Index} />
-          <Route path="/:user" component={Index} />
-          <Route exact path="/" component={Index} />
-        </Switch>
-        <div className="flex-side-column"></div>
-      </div>
-      <NavigationBottom />
+      <DndProvider backend={Backend}>
+        <CssBaseline />
+        <div className={classes.root}>
+          <AppBar position="fixed" className={classes.appBar}>
+            <Toolbar variant="dense" className={classes.toolBar}>
+              {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+             <MenuIcon />
+           </IconButton> */}
+              <Typography className={classes.title}>
+              </Typography>
+              <Button size="small" color="inherit" className={classes.button}>Login</Button>
+            </Toolbar>
+            <MenuBar/>
+          </AppBar>
+          <LeftDrawer/>
+          <main className={classes.main}>
+            <EntryList/>
+          </main>
+          {/* <RightDrawer/> */}
+        </div>
+      </DndProvider>
     </Router>
+    
   );
 }
 ReactDOM.render(<AppRouter />, document.getElementById("©"));
