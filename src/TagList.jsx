@@ -112,8 +112,8 @@ const TagList = React.memo(function TagList(props) {
     <List className={classes.root}>
       {data.map((tag, i) => {
         return (
-          <div className={classes.container}>
-            <ListItem className={classes.item} key={tag.id} button>
+          <div key={tag.id} className={classes.container}>
+            <ListItem className={classes.item} button>
               <Tag id={tag.id} name={tag.attributes.name}/>
             </ListItem>
           </div>
