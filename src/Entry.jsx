@@ -15,16 +15,15 @@ const useStyles = makeStyles({
   entry: {
     display: 'inline-block',
     verticalAlign: 'top',
-    color: 'white'
   },
   entryWrapper: {
     marginBottom: 16,
-    "&:hover": {
-      color: "white"
-    },
-    "&:active": {
-      color: "white"
-    },
+    // "&:hover": {
+    //   color: "white"
+    // },
+    // "&:active": {
+    //   color: "white"
+    // },
   },
   entrySubject: {
 

@@ -1,11 +1,14 @@
 import React from 'react'
 import { useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import { useTheme } from '@material-ui/styles';
+
 
 const style = {
   marginRight: 0,
   marginBottom: 0,
-  color: 'white',
   padding: 0,
   textAlign: 'left',
   fontSize: '12',
@@ -13,6 +16,7 @@ const style = {
   float: 'left'
 }
 const Tag = React.memo(function Tag({name, id}) {
+  const theme = useTheme();
   const [{ canDrop, isOver }, drop] = useDrop({
     accept: ItemTypes.ENTRY,
     drop: () => ({ 
@@ -25,7 +29,7 @@ const Tag = React.memo(function Tag({name, id}) {
     }),
   })
   const isActive = canDrop && isOver
-  let backgroundColor = 'black'
+  let backgroundColor = theme.palette.background.paper
   if (isActive) {
     backgroundColor = 'white'
   } else if (canDrop) {
@@ -36,10 +40,51 @@ const Tag = React.memo(function Tag({name, id}) {
     console.log('handle it')
   }
 
+  const initialState = {
+    mouseX: null,
+    mouseY: null,
+  };
+
+  const [state, setState] = React.useState(initialState);
+
+  const handleContextClick = (event) => {
+    event.preventDefault();
+    setState({
+      mouseX: event.clientX - 2,
+      mouseY: event.clientY - 4,
+    });
+  };
+
+  const handleClose = () => {
+    setState(initialState);
+  };
+
   return (
-    <div ref={drop} style={{ ...style, backgroundColor }} onClick={handleTagClick}>
-      {isActive ? name : name}
-    </div>
+    <>
+      <div
+        ref={drop}
+        style={{ ...style, backgroundColor }}
+        onClick={handleTagClick}
+        onContextMenu={handleContextClick}>
+        {isActive ? name : name}
+      </div>
+      <Menu
+        keepMounted
+        open={state.mouseY !== null}
+        onClose={handleClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          state.mouseY !== null && state.mouseX !== null
+            ? { top: state.mouseY, left: state.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleClose}>New Tag</MenuItem>
+        <MenuItem onClick={handleClose}>Delete Tag</MenuItem>
+        <MenuItem onClick={handleClose}>Delete Tag and sll Entries</MenuItem>
+      </Menu>
+    </>
+    
   )
 })
 export default Tag

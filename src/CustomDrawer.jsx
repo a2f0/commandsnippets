@@ -23,8 +23,6 @@ const useStyles = makeStyles((theme) => ({
     borderRight: 0,
     borderLeft: 0,
     width: drawerWidth,
-    background: "black",
-    color: "white",
     overflow: "hidden"
   },
   drawerContainer: {
@@ -33,14 +31,9 @@ const useStyles = makeStyles((theme) => ({
   toolBar: {	
     minHeight: 0,	
     padding: 0,	
-    background: "black"	
   },	
   title: {	
     flexGrow: 1,	
-  },
-  svgIcon: {	
-    color: "white",	
-    fontSize: 12	
   },
   list: {	
     padding: 0	

@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useState} from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import observableUser from './user.js';
 import constructApiUrl from './api.js';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles, createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
@@ -15,9 +15,44 @@ import { DndProvider } from 'react-dnd'
 import Backend from 'react-dnd-html5-backend'
 import EntryList from './EntryList.jsx'
 import LeftDrawer from './LeftDrawer.jsx'
-import RightDrawer from './RightDrawer.jsx'
 
-class Index extends React.Component { 
+const darkTheme = createMuiTheme({
+  palette: {
+    primary: {
+      main: "#000"
+    },
+    background: {
+      default: '#000',
+      paper: '#000'
+    },
+    text: {
+      primary: '#FFF',
+    }
+  },
+  // custom: {
+  //   myOwnComponent: {
+  //     margin: "10px 10px",
+  //     backgroundColor: "lightgreen"
+  //   }
+  // }
+});
+
+const lightTheme = createMuiTheme({
+  palette: {
+    primary: {
+      main: "#FFF"
+    },
+    background: {
+      default: '#FFF',
+      paper: '#FFF'
+    },
+    text: {
+      primary: '#000',
+    }
+  },
+});
+
+class Index extends React.Component {
 
   constructor(props) {
     super(props);
@@ -188,14 +223,12 @@ function NavigationBottom() {
 
 const appBarHeight = 52;
 
-const useStyles = makeStyles((theme) => ({	
-  button: {	
-    textTransform: 'none'	
+const useStyles = makeStyles((theme) => ({
+  button: {
+    textTransform: 'none'
   },
-
   root: {
     display: 'flex',
-    background: 'red'
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
@@ -207,22 +240,15 @@ const useStyles = makeStyles((theme) => ({
   main: {
     width: "100%",
     marginTop: appBarHeight,
-    color: "white",
-    background: "black",
     height: `calc(100vh - ${appBarHeight}px)`,
     overflow: "auto"
-  },	
-  toolBar: {	
-    minHeight: 0,	
-    padding: 0,	
-    background: "black"	
-  },	
-  title: {	
-    flexGrow: 1,	
   },
-  svgIcon: {	
-    color: "white",	
-    fontSize: 12	
+  toolBar: {
+    minHeight: 0,
+    padding: 0,
+  },
+  title: {
+    flexGrow: 1,
   },
   list: {	
     padding: 0	
@@ -230,30 +256,41 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function AppRouter() {
+  const [selectedTheme, setSelectedTheme] = useState(lightTheme);
   const classes = useStyles();
+  const handleThemeSwitcher = () => {
+    if(selectedTheme === lightTheme) {
+      setSelectedTheme(darkTheme) 
+    } else {
+      setSelectedTheme(lightTheme)
+    }
+  }
+
   return (
     <Router>
-      <DndProvider backend={Backend}>
+      <MuiThemeProvider theme={selectedTheme}>
         <CssBaseline />
-        <div className={classes.root}>
-          <AppBar position="fixed" className={classes.appBar}>
-            <Toolbar variant="dense" className={classes.toolBar}>
-              {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+        <DndProvider backend={Backend}>
+          <div className={classes.root}>
+            <AppBar position="fixed" className={classes.appBar}>
+              <Toolbar variant="dense" className={classes.toolBar}>
+                {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
              <MenuIcon />
            </IconButton> */}
-              <Typography className={classes.title}>
-              </Typography>
-              <Button size="small" color="inherit" className={classes.button}>Login</Button>
-            </Toolbar>
-            <MenuBar/>
-          </AppBar>
-          <LeftDrawer/>
-          <main className={classes.main}>
-            <EntryList/>
-          </main>
-          {/* <RightDrawer/> */}
-        </div>
-      </DndProvider>
+                <Typography className={classes.title}></Typography>
+                <Button size="small" color="inherit" className={classes.button} onClick={handleThemeSwitcher} >Theme Switcher</Button>
+                <Button size="small" color="inherit" className={classes.button}>Login</Button>
+              </Toolbar>
+              <MenuBar/>
+            </AppBar>
+            <LeftDrawer/>
+            <main className={classes.main}>
+              <EntryList/>
+            </main>
+            {/* <RightDrawer/> */}
+          </div>
+        </DndProvider>
+      </MuiThemeProvider>
     </Router>
     
   );

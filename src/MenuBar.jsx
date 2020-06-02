@@ -10,7 +10,7 @@ import Button from '@material-ui/core/Button';
 
 const StyledMenu = withStyles({
   paper: {
-    border: '0px solid #d3d4d5',
+    border: '1px solid #d3d4d5',
     borderRadius: 0,
     margin: 0
   },
@@ -40,10 +40,8 @@ const useStyles = makeStyles((theme) => ({
   toolBar: {
     minHeight: 0,
     padding: 0,
-    background: "black"
   },
   menuButton: {
-    background: "black",
     textTransform: 'none',
     padding: 0,
     minWidth: 0,
@@ -57,13 +55,11 @@ const useStyles = makeStyles((theme) => ({
       borderRadius: 0	
     }
   },
-  menuItem: {	
-    background: "black",	
-    color: 'white',	
+  menuItem: {
+    padding: 5,
     fontSize: 12
   },
 }));
-
 
 const MenuBar = React.memo(function EntryList(props) {
   const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
