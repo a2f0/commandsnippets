@@ -58,7 +58,7 @@ const EntryList = React.memo(function EntryList(props) {
         return (
           <Entry
             key={entry.id}
-            id={`${entry.id}`}
+            id={entry.id}
             index={i}
             subject={text_entry.attributes.subject}
             body={text_entry.attributes.body}

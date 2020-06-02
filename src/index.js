@@ -256,7 +256,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function AppRouter() {
-  const [selectedTheme, setSelectedTheme] = useState(lightTheme);
+  const [selectedTheme, setSelectedTheme] = useState(darkTheme);
   const classes = useStyles();
   const handleThemeSwitcher = () => {
     if(selectedTheme === lightTheme) {
@@ -278,8 +278,8 @@ function AppRouter() {
              <MenuIcon />
            </IconButton> */}
                 <Typography className={classes.title}></Typography>
-                <Button size="small" color="inherit" className={classes.button} onClick={handleThemeSwitcher} >Theme Switcher</Button>
-                <Button size="small" color="inherit" className={classes.button}>Login</Button>
+                <Button size="small" className={classes.button} onClick={handleThemeSwitcher} >Theme Switcher</Button>
+                <Button size="small" className={classes.button}>Login</Button>
               </Toolbar>
               <MenuBar/>
             </AppBar>

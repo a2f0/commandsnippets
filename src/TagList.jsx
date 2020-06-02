@@ -24,7 +24,6 @@ const useStyles = makeStyles({
   }
 });
 
-
 const TagList = React.memo(function TagList(props) {
 
   const [data, setData] = useState([]);
@@ -40,25 +39,6 @@ const TagList = React.memo(function TagList(props) {
     }
     fetchData();
   }, []);
-
-  const [{ canDrop, isOver }, drop] = useDrop({
-    accept: ItemTypes.ENTRY,
-    drop: () => ({ 
-      name: name, 
-      id: id, 
-      type: 'Tag' }),
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-      canDrop: monitor.canDrop(),
-    }),
-  })
-  const isActive = canDrop && isOver
-  let backgroundColor = 'black'
-  if (isActive) {
-    backgroundColor = 'white'
-  } else if (canDrop) {
-    backgroundColor = 'gray'
-  }
 
   const getSortedTags = (sort) => {
     if (sort === this.state.tagSort) {

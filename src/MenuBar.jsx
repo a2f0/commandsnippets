@@ -10,7 +10,7 @@ import Button from '@material-ui/core/Button';
 
 const StyledMenu = withStyles({
   paper: {
-    border: '1px solid #d3d4d5',
+    // border: '1px solid #d3d4d5',
     borderRadius: 0,
     margin: 0
   },
@@ -62,11 +62,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const MenuBar = React.memo(function EntryList(props) {
+  const classes = useStyles();
   const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
   const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);
   const [helpMenuAnchorEl, setHelpMenuAnchorEl] = React.useState(null);
-  const classes = useStyles();
 
   const handleFileMenuClick = (event) => {
     setFileMenuAnchorEl(event.currentTarget);
@@ -105,16 +105,16 @@ const MenuBar = React.memo(function EntryList(props) {
       <Toolbar variant="dense" className={classes.toolBar}>
         <Typography className={classes.drawer}>
         </Typography>
-        <Button size="small" color="inherit" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleFileMenuClick}>
+        <Button size="small" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleFileMenuClick}>
       File
         </Button>
-        <Button size="small" color="inherit" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEditMenuClick}>
+        <Button size="small" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEditMenuClick}>
       Edit
         </Button>
-        <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleViewMenuClick}>
+        <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleViewMenuClick}>
       View
         </Button>
-        <Button size="small" color="inherit" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
+        <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
       Help
         </Button>
       </Toolbar>
