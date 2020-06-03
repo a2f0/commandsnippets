@@ -40,7 +40,7 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
   const classes = useStyles();
   const theme = useTheme();
   const [{ isDragging }, drag, preview] = useDrag({
-    item: { type: ItemTypes.ENTRY, id, index },
+    item: { type: ItemTypes.ENTRY, id, originalIndex },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -58,7 +58,9 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
         } else {
           // Then it was reordered in the list.
           if (originalIndex != findEntry(id).index ) {
-            console.log("it moved")
+            console.info("it moved from index " + originalIndex + " to " + findEntry(id).index)
+          } else {
+            console.info("it wasn't moved.")
           }
         }
       }
@@ -121,7 +123,7 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
   }
 
   return (
-    <div ref={(dropRef)}style={{opacity}}>
+    <div ref={(dropRef)} style={{opacity}}>
       <div ref={(preview)} className={classes.entryWrapper}>
         <div
           ref={(dragRef)} 
