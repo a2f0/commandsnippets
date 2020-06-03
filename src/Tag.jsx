@@ -1,9 +1,10 @@
-import React from 'react'
+import React, {useState} from 'react'
 import { useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { useTheme } from '@material-ui/styles';
+import TagContextMenu from './TagContextMenu.jsx'
 
 
 const style = {
@@ -40,23 +41,19 @@ const Tag = React.memo(function Tag({name, id}) {
     console.log('handle it')
   }
 
-  const initialState = {
+  const initialMouse = {
     mouseX: null,
     mouseY: null,
   };
 
-  const [state, setState] = React.useState(initialState);
+  const [mouse, setMouse] = useState(initialMouse);
 
   const handleContextClick = (event) => {
     event.preventDefault();
-    setState({
-      mouseX: event.clientX - 2,
-      mouseY: event.clientY - 4,
-    });
-  };
-
-  const handleClose = () => {
-    setState(initialState);
+    let mouseData = {...mouse}
+    mouseData.mouseX = event.clientX - 2,
+    mouseData.mouseY = event.clientY - 4,
+    setMouse(mouseData)
   };
 
   return (
@@ -68,23 +65,8 @@ const Tag = React.memo(function Tag({name, id}) {
         onContextMenu={handleContextClick}>
         {isActive ? name : name}
       </div>
-      {/* <Menu
-        keepMounted
-        open={state.mouseY !== null}
-        onClose={handleClose}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          state.mouseY !== null && state.mouseX !== null
-            ? { top: state.mouseY, left: state.mouseX }
-            : undefined
-        }
-      >
-        <MenuItem onClick={handleClose}>New Tag</MenuItem>
-        <MenuItem onClick={handleClose}>Delete Tag</MenuItem>
-        <MenuItem onClick={handleClose}>Delete Tag and sll Entries</MenuItem>
-      </Menu> */}
+      <TagContextMenu mouse={mouse}/>
     </>
-    
   )
 })
 export default Tag
