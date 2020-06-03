@@ -1,17 +1,14 @@
 import React, { useRef, useState } from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
+import { useTheme } from '@material-ui/styles';
 
 import { makeStyles } from '@material-ui/core/styles';
 
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 
 const useStyles = makeStyles({
-  dragIndicator: {
-    display: 'inline-block',
-    cursor: 'move',
-    verticalAlign: 'top'
-  },
+
   entry: {
     display: 'inline-block',
     verticalAlign: 'top',
@@ -40,9 +37,8 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
   const dropRef = useRef(null)
   const originalIndex = findEntry(id).index
   const [showDragHandle, setShowDragHandle] = useState(false)
-  const opacity = isDragging ? 0 : 1
   const classes = useStyles();
-
+  const theme = useTheme();
   const [{ isDragging }, drag, preview] = useDrag({
     item: { type: ItemTypes.ENTRY, id, index },
     collect: (monitor) => ({
@@ -68,6 +64,8 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
       }
     },
   })
+  // Make sure opacity is above the useDrag call above
+  const opacity = isDragging ? 0 : 1
   const [, drop] = useDrop({
     accept: ItemTypes.ENTRY,
     canDrop: () => {
@@ -125,9 +123,9 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
   return (
     <div ref={(dropRef)}style={{opacity}}>
       <div ref={(preview)} className={classes.entryWrapper}>
-        <div ref={(dragRef)} 
-          className={classes.dragIndicator}
-          style={{ visibility: showDragHandle ? "visible" : "hidden" }}
+        <div
+          ref={(dragRef)} 
+          style={{...theme.custom.dragIndicator, visibility: showDragHandle ? "visible" : "hidden" }}
           onMouseEnter={mouseEnter} 
           onMouseLeave={mouseLeave}>
           <DragIndicatorIcon/>

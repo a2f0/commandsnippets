@@ -16,28 +16,36 @@ import Backend from 'react-dnd-html5-backend'
 import EntryList from './EntryList.jsx'
 import LeftDrawer from './LeftDrawer.jsx'
 
-const darkTheme = createMuiTheme({
+const darkBackground = "#000"
+const darkForeground = "#FFF"
+
+const baseTheme = createMuiTheme({
+  custom: {
+    dragIndicator: {
+      display: 'inline-block',
+      cursor: 'move',
+      verticalAlign: 'top',
+      width: 24
+    }
+  }
+})
+
+const darkTheme = createMuiTheme(baseTheme, {
   palette: {
     primary: {
-      main: "#000"
+      main: darkBackground
     },
     background: {
-      default: '#000',
-      paper: '#000'
+      default: darkBackground,
+      paper: darkBackground
     },
     text: {
-      primary: '#FFF',
+      primary: darkForeground,
     }
-  },
-  // custom: {
-  //   myOwnComponent: {
-  //     margin: "10px 10px",
-  //     backgroundColor: "lightgreen"
-  //   }
-  // }
+  }
 });
 
-const lightTheme = createMuiTheme({
+const lightTheme = createMuiTheme(baseTheme, {
   palette: {
     primary: {
       main: "#FFF"

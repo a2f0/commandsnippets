@@ -68,7 +68,7 @@ const Tag = React.memo(function Tag({name, id}) {
         onContextMenu={handleContextClick}>
         {isActive ? name : name}
       </div>
-      <Menu
+      {/* <Menu
         keepMounted
         open={state.mouseY !== null}
         onClose={handleClose}
@@ -82,7 +82,7 @@ const Tag = React.memo(function Tag({name, id}) {
         <MenuItem onClick={handleClose}>New Tag</MenuItem>
         <MenuItem onClick={handleClose}>Delete Tag</MenuItem>
         <MenuItem onClick={handleClose}>Delete Tag and sll Entries</MenuItem>
-      </Menu>
+      </Menu> */}
     </>
     
   )

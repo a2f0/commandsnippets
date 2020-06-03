@@ -7,6 +7,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
+import { useTheme } from '@material-ui/styles';
 
 const StyledMenu = withStyles({
   paper: {
@@ -24,7 +25,7 @@ const StyledMenu = withStyles({
     anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
     transformOrigin={{ vertical: "top", horizontal: "left" }}
     keepMounted
-    elevation={0}
+    // elevation={0}
     getContentAnchorEl={null}
     {...props}
   />
@@ -63,6 +64,7 @@ const useStyles = makeStyles((theme) => ({
 
 const MenuBar = React.memo(function EntryList(props) {
   const classes = useStyles();
+  const theme = useTheme();
   const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
   const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);
@@ -104,6 +106,8 @@ const MenuBar = React.memo(function EntryList(props) {
     <>
       <Toolbar variant="dense" className={classes.toolBar}>
         <Typography className={classes.drawer}>
+        </Typography>
+        <Typography style={{...theme.custom.dragIndicator}}>
         </Typography>
         <Button size="small" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleFileMenuClick}>
       File
