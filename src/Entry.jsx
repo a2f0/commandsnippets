@@ -125,10 +125,12 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
       <div ref={(preview)} className={classes.entryWrapper}>
         <div
           ref={(dragRef)} 
-          style={{...theme.custom.dragIndicator, visibility: showDragHandle ? "visible" : "hidden" }}
+          style={{...theme.custom.dragIndicator}}
           onMouseEnter={mouseEnter} 
           onMouseLeave={mouseLeave}>
-          <DragIndicatorIcon/>
+          <DragIndicatorIcon
+            style={{ visibility: showDragHandle ? "visible" : "hidden" }}
+          />
         </div>
         <div className={classes.entry}
           onMouseEnter={mouseEnter}
