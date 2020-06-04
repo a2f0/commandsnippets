@@ -15,50 +15,8 @@ import { DndProvider } from 'react-dnd'
 import Backend from 'react-dnd-html5-backend'
 import EntryList from './EntryList.jsx'
 import LeftDrawer from './LeftDrawer.jsx'
-
-const darkBackground = "#000"
-const darkForeground = "#FFF"
-
-const baseTheme = createMuiTheme({
-  custom: {
-    dragIndicator: {
-      display: 'inline-block',
-      cursor: 'move',
-      verticalAlign: 'top',
-      width: 24
-    }
-  }
-})
-
-const darkTheme = createMuiTheme(baseTheme, {
-  palette: {
-    primary: {
-      main: darkBackground
-    },
-    background: {
-      default: darkBackground,
-      paper: darkBackground
-    },
-    text: {
-      primary: darkForeground,
-    }
-  }
-});
-
-const lightTheme = createMuiTheme(baseTheme, {
-  palette: {
-    primary: {
-      main: "#FFF"
-    },
-    background: {
-      default: '#FFF',
-      paper: '#FFF'
-    },
-    text: {
-      primary: '#000',
-    }
-  },
-});
+import ThemeSwitcher from './ThemeSwitcher.jsx'
+import {lightTheme, darkTheme } from './themes.js'
 
 class Index extends React.Component {
 
@@ -268,7 +226,7 @@ function AppRouter() {
   const classes = useStyles();
   const handleThemeSwitcher = () => {
     if(selectedTheme === lightTheme) {
-      setSelectedTheme(darkTheme) 
+      setSelectedTheme(darkTheme)
     } else {
       setSelectedTheme(lightTheme)
     }
@@ -282,11 +240,8 @@ function AppRouter() {
           <div className={classes.root}>
             <AppBar position="fixed" className={classes.appBar}>
               <Toolbar variant="dense" className={classes.toolBar}>
-                {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
-             <MenuIcon />
-           </IconButton> */}
                 <Typography className={classes.title}></Typography>
-                <Button size="small" className={classes.button} onClick={handleThemeSwitcher} >Theme Switcher</Button>
+                <ThemeSwitcher handleThemeSwitcher={handleThemeSwitcher} selectedTheme={selectedTheme}/>
                 <Button size="small" className={classes.button}>Login</Button>
               </Toolbar>
               <MenuBar/>
