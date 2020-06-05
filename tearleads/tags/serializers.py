@@ -3,6 +3,7 @@ from rest_framework_json_api.relations import ResourceRelatedField
 
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
 from tearleads.users.serializers import UserSerializer
+from tearleads.text_entries.serializers import TextEntrySerializer
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -22,15 +23,16 @@ class TagTextEntryThroughModelSerializer(serializers.ModelSerializer):
 
     included_serializers = {
         'user': UserSerializer,
-        'tag': TagSerializer
+        'tag': TagSerializer,
+        'text_entry': TextEntrySerializer
     }
 
     class Meta:
         model = TagTextEntryThroughModel
-        fields = ('id','tag','user')
+        fields = ('id','tag','user','text_entry')
 
     class JSONAPIMeta:
-        included_resources = ['user', 'tag']
+        included_resources = ['user', 'tag', 'text_entry']
 
 
 class TagTextEntryThroughModelCreateSerializer(serializers.ModelSerializer):
