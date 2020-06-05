@@ -9,6 +9,10 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import { useTheme } from '@material-ui/styles';
 
+import WbSunnyIcon from '@material-ui/icons/WbSunny';
+import Brightness3Icon from '@material-ui/icons/Brightness3';
+import { darkTheme } from './themes.js'
+
 const StyledMenu = withStyles({
   paper: {
     // border: '1px solid #d3d4d5',
@@ -57,9 +61,16 @@ const useStyles = makeStyles((theme) => ({
     }
   },
   menuItem: {
-    padding: 5,
-    fontSize: 12
+    paddingLeft: 10,
+    paddingRight: 30,
+    paddingTop: 10,
+    paddingBottom: 10,
+    fontSize: 12,
+    // border: '1px solid red'
   },
+  themeSwitcher: {
+    height: 16,
+  }
 }));
 
 const MenuBar = React.memo(function EntryList(props) {
@@ -151,6 +162,13 @@ const MenuBar = React.memo(function EntryList(props) {
       >
         <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>View 1</MenuItem>
         <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>View 2</MenuItem>
+        {/* <MenuItem className={classes.menuItem} onClick={props.handleThemeSwitcher; handleViewMenuClose}>Light Mode */}
+        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(); handleViewMenuClose();}}>Light Mode
+          <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(); handleViewMenuClose();}}>Dark Mode
+          <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/>
+        </MenuItem>
       </StyledMenu>
       <StyledMenu
         id="help-menu"

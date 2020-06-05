@@ -244,7 +244,7 @@ function AppRouter() {
                 <ThemeSwitcher handleThemeSwitcher={handleThemeSwitcher} selectedTheme={selectedTheme}/>
                 <Button size="small" className={classes.button}>Login</Button>
               </Toolbar>
-              <MenuBar/>
+              <MenuBar handleThemeSwitcher={handleThemeSwitcher}/>
             </AppBar>
             <LeftDrawer/>
             <main className={classes.main}>
