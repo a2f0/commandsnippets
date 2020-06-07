@@ -3,19 +3,9 @@ import { makeStyles, createMuiTheme, MuiThemeProvider } from '@material-ui/core/
 const darkBackground = "#202020"
 const darkForeground = "#FFF"
 
-const baseTheme = createMuiTheme({
-  custom: {
-    dragIndicator: {
-      display: 'inline-block',
-      cursor: 'move',
-      verticalAlign: 'top',
-      width: 24
-    }
-  }
-})
-
-export const darkTheme = createMuiTheme(baseTheme, {
+export const darkTheme = createMuiTheme({
   palette: {
+    type: 'dark',
     primary: {
       main: darkBackground
     },
@@ -26,11 +16,20 @@ export const darkTheme = createMuiTheme(baseTheme, {
     text: {
       primary: darkForeground,
     }
+  },
+  custom: {
+    dragIndicator: {
+      display: 'inline-block',
+      cursor: 'move',
+      verticalAlign: 'top',
+      width: 24
+    }
   }
-});
+})
 
-export const lightTheme = createMuiTheme(baseTheme, {
+export const lightTheme = createMuiTheme({
   palette: {
+    type: 'light',
     primary: {
       main: "#FFF"
     },
@@ -42,4 +41,12 @@ export const lightTheme = createMuiTheme(baseTheme, {
       primary: '#000',
     }
   },
+  custom: {
+    dragIndicator: {
+      display: 'inline-block',
+      cursor: 'move',
+      verticalAlign: 'top',
+      width: 24
+    }
+  }
 });
