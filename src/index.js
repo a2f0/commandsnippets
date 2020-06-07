@@ -222,7 +222,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function AppRouter() {
-  const [selectedTheme, setSelectedTheme] = useState(darkTheme);
+  const [selectedTheme, setSelectedTheme] = useState(lightTheme);
   const classes = useStyles();
   const handleThemeSwitcher = () => {
     if(selectedTheme === lightTheme) {

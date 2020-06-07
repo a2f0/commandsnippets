@@ -12,6 +12,8 @@ import { useTheme } from '@material-ui/styles';
 import WbSunnyIcon from '@material-ui/icons/WbSunny';
 import Brightness3Icon from '@material-ui/icons/Brightness3';
 import { darkTheme } from './themes.js'
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import CheckIcon from '@material-ui/icons/Check';
 
 const StyledMenu = withStyles({
   paper: {
@@ -63,8 +65,8 @@ const useStyles = makeStyles((theme) => ({
   menuItem: {
     paddingLeft: 10,
     paddingRight: 30,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: 3,
+    paddingBottom: 3,
     fontSize: 12,
     // border: '1px solid red'
   },
@@ -160,13 +162,42 @@ const MenuBar = React.memo(function EntryList(props) {
         onClose={handleViewMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>View 1</MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>View 2</MenuItem>
-        {/* <MenuItem className={classes.menuItem} onClick={props.handleThemeSwitcher; handleViewMenuClose}>Light Mode */}
-        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(); handleViewMenuClose();}}>Light Mode
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>
+          <ListItemIcon>
+            <CheckIcon fontSize="small" />
+          </ListItemIcon>
+          Sort Entries by Subject
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>
+          <ListItemIcon>
+            <CheckIcon fontSize="small" />
+          </ListItemIcon>
+          Sort Entries by Body
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>
+          <ListItemIcon>
+            <CheckIcon fontSize="small" />
+          </ListItemIcon>
+          Sort Entries by Date Created
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} divider>
+          <ListItemIcon>
+            <CheckIcon fontSize="small" />
+          </ListItemIcon>
+          Sort Entries by Date Modified
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(); handleViewMenuClose();}}>
+          <ListItemIcon>
+            <CheckIcon fontSize="small" />
+          </ListItemIcon>
+          Light Mode
           <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(); handleViewMenuClose();}}>Dark Mode
+        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(); handleViewMenuClose();}}>
+          <ListItemIcon>
+            <CheckIcon fontSize="small" />
+          </ListItemIcon>
+          Dark Mode
           <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/>
         </MenuItem>
       </StyledMenu>

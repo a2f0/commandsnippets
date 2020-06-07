@@ -1,6 +1,6 @@
 import { makeStyles, createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 
-const darkBackground = "#000"
+const darkBackground = "#202020"
 const darkForeground = "#FFF"
 
 const baseTheme = createMuiTheme({
