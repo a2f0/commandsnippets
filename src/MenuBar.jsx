@@ -11,7 +11,7 @@ import { useTheme } from '@material-ui/styles';
 
 import WbSunnyIcon from '@material-ui/icons/WbSunny';
 import Brightness3Icon from '@material-ui/icons/Brightness3';
-import { darkTheme } from './themes.js'
+import { darkTheme, lightTheme } from './themes.js'
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import CheckIcon from '@material-ui/icons/Check';
 
@@ -186,14 +186,14 @@ const MenuBar = React.memo(function EntryList(props) {
           </ListItemIcon>
           Sort Entries by Date Modified
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(); handleViewMenuClose();}}>
+        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(lightTheme); handleViewMenuClose();}}>
           <ListItemIcon>
             <CheckIcon fontSize="small" />
           </ListItemIcon>
           Light Mode
           <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(); handleViewMenuClose();}}>
+        <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(darkTheme); handleViewMenuClose();}}>
           <ListItemIcon>
             <CheckIcon fontSize="small" />
           </ListItemIcon>

@@ -1,7 +1,7 @@
 import React from "react";
 import { makeStyles } from '@material-ui/core/styles';
 import { useTheme } from '@material-ui/styles';
-import {darkTheme } from './themes.js'
+import { darkTheme, lightTheme } from './themes.js'
 import WbSunnyIcon from '@material-ui/icons/WbSunny';
 import Brightness3Icon from '@material-ui/icons/Brightness3';
 
@@ -17,8 +17,8 @@ const ThemeSwitcher = React.memo(function ThemeSwitcher(props) {
   return (
     <>
       { theme == darkTheme
-        ? <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} onClick={props.handleThemeSwitcher}/>
-        : <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} onClick={props.handleThemeSwitcher}/>
+        ? <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} onClick={() => { props.handleThemeSwitcher(lightTheme);}}/>
+        : <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} onClick={() => { props.handleThemeSwitcher(darkTheme);}}/>
       }
     </>    
   )

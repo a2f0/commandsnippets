@@ -224,12 +224,8 @@ const useStyles = makeStyles((theme) => ({
 function AppRouter() {
   const [selectedTheme, setSelectedTheme] = useState(lightTheme);
   const classes = useStyles();
-  const handleThemeSwitcher = () => {
-    if(selectedTheme === lightTheme) {
-      setSelectedTheme(darkTheme)
-    } else {
-      setSelectedTheme(lightTheme)
-    }
+  const handleThemeSwitcher = (chosenTheme) => {
+    setSelectedTheme(chosenTheme)
   }
 
   return (
