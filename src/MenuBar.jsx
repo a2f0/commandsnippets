@@ -188,14 +188,20 @@ const MenuBar = React.memo(function EntryList(props) {
         </MenuItem>
         <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(lightTheme); handleViewMenuClose();}}>
           <ListItemIcon>
-            <CheckIcon fontSize="small" />
+            {
+              theme == lightTheme &&
+                <CheckIcon fontSize="small" />
+            }
           </ListItemIcon>
           Light Mode
           <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} />
         </MenuItem>
         <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(darkTheme); handleViewMenuClose();}}>
           <ListItemIcon>
-            <CheckIcon fontSize="small" />
+            {
+              theme == darkTheme &&
+                <CheckIcon fontSize="small" />
+            }
           </ListItemIcon>
           Dark Mode
           <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/>
