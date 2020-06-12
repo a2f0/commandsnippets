@@ -222,16 +222,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const appConfig = observable({
+  entrySortOrder: "date_created",
+})
+
 function AppRouter() {
   const [selectedTheme, setSelectedTheme] = useState(lightTheme);
   const classes = useStyles();
   const handleThemeSwitcher = (chosenTheme) => {
     setSelectedTheme(chosenTheme)
   }
-
-  const appConfig = observable({
-    entrySortOrder: "date_created",
-  })
 
   return (
     <Router>
