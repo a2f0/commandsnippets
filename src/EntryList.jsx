@@ -15,38 +15,38 @@ const width = {
 const EntryList = React.memo(observer(function EntryList(props) {
 
   const appConfig = useContext(AppContext)
+  const [data, setData] = useState( { data: [], included: [] })
 
   useEffect(
     () =>
       autorun(() => {
         const fetchData = async () => {
-          const response = await API.get('/tags_entries?sort=' + appConfig.entrySortOrder);
-          setIncluded(response.data.included);
-          setEntries(response.data.data);
+          const response = await API.get(
+            '/tags_entries?' +
+            'sort=' + appConfig.entrySortOrder
+          );
+          setData(response.data);
         }
         fetchData();
       }),
     [],
   )
-
-  const [entries, setEntries] = useState([])
-  const [included, setIncluded] = useState([])
   const moveEntry = (id, atIndex) => {
     const { entry, index } = findEntry(id)
-    setEntries(
-      update(entries, {
-        $splice: [
-          [index, 1],
-          [atIndex, 0, entry],
-        ],
-      }),
-    )
+    let reordered = update(data.data, {
+      $splice: [
+        [index, 1],
+        [atIndex, 0, entry],
+      ],
+    }) 
+    let newData = {...data, data: reordered }
+    setData(newData)
   }
   const findEntry = (id) => {
-    const entry = entries.filter((c) => `${c.id}` === id)[0]
+    const entry = data.data.filter((c) => `${c.id}` === id)[0]
     return {
       entry,
-      index: entries.indexOf(entry),
+      index: data.data.indexOf(entry),
     }
   }
   const [, drop] = useDrop({ accept: ItemTypes.ENTRY })
@@ -54,13 +54,13 @@ const EntryList = React.memo(observer(function EntryList(props) {
   return (
 
     <div ref={drop} style={width}>
-      {entries.map((entry, i) => {
+      {data.data.map((entry, i) => {
 
-        const text_entry = included.filter(
+        const text_entry = data.included.filter(
           i => i.type=="TextEntry" && i.id == entry.relationships.text_entry.data.id
         )[0];
 
-        const tag = included.filter(
+        const tag = data.included.filter(
           i => i.type==="Tag" && i.id == entry.relationships.tag.data.id
         )[0];
 
