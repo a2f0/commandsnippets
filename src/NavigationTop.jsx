@@ -1,6 +1,5 @@
 import Logout from './Logout.jsx';
 import React from "react";
-import observableUser from './user.js';
 import { observer } from 'mobx-react';
 import { Link } from "react-router-dom";
 

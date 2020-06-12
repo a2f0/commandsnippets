@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useContext } from 'react'
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Fade from '@material-ui/core/Fade';
@@ -14,6 +14,12 @@ import Brightness3Icon from '@material-ui/icons/Brightness3';
 import { darkTheme, lightTheme } from './themes.js'
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import CheckIcon from '@material-ui/icons/Check';
+import { useObserver } from 'mobx-react'
+import AppContext from './AppContext.js'
+
+
+import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward'
+import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward'
 
 const StyledMenu = withStyles({
   paper: {
@@ -75,7 +81,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const MenuBar = React.memo(function EntryList(props) {
+const MenuBar = React.memo(function MenuBar(props) {
   const classes = useStyles();
   const theme = useTheme();
   const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
@@ -115,7 +121,13 @@ const MenuBar = React.memo(function EntryList(props) {
     setHelpMenuAnchorEl(null);
   };
 
-  return (
+  const handleSetEntrySortOrder = (order) => {
+    appConfig.entrySortOrder = order
+  };
+
+  const appConfig = useContext(AppContext)
+  
+  return useObserver(() => (
     <>
       <Toolbar variant="dense" className={classes.toolBar}>
         <Typography className={classes.drawer}>
@@ -164,27 +176,33 @@ const MenuBar = React.memo(function EntryList(props) {
       >
         <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>
           <ListItemIcon>
-            <CheckIcon fontSize="small" />
+            {/* <CheckIcon fontSize="small" /> */}
           </ListItemIcon>
           Sort Entries by Subject
         </MenuItem>
         <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>
           <ListItemIcon>
-            <CheckIcon fontSize="small" />
+          
           </ListItemIcon>
           Sort Entries by Body
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("date_created"); handleViewMenuClose();}}>
           <ListItemIcon>
-            <CheckIcon fontSize="small" />
-          </ListItemIcon>
-          Sort Entries by Date Created
+            {
+              appConfig.entrySortOrder == "date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>  
+          Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} divider>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-date_created"); handleViewMenuClose();}} divider>
           <ListItemIcon>
-            <CheckIcon fontSize="small" />
+            {
+              appConfig.entrySortOrder== "-date_created" &&
+              <CheckIcon fontSize="small" />
+            }
           </ListItemIcon>
-          Sort Entries by Date Modified
+          Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
         <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(lightTheme); handleViewMenuClose();}}>
           <ListItemIcon>
@@ -194,7 +212,7 @@ const MenuBar = React.memo(function EntryList(props) {
             }
           </ListItemIcon>
           Light Mode
-          <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} />
+          {/* <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} /> */}
         </MenuItem>
         <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(darkTheme); handleViewMenuClose();}}>
           <ListItemIcon>
@@ -204,7 +222,7 @@ const MenuBar = React.memo(function EntryList(props) {
             }
           </ListItemIcon>
           Dark Mode
-          <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/>
+          {/* <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/> */}
         </MenuItem>
       </StyledMenu>
       <StyledMenu
@@ -218,6 +236,6 @@ const MenuBar = React.memo(function EntryList(props) {
         <MenuItem className={classes.menuItem} onClick={handleHelpMenuClose}>Help 2</MenuItem>
       </StyledMenu>
     </>
-  )
+  ))
 })
 export default MenuBar

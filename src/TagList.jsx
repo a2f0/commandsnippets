@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react'
 import { useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import Tag from './Tag.jsx'
+import TagSearch from './Search.jsx'
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import memoize from "memoize-one";
@@ -89,17 +90,20 @@ const TagList = React.memo(function TagList(props) {
 
   const classes = useStyles();
   return (
-    <List className={classes.root}>
-      {data.map((tag, i) => {
-        return (
-          <div key={tag.id} className={classes.container}>
-            <ListItem className={classes.item} button>
-              <Tag id={tag.id} name={tag.attributes.name}/>
-            </ListItem>
-          </div>
-        )
-      })}
-    </List>
+    <>
+      <TagSearch/>
+      <List className={classes.root}>
+        {data.map((tag, i) => {
+          return (
+            <div key={tag.id} className={classes.container}>
+              <ListItem className={classes.item} button>
+                <Tag id={tag.id} name={tag.attributes.name}/>
+              </ListItem>
+            </div>
+          )
+        })}
+      </List>
+    </>
   )
 })
 export default TagList

@@ -1,24 +1,33 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { useDrop } from 'react-dnd'
 import Entry from './Entry.jsx'
 import update from 'immutability-helper'
 import ItemTypes from './ItemTypes'
 import API from './api.js'
+import { autorun } from 'mobx'
+import AppContext from './AppContext.js'
+import { observer } from "mobx-react"
 
 const width = {
   width: "100%",
 }
 
-const EntryList = React.memo(function EntryList(props) {
+const EntryList = React.memo(observer(function EntryList(props) {
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await API.get('/tags_entries');
-      setIncluded(response.data.included);
-      setEntries(response.data.data);
-    }
-    fetchData();
-  }, []);
+  const appConfig = useContext(AppContext)
+
+  useEffect(
+    () =>
+      autorun(() => {
+        const fetchData = async () => {
+          const response = await API.get('/tags_entries?sort=' + appConfig.entrySortOrder);
+          setIncluded(response.data.included);
+          setEntries(response.data.data);
+        }
+        fetchData();
+      }),
+    [],
+  )
 
   const [entries, setEntries] = useState([])
   const [included, setIncluded] = useState([])
@@ -71,5 +80,5 @@ const EntryList = React.memo(function EntryList(props) {
     </div>
 
   )
-})
+}))
 export default EntryList

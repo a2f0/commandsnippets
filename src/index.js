@@ -1,7 +1,6 @@
 import React, { useState} from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import observableUser from './user.js';
 import constructApiUrl from './api.js';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Typography from '@material-ui/core/Typography';
@@ -17,6 +16,8 @@ import EntryList from './EntryList.jsx'
 import LeftDrawer from './LeftDrawer.jsx'
 import ThemeSwitcher from './ThemeSwitcher.jsx'
 import {lightTheme, darkTheme } from './themes.js'
+import { observable } from "mobx"
+import AppContext from './AppContext.js'
 
 class Index extends React.Component {
 
@@ -228,28 +229,34 @@ function AppRouter() {
     setSelectedTheme(chosenTheme)
   }
 
+  const appConfig = observable({
+    entrySortOrder: "date_created",
+  })
+
   return (
     <Router>
-      <MuiThemeProvider theme={selectedTheme}>
-        <CssBaseline />
-        <DndProvider backend={Backend}>
-          <div className={classes.root}>
-            <AppBar position="fixed" className={classes.appBar}>
-              <Toolbar variant="dense" className={classes.toolBar}>
-                <Typography className={classes.title}></Typography>
-                <ThemeSwitcher handleThemeSwitcher={handleThemeSwitcher} selectedTheme={selectedTheme}/>
-                <Button size="small" className={classes.button}>Login</Button>
-              </Toolbar>
-              <MenuBar handleThemeSwitcher={handleThemeSwitcher}/>
-            </AppBar>
-            <LeftDrawer/>
-            <main className={classes.main}>
-              <EntryList/>
-            </main>
-            {/* <RightDrawer/> */}
-          </div>
-        </DndProvider>
-      </MuiThemeProvider>
+      <AppContext.Provider value={appConfig}>
+        <MuiThemeProvider theme={selectedTheme}>
+          <CssBaseline />
+          <DndProvider backend={Backend}>
+            <div className={classes.root}>
+              <AppBar position="fixed" className={classes.appBar}>
+                <Toolbar variant="dense" className={classes.toolBar}>
+                  <Typography className={classes.title}></Typography>
+                  <ThemeSwitcher handleThemeSwitcher={handleThemeSwitcher} selectedTheme={selectedTheme}/>
+                  <Button size="small" className={classes.button}>Login</Button>
+                </Toolbar>
+                <MenuBar handleThemeSwitcher={handleThemeSwitcher}/>
+              </AppBar>
+              <LeftDrawer/>
+              <main className={classes.main}>
+                <EntryList/>
+              </main>
+              {/* <RightDrawer/> */}
+            </div>
+          </DndProvider>
+        </MuiThemeProvider>
+      </AppContext.Provider>
     </Router>
     
   );
