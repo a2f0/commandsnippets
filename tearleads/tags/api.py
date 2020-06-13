@@ -15,7 +15,7 @@ class TagViewSet(viewsets.ModelViewSet):
 class TagTextEntryThroughModel(viewsets.ModelViewSet):
     queryset = TagTextEntryThroughModel.objects.all()
     serializer_class = TagTextEntryThroughModelSerializer
-    ordering_fields = ('date_created', 'order')
+    ordering_fields = ('date_created', 'order', 'text_entry__subject', 'text_entry__body')
 
     def create(self, request, *args, **kwargs):
         serializer = TagTextEntryThroughModelCreateSerializer(data=request.data)
