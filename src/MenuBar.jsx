@@ -174,6 +174,15 @@ const MenuBar = React.memo(function MenuBar(props) {
         onClose={handleViewMenuClose}
         TransitionComponent={Fade}
       >
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("order"); handleViewMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "order" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by User-Defined Order
+        </MenuItem>
         <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("text_entry__subject"); handleViewMenuClose();}} >
           <ListItemIcon>
             {
