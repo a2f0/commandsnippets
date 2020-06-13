@@ -174,17 +174,41 @@ const MenuBar = React.memo(function MenuBar(props) {
         onClose={handleViewMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("text_entry__subject"); handleViewMenuClose();}} >
           <ListItemIcon>
-            {/* <CheckIcon fontSize="small" /> */}
-          </ListItemIcon>
-          Sort Entries by Subject
+            {
+              appConfig.entrySortOrder == "text_entry__subject" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Subject <ArrowDownwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose}>
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("-text_entry__subject"); handleViewMenuClose();}} >
           <ListItemIcon>
-          
-          </ListItemIcon>
-          Sort Entries by Body
+            {
+              appConfig.entrySortOrder == "-text_entry__subject" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Subject <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("text_entry__body"); handleViewMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "text_entry__body" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Body <ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("-text_entry__body"); handleViewMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "-text_entry__body" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Body <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
         <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("date_created"); handleViewMenuClose();}}>
           <ListItemIcon>
