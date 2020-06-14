@@ -16,7 +16,7 @@ const style = {
   lineHeight: 'normal',
   float: 'left'
 }
-const Tag = React.memo(function Tag({name, id}) {
+const Tag = React.memo(function Tag({tag, id, user}) {
   const theme = useTheme();
   const [{ canDrop, isOver }, drop] = useDrop({
     accept: ItemTypes.ENTRY,
@@ -63,7 +63,7 @@ const Tag = React.memo(function Tag({name, id}) {
         style={{ ...style, backgroundColor }}
         onClick={handleTagClick}
         onContextMenu={handleContextClick}>
-        {isActive ? name : name}
+        {isActive ? tag.attributes.name : tag.attributes.name}
       </div>
       <TagContextMenu mouse={mouse}/>
     </>

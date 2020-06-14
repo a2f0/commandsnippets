@@ -27,16 +27,14 @@ const useStyles = makeStyles({
 
 const TagList = React.memo(function TagList(props) {
 
-  const [data, setData] = useState([]);
-  const [included, setIncluded] = useState([]);
+  const [data, setData] = useState( { data: [], included: [] });
   const [sort, setSort] = useState('name');
   
   useEffect(() => {
     const fetchData = async () => {
       const sort_string = '?sort=' + sort
       const response = await API.get('/tags' + sort_string);
-      setData(response.data.data);
-      setIncluded(response.data.included); 
+      setData(response.data);
     }
     fetchData();
   }, []);
@@ -93,11 +91,14 @@ const TagList = React.memo(function TagList(props) {
     <>
       <TagSearch/>
       <List className={classes.root}>
-        {data.map((tag, i) => {
+        {data.data.map((tag, i) => {
+          const user = data.included.filter(
+            i => i.type=="User" && i.id == tag.relationships.user.data.id
+          )[0];
           return (
             <div key={tag.id} className={classes.container}>
               <ListItem className={classes.item} button>
-                <Tag id={tag.id} name={tag.attributes.name}/>
+                <Tag id={tag.id} tag={tag} user={user}/>
               </ListItem>
             </div>
           )
