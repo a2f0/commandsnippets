@@ -87,12 +87,22 @@ class TestTagsEntriesApi(BaseTestCase):
         entry1 = TextEntryFactory(user=self.user1)
         entry2 = TextEntryFactory(user=self.user1)
         tag1 = TagFactory(user=self.user1)
-        TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1, user=self.user1)
+        tag_entry1 = TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1, user=self.user1)
         response = self.user1_api_client.get('/api/v1/tags_entries?filter[tag.name]={}'.format(tag1.name))
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response['data']), 1)
-        self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+        self.assertEqual(json_response['data'][0]['id'],str(tag_entry1.id))
+
+    def test_filter_by_user_name(self):
+        entry1 = TextEntryFactory(user=self.user1)
+        tag1 = TagFactory(user=self.user1)
+        tag_entry1 = TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1, user=self.user1)
+        response = self.user1_api_client.get('/api/v1/tags_entries?filter[user.username]={}'.format(self.user1.username))
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 1)
+        self.assertEqual(json_response['data'][0]['id'],str(tag_entry1.id))
 
     def test_order_filter(self):
         tag1 = TagFactory(user=self.user1)

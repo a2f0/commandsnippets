@@ -19,7 +19,8 @@ class TagTextEntryThroughModel(viewsets.ModelViewSet):
     ordering_fields = ('date_created', 'order', 'text_entry__subject', 'text_entry__body')
 
     filterset_fields = {
-       'tag__name': ('exact',)
+       'tag__name': ('exact',),
+       'user__username': ('exact',)
     }
 
     def create(self, request, *args, **kwargs):
