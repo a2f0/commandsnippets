@@ -9,7 +9,6 @@ from tearleads.text_entries.serializers import TextEntryCreateSerializer, TextEn
 
 
 class TextEntryViewSet(viewsets.ModelViewSet):
-    filter_backends = (DjangoFilterBackend, OrderingFilter)
     ordering_fields = ('body','date_created','date_updated','subject')
     permission_classes = (IsAuthenticatedOrReadOnly,)
     queryset = TextEntry.objects.all()

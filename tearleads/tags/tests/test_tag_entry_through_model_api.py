@@ -76,6 +76,24 @@ class TestTagsEntriesApi(BaseTestCase):
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_bad_filter(self):
+        response = self.user1_api_client.get('/api/v1/tags_entries?filter[bad]=1')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(json_response['errors']), 1)
+        self.assertEqual(json_response['errors'][0]['detail'], 'invalid filter[bad]')
+
+    def test_filter_by_tag_name(self):
+        entry1 = TextEntryFactory(user=self.user1)
+        entry2 = TextEntryFactory(user=self.user1)
+        tag1 = TagFactory(user=self.user1)
+        TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1, user=self.user1)
+        response = self.user1_api_client.get('/api/v1/tags_entries?filter[tag.name]={}'.format(tag1.name))
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 1)
+        self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+
     def test_order_filter(self):
         tag1 = TagFactory(user=self.user1)
         tag2 = TagFactory(user=self.user1)

@@ -39,7 +39,8 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(len(json_response['errors']), 1)
         self.assertEqual(json_response['errors'][0]['detail'], 'invalid filter[bad]')
-
+    
+    def test_filter_by_id(self):
         # filter by single id
         entry1 = TextEntryFactory(user=self.user1)
         entry2 = TextEntryFactory(user=self.user1)
