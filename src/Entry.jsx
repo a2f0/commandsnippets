@@ -54,6 +54,26 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
         if ( "type" in drop_result ) {
           if ( drop_result.type === "Tag" ) {
             console.info("it was dropped on a tag.")
+            const payload = {
+              'data': {
+                'type': 'TagTextEntryThroughModel',
+                'attributes': {},
+                'relationships': {
+                  'tag': {
+                    'data': {
+                      'type': 'Tag', 
+                      'id': drop_result.id 
+                    }
+                  },
+                  'text_entry': {
+                    'data': {
+                      'type': 'TextEntry',
+                      'id': findEntry(id).id
+                    }
+                  }
+                }
+              }
+            }
           }
         } else {
           // Then it was reordered in the list.
