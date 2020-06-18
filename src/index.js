@@ -250,7 +250,10 @@ function AppRouter() {
               </AppBar>
               <LeftDrawer/>
               <main className={classes.main}>
-                <EntryList/>
+                <Switch>
+                  <Route path="/:user/:tag" component={EntryList} />
+                  <Route exact path="/" component={EntryList} />
+                </Switch>
               </main>
               {/* <RightDrawer/> */}
             </div>

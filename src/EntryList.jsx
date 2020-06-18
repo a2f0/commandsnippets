@@ -7,6 +7,7 @@ import API from './api.js'
 import { autorun } from 'mobx'
 import AppContext from './AppContext.js'
 import { observer } from "mobx-react"
+import { useLocation, useParams } from 'react-router-dom';
 
 const width = {
   width: "100%",
@@ -16,21 +17,36 @@ const EntryList = React.memo(observer(function EntryList(props) {
 
   const appConfig = useContext(AppContext)
   const [data, setData] = useState( { data: [], included: [] })
+  const location = useLocation()
+  const { user } = useParams();
+  const { tag } = useParams();
 
   useEffect(
     () =>
       autorun(() => {
-        const fetchData = async () => {
-          const response = await API.get(
-            '/tags_entries?' +
-            'sort=' + appConfig.entrySortOrder
-          );
-          setData(response.data);
-        }
-        fetchData();
+        retrieveEntries();
       }),
-    [],
+    [location],
   )
+
+  const retrieveEntries = () => {
+    const fetchData = async () => {
+      var url_query_query_string = '/tags_entries?' +
+        'sort=' + appConfig.entrySortOrder
+      if (user != undefined ) {
+        url_query_query_string += '&filter[user.username]=' + user
+      }
+      if (tag != undefined ) {
+        url_query_query_string += '&filter[tag.name]=' + tag
+      } 
+      console.log(url_query_query_string)
+      const response = await API.get(
+        url_query_query_string
+      );
+      setData(response.data);
+    }
+    fetchData();
+  }
   const moveEntry = (id, atIndex) => {
     const { entry, index } = findEntry(id)
     let reordered = update(data.data, {

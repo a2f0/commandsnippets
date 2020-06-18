@@ -5,7 +5,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { useTheme } from '@material-ui/styles';
 import TagContextMenu from './TagContextMenu.jsx'
-
+import { Link } from "react-router-dom";
 
 const style = {
   marginRight: 0,
@@ -58,13 +58,15 @@ const Tag = React.memo(function Tag({tag, id, user}) {
 
   return (
     <>
-      <div
-        ref={drop}
-        style={{ ...style, backgroundColor }}
-        onClick={handleTagClick}
-        onContextMenu={handleContextClick}>
-        {isActive ? tag.attributes.name : tag.attributes.name}
-      </div>
+      <Link to={`/${user.attributes.username}/${tag.attributes.name}`}>
+        <div
+          ref={drop}
+          style={{ ...style, backgroundColor }}
+          onClick={handleTagClick}
+          onContextMenu={handleContextClick}>
+          {isActive ? tag.attributes.name : tag.attributes.name}
+        </div>
+      </Link>
       <TagContextMenu mouse={mouse}/>
     </>
   )
