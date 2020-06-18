@@ -10,6 +10,7 @@ class BaseTestCase(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user1 = UserFactory()
+        cls.user2 = UserFactory()
         cls.user1_api_client = APIClient()
         token = Token.objects.get(user__username=cls.user1.username)
         C = cookies.SimpleCookie()

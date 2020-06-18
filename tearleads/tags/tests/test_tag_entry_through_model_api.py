@@ -94,6 +94,19 @@ class TestTagsEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response['data']), 1)
         self.assertEqual(json_response['data'][0]['id'],str(tag_entry1.id))
 
+    def test_filter_by_tag_name_and_user_name(self):
+        entry1 = TextEntryFactory(user=self.user1)
+        entry2 = TextEntryFactory(user=self.user2)
+        tag1 = TagFactory(user=self.user1)
+        tag2 = TagFactory(user=self.user2)
+        tag_entry1 = TagTextEntryThroughModelFactory(text_entry=entry1, tag=tag1, user=self.user1)
+        tag_entry2 = TagTextEntryThroughModelFactory(text_entry=entry2, tag=tag2, user=self.user2)
+        response = self.user1_api_client.get('/api/v1/tags_entries?filter[tag.name]={}&filter[user.username]={}'.format(tag1.name, tag1.user.username))
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 1)
+        self.assertEqual(json_response['data'][0]['id'],str(tag_entry1.id))
+
     def test_filter_by_user_name(self):
         entry1 = TextEntryFactory(user=self.user1)
         tag1 = TagFactory(user=self.user1)
