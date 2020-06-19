@@ -50,9 +50,6 @@ class TestTagsEntriesApi(BaseTestCase):
         tag = TagFactory(user=self.user1)
         text_entry = TextEntryFactory(user=self.user1)
         payload = {
-            'password': 'password'
-        }
-        payload = {
             'data': {
                 'type': 'TagTextEntryThroughModel',
                 'attributes': {},
@@ -75,6 +72,16 @@ class TestTagsEntriesApi(BaseTestCase):
         response = self.user1_api_client.post('/api/v1/tags_entries', payload, format='vnd.api+json')
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_requires_authentication(self):
+        tag = TagFactory(user=self.user1)
+        text_entry = TextEntryFactory(user=self.user1)
+        payload = {}
+        response = self.unauthenticated_user_api_client.post('/api/v1/tags_entries', payload, format='vnd.api+json')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(len(json_response['errors']), 1)
+        self.assertEqual(json_response['errors'][0]['detail'], 'Authentication credentials were not provided.')
 
     def test_bad_filter(self):
         response = self.user1_api_client.get('/api/v1/tags_entries?filter[bad]=1')

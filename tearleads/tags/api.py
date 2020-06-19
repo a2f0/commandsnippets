@@ -1,4 +1,5 @@
 from rest_framework import filters, viewsets, response, status
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework_json_api import serializers
 from rest_framework_json_api.filters import OrderingFilter
 from rest_framework_json_api.django_filters import DjangoFilterBackend
@@ -17,6 +18,7 @@ class TagTextEntryThroughModel(viewsets.ModelViewSet):
     queryset = TagTextEntryThroughModel.objects.all()
     serializer_class = TagTextEntryThroughModelSerializer
     ordering_fields = ('date_created', 'order', 'text_entry__subject', 'text_entry__body')
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     filterset_fields = {
        'tag__name': ('exact',),
