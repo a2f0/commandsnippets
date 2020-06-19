@@ -2,9 +2,8 @@ import React, { useRef, useState } from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import { useTheme } from '@material-ui/styles';
-
+import API from './api.js'
 import { makeStyles } from '@material-ui/core/styles';
-
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 
 const useStyles = makeStyles({
@@ -53,7 +52,6 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
       } else {
         if ( "type" in drop_result ) {
           if ( drop_result.type === "Tag" ) {
-            console.info("it was dropped on a tag.")
             const payload = {
               'data': {
                 'type': 'TagTextEntryThroughModel',
@@ -68,12 +66,13 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
                   'text_entry': {
                     'data': {
                       'type': 'TextEntry',
-                      'id': findEntry(id).id
+                      'id': findEntry(id).entry.id
                     }
                   }
                 }
               }
             }
+            const response = API.post('tags_entries', payload);
           }
         } else {
           // Then it was reordered in the list.

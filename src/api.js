@@ -10,5 +10,8 @@ function baseURL() {
 
 export default axios.create({
   baseURL: baseURL(),
-  responseType: "json"
+  responseType: "json",
+  headers: {
+    'Content-Type': 'application/vnd.api+json'
+  },
 });
