@@ -66,7 +66,7 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
                   'text_entry': {
                     'data': {
                       'type': 'TextEntry',
-                      'id': findEntry(id).entry.id
+                      'id': findEntry(id).entry.relationships.text_entry.data.id
                     }
                   }
                 }
