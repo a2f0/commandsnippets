@@ -1,17 +1,23 @@
 import axios from "axios";
 
-function baseURL() {
+export const baseHTTPURL = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
-    return 'https://api-staging.tearleads.com/api/v1';
+    return 'https://api-staging.tearleads.com';
   } else {
-    return "http://localhost:9001/api/v1";
+    return "http://localhost:9001";
   }  
 }
 
-export default axios.create({
-  baseURL: baseURL(),
+const baseAPIURL = () => {
+  return baseHTTPURL() + '/api/v1';
+}
+
+const API = axios.create({
+  baseURL: baseAPIURL(),
   responseType: "json",
   headers: {
     'Content-Type': 'application/vnd.api+json'
   },
 });
+
+export default API

@@ -3,21 +3,15 @@ import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import constructApiUrl from './api.js';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles, createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Button from '@material-ui/core/Button';
-import MenuBar from './MenuBar.jsx';
+import { makeStyles, MuiThemeProvider } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import { DndProvider } from 'react-dnd'
 import Backend from 'react-dnd-html5-backend'
-import EntryList from './EntryList.jsx'
-import LeftDrawer from './LeftDrawer.jsx'
-import ThemeSwitcher from './ThemeSwitcher.jsx'
-import {lightTheme, darkTheme } from './themes.js'
+import {lightTheme } from './themes.js'
 import { observable } from "mobx"
 import AppContext from './AppContext.js'
+import Main from './Main.jsx'
+import Login from './Login.jsx'
 
 class Index extends React.Component {
 
@@ -191,48 +185,24 @@ function NavigationBottom() {
 const appBarHeight = 52;
 
 const useStyles = makeStyles((theme) => ({
-  button: {
-    textTransform: 'none'
-  },
   root: {
     display: 'flex',
   },
-  appBar: {
-    zIndex: theme.zIndex.drawer + 1,
-    height: appBarHeight
-  },
-  drawerContainer: {
-    overflow: 'auto',
-  },
-  main: {
-    width: "100%",
-    marginTop: appBarHeight,
-    height: `calc(100vh - ${appBarHeight}px)`,
-    overflow: "auto"
-  },
-  toolBar: {
-    minHeight: 0,
-    padding: 0,
-  },
-  title: {
-    flexGrow: 1,
-  },
-  list: {	
-    padding: 0	
-  },
+
+
 }));
 
 const appConfig = observable({
-  entrySortOrder: "date_created",
+  entrySortOrder: 'date_created',
+  authenticatedUser: null
 })
 
 function AppRouter() {
-  const [selectedTheme, setSelectedTheme] = useState(lightTheme);
   const classes = useStyles();
+  const [selectedTheme, setSelectedTheme] = useState(lightTheme);
   const handleThemeSwitcher = (chosenTheme) => {
     setSelectedTheme(chosenTheme)
   }
-
   return (
     <Router>
       <AppContext.Provider value={appConfig}>
@@ -240,23 +210,21 @@ function AppRouter() {
           <CssBaseline />
           <DndProvider backend={Backend}>
             <div className={classes.root}>
-              <AppBar position="fixed" className={classes.appBar}>
-                <Toolbar variant="dense" className={classes.toolBar}>
-                  <Typography className={classes.title}></Typography>
-                  <ThemeSwitcher handleThemeSwitcher={handleThemeSwitcher} selectedTheme={selectedTheme}/>
-                  <Button size="small" className={classes.button}>Login</Button>
-                </Toolbar>
-                <MenuBar handleThemeSwitcher={handleThemeSwitcher}/>
-              </AppBar>
-              <LeftDrawer/>
-              <main className={classes.main}>
-                <Switch>
-                  <Route path="/:user/:tag" component={EntryList} />
-                  <Route exact path="/" component={EntryList} />
-                </Switch>
-              </main>
-              {/* <RightDrawer/> */}
-            </div>
+              <Switch>
+                <Route path="/login">
+                  <Login/>
+                </Route>
+                <Route path="/:user/:tag">
+                  <Main handleThemeSwitcher={handleThemeSwitcher}/>
+                </Route>
+                <Route path="/:user">
+                  <Main handleThemeSwitcher={handleThemeSwitcher}/>
+                </Route>
+                <Route exact path="/">
+                  <Main handleThemeSwitcher={handleThemeSwitcher}/>
+                </Route>
+              </Switch>
+            </div>    
           </DndProvider>
         </MuiThemeProvider>
       </AppContext.Provider>

@@ -72,7 +72,7 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
                 }
               }
             }
-            const response = API.post('tags_entries', payload);
+            const response = API.post('tags_entries', payload,  {withCredentials: true});
           }
         } else {
           // Then it was reordered in the list.
