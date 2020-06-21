@@ -20,6 +20,12 @@ const useStyles = makeStyles((theme) => ({
     zIndex: theme.zIndex.drawer + 1,
     height: appBarHeight
   },
+  main: {	
+    width: "100%",	
+    marginTop: appBarHeight,	
+    height: `calc(100vh - ${appBarHeight}px)`,	
+    overflow: "auto"	
+  },
   toolBar: {
     minHeight: 0,
     padding: 0,
