@@ -5,6 +5,7 @@ import { useTheme } from '@material-ui/styles';
 import API from './api.js'
 import { makeStyles } from '@material-ui/core/styles';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
+import EntryContextMenu from './EntryContextMenu.jsx'
 
 const useStyles = makeStyles({
 
@@ -141,30 +142,48 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
     setShowDragHandle(false)
   }
 
+  const initialMouse = {
+    mouseX: null,
+    mouseY: null,
+  };
+
+  const [mouse, setMouse] = useState(initialMouse);
+
+  const handleContextClick = (event) => {
+    event.preventDefault();
+    let mouseData = {...mouse}
+    mouseData.mouseX = event.clientX - 2,
+    mouseData.mouseY = event.clientY - 4,
+    setMouse(mouseData)
+  };
+
   return (
-    <div ref={(dropRef)} style={{opacity}}>
-      <div ref={(preview)} className={classes.entryWrapper}>
-        <div
-          ref={(dragRef)} 
-          style={{...theme.custom.dragIndicator}}
-          onMouseEnter={mouseEnter} 
-          onMouseLeave={mouseLeave}>
-          <DragIndicatorIcon
-            style={{ visibility: showDragHandle ? "visible" : "hidden" }}
-          />
-        </div>
-        <div className={classes.entry}
-          onMouseEnter={mouseEnter}
-          onMouseLeave={mouseLeave}>
-          <div className={classes.entrySubject}>
-            {subject} 
+    <>
+      <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick} >
+        <div ref={(preview)} className={classes.entryWrapper}>
+          <div
+            ref={(dragRef)} 
+            style={{...theme.custom.dragIndicator}}
+            onMouseEnter={mouseEnter} 
+            onMouseLeave={mouseLeave}>
+            <DragIndicatorIcon
+              style={{ visibility: showDragHandle ? "visible" : "hidden" }}
+            />
           </div>
-          <div className={classes.entryBody}>
-            {body}
+          <div className={classes.entry}
+            onMouseEnter={mouseEnter}
+            onMouseLeave={mouseLeave}>
+            <div className={classes.entrySubject}>
+              {subject}
+            </div>
+            <div className={classes.entryBody}>
+              {body}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <EntryContextMenu mouse={mouse} id={id}/>
+    </>
   )
 })
 export default Entry

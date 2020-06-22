@@ -174,7 +174,7 @@ const MenuBar = React.memo(function MenuBar(props) {
         onClose={handleViewMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("order"); handleViewMenuClose();}} >
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("order"); handleViewMenuClose();}} >
           <ListItemIcon>
             {
               appConfig.entrySortOrder == "order" &&
@@ -183,7 +183,7 @@ const MenuBar = React.memo(function MenuBar(props) {
           </ListItemIcon> 
           Sort by User-Defined Order
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("text_entry__subject"); handleViewMenuClose();}} >
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__subject"); handleViewMenuClose();}} >
           <ListItemIcon>
             {
               appConfig.entrySortOrder == "text_entry__subject" &&
@@ -192,7 +192,7 @@ const MenuBar = React.memo(function MenuBar(props) {
           </ListItemIcon> 
           Sort by Subject <ArrowDownwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("-text_entry__subject"); handleViewMenuClose();}} >
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__subject"); handleViewMenuClose();}} >
           <ListItemIcon>
             {
               appConfig.entrySortOrder == "-text_entry__subject" &&
@@ -201,7 +201,7 @@ const MenuBar = React.memo(function MenuBar(props) {
           </ListItemIcon> 
           Sort by Subject <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("text_entry__body"); handleViewMenuClose();}} >
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__body"); handleViewMenuClose();}} >
           <ListItemIcon>
             {
               appConfig.entrySortOrder == "text_entry__body" &&
@@ -210,7 +210,7 @@ const MenuBar = React.memo(function MenuBar(props) {
           </ListItemIcon> 
           Sort by Body <ArrowDownwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleViewMenuClose} onClick={() => { handleSetEntrySortOrder("-text_entry__body"); handleViewMenuClose();}} >
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__body"); handleViewMenuClose();}} >
           <ListItemIcon>
             {
               appConfig.entrySortOrder == "-text_entry__body" &&
