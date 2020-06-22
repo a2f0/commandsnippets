@@ -23,6 +23,7 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
 
   const handleUntag = (id) => {
     API.delete('/tags_entries/' + id , {withCredentials: true});
+    props.handleDelete(id)
     handleClose();
   };
 

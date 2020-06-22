@@ -32,7 +32,7 @@ const useStyles = makeStyles({
   }
 });
 
-const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEntry }) {
+const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEntry, handleDelete }) {
   const dragRef = useRef(null)
   const dropRef = useRef(null)
   const originalIndex = findEntry(id).index
@@ -182,7 +182,7 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
           </div>
         </div>
       </div>
-      <EntryContextMenu mouse={mouse} id={id}/>
+      <EntryContextMenu mouse={mouse} id={id} handleDelete={handleDelete}/>
     </>
   )
 })

@@ -67,6 +67,12 @@ const EntryList = React.memo(observer(function EntryList(props) {
   }
   const [, drop] = useDrop({ accept: ItemTypes.ENTRY })
 
+  const handleDelete = (id) => {
+    const new_data = data.data.filter(item => item.id !== id);
+    let newData = {...data, data: new_data }
+    setData(newData)
+  };
+
   return (
 
     <div ref={drop} style={width}>
@@ -89,6 +95,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
             body={text_entry.attributes.body}
             moveEntry={moveEntry}
             findEntry={findEntry}
+            handleDelete={handleDelete}
           />
         ) 
       })
