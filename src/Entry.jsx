@@ -151,6 +151,7 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
 
   const handleContextClick = (event) => {
     event.preventDefault();
+    event.stopPropagation();
     let mouseData = {...mouse}
     mouseData.mouseX = event.clientX - 2,
     mouseData.mouseY = event.clientY - 4,

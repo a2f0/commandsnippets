@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import LeftDrawer from './LeftDrawer.jsx'
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -9,6 +9,7 @@ import Button from '@material-ui/core/Button';
 import MenuBar from './MenuBar.jsx';
 import EntryList from './EntryList.jsx'
 import { useHistory } from "react-router-dom";
+import MainContextMenu from './MainContextMenu.jsx'
 
 const appBarHeight = 52;
 
@@ -24,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",	
     marginTop: appBarHeight,	
     height: `calc(100vh - ${appBarHeight}px)`,	
-    overflow: "auto"	
+    overflow: "auto"
   },
   toolBar: {
     minHeight: 0,
@@ -46,6 +47,25 @@ const Main = function (props) {
 
   const history = useHistory();
 
+  const initialMouse = {
+    mouseX: null,
+    mouseY: null,
+  };
+
+  const [mouse, setMouse] = useState(initialMouse);
+
+  const handleContextClick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    let mouseData = {...mouse}
+    mouseData.mouseX = event.clientX - 2,
+    mouseData.mouseY = event.clientY - 4,
+    setMouse(mouseData)
+  };
+
+  const showNewEntry = () => {
+    console.log("showNewEntry")
+  };
   
   return (
     <>
@@ -58,9 +78,10 @@ const Main = function (props) {
         </Toolbar>
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>
       </AppBar>
-      <main className={classes.main}>
+      <main className={classes.main} onContextMenu={handleContextClick}>
         <EntryList/>
       </main>
+      <MainContextMenu mouse={mouse} showNewEntry={showNewEntry} />
       {/* <RightDrawer/>  */}
     </>
   )
