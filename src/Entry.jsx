@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useMemo } from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import { useTheme } from '@material-ui/styles';
@@ -148,6 +148,11 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
   };
 
   const [mouse, setMouse] = useState(initialMouse);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleBeginEdit = () => {
+    setIsEditing(true)
+  };
 
   const handleContextClick = (event) => {
     event.preventDefault();
@@ -158,32 +163,58 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
     setMouse(mouseData)
   };
 
+  const contextMenu = useMemo(() => 
+    <EntryContextMenu 
+      mouse={mouse} 
+      id={id} 
+      handleDelete={handleDelete}
+      handleBeginEdit={handleBeginEdit}/>, [mouse]);
+  
   return (
     <>
-      <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick} >
-        <div ref={(preview)} className={classes.entryWrapper}>
-          <div
-            ref={(dragRef)} 
-            style={{...theme.custom.dragIndicator}}
-            onMouseEnter={mouseEnter} 
-            onMouseLeave={mouseLeave}>
-            <DragIndicatorIcon
-              style={{ visibility: showDragHandle ? "visible" : "hidden" }}
-            />
+      { ! isEditing && (
+        <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick} > 
+          <div ref={(preview)} className={classes.entryWrapper}>
+            <div
+              ref={(dragRef)} 
+              style={{...theme.custom.dragIndicator}}
+              onMouseEnter={mouseEnter} 
+              onMouseLeave={mouseLeave}>
+              <DragIndicatorIcon
+                style={{ visibility: showDragHandle ? "visible" : "hidden" }}
+              />
+            </div>
+            <div className={classes.entry}
+              onMouseEnter={mouseEnter}
+              onMouseLeave={mouseLeave}>
+              <div className={classes.entrySubject}>
+                {subject}
+              </div>
+              <div className={classes.entryBody}>
+                {body}
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+
+      {contextMenu}
+      
+      {isEditing && (
+        <div className={classes.entryWrapper}>
+          <div style={{...theme.custom.dragIndicator}}></div>
           <div className={classes.entry}
             onMouseEnter={mouseEnter}
             onMouseLeave={mouseLeave}>
             <div className={classes.entrySubject}>
-              {subject}
+              Subject
             </div>
             <div className={classes.entryBody}>
-              {body}
+              Body
             </div>
           </div>
         </div>
-      </div>
-      <EntryContextMenu mouse={mouse} id={id} handleDelete={handleDelete}/>
+      )}
     </>
   )
 })

@@ -4,7 +4,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import API from './api.js'
 
 const EntryContextMenu = React.memo(function EntryContextMenu(props) {
-  
+
 
   const initialMouse = {
     mouseX: null,
@@ -27,6 +27,11 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
     handleClose();
   };
 
+  const handleBeginEdit = () => {
+    props.handleBeginEdit();
+    handleClose();
+  };
+
   return (
     <Menu
       keepMounted
@@ -40,6 +45,7 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
       }
     >
       <MenuItem onClick={() => { handleUntag( props.id );}}>Untag</MenuItem>
+      <MenuItem onClick={() => { handleBeginEdit( );}}>Edit</MenuItem>
     </Menu>    
   )
 })
