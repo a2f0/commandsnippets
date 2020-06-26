@@ -157,6 +157,10 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
     setIsEditing(true)
   };
 
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+  };
+
   const handleContextClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -228,7 +232,7 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
               <Button variant="outlined">
                 Save
               </Button>
-              <Button variant="outlined">
+              <Button variant="outlined" onClick={() => { handleCancelEdit();}}>
                 Cancel
               </Button>
             </form>
