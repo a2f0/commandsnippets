@@ -6,6 +6,9 @@ import API from './api.js'
 import { makeStyles } from '@material-ui/core/styles';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 import EntryContextMenu from './EntryContextMenu.jsx'
+import Button from '@material-ui/core/Button';
+
+import TextField from '@material-ui/core/TextField';
 
 const useStyles = makeStyles({
 
@@ -206,12 +209,29 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
           <div className={classes.entry}
             onMouseEnter={mouseEnter}
             onMouseLeave={mouseLeave}>
-            <div className={classes.entrySubject}>
-              Subject
-            </div>
-            <div className={classes.entryBody}>
-              Body
-            </div>
+            <form noValidate autoComplete="off">
+              <TextField
+                value={subject}
+                id="outlined-textarea"
+                placeholder="Subject"
+                variant="outlined"
+                fullWidth
+              />
+              <TextField
+                value={body}
+                id="outlined-textarea"
+                placeholder="Body"
+                multiline
+                variant="outlined"
+                fullWidth
+              />
+              <Button variant="outlined">
+                Save
+              </Button>
+              <Button variant="outlined">
+                Cancel
+              </Button>
+            </form>
           </div>
         </div>
       )}
