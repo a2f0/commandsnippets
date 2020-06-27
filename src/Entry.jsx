@@ -6,9 +6,8 @@ import API from './api.js'
 import { makeStyles } from '@material-ui/core/styles';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 import EntryContextMenu from './EntryContextMenu.jsx'
-import Button from '@material-ui/core/Button';
+import EntryEdit from './EntryEdit.jsx';
 
-import TextField from '@material-ui/core/TextField';
 
 const useStyles = makeStyles({
 
@@ -207,37 +206,8 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
 
       {contextMenu}
       
-      {isEditing && (
-        <div className={classes.entryWrapper}>
-          <div style={{...theme.custom.dragIndicator}}></div>
-          <div className={classes.entry}
-            onMouseEnter={mouseEnter}
-            onMouseLeave={mouseLeave}>
-            <form noValidate autoComplete="off">
-              <TextField
-                value={subject}
-                id="outlined-textarea"
-                placeholder="Subject"
-                variant="outlined"
-                fullWidth
-              />
-              <TextField
-                value={body}
-                id="outlined-textarea"
-                placeholder="Body"
-                multiline
-                variant="outlined"
-                fullWidth
-              />
-              <Button variant="outlined">
-                Save
-              </Button>
-              <Button variant="outlined" onClick={() => { handleCancelEdit();}}>
-                Cancel
-              </Button>
-            </form>
-          </div>
-        </div>
+      { isEditing && (
+        <EntryEdit classes={classes} subject={subject} body={body} handleCancelEdit={handleCancelEdit}/>
       )}
     </>
   )

@@ -44,8 +44,8 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
           : undefined
       }
     >
-      <MenuItem onClick={() => { handleUntag( props.id );}}>Untag</MenuItem>
-      <MenuItem onClick={() => { handleBeginEdit( );}}>Edit</MenuItem>
+      <MenuItem onClick={() => { handleBeginEdit();}}>Edit</MenuItem>
+      <MenuItem onClick={() => { handleUntag(props.id);}}>Untag</MenuItem>
     </Menu>    
   )
 })
