@@ -11,8 +11,8 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data
       - postgres_backup_dev:/backups
     env_file: .env
-    #ports:
-    #  - "${POSTGRES_DOCKER_PORT}:5432"
+    ports:
+      - "${POSTGRES_DOCKER_PORT}:5432"
     # uncomment below for full statement logging to stdout
     # command: postgres -c log_statement=all
   backend:

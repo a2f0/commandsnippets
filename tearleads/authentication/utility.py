@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from rest_framework import authentication
@@ -7,12 +8,21 @@ class CustomAuthentication(authentication.BaseAuthentication):
     def get_token_from_request(self, request):
         if 'Authorization' in request.COOKIES:
             token = request.COOKIES['Authorization']
-            return Token.objects.select_related('user').get(key=token)
+            try: 
+                token_object = Token.objects.select_related('user').get(key=token)
+                return token_object
+            except ObjectDoesNotExist:
+                return None
+
         if 'Authorization' in request.headers:
             parsed = request.headers['Authorization'].split()
             if len(parsed) != 2:
                 return None
-            return Token.objects.select_related('user').get(key=parsed[1])
+            try:
+                token_object = Token.objects.select_related('user').get(key=parsed[1])
+                return token_object
+            except ObjectDoesNotExist:
+                return None
         return None
     
     def authenticate(self, request):

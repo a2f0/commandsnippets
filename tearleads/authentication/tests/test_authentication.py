@@ -31,7 +31,6 @@ class TestAuthentication(BaseTestCase):
         self.assertEqual('Authorization' in self.auth_user_api_client.cookies, True)
         self.assertEqual(self.auth_user_api_client.cookies['Authorization'].value, '')
 
-
     def test_failed_authentication(self):
         payload = {
             'username': 'user1',
@@ -39,3 +38,11 @@ class TestAuthentication(BaseTestCase):
         }
         response = self.user1_api_client.post('/api-token-auth/', payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_token_passed_to_logout(self):
+        self.auth_user = UserFactory()
+        self.auth_user_api_client = APIClient()
+        self.auth_user_api_client.cookies['Authorization'] = 'invalid_token'
+        response = self.auth_user_api_client.post('/api-token-deauth/', format='json')
+        self.assertEqual('Authorization' in self.auth_user_api_client.cookies, True)
+        self.assertEqual(self.auth_user_api_client.cookies['Authorization'].value, '')
