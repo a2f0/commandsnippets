@@ -160,6 +160,11 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
     setIsEditing(false)
   };
 
+  const handleSave = () => {
+    console.log("handle save")
+    setIsEditing(false)
+  };
+
   const handleContextClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -179,7 +184,7 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
   return (
     <>
       { ! isEditing && (
-        <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick} > 
+        <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}> 
           <div ref={(preview)} className={classes.entryWrapper}>
             <div
               ref={(dragRef)} 
@@ -207,7 +212,12 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
       {contextMenu}
       
       { isEditing && (
-        <EntryEdit classes={classes} subject={subject} body={body} handleCancelEdit={handleCancelEdit}/>
+        <EntryEdit 
+          classes={classes} 
+          subject={subject} 
+          body={body}
+          handleSave={handleSave}
+          handleCancelEdit={handleCancelEdit}/>
       )}
     </>
   )

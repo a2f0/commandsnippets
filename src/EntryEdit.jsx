@@ -1,41 +1,98 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '@material-ui/styles';
 import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core/styles';
 
-import TextField from '@material-ui/core/TextField';
+const useStyles = makeStyles({
+
+  entry: {
+    display: 'inline-block',
+    verticalAlign: 'top',
+  },
+  entryWrapper: {
+    marginBottom: 16,
+    // "&:hover": {
+    //   color: "white"
+    // },
+    // "&:active": {
+    //   color: "white"
+    // },
+  },
+  entrySubject: {
+    display: 'inline-block',
+    fontSize: 14,
+    margin: 'auto',
+  },
+  entryBody: {
+    display: 'inline-block',
+    fontSize: 14,
+    margin: 'auto',
+    fontFamily: 'monospace',
+    whiteSpace: 'pre-wrap',
+    padding: 2
+  }
+});
 
 const EntryEdit = React.memo(function (props) {
 
   const theme = useTheme();
+
+  useEffect(() => {
+    setBody(props.body)
+    setSubject(props.subject)
+  }, [props.body, props.subject]);
+
+  const [subject,setSubject] = useState()
+  const [body,setBody] = useState()
+
+  const classes = useStyles();
+
+  const handleSave = () => {
+    props.handleSave()
+  }
+
+  const handleCancel = () => {
+    setBody(props.body)
+    setSubject(props.subject)
+    props.handleCancelEdit()
+  }
+
+  const handleBodyChange = (body) => {
+    setBody(body);
+  }
+
+  const handleSubjectChange = (subject) => {
+    setSubject(subject);
+  }
   
   return (
     <>
       <div className={props.classes.entryWrapper}>
         <div style={{...theme.custom.dragIndicator}}></div>
-        <div className={props.classes.entry}>
-          <form noValidate autoComplete="off">
-            <TextField
-              value={props.subject}
-              id="outlined-textarea"
-              placeholder="Subject"
-              variant="outlined"
-              fullWidth
-            />
-            <TextField
-              value={props.body}
-              id="outlined-textarea"
-              placeholder="Body"
-              multiline
-              variant="outlined"
-              fullWidth
-            />
-            <Button variant="outlined">
-              Save
-            </Button>
-            <Button variant="outlined" onClick={() => { props.handleCancelEdit();}}>
-              Cancel
-            </Button>
-          </form>
+        <div className={classes.entry}>
+          <div>
+            <div className={classes.entrySubject} 
+              contentEditable={true}
+              suppressContentEditableWarning={true}
+              onInput={(e) => { handleSubjectChange(e.currentTarget.textContent);}}> 
+              {subject}
+            </div>
+          </div>
+          <div>
+            <div
+              className={classes.entryBody}
+              contentEditable={true}
+              suppressContentEditableWarning={true}
+              onInput={(e) => { handleBodyChange(e.currentTarget.textContent);}}> 
+              {body}
+            </div>
+          </div>
+          <Button variant="outlined" onClick={() => { handleSave();}}>
+            Save
+          </Button>
+          <Button variant="outlined" onClick={() => { handleCancel();}}>
+            Cancel
+          </Button>
         </div>
       </div>
     </>
