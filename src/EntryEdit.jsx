@@ -48,7 +48,7 @@ const EntryEdit = React.memo(function (props) {
   const classes = useStyles();
 
   const handleSave = () => {
-    props.handleSave()
+    props.handleSave(subject, body)
   }
 
   const handleCancel = () => {
@@ -74,7 +74,7 @@ const EntryEdit = React.memo(function (props) {
             <div className={classes.entrySubject} 
               contentEditable={true}
               suppressContentEditableWarning={true}
-              onInput={(e) => { handleSubjectChange(e.currentTarget.textContent);}}> 
+              onBlur={(e) => { handleSubjectChange(e.currentTarget.textContent);}}> 
               {subject}
             </div>
           </div>
@@ -83,7 +83,7 @@ const EntryEdit = React.memo(function (props) {
               className={classes.entryBody}
               contentEditable={true}
               suppressContentEditableWarning={true}
-              onInput={(e) => { handleBodyChange(e.currentTarget.textContent);}}> 
+              onBlur={(e) => { handleBodyChange(e.currentTarget.textContent);}}> 
               {body}
             </div>
           </div>

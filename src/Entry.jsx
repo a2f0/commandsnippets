@@ -34,7 +34,7 @@ const useStyles = makeStyles({
   }
 });
 
-const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEntry, handleDelete }) {
+const Entry = React.memo(function ({ id, index, entry_id, subject, body, moveEntry, findEntry, handleDelete }) {
   const dragRef = useRef(null)
   const dropRef = useRef(null)
   const originalIndex = findEntry(id).index
@@ -160,8 +160,18 @@ const Entry = React.memo(function ({ id, index, subject, body, moveEntry, findEn
     setIsEditing(false)
   };
 
-  const handleSave = () => {
-    console.log("handle save")
+  const handleSave = (updated_subject, updated_body) => {
+    const payload = {
+      'data': {
+        'id': entry_id,
+        'type': 'TextEntry',
+        'attributes': {
+          'subject': updated_subject,
+          'body': updated_body,
+        }
+      }
+    }
+    const response = API.patch('entries/' + entry_id, payload,  {withCredentials: true});
     setIsEditing(false)
   };
 
