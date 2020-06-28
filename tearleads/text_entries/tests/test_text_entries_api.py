@@ -195,15 +195,16 @@ class TestTextEntriesApi(BaseTestCase):
         payload = {
             'data': {
                 'type': 'TextEntry',
+                'id': str(entry1.id),
                 'attributes': {
                     'subject': 'new subject',
                     'body': 'new body',
                 }
             }
         }
-        response = self.user1_api_client.post('/api/v1/entries', payload, format='vnd.api+json')
+        response = self.user1_api_client.patch('/api/v1/entries/' + str(entry1.id), payload, format='vnd.api+json')
         json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_response['data']['attributes']['subject'],payload['data']['attributes']['subject'])
         self.assertEqual(json_response['data']['attributes']['body'],payload['data']['attributes']['body'])
         self.assertEqual(len(json_response['included']), 1)
