@@ -189,3 +189,24 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(len(json_response['errors']), 1)
         self.assertEqual(json_response['errors'][0]['detail'], 'Authentication credentials were not provided.')
+    
+    def test_edit_works_when_modifying_self_owned_object(self):
+        entry1 = TextEntryFactory(user=self.user1)
+        payload = {
+            'data': {
+                'type': 'TextEntry',
+                'attributes': {
+                    'subject': 'new subject',
+                    'body': 'new body',
+                }
+            }
+        }
+        response = self.user1_api_client.post('/api/v1/entries', payload, format='vnd.api+json')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(json_response['data']['attributes']['subject'],payload['data']['attributes']['subject'])
+        self.assertEqual(json_response['data']['attributes']['body'],payload['data']['attributes']['body'])
+        self.assertEqual(len(json_response['included']), 1)
+        self.assertEqual(json_response['included'][0]['type'],'User')
+        self.assertEqual(len(json_response['included'][0]['attributes']),1)
+        self.assertEqual(json_response['included'][0]['attributes']['username'],self.user1.username)
