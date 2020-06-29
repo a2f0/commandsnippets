@@ -91,12 +91,10 @@ const EntryList = React.memo(observer(function EntryList(props) {
             key={entry.id}
             id={entry.id}
             index={i}
-            entry_id={text_entry.id}
-            subject={text_entry.attributes.subject}
-            body={text_entry.attributes.body}
             moveEntry={moveEntry}
             findEntry={findEntry}
             handleDelete={handleDelete}
+            text_entry={text_entry}
           />
         ) 
       })

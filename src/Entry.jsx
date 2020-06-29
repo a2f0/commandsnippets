@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react'
+import React, { useRef, useState, useMemo, useEffect } from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import { useTheme } from '@material-ui/styles';
@@ -34,7 +34,13 @@ const useStyles = makeStyles({
   }
 });
 
-const Entry = React.memo(function ({ id, index, entry_id, subject, body, moveEntry, findEntry, handleDelete }) {
+const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDelete, text_entry }) {
+
+  useEffect(() => {
+    setTextEntry(text_entry);
+  }, [text_entry]);
+
+  const [textEntry, setTextEntry] = useState()
   const dragRef = useRef(null)
   const dropRef = useRef(null)
   const originalIndex = findEntry(id).index
@@ -163,7 +169,7 @@ const Entry = React.memo(function ({ id, index, entry_id, subject, body, moveEnt
   const handleSave = (updated_subject, updated_body) => {
     const payload = {
       'data': {
-        'id': entry_id,
+        'id': text_entry.id,
         'type': 'TextEntry',
         'attributes': {
           'subject': updated_subject,
@@ -171,7 +177,11 @@ const Entry = React.memo(function ({ id, index, entry_id, subject, body, moveEnt
         }
       }
     }
-    const response = API.patch('entries/' + entry_id, payload,  {withCredentials: true});
+    const response = API.patch('entries/' + text_entry.id, payload,  {withCredentials: true});
+    let new_text_entry = {...textEntry}
+    new_text_entry.attributes.subject = updated_subject
+    new_text_entry.attributes.body = updated_body
+    setTextEntry(new_text_entry)
     setIsEditing(false)
   };
 
@@ -209,10 +219,10 @@ const Entry = React.memo(function ({ id, index, entry_id, subject, body, moveEnt
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}>
               <div className={classes.entrySubject}>
-                {subject}
+                {text_entry.attributes.subject}
               </div>
               <div className={classes.entryBody}>
-                {body}
+                {text_entry.attributes.body}
               </div>
             </div>
           </div>
@@ -224,8 +234,8 @@ const Entry = React.memo(function ({ id, index, entry_id, subject, body, moveEnt
       { isEditing && (
         <EntryEdit 
           classes={classes} 
-          subject={subject} 
-          body={body}
+          subject={text_entry.attributes.subject} 
+          body={text_entry.attributes.body}
           handleSave={handleSave}
           handleCancelEdit={handleCancelEdit}/>
       )}
