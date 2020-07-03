@@ -73,6 +73,10 @@ const EntryList = React.memo(observer(function EntryList(props) {
     setData(newData)
   };
 
+  const newEntry = (index) => {
+    console.log("new entry1: " + index)
+  };
+
   return (
 
     <div ref={drop} style={width}>
@@ -94,7 +98,9 @@ const EntryList = React.memo(observer(function EntryList(props) {
             moveEntry={moveEntry}
             findEntry={findEntry}
             handleDelete={handleDelete}
+            newEntry={newEntry}
             text_entry={text_entry}
+            tag={tag}
           />
         ) 
       })

@@ -10,6 +10,7 @@ import MenuBar from './MenuBar.jsx';
 import EntryList from './EntryList.jsx'
 import { useHistory } from "react-router-dom";
 import MainContextMenu from './MainContextMenu.jsx'
+import Box from '@material-ui/core/Box';
 
 const appBarHeight = 52;
 
@@ -37,6 +38,9 @@ const useStyles = makeStyles((theme) => ({
   list: {	
     padding: 0	
   },
+  entryListEmptySpace: {
+    backgroundColor: "green"
+  }
 }));
 
 const Main = function (props) {
@@ -78,10 +82,14 @@ const Main = function (props) {
         </Toolbar>
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>
       </AppBar>
-      <main className={classes.main} onContextMenu={handleContextClick}>
+      <main className={classes.main}>
         <EntryList/>
+        {/* <Box height="auto" className={classes.entryListBlankSpace}>
+          Empty Space
+        </Box> */}
+
       </main>
-      <MainContextMenu mouse={mouse} showNewEntry={showNewEntry} />
+      {/* <MainContextMenu mouse={mouse} showNewEntry={showNewEntry} /> */}
       {/* <RightDrawer/>  */}
     </>
   )

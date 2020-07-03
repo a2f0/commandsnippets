@@ -7,6 +7,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 import EntryContextMenu from './EntryContextMenu.jsx'
 import EntryEdit from './EntryEdit.jsx';
+import EntryNew from './EntryNew.jsx'
 
 
 const useStyles = makeStyles({
@@ -34,12 +35,13 @@ const useStyles = makeStyles({
   }
 });
 
-const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDelete, text_entry }) {
+const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDelete, text_entry, newEntry, tag }) {
 
   useEffect(() => {
     setTextEntry(text_entry);
   }, [text_entry]);
 
+  const [showNew, setShowNew] = useState(false)
   const [textEntry, setTextEntry] = useState()
   const dragRef = useRef(null)
   const dropRef = useRef(null)
@@ -194,11 +196,16 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
     setMouse(mouseData)
   };
 
+  const handleNewEntry = () => {
+    newEntry(index)
+  };
+
   const contextMenu = useMemo(() => 
     <EntryContextMenu 
       mouse={mouse} 
-      id={id} 
+      id={id}
       handleDelete={handleDelete}
+      handleNewEntry={handleNewEntry}
       handleBeginEdit={handleBeginEdit}/>, [mouse]);
   
   return (
@@ -227,6 +234,12 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
             </div>
           </div>
         </div>
+      )}
+
+      { ! showNew && (
+        <EntryNew
+          tag={tag} 
+          classes={classes}/>
       )}
 
       {contextMenu}

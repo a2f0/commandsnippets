@@ -32,6 +32,11 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
     handleClose();
   };
 
+  const handleNewEntry = () => {
+    props.handleNewEntry();
+    handleClose();
+  };
+
   return (
     <Menu
       keepMounted
@@ -45,6 +50,7 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
       }
     >
       <MenuItem onClick={() => { handleBeginEdit();}}>Edit</MenuItem>
+      <MenuItem onClick={() => { handleNewEntry();}}>New Entry</MenuItem>
       <MenuItem onClick={() => { handleUntag(props.id);}}>Untag</MenuItem>
     </Menu>    
   )
