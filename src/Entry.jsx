@@ -197,7 +197,7 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
   };
 
   const handleNewEntry = () => {
-    newEntry(index)
+    setShowNew(true)
   };
 
   const contextMenu = useMemo(() => 
@@ -236,7 +236,7 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
         </div>
       )}
 
-      { ! showNew && (
+      { showNew && (
         <EntryNew
           tag={tag} 
           classes={classes}/>

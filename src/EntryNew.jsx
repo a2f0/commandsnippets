@@ -87,7 +87,6 @@ const EntryNew = React.memo(function (props) {
             }
           }
         }
-        console.log('made it here')
         API.post('/tags_entries', text_entry_through_model_payload, {withCredentials: true})
           .then(function (response) {
             console.log(response)
