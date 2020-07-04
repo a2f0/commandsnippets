@@ -87,10 +87,10 @@ const EntryEdit = React.memo(function (props) {
               {body}
             </div>
           </div>
-          <Button variant="outlined" onClick={() => { handleSave();}}>
+          <Button size="small" variant="outlined" onClick={() => { handleSave();}}>
             Save
           </Button>
-          <Button variant="outlined" onClick={() => { handleCancel();}}>
+          <Button size="small" variant="outlined" onClick={() => { handleCancel();}}>
             Cancel
           </Button>
         </div>

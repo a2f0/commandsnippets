@@ -219,6 +219,24 @@ const MenuBar = React.memo(function MenuBar(props) {
           </ListItemIcon> 
           Sort by Body <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__date_created"); handleViewMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "text_entry__date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>  
+          Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__date_created"); handleViewMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder== "-text_entry__date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>
+          Sort by Date Created <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
         <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("date_created"); handleViewMenuClose();}}>
           <ListItemIcon>
             {
