@@ -202,3 +202,35 @@ class TestTagsEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response['data']), 2)
         self.assertEqual(json_response['data'][0]['id'],str(tag_text_entry2.id))
         self.assertEqual(json_response['data'][1]['id'],str(tag_text_entry1.id))
+
+        # sort text entries by date created
+        response = self.user1_api_client.get('/api/v1/tags_entries?sort=text_entry__date_created')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(tag_text_entry1.id))
+        self.assertEqual(json_response['data'][1]['id'],str(tag_text_entry2.id))
+
+        # sort text entries by date created (reversed)
+        response = self.user1_api_client.get('/api/v1/tags_entries?sort=-text_entry__date_created')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(tag_text_entry2.id))
+        self.assertEqual(json_response['data'][1]['id'],str(tag_text_entry1.id))
+
+        # sort text entries by date updated
+        response = self.user1_api_client.get('/api/v1/tags_entries?sort=text_entry__date_updated')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(tag_text_entry1.id))
+        self.assertEqual(json_response['data'][1]['id'],str(tag_text_entry2.id))
+
+        # sort text entries by date updated (reversed)
+        response = self.user1_api_client.get('/api/v1/tags_entries?sort=-text_entry__date_updated')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 2)
+        self.assertEqual(json_response['data'][0]['id'],str(tag_text_entry2.id))
+        self.assertEqual(json_response['data'][1]['id'],str(tag_text_entry1.id))

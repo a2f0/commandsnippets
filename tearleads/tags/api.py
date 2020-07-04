@@ -17,7 +17,14 @@ class TagViewSet(viewsets.ModelViewSet):
 class TagTextEntryThroughModel(viewsets.ModelViewSet):
     queryset = TagTextEntryThroughModel.objects.all()
     serializer_class = TagTextEntryThroughModelSerializer
-    ordering_fields = ('date_created', 'order', 'text_entry__subject', 'text_entry__body')
+    ordering_fields = (
+        'date_created', 
+        'order', 
+        'text_entry__subject', 
+        'text_entry__body',
+        'text_entry__date_created',
+        'text_entry__date_updated'
+    )
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     filterset_fields = {
