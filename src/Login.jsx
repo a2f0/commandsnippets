@@ -32,6 +32,9 @@ const Login = React.memo(function Login() {
       login_api.post('/api-token-auth/', payload, {withCredentials: true})
         .then(function (response) {
           // Login succeded
+          appConfig.loggedInUser = username
+          setUsername(null)
+          setPassword(null)
           history.push("/" + username);
         })
         .catch(function (error) {

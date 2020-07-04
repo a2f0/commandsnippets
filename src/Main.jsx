@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useState, useContext} from 'react'
 import LeftDrawer from './LeftDrawer.jsx'
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -11,6 +11,8 @@ import EntryList from './EntryList.jsx'
 import { useHistory } from "react-router-dom";
 import MainContextMenu from './MainContextMenu.jsx'
 import Box from '@material-ui/core/Box';
+import {observer} from 'mobx-react';
+import AppContext from './AppContext.js'
 
 const appBarHeight = 52;
 
@@ -43,7 +45,8 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const Main = function (props) {
+const Main = React.memo(observer(function Main(props) {
+  const appConfig = useContext(AppContext)
   const classes = useStyles();
   const handleNavigateToLogin = () => {
     history.push("/login");
@@ -78,7 +81,12 @@ const Main = function (props) {
         <Toolbar variant="dense" className={classes.toolBar}>
           <Typography className={classes.title}></Typography>
           <ThemeSwitcher handleThemeSwitcher={props.handleThemeSwitcher}/>
-          <Button size="small" className={classes.button} onClick={handleNavigateToLogin}>Login</Button>
+          { ! appConfig.loggedInUser && (
+            <Button size="small" className={classes.button} onClick={handleNavigateToLogin}>Login</Button>
+          )}
+          { appConfig.loggedInUser && (
+            <Button size="small" className={classes.button} onClick={handleNavigateToLogin}>{appConfig.loggedInUser}</Button>
+          )}
         </Toolbar>
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>
       </AppBar>
@@ -93,5 +101,5 @@ const Main = function (props) {
       {/* <RightDrawer/>  */}
     </>
   )
-}
+}))
 export default Main
