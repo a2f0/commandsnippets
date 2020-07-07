@@ -200,6 +200,10 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
     setShowNew(true)
   };
 
+  const handleCancelNewEntry = () => {
+    setShowNew(false);
+  };
+
   const contextMenu = useMemo(() => 
     <EntryContextMenu 
       mouse={mouse} 
@@ -239,7 +243,8 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
       { showNew && (
         <EntryNew
           tag={tag} 
-          classes={classes}/>
+          classes={classes}
+          handleCancelNewEntry={handleCancelNewEntry}/>
       )}
 
       {contextMenu}

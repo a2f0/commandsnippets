@@ -23,6 +23,9 @@ const useStyles = makeStyles({
     display: 'inline-block',
     fontSize: 14,
     margin: 'auto',
+    border: '1px solid red',
+    padding: 2,
+    minWidth: '300px'
   },
   entryBody: {
     display: 'inline-block',
@@ -30,7 +33,9 @@ const useStyles = makeStyles({
     margin: 'auto',
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap',
-    padding: 2
+    padding: 2,
+    border: '1px solid red',
+    minWidth: '300px'
   }
 });
 
@@ -124,8 +129,7 @@ const EntryNew = React.memo(function (props) {
   const handleCancel = () => {
     setBody(props.body)
     setSubject(props.subject)
-    //props.handleCancelEdit()
-    console.log('handleCancel')
+    props.handleCancelNewEntry()
   }
 
   const handleBodyChange = (body) => {
