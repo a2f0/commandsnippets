@@ -1739,4 +1739,77 @@
     date_created: "2020-05-12T18:22:00+00:00"
     date_updated: "2020-05-12T18:22:00+00:00"
 
-    
+- model: text_entries.TextEntry
+  pk: 159
+  fields:
+    user_id: 1
+    subject: list container registries
+    body:  az acr list
+    date_created: "2020-07-04T00:00:00+00:00"
+    date_created: "2020-07-04T00:00:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 160
+  fields:
+    user_id: 1
+    subject: get password for container registery
+    body: |
+      az acr update -n <registry> --admin-enabled true
+      az acr credential show --name <registry>
+      az acr update -n <registry> --admin-enabled false
+    date_created: "2020-07-04T00:00:00+00:00"
+    date_created: "2020-07-04T00:00:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 161
+  fields:
+    user_id: 1
+    subject: build from a dockerfile with the current directory as context
+    body: |
+      docker build . -f ./compose/django/Dockerfile
+    date_created: "2020-07-04T00:00:00+00:00"
+    date_created: "2020-07-04T00:00:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 162
+  fields:
+    user_id: 1
+    subject: show the tags for a repository
+    body: |
+      az acr repository list --name tfcontainers --output table
+      az acr repository show-tags --repository ccs-backend --name <registry>
+    date_created: "2020-07-04T00:01:00+00:00"
+    date_created: "2020-07-04T00:01:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 163
+  fields:
+    user_id: 1
+    subject: show the tags for a repository
+    body: |
+      az acr repository list --name tfcontainers --output table
+      az acr repository show-tags --repository ccs-backend --name <registry>
+    date_created: "2020-07-04T00:01:00+00:00"
+    date_created: "2020-07-04T00:01:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 164
+  fields:
+    user_id: 1
+    subject: delete unpushed commits and drop history
+    body: |
+      git reset --hard HEAD~1
+      git reset --hard HEAD~2
+    date_created: "2020-07-15T00:01:00+00:00"
+    date_created: "2020-07-15T00:01:00+00:00"
+
+- model: text_entries.TextEntry
+  pk: 165
+  fields:
+    user_id: 1
+    subject: delete unpushed commits and keep history
+    body: |
+      git reset --soft HEAD~1
+      git reset --soft HEAD~2
+    date_created: "2020-07-15T00:01:00+00:00"
+    date_created: "2020-07-15T00:01:00+00:00"

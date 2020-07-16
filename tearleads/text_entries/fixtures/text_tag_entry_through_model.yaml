@@ -578,3 +578,73 @@
     user: 1
     date_created: "2020-05-07T18:20:00+00:00"
     date_updated: "2020-05-07T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 59
+  fields:
+    tag: 5
+    text_entry: 159
+    order: 59
+    user: 1
+    date_created: "2020-05-07T18:20:00+00:00"
+    date_updated: "2020-05-07T18:20:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 60
+  fields:
+    tag: 5
+    text_entry: 160
+    order: 60
+    user: 1
+    date_created: "2020-05-07T18:21:00+00:00"
+    date_updated: "2020-05-07T18:21:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 61
+  fields:
+    tag: 1
+    text_entry: 161
+    order: 61
+    user: 1
+    date_created: "2020-05-07T18:21:00+00:00"
+    date_updated: "2020-05-07T18:21:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 62
+  fields:
+    tag: 5
+    text_entry: 162
+    order: 62
+    user: 1
+    date_created: "2020-05-07T18:21:00+00:00"
+    date_updated: "2020-05-07T18:21:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 63
+  fields:
+    tag: 5
+    text_entry: 163
+    order: 63
+    user: 1
+    date_created: "2020-07-16T18:21:00+00:00"
+    date_updated: "2020-07-16T18:21:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 64
+  fields:
+    tag: 7
+    text_entry: 164
+    order: 64
+    user: 1
+    date_created: "2020-07-16T18:21:00+00:00"
+    date_updated: "2020-07-16T18:21:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 65
+  fields:
+    tag: 7
+    text_entry: 165
+    order: 65
+    user: 1
+    date_created: "2020-07-16T18:21:00+00:00"
+    date_updated: "2020-07-16T18:21:00+00:00"
