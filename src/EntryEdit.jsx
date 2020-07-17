@@ -22,14 +22,20 @@ const useStyles = makeStyles({
     display: 'inline-block',
     fontSize: 14,
     margin: 'auto',
+    padding: 2,
+    border: '1px solid red',
+    minWidth: '300px'
   },
+  
   entryBody: {
     display: 'inline-block',
     fontSize: 14,
     margin: 'auto',
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap',
-    padding: 2
+    padding: 2,
+    border: '1px solid red',
+    minWidth: '300px'
   }
 });
 
