@@ -6,11 +6,11 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from tearleads.text_entries.models import TextEntry
 from tearleads.text_entries.serializers import TextEntryCreateSerializer, TextEntrySerializer
-
+from tearleads.core.permissions import IsOwner
 
 class TextEntryViewSet(viewsets.ModelViewSet):
     ordering_fields = ('body','date_created','date_updated','subject')
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,IsOwner)
     queryset = TextEntry.objects.all()
     serializer_class = TextEntrySerializer
 
@@ -34,4 +34,14 @@ class TextEntryViewSet(viewsets.ModelViewSet):
         return response.Response(
             data=TextEntrySerializer(instance=instance).data,
             status=status.HTTP_201_CREATED
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_deleted = True
+        instance.save()
+
+        return response.Response(
+            data=TextEntrySerializer(instance=instance).data,
+            status=status.HTTP_200_OK
         )

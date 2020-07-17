@@ -211,3 +211,56 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response['included'][0]['type'],'User')
         self.assertEqual(len(json_response['included'][0]['attributes']),1)
         self.assertEqual(json_response['included'][0]['attributes']['username'],self.user1.username)
+
+    def test_delete_works_when_modifying_self_owned_object(self):
+        entry1 = TextEntryFactory(user=self.user1, is_deleted=False)
+        payload = {
+            'data': {
+                'type': 'TextEntry',
+                'id': str(entry1.id),
+                'attributes': {
+                    'is_deleted': 'True',
+                }
+            }
+        }
+        self.assertEqual(entry1.is_deleted, False)
+        response = self.user1_api_client.delete('/api/v1/entries/' + str(entry1.id), format='vnd.api+json')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_response['data']['attributes']['is_deleted'],True)
+        self.assertEqual(len(json_response['included']), 1)
+        self.assertEqual(json_response['included'][0]['type'],'User')
+        self.assertEqual(len(json_response['included'][0]['attributes']),1)
+        self.assertEqual(json_response['included'][0]['attributes']['username'],self.user1.username)
+
+    def test_delete_fails_when_modifying_self_owned_object(self):
+        entry1 = TextEntryFactory(user=self.user2, is_deleted=False)
+        payload = {
+            'data': {
+                'type': 'TextEntry',
+                'id': str(entry1.id),
+                'attributes': {
+                    'is_deleted': 'True',
+                }
+            }
+        }
+        response = self.user1_api_client.delete('/api/v1/entries/' + str(entry1.id), format='vnd.api+json')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(json_response['errors'][0]['detail'], 'You do not have permission to perform this action.')
+
+    def test_delete_fails_for_anonymous_user(self):
+        entry1 = TextEntryFactory(user=self.user2, is_deleted=False)
+        payload = {
+            'data': {
+                'type': 'TextEntry',
+                'id': str(entry1.id),
+                'attributes': {
+                    'is_deleted': 'True',
+                }
+            }
+        }
+        response = self.unauthenticated_user_api_client.delete('/api/v1/entries/' + str(entry1.id), format='vnd.api+json')
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(json_response['errors'][0]['detail'], 'Authentication credentials were not provided.')

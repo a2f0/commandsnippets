@@ -15,7 +15,7 @@ class TextEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TextEntry
-        fields = ('id','body','subject','date_updated','date_created','user')
+        fields = ('id','body','subject','date_updated','date_created','user','is_deleted')
 
     class JSONAPIMeta:
         included_resources = ['user',]
