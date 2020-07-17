@@ -648,3 +648,33 @@
     user: 1
     date_created: "2020-07-16T18:21:00+00:00"
     date_updated: "2020-07-16T18:21:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 66
+  fields:
+    tag: 15
+    text_entry: 166
+    order: 66
+    user: 1
+    date_created: "2020-07-16T18:21:00+00:00"
+    date_updated: "2020-07-16T18:21:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 67
+  fields:
+    tag: 15
+    text_entry: 167
+    order: 67
+    user: 1
+    date_created: "2020-07-16T18:21:00+00:00"
+    date_updated: "2020-07-16T18:21:00+00:00"
+
+- model: tags.TagTextEntryThroughModel
+  pk: 68
+  fields:
+    tag: 5
+    text_entry: 168
+    order: 68
+    user: 1
+    date_created: "2020-07-16T18:21:00+00:00"
+    date_updated: "2020-07-16T18:21:00+00:00"
