@@ -1746,7 +1746,7 @@
     subject: list container registries
     body:  az acr list
     date_created: "2020-07-04T00:00:00+00:00"
-    date_created: "2020-07-04T00:00:00+00:00"
+    date_updated: "2020-07-04T00:00:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 160
@@ -1758,7 +1758,7 @@
       az acr credential show --name <registry>
       az acr update -n <registry> --admin-enabled false
     date_created: "2020-07-04T00:00:00+00:00"
-    date_created: "2020-07-04T00:00:00+00:00"
+    date_updated: "2020-07-04T00:00:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 161
@@ -1768,7 +1768,7 @@
     body: |
       docker build . -f ./compose/django/Dockerfile
     date_created: "2020-07-04T00:00:00+00:00"
-    date_created: "2020-07-04T00:00:00+00:00"
+    date_updated: "2020-07-04T00:00:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 162
@@ -1779,7 +1779,7 @@
       az acr repository list --name tfcontainers --output table
       az acr repository show-tags --repository ccs-backend --name <registry>
     date_created: "2020-07-04T00:01:00+00:00"
-    date_created: "2020-07-04T00:01:00+00:00"
+    date_updated: "2020-07-04T00:01:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 163
@@ -1790,7 +1790,7 @@
       az acr repository list --name tfcontainers --output table
       az acr repository show-tags --repository ccs-backend --name <registry>
     date_created: "2020-07-04T00:01:00+00:00"
-    date_created: "2020-07-04T00:01:00+00:00"
+    date_updated: "2020-07-04T00:01:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 164
@@ -1801,7 +1801,7 @@
       git reset --hard HEAD~1
       git reset --hard HEAD~2
     date_created: "2020-07-15T00:01:00+00:00"
-    date_created: "2020-07-15T00:01:00+00:00"
+    date_updated: "2020-07-15T00:01:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 165
@@ -1812,7 +1812,7 @@
       git reset --soft HEAD~1
       git reset --soft HEAD~2
     date_created: "2020-07-15T00:01:00+00:00"
-    date_created: "2020-07-15T00:01:00+00:00"
+    date_updated: "2020-07-15T00:01:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 166
@@ -1825,7 +1825,7 @@
       commit = True
       tag = True
     date_created: "2020-07-15T00:01:00+00:00"
-    date_created: "2020-07-15T00:01:00+00:00"
+    date_updated: "2020-07-15T00:01:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 167
@@ -1838,7 +1838,7 @@
       bump2version patch
       bump2version major
     date_created: "2020-07-15T00:01:00+00:00"
-    date_created: "2020-07-15T00:01:00+00:00"
+    date_updated: "2020-07-15T00:01:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 168
@@ -1849,4 +1849,4 @@
       az postgres server configuration set --name pg_qs.query_capture_mode --resource-group $SERVER_RESOURCE_GROUP --server $SERVER_NAME --value TOP
       az postgres server configuration set --name pgms_wait_sampling.query_capture_mode --resource-group $SERVER_RESOURCE_GROUP --server $SERVER_NAME --value ALL
     date_created: "2020-07-15T00:01:00+00:00"
-    date_created: "2020-07-15T00:01:00+00:00"
+    date_updated: "2020-07-15T00:01:00+00:00"

@@ -7,5 +7,6 @@ class TextEntry(models.Model):
     date_updated = models.DateTimeField(auto_now=True)
     subject = models.CharField(max_length=255)
     user = models.ForeignKey('users.User', related_name='text_entries', null=False, on_delete=models.CASCADE)
+    is_deleted = models.BooleanField(default=False)
     class Meta:
         ordering = ['date_updated','id']
