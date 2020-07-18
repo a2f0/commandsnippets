@@ -58,6 +58,6 @@ services:
   postgres:
     build: ./compose/postgres
     volumes:
-      - postgres_data_dev:/var/lib/postgresql/data
-      - postgres_backup_dev:/backups
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_backup:/backups
     env_file: .env
