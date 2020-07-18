@@ -38,8 +38,6 @@ services:
     depends_on:
       - postgres
     env_file: .env
-    volumes:
-      - .:/app:cached
     ports:
       - "9001:9001"
     links:

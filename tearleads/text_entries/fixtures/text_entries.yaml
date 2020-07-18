@@ -27,6 +27,7 @@
     body: |
       docker run -it ubuntu
       docker-compose run postgres /bin/bash
+      docker run -it <REPOSITORY>:tearleads-backend-latest /bin/bash
     date_created: "2020-03-26T18:20:00+00:00"
     date_updated: "2020-03-26T18:20:00+00:00"
 

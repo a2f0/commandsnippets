@@ -1,9 +1,14 @@
 # Tearleads Backend
 
-Bootstrap
+Bootstrap (Local dev)
 
     docker-compose build
     docker-compose run backend /app/loaddata.sh
+
+Bootstrap (Server)
+
+    docker-compose -f container-registry.yaml run backend /app/loaddata.sh
+    docker-compose -f container-registry.yaml up -d
 
 Run tests
 
