@@ -1,0 +1,56 @@
+import React, { useState, useEffect } from 'react'
+import { useTheme } from '@material-ui/styles';
+import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core/styles';
+import API from './api.js'
+
+const useStyles = makeStyles({
+  tagName: {
+    display: 'inline-block',
+    fontSize: 14,
+    margin: 'auto',
+    border: '1px solid red',
+    paddingLeft: 2,
+    minWidth: '100px'
+  }
+});
+
+const TagNew = React.memo(function (props) {
+
+  const theme = useTheme();
+  const [tagName,setTagName] = useState();
+  const classes = useStyles();
+
+  const handleTagNameChange = (newTagName) => {
+    setTagName(newTagName);
+  }
+
+  const handleCancel = () => {
+    setTagName(null)
+  }
+
+  const handleSave = () => {
+
+  }
+
+  return (
+    <>
+      <div>
+        <div
+          className={classes.tagName}
+          contentEditable={true}
+          suppressContentEditableWarning={true}
+          onBlur={(e) => { handleTagNameChange(e.currentTarget.textContent);}}> 
+          {tagName}
+        </div>
+      </div>
+      <Button size="small" variant="outlined" onClick={() => { handleSave();}}>
+        Save
+      </Button>
+      <Button size="small" variant="outlined" onClick={() => { handleCancel();}}>
+        Cancel
+      </Button>
+    </>
+  )
+})
+export default TagNew

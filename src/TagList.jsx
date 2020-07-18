@@ -8,6 +8,7 @@ import ListItem from '@material-ui/core/ListItem';
 import memoize from "memoize-one";
 import { makeStyles } from '@material-ui/core/styles';
 import API from './api.js'
+import TagNew from './TagNew.jsx'
 
 const useStyles = makeStyles({
   root: {
@@ -90,6 +91,7 @@ const TagList = React.memo(function TagList(props) {
     <>
       <TagSearch/>
       <List className={classes.root}>
+        <TagNew/>
         {data.data.map((tag, i) => {
           const user = data.included.filter(
             i => i.type=="User" && i.id == tag.relationships.user.data.id
