@@ -9,4 +9,16 @@
   tasks:
     - include: tasks/copy-deploy-keys.yaml
     - include: tasks/clone-repos.yaml
- 
+
+- hosts: production
+  become: yes
+  become_user: root
+  tasks:
+    - include: tasks/install-packages-ubuntu-20.yaml
+    - include: tasks/configure-users.yaml
+      
+- hosts: production
+  tasks:
+    - include: tasks/copy-deploy-keys.yaml
+    - include: tasks/clone-repos.yaml
+  
