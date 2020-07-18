@@ -5,7 +5,7 @@ from rest_framework_json_api.filters import OrderingFilter
 from rest_framework_json_api.django_filters import DjangoFilterBackend
 
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
-from tearleads.tags.serializers import TagSerializer, TagTextEntryThroughModelSerializer, TagTextEntryThroughModelCreateSerializer
+from tearleads.tags.serializers import TagSerializer, TagTextEntryThroughModelSerializer, TagTextEntryThroughModelCreateSerializer, TagCreateSerializer
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -13,6 +13,19 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     ordering_fields = ('date_created','name',)
+
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = TagCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(
+            user=request.user
+        )
+        return response.Response(
+            data=TagSerializer(instance=instance).data,
+            status=status.HTTP_201_CREATED
+    )
 
 class TagTextEntryThroughModel(viewsets.ModelViewSet):
     queryset = TagTextEntryThroughModel.objects.all()

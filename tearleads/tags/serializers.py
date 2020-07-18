@@ -19,6 +19,12 @@ class TagSerializer(serializers.ModelSerializer):
     class JSONAPIMeta:
         included_resources = ['user']
 
+class TagCreateSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Tag
+        fields = ('name',)
+
 class TagTextEntryThroughModelSerializer(serializers.ModelSerializer):
 
     included_serializers = {
