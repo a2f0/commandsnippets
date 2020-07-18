@@ -30,7 +30,25 @@ const TagNew = React.memo(function (props) {
   }
 
   const handleSave = () => {
-
+    const payload = {
+      'data': {
+        'type': 'Tag',
+        'attributes': {
+          'name': tagName
+        },
+      }
+    }
+    API.post('/tags', payload, {withCredentials: true})
+      .then(function (response) {
+        console.log(response)
+      })
+      .catch(function (error) {
+        // handle error
+        console.log(error);
+      })
+      .then(function () {
+        // always executed
+      });
   }
 
   return (
