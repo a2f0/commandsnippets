@@ -1,8 +1,8 @@
 version: '2'
 
 volumes:
-  postgres_data_dev: {}
-  postgres_backup_dev: {}
+  postgres_data: {}
+  postgres_backup: {}
   conf:
   vhost:
   html:
