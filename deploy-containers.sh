@@ -8,5 +8,5 @@ $DIR/ecr-login-aws-v2.sh
 
 docker-compose -f container-registry.yaml pull
 docker-compose -f container-registry.yaml down
-docker-compose -f container-registry.yaml run python manage.py migrate
+docker-compose -f container-registry.yaml run backend manage.py migrate
 docker-compose -f container-registry.yaml up -d
