@@ -3,6 +3,8 @@ import axios from "axios";
 export const baseHTTPURL = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
     return 'https://api-staging.tearleads.com';
+  } else if (window.location.hostname === 'tearleads.com') {
+    return 'https://api.tearleads.com';
   } else {
     return "http://localhost:9001";
   }  
