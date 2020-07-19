@@ -90,7 +90,7 @@ WSGI_APPLICATION = 'tearleads.wsgi.application'
 # Also see ALLOWED_HOSTS
 CORS_ORIGIN_REGEX_WHITELIST = [
     r"^http://localhost:*",
-    r"^https://tearleads\.com$"
+    r"^https://tearleads\.com$",
     r"^https://\w+\.tearleads\.com$"
 ]
 
