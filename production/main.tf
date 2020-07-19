@@ -150,5 +150,5 @@ resource "aws_route53_record" "tearleads" {
   name    = "tearleads.com"
   type    = "A"
   ttl     = "30"
-  records = [ "185.199.108.153" ]
+  records = [ aws_instance.ec2.public_ip ]
 }
