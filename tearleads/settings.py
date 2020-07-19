@@ -27,7 +27,7 @@ SECRET_KEY = '#ridx)6=92r06^kym!jhsvh=y1pdv-lt$##rqfo7nv(0(v9ug0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.tearleads.com' ]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.tearleads.com' 'tearleads.com' ]
 
 # Application definition
 
@@ -87,6 +87,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tearleads.wsgi.application'
 
+# Also see ALLOWED_HOSTS
 CORS_ORIGIN_REGEX_WHITELIST = [
     r"^http://localhost:*",
     r"^https://tearleads\.com$"
