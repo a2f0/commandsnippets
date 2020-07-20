@@ -10,6 +10,10 @@ Bootstrap (Server)
     docker-compose -f container-registry.yaml run backend /app/loaddata.sh
     docker-compose -f container-registry.yaml up -d
 
+Backups (Server)
+
+    docker-compose -f container-registry.yaml run postgres backup
+
 Run tests
 
     docker-compose run backend python manage.py test
