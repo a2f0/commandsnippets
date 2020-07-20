@@ -9,6 +9,7 @@
   tasks:
     - include: tasks/copy-deploy-keys.yaml
     - include: tasks/clone-repos.yaml
+    - include: tasks/schedule-api-backup.yaml
 
 - hosts: production
   become: yes
@@ -21,4 +22,5 @@
   tasks:
     - include: tasks/copy-deploy-keys.yaml
     - include: tasks/clone-repos.yaml
+    - include: tasks/schedule-api-backup.yaml
   

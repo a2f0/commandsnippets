@@ -1,0 +1,7 @@
+- name: Regular DB Backups
+  cron:
+    name: "api database backup"
+    minute: '0'
+    hour: '5'
+    job: "cd /home/{{ ansible_user }}/tearleads-backend/ && docker-compose -f container-registry.yaml run postgres backup >/home/{{ ansible_user }}/db-backup-log 2>&1"
+    user: "{{ ansible_user }}"
