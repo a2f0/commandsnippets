@@ -18,9 +18,11 @@ import { useObserver } from 'mobx-react'
 import AppContext from './AppContext.js'
 import { useHistory } from "react-router-dom";
 import {observer} from 'mobx-react';
+import { baseHTTPURL } from './api.js' 
 
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward'
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward'
+import axios from "axios";
 
 const StyledMenu = withStyles({
   paper: {
@@ -93,13 +95,32 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
   const [helpMenuAnchorEl, setHelpMenuAnchorEl] = React.useState(null);
 
   const handleNavigateToLogin = () => {
-    console.info('navigate!')
     history.push("/login");
   }
 
   const handleLogout = () => {
-    console.info('logout')
 
+    const base_url = baseHTTPURL();
+    const logout_api = axios.create({
+      baseURL: base_url,
+      responseType: "json",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    });
+
+    logout_api.post('/api-token-deauth/', {}, {withCredentials: true})
+      .then(function (response) {
+        // Login succeded
+        appConfig.loggedInUser = '';
+        setFileMenuAnchorEl(null);
+      })
+      .catch(function (error) {
+        // Login failed
+      })
+      .then(function () {
+        // always executed
+      });
   }
 
   const handleFileMenuClick = (event) => {
@@ -171,7 +192,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
           <MenuItem className={classes.menuItem} onClick={handleNavigateToLogin}>Login</MenuItem>
         )}
         { appConfig.loggedInUser && (
-          <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Logout</MenuItem>
+          <MenuItem className={classes.menuItem} onClick={handleLogout}>Logout</MenuItem>
         )}
       </StyledMenu>
       <StyledMenu
