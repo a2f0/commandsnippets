@@ -16,6 +16,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import CheckIcon from '@material-ui/icons/Check';
 import { useObserver } from 'mobx-react'
 import AppContext from './AppContext.js'
+import { useHistory } from "react-router-dom";
 
 
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward'
@@ -83,11 +84,21 @@ const useStyles = makeStyles((theme) => ({
 
 const MenuBar = React.memo(function MenuBar(props) {
   const classes = useStyles();
+  const history = useHistory();
   const theme = useTheme();
   const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
   const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);
   const [helpMenuAnchorEl, setHelpMenuAnchorEl] = React.useState(null);
+
+  const handleNavigateToLogin = () => {
+    console.info('navigate!')
+    history.push("/login");
+  }
+
+  const handleLogout = () => {
+    history.push("/login");
+  }
 
   const handleFileMenuClick = (event) => {
     setFileMenuAnchorEl(event.currentTarget);
@@ -154,7 +165,9 @@ const MenuBar = React.memo(function MenuBar(props) {
         onClose={handleFileMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create a personal tag</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create a Tag</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create an Entry</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleNavigateToLogin}>Login</MenuItem>
         <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Logout</MenuItem>
       </StyledMenu>
       <StyledMenu
