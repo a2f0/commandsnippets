@@ -9,6 +9,7 @@ import memoize from "memoize-one";
 import { makeStyles } from '@material-ui/core/styles';
 import API from './api.js'
 import TagNew from './TagNew.jsx'
+import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles({
   root: {
@@ -29,6 +30,7 @@ const TagList = React.memo(function TagList(props) {
 
   const [data, setData] = useState( { data: [], included: [] });
   const [sort, setSort] = useState('name');
+  const history = useHistory();
   
   useEffect(() => {
     const fetchData = async () => {
@@ -61,49 +63,31 @@ const TagList = React.memo(function TagList(props) {
     this.getTags(sort);
   };
 
-  // const getTags = memoize(
-  //   (sort) => {
-  //     var url = 'http://localhost:9001/api/v1/tags';
-  //     var querystring = "?"
-  //     if (sort != undefined) {
-  //       querystring = querystring + 'sort=' + sort
-  //     } else {
-  //       querystring = querystring + 'sort=name'
-  //     }
-
-  //     if (querystring != '?') {
-  //       url = url + querystring
-  //     }
-  //     fetch(url, {
-  //       method: 'GET',
-  //       credentials: 'include'
-  //     })
-  //       .then(res => res.json())
-  //       .then((res) => {
-  //         this.setState({ tags: res })
-  //       })
-  //       .catch(console.log)
-  //   }
-  // );
+  const handleNavigateToUntaggedEntries = () => {
+    console.info('untagged entries')
+  }
 
   const classes = useStyles();
   return (
     <>
       <TagSearch/>
       <List className={classes.root}>
-        <TagNew/>
+        {/* <TagNew/> */}
         {data.data.map((tag, i) => {
           const user = data.included.filter(
             i => i.type=="User" && i.id == tag.relationships.user.data.id
           )[0];
           return (
             <div key={tag.id} className={classes.container}>
-              <ListItem className={classes.item} button>
+              <ListItem  className={classes.item} button>
                 <Tag id={tag.id} tag={tag} user={user}/>
               </ListItem>
             </div>
           )
         })}
+        <ListItem className={classes.item} button>
+          <div onClick={handleNavigateToUntaggedEntries}>Untagged Entries</div>
+        </ListItem>
       </List>
     </>
   )
