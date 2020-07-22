@@ -17,7 +17,7 @@ import CheckIcon from '@material-ui/icons/Check';
 import { useObserver } from 'mobx-react'
 import AppContext from './AppContext.js'
 import { useHistory } from "react-router-dom";
-
+import {observer} from 'mobx-react';
 
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward'
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward'
@@ -82,10 +82,11 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const MenuBar = React.memo(function MenuBar(props) {
+const MenuBar = React.memo(observer(function MenuBar(props) {
   const classes = useStyles();
   const history = useHistory();
   const theme = useTheme();
+  const appConfig = useContext(AppContext)
   const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
   const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);
@@ -97,7 +98,8 @@ const MenuBar = React.memo(function MenuBar(props) {
   }
 
   const handleLogout = () => {
-    history.push("/login");
+    console.info('logout')
+
   }
 
   const handleFileMenuClick = (event) => {
@@ -135,10 +137,8 @@ const MenuBar = React.memo(function MenuBar(props) {
   const handleSetEntrySortOrder = (order) => {
     appConfig.entrySortOrder = order
   };
-
-  const appConfig = useContext(AppContext)
   
-  return useObserver(() => (
+  return(
     <>
       <Toolbar variant="dense" className={classes.toolBar}>
         <Typography className={classes.drawer}>
@@ -167,8 +167,12 @@ const MenuBar = React.memo(function MenuBar(props) {
       >
         <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create a Tag</MenuItem>
         <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create an Entry</MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleNavigateToLogin}>Login</MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Logout</MenuItem>
+        { ! appConfig.loggedInUser && (
+          <MenuItem className={classes.menuItem} onClick={handleNavigateToLogin}>Login</MenuItem>
+        )}
+        { appConfig.loggedInUser && (
+          <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Logout</MenuItem>
+        )}
       </StyledMenu>
       <StyledMenu
         id="edit-menu"
@@ -300,6 +304,6 @@ const MenuBar = React.memo(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={handleHelpMenuClose}>Help 2</MenuItem>
       </StyledMenu>
     </>
-  ))
-})
+  )
+}))
 export default MenuBar
