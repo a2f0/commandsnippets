@@ -46,3 +46,4 @@ class TagTextEntryThroughModelCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TagTextEntryThroughModel
         fields = ('tag','text_entry')
+        validators = []
