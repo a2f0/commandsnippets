@@ -13,6 +13,7 @@ import MainContextMenu from './MainContextMenu.jsx'
 import Box from '@material-ui/core/Box';
 import {observer} from 'mobx-react';
 import AppContext from './AppContext.js'
+import UntaggedEntryList from './UntaggedEntryList.jsx'
 
 const appBarHeight = 52;
 
@@ -91,6 +92,7 @@ const Main = React.memo(observer(function Main(props) {
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>
       </AppBar>
       <main className={classes.main}>
+        <UntaggedEntryList/>
         <EntryList/>
         {/* <Box height="auto" className={classes.entryListBlankSpace}>
           Empty Space
