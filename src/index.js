@@ -195,7 +195,8 @@ const useStyles = makeStyles((theme) => ({
 const appConfig = observable({
   entrySortOrder: 'date_created',
   authenticatedUser: null,
-  loggedInUser: null
+  loggedInUser: null,
+  mainPanel: 'EntryList'
 })
 
 function AppRouter() {

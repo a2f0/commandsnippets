@@ -92,8 +92,12 @@ const Main = React.memo(observer(function Main(props) {
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>
       </AppBar>
       <main className={classes.main}>
-        <UntaggedEntryList/>
-        <EntryList/>
+        { appConfig.mainPanel == 'UntaggedEntryList' && (
+          <UntaggedEntryList/>
+        )}
+        { appConfig.mainPanel == 'EntryList' && (
+          <EntryList/>
+        )}
         {/* <Box height="auto" className={classes.entryListBlankSpace}>
           Empty Space
         </Box> */}
