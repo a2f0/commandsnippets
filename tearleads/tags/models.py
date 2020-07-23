@@ -22,6 +22,10 @@ class TagTextEntryThroughModel(OrderedModel):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['date_updated','id']
+        unique_together = ('tag', 'text_entry')
+
 def update_counter_increment(sender, instance, created, **kwargs):
     if created:
         text_tag_entry_through_model = instance
