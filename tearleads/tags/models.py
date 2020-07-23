@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import F
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from ordered_model.models import OrderedModel
 
 from tearleads.text_entries.models import TextEntry
@@ -34,3 +34,11 @@ def update_counter_increment(sender, instance, created, **kwargs):
         text_entry.save(update_fields=['tag_count'])
 
 post_save.connect(update_counter_increment, sender=TagTextEntryThroughModel)
+
+def update_counter_decrement(sender, instance, **kwargs):
+        text_tag_entry_through_model = instance
+        text_entry = text_tag_entry_through_model.text_entry
+        text_entry.tag_count = F('tag_count') - 1
+        text_entry.save(update_fields=['tag_count'])
+
+post_delete.connect(update_counter_decrement, sender=TagTextEntryThroughModel)
