@@ -27,7 +27,7 @@ class TagViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
     )
 
-class TagTextEntryThroughModel(viewsets.ModelViewSet):
+class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
     queryset = TagTextEntryThroughModel.objects.all()
     serializer_class = TagTextEntryThroughModelSerializer
     ordering_fields = (
@@ -48,9 +48,17 @@ class TagTextEntryThroughModel(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = TagTextEntryThroughModelCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        instance = serializer.save(
-            user=request.user
+
+        text_entry = serializer.validated_data.pop('text_entry')
+        tag = serializer.validated_data.pop('tag')
+        
+        instance, created = TagTextEntryThroughModel.objects.get_or_create(
+            user=request.user,
+            tag=tag,
+            text_entry=text_entry,
+            defaults=dict(),
         )
+
         return response.Response(
             data=TagTextEntryThroughModelSerializer(instance=instance).data,
             status=status.HTTP_201_CREATED

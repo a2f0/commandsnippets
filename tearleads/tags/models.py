@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import F
+from django.db.models.signals import post_save
 from ordered_model.models import OrderedModel
 
 from tearleads.text_entries.models import TextEntry
@@ -19,3 +21,12 @@ class TagTextEntryThroughModel(OrderedModel):
     user = models.ForeignKey('users.User', related_name='tags_entries', null=False, on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
+
+def update_counter_increment(sender, instance, created, **kwargs):
+    if created:
+        text_tag_entry_through_model = instance
+        text_entry = text_tag_entry_through_model.text_entry
+        text_entry.tag_count = F('tag_count') + 1
+        text_entry.save(update_fields=['tag_count'])
+
+post_save.connect(update_counter_increment, sender=TagTextEntryThroughModel)
