@@ -79,6 +79,15 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response['data']), 1)
         self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
 
+    def test_filter_by_tag_count(self):
+        entry1 = TextEntryFactory(user=self.user1, tag_count=0)
+        entry2 = TextEntryFactory(user=self.user1, tag_count=1)
+        response = self.user1_api_client.get('/api/v1/entries?filter[tag_count]={}'.format(0))
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 1)
+        self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
+
     def test_order_filter(self):
         entry1 = TextEntryFactory(user=self.user1, subject='a', body='z')
         entry2 = TextEntryFactory(user=self.user1, subject='b', body='y')

@@ -22,7 +22,8 @@ class TextEntryViewSet(viewsets.ModelViewSet):
     filterset_fields = {
        'id': ('exact',),
        'tags__name': ('exact',),
-       'tags__id': ('exact',)
+       'tags__id': ('exact',),
+       'tag_count': ('exact',)
     }
 
     def create(self, request, *args, **kwargs):
