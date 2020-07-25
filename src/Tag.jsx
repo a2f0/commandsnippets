@@ -1,11 +1,10 @@
-import React, {useState} from 'react'
+import React, {useState, useContext} from 'react'
 import { useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import { useTheme } from '@material-ui/styles';
 import TagContextMenu from './TagContextMenu.jsx'
-import { Link } from "react-router-dom";
+import AppContext from './AppContext.js';
+import { useHistory } from "react-router-dom";
 
 const style = {
   marginRight: 0,
@@ -37,8 +36,12 @@ const Tag = React.memo(function Tag({tag, id, user}) {
     backgroundColor = 'gray'
   }
 
+  const appConfig = useContext(AppContext)
+  const history = useHistory();
+
   const handleTagClick = () => {
-    console.log('handle it')
+    appConfig.mainPanel = 'EntryList'
+    history.push(`/${user.attributes.username}/${tag.attributes.name}`);
   }
 
   const initialMouse = {
@@ -58,15 +61,13 @@ const Tag = React.memo(function Tag({tag, id, user}) {
 
   return (
     <>
-      <Link to={`/${user.attributes.username}/${tag.attributes.name}`}>
-        <div
-          ref={drop}
-          style={{ ...style, backgroundColor }}
-          onClick={handleTagClick}
-          onContextMenu={handleContextClick}>
-          {isActive ? tag.attributes.name : tag.attributes.name}
-        </div>
-      </Link>
+      <div
+        ref={drop}
+        style={{ ...style, backgroundColor }}
+        onClick={handleTagClick}
+        onContextMenu={handleContextClick}>
+        {isActive ? tag.attributes.name : tag.attributes.name}
+      </div>
       <TagContextMenu mouse={mouse}/>
     </>
   )

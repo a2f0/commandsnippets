@@ -33,7 +33,8 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
   const retrieveEntries = () => {
     const fetchData = async () => {
       var url_query_query_string = '/entries?' +
-        'sort=' + appConfig.entrySortOrder
+        'sort=' + appConfig.entrySortOrder +
+        '&filter[tag_count]=0'
       // if (user != undefined ) {
       //   url_query_query_string += '&filter[user.username]=' + user
       // }

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useContext} from 'react'
 import { useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import Tag from './Tag.jsx'
@@ -9,7 +9,8 @@ import memoize from "memoize-one";
 import { makeStyles } from '@material-ui/core/styles';
 import API from './api.js'
 import TagNew from './TagNew.jsx'
-import { useHistory } from "react-router-dom";
+import AppContext from './AppContext.js'
+import {observer} from 'mobx-react';
 
 const useStyles = makeStyles({
   root: {
@@ -26,11 +27,11 @@ const useStyles = makeStyles({
   }
 });
 
-const TagList = React.memo(function TagList(props) {
+const TagList = React.memo(observer(function TagList(props) {
 
+  const appConfig = useContext(AppContext)
   const [data, setData] = useState( { data: [], included: [] });
   const [sort, setSort] = useState('name');
-  const history = useHistory();
   
   useEffect(() => {
     const fetchData = async () => {
@@ -64,7 +65,7 @@ const TagList = React.memo(function TagList(props) {
   };
 
   const handleNavigateToUntaggedEntries = () => {
-    console.info('untagged entries')
+    appConfig.mainPanel = 'UntaggedEntryList'
   }
 
   const classes = useStyles();
@@ -91,5 +92,5 @@ const TagList = React.memo(function TagList(props) {
       </List>
     </>
   )
-})
+}))
 export default TagList
