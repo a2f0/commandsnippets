@@ -216,6 +216,9 @@ function AppRouter() {
                 <Route path="/login">
                   <Login/>
                 </Route>
+                <Route path="/:user/untagged-entries">
+                  <Main handleThemeSwitcher={handleThemeSwitcher}/>
+                </Route>
                 <Route path="/:user/:tag">
                   <Main handleThemeSwitcher={handleThemeSwitcher}/>
                 </Route>

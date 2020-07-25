@@ -11,6 +11,7 @@ import API from './api.js'
 import TagNew from './TagNew.jsx'
 import AppContext from './AppContext.js'
 import {observer} from 'mobx-react';
+import { useParams, useHistory } from 'react-router-dom';
 
 const useStyles = makeStyles({
   root: {
@@ -32,6 +33,8 @@ const TagList = React.memo(observer(function TagList(props) {
   const appConfig = useContext(AppContext)
   const [data, setData] = useState( { data: [], included: [] });
   const [sort, setSort] = useState('name');
+  const { user } = useParams();
+  const history = useHistory();
   
   useEffect(() => {
     const fetchData = async () => {
@@ -65,6 +68,8 @@ const TagList = React.memo(observer(function TagList(props) {
   };
 
   const handleNavigateToUntaggedEntries = () => {
+    // untagged-entries
+    history.push(`/${user}/untagged-entries`);
     appConfig.mainPanel = 'UntaggedEntryList'
   }
 
