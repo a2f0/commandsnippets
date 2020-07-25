@@ -158,6 +158,10 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
   const handleSetEntrySortOrder = (order) => {
     appConfig.entrySortOrder = order
   };
+
+  const handleCreateTag = () => {
+    appConfig.tagNew = true;
+  };
   
   return(
     <>
@@ -186,7 +190,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         onClose={handleFileMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create a Tag</MenuItem>
+        <MenuItem className={classes.menuItem} onClick={handleCreateTag}>Create a Tag</MenuItem>
         <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create an Entry</MenuItem>
         { ! appConfig.loggedInUser && (
           <MenuItem className={classes.menuItem} onClick={handleNavigateToLogin}>Login</MenuItem>

@@ -76,9 +76,13 @@ const TagList = React.memo(observer(function TagList(props) {
   const classes = useStyles();
   return (
     <>
-      <TagSearch/>
+      { appConfig.tagSearch && (
+        <TagSearch/>
+      )}
       <List className={classes.root}>
-        {/* <TagNew/> */}
+        { appConfig.tagNew && (
+          <TagNew/>
+        )}
         {data.data.map((tag, i) => {
           const user = data.included.filter(
             i => i.type=="User" && i.id == tag.relationships.user.data.id
