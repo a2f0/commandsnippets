@@ -25,6 +25,7 @@ const useStyles = makeStyles((theme) => ({
     zIndex: theme.zIndex.drawer + 1,
     height: appBarHeight,
     boxShadow: "none",
+    borderBottom: ".5px solid"
   },
   main: {	
     width: "100%",	
