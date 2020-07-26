@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo, useEffect } from 'react'
+import React, { useRef, useState, useMemo, useEffect, useContext } from 'react'
 import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import { useTheme } from '@material-ui/styles';
@@ -8,6 +8,7 @@ import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 import EntryContextMenu from './EntryContextMenu.jsx'
 import EntryEdit from './EntryEdit.jsx';
 import EntryNew from './EntryNew.jsx'
+import AppContext from './AppContext.js'
 
 
 const useStyles = makeStyles({
@@ -41,6 +42,7 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
     setTextEntry(text_entry);
   }, [text_entry]);
 
+  const appConfig = useContext(AppContext)
   const [showNew, setShowNew] = useState(false)
   const [textEntry, setTextEntry] = useState()
   const dragRef = useRef(null)
@@ -146,7 +148,9 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
   drop(dropRef)
 
   const mouseEnter = () => {
-    setShowDragHandle(true)
+    if (appConfig.loggedInUser != null) {
+      setShowDragHandle(true)
+    }
   }
   const mouseLeave = () => {
     setShowDragHandle(false)
