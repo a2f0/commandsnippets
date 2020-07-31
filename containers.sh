@@ -1,4 +1,5 @@
 #!/bin/bash
+# Build and push containers.
 set -e
 START=`date +%s`
 

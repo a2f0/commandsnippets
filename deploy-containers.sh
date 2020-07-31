@@ -1,4 +1,5 @@
 #!/bin/bash
+# Deploy containers to a frontend.
 set -e
 START=`date +%s`
 
