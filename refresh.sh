@@ -19,4 +19,28 @@ download_latest() {
   ssh $1 "rm -rf /tmp/dbback"
 }
 
+restore_latest_backup_local() {
+  echo "=== entering $SCRIPT_DIR"
+  cd $SCRIPT_DIR
+  echo '=== running docker-compose up -d'
+  docker-compose up -d
+  echo '=== stopping django container'
+  docker-compose stop backend
+  MOST_RECENT_FILE=`ls -t ~/tearleads-backups/* | head -1`
+  BASE_FILE=`basename $MOST_RECENT_FILE`
+  echo "=== restoring: $MOST_RECENT_FILE"
+  echo '=== copying backup into docker container'
+  docker cp $MOST_RECENT_FILE "$(docker-compose ps -q postgres)":/backups
+  echo '=== listing backups'
+  docker-compose run postgres list-backups
+  echo '=== running postgres restore'
+  docker-compose run postgres restore $BASE_FILE
+  echo '=== migrating database'
+  docker-compose run backend python manage.py migrate
+  echo '=== stopping compose'
+  docker-compose down
+  echo '=== local refresh completed successfully'
+}
+
 time download_latest tearleads.com
+time restore_latest_backup_local
