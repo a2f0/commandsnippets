@@ -45,28 +45,6 @@ const TagList = React.memo(observer(function TagList(props) {
     fetchData();
   }, []);
 
-  const getSortedTags = (sort) => {
-    if (sort === this.state.tagSort) {
-      // Then the sort attribute stayed the same, reverse the order.
-      if (this.state.tagDescending === false) {
-        sort = '-' + sort
-      }
-      this.setState({ tagDescending: !this.state.tagDescending })
-    } else {
-      // Then the sort attribute changed.
-      this.setState({ tagSort: sort })
-      // When sorting tags by created, the most recent should be on top.
-      if (sort === 'date_created') {
-        sort = '-' + sort
-        this.setState({ tagDescending: true })
-      } else {
-        // Reset the sort order to ascending.
-        this.setState({ tagDescending: false })
-      }
-    }
-    this.getTags(sort);
-  };
-
   const handleNavigateToUntaggedEntries = () => {
     // untagged-entries
     history.push(`/${user}/untagged-entries`);
