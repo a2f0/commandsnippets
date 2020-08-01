@@ -85,7 +85,7 @@ const TagList = React.memo(observer(function TagList(props) {
           )
         })}
         <ListItem className={classes.item} button>
-          <div onClick={handleNavigateToUntaggedEntries}>Untagged Entries</div>
+          <div onClick={handleNavigateToUntaggedEntries}>untagged entries</div>
         </ListItem>
       </List>
     </>
