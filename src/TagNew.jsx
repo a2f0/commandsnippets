@@ -43,7 +43,8 @@ const TagNew = React.memo(function (props) {
     }
     API.post('/tags', payload, {withCredentials: true})
       .then(function (response) {
-        console.log(response)
+        appConfig.tagNew = false;
+        props.fetchTags();
       })
       .catch(function (error) {
         // handle error

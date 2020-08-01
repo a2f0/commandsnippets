@@ -37,13 +37,24 @@ const TagList = React.memo(observer(function TagList(props) {
   const history = useHistory();
   
   useEffect(() => {
-    const fetchData = async () => {
-      const sort_string = '?sort=' + sort
-      const response = await API.get('/tags' + sort_string);
-      setData(response.data);
-    }
-    fetchData();
+    fetchTags();
   }, []);
+
+  const fetchTags = () => {
+    const sort_string = '?sort=' + sort
+    API.get('/tags' + sort_string)
+      .then(function (response) {
+        // success
+        setData(response.data);
+      })
+      .catch(function (error) {
+        // handle error
+        console.log(error);
+      })
+      .then(function () {
+        // always executed
+      }); 
+  }
 
   const handleNavigateToUntaggedEntries = () => {
     // untagged-entries
@@ -59,7 +70,7 @@ const TagList = React.memo(observer(function TagList(props) {
       )}
       <List className={classes.root}>
         { appConfig.tagNew && (
-          <TagNew/>
+          <TagNew fetchTags={fetchTags}/>
         )}
         {data.data.map((tag, i) => {
           const user = data.included.filter(
