@@ -183,12 +183,22 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
         }
       }
     }
-    const response = API.patch('entries/' + text_entry.id, payload,  {withCredentials: true});
-    let new_text_entry = {...textEntry}
-    new_text_entry.attributes.subject = updated_subject
-    new_text_entry.attributes.body = updated_body
-    setTextEntry(new_text_entry)
-    setIsEditing(false)
+    API.patch('entries/' + text_entry.id, payload,  {withCredentials: true})
+      .then(function (response) {
+        // handle success
+        let new_text_entry = {...textEntry}
+        new_text_entry.attributes.subject = response.data.data.attributes.subject
+        new_text_entry.attributes.body =  response.data.data.attributes.body
+        setTextEntry(new_text_entry)
+        setIsEditing(false)
+      })
+      .catch(function (error) {
+        // handle error
+        console.log(error);
+      })
+      .then(function () {
+        // always executed
+      });
   };
 
   const handleContextClick = (event) => {
