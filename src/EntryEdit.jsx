@@ -32,7 +32,11 @@ const useStyles = makeStyles({
     fontSize: 14,
     margin: 'auto',
     fontFamily: 'monospace',
-    whiteSpace: 'pre-wrap',
+    whiteSpace: 'pre-wrap', /* css-3 */
+    whiteSpace: '-moz-pre-wrap', 
+    whiteSpace: '-pre-wrap',
+    whiteSpace: '-o-pre-wrap',
+    wordWrap: 'break-word',
     padding: 2,
     border: '1px solid red',
     minWidth: '300px'
