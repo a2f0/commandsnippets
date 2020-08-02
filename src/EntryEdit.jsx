@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { useTheme } from '@material-ui/styles';
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
+import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 
 const useStyles = makeStyles({
 
   entry: {
-    display: 'inline-block',
     verticalAlign: 'top',
+    width: '100%'
   },
   entryWrapper: {
     marginBottom: 16,
@@ -24,7 +25,7 @@ const useStyles = makeStyles({
     margin: 'auto',
     padding: 2,
     border: '1px solid red',
-    minWidth: '300px'
+    width: '100%'
   },
   
   entryBody: {
@@ -40,6 +41,9 @@ const useStyles = makeStyles({
     padding: 2,
     border: '1px solid red',
     minWidth: '300px'
+  },
+  textArea: {
+    width: '100%'
   }
 });
 
@@ -52,8 +56,8 @@ const EntryEdit = React.memo(function (props) {
     setSubject(props.subject)
   }, [props.body, props.subject]);
 
-  const [subject,setSubject] = useState()
-  const [body,setBody] = useState()
+  const [subject,setSubject] = useState('')
+  const [body,setBody] = useState('')
 
   const classes = useStyles();
 
@@ -67,12 +71,12 @@ const EntryEdit = React.memo(function (props) {
     props.handleCancelEdit()
   }
 
-  const handleBodyChange = (body) => {
-    setBody(body);
+  const handleBodyChange = (event) => {
+    setBody(event.target.value);
   }
 
-  const handleSubjectChange = (subject) => {
-    setSubject(subject);
+  const handleSubjectChange = (event) => {
+    setSubject(event.target.value);
   }
   
   return (
@@ -81,21 +85,21 @@ const EntryEdit = React.memo(function (props) {
         <div style={{...theme.custom.dragIndicator}}></div>
         <div className={classes.entry}>
           <div>
-            <div className={classes.entrySubject} 
-              contentEditable={true}
-              suppressContentEditableWarning={true}
-              onBlur={(e) => { handleSubjectChange(e.currentTarget.textContent);}}> 
-              {subject}
-            </div>
+            <input type="text"
+              className={classes.entrySubject}
+              value={subject}
+              onChange={handleSubjectChange}
+            />
           </div>
           <div>
-            <div
-              className={classes.entryBody}
-              contentEditable={true}
-              suppressContentEditableWarning={true}
-              onBlur={(e) => { handleBodyChange(e.currentTarget.textContent);}}> 
-              {body}
-            </div>
+            <TextareaAutosize
+              className={classes.textArea}
+             
+
+              placeholder="body"
+              value={body}
+              onChange={handleBodyChange}
+            />
           </div>
           <Button size="small" variant="outlined" onClick={() => { handleSave();}}>
             Save
