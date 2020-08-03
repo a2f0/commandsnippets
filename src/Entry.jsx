@@ -262,7 +262,9 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
       )}
 
       { appConfig.loggedInUser && (
-        {contextMenu}
+        <>
+          {contextMenu}
+        </>
       )}
       
       { isEditing && (
