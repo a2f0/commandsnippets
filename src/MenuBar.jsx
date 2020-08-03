@@ -173,15 +173,15 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <Button size="small" label="Primary" aria-controls="file-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleFileMenuClick}>
       File
         </Button>
-        <Button size="small" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEditMenuClick}>
+        {/* <Button size="small" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEditMenuClick}>
       Edit
-        </Button>
+        </Button> */}
         <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleViewMenuClick}>
       View
         </Button>
-        <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
+        {/* <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
       Help
-        </Button>
+        </Button> */}
       </Toolbar>
       <StyledMenu
         id="file-menu"
@@ -190,8 +190,12 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         onClose={handleFileMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={handleCreateTag}>Create a Tag</MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create an Entry</MenuItem>
+        { appConfig.loggedInUser && (
+          <>
+            <MenuItem className={classes.menuItem} onClick={handleCreateTag}>Create a Tag</MenuItem>
+            <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create an Entry</MenuItem>
+          </>
+        )}
         { ! appConfig.loggedInUser && (
           <MenuItem className={classes.menuItem} onClick={handleNavigateToLogin}>Login</MenuItem>
         )}
