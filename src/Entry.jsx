@@ -261,7 +261,9 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
           handleCancelNewEntry={handleCancelNewEntry}/>
       )}
 
-      {contextMenu}
+      { appConfig.loggedInUser && (
+        {contextMenu}
+      )}
       
       { isEditing && (
         <EntryEdit 
