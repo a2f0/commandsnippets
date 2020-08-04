@@ -18,7 +18,7 @@ const style = {
 const Tag = React.memo(function Tag({tag, id, user}) {
   const theme = useTheme();
   const [{ canDrop, isOver }, drop] = useDrop({
-    accept: ItemTypes.ENTRY,
+    accept: [ ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY ],
     drop: () => ({ 
       name: name, 
       id: id, 

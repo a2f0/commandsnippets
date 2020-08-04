@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { useDrop } from 'react-dnd'
+import { useDrop, useDrag } from 'react-dnd'
 import Entry from './Entry.jsx'
 import update from 'immutability-helper'
 import ItemTypes from './ItemTypes'
@@ -11,6 +11,16 @@ import { useLocation, useParams } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import { useTheme } from '@material-ui/styles';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
+
+// const style = {
+//   border: '1px dashed gray',
+//   backgroundColor: 'white',
+//   padding: '0.5rem 1rem',
+//   marginRight: '1.5rem',
+//   marginBottom: '1.5rem',
+//   cursor: 'move',
+//   float: 'left',
+// }
 
 const width = {
   width: "100%",
@@ -49,9 +59,22 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
     setShowDragHandle(false)
   }
 
+  const [{ isDragging }, drag] = useDrag({
+    item: { name, type: ItemTypes.UNTAGGEDENTRY },
+    end: (item, monitor) => {
+      const dropResult = monitor.getDropResult()
+      if (item && dropResult) {
+        console.info("it was dropped")
+      }
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  })
+  const opacity = isDragging ? 0 : 1
+
   return (
-    
-    <div  className={classes.entryWrapper}>
+    <div  className={classes.entryWrapper} ref={drag} style={{ opacity }}>
       <div
         style={{...theme.custom.dragIndicator}}
         onMouseEnter={mouseEnter} 
