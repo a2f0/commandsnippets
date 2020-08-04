@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react'
+import React, {useState, useContext, useMemo} from 'react'
 import { useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import { useTheme } from '@material-ui/styles';
@@ -59,6 +59,9 @@ const Tag = React.memo(function Tag({tag, id, user}) {
     setMouse(mouseData)
   };
 
+  const contextMenu = useMemo(() => 
+    <TagContextMenu mouse={mouse}/>);
+
   return (
     <>
       <div
@@ -68,7 +71,12 @@ const Tag = React.memo(function Tag({tag, id, user}) {
         onContextMenu={handleContextClick}>
         {isActive ? tag.attributes.name : tag.attributes.name}
       </div>
-      <TagContextMenu mouse={mouse}/>
+
+      { appConfig.loggedInUser && (
+        <>
+          {contextMenu}
+        </>
+      )}
     </>
   )
 })
