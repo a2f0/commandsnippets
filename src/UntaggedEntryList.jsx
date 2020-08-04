@@ -35,13 +35,6 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
       var url_query_query_string = '/entries?' +
         'sort=' + appConfig.entrySortOrder +
         '&filter[tag_count]=0'
-      // if (user != undefined ) {
-      //   url_query_query_string += '&filter[user.username]=' + user
-      // }
-      // if (tag != undefined ) {
-      //   url_query_query_string += '&filter[tag.name]=' + tag
-      // } 
-      console.log(url_query_query_string)
       const response = await API.get(
         url_query_query_string
       );
@@ -60,6 +53,7 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
             key={entry.id}
             id={entry.id}
             entry={entry}
+            retrieveEntries={retrieveEntries}
           />
         ) 
       })

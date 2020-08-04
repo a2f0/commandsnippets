@@ -46,7 +46,7 @@ const useStyles = makeStyles({
 });
 
 
-const UntaggedEntryList = React.memo(observer(function EntryList(props) {
+const UntaggedEntry = React.memo(observer(function EntryList(props) {
 
   const [showDragHandle, setShowDragHandle] = useState(false)
   const classes = useStyles();
@@ -90,7 +90,7 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
             }
             API.post('tags_entries', payload,  {withCredentials: true})
               .then(function (response) {
-                console.log('successfully tagged.')
+                props.retrieveEntries();
               })
               .catch(function (error) {
                 // handle error
@@ -133,4 +133,4 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
 
   )
 }))
-export default UntaggedEntryList
+export default UntaggedEntry
