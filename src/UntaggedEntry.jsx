@@ -65,6 +65,42 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
       const dropResult = monitor.getDropResult()
       if (item && dropResult) {
         console.info("it was dropped")
+        if ( "type" in dropResult ) {
+          if ( dropResult.type === "Tag" ) {
+            console.info(props.entry.id)
+            const payload = {
+              'data': {
+                'type': 'TagTextEntryThroughModel',
+                'attributes': {},
+                'relationships': {
+                  'tag': {
+                    'data': {
+                      'type': 'Tag', 
+                      'id': dropResult.id 
+                    }
+                  },
+                  'text_entry': {
+                    'data': {
+                      'type': 'TextEntry',
+                      'id': props.entry.id
+                    }
+                  }
+                }
+              }
+            }
+            API.post('tags_entries', payload,  {withCredentials: true})
+              .then(function (response) {
+                console.log('successfully tagged.')
+              })
+              .catch(function (error) {
+                // handle error
+                console.log(error);
+              })
+              .then(function () {
+                // always executed
+              });
+          }
+        }
       }
     },
     collect: (monitor) => ({
