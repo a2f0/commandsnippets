@@ -221,7 +221,7 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response['included'][0]['attributes']),1)
         self.assertEqual(json_response['included'][0]['attributes']['username'],self.user1.username)
 
-    def test_delete_works_when_modifying_self_owned_object(self):
+    def test_delete_works_when_self_owns_object(self):
         entry1 = TextEntryFactory(user=self.user1, is_deleted=False)
         payload = {
             'data': {
@@ -242,7 +242,7 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response['included'][0]['attributes']),1)
         self.assertEqual(json_response['included'][0]['attributes']['username'],self.user1.username)
 
-    def test_delete_fails_when_modifying_self_owned_object(self):
+    def test_delete_fails_when_object_owned_by_other(self):
         entry1 = TextEntryFactory(user=self.user2, is_deleted=False)
         payload = {
             'data': {
