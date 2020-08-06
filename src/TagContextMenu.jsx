@@ -33,7 +33,6 @@ const TagContextMenu = React.memo(function TagContextMenu(props) {
     >
       <MenuItem onClick={handleClose}>New Tag</MenuItem>
       <MenuItem onClick={handleClose}>Delete Tag</MenuItem>
-      <MenuItem onClick={handleClose}>Delete Tag and all Entries</MenuItem>
     </Menu>    
   )
 })
