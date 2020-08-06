@@ -15,13 +15,16 @@ class TestTagsModel(BaseTestCase):
     def setUpTestData(cls):
         super(TestTagsModel, cls).setUpTestData()
 
-    def test_deleting_tag_deletes_junction_and_leaves_entry(self):
+    def test_deleting_tag_deletes_junction_and_leaves_entry_and_maintains_tag_count(self):
         tag = TagFactory(user=self.user1)
         text_entry = TextEntryFactory(user=self.user1)
         tag_text_entry = TagTextEntryThroughModelFactory(user=self.user1, tag=tag, text_entry=text_entry)
+        text_entry.refresh_from_db()
         tag.delete()
+        self.assertEqual(text_entry.tag_count, 1)
         with self.assertRaisesMessage(Tag.DoesNotExist, 'Tag matching query does not exist'):
             tag.refresh_from_db()
         with self.assertRaisesMessage(TagTextEntryThroughModel.DoesNotExist, 'TagTextEntryThroughModel matching query does not exist'):
             tag_text_entry.refresh_from_db()
         text_entry.refresh_from_db()
+        self.assertEqual(text_entry.tag_count, 0)
