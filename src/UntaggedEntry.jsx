@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useMemo } from 'react'
 import { useDrop, useDrag } from 'react-dnd'
 import Entry from './Entry.jsx'
 import update from 'immutability-helper'
@@ -11,6 +11,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import { useTheme } from '@material-ui/styles';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
+import UntaggedEntryContextMenu from './UntaggedEntryContextMenu.jsx'
 
 // const style = {
 //   border: '1px dashed gray',
@@ -109,28 +110,65 @@ const UntaggedEntry = React.memo(observer(function EntryList(props) {
   })
   const opacity = isDragging ? 0 : 1
 
-  return (
-    <div  className={classes.entryWrapper} ref={drag} style={{ opacity }}>
-      <div
-        style={{...theme.custom.dragIndicator}}
-        onMouseEnter={mouseEnter} 
-        onMouseLeave={mouseLeave}>
-        <DragIndicatorIcon
-          style={{ visibility: showDragHandle ? "visible" : "hidden" }}
-        />
-      </div>
-      <div className={classes.entry}
-        onMouseEnter={mouseEnter}
-        onMouseLeave={mouseLeave}>
-        <div className={classes.entrySubject}>
-          {props.entry.attributes.subject}
-        </div>
-        <div className={classes.entryBody}>
-          {props.entry.attributes.body}
-        </div>
-      </div>
-    </div>
+  const initialMouse = {
+    mouseX: null,
+    mouseY: null,
+  };
 
+  const [mouse, setMouse] = useState(initialMouse);
+
+  const handleContextClick = (event) => {
+    console.info("context click")
+    event.preventDefault();
+    event.stopPropagation();
+    let mouseData = {...mouse}
+    mouseData.mouseX = event.clientX - 2,
+    mouseData.mouseY = event.clientY - 4,
+    setMouse(mouseData)
+  };
+
+  const handleDelete = (event) => {
+    console.log("delete called.")
+  };
+
+  const contextMenu = useMemo(() => 
+    <UntaggedEntryContextMenu 
+      mouse={mouse} 
+      handleDelete={handleDelete}/>, [mouse]);
+
+  return (
+    <>
+      <div 
+        className={classes.entryWrapper}
+        onContextMenu={handleContextClick}
+        ref={drag} 
+        style={{ opacity }}>
+        <div
+          style={{...theme.custom.dragIndicator}}
+          onMouseEnter={mouseEnter} 
+          onMouseLeave={mouseLeave}>
+          <DragIndicatorIcon
+            style={{ visibility: showDragHandle ? "visible" : "hidden" }}
+          />
+        </div>
+        <div className={classes.entry}
+          onMouseEnter={mouseEnter}
+          onMouseLeave={mouseLeave}>
+          <div className={classes.entrySubject}>
+            {props.entry.attributes.subject}
+          </div>
+          <div className={classes.entryBody}>
+            {props.entry.attributes.body}
+          </div>
+        </div>
+      </div>
+      <>
+        { contextMenu }
+      </>
+    </>
+    
+
+    
   )
 }))
 export default UntaggedEntry
