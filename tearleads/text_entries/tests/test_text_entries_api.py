@@ -88,6 +88,15 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response['data']), 1)
         self.assertEqual(json_response['data'][0]['id'],str(entry1.id))
 
+    def test_filter_by_is_deleted(self):
+        entry1 = TextEntryFactory(user=self.user1, is_deleted=True)
+        entry2 = TextEntryFactory(user=self.user1, is_deleted=False)
+        response = self.user1_api_client.get('/api/v1/entries?filter[is_deleted]={}'.format(0))
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response['data']), 1)
+        self.assertEqual(json_response['data'][0]['id'],str(entry2.id))
+
     def test_order_filter(self):
         entry1 = TextEntryFactory(user=self.user1, subject='a', body='z')
         entry2 = TextEntryFactory(user=self.user1, subject='b', body='y')
@@ -273,3 +282,5 @@ class TestTextEntriesApi(BaseTestCase):
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(json_response['errors'][0]['detail'], 'Authentication credentials were not provided.')
+
+    

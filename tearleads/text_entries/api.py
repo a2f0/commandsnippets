@@ -23,7 +23,8 @@ class TextEntryViewSet(viewsets.ModelViewSet):
        'id': ('exact',),
        'tags__name': ('exact',),
        'tags__id': ('exact',),
-       'tag_count': ('exact',)
+       'tag_count': ('exact',),
+       'is_deleted': ('exact',)
     }
 
     def create(self, request, *args, **kwargs):
