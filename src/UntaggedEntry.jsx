@@ -128,7 +128,17 @@ const UntaggedEntry = React.memo(observer(function EntryList(props) {
   };
 
   const handleDelete = (event) => {
-    console.log("delete called.")
+    API.delete('/entries/' + props.entry.id , {withCredentials: true})
+      .then(function (response) {
+        props.retrieveEntries();
+      })
+      .catch(function (error) {
+        // handle error
+        console.log(error);
+      })
+      .then(function () {
+      // always executed
+      });
   };
 
   const contextMenu = useMemo(() => 

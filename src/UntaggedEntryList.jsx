@@ -34,7 +34,8 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
     const fetchData = async () => {
       var url_query_query_string = '/entries?' +
         'sort=' + appConfig.entrySortOrder +
-        '&filter[tag_count]=0'
+        '&filter[tag_count]=0' +
+        '&filter[is_deleted]=False'
       const response = await API.get(
         url_query_query_string
       );
