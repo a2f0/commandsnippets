@@ -84,11 +84,11 @@ const Main = React.memo(observer(function Main(props) {
         <Toolbar variant="dense" className={classes.toolBar}>
           <Typography className={classes.title}></Typography>
           <ThemeSwitcher handleThemeSwitcher={props.handleThemeSwitcher}/>
-          { ! appConfig.loggedInUser && (
+          { ! appConfig.appStateStore.loggedInUser && (
             <Button size="small" className={classes.button} onClick={handleNavigateToLogin}>Login</Button>
           )}
-          { appConfig.loggedInUser && (
-            <Button size="small" className={classes.button} onClick={handleNavigateToLogin}>{appConfig.loggedInUser}</Button>
+          { appConfig.appStateStore.loggedInUser && (
+            <Button size="small" className={classes.button} onClick={handleNavigateToLogin}>{appConfig.appStateStore.loggedInUser}</Button>
           )}
         </Toolbar>
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>

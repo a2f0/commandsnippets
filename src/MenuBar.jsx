@@ -112,7 +112,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
     logout_api.post('/api-token-deauth/', {}, {withCredentials: true})
       .then(function (response) {
         // Login succeded
-        appConfig.loggedInUser = '';
+        appConfig.appStateStore.setLoggedInUser('')
         setFileMenuAnchorEl(null);
       })
       .catch(function (error) {
@@ -196,10 +196,10 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         { appConfig.loggedInUser && (
           <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create an Entry</MenuItem>
         )}
-        { ! appConfig.loggedInUser && (
+        { ! appConfig.appStateStore.loggedInUser && (
           <MenuItem className={classes.menuItem} onClick={handleNavigateToLogin}>Login</MenuItem>
         )}
-        { appConfig.loggedInUser && (
+        { appConfig.appStateStore.loggedInUser && (
           <MenuItem className={classes.menuItem} onClick={handleLogout}>Logout</MenuItem>
         )}
       </StyledMenu>
