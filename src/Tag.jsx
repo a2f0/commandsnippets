@@ -72,7 +72,7 @@ const Tag = React.memo(function Tag({tag, id, user}) {
         {isActive ? tag.attributes.name : tag.attributes.name}
       </div>
 
-      { appConfig.loggedInUser && (
+      { appConfig.appStateStore.loggedInUser && (
         <>
           {contextMenu}
         </>

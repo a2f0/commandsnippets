@@ -148,7 +148,7 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
   drop(dropRef)
 
   const mouseEnter = () => {
-    if (appConfig.loggedInUser != null) {
+    if (appConfig.appStateStore.loggedInUser != null) {
       setShowDragHandle(true)
     }
   }
@@ -261,7 +261,7 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
           handleCancelNewEntry={handleCancelNewEntry}/>
       )}
 
-      { appConfig.loggedInUser && (
+      { appConfig.appStateStore.loggedInUser && (
         <>
           {contextMenu}
         </>

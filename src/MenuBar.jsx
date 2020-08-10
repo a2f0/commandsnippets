@@ -190,10 +190,10 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         onClose={handleFileMenuClose}
         TransitionComponent={Fade}
       >
-        { appConfig.loggedInUser && (
+        { appConfig.appStateStore.loggedInUser && (
           <MenuItem className={classes.menuItem} onClick={handleCreateTag}>Create a Tag</MenuItem>
         )}
-        { appConfig.loggedInUser && (
+        { appConfig.appStateStore.loggedInUser && (
           <MenuItem className={classes.menuItem} onClick={handleFileMenuClose}>Create an Entry</MenuItem>
         )}
         { ! appConfig.appStateStore.loggedInUser && (
