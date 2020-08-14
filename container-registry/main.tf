@@ -41,7 +41,6 @@ data "aws_iam_policy_document" "pull" {
   }
 }
 
-
 // Only allow EC2 instances to assume the role.
 data "aws_iam_policy_document" "instance-assume-role-policy" {
   statement {
@@ -53,8 +52,6 @@ data "aws_iam_policy_document" "instance-assume-role-policy" {
     }
   }
 }
-
-
 
 // Write access to images. For CI/CD.
 data "aws_iam_policy_document" "push" {
