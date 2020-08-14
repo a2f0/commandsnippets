@@ -11,11 +11,8 @@ terraform {
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
-resource "aws_ecr_repository" "main" {
-  name = var.registry_name
-}
-
-data "aws_iam_policy_document" "main" {
+// Pull images. For web frontends.
+data "aws_iam_policy_document" "pull" {
 
   //* required.
   statement {
@@ -27,6 +24,7 @@ data "aws_iam_policy_document" "main" {
     ]
   }
 
+  // Download images from ECR
   statement {
     actions = [
       "ecr:BatchCheckLayerAvailability",
@@ -43,11 +41,6 @@ data "aws_iam_policy_document" "main" {
   }
 }
 
-resource "aws_iam_role_policy" "web_frontend" {
-  name = "tf-tearleads-web-frontend-role-policy"
-  role = aws_iam_role.web_frontend.id
-  policy = data.aws_iam_policy_document.main.json
-}
 
 // Only allow EC2 instances to assume the role.
 data "aws_iam_policy_document" "instance-assume-role-policy" {
@@ -59,6 +52,58 @@ data "aws_iam_policy_document" "instance-assume-role-policy" {
       identifiers = ["ec2.amazonaws.com"]
     }
   }
+}
+
+
+
+// Write access to images. For CI/CD.
+data "aws_iam_policy_document" "push" {
+
+  //* required.
+  statement {
+    actions = [
+      "ecr:GetAuthorizationToken",
+    ]
+    resources = [
+        "*",
+    ]
+  }
+
+  // Download and Upload Images to ECR
+  statement {
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+			"ecr:GetRepositoryPolicy",
+			"ecr:DescribeRepositories",
+			"ecr:ListImages",
+			"ecr:DescribeImages",
+			"ecr:BatchGetImage",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload",
+      "ecr:PutImage"
+    ]
+    resources = [
+        aws_ecr_repository.main.arn,
+    ]
+  }
+}
+
+resource "aws_ecr_repository" "main" {
+  name = var.registry_name
+}
+
+resource "aws_iam_role_policy" "web_frontend" {
+  name = "tf-tearleads-web-frontend-role-policy"
+  role = aws_iam_role.web_frontend.id
+  policy = data.aws_iam_policy_document.pull.json
+}
+
+resource "aws_iam_role_policy" "ci_cd" {
+  name = "tf-tearleads-web-frontend-role-policy"
+  role = aws_iam_role.web_frontend.id
+  policy = data.aws_iam_policy_document.push.json
 }
 
 resource "aws_iam_role" "web_frontend" {
