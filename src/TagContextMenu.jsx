@@ -38,6 +38,7 @@ const TagContextMenu = React.memo(function TagContextMenu(props) {
   const handleAcceptDialog = () => {
     console.info("accept dialog")
     setDialogOpen(false);
+    props.deleteTag()
   }
 
   return (
@@ -68,10 +69,10 @@ const TagContextMenu = React.memo(function TagContextMenu(props) {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelDialog}>
-            Disagree
+            Cancel
           </Button>
           <Button onClick={handleAcceptDialog} autoFocus>
-            Agree
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

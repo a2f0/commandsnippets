@@ -5,6 +5,7 @@ import { useTheme } from '@material-ui/styles';
 import TagContextMenu from './TagContextMenu.jsx'
 import AppContext from './AppContext.js';
 import { useHistory } from "react-router-dom";
+import API from './api.js'
 
 const style = {
   marginRight: 0,
@@ -49,6 +50,20 @@ const Tag = React.memo(function Tag({tag, id, user}) {
     mouseY: null,
   };
 
+  const deleteTag = () => {
+    API.delete('/tags/' + tag.id , {withCredentials: true})
+      .then(function (response) {
+        
+      })
+      .catch(function (error) {
+        // handle error
+        console.log(error);
+      })
+      .then(function () {
+      // always executed
+      });
+  }
+
   const [mouse, setMouse] = useState(initialMouse);
 
   const handleContextClick = (event) => {
@@ -60,7 +75,7 @@ const Tag = React.memo(function Tag({tag, id, user}) {
   };
 
   const contextMenu = useMemo(() => 
-    <TagContextMenu mouse={mouse}/>);
+    <TagContextMenu mouse={mouse} deleteTag={deleteTag}/>);
 
   return (
     <>
