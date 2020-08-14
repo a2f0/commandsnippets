@@ -27,6 +27,7 @@ const TagContextMenu = React.memo(function TagContextMenu(props) {
   };
 
   const handleDelete = () => {
+    setMouse(initialMouse);
     setDialogOpen(true);
   }
 
