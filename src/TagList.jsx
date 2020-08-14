@@ -79,7 +79,7 @@ const TagList = React.memo(observer(function TagList(props) {
           return (
             <div key={tag.id} className={classes.container}>
               <ListItem  className={classes.item} button>
-                <Tag id={tag.id} tag={tag} user={user}/>
+                <Tag id={tag.id} tag={tag} user={user} fetchTags={fetchTags}/>
               </ListItem>
             </div>
           )

@@ -16,7 +16,7 @@ const style = {
   lineHeight: 'normal',
   float: 'left'
 }
-const Tag = React.memo(function Tag({tag, id, user}) {
+const Tag = React.memo(function Tag({tag, id, user, fetchTags}) {
   const theme = useTheme();
   const [{ canDrop, isOver }, drop] = useDrop({
     accept: [ ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY ],
@@ -53,7 +53,7 @@ const Tag = React.memo(function Tag({tag, id, user}) {
   const deleteTag = () => {
     API.delete('/tags/' + tag.id , {withCredentials: true})
       .then(function (response) {
-        
+        fetchTags();
       })
       .catch(function (error) {
         // handle error
