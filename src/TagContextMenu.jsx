@@ -1,6 +1,12 @@
 import React, {useEffect, useState, setState} from 'react'
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 const TagContextMenu = React.memo(function TagContextMenu(props) {
   
@@ -10,7 +16,8 @@ const TagContextMenu = React.memo(function TagContextMenu(props) {
   };
 
   const [mouse, setMouse] = useState(initialMouse);
-  
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+
   useEffect(() => {
     setMouse(props.mouse)
   }, [props.mouse]);
@@ -19,21 +26,55 @@ const TagContextMenu = React.memo(function TagContextMenu(props) {
     setMouse(initialMouse);
   };
 
+  const handleDelete = () => {
+    setDialogOpen(true);
+  }
+
+  const handleCancelDialog = () => {
+    setDialogOpen(false);
+  }
+
+  const handleAcceptDialog = () => {
+    console.info("accept dialog")
+    setDialogOpen(false);
+  }
+
   return (
-    <Menu
-      keepMounted
-      open={mouse.mouseY !== null}
-      onClose={handleClose}
-      anchorReference="anchorPosition"
-      anchorPosition={
-        mouse.mouseY !== null && mouse.mouseX !== null
-          ? { top: mouse.mouseY, left: mouse.mouseX }
-          : undefined
-      }
-    >
-      <MenuItem onClick={handleClose}>New Tag</MenuItem>
-      <MenuItem onClick={handleClose}>Delete Tag</MenuItem>
-    </Menu>    
+    <>
+      <Menu
+        keepMounted
+        open={mouse.mouseY !== null}
+        onClose={handleClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          mouse.mouseY !== null && mouse.mouseX !== null
+            ? { top: mouse.mouseY, left: mouse.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleClose}>New Tag</MenuItem>
+        <MenuItem onClick={handleDelete}>Delete Tag</MenuItem>
+      </Menu>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description">
+        <DialogTitle id="alert-dialog-title">{"Are you sure you want to delete this tag?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDialog}>
+            Disagree
+          </Button>
+          <Button onClick={handleAcceptDialog} autoFocus>
+            Agree
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   )
 })
 export default TagContextMenu
