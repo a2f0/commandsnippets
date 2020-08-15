@@ -1,0 +1,23 @@
+name: Github Actions
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: '**'
+
+jobs:
+
+  push-containers:
+    runs-on: [runs-on: ubuntu-latest]
+    continue-on-error: false
+
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.5
+    uses: actions/setup-python@v2
+    with:
+      # Semantic version range syntax or exact version of a Python version
+      python-version: '3.5'
+      # Optional - x64 or x86 architecture, defaults to x64
+      architecture: 'x64'

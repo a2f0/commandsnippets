@@ -74,7 +74,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
   };
 
   const newEntry = (index) => {
-    console.log("new entry1: " + index)
+    console.log("new entry: " + index)
   };
 
   return (
