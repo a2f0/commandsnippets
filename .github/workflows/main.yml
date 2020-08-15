@@ -9,7 +9,7 @@ on:
 jobs:
 
   push-containers:
-    runs-on: [runs-on: ubuntu-latest]
+    runs-on: ubuntu-latest
     continue-on-error: false
     
     steps:
