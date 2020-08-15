@@ -34,7 +34,7 @@ jobs:
           ECR_REPOSITORY: tftearleads
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -f compose/django/Dockerfile-prod -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
 
       - name: Tag and push staging images to Amazon ECR
         if: github.event.ref == 'refs/heads/staging'
