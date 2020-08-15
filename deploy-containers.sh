@@ -5,8 +5,10 @@ START=`date +%s`
 
 # Login to Docker (aws v2 cli)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo "=== Entering directory $DIR"
+cd $DIR
+echo "=== calling ecr login"
 $DIR/ecr-login-aws-v2.sh
-
 echo "=== Running git pull..."
 git pull
 echo "=== Pulling down containers..."

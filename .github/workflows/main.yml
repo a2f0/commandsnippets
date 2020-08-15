@@ -57,3 +57,21 @@ jobs:
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:backend-production-latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-production-latest
+
+  deploy-code:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    steps:
+
+      steps:
+        - name: Install SSH key
+          uses: shimataro/ssh-key-action@v2
+          with:
+            key: ${{ secrets.SSH_KEY }}
+            known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+        - name: Deploy via SSH
+          if: github.event.ref == 'refs/heads/production'
+          run: |
+            ssh $DEPLOY_USER@$DEPLOY_PRODUCTION_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
