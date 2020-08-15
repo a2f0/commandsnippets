@@ -1,0 +1,7 @@
+- name: Github Deploy Key
+  authorized_key:
+    user: '{{ ansible_user }}'
+    state: present
+    key: '{{ item }}'
+  with_file:
+    - ../public_ssh_keys/github_actions.pub
