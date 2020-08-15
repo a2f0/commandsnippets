@@ -94,7 +94,7 @@ resource "aws_instance" "ec2" {
   key_name = "dps-blackbox"
   iam_instance_profile = data.terraform_remote_state.container-registry.outputs.iam-instance-profile
   tags = {
-    Name = "devopsrockstars-${var.environment}"
+    Name = "${var.environment}"
   }
   user_data = <<-EOF
               #!/bin/bash
