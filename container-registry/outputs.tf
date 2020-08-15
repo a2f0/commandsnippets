@@ -9,3 +9,11 @@ output "repository-fqdn" {
 output "iam-instance-profile" {
   value = "${aws_iam_instance_profile.web_frontend.id}"
 }
+
+output "ci-cd-access-key" {
+  value = "${aws_iam_access_key.ci_cd.id}"
+}
+
+output "ci-cd-secret-access-key" {
+  value = "${aws_iam_access_key.ci_cd.secret}"
+}

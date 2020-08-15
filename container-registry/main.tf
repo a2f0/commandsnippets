@@ -8,6 +8,7 @@ provider "aws" {
 terraform {
   backend "s3" {}
 }
+
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
@@ -112,4 +113,18 @@ resource "aws_iam_role" "web_frontend" {
 resource "aws_iam_instance_profile" "web_frontend" {
   name = "tf-tearleads-iam-instance-profile"
   role = aws_iam_role.web_frontend.name
+}
+
+resource "aws_iam_user" "ci_cd" {
+  name = "tf-tearleads-ci-cd"
+}
+
+resource "aws_iam_user_policy" "ci_cd" {
+  name = "test"
+  user = aws_iam_user.ci_cd.name
+  policy = data.aws_iam_policy_document.push.json
+}
+
+resource "aws_iam_access_key" "ci_cd" {
+  user = aws_iam_user.ci_cd.name
 }
