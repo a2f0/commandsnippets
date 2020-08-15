@@ -75,5 +75,5 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_FQDN: ${{ secrets.DEPLOY_PRODUCTION_FQDN }}
         run: |
-          printenv
+          printenv | sort
           ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
