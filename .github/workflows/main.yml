@@ -72,4 +72,5 @@ jobs:
       - name: Deploy via SSH
         if: github.event.ref == 'refs/heads/production'
         run: |
+          printenv
           ssh $DEPLOY_USER@$DEPLOY_PRODUCTION_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
