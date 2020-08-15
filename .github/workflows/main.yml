@@ -63,15 +63,13 @@ jobs:
     continue-on-error: false
 
     steps:
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
 
-      steps:
-        - name: Install SSH key
-          uses: shimataro/ssh-key-action@v2
-          with:
-            key: ${{ secrets.SSH_KEY }}
-            known_hosts: ${{ secrets.KNOWN_HOSTS }}
-
-        - name: Deploy via SSH
-          if: github.event.ref == 'refs/heads/production'
-          run: |
-            ssh $DEPLOY_USER@$DEPLOY_PRODUCTION_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
+      - name: Deploy via SSH
+        if: github.event.ref == 'refs/heads/production'
+        run: |
+          ssh $DEPLOY_USER@$DEPLOY_PRODUCTION_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
