@@ -12,7 +12,7 @@ $DIR/ecr-login-aws-v2.sh
 echo "=== Running git pull..."
 git pull
 echo "=== Pulling down containers..."
-docker-compose -f container-registry.yaml pull
+docker-compose -f container-registry.yaml pull --quiet
 echo "=== Stopping compose..."
 docker-compose -f container-registry.yaml down
 echo "=== Running database migrations..."
