@@ -10,7 +10,6 @@ import EntryEdit from './EntryEdit.jsx';
 import EntryNew from './EntryNew.jsx'
 import AppContext from './AppContext.js'
 
-
 const useStyles = makeStyles({
 
   entry: {
@@ -36,7 +35,17 @@ const useStyles = makeStyles({
   }
 });
 
-const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDelete, text_entry, newEntry, tag }) {
+const Entry = React.memo(function (
+  { 
+    id, 
+    index, 
+    moveEntry, 
+    findEntry, 
+    handleDelete, 
+    text_entry,  
+    tag,
+    retrieveEntries 
+  }) {
 
   useEffect(() => {
     setTextEntry(text_entry);
@@ -258,6 +267,7 @@ const Entry = React.memo(function ({ id, index, moveEntry, findEntry, handleDele
         <EntryNew
           tag={tag} 
           classes={classes}
+          retrieveEntries={retrieveEntries}
           handleCancelNewEntry={handleCancelNewEntry}/>
       )}
 

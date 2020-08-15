@@ -73,9 +73,6 @@ const EntryList = React.memo(observer(function EntryList(props) {
     setData(newData)
   };
 
-  const newEntry = (index) => {
-    console.log("new entry: " + index)
-  };
 
   return (
 
@@ -98,9 +95,9 @@ const EntryList = React.memo(observer(function EntryList(props) {
             moveEntry={moveEntry}
             findEntry={findEntry}
             handleDelete={handleDelete}
-            newEntry={newEntry}
             text_entry={text_entry}
             tag={tag}
+            retrieveEntries={retrieveEntries}
           />
         ) 
       })

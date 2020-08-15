@@ -94,7 +94,8 @@ const EntryNew = React.memo(function (props) {
         }
         API.post('/tags_entries', text_entry_through_model_payload, {withCredentials: true})
           .then(function (response) {
-            console.log(response)
+            props.retrieveEntries()
+            props.handleCancelNewEntry()
           })
           .catch(function (error) {
             // handle error
@@ -103,8 +104,6 @@ const EntryNew = React.memo(function (props) {
           .then(function () {
             // always executed
           });
-      
-
       })
       .catch(function (error) {
         // handle error
@@ -113,17 +112,6 @@ const EntryNew = React.memo(function (props) {
       .then(function () {
         // always executed
       });
-
-    
-
-
-
-    console.log('actially made it here')
-    // let new_text_entry = {...textEntry}
-    // new_text_entry.attributes.subject = updated_subject
-    // new_text_entry.attributes.body = updated_body
-    // setTextEntry(new_text_entry)
-    // setIsEditing(false)
   };
 
   const handleCancel = () => {
