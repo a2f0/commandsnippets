@@ -13,6 +13,8 @@ echo "=== Running git pull..."
 git pull
 echo "=== Pulling down containers..."
 docker-compose -f container-registry.yaml pull --quiet
+echo "=== Running docker system prune"
+docker system prune --force
 echo "=== Stopping compose..."
 docker-compose -f container-registry.yaml down
 echo "=== Running database migrations..."
