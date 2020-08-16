@@ -18,6 +18,7 @@ const useStyles = makeStyles({
   },
   entryWrapper: {
     marginBottom: 16,
+    whiteSpace: 'pre'
     // "&:hover": {
     //   color: "white"
     // },
