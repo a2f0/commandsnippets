@@ -238,15 +238,15 @@ const Entry = React.memo(function (
   return (
     <>
       { ! isEditing && (
-        <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}> 
+        <div ref={(dropRef)} style={{opacity}} > 
           <div ref={(preview)} className={classes.entryWrapper}>
             <div
               ref={(dragRef)} 
-              style={{...theme.custom.dragIndicator}}
+              style={{...theme.custom.dragIndicator}} //
               onMouseEnter={mouseEnter} 
               onMouseLeave={mouseLeave}>
               <DragIndicatorIcon
-                style={{ visibility: showDragHandle ? "visible" : "hidden" }}
+                style={{ fontSize: '19px', visibility: showDragHandle ? "visible" : "hidden" }}
               />
             </div>
             <div className={classes.entry}

@@ -8,7 +8,9 @@ const CUSTOM_SHARED = {
     display: 'inline-block',
     cursor: 'move',
     verticalAlign: 'top',
-    width: 24
+    width: '19px',
+    height: '19px',
+    border: '0px solid red'
   }
 }
 
