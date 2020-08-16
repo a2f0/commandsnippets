@@ -69,10 +69,18 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
 
-      - name: Deploy via SSH
+      - name: Deploy production via SSH
         if: github.event.ref == 'refs/heads/production'
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_FQDN: ${{ secrets.DEPLOY_PRODUCTION_FQDN }}
+        run: |
+          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
+
+      - name: Deploy staging via SSH
+        if: github.event.ref == 'refs/heads/staging'
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_FQDN: ${{ secrets.DEPLOY_STAGING_FQDN }}
         run: |
           ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
