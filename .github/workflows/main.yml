@@ -61,6 +61,7 @@ jobs:
   deploy-code:
     runs-on: ubuntu-latest
     continue-on-error: false
+    needs: push-containers
 
     steps:
       - name: Install SSH key
