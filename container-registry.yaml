@@ -21,6 +21,7 @@ services:
       - conf:/etc/nginx/conf.d
       - certs:/etc/nginx/certs:ro
       - dhparam:/etc/nginx/dhparam
+      - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
 
