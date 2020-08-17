@@ -85,3 +85,18 @@ jobs:
           DEPLOY_FQDN: ${{ secrets.DEPLOY_STAGING_FQDN }}
         run: |
           ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
+
+  post-to-slack:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: deploy-code
+    
+    steps:
+      - uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      
