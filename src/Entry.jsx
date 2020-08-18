@@ -239,7 +239,7 @@ const Entry = React.memo(function (
   return (
     <>
       { ! isEditing && (
-        <div ref={(dropRef)} style={{opacity}} > 
+        <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}> 
           <div ref={(preview)} className={classes.entryWrapper}>
             <div
               ref={(dragRef)} 
