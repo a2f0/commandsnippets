@@ -18,17 +18,19 @@ import UntaggedEntryList from './UntaggedEntryList.jsx'
 const appBarHeight = 52;
 
 const useStyles = makeStyles((theme) => ({
-  button: {
-    textTransform: 'none'
+  clickableDiv: {
+    marginRight: '10px',
+    cursor: 'pointer'
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
     height: appBarHeight,
-    boxShadow: "none",
-    borderBottom: ".5px solid"
+    boxShadow: 'none',
+    display: 'flex', // Make this a flex container to allow the greedyExpander to gobble up space.
+    flexDirection: 'column' // Make this a flex container to allow the greedyExpander to gobble up space.
   },
   main: {	
-    width: "100%",	
+    flexGrow: 1,
     marginTop: appBarHeight,	
     height: `calc(100vh - ${appBarHeight}px)`,	
     overflow: "auto"
@@ -37,15 +39,30 @@ const useStyles = makeStyles((theme) => ({
     minHeight: 0,
     padding: 0,
   },
-  title: {
-    flexGrow: 1,
+  positionedTitle: {
+    fontSize: '16px',
+    position: 'fixed',
+    top: '15px',
+    left: '15px',
+    userSelect: 'none', /* Non-prefixed version, currently */
+    '-webkit-touch-callout': 'none', /* iOS Safari */
+    '-webkit-user-select': 'none',   /* Safari */
+    '-khtml-user-select': 'none', /* Konqueror HTML */
+    '-moz-user-select': 'none', /* Old versions of Firefox */
+    '-ms-user-select': 'none', /* Internet Explorer/Edge */
   },
-  list: {	
-    padding: 0	
+  greedyExpander: {
+    flexGrow: 1
+  },
+  list: {
+    padding: 0
   },
   entryListEmptySpace: {
     backgroundColor: "green"
-  }
+  },
+  title: {
+    flexGrow: 1,
+  },
 }));
 
 const Main = React.memo(observer(function Main(props) {
@@ -81,14 +98,24 @@ const Main = React.memo(observer(function Main(props) {
     <>
       <LeftDrawer/>
       <AppBar position="fixed" className={classes.appBar}>
+        <div className={classes.greedyExpander}>
+          {/* force the menu to be at the bottom of the app bar */}
+        </div>
         <Toolbar variant="dense" className={classes.toolBar}>
-          <Typography className={classes.title}></Typography>
-          <ThemeSwitcher handleThemeSwitcher={props.handleThemeSwitcher}/>
+          <div className={classes.title}>
+            {/* Push the login buttons to the right */}
+          </div>
+          <div className={classes.positionedTitle}>
+            <span>
+              &#9679;
+            </span>Tearleads
+          </div>
+          {/* <ThemeSwitcher handleThemeSwitcher={props.handleThemeSwitcher}/> */}
           { ! appConfig.appStateStore.loggedInUser && (
-            <Button size="small" className={classes.button} onClick={handleNavigateToLogin}>Login</Button>
+            <div className={classes.clickableDiv} onClick={handleNavigateToLogin}>Login</div>
           )}
           { appConfig.appStateStore.loggedInUser && (
-            <Button size="small" className={classes.button} onClick={handleNavigateToLogin}>{appConfig.appStateStore.loggedInUser}</Button>
+            <div className={classes.clickableDiv} onClick={handleNavigateToLogin}>{appConfig.appStateStore.loggedInUser}</div>
           )}
         </Toolbar>
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>

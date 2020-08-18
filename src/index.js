@@ -1,10 +1,8 @@
 import React, { useState} from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import constructApiUrl from './api.js';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { makeStyles, MuiThemeProvider } from '@material-ui/core/styles';
-import Link from '@material-ui/core/Link';
 import { DndProvider } from 'react-dnd'
 import Backend from 'react-dnd-html5-backend'
 import {lightTheme } from './themes.js'

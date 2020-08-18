@@ -56,6 +56,7 @@ const useStyles = makeStyles((theme) => ({
   toolBar: {
     minHeight: 0,
     padding: 0,
+    borderBottom: ".5px solid",
   },
   menuButton: {
     textTransform: 'none',

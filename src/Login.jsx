@@ -78,7 +78,7 @@ const Login = React.memo(function Login() {
             <input type="password" id="password" name="password" onChange={handlePasswordChange} autoComplete="current-password"></input>
           </div>
           <div>
-            <div className="create-entry-button" onClick={handleAuthenticate}>
+            <div onClick={handleAuthenticate}>
               Login
             </div>
           </div>
