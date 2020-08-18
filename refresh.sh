@@ -42,5 +42,24 @@ restore_latest_backup_local() {
   echo '=== local refresh completed successfully'
 }
 
+restore_latest() {
+  echo "=== authorotative_restore()"
+  echo "=== restoring backup to: $1"
+  MOST_RECENT_FILE=`ls -t ~/tearleads-backups/* | head -1`
+  echo "=== restoring: $MOST_RECENT_FILE"
+  ssh $1 "mkdir -p /tmp/dbback"
+  scp $MOST_RECENT_FILE $1:/tmp/dbback/db-to-restore.sql
+  ssh $1 "sudo mv /tmp/dbback/db-to-restore.sql /var/lib/docker/volumes/tearleads_postgres_backup/_data/"
+  ssh $1 "cd ~/tearleads-backend && docker-compose -f container-registry.yaml up -d"
+  ssh $1 "cd ~/tearleads-backend && docker stop tearleads_backend_1"
+  ssh $1 "cd ~/tearleads-backend && docker-compose -f container-registry.yaml run postgres list-backups"
+  ssh $1 "cd ~/tearleads-backend && docker-compose -f container-registry.yaml run postgres restore db-to-restore.sql"
+  ssh $1 "cd ~/tearleads-backend && docker-compose -f container-registry.yaml down"
+  ssh $1 "cd ~/tearleads-backend && docker-compose -f container-registry.yaml up -d"
+  ssh $1 "cd ~/tearleads-backend && docker system prune --force"
+
+}
+
 time download_latest tearleads.com
 time restore_latest_backup_local
+#time restore_latest cedar.tearleads.com
