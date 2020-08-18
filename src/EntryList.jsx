@@ -9,10 +9,6 @@ import AppContext from './AppContext.js'
 import { observer } from "mobx-react"
 import { useLocation, useParams } from 'react-router-dom';
 
-const width = {
-  width: "100%",
-}
-
 const EntryList = React.memo(observer(function EntryList(props) {
 
   const appConfig = useContext(AppContext)
@@ -76,7 +72,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
 
   return (
 
-    <div ref={drop} style={width}>
+    <div ref={drop}>
       {data.data.map((entry, i) => {
 
         const text_entry = data.included.filter(
