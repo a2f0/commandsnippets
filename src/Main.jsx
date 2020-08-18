@@ -107,7 +107,7 @@ const Main = React.memo(observer(function Main(props) {
           </div>
           <div className={classes.positionedTitle}>
             <span>
-              &#9679;
+              &#x25cf;
             </span>Tearleads
           </div>
           {/* <ThemeSwitcher handleThemeSwitcher={props.handleThemeSwitcher}/> */}
