@@ -1,6 +1,6 @@
 import { createMuiTheme } from '@material-ui/core/styles';
 
-const darkBackground = "#202020"
+const darkBackground = "#0F0F0F"
 const darkForeground = "#FFF"
 
 const CUSTOM_SHARED = {
