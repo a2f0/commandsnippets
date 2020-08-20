@@ -14,6 +14,7 @@ import Box from '@material-ui/core/Box';
 import {observer} from 'mobx-react';
 import AppContext from './AppContext.js'
 import UntaggedEntryList from './UntaggedEntryList.jsx'
+import RightDrawer from './RightDrawer.jsx'
 
 const appBarHeight = 52;
 

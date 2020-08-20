@@ -5,22 +5,12 @@ import { makeStyles } from '@material-ui/core/styles';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 
 const useStyles = makeStyles({
-
   entry: {
     verticalAlign: 'top',
-    width: '100%'
-  },
-  entryWrapper: {
-    marginBottom: 16,
-    // "&:hover": {
-    //   color: "white"
-    // },
-    // "&:active": {
-    //   color: "white"
-    // },
+    width: `calc(100% - ${100}px)`,
+    display: 'inline-block'
   },
   entrySubject: {
-    display: 'inline-block',
     fontSize: 14,
     margin: 'auto',
     padding: 2,
