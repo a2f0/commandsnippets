@@ -44,13 +44,16 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '16px',
     position: 'fixed',
     top: '15px',
-    left: '15px',
+    left: '8px',
     userSelect: 'none', /* Non-prefixed version, currently */
     '-webkit-touch-callout': 'none', /* iOS Safari */
     '-webkit-user-select': 'none',   /* Safari */
     '-khtml-user-select': 'none', /* Konqueror HTML */
     '-moz-user-select': 'none', /* Old versions of Firefox */
     '-ms-user-select': 'none', /* Internet Explorer/Edge */
+  },
+  positionedTearleads: {
+    paddingLeft: '3px'
   },
   greedyExpander: {
     flexGrow: 1
@@ -97,7 +100,6 @@ const Main = React.memo(observer(function Main(props) {
   
   return (
     <>
-      <LeftDrawer/>
       <AppBar position="fixed" className={classes.appBar}>
         <div className={classes.greedyExpander}>
           {/* force the menu to be at the bottom of the app bar */}
@@ -109,7 +111,10 @@ const Main = React.memo(observer(function Main(props) {
           <div className={classes.positionedTitle}>
             <span>
               &#x25cf;
-            </span>Tearleads
+            </span>
+            <span className={classes.positionedTearleads}>
+              Tearleads
+            </span>
           </div>
           {/* <ThemeSwitcher handleThemeSwitcher={props.handleThemeSwitcher}/> */}
           { ! appConfig.appStateStore.loggedInUser && (
@@ -121,6 +126,7 @@ const Main = React.memo(observer(function Main(props) {
         </Toolbar>
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>
       </AppBar>
+      <LeftDrawer/>
       <main className={classes.main}>
         { appConfig.mainPanel == 'UntaggedEntryList' && (
           <UntaggedEntryList/>
@@ -131,7 +137,6 @@ const Main = React.memo(observer(function Main(props) {
         {/* <Box height="auto" className={classes.entryListBlankSpace}>
           Empty Space
         </Box> */}
-
       </main>
       {/* <MainContextMenu mouse={mouse} showNewEntry={showNewEntry} /> */}
       {/* <RightDrawer/>  */}

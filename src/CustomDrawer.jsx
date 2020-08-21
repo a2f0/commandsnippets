@@ -9,7 +9,6 @@ const useStyles = makeStyles((theme) => ({
   button: {	
     textTransform: 'none'	
   },
-
   root: {
     display: 'flex',
     background: 'red'
@@ -39,7 +38,6 @@ const useStyles = makeStyles((theme) => ({
     padding: 0	
   },
 }));
-
 
 const CustomDrawer = function (props) {
   const classes = useStyles();
