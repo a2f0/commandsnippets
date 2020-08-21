@@ -1,9 +1,7 @@
 import React, { useRef } from 'react'
 import Drawer from '@material-ui/core/Drawer';
 import { makeStyles } from '@material-ui/core/styles';
-
-const drawerWidth = 150;
-const appBarHeight = 52;
+import * as Constants from './constants'
 
 const useStyles = makeStyles((theme) => ({	
   button: {	
@@ -14,14 +12,14 @@ const useStyles = makeStyles((theme) => ({
     background: 'red'
   },
   drawer: {
-    width: drawerWidth,
+    width: Constants.drawerWidth,
     flexShrink: 0,
   },
   drawerPaper: {
-    marginTop: appBarHeight,
+    marginTop: Constants.appBarHeight,
     borderRight: 0,
     borderLeft: 0,
-    width: drawerWidth,
+    width: Constants.drawerWidth,
     overflow: "hidden"
   },
   drawerContainer: {

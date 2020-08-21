@@ -17,7 +17,8 @@ const localStorageKey = "mst-tearleads"
 const initialState = localStorage.getItem(localStorageKey)
   ? JSON.parse(localStorage.getItem(localStorageKey))
   : {
-    loggedInUser: ''
+    loggedInUser: '',
+    selectedTheme: 'darkTheme'
   }
 
 let snapshotListener
@@ -40,8 +41,6 @@ function createAppStateStore(snapshot) {
 }
 
 let store = createAppStateStore(initialState)
-
-const appBarHeight = 52;
 
 const useStyles = makeStyles((theme) => ({
   root: {
