@@ -305,7 +305,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(lightTheme); handleViewMenuClose();}}>
           <ListItemIcon>
             {
-              theme == lightTheme &&
+              appConfig.appStateStore.selectedTheme == "lightTheme" &&
                 <CheckIcon fontSize="small" />
             }
           </ListItemIcon>
@@ -315,7 +315,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(darkTheme); handleViewMenuClose();}}>
           <ListItemIcon>
             {
-              theme == darkTheme &&
+              appConfig.appStateStore.selectedTheme == "darkTheme" &&
                 <CheckIcon fontSize="small" />
             }
           </ListItemIcon>

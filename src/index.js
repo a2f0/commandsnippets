@@ -5,7 +5,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import { makeStyles, MuiThemeProvider } from '@material-ui/core/styles';
 import { DndProvider } from 'react-dnd'
 import Backend from 'react-dnd-html5-backend'
-import {lightTheme } from './themes.js'
+import { lightTheme, darkTheme } from './themes.js'
 import { observable } from "mobx"
 import AppContext from './AppContext.js'
 import Main from './Main.jsx'
@@ -58,8 +58,22 @@ const appConfig = observable({
 
 function AppRouter() {
   const classes = useStyles();
-  const [selectedTheme, setSelectedTheme] = useState(lightTheme);
+
+  if (appConfig.appStateStore.selectedTheme=='lightTheme') {
+    var initialTheme = lightTheme;
+  } else {
+    var initialTheme = darkTheme;
+  }
+
+  const [selectedTheme, setSelectedTheme] = useState(initialTheme);
+
+
   const handleThemeSwitcher = (chosenTheme) => {
+    if (chosenTheme == lightTheme) {
+      appConfig.appStateStore.setSelectedTheme("lightTheme")
+    } else {
+      appConfig.appStateStore.setSelectedTheme("darkTheme")
+    }
     setSelectedTheme(chosenTheme)
   }
   return (
