@@ -98,12 +98,6 @@ resource "aws_iam_role_policy" "web_frontend" {
   policy = data.aws_iam_policy_document.pull.json
 }
 
-resource "aws_iam_role_policy" "ci_cd" {
-  name = "tf-tearleads-ci-cd-role-policy"
-  role = aws_iam_role.web_frontend.id
-  policy = data.aws_iam_policy_document.push.json
-}
-
 resource "aws_iam_role" "web_frontend" {
   name = "tf-tearleads-web-iam-role"
   assume_role_policy = data.aws_iam_policy_document.instance-assume-role-policy.json
