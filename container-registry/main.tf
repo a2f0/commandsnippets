@@ -114,7 +114,7 @@ resource "aws_iam_user" "ci_cd" {
 }
 
 resource "aws_iam_user_policy" "ci_cd" {
-  name = "test"
+  name = "tf-teadleads-ci-cd-user-policy"
   user = aws_iam_user.ci_cd.name
   policy = data.aws_iam_policy_document.push.json
 }
