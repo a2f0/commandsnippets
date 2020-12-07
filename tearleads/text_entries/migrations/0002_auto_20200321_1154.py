@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('text_entries', '0001_initial'),
+        ("text_entries", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='textentry',
-            options={'ordering': ['date_updated', 'id']},
+            name="textentry",
+            options={"ordering": ["date_updated", "id"]},
         ),
     ]

@@ -36,7 +36,7 @@ services:
       - DEFAULT_EMAIL=${LETSENCRYPT_EMAIL}
 
   backend:
-    image: ${ECR_FQDN}/${ECR_REPOSITORY}:backend-${FLOW_BRANCH}-latest 
+    image: ${ECR_FQDN}/${ECR_REPOSITORY}:backend-${FLOW_BRANCH}-latest
     depends_on:
       - postgres
     env_file: .env
@@ -50,7 +50,7 @@ services:
       - LETSENCRYPT_TEST=false
 
   frontend:
-    image: ${ECR_FQDN}/${ECR_REPOSITORY}:frontend-${FLOW_BRANCH}-latest 
+    image: ${ECR_FQDN}/${ECR_REPOSITORY}:frontend-${FLOW_BRANCH}-latest
     env_file: .env
     environment:
       - VIRTUAL_HOST=${WEB_FQDN}

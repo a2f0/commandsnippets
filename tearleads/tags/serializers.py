@@ -9,41 +9,41 @@ from tearleads.text_entries.serializers import TextEntrySerializer
 class TagSerializer(serializers.ModelSerializer):
 
     included_serializers = {
-        'user': UserSerializer,
+        "user": UserSerializer,
     }
 
     class Meta:
         model = Tag
-        fields = ('id','name','date_created','date_updated','user')
+        fields = ("id", "name", "date_created", "date_updated", "user")
 
     class JSONAPIMeta:
-        included_resources = ['user']
+        included_resources = ["user"]
+
 
 class TagCreateSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = Tag
-        fields = ('name',)
+        fields = ("name",)
+
 
 class TagTextEntryThroughModelSerializer(serializers.ModelSerializer):
 
     included_serializers = {
-        'user': UserSerializer,
-        'tag': TagSerializer,
-        'text_entry': TextEntrySerializer
+        "user": UserSerializer,
+        "tag": TagSerializer,
+        "text_entry": TextEntrySerializer,
     }
 
     class Meta:
         model = TagTextEntryThroughModel
-        fields = ('id','tag','user','text_entry')
+        fields = ("id", "tag", "user", "text_entry")
 
     class JSONAPIMeta:
-        included_resources = ['user', 'tag', 'text_entry']
+        included_resources = ["user", "tag", "text_entry"]
 
 
 class TagTextEntryThroughModelCreateSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = TagTextEntryThroughModel
-        fields = ('tag','text_entry')
+        fields = ("tag", "text_entry")
         validators = []

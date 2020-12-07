@@ -18,7 +18,7 @@
       docker system prune --volumes -f
     date_created: "2020-03-26T18:20:00+00:00"
     date_updated: "2020-03-26T18:20:00+00:00"
-  
+
 - model: text_entries.TextEntry
   pk: 3
   fields:
@@ -98,7 +98,7 @@
     body: yarn install
     date_created: "2020-03-26T18:20:00+00:00"
     date_updated: "2020-03-26T18:20:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 11
   fields:
@@ -116,7 +116,7 @@
     body: terraform init
     date_created: "2020-03-26T18:20:00+00:00"
     date_updated: "2020-03-26T18:20:00+00:00"
-      
+
 - model: text_entries.TextEntry
   pk: 13
   fields:
@@ -125,7 +125,7 @@
     body: terraform destroy
     date_created: "2020-03-26T18:20:00+00:00"
     date_updated: "2020-03-26T18:20:00+00:00"
-  
+
 - model: text_entries.TextEntry
   pk: 14
   fields:
@@ -226,7 +226,7 @@
     body: aws rds describe-pending-maintenance-actions
     date_created: "2019-03-17T18:20:00+00:00"
     date_updated: "2019-03-17T18:20:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 25
   fields:
@@ -240,7 +240,7 @@
   pk: 26
   fields:
     user_id: 1
-    subject: change terraform logging level 
+    subject: change terraform logging level
     body: export TF_LOG=DEBUG (TRACE, DEBUG, INFO, WARN or ERROR)
     date_created: "2019-03-17T18:20:00+00:00"
     date_updated: "2019-03-17T18:20:00+00:00"
@@ -262,7 +262,7 @@
     body: sudo -u deploy /usr/bin/whoami
     date_created: "2019-03-17T18:20:00+00:00"
     date_updated: "2019-03-17T18:20:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 29
   fields:
@@ -285,7 +285,7 @@
       o = Observation.objects.get(pk=1)
     date_created: "2019-03-17T18:20:00+00:00"
     date_updated: "2019-03-17T18:20:00+00:00"
-  
+
 - model: text_entries.TextEntry
   pk: 31
   fields:
@@ -330,7 +330,7 @@
     subject: render whitespace characters in VS studio code
     body: View -> Toggle Render Whitespace
     date_created: "2019-03-21T18:20:00+00:00"
-    date_updated: "2019-03-21T18:20:00+00:00" 
+    date_updated: "2019-03-21T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 35
@@ -339,7 +339,7 @@
     subject: show postgres locks
     body: SELECT relation::regclass, * FROM pg_locks WHERE NOT GRANTED;
     date_created: "2019-03-22T18:20:00+00:00"
-    date_updated: "2019-03-22T18:20:00+00:00"     
+    date_updated: "2019-03-22T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 36
@@ -348,7 +348,7 @@
     subject: manually start postgres
     body:  pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
     date_created: "2019-03-22T18:20:00+00:00"
-    date_updated: "2019-03-22T18:20:00+00:00"   
+    date_updated: "2019-03-22T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 37
@@ -357,8 +357,8 @@
     subject: brew list versions of installed packages
     body: brew list --versions
     date_created: "2019-03-22T18:20:00+00:00"
-    date_updated: "2019-03-22T18:20:00+00:00"   
-    
+    date_updated: "2019-03-22T18:20:00+00:00"
+
 - model: text_entries.TextEntry
   pk: 38
   fields:
@@ -390,7 +390,7 @@
   pk: 41
   fields:
     user_id: 1
-    subject: list available rbenv versions 
+    subject: list available rbenv versions
     body: rbenv install -l
     date_created: "2019-03-22T18:20:00+00:00"
     date_updated: "2019-03-22T18:20:00+00:00"
@@ -438,7 +438,7 @@
     subject: run a single test with rspec
     body: bundle exec rspec ./spec/models/user_spec.rb:15
     date_created: "2019-03-22T18:20:00+00:00"
-    date_updated: "2019-03-22T18:20:00+00:00"    
+    date_updated: "2019-03-22T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 47
@@ -447,8 +447,8 @@
     subject:  show 100 slowest rpsec examples
     body: bundle exec rspec --profile 100
     date_created: "2019-03-22T18:20:00+00:00"
-    date_updated: "2019-03-22T18:20:00+00:00" 
-    
+    date_updated: "2019-03-22T18:20:00+00:00"
+
 - model: text_entries.TextEntry
   pk: 48
   fields:
@@ -456,7 +456,7 @@
     subject:  show tests as they run
     body: bundle exec rspec --profile 100 --format documentation
     date_created: "2019-07-31T18:20:00+00:00"
-    date_updated: "2019-07-21T18:20:00+00:00" 
+    date_updated: "2019-07-21T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 49
@@ -465,7 +465,7 @@
     subject: fail tests right away
     body: bundle exec rspec --fail-fast
     date_created: "2019-07-31T18:20:00+00:00"
-    date_updated: "2019-07-21T18:20:00+00:00" 
+    date_updated: "2019-07-21T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 50
@@ -475,16 +475,16 @@
     body: |
       az account show --query "{ subscription_id: id }"
     date_created: "2019-07-31T18:20:00+00:00"
-    date_updated: "2019-07-21T18:20:00+00:00" 
-    
+    date_updated: "2019-07-21T18:20:00+00:00"
+
 - model: text_entries.TextEntry
   pk: 51
   fields:
     user_id: 1
     subject:  query for WAF blocks (FQDN destination)
     body: |
-      AzureDiagnostics 
-          | where hostname_s == "public-facing.fqdn" 
+      AzureDiagnostics
+          | where hostname_s == "public-facing.fqdn"
           | limit 1000
     date_created: "2019-07-31T18:20:00+00:00"
     date_updated: "2019-07-21T18:20:00+00:00"
@@ -526,8 +526,8 @@
     user_id: 1
     subject: query for WAF blocks inbound IP
     body: |
-      AzureDiagnostics 
-      | where clientIp_s == "10.121.162.146"   
+      AzureDiagnostics
+      | where clientIp_s == "10.121.162.146"
       | limit 1000
     date_created: "2020-03-29T18:20:00+00:00"
     date_updated: "2020-03-29T18:20:00+00:00"
@@ -614,7 +614,7 @@
     body: gcloud projects create tearleads
     date_created: "2019-05-31T18:20:00+00:00"
     date_updated: "2019-05-31T18:20:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 65
   fields:
@@ -669,7 +669,7 @@
   fields:
     user_id: 1
     subject:  list gke clusters (get master IP)
-    body: gcloud container clusters list 
+    body: gcloud container clusters list
     date_created: "2019-05-31T18:20:00+00:00"
     date_updated: "2019-05-31T18:20:00+00:00"
 
@@ -695,8 +695,8 @@
       gcloud compute addresses list
       gcloud compute addresses delete tearleads --region us-central1
     date_created: "2019-08-18T18:20:00+00:00"
-    date_updated: "2019-08-18T18:20:00+00:00" 
-    
+    date_updated: "2019-08-18T18:20:00+00:00"
+
 - model: text_entries.TextEntry
   pk: 73
   fields:
@@ -716,7 +716,7 @@
       gcloud container clusters get-credentials tear1 --region=us-central1-a
     date_created: "2019-08-18T18:20:00+00:00"
     date_updated: "2019-08-18T18:20:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 75
   fields:
@@ -782,7 +782,7 @@
     body: |
       gcloud container node-pools list --cluster tear1
     date_created: "2019-08-18T18:20:00+00:00"
-    date_updated: "2019-08-18T18:20:00+00:00"    
+    date_updated: "2019-08-18T18:20:00+00:00"
 
 - model: text_entries.TextEntry
   pk: 81
@@ -811,7 +811,7 @@
     body: gcloud components update
     date_created: "2019-08-18T18:20:00+00:00"
     date_updated: "2019-08-18T18:20:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 84
   fields:
@@ -867,7 +867,7 @@
       / returns 404
     date_created: "2019-08-18T18:20:00+00:00"
     date_updated: "2019-08-18T18:20:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 88
   fields:
@@ -927,13 +927,13 @@
       kubectl get pods --namespace cert-manager #make sure the cert-manager namnespace has some pods running
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 91
   fields:
     user_id: 1
     subject: deploy self-signed test resource using cert-manager
-    body: | 
+    body: |
       cat <<EOF > test-resources.yaml
       apiVersion: v1
       kind: Namespace
@@ -964,13 +964,13 @@
       kubectl delete -f test-resources.yaml
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 92
   fields:
     user_id: 1
     subject: cert-manager staging issuer
-    body: | 
+    body: |
       cat <<EOF > letsencrypt-staging.yaml
       apiVersion: certmanager.k8s.io/v1alpha1
       kind: ClusterIssuer
@@ -999,20 +999,20 @@
   fields:
     user_id: 1
     subject: inspect load balancing / health of target pools
-    body: | 
+    body: |
       gcloud compute forwarding-rules list
       gcloud compute target-pools list
       gcloud compute target-pools describe a1f172168c1de11e999a942010a80018 --region=us-central1
       gcloud compute target-pools get-health a1f172168c1de11e999a942010a80018 --region=us-central1
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
-      
+
 - model: text_entries.TextEntry
   pk: 94
   fields:
     user_id: 1
     subject: show kubernetes resources
-    body: | 
+    body: |
       kubectl get deployments --all-namespaces
       kubectl get pods --all-namespaces
       kubectl get services --all-namespaces
@@ -1027,7 +1027,7 @@
   fields:
     user_id: 1
     subject: remove kubernetes taints, to allow services to run on master, for example
-    body: | 
+    body: |
       kubectl taint nodes k8s-staging node.kubernetes.io/not-ready:NoSchedule-
       kubectl taint nodes k8s-staging node-role.kubernetes.io/master:NoSchedule-
     date_created: "2019-08-20T18:21:00+00:00"
@@ -1038,7 +1038,7 @@
   fields:
     user_id: 1
     subject: kubernetes hose
-    body: | 
+    body: |
       kubectl delete --all pods
       kubectl delete --all deployments
       kubectl delete --all services
@@ -1050,7 +1050,7 @@
   fields:
     user_id: 1
     subject: get all resources for a namespace / delete a namespace
-    body: | 
+    body: |
       kubectl proxy
       kubectl get namespace cert-manager -o json > tmp.json
       <delete finalize>
@@ -1063,7 +1063,7 @@
   fields:
     user_id: 1
     subject: setup a proxy for kubectl to 127.0.0.1
-    body: | 
+    body: |
       kubectl proxy
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
@@ -1073,7 +1073,7 @@
   fields:
     user_id: 1
     subject: edit namespace
-    body: | 
+    body: |
       kubectl edit ns cert-manager
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
@@ -1083,7 +1083,7 @@
   fields:
     user_id: 1
     subject: install helm
-    body: | 
+    body: |
       brew install kubernetes-helm
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
@@ -1093,7 +1093,7 @@
   fields:
     user_id: 1
     subject: list available nvm versions
-    body: | 
+    body: |
       nvm ls-remote
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
@@ -1103,17 +1103,17 @@
   fields:
     user_id: 1
     subject: install a specific version with nvm
-    body: | 
+    body: |
       nvm install v8.16.0
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
-  
+
 - model: text_entries.TextEntry
   pk: 103
   fields:
     user_id: 1
     subject: use a specific version of nvm
-    body: | 
+    body: |
       nvm use v8.16.0
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
@@ -1123,7 +1123,7 @@
   fields:
     user_id: 1
     subject: set the default nvm version
-    body: | 
+    body: |
       nvm alias default v8.16.0
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
@@ -1133,7 +1133,7 @@
   fields:
     user_id: 1
     subject: show available versions of npm package
-    body: | 
+    body: |
       npm view webpack versions  --json
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
@@ -1143,12 +1143,12 @@
   fields:
     user_id: 1
     subject: aws mfs 2fa
-    body: | 
+    body: |
       unset AWS_SESSION_TOKEN
       export AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID>
       export AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY>
       aws iam list-mfa-devices
-      aws sts get-session-token --duration 129600 --serial-number <SERIAL_NUMBER> --token-code <TOKEN FROM FOB> 
+      aws sts get-session-token --duration 129600 --serial-number <SERIAL_NUMBER> --token-code <TOKEN FROM FOB>
       export AWS_SECRET_ACCESS_KEY=<AWS_ACCESS_KEY_ID>
       export AWS_SESSION_TOKEN=<AWS_SESSION_TOKEN>
       export AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID>
@@ -1160,7 +1160,7 @@
   fields:
     user_id: 1
     subject: aws mfa 2fa automated python
-    body: | 
+    body: |
       https://github.com/broamski/aws-mfa
       aws-mfa --profile dansullivan --duration 129600 --device <device>
     date_created: "2019-08-22T18:21:00+00:00"
@@ -1171,7 +1171,7 @@
   fields:
     user_id: 1
     subject: get a `docker login` command with an auth token (remove `-e none` on MacOS)
-    body: | 
+    body: |
       aws ecr get-login
       aws ecr get-login --region us-east-1 --no-include-email
       `aws ecr get-login --region us-east-1 --no-include-email`
@@ -1183,7 +1183,7 @@
   fields:
     user_id: 1
     subject: aws ecr describe and list
-    body: | 
+    body: |
       aws ecr describe-repositories --region us-east-1
       aws ecr list-images --repository-name <repo> --region us-east-1
     date_created: "2019-08-22T18:21:00+00:00"
@@ -1206,7 +1206,7 @@
     body: openssl s_client -showcerts -connect devopsrockstars.com:443
     date_created: "2019-08-22T18:21:00+00:00"
     date_updated: "2019-08-22T18:21:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 112
   fields:
@@ -1268,7 +1268,7 @@
   fields:
     user_id: 1
     subject: list installed nvm versions
-    body: | 
+    body: |
       nvm ls
     date_created: "2019-08-20T18:21:00+00:00"
     date_updated: "2019-08-20T18:21:00+00:00"
@@ -1278,7 +1278,7 @@
   fields:
     user_id: 1
     subject: rebase / combine git commits into previous without force pushing
-    body: | 
+    body: |
       git checkout -b fix/unpushed-brach
       git rebase -i HEAD~5
       pick -> squash
@@ -1291,13 +1291,13 @@
   fields:
     user_id: 1
     subject: disable ghost mode in Browsersync
-    body: | 
+    body: |
       browserSync.instance = browserSync.init({
         startPath: '/',
         server: server,
         browser: browser,
         port: 8080
-        ghostMode: false 
+        ghostMode: false
       });
     date_created: "2019-04-19T18:21:00+00:00"
     date_updated: "2019-04-19T18:21:00+00:00"
@@ -1419,7 +1419,7 @@
       psql --version
     date_created: "2019-05-01T18:21:00+00:00"
     date_updated: "2019-05-01T18:21:00+00:00"
-    
+
 - model: text_entries.TextEntry
   pk: 132
   fields:
@@ -1449,7 +1449,7 @@
     body: FILENAME=backup_$(date +'%Y_%m_%dT%H_%M_%S').sql
     date_created: "2020-05-01T18:21:00+00:00"
     date_updated: "2020-05-01T18:21:00+00:00"
-  
+
 - model: text_entries.TextEntry
   pk: 135
   fields:
@@ -1514,7 +1514,7 @@
             - /etc/nginx/certs
             - /etc/nginx/vhost.d
             - /usr/share/nginx/html
-      
+
         nginx-proxy-letsencrypt:
           image: jrcs/letsencrypt-nginx-proxy-companion
           volumes:
@@ -1523,14 +1523,14 @@
             - nginx-proxy
           environment:
             - DEFAULT_EMAIL=${LETSENCRYPT_EMAIL}
-      
+
         whoami-1:
           image: jwilder/whoami
           environment:
             - VIRTUAL_HOST=${API_FQDN}
             - LETSENCRYPT_HOST=${API_FQDN}
             - LETSENCRYPT_TEST=true
-      
+
         whoami-2:
           image: jwilder/whoami
           environment:
@@ -1583,7 +1583,7 @@
   pk: 145
   fields:
     user_id: 1
-    subject: generate ssh key at specific path 
+    subject: generate ssh key at specific path
     body: ssh-keygen -f ~/.ssh/tearleads-frontend_rsa
     date_created: "2020-05-06T18:22:00+00:00"
     date_updated: "2020-05-06T18:22:00+00:00"
@@ -1693,7 +1693,7 @@
   fields:
     user_id: 1
     subject: install the experimental langage server in Visual Studio Code (Terraform v0.12)
-    body: | 
+    body: |
       cmd + shift + p (bring up the console)
       Terraform: Install/Update Language Server
       cmd + shift + p (bring up the console)
@@ -1706,7 +1706,7 @@
   fields:
     user_id: 1
     subject: view language server and extension output in Visual Studio Code (MacOS)
-    body: | 
+    body: |
       cmd + j
       go to the OUTPUT tab
       select Language Server from the dropdown

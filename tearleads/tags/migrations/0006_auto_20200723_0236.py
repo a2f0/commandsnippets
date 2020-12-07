@@ -6,17 +6,17 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('text_entries', '0005_textentry_tag_count'),
-        ('tags', '0005_tagtextentrythroughmodel_user'),
+        ("text_entries", "0005_textentry_tag_count"),
+        ("tags", "0005_tagtextentrythroughmodel_user"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='tagtextentrythroughmodel',
-            options={'ordering': ['date_updated', 'id']},
+            name="tagtextentrythroughmodel",
+            options={"ordering": ["date_updated", "id"]},
         ),
         migrations.AlterUniqueTogether(
-            name='tagtextentrythroughmodel',
-            unique_together={('tag', 'text_entry')},
+            name="tagtextentrythroughmodel",
+            unique_together={("tag", "text_entry")},
         ),
     ]

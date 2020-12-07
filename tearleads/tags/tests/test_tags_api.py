@@ -7,7 +7,6 @@ from .factories import TagFactory
 
 
 class TestTagsApi(BaseTestCase):
-
     def setUp(self):
         super(TestTagsApi, self).setUp()
 
@@ -17,83 +16,101 @@ class TestTagsApi(BaseTestCase):
 
     def test_serialization_format(self):
         tag = TagFactory(user=self.user1)
-        response = self.user1_api_client.get('/api/v1/tags')
+        response = self.user1_api_client.get("/api/v1/tags")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()['data']), 1)
-        self.assertEqual(response.json()['data'][0]['id'],str(tag.id))
-        self.assertEqual(response.json()['data'][0]['attributes']['name'],tag.name)
-        self.assertEqual(response.json()['data'][0]['attributes']['date_created'], str(tag.date_created.isoformat()))
-        self.assertEqual(response.json()['data'][0]['attributes']['date_updated'], str(tag.date_updated.isoformat()))
-        self.assertEqual(len(response.json()['included']), 1)
-        self.assertEqual(response.json()['included'][0]['type'],'User')
-        self.assertEqual(len(response.json()['included'][0]['attributes']),1)
-        self.assertEqual(response.json()['included'][0]['attributes']['username'],self.user1.username)
+        self.assertEqual(len(response.json()["data"]), 1)
+        self.assertEqual(response.json()["data"][0]["id"], str(tag.id))
+        self.assertEqual(response.json()["data"][0]["attributes"]["name"], tag.name)
+        self.assertEqual(
+            response.json()["data"][0]["attributes"]["date_created"],
+            str(tag.date_created.isoformat()),
+        )
+        self.assertEqual(
+            response.json()["data"][0]["attributes"]["date_updated"],
+            str(tag.date_updated.isoformat()),
+        )
+        self.assertEqual(len(response.json()["included"]), 1)
+        self.assertEqual(response.json()["included"][0]["type"], "User")
+        self.assertEqual(len(response.json()["included"][0]["attributes"]), 1)
+        self.assertEqual(
+            response.json()["included"][0]["attributes"]["username"],
+            self.user1.username,
+        )
 
     def test_order_filter(self):
-        tag1 = TagFactory(user=self.user1, name='a')
-        tag2 = TagFactory(user=self.user1, name='z')
+        tag1 = TagFactory(user=self.user1, name="a")
+        tag2 = TagFactory(user=self.user1, name="z")
 
         # invalid sort key
-        response = self.user1_api_client.get('/api/v1/tags?sort=invalid_sort_key')
+        response = self.user1_api_client.get("/api/v1/tags?sort=invalid_sort_key")
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(len(json_response['errors']), 1)
-        self.assertEqual(json_response['errors'][0]['detail'], 'invalid sort parameter: invalid_sort_key')
-        
+        self.assertEqual(len(json_response["errors"]), 1)
+        self.assertEqual(
+            json_response["errors"][0]["detail"],
+            "invalid sort parameter: invalid_sort_key",
+        )
+
         # sort by name
-        response = self.user1_api_client.get('/api/v1/tags?sort=name')
+        response = self.user1_api_client.get("/api/v1/tags?sort=name")
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response['data']), 2)
-        self.assertEqual(json_response['data'][0]['id'],str(tag1.id))
-        self.assertEqual(json_response['data'][1]['id'],str(tag2.id))
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag2.id))
 
         # reverse sort by name
-        response = self.user1_api_client.get('/api/v1/tags?sort=-name')
+        response = self.user1_api_client.get("/api/v1/tags?sort=-name")
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response['data']), 2)
-        self.assertEqual(json_response['data'][0]['id'],str(tag2.id))
-        self.assertEqual(json_response['data'][1]['id'],str(tag1.id))
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag1.id))
 
         # sort by date_created
-        response = self.user1_api_client.get('/api/v1/tags?sort=date_created')
+        response = self.user1_api_client.get("/api/v1/tags?sort=date_created")
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response['data']), 2)
-        self.assertEqual(json_response['data'][0]['id'],str(tag1.id))
-        self.assertEqual(json_response['data'][1]['id'],str(tag2.id))
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag2.id))
 
         # reverse sort by date_created
-        response = self.user1_api_client.get('/api/v1/tags?sort=-date_created')
+        response = self.user1_api_client.get("/api/v1/tags?sort=-date_created")
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response['data']), 2)
-        self.assertEqual(json_response['data'][0]['id'],str(tag2.id))
-        self.assertEqual(json_response['data'][1]['id'],str(tag1.id))
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag1.id))
 
     def test_create_requires_authentication(self):
         payload = {}
-        response = self.unauthenticated_user_api_client.post('/api/v1/tags', payload, format='vnd.api+json')
+        response = self.unauthenticated_user_api_client.post(
+            "/api/v1/tags", payload, format="vnd.api+json"
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(len(json_response['errors']), 1)
-        self.assertEqual(json_response['errors'][0]['detail'], 'Authentication credentials were not provided.')
+        self.assertEqual(len(json_response["errors"]), 1)
+        self.assertEqual(
+            json_response["errors"][0]["detail"],
+            "Authentication credentials were not provided.",
+        )
 
     def test_can_create_self_owned(self):
-        payload = {
-            'data': {
-                'type': 'Tag',
-                'attributes': {
-                    'name': 'new tag'
-                }
-            }
-        }
-        response = self.user1_api_client.post('/api/v1/tags', payload, format='vnd.api+json')
+        payload = {"data": {"type": "Tag", "attributes": {"name": "new tag"}}}
+        response = self.user1_api_client.post(
+            "/api/v1/tags", payload, format="vnd.api+json"
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(json_response['data']['attributes']['name'],payload['data']['attributes']['name'])
-        self.assertEqual(len(response.json()['included']), 1)
-        self.assertEqual(response.json()['included'][0]['type'],'User')
-        self.assertEqual(len(response.json()['included'][0]['attributes']),1)
-        self.assertEqual(response.json()['included'][0]['attributes']['username'],self.user1.username)
+        self.assertEqual(
+            json_response["data"]["attributes"]["name"],
+            payload["data"]["attributes"]["name"],
+        )
+        self.assertEqual(len(response.json()["included"]), 1)
+        self.assertEqual(response.json()["included"][0]["type"], "User")
+        self.assertEqual(len(response.json()["included"][0]["attributes"]), 1)
+        self.assertEqual(
+            response.json()["included"][0]["attributes"]["username"],
+            self.user1.username,
+        )

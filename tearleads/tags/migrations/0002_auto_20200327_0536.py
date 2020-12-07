@@ -7,27 +7,59 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('text_entries', '0002_auto_20200321_1154'),
-        ('tags', '0001_initial'),
+        ("text_entries", "0002_auto_20200321_1154"),
+        ("tags", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='TagTextEntryThroughModel',
+            name="TagTextEntryThroughModel",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('order', models.PositiveIntegerField(db_index=True, editable=False, verbose_name='order')),
-                ('tag', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tag_to_text_entry', to='tags.Tag')),
-                ('text_entry', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='text_entry_to_tag', to='text_entries.TextEntry')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "order",
+                    models.PositiveIntegerField(
+                        db_index=True, editable=False, verbose_name="order"
+                    ),
+                ),
+                (
+                    "tag",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tag_to_text_entry",
+                        to="tags.Tag",
+                    ),
+                ),
+                (
+                    "text_entry",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="text_entry_to_tag",
+                        to="text_entries.TextEntry",
+                    ),
+                ),
             ],
             options={
-                'ordering': ('order',),
-                'abstract': False,
+                "ordering": ("order",),
+                "abstract": False,
             },
         ),
         migrations.AddField(
-            model_name='tag',
-            name='text_entries',
-            field=models.ManyToManyField(blank=True, related_name='tags', through='tags.TagTextEntryThroughModel', to='text_entries.TextEntry'),
+            model_name="tag",
+            name="text_entries",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="tags",
+                through="tags.TagTextEntryThroughModel",
+                to="text_entries.TextEntry",
+            ),
         ),
     ]

@@ -7,19 +7,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0002_auto_20200327_0536'),
+        ("tags", "0002_auto_20200327_0536"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tagtextentrythroughmodel',
-            name='date_created',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="tagtextentrythroughmodel",
+            name="date_created",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='tagtextentrythroughmodel',
-            name='date_updated',
+            model_name="tagtextentrythroughmodel",
+            name="date_updated",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

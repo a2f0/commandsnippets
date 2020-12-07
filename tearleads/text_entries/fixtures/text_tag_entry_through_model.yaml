@@ -48,7 +48,7 @@
     user: 1
     date_created: "2020-04-13T18:20:00+00:00"
     date_updated: "2020-04-13T18:20:00+00:00"
-    
+
 - model: tags.TagTextEntryThroughModel
   pk: 6
   fields:

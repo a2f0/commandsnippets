@@ -2,6 +2,8 @@
 
 Bootstrap (Local dev)
 
+    pip3 install pre-commit
+    pre-commit install
     docker-compose build
     docker-compose run backend /app/loaddata.sh
 

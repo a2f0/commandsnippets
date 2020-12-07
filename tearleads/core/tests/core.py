@@ -5,8 +5,8 @@ from http import cookies
 
 from tearleads.users.tests.factories import UserFactory
 
+
 class BaseTestCase(APITestCase):
-    
     @classmethod
     def setUpTestData(cls):
         cls.user1 = UserFactory()
@@ -14,7 +14,7 @@ class BaseTestCase(APITestCase):
         cls.user1_api_client = APIClient()
         token = Token.objects.get(user__username=cls.user1.username)
         C = cookies.SimpleCookie()
-        C['Authorization'] = token.key
+        C["Authorization"] = token.key
         cls.user1_api_client.cookies = C
 
         cls.unauthenticated_user = UserFactory()
