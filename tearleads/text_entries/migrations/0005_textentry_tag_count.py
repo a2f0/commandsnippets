@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('text_entries', '0004_textentry_is_deleted'),
+        ("text_entries", "0004_textentry_is_deleted"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='textentry',
-            name='tag_count',
+            model_name="textentry",
+            name="tag_count",
             field=models.IntegerField(default=0),
         ),
     ]

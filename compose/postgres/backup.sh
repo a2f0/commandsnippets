@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e 
+set -e
 echo "=== Backup Postgres database: $POSTGRES_DB"
 
 FILENAME=backup_$(date +'%Y_%m_%dT%H_%M_%S')-pg_dump-Fc

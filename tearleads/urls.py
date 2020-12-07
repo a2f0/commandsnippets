@@ -1,15 +1,18 @@
 from django.conf.urls import include, url
 from django.contrib import admin
-from tearleads.authentication.api import CustomObtainAuthToken, CustomInvalidateAuthToken
+from tearleads.authentication.api import (
+    CustomObtainAuthToken,
+    CustomInvalidateAuthToken,
+)
 
 from tearleads.healthcheck.api import HealthCheckAPIView
 
 from .routers import router
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^api-token-auth/',  CustomObtainAuthToken.as_view()),
-    url(r'^api-token-deauth/',  CustomInvalidateAuthToken.as_view()),
-    url(r'^healthcheck/',  HealthCheckAPIView.as_view(), name='healthcheck'),
-    url(r'^api/v1/', include(router.urls)),
+    url(r"^admin/", admin.site.urls),
+    url(r"^api-token-auth/", CustomObtainAuthToken.as_view()),
+    url(r"^api-token-deauth/", CustomInvalidateAuthToken.as_view()),
+    url(r"^healthcheck/", HealthCheckAPIView.as_view(), name="healthcheck"),
+    url(r"^api/v1/", include(router.urls)),
 ]

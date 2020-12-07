@@ -5,25 +5,24 @@ from rest_framework.views import APIView
 
 from tearleads.authentication import utility
 
-class CustomObtainAuthToken(ObtainAuthToken):
 
+class CustomObtainAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(
-            data=request.data,
-            context={'request': request}
+            data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
         response = Response({})
-        response.set_cookie('Authorization', token.key, httponly=True)
+        response.set_cookie("Authorization", token.key, httponly=True)
         return response
 
-class CustomInvalidateAuthToken(APIView):
 
+class CustomInvalidateAuthToken(APIView):
     def post(self, request, *args, **kwargs):
         ca = utility.CustomAuthentication()
         ca.deauthenticate(request)
         response = Response({})
-        response.delete_cookie('Authorization')
+        response.delete_cookie("Authorization")
         return response

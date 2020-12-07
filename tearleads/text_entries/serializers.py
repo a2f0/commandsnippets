@@ -9,19 +9,27 @@ from tearleads.users.serializers import UserSerializer
 
 class TextEntrySerializer(serializers.ModelSerializer):
 
-    included_serializers = {
-        'user': UserSerializer
-    }
+    included_serializers = {"user": UserSerializer}
 
     class Meta:
         model = TextEntry
-        fields = ('id','body','subject','date_updated','date_created','user','is_deleted')
+        fields = (
+            "id",
+            "body",
+            "subject",
+            "date_updated",
+            "date_created",
+            "user",
+            "is_deleted",
+        )
 
     class JSONAPIMeta:
-        included_resources = ['user',]
+        included_resources = [
+            "user",
+        ]
+
 
 class TextEntryCreateSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = TextEntry
-        fields = ('body','subject')
+        fields = ("body", "subject")
