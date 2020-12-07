@@ -8,9 +8,59 @@ on:
 
 jobs:
 
+  code-quality:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    services:
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+       # Checks-out the repository into $GITHUB_WORKSPACE.
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        # Semantic version range syntax or exact version of a Python version
+        python-version: '3.6'
+        # Optional - x64 or x86 architecture, defaults to x64
+        architecture: 'x64'
+
+    - name: install and configure python dependencies
+      run: pip install -r ./requirements/local.txt
+
+    - name: Run pre-commit
+      run: |
+        pre-commit install
+        pre-commit run --all-files
+
+    - name: run tests
+      run: python manage.py test -v 2
+      env:
+        POSTGRES_DB: postgres
+        POSTGRES_HOST: localhost
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_PORT: 5432
+        POSTGRES_USER: postgres
+
   push-containers:
     runs-on: ubuntu-latest
     continue-on-error: false
+    needs: code-quality
 
     steps:
 
