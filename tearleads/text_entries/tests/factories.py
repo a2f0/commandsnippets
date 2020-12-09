@@ -10,3 +10,11 @@ class TextEntryFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = "text_entries.TextEntry"
+
+
+class TextEntryReusedFactory(factory.django.DjangoModelFactory):
+    text_entry = factory.SubFactory(TextEntryFactory)
+    user = factory.SubFactory(UserFactory)
+
+    class Meta:
+        model = "text_entries.TextEntryReused"

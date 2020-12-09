@@ -4,12 +4,18 @@ from rest_framework_json_api.django_filters import DjangoFilterBackend
 from rest_framework_json_api.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from tearleads.text_entries.models import TextEntry
+from tearleads.text_entries.models import TextEntry, TextEntryReused
 from tearleads.text_entries.serializers import (
     TextEntryCreateSerializer,
     TextEntrySerializer,
 )
 from tearleads.core.permissions import IsOwner
+
+from .serializers import (
+    TextEntryReusedSerializer,
+    TextEntryReusedCreateSerializer,
+    TextEntryCreateSerializer,
+)
 
 
 class TextEntryViewSet(viewsets.ModelViewSet):
@@ -44,4 +50,20 @@ class TextEntryViewSet(viewsets.ModelViewSet):
 
         return response.Response(
             data=TextEntrySerializer(instance=instance).data, status=status.HTTP_200_OK
+        )
+
+
+class TextEntryReusedViewset(viewsets.ModelViewSet):
+    ordering_fields = "date_created"
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwner)
+    queryset = TextEntryReused.objects.all()
+    serializer_class = TextEntryReusedSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = TextEntryReusedCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(user=request.user)
+        return response.Response(
+            data=TextEntryReusedCreateSerializer(instance=instance).data,
+            status=status.HTTP_201_CREATED,
         )
