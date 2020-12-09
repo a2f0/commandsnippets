@@ -8,6 +8,7 @@ import ListItem from '@material-ui/core/ListItem';
 import memoize from "memoize-one";
 import { makeStyles } from '@material-ui/core/styles';
 import API from './api.js'
+import { autorun } from 'mobx'
 import TagNew from './TagNew.jsx'
 import AppContext from './AppContext.js'
 import {observer} from 'mobx-react';
@@ -35,14 +36,18 @@ const TagList = React.memo(observer(function TagList(props) {
   const [sort, setSort] = useState('name');
   const { user } = useParams();
   const history = useHistory();
-  
-  useEffect(() => {
-    fetchTags();
-  }, []);
+
+  useEffect(
+    () =>
+      autorun(() => {
+        fetchTags();
+      }),
+    [location],
+  )
 
   const fetchTags = () => {
-    const sort_string = '?sort=' + sort
-    API.get('/tags' + sort_string)
+    var url_query_query_string = '/tags?sort=' + appConfig.tagSortOrder
+    API.get(url_query_query_string)
       .then(function (response) {
         // success
         setData(response.data);

@@ -95,6 +95,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);
   const [entriesMenuAnchorEl, setEntriesMenuAnchorEl] = React.useState(null);
   const [helpMenuAnchorEl, setHelpMenuAnchorEl] = React.useState(null);
+  const [tagsMenuAnchorEl, setTagsMenuAnchorEl] = React.useState(null);
 
   const handleNavigateToLogin = () => {
     history.push("/login");
@@ -145,12 +146,20 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
     setViewMenuAnchorEl(event.currentTarget);
   };
 
+  const handleTagsMenuClick = (event) => {
+    setTagsMenuAnchorEl(event.currentTarget);
+  };
+
   const handleEntriesMenuClick = (event) => {
     setEntriesMenuAnchorEl(event.currentTarget);
   };
 
   const handleViewMenuClose = () => {
     setViewMenuAnchorEl(null);
+  };
+
+  const handleTagsMenuClose = () => {
+    setTagsMenuAnchorEl(null);
   };
 
   const handleEntriesMenuClose = () => {
@@ -163,6 +172,10 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
 
   const handleHelpMenuClose = () => {
     setHelpMenuAnchorEl(null);
+  };
+
+  const handleSetTagSortOrder = (order) => {
+    appConfig.tagSortOrder = order
   };
 
   const handleSetEntrySortOrder = (order) => {
@@ -188,6 +201,9 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         </Button> */}
         <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleViewMenuClick}>
       View
+        </Button>
+        <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleTagsMenuClick}>
+      Tags
         </Button>
         <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEntriesMenuClick}>
       Entries
@@ -255,9 +271,52 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
           {/* <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/> */}
         </MenuItem>
       </StyledMenu>
-      
       <StyledMenu
-        id="view-menu"
+        id="tags-menu"
+        anchorEl={tagsMenuAnchorEl}
+        open={Boolean(tagsMenuAnchorEl)}
+        onClose={handleTagsMenuClose}
+        TransitionComponent={Fade}
+      >
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("name"); handleTagsMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.tagSortOrder == "name" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Tag Name <ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-name"); handleTagsMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.tagSortOrder == "-name" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Tag Name <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("date_created"); handleTagsMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.tagSortOrder == "date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>  
+          Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-date_created"); handleTagsMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.tagSortOrder== "-date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>
+          Sort by Date Created <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
+      </StyledMenu>
+      <StyledMenu
+        id="entries-menu"
         anchorEl={entriesMenuAnchorEl}
         open={Boolean(entriesMenuAnchorEl)}
         onClose={handleEntriesMenuClose}

@@ -50,6 +50,7 @@ const useStyles = makeStyles((theme) => ({
 
 const appConfig = observable({
   entrySortOrder: 'date_created',
+  tagSortOrder: 'name',
   authenticatedUser: null,
   loggedInUser: null,
   mainPanel: 'EntryList',
