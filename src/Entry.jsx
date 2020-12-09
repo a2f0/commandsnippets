@@ -14,7 +14,7 @@ const useStyles = makeStyles({
 
   entry: {
     display: 'inline-block',
-    verticalAlign: 'top',
+    verticalAlign: 'top'
   },
   entryWrapper: {
     marginBottom: 16,
@@ -232,6 +232,7 @@ const Entry = React.memo(function (
     <EntryContextMenu 
       mouse={mouse} 
       id={id}
+      text_entry={text_entry}
       handleDelete={handleDelete}
       handleNewEntry={handleNewEntry}
       handleBeginEdit={handleBeginEdit}/>, [mouse]);
@@ -249,6 +250,12 @@ const Entry = React.memo(function (
               <DragIndicatorIcon
                 style={{ fontSize: '19px', visibility: showDragHandle ? "visible" : "hidden" }}
               />
+            </div>
+            <div
+              style={{ ...theme.custom.reuseCount }}
+              onMouseEnter={mouseEnter} 
+              onMouseLeave={mouseLeave}>
+              {text_entry.attributes.reused_count}
             </div>
             <div className={classes.entry}
               onMouseEnter={mouseEnter}

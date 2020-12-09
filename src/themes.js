@@ -10,7 +10,12 @@ const CUSTOM_SHARED = {
     verticalAlign: 'top',
     width: '19px',
     height: '19px',
-    border: '0px solid red'
+  },
+  reuseCount: {
+    display: 'inline-block',
+    verticalAlign: 'top',
+    width: '19px',
+    height: '19px',
   }
 }
 

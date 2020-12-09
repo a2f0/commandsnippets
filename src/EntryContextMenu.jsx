@@ -37,6 +37,34 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
     handleClose();
   };
 
+  const handleIncrementTimesUsed = () => {
+    const entry_reuse_payload = {
+      'data': {
+        'type': 'TextEntryReused',
+        'attributes': {},
+        'relationships': {
+          'text_entry': {
+            'data': {
+              'type': 'TextEntry', 
+              'id': props.text_entry.id
+            }
+          },
+        }
+      }
+    }
+    API.post('/entry_reuses', entry_reuse_payload, {withCredentials: true})
+      .then(function (response) {
+      })
+      .catch(function (error) {
+        // handle error
+        console.log(error);
+      })
+      .then(function () {
+        // always executed
+        handleClose();
+      });
+  }
+
   return (
     <Menu
       keepMounted
@@ -51,6 +79,7 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
     >
       <MenuItem onClick={() => { handleBeginEdit();}}>Edit</MenuItem>
       <MenuItem onClick={() => { handleNewEntry();}}>New Entry</MenuItem>
+      <MenuItem onClick={() => { handleIncrementTimesUsed(props.id);}}>Increment Times Used</MenuItem>
       <MenuItem onClick={() => { handleUntag(props.id);}}>Untag</MenuItem>
     </Menu>    
   )
