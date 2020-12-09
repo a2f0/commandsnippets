@@ -19,6 +19,7 @@ class TextEntrySerializer(serializers.ModelSerializer):
             "subject",
             "date_updated",
             "date_created",
+            "reused_count",
             "user",
             "is_deleted",
         )
