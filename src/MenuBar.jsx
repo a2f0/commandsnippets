@@ -93,6 +93,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
   const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
   const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);
+  const [entriesMenuAnchorEl, setEntriesMenuAnchorEl] = React.useState(null);
   const [helpMenuAnchorEl, setHelpMenuAnchorEl] = React.useState(null);
 
   const handleNavigateToLogin = () => {
@@ -144,8 +145,16 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
     setViewMenuAnchorEl(event.currentTarget);
   };
 
+  const handleEntriesMenuClick = (event) => {
+    setEntriesMenuAnchorEl(event.currentTarget);
+  };
+
   const handleViewMenuClose = () => {
     setViewMenuAnchorEl(null);
+  };
+
+  const handleEntriesMenuClose = () => {
+    setEntriesMenuAnchorEl(null);
   };
 
   const handleHelpMenuClick = (event) => {
@@ -180,6 +189,10 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleViewMenuClick}>
       View
         </Button>
+        <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEntriesMenuClick}>
+      Entries
+        </Button>
+      
         {/* <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
       Help
         </Button> */}
@@ -221,87 +234,6 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         onClose={handleViewMenuClose}
         TransitionComponent={Fade}
       >
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("order"); handleViewMenuClose();}} >
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder == "order" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon> 
-          Sort by User-Defined Order
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__subject"); handleViewMenuClose();}} >
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder == "text_entry__subject" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon> 
-          Sort by Subject <ArrowDownwardIcon fontSize="small" />
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__subject"); handleViewMenuClose();}} >
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder == "-text_entry__subject" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon> 
-          Sort by Subject <ArrowUpwardIcon fontSize="small" />
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__body"); handleViewMenuClose();}} >
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder == "text_entry__body" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon> 
-          Sort by Body <ArrowDownwardIcon fontSize="small" />
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__body"); handleViewMenuClose();}} >
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder == "-text_entry__body" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon> 
-          Sort by Body <ArrowUpwardIcon fontSize="small" />
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__date_created"); handleViewMenuClose();}}>
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder == "text_entry__date_created" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon>  
-          Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__date_created"); handleViewMenuClose();}}>
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder== "-text_entry__date_created" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon>
-          Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("date_created"); handleViewMenuClose();}}>
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder == "date_created" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon>  
-          Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-date_created"); handleViewMenuClose();}} divider>
-          <ListItemIcon>
-            {
-              appConfig.entrySortOrder== "-date_created" &&
-              <CheckIcon fontSize="small" />
-            }
-          </ListItemIcon>
-          Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
-        </MenuItem>
         <MenuItem className={classes.menuItem} onClick={() => { props.handleThemeSwitcher(lightTheme); handleViewMenuClose();}}>
           <ListItemIcon>
             {
@@ -321,6 +253,96 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
           </ListItemIcon>
           Dark Mode
           {/* <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/> */}
+        </MenuItem>
+      </StyledMenu>
+      
+      <StyledMenu
+        id="view-menu"
+        anchorEl={entriesMenuAnchorEl}
+        open={Boolean(entriesMenuAnchorEl)}
+        onClose={handleEntriesMenuClose}
+        TransitionComponent={Fade}
+      >
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("order"); handleEntriesMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "order" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by User-Defined Order
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__subject"); handleEntriesMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "text_entry__subject" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Subject <ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__subject"); handleEntriesMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "-text_entry__subject" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Subject <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__body"); handleEntriesMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "text_entry__body" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Body <ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__body"); handleEntriesMenuClose();}} >
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "-text_entry__body" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon> 
+          Sort by Body <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__date_created"); handleEntriesMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "text_entry__date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>  
+          Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__date_created"); handleEntriesMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder== "-text_entry__date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>
+          Sort by Date Created <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("date_created"); handleEntriesMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>  
+          Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-date_created"); handleEntriesMenuClose();}} divider>
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder== "-date_created" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>
+          Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
       </StyledMenu>
       <StyledMenu
