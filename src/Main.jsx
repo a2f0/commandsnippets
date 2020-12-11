@@ -14,7 +14,7 @@ import Box from '@material-ui/core/Box';
 import {observer} from 'mobx-react';
 import AppContext from './AppContext.js'
 import UntaggedEntryList from './UntaggedEntryList.jsx'
-import RightDrawer from './RightDrawer.jsx'
+import * as Constants from './constants'
 
 const appBarHeight = 52;
 
@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
   main: {	
     flexGrow: 1,
     marginTop: appBarHeight,	
-    height: `calc(100vh - ${appBarHeight}px)`,	
+    height: `calc(100vh - ${Constants.appBarHeight}px)`,
     overflow: "auto"
   },
   toolBar: {
