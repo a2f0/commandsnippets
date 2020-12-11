@@ -52,20 +52,19 @@ const TagList = React.memo(observer(function TagList(props) {
     [location],
   )
 
-  const fetchTags = () => {
-    var url_query_query_string = '/tags?sort=' + appConfig.tagSortOrder
-    API.get(url_query_query_string)
-      .then(function (response) {
-        // success
-        setData(response.data);
-      })
-      .catch(function (error) {
-        // handle error
-        console.log(error);
-      })
-      .then(function () {
-        // always executed
-      }); 
+  async function fetchTags() {
+    let data = [];
+    let included = [];
+    let nextPage = null;
+    let page = 0;
+
+    do {
+      let { data: response }  = await API.get('/tags', { params: { 'page[number]': ++page, sort: appConfig.tagSortOrder } });
+      nextPage = response.links.next
+      data = data.concat(response.data);
+      included = data.concat(response.included);
+    } while (nextPage != null) 
+    setData({ data: data, included: included});
   }
 
   const handleNavigateToUntaggedEntries = () => {
