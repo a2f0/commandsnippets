@@ -412,7 +412,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
           </ListItemIcon>  
           Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-date_created"); handleEntriesMenuClose();}} divider>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-date_created"); handleEntriesMenuClose();}}>
           <ListItemIcon>
             {
               appConfig.entrySortOrder== "-date_created" &&
@@ -420,6 +420,24 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
             }
           </ListItemIcon>
           Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("text_entry__tag_count"); handleEntriesMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder == "text_entry__tag_count" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>  
+          Sort by Tag Count<ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetEntrySortOrder("-text_entry__tag_count"); handleEntriesMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.entrySortOrder== "-text_entry__tag_count" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>
+          Sort by Tag Count<ArrowUpwardIcon fontSize="small" />
         </MenuItem>
       </StyledMenu>
       <StyledMenu
