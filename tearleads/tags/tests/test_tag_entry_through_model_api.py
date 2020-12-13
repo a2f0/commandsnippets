@@ -44,8 +44,9 @@ class TestTagsEntriesApi(BaseTestCase):
             json_response["data"]["relationships"]["user"]["data"]["type"], "User"
         )
         self.assertEqual(len(json_response["included"]), 3)
+        # Tag
         self.assertEqual(json_response["included"][0]["type"], "Tag")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 3)
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 4)
         self.assertEqual(json_response["included"][0]["attributes"]["name"], tag.name)
         self.assertEqual(
             json_response["included"][0]["attributes"]["date_updated"],
@@ -55,6 +56,11 @@ class TestTagsEntriesApi(BaseTestCase):
             json_response["included"][0]["attributes"]["date_created"],
             str(tag.date_created.isoformat()),
         )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["entry_count"],
+            tag.entry_count,
+        )
+        # Entry
         self.assertEqual(json_response["included"][1]["type"], "TextEntry")
         self.assertEqual(len(json_response["included"][1]["attributes"]), 6)
         self.assertEqual(

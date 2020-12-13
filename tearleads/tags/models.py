@@ -53,6 +53,7 @@ def update_counter_increment(sender, instance, created, **kwargs):
         tag = text_tag_entry_through_model.tag
         tag.entry_count = F("entry_count") + 1
         tag.save(update_fields=["entry_count"])
+        tag.refresh_from_db()
 
 
 post_save.connect(update_counter_increment, sender=TagTextEntryThroughModel)

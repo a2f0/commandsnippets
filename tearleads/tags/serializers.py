@@ -14,7 +14,7 @@ class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = ("id", "name", "date_created", "date_updated", "user")
+        fields = ("id", "name", "date_created", "date_updated", "user", "entry_count")
 
     class JSONAPIMeta:
         included_resources = ["user"]
