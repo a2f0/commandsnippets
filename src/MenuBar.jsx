@@ -314,6 +314,24 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
           </ListItemIcon>
           Sort by Date Created <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("entry_count"); handleTagsMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.tagSortOrder == "entry_count" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>  
+          Sort by Number of Tagged Entries<ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-entry_count"); handleTagsMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.tagSortOrder== "-entry_count" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>
+          Sort by Number of Tagged Entries <ArrowUpwardIcon fontSize="small" />
+        </MenuItem>
       </StyledMenu>
       <StyledMenu
         id="entries-menu"
