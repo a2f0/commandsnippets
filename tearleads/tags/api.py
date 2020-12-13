@@ -18,6 +18,7 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     ordering_fields = (
+        "tag_to_text_entry__date_created",
         "date_created",
         "entry_count",
         "name",
