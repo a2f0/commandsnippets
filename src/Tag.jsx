@@ -84,7 +84,7 @@ const Tag = React.memo(function Tag({tag, id, user, fetchTags}) {
         style={{ ...style, backgroundColor }}
         onClick={handleTagClick}
         onContextMenu={handleContextClick}>
-        {isActive ? tag.attributes.name : tag.attributes.name}
+        {isActive ? tag.attributes.name : tag.attributes.name} { tag.attributes.entry_count }
       </div>
 
       { appConfig.appStateStore.loggedInUser && (
