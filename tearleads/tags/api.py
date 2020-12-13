@@ -44,6 +44,7 @@ class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
         "text_entry__body",
         "text_entry__date_created",
         "text_entry__date_updated",
+        "text_entry__tag_count",
     )
     permission_classes = (IsAuthenticatedOrReadOnly,)
 

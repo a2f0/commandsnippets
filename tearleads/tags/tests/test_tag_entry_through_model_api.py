@@ -182,8 +182,12 @@ class TestTagsEntriesApi(BaseTestCase):
     def test_order_filter(self):
         tag1 = TagFactory(user=self.user1)
         tag2 = TagFactory(user=self.user1)
-        text_entry1 = TextEntryFactory(user=self.user1, subject="a", body="a")
-        text_entry2 = TextEntryFactory(user=self.user1, subject="z", body="z")
+        text_entry1 = TextEntryFactory(
+            user=self.user1, subject="a", body="a", tag_count=0
+        )
+        text_entry2 = TextEntryFactory(
+            user=self.user1, subject="z", body="z", tag_count=1
+        )
         tag_text_entry1 = TagTextEntryThroughModelFactory(
             tag=tag1, order=0, text_entry=text_entry1, user=self.user1
         )
@@ -308,6 +312,26 @@ class TestTagsEntriesApi(BaseTestCase):
         # sort text entries by date updated (reversed)
         response = self.user1_api_client.get(
             "/api/v1/tags_entries?sort=-text_entry__date_updated"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
+
+        # sort text entries by tag count
+        response = self.user1_api_client.get(
+            "/api/v1/tags_entries?sort=text_entry__tag_count"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
+
+        # sort text entries by tag count (reversed)
+        response = self.user1_api_client.get(
+            "/api/v1/tags_entries?sort=-text_entry__tag_count"
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
