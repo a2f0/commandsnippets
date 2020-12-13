@@ -38,8 +38,8 @@ class TestTagsApi(BaseTestCase):
         )
 
     def test_order_filter(self):
-        tag1 = TagFactory(user=self.user1, name="a")
-        tag2 = TagFactory(user=self.user1, name="z")
+        tag1 = TagFactory(user=self.user1, name="a", entry_count=0)
+        tag2 = TagFactory(user=self.user1, name="z", entry_count=1)
 
         # invalid sort key
         response = self.user1_api_client.get("/api/v1/tags?sort=invalid_sort_key")
@@ -77,6 +77,22 @@ class TestTagsApi(BaseTestCase):
 
         # reverse sort by date_created
         response = self.user1_api_client.get("/api/v1/tags?sort=-date_created")
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag1.id))
+
+        # sort by date_created
+        response = self.user1_api_client.get("/api/v1/tags?sort=entry_count")
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag2.id))
+
+        # reverse sort by date_created
+        response = self.user1_api_client.get("/api/v1/tags?sort=-entry_count")
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)

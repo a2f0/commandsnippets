@@ -19,6 +19,7 @@ class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
     ordering_fields = (
         "date_created",
+        "entry_count",
         "name",
     )
 
