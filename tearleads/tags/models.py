@@ -11,6 +11,7 @@ class Tag(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
     entry_count = models.IntegerField(default=0, null=False)
+    date_last_used = models.DateTimeField(auto_now=False, null=True)
     text_entries = models.ManyToManyField(
         "text_entries.TextEntry",
         related_name="tags",
@@ -52,7 +53,8 @@ def update_counter_increment(sender, instance, created, **kwargs):
 
         tag = text_tag_entry_through_model.tag
         tag.entry_count = F("entry_count") + 1
-        tag.save(update_fields=["entry_count"])
+        tag.date_last_used = text_tag_entry_through_model.date_created
+        tag.save(update_fields=["entry_count", "date_last_used"])
         tag.refresh_from_db()
 
 
@@ -67,7 +69,14 @@ def update_counter_decrement(sender, instance, **kwargs):
 
     tag = text_tag_entry_through_model.tag
     tag.entry_count = F("entry_count") - 1
-    tag.save(update_fields=["entry_count"])
+    most_recent_tag_to_text_entry = (
+        tag.tag_to_text_entry.all().order_by("-date_created").first()
+    )
+    if most_recent_tag_to_text_entry == None:
+        tag.date_last_used = None
+    else:
+        tag.date_last_used = most_recent_tag_to_text_entry.date_created
+    tag.save(update_fields=["entry_count", "date_last_used"])
 
 
 post_delete.connect(update_counter_decrement, sender=TagTextEntryThroughModel)
