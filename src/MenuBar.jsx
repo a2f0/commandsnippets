@@ -296,42 +296,60 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
           </ListItemIcon> 
           Sort by Tag Name <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("date_created"); handleTagsMenuClose();}}>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-date_created"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder == "date_created" &&
+              appConfig.tagSortOrder == "-date_created" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>  
           Sort by Date Created <ArrowDownwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-date_created"); handleTagsMenuClose();}}>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("date_created"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder== "-date_created" &&
+              appConfig.tagSortOrder== "date_created" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>
           Sort by Date Created <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("entry_count"); handleTagsMenuClose();}}>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-entry_count"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder == "entry_count" &&
+              appConfig.tagSortOrder == "-entry_count" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>  
           Sort by Number of Tagged Entries<ArrowDownwardIcon fontSize="small" />
         </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-entry_count"); handleTagsMenuClose();}}>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("entry_count"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder== "-entry_count" &&
+              appConfig.tagSortOrder== "entry_count" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>
           Sort by Number of Tagged Entries <ArrowUpwardIcon fontSize="small" />
         </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-date_last_used"); handleTagsMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.tagSortOrder == "-date_last_used" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>  
+          Sort by Tag recently used<ArrowDownwardIcon fontSize="small" />
+        </MenuItem>
+        <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("date_last_used"); handleTagsMenuClose();}}>
+          <ListItemIcon>
+            {
+              appConfig.tagSortOrder== "date_last_used" &&
+              <CheckIcon fontSize="small" />
+            }
+          </ListItemIcon>
+          Sort by Tag recently used<ArrowUpwardIcon fontSize="small" />
+        </MenuItem>        
       </StyledMenu>
       <StyledMenu
         id="entries-menu"
