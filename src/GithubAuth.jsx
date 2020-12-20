@@ -6,7 +6,7 @@ import {observer} from 'mobx-react';
 
 export const githubClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
-    return '48c3fe5bbaba3afe2cdc';
+    return '3be8b14684de28d54a0d';
   } else if (window.location.hostname === 'tearleads.com') {
     return 'a3cf7c1dfabc3df68b06';
   } else {
