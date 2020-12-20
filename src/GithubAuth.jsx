@@ -8,7 +8,7 @@ export const githubClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
     return '48c3fe5bbaba3afe2cdc';
   } else if (window.location.hostname === 'tearleads.com') {
-    return 'e6d68d0827ef6c54e4a3';
+    return 'a3cf7c1dfabc3df68b06';
   } else {
     return "a94dc4b2bb6ed4fc63a0";
   }
