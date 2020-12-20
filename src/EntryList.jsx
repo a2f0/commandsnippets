@@ -9,6 +9,7 @@ import AppContext from './AppContext.js'
 import { observer } from "mobx-react"
 import { useLocation, useParams } from 'react-router-dom';
 
+
 const EntryList = React.memo(observer(function EntryList(props) {
 
   const appConfig = useContext(AppContext)
@@ -35,7 +36,6 @@ const EntryList = React.memo(observer(function EntryList(props) {
       if (tag != undefined ) {
         url_query_query_string += '&filter[tag.name]=' + tag
       } 
-      console.log(url_query_query_string)
       const response = await API.get(
         url_query_query_string
       );
@@ -68,7 +68,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
     let newData = {...data, data: new_data }
     setData(newData)
   };
-
+  
 
   return (
 

@@ -15,6 +15,7 @@ import {observer} from 'mobx-react';
 import AppContext from './AppContext.js'
 import UntaggedEntryList from './UntaggedEntryList.jsx'
 import * as Constants from './constants'
+import GithubAuth from './GithubAuth.jsx'
 
 const appBarHeight = 52;
 
@@ -116,13 +117,7 @@ const Main = React.memo(observer(function Main(props) {
               Tearleads
             </span>
           </div>
-          {/* <ThemeSwitcher handleThemeSwitcher={props.handleThemeSwitcher}/> */}
-          { ! appConfig.appStateStore.loggedInUser && (
-            <div className={classes.clickableDiv} onClick={handleNavigateToLogin}>Login</div>
-          )}
-          { appConfig.appStateStore.loggedInUser && (
-            <div className={classes.clickableDiv} onClick={handleNavigateToLogin}>{appConfig.appStateStore.loggedInUser}</div>
-          )}
+          <GithubAuth/>
         </Toolbar>
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>
       </AppBar>
