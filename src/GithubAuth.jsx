@@ -4,6 +4,16 @@ import AppContext from './AppContext.js'
 import { makeStyles } from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 
+export const githubClientID = () => {
+  if (window.location.hostname === 'staging.tearleads.com') {
+    return '48c3fe5bbaba3afe2cdc';
+  } else if (window.location.hostname === 'tearleads.com') {
+    return 'e6d68d0827ef6c54e4a3';
+  } else {
+    return "a94dc4b2bb6ed4fc63a0";
+  }
+}
+
 const useStyles = makeStyles((theme) => ({
   clickableDiv: {
     marginRight: '10px',
@@ -63,7 +73,7 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
 
       { ! appConfig.appStateStore.loggedInUser && (
         <div>
-          <a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=a94dc4b2bb6ed4fc63a0">Github</a> 
+          <a href={`https://github.com/login/oauth/authorize?scope=user:email&client_id=` + githubClientID() }>Github</a>
         </div>
       )}
     </>
