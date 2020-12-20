@@ -77,8 +77,12 @@ class GithubLogin(APIView):
                     )
                     token, created = Token.objects.get_or_create(user=user)
                     response = Response({})
-                    response.set_cookie("Authorization", token.key, httponly=True)
-                    response.set_cookie("LoggedInUser", login, httponly=False)
+                    response.set_cookie(
+                        "Authorization", token.key, httponly=True, samesite="Strict"
+                    )
+                    response.set_cookie(
+                        "LoggedInUser", login, httponly=False, samesite="Strict"
+                    )
                     return response
 
         else:
