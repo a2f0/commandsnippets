@@ -43,18 +43,10 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
       };
       API.post('/github-login/', payload, {withCredentials: true})
         .then(function (response) {
-          // This function parses document.cookie.
-          const x = document.cookie
-            .split(';')
-            .reduce((res, c) => {
-              const [key, val] = c.trim().split('=').map(decodeURIComponent)
-              try {
-                return Object.assign(res, { [key]: JSON.parse(val) })
-              } catch (e) {
-                return Object.assign(res, { [key]: val })
-              }
-            }, {});
-          appConfig.appStateStore.setLoggedInUser(x.LoggedInUser)
+          API.get('/user/', {withCredentials: true})
+            .then(function (response) {            
+              appConfig.appStateStore.setLoggedInUser(response.data.data.attributes.username)
+            })
         })
         .catch(function (error) {
           appConfig.appStateStore.setLoggedInUser('')
