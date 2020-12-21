@@ -62,7 +62,7 @@ class GithubLogin(APIView):
             headers = {"Authorization": authorization_header}
             response = requests.get(url="https://api.github.com/user", headers=headers)
             data = json.loads(response.text)
-            login = data["login"]
+            username = data["login"]
 
             # To get the email
             response = requests.get(
@@ -73,16 +73,11 @@ class GithubLogin(APIView):
             for email in data:
                 if email["primary"] == True:
                     user, created = User.objects.get_or_create(
-                        email=email["email"], defaults={"login": login}
+                        email=email["email"], defaults={"username": username}
                     )
                     token, created = Token.objects.get_or_create(user=user)
                     response = Response({})
-                    response.set_cookie(
-                        "Authorization", token.key, httponly=True, samesite="Strict"
-                    )
-                    response.set_cookie(
-                        "LoggedInUser", login, httponly=False, samesite="Strict"
-                    )
+                    response.set_cookie("Authorization", token.key, httponly=True)
                     return response
 
         else:

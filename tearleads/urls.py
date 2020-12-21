@@ -6,6 +6,8 @@ from tearleads.authentication.api import (
     GithubLogin,
 )
 
+from tearleads.users.api import User
+
 from tearleads.healthcheck.api import HealthCheckAPIView
 
 from .routers import router
@@ -15,6 +17,7 @@ urlpatterns = [
     url(r"^api-token-auth/", CustomObtainAuthToken.as_view()),
     url(r"^api-token-deauth/", CustomInvalidateAuthToken.as_view()),
     url(r"^healthcheck/", HealthCheckAPIView.as_view(), name="healthcheck"),
+    url(r"^api/v1/user/", User.as_view()),
     url(r"^api/v1/github-login/", GithubLogin.as_view()),
     url(r"^api/v1/", include(router.urls)),
 ]
