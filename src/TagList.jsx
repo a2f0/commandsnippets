@@ -14,12 +14,14 @@ import AppContext from './AppContext.js'
 import {observer} from 'mobx-react';
 import { useParams, useHistory } from 'react-router-dom';
 import * as Constants from './constants'
+import update from 'immutability-helper'
+
 
 const useStyles = makeStyles({
   root: {
     paddingTop: 2,
     paddingBottom: 0,
-    paddingLeft: 10,
+    paddingLeft: 0,
     paddingRight: 0,
     overflowY: "auto",
     direction: "rtl",
@@ -29,10 +31,8 @@ const useStyles = makeStyles({
     direction: "ltr"
   },
   item: {
-    padding: 0,
-    minWidth: 0,
-    width: 'inherit',
-    display: 'inline-block'
+    display: 'inline-block',
+    marginLeft: `${Constants.dragIndicatorWidthTag}px`
   }
 });
 
@@ -74,6 +74,27 @@ const TagList = React.memo(observer(function TagList(props) {
   }
 
   const classes = useStyles();
+
+  const moveEntry = (id, atIndex) => {
+    const { entry, index } = findEntry(id)
+    let reordered = update(data.data, {
+      $splice: [
+        [index, 1],
+        [atIndex, 0, entry],
+      ],
+    }) 
+    let newData = {...data, data: reordered }
+    setData(newData)
+  }
+  
+  const findEntry = (id) => {
+    const entry = data.data.filter((c) => `${c.id}` === id)[0]
+    return {
+      entry,
+      index: data.data.indexOf(entry),
+    }
+  }
+
   return (
     <>
       { appConfig.tagSearch && (
@@ -89,16 +110,14 @@ const TagList = React.memo(observer(function TagList(props) {
               i => i.type=="User" && i.id == tag.relationships.user.data.id
             )[0];
             return (
-              <div key={tag.id} className={classes.container}>
-                <ListItem  className={classes.item} button>
-                  <Tag id={tag.id} tag={tag} user={user} fetchTags={fetchTags}/>
-                </ListItem>
+              <div key={tag.id}>
+                <Tag id={tag.id} tag={tag} user={user} fetchTags={fetchTags} moveEntry={moveEntry} findEntry={findEntry} index={i} />
               </div>
             )
           })}
-          <ListItem className={classes.item} button>
-            <div onClick={handleNavigateToUntaggedEntries}>untagged entries</div>
-          </ListItem>
+          <div className={classes.item}>
+            <div onClick={handleNavigateToUntaggedEntries}>untagged</div>
+          </div>
         </div>
       </List>
     </>

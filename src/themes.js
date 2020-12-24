@@ -6,16 +6,15 @@ const darkForeground = "#FFF"
 const CUSTOM_SHARED = {
   dragIndicator: {
     display: 'inline-block',
-    cursor: 'move',
     verticalAlign: 'top',
-    width: '19px',
-    height: '19px',
+    fontWeight: 900,
+    textAlign: 'center',
+    cursor: 'grab',
+    width: '15px',
   },
   reuseCount: {
     display: 'inline-block',
     verticalAlign: 'top',
-    width: '19px',
-    height: '19px',
   }
 }
 

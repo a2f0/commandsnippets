@@ -1,12 +1,14 @@
-import React, {useState, useContext, useMemo} from 'react'
-import { useDrop } from 'react-dnd'
+import React, {useRef, useState, useContext, useMemo} from 'react'
+import { useDrag, useDrop } from 'react-dnd'
 import ItemTypes from './ItemTypes'
 import { useTheme } from '@material-ui/styles';
 import TagContextMenu from './TagContextMenu.jsx'
 import AppContext from './AppContext.js';
 import { useHistory } from "react-router-dom";
 import API from './api.js'
-
+import { makeStyles } from '@material-ui/core/styles';
+import * as Constants from './constants'
+ 
 const style = {
   marginRight: 0,
   marginBottom: 0,
@@ -16,10 +18,52 @@ const style = {
   lineHeight: 'normal',
   float: 'left'
 }
-const Tag = React.memo(function Tag({tag, id, user, fetchTags}) {
+
+const useStyles = makeStyles({
+  entry: {
+    display: 'inline-block',
+    verticalAlign: 'top'
+  },
+  entryWrapper: {
+    whiteSpace: 'pre'
+  },
+  tagLabel: {
+    display: 'inline-block',
+    cursor: 'pointer',
+  },
+  tagDragIndicator: {
+    display: 'inline-block',
+    fontWeight: 900,
+    textAlign: 'center',
+    cursor: 'grab',
+    width: `${Constants.dragIndicatorWidthTag}px`
+  }
+});
+
+const Tag = React.memo(function Tag(
+  {
+    tag,
+    id,
+    user,
+    fetchTags,
+    moveEntry,
+    findEntry, 
+    index
+  }) {
+  
+  const dragRef = useRef(null)
+  const dropRef = useRef(null)
+  const classes = useStyles();
+  const originalIndex = findEntry(id).index
+  const [showDragHandle, setShowDragHandle] = useState(false)
   const theme = useTheme();
-  const [{ canDrop, isOver }, drop] = useDrop({
-    accept: [ ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY ],
+  const opacity = isDragging ? 0 : 1
+
+  const [{canDrop, isOver}, drop] = useDrop({
+    accept: [ ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY ] ,
+    canDrop: () => {
+      return true;
+    },
     drop: () => ({ 
       name: name, 
       id: id, 
@@ -28,6 +72,49 @@ const Tag = React.memo(function Tag({tag, id, user, fetchTags}) {
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
+    hover(item, monitor) {
+      if (!dragRef.current) {
+        return
+      }
+
+      if (item.type == 'entry') {
+        return
+      }
+
+      const dragIndex = item.index
+      const hoverIndex = index
+      if (dragIndex === hoverIndex) {
+        return
+      }
+      // Determine rectangle on screen
+      const hoverBoundingRect = dragRef.current?.getBoundingClientRect()
+      // Get vertical middle
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+      // Determine mouse position
+      const clientOffset = monitor.getClientOffset()
+      // Get pixels to the top
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top
+
+      // Only perform the move when the mouse has crossed half of the items height
+      // When dragging downwards, only move when the cursor is below 50%
+      // When dragging upwards, only move when the cursor is above 50%
+      // Dragging downwards
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return
+      }
+      // Dragging upwards
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return
+      }
+
+      moveEntry(item.id, hoverIndex)
+      // Note: we're mutating the monitor item here!
+      // Generally it's better to avoid mutations,
+      // but it's good here for the sake of performance
+      // to avoid expensive index searches.
+      item.index = hoverIndex
+    },
   })
   const isActive = canDrop && isOver
   let backgroundColor = theme.palette.background.paper
@@ -43,6 +130,15 @@ const Tag = React.memo(function Tag({tag, id, user, fetchTags}) {
   const handleTagClick = () => {
     appConfig.mainPanel = 'EntryList'
     history.push(`/${user.attributes.username}/${tag.attributes.name}`);
+  }
+
+  const mouseEnter = () => {
+    if (appConfig.appStateStore.loggedInUser != null) {
+      setShowDragHandle(true)
+    }
+  }
+  const mouseLeave = () => {
+    setShowDragHandle(false)
   }
 
   const initialMouse = {
@@ -74,24 +170,70 @@ const Tag = React.memo(function Tag({tag, id, user, fetchTags}) {
     setMouse(mouseData)
   };
 
-  const contextMenu = useMemo(() => 
-    <TagContextMenu mouse={mouse} deleteTag={deleteTag}/>);
+  const [{ isDragging }, drag, preview] = useDrag({
+    item: { type: ItemTypes.TAG, id, originalIndex },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+    end: (dropResult, monitor) => {
+      const drop_result = monitor.getDropResult()
+      const { id: droppedId, originalIndex } = monitor.getItem()
+      const didDrop = monitor.didDrop()
+      if (!didDrop) {
+        console.info('didDrop Tag moveEntry')
+        moveEntry(droppedId, originalIndex)
+      } else {
+        console.info('didDrop Tag')
+        if ( "type" in drop_result ) {
+          if ( drop_result.type === "Tag" ) {
+            // Then it was reordered in the list.
+            if (originalIndex != findEntry(id).index ) {
+              console.info("it moved from index " + originalIndex + " to " + findEntry(id).index)
+            } else {
+              console.info("it wasn't moved.")
+            }
+          }
+        }
+      }
+    },
+  })
 
+  drag(dragRef)
+  drop(dropRef)
+
+  const contextMenu = useMemo(() => 
+    <TagContextMenu mouse={mouse} deleteTag={deleteTag}/>, [mouse]);
+
+    
   return (
     <>
-      <div
-        ref={drop}
-        style={{ ...style, backgroundColor }}
-        onClick={handleTagClick}
-        onContextMenu={handleContextClick}>
-        {isActive ? tag.attributes.name : tag.attributes.name} { tag.attributes.entry_count }
-      </div>
+      <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}> 
+        <div ref={(preview)} className={classes.entryWrapper}>
+          <div
+            ref={(dragRef)} 
+            className={classes.tagDragIndicator}
+            onMouseEnter={mouseEnter} 
+            onMouseLeave={mouseLeave}> 
+            <div style={{ visibility: showDragHandle ? "visible" : "hidden" }}>::</div>
+          </div>
+          <div
+            onMouseEnter={mouseEnter}
+            onMouseLeave={mouseLeave}
+            ref={drop}
+            className={classes.tagLabel}
+            style={{ backgroundColor }}
+            onClick={handleTagClick}
+            onContextMenu={handleContextClick}>
+            {isActive ? tag.attributes.name : tag.attributes.name} { tag.attributes.entry_count }
+          </div>
 
-      { appConfig.appStateStore.loggedInUser && (
-        <>
-          {contextMenu}
-        </>
-      )}
+          { appConfig.appStateStore.loggedInUser && (
+            <>
+              {contextMenu}
+            </>
+          )}
+        </div>
+      </div>
     </>
   )
 })

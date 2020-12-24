@@ -247,16 +247,14 @@ const Entry = React.memo(function (
               style={{...theme.custom.dragIndicator}} //
               onMouseEnter={mouseEnter} 
               onMouseLeave={mouseLeave}>
-              <DragIndicatorIcon
-                style={{ fontSize: '19px', visibility: showDragHandle ? "visible" : "hidden" }}
-              />
+              <div style={{ visibility: showDragHandle ? "visible" : "hidden" }}>::</div>
             </div>
-            <div
+            {/* <div
               style={{ ...theme.custom.reuseCount }}
               onMouseEnter={mouseEnter} 
               onMouseLeave={mouseLeave}>
               {text_entry.attributes.reused_count}
-            </div>
+            </div> */}
             <div className={classes.entry}
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}>

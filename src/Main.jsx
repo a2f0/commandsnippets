@@ -1,5 +1,6 @@
 import React, {useState, useContext} from 'react'
 import LeftDrawer from './LeftDrawer.jsx'
+import RightDrawer from './LeftDrawer.jsx'
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
@@ -119,10 +120,13 @@ const Main = React.memo(observer(function Main(props) {
           </div>
           <GithubAuth/>
         </Toolbar>
+
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher}/>
+
       </AppBar>
       <LeftDrawer/>
       <main className={classes.main}>
+
         { appConfig.mainPanel == 'UntaggedEntryList' && (
           <UntaggedEntryList/>
         )}
