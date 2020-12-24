@@ -45,7 +45,9 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
         .then(function (response) {
           API.get('/user/', {withCredentials: true})
             .then(function (response) {            
-              appConfig.appStateStore.setLoggedInUser(response.data.data.attributes.username)
+              const username = response.data.data.attributes.username
+              appConfig.appStateStore.setLoggedInUser(username)
+              document.cookie = "loggedInUser=" + username;
             })
         })
         .catch(function (error) {

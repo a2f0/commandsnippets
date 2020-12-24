@@ -1,4 +1,5 @@
 export default {
   ENTRY: 'entry',
-  UNTAGGEDENTRY: 'untaggedentry'
+  UNTAGGEDENTRY: 'untaggedentry',
+  TAG: 'tag'
 }
