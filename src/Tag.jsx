@@ -30,6 +30,7 @@ const useStyles = makeStyles({
   tagLabel: {
     display: 'inline-block',
     cursor: 'pointer',
+    width: '100%'
   },
   tagDragIndicator: {
     display: 'inline-block',
@@ -133,7 +134,7 @@ const Tag = React.memo(function Tag(
   }
 
   const mouseEnter = () => {
-    if (appConfig.appStateStore.loggedInUser != null) {
+    if (appConfig.appStateStore.loggedInUser != '') {
       setShowDragHandle(true)
     }
   }

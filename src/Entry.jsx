@@ -158,7 +158,7 @@ const Entry = React.memo(function (
   drop(dropRef)
 
   const mouseEnter = () => {
-    if (appConfig.appStateStore.loggedInUser != null) {
+    if (appConfig.appStateStore.loggedInUser != '') {
       setShowDragHandle(true)
     }
   }
