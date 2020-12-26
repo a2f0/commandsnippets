@@ -9,6 +9,7 @@ import EntryContextMenu from './EntryContextMenu.jsx'
 import EntryEdit from './EntryEdit.jsx';
 import EntryNew from './EntryNew.jsx'
 import AppContext from './AppContext.js'
+import * as Constants from './constants'
 
 const useStyles = makeStyles({
 
@@ -16,23 +17,25 @@ const useStyles = makeStyles({
     display: 'inline-block',
     verticalAlign: 'top'
   },
-  entryWrapper: {
+  entryContainer: {
     marginBottom: 16,
     whiteSpace: 'pre'
-    // "&:hover": {
-    //   color: "white"
-    // },
-    // "&:active": {
-    //   color: "white"
-    // },
   },
   entrySubject: {
-
   },
   entryBody: {
     fontSize: 14,
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap',
+  },
+  dragIndicatorContainer: {
+    display: 'inline-block',
+    fontWeight: 900,
+    textAlign: 'center',
+    width: `${Constants.dragIndicatorWidthTag}px`
+  },
+  dragIndicator: {
+    cursor: 'grab',
   }
 });
 
@@ -241,13 +244,17 @@ const Entry = React.memo(function (
     <>
       { ! isEditing && (
         <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}> 
-          <div ref={(preview)} className={classes.entryWrapper}>
+          <div ref={(preview)} className={classes.entryContainer}>
             <div
-              ref={(dragRef)} 
-              style={{...theme.custom.dragIndicator}} //
-              onMouseEnter={mouseEnter} 
+              className={classes.dragIndicatorContainer}
+              onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}>
-              <div style={{ visibility: showDragHandle ? "visible" : "hidden" }}>::</div>
+              <div
+                ref={(dragRef)}
+                className={classes.dragIndicator}
+                onMouseEnter={mouseEnter} 
+                onMouseLeave={mouseLeave}
+                style={{ visibility: showDragHandle ? "visible" : "hidden" }}>::</div>
             </div>
             {/* <div
               style={{ ...theme.custom.reuseCount }}

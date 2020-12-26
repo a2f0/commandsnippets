@@ -32,12 +32,14 @@ const useStyles = makeStyles({
     cursor: 'pointer',
     width: '100%'
   },
-  tagDragIndicator: {
+  tagDragIndicatorContainer: {
     display: 'inline-block',
     fontWeight: 900,
     textAlign: 'center',
-    cursor: 'grab',
     width: `${Constants.dragIndicatorWidthTag}px`
+  },
+  tagDragIndicator: {
+    cursor: 'grab',
   }
 });
 
@@ -211,11 +213,17 @@ const Tag = React.memo(function Tag(
       <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}> 
         <div ref={(preview)} className={classes.entryWrapper}>
           <div
-            ref={(dragRef)} 
-            className={classes.tagDragIndicator}
+            className={classes.tagDragIndicatorContainer}
             onMouseEnter={mouseEnter} 
-            onMouseLeave={mouseLeave}> 
-            <div style={{ visibility: showDragHandle ? "visible" : "hidden" }}>::</div>
+            onMouseLeave={mouseLeave}>
+            <div
+              ref={(dragRef)}
+              className={classes.tagDragIndicator}
+              onMouseEnter={mouseEnter}
+              onMouseLeave={mouseLeave}
+              style={{ visibility: showDragHandle ? "visible" : "hidden" }} >
+                ::
+            </div>
           </div>
           <div
             onMouseEnter={mouseEnter}
