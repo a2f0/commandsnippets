@@ -3,6 +3,7 @@ import API from './api.js'
 import AppContext from './AppContext.js'
 import { makeStyles } from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
+import { Github } from '@icons-pack/react-simple-icons';
 
 export const githubClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
@@ -19,6 +20,21 @@ const useStyles = makeStyles((theme) => ({
     marginRight: '10px',
     cursor: 'pointer'
   },
+  loginBox: {
+    width: '150px',
+    position: 'fixed',
+    top: '15px',
+    right: '8px',
+  },
+  loginBoxIcon: {
+    textAlign: 'center',
+    display: 'inline-block'
+  },
+  loginBoxText: {
+    marginLeft: '5px',
+    textAlign: 'center',
+    display: 'inline-block'
+  }
 }));
 
 const GithubAuth = React.memo(observer(function GithubAuth() {
@@ -59,6 +75,10 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
 
   }, [])
 
+  const handleGitHubClick = () => {
+    window.location.assign('https://github.com/login/oauth/authorize?scope=user:email&client_id=' + githubClientID());
+  }
+
   return (
     <>
       { appConfig.appStateStore.loggedInUser && (
@@ -66,8 +86,14 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
       )}
 
       { ! appConfig.appStateStore.loggedInUser && (
-        <div>
-          <a href={`https://github.com/login/oauth/authorize?scope=user:email&client_id=` + githubClientID() }>Github</a>
+        <div className={classes.loginBox}>
+
+          <div className={classes.loginBoxIcon}>
+            <Github color="#FFFFFF" size={18} />
+          </div>
+          <div className={classes.loginBoxText} onClick={handleGitHubClick}>
+            Login with GitHub
+          </div>
         </div>
       )}
     </>
