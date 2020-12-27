@@ -4,12 +4,16 @@ from rest_framework_json_api import serializers
 from rest_framework_json_api.filters import OrderingFilter
 from rest_framework_json_api.django_filters import DjangoFilterBackend
 
+from rest_framework.decorators import action
+
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
 from tearleads.tags.serializers import (
-    TagSerializer,
-    TagTextEntryThroughModelSerializer,
-    TagTextEntryThroughModelCreateSerializer,
     TagCreateSerializer,
+    TagSerializer,
+    TagReorderSerializer,
+    TagTextEntryThroughModelCreateSerializer,
+    TagTextEntryThroughModelSerializer,
+    TagTextEntryThroughModelReorderSerializer
 )
 
 
@@ -34,6 +38,17 @@ class TagViewSet(viewsets.ModelViewSet):
             data=TagSerializer(instance=instance).data, status=status.HTTP_201_CREATED
         )
 
+    @action(detail=False, methods=['post'])
+    def reorder(self, request, *args, **kwargs):
+        serializer = TagReorderSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(validated_data=serializer.data)
+        return response.Response(
+            status=status.HTTP_200_OK,
+        )
 
 class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
     queryset = TagTextEntryThroughModel.objects.all()
@@ -68,4 +83,16 @@ class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
         return response.Response(
             data=TagTextEntryThroughModelSerializer(instance=instance).data,
             status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=False, methods=['post'])
+    def reorder(self, request, *args, **kwargs):
+        serializer = TagTextEntryThroughModelReorderSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(validated_data=serializer.data)
+        return response.Response(
+            status=status.HTTP_200_OK,
         )

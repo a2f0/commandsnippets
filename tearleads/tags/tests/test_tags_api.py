@@ -168,3 +168,28 @@ class TestTagsApi(BaseTestCase):
             response.json()["included"][0]["attributes"]["username"],
             self.user1.username,
         )
+
+    def test_reorder_works(self):
+        tag1 = TagFactory(user=self.user1, order=1)
+        tag2 = TagFactory(user=self.user1, order=2)
+        payload = {
+            "data": {
+                "type": "Tag",
+                "attributes": {
+                    "top": tag2.id,
+                    "bottom": tag1.id
+                },
+                "relationships": { 
+                },
+            }
+        }
+
+        self.assertLess(tag1.order, tag2.order)
+        response = self.user1_api_client.post(
+            "/api/v1/tags/reorder", payload, format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        tag1.refresh_from_db()
+        tag2.refresh_from_db()        
+        self.assertLess(tag2.order, tag1.order)
