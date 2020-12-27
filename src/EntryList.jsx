@@ -61,6 +61,16 @@ const EntryList = React.memo(observer(function EntryList(props) {
       index: data.data.indexOf(entry),
     }
   }
+
+  const findEntryByIndex = (index) => {
+    console.info(data.data.length)
+    if (index > data.data.length - 1) {
+      return null;
+    } else {
+      return data.data[index];
+    }
+  }
+
   const [, drop] = useDrop({ accept: ItemTypes.ENTRY })
 
   const handleDelete = (id) => {
@@ -94,6 +104,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
             text_entry={text_entry}
             tag={tag}
             retrieveEntries={retrieveEntries}
+            findEntryByIndex={findEntryByIndex}
           />
         ) 
       })

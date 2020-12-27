@@ -48,7 +48,8 @@ const Entry = React.memo(function (
     handleDelete, 
     text_entry,  
     tag,
-    retrieveEntries 
+    retrieveEntries,
+    findEntryByIndex 
   }) {
 
   useEffect(() => {
@@ -98,12 +99,42 @@ const Entry = React.memo(function (
                 }
               }
             }
-            const response = API.post('tags_entries', payload,  {withCredentials: true});
+            const response = API.post('tags_entries', payload, {withCredentials: true});
           }
         } else {
           // Then it was reordered in the list.
           if (originalIndex != findEntry(id).index ) {
-            console.info("it moved from index " + originalIndex + " to " + findEntry(id).index)
+            const entry = findEntry(id).entry
+            const entry_below = findEntryByIndex(index+1)
+            if (entry_below == null) {
+              //Then it was moved to the bottom position, get the entry before it.
+              var ordered_top = findEntryByIndex(index-1)
+              var ordered_bottom = entry
+            } else {
+              var ordered_top = entry
+              var ordered_bottom = entry_below
+            }
+            const payload = {
+              "data": {
+                "type": "TagTextEntryThroughModel",
+                "attributes": {
+                  "top": ordered_top.id,
+                  "bottom": ordered_bottom.id
+                },
+                "relationships": {
+                }
+              }
+            }
+            API.post('/tags_entries/reorder', payload, {withCredentials: true})
+              .then(function (response) {
+              })
+              .catch(function (error) {
+                // handle error
+                console.log(error);
+              })
+              .then(function () {
+                // always executed
+              });
           } else {
             console.info("it wasn't moved.")
           }
