@@ -192,7 +192,7 @@ const Entry = React.memo(function (
   drop(dropRef)
 
   const mouseEnter = () => {
-    if (appConfig.appStateStore.loggedInUser != '') {
+    if (appConfig.appStateStore.loggedInUser != '' && appConfig.entrySortOrder == 'order') {
       setShowDragHandle(true)
     }
   }
