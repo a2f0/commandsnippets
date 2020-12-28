@@ -6,7 +6,6 @@ from ordered_model.models import OrderedModel
 from tearleads.text_entries.models import TextEntry
 
 
-
 class Tag(OrderedModel):
     name = models.CharField(max_length=24, unique=True, null=False)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -44,6 +43,7 @@ class TagTextEntryThroughModel(OrderedModel):
         ordering = ["date_updated", "id"]
         unique_together = ("tag", "text_entry")
 
+
 def update_counter_increment(sender, instance, created, **kwargs):
     if created:
         text_tag_entry_through_model = instance
@@ -77,5 +77,6 @@ def update_counter_decrement(sender, instance, **kwargs):
     else:
         tag.date_last_used = most_recent_tag_to_text_entry.date_created
     tag.save(update_fields=["entry_count", "date_last_used"])
+
 
 post_delete.connect(update_counter_decrement, sender=TagTextEntryThroughModel)

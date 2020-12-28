@@ -6,14 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tags', '0010_backfill_most_date_last_used'),
+        ("tags", "0010_backfill_most_date_last_used"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tag',
-            name='order',
-            field=models.PositiveIntegerField(db_index=True, default=0, editable=False, verbose_name='order'),
+            model_name="tag",
+            name="order",
+            field=models.PositiveIntegerField(
+                db_index=True, default=0, editable=False, verbose_name="order"
+            ),
             preserve_default=False,
         ),
     ]

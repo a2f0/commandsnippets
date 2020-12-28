@@ -191,12 +191,8 @@ class TestTagsApi(BaseTestCase):
         payload = {
             "data": {
                 "type": "Tag",
-                "attributes": {
-                    "top": tag2.id,
-                    "bottom": tag1.id
-                },
-                "relationships": { 
-                },
+                "attributes": {"top": tag2.id, "bottom": tag1.id},
+                "relationships": {},
             }
         }
 
@@ -207,5 +203,5 @@ class TestTagsApi(BaseTestCase):
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         tag1.refresh_from_db()
-        tag2.refresh_from_db()        
+        tag2.refresh_from_db()
         self.assertLess(tag2.order, tag1.order)

@@ -339,7 +339,6 @@ class TestTagsEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
 
-
     def test_reorder_requires_authentication(self):
         tag = TagFactory(user=self.user1)
         text_entry = TextEntryFactory(user=self.user1)
@@ -368,12 +367,8 @@ class TestTagsEntriesApi(BaseTestCase):
         payload = {
             "data": {
                 "type": "TagTextEntryThroughModel",
-                "attributes": {
-                    "top": tag_entry2.id,
-                    "bottom": tag_entry1.id
-                },
-                "relationships": { 
-                },
+                "attributes": {"top": tag_entry2.id, "bottom": tag_entry1.id},
+                "relationships": {},
             }
         }
 
@@ -384,5 +379,5 @@ class TestTagsEntriesApi(BaseTestCase):
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         tag_entry1.refresh_from_db()
-        tag_entry2.refresh_from_db()        
+        tag_entry2.refresh_from_db()
         self.assertLess(tag_entry2.order, tag_entry1.order)

@@ -13,7 +13,7 @@ from tearleads.tags.serializers import (
     TagReorderSerializer,
     TagTextEntryThroughModelCreateSerializer,
     TagTextEntryThroughModelSerializer,
-    TagTextEntryThroughModelReorderSerializer
+    TagTextEntryThroughModelReorderSerializer,
 )
 
 
@@ -21,13 +21,7 @@ class TagViewSet(viewsets.ModelViewSet):
     filter_backends = (OrderingFilter,)
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    ordering_fields = (
-        "date_last_used",
-        "date_created",
-        "entry_count",
-        "name",
-        "order"
-    )
+    ordering_fields = ("date_last_used", "date_created", "entry_count", "name", "order")
 
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
@@ -39,17 +33,18 @@ class TagViewSet(viewsets.ModelViewSet):
             data=TagSerializer(instance=instance).data, status=status.HTTP_201_CREATED
         )
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     def reorder(self, request, *args, **kwargs):
+        print("DOINT HIS")
         serializer = TagReorderSerializer(
-            data=request.data,
-            context={'request': request}
+            data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save(validated_data=serializer.data)
         return response.Response(
             status=status.HTTP_200_OK,
         )
+
 
 class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
     queryset = TagTextEntryThroughModel.objects.all()
@@ -86,11 +81,10 @@ class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     def reorder(self, request, *args, **kwargs):
         serializer = TagTextEntryThroughModelReorderSerializer(
-            data=request.data,
-            context={'request': request}
+            data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save(validated_data=serializer.data)
