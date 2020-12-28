@@ -26,6 +26,7 @@ class TagViewSet(viewsets.ModelViewSet):
         "date_created",
         "entry_count",
         "name",
+        "order"
     )
 
     permission_classes = (IsAuthenticatedOrReadOnly,)

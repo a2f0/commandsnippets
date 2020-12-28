@@ -121,6 +121,22 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag1.id))
 
+        # sort by user-defined order
+        response = self.user1_api_client.get("/api/v1/tags?sort=order")
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag2.id))
+
+        # reverse sort by user-defined order
+        response = self.user1_api_client.get("/api/v1/tags?sort=-order")
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag1.id))
+
     def test_pagination(self):
         tag1 = TagFactory(user=self.user1, name="a")
         tag2 = TagFactory(user=self.user1, name="z")
