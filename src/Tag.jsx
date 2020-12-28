@@ -51,7 +51,8 @@ const Tag = React.memo(function Tag(
     fetchTags,
     moveEntry,
     findEntry, 
-    index
+    index,
+    findEntryByIndex
   }) {
   
   const dragRef = useRef(null)
@@ -192,6 +193,38 @@ const Tag = React.memo(function Tag(
             // Then it was reordered in the list.
             if (originalIndex != findEntry(id).index ) {
               console.info("it moved from index " + originalIndex + " to " + findEntry(id).index)
+
+              const entry = findEntry(id).entry
+              const entry_below = findEntryByIndex(index+1)
+              if (entry_below == null) {
+                //Then it was moved to the bottom position, get the entry before it.
+                var ordered_top = findEntryByIndex(index-1)
+                var ordered_bottom = entry
+              } else {
+                var ordered_top = entry
+                var ordered_bottom = entry_below
+              }
+              const payload = {
+                "data": {
+                  "type": "Tag",
+                  "attributes": {
+                    "top": ordered_top.id,
+                    "bottom": ordered_bottom.id
+                  },
+                  "relationships": {
+                  }
+                }
+              }
+              API.post('/tags/reorder', payload, {withCredentials: true})
+                .then(function (response) {
+                })
+                .catch(function (error) {
+                  // handle error
+                })
+                .then(function () {
+                  // always executed
+                });
+
             } else {
               console.info("it wasn't moved.")
             }

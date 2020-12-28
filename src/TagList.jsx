@@ -95,6 +95,14 @@ const TagList = React.memo(observer(function TagList(props) {
     }
   }
 
+  const findEntryByIndex = (index) => {
+    if (index > data.data.length - 1) {
+      return null;
+    } else {
+      return data.data[index];
+    }
+  }
+
   return (
     <>
       { appConfig.tagSearch && (
@@ -111,7 +119,7 @@ const TagList = React.memo(observer(function TagList(props) {
             )[0];
             return (
               <div key={tag.id}>
-                <Tag id={tag.id} tag={tag} user={user} fetchTags={fetchTags} moveEntry={moveEntry} findEntry={findEntry} index={i} />
+                <Tag id={tag.id} tag={tag} user={user} fetchTags={fetchTags} moveEntry={moveEntry} findEntry={findEntry} index={i} findEntryByIndex={findEntryByIndex}/>
               </div>
             )
           })}

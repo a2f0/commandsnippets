@@ -63,7 +63,6 @@ const EntryList = React.memo(observer(function EntryList(props) {
   }
 
   const findEntryByIndex = (index) => {
-    console.info(data.data.length)
     if (index > data.data.length - 1) {
       return null;
     } else {
