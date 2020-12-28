@@ -35,7 +35,6 @@ class TagViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def reorder(self, request, *args, **kwargs):
-        print("DOINT HIS")
         serializer = TagReorderSerializer(
             data=request.data, context={"request": request}
         )

@@ -46,7 +46,7 @@ class TestTagsEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response["included"]), 3)
         # Tag
         self.assertEqual(json_response["included"][0]["type"], "Tag")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 4)
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 5)
         self.assertEqual(json_response["included"][0]["attributes"]["name"], tag.name)
         self.assertEqual(
             json_response["included"][0]["attributes"]["date_updated"],
