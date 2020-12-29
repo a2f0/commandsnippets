@@ -11,7 +11,6 @@ import AppContext from './AppContext.js'
 import Main from './Main.jsx'
 import Login from './Login.jsx'
 import AppStateStore from './AppStateStore.js'
-import { environment } from './api.js'
 
 const useStyles = makeStyles((theme) => ({
   root: {

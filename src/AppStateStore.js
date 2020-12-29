@@ -1,5 +1,6 @@
 import { types } from "mobx-state-tree"
-import { destroy, onSnapshot, applySnapshot } from "mobx-state-tree"
+import { destroy, onSnapshot, applySnapshot } from "mobx-state-tree";
+import { environment } from './api.js';
 
 const AppStateStoreModel = types.model({
   loggedInUser: types.string,
@@ -24,7 +25,7 @@ const defaultState = {
   tagSortOrder: 'order'
 }
 
-const localStorageKey = "mst-tearleads"
+const localStorageKey = "mst-tearleads-" + environment()
 
 const initialState = localStorage.getItem(localStorageKey)
   ? JSON.parse(localStorage.getItem(localStorageKey))
