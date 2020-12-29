@@ -59,7 +59,7 @@ const TagList = React.memo(observer(function TagList(props) {
     let page = 0;
 
     do {
-      let { data: response }  = await API.get('/tags', { params: { 'page[number]': ++page, sort: appConfig.tagSortOrder } });
+      let { data: response }  = await API.get('/tags', { params: { 'page[number]': ++page, sort: appConfig.appStateStore.tagSortOrder } });
       nextPage = response.links.next
       data = data.concat(response.data);
       included = data.concat(response.included);

@@ -2,7 +2,8 @@ import { types } from "mobx-state-tree"
 
 const AppStateStore = types.model({
   loggedInUser: types.string,
-  selectedTheme: types.string
+  selectedTheme: types.string,
+  tagSortOrder: types.string
 })
   .actions((self) => ({
     setLoggedInUser(handle) {
@@ -10,6 +11,9 @@ const AppStateStore = types.model({
     },
     setSelectedTheme(theme) {
       self.selectedTheme = theme
+    },
+    setTagSortOrder(order) {
+      self.tagSortOrder = order
     }
   }))
 export default AppStateStore

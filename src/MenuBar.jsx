@@ -175,7 +175,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
   };
 
   const handleSetTagSortOrder = (order) => {
-    appConfig.tagSortOrder = order
+    appConfig.appStateStore.setTagSortOrder(order)
   };
 
   const handleSetEntrySortOrder = (order) => {
@@ -281,7 +281,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("order"); handleTagsMenuClose();}} >
           <ListItemIcon>
             {
-              appConfig.tagSortOrder == "order" &&
+              appConfig.appStateStore.tagSortOrder == "order" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon> 
@@ -290,7 +290,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("name"); handleTagsMenuClose();}} >
           <ListItemIcon>
             {
-              appConfig.tagSortOrder == "name" &&
+              appConfig.appStateStore.tagSortOrder == "name" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon> 
@@ -299,7 +299,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-name"); handleTagsMenuClose();}} >
           <ListItemIcon>
             {
-              appConfig.tagSortOrder == "-name" &&
+              appConfig.appStateStore.tagSortOrder == "-name" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon> 
@@ -308,7 +308,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-date_created"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder == "-date_created" &&
+              appConfig.appStateStore.tagSortOrder == "-date_created" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>  
@@ -317,7 +317,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("date_created"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder== "date_created" &&
+              appConfig.appStateStore.tagSortOrder == "date_created" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>
@@ -326,7 +326,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-entry_count"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder == "-entry_count" &&
+              appConfig.appStateStore.tagSortOrder == "-entry_count" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>  
@@ -335,7 +335,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("entry_count"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder== "entry_count" &&
+              appConfig.appStateStore.tagSortOrder == "entry_count" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>
@@ -344,7 +344,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("-date_last_used"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder == "-date_last_used" &&
+              appConfig.appStateStore.tagSortOrder == "-date_last_used" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>  
@@ -353,7 +353,7 @@ const MenuBar = React.memo(observer(function MenuBar(props) {
         <MenuItem className={classes.menuItem} onClick={() => { handleSetTagSortOrder("date_last_used"); handleTagsMenuClose();}}>
           <ListItemIcon>
             {
-              appConfig.tagSortOrder== "date_last_used" &&
+              appConfig.appStateStore.tagSortOrder == "date_last_used" &&
               <CheckIcon fontSize="small" />
             }
           </ListItemIcon>

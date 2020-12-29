@@ -137,7 +137,7 @@ const Tag = React.memo(function Tag(
   }
 
   const mouseEnter = () => {
-    if (appConfig.appStateStore.loggedInUser != '' && appConfig.tagSortOrder == 'order' ) {
+    if (appConfig.appStateStore.loggedInUser != '' && appConfig.appStateStore.tagSortOrder == 'order' ) {
       setShowDragHandle(true)
     }
   }

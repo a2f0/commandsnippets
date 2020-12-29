@@ -11,15 +11,19 @@ import AppContext from './AppContext.js'
 import Main from './Main.jsx'
 import Login from './Login.jsx'
 import AppStateStore from './models/AppStateStore.js'
-import { destroy, onSnapshot } from "mobx-state-tree"
+import { destroy, onSnapshot, applySnapshot } from "mobx-state-tree"
 
 const localStorageKey = "mst-tearleads"
+
+const defaultState = {
+  loggedInUser: '',
+  selectedTheme: 'darkTheme',
+  tagSortOrder: 'order'
+}
+
 const initialState = localStorage.getItem(localStorageKey)
   ? JSON.parse(localStorage.getItem(localStorageKey))
-  : {
-    loggedInUser: '',
-    selectedTheme: 'darkTheme'
-  }
+  : defaultState
 
 let snapshotListener
 
@@ -30,7 +34,13 @@ function createAppStateStore(snapshot) {
   if (store) destroy(store)
 
   // create new one
-  store = AppStateStore.create(snapshot)
+  store = AppStateStore.create(defaultState)
+  const snapshotMergedIntoDefaults = {
+    ...defaultState,
+    ...snapshot
+
+  }
+  applySnapshot(store, snapshotMergedIntoDefaults)
 
   // connect local storage
   snapshotListener = onSnapshot(store, (snapshot) =>
