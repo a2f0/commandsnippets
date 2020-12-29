@@ -1,9 +1,20 @@
 import axios from "axios";
 
-export const baseHTTPURL = () => {
+
+export const environment = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
-    return 'https://api-staging.tearleads.com';
+    return 'staging';
   } else if (window.location.hostname === 'tearleads.com') {
+    return 'production';
+  } else {
+    return "local";
+  }  
+}
+
+export const baseHTTPURL = () => {
+  if (environment() === 'staging') {
+    return 'https://api-staging.tearleads.com';
+  } else if (environment() === 'production') {
     return 'https://api.tearleads.com';
   } else {
     return "http://localhost:9001";
