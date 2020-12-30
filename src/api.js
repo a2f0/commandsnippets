@@ -8,7 +8,7 @@ export const environment = () => {
     return 'production';
   } else {
     return "local";
-  }  
+  }
 }
 
 export const baseHTTPURL = () => {
@@ -18,7 +18,7 @@ export const baseHTTPURL = () => {
     return 'https://api.tearleads.com';
   } else {
     return "http://localhost:9001";
-  }  
+  }
 }
 
 const baseAPIURL = () => {

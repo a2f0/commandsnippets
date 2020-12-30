@@ -63,7 +63,7 @@ const TagList = React.memo(observer(function TagList(props) {
       nextPage = response.links.next
       data = data.concat(response.data);
       included = data.concat(response.included);
-    } while (nextPage != null) 
+    } while (nextPage != null)
     setData({ data: data, included: included});
   }
 
@@ -82,11 +82,11 @@ const TagList = React.memo(observer(function TagList(props) {
         [index, 1],
         [atIndex, 0, entry],
       ],
-    }) 
+    })
     let newData = {...data, data: reordered }
     setData(newData)
   }
-  
+
   const findEntry = (id) => {
     const entry = data.data.filter((c) => `${c.id}` === id)[0]
     return {

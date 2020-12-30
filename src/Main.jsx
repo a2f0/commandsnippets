@@ -32,9 +32,9 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex', // Make this a flex container to allow the greedyExpander to gobble up space.
     flexDirection: 'column' // Make this a flex container to allow the greedyExpander to gobble up space.
   },
-  main: {	
+  main: {
     flexGrow: 1,
-    marginTop: appBarHeight,	
+    marginTop: appBarHeight,
     height: `calc(100vh - ${Constants.appBarHeight}px)`,
     overflow: "auto"
   },
@@ -99,7 +99,7 @@ const Main = React.memo(observer(function Main(props) {
   const showNewEntry = () => {
     console.log("showNewEntry")
   };
-  
+
   return (
     <>
       <AppBar position="fixed" className={classes.appBar}>

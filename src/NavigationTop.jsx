@@ -31,7 +31,7 @@ class NavigationTop extends React.Component {
         </div>
       </div>
     )
-  }  
+  }
 }
 
 export default NavigationTop;

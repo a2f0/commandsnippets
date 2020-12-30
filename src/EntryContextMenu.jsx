@@ -12,7 +12,7 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
   };
 
   const [mouse, setMouse] = useState(initialMouse);
-  
+
   useEffect(() => {
     setMouse(props.mouse)
   }, [props.mouse]);
@@ -45,7 +45,7 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
         'relationships': {
           'text_entry': {
             'data': {
-              'type': 'TextEntry', 
+              'type': 'TextEntry',
               'id': props.text_entry.id
             }
           },
@@ -81,7 +81,7 @@ const EntryContextMenu = React.memo(function EntryContextMenu(props) {
       <MenuItem onClick={() => { handleNewEntry();}}>New Entry</MenuItem>
       <MenuItem onClick={() => { handleIncrementTimesUsed(props.id);}}>Increment Times Used</MenuItem>
       <MenuItem onClick={() => { handleUntag(props.id);}}>Untag</MenuItem>
-    </Menu>    
+    </Menu>
   )
 })
 export default EntryContextMenu

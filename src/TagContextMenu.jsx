@@ -9,7 +9,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 const TagContextMenu = React.memo(function TagContextMenu(props) {
-  
+
   const initialMouse = {
     mouseX: null,
     mouseY: null,

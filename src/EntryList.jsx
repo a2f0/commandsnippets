@@ -35,7 +35,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
       }
       if (tag != undefined ) {
         url_query_query_string += '&filter[tag.name]=' + tag
-      } 
+      }
       const response = await API.get(
         url_query_query_string
       );
@@ -50,7 +50,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
         [index, 1],
         [atIndex, 0, entry],
       ],
-    }) 
+    })
     let newData = {...data, data: reordered }
     setData(newData)
   }
@@ -77,7 +77,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
     let newData = {...data, data: new_data }
     setData(newData)
   };
-  
+
 
   return (
 
@@ -105,7 +105,7 @@ const EntryList = React.memo(observer(function EntryList(props) {
             retrieveEntries={retrieveEntries}
             findEntryByIndex={findEntryByIndex}
           />
-        ) 
+        )
       })
       }
     </div>

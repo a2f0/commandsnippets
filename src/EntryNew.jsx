@@ -79,8 +79,8 @@ const EntryNew = React.memo(function (props) {
             'relationships': {
               'tag': {
                 'data': {
-                  'type': 'Tag', 
-                  'id': props.tag.id 
+                  'type': 'Tag',
+                  'id': props.tag.id
                 }
               },
               'text_entry': {
@@ -127,17 +127,17 @@ const EntryNew = React.memo(function (props) {
   const handleSubjectChange = (subject) => {
     setSubject(subject);
   }
-  
+
   return (
     <>
       <div className={props.classes.entryWrapper}>
         <div style={{...theme.custom.dragIndicator}}></div>
         <div className={classes.entry}>
           <div>
-            <div className={classes.entrySubject} 
+            <div className={classes.entrySubject}
               contentEditable={true}
               suppressContentEditableWarning={true}
-              onBlur={(e) => { handleSubjectChange(e.currentTarget.textContent);}}> 
+              onBlur={(e) => { handleSubjectChange(e.currentTarget.textContent);}}>
               {subject}
             </div>
           </div>
@@ -146,7 +146,7 @@ const EntryNew = React.memo(function (props) {
               className={classes.entryBody}
               contentEditable={true}
               suppressContentEditableWarning={true}
-              onBlur={(e) => { handleBodyChange(e.currentTarget.textContent);}}> 
+              onBlur={(e) => { handleBodyChange(e.currentTarget.textContent);}}>
               {body}
             </div>
           </div>

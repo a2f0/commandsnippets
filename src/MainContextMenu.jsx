@@ -3,7 +3,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
 const MainContextMenu = React.memo(function MainContextMenu(props) {
-  
+
 
   const initialMouse = {
     mouseX: null,
@@ -11,7 +11,7 @@ const MainContextMenu = React.memo(function MainContextMenu(props) {
   };
 
   const [mouse, setMouse] = useState(initialMouse);
-  
+
   useEffect(() => {
     setMouse(props.mouse)
   }, [props.mouse]);
@@ -38,7 +38,7 @@ const MainContextMenu = React.memo(function MainContextMenu(props) {
       }
     >
       <MenuItem onClick={() => { handleShowNewEntry();}}>New Entry</MenuItem>
-    </Menu>    
+    </Menu>
   )
 })
 export default MainContextMenu

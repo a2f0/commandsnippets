@@ -56,7 +56,7 @@ const UntaggedEntryList = React.memo(observer(function EntryList(props) {
             entry={entry}
             retrieveEntries={retrieveEntries}
           />
-        ) 
+        )
       })
       }
     </div>

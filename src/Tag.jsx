@@ -8,7 +8,7 @@ import { useHistory } from "react-router-dom";
 import API from './api.js'
 import { makeStyles } from '@material-ui/core/styles';
 import * as Constants from './constants'
- 
+
 const style = {
   marginRight: 0,
   marginBottom: 0,
@@ -50,11 +50,11 @@ const Tag = React.memo(function Tag(
     user,
     fetchTags,
     moveEntry,
-    findEntry, 
+    findEntry,
     index,
     findEntryByIndex
   }) {
-  
+
   const dragRef = useRef(null)
   const dropRef = useRef(null)
   const classes = useStyles();
@@ -68,9 +68,9 @@ const Tag = React.memo(function Tag(
     canDrop: () => {
       return true;
     },
-    drop: () => ({ 
-      name: name, 
-      id: id, 
+    drop: () => ({
+      name: name,
+      id: id,
       type: 'Tag' }),
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -237,17 +237,17 @@ const Tag = React.memo(function Tag(
   drag(dragRef)
   drop(dropRef)
 
-  const contextMenu = useMemo(() => 
+  const contextMenu = useMemo(() =>
     <TagContextMenu mouse={mouse} deleteTag={deleteTag}/>, [mouse]);
 
-    
+
   return (
     <>
-      <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}> 
+      <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}>
         <div ref={(preview)} className={classes.entryWrapper}>
           <div
             className={classes.tagDragIndicatorContainer}
-            onMouseEnter={mouseEnter} 
+            onMouseEnter={mouseEnter}
             onMouseLeave={mouseLeave}>
             <div
               ref={(dragRef)}

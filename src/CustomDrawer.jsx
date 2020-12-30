@@ -3,9 +3,9 @@ import Drawer from '@material-ui/core/Drawer';
 import { makeStyles } from '@material-ui/core/styles';
 import * as Constants from './constants'
 
-const useStyles = makeStyles((theme) => ({	
-  button: {	
-    textTransform: 'none'	
+const useStyles = makeStyles((theme) => ({
+  button: {
+    textTransform: 'none'
   },
   root: {
     display: 'flex',
@@ -25,15 +25,15 @@ const useStyles = makeStyles((theme) => ({
   drawerContainer: {
     overflow: 'auto',
   },
-  toolBar: {	
-    minHeight: 0,	
-    padding: 0,	
-  },	
-  title: {	
-    flexGrow: 1,	
+  toolBar: {
+    minHeight: 0,
+    padding: 0,
   },
-  list: {	
-    padding: 0	
+  title: {
+    flexGrow: 1,
+  },
+  list: {
+    padding: 0
   },
 }));
 

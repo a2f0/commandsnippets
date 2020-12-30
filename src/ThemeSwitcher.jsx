@@ -20,7 +20,7 @@ const ThemeSwitcher = React.memo(function ThemeSwitcher(props) {
         ? <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} onClick={() => { props.handleThemeSwitcher(lightTheme);}}/>
         : <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} onClick={() => { props.handleThemeSwitcher(darkTheme);}}/>
       }
-    </>    
+    </>
   )
 })
 export default ThemeSwitcher
