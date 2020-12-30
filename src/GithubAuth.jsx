@@ -4,6 +4,7 @@ import AppContext from './AppContext.js'
 import { makeStyles } from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import { Github } from '@icons-pack/react-simple-icons';
+import { useTheme } from '@material-ui/styles';
 
 export const githubClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
@@ -25,6 +26,7 @@ const useStyles = makeStyles((theme) => ({
     position: 'fixed',
     top: '15px',
     right: '8px',
+    cursor: 'pointer'
   },
   loginBoxIcon: {
     textAlign: 'center',
@@ -38,7 +40,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const GithubAuth = React.memo(observer(function GithubAuth() {
-
+  const theme = useTheme();
   const appConfig = useContext(AppContext)
   const classes = useStyles()
 
@@ -86,12 +88,17 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
       )}
 
       { ! appConfig.appStateStore.loggedInUser && (
-        <div className={classes.loginBox}>
+        <div 
+          className={classes.loginBox}
+          style={{color: theme.palette.text.primary}}
+          onClick={handleGitHubClick}>
 
           <div className={classes.loginBoxIcon}>
-            <Github color="#FFFFFF" size={18} />
+            <Github
+              style={{color: theme.palette.text.primary}} 
+              size={18} />
           </div>
-          <div className={classes.loginBoxText} onClick={handleGitHubClick}>
+          <div className={classes.loginBoxText}>
             Login with GitHub
           </div>
         </div>
