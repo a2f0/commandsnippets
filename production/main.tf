@@ -12,11 +12,22 @@ data "terraform_remote_state" "container-registry" {
   }
 }
 
+data "cloudflare_zones" "zone" {
+  filter {
+    name = "tearleads.com"
+  }
+}
+
 provider "aws" {
   access_key = ""
   secret_key = ""
   region     = "us-east-1"
   version    = "~> 2.0"
+}
+provider "cloudflare" {
+  version = "~> 2.0"
+  email   = var.cloudflare_email
+  api_key = var.cloudflare_api_key
 }
 
 resource "aws_vpc" "vpc" {
@@ -129,26 +140,30 @@ resource "aws_route53_record" "route53-record" {
   records = [ aws_instance.ec2.public_ip ]
 }
 
-resource "aws_route53_record" "api" {
-  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
-  name    = "${var.production_api}.${data.aws_route53_zone.tearleads-zone.name}"
+resource "cloudflare_record" "api" {
+  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  name    = "api"
+  value   = aws_instance.ec2.public_ip
   type    = "A"
-  ttl     = "30"
-  records = [ aws_instance.ec2.public_ip ]
+  ttl     = 1
+  proxied = true
 }
 
-resource "aws_route53_record" "web" {
-  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
-  name    = "${var.production_web}.${data.aws_route53_zone.tearleads-zone.name}"
+
+resource "cloudflare_record" "web" {
+  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  name    = "web"
+  value   = aws_instance.ec2.public_ip
   type    = "A"
-  ttl     = "30"
-  records = [ aws_instance.ec2.public_ip ]
+  ttl     = 1
+  proxied = true
 }
 
-resource "aws_route53_record" "tearleads" {
-  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
+resource "cloudflare_record" "tearleads" {
+  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
   name    = "tearleads.com"
+  value   = aws_instance.ec2.public_ip
   type    = "A"
-  ttl     = "30"
-  records = [ aws_instance.ec2.public_ip ]
+  ttl     = 1
+  proxied = true
 }
