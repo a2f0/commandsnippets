@@ -4,7 +4,7 @@ terraform {
 
 //For pulling in the IAM profile
 data "terraform_remote_state" "container-registry" {
-  backend = "s3" 
+  backend = "s3"
   config = {
     bucket = var.remote_state_bucket
     key = "container-registry/terraform.tfstate"
@@ -16,7 +16,7 @@ provider "aws" {
   access_key = ""
   secret_key = ""
   region     = "us-east-1"
-  version    = "~> 2.0" 
+  version    = "~> 2.0"
 }
 
 resource "aws_vpc" "vpc" {

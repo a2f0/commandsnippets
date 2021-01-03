@@ -33,7 +33,7 @@ resource "aws_route53_record" "tearleads-mx" {
               "5 ALT1.ASPMX.L.GOOGLE.COM.",
               "5 ALT2.ASPMX.L.GOOGLE.COM.",
               "10 ASPMX2.GOOGLEMAIL.COM.",
-              "10 ASPMX3.GOOGLEMAIL.COM." ]       
+              "10 ASPMX3.GOOGLEMAIL.COM." ]
 }
 
 # resource "aws_route53_record" "tearleads-github" {

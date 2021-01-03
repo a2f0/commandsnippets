@@ -7,7 +7,7 @@
     mode: '0400'
 
 - name: Clone backend repository
-  git: 
+  git:
     repo=github-backend.com:tearleads/tearleads-backend.git
     dest="/home/{{ ansible_user }}/tearleads-backend"
     accept_hostkey=yes
@@ -15,7 +15,7 @@
     recursive=no
 
 - name: Clone frontend repository
-  git: 
+  git:
     repo=github-frontend.com:tearleads/tearleads-frontend.git
     dest="/home/{{ ansible_user }}/tearleads-frontend"
     accept_hostkey=yes

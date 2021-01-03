@@ -4,7 +4,7 @@
   tasks:
     - include: tasks/install-packages-ubuntu-20.yaml
     - include: tasks/configure-users.yaml
-    
+
 - hosts: staging
   tasks:
     - include: tasks/copy-deploy-keys.yaml
@@ -19,10 +19,9 @@
     - include: tasks/install-packages-ubuntu-20.yaml
     - include: tasks/configure-users.yaml
     - include: tasks/authorized_keys.yaml
-      
+
 - hosts: production
   tasks:
     - include: tasks/copy-deploy-keys.yaml
     - include: tasks/clone-repos.yaml
     - include: tasks/schedule-api-backup.yaml
-  
