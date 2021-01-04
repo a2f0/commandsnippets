@@ -137,8 +137,8 @@ resource "cloudflare_record" "host" {
   name    = "${var.hostname}.${data.aws_route53_zone.tearleads-zone.name}"
   value   = aws_instance.ec2.public_ip
   type    = "A"
-  ttl     = 1
-  proxied = true
+  ttl     = 120
+  proxied = false
 }
 
 resource "cloudflare_record" "api" {
