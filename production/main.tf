@@ -132,12 +132,13 @@ data "aws_route53_zone" "tearleads-zone" {
   private_zone = false
 }
 
-resource "aws_route53_record" "route53-record" {
-  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
+resource "cloudflare_record" "host" {
+  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
   name    = "${var.hostname}.${data.aws_route53_zone.tearleads-zone.name}"
+  value   = aws_instance.ec2.public_ip
   type    = "A"
-  ttl     = "30"
-  records = [ aws_instance.ec2.public_ip ]
+  ttl     = 1
+  proxied = true
 }
 
 resource "cloudflare_record" "api" {
@@ -148,7 +149,6 @@ resource "cloudflare_record" "api" {
   ttl     = 1
   proxied = true
 }
-
 
 resource "cloudflare_record" "web" {
   zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
