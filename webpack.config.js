@@ -26,11 +26,11 @@ module.exports = {
           fix: true,
         },
       },
-      { 
+      {
         test: /\.less$/,
-        use: [ 
+        use: [
           'style-loader',
-          'css-loader', 
+          'css-loader',
           'less-loader',
         ],
       },

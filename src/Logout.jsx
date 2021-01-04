@@ -3,7 +3,7 @@ import {observer} from 'mobx-react';
 import constructApiUrl from './api.mjs';
 
 @observer
-class Logout extends React.Component { 
+class Logout extends React.Component {
 
   constructor(props) {
     super(props);
@@ -25,7 +25,7 @@ class Logout extends React.Component {
     }).then((data) => {
       user.userName = '';
     }).catch(err => console.error("Error:", err));
-    
+
   }
 
   render() {

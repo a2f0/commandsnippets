@@ -1,6 +1,6 @@
 import React from "react";
 import constructApiUrl from './api.mjs';
-class NewEntry extends React.Component { 
+class NewEntry extends React.Component {
 
   constructor(props) {
     super(props);

@@ -62,7 +62,7 @@ const TagNew = React.memo(function (props) {
           className={classes.tagName}
           contentEditable={true}
           suppressContentEditableWarning={true}
-          onBlur={(e) => { handleTagNameChange(e.currentTarget.textContent);}}> 
+          onBlur={(e) => { handleTagNameChange(e.currentTarget.textContent);}}>
           {tagName}
         </div>
       </div>

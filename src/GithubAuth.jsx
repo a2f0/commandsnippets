@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, createContext } from 'react'
-import API from './api.js' 
+import API from './api.js'
 import AppContext from './AppContext.js'
 import { makeStyles } from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
@@ -62,7 +62,7 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
       API.post('/github-login/', payload, {withCredentials: true})
         .then(function (response) {
           API.get('/user/', {withCredentials: true})
-            .then(function (response) {            
+            .then(function (response) {
               const username = response.data.data.attributes.username
               appConfig.appStateStore.setLoggedInUser(username)
               document.cookie = "loggedInUser=" + username;
@@ -88,14 +88,14 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
       )}
 
       { ! appConfig.appStateStore.loggedInUser && (
-        <div 
+        <div
           className={classes.loginBox}
           style={{color: theme.palette.text.primary}}
           onClick={handleGitHubClick}>
 
           <div className={classes.loginBoxIcon}>
             <Github
-              style={{color: theme.palette.text.primary}} 
+              style={{color: theme.palette.text.primary}}
               size={18} />
           </div>
           <div className={classes.loginBoxText}>

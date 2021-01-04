@@ -76,8 +76,8 @@ const UntaggedEntry = React.memo(observer(function EntryList(props) {
                 'relationships': {
                   'tag': {
                     'data': {
-                      'type': 'Tag', 
-                      'id': dropResult.id 
+                      'type': 'Tag',
+                      'id': dropResult.id
                     }
                   },
                   'text_entry': {
@@ -141,21 +141,21 @@ const UntaggedEntry = React.memo(observer(function EntryList(props) {
       });
   };
 
-  const contextMenu = useMemo(() => 
-    <UntaggedEntryContextMenu 
-      mouse={mouse} 
+  const contextMenu = useMemo(() =>
+    <UntaggedEntryContextMenu
+      mouse={mouse}
       handleDelete={handleDelete}/>, [mouse]);
 
   return (
     <>
-      <div 
+      <div
         className={classes.entryWrapper}
         onContextMenu={handleContextClick}
-        ref={drag} 
+        ref={drag}
         style={{ opacity }}>
         <div
           style={{...theme.custom.dragIndicator}}
-          onMouseEnter={mouseEnter} 
+          onMouseEnter={mouseEnter}
           onMouseLeave={mouseLeave}>
           <DragIndicatorIcon
             style={{ visibility: showDragHandle ? "visible" : "hidden" }}
@@ -176,9 +176,9 @@ const UntaggedEntry = React.memo(observer(function EntryList(props) {
         { contextMenu }
       </>
     </>
-    
 
-    
+
+
   )
 }))
 export default UntaggedEntry

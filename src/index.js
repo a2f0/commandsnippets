@@ -71,12 +71,12 @@ function AppRouter() {
                   <Main handleThemeSwitcher={handleThemeSwitcher}/>
                 </Route>
               </Switch>
-            </div>    
+            </div>
           </DndProvider>
         </MuiThemeProvider>
       </AppContext.Provider>
     </Router>
-    
+
   );
 }
 ReactDOM.render(<AppRouter />, document.getElementById("©"));

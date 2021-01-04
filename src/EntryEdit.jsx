@@ -17,14 +17,14 @@ const useStyles = makeStyles({
     border: '1px solid red',
     width: '100%'
   },
-  
+
   entryBody: {
     display: 'inline-block',
     fontSize: 14,
     margin: 'auto',
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap', /* css-3 */
-    whiteSpace: '-moz-pre-wrap', 
+    whiteSpace: '-moz-pre-wrap',
     whiteSpace: '-pre-wrap',
     whiteSpace: '-o-pre-wrap',
     wordWrap: 'break-word',
@@ -68,7 +68,7 @@ const EntryEdit = React.memo(function (props) {
   const handleSubjectChange = (event) => {
     setSubject(event.target.value);
   }
-  
+
   return (
     <>
       <div className={props.classes.entryWrapper}>
@@ -84,7 +84,7 @@ const EntryEdit = React.memo(function (props) {
           <div>
             <TextareaAutosize
               className={classes.textArea}
-             
+
 
               placeholder="body"
               value={body}

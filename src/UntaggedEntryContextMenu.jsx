@@ -12,7 +12,7 @@ const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(props) {
   };
 
   const [mouse, setMouse] = useState(initialMouse);
-  
+
   useEffect(() => {
     setMouse(props.mouse)
   }, [props.mouse]);
@@ -39,7 +39,7 @@ const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(props) {
       }
     >
       <MenuItem onClick={() => { handleDelete();}}>Delete</MenuItem>
-    </Menu>    
+    </Menu>
   )
 })
 export default UntaggedEntryContextMenu

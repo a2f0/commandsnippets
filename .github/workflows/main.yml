@@ -11,7 +11,7 @@ jobs:
   push-containers:
     runs-on: ubuntu-latest
     continue-on-error: false
-    
+
     steps:
 
       - uses: actions/checkout@v2
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     needs: deploy-code
-    
+
     steps:
       - uses: 8398a7/action-slack@v3
         if: always()

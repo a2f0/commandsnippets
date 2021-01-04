@@ -40,16 +40,16 @@ const useStyles = makeStyles({
 });
 
 const Entry = React.memo(function (
-  { 
-    id, 
-    index, 
-    moveEntry, 
-    findEntry, 
-    handleDelete, 
-    text_entry,  
+  {
+    id,
+    index,
+    moveEntry,
+    findEntry,
+    handleDelete,
+    text_entry,
     tag,
     retrieveEntries,
-    findEntryByIndex 
+    findEntryByIndex
   }) {
 
   useEffect(() => {
@@ -86,8 +86,8 @@ const Entry = React.memo(function (
                 'relationships': {
                   'tag': {
                     'data': {
-                      'type': 'Tag', 
-                      'id': drop_result.id 
+                      'type': 'Tag',
+                      'id': drop_result.id
                     }
                   },
                   'text_entry': {
@@ -262,19 +262,19 @@ const Entry = React.memo(function (
     setShowNew(false);
   };
 
-  const contextMenu = useMemo(() => 
-    <EntryContextMenu 
-      mouse={mouse} 
+  const contextMenu = useMemo(() =>
+    <EntryContextMenu
+      mouse={mouse}
       id={id}
       text_entry={text_entry}
       handleDelete={handleDelete}
       handleNewEntry={handleNewEntry}
       handleBeginEdit={handleBeginEdit}/>, [mouse]);
-  
+
   return (
     <>
       { ! isEditing && (
-        <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}> 
+        <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}>
           <div ref={(preview)} className={classes.entryContainer}>
             <div
               className={classes.dragIndicatorContainer}
@@ -283,13 +283,13 @@ const Entry = React.memo(function (
               <div
                 ref={(dragRef)}
                 className={classes.dragIndicator}
-                onMouseEnter={mouseEnter} 
+                onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
                 style={{ visibility: showDragHandle ? "visible" : "hidden" }}>::</div>
             </div>
             {/* <div
               style={{ ...theme.custom.reuseCount }}
-              onMouseEnter={mouseEnter} 
+              onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}>
               {text_entry.attributes.reused_count}
             </div> */}
@@ -309,7 +309,7 @@ const Entry = React.memo(function (
 
       { showNew && (
         <EntryNew
-          tag={tag} 
+          tag={tag}
           classes={classes}
           retrieveEntries={retrieveEntries}
           handleCancelNewEntry={handleCancelNewEntry}/>
@@ -320,11 +320,11 @@ const Entry = React.memo(function (
           {contextMenu}
         </>
       )}
-      
+
       { isEditing && (
-        <EntryEdit 
-          classes={classes} 
-          subject={text_entry.attributes.subject} 
+        <EntryEdit
+          classes={classes}
+          subject={text_entry.attributes.subject}
           body={text_entry.attributes.body}
           handleSave={handleSave}
           handleCancelEdit={handleCancelEdit}/>
