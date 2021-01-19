@@ -1,6 +1,6 @@
 # Stage 1 - Application build
 
-FROM node:12.18.3 as build
+FROM node:14.15.4 as build
 
 # Make a directory for the application
 RUN mkdir /usr/src/app
