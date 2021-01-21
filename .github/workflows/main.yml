@@ -18,8 +18,21 @@ jobs:
         with:
           node-version: '14'
           check-latest: true
-      - name: 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+          architecture: 'x64'
+      - name:
         run: npm install
+      - name:
+        run: npm audit
+      - name:
+        run: eslint -f tap .
+      - name: pre-commit
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -99,7 +112,7 @@ jobs:
           DEPLOY_FQDN: ${{ secrets.DEPLOY_STAGING_FQDN }}
         run: |
           ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
-      
+
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
