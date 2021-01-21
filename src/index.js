@@ -9,8 +9,9 @@ import { lightTheme, darkTheme } from './themes.js'
 import { observable } from "mobx"
 import AppContext from './AppContext.js'
 import Main from './Main.jsx'
-import Login from './Login.jsx'
 import AppStateStore from './AppStateStore.js'
+import {observer} from 'mobx-react';
+import GithubAuth from './GithubAuth.jsx'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -27,7 +28,8 @@ const appConfig = observable({
   appStateStore: AppStateStore
 })
 
-function AppRouter() {
+
+const AppRouter = React.memo(observer(function AppRouter(props) {
   const classes = useStyles();
 
   if (appConfig.appStateStore.selectedTheme=='lightTheme') {
@@ -54,23 +56,25 @@ function AppRouter() {
           <CssBaseline />
           <DndProvider backend={Backend}>
             <div className={classes.root}>
-              <Switch>
-                <Route path="/login">
-                  <Login/>
-                </Route>
-                <Route path="/:user/untagged-entries">
-                  <Main handleThemeSwitcher={handleThemeSwitcher}/>
-                </Route>
-                <Route path="/:user/:tag">
-                  <Main handleThemeSwitcher={handleThemeSwitcher}/>
-                </Route>
-                <Route path="/:user">
-                  <Main handleThemeSwitcher={handleThemeSwitcher}/>
-                </Route>
-                <Route exact path="/">
-                  <Main handleThemeSwitcher={handleThemeSwitcher}/>
-                </Route>
-              </Switch>
+              { appConfig.appStateStore.loggedInUser && (
+                <Switch>
+                  <Route path="/:user/untagged-entries">
+                    <Main handleThemeSwitcher={handleThemeSwitcher}/>
+                  </Route>
+                  <Route path="/:user/:tag">
+                    <Main handleThemeSwitcher={handleThemeSwitcher}/>
+                  </Route>
+                  <Route path="/:user">
+                    <Main handleThemeSwitcher={handleThemeSwitcher}/>
+                  </Route>
+                  <Route exact path="/">
+                    <Main handleThemeSwitcher={handleThemeSwitcher}/>
+                  </Route>
+                </Switch>
+              )}
+              { ! appConfig.appStateStore.loggedInUser && (
+                <GithubAuth/>
+              )}
             </div>
           </DndProvider>
         </MuiThemeProvider>
@@ -78,5 +82,5 @@ function AppRouter() {
     </Router>
 
   );
-}
+}))
 ReactDOM.render(<AppRouter />, document.getElementById("©"));
