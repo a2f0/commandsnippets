@@ -13,9 +13,13 @@ jobs:
     continue-on-error: false
 
     steps:
-
       - uses: actions/checkout@v2
-
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          check-latest: true
+      - name: 
+        run: npm install
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
