@@ -3,16 +3,16 @@ import API from './api.js'
 import AppContext from './AppContext.js'
 import { makeStyles } from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
-import { Github } from '@icons-pack/react-simple-icons';
+import { Google } from '@icons-pack/react-simple-icons';
 import { useTheme } from '@material-ui/styles';
 
-export const githubClientID = () => {
+export const googleClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
-    return '3be8b14684de28d54a0d';
+    return '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
   } else if (window.location.hostname === 'tearleads.com') {
-    return 'a3cf7c1dfabc3df68b06';
+    return '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
   } else {
-    return "a94dc4b2bb6ed4fc63a0";
+    return '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
   }
 }
 
@@ -36,29 +36,28 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const GithubAuth = React.memo(observer(function GithubAuth() {
+const GoogleAuth = React.memo(observer(function GoogleAuth() {
   const theme = useTheme();
   const appConfig = useContext(AppContext)
   const classes = useStyles()
 
   useEffect(() => {
     const queryString = window.location.search;
-    // The callback adds oath/github to the current location.
-    const is_github_oauth =   window.location.href.includes("oauth/github");
     const urlParams = new URLSearchParams(queryString);
     const code = urlParams.get('code')
-    if (code !='' && is_github_oauth === true) {
+    const scope = urlParams.get('scope')
+    if (code !='' && scope == 'email https://www.googleapis.com/auth/userinfo.email openid') {
       var newURL = window.location.protocol + "//" + window.location.host + "/" 
       window.history.pushState({}, null, newURL);
       const payload = {
         data: {
-          type: "GithubLogin",
+          type: "GoogleLogin",
           attributes: {
             code: code
           }
         },
       };
-      API.post('/github-login/', payload, {withCredentials: true})
+      API.post('/google-login/', payload, {withCredentials: true})
         .then(function (response) {
           API.get('/user/', {withCredentials: true})
             .then(function (response) {
@@ -77,7 +76,7 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
   }, [])
 
   const handleGitHubClick = () => {
-    window.location.assign('https://github.com/login/oauth/authorize?scope=user:email&client_id=' + githubClientID());
+    window.location.assign('https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=http%3A//localhost:8080&client_id=' + googleClientID());
   }
 
   return (
@@ -93,12 +92,12 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
           onClick={handleGitHubClick}>
 
           <div className={classes.loginBoxIcon}>
-            <Github
+            <Google
               style={{color: theme.palette.text.primary}}
               size={18} />
           </div>
           <div className={classes.loginBoxText}>
-            Login with GitHub
+            Login with Google
           </div>
         </div>
       )}
@@ -106,4 +105,4 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
   )
 }))
 
-export default GithubAuth;
+export default GoogleAuth;

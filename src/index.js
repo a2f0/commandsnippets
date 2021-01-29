@@ -12,6 +12,7 @@ import Main from './Main.jsx'
 import AppStateStore from './AppStateStore.js'
 import {observer} from 'mobx-react';
 import GithubAuth from './GithubAuth.jsx'
+import GoogleAuth from './GoogleAuth.jsx'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -73,7 +74,10 @@ const AppRouter = React.memo(observer(function AppRouter(props) {
                 </Switch>
               )}
               { ! appConfig.appStateStore.loggedInUser && (
-                <GithubAuth/>
+                <>
+                  <GithubAuth/>
+                  <GoogleAuth/>
+                </>
               )}
             </div>
           </DndProvider>
