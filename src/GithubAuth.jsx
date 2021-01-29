@@ -48,7 +48,7 @@ const GithubAuth = React.memo(observer(function GithubAuth() {
     const urlParams = new URLSearchParams(queryString);
     const code = urlParams.get('code')
     if (code !='' && is_github_oauth === true) {
-      var newURL = window.location.protocol + "//" + window.location.host + "/" 
+      var newURL = window.location.protocol + "//" + window.location.host + "/"
       window.history.pushState({}, null, newURL);
       const payload = {
         data: {
