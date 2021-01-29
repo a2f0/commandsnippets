@@ -4,6 +4,7 @@ from tearleads.authentication.api import (
     CustomObtainAuthToken,
     CustomInvalidateAuthToken,
     GithubLogin,
+    GoogleLogin,
 )
 
 from tearleads.users.api import User
@@ -19,5 +20,6 @@ urlpatterns = [
     url(r"^healthcheck/", HealthCheckAPIView.as_view(), name="healthcheck"),
     url(r"^api/v1/user/", User.as_view()),
     url(r"^api/v1/github-login/", GithubLogin.as_view()),
+    url(r"^api/v1/google-login/", GoogleLogin.as_view()),
     url(r"^api/v1/", include(router.urls)),
 ]
