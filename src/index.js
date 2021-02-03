@@ -13,6 +13,9 @@ import AppStateStore from './AppStateStore.js'
 import {observer} from 'mobx-react';
 import GithubAuth from './GithubAuth.jsx'
 import GoogleAuth from './GoogleAuth.jsx'
+import packageJson from '../package.json';
+
+console.info('Package version: ' + packageJson.version);
 
 const useStyles = makeStyles((theme) => ({
   root: {
