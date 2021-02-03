@@ -16,6 +16,16 @@ export const googleClientID = () => {
   }
 }
 
+export const redirectUrl = () => {
+  if (window.location.hostname === 'staging.tearleads.com') {
+    return 'https%3A//staging.tearleads.com';
+  } else if (window.location.hostname === 'tearleads.com') {
+    return 'https%3A//tearleads.com';
+  } else {
+    return 'http%3A//localhost:8080';
+  }
+}
+
 const useStyles = makeStyles((theme) => ({
   clickableDiv: {
     marginRight: '10px',
@@ -76,7 +86,7 @@ const GoogleAuth = React.memo(observer(function GoogleAuth() {
   }, [])
 
   const handleGitHubClick = () => {
-    window.location.assign('https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=http%3A//localhost:8080&client_id=' + googleClientID());
+    window.location.assign('https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=' + redirectUrl() + '&client_id=' + googleClientID());
   }
 
   return (
