@@ -60,6 +60,8 @@ const GoogleAuth = React.memo(observer(function GoogleAuth() {
     const urlParams = new URLSearchParams(queryString);
     const code = urlParams.get('code')
     const scope = urlParams.get('scope')
+    console.info('code (google auth): ' + code)
+    console.info('scope (google auth): ' + scope)
     if (code !='' && scope == 'email https://www.googleapis.com/auth/userinfo.email openid') {
       var newURL = window.location.protocol + "//" + window.location.host + "/"
       window.history.pushState({}, null, newURL);
