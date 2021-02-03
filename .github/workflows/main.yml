@@ -23,11 +23,11 @@ jobs:
         with:
           python-version: '3.7'
           architecture: 'x64'
-      - name:
+      - name: npm install
         run: npm install
-      - name:
+      - name: npm audit
         run: npm audit
-      - name:
+      - name: npx eslint -f tap .
         run: npx eslint -f tap .
       - name: pre-commit
         run: |
@@ -43,6 +43,9 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+
+      - name: show git head commit
+        run: git log -n 1
 
       - name: Build SHA image
         if: github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production'
