@@ -94,7 +94,7 @@ class GoogleLogin(APIView):
             "client_id": os.environ["GOOGLE_CLIENT_ID"],
             "code": serializer.data["code"],
             "client_secret": os.environ["GOOGLE_CLIENT_SECRET"],
-            "redirect_uri": "http://localhost:8080",
+            "redirect_uri": os.environ["GOOGLE_REDIRECT_URI"],
             "grant_type": "authorization_code",
         }
         response = requests.post(url="https://oauth2.googleapis.com/token", data=data)
