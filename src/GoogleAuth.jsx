@@ -62,7 +62,7 @@ const GoogleAuth = React.memo(observer(function GoogleAuth() {
     const scope = urlParams.get('scope')
     console.info('code (google auth): ' + code)
     console.info('scope (google auth): ' + scope)
-    if (code !='' && scope == 'email https://www.googleapis.com/auth/userinfo.email openid') {
+    if (code !='' && scope !=null && scope.includes('https://www.googleapis.com/auth/userinfo.email')) {
       var newURL = window.location.protocol + "//" + window.location.host + "/"
       window.history.pushState({}, null, newURL);
       const payload = {
