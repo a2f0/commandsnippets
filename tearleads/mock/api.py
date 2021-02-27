@@ -6,5 +6,11 @@ from rest_framework.response import Response
 
 class MockGoogleOAuthAccessToken(APIView):
     def post(self, request, *args, **kwargs):
-        response = Response({})
+        response = Response({"access_token": "valid_access_token"})
+        return response
+
+
+class MockGoogleOAuthUserInfo(APIView):
+    def post(self, request, *args, **kwargs):
+        response = Response({"valid_email": "valid@gmail.com"})
         return response

@@ -15,8 +15,24 @@ class TestMockGoogleOAuthApi(APITestCase):
         cls.unauthenticated_user_api_client = APIClient()
         super(TestMockGoogleOAuthApi, cls).setUpTestData()
 
-    def test_health_check(self):
+    def test_oauth_access_token(self):
+        payload = {
+            "token": "mock_valid_token",
+            "code": "mock_valid_code",
+            "client_secret": "mock_valid_client_secret",
+        }
         response = self.unauthenticated_user_api_client.post(
-            "/mock/google/oauth/access_token", format="json"
+            "/mock/google/oauth2/access_token", format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        json_response = response.json()
+        self.assertEqual(json_response["data"]["access_token"], "valid_access_token")
+
+    def test_oauth_email(self):
+        valid_access_token = "valid_access_token"
+        response = self.unauthenticated_user_api_client.post(
+            "/mock/google/oauth2/access_token", format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        json_response = response.json()
+        self.assertEqual(json_response["data"]["access_token"], "valid_access_token")
