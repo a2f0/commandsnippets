@@ -1,5 +1,6 @@
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.conf import settings
 from tearleads.authentication.api import (
     CustomObtainAuthToken,
     CustomInvalidateAuthToken,
@@ -19,10 +20,15 @@ urlpatterns = [
     url(r"^api-token-auth/", CustomObtainAuthToken.as_view()),
     url(r"^api-token-deauth/", CustomInvalidateAuthToken.as_view()),
     url(r"^healthcheck/", HealthCheckAPIView.as_view(), name="healthcheck"),
-    url(r"^mock/google/oauth2/access_token", MockGoogleOAuthAccessToken.as_view()),
-    url(r"^mock/google/oauth2/v3/userinfo", MockGoogleOAuthUserInfo.as_view()),
     url(r"^api/v1/user/", User.as_view()),
     url(r"^api/v1/github-login/", GithubLogin.as_view()),
     url(r"^api/v1/google-login/", GoogleLogin.as_view()),
     url(r"^api/v1/", include(router.urls)),
 ]
+
+if settings.TEARLEADS_SETTINGS_MODULE == "test":
+    print("=== Loding mock APIs endpoints...")
+    urlpatterns += [
+        url(r"^mock/google/oauth2/access_token", MockGoogleOAuthAccessToken.as_view()),
+        url(r"^mock/google/oauth2/v3/userinfo", MockGoogleOAuthUserInfo.as_view()),
+    ]

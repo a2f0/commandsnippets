@@ -18,7 +18,7 @@ Backups (Server)
 
 Run tests
 
-    docker-compose run backend python manage.py test
+    docker-compose run backend python manage.py test --settings=tearleads.settings.test
 
 Run black
 
