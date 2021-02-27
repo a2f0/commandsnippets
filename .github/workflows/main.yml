@@ -50,7 +50,7 @@ jobs:
 
     - name: run tests / coverage analysis
       run: |
-        coverage run manage.py test -v 2
+        coverage run manage.py test -v 2 --settings=tearleads.settings.test
         coverage report
       env:
         POSTGRES_DB: postgres
