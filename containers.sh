@@ -12,7 +12,7 @@ echo "=== Building container."
 echo "=== AWS_REGION: $AWS_REGION"
 echo "=== ECR_FQDN: $ECR_FQDN"
 echo "=== ECR_REPOSITORY: $ECR_REPOSITORY"
-docker build --no-cache . -f compose/django/Dockerfile-prod -t tearleads-backend:latest
+docker build --no-cache . -f compose/django/Dockerfile.prod -t tearleads-backend:latest
 
 echo "=== Tagging image: $ECR_FQDN/$ECR_REPOSITORY:tearleads-backend-latest"
 docker tag tearleads-backend $ECR_FQDN/$ECR_REPOSITORY:tearleads-backend-latest

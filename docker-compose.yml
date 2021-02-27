@@ -18,7 +18,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: ./compose/django/Dockerfile-dev
+      dockerfile: ./compose/django/Dockerfile.dev
     depends_on:
       - postgres
     env_file: .env

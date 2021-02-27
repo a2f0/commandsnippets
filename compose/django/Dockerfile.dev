@@ -1,0 +1,18 @@
+FROM python:3.7
+
+ENV PYTHONUNBUFFERED 1
+
+# Requirements have to be pulled and installed here, otherwise caching won't work
+COPY ./requirements /requirements
+RUN pip install --upgrade pip
+RUN pip install -U setuptools
+RUN pip install -r /requirements/local.txt
+
+WORKDIR /app
+
+EXPOSE 9001
+CMD python /app/manage.py runserver 0.0.0.0:9001 --settings=tearleads.settings.development
+
+# Uncomment this block to emulate production
+# RUN pip install -r /requirements/production.txt
+# CMD gunicorn tearleads.wsgi:application --bind 0.0.0.0:9001 --env DJANGO_SETTINGS_MODULE=tearleads.settings.development

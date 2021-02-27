@@ -6,9 +6,10 @@ ENV PYTHONUNBUFFERED 1
 COPY ./requirements /requirements
 RUN pip install --upgrade pip
 RUN pip install -U setuptools
-RUN pip install -r /requirements/local.txt
+RUN pip install -r /requirements/production.txt
 
+COPY . /app
 WORKDIR /app
 
 EXPOSE 9001
-CMD python /app/manage.py runserver 0.0.0.0:9001
+CMD gunicorn tearleads.wsgi:application --bind 0.0.0.0:9001 --env DJANGO_SETTINGS_MODULE=tearleads.settings.production
