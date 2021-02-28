@@ -26,7 +26,7 @@ class TestMockGoogleOAuthApi(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
-        self.assertEqual(json_response["data"]["access_token"], "valid_access_token")
+        self.assertEqual(json_response["access_token"], "valid_access_token")
 
     def test_oauth_email(self):
         valid_access_token = "valid_access_token"
@@ -35,4 +35,4 @@ class TestMockGoogleOAuthApi(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
-        self.assertEqual(json_response["data"]["access_token"], "valid_access_token")
+        self.assertEqual(json_response["access_token"], "valid_access_token")

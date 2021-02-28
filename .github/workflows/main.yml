@@ -53,6 +53,9 @@ jobs:
         coverage run manage.py test -v 2 --settings=tearleads.settings.test
         coverage report
       env:
+        GOOGLE_CLIENT_ID: google_client_id
+        GOOGLE_CLIENT_SECRET: google_client_secret
+        GOOGLE_REDIRECT_URI: google_redirect_uri
         POSTGRES_DB: postgres
         POSTGRES_HOST: localhost
         POSTGRES_PASSWORD: postgres
