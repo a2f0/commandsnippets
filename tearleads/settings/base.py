@@ -14,6 +14,8 @@ import os
 
 import rest_framework_json_api
 
+TEARLEADS_SETTINGS_MODULE = "base"
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
