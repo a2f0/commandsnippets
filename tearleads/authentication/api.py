@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 
 from tearleads.authentication import utility
 from tearleads.users.models import User
+from tearleads.users.utils import create_collisionless_user
 
 from .serializers import GithubAuthenticationSerializer, GoogleAuthenticationSerializer
 
@@ -113,9 +114,7 @@ class GoogleLogin(APIView):
             response_dict = json.loads(response.text)
             email = response_dict["email"]
             username = email.split("@", 1)[0]
-            user, created = User.objects.get_or_create(
-                email=email, defaults={"username": username}
-            )
+            user = create_collisionless_user(username, email)
             token, created = Token.objects.get_or_create(user=user)
             response = Response({})
             response.set_cookie("Authorization", token.key, httponly=True)
