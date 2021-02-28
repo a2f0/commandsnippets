@@ -187,3 +187,8 @@ REST_FRAMEWORK = {
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
 }
+
+GOOGLE_APIS = {
+    "TOKEN": "https://oauth2.googleapis.com/token",
+    "USERINFO": "https://www.googleapis.com/oauth2/v3/userinfo",
+}

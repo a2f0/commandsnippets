@@ -3,6 +3,7 @@ from urllib.parse import parse_qs
 import json
 import os
 
+from django.conf import settings
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -97,7 +98,7 @@ class GoogleLogin(APIView):
             "redirect_uri": os.environ["GOOGLE_REDIRECT_URI"],
             "grant_type": "authorization_code",
         }
-        response = requests.post(url="https://oauth2.googleapis.com/token", data=data)
+        response = requests.post(url=settings.GOOGLE_APIS["TOKEN"], data=data)
         if response.status_code == 200:
             response_dict = json.loads(response.text)
             authorization_header = "Bearer " + response_dict["access_token"]
@@ -105,7 +106,8 @@ class GoogleLogin(APIView):
 
             # Get the email address associated with the account
             response = requests.get(
-                url="https://www.googleapis.com/oauth2/v3/userinfo?access_token="
+                url=settings.GOOGLE_APIS["USERINFO"]
+                + "?access_token="
                 + response_dict["access_token"]
             )
             response_dict = json.loads(response.text)
