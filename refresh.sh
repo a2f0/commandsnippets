@@ -36,7 +36,7 @@ restore_latest_backup_local() {
   echo '=== running postgres restore'
   docker-compose run postgres restore $BASE_FILE
   echo '=== migrating database'
-  docker-compose run backend python manage.py migrate
+  docker-compose run backend python manage.py migrate --settings=tearleads.settings.base
   echo '=== stopping compose'
   docker-compose down
   echo '=== local refresh completed successfully'
