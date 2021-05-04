@@ -18,7 +18,7 @@ docker system prune --force
 echo "=== Stopping compose..."
 docker-compose -f container-registry.yaml down
 echo "=== Running database migrations..."
-docker-compose -f container-registry.yaml run backend python manage.py migrate --settings=tearleads.settings.base
+docker-compose -f container-registry.yaml run backend python manage.py migrate
 echo "=== Starting compose..."
 docker-compose -f container-registry.yaml up -d
 echo "=== Done."

@@ -1,51 +1,51 @@
 from django.test import TestCase
 from django.db.utils import IntegrityError
 
-from .factories import TearleadsUserFactory, UserFactory
+from .factories import UserFactory
 
 
-class TestTearleadsUserModel(TestCase):
+class TestUserModel(TestCase):
     def setUp(self):
-        super(TestTearleadsUserModel, self).setUp()
+        super(TestUserModel, self).setUp()
 
     @classmethod
     def setUpTestData(cls):
-        super(TestTearleadsUserModel, cls).setUpTestData()
+        super(TestUserModel, cls).setUpTestData()
 
     def test_usernames_cannot_be_duplicated(self):
         try:
-            user1 = TearleadsUserFactory(username="collide")
-            user2 = TearleadsUserFactory(username="collide")
+            user1 = UserFactory(username="collide")
+            user2 = UserFactory(username="collide")
         except IntegrityError:
             pass
 
     def test_usernames_cannot_be_none(self):
         try:
-            user1 = TearleadsUserFactory(username=None)
+            user1 = UserFactory(username=None)
         except IntegrityError:
             pass
 
     def test_usernames_cannot_be_empty_strings(self):
         try:
-            user1 = TearleadsUserFactory(username="")
+            user1 = UserFactory(username="")
         except IntegrityError:
             pass
 
     def test_emails_cannot_be_duplicates(self):
         try:
-            user1 = TearleadsUserFactory(email="collide@tearleads.com")
-            user2 = TearleadsUserFactory(email="collide@tearleads.com")
+            user1 = UserFactory(email="collide@tearleads.com")
+            user2 = UserFactory(email="collide@tearleads.com")
         except IntegrityError:
             pass
 
     def test_emails_cannot_be_none(self):
         try:
-            user1 = TearleadsUserFactory(email=None)
+            user1 = UserFactory(email=None)
         except IntegrityError:
             pass
 
     def test_emails_cannot_be_empty_strings(self):
         try:
-            user1 = TearleadsUserFactory(email="")
+            user1 = UserFactory(email="")
         except IntegrityError:
             pass
