@@ -7,6 +7,11 @@ Bootstrap (Local dev)
     docker-compose build
     docker-compose run backend /app/loaddata.sh
 
+Reset the databas (Local dev)
+
+    docker-compose run backend python manage.py reset_db --noinput
+    docker-compose run backend python manage.py migrate
+
 Bootstrap (Server)
 
     docker-compose -f container-registry.yaml run backend /app/loaddata.sh

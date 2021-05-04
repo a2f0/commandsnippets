@@ -74,7 +74,7 @@ class GithubLogin(APIView):
 
             for email in data:
                 if email["primary"] == True:
-                    user = create_collisionless_user(username, email)
+                    user = create_collisionless_user(username, email["email"])
                     token, created = Token.objects.get_or_create(user=user)
                     response = Response({})
                     response.set_cookie("Authorization", token.key, httponly=True)
