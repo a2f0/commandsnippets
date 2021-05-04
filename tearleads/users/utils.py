@@ -1,8 +1,8 @@
-from tearleads.users.models import TearleadsUser
+from tearleads.users.models import User
 
 
 def create_collisionless_user(username, email):
-    user, created = TearleadsUser.objects.get_or_create(
+    user, created = User.objects.get_or_create(
         email=email, defaults={"username": username}
     )
     return user
