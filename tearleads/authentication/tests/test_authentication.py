@@ -4,6 +4,7 @@ from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
 from tearleads.users.tests.factories import UserFactory
+from tearleads.users.models import User
 
 
 class TestAuthentication(BaseTestCase):
@@ -38,6 +39,32 @@ class TestAuthentication(BaseTestCase):
     def test_failed_authentication(self):
         payload = {"username": "user1", "password": "wrongpassword"}
         response = self.user1_api_client.post(
+            "/api-token-auth/", payload, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_blank_passwords_not_allowed(self):
+        user, created = User.objects.get_or_create(
+            email="user@example.com", username="user"
+        )
+        self.assertEqual(user.password, "")
+        self.assertNotEqual(user.id, None)
+        self.auth_user_api_client = APIClient()
+        # password as empty string
+        payload = {"username": "user", "password": ""}
+        response = self.auth_user_api_client.post(
+            "/api-token-auth/", payload, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # password attribute missing
+        payload = {"username": "user"}
+        response = self.auth_user_api_client.post(
+            "/api-token-auth/", payload, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # password as None
+        payload = {"username": "user", "password": None}
+        response = self.auth_user_api_client.post(
             "/api-token-auth/", payload, format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
