@@ -38,7 +38,6 @@ THIRD_PARTY_APPS = ["corsheaders", "rest_framework", "rest_framework.authtoken"]
 LOCAL_APPS = [
     "tearleads.authentication",
     "tearleads.healthcheck",
-    "tearleads.mock",
     "tearleads.tags",
     "tearleads.text_entries",
     "tearleads.users",

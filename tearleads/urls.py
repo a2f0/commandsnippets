@@ -7,7 +7,6 @@ from tearleads.authentication.api import (
     GithubLogin,
     GoogleLogin,
 )
-from tearleads.mock.api import MockGoogleOAuthAccessToken, MockGoogleOAuthUserInfo
 
 from tearleads.users.api import User
 
@@ -25,10 +24,3 @@ urlpatterns = [
     url(r"^api/v1/google-login/", GoogleLogin.as_view()),
     url(r"^api/v1/", include(router.urls)),
 ]
-
-if settings.TEARLEADS_SETTINGS_MODULE == "test":
-    print("=== Loding mock APIs endpoints...")
-    urlpatterns += [
-        url(r"^mock/google/oauth2/access_token", MockGoogleOAuthAccessToken.as_view()),
-        url(r"^mock/google/oauth2/v3/userinfo", MockGoogleOAuthUserInfo.as_view()),
-    ]
