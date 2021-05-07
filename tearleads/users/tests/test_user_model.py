@@ -13,11 +13,12 @@ class TestUserModel(TestCase):
         super(TestUserModel, cls).setUpTestData()
 
     def test_usernames_cannot_be_duplicated(self):
-        try:
-            user1 = UserFactory(username="collide")
-            user2 = UserFactory(username="collide")
-        except IntegrityError:
-            pass
+        user1 = UserFactory(username="collide")
+        user2 = UserFactory(username="collide")
+        self.assertEqual(user1.username, "collide")
+        self.assertNotEqual(user2.username, "collide")
+        user3 = UserFactory(username=user2.username)
+        self.assertNotEqual(user3.username, user2.username)
 
     def test_usernames_cannot_be_none(self):
         try:
