@@ -4,6 +4,32 @@ import requests
 
 class GoogleOAuthService(object):
     def __init__(self):
+        self.client_secret = os.environ["GOOGLE_CLIENT_SECRET"]
+        self.client_id = os.environ["GOOGLE_CLIENT_ID"]
+        self.redirect_uri = os.environ["GOOGLE_REDIRECT_URI"]
+
+    def access_token(self, code):
+        data = {
+            "client_id": self.client_id,
+            "code": code,
+            "client_secret": self.client_secret,
+            "redirect_uri": self.redirect_uri,
+            "grant_type": "authorization_code",
+        }
+        response = requests.post(url="https://oauth2.googleapis.com/token", data=data)
+        return response
+
+    def user(self, access_token):
+        response = requests.get(
+            url="https://www.googleapis.com/oauth2/v3/userinfo"
+            + "?access_token="
+            + access_token
+        )
+        return response
+
+
+class GithubOAuthService(object):
+    def __init__(self):
         self.client_secret = os.environ["GITHUB_CLIENT_SECRET"]
         self.client_id = os.environ["GITHUB_CLIENT_ID"]
 

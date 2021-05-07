@@ -15,7 +15,7 @@ from tearleads.users.models import User
 from tearleads.users.utils import create_collisionless_user
 
 from .serializers import GithubAuthenticationSerializer, GoogleAuthenticationSerializer
-from .services import GoogleOAuthService
+from .services import GoogleOAuthService, GithubOAuthService
 
 
 class CustomObtainAuthToken(ObtainAuthToken):
@@ -46,7 +46,7 @@ class GithubLogin(APIView):
     def post(self, request, *args, **kwargs):
         serializer = GithubAuthenticationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        service = GoogleOAuthService()
+        service = GithubOAuthService()
         response = service.access_token(serializer.data["code"])
         if response.status_code == 200:
             qs = parse_qs(response.text)
@@ -82,32 +82,23 @@ class GoogleLogin(APIView):
     def post(self, request, *args, **kwargs):
         serializer = GoogleAuthenticationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        data = {
-            "client_id": os.environ["GOOGLE_CLIENT_ID"],
-            "code": serializer.data["code"],
-            "client_secret": os.environ["GOOGLE_CLIENT_SECRET"],
-            "redirect_uri": os.environ["GOOGLE_REDIRECT_URI"],
-            "grant_type": "authorization_code",
-        }
-        response = requests.post(url=settings.GOOGLE_APIS["TOKEN"], data=data)
+        service = GoogleOAuthService()
+        response = service.access_token(serializer.data["code"])
         if response.status_code == 200:
             response_dict = json.loads(response.text)
             authorization_header = "Bearer " + response_dict["access_token"]
             headers = {"Authorization": authorization_header}
 
             # Get the email address associated with the account
-            response = requests.get(
-                url=settings.GOOGLE_APIS["USERINFO"]
-                + "?access_token="
-                + response_dict["access_token"]
-            )
-            response_dict = json.loads(response.text)
-            email = response_dict["email"]
-            username = email.split("@", 1)[0]
-            user = create_collisionless_user(username, email)
-            token, created = Token.objects.get_or_create(user=user)
-            response = Response({})
-            response.set_cookie("Authorization", token.key, httponly=True)
-            return response
-        else:
-            return Response({}, status=status.HTTP_401_UNAUTHORIZED)
+            response = service.user(response_dict["access_token"])
+            if response.status_code == 200:
+                response_dict = json.loads(response.text)
+                email = response_dict["email"]
+                username = email.split("@", 1)[0]
+                user = create_collisionless_user(username, email)
+                token, created = Token.objects.get_or_create(user=user)
+                response = Response({})
+                response.set_cookie("Authorization", token.key, httponly=True)
+                return response
+
+        return Response({}, status=status.HTTP_401_UNAUTHORIZED)

@@ -1,3 +1,5 @@
+from unittest import skip
+
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
 
@@ -15,6 +17,7 @@ class TestMockGoogleOAuthApi(APITestCase):
         cls.unauthenticated_user_api_client = APIClient()
         super(TestMockGoogleOAuthApi, cls).setUpTestData()
 
+    @skip("temporary")
     def test_oauth_access_token(self):
         payload = {
             "token": "mock_valid_token",
@@ -28,6 +31,7 @@ class TestMockGoogleOAuthApi(APITestCase):
         json_response = response.json()
         self.assertEqual(json_response["access_token"], "valid_access_token")
 
+    @skip("temporary")
     def test_oauth_email(self):
         valid_access_token = "valid_access_token"
         response = self.unauthenticated_user_api_client.post(
