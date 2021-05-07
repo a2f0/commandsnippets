@@ -15,6 +15,7 @@ from tearleads.users.models import User
 from tearleads.users.utils import create_collisionless_user
 
 from .serializers import GithubAuthenticationSerializer, GoogleAuthenticationSerializer
+from .services import GoogleOAuthService
 
 
 class CustomObtainAuthToken(ObtainAuthToken):
@@ -45,43 +46,34 @@ class GithubLogin(APIView):
     def post(self, request, *args, **kwargs):
         serializer = GithubAuthenticationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        data = {
-            "client_id": os.environ["GITHUB_CLIENT_ID"],
-            "code": serializer.data["code"],
-            "client_secret": os.environ["GITHUB_CLIENT_SECRET"],
-        }
-        response = requests.post(
-            url="https://github.com/login/oauth/access_token", data=data
-        )
+        service = GoogleOAuthService()
+        response = service.access_token(serializer.data["code"])
         if response.status_code == 200:
             qs = parse_qs(response.text)
-            payload = {"token": qs["access_token"][0]}
-            authorization_header = "token " + qs["access_token"][0]
-            headers = {"Authorization": authorization_header}
-
+            access_token = qs["access_token"][0]
             # Get the Github login
-            authorization_header = "token " + qs["access_token"][0]
-            headers = {"Authorization": authorization_header}
-            response = requests.get(url="https://api.github.com/user", headers=headers)
-            data = json.loads(response.text)
-            username = data["login"]
+            response = service.user(access_token)
 
-            # To get the email
-            response = requests.get(
-                url="https://api.github.com/user/emails", headers=headers
-            )
-            data = json.loads(response.text)
+            if response.status_code == 200:
+                data = json.loads(response.text)
+                username = data["login"]
 
-            for email in data:
-                if email["primary"] == True:
-                    user = create_collisionless_user(username, email["email"])
-                    token, created = Token.objects.get_or_create(user=user)
-                    response = Response({})
-                    response.set_cookie("Authorization", token.key, httponly=True)
-                    return response
+                # To get the primary email
+                response = service.emails(access_token)
+                if response.status_code == 200:
+                    data = json.loads(response.text)
 
-        else:
-            return Response({}, status=status.HTTP_401_UNAUTHORIZED)
+                    for email in data:
+                        if email["primary"] == True:
+                            user = create_collisionless_user(username, email["email"])
+                            token, created = Token.objects.get_or_create(user=user)
+                            response = Response({})
+                            response.set_cookie(
+                                "Authorization", token.key, httponly=True
+                            )
+                            return response
+
+        return Response({}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class GoogleLogin(APIView):
