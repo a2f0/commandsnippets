@@ -61,7 +61,8 @@ const UntaggedEntry = React.memo(observer(function EntryList(props) {
   }
 
   const [{ isDragging }, drag] = useDrag({
-    item: { name, type: ItemTypes.UNTAGGEDENTRY },
+    item: { name },
+    type: ItemTypes.UNTAGGEDENTRY,
     end: (item, monitor) => {
       const dropResult = monitor.getDropResult()
       if (item && dropResult) {

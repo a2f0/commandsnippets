@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { makeStyles, MuiThemeProvider } from '@material-ui/core/styles';
 import { DndProvider } from 'react-dnd'
-import Backend from 'react-dnd-html5-backend'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 import { lightTheme, darkTheme } from './themes.js'
 import { observable } from "mobx"
 import AppContext from './AppContext.js'
@@ -58,7 +58,7 @@ const AppRouter = React.memo(observer(function AppRouter(props) {
       <AppContext.Provider value={appConfig}>
         <MuiThemeProvider theme={selectedTheme}>
           <CssBaseline />
-          <DndProvider backend={Backend}>
+          <DndProvider backend={HTML5Backend}>
             <div className={classes.root}>
               { appConfig.appStateStore.loggedInUser && (
                 <Switch>
