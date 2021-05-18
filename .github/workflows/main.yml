@@ -27,8 +27,6 @@ jobs:
         run: npm install
       - name: npm audit
         run: npm audit
-      - name: npx eslint -f tap .
-        run: npx eslint -f tap .
       - name: pre-commit
         run: |
           pip install pre-commit
