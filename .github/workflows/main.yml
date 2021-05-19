@@ -23,6 +23,15 @@ jobs:
         with:
           python-version: '3.7'
           architecture: 'x64'
+
+      - name: Install
+        uses: ianwalter/puppeteer-container@v4.0.0
+        with:
+          args: npm install
+      - name: Test
+        uses: ianwalter/puppeteer-container@v4.0.0
+        with:
+          args: npm run ci-headless
       - name: npm install
         run: npm install
       - name: npm audit
@@ -31,6 +40,7 @@ jobs:
         run: |
           pip install pre-commit
           pre-commit run --all-files
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
