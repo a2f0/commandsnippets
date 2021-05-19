@@ -11,9 +11,11 @@ output "iam-instance-profile" {
 }
 
 output "ci-cd-access-key" {
+  sensitive = true
   value = aws_iam_access_key.ci_cd.id
 }
 
 output "ci-cd-secret-access-key" {
+  sensitive = true
   value = aws_iam_access_key.ci_cd.secret
 }
