@@ -32,6 +32,12 @@ jobs:
         uses: ianwalter/puppeteer-container@v4.0.0
         with:
           args: npm run ci-headless
+
+      - name: cleanup test artifacts
+        uses: ianwalter/puppeteer-container@v4.0.0
+        with:
+          args: rm -rf core
+
       - name: npm install
         run: npm install
       - name: npm audit
@@ -51,9 +57,6 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
-      - name: show git head commit
-        run: git log -n 1
 
       - name: Build SHA image
         if: github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production'
