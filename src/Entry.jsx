@@ -66,7 +66,7 @@ const Entry = React.memo(function (
   const classes = useStyles();
   const theme = useTheme();
   const [{ isDragging }, drag, preview] = useDrag({
-    item: { id, originalIndex },
+    item: () => ({ id, originalIndex, type: ItemTypes.ENTRY }),
     type: ItemTypes.ENTRY,
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),

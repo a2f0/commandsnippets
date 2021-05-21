@@ -175,7 +175,7 @@ const Tag = React.memo(function Tag(
   };
 
   const [{ isDragging }, drag, preview] = useDrag({
-    item: { id, originalIndex },
+    item: () => ({ id, originalIndex, type: ItemTypes.TAG }),
     type: ItemTypes.TAG,
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
