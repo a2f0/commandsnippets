@@ -17,6 +17,7 @@
   },
   "globals": {
     "localStorage": true,
+    "window": true,
     "document": true, // Mocha
     "browser": true // Mocha
   },
