@@ -14,7 +14,7 @@ import CheckIcon from '@material-ui/icons/Check';
 import AppContext from './AppContext.js';
 import {useHistory} from 'react-router-dom';
 import {observer} from 'mobx-react';
-import {baseHTTPURL} from './api.js';
+import {baseHTTPURL} from './api.ts';
 
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';

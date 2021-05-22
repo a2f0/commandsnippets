@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+declare var window: any;
 export const environment = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
     return 'staging';

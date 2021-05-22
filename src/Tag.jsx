@@ -5,7 +5,7 @@ import {useTheme} from '@material-ui/styles';
 import TagContextMenu from './TagContextMenu.jsx';
 import AppContext from './AppContext.js';
 import {useHistory} from 'react-router-dom';
-import API from './api.js';
+import API from './api.ts';
 import {makeStyles} from '@material-ui/core/styles';
 import * as Constants from './constants';
 

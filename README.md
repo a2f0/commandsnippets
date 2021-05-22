@@ -1,4 +1,4 @@
-# tearleads-frontend
+# Tearleads Frontend
 
 install dependencies `npm ci`
 
@@ -8,7 +8,7 @@ build `npm run build`
 
 test `npm run ci`
 
-## Docker
+## Testing a build locally
 
-1. Build the container `docker build . -t tearleads`.
-2. Run it `docker run -p 80:80 tearleads` (this won't show any output until an HTTP request issued).
+1. Build the app with `npm run build`.
+2. Run a local webserver `cd build && python3 -m http.server 8080`

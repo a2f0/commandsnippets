@@ -3,7 +3,7 @@ import {useDrop} from 'react-dnd';
 import Entry from './Entry.jsx';
 import update from 'immutability-helper';
 import ItemTypes from './ItemTypes';
-import API from './api.js';
+import API from './api.ts';
 import {autorun} from 'mobx';
 import AppContext from './AppContext.js';
 import {observer} from 'mobx-react';

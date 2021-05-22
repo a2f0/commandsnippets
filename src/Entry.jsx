@@ -1,7 +1,7 @@
 import React, {useRef, useState, useMemo, useEffect, useContext} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import ItemTypes from './ItemTypes';
-import API from './api.js';
+import API from './api.ts';
 import {makeStyles} from '@material-ui/core/styles';
 import AppContext from './AppContext.js';
 import * as Constants from './constants';

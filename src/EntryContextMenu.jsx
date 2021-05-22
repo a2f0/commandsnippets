@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import API from './api.js';
+import API from './api.ts';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 

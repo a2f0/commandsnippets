@@ -1,6 +1,6 @@
 import {types} from 'mobx-state-tree';
 import {destroy, onSnapshot, applySnapshot} from 'mobx-state-tree';
-import {environment} from './api.js';
+import {environment} from './api.ts';
 
 const AppStateStoreModel = types
   .model({

@@ -3,7 +3,7 @@ import Tag from './Tag.jsx';
 import TagSearch from './Search.jsx';
 import List from '@material-ui/core/List';
 import {makeStyles} from '@material-ui/core/styles';
-import API from './api.js';
+import API from './api.ts';
 import {autorun} from 'mobx';
 import TagNew from './TagNew.jsx';
 import AppContext from './AppContext.js';

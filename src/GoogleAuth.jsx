@@ -1,5 +1,5 @@
 import React, {useEffect, useContext} from 'react';
-import API from './api.js';
+import API from './api.ts';
 import AppContext from './AppContext.js';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';

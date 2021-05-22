@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {useTheme} from '@material-ui/styles';
 import {makeStyles} from '@material-ui/core/styles';
-import API from './api.js';
+import API from './api.ts';
 import Button from '@material-ui/core/Button';
 
 const useStyles = makeStyles({

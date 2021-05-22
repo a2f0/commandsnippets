@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useContext} from 'react';
-import API from './api.js';
+import API from './api.ts';
 import {autorun} from 'mobx';
 import AppContext from './AppContext.js';
 import {observer} from 'mobx-react';

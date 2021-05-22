@@ -1,6 +1,6 @@
 import React from 'react';
 import {observer} from 'mobx-react';
-import API from './api.js';
+import API from './api.ts';
 
 const Logout = React.memo(
   observer(function Logout() {
