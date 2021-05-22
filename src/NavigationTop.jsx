@@ -1,7 +1,7 @@
 import Logout from './Logout.jsx';
-import React from "react";
-import { observer } from 'mobx-react';
-import { Link } from "react-router-dom";
+import React from 'react';
+import {observer} from 'mobx-react';
+import {Link} from 'react-router-dom';
 
 @observer
 class NavigationTop extends React.Component {
@@ -19,10 +19,13 @@ class NavigationTop extends React.Component {
               </div>
               <div className="flex-align-right">
                 <div className="inline-block menu-item-small menu-item-spacing">
-                  { observableUser.userName != ''
-                    ? <Logout user={ observableUser }/>
-                    : <Link to="/login" user={ observableUser }>Login</Link>
-                  }
+                  {observableUser.userName != '' ? (
+                    <Logout user={observableUser} />
+                  ) : (
+                    <Link to="/login" user={observableUser}>
+                      Login
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -30,7 +33,7 @@ class NavigationTop extends React.Component {
           <div className="flex-side-column"></div>
         </div>
       </div>
-    )
+    );
   }
 }
 

@@ -1,7 +1,6 @@
-import React from "react";
+import React from 'react';
 import constructApiUrl from './api.mjs';
 class NewEntry extends React.Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -12,16 +11,16 @@ class NewEntry extends React.Component {
     this.handleBodyChange = this.handleBodyChange.bind(this);
   }
 
-  saveEntry( ) {
-    var payload = {
-      'data': {
-        'type': 'TextEntry',
-        'attributes': {
-          'subject': this.state.subject,
-          'body': this.state.body
-        }
-      }
-    }
+  saveEntry() {
+    const payload = {
+      data: {
+        type: 'TextEntry',
+        attributes: {
+          subject: this.state.subject,
+          body: this.state.body,
+        },
+      },
+    };
     const base_url = constructApiUrl();
     var url = base_url + '/api/v1/entries';
     fetch(url, {
@@ -30,11 +29,11 @@ class NewEntry extends React.Component {
       body: JSON.stringify(payload),
       headers: {
         'Content-Type': 'application/vnd.api+json',
-      }
+      },
     })
       .then(res => res.json())
-      .then((res) => {
-        console.log(res)
+      .then(res => {
+        console.log(res);
         this.setState({subject: ''});
         this.setState({body: ''});
         this.showNewEntry();
@@ -42,7 +41,7 @@ class NewEntry extends React.Component {
       .catch(console.log);
   }
 
-  showNewEntry( ) {
+  showNewEntry() {
     this.props.parentShowNewEntry();
   }
 
@@ -55,25 +54,39 @@ class NewEntry extends React.Component {
   }
 
   render() {
-
     return (
       <div>
         <div>
-          <input type="text" id="subject" name="subject"  value={this.state.subject} onChange={this.handleSubjectChange}></input>
+          <input
+            type="text"
+            id="subject"
+            name="subject"
+            value={this.state.subject}
+            onChange={this.handleSubjectChange}
+          ></input>
         </div>
         <div>
-          <input type="text" id="body" name="body" value={this.state.body} onChange={this.handleBodyChange}></input>
+          <input
+            type="text"
+            id="body"
+            name="body"
+            value={this.state.body}
+            onChange={this.handleBodyChange}
+          ></input>
         </div>
         <div>
           <div className="create-entry-button" onClick={() => this.saveEntry()}>
-          Save
+            Save
           </div>
-          <div className="create-entry-button" onClick={() => this.showNewEntry()}>
-          Cancel
+          <div
+            className="create-entry-button"
+            onClick={() => this.showNewEntry()}
+          >
+            Cancel
           </div>
         </div>
       </div>
-    )
+    );
   }
 }
 

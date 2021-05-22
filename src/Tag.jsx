@@ -1,149 +1,141 @@
-import React, {useRef, useState, useContext, useMemo} from 'react'
-import { useDrag, useDrop } from 'react-dnd'
-import ItemTypes from './ItemTypes'
-import { useTheme } from '@material-ui/styles';
-import TagContextMenu from './TagContextMenu.jsx'
+import React, {useRef, useState, useContext, useMemo} from 'react';
+import {useDrag, useDrop} from 'react-dnd';
+import ItemTypes from './ItemTypes';
+import {useTheme} from '@material-ui/styles';
+import TagContextMenu from './TagContextMenu.jsx';
 import AppContext from './AppContext.js';
-import { useHistory } from "react-router-dom";
-import API from './api.js'
-import { makeStyles } from '@material-ui/core/styles';
-import * as Constants from './constants'
-
-const style = {
-  marginRight: 0,
-  marginBottom: 0,
-  padding: 0,
-  textAlign: 'left',
-  fontSize: '12',
-  lineHeight: 'normal',
-  float: 'left'
-}
+import {useHistory} from 'react-router-dom';
+import API from './api.js';
+import {makeStyles} from '@material-ui/core/styles';
+import * as Constants from './constants';
 
 const useStyles = makeStyles({
   entry: {
     display: 'inline-block',
-    verticalAlign: 'top'
+    verticalAlign: 'top',
   },
   entryWrapper: {
-    whiteSpace: 'pre'
+    whiteSpace: 'pre',
   },
   tagLabel: {
     display: 'inline-block',
     cursor: 'pointer',
-    width: '100%'
+    width: '100%',
   },
   tagDragIndicatorContainer: {
     display: 'inline-block',
     fontWeight: 900,
     textAlign: 'center',
-    width: `${Constants.dragIndicatorWidthTag}px`
+    width: `${Constants.dragIndicatorWidthTag}px`,
   },
   tagDragIndicator: {
     cursor: 'grab',
-  }
+  },
 });
 
-const Tag = React.memo(function Tag(
-  {
-    tag,
-    id,
-    user,
-    fetchTags,
-    moveEntry,
-    findEntry,
-    index,
-    findEntryByIndex
-  }) {
-
-  const dragRef = useRef(null)
-  const dropRef = useRef(null)
+const Tag = React.memo(function Tag({
+  tag,
+  id,
+  user,
+  fetchTags,
+  moveEntry,
+  findEntry,
+  index,
+  findEntryByIndex,
+}) {
+  const dragRef = useRef(null);
+  const dropRef = useRef(null);
   const classes = useStyles();
-  const originalIndex = findEntry(id).index
-  const [showDragHandle, setShowDragHandle] = useState(false)
+  const originalIndex = findEntry(id).index;
+  const [showDragHandle, setShowDragHandle] = useState(false);
   const theme = useTheme();
-  const opacity = isDragging ? 0 : 1
+  const opacity = isDragging ? 0 : 1;
 
   const [{canDrop, isOver}, drop] = useDrop({
-    accept: [ ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY ] ,
+    accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
       return true;
     },
     drop: () => ({
-      name: name,
+      //name: name,
       id: id,
-      type: 'Tag' }),
-    collect: (monitor) => ({
+      type: 'Tag',
+    }),
+    collect: monitor => ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
     hover(item, monitor) {
       if (!dragRef.current) {
-        return
+        return;
       }
 
-      if (item.type == 'entry') {
-        return
+      if (item.type === 'entry') {
+        return;
       }
 
-      const dragIndex = item.index
-      const hoverIndex = index
+      const dragIndex = item.index;
+      const hoverIndex = index;
       if (dragIndex === hoverIndex) {
-        return
+        return;
       }
       // Determine rectangle on screen
-      const hoverBoundingRect = dragRef.current?.getBoundingClientRect()
+      const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
       // Get vertical middle
       const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       // Determine mouse position
-      const clientOffset = monitor.getClientOffset()
+      const clientOffset = monitor.getClientOffset();
       // Get pixels to the top
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
       // Only perform the move when the mouse has crossed half of the items height
       // When dragging downwards, only move when the cursor is below 50%
       // When dragging upwards, only move when the cursor is above 50%
       // Dragging downwards
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return
+        return;
       }
       // Dragging upwards
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return
+        return;
       }
 
-      moveEntry(item.id, hoverIndex)
+      moveEntry(item.id, hoverIndex);
       // Note: we're mutating the monitor item here!
       // Generally it's better to avoid mutations,
       // but it's good here for the sake of performance
       // to avoid expensive index searches.
-      item.index = hoverIndex
+      item.index = hoverIndex;
     },
-  })
-  const isActive = canDrop && isOver
-  let backgroundColor = theme.palette.background.paper
+  });
+  const isActive = canDrop && isOver;
+  let backgroundColor = theme.palette.background.paper;
   if (isActive) {
-    backgroundColor = 'white'
+    backgroundColor = 'white';
   } else if (canDrop) {
-    backgroundColor = 'gray'
+    backgroundColor = 'gray';
   }
 
-  const appConfig = useContext(AppContext)
+  const appConfig = useContext(AppContext);
   const history = useHistory();
 
   const handleTagClick = () => {
-    appConfig.mainPanel = 'EntryList'
+    appConfig.mainPanel = 'EntryList';
     history.push(`/${user.attributes.username}/${tag.attributes.name}`);
-  }
+  };
 
   const mouseEnter = () => {
-    if (appConfig.appStateStore.loggedInUser != '' && appConfig.appStateStore.tagSortOrder == 'order' ) {
-      setShowDragHandle(true)
+    if (
+      appConfig.appStateStore.loggedInUser !== '' &&
+      appConfig.appStateStore.tagSortOrder === 'order'
+    ) {
+      setShowDragHandle(true);
     }
-  }
+  };
   const mouseLeave = () => {
-    setShowDragHandle(false)
-  }
+    setShowDragHandle(false);
+  };
 
   const initialMouse = {
     mouseX: null,
@@ -151,8 +143,8 @@ const Tag = React.memo(function Tag(
   };
 
   const deleteTag = () => {
-    API.delete('/tags/' + tag.id , {withCredentials: true})
-      .then(function (response) {
+    API.delete('/tags/' + tag.id, {withCredentials: true})
+      .then(function () {
         fetchTags();
       })
       .catch(function (error) {
@@ -160,103 +152,110 @@ const Tag = React.memo(function Tag(
         console.log(error);
       })
       .then(function () {
-      // always executed
+        // always executed
       });
-  }
+  };
 
   const [mouse, setMouse] = useState(initialMouse);
 
-  const handleContextClick = (event) => {
+  const handleContextClick = event => {
     event.preventDefault();
-    let mouseData = {...mouse}
-    mouseData.mouseX = event.clientX - 2,
-    mouseData.mouseY = event.clientY - 4,
-    setMouse(mouseData)
+    const mouseData = {...mouse};
+    (mouseData.mouseX = event.clientX - 2),
+      (mouseData.mouseY = event.clientY - 4),
+      setMouse(mouseData);
   };
 
-  const [{ isDragging }, drag, preview] = useDrag({
-    item: () => ({ id, originalIndex, type: ItemTypes.TAG }),
+  const [{isDragging}, drag, preview] = useDrag({
+    item: () => ({id, originalIndex, type: ItemTypes.TAG}),
     type: ItemTypes.TAG,
-    collect: (monitor) => ({
+    collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
     end: (dropResult, monitor) => {
-      const drop_result = monitor.getDropResult()
-      const { id: droppedId, originalIndex } = monitor.getItem()
-      const didDrop = monitor.didDrop()
+      const drop_result = monitor.getDropResult();
+      const {id: droppedId, originalIndex} = monitor.getItem();
+      const didDrop = monitor.didDrop();
       if (!didDrop) {
-        console.info('didDrop Tag moveEntry')
-        moveEntry(droppedId, originalIndex)
+        console.info('didDrop Tag moveEntry');
+        moveEntry(droppedId, originalIndex);
       } else {
-        console.info('didDrop Tag')
-        if ( "type" in drop_result ) {
-          if ( drop_result.type === "Tag" ) {
+        console.info('didDrop Tag');
+        if ('type' in drop_result) {
+          if (drop_result.type === 'Tag') {
             // Then it was reordered in the list.
-            if (originalIndex != findEntry(id).index ) {
-              console.info("it moved from index " + originalIndex + " to " + findEntry(id).index)
+            if (originalIndex !== findEntry(id).index) {
+              console.info(
+                'it moved from index ' +
+                  originalIndex +
+                  ' to ' +
+                  findEntry(id).index
+              );
 
-              const entry = findEntry(id).entry
-              const entry_below = findEntryByIndex(index+1)
-              if (entry_below == null) {
+              const entry = findEntry(id).entry;
+              const entry_below = findEntryByIndex(index + 1);
+              let ordered_top;
+              let ordered_bottom;
+              if (entry_below === null) {
                 //Then it was moved to the bottom position, get the entry before it.
-                var ordered_top = findEntryByIndex(index-1)
-                var ordered_bottom = entry
+                ordered_top = findEntryByIndex(index - 1);
+                ordered_bottom = entry;
               } else {
-                var ordered_top = entry
-                var ordered_bottom = entry_below
+                ordered_top = entry;
+                ordered_bottom = entry_below;
               }
               const payload = {
-                "data": {
-                  "type": "Tag",
-                  "attributes": {
-                    "top": ordered_top.id,
-                    "bottom": ordered_bottom.id
+                data: {
+                  type: 'Tag',
+                  attributes: {
+                    top: ordered_top.id,
+                    bottom: ordered_bottom.id,
                   },
-                  "relationships": {
-                  }
-                }
-              }
+                  relationships: {},
+                },
+              };
               API.post('/tags/reorder', payload, {withCredentials: true})
-                .then(function (response) {
-                })
-                .catch(function (error) {
+                .then(function () {})
+                .catch(function () {
                   // handle error
                 })
                 .then(function () {
                   // always executed
                 });
-
             } else {
-              console.info("it wasn't moved.")
+              console.info("it wasn't moved.");
             }
           }
         }
       }
     },
-  })
+  });
 
-  drag(dragRef)
-  drop(dropRef)
+  drag(dragRef);
+  drop(dropRef);
 
-  const contextMenu = useMemo(() =>
-    <TagContextMenu mouse={mouse} deleteTag={deleteTag}/>, [mouse]);
-
+  const contextMenu = useMemo(
+    () => <TagContextMenu mouse={mouse} deleteTag={deleteTag} />,
+    [mouse]
+  );
 
   return (
     <>
-      <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}>
-        <div ref={(preview)} className={classes.entryWrapper}>
+      <div ref={dropRef} style={{opacity}} onContextMenu={handleContextClick}>
+        <div ref={preview} className={classes.entryWrapper}>
           <div
             className={classes.tagDragIndicatorContainer}
             onMouseEnter={mouseEnter}
-            onMouseLeave={mouseLeave}>
+            onMouseLeave={mouseLeave}
+          >
             <div
-              ref={(dragRef)}
+              ref={dragRef}
               className={classes.tagDragIndicator}
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
-              style={{ visibility: showDragHandle ? "visible" : "hidden" }} >
-                ::
+              style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
+            >
+              ::
             </div>
           </div>
           <div
@@ -264,20 +263,18 @@ const Tag = React.memo(function Tag(
             onMouseLeave={mouseLeave}
             ref={drop}
             className={classes.tagLabel}
-            style={{ backgroundColor }}
+            style={{backgroundColor}}
             onClick={handleTagClick}
-            onContextMenu={handleContextClick}>
-            {isActive ? tag.attributes.name : tag.attributes.name} { tag.attributes.entry_count }
+            onContextMenu={handleContextClick}
+          >
+            {isActive ? tag.attributes.name : tag.attributes.name}{' '}
+            {tag.attributes.entry_count}
           </div>
 
-          { appConfig.appStateStore.loggedInUser && (
-            <>
-              {contextMenu}
-            </>
-          )}
+          {appConfig.appStateStore.loggedInUser && <>{contextMenu}</>}
         </div>
       </div>
     </>
-  )
-})
-export default Tag
+  );
+});
+export default Tag;

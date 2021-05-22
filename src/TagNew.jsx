@@ -1,9 +1,8 @@
-import React, { useState, useContext } from 'react'
-import { useTheme } from '@material-ui/styles';
+import React, {useState, useContext} from 'react';
 import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
-import API from './api.js'
-import AppContext from './AppContext.js'
+import {makeStyles} from '@material-ui/core/styles';
+import API from './api.js';
+import AppContext from './AppContext.js';
 
 const useStyles = makeStyles({
   tagName: {
@@ -12,37 +11,35 @@ const useStyles = makeStyles({
     margin: 'auto',
     border: '1px solid red',
     paddingLeft: 2,
-    minWidth: '100px'
-  }
+    minWidth: '100px',
+  },
 });
 
-const TagNew = React.memo(function (props) {
-
-  const theme = useTheme();
-  const [tagName,setTagName] = useState();
+const TagNew = React.memo(function TagNew(props) {
+  const [tagName, setTagName] = useState();
   const classes = useStyles();
-  const appConfig = useContext(AppContext)
+  const appConfig = useContext(AppContext);
 
-  const handleTagNameChange = (newTagName) => {
+  const handleTagNameChange = newTagName => {
     setTagName(newTagName);
-  }
+  };
 
   const handleCancel = () => {
     setTagName(null);
     appConfig.tagNew = false;
-  }
+  };
 
   const handleSave = () => {
     const payload = {
-      'data': {
-        'type': 'Tag',
-        'attributes': {
-          'name': tagName
+      data: {
+        type: 'Tag',
+        attributes: {
+          name: tagName,
         },
-      }
-    }
+      },
+    };
     API.post('/tags', payload, {withCredentials: true})
-      .then(function (response) {
+      .then(function () {
         appConfig.tagNew = false;
         props.fetchTags();
       })
@@ -53,7 +50,7 @@ const TagNew = React.memo(function (props) {
       .then(function () {
         // always executed
       });
-  }
+  };
 
   return (
     <>
@@ -62,17 +59,32 @@ const TagNew = React.memo(function (props) {
           className={classes.tagName}
           contentEditable={true}
           suppressContentEditableWarning={true}
-          onBlur={(e) => { handleTagNameChange(e.currentTarget.textContent);}}>
+          onBlur={e => {
+            handleTagNameChange(e.currentTarget.textContent);
+          }}
+        >
           {tagName}
         </div>
       </div>
-      <Button size="small" variant="outlined" onClick={() => { handleSave();}}>
+      <Button
+        size="small"
+        variant="outlined"
+        onClick={() => {
+          handleSave();
+        }}
+      >
         Save
       </Button>
-      <Button size="small" variant="outlined" onClick={() => { handleCancel();}}>
+      <Button
+        size="small"
+        variant="outlined"
+        onClick={() => {
+          handleCancel();
+        }}
+      >
         Cancel
       </Button>
     </>
-  )
-})
-export default TagNew
+  );
+});
+export default TagNew;

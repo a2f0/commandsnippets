@@ -1,28 +1,24 @@
-import React, { useRef, useState, useMemo, useEffect, useContext } from 'react'
-import { useDrag, useDrop } from 'react-dnd'
-import ItemTypes from './ItemTypes'
-import { useTheme } from '@material-ui/styles';
-import API from './api.js'
-import { makeStyles } from '@material-ui/core/styles';
-import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
-import EntryContextMenu from './EntryContextMenu.jsx'
+import React, {useRef, useState, useMemo, useEffect, useContext} from 'react';
+import {useDrag, useDrop} from 'react-dnd';
+import ItemTypes from './ItemTypes';
+import API from './api.js';
+import {makeStyles} from '@material-ui/core/styles';
+import AppContext from './AppContext.js';
+import * as Constants from './constants';
+import EntryNew from './EntryNew.jsx';
 import EntryEdit from './EntryEdit.jsx';
-import EntryNew from './EntryNew.jsx'
-import AppContext from './AppContext.js'
-import * as Constants from './constants'
+import EntryContextMenu from './EntryContextMenu.jsx';
 
 const useStyles = makeStyles({
-
   entry: {
     display: 'inline-block',
-    verticalAlign: 'top'
+    verticalAlign: 'top',
   },
   entryContainer: {
     marginBottom: 16,
-    whiteSpace: 'pre'
+    whiteSpace: 'pre',
   },
-  entrySubject: {
-  },
+  entrySubject: {},
   entryBody: {
     fontSize: 14,
     fontFamily: 'monospace',
@@ -32,103 +28,102 @@ const useStyles = makeStyles({
     display: 'inline-block',
     fontWeight: 900,
     textAlign: 'center',
-    width: `${Constants.dragIndicatorWidthTag}px`
+    width: `${Constants.dragIndicatorWidthTag}px`,
   },
   dragIndicator: {
     cursor: 'grab',
-  }
+  },
 });
 
-const Entry = React.memo(function (
-  {
-    id,
-    index,
-    moveEntry,
-    findEntry,
-    handleDelete,
-    text_entry,
-    tag,
-    retrieveEntries,
-    findEntryByIndex
-  }) {
-
+const Entry = React.memo(function ({
+  id,
+  index,
+  moveEntry,
+  findEntry,
+  handleDelete,
+  text_entry,
+  tag,
+  retrieveEntries,
+  findEntryByIndex,
+}) {
   useEffect(() => {
     setTextEntry(text_entry);
   }, [text_entry]);
 
-  const appConfig = useContext(AppContext)
-  const [showNew, setShowNew] = useState(false)
-  const [textEntry, setTextEntry] = useState()
-  const dragRef = useRef(null)
-  const dropRef = useRef(null)
-  const originalIndex = findEntry(id).index
-  const [showDragHandle, setShowDragHandle] = useState(false)
+  const appConfig = useContext(AppContext);
+  const [showNew, setShowNew] = useState(false);
+  const [textEntry, setTextEntry] = useState();
+  const dragRef = useRef(null);
+  const dropRef = useRef(null);
+  const originalIndex = findEntry(id).index;
+  const [showDragHandle, setShowDragHandle] = useState(false);
   const classes = useStyles();
-  const theme = useTheme();
-  const [{ isDragging }, drag, preview] = useDrag({
-    item: () => ({ id, originalIndex, type: ItemTypes.ENTRY }),
+  const [{isDragging}, drag, preview] = useDrag({
+    item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
     type: ItemTypes.ENTRY,
-    collect: (monitor) => ({
+    collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
     end: (dropResult, monitor) => {
-      const drop_result = monitor.getDropResult()
-      const { id: droppedId, originalIndex } = monitor.getItem()
-      const didDrop = monitor.didDrop()
+      const drop_result = monitor.getDropResult();
+      const {id: droppedId, originalIndex} = monitor.getItem();
+      const didDrop = monitor.didDrop();
       if (!didDrop) {
-        moveEntry(droppedId, originalIndex)
+        moveEntry(droppedId, originalIndex);
       } else {
-        if ( "type" in drop_result ) {
-          if ( drop_result.type === "Tag" ) {
+        if ('type' in drop_result) {
+          if (drop_result.type === 'Tag') {
             const payload = {
-              'data': {
-                'type': 'TagTextEntryThroughModel',
-                'attributes': {},
-                'relationships': {
-                  'tag': {
-                    'data': {
-                      'type': 'Tag',
-                      'id': drop_result.id
-                    }
+              data: {
+                type: 'TagTextEntryThroughModel',
+                attributes: {},
+                relationships: {
+                  tag: {
+                    data: {
+                      type: 'Tag',
+                      id: drop_result.id,
+                    },
                   },
-                  'text_entry': {
-                    'data': {
-                      'type': 'TextEntry',
-                      'id': findEntry(id).entry.relationships.text_entry.data.id
-                    }
-                  }
-                }
-              }
-            }
-            const response = API.post('tags_entries', payload, {withCredentials: true});
+                  text_entry: {
+                    data: {
+                      type: 'TextEntry',
+                      id: findEntry(id).entry.relationships.text_entry.data.id,
+                    },
+                  },
+                },
+              },
+            };
+            API.post('tags_entries', payload, {
+              withCredentials: true,
+            });
           }
         } else {
           // Then it was reordered in the list.
-          if (originalIndex != findEntry(id).index ) {
-            const entry = findEntry(id).entry
-            const entry_below = findEntryByIndex(index+1)
-            if (entry_below == null) {
+          if (originalIndex !== findEntry(id).index) {
+            const entry = findEntry(id).entry;
+            const entry_below = findEntryByIndex(index + 1);
+            let ordered_top;
+            let ordered_bottom;
+            if (entry_below === null) {
               //Then it was moved to the bottom position, get the entry before it.
-              var ordered_top = findEntryByIndex(index-1)
-              var ordered_bottom = entry
+              ordered_top = findEntryByIndex(index - 1);
+              ordered_bottom = entry;
             } else {
-              var ordered_top = entry
-              var ordered_bottom = entry_below
+              ordered_top = entry;
+              ordered_bottom = entry_below;
             }
             const payload = {
-              "data": {
-                "type": "TagTextEntryThroughModel",
-                "attributes": {
-                  "top": ordered_top.id,
-                  "bottom": ordered_bottom.id
+              data: {
+                type: 'TagTextEntryThroughModel',
+                attributes: {
+                  top: ordered_top.id,
+                  bottom: ordered_bottom.id,
                 },
-                "relationships": {
-                }
-              }
-            }
+                relationships: {},
+              },
+            };
             API.post('/tags_entries/reorder', payload, {withCredentials: true})
-              .then(function (response) {
-              })
+              .then(function () {})
               .catch(function (error) {
                 // handle error
                 console.log(error);
@@ -137,69 +132,71 @@ const Entry = React.memo(function (
                 // always executed
               });
           } else {
-            console.info("it wasn't moved.")
+            console.info("it wasn't moved.");
           }
         }
       }
     },
-  })
+  });
   // Make sure opacity is above the useDrag call above
-  const opacity = isDragging ? 0 : 1
+  const opacity = isDragging ? 0 : 1;
   const [, drop] = useDrop({
     accept: ItemTypes.ENTRY,
-    canDrop: () => {
-    },
+    canDrop: () => {},
     hover(item, monitor) {
       if (!dragRef.current) {
-        return
+        return;
       }
-      const dragIndex = item.index
-      const hoverIndex = index
+      const dragIndex = item.index;
+      const hoverIndex = index;
       if (dragIndex === hoverIndex) {
-        return
+        return;
       }
       // Determine rectangle on screen
-      const hoverBoundingRect = dragRef.current?.getBoundingClientRect()
+      const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
       // Get vertical middle
       const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       // Determine mouse position
-      const clientOffset = monitor.getClientOffset()
+      const clientOffset = monitor.getClientOffset();
       // Get pixels to the top
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
       // Only perform the move when the mouse has crossed half of the items height
       // When dragging downwards, only move when the cursor is below 50%
       // When dragging upwards, only move when the cursor is above 50%
       // Dragging downwards
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return
+        return;
       }
       // Dragging upwards
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return
+        return;
       }
 
-      moveEntry(item.id, hoverIndex)
+      moveEntry(item.id, hoverIndex);
       // Note: we're mutating the monitor item here!
       // Generally it's better to avoid mutations,
       // but it's good here for the sake of performance
       // to avoid expensive index searches.
-      item.index = hoverIndex
+      item.index = hoverIndex;
     },
-  })
+  });
 
-  drag(dragRef)
-  drop(dropRef)
+  drag(dragRef);
+  drop(dropRef);
 
   const mouseEnter = () => {
-    if (appConfig.appStateStore.loggedInUser != '' && appConfig.entrySortOrder == 'order') {
-      setShowDragHandle(true)
+    if (
+      appConfig.appStateStore.loggedInUser !== '' &&
+      appConfig.entrySortOrder === 'order'
+    ) {
+      setShowDragHandle(true);
     }
-  }
+  };
   const mouseLeave = () => {
-    setShowDragHandle(false)
-  }
+    setShowDragHandle(false);
+  };
 
   const initialMouse = {
     mouseX: null,
@@ -210,32 +207,33 @@ const Entry = React.memo(function (
   const [isEditing, setIsEditing] = useState(false);
 
   const handleBeginEdit = () => {
-    setIsEditing(true)
+    setIsEditing(true);
   };
 
   const handleCancelEdit = () => {
-    setIsEditing(false)
+    setIsEditing(false);
   };
 
   const handleSave = (updated_subject, updated_body) => {
     const payload = {
-      'data': {
-        'id': text_entry.id,
-        'type': 'TextEntry',
-        'attributes': {
-          'subject': updated_subject,
-          'body': updated_body,
-        }
-      }
-    }
-    API.patch('entries/' + text_entry.id, payload,  {withCredentials: true})
+      data: {
+        id: text_entry.id,
+        type: 'TextEntry',
+        attributes: {
+          subject: updated_subject,
+          body: updated_body,
+        },
+      },
+    };
+    API.patch('entries/' + text_entry.id, payload, {withCredentials: true})
       .then(function (response) {
         // handle success
-        let new_text_entry = {...textEntry}
-        new_text_entry.attributes.subject = response.data.data.attributes.subject
-        new_text_entry.attributes.body =  response.data.data.attributes.body
-        setTextEntry(new_text_entry)
-        setIsEditing(false)
+        const new_text_entry = {...textEntry};
+        new_text_entry.attributes.subject =
+          response.data.data.attributes.subject;
+        new_text_entry.attributes.body = response.data.data.attributes.body;
+        setTextEntry(new_text_entry);
+        setIsEditing(false);
       })
       .catch(function (error) {
         // handle error
@@ -246,47 +244,56 @@ const Entry = React.memo(function (
       });
   };
 
-  const handleContextClick = (event) => {
+  const handleContextClick = event => {
     event.preventDefault();
     event.stopPropagation();
-    let mouseData = {...mouse}
-    mouseData.mouseX = event.clientX - 2,
-    mouseData.mouseY = event.clientY - 4,
-    setMouse(mouseData)
+    const mouseData = {...mouse};
+    (mouseData.mouseX = event.clientX - 2),
+      (mouseData.mouseY = event.clientY - 4),
+      setMouse(mouseData);
   };
 
   const handleNewEntry = () => {
-    setShowNew(true)
+    setShowNew(true);
   };
 
   const handleCancelNewEntry = () => {
     setShowNew(false);
   };
 
-  const contextMenu = useMemo(() =>
-    <EntryContextMenu
-      mouse={mouse}
-      id={id}
-      text_entry={text_entry}
-      handleDelete={handleDelete}
-      handleNewEntry={handleNewEntry}
-      handleBeginEdit={handleBeginEdit}/>, [mouse]);
+  const contextMenu = useMemo(
+    () => (
+      <EntryContextMenu
+        mouse={mouse}
+        id={id}
+        text_entry={text_entry}
+        handleDelete={handleDelete}
+        handleNewEntry={handleNewEntry}
+        handleBeginEdit={handleBeginEdit}
+      />
+    ),
+    [mouse]
+  );
 
   return (
     <>
-      { ! isEditing && (
-        <div ref={(dropRef)} style={{opacity}} onContextMenu={handleContextClick}>
-          <div ref={(preview)} className={classes.entryContainer}>
+      {!isEditing && (
+        <div ref={dropRef} style={{opacity}} onContextMenu={handleContextClick}>
+          <div ref={preview} className={classes.entryContainer}>
             <div
               className={classes.dragIndicatorContainer}
               onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}>
+              onMouseLeave={mouseLeave}
+            >
               <div
-                ref={(dragRef)}
+                ref={dragRef}
                 className={classes.dragIndicator}
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
-                style={{ visibility: showDragHandle ? "visible" : "hidden" }}>::</div>
+                style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
+              >
+                ::
+              </div>
             </div>
             {/* <div
               style={{ ...theme.custom.reuseCount }}
@@ -294,9 +301,11 @@ const Entry = React.memo(function (
               onMouseLeave={mouseLeave}>
               {text_entry.attributes.reused_count}
             </div> */}
-            <div className={classes.entry}
+            <div
+              className={classes.entry}
               onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}>
+              onMouseLeave={mouseLeave}
+            >
               <div className={classes.entrySubject}>
                 {text_entry.attributes.subject}
               </div>
@@ -308,29 +317,27 @@ const Entry = React.memo(function (
         </div>
       )}
 
-      { showNew && (
+      {showNew && (
         <EntryNew
           tag={tag}
           classes={classes}
           retrieveEntries={retrieveEntries}
-          handleCancelNewEntry={handleCancelNewEntry}/>
+          handleCancelNewEntry={handleCancelNewEntry}
+        />
       )}
 
-      { appConfig.appStateStore.loggedInUser && (
-        <>
-          {contextMenu}
-        </>
-      )}
+      {appConfig.appStateStore.loggedInUser && <>{contextMenu}</>}
 
-      { isEditing && (
+      {isEditing && (
         <EntryEdit
           classes={classes}
           subject={text_entry.attributes.subject}
           body={text_entry.attributes.body}
           handleSave={handleSave}
-          handleCancelEdit={handleCancelEdit}/>
+          handleCancelEdit={handleCancelEdit}
+        />
       )}
     </>
-  )
-})
-export default Entry
+  );
+});
+export default Entry;

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react'
-import { useTheme } from '@material-ui/styles';
+import React, {useState, useEffect} from 'react';
+import {useTheme} from '@material-ui/styles';
+import {makeStyles} from '@material-ui/core/styles';
+import API from './api.js';
 import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
-import API from './api.js'
 
 const useStyles = makeStyles({
-
   entry: {
     display: 'inline-block',
     verticalAlign: 'top',
@@ -25,7 +24,7 @@ const useStyles = makeStyles({
     margin: 'auto',
     border: '1px solid red',
     padding: 2,
-    minWidth: '300px'
+    minWidth: '300px',
   },
   entryBody: {
     display: 'inline-block',
@@ -35,67 +34,68 @@ const useStyles = makeStyles({
     whiteSpace: 'pre-wrap',
     padding: 2,
     border: '1px solid red',
-    minWidth: '300px'
-  }
+    minWidth: '300px',
+  },
 });
 
-const EntryNew = React.memo(function (props) {
-
+const EntryNew = React.memo(function EntryNew(props) {
   const theme = useTheme();
 
   useEffect(() => {
-    setBody(props.body)
-    setSubject(props.subject)
+    setBody(props.body);
+    setSubject(props.subject);
   }, [props.body, props.subject]);
 
-  const [subject,setSubject] = useState()
-  const [body,setBody] = useState()
+  const [subject, setSubject] = useState();
+  const [body, setBody] = useState();
   const classes = useStyles();
 
   const handleSave = () => {
-    console.log('handle save')
+    console.log('handle save');
     //setBody()
     //setSubject()
     //props.handleSave(subject, body)
     const text_entry_payload = {
-      'data': {
-        'type': 'TextEntry',
-        'attributes': {
-          'subject': subject,
-          'body': body,
-        }
-      }
-    }
+      data: {
+        type: 'TextEntry',
+        attributes: {
+          subject: subject,
+          body: body,
+        },
+      },
+    };
 
     API.post('/entries', text_entry_payload, {withCredentials: true})
       .then(function (response) {
         // handle success
         console.log(response);
-        console.log(props.tag)
+        console.log(props.tag);
         const text_entry_through_model_payload = {
-          'data': {
-            'type': 'TagTextEntryThroughModel',
-            'attributes': {},
-            'relationships': {
-              'tag': {
-                'data': {
-                  'type': 'Tag',
-                  'id': props.tag.id
-                }
+          data: {
+            type: 'TagTextEntryThroughModel',
+            attributes: {},
+            relationships: {
+              tag: {
+                data: {
+                  type: 'Tag',
+                  id: props.tag.id,
+                },
               },
-              'text_entry': {
-                'data': {
-                  'type': 'TextEntry',
-                  'id': response.data.data.id
-                }
-              }
-            }
-          }
-        }
-        API.post('/tags_entries', text_entry_through_model_payload, {withCredentials: true})
-          .then(function (response) {
-            props.retrieveEntries()
-            props.handleCancelNewEntry()
+              text_entry: {
+                data: {
+                  type: 'TextEntry',
+                  id: response.data.data.id,
+                },
+              },
+            },
+          },
+        };
+        API.post('/tags_entries', text_entry_through_model_payload, {
+          withCredentials: true,
+        })
+          .then(function () {
+            props.retrieveEntries();
+            props.handleCancelNewEntry();
           })
           .catch(function (error) {
             // handle error
@@ -115,18 +115,18 @@ const EntryNew = React.memo(function (props) {
   };
 
   const handleCancel = () => {
-    setBody(props.body)
-    setSubject(props.subject)
-    props.handleCancelNewEntry()
-  }
+    setBody(props.body);
+    setSubject(props.subject);
+    props.handleCancelNewEntry();
+  };
 
-  const handleBodyChange = (body) => {
+  const handleBodyChange = body => {
     setBody(body);
-  }
+  };
 
-  const handleSubjectChange = (subject) => {
+  const handleSubjectChange = subject => {
     setSubject(subject);
-  }
+  };
 
   return (
     <>
@@ -134,10 +134,14 @@ const EntryNew = React.memo(function (props) {
         <div style={{...theme.custom.dragIndicator}}></div>
         <div className={classes.entry}>
           <div>
-            <div className={classes.entrySubject}
+            <div
+              className={classes.entrySubject}
               contentEditable={true}
               suppressContentEditableWarning={true}
-              onBlur={(e) => { handleSubjectChange(e.currentTarget.textContent);}}>
+              onBlur={e => {
+                handleSubjectChange(e.currentTarget.textContent);
+              }}
+            >
               {subject}
             </div>
           </div>
@@ -146,19 +150,34 @@ const EntryNew = React.memo(function (props) {
               className={classes.entryBody}
               contentEditable={true}
               suppressContentEditableWarning={true}
-              onBlur={(e) => { handleBodyChange(e.currentTarget.textContent);}}>
+              onBlur={e => {
+                handleBodyChange(e.currentTarget.textContent);
+              }}
+            >
               {body}
             </div>
           </div>
-          <Button size="small" variant="outlined" onClick={() => { handleSave();}}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => {
+              handleSave();
+            }}
+          >
             Save
           </Button>
-          <Button size="small" variant="outlined" onClick={() => { handleCancel();}}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => {
+              handleCancel();
+            }}
+          >
             Cancel
           </Button>
         </div>
       </div>
     </>
-  )
-})
-export default EntryNew
+  );
+});
+export default EntryNew;

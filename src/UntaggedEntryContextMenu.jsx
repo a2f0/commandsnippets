@@ -1,11 +1,8 @@
-import React, {useEffect, useState } from 'react'
+import React, {useEffect, useState} from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import API from './api.js'
 
 const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(props) {
-
-
   const initialMouse = {
     mouseX: null,
     mouseY: null,
@@ -14,7 +11,7 @@ const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(props) {
   const [mouse, setMouse] = useState(initialMouse);
 
   useEffect(() => {
-    setMouse(props.mouse)
+    setMouse(props.mouse);
   }, [props.mouse]);
 
   const handleClose = () => {
@@ -34,12 +31,18 @@ const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(props) {
       anchorReference="anchorPosition"
       anchorPosition={
         mouse.mouseY !== null && mouse.mouseX !== null
-          ? { top: mouse.mouseY, left: mouse.mouseX }
+          ? {top: mouse.mouseY, left: mouse.mouseX}
           : undefined
       }
     >
-      <MenuItem onClick={() => { handleDelete();}}>Delete</MenuItem>
+      <MenuItem
+        onClick={() => {
+          handleDelete();
+        }}
+      >
+        Delete
+      </MenuItem>
     </Menu>
-  )
-})
-export default UntaggedEntryContextMenu
+  );
+});
+export default UntaggedEntryContextMenu;

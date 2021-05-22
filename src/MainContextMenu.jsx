@@ -1,10 +1,8 @@
-import React, {useEffect, useState } from 'react'
+import React, {useEffect, useState} from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
 const MainContextMenu = React.memo(function MainContextMenu(props) {
-
-
   const initialMouse = {
     mouseX: null,
     mouseY: null,
@@ -13,7 +11,7 @@ const MainContextMenu = React.memo(function MainContextMenu(props) {
   const [mouse, setMouse] = useState(initialMouse);
 
   useEffect(() => {
-    setMouse(props.mouse)
+    setMouse(props.mouse);
   }, [props.mouse]);
 
   const handleClose = () => {
@@ -33,12 +31,18 @@ const MainContextMenu = React.memo(function MainContextMenu(props) {
       anchorReference="anchorPosition"
       anchorPosition={
         mouse.mouseY !== null && mouse.mouseX !== null
-          ? { top: mouse.mouseY, left: mouse.mouseX }
+          ? {top: mouse.mouseY, left: mouse.mouseX}
           : undefined
       }
     >
-      <MenuItem onClick={() => { handleShowNewEntry();}}>New Entry</MenuItem>
+      <MenuItem
+        onClick={() => {
+          handleShowNewEntry();
+        }}
+      >
+        New Entry
+      </MenuItem>
     </Menu>
-  )
-})
-export default MainContextMenu
+  );
+});
+export default MainContextMenu;

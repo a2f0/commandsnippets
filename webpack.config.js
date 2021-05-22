@@ -1,3 +1,4 @@
+/* eslint node/no-unpublished-require: 0 */
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -9,40 +10,28 @@ module.exports = {
     filename: 'bundle.[contenthash].js',
   },
   devServer: {
-    contentBase: "./build",
+    contentBase: './build',
   },
   module: {
     rules: [
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        use: ['babel-loader', 'eslint-loader']
-      },
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        loader: 'eslint-loader',
-        options: {
-          fix: true,
-        },
+        use: ['babel-loader', 'eslint-loader'],
       },
       {
         test: /\.less$/,
-        use: [
-          'style-loader',
-          'css-loader',
-          'less-loader',
-        ],
+        use: ['style-loader', 'css-loader', 'less-loader'],
       },
       {
         test: /\.svg$/,
         use: ['@svgr/webpack', 'url-loader'],
-      }
-    ]
+      },
+    ],
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template:  path.resolve('./index.html'),
+      template: path.resolve('./index.html'),
     }),
-  ]
+  ],
 };

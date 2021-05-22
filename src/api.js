@@ -1,5 +1,4 @@
-import axios from "axios";
-
+import axios from 'axios';
 
 export const environment = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
@@ -7,9 +6,9 @@ export const environment = () => {
   } else if (window.location.hostname === 'tearleads.com') {
     return 'production';
   } else {
-    return "local";
+    return 'local';
   }
-}
+};
 
 export const baseHTTPURL = () => {
   if (environment() === 'staging') {
@@ -17,20 +16,20 @@ export const baseHTTPURL = () => {
   } else if (environment() === 'production') {
     return 'https://api.tearleads.com';
   } else {
-    return "http://localhost:9001";
+    return 'http://localhost:9001';
   }
-}
+};
 
 const baseAPIURL = () => {
   return baseHTTPURL() + '/api/v1';
-}
+};
 
 const API = axios.create({
   baseURL: baseAPIURL(),
-  responseType: "json",
+  responseType: 'json',
   headers: {
-    'Content-Type': 'application/vnd.api+json'
+    'Content-Type': 'application/vnd.api+json',
   },
 });
 
-export default API
+export default API;

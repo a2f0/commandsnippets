@@ -1,15 +1,15 @@
-import React, { useRef } from 'react'
+import {makeStyles} from '@material-ui/core/styles';
+import * as Constants from './constants';
+import React from 'react';
 import Drawer from '@material-ui/core/Drawer';
-import { makeStyles } from '@material-ui/core/styles';
-import * as Constants from './constants'
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles({
   button: {
-    textTransform: 'none'
+    textTransform: 'none',
   },
   root: {
     display: 'flex',
-    background: 'red'
+    background: 'red',
   },
   drawer: {
     width: Constants.drawerWidth,
@@ -20,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
     borderRight: 0,
     borderLeft: 0,
     width: Constants.drawerWidth,
-    overflow: "hidden"
+    overflow: 'hidden',
   },
   drawerContainer: {
     overflow: 'auto',
@@ -33,9 +33,9 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 1,
   },
   list: {
-    padding: 0
+    padding: 0,
   },
-}));
+});
 
 const CustomDrawer = function (props) {
   const classes = useStyles();
@@ -50,6 +50,6 @@ const CustomDrawer = function (props) {
     >
       {props.children}
     </Drawer>
-  )
-}
-export default CustomDrawer
+  );
+};
+export default CustomDrawer;

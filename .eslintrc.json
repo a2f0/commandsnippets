@@ -1,0 +1,38 @@
+{
+  "extends": [
+    "./node_modules/gts/",
+    "plugin:react/recommended"
+  ],
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 2021,
+    "ecmaFeatures": {
+      "experimentalObjectRestSpread": true,
+      "jsx": true
+    }
+  },
+  "plugins": [
+    "react",
+    "mocha"
+  ],
+  "rules": {
+    "node/no-unsupported-features/es-syntax": "off",
+    "prefer-arrow-callback": "off",
+    "react/prop-types": "off"
+  },
+  "globals": {
+    "localStorage": true,
+    "window": true,
+    "document": true,
+    "browser": true // Mocha
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "env": {
+    "mocha": true
+  }
+}
