@@ -7,5 +7,5 @@
     "jsx": "react",
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "src/Empty.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "src/Empty.ts"]
 }
