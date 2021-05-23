@@ -1,5 +1,5 @@
 import {makeStyles} from '@material-ui/core/styles';
-import * as Constants from './constants';
+import * as Constants from './constants.ts';
 import React from 'react';
 import Drawer from '@material-ui/core/Drawer';
 

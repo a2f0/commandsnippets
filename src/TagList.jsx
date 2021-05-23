@@ -9,7 +9,7 @@ import TagNew from './TagNew.jsx';
 import AppContext from './AppContext.ts';
 import {observer} from 'mobx-react';
 import {useParams, useHistory} from 'react-router-dom';
-import * as Constants from './constants';
+import * as Constants from './constants.ts';
 import update from 'immutability-helper';
 
 const useStyles = makeStyles({

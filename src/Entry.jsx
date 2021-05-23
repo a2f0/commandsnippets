@@ -4,7 +4,7 @@ import ItemTypes from './ItemTypes';
 import API from './api.ts';
 import {makeStyles} from '@material-ui/core/styles';
 import AppContext from './AppContext.ts';
-import * as Constants from './constants';
+import * as Constants from './constants.ts';
 import EntryNew from './EntryNew.jsx';
 import EntryEdit from './EntryEdit.jsx';
 import EntryContextMenu from './EntryContextMenu.jsx';

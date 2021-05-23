@@ -7,7 +7,7 @@ import AppContext from './AppContext.ts';
 import {useHistory} from 'react-router-dom';
 import API from './api.ts';
 import {makeStyles} from '@material-ui/core/styles';
-import * as Constants from './constants';
+import * as Constants from './constants.ts';
 
 const useStyles = makeStyles({
   entry: {

@@ -8,7 +8,7 @@ import EntryList from './EntryList.jsx';
 import {observer} from 'mobx-react';
 import AppContext from './AppContext.ts';
 import UntaggedEntryList from './UntaggedEntryList.jsx';
-import * as Constants from './constants';
+import * as Constants from './constants.ts';
 import GithubAuth from './GithubAuth.jsx';
 
 const appBarHeight = 52;
