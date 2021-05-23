@@ -1,6 +1,7 @@
-import {types} from 'mobx-state-tree';
+import {IDisposer, Instance, types} from 'mobx-state-tree';
 import {destroy, onSnapshot, applySnapshot} from 'mobx-state-tree';
-import {environment} from './api.ts';
+import {environment} from './api';
+declare var localStorage: any;
 
 const AppStateStoreModel = types
   .model({
@@ -9,16 +10,18 @@ const AppStateStoreModel = types
     tagSortOrder: types.string,
   })
   .actions(self => ({
-    setLoggedInUser(handle) {
+    setLoggedInUser(handle: string) {
       self.loggedInUser = handle;
     },
-    setSelectedTheme(theme) {
+    setSelectedTheme(theme: string) {
       self.selectedTheme = theme;
     },
-    setTagSortOrder(order) {
+    setTagSortOrder(order: string) {
       self.tagSortOrder = order;
     },
   }));
+
+interface IAppStateStoreModel extends Instance<typeof AppStateStoreModel> {}
 
 const defaultState = {
   loggedInUser: '',
@@ -32,9 +35,9 @@ const initialState = localStorage.getItem(localStorageKey)
   ? JSON.parse(localStorage.getItem(localStorageKey))
   : defaultState;
 
-let snapshotListener;
+let snapshotListener: IDisposer;
 
-function createAppStateStore(snapshot) {
+function createAppStateStore(snapshot: any): IAppStateStoreModel {
   // clean up snapshot listener
   if (snapshotListener) snapshotListener();
   // kill old store to prevent accidental use and run clean up hooks
@@ -55,7 +58,7 @@ function createAppStateStore(snapshot) {
 
   return store;
 }
-
-let store = createAppStateStore(initialState);
+let store: IAppStateStoreModel | undefined;
+store = createAppStateStore(initialState);
 
 export default store;

@@ -9,7 +9,7 @@ import {lightTheme, darkTheme} from './themes.js';
 import {observable} from 'mobx';
 import AppContext from './AppContext.ts';
 import Main from './Main.jsx';
-import AppStateStore from './AppStateStore.js';
+import AppStateStore from './AppStateStore.ts';
 import {observer} from 'mobx-react';
 import GithubAuth from './GithubAuth.jsx';
 import GoogleAuth from './GoogleAuth.jsx';

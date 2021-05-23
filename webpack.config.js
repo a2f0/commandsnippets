@@ -34,6 +34,9 @@ module.exports = {
       },
     ],
   },
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve('./index.html'),
