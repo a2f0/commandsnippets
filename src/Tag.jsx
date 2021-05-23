@@ -3,7 +3,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import ItemTypes from './ItemTypes';
 import {useTheme} from '@material-ui/styles';
 import TagContextMenu from './TagContextMenu.jsx';
-import AppContext from './AppContext.js';
+import AppContext from './AppContext.ts';
 import {useHistory} from 'react-router-dom';
 import API from './api.ts';
 import {makeStyles} from '@material-ui/core/styles';

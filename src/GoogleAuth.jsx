@@ -1,6 +1,6 @@
 import React, {useEffect, useContext} from 'react';
 import API from './api.ts';
-import AppContext from './AppContext.js';
+import AppContext from './AppContext.ts';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {Google} from '@icons-pack/react-simple-icons';

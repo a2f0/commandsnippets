@@ -7,7 +7,7 @@ import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import {lightTheme, darkTheme} from './themes.js';
 import {observable} from 'mobx';
-import AppContext from './AppContext.js';
+import AppContext from './AppContext.ts';
 import Main from './Main.jsx';
 import AppStateStore from './AppStateStore.js';
 import {observer} from 'mobx-react';

@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useContext} from 'react';
 import API from './api.ts';
 import {autorun} from 'mobx';
-import AppContext from './AppContext.js';
+import AppContext from './AppContext.ts';
 import {observer} from 'mobx-react';
 import {useLocation} from 'react-router-dom';
 import UntaggedEntry from './UntaggedEntry.jsx';

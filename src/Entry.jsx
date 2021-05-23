@@ -3,7 +3,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import ItemTypes from './ItemTypes';
 import API from './api.ts';
 import {makeStyles} from '@material-ui/core/styles';
-import AppContext from './AppContext.js';
+import AppContext from './AppContext.ts';
 import * as Constants from './constants';
 import EntryNew from './EntryNew.jsx';
 import EntryEdit from './EntryEdit.jsx';

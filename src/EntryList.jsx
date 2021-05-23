@@ -5,7 +5,7 @@ import update from 'immutability-helper';
 import ItemTypes from './ItemTypes';
 import API from './api.ts';
 import {autorun} from 'mobx';
-import AppContext from './AppContext.js';
+import AppContext from './AppContext.ts';
 import {observer} from 'mobx-react';
 import {useLocation, useParams} from 'react-router-dom';
 

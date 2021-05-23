@@ -11,7 +11,7 @@ import {useTheme} from '@material-ui/styles';
 import {darkTheme, lightTheme} from './themes.js';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import CheckIcon from '@material-ui/icons/Check';
-import AppContext from './AppContext.js';
+import AppContext from './AppContext.ts';
 import {useHistory} from 'react-router-dom';
 import {observer} from 'mobx-react';
 import {baseHTTPURL} from './api.ts';

@@ -7,7 +7,8 @@
     "outDir": "build",
     "jsx": "react",
     // Don't check node_modules
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": true
   },
   "include": ["src/**/*.ts", "test/**/*.ts", "src/Empty.ts"]
 }
