@@ -22,41 +22,31 @@ jobs:
         with:
           python-version: '3.7'
           architecture: 'x64'
-
-      - name: Install
-        uses: ianwalter/puppeteer-container@v4.0.0
-        with:
-          args: npm install
-      - name: Test
-        uses: ianwalter/puppeteer-container@v4.0.0
-        with:
-          args: npm run ci-headless
-
-      - name: cleanup test artifacts
-        uses: ianwalter/puppeteer-container@v4.0.0
-        with:
-          args: rm -rf core
-
-      - name: npm install
-        run: npm install
       - name: npm audit
         run: npm audit
+      - name: npm install
+        run: npm install
       - name: pre-commit
         run: |
           pip install pre-commit
           pre-commit run --all-files
-
+      - name: run tests
+        uses: ianwalter/puppeteer-container@v4.0.0
+        with:
+          args: npm run ci-headless
+      - name: cleanup test artifacts
+        uses: ianwalter/puppeteer-container@v4.0.0
+        with:
+          args: rm -rf core
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
       - name: Build SHA image
         if: github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production'
         env:
