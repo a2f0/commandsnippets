@@ -1,8 +1,8 @@
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import Button from '@material-ui/core/Button';
 import {makeStyles} from '@material-ui/core/styles';
 import API from './api.ts';
-import AppContext from './AppContext.ts';
+import {useAppContext} from './AppContext.tsx';
 
 const useStyles = makeStyles({
   tagName: {
@@ -18,7 +18,7 @@ const useStyles = makeStyles({
 const TagNew = React.memo(function TagNew(props) {
   const [tagName, setTagName] = useState();
   const classes = useStyles();
-  const appConfig = useContext(AppContext);
+  const appConfig = useAppContext();
 
   const handleTagNameChange = newTagName => {
     setTagName(newTagName);

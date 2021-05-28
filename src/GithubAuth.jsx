@@ -1,6 +1,6 @@
-import React, {useEffect, useContext} from 'react';
+import React, {useEffect} from 'react';
 import API from './api.ts';
-import AppContext from './AppContext.ts';
+import {useAppContext} from './AppContext.tsx';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {useTheme} from '@material-ui/styles';
@@ -39,7 +39,7 @@ const useStyles = makeStyles({
 const GithubAuth = React.memo(
   observer(function GithubAuth() {
     const theme = useTheme();
-    const appConfig = useContext(AppContext);
+    const appConfig = useAppContext();
     const classes = useStyles();
 
     useEffect(() => {

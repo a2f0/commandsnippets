@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import LeftDrawer from './LeftDrawer.jsx';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -6,7 +6,7 @@ import {makeStyles} from '@material-ui/core/styles';
 import MenuBar from './MenuBar.jsx';
 import EntryList from './EntryList.jsx';
 import {observer} from 'mobx-react';
-import AppContext from './AppContext.ts';
+import {useAppContext} from './AppContext.tsx';
 import UntaggedEntryList from './UntaggedEntryList.jsx';
 import * as Constants from './constants.ts';
 import GithubAuth from './GithubAuth.jsx';
@@ -66,7 +66,7 @@ const useStyles = makeStyles(theme => ({
 
 const Main = React.memo(
   observer(function Main(props) {
-    const appConfig = useContext(AppContext);
+    const appConfig = useAppContext();
     const classes = useStyles();
 
     // const initialMouse = {

@@ -1,6 +1,6 @@
 import React, {useState, useMemo} from 'react';
 import {useDrag} from 'react-dnd';
-import ItemTypes from './ItemTypes';
+import ItemTypes from './ItemTypes.ts';
 import API from './api.ts';
 import {observer} from 'mobx-react';
 import {makeStyles} from '@material-ui/core/styles';

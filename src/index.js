@@ -7,13 +7,13 @@ import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import {lightTheme, darkTheme} from './themes.js';
 import {observable} from 'mobx';
-import AppContext from './AppContext.ts';
 import Main from './Main.jsx';
 import AppStateStore from './AppStateStore.ts';
 import {observer} from 'mobx-react';
 import GithubAuth from './GithubAuth.jsx';
 import GoogleAuth from './GoogleAuth.jsx';
 import packageJson from '../package.json';
+import {AppContextProvider} from './AppContext.tsx';
 
 console.info('Package version: ' + packageJson.version);
 
@@ -26,7 +26,6 @@ const useStyles = makeStyles({
 const appConfig = observable({
   entrySortOrder: 'order',
   tagSortOrder: 'order',
-  authenticatedUser: null,
   loggedInUser: null,
   mainPanel: 'EntryList',
   appStateStore: AppStateStore,
@@ -53,7 +52,7 @@ const AppRouter = React.memo(
     };
     return (
       <Router>
-        <AppContext.Provider value={appConfig}>
+        <AppContextProvider value={appConfig}>
           <MuiThemeProvider theme={selectedTheme}>
             <CssBaseline />
             <DndProvider backend={HTML5Backend}>
@@ -83,7 +82,7 @@ const AppRouter = React.memo(
               </div>
             </DndProvider>
           </MuiThemeProvider>
-        </AppContext.Provider>
+        </AppContextProvider>
       </Router>
     );
   })

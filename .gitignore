@@ -3,6 +3,7 @@ dist/
 node_modules/
 .DS_Store
 .env
+src/ts-out
 
 /.blackbox/pubring.gpg~
 /.blackbox/pubring.kbx~

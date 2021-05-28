@@ -130,7 +130,7 @@ const EntryNew = React.memo(function EntryNew(props) {
 
   return (
     <>
-      <div className={props.classes.entryWrapper}>
+      <div>
         <div style={{...theme.custom.dragIndicator}}></div>
         <div className={classes.entry}>
           <div>

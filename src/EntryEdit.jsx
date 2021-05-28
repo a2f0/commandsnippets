@@ -67,7 +67,7 @@ const EntryEdit = React.memo(function EntryEdit(props) {
 
   return (
     <>
-      <div className={props.classes.entryWrapper}>
+      <div>
         <div style={{...theme.custom.dragIndicator}}></div>
         <div className={classes.entry}>
           <div>

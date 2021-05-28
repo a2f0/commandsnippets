@@ -1,7 +1,7 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, {useState, useEffect} from 'react';
 import API from './api.ts';
 import {autorun} from 'mobx';
-import AppContext from './AppContext.ts';
+import {useAppContext} from './AppContext.tsx';
 import {observer} from 'mobx-react';
 import {useLocation} from 'react-router-dom';
 import UntaggedEntry from './UntaggedEntry.jsx';
@@ -12,7 +12,7 @@ const width = {
 
 const UntaggedEntryList = React.memo(
   observer(function UntaggedEntryList() {
-    const appConfig = useContext(AppContext);
+    const appConfig = useAppContext();
     const [data, setData] = useState({data: [], included: []});
     const location = useLocation();
 

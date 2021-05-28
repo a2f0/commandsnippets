@@ -21,7 +21,8 @@ const AppStateStoreModel = types
     },
   }));
 
-interface IAppStateStoreModel extends Instance<typeof AppStateStoreModel> {}
+export interface IAppStateStoreModel
+  extends Instance<typeof AppStateStoreModel> {}
 
 const defaultState = {
   loggedInUser: '',
@@ -34,6 +35,8 @@ const localStorageKey = 'mst-tearleads-' + environment();
 const initialState = localStorage.getItem(localStorageKey)
   ? JSON.parse(localStorage.getItem(localStorageKey))
   : defaultState;
+
+// const initialState = defaultState;
 
 let snapshotListener: IDisposer;
 
@@ -55,10 +58,9 @@ function createAppStateStore(snapshot: any): IAppStateStoreModel {
   snapshotListener = onSnapshot(store, snapshot =>
     localStorage.setItem(localStorageKey, JSON.stringify(snapshot))
   );
-
   return store;
 }
-let store: IAppStateStoreModel | undefined;
+let store: IAppStateStoreModel;
 store = createAppStateStore(initialState);
 
 export default store;

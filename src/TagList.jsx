@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useContext} from 'react';
+import React, {useEffect, useState} from 'react';
 import Tag from './Tag.jsx';
 import TagSearch from './Search.jsx';
 import List from '@material-ui/core/List';
@@ -6,7 +6,7 @@ import {makeStyles} from '@material-ui/core/styles';
 import API from './api.ts';
 import {autorun} from 'mobx';
 import TagNew from './TagNew.jsx';
-import AppContext from './AppContext.ts';
+import {useAppContext} from './AppContext.tsx';
 import {observer} from 'mobx-react';
 import {useParams, useHistory} from 'react-router-dom';
 import * as Constants from './constants.ts';
@@ -33,7 +33,7 @@ const useStyles = makeStyles({
 
 const TagList = React.memo(
   observer(function TagList() {
-    const appConfig = useContext(AppContext);
+    const appConfig = useAppContext();
     const [data, setData] = useState({data: [], included: []});
     const {user} = useParams();
     const history = useHistory();

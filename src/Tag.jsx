@@ -1,9 +1,9 @@
-import React, {useRef, useState, useContext, useMemo} from 'react';
+import React, {useRef, useState, useMemo} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
-import ItemTypes from './ItemTypes';
+import ItemTypes from './ItemTypes.ts';
 import {useTheme} from '@material-ui/styles';
 import TagContextMenu from './TagContextMenu.jsx';
-import AppContext from './AppContext.ts';
+import {useAppContext} from './AppContext.tsx';
 import {useHistory} from 'react-router-dom';
 import API from './api.ts';
 import {makeStyles} from '@material-ui/core/styles';
@@ -117,7 +117,7 @@ const Tag = React.memo(function Tag({
     backgroundColor = 'gray';
   }
 
-  const appConfig = useContext(AppContext);
+  const appConfig = useAppContext();
   const history = useHistory();
 
   const handleTagClick = () => {

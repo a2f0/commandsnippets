@@ -1,17 +1,17 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useDrop} from 'react-dnd';
-import Entry from './Entry.jsx';
+import Entry from './Entry.tsx';
 import update from 'immutability-helper';
-import ItemTypes from './ItemTypes';
+import ItemTypes from './ItemTypes.ts';
 import API from './api.ts';
 import {autorun} from 'mobx';
-import AppContext from './AppContext.ts';
+import {useAppContext} from './AppContext.tsx';
 import {observer} from 'mobx-react';
 import {useLocation, useParams} from 'react-router-dom';
 
 const EntryList = React.memo(
   observer(function EntryList() {
-    const appConfig = useContext(AppContext);
+    const appConfig = useAppContext();
     const [data, setData] = useState({data: [], included: []});
     const location = useLocation();
     const {user} = useParams();

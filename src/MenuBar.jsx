@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Fade from '@material-ui/core/Fade';
@@ -11,7 +11,7 @@ import {useTheme} from '@material-ui/styles';
 import {darkTheme, lightTheme} from './themes.js';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import CheckIcon from '@material-ui/icons/Check';
-import AppContext from './AppContext.ts';
+import {useAppContext} from './AppContext.tsx';
 import {useHistory} from 'react-router-dom';
 import {observer} from 'mobx-react';
 import {baseHTTPURL} from './api.ts';
@@ -85,7 +85,7 @@ const MenuBar = React.memo(
     const classes = useStyles();
     const history = useHistory();
     const theme = useTheme();
-    const appConfig = useContext(AppContext);
+    const appConfig = useAppContext();
     const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
     const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
     const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);

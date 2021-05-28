@@ -1,14 +1,14 @@
-import React, {useRef, useState, useMemo, useEffect, useContext} from 'react';
+import * as React from 'react';
+import {useRef, useState, useMemo, useEffect} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import ItemTypes from './ItemTypes';
-import API from './api.ts';
+import API from './api';
 import {makeStyles} from '@material-ui/core/styles';
-import AppContext from './AppContext.ts';
-import * as Constants from './constants.ts';
+import {useAppContext} from './AppContext';
+import * as Constants from './constants';
 import EntryNew from './EntryNew.jsx';
 import EntryEdit from './EntryEdit.jsx';
 import EntryContextMenu from './EntryContextMenu.jsx';
-
 const useStyles = makeStyles({
   entry: {
     display: 'inline-block',
@@ -35,7 +35,50 @@ const useStyles = makeStyles({
   },
 });
 
-const Entry = React.memo(function ({
+interface IEntry {
+  id: number;
+  index: number;
+  type: string;
+  relationships: {
+    text_entry: ITextEntry;
+  };
+}
+
+export interface ITag {
+  id: number;
+  type: string;
+}
+
+interface ITextEntry {
+  id: number;
+  type: string;
+  attributes: {
+    subject: string;
+    body: string;
+  };
+  data: {
+    id: number;
+  };
+}
+
+export interface IMouse {
+  mouseX: number | null;
+  mouseY: number | null;
+}
+
+interface IEntryProps {
+  id: number;
+  index: number;
+  moveEntry: (id: number, to: number) => void;
+  findEntry: (id: number) => {entry: IEntry; index: number};
+  handleDelete: (id: number) => void;
+  text_entry: ITextEntry;
+  tag: ITag;
+  retrieveEntries: () => void;
+  findEntryByIndex: (id: number) => IEntry;
+}
+
+const Entry: React.FC<IEntryProps> = React.memo(function Entry({
   id,
   index,
   moveEntry,
@@ -47,14 +90,15 @@ const Entry = React.memo(function ({
   findEntryByIndex,
 }) {
   useEffect(() => {
+    console.info('useEffect');
     setTextEntry(text_entry);
   }, [text_entry]);
 
-  const appConfig = useContext(AppContext);
+  const appConfig = useAppContext();
   const [showNew, setShowNew] = useState(false);
-  const [textEntry, setTextEntry] = useState();
-  const dragRef = useRef(null);
-  const dropRef = useRef(null);
+  const [textEntry, setTextEntry] = useState<ITextEntry | undefined>();
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
   const classes = useStyles();
@@ -65,13 +109,14 @@ const Entry = React.memo(function ({
       isDragging: monitor.isDragging(),
     }),
     end: (dropResult, monitor) => {
-      const drop_result = monitor.getDropResult();
+      const drop_result: ITextEntry | null = monitor.getDropResult();
       const {id: droppedId, originalIndex} = monitor.getItem();
       const didDrop = monitor.didDrop();
       if (!didDrop) {
         moveEntry(droppedId, originalIndex);
       } else {
-        if ('type' in drop_result) {
+        if (drop_result?.type) {
+          // Then it was dropped on something.
           if (drop_result.type === 'Tag') {
             const payload = {
               data: {
@@ -102,7 +147,7 @@ const Entry = React.memo(function ({
           if (originalIndex !== findEntry(id).index) {
             const entry = findEntry(id).entry;
             const entry_below = findEntryByIndex(index + 1);
-            let ordered_top;
+            let ordered_top: IEntry;
             let ordered_bottom;
             if (entry_below === null) {
               //Then it was moved to the bottom position, get the entry before it.
@@ -142,8 +187,7 @@ const Entry = React.memo(function ({
   const opacity = isDragging ? 0 : 1;
   const [, drop] = useDrop({
     accept: ItemTypes.ENTRY,
-    canDrop: () => {},
-    hover(item, monitor) {
+    hover(item: IEntry, monitor) {
       if (!dragRef.current) {
         return;
       }
@@ -160,26 +204,27 @@ const Entry = React.memo(function ({
       // Determine mouse position
       const clientOffset = monitor.getClientOffset();
       // Get pixels to the top
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+      if (clientOffset !== null) {
+        const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
-      // Only perform the move when the mouse has crossed half of the items height
-      // When dragging downwards, only move when the cursor is below 50%
-      // When dragging upwards, only move when the cursor is above 50%
-      // Dragging downwards
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
+        // Only perform the move when the mouse has crossed half of the items height
+        // When dragging downwards, only move when the cursor is below 50%
+        // When dragging upwards, only move when the cursor is above 50%
+        // Dragging downwards
+        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+          return;
+        }
+        // Dragging upwards
+        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+          return;
+        }
+        moveEntry(item.id, hoverIndex);
+        // Note: we're mutating the monitor item here!
+        // Generally it's better to avoid mutations,
+        // but it's good here for the sake of performance
+        // to avoid expensive index searches.
+        item.index = hoverIndex;
       }
-      // Dragging upwards
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
-
-      moveEntry(item.id, hoverIndex);
-      // Note: we're mutating the monitor item here!
-      // Generally it's better to avoid mutations,
-      // but it's good here for the sake of performance
-      // to avoid expensive index searches.
-      item.index = hoverIndex;
     },
   });
 
@@ -198,7 +243,7 @@ const Entry = React.memo(function ({
     setShowDragHandle(false);
   };
 
-  const initialMouse = {
+  const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
   };
@@ -214,7 +259,7 @@ const Entry = React.memo(function ({
     setIsEditing(false);
   };
 
-  const handleSave = (updated_subject, updated_body) => {
+  const handleSave = (updated_subject: string, updated_body: string) => {
     const payload = {
       data: {
         id: text_entry.id,
@@ -228,12 +273,14 @@ const Entry = React.memo(function ({
     API.patch('entries/' + text_entry.id, payload, {withCredentials: true})
       .then(function (response) {
         // handle success
-        const new_text_entry = {...textEntry};
-        new_text_entry.attributes.subject =
-          response.data.data.attributes.subject;
-        new_text_entry.attributes.body = response.data.data.attributes.body;
-        setTextEntry(new_text_entry);
-        setIsEditing(false);
+        if (textEntry !== undefined) {
+          const new_text_entry = {...textEntry};
+          new_text_entry.attributes.subject =
+            response.data.data.attributes.subject;
+          new_text_entry.attributes.body = response.data.data.attributes.body;
+          setTextEntry(new_text_entry);
+          setIsEditing(false);
+        }
       })
       .catch(function (error) {
         // handle error
@@ -244,10 +291,10 @@ const Entry = React.memo(function ({
       });
   };
 
-  const handleContextClick = event => {
+  const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    const mouseData = {...mouse};
+    const mouseData: IMouse = {...mouse};
     (mouseData.mouseX = event.clientX - 2),
       (mouseData.mouseY = event.clientY - 4),
       setMouse(mouseData);
@@ -320,7 +367,6 @@ const Entry = React.memo(function ({
       {showNew && (
         <EntryNew
           tag={tag}
-          classes={classes}
           retrieveEntries={retrieveEntries}
           handleCancelNewEntry={handleCancelNewEntry}
         />
@@ -330,7 +376,6 @@ const Entry = React.memo(function ({
 
       {isEditing && (
         <EntryEdit
-          classes={classes}
           subject={text_entry.attributes.subject}
           body={text_entry.attributes.body}
           handleSave={handleSave}
