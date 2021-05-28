@@ -8,7 +8,7 @@ import {useAppContext} from './AppContext';
 import * as Constants from './constants';
 import EntryNew from './EntryNew.jsx';
 import EntryEdit from './EntryEdit.jsx';
-import EntryContextMenu from './EntryContextMenu.jsx';
+import EntryContextMenu from './EntryContextMenu';
 const useStyles = makeStyles({
   entry: {
     display: 'inline-block',
@@ -49,7 +49,7 @@ export interface ITag {
   type: string;
 }
 
-interface ITextEntry {
+export interface ITextEntry {
   id: number;
   type: string;
   attributes: {
