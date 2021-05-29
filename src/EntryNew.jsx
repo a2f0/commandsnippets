@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from 'react';
-import {useTheme} from '@material-ui/styles';
 import {makeStyles} from '@material-ui/core/styles';
 import API from './api.ts';
 import Button from '@material-ui/core/Button';
@@ -36,11 +35,13 @@ const useStyles = makeStyles({
     border: '1px solid red',
     minWidth: '300px',
   },
+  dragIndicator: {
+    display: 'inline-block',
+    width: '15px',
+  },
 });
 
 const EntryNew = React.memo(function EntryNew(props) {
-  const theme = useTheme();
-
   useEffect(() => {
     setBody(props.body);
     setSubject(props.subject);
@@ -131,7 +132,7 @@ const EntryNew = React.memo(function EntryNew(props) {
   return (
     <>
       <div>
-        <div style={{...theme.custom.dragIndicator}}></div>
+        <div className={classes.dragIndicator}></div>
         <div className={classes.entry}>
           <div>
             <div

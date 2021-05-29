@@ -3,21 +3,6 @@ import {createMuiTheme} from '@material-ui/core/styles';
 const darkBackground = '#0F0F0F';
 const darkForeground = '#FFF';
 
-const CUSTOM_SHARED = {
-  dragIndicator: {
-    display: 'inline-block',
-    verticalAlign: 'top',
-    fontWeight: 900,
-    textAlign: 'center',
-    cursor: 'grab',
-    width: '15px',
-  },
-  reuseCount: {
-    display: 'inline-block',
-    verticalAlign: 'top',
-  },
-};
-
 export const darkTheme = createMuiTheme({
   palette: {
     type: 'dark',
@@ -32,7 +17,6 @@ export const darkTheme = createMuiTheme({
       primary: darkForeground,
     },
   },
-  custom: CUSTOM_SHARED,
 });
 
 export const lightTheme = createMuiTheme({
@@ -49,5 +33,4 @@ export const lightTheme = createMuiTheme({
       primary: '#000',
     },
   },
-  custom: CUSTOM_SHARED,
 });

@@ -7,7 +7,7 @@ import {makeStyles} from '@material-ui/core/styles';
 import {useAppContext} from './AppContext';
 import * as Constants from './constants';
 import EntryNew from './EntryNew.jsx';
-import EntryEdit from './EntryEdit.jsx';
+import EntryEdit from './EntryEdit';
 import EntryContextMenu from './EntryContextMenu';
 const useStyles = makeStyles({
   entry: {
@@ -33,6 +33,10 @@ const useStyles = makeStyles({
   dragIndicator: {
     cursor: 'grab',
   },
+  reuseCount: {
+    display: 'inline-block',
+    verticalAlign: 'top',
+  },
 });
 
 interface IEntry {
@@ -53,6 +57,7 @@ export interface ITextEntry {
   id: number;
   type: string;
   attributes: {
+    reused_count: number;
     subject: string;
     body: string;
   };
@@ -342,12 +347,13 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
                 ::
               </div>
             </div>
-            {/* <div
-              style={{ ...theme.custom.reuseCount }}
+            <div
+              className={classes.reuseCount}
               onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}>
-              {text_entry.attributes.reused_count}
-            </div> */}
+              onMouseLeave={mouseLeave}
+            >
+              {/* {text_entry.attributes.reused_count} */}
+            </div>
             <div
               className={classes.entry}
               onMouseEnter={mouseEnter}

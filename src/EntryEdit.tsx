@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from 'react';
-import {useTheme} from '@material-ui/styles';
 import {makeStyles} from '@material-ui/core/styles';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import Button from '@material-ui/core/Button';
@@ -32,11 +31,20 @@ const useStyles = makeStyles({
   textArea: {
     width: '100%',
   },
+  dragIndicator: {
+    display: 'inline-block',
+    width: '15px',
+  },
 });
 
-const EntryEdit = React.memo(function EntryEdit(props) {
-  const theme = useTheme();
+export interface IEntryEdit {
+  subject: string;
+  body: string;
+  handleSave: (updated_subject: string, updated_body: string) => void;
+  handleCancelEdit: () => void;
+}
 
+const EntryEdit = React.memo(function EntryEdit(props: IEntryEdit) {
   useEffect(() => {
     setBody(props.body);
     setSubject(props.subject);
@@ -57,18 +65,18 @@ const EntryEdit = React.memo(function EntryEdit(props) {
     props.handleCancelEdit();
   };
 
-  const handleBodyChange = event => {
+  const handleBodyChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setBody(event.target.value);
   };
 
-  const handleSubjectChange = event => {
+  const handleSubjectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSubject(event.target.value);
   };
 
   return (
     <>
       <div>
-        <div style={{...theme.custom.dragIndicator}}></div>
+        <div className={classes.dragIndicator}></div>
         <div className={classes.entry}>
           <div>
             <input

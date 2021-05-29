@@ -4,7 +4,6 @@ import ItemTypes from './ItemTypes.ts';
 import API from './api.ts';
 import {observer} from 'mobx-react';
 import {makeStyles} from '@material-ui/core/styles';
-import {useTheme} from '@material-ui/styles';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 import UntaggedEntryContextMenu from './UntaggedEntryContextMenu.jsx';
 
@@ -32,13 +31,16 @@ const useStyles = makeStyles({
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap',
   },
+  dragIndicator: {
+    display: 'inline-block',
+    width: '15px',
+  },
 });
 
 const UntaggedEntry = React.memo(
   observer(function EntryList(props) {
     const [showDragHandle, setShowDragHandle] = useState(false);
     const classes = useStyles();
-    const theme = useTheme();
 
     const mouseEnter = () => {
       setShowDragHandle(true);
@@ -145,7 +147,7 @@ const UntaggedEntry = React.memo(
           style={{opacity}}
         >
           <div
-            style={{...theme.custom.dragIndicator}}
+            className={classes.dragIndicator}
             onMouseEnter={mouseEnter}
             onMouseLeave={mouseLeave}
           >

@@ -7,8 +7,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import {makeStyles} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import {useTheme} from '@material-ui/styles';
-import {darkTheme, lightTheme} from './themes.js';
+import {darkTheme, lightTheme} from './themes.ts';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import CheckIcon from '@material-ui/icons/Check';
 import {useAppContext} from './AppContext.tsx';
@@ -78,13 +77,16 @@ const useStyles = makeStyles({
   themeSwitcher: {
     height: 16,
   },
+  dragIndicator: {
+    display: 'inline-block',
+    width: '15px',
+  },
 });
 
 const MenuBar = React.memo(
   observer(function MenuBar(props) {
     const classes = useStyles();
     const history = useHistory();
-    const theme = useTheme();
     const appConfig = useAppContext();
     const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
     const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
@@ -186,7 +188,7 @@ const MenuBar = React.memo(
       <>
         <Toolbar variant="dense" className={classes.toolBar}>
           <Typography className={classes.drawer}></Typography>
-          <Typography style={{...theme.custom.dragIndicator}}></Typography>
+          <Typography className={classes.dragIndicator}></Typography>
           <Button
             size="small"
             label="Primary"

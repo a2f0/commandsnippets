@@ -5,7 +5,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import {makeStyles, MuiThemeProvider} from '@material-ui/core/styles';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
-import {lightTheme, darkTheme} from './themes.js';
+import {lightTheme, darkTheme} from './themes.ts';
 import {observable} from 'mobx';
 import Main from './Main.jsx';
 import AppStateStore from './AppStateStore.ts';
