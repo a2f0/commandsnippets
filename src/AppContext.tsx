@@ -1,15 +1,15 @@
 import React, {ReactNode} from 'react';
-import {IAppStateStoreModel} from './AppStateStore';
+import {AppStateStoreModel} from './AppStateStore';
 import {observable} from 'mobx';
 import AppStateStore from './AppStateStore';
-
+import {Instance} from 'mobx-state-tree';
 interface IAppContextProps {
   children: ReactNode;
   entrySortOrder: string;
   tagSortOrder: string;
   loggedInUser: string | null;
   mainPanel: string;
-  appStateStore: IAppStateStoreModel;
+  appStateStore: Instance<typeof AppStateStoreModel>;
 }
 
 const AppContext = React.createContext<IAppContextProps | undefined>(undefined);

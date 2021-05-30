@@ -9,6 +9,7 @@ import * as Constants from './constants';
 import EntryNew from './EntryNew.jsx';
 import EntryEdit from './EntryEdit';
 import EntryContextMenu from './EntryContextMenu';
+import {TagTextEntryThroughModel} from './EntryList';
 const useStyles = makeStyles({
   entry: {
     display: 'inline-block',
@@ -39,18 +40,11 @@ const useStyles = makeStyles({
   },
 });
 
-interface IEntry {
-  id: number;
-  index: number;
-  type: string;
-  relationships: {
-    text_entry: ITextEntry;
-  };
-}
-
 export interface ITag {
   id: number;
   type: string;
+  attributes: {};
+  data: {};
 }
 
 export interface ITextEntry {
@@ -75,12 +69,12 @@ interface IEntryProps {
   id: number;
   index: number;
   moveEntry: (id: number, to: number) => void;
-  findEntry: (id: number) => {entry: IEntry; index: number};
+  findEntry: (id: number) => {entry: TagTextEntryThroughModel; index: number};
   handleDelete: (id: number) => void;
   text_entry: ITextEntry;
   tag: ITag;
   retrieveEntries: () => void;
-  findEntryByIndex: (id: number) => IEntry;
+  findEntryByIndex: (id: number) => TagTextEntryThroughModel | null;
 }
 
 const Entry: React.FC<IEntryProps> = React.memo(function Entry({
@@ -152,7 +146,7 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
           if (originalIndex !== findEntry(id).index) {
             const entry = findEntry(id).entry;
             const entry_below = findEntryByIndex(index + 1);
-            let ordered_top: IEntry;
+            let ordered_top: TagTextEntryThroughModel | null;
             let ordered_bottom;
             if (entry_below === null) {
               //Then it was moved to the bottom position, get the entry before it.
@@ -162,25 +156,29 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
               ordered_top = entry;
               ordered_bottom = entry_below;
             }
-            const payload = {
-              data: {
-                type: 'TagTextEntryThroughModel',
-                attributes: {
-                  top: ordered_top.id,
-                  bottom: ordered_bottom.id,
+            if (ordered_top !== null && ordered_bottom !== null) {
+              const payload = {
+                data: {
+                  type: 'TagTextEntryThroughModel',
+                  attributes: {
+                    top: ordered_top.id,
+                    bottom: ordered_bottom.id,
+                  },
+                  relationships: {},
                 },
-                relationships: {},
-              },
-            };
-            API.post('/tags_entries/reorder', payload, {withCredentials: true})
-              .then(function () {})
-              .catch(function (error) {
-                // handle error
-                console.log(error);
+              };
+              API.post('/tags_entries/reorder', payload, {
+                withCredentials: true,
               })
-              .then(function () {
-                // always executed
-              });
+                .then(function () {})
+                .catch(function (error) {
+                  // handle error
+                  console.log(error);
+                })
+                .then(function () {
+                  // always executed
+                });
+            }
           } else {
             console.info("it wasn't moved.");
           }
@@ -192,7 +190,7 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
   const opacity = isDragging ? 0 : 1;
   const [, drop] = useDrop({
     accept: ItemTypes.ENTRY,
-    hover(item: IEntry, monitor) {
+    hover(item: TagTextEntryThroughModel, monitor) {
       if (!dragRef.current) {
         return;
       }
