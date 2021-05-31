@@ -24,8 +24,8 @@ export const AppStateStoreModel = types
     setEntrySortOrder(order: string) {
       self.entrySortOrder = order;
     },
-    setMainPanel(order: string) {
-      self.mainPanel = order;
+    setMainPanel(panelName: string) {
+      self.mainPanel = panelName;
     },
     setTagNew(value: boolean) {
       self.tagNew = value;

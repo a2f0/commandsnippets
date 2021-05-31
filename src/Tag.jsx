@@ -121,7 +121,7 @@ const Tag = React.memo(function Tag({
   const history = useHistory();
 
   const handleTagClick = () => {
-    appConfig.setMainPanel = 'EntryList';
+    appConfig.setMainPanel('EntryList');
     history.push(`/${user.attributes.username}/${tag.attributes.name}`);
   };
 
