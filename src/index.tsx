@@ -5,15 +5,15 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import {makeStyles, MuiThemeProvider} from '@material-ui/core/styles';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
-import {lightTheme, darkTheme} from './themes.ts';
-import {observable} from 'mobx';
+import {lightTheme, darkTheme} from './themes';
 import Main from './Main.jsx';
-import AppStateStore from './AppStateStore.ts';
 import {observer} from 'mobx-react';
-import GithubAuth from './GithubAuth.jsx';
+import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth.jsx';
 import packageJson from '../package.json';
-import {AppContextProvider} from './AppContext.tsx';
+import {AppContextProvider} from './AppContext';
+import {Theme} from '@material-ui/core/styles';
+import {store} from './AppStateStore';
 
 console.info('Package version: ' + packageJson.version);
 
@@ -23,41 +23,32 @@ const useStyles = makeStyles({
   },
 });
 
-const appConfig = observable({
-  entrySortOrder: 'order',
-  tagSortOrder: 'order',
-  loggedInUser: null,
-  mainPanel: 'EntryList',
-  appStateStore: AppStateStore,
-});
-
 const AppRouter = React.memo(
   observer(function AppRouter() {
     const classes = useStyles();
-
     let initialTheme = darkTheme;
-    if (appConfig.appStateStore.selectedTheme === 'lightTheme') {
+    if (store.selectedTheme === 'lightTheme') {
       initialTheme = lightTheme;
     }
 
     const [selectedTheme, setSelectedTheme] = useState(initialTheme);
 
-    const handleThemeSwitcher = chosenTheme => {
+    const handleThemeSwitcher = (chosenTheme: Theme) => {
       if (chosenTheme === lightTheme) {
-        appConfig.appStateStore.setSelectedTheme('lightTheme');
+        store.setSelectedTheme('lightTheme');
       } else {
-        appConfig.appStateStore.setSelectedTheme('darkTheme');
+        store.setSelectedTheme('darkTheme');
       }
       setSelectedTheme(chosenTheme);
     };
     return (
       <Router>
-        <AppContextProvider value={appConfig}>
+        <AppContextProvider>
           <MuiThemeProvider theme={selectedTheme}>
             <CssBaseline />
             <DndProvider backend={HTML5Backend}>
               <div className={classes.root}>
-                {appConfig.appStateStore.loggedInUser && (
+                {store.loggedInUser && (
                   <Switch>
                     <Route path="/:user/untagged-entries">
                       <Main handleThemeSwitcher={handleThemeSwitcher} />
@@ -73,7 +64,7 @@ const AppRouter = React.memo(
                     </Route>
                   </Switch>
                 )}
-                {!appConfig.appStateStore.loggedInUser && (
+                {!store.loggedInUser && (
                   <>
                     <GithubAuth />
                     <GoogleAuth />

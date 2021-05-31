@@ -1,31 +1,10 @@
-import React, {ReactNode} from 'react';
-import {AppStateStoreModel} from './AppStateStore';
-import {observable} from 'mobx';
-import AppStateStore from './AppStateStore';
-import {Instance} from 'mobx-state-tree';
-interface IAppContextProps {
-  children: ReactNode;
-  entrySortOrder: string;
-  tagSortOrder: string;
-  loggedInUser: string | null;
-  mainPanel: string;
-  appStateStore: Instance<typeof AppStateStoreModel>;
-}
+import React from 'react';
+import {TStore, store} from './AppStateStore';
 
-const AppContext = React.createContext<IAppContextProps | undefined>(undefined);
+const AppContext = React.createContext<TStore | undefined>(undefined);
 
-function AppContextProvider({children}: IAppContextProps) {
-  const appConfig = observable({
-    entrySortOrder: 'order',
-    tagSortOrder: 'order',
-    loggedInUser: null,
-    mainPanel: 'EntryList',
-    appStateStore: AppStateStore,
-    children: children,
-  });
-  return (
-    <AppContext.Provider value={appConfig}>{children}</AppContext.Provider>
-  );
+function AppContextProvider({children}: React.PropsWithChildren<{}>) {
+  return <AppContext.Provider value={store}>{children}</AppContext.Provider>;
 }
 
 function useAppContext() {

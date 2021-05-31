@@ -57,7 +57,7 @@ const TagList = React.memo(
         const {data: response} = await API.get('/tags', {
           params: {
             'page[number]': ++page,
-            sort: appConfig.appStateStore.tagSortOrder,
+            sort: appConfig.tagSortOrder,
           },
         });
         nextPage = response.links.next;

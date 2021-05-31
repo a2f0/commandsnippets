@@ -121,15 +121,12 @@ const Tag = React.memo(function Tag({
   const history = useHistory();
 
   const handleTagClick = () => {
-    appConfig.mainPanel = 'EntryList';
+    appConfig.setMainPanel = 'EntryList';
     history.push(`/${user.attributes.username}/${tag.attributes.name}`);
   };
 
   const mouseEnter = () => {
-    if (
-      appConfig.appStateStore.loggedInUser !== '' &&
-      appConfig.appStateStore.tagSortOrder === 'order'
-    ) {
+    if (appConfig.loggedInUser !== '' && appConfig.tagSortOrder === 'order') {
       setShowDragHandle(true);
     }
   };
@@ -271,7 +268,7 @@ const Tag = React.memo(function Tag({
             {tag.attributes.entry_count}
           </div>
 
-          {appConfig.appStateStore.loggedInUser && <>{contextMenu}</>}
+          {appConfig.loggedInUser && <>{contextMenu}</>}
         </div>
       </div>
     </>

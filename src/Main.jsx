@@ -9,7 +9,7 @@ import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext.tsx';
 import UntaggedEntryList from './UntaggedEntryList.jsx';
 import * as Constants from './constants.ts';
-import GithubAuth from './GithubAuth.jsx';
+import GithubAuth from './GithubAuth.tsx';
 
 const appBarHeight = 52;
 

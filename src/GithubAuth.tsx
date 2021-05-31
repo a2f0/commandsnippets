@@ -1,10 +1,11 @@
 import React, {useEffect} from 'react';
-import API from './api.ts';
-import {useAppContext} from './AppContext.tsx';
+import API from './api';
+import {useAppContext} from './AppContext';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {useTheme} from '@material-ui/styles';
 import {Github} from '@icons-pack/react-simple-icons';
+import {Theme} from '@material-ui/core/styles';
 
 export const githubClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
@@ -38,7 +39,7 @@ const useStyles = makeStyles({
 
 const GithubAuth = React.memo(
   observer(function GithubAuth() {
-    const theme = useTheme();
+    const theme = useTheme<Theme>();
     const appConfig = useAppContext();
     const classes = useStyles();
 
@@ -53,7 +54,7 @@ const GithubAuth = React.memo(
       if (code !== '' && is_github_oauth === true) {
         const newURL =
           window.location.protocol + '//' + window.location.host + '/';
-        window.history.pushState({}, null, newURL);
+        window.history.pushState({}, '', newURL);
         const payload = {
           data: {
             type: 'GithubLogin',
@@ -68,12 +69,12 @@ const GithubAuth = React.memo(
               response
             ) {
               const username = response.data.data.attributes.username;
-              appConfig.appStateStore.setLoggedInUser(username);
+              appConfig.setLoggedInUser(username);
               document.cookie = 'loggedInUser=' + username;
             });
           })
           .catch(function () {
-            appConfig.appStateStore.setLoggedInUser('');
+            appConfig.setLoggedInUser('');
           })
           .then(function () {});
       }
@@ -88,13 +89,11 @@ const GithubAuth = React.memo(
 
     return (
       <>
-        {appConfig.appStateStore.loggedInUser && (
-          <div className={classes.clickableDiv}>
-            {appConfig.appStateStore.loggedInUser}
-          </div>
+        {appConfig.loggedInUser && (
+          <div className={classes.clickableDiv}>{appConfig.loggedInUser}</div>
         )}
 
-        {!appConfig.appStateStore.loggedInUser && (
+        {!appConfig.loggedInUser && (
           <div
             className={classes.loginBox}
             style={{color: theme.palette.text.primary}}

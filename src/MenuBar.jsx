@@ -113,7 +113,7 @@ const MenuBar = React.memo(
         .post('/api-token-deauth/', {}, {withCredentials: true})
         .then(function () {
           // Login succeded
-          appConfig.appStateStore.setLoggedInUser('');
+          appConfig.setLoggedInUser('');
           setFileMenuAnchorEl(null);
         })
         .catch(function () {
@@ -173,15 +173,15 @@ const MenuBar = React.memo(
     };
 
     const handleSetTagSortOrder = order => {
-      appConfig.appStateStore.setTagSortOrder(order);
+      appConfig.setTagSortOrder(order);
     };
 
     const handleSetEntrySortOrder = order => {
-      appConfig.entrySortOrder = order;
+      appConfig.setEntrySortOrder(order);
     };
 
     const handleCreateTag = () => {
-      appConfig.tagNew = true;
+      appConfig.setTagNew(true);
     };
 
     return (
@@ -244,12 +244,12 @@ const MenuBar = React.memo(
           onClose={handleFileMenuClose}
           TransitionComponent={Fade}
         >
-          {appConfig.appStateStore.loggedInUser && (
+          {appConfig.loggedInUser && (
             <MenuItem className={classes.menuItem} onClick={handleCreateTag}>
               Create a Tag
             </MenuItem>
           )}
-          {appConfig.appStateStore.loggedInUser && (
+          {appConfig.loggedInUser && (
             <MenuItem
               className={classes.menuItem}
               onClick={handleFileMenuClose}
@@ -257,7 +257,7 @@ const MenuBar = React.memo(
               Create an Entry
             </MenuItem>
           )}
-          {!appConfig.appStateStore.loggedInUser && (
+          {!appConfig.loggedInUser && (
             <MenuItem
               className={classes.menuItem}
               onClick={handleNavigateToLogin}
@@ -265,7 +265,7 @@ const MenuBar = React.memo(
               Login
             </MenuItem>
           )}
-          {appConfig.appStateStore.loggedInUser && (
+          {appConfig.loggedInUser && (
             <MenuItem className={classes.menuItem} onClick={handleLogout}>
               Logout
             </MenuItem>
@@ -300,7 +300,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.selectedTheme === 'lightTheme' && (
+              {appConfig.selectedTheme === 'lightTheme' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -315,7 +315,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.selectedTheme === 'darkTheme' && (
+              {appConfig.selectedTheme === 'darkTheme' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -338,7 +338,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === 'order' && (
+              {appConfig.tagSortOrder === 'order' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -352,7 +352,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === 'name' && (
+              {appConfig.tagSortOrder === 'name' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -366,7 +366,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === '-name' && (
+              {appConfig.tagSortOrder === '-name' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -380,7 +380,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === '-date_created' && (
+              {appConfig.tagSortOrder === '-date_created' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -394,7 +394,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === 'date_created' && (
+              {appConfig.tagSortOrder === 'date_created' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -408,7 +408,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === '-entry_count' && (
+              {appConfig.tagSortOrder === '-entry_count' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -423,7 +423,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === 'entry_count' && (
+              {appConfig.tagSortOrder === 'entry_count' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -438,7 +438,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === '-date_last_used' && (
+              {appConfig.tagSortOrder === '-date_last_used' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -453,7 +453,7 @@ const MenuBar = React.memo(
             }}
           >
             <ListItemIcon>
-              {appConfig.appStateStore.tagSortOrder === 'date_last_used' && (
+              {appConfig.tagSortOrder === 'date_last_used' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>

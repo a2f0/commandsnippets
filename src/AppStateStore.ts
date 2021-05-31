@@ -7,6 +7,9 @@ export const AppStateStoreModel = types
     loggedInUser: types.string,
     selectedTheme: types.string,
     tagSortOrder: types.string,
+    entrySortOrder: types.string,
+    mainPanel: types.string,
+    tagNew: types.boolean,
   })
   .actions(self => ({
     setLoggedInUser(handle: string) {
@@ -18,18 +21,32 @@ export const AppStateStoreModel = types
     setTagSortOrder(order: string) {
       self.tagSortOrder = order;
     },
+    setEntrySortOrder(order: string) {
+      self.entrySortOrder = order;
+    },
+    setMainPanel(order: string) {
+      self.mainPanel = order;
+    },
+    setTagNew(value: boolean) {
+      self.tagNew = value;
+    },
   }));
 
 interface appState {
   loggedInUser: string;
   selectedTheme: string;
   tagSortOrder: string;
+  entrySortOrder: string;
+  mainPanel: string;
 }
 
 const defaultState = {
   loggedInUser: '',
   selectedTheme: 'darkTheme',
   tagSortOrder: 'order',
+  entrySortOrder: 'order',
+  mainPanel: 'EntryList',
+  tagNew: false,
 };
 
 const localStorageKey = 'mst-tearleads-' + environment();
@@ -67,7 +84,9 @@ function createAppStateStore(
   );
   return store;
 }
-let store: Instance<typeof AppStateStoreModel>;
+
+let store: ReturnType<typeof createAppStateStore>;
 store = createAppStateStore(state);
 
-export default store;
+export type TStore = ReturnType<typeof createAppStateStore>;
+export {store};

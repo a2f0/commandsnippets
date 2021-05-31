@@ -87,12 +87,12 @@ const GoogleAuth = React.memo(
               response
             ) {
               const username = response.data.data.attributes.username;
-              appConfig.appStateStore.setLoggedInUser(username);
+              appConfig.setLoggedInUser(username);
               document.cookie = 'loggedInUser=' + username;
             });
           })
           .catch(function () {
-            appConfig.appStateStore.setLoggedInUser('');
+            appConfig.setLoggedInUser('');
           })
           .then(function () {});
       }
@@ -112,13 +112,11 @@ const GoogleAuth = React.memo(
 
     return (
       <>
-        {appConfig.appStateStore.loggedInUser && (
-          <div className={classes.clickableDiv}>
-            {appConfig.appStateStore.loggedInUser}
-          </div>
+        {appConfig.loggedInUser && (
+          <div className={classes.clickableDiv}>{appConfig.loggedInUser}</div>
         )}
 
-        {!appConfig.appStateStore.loggedInUser && (
+        {!appConfig.loggedInUser && (
           <div
             className={classes.loginBox}
             style={{color: theme.palette.text.primary}}

@@ -235,10 +235,7 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
   drop(dropRef);
 
   const mouseEnter = () => {
-    if (
-      appConfig.appStateStore.loggedInUser !== '' &&
-      appConfig.entrySortOrder === 'order'
-    ) {
+    if (appConfig.loggedInUser !== '' && appConfig.entrySortOrder === 'order') {
       setShowDragHandle(true);
     }
   };
@@ -376,7 +373,7 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
         />
       )}
 
-      {appConfig.appStateStore.loggedInUser && <>{contextMenu}</>}
+      {appConfig.loggedInUser && <>{contextMenu}</>}
 
       {isEditing && (
         <EntryEdit

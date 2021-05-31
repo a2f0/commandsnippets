@@ -26,7 +26,7 @@ const TagNew = React.memo(function TagNew(props) {
 
   const handleCancel = () => {
     setTagName(null);
-    appConfig.tagNew = false;
+    appConfig.setTagNew(true);
   };
 
   const handleSave = () => {
@@ -40,7 +40,7 @@ const TagNew = React.memo(function TagNew(props) {
     };
     API.post('/tags', payload, {withCredentials: true})
       .then(function () {
-        appConfig.tagNew = false;
+        appConfig.setTagNew(true);
         props.fetchTags();
       })
       .catch(function (error) {
