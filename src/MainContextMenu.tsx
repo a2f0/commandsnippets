@@ -1,14 +1,22 @@
 import React, {useEffect, useState} from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import {IMouse} from './Entry';
 
-const MainContextMenu = React.memo(function MainContextMenu(props) {
-  const initialMouse = {
+interface IMainContextMenu {
+  mouse: IMouse;
+  showNewEntry: () => void;
+}
+
+const MainContextMenu = React.memo(function MainContextMenu(
+  props: IMainContextMenu
+) {
+  const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
   };
 
-  const [mouse, setMouse] = useState(initialMouse);
+  const [mouse, setMouse] = useState<IMouse>(initialMouse);
 
   useEffect(() => {
     setMouse(props.mouse);
