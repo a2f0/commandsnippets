@@ -1,7 +1,13 @@
 import React, {useState, useEffect} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
-import API from './api.ts';
+import API from './api';
 import Button from '@material-ui/core/Button';
+import {ITag} from './Entry';
+export interface IEntryNewProps {
+  tag: ITag;
+  retrieveEntries: () => void;
+  handleCancelNewEntry: () => void;
+}
 
 const useStyles = makeStyles({
   entry: {
@@ -41,14 +47,9 @@ const useStyles = makeStyles({
   },
 });
 
-const EntryNew = React.memo(function EntryNew(props) {
-  useEffect(() => {
-    setBody(props.body);
-    setSubject(props.subject);
-  }, [props.body, props.subject]);
-
-  const [subject, setSubject] = useState();
-  const [body, setBody] = useState();
+const EntryNew = React.memo(function EntryNew(props: IEntryNewProps) {
+  const [subject, setSubject] = useState<string | null>();
+  const [body, setBody] = useState<string | null>();
   const classes = useStyles();
 
   const handleSave = () => {
@@ -116,16 +117,16 @@ const EntryNew = React.memo(function EntryNew(props) {
   };
 
   const handleCancel = () => {
-    setBody(props.body);
-    setSubject(props.subject);
+    setBody(body);
+    setSubject(subject);
     props.handleCancelNewEntry();
   };
 
-  const handleBodyChange = body => {
+  const handleBodyChange = (body: string | null) => {
     setBody(body);
   };
 
-  const handleSubjectChange = subject => {
+  const handleSubjectChange = (subject: string | null) => {
     setSubject(subject);
   };
 

@@ -6,7 +6,7 @@ import API from './api';
 import {makeStyles} from '@material-ui/core/styles';
 import {useAppContext} from './AppContext';
 import * as Constants from './constants';
-import EntryNew from './EntryNew.jsx';
+import EntryNew from './EntryNew';
 import EntryEdit from './EntryEdit';
 import EntryContextMenu from './EntryContextMenu';
 import {TagTextEntryThroughModel} from './EntryList';
