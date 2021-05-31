@@ -1,5 +1,5 @@
 import React from 'react';
-import CustomDrawer from './CustomDrawer.tsx';
+import CustomDrawer from './CustomDrawer';
 
 const RightDrawer = function () {
   return <CustomDrawer anchor="right"></CustomDrawer>;
