@@ -1,15 +1,16 @@
 import React from 'react';
-import LeftDrawer from './LeftDrawer.jsx';
+import LeftDrawer from './LeftDrawer';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import {makeStyles} from '@material-ui/core/styles';
 import MenuBar from './MenuBar.jsx';
-import EntryList from './EntryList.tsx';
+import EntryList from './EntryList';
 import {observer} from 'mobx-react';
-import {useAppContext} from './AppContext.tsx';
+import {useAppContext} from './AppContext';
 import UntaggedEntryList from './UntaggedEntryList.jsx';
-import * as Constants from './constants.ts';
-import GithubAuth from './GithubAuth.tsx';
+import * as Constants from './constants';
+import GithubAuth from './GithubAuth';
+import {Theme} from '@material-ui/core/styles';
 
 const appBarHeight = 52;
 
@@ -64,8 +65,12 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
+interface IMainProps {
+  handleThemeSwitcher: (chosenTheme: Theme) => void;
+}
+
 const Main = React.memo(
-  observer(function Main(props) {
+  observer(function Main(props: IMainProps) {
     const appConfig = useAppContext();
     const classes = useStyles();
 

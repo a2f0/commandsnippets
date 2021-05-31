@@ -1,5 +1,5 @@
 import React from 'react';
-import CustomDrawer from './CustomDrawer.tsx';
+import CustomDrawer from './CustomDrawer';
 import TagList from './TagList.jsx';
 
 const LeftDrawer = function () {

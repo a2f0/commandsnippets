@@ -6,7 +6,7 @@ import {makeStyles, MuiThemeProvider} from '@material-ui/core/styles';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import {lightTheme, darkTheme} from './themes';
-import Main from './Main.jsx';
+import Main from './Main';
 import {observer} from 'mobx-react';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';

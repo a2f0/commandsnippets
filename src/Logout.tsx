@@ -1,17 +1,18 @@
 import React from 'react';
 import {observer} from 'mobx-react';
-import API from './api.ts';
+import API from './api';
+import {AxiosResponse} from 'axios';
 
-const Logout = React.memo(
+const Logout: React.FunctionComponent = React.memo(
   observer(function Logout() {
     const handleLogout = () => {
-      const user = this.props.user;
+      //const user = props.user;
       API.get('/api-token-deauth/', {withCredentials: true})
-        .then(function (response) {
-          return response.json();
+        .then(function (response: AxiosResponse<JSON>) {
+          return response;
         })
         .then(() => {
-          user.userName = '';
+          //user.userName = '';
         })
         .catch(err => console.error('Error:', err));
     };
