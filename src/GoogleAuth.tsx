@@ -1,10 +1,11 @@
 import React, {useEffect} from 'react';
-import API from './api.ts';
-import {useAppContext} from './AppContext.tsx';
+import API from './api';
+import {useAppContext} from './AppContext';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {Google} from '@icons-pack/react-simple-icons';
 import {useTheme} from '@material-ui/styles';
+import {Theme} from '@material-ui/core/styles';
 
 export const googleClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
@@ -54,7 +55,7 @@ const useStyles = makeStyles({
 
 const GoogleAuth = React.memo(
   observer(function GoogleAuth() {
-    const theme = useTheme();
+    const theme = useTheme<Theme>();
     const appConfig = useAppContext();
     const classes = useStyles();
 
@@ -72,7 +73,7 @@ const GoogleAuth = React.memo(
       ) {
         const newURL =
           window.location.protocol + '//' + window.location.host + '/';
-        window.history.pushState({}, null, newURL);
+        window.history.pushState({}, '', newURL);
         const payload = {
           data: {
             type: 'GoogleLogin',

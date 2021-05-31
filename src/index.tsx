@@ -9,7 +9,7 @@ import {lightTheme, darkTheme} from './themes';
 import Main from './Main.jsx';
 import {observer} from 'mobx-react';
 import GithubAuth from './GithubAuth';
-import GoogleAuth from './GoogleAuth.jsx';
+import GoogleAuth from './GoogleAuth';
 import packageJson from '../package.json';
 import {AppContextProvider} from './AppContext';
 import {Theme} from '@material-ui/core/styles';
