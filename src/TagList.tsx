@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Tag from './Tag';
-import TagSearch from './Search.jsx';
+import TagSearch from './TagSearch';
 import List from '@material-ui/core/List';
 import {makeStyles} from '@material-ui/core/styles';
 import API from './api';
