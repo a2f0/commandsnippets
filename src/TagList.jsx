@@ -70,7 +70,7 @@ const TagList = React.memo(
     const handleNavigateToUntaggedEntries = () => {
       // untagged-entries
       history.push(`/${user}/untagged-entries`);
-      appConfig.mainPanel = 'UntaggedEntryList';
+      appConfig.setMainPanel('UntaggedEntryList');
     };
 
     const classes = useStyles();
