@@ -3,13 +3,13 @@ import Tag from './Tag.jsx';
 import TagSearch from './Search.jsx';
 import List from '@material-ui/core/List';
 import {makeStyles} from '@material-ui/core/styles';
-import API from './api.ts';
+import API from './api';
 import {autorun} from 'mobx';
-import TagNew from './TagNew.tsx';
-import {useAppContext} from './AppContext.tsx';
+import TagNew from './TagNew';
+import {useAppContext} from './AppContext';
 import {observer} from 'mobx-react';
 import {useParams, useHistory} from 'react-router-dom';
-import * as Constants from './constants.ts';
+import * as Constants from './constants';
 import update from 'immutability-helper';
 
 const useStyles = makeStyles({
@@ -31,14 +31,50 @@ const useStyles = makeStyles({
   },
 });
 
+interface IParamTypes {
+  user: string;
+}
+
+interface IRelationships {
+  [key: string]: IRelationshipData;
+}
+
+interface IRelationshipData {
+  data: {
+    type: string;
+    id: number;
+  };
+}
+
+interface ITagsData {
+  data: Array<ITag>;
+  included: Array<IUser>;
+}
+
+interface IUser {
+  id: number;
+  type: string;
+  attributes: {
+    username: string;
+  };
+}
+
+interface ITag {
+  id: number;
+  type: string;
+  attributes: {
+    name: string;
+  };
+  relationships: IRelationships;
+}
+
 const TagList = React.memo(
   observer(function TagList() {
     const appConfig = useAppContext();
-    const [data, setData] = useState({data: [], included: []});
-    const {user} = useParams();
+    const [data, setData] = useState<ITagsData>({data: [], included: []});
+    const {user} = useParams<IParamTypes>();
     const history = useHistory();
 
-    // location -> window location might be buggy (eslint, gts)
     useEffect(
       () =>
         autorun(() => {
@@ -48,8 +84,8 @@ const TagList = React.memo(
     );
 
     async function fetchTags() {
-      let data = [];
-      let included = [];
+      let data: Array<ITag> = [];
+      let included: Array<IUser> = [];
       let nextPage = null;
       let page = 0;
 
@@ -62,7 +98,7 @@ const TagList = React.memo(
         });
         nextPage = response.links.next;
         data = data.concat(response.data);
-        included = data.concat(response.included);
+        included = included.concat(response.included);
       } while (nextPage !== null);
       setData({data: data, included: included});
     }
@@ -75,7 +111,7 @@ const TagList = React.memo(
 
     const classes = useStyles();
 
-    const moveEntry = (id, atIndex) => {
+    const moveEntry = (id: number, atIndex: number) => {
       const {entry, index} = findEntry(id);
       const reordered = update(data.data, {
         $splice: [
@@ -87,15 +123,15 @@ const TagList = React.memo(
       setData(newData);
     };
 
-    const findEntry = id => {
-      const entry = data.data.filter(c => `${c.id}` === id)[0];
+    const findEntry = (id: number) => {
+      const entry = data.data.filter(c => c.id === id)[0];
       return {
         entry,
         index: data.data.indexOf(entry),
       };
     };
 
-    const findEntryByIndex = index => {
+    const findEntryByIndex = (index: number) => {
       if (index > data.data.length - 1) {
         return null;
       } else {
@@ -109,8 +145,8 @@ const TagList = React.memo(
         <List className={classes.root}>
           <div className={classes.ltr}>
             {appConfig.tagNew && <TagNew fetchTags={fetchTags} />}
-            {data.data.map((tag, i) => {
-              const user = data.included.filter(
+            {data.data.map((tag: ITag, i) => {
+              const user: IUser = data.included.filter(
                 i =>
                   i.type === 'User' && i.id === tag.relationships.user.data.id
               )[0];

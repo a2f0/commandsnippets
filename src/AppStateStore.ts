@@ -10,6 +10,7 @@ export const AppStateStoreModel = types
     entrySortOrder: types.string,
     mainPanel: types.string,
     tagNew: types.boolean,
+    tagSearch: types.boolean,
   })
   .actions(self => ({
     setLoggedInUser(handle: string) {
@@ -30,6 +31,9 @@ export const AppStateStoreModel = types
     setTagNew(value: boolean) {
       self.tagNew = value;
     },
+    setTagSearch(value: boolean) {
+      self.tagSearch = value;
+    },
   }));
 
 interface appState {
@@ -38,6 +42,8 @@ interface appState {
   tagSortOrder: string;
   entrySortOrder: string;
   mainPanel: string;
+  tagNew: boolean;
+  tagSearch: boolean;
 }
 
 const defaultState = {
@@ -47,6 +53,7 @@ const defaultState = {
   entrySortOrder: 'order',
   mainPanel: 'EntryList',
   tagNew: false,
+  tagSearch: false,
 };
 
 const localStorageKey = 'mst-tearleads-' + environment();

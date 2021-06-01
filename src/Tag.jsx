@@ -34,8 +34,8 @@ const useStyles = makeStyles({
 });
 
 const Tag = React.memo(function Tag({
-  tag,
   id,
+  tag,
   user,
   fetchTags,
   moveEntry,
