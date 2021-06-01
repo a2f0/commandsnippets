@@ -7,7 +7,7 @@ import MenuBar from './MenuBar.jsx';
 import EntryList from './EntryList';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-import UntaggedEntryList from './UntaggedEntryList.jsx';
+import UntaggedEntryList from './UntaggedEntryList';
 import * as Constants from './constants';
 import GithubAuth from './GithubAuth';
 import {Theme} from '@material-ui/core/styles';

@@ -1,11 +1,14 @@
 import React, {useState, useMemo} from 'react';
 import {useDrag} from 'react-dnd';
-import ItemTypes from './ItemTypes.ts';
-import API from './api.ts';
+import ItemTypes from './ItemTypes';
+import API from './api';
 import {observer} from 'mobx-react';
 import {makeStyles} from '@material-ui/core/styles';
 import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
-import UntaggedEntryContextMenu from './UntaggedEntryContextMenu.jsx';
+import UntaggedEntryContextMenu from './UntaggedEntryContextMenu';
+import {ITextEntry} from './Entry';
+import {AxiosError} from 'axios';
+import {IMouse} from './Entry';
 
 // const style = {
 //   border: '1px dashed gray',
@@ -37,8 +40,15 @@ const useStyles = makeStyles({
   },
 });
 
+interface IUntaggedEntryProps {
+  id: number;
+  key: number;
+  entry: ITextEntry;
+  retrieveEntries: () => void;
+}
+
 const UntaggedEntry = React.memo(
-  observer(function EntryList(props) {
+  observer(function EntryList(props: IUntaggedEntryProps) {
     const [showDragHandle, setShowDragHandle] = useState(false);
     const classes = useStyles();
 
@@ -53,7 +63,7 @@ const UntaggedEntry = React.memo(
       item: () => ({type: ItemTypes.UNTAGGEDENTRY}),
       type: ItemTypes.UNTAGGEDENTRY,
       end: (item, monitor) => {
-        const dropResult = monitor.getDropResult();
+        const dropResult: ITextEntry | null = monitor.getDropResult();
         if (item && dropResult) {
           console.info('it was dropped');
           if ('type' in dropResult) {
@@ -83,7 +93,7 @@ const UntaggedEntry = React.memo(
                 .then(function () {
                   props.retrieveEntries();
                 })
-                .catch(function (error) {
+                .catch(function (error: AxiosError) {
                   // handle error
                   console.log(error);
                 })
@@ -100,14 +110,14 @@ const UntaggedEntry = React.memo(
     });
     const opacity = isDragging ? 0 : 1;
 
-    const initialMouse = {
+    const initialMouse: IMouse = {
       mouseX: null,
       mouseY: null,
     };
 
     const [mouse, setMouse] = useState(initialMouse);
 
-    const handleContextClick = event => {
+    const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
       console.info('context click');
       event.preventDefault();
       event.stopPropagation();
@@ -122,7 +132,7 @@ const UntaggedEntry = React.memo(
         .then(function () {
           props.retrieveEntries();
         })
-        .catch(function (error) {
+        .catch(function (error: AxiosError) {
           // handle error
           console.log(error);
         })

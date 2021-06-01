@@ -70,7 +70,10 @@ const Tag = React.memo(function Tag({
         return;
       }
 
-      if (item.type === 'entry') {
+      if (
+        item.type === ItemTypes.ENTRY ||
+        item.type === ItemTypes.UNTAGGEDENTRY
+      ) {
         return;
       }
 

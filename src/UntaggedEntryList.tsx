@@ -4,7 +4,7 @@ import {autorun} from 'mobx';
 import {useAppContext} from './AppContext';
 import {observer} from 'mobx-react';
 import {useLocation} from 'react-router-dom';
-import UntaggedEntry from './UntaggedEntry.jsx';
+import UntaggedEntry from './UntaggedEntry';
 import {ITextEntry} from './Entry';
 
 const width = {
