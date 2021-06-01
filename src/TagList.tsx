@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import Tag from './Tag.jsx';
+import Tag from './Tag';
 import TagSearch from './Search.jsx';
 import List from '@material-ui/core/List';
 import {makeStyles} from '@material-ui/core/styles';
@@ -51,7 +51,7 @@ interface ITagsData {
   included: Array<IUser>;
 }
 
-interface IUser {
+export interface IUser {
   id: number;
   type: string;
   attributes: {
@@ -59,11 +59,12 @@ interface IUser {
   };
 }
 
-interface ITag {
+export interface ITag {
   id: number;
   type: string;
   attributes: {
     name: string;
+    entry_count: number;
   };
   relationships: IRelationships;
 }
@@ -126,7 +127,7 @@ const TagList = React.memo(
     const findEntry = (id: number) => {
       const entry = data.data.filter(c => c.id === id)[0];
       return {
-        entry,
+        entry: entry,
         index: data.data.indexOf(entry),
       };
     };

@@ -1,13 +1,17 @@
 import React, {useRef, useState, useMemo} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
-import ItemTypes from './ItemTypes.ts';
+import ItemTypes from './ItemTypes';
 import {useTheme} from '@material-ui/styles';
-import TagContextMenu from './TagContextMenu.tsx';
-import {useAppContext} from './AppContext.tsx';
+import TagContextMenu from './TagContextMenu';
+import {useAppContext} from './AppContext';
 import {useHistory} from 'react-router-dom';
-import API from './api.ts';
+import API from './api';
 import {makeStyles} from '@material-ui/core/styles';
-import * as Constants from './constants.ts';
+import * as Constants from './constants';
+import {ITag, IUser} from './TagList';
+import {TagTextEntryThroughModel} from './EntryList';
+import {Theme} from '@material-ui/core/styles';
+import {IMouse} from './Entry';
 
 const useStyles = makeStyles({
   entry: {
@@ -33,6 +37,17 @@ const useStyles = makeStyles({
   },
 });
 
+interface ITagProps {
+  id: number;
+  tag: ITag;
+  user: IUser;
+  fetchTags: () => void;
+  moveEntry: (id: number, atIndex: number) => void;
+  findEntry: (id: number) => {entry: ITag; index: number};
+  index: number;
+  findEntryByIndex: (id: number) => ITag | null;
+}
+
 const Tag = React.memo(function Tag({
   id,
   tag,
@@ -42,15 +57,13 @@ const Tag = React.memo(function Tag({
   findEntry,
   index,
   findEntryByIndex,
-}) {
-  const dragRef = useRef(null);
-  const dropRef = useRef(null);
+}: ITagProps) {
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
   const classes = useStyles();
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
-  const theme = useTheme();
-  const opacity = isDragging ? 0 : 1;
-
+  const theme: Theme = useTheme();
   const [{canDrop, isOver}, drop] = useDrop({
     accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
@@ -65,11 +78,10 @@ const Tag = React.memo(function Tag({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
-    hover(item, monitor) {
+    hover(item: TagTextEntryThroughModel, monitor) {
       if (!dragRef.current) {
         return;
       }
-
       if (
         item.type === ItemTypes.ENTRY ||
         item.type === ItemTypes.UNTAGGEDENTRY
@@ -90,26 +102,28 @@ const Tag = React.memo(function Tag({
       // Determine mouse position
       const clientOffset = monitor.getClientOffset();
       // Get pixels to the top
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+      if (clientOffset !== null) {
+        const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
-      // Only perform the move when the mouse has crossed half of the items height
-      // When dragging downwards, only move when the cursor is below 50%
-      // When dragging upwards, only move when the cursor is above 50%
-      // Dragging downwards
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-      // Dragging upwards
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
+        // Only perform the move when the mouse has crossed half of the items height
+        // When dragging downwards, only move when the cursor is below 50%
+        // When dragging upwards, only move when the cursor is above 50%
+        // Dragging downwards
+        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+          return;
+        }
+        // Dragging upwards
+        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+          return;
+        }
 
-      moveEntry(item.id, hoverIndex);
-      // Note: we're mutating the monitor item here!
-      // Generally it's better to avoid mutations,
-      // but it's good here for the sake of performance
-      // to avoid expensive index searches.
-      item.index = hoverIndex;
+        moveEntry(item.id, hoverIndex);
+        // Note: we're mutating the monitor item here!
+        // Generally it's better to avoid mutations,
+        // but it's good here for the sake of performance
+        // to avoid expensive index searches.
+        item.index = hoverIndex;
+      }
     },
   });
   const isActive = canDrop && isOver;
@@ -137,7 +151,7 @@ const Tag = React.memo(function Tag({
     setShowDragHandle(false);
   };
 
-  const initialMouse = {
+  const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
   };
@@ -158,9 +172,9 @@ const Tag = React.memo(function Tag({
 
   const [mouse, setMouse] = useState(initialMouse);
 
-  const handleContextClick = event => {
+  const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
-    const mouseData = {...mouse};
+    const mouseData: IMouse = {...mouse};
     (mouseData.mouseX = event.clientX - 2),
       (mouseData.mouseY = event.clientY - 4),
       setMouse(mouseData);
@@ -173,7 +187,7 @@ const Tag = React.memo(function Tag({
       isDragging: monitor.isDragging(),
     }),
     end: (dropResult, monitor) => {
-      const drop_result = monitor.getDropResult();
+      const drop_result: ITag | null = monitor.getDropResult();
       const {id: droppedId, originalIndex} = monitor.getItem();
       const didDrop = monitor.didDrop();
       if (!didDrop) {
@@ -181,56 +195,59 @@ const Tag = React.memo(function Tag({
         moveEntry(droppedId, originalIndex);
       } else {
         console.info('didDrop Tag');
-        if ('type' in drop_result) {
-          if (drop_result.type === 'Tag') {
-            // Then it was reordered in the list.
-            if (originalIndex !== findEntry(id).index) {
-              console.info(
-                'it moved from index ' +
-                  originalIndex +
-                  ' to ' +
-                  findEntry(id).index
-              );
-
-              const entry = findEntry(id).entry;
-              const entry_below = findEntryByIndex(index + 1);
-              let ordered_top;
-              let ordered_bottom;
-              if (entry_below === null) {
-                //Then it was moved to the bottom position, get the entry before it.
-                ordered_top = findEntryByIndex(index - 1);
-                ordered_bottom = entry;
+        if (drop_result?.type) {
+          if ('type' in drop_result) {
+            if (drop_result.type === 'Tag') {
+              // Then it was reordered in the list.
+              if (originalIndex !== findEntry(id).index) {
+                console.info(
+                  'it moved from index ' +
+                    originalIndex +
+                    ' to ' +
+                    findEntry(id).index
+                );
+                const entry = findEntry(id).entry;
+                const entry_below = findEntryByIndex(index + 1);
+                let ordered_top: ITag | null;
+                let ordered_bottom: ITag | null;
+                if (entry_below === null) {
+                  //Then it was moved to the bottom position, get the entry before it.
+                  ordered_top = findEntryByIndex(index - 1);
+                  ordered_bottom = entry;
+                } else {
+                  ordered_top = entry;
+                  ordered_bottom = entry_below;
+                }
+                if (ordered_top !== null && ordered_bottom !== null) {
+                  const payload = {
+                    data: {
+                      type: 'Tag',
+                      attributes: {
+                        top: ordered_top.id,
+                        bottom: ordered_bottom.id,
+                      },
+                      relationships: {},
+                    },
+                  };
+                  API.post('/tags/reorder', payload, {withCredentials: true})
+                    .then(function () {})
+                    .catch(function () {
+                      // handle error
+                    })
+                    .then(function () {
+                      // always executed
+                    });
+                }
               } else {
-                ordered_top = entry;
-                ordered_bottom = entry_below;
+                console.info("it wasn't moved.");
               }
-              const payload = {
-                data: {
-                  type: 'Tag',
-                  attributes: {
-                    top: ordered_top.id,
-                    bottom: ordered_bottom.id,
-                  },
-                  relationships: {},
-                },
-              };
-              API.post('/tags/reorder', payload, {withCredentials: true})
-                .then(function () {})
-                .catch(function () {
-                  // handle error
-                })
-                .then(function () {
-                  // always executed
-                });
-            } else {
-              console.info("it wasn't moved.");
             }
           }
         }
       }
     },
   });
-
+  const opacity = isDragging ? 0 : 1;
   drag(dragRef);
   drop(dropRef);
 
