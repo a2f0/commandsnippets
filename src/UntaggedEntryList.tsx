@@ -1,10 +1,11 @@
 import React, {useState, useEffect} from 'react';
-import API from './api.ts';
+import API from './api';
 import {autorun} from 'mobx';
-import {useAppContext} from './AppContext.tsx';
+import {useAppContext} from './AppContext';
 import {observer} from 'mobx-react';
 import {useLocation} from 'react-router-dom';
 import UntaggedEntry from './UntaggedEntry.jsx';
+import {ITextEntry} from './Entry';
 
 const width = {
   width: '100%',
@@ -40,7 +41,7 @@ const UntaggedEntryList = React.memo(
 
     return (
       <div style={width}>
-        {data.data.map(entry => {
+        {data.data.map((entry: ITextEntry) => {
           return (
             <UntaggedEntry
               key={entry.id}
