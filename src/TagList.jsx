@@ -5,7 +5,7 @@ import List from '@material-ui/core/List';
 import {makeStyles} from '@material-ui/core/styles';
 import API from './api.ts';
 import {autorun} from 'mobx';
-import TagNew from './TagNew.jsx';
+import TagNew from './TagNew.tsx';
 import {useAppContext} from './AppContext.tsx';
 import {observer} from 'mobx-react';
 import {useParams, useHistory} from 'react-router-dom';

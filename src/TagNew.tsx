@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import Button from '@material-ui/core/Button';
 import {makeStyles} from '@material-ui/core/styles';
-import API from './api.ts';
-import {useAppContext} from './AppContext.tsx';
+import API from './api';
+import {useAppContext} from './AppContext';
 
 const useStyles = makeStyles({
   tagName: {
@@ -15,13 +15,17 @@ const useStyles = makeStyles({
   },
 });
 
-const TagNew = React.memo(function TagNew(props) {
-  const [tagName, setTagName] = useState();
+interface ITagNewProps {
+  fetchTags: () => void;
+}
+
+const TagNew = React.memo(function TagNew(props: ITagNewProps) {
+  const [tagName, setTagName] = useState<string | null>();
   const classes = useStyles();
   const appConfig = useAppContext();
 
-  const handleTagNameChange = newTagName => {
-    setTagName(newTagName);
+  const handleTagNameChange = (event: React.FocusEvent<HTMLDivElement>) => {
+    setTagName(event.currentTarget.textContent);
   };
 
   const handleCancel = () => {
@@ -60,7 +64,7 @@ const TagNew = React.memo(function TagNew(props) {
           contentEditable={true}
           suppressContentEditableWarning={true}
           onBlur={e => {
-            handleTagNameChange(e.currentTarget.textContent);
+            handleTagNameChange(e);
           }}
         >
           {tagName}
