@@ -1,9 +1,10 @@
 import React from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import {useTheme} from '@material-ui/styles';
-import {darkTheme, lightTheme} from './themes.ts';
+import {darkTheme, lightTheme} from './themes';
 import WbSunnyIcon from '@material-ui/icons/WbSunny';
 import Brightness3Icon from '@material-ui/icons/Brightness3';
+import {Theme} from '@material-ui/core/styles';
 
 const useStyles = makeStyles({
   themeSwitcher: {
@@ -11,8 +12,14 @@ const useStyles = makeStyles({
   },
 });
 
-const ThemeSwitcher = React.memo(function ThemeSwitcher(props) {
-  const theme = useTheme();
+interface IThemeSwitcherProps {
+  handleThemeSwitcher: (chosenTheme: Theme) => void;
+}
+
+const ThemeSwitcher = React.memo(function ThemeSwitcher(
+  props: IThemeSwitcherProps
+) {
+  const theme = useTheme<Theme>();
   const classes = useStyles();
   return (
     <>
