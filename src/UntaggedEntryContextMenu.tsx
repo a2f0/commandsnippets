@@ -1,9 +1,17 @@
 import React, {useEffect, useState} from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import {IMouse} from './Entry';
 
-const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(props) {
-  const initialMouse = {
+interface IUntaggedEntryContextMenuProps {
+  mouse: IMouse;
+  handleDelete: () => void;
+}
+
+const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(
+  props: IUntaggedEntryContextMenuProps
+) {
+  const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
   };
