@@ -7,14 +7,22 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import {IMouse} from './Entry';
 
-const TagContextMenu = React.memo(function TagContextMenu(props) {
-  const initialMouse = {
+interface ITagContextMenuProps {
+  mouse: IMouse;
+  deleteTag: () => void;
+}
+
+const TagContextMenu = React.memo(function TagContextMenu(
+  props: ITagContextMenuProps
+) {
+  const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
   };
 
-  const [mouse, setMouse] = useState(initialMouse);
+  const [mouse, setMouse] = useState<IMouse>(initialMouse);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
   useEffect(() => {

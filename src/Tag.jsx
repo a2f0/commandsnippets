@@ -2,7 +2,7 @@ import React, {useRef, useState, useMemo} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import ItemTypes from './ItemTypes.ts';
 import {useTheme} from '@material-ui/styles';
-import TagContextMenu from './TagContextMenu.jsx';
+import TagContextMenu from './TagContextMenu.tsx';
 import {useAppContext} from './AppContext.tsx';
 import {useHistory} from 'react-router-dom';
 import API from './api.ts';
