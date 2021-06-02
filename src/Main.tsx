@@ -3,7 +3,7 @@ import LeftDrawer from './LeftDrawer';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import {makeStyles} from '@material-ui/core/styles';
-import MenuBar from './MenuBar.jsx';
+import MenuBar from './MenuBar';
 import EntryList from './EntryList';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';

@@ -2,43 +2,69 @@ import React from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Fade from '@material-ui/core/Fade';
-import {withStyles} from '@material-ui/core/styles';
+import {WithStyles} from '@material-ui/core';
+import {createStyles, withStyles} from '@material-ui/core/styles';
 import Toolbar from '@material-ui/core/Toolbar';
 import {makeStyles} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import {darkTheme, lightTheme} from './themes.ts';
+import {darkTheme, lightTheme} from './themes';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import CheckIcon from '@material-ui/icons/Check';
-import {useAppContext} from './AppContext.tsx';
+import {useAppContext} from './AppContext';
 import {useHistory} from 'react-router-dom';
 import {observer} from 'mobx-react';
-import {baseHTTPURL} from './api.ts';
-
+import {baseHTTPURL} from './api';
+import {Theme} from '@material-ui/core/styles';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import axios from 'axios';
 
-const StyledMenu = withStyles({
-  paper: {
-    // border: '1px solid #d3d4d5',
-    borderRadius: 0,
-    margin: 0,
-  },
-  list: {
-    padding: 0,
-  },
-})(props => (
-  <Menu
-    transitionDuration={0}
-    getContentAnchorEl={null}
-    anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
-    transformOrigin={{vertical: 'top', horizontal: 'left'}}
-    keepMounted
-    // elevation={0}
-    {...props}
-  />
-));
+const sty = () => {
+  return createStyles({
+    paper: {
+      borderRadius: 0,
+      margin: 0,
+    },
+    list: {
+      padding: 0,
+    },
+  });
+};
+
+interface IStyledMenuProps extends WithStyles<typeof sty> {
+  id: string;
+  anchorEl: HTMLElement | null;
+  open: boolean;
+  onClose: () => void;
+  classes: {
+    paper: string;
+    list: string;
+  };
+  children: React.PropsWithChildren<{}>;
+}
+
+const StyledMenu = withStyles(sty)(
+  ({id, anchorEl, open, onClose, classes, children}: IStyledMenuProps) => {
+    return (
+      <Menu
+        id={id}
+        anchorEl={anchorEl}
+        onClose={onClose}
+        transitionDuration={0}
+        getContentAnchorEl={null}
+        anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+        transformOrigin={{vertical: 'top', horizontal: 'left'}}
+        keepMounted
+        classes={classes}
+        open={open}
+        TransitionComponent={Fade}
+      >
+        {children}
+      </Menu>
+    );
+  }
+);
 
 const drawerWidth = 150;
 
@@ -83,17 +109,28 @@ const useStyles = makeStyles({
   },
 });
 
+interface IMenuBarProps {
+  handleThemeSwitcher: (theme: Theme) => void;
+}
+
 const MenuBar = React.memo(
-  observer(function MenuBar(props) {
+  observer(function MenuBar(props: IMenuBarProps) {
     const classes = useStyles();
     const history = useHistory();
     const appConfig = useAppContext();
-    const [fileMenuAnchorEl, setFileMenuAnchorEl] = React.useState(null);
-    const [editMenuAnchorEl, setEditMenuAnchorEl] = React.useState(null);
-    const [viewMenuAnchorEl, setViewMenuAnchorEl] = React.useState(null);
-    const [entriesMenuAnchorEl, setEntriesMenuAnchorEl] = React.useState(null);
-    const [helpMenuAnchorEl, setHelpMenuAnchorEl] = React.useState(null);
-    const [tagsMenuAnchorEl, setTagsMenuAnchorEl] = React.useState(null);
+
+    const [fileMenuAnchorEl, setFileMenuAnchorEl] =
+      React.useState<null | HTMLElement>(null);
+    const [editMenuAnchorEl, setEditMenuAnchorEl] =
+      React.useState<null | HTMLElement>(null);
+    const [viewMenuAnchorEl, setViewMenuAnchorEl] =
+      React.useState<null | HTMLElement>(null);
+    const [entriesMenuAnchorEl, setEntriesMenuAnchorEl] =
+      React.useState<null | HTMLElement>(null);
+    const [helpMenuAnchorEl, setHelpMenuAnchorEl] =
+      React.useState<null | HTMLElement>(null);
+    const [tagsMenuAnchorEl, setTagsMenuAnchorEl] =
+      React.useState<null | HTMLElement>(null);
 
     const handleNavigateToLogin = () => {
       history.push('/login');
@@ -124,7 +161,9 @@ const MenuBar = React.memo(
         });
     };
 
-    const handleFileMenuClick = event => {
+    const handleFileMenuClick = (
+      event: React.MouseEvent<HTMLButtonElement>
+    ) => {
       setFileMenuAnchorEl(event.currentTarget);
     };
 
@@ -140,15 +179,21 @@ const MenuBar = React.memo(
       setEditMenuAnchorEl(null);
     };
 
-    const handleViewMenuClick = event => {
+    const handleViewMenuClick = (
+      event: React.MouseEvent<HTMLButtonElement>
+    ) => {
       setViewMenuAnchorEl(event.currentTarget);
     };
 
-    const handleTagsMenuClick = event => {
+    const handleTagsMenuClick = (
+      event: React.MouseEvent<HTMLButtonElement>
+    ) => {
       setTagsMenuAnchorEl(event.currentTarget);
     };
 
-    const handleEntriesMenuClick = event => {
+    const handleEntriesMenuClick = (
+      event: React.MouseEvent<HTMLButtonElement>
+    ) => {
       setEntriesMenuAnchorEl(event.currentTarget);
     };
 
@@ -172,11 +217,11 @@ const MenuBar = React.memo(
       setHelpMenuAnchorEl(null);
     };
 
-    const handleSetTagSortOrder = order => {
+    const handleSetTagSortOrder = (order: string) => {
       appConfig.setTagSortOrder(order);
     };
 
-    const handleSetEntrySortOrder = order => {
+    const handleSetEntrySortOrder = (order: string) => {
       appConfig.setEntrySortOrder(order);
     };
 
@@ -191,7 +236,6 @@ const MenuBar = React.memo(
           <Typography className={classes.dragIndicator}></Typography>
           <Button
             size="small"
-            label="Primary"
             aria-controls="file-menu"
             className={classes.menuButton}
             aria-haspopup="true"
@@ -204,7 +248,6 @@ const MenuBar = React.memo(
         </Button> */}
           <Button
             size="small"
-            label="Primary"
             aria-controls="view-menu"
             className={classes.menuButton}
             aria-haspopup="true"
@@ -214,7 +257,6 @@ const MenuBar = React.memo(
           </Button>
           <Button
             size="small"
-            label="Primary"
             aria-controls="view-menu"
             className={classes.menuButton}
             aria-haspopup="true"
@@ -224,7 +266,6 @@ const MenuBar = React.memo(
           </Button>
           <Button
             size="small"
-            label="Primary"
             aria-controls="view-menu"
             className={classes.menuButton}
             aria-haspopup="true"
@@ -242,7 +283,6 @@ const MenuBar = React.memo(
           anchorEl={fileMenuAnchorEl}
           open={Boolean(fileMenuAnchorEl)}
           onClose={handleFileMenuClose}
-          TransitionComponent={Fade}
         >
           {appConfig.loggedInUser && (
             <MenuItem className={classes.menuItem} onClick={handleCreateTag}>
@@ -276,7 +316,6 @@ const MenuBar = React.memo(
           anchorEl={editMenuAnchorEl}
           open={Boolean(editMenuAnchorEl)}
           onClose={handleEditMenuClose}
-          TransitionComponent={Fade}
         >
           <MenuItem className={classes.menuItem} onClick={handleEditMenuClose}>
             Edit 1
@@ -290,7 +329,6 @@ const MenuBar = React.memo(
           anchorEl={viewMenuAnchorEl}
           open={Boolean(viewMenuAnchorEl)}
           onClose={handleViewMenuClose}
-          TransitionComponent={Fade}
         >
           <MenuItem
             className={classes.menuItem}
@@ -328,7 +366,6 @@ const MenuBar = React.memo(
           anchorEl={tagsMenuAnchorEl}
           open={Boolean(tagsMenuAnchorEl)}
           onClose={handleTagsMenuClose}
-          TransitionComponent={Fade}
         >
           <MenuItem
             className={classes.menuItem}
@@ -466,7 +503,6 @@ const MenuBar = React.memo(
           anchorEl={entriesMenuAnchorEl}
           open={Boolean(entriesMenuAnchorEl)}
           onClose={handleEntriesMenuClose}
-          TransitionComponent={Fade}
         >
           <MenuItem
             className={classes.menuItem}
@@ -630,7 +666,6 @@ const MenuBar = React.memo(
           anchorEl={helpMenuAnchorEl}
           open={Boolean(helpMenuAnchorEl)}
           onClose={handleHelpMenuClose}
-          TransitionComponent={Fade}
         >
           <MenuItem className={classes.menuItem} onClick={handleHelpMenuClose}>
             Help 1
