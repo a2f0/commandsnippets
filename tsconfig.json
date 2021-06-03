@@ -1,23 +1,21 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
+    "types": ["webdriverio/sync", "mocha", "expect-webdriverio"],
     "target": "esnext",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false,
     "jsx": "react-jsx",
     "outDir": "src/ts-out"
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["src/ts-out/**/*"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/*.ts", "node_modules"]
 }
