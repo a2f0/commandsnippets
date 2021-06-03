@@ -1,7 +1,7 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
-    "types": ["webdriverio/sync", "mocha", "expect-webdriverio"],
+    "types": ["webdriverio/sync", "mocha"],
     "target": "esnext",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
@@ -17,5 +17,5 @@
     "outDir": "src/ts-out"
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["**/*.ts", "node_modules"]
+  "exclude": ["src/ts-out", "node_modules"]
 }
