@@ -11,8 +11,7 @@
   "plugins": ["react", "mocha"],
   "rules": {
     "node/no-unsupported-features/es-syntax": "off",
-    "prefer-arrow-callback": "off",
-    "react/prop-types": "off"
+    "prefer-arrow-callback": "off"
   },
   "globals": {
     "localStorage": true,

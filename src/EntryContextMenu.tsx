@@ -15,7 +15,7 @@ export interface IEntryContextMenu {
 }
 
 const EntryContextMenu: React.FC<IEntryContextMenu> = React.memo(
-  function EntryContextMenu(props) {
+  function EntryContextMenu(props: IEntryContextMenu) {
     const initialMouse: IMouse = {
       mouseX: null,
       mouseY: null,

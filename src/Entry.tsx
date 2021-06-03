@@ -87,7 +87,7 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
   tag,
   retrieveEntries,
   findEntryByIndex,
-}) {
+}: IEntryProps) {
   useEffect(() => {
     console.info('useEffect');
     setTextEntry(text_entry);
