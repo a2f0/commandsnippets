@@ -14,108 +14,106 @@ export interface IEntryContextMenu {
   handleBeginEdit: () => void;
 }
 
-const EntryContextMenu: React.FC<IEntryContextMenu> = React.memo(
-  function EntryContextMenu(props: IEntryContextMenu) {
-    const initialMouse: IMouse = {
-      mouseX: null,
-      mouseY: null,
-    };
+const EntryContextMenu = (props: IEntryContextMenu) => {
+  const initialMouse: IMouse = {
+    mouseX: null,
+    mouseY: null,
+  };
 
-    const [mouse, setMouse] = useState(initialMouse);
+  const [mouse, setMouse] = useState(initialMouse);
 
-    useEffect(() => {
-      setMouse(props.mouse);
-    }, [props.mouse]);
+  useEffect(() => {
+    setMouse(props.mouse);
+  }, [props.mouse]);
 
-    const handleClose = () => {
-      setMouse(initialMouse);
-    };
+  const handleClose = () => {
+    setMouse(initialMouse);
+  };
 
-    const handleUntag = (id: number) => {
-      API.delete('/tags_entries/' + id, {withCredentials: true});
-      props.handleDelete(id);
-      handleClose();
-    };
+  const handleUntag = (id: number) => {
+    API.delete('/tags_entries/' + id, {withCredentials: true});
+    props.handleDelete(id);
+    handleClose();
+  };
 
-    const handleBeginEdit = () => {
-      props.handleBeginEdit();
-      handleClose();
-    };
+  const handleBeginEdit = () => {
+    props.handleBeginEdit();
+    handleClose();
+  };
 
-    const handleNewEntry = () => {
-      props.handleNewEntry();
-      handleClose();
-    };
+  const handleNewEntry = () => {
+    props.handleNewEntry();
+    handleClose();
+  };
 
-    const handleIncrementTimesUsed = () => {
-      const entry_reuse_payload = {
-        data: {
-          type: 'TextEntryReused',
-          attributes: {},
-          relationships: {
-            text_entry: {
-              data: {
-                type: 'TextEntry',
-                id: props.text_entry.id,
-              },
+  const handleIncrementTimesUsed = () => {
+    const entry_reuse_payload = {
+      data: {
+        type: 'TextEntryReused',
+        attributes: {},
+        relationships: {
+          text_entry: {
+            data: {
+              type: 'TextEntry',
+              id: props.text_entry.id,
             },
           },
         },
-      };
-      API.post('/entry_reuses', entry_reuse_payload, {withCredentials: true})
-        .then(function () {})
-        .catch(function (error) {
-          // handle error
-          console.log(error);
-        })
-        .then(function () {
-          // always executed
-          handleClose();
-        });
+      },
     };
+    API.post('/entry_reuses', entry_reuse_payload, {withCredentials: true})
+      .then(() => {})
+      .catch(error => {
+        // handle error
+        console.log(error);
+      })
+      .then(() => {
+        // always executed
+        handleClose();
+      });
+  };
 
-    return (
-      <Menu
-        keepMounted
-        open={mouse.mouseY !== null}
-        onClose={handleClose}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          mouse.mouseY !== null && mouse.mouseX !== null
-            ? {top: mouse.mouseY, left: mouse.mouseX}
-            : undefined
-        }
+  return (
+    <Menu
+      keepMounted
+      open={mouse.mouseY !== null}
+      onClose={handleClose}
+      anchorReference="anchorPosition"
+      anchorPosition={
+        mouse.mouseY !== null && mouse.mouseX !== null
+          ? {top: mouse.mouseY, left: mouse.mouseX}
+          : undefined
+      }
+    >
+      <MenuItem
+        onClick={() => {
+          handleBeginEdit();
+        }}
       >
-        <MenuItem
-          onClick={() => {
-            handleBeginEdit();
-          }}
-        >
-          Edit
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleNewEntry();
-          }}
-        >
-          New Entry
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleIncrementTimesUsed();
-          }}
-        >
-          Increment Times Used
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleUntag(props.id);
-          }}
-        >
-          Untag
-        </MenuItem>
-      </Menu>
-    );
-  }
-);
-export default EntryContextMenu;
+        Edit
+      </MenuItem>
+      <MenuItem
+        onClick={() => {
+          handleNewEntry();
+        }}
+      >
+        New Entry
+      </MenuItem>
+      <MenuItem
+        onClick={() => {
+          handleIncrementTimesUsed();
+        }}
+      >
+        Increment Times Used
+      </MenuItem>
+      <MenuItem
+        onClick={() => {
+          handleUntag(props.id);
+        }}
+      >
+        Untag
+      </MenuItem>
+    </Menu>
+  );
+};
+export default React.memo(EntryContextMenu);

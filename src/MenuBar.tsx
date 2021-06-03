@@ -114,7 +114,7 @@ interface IMenuBarProps {
 }
 
 const MenuBar = React.memo(
-  observer(function MenuBar(props: IMenuBarProps) {
+  observer((props: IMenuBarProps) => {
     const classes = useStyles();
     const history = useHistory();
     const appConfig = useAppContext();
@@ -148,15 +148,15 @@ const MenuBar = React.memo(
 
       logout_api
         .post('/api-token-deauth/', {}, {withCredentials: true})
-        .then(function () {
+        .then(() => {
           // Login succeded
           appConfig.setLoggedInUser('');
           setFileMenuAnchorEl(null);
         })
-        .catch(function () {
+        .catch(() => {
           // Login failed
         })
-        .then(function () {
+        .then(() => {
           // always executed
         });
     };

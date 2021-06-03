@@ -16,9 +16,7 @@ interface IThemeSwitcherProps {
   handleThemeSwitcher: (chosenTheme: Theme) => void;
 }
 
-const ThemeSwitcher = React.memo(function ThemeSwitcher(
-  props: IThemeSwitcherProps
-) {
+const ThemeSwitcher = (props: IThemeSwitcherProps) => {
   const theme = useTheme<Theme>();
   const classes = useStyles();
   return (
@@ -42,5 +40,5 @@ const ThemeSwitcher = React.memo(function ThemeSwitcher(
       )}
     </>
   );
-});
-export default ThemeSwitcher;
+};
+export default React.memo(ThemeSwitcher);

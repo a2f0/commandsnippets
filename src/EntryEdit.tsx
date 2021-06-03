@@ -44,7 +44,7 @@ export interface IEntryEdit {
   handleCancelEdit: () => void;
 }
 
-const EntryEdit = React.memo(function EntryEdit(props: IEntryEdit) {
+const EntryEdit = (props: IEntryEdit) => {
   useEffect(() => {
     setBody(props.body);
     setSubject(props.subject);
@@ -116,5 +116,6 @@ const EntryEdit = React.memo(function EntryEdit(props: IEntryEdit) {
       </div>
     </>
   );
-});
-export default EntryEdit;
+};
+
+export default React.memo(EntryEdit);

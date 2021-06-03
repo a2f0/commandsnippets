@@ -1,13 +1,9 @@
 {
   "extends": ["./node_modules/gts/", "plugin:react/recommended"],
   "plugins": ["mocha"],
-  "rules": {
-    "prefer-arrow-callback": "off"
-  },
   "globals": {
     "browser": true // Mocha
   },
-
   "env": {
     "mocha": true
   },

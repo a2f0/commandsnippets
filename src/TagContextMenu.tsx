@@ -14,9 +14,7 @@ interface ITagContextMenuProps {
   deleteTag: () => void;
 }
 
-const TagContextMenu = React.memo(function TagContextMenu(
-  props: ITagContextMenuProps
-) {
+const TagContextMenu = (props: ITagContextMenuProps) => {
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
@@ -85,5 +83,5 @@ const TagContextMenu = React.memo(function TagContextMenu(
       </Dialog>
     </>
   );
-});
-export default TagContextMenu;
+};
+export default React.memo(TagContextMenu);

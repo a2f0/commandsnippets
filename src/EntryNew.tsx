@@ -47,7 +47,7 @@ const useStyles = makeStyles({
   },
 });
 
-const EntryNew = React.memo(function EntryNew(props: IEntryNewProps) {
+const EntryNew = (props: IEntryNewProps) => {
   const [subject, setSubject] = useState<string | null>();
   const [body, setBody] = useState<string | null>();
   const classes = useStyles();
@@ -68,7 +68,7 @@ const EntryNew = React.memo(function EntryNew(props: IEntryNewProps) {
     };
 
     API.post('/entries', text_entry_payload, {withCredentials: true})
-      .then(function (response) {
+      .then(response => {
         // handle success
         console.log(response);
         console.log(props.tag);
@@ -95,23 +95,23 @@ const EntryNew = React.memo(function EntryNew(props: IEntryNewProps) {
         API.post('/tags_entries', text_entry_through_model_payload, {
           withCredentials: true,
         })
-          .then(function () {
+          .then(() => {
             props.retrieveEntries();
             props.handleCancelNewEntry();
           })
-          .catch(function (error) {
+          .catch(error => {
             // handle error
             console.log(error);
           })
-          .then(function () {
+          .then(() => {
             // always executed
           });
       })
-      .catch(function (error) {
+      .catch(error => {
         // handle error
         console.log(error);
       })
-      .then(function () {
+      .then(() => {
         // always executed
       });
   };
@@ -181,5 +181,5 @@ const EntryNew = React.memo(function EntryNew(props: IEntryNewProps) {
       </div>
     </>
   );
-});
-export default EntryNew;
+};
+export default React.memo(EntryNew);

@@ -70,7 +70,7 @@ interface IMainProps {
 }
 
 const Main = React.memo(
-  observer(function Main(props: IMainProps) {
+  observer((props: IMainProps) => {
     const appConfig = useAppContext();
     const classes = useStyles();
 

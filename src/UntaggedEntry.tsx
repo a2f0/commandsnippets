@@ -48,7 +48,7 @@ interface IUntaggedEntryProps {
 }
 
 const UntaggedEntry = React.memo(
-  observer(function EntryList(props: IUntaggedEntryProps) {
+  observer((props: IUntaggedEntryProps) => {
     const [showDragHandle, setShowDragHandle] = useState(false);
     const classes = useStyles();
 
@@ -90,14 +90,14 @@ const UntaggedEntry = React.memo(
                 },
               };
               API.post('tags_entries', payload, {withCredentials: true})
-                .then(function () {
+                .then(() => {
                   props.retrieveEntries();
                 })
-                .catch(function (error: AxiosError) {
+                .catch((error: AxiosError) => {
                   // handle error
                   console.log(error);
                 })
-                .then(function () {
+                .then(() => {
                   // always executed
                 });
             }
@@ -129,14 +129,14 @@ const UntaggedEntry = React.memo(
 
     const handleDelete = () => {
       API.delete('/entries/' + props.entry.id, {withCredentials: true})
-        .then(function () {
+        .then(() => {
           props.retrieveEntries();
         })
-        .catch(function (error: AxiosError) {
+        .catch((error: AxiosError) => {
           // handle error
           console.log(error);
         })
-        .then(function () {
+        .then(() => {
           // always executed
         });
     };

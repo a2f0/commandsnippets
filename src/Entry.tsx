@@ -77,7 +77,7 @@ interface IEntryProps {
   findEntryByIndex: (id: number) => TagTextEntryThroughModel | null;
 }
 
-const Entry: React.FC<IEntryProps> = React.memo(function Entry({
+const Entry = ({
   id,
   index,
   moveEntry,
@@ -87,7 +87,7 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
   tag,
   retrieveEntries,
   findEntryByIndex,
-}: IEntryProps) {
+}: IEntryProps) => {
   useEffect(() => {
     console.info('useEffect');
     setTextEntry(text_entry);
@@ -170,12 +170,12 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
               API.post('/tags_entries/reorder', payload, {
                 withCredentials: true,
               })
-                .then(function () {})
-                .catch(function (error) {
+                .then(() => {})
+                .catch(error => {
                   // handle error
                   console.log(error);
                 })
-                .then(function () {
+                .then(() => {
                   // always executed
                 });
             }
@@ -271,7 +271,7 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
       },
     };
     API.patch('entries/' + text_entry.id, payload, {withCredentials: true})
-      .then(function (response) {
+      .then(response => {
         // handle success
         if (textEntry !== undefined) {
           const new_text_entry = {...textEntry};
@@ -282,11 +282,11 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
           setIsEditing(false);
         }
       })
-      .catch(function (error) {
+      .catch(error => {
         // handle error
         console.log(error);
       })
-      .then(function () {
+      .then(() => {
         // always executed
       });
   };
@@ -385,5 +385,6 @@ const Entry: React.FC<IEntryProps> = React.memo(function Entry({
       )}
     </>
   );
-});
-export default Entry;
+};
+
+export default React.memo(Entry);

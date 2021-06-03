@@ -12,7 +12,7 @@ const width = {
 };
 
 const UntaggedEntryList = React.memo(
-  observer(function UntaggedEntryList() {
+  observer(() => {
     const appConfig = useAppContext();
     const [data, setData] = useState({data: [], included: []});
     const location = useLocation();

@@ -19,7 +19,7 @@ interface ITagNewProps {
   fetchTags: () => void;
 }
 
-const TagNew = React.memo(function TagNew(props: ITagNewProps) {
+const TagNew = (props: ITagNewProps) => {
   const [tagName, setTagName] = useState<string | null>();
   const classes = useStyles();
   const appConfig = useAppContext();
@@ -43,15 +43,15 @@ const TagNew = React.memo(function TagNew(props: ITagNewProps) {
       },
     };
     API.post('/tags', payload, {withCredentials: true})
-      .then(function () {
+      .then(() => {
         appConfig.setTagNew(true);
         props.fetchTags();
       })
-      .catch(function (error) {
+      .catch(error => {
         // handle error
         console.log(error);
       })
-      .then(function () {
+      .then(() => {
         // always executed
       });
   };
@@ -90,5 +90,5 @@ const TagNew = React.memo(function TagNew(props: ITagNewProps) {
       </Button>
     </>
   );
-});
-export default TagNew;
+};
+export default React.memo(TagNew);

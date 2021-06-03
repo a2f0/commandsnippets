@@ -70,7 +70,7 @@ export interface ITag {
 }
 
 const TagList = React.memo(
-  observer(function TagList() {
+  observer(() => {
     const appConfig = useAppContext();
     const [data, setData] = useState<ITagsData>({data: [], included: []});
     const {user} = useParams<IParamTypes>();

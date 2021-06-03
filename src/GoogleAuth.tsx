@@ -53,85 +53,81 @@ const useStyles = makeStyles({
   },
 });
 
-const GoogleAuth = React.memo(
-  observer(function GoogleAuth() {
-    const theme = useTheme<Theme>();
-    const appConfig = useAppContext();
-    const classes = useStyles();
+const GoogleAuth = () => {
+  const theme = useTheme<Theme>();
+  const appConfig = useAppContext();
+  const classes = useStyles();
 
-    useEffect(() => {
-      const queryString = window.location.search;
-      const urlParams = new URLSearchParams(queryString);
-      const code = urlParams.get('code');
-      const scope = urlParams.get('scope');
-      console.info('code (google auth): ' + code);
-      console.info('scope (google auth): ' + scope);
-      if (
-        code !== '' &&
-        scope !== null &&
-        scope.includes('https://www.googleapis.com/auth/userinfo.email')
-      ) {
-        const newURL =
-          window.location.protocol + '//' + window.location.host + '/';
-        window.history.pushState({}, '', newURL);
-        const payload = {
-          data: {
-            type: 'GoogleLogin',
-            attributes: {
-              code: code,
-            },
+  useEffect(() => {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const code = urlParams.get('code');
+    const scope = urlParams.get('scope');
+    console.info('code (google auth): ' + code);
+    console.info('scope (google auth): ' + scope);
+    if (
+      code !== '' &&
+      scope !== null &&
+      scope.includes('https://www.googleapis.com/auth/userinfo.email')
+    ) {
+      const newURL =
+        window.location.protocol + '//' + window.location.host + '/';
+      window.history.pushState({}, '', newURL);
+      const payload = {
+        data: {
+          type: 'GoogleLogin',
+          attributes: {
+            code: code,
           },
-        };
-        API.post('/google-login/', payload, {withCredentials: true})
-          .then(function () {
-            API.get('/user/', {withCredentials: true}).then(function (
-              response
-            ) {
-              const username = response.data.data.attributes.username;
-              appConfig.setLoggedInUser(username);
-              document.cookie = 'loggedInUser=' + username;
-            });
-          })
-          .catch(function () {
-            appConfig.setLoggedInUser('');
-          })
-          .then(function () {});
-      }
-    }, []);
+        },
+      };
+      API.post('/google-login/', payload, {withCredentials: true})
+        .then(() => {
+          API.get('/user/', {withCredentials: true}).then(response => {
+            const username = response.data.data.attributes.username;
+            appConfig.setLoggedInUser(username);
+            document.cookie = 'loggedInUser=' + username;
+          });
+        })
+        .catch(() => {
+          appConfig.setLoggedInUser('');
+        })
+        .then(() => {});
+    }
+  }, []);
 
-    const handleGitHubClick = () => {
-      const redirect = redirectUrl();
-      console.info('window.location.hostname: ' + window.location.hostname);
-      console.info('redirect: ' + redirect);
-      window.location.assign(
-        'https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=' +
-          redirect +
-          '&client_id=' +
-          googleClientID()
-      );
-    };
-
-    return (
-      <>
-        {appConfig.loggedInUser && (
-          <div className={classes.clickableDiv}>{appConfig.loggedInUser}</div>
-        )}
-
-        {!appConfig.loggedInUser && (
-          <div
-            className={classes.loginBox}
-            style={{color: theme.palette.text.primary}}
-            onClick={handleGitHubClick}
-          >
-            <div className={classes.loginBoxIcon}>
-              <Google style={{color: theme.palette.text.primary}} size={18} />
-            </div>
-            <div className={classes.loginBoxText}>Login with Google</div>
-          </div>
-        )}
-      </>
+  const handleGitHubClick = () => {
+    const redirect = redirectUrl();
+    console.info('window.location.hostname: ' + window.location.hostname);
+    console.info('redirect: ' + redirect);
+    window.location.assign(
+      'https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=' +
+        redirect +
+        '&client_id=' +
+        googleClientID()
     );
-  })
-);
+  };
 
-export default GoogleAuth;
+  return (
+    <>
+      {appConfig.loggedInUser && (
+        <div className={classes.clickableDiv}>{appConfig.loggedInUser}</div>
+      )}
+
+      {!appConfig.loggedInUser && (
+        <div
+          className={classes.loginBox}
+          style={{color: theme.palette.text.primary}}
+          onClick={handleGitHubClick}
+        >
+          <div className={classes.loginBoxIcon}>
+            <Google style={{color: theme.palette.text.primary}} size={18} />
+          </div>
+          <div className={classes.loginBoxText}>Login with Google</div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default React.memo(observer(GoogleAuth));

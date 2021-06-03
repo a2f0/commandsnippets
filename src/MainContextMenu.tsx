@@ -8,9 +8,7 @@ interface IMainContextMenu {
   showNewEntry: () => void;
 }
 
-const MainContextMenu = React.memo(function MainContextMenu(
-  props: IMainContextMenu
-) {
+const MainContextMenu = (props: IMainContextMenu) => {
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
@@ -52,5 +50,5 @@ const MainContextMenu = React.memo(function MainContextMenu(
       </MenuItem>
     </Menu>
   );
-});
-export default MainContextMenu;
+};
+export default React.memo(MainContextMenu);

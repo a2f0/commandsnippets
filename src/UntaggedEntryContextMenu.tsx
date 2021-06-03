@@ -8,9 +8,7 @@ interface IUntaggedEntryContextMenuProps {
   handleDelete: () => void;
 }
 
-const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(
-  props: IUntaggedEntryContextMenuProps
-) {
+const UntaggedEntryContextMenu = (props: IUntaggedEntryContextMenuProps) => {
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
@@ -52,5 +50,5 @@ const UntaggedEntryContextMenu = React.memo(function EntryContextMenu(
       </MenuItem>
     </Menu>
   );
-});
-export default UntaggedEntryContextMenu;
+};
+export default React.memo(UntaggedEntryContextMenu);

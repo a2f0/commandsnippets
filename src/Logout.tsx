@@ -4,11 +4,11 @@ import API from './api';
 import {AxiosResponse} from 'axios';
 
 const Logout: React.FunctionComponent = React.memo(
-  observer(function Logout() {
+  observer(() => {
     const handleLogout = () => {
       //const user = props.user;
       API.get('/api-token-deauth/', {withCredentials: true})
-        .then(function (response: AxiosResponse<JSON>) {
+        .then((response: AxiosResponse<JSON>) => {
           return response;
         })
         .then(() => {

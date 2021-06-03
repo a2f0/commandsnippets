@@ -24,7 +24,7 @@ const useStyles = makeStyles({
 });
 
 const AppRouter = React.memo(
-  observer(function AppRouter() {
+  observer(() => {
     const classes = useStyles();
     let initialTheme = darkTheme;
     if (store.selectedTheme === 'lightTheme') {
