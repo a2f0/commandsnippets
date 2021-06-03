@@ -30,7 +30,7 @@ const TagNew = (props: ITagNewProps) => {
 
   const handleCancel = () => {
     setTagName(null);
-    appConfig.setTagNew(true);
+    appConfig.setTagNew(false);
   };
 
   const handleSave = () => {
