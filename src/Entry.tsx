@@ -1,15 +1,15 @@
+import * as Constants from './constants';
 import * as React from 'react';
-import {useRef, useState, useMemo, useEffect} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
-import ItemTypes from './ItemTypes';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import API from './api';
+import EntryContextMenu from './EntryContextMenu';
+import EntryEdit from './EntryEdit';
+import EntryNew from './EntryNew';
+import ItemTypes from './ItemTypes';
+import {TagTextEntryThroughModel} from './EntryList';
 import {makeStyles} from '@material-ui/core/styles';
 import {useAppContext} from './AppContext';
-import * as Constants from './constants';
-import EntryNew from './EntryNew';
-import EntryEdit from './EntryEdit';
-import EntryContextMenu from './EntryContextMenu';
-import {TagTextEntryThroughModel} from './EntryList';
 const useStyles = makeStyles({
   entry: {
     display: 'inline-block',

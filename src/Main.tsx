@@ -1,16 +1,16 @@
-import React from 'react';
-import LeftDrawer from './LeftDrawer';
+import * as Constants from './constants';
 import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import {makeStyles} from '@material-ui/core/styles';
-import MenuBar from './MenuBar';
 import EntryList from './EntryList';
+import GithubAuth from './GithubAuth';
+import LeftDrawer from './LeftDrawer';
+import MenuBar from './MenuBar';
+import React from 'react';
+import {Theme} from '@material-ui/core/styles';
+import Toolbar from '@material-ui/core/Toolbar';
+import UntaggedEntryList from './UntaggedEntryList';
+import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-import UntaggedEntryList from './UntaggedEntryList';
-import * as Constants from './constants';
-import GithubAuth from './GithubAuth';
-import {Theme} from '@material-ui/core/styles';
 
 const appBarHeight = 52;
 

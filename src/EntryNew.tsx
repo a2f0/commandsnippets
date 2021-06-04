@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
-import {makeStyles} from '@material-ui/core/styles';
 import API from './api';
 import Button from '@material-ui/core/Button';
 import {ITag} from './Entry';
+import {makeStyles} from '@material-ui/core/styles';
 export interface IEntryNewProps {
   tag: ITag;
   retrieveEntries: () => void;

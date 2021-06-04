@@ -1,10 +1,10 @@
+import {darkTheme, lightTheme} from './themes';
+import Brightness3Icon from '@material-ui/icons/Brightness3';
 import React from 'react';
+import {Theme} from '@material-ui/core/styles';
+import WbSunnyIcon from '@material-ui/icons/WbSunny';
 import {makeStyles} from '@material-ui/core/styles';
 import {useTheme} from '@material-ui/styles';
-import {darkTheme, lightTheme} from './themes';
-import WbSunnyIcon from '@material-ui/icons/WbSunny';
-import Brightness3Icon from '@material-ui/icons/Brightness3';
-import {Theme} from '@material-ui/core/styles';
 
 const useStyles = makeStyles({
   themeSwitcher: {

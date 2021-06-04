@@ -7,6 +7,9 @@
   "env": {
     "mocha": true
   },
+  "rules": {
+    "sort-imports": "error"
+  },
   "settings": {
     "react": {
       "version": "detect"

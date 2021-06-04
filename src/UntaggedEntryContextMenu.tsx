@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
+import {IMouse} from './Entry';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import {IMouse} from './Entry';
 
 interface IUntaggedEntryContextMenuProps {
   mouse: IMouse;

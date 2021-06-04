@@ -1,7 +1,7 @@
-import {makeStyles} from '@material-ui/core/styles';
 import * as Constants from './constants';
-import Drawer, {DrawerProps} from '@material-ui/core/Drawer';
 import * as React from 'react';
+import Drawer, {DrawerProps} from '@material-ui/core/Drawer';
+import {makeStyles} from '@material-ui/core/styles';
 
 const useStyles = makeStyles({
   button: {

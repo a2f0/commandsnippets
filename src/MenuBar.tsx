@@ -1,26 +1,26 @@
-import React from 'react';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import Fade from '@material-ui/core/Fade';
-import {WithStyles} from '@material-ui/core';
 import {createStyles, withStyles} from '@material-ui/core/styles';
-import Toolbar from '@material-ui/core/Toolbar';
-import {makeStyles} from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
 import {darkTheme, lightTheme} from './themes';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import CheckIcon from '@material-ui/icons/Check';
-import {useAppContext} from './AppContext';
-import {useHistory} from 'react-router-dom';
-import {observer} from 'mobx-react';
-import {baseHTTPURL} from './api';
-import {Theme} from '@material-ui/core/styles';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
+import Button from '@material-ui/core/Button';
+import CheckIcon from '@material-ui/icons/Check';
+import Fade from '@material-ui/core/Fade';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import React from 'react';
+import {Theme} from '@material-ui/core/styles';
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
+import {WithStyles} from '@material-ui/core';
 import axios from 'axios';
+import {baseHTTPURL} from './api';
+import {makeStyles} from '@material-ui/core/styles';
+import {observer} from 'mobx-react';
+import {useAppContext} from './AppContext';
+import {useHistory} from 'react-router-dom';
 
-const sty = () => {
+const MenuStyle = () => {
   return createStyles({
     paper: {
       borderRadius: 0,
@@ -32,7 +32,7 @@ const sty = () => {
   });
 };
 
-interface IStyledMenuProps extends WithStyles<typeof sty> {
+interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
   id: string;
   anchorEl: HTMLElement | null;
   open: boolean;
@@ -44,7 +44,7 @@ interface IStyledMenuProps extends WithStyles<typeof sty> {
   children: React.PropsWithChildren<{}>;
 }
 
-const StyledMenu = withStyles(sty)(
+const StyledMenu = withStyles(MenuStyle)(
   ({id, anchorEl, open, onClose, classes, children}: IStyledMenuProps) => {
     return (
       <Menu

@@ -1,11 +1,11 @@
 import React, {useEffect} from 'react';
 import API from './api';
-import {useAppContext} from './AppContext';
+import {Google} from '@icons-pack/react-simple-icons';
+import {Theme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
-import {Google} from '@icons-pack/react-simple-icons';
+import {useAppContext} from './AppContext';
 import {useTheme} from '@material-ui/styles';
-import {Theme} from '@material-ui/core/styles';
 
 export const googleClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {

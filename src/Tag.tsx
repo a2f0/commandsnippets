@@ -1,17 +1,17 @@
-import React, {useRef, useState, useMemo} from 'react';
-import {useDrag, useDrop} from 'react-dnd';
-import ItemTypes from './ItemTypes';
-import {useTheme} from '@material-ui/styles';
-import TagContextMenu from './TagContextMenu';
-import {useAppContext} from './AppContext';
-import {useHistory} from 'react-router-dom';
-import API from './api';
-import {makeStyles} from '@material-ui/core/styles';
 import * as Constants from './constants';
 import {ITag, IUser} from './TagList';
+import React, {useMemo, useRef, useState} from 'react';
+import {useDrag, useDrop} from 'react-dnd';
+import API from './api';
+import {IMouse} from './Entry';
+import ItemTypes from './ItemTypes';
+import TagContextMenu from './TagContextMenu';
 import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@material-ui/core/styles';
-import {IMouse} from './Entry';
+import {makeStyles} from '@material-ui/core/styles';
+import {useAppContext} from './AppContext';
+import {useHistory} from 'react-router-dom';
+import {useTheme} from '@material-ui/styles';
 
 const useStyles = makeStyles({
   entry: {

@@ -1,7 +1,7 @@
-import React from 'react';
-import {observer} from 'mobx-react';
 import API from './api';
 import {AxiosResponse} from 'axios';
+import React from 'react';
+import {observer} from 'mobx-react';
 
 const Logout: React.FunctionComponent = React.memo(
   observer(() => {

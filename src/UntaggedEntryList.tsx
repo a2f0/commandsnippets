@@ -1,11 +1,11 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import API from './api';
-import {autorun} from 'mobx';
-import {useAppContext} from './AppContext';
-import {observer} from 'mobx-react';
-import {useLocation} from 'react-router-dom';
-import UntaggedEntry from './UntaggedEntry';
 import {ITextEntry} from './Entry';
+import UntaggedEntry from './UntaggedEntry';
+import {autorun} from 'mobx';
+import {observer} from 'mobx-react';
+import {useAppContext} from './AppContext';
+import {useLocation} from 'react-router-dom';
 
 const width = {
   width: '100%',

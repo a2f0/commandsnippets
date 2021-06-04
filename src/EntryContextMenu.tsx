@@ -1,9 +1,8 @@
+import {IMouse, ITextEntry} from './Entry';
 import React, {useEffect, useState} from 'react';
 import API from './api';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-
-import {IMouse, ITextEntry} from './Entry';
 
 export interface IEntryContextMenu {
   mouse: IMouse;
