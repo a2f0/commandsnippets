@@ -29,14 +29,7 @@ jobs:
         run: |
           pip install pre-commit
           pre-commit run --all-files
-      - name: run tests
-        uses: ianwalter/puppeteer-container@v4.0.0
-        with:
-          args: npm run ci-headless
-      - name: cleanup test artifacts
-        uses: ianwalter/puppeteer-container@v4.0.0
-        with:
-          args: rm -rf core
+      - run: npm run ci-headless
       - name: Configure AWS credentials
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         uses: aws-actions/configure-aws-credentials@v1
