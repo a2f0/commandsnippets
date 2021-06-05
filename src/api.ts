@@ -31,4 +31,12 @@ const API = axios.create({
   },
 });
 
+API.interceptors.response.use(
+  response => response,
+  error => {
+    console.error(error);
+    throw error;
+  }
+);
+
 export default API;
