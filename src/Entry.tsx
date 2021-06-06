@@ -106,7 +106,7 @@ const Entry = ({
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
-  const [showCopyIcon] = useState(true);
+  const [showCopyIcon, setShowCopyIcon] = useState(false);
   const classes = useStyles();
   const [{isDragging}, drag, preview] = useDrag({
     item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
@@ -245,9 +245,11 @@ const Entry = ({
     if (appConfig.loggedInUser !== '' && appConfig.entrySortOrder === 'order') {
       setShowDragHandle(true);
     }
+    setShowCopyIcon(true);
   };
   const mouseLeave = () => {
     setShowDragHandle(false);
+    setShowCopyIcon(false);
   };
 
   const initialMouse: IMouse = {
@@ -375,6 +377,8 @@ const Entry = ({
               <div
                 className={classes.dragIndicatorContainer}
                 onClick={handleCopyClick}
+                onMouseEnter={mouseEnter}
+                onMouseLeave={mouseLeave}
               >
                 <div
                   className={classes.copyIndicator}
@@ -384,7 +388,11 @@ const Entry = ({
                 </div>
               </div>
               <div className={classes.reuseCount}></div>
-              <div className={classes.entry}>
+              <div
+                className={classes.entry}
+                onMouseEnter={mouseEnter}
+                onMouseLeave={mouseLeave}
+              >
                 <div className={classes.entryBody}>
                   {text_entry.attributes.body}
                 </div>
