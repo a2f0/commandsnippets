@@ -6,10 +6,12 @@ import API from './api';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
+import FileCopySharpIcon from '@material-ui/icons/FileCopySharp';
 import ItemTypes from './ItemTypes';
 import {TagTextEntryThroughModel} from './EntryList';
 import {makeStyles} from '@material-ui/core/styles';
 import {useAppContext} from './AppContext';
+
 const useStyles = makeStyles({
   entry: {
     display: 'inline-block',
@@ -33,6 +35,10 @@ const useStyles = makeStyles({
   },
   dragIndicator: {
     cursor: 'grab',
+  },
+  copyIndicator: {
+    fontSize: '13px',
+    cursor: 'pointer',
   },
   reuseCount: {
     display: 'inline-block',
@@ -100,6 +106,7 @@ const Entry = ({
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
+  const [showCopyIcon] = useState(true);
   const classes = useStyles();
   const [{isDragging}, drag, preview] = useDrag({
     item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
@@ -322,43 +329,65 @@ const Entry = ({
     [mouse]
   );
 
+  const handleCopyClick = () => {
+    navigator.clipboard.writeText(text_entry.attributes.body);
+  };
+
   return (
     <>
       {!isEditing && (
         <div ref={dropRef} style={{opacity}} onContextMenu={handleContextClick}>
           <div ref={preview} className={classes.entryContainer}>
-            <div
-              className={classes.dragIndicatorContainer}
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
-            >
+            <div>
               <div
-                ref={dragRef}
-                className={classes.dragIndicator}
+                className={classes.dragIndicatorContainer}
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
-                style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
               >
-                ::
+                <div
+                  ref={dragRef}
+                  className={classes.dragIndicator}
+                  onMouseEnter={mouseEnter}
+                  onMouseLeave={mouseLeave}
+                  style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
+                >
+                  ::
+                </div>
+              </div>
+              <div
+                className={classes.reuseCount}
+                onMouseEnter={mouseEnter}
+                onMouseLeave={mouseLeave}
+              >
+                {/* {text_entry.attributes.reused_count} */}
+              </div>
+              <div
+                className={classes.entry}
+                onMouseEnter={mouseEnter}
+                onMouseLeave={mouseLeave}
+              >
+                <div className={classes.entrySubject}>
+                  {text_entry.attributes.subject}
+                </div>
               </div>
             </div>
-            <div
-              className={classes.reuseCount}
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
-            >
-              {/* {text_entry.attributes.reused_count} */}
-            </div>
-            <div
-              className={classes.entry}
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
-            >
-              <div className={classes.entrySubject}>
-                {text_entry.attributes.subject}
+            <div>
+              <div
+                className={classes.dragIndicatorContainer}
+                onClick={handleCopyClick}
+              >
+                <div
+                  className={classes.copyIndicator}
+                  style={{visibility: showCopyIcon ? 'visible' : 'hidden'}}
+                >
+                  <FileCopySharpIcon fontSize="inherit" />
+                </div>
               </div>
-              <div className={classes.entryBody}>
-                {text_entry.attributes.body}
+              <div className={classes.reuseCount}></div>
+              <div className={classes.entry}>
+                <div className={classes.entryBody}>
+                  {text_entry.attributes.body}
+                </div>
               </div>
             </div>
           </div>
