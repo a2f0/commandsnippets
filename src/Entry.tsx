@@ -3,6 +3,7 @@ import * as React from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import API from './api';
+import CheckIcon from '@material-ui/icons/Check';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
@@ -35,6 +36,9 @@ const useStyles = makeStyles({
   },
   dragIndicator: {
     cursor: 'grab',
+  },
+  checkIndicator: {
+    fontSize: '13px',
   },
   copyIndicator: {
     fontSize: '13px',
@@ -107,6 +111,7 @@ const Entry = ({
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
   const [showCopyIcon, setShowCopyIcon] = useState(false);
+  const [showCheckIcon, setShowCheckIcon] = useState(false);
   const classes = useStyles();
   const [{isDragging}, drag, preview] = useDrag({
     item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
@@ -332,7 +337,14 @@ const Entry = ({
   );
 
   const handleCopyClick = () => {
+    setShowCopyIcon(false);
+    setShowCheckIcon(true);
     navigator.clipboard.writeText(text_entry.attributes.body);
+  };
+
+  const handleBodyClick = () => {
+    setShowCopyIcon(false);
+    setShowCheckIcon(true);
   };
 
   return (
@@ -382,9 +394,21 @@ const Entry = ({
               >
                 <div
                   className={classes.copyIndicator}
-                  style={{visibility: showCopyIcon ? 'visible' : 'hidden'}}
+                  style={{
+                    visibility: showCopyIcon ? 'visible' : 'hidden',
+                    display: showCheckIcon ? 'none' : 'block',
+                  }}
                 >
                   <FileCopySharpIcon fontSize="inherit" />
+                </div>
+                <div
+                  className={classes.checkIndicator}
+                  style={{
+                    visibility: showCheckIcon ? 'visible' : 'hidden',
+                    display: showCheckIcon ? 'block' : 'none',
+                  }}
+                >
+                  <CheckIcon fontSize="inherit" />
                 </div>
               </div>
               <div className={classes.reuseCount}></div>
@@ -393,7 +417,7 @@ const Entry = ({
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <div className={classes.entryBody}>
+                <div onClick={handleBodyClick} className={classes.entryBody}>
                   {text_entry.attributes.body}
                 </div>
               </div>
