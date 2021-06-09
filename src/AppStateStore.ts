@@ -11,6 +11,8 @@ export const AppStateStoreModel = types
     mainPanel: types.string,
     tagNew: types.boolean,
     tagSearch: types.boolean,
+    mostRecentCopyType: types.maybeNull(types.string),
+    mostRecentCopyID: types.maybeNull(types.string),
   })
   .actions(self => ({
     setLoggedInUser(handle: string) {
@@ -34,6 +36,12 @@ export const AppStateStoreModel = types
     setTagSearch(value: boolean) {
       self.tagSearch = value;
     },
+    setMostRecentCopyType(value: string) {
+      self.mostRecentCopyType = value;
+    },
+    setMostRecentCopyID(value: string) {
+      self.mostRecentCopyID = value;
+    },
   }));
 
 interface appState {
@@ -44,6 +52,8 @@ interface appState {
   mainPanel: string;
   tagNew: boolean;
   tagSearch: boolean;
+  mostRecentCopyType: string | null;
+  mostRecentCopyID: string | null;
 }
 
 const defaultState = {
@@ -54,6 +64,8 @@ const defaultState = {
   mainPanel: 'EntryList',
   tagNew: false,
   tagSearch: false,
+  mostRecentCopyType: null,
+  mostRecentCopyID: null,
 };
 
 const localStorageKey = 'mst-tearleads-' + environment();

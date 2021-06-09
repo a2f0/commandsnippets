@@ -11,6 +11,7 @@ import FileCopySharpIcon from '@material-ui/icons/FileCopySharp';
 import ItemTypes from './ItemTypes';
 import {TagTextEntryThroughModel} from './EntryList';
 import {makeStyles} from '@material-ui/core/styles';
+import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 
 const useStyles = makeStyles({
@@ -51,14 +52,14 @@ const useStyles = makeStyles({
 });
 
 export interface ITag {
-  id: number;
+  id: string;
   type: string;
   attributes: {};
   data: {};
 }
 
 export interface ITextEntry {
-  id: number;
+  id: string;
   type: string;
   attributes: {
     reused_count: number;
@@ -66,7 +67,7 @@ export interface ITextEntry {
     body: string;
   };
   data: {
-    id: number;
+    id: string;
   };
 }
 
@@ -76,11 +77,11 @@ export interface IMouse {
 }
 
 interface IEntryProps {
-  id: number;
+  id: string;
   index: number;
-  moveEntry: (id: number, to: number) => void;
-  findEntry: (id: number) => {entry: TagTextEntryThroughModel; index: number};
-  handleDelete: (id: number) => void;
+  moveEntry: (id: string, to: number) => void;
+  findEntry: (id: string) => {entry: TagTextEntryThroughModel; index: number};
+  handleDelete: (id: string) => void;
   text_entry: ITextEntry;
   tag: ITag;
   retrieveEntries: () => void;
@@ -340,11 +341,27 @@ const Entry = ({
     setShowCopyIcon(false);
     setShowCheckIcon(true);
     navigator.clipboard.writeText(text_entry.attributes.body);
+    appConfig.setMostRecentCopyType(text_entry.type);
+    appConfig.setMostRecentCopyID(text_entry.id);
   };
 
   const handleBodyClick = () => {
     setShowCopyIcon(false);
     setShowCheckIcon(true);
+    appConfig.setMostRecentCopyType(text_entry.type);
+    appConfig.setMostRecentCopyID(text_entry.id);
+  };
+
+  const mostRecentCopy = () => {
+    if (
+      showCheckIcon === true &&
+      appConfig.mostRecentCopyID === text_entry.id &&
+      appConfig.mostRecentCopyType === text_entry.type
+    ) {
+      return true;
+    } else {
+      return false;
+    }
   };
 
   return (
@@ -396,7 +413,7 @@ const Entry = ({
                   className={classes.copyIndicator}
                   style={{
                     visibility: showCopyIcon ? 'visible' : 'hidden',
-                    display: showCheckIcon ? 'none' : 'block',
+                    display: mostRecentCopy() ? 'none' : 'block',
                   }}
                 >
                   <FileCopySharpIcon fontSize="inherit" />
@@ -404,8 +421,8 @@ const Entry = ({
                 <div
                   className={classes.checkIndicator}
                   style={{
-                    visibility: showCheckIcon ? 'visible' : 'hidden',
-                    display: showCheckIcon ? 'block' : 'none',
+                    visibility: mostRecentCopy() ? 'visible' : 'hidden',
+                    display: mostRecentCopy() ? 'block' : 'none',
                   }}
                 >
                   <CheckIcon fontSize="inherit" />
@@ -448,4 +465,4 @@ const Entry = ({
   );
 };
 
-export default React.memo(Entry);
+export default React.memo(observer(Entry));

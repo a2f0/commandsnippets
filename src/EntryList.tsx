@@ -30,12 +30,12 @@ interface IRelationship {
 
 interface IRelationshipData {
   type: string;
-  id: number;
+  id: string;
 }
 
 export interface TagTextEntryThroughModel {
   type: string;
-  id: number;
+  id: string;
   relationships: IRelationships;
   index: number;
 }
@@ -73,7 +73,7 @@ const EntryList = () => {
     };
     fetchData();
   };
-  const moveEntry = (id: number, atIndex: number) => {
+  const moveEntry = (id: string, atIndex: number) => {
     const {entry, index} = findEntry(id);
     const reordered = update(data.data, {
       $splice: [
@@ -84,7 +84,7 @@ const EntryList = () => {
     const newData = {...data, data: reordered};
     setData(newData);
   };
-  const findEntry = (id: number) => {
+  const findEntry = (id: string) => {
     const entry = data.data.filter(c => c.id === id)[0];
     return {
       entry,
@@ -102,7 +102,7 @@ const EntryList = () => {
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     const new_data = data.data.filter(item => item.id !== id);
     const newData = {...data, data: new_data};
     setData(newData);

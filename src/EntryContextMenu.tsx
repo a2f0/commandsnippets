@@ -6,9 +6,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 
 export interface IEntryContextMenu {
   mouse: IMouse;
-  id: number;
+  id: string;
   text_entry: ITextEntry;
-  handleDelete: (id: number) => void;
+  handleDelete: (id: string) => void;
   handleNewEntry: () => void;
   handleBeginEdit: () => void;
 }
@@ -29,7 +29,7 @@ const EntryContextMenu = (props: IEntryContextMenu) => {
     setMouse(initialMouse);
   };
 
-  const handleUntag = (id: number) => {
+  const handleUntag = (id: string) => {
     API.delete('/tags_entries/' + id, {withCredentials: true});
     props.handleDelete(id);
     handleClose();

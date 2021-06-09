@@ -60,7 +60,7 @@ export interface IUser {
 }
 
 export interface ITag {
-  id: number;
+  id: string;
   type: string;
   attributes: {
     name: string;
@@ -112,7 +112,7 @@ const TagList = React.memo(
 
     const classes = useStyles();
 
-    const moveEntry = (id: number, atIndex: number) => {
+    const moveEntry = (id: string, atIndex: number) => {
       const {entry, index} = findEntry(id);
       const reordered = update(data.data, {
         $splice: [
@@ -124,7 +124,7 @@ const TagList = React.memo(
       setData(newData);
     };
 
-    const findEntry = (id: number) => {
+    const findEntry = (id: string) => {
       const entry = data.data.filter(c => c.id === id)[0];
       return {
         entry: entry,

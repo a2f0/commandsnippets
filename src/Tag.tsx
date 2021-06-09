@@ -38,12 +38,12 @@ const useStyles = makeStyles({
 });
 
 interface ITagProps {
-  id: number;
+  id: string;
   tag: ITag;
   user: IUser;
   fetchTags: () => void;
-  moveEntry: (id: number, atIndex: number) => void;
-  findEntry: (id: number) => {entry: ITag; index: number};
+  moveEntry: (id: string, atIndex: number) => void;
+  findEntry: (id: string) => {entry: ITag; index: number};
   index: number;
   findEntryByIndex: (id: number) => ITag | null;
 }

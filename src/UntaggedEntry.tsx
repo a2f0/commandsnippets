@@ -41,8 +41,8 @@ const useStyles = makeStyles({
 });
 
 interface IUntaggedEntryProps {
-  id: number;
-  key: number;
+  id: string;
+  key: string;
   entry: ITextEntry;
   retrieveEntries: () => void;
 }
