@@ -7,11 +7,12 @@
     "node": ">=14.15.4 <15"
   },
   "scripts": {
-    "start-server": "webpack serve --mode development --history-api-fallback",
+    "server": "webpack serve --mode development --history-api-fallback",
+    "server-test": "webpack serve --port 8081 --mode development --history-api-fallback",
     "test": "./node_modules/.bin/wdio wdio.shared.conf.ts",
     "test-headless": "./node_modules/.bin/wdio wdio.headless.conf.ts",
-    "ci": "start-server-and-test start-server http-get://localhost:8080 test",
-    "ci-headless": "start-server-and-test start-server http-get://localhost:8080 test-headless",
+    "ci": "start-server-and-test server-test http-get://localhost:8081 test",
+    "ci-headless": "start-server-and-test server-test http-get://localhost:8081 test-headless",
     "format": "prettier --write \"src/**/*.js\"",
     "eslint-fix": "eslint --fix \"src/**/*.js\"",
     "build": "webpack --mode production",
