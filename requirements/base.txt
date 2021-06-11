@@ -2,7 +2,7 @@ djangorestframework-jsonapi[django-filter]==3.1.0
 django-cors-headers==3.2.1
 django-filter==2.4.0
 django-ordered-model==3.3.0
-django==3.1.11
+django==3.1.12
 djangorestframework==3.12.2
 psycopg2==2.8.3
 pyyaml==5.4
