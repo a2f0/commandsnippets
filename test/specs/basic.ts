@@ -1,9 +1,7 @@
-const assert = require('assert');
+import {BasePage} from '../pageobjects/base';
 
-describe('index page', () => {
-  it('loads correctly', () => {
-    browser.url('http://localhost:8080');
-    const title = browser.getTitle();
-    assert.strictEqual(title, 'Tearleads');
+describe('Page Behavior', () => {
+  it('should load', async () => {
+    await BasePage.open('');
   });
 });
