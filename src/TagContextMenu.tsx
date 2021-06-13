@@ -10,6 +10,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
 interface ITagContextMenuProps {
+  id: string;
   mouse: IMouse;
   deleteTag: () => void;
 }
@@ -49,6 +50,7 @@ const TagContextMenu = (props: ITagContextMenuProps) => {
   return (
     <>
       <Menu
+        id={`tagContextMenu-${props.id}`}
         keepMounted
         open={mouse.mouseY !== null}
         onClose={handleClose}

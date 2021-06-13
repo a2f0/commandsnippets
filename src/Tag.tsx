@@ -253,12 +253,17 @@ const Tag = React.memo(
     drop(dropRef);
 
     const contextMenu = useMemo(
-      () => <TagContextMenu mouse={mouse} deleteTag={deleteTag} />,
+      () => <TagContextMenu id={id} mouse={mouse} deleteTag={deleteTag} />,
       [mouse]
     );
 
     return (
-      <div ref={dropRef} style={{opacity}} onContextMenu={handleContextClick}>
+      <div
+        ref={dropRef}
+        style={{opacity}}
+        onContextMenu={handleContextClick}
+        id={`tagParent-${id}`}
+      >
         <div ref={preview} className={classes.entryWrapper}>
           <div
             className={classes.tagDragIndicatorContainer}
