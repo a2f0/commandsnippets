@@ -29,6 +29,11 @@ const useStyles = makeStyles({
     display: 'inline-block',
     marginLeft: `${Constants.dragIndicatorWidthTag}px`,
   },
+  untaggedEntries: {
+    width: '100%',
+    direction: 'ltr',
+    paddingLeft: `${Constants.dragIndicatorWidthTag}px`,
+  },
 });
 
 interface IParamTypes {
@@ -144,7 +149,7 @@ const TagList = React.memo(
       <>
         {appConfig.tagSearch && <TagSearch />}
         <List className={classes.root}>
-          <div className={classes.ltr}>
+          <div className={classes.ltr} id="tagList">
             {appConfig.tagNew && <TagNew fetchTags={fetchTags} />}
             {data.data.map((tag: ITag, i) => {
               const user: IUser = data.included.filter(
@@ -152,23 +157,22 @@ const TagList = React.memo(
                   i.type === 'User' && i.id === tag.relationships.user.data.id
               )[0];
               return (
-                <div key={tag.id} id="tagList">
-                  <Tag
-                    id={tag.id}
-                    tag={tag}
-                    user={user}
-                    fetchTags={fetchTags}
-                    moveEntry={moveEntry}
-                    findEntry={findEntry}
-                    index={i}
-                    findEntryByIndex={findEntryByIndex}
-                  />
-                </div>
+                <Tag
+                  key={tag.id}
+                  id={tag.id}
+                  tag={tag}
+                  user={user}
+                  fetchTags={fetchTags}
+                  moveEntry={moveEntry}
+                  findEntry={findEntry}
+                  index={i}
+                  findEntryByIndex={findEntryByIndex}
+                />
               );
             })}
-            <div className={classes.item}>
-              <div onClick={handleNavigateToUntaggedEntries}>untagged</div>
-            </div>
+          </div>
+          <div className={classes.untaggedEntries}>
+            <div onClick={handleNavigateToUntaggedEntries}>untagged</div>
           </div>
         </List>
       </>

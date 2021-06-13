@@ -258,41 +258,39 @@ const Tag = React.memo(
     );
 
     return (
-      <>
-        <div ref={dropRef} style={{opacity}} onContextMenu={handleContextClick}>
-          <div ref={preview} className={classes.entryWrapper}>
+      <div ref={dropRef} style={{opacity}} onContextMenu={handleContextClick}>
+        <div ref={preview} className={classes.entryWrapper}>
+          <div
+            className={classes.tagDragIndicatorContainer}
+            onMouseEnter={mouseEnter}
+            onMouseLeave={mouseLeave}
+          >
             <div
-              className={classes.tagDragIndicatorContainer}
+              ref={dragRef}
+              className={classes.tagDragIndicator}
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
+              style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
             >
-              <div
-                ref={dragRef}
-                className={classes.tagDragIndicator}
-                onMouseEnter={mouseEnter}
-                onMouseLeave={mouseLeave}
-                style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
-              >
-                ::
-              </div>
+              ::
             </div>
-            <div
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
-              ref={drop}
-              className={classes.tagLabel}
-              style={{backgroundColor}}
-              onClick={handleTagClick}
-              onContextMenu={handleContextClick}
-            >
-              {isActive ? tag.attributes.name : tag.attributes.name}{' '}
-              {tag.attributes.entry_count}
-            </div>
-
-            {appConfig.loggedInUser && <>{contextMenu}</>}
           </div>
+          <div
+            onMouseEnter={mouseEnter}
+            onMouseLeave={mouseLeave}
+            ref={drop}
+            className={classes.tagLabel}
+            style={{backgroundColor}}
+            onClick={handleTagClick}
+            onContextMenu={handleContextClick}
+          >
+            {isActive ? tag.attributes.name : tag.attributes.name}{' '}
+            {tag.attributes.entry_count}
+          </div>
+
+          {appConfig.loggedInUser && <>{contextMenu}</>}
         </div>
-      </>
+      </div>
     );
   }
 );

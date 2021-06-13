@@ -21,5 +21,8 @@ describe('Tag Behavior', () => {
     mockTagsEntries.respond(tagsEntries, {fetchResponse: false});
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
+    await expect(BasePage.tagList).toBeDisplayed();
+    const tagDivs = await BasePage.tagDivs;
+    await expect(tagDivs.length).toEqual(2);
   });
 });
