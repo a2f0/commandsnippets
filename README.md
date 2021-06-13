@@ -2,7 +2,7 @@
 
 install dependencies `npm ci`
 
-run `npm run start-server`
+run `npm run server`
 
 build `npm run build`
 

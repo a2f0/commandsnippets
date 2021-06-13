@@ -44,7 +44,7 @@ export const AppStateStoreModel = types
     },
   }));
 
-interface appState {
+export interface appState {
   loggedInUser: string;
   selectedTheme: string;
   tagSortOrder: string;
@@ -56,7 +56,7 @@ interface appState {
   mostRecentCopyID: string | null;
 }
 
-const defaultState = {
+const defaultState: appState = {
   loggedInUser: '',
   selectedTheme: 'darkTheme',
   tagSortOrder: 'order',
@@ -67,6 +67,8 @@ const defaultState = {
   mostRecentCopyType: null,
   mostRecentCopyID: null,
 };
+
+export const defaultStateStringified: string = JSON.stringify(defaultState);
 
 const localStorageKey = 'mst-tearleads-' + environment();
 const initialState = localStorage.getItem(localStorageKey);

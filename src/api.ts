@@ -4,8 +4,18 @@ export const environment = () => {
     return 'staging';
   } else if (window.location.hostname === 'tearleads.com') {
     return 'production';
+  } else if (
+    window.location.hostname === 'localhost' &&
+    window.location.port === '8080'
+  ) {
+    return 'development';
+  } else if (
+    window.location.hostname === 'localhost' &&
+    window.location.port === '8081'
+  ) {
+    return 'test';
   } else {
-    return 'local';
+    throw 'Unknown environment';
   }
 };
 

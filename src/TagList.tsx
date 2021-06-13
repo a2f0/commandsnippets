@@ -143,7 +143,7 @@ const TagList = React.memo(
     return (
       <>
         {appConfig.tagSearch && <TagSearch />}
-        <List className={classes.root} id="tagList">
+        <List className={classes.root}>
           <div className={classes.ltr}>
             {appConfig.tagNew && <TagNew fetchTags={fetchTags} />}
             {data.data.map((tag: ITag, i) => {
@@ -152,7 +152,7 @@ const TagList = React.memo(
                   i.type === 'User' && i.id === tag.relationships.user.data.id
               )[0];
               return (
-                <div key={tag.id}>
+                <div key={tag.id} id="tagList">
                   <Tag
                     id={tag.id}
                     tag={tag}

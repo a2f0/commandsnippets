@@ -11,6 +11,7 @@ export const config: WebdriverIO.Config = {
             '--headless',
             '--disable-gpu',
             '--disable-features=NetworkService',
+            '--disable-web-security',
             '--no-sandbox',
             '--disable-dev-shm-usage',
           ],
