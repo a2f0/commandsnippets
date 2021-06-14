@@ -149,8 +149,7 @@ const MenuBar = React.memo(
       logout_api
         .post('/api-token-deauth/', {}, {withCredentials: true})
         .then(() => {
-          // Login succeded
-          appConfig.setLoggedInUser('');
+          appConfig.setLoggedInUser(null);
           setFileMenuAnchorEl(null);
         })
         .catch(() => {

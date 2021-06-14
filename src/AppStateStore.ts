@@ -4,7 +4,7 @@ import {environment} from './api';
 
 export const AppStateStoreModel = types
   .model({
-    loggedInUser: types.string,
+    loggedInUser: types.maybeNull(types.string),
     selectedTheme: types.string,
     tagSortOrder: types.string,
     entrySortOrder: types.string,
@@ -15,7 +15,7 @@ export const AppStateStoreModel = types
     mostRecentCopyID: types.maybeNull(types.string),
   })
   .actions(self => ({
-    setLoggedInUser(handle: string) {
+    setLoggedInUser(handle: string | null) {
       self.loggedInUser = handle;
     },
     setSelectedTheme(theme: string) {
@@ -45,7 +45,7 @@ export const AppStateStoreModel = types
   }));
 
 export interface appState {
-  loggedInUser: string;
+  loggedInUser: string | null;
   selectedTheme: string;
   tagSortOrder: string;
   entrySortOrder: string;

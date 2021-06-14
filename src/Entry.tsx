@@ -248,7 +248,10 @@ const Entry = ({
   drop(dropRef);
 
   const mouseEnter = () => {
-    if (appConfig.loggedInUser !== '' && appConfig.entrySortOrder === 'order') {
+    if (
+      appConfig.loggedInUser !== null &&
+      appConfig.entrySortOrder === 'order'
+    ) {
       setShowDragHandle(true);
     }
     setShowCopyIcon(true);
