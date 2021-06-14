@@ -2,7 +2,7 @@ import {IMouse, ITextEntry} from './Entry';
 import React, {useEffect, useState} from 'react';
 import API from './api';
 import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
+import StyledMenuItem from './StyledMenuItem';
 
 export interface IEntryContextMenu {
   mouse: IMouse;
@@ -84,34 +84,34 @@ const EntryContextMenu = (props: IEntryContextMenu) => {
           : undefined
       }
     >
-      <MenuItem
+      <StyledMenuItem
         onClick={() => {
           handleBeginEdit();
         }}
       >
         Edit
-      </MenuItem>
-      <MenuItem
+      </StyledMenuItem>
+      <StyledMenuItem
         onClick={() => {
           handleNewEntry();
         }}
       >
         New Entry
-      </MenuItem>
-      <MenuItem
+      </StyledMenuItem>
+      <StyledMenuItem
         onClick={() => {
           handleIncrementTimesUsed();
         }}
       >
         Increment Times Used
-      </MenuItem>
-      <MenuItem
+      </StyledMenuItem>
+      <StyledMenuItem
         onClick={() => {
           handleUntag(props.id);
         }}
       >
         Untag
-      </MenuItem>
+      </StyledMenuItem>
     </Menu>
   );
 };

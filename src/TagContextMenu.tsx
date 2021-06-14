@@ -8,8 +8,8 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {IMouse} from './Entry';
 import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import {MenuStyle} from './MenuBar';
+import StyledMenuItem from './StyledMenuItem';
 import {WithStyles} from '@material-ui/core';
 
 interface ITagContextMenuProps {
@@ -60,32 +60,6 @@ const StyledMenu = withStyles(MenuStyle)(
       >
         {children}
       </Menu>
-    );
-  }
-);
-
-export const MenuItemStyle = () => {
-  return createStyles({
-    root: {
-      fontSize: 12,
-    },
-  });
-};
-
-interface IStyledMenuItemProps extends WithStyles<typeof MenuItemStyle> {
-  onClick: () => void;
-  children: React.PropsWithChildren<{}>;
-  classes: {
-    root: string;
-  };
-}
-
-const StyledMenuItem = withStyles(MenuItemStyle)(
-  ({onClick, classes, children}: IStyledMenuItemProps) => {
-    return (
-      <MenuItem onClick={onClick} classes={classes}>
-        {children}
-      </MenuItem>
     );
   }
 );
