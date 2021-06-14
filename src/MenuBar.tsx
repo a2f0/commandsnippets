@@ -20,7 +20,7 @@ import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useHistory} from 'react-router-dom';
 
-const MenuStyle = () => {
+export const MenuStyle = () => {
   return createStyles({
     paper: {
       borderRadius: 0,

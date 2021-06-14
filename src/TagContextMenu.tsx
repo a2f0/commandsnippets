@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {createStyles, withStyles} from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -8,6 +9,8 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import {IMouse} from './Entry';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import {MenuStyle} from './MenuBar';
+import {WithStyles} from '@material-ui/core';
 
 interface ITagContextMenuProps {
   id: string;
@@ -15,25 +18,97 @@ interface ITagContextMenuProps {
   deleteTag: () => void;
 }
 
-const TagContextMenu = (props: ITagContextMenuProps) => {
+interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
+  id: string;
+  keepMounted: boolean;
+  mousePosition: IMouse;
+  open: boolean;
+  onClose: () => void;
+  anchorReference: 'anchorPosition';
+  anchorPosition: {top: number; left: number} | undefined;
+  classes: {
+    paper: string;
+    list: string;
+  };
+  children: React.PropsWithChildren<{}>;
+}
+
+const StyledMenu = withStyles(MenuStyle)(
+  ({
+    id,
+    keepMounted,
+    mousePosition,
+    open,
+    onClose,
+    anchorReference,
+    classes,
+    children,
+  }: IStyledMenuProps) => {
+    return (
+      <Menu
+        id={id}
+        keepMounted={keepMounted}
+        open={open}
+        onClose={onClose}
+        anchorReference={anchorReference}
+        anchorPosition={
+          mousePosition.mouseY !== null && mousePosition.mouseX !== null
+            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
+            : undefined
+        }
+        classes={classes}
+      >
+        {children}
+      </Menu>
+    );
+  }
+);
+
+export const MenuItemStyle = () => {
+  return createStyles({
+    root: {
+      fontSize: 12,
+    },
+  });
+};
+
+interface IStyledMenuItemProps extends WithStyles<typeof MenuItemStyle> {
+  onClick: () => void;
+  children: React.PropsWithChildren<{}>;
+  classes: {
+    root: string;
+  };
+}
+
+const StyledMenuItem = withStyles(MenuItemStyle)(
+  ({onClick, classes, children}: IStyledMenuItemProps) => {
+    return (
+      <MenuItem onClick={onClick} classes={classes}>
+        {children}
+      </MenuItem>
+    );
+  }
+);
+
+const TagContextMenu = ({id, mouse, deleteTag}: ITagContextMenuProps) => {
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
   };
 
-  const [mouse, setMouse] = useState<IMouse>(initialMouse);
+  const [mousePosition, setMousePosition] = useState<IMouse>(initialMouse);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
   useEffect(() => {
-    setMouse(props.mouse);
-  }, [props.mouse]);
+    setMousePosition(mouse);
+  }, [mouse]);
 
   const handleClose = () => {
-    setMouse(initialMouse);
+    setMousePosition(initialMouse);
   };
 
   const handleDelete = () => {
-    setMouse(initialMouse);
+    setMousePosition(initialMouse);
     setDialogOpen(true);
   };
 
@@ -44,26 +119,27 @@ const TagContextMenu = (props: ITagContextMenuProps) => {
   const handleAcceptDialog = () => {
     console.info('accept dialog');
     setDialogOpen(false);
-    props.deleteTag();
+    deleteTag();
   };
 
   return (
     <>
-      <Menu
-        id={`tagContextMenu-${props.id}`}
+      <StyledMenu
+        id={`tagContextMenu-${id}`}
         keepMounted
-        open={mouse.mouseY !== null}
+        mousePosition={mousePosition}
+        open={mousePosition.mouseY !== null}
         onClose={handleClose}
         anchorReference="anchorPosition"
         anchorPosition={
-          mouse.mouseY !== null && mouse.mouseX !== null
-            ? {top: mouse.mouseY, left: mouse.mouseX}
+          mousePosition.mouseY !== null && mousePosition.mouseX !== null
+            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
             : undefined
         }
       >
-        <MenuItem onClick={handleClose}>New Tag</MenuItem>
-        <MenuItem onClick={handleDelete}>Delete Tag</MenuItem>
-      </Menu>
+        <StyledMenuItem onClick={handleClose}>New Tag</StyledMenuItem>
+        <StyledMenuItem onClick={handleDelete}>Delete Tag</StyledMenuItem>
+      </StyledMenu>
       <Dialog
         open={dialogOpen}
         onClose={handleClose}
