@@ -30,7 +30,7 @@ const UntaggedEntryList = React.memo(
         const url_query_query_string =
           '/entries?' +
           'sort=' +
-          appConfig.entrySortOrder +
+          appConfig.untaggedEntrySortOrder +
           '&filter[tag_count]=0' +
           '&filter[is_deleted]=False';
         const response = await API.get(url_query_query_string);

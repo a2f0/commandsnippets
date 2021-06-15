@@ -8,6 +8,7 @@ export const AppStateStoreModel = types
     selectedTheme: types.string,
     tagSortOrder: types.string,
     entrySortOrder: types.string,
+    untaggedEntrySortOrder: types.string,
     mainPanel: types.string,
     tagNew: types.boolean,
     tagSearch: types.boolean,
@@ -26,6 +27,9 @@ export const AppStateStoreModel = types
     },
     setEntrySortOrder(order: string) {
       self.entrySortOrder = order;
+    },
+    setUntaggedEntrySortOrder(order: string) {
+      self.untaggedEntrySortOrder = order;
     },
     setMainPanel(panelName: string) {
       self.mainPanel = panelName;
@@ -49,6 +53,7 @@ export interface appState {
   selectedTheme: string;
   tagSortOrder: string;
   entrySortOrder: string;
+  untaggedEntrySortOrder: string;
   mainPanel: string;
   tagNew: boolean;
   tagSearch: boolean;
@@ -61,6 +66,7 @@ const defaultState: appState = {
   selectedTheme: 'darkTheme',
   tagSortOrder: 'order',
   entrySortOrder: 'order',
+  untaggedEntrySortOrder: 'date_updated',
   mainPanel: 'EntryList',
   tagNew: false,
   tagSearch: false,
