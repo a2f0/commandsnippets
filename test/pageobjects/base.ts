@@ -5,7 +5,7 @@ export default class Base {
   get tags() {
     return $$('div[id^="tag-"]');
   }
-  get tagContext() {
+  get tagContext1() {
     return $('#tagContextMenu-1');
   }
   get tag1() {

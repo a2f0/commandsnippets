@@ -18,19 +18,19 @@ describe('TagE Behavior', () => {
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
-    await expect(BasePage.tagContext).toBeExisting();
+    await expect(BasePage.tagContext1).toBeExisting();
     const tag1 = await BasePage.tag1;
     const tags = await BasePage.tags;
-    const tagContext = await BasePage.tagContext;
+    const tagContext1 = await BasePage.tagContext1;
     expect(tags.length).toEqual(2);
 
-    let tagContextVisibility = await tagContext.getCSSProperty('visibility');
+    let tagContextVisibility = await tagContext1.getCSSProperty('visibility');
     assert.strictEqual(tagContextVisibility.value, 'hidden');
 
     tag1.click({button: 'right'});
-    await tagContext.waitUntil(
+    await tagContext1.waitUntil(
       async () => {
-        tagContextVisibility = await tagContext.getCSSProperty('visibility');
+        tagContextVisibility = await tagContext1.getCSSProperty('visibility');
         return tagContextVisibility.value === 'visible';
       },
       {
@@ -40,9 +40,9 @@ describe('TagE Behavior', () => {
     );
 
     browser.keys('Escape');
-    await tagContext.waitUntil(
+    await tagContext1.waitUntil(
       async () => {
-        tagContextVisibility = await tagContext.getCSSProperty('visibility');
+        tagContextVisibility = await tagContext1.getCSSProperty('visibility');
         return tagContextVisibility.value === 'hidden';
       },
       {
