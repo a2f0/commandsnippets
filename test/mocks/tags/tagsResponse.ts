@@ -1,4 +1,4 @@
-const tags = {
+const tagsResponse = {
   links: {
     first: 'http://localhost:9001/api/v1/tags?page%5Bnumber%5D=1&sort=name',
     last: 'http://localhost:9001/api/v1/tags?page%5Bnumber%5D=1&sort=name',
@@ -63,4 +63,4 @@ const tags = {
   },
 };
 
-export default tags;
+export default tagsResponse;

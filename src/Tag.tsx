@@ -265,7 +265,7 @@ const Tag = React.memo(
         ref={dropRef}
         style={{opacity}}
         onContextMenu={handleContextClick}
-        id={`tagParent-${id}`}
+        id={`tag-${id}`}
       >
         <div ref={preview} className={classes.entryWrapper}>
           <div

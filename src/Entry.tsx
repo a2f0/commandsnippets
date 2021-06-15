@@ -374,7 +374,7 @@ const Entry = ({
           ref={dropRef}
           style={{opacity}}
           onContextMenu={handleContextClick}
-          id={`TagsEntries-${id}`}
+          id={`tagsEntries-${id}`}
         >
           <div ref={preview} className={classes.entryContainer}>
             <div>
