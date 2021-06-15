@@ -507,198 +507,207 @@ const MenuBar = React.memo(
           open={Boolean(entriesMenuAnchorEl)}
           onClose={handleEntriesMenuClose}
         >
-          {appConfig.mainPanel === 'EntryList' && (
-            <>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('order');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === 'order' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by User-Defined Order
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('text_entry__subject');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === 'text_entry__subject' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Subject <ArrowDownwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('-text_entry__subject');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === '-text_entry__subject' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Subject <ArrowUpwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('text_entry__body');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === 'text_entry__body' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Body <ArrowDownwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('-text_entry__body');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === '-text_entry__body' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Body <ArrowUpwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('text_entry__date_created');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === 'text_entry__date_created' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('-text_entry__date_created');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === '-text_entry__date_created' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('date_created');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === 'date_created' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('-date_created');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === '-date_created' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('text_entry__tag_count');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === 'text_entry__tag_count' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Tag Count
-                <ArrowDownwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetEntrySortOrder('-text_entry__tag_count');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.entrySortOrder === '-text_entry__tag_count' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Tag Count
-                <ArrowUpwardIcon fontSize="small" />
-              </MenuItem>
-            </>
-          )}
-          {appConfig.mainPanel === 'UntaggedEntryList' && (
-            <>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetUntaggedEntrySortOrder('date_created');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.untaggedEntrySortOrder === 'date_created' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-              </MenuItem>
-              <MenuItem
-                className={classes.menuItem}
-                onClick={() => {
-                  handleSetUntaggedEntrySortOrder('-date_created');
-                  handleEntriesMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  {appConfig.untaggedEntrySortOrder === '-date_created' && (
-                    <CheckIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-              </MenuItem>
-            </>
-          )}
+          {appConfig.mainPanel === 'EntryList' && [
+            <MenuItem
+              key="SortMenuItemOrder"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('order');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === 'order' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by User-Defined Order
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemTextEntrySubject"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('text_entry__subject');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === 'text_entry__subject' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Subject <ArrowDownwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemTextEntrySubject-"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('-text_entry__subject');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === '-text_entry__subject' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Subject <ArrowUpwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemTextEntryBody"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('text_entry__body');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === 'text_entry__body' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Body <ArrowDownwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemTextEntryBody-"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('-text_entry__body');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === '-text_entry__body' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Body <ArrowUpwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemTextEntryDateCreated"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('text_entry__date_created');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === 'text_entry__date_created' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemTextEntryDateCreated-"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('-text_entry__date_created');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === '-text_entry__date_created' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Date Created <ArrowUpwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemDateCreated"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('date_created');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === 'date_created' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemDateCreated-"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('-date_created');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === '-date_created' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemTextEntryTagCount"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('text_entry__tag_count');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === 'text_entry__tag_count' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Tag Count
+              <ArrowDownwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortMenuItemTextEntryTagCount-"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetEntrySortOrder('-text_entry__tag_count');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.entrySortOrder === '-text_entry__tag_count' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Tag Count
+              <ArrowUpwardIcon fontSize="small" />
+            </MenuItem>,
+          ]}
+          {appConfig.mainPanel === 'UntaggedEntryList' && [
+            <MenuItem
+              key="SortUntaggedEntryListDateCreated"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetUntaggedEntrySortOrder('date_created');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.untaggedEntrySortOrder === 'date_created' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+            </MenuItem>,
+            <MenuItem
+              key="SortUntaggedEntryListDateCreated-"
+              className={classes.menuItem}
+              onClick={() => {
+                handleSetUntaggedEntrySortOrder('date_created');
+                handleEntriesMenuClose();
+              }}
+            >
+              <ListItemIcon>
+                {appConfig.untaggedEntrySortOrder === '-date_created' && (
+                  <CheckIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+            </MenuItem>,
+          ]}
         </StyledMenu>
         <StyledMenu
           id="help-menu"
