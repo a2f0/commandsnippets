@@ -3,7 +3,7 @@ import assert from 'assert';
 import tagsEntriesResponse from '../mocks/tags_entries/tagsEntriesResponse';
 import tagsResponse from '../mocks/tags/tagsResponse';
 
-describe('TagE Behavior', () => {
+describe('Tag Behavior', () => {
   it('should list tags', async () => {
     const mockTagsEntries = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries**',
@@ -18,19 +18,23 @@ describe('TagE Behavior', () => {
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
-    await expect(BasePage.tagContext1).toBeExisting();
+    await expect(BasePage.tagContextMenu1).toBeExisting();
     const tag1 = await BasePage.tag1;
     const tags = await BasePage.tags;
-    const tagContext1 = await BasePage.tagContext1;
+    const tagContextMenu1 = await BasePage.tagContextMenu1;
     expect(tags.length).toEqual(2);
 
-    let tagContextVisibility = await tagContext1.getCSSProperty('visibility');
+    let tagContextVisibility = await tagContextMenu1.getCSSProperty(
+      'visibility'
+    );
     assert.strictEqual(tagContextVisibility.value, 'hidden');
 
     tag1.click({button: 'right'});
-    await tagContext1.waitUntil(
+    await tagContextMenu1.waitUntil(
       async () => {
-        tagContextVisibility = await tagContext1.getCSSProperty('visibility');
+        tagContextVisibility = await tagContextMenu1.getCSSProperty(
+          'visibility'
+        );
         return tagContextVisibility.value === 'visible';
       },
       {
@@ -40,9 +44,11 @@ describe('TagE Behavior', () => {
     );
 
     browser.keys('Escape');
-    await tagContext1.waitUntil(
+    await tagContextMenu1.waitUntil(
       async () => {
-        tagContextVisibility = await tagContext1.getCSSProperty('visibility');
+        tagContextVisibility = await tagContextMenu1.getCSSProperty(
+          'visibility'
+        );
         return tagContextVisibility.value === 'hidden';
       },
       {

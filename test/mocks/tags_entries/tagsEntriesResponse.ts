@@ -14,7 +14,7 @@ const tagsEntriesResponse = {
         tag: {
           data: {
             type: 'Tag',
-            id: '8',
+            id: '1',
           },
         },
         user: {
@@ -26,7 +26,7 @@ const tagsEntriesResponse = {
         text_entry: {
           data: {
             type: 'TextEntry',
-            id: '103',
+            id: '1',
           },
         },
       },
@@ -39,7 +39,7 @@ const tagsEntriesResponse = {
         tag: {
           data: {
             type: 'Tag',
-            id: '8',
+            id: '2',
           },
         },
         user: {
@@ -51,7 +51,7 @@ const tagsEntriesResponse = {
         text_entry: {
           data: {
             type: 'TextEntry',
-            id: '104',
+            id: '2',
           },
         },
       },
@@ -98,7 +98,7 @@ const tagsEntriesResponse = {
     },
     {
       type: 'TextEntry',
-      id: '103',
+      id: '1',
       attributes: {
         body: 'nvm use v8.16.0\n',
         subject: 'use a specific version of nvm',
@@ -118,7 +118,7 @@ const tagsEntriesResponse = {
     },
     {
       type: 'TextEntry',
-      id: '104',
+      id: '2',
       attributes: {
         body: 'nvm alias default v8.16.0\n',
         subject: 'set the default nvm version',
@@ -147,8 +147,8 @@ const tagsEntriesResponse = {
   meta: {
     pagination: {
       page: 1,
-      pages: 8,
-      count: 354,
+      pages: 1,
+      count: 2,
     },
   },
 };

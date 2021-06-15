@@ -74,6 +74,7 @@ const EntryContextMenu = (props: IEntryContextMenu) => {
 
   return (
     <Menu
+      id={`tagsEntriesContextMenu-${props.id}`}
       keepMounted
       open={mouse.mouseY !== null}
       onClose={handleClose}
