@@ -114,7 +114,7 @@ const EntryList = () => {
   }
 
   return (
-    <div ref={drop}>
+    <div ref={drop} id="tagsEntriesList">
       {data.data.map((entry, i) => {
         const text_entries = data.included.filter(isTextEntry);
         const text_entry = text_entries.filter(

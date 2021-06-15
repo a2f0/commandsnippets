@@ -370,7 +370,12 @@ const Entry = ({
   return (
     <>
       {!isEditing && (
-        <div ref={dropRef} style={{opacity}} onContextMenu={handleContextClick}>
+        <div
+          ref={dropRef}
+          style={{opacity}}
+          onContextMenu={handleContextClick}
+          id={`TagsEntries-${id}`}
+        >
           <div ref={preview} className={classes.entryContainer}>
             <div>
               <div

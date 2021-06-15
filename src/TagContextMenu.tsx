@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import {createStyles, withStyles} from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -11,6 +10,7 @@ import Menu from '@material-ui/core/Menu';
 import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
 import {WithStyles} from '@material-ui/core';
+import {withStyles} from '@material-ui/core/styles';
 
 interface ITagContextMenuProps {
   id: string;

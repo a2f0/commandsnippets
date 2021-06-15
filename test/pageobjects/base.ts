@@ -11,6 +11,9 @@ export default class Base {
   get tagParent() {
     return $('#tagParent-1');
   }
+  get tagsEntriesList() {
+    return $('#tagsEntriesList');
+  }
   open(path: string) {
     return browser.url(`http://localhost:8081/${path}`);
   }
