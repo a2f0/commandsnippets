@@ -332,9 +332,9 @@ const Entry = ({
         mouse={mouse}
         id={id}
         text_entry={text_entry}
-        handleDelete={handleDelete}
-        handleNewEntry={handleNewEntry}
-        handleBeginEdit={handleBeginEdit}
+        handleDeleteParent={handleDelete}
+        handleNewEntryParent={handleNewEntry}
+        handleBeginEditParent={handleBeginEdit}
       />
     ),
     [mouse]

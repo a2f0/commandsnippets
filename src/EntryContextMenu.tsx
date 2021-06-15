@@ -8,40 +8,47 @@ export interface IEntryContextMenu {
   mouse: IMouse;
   id: string;
   text_entry: ITextEntry;
-  handleDelete: (id: string) => void;
-  handleNewEntry: () => void;
-  handleBeginEdit: () => void;
+  handleDeleteParent: (id: string) => void;
+  handleNewEntryParent: () => void;
+  handleBeginEditParent: () => void;
 }
 
-const EntryContextMenu = (props: IEntryContextMenu) => {
+const EntryContextMenu = ({
+  mouse,
+  id,
+  text_entry,
+  handleDeleteParent,
+  handleNewEntryParent,
+  handleBeginEditParent,
+}: IEntryContextMenu) => {
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
   };
 
-  const [mouse, setMouse] = useState(initialMouse);
+  const [mousePosition, setMousePosition] = useState(initialMouse);
 
   useEffect(() => {
-    setMouse(props.mouse);
-  }, [props.mouse]);
+    setMousePosition(mouse);
+  }, [mouse]);
 
   const handleClose = () => {
-    setMouse(initialMouse);
+    setMousePosition(initialMouse);
   };
 
   const handleUntag = (id: string) => {
     API.delete('/tags_entries/' + id, {withCredentials: true});
-    props.handleDelete(id);
+    handleDeleteParent(id);
     handleClose();
   };
 
   const handleBeginEdit = () => {
-    props.handleBeginEdit();
+    handleBeginEditParent();
     handleClose();
   };
 
   const handleNewEntry = () => {
-    props.handleNewEntry();
+    handleNewEntryParent();
     handleClose();
   };
 
@@ -54,7 +61,7 @@ const EntryContextMenu = (props: IEntryContextMenu) => {
           text_entry: {
             data: {
               type: 'TextEntry',
-              id: props.text_entry.id,
+              id: text_entry.id,
             },
           },
         },
@@ -74,14 +81,14 @@ const EntryContextMenu = (props: IEntryContextMenu) => {
 
   return (
     <Menu
-      id={`tagsEntriesContextMenu-${props.id}`}
+      id={`tagsEntriesContextMenu-${id}`}
       keepMounted
-      open={mouse.mouseY !== null}
+      open={mousePosition.mouseY !== null}
       onClose={handleClose}
       anchorReference="anchorPosition"
       anchorPosition={
-        mouse.mouseY !== null && mouse.mouseX !== null
-          ? {top: mouse.mouseY, left: mouse.mouseX}
+        mousePosition.mouseY !== null && mousePosition.mouseX !== null
+          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
           : undefined
       }
     >
@@ -108,7 +115,7 @@ const EntryContextMenu = (props: IEntryContextMenu) => {
       </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
-          handleUntag(props.id);
+          handleUntag(id);
         }}
       >
         Untag
