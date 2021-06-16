@@ -12,6 +12,7 @@ module.exports = {
   devServer: {
     contentBase: './build',
   },
+  devtool: 'eval',
   module: {
     rules: [
       {
