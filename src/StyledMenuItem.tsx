@@ -1,7 +1,7 @@
 import {createStyles, withStyles} from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
+import {MenuItemProps} from '@material-ui/core';
 import React from 'react';
-import {WithStyles} from '@material-ui/core';
 
 const MenuItemStyle = () => {
   return createStyles({
@@ -11,22 +11,18 @@ const MenuItemStyle = () => {
   });
 };
 
-interface IStyledMenuItemProps extends WithStyles<typeof MenuItemStyle> {
+interface IMenuItemProps {
   onClick: () => void;
-  children: React.PropsWithChildren<{}>;
-  classes: {
-    root: string;
-  };
+  children?: React.ReactNode;
 }
 
-const StyledMenuItem = withStyles(MenuItemStyle)(
-  ({onClick, classes, children}: IStyledMenuItemProps) => {
-    return (
-      <MenuItem onClick={onClick} classes={classes}>
-        {children}
-      </MenuItem>
-    );
-  }
+export const MuiMenuItem = React.forwardRef<MenuItemProps, IMenuItemProps>(
+  (props: IMenuItemProps, ref) => (
+    <MenuItem innerRef={ref} {...props}>
+      {props.children}
+    </MenuItem>
+  )
 );
-
+MuiMenuItem.displayName = 'MuiMenuItem';
+const StyledMenuItem = withStyles(MenuItemStyle)(MuiMenuItem);
 export default StyledMenuItem;
