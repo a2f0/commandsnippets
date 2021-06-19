@@ -212,6 +212,9 @@ const Entry = ({
       if (dragIndex === hoverIndex) {
         return;
       }
+      if (appConfig.entrySortOrder !== 'order') {
+        return;
+      }
       // Determine rectangle on screen
       const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
       // Get vertical middle
@@ -248,10 +251,7 @@ const Entry = ({
   drop(dropRef);
 
   const mouseEnter = () => {
-    if (
-      appConfig.loggedInUser !== null &&
-      appConfig.entrySortOrder === 'order'
-    ) {
+    if (appConfig.loggedInUser !== null) {
       setShowDragHandle(true);
     }
     setShowCopyIcon(true);
