@@ -9,7 +9,9 @@ import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import Main from './Main';
+import PublicHomePage from './PublicHomePage';
 import ReactDOM from 'react-dom';
+import {Redirect} from 'react-router-dom';
 import {Theme} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import packageJson from '../package.json';
@@ -48,28 +50,38 @@ const AppRouter = React.memo(
             <CssBaseline />
             <DndProvider backend={HTML5Backend}>
               <div className={classes.root}>
-                {store.loggedInUser && (
-                  <Switch>
-                    <Route path="/:user/untagged-entries">
-                      <Main handleThemeSwitcher={handleThemeSwitcher} />
-                    </Route>
-                    <Route path="/:user/:tag">
-                      <Main handleThemeSwitcher={handleThemeSwitcher} />
-                    </Route>
-                    <Route path="/:user">
-                      <Main handleThemeSwitcher={handleThemeSwitcher} />
-                    </Route>
-                    <Route exact path="/">
-                      <Main handleThemeSwitcher={handleThemeSwitcher} />
-                    </Route>
-                  </Switch>
-                )}
-                {!store.loggedInUser && (
-                  <>
-                    <GithubAuth />
-                    <GoogleAuth />
-                  </>
-                )}
+                <Switch>
+                  <Route exact path="/oauth/github">
+                    {store.loggedInUser ? (
+                      <Redirect to={'/' + store.loggedInUser} />
+                    ) : (
+                      <GithubAuth />
+                    )}
+                  </Route>
+                  <Route exact path="/oauth/google">
+                    {store.loggedInUser ? (
+                      <Redirect to={'/' + store.loggedInUser} />
+                    ) : (
+                      <GoogleAuth />
+                    )}
+                  </Route>
+                  <Route path="/:user/untagged-entries">
+                    <Main handleThemeSwitcher={handleThemeSwitcher} />
+                  </Route>
+                  <Route path="/:user/:tag">
+                    <Main handleThemeSwitcher={handleThemeSwitcher} />
+                  </Route>
+                  <Route path="/:user">
+                    <Main handleThemeSwitcher={handleThemeSwitcher} />
+                  </Route>
+                  <Route exact path="/">
+                    {store.loggedInUser ? (
+                      <Redirect to={'/' + store.loggedInUser} />
+                    ) : (
+                      <PublicHomePage />
+                    )}
+                  </Route>
+                </Switch>
               </div>
             </DndProvider>
           </MuiThemeProvider>

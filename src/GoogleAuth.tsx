@@ -22,14 +22,14 @@ export const redirectUrl = () => {
     'window.location.hostname (redirectUrl): ' + window.location.hostname
   );
   if (window.location.hostname === 'staging.tearleads.com') {
-    console.info('returning https%3A//staging.tearleads.com');
-    return 'https%3A//staging.tearleads.com';
+    console.info('returning https%3A//staging.tearleads.com/oauth/google');
+    return 'https%3A//staging.tearleads.com/oauth/google';
   } else if (window.location.hostname === 'tearleads.com') {
-    console.info('returning https%3A//tearleads.com');
-    return 'https%3A//tearleads.com';
+    console.info('returning https%3A//tearleads.com/oauth/google');
+    return 'https%3A//tearleads.com/oauth/google';
   } else {
-    console.info('returning http%3A//localhost:8080');
-    return 'http%3A//localhost:8080';
+    console.info('returning http%3A//localhost:8080/oauth/google');
+    return 'http%3A//localhost:8080/oauth/google';
   }
 };
 
@@ -90,7 +90,7 @@ const GoogleAuth = () => {
           });
         })
         .catch(() => {
-          appConfig.setLoggedInUser('');
+          appConfig.setLoggedInUser(null);
         })
         .then(() => {});
     }

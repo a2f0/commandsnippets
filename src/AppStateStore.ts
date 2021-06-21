@@ -62,7 +62,7 @@ export interface appState {
 }
 
 const defaultState: appState = {
-  loggedInUser: '',
+  loggedInUser: null,
   selectedTheme: 'darkTheme',
   tagSortOrder: 'order',
   entrySortOrder: 'order',

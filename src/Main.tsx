@@ -2,6 +2,7 @@ import * as Constants from './constants';
 import AppBar from '@material-ui/core/AppBar';
 import EntryList from './EntryList';
 import GithubAuth from './GithubAuth';
+import GoogleAuth from './GoogleAuth';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
 import React from 'react';
@@ -109,6 +110,7 @@ const Main = React.memo(
               <span className={classes.positionedTearleads}>Tearleads</span>
             </div>
             <GithubAuth />
+            <GoogleAuth />
           </Toolbar>
 
           <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
