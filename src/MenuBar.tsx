@@ -4,6 +4,7 @@ import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import Button from '@material-ui/core/Button';
 import CheckIcon from '@material-ui/icons/Check';
+import Divider from '@material-ui/core/Divider';
 import Fade from '@material-ui/core/Fade';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Menu from '@material-ui/core/Menu';
@@ -19,6 +20,7 @@ import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useHistory} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 
 export const MenuStyle = () => {
   return createStyles({
@@ -112,12 +114,16 @@ const useStyles = makeStyles({
 interface IMenuBarProps {
   handleThemeSwitcher: (theme: Theme) => void;
 }
+interface IParamTypes {
+  user: string;
+}
 
 const MenuBar = React.memo(
   observer((props: IMenuBarProps) => {
     const classes = useStyles();
     const history = useHistory();
     const appConfig = useAppContext();
+    const {user} = useParams<IParamTypes>();
 
     const [fileMenuAnchorEl, setFileMenuAnchorEl] =
       React.useState<null | HTMLElement>(null);
@@ -362,6 +368,39 @@ const MenuBar = React.memo(
             </ListItemIcon>
             Dark Mode
             {/* <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/> */}
+          </MenuItem>
+          <Divider />
+          <MenuItem
+            className={classes.menuItem}
+            onClick={() => {
+              appConfig.currentTag
+                ? history.push(`/${user}/${appConfig.currentTag}`)
+                : history.push(`/${user}`);
+              appConfig.setMainPanel('EntryList');
+              handleViewMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.mainPanel === 'EntryList' && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
+            Tagged Entries
+          </MenuItem>
+          <MenuItem
+            className={classes.menuItem}
+            onClick={() => {
+              appConfig.setMainPanel('UntaggedEntryList');
+              history.push(`/${user}/untagged`);
+              handleViewMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.mainPanel === 'UntaggedEntryList' && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
+            Untagged Entries
           </MenuItem>
         </StyledMenu>
         <StyledMenu

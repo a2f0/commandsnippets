@@ -14,6 +14,7 @@ export const AppStateStoreModel = types
     tagSearch: types.boolean,
     mostRecentCopyType: types.maybeNull(types.string),
     mostRecentCopyID: types.maybeNull(types.string),
+    currentTag: types.maybeNull(types.string),
   })
   .actions(self => ({
     setLoggedInUser(handle: string | null) {
@@ -45,6 +46,9 @@ export const AppStateStoreModel = types
     },
     setMostRecentCopyID(value: string) {
       self.mostRecentCopyID = value;
+    },
+    setCurrentTag(value: string | null) {
+      self.currentTag = value;
     },
   }));
 

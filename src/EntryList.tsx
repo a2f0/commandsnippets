@@ -70,6 +70,7 @@ const EntryList = () => {
       }
       const response = await API.get(url_query_query_string);
       setData(response.data);
+      appConfig.setCurrentTag(tag);
     };
     fetchData();
   };

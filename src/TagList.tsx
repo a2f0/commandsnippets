@@ -109,12 +109,6 @@ const TagList = React.memo(
       setData({data: data, included: included});
     }
 
-    const handleNavigateToUntaggedEntries = () => {
-      // untagged-entries
-      history.push(`/${user}/untagged-entries`);
-      appConfig.setMainPanel('UntaggedEntryList');
-    };
-
     const classes = useStyles();
 
     const moveEntry = (id: string, atIndex: number) => {
@@ -170,9 +164,6 @@ const TagList = React.memo(
                 />
               );
             })}
-          </div>
-          <div className={classes.untaggedEntries}>
-            <div onClick={handleNavigateToUntaggedEntries}>untagged</div>
           </div>
         </List>
       </>
