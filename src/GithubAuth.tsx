@@ -1,8 +1,8 @@
 import React, {useEffect} from 'react';
+import {Theme, createStyles, makeStyles} from '@material-ui/core/styles';
 import API from './api';
+import Button from '@material-ui/core/Button';
 import {Github} from '@icons-pack/react-simple-icons';
-import {Theme} from '@material-ui/core/styles';
-import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useTheme} from '@material-ui/styles';
@@ -17,25 +17,13 @@ export const githubClientID = () => {
   }
 };
 
-const useStyles = makeStyles({
-  clickableDiv: {
-    marginRight: '10px',
-    cursor: 'pointer',
-  },
-  loginBox: {
-    width: '150px',
-    cursor: 'pointer',
-  },
-  loginBoxIcon: {
-    textAlign: 'center',
-    display: 'inline-block',
-  },
-  loginBoxText: {
-    marginLeft: '5px',
-    textAlign: 'center',
-    display: 'inline-block',
-  },
-});
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    button: {
+      margin: theme.spacing(1),
+    },
+  })
+);
 
 const GithubAuth = () => {
   const theme = useTheme<Theme>();
@@ -87,16 +75,16 @@ const GithubAuth = () => {
   return (
     <>
       {!appConfig.loggedInUser && (
-        <div
-          className={classes.loginBox}
-          style={{color: theme.palette.text.primary}}
+        <Button
+          size="small"
+          variant="contained"
+          color="secondary"
+          className={classes.button}
           onClick={handleGitHubClick}
+          startIcon={<Github />}
         >
-          <div className={classes.loginBoxIcon}>
-            <Github style={{color: theme.palette.text.primary}} size={18} />
-          </div>
-          <div className={classes.loginBoxText}>Login with GitHub</div>
-        </div>
+          Login with GitHub
+        </Button>
       )}
     </>
   );
