@@ -10,6 +10,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import React from 'react';
+import StyledMenuItem from './StyledMenuItem';
 import {Theme} from '@material-ui/core/styles';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -93,14 +94,6 @@ const useStyles = makeStyles({
       backgroundColor: '#585858',
       borderRadius: 0,
     },
-  },
-  menuItem: {
-    paddingLeft: 10,
-    paddingRight: 30,
-    paddingTop: 3,
-    paddingBottom: 3,
-    fontSize: 12,
-    // border: '1px solid red'
   },
   themeSwitcher: {
     height: 16,
@@ -294,30 +287,22 @@ const MenuBar = React.memo(
           onClose={handleFileMenuClose}
         >
           {appConfig.loggedInUser && (
-            <MenuItem className={classes.menuItem} onClick={handleCreateTag}>
+            <StyledMenuItem onClick={handleCreateTag}>
               Create a Tag
-            </MenuItem>
+            </StyledMenuItem>
           )}
           {appConfig.loggedInUser && (
-            <MenuItem
-              className={classes.menuItem}
-              onClick={handleFileMenuClose}
-            >
+            <StyledMenuItem onClick={handleFileMenuClose}>
               Create an Entry
-            </MenuItem>
+            </StyledMenuItem>
           )}
           {!appConfig.loggedInUser && (
-            <MenuItem
-              className={classes.menuItem}
-              onClick={handleNavigateToLogin}
-            >
+            <StyledMenuItem onClick={handleNavigateToLogin}>
               Login
-            </MenuItem>
+            </StyledMenuItem>
           )}
           {appConfig.loggedInUser && (
-            <MenuItem className={classes.menuItem} onClick={handleLogout}>
-              Logout
-            </MenuItem>
+            <StyledMenuItem onClick={handleLogout}>Logout</StyledMenuItem>
           )}
         </StyledMenu>
         <StyledMenu
@@ -326,12 +311,8 @@ const MenuBar = React.memo(
           open={Boolean(editMenuAnchorEl)}
           onClose={handleEditMenuClose}
         >
-          <MenuItem className={classes.menuItem} onClick={handleEditMenuClose}>
-            Edit 1
-          </MenuItem>
-          <MenuItem className={classes.menuItem} onClick={handleEditMenuClose}>
-            Edit 2
-          </MenuItem>
+          <StyledMenuItem onClick={handleEditMenuClose}>Edit 1</StyledMenuItem>
+          <StyledMenuItem onClick={handleEditMenuClose}>Edit 2</StyledMenuItem>
         </StyledMenu>
         <StyledMenu
           id="view-menu"
@@ -339,8 +320,7 @@ const MenuBar = React.memo(
           open={Boolean(viewMenuAnchorEl)}
           onClose={handleViewMenuClose}
         >
-          <MenuItem
-            className={classes.menuItem}
+          <StyledMenuItem
             onClick={() => {
               props.handleThemeSwitcher(lightTheme);
               handleViewMenuClose();
@@ -353,9 +333,8 @@ const MenuBar = React.memo(
             </ListItemIcon>
             Light Mode
             {/* <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} /> */}
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               props.handleThemeSwitcher(darkTheme);
               handleViewMenuClose();
@@ -368,10 +347,9 @@ const MenuBar = React.memo(
             </ListItemIcon>
             Dark Mode
             {/* <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/> */}
-          </MenuItem>
+          </StyledMenuItem>
           <Divider />
-          <MenuItem
-            className={classes.menuItem}
+          <StyledMenuItem
             onClick={() => {
               appConfig.currentTag
                 ? history.push(`/${user}/${appConfig.currentTag}`)
@@ -386,9 +364,8 @@ const MenuBar = React.memo(
               )}
             </ListItemIcon>
             Tagged Entries
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               appConfig.setMainPanel('UntaggedEntryList');
               history.push(`/${user}/untagged`);
@@ -401,7 +378,7 @@ const MenuBar = React.memo(
               )}
             </ListItemIcon>
             Untagged Entries
-          </MenuItem>
+          </StyledMenuItem>
         </StyledMenu>
         <StyledMenu
           id="tags-menu"
@@ -409,8 +386,7 @@ const MenuBar = React.memo(
           open={Boolean(tagsMenuAnchorEl)}
           onClose={handleTagsMenuClose}
         >
-          <MenuItem
-            className={classes.menuItem}
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('order');
               handleTagsMenuClose();
@@ -422,9 +398,8 @@ const MenuBar = React.memo(
               )}
             </ListItemIcon>
             Sort by User-Defined Order
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('name');
               handleTagsMenuClose();
@@ -436,9 +411,8 @@ const MenuBar = React.memo(
               )}
             </ListItemIcon>
             Sort by Tag Name <ArrowDownwardIcon fontSize="small" />
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('-name');
               handleTagsMenuClose();
@@ -450,9 +424,8 @@ const MenuBar = React.memo(
               )}
             </ListItemIcon>
             Sort by Tag Name <ArrowUpwardIcon fontSize="small" />
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('-date_created');
               handleTagsMenuClose();
@@ -464,9 +437,8 @@ const MenuBar = React.memo(
               )}
             </ListItemIcon>
             Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('date_created');
               handleTagsMenuClose();
@@ -478,9 +450,8 @@ const MenuBar = React.memo(
               )}
             </ListItemIcon>
             Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('-entry_count');
               handleTagsMenuClose();
@@ -493,9 +464,8 @@ const MenuBar = React.memo(
             </ListItemIcon>
             Sort by Number of Tagged Entries
             <ArrowDownwardIcon fontSize="small" />
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('entry_count');
               handleTagsMenuClose();
@@ -508,9 +478,8 @@ const MenuBar = React.memo(
             </ListItemIcon>
             Sort by Number of Tagged Entries{' '}
             <ArrowUpwardIcon fontSize="small" />
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('-date_last_used');
               handleTagsMenuClose();
@@ -523,9 +492,8 @@ const MenuBar = React.memo(
             </ListItemIcon>
             Sort by Tag recently used
             <ArrowDownwardIcon fontSize="small" />
-          </MenuItem>
-          <MenuItem
-            className={classes.menuItem}
+          </StyledMenuItem>
+          <StyledMenuItem
             onClick={() => {
               handleSetTagSortOrder('date_last_used');
               handleTagsMenuClose();
@@ -538,7 +506,7 @@ const MenuBar = React.memo(
             </ListItemIcon>
             Sort by Tag recently used
             <ArrowUpwardIcon fontSize="small" />
-          </MenuItem>
+          </StyledMenuItem>
         </StyledMenu>
         <StyledMenu
           id="entries-menu"
@@ -547,9 +515,8 @@ const MenuBar = React.memo(
           onClose={handleEntriesMenuClose}
         >
           {appConfig.mainPanel === 'EntryList' && [
-            <MenuItem
+            <StyledMenuItem
               key="SortMenuItemOrder"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('order');
                 handleEntriesMenuClose();
@@ -561,10 +528,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by User-Defined Order
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemTextEntrySubject"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('text_entry__subject');
                 handleEntriesMenuClose();
@@ -576,10 +542,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Subject <ArrowDownwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemTextEntrySubject-"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('-text_entry__subject');
                 handleEntriesMenuClose();
@@ -591,10 +556,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Subject <ArrowUpwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemTextEntryBody"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('text_entry__body');
                 handleEntriesMenuClose();
@@ -606,10 +570,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Body <ArrowDownwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemTextEntryBody-"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('-text_entry__body');
                 handleEntriesMenuClose();
@@ -621,10 +584,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Body <ArrowUpwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemTextEntryDateCreated"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('text_entry__date_created');
                 handleEntriesMenuClose();
@@ -636,10 +598,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemTextEntryDateCreated-"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('-text_entry__date_created');
                 handleEntriesMenuClose();
@@ -651,10 +612,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemDateCreated"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('date_created');
                 handleEntriesMenuClose();
@@ -666,10 +626,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemDateCreated-"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('-date_created');
                 handleEntriesMenuClose();
@@ -681,10 +640,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemTextEntryTagCount"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('text_entry__tag_count');
                 handleEntriesMenuClose();
@@ -697,10 +655,9 @@ const MenuBar = React.memo(
               </ListItemIcon>
               Sort by Tag Count
               <ArrowDownwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortMenuItemTextEntryTagCount-"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetEntrySortOrder('-text_entry__tag_count');
                 handleEntriesMenuClose();
@@ -713,12 +670,11 @@ const MenuBar = React.memo(
               </ListItemIcon>
               Sort by Tag Count
               <ArrowUpwardIcon fontSize="small" />
-            </MenuItem>,
+            </StyledMenuItem>,
           ]}
           {appConfig.mainPanel === 'UntaggedEntryList' && [
-            <MenuItem
+            <StyledMenuItem
               key="SortUntaggedEntryListDateCreated"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetUntaggedEntrySortOrder('date_created');
                 handleEntriesMenuClose();
@@ -730,10 +686,9 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-            </MenuItem>,
-            <MenuItem
+            </StyledMenuItem>,
+            <StyledMenuItem
               key="SortUntaggedEntryListDateCreated-"
-              className={classes.menuItem}
               onClick={() => {
                 handleSetUntaggedEntrySortOrder('date_created');
                 handleEntriesMenuClose();
@@ -745,7 +700,7 @@ const MenuBar = React.memo(
                 )}
               </ListItemIcon>
               Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-            </MenuItem>,
+            </StyledMenuItem>,
           ]}
         </StyledMenu>
         <StyledMenu
@@ -754,12 +709,8 @@ const MenuBar = React.memo(
           open={Boolean(helpMenuAnchorEl)}
           onClose={handleHelpMenuClose}
         >
-          <MenuItem className={classes.menuItem} onClick={handleHelpMenuClose}>
-            Help 1
-          </MenuItem>
-          <MenuItem className={classes.menuItem} onClick={handleHelpMenuClose}>
-            Help 2
-          </MenuItem>
+          <StyledMenuItem onClick={handleHelpMenuClose}>Help 1</StyledMenuItem>
+          <StyledMenuItem onClick={handleHelpMenuClose}>Help 2</StyledMenuItem>
         </StyledMenu>
       </>
     );
