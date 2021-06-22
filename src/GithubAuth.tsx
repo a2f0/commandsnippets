@@ -86,10 +86,6 @@ const GithubAuth = () => {
 
   return (
     <>
-      {appConfig.loggedInUser && (
-        <div className={classes.clickableDiv}>{appConfig.loggedInUser}</div>
-      )}
-
       {!appConfig.loggedInUser && (
         <div
           className={classes.loginBox}

@@ -1,6 +1,5 @@
 import * as Constants from './constants';
 import React, {useEffect, useState} from 'react';
-import {useHistory, useParams} from 'react-router-dom';
 import API from './api';
 import List from '@material-ui/core/List';
 import Tag from './Tag';
@@ -35,10 +34,6 @@ const useStyles = makeStyles({
     paddingLeft: `${Constants.dragIndicatorWidthTag}px`,
   },
 });
-
-interface IParamTypes {
-  user: string;
-}
 
 interface IRelationships {
   [key: string]: IRelationshipData;
@@ -78,8 +73,6 @@ const TagList = React.memo(
   observer(() => {
     const appConfig = useAppContext();
     const [data, setData] = useState<ITagsData>({data: [], included: []});
-    const {user} = useParams<IParamTypes>();
-    const history = useHistory();
 
     useEffect(
       () =>

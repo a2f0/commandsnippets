@@ -8,7 +8,6 @@ import Divider from '@material-ui/core/Divider';
 import Fade from '@material-ui/core/Fade';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import React from 'react';
 import StyledMenuItem from './StyledMenuItem';
 import {Theme} from '@material-ui/core/styles';
