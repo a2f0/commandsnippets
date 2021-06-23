@@ -1,4 +1,5 @@
 import * as Constants from './constants';
+import {useHistory, useParams} from 'react-router-dom';
 import AppBar from '@material-ui/core/AppBar';
 import EntryList from './EntryList';
 import GithubAuth from './GithubAuth';
@@ -48,6 +49,7 @@ const useStyles = makeStyles(theme => ({
     '-khtml-user-select': 'none' /* Konqueror HTML */,
     '-moz-user-select': 'none' /* Old versions of Firefox */,
     '-ms-user-select': 'none' /* Internet Explorer/Edge */,
+    cursor: 'pointer',
   },
   positionedTearleads: {
     paddingLeft: '3px',
@@ -70,62 +72,77 @@ interface IMainProps {
   handleThemeSwitcher: (chosenTheme: Theme) => void;
 }
 
-const Main = React.memo(
-  observer((props: IMainProps) => {
-    const appConfig = useAppContext();
-    const classes = useStyles();
+interface IParamTypes {
+  user: string;
+  tag: string;
+}
 
-    // const initialMouse = {
-    //   mouseX: null,
-    //   mouseY: null,
-    // };
+const Main = (props: IMainProps) => {
+  const appConfig = useAppContext();
+  const classes = useStyles();
+  const history = useHistory();
+  const {user} = useParams<IParamTypes>();
 
-    // const [mouse, setMouse] = useState(initialMouse);
+  const handleNavigateToRoot = (user: string) => {
+    console.info('go to root!');
+    history.push(`/${user}`);
+  };
 
-    // const handleContextClick = event => {
-    //   event.preventDefault();
-    //   event.stopPropagation();
-    //   let mouseData = {...mouse};
-    //   (mouseData.mouseX = event.clientX - 2),
-    //     (mouseData.mouseY = event.clientY - 4),
-    //     setMouse(mouseData);
-    // };
+  // const initialMouse = {
+  //   mouseX: null,
+  //   mouseY: null,
+  // };
 
-    // const showNewEntry = () => {
-    //   console.log('showNewEntry');
-    // };
+  // const [mouse, setMouse] = useState(initialMouse);
 
-    return (
-      <>
-        <AppBar position="fixed" className={classes.appBar}>
-          <div className={classes.greedyExpander}>
-            {/* force the menu to be at the bottom of the app bar */}
+  // const handleContextClick = event => {
+  //   event.preventDefault();
+  //   event.stopPropagation();
+  //   let mouseData = {...mouse};
+  //   (mouseData.mouseX = event.clientX - 2),
+  //     (mouseData.mouseY = event.clientY - 4),
+  //     setMouse(mouseData);
+  // };
+
+  // const showNewEntry = () => {
+  //   console.log('showNewEntry');
+  // };
+
+  return (
+    <>
+      <AppBar position="fixed" className={classes.appBar}>
+        <div className={classes.greedyExpander}>
+          {/* force the menu to be at the bottom of the app bar */}
+        </div>
+        <Toolbar variant="dense" className={classes.toolBar}>
+          <div className={classes.title}>
+            {/* Push the login buttons to the right */}
           </div>
-          <Toolbar variant="dense" className={classes.toolBar}>
-            <div className={classes.title}>
-              {/* Push the login buttons to the right */}
-            </div>
-            <div className={classes.positionedTitle}>
-              <span>&#x25cf;</span>
-              <span className={classes.positionedTearleads}>Tearleads</span>
-            </div>
-            <GithubAuth />
-            <GoogleAuth />
-          </Toolbar>
+          <div
+            className={classes.positionedTitle}
+            onClick={() => {
+              handleNavigateToRoot(user);
+            }}
+          >
+            <span>&#x25cf;</span>
+            <span className={classes.positionedTearleads}>Tearleads</span>
+          </div>
+          <GithubAuth />
+          <GoogleAuth />
+        </Toolbar>
 
-          <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
-        </AppBar>
-        <LeftDrawer />
-        <main className={classes.main}>
-          {appConfig.mainPanel === 'UntaggedEntryList' && <UntaggedEntryList />}
-          {appConfig.mainPanel === 'EntryList' && <EntryList />}
-          {/* <Box height="auto" className={classes.entryListBlankSpace}>
+        <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
+      </AppBar>
+      <LeftDrawer />
+      <main className={classes.main}>
+        {appConfig.mainPanel === 'UntaggedEntryList' && <UntaggedEntryList />}
+        {appConfig.mainPanel === 'EntryList' && <EntryList />}
+        {/* <Box height="auto" className={classes.entryListBlankSpace}>
           Empty Space
         </Box> */}
-        </main>
-        {/* <MainContextMenu mouse={mouse} showNewEntry={showNewEntry} /> */}
-      </>
-    );
-  })
-);
-export default Main;
+      </main>
+      {/* <MainContextMenu mouse={mouse} showNewEntry={showNewEntry} /> */}
+    </>
+  );
+};
+export default React.memo(observer(Main));

@@ -110,624 +110,611 @@ interface IParamTypes {
   user: string;
 }
 
-const MenuBar = React.memo(
-  observer((props: IMenuBarProps) => {
-    const classes = useStyles();
-    const history = useHistory();
-    const appConfig = useAppContext();
-    const {user} = useParams<IParamTypes>();
+const MenuBar = (props: IMenuBarProps) => {
+  const classes = useStyles();
+  const history = useHistory();
+  const appConfig = useAppContext();
+  const {user} = useParams<IParamTypes>();
 
-    const [fileMenuAnchorEl, setFileMenuAnchorEl] =
-      React.useState<null | HTMLElement>(null);
-    const [editMenuAnchorEl, setEditMenuAnchorEl] =
-      React.useState<null | HTMLElement>(null);
-    const [viewMenuAnchorEl, setViewMenuAnchorEl] =
-      React.useState<null | HTMLElement>(null);
-    const [entriesMenuAnchorEl, setEntriesMenuAnchorEl] =
-      React.useState<null | HTMLElement>(null);
-    const [helpMenuAnchorEl, setHelpMenuAnchorEl] =
-      React.useState<null | HTMLElement>(null);
-    const [tagsMenuAnchorEl, setTagsMenuAnchorEl] =
-      React.useState<null | HTMLElement>(null);
+  const [fileMenuAnchorEl, setFileMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [editMenuAnchorEl, setEditMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [viewMenuAnchorEl, setViewMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [entriesMenuAnchorEl, setEntriesMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [helpMenuAnchorEl, setHelpMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [tagsMenuAnchorEl, setTagsMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
 
-    const handleNavigateToLogin = () => {
-      history.push('/login');
-    };
+  const handleNavigateToLogin = () => {
+    history.push('/login');
+  };
 
-    const handleLogout = () => {
-      const base_url = baseHTTPURL();
-      const logout_api = axios.create({
-        baseURL: base_url,
-        responseType: 'json',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const handleLogout = () => {
+    const base_url = baseHTTPURL();
+    const logout_api = axios.create({
+      baseURL: base_url,
+      responseType: 'json',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    logout_api
+      .post('/api-token-deauth/', {}, {withCredentials: true})
+      .then(() => {
+        appConfig.setLoggedInUser(null);
+        setFileMenuAnchorEl(null);
+      })
+      .catch(() => {
+        // Login failed
+      })
+      .then(() => {
+        // always executed
       });
+  };
 
-      logout_api
-        .post('/api-token-deauth/', {}, {withCredentials: true})
-        .then(() => {
-          appConfig.setLoggedInUser(null);
-          setFileMenuAnchorEl(null);
-        })
-        .catch(() => {
-          // Login failed
-        })
-        .then(() => {
-          // always executed
-        });
-    };
+  const handleFileMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setFileMenuAnchorEl(event.currentTarget);
+  };
 
-    const handleFileMenuClick = (
-      event: React.MouseEvent<HTMLButtonElement>
-    ) => {
-      setFileMenuAnchorEl(event.currentTarget);
-    };
+  const handleFileMenuClose = () => {
+    setFileMenuAnchorEl(null);
+  };
 
-    const handleFileMenuClose = () => {
-      setFileMenuAnchorEl(null);
-    };
+  // const handleEditMenuClick = event => {
+  //   setEditMenuAnchorEl(event.currentTarget);
+  // };
 
-    // const handleEditMenuClick = event => {
-    //   setEditMenuAnchorEl(event.currentTarget);
-    // };
+  const handleEditMenuClose = () => {
+    setEditMenuAnchorEl(null);
+  };
 
-    const handleEditMenuClose = () => {
-      setEditMenuAnchorEl(null);
-    };
+  const handleViewMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setViewMenuAnchorEl(event.currentTarget);
+  };
 
-    const handleViewMenuClick = (
-      event: React.MouseEvent<HTMLButtonElement>
-    ) => {
-      setViewMenuAnchorEl(event.currentTarget);
-    };
+  const handleTagsMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setTagsMenuAnchorEl(event.currentTarget);
+  };
 
-    const handleTagsMenuClick = (
-      event: React.MouseEvent<HTMLButtonElement>
-    ) => {
-      setTagsMenuAnchorEl(event.currentTarget);
-    };
+  const handleEntriesMenuClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setEntriesMenuAnchorEl(event.currentTarget);
+  };
 
-    const handleEntriesMenuClick = (
-      event: React.MouseEvent<HTMLButtonElement>
-    ) => {
-      setEntriesMenuAnchorEl(event.currentTarget);
-    };
+  const handleViewMenuClose = () => {
+    setViewMenuAnchorEl(null);
+  };
 
-    const handleViewMenuClose = () => {
-      setViewMenuAnchorEl(null);
-    };
+  const handleTagsMenuClose = () => {
+    setTagsMenuAnchorEl(null);
+  };
 
-    const handleTagsMenuClose = () => {
-      setTagsMenuAnchorEl(null);
-    };
+  const handleEntriesMenuClose = () => {
+    setEntriesMenuAnchorEl(null);
+  };
 
-    const handleEntriesMenuClose = () => {
-      setEntriesMenuAnchorEl(null);
-    };
+  // const handleHelpMenuClick = event => {
+  //   setHelpMenuAnchorEl(event.currentTarget);
+  // };
 
-    // const handleHelpMenuClick = event => {
-    //   setHelpMenuAnchorEl(event.currentTarget);
-    // };
+  const handleHelpMenuClose = () => {
+    setHelpMenuAnchorEl(null);
+  };
 
-    const handleHelpMenuClose = () => {
-      setHelpMenuAnchorEl(null);
-    };
+  const handleSetTagSortOrder = (order: string) => {
+    appConfig.setTagSortOrder(order);
+  };
 
-    const handleSetTagSortOrder = (order: string) => {
-      appConfig.setTagSortOrder(order);
-    };
+  const handleSetEntrySortOrder = (order: string) => {
+    appConfig.setEntrySortOrder(order);
+  };
 
-    const handleSetEntrySortOrder = (order: string) => {
-      appConfig.setEntrySortOrder(order);
-    };
+  const handleSetUntaggedEntrySortOrder = (order: string) => {
+    appConfig.setUntaggedEntrySortOrder(order);
+  };
 
-    const handleSetUntaggedEntrySortOrder = (order: string) => {
-      appConfig.setUntaggedEntrySortOrder(order);
-    };
+  const handleCreateTag = () => {
+    setFileMenuAnchorEl(null);
+    appConfig.setTagNew(true);
+  };
 
-    const handleCreateTag = () => {
-      setFileMenuAnchorEl(null);
-      appConfig.setTagNew(true);
-    };
-
-    return (
-      <>
-        <Toolbar variant="dense" className={classes.toolBar}>
-          <Typography className={classes.drawer}></Typography>
-          <Typography className={classes.dragIndicator}></Typography>
-          <Button
-            size="small"
-            aria-controls="file-menu"
-            className={classes.menuButton}
-            aria-haspopup="true"
-            onClick={handleFileMenuClick}
-          >
-            File
-          </Button>
-          {/* <Button size="small" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEditMenuClick}>
+  return (
+    <>
+      <Toolbar variant="dense" className={classes.toolBar}>
+        <Typography className={classes.drawer}></Typography>
+        <Typography className={classes.dragIndicator}></Typography>
+        <Button
+          size="small"
+          aria-controls="file-menu"
+          className={classes.menuButton}
+          aria-haspopup="true"
+          onClick={handleFileMenuClick}
+        >
+          File
+        </Button>
+        {/* <Button size="small" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEditMenuClick}>
       Edit
         </Button> */}
-          <Button
-            size="small"
-            aria-controls="view-menu"
-            className={classes.menuButton}
-            aria-haspopup="true"
-            onClick={handleViewMenuClick}
-          >
-            View
-          </Button>
-          <Button
-            size="small"
-            aria-controls="view-menu"
-            className={classes.menuButton}
-            aria-haspopup="true"
-            onClick={handleTagsMenuClick}
-          >
-            Tags
-          </Button>
-          <Button
-            size="small"
-            aria-controls="view-menu"
-            className={classes.menuButton}
-            aria-haspopup="true"
-            onClick={handleEntriesMenuClick}
-          >
-            Entries
-          </Button>
+        <Button
+          size="small"
+          aria-controls="view-menu"
+          className={classes.menuButton}
+          aria-haspopup="true"
+          onClick={handleViewMenuClick}
+        >
+          View
+        </Button>
+        <Button
+          size="small"
+          aria-controls="view-menu"
+          className={classes.menuButton}
+          aria-haspopup="true"
+          onClick={handleTagsMenuClick}
+        >
+          Tags
+        </Button>
+        <Button
+          size="small"
+          aria-controls="view-menu"
+          className={classes.menuButton}
+          aria-haspopup="true"
+          onClick={handleEntriesMenuClick}
+        >
+          Entries
+        </Button>
 
-          {/* <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
+        {/* <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
       Help
         </Button> */}
-        </Toolbar>
-        <StyledMenu
-          id="file-menu"
-          anchorEl={fileMenuAnchorEl}
-          open={Boolean(fileMenuAnchorEl)}
-          onClose={handleFileMenuClose}
+      </Toolbar>
+      <StyledMenu
+        id="file-menu"
+        anchorEl={fileMenuAnchorEl}
+        open={Boolean(fileMenuAnchorEl)}
+        onClose={handleFileMenuClose}
+      >
+        {appConfig.loggedInUser && (
+          <StyledMenuItem onClick={handleCreateTag}>
+            Create a Tag
+          </StyledMenuItem>
+        )}
+        {appConfig.loggedInUser && (
+          <StyledMenuItem onClick={handleFileMenuClose}>
+            Create an Entry
+          </StyledMenuItem>
+        )}
+        {!appConfig.loggedInUser && (
+          <StyledMenuItem onClick={handleNavigateToLogin}>Login</StyledMenuItem>
+        )}
+        {appConfig.loggedInUser && (
+          <StyledMenuItem onClick={handleLogout}>Logout</StyledMenuItem>
+        )}
+      </StyledMenu>
+      <StyledMenu
+        id="edit-menu"
+        anchorEl={editMenuAnchorEl}
+        open={Boolean(editMenuAnchorEl)}
+        onClose={handleEditMenuClose}
+      >
+        <StyledMenuItem onClick={handleEditMenuClose}>Edit 1</StyledMenuItem>
+        <StyledMenuItem onClick={handleEditMenuClose}>Edit 2</StyledMenuItem>
+      </StyledMenu>
+      <StyledMenu
+        id="view-menu"
+        anchorEl={viewMenuAnchorEl}
+        open={Boolean(viewMenuAnchorEl)}
+        onClose={handleViewMenuClose}
+      >
+        <StyledMenuItem
+          onClick={() => {
+            props.handleThemeSwitcher(lightTheme);
+            handleViewMenuClose();
+          }}
         >
-          {appConfig.loggedInUser && (
-            <StyledMenuItem onClick={handleCreateTag}>
-              Create a Tag
-            </StyledMenuItem>
-          )}
-          {appConfig.loggedInUser && (
-            <StyledMenuItem onClick={handleFileMenuClose}>
-              Create an Entry
-            </StyledMenuItem>
-          )}
-          {!appConfig.loggedInUser && (
-            <StyledMenuItem onClick={handleNavigateToLogin}>
-              Login
-            </StyledMenuItem>
-          )}
-          {appConfig.loggedInUser && (
-            <StyledMenuItem onClick={handleLogout}>Logout</StyledMenuItem>
-          )}
-        </StyledMenu>
-        <StyledMenu
-          id="edit-menu"
-          anchorEl={editMenuAnchorEl}
-          open={Boolean(editMenuAnchorEl)}
-          onClose={handleEditMenuClose}
+          <ListItemIcon>
+            {appConfig.selectedTheme === 'lightTheme' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Light Mode
+          {/* <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} /> */}
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            props.handleThemeSwitcher(darkTheme);
+            handleViewMenuClose();
+          }}
         >
-          <StyledMenuItem onClick={handleEditMenuClose}>Edit 1</StyledMenuItem>
-          <StyledMenuItem onClick={handleEditMenuClose}>Edit 2</StyledMenuItem>
-        </StyledMenu>
-        <StyledMenu
-          id="view-menu"
-          anchorEl={viewMenuAnchorEl}
-          open={Boolean(viewMenuAnchorEl)}
-          onClose={handleViewMenuClose}
+          <ListItemIcon>
+            {appConfig.selectedTheme === 'darkTheme' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Dark Mode
+          {/* <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/> */}
+        </StyledMenuItem>
+        <Divider />
+        <StyledMenuItem
+          onClick={() => {
+            appConfig.currentTag
+              ? history.push(`/${user}/${appConfig.currentTag}`)
+              : history.push(`/${user}`);
+            appConfig.setMainPanel('EntryList');
+            handleViewMenuClose();
+          }}
         >
-          <StyledMenuItem
-            onClick={() => {
-              props.handleThemeSwitcher(lightTheme);
-              handleViewMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.selectedTheme === 'lightTheme' && (
-                <CheckIcon fontSize="small" />
-              )}
-            </ListItemIcon>
-            Light Mode
-            {/* <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} /> */}
-          </StyledMenuItem>
-          <StyledMenuItem
-            onClick={() => {
-              props.handleThemeSwitcher(darkTheme);
-              handleViewMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.selectedTheme === 'darkTheme' && (
-                <CheckIcon fontSize="small" />
-              )}
-            </ListItemIcon>
-            Dark Mode
-            {/* <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/> */}
-          </StyledMenuItem>
-          <Divider />
-          <StyledMenuItem
-            onClick={() => {
-              appConfig.currentTag
-                ? history.push(`/${user}/${appConfig.currentTag}`)
-                : history.push(`/${user}`);
-              appConfig.setMainPanel('EntryList');
-              handleViewMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.mainPanel === 'EntryList' && (
-                <CheckIcon fontSize="small" />
-              )}
-            </ListItemIcon>
-            Tagged Entries
-          </StyledMenuItem>
-          <StyledMenuItem
-            onClick={() => {
-              appConfig.setMainPanel('UntaggedEntryList');
-              history.push(`/${user}/untagged`);
-              handleViewMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.mainPanel === 'UntaggedEntryList' && (
-                <CheckIcon fontSize="small" />
-              )}
-            </ListItemIcon>
-            Untagged Entries
-          </StyledMenuItem>
-          <Divider />
-          <StyledMenuItem
-            onClick={() => {
-              appConfig.setShowTagCounts(!appConfig.showTagCounts);
-              handleViewMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.showTagCounts === true && (
-                <CheckIcon fontSize="small" />
-              )}
-            </ListItemIcon>
-            Show Tag Counts
-          </StyledMenuItem>
-        </StyledMenu>
-        <StyledMenu
-          id="tags-menu"
-          anchorEl={tagsMenuAnchorEl}
-          open={Boolean(tagsMenuAnchorEl)}
-          onClose={handleTagsMenuClose}
+          <ListItemIcon>
+            {appConfig.mainPanel === 'EntryList' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Tagged Entries
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            appConfig.setMainPanel('UntaggedEntryList');
+            history.push(`/${user}/untagged`);
+            handleViewMenuClose();
+          }}
         >
+          <ListItemIcon>
+            {appConfig.mainPanel === 'UntaggedEntryList' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Untagged Entries
+        </StyledMenuItem>
+        <Divider />
+        <StyledMenuItem
+          onClick={() => {
+            appConfig.setShowTagCounts(!appConfig.showTagCounts);
+            handleViewMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.showTagCounts === true && <CheckIcon fontSize="small" />}
+          </ListItemIcon>
+          Show Tag Counts
+        </StyledMenuItem>
+      </StyledMenu>
+      <StyledMenu
+        id="tags-menu"
+        anchorEl={tagsMenuAnchorEl}
+        open={Boolean(tagsMenuAnchorEl)}
+        onClose={handleTagsMenuClose}
+      >
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('order');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === 'order' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by User-Defined Order
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('name');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === 'name' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by Tag Name <ArrowDownwardIcon fontSize="small" />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('-name');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === '-name' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by Tag Name <ArrowUpwardIcon fontSize="small" />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('-date_created');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === '-date_created' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('date_created');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === 'date_created' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by Date Created <ArrowUpwardIcon fontSize="small" />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('-entry_count');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === '-entry_count' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by Number of Tagged Entries
+          <ArrowDownwardIcon fontSize="small" />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('entry_count');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === 'entry_count' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by Number of Tagged Entries <ArrowUpwardIcon fontSize="small" />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('-date_last_used');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === '-date_last_used' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by Tag recently used
+          <ArrowDownwardIcon fontSize="small" />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleSetTagSortOrder('date_last_used');
+            handleTagsMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.tagSortOrder === 'date_last_used' && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Sort by Tag recently used
+          <ArrowUpwardIcon fontSize="small" />
+        </StyledMenuItem>
+      </StyledMenu>
+      <StyledMenu
+        id="entries-menu"
+        anchorEl={entriesMenuAnchorEl}
+        open={Boolean(entriesMenuAnchorEl)}
+        onClose={handleEntriesMenuClose}
+      >
+        {appConfig.mainPanel === 'EntryList' && [
           <StyledMenuItem
+            key="SortMenuItemOrder"
             onClick={() => {
-              handleSetTagSortOrder('order');
-              handleTagsMenuClose();
+              handleSetEntrySortOrder('order');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === 'order' && (
+              {appConfig.entrySortOrder === 'order' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
             Sort by User-Defined Order
-          </StyledMenuItem>
+          </StyledMenuItem>,
           <StyledMenuItem
+            key="SortMenuItemTextEntrySubject"
             onClick={() => {
-              handleSetTagSortOrder('name');
-              handleTagsMenuClose();
+              handleSetEntrySortOrder('text_entry__subject');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === 'name' && (
+              {appConfig.entrySortOrder === 'text_entry__subject' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
-            Sort by Tag Name <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>
+            Sort by Subject <ArrowDownwardIcon fontSize="small" />
+          </StyledMenuItem>,
           <StyledMenuItem
+            key="SortMenuItemTextEntrySubject-"
             onClick={() => {
-              handleSetTagSortOrder('-name');
-              handleTagsMenuClose();
+              handleSetEntrySortOrder('-text_entry__subject');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === '-name' && (
+              {appConfig.entrySortOrder === '-text_entry__subject' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
-            Sort by Tag Name <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>
+            Sort by Subject <ArrowUpwardIcon fontSize="small" />
+          </StyledMenuItem>,
           <StyledMenuItem
+            key="SortMenuItemTextEntryBody"
             onClick={() => {
-              handleSetTagSortOrder('-date_created');
-              handleTagsMenuClose();
+              handleSetEntrySortOrder('text_entry__body');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === '-date_created' && (
+              {appConfig.entrySortOrder === 'text_entry__body' && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
+            Sort by Body <ArrowDownwardIcon fontSize="small" />
+          </StyledMenuItem>,
+          <StyledMenuItem
+            key="SortMenuItemTextEntryBody-"
+            onClick={() => {
+              handleSetEntrySortOrder('-text_entry__body');
+              handleEntriesMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.entrySortOrder === '-text_entry__body' && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
+            Sort by Body <ArrowUpwardIcon fontSize="small" />
+          </StyledMenuItem>,
+          <StyledMenuItem
+            key="SortMenuItemTextEntryDateCreated"
+            onClick={() => {
+              handleSetEntrySortOrder('text_entry__date_created');
+              handleEntriesMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.entrySortOrder === 'text_entry__date_created' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
             Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>
+          </StyledMenuItem>,
           <StyledMenuItem
+            key="SortMenuItemTextEntryDateCreated-"
             onClick={() => {
-              handleSetTagSortOrder('date_created');
-              handleTagsMenuClose();
+              handleSetEntrySortOrder('-text_entry__date_created');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === 'date_created' && (
+              {appConfig.entrySortOrder === '-text_entry__date_created' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
             Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>
+          </StyledMenuItem>,
           <StyledMenuItem
+            key="SortMenuItemDateCreated"
             onClick={() => {
-              handleSetTagSortOrder('-entry_count');
-              handleTagsMenuClose();
+              handleSetEntrySortOrder('date_created');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === '-entry_count' && (
+              {appConfig.entrySortOrder === 'date_created' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
-            Sort by Number of Tagged Entries
+            Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
+          </StyledMenuItem>,
+          <StyledMenuItem
+            key="SortMenuItemDateCreated-"
+            onClick={() => {
+              handleSetEntrySortOrder('-date_created');
+              handleEntriesMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.entrySortOrder === '-date_created' && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
+            Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
+          </StyledMenuItem>,
+          <StyledMenuItem
+            key="SortMenuItemTextEntryTagCount"
+            onClick={() => {
+              handleSetEntrySortOrder('text_entry__tag_count');
+              handleEntriesMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.entrySortOrder === 'text_entry__tag_count' && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
+            Sort by Tag Count
             <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>
+          </StyledMenuItem>,
           <StyledMenuItem
+            key="SortMenuItemTextEntryTagCount-"
             onClick={() => {
-              handleSetTagSortOrder('entry_count');
-              handleTagsMenuClose();
+              handleSetEntrySortOrder('-text_entry__tag_count');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === 'entry_count' && (
+              {appConfig.entrySortOrder === '-text_entry__tag_count' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
-            Sort by Number of Tagged Entries{' '}
+            Sort by Tag Count
             <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>
+          </StyledMenuItem>,
+        ]}
+        {appConfig.mainPanel === 'UntaggedEntryList' && [
           <StyledMenuItem
+            key="SortUntaggedEntryListDateCreated"
             onClick={() => {
-              handleSetTagSortOrder('-date_last_used');
-              handleTagsMenuClose();
+              handleSetUntaggedEntrySortOrder('date_created');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === '-date_last_used' && (
+              {appConfig.untaggedEntrySortOrder === 'date_created' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
-            Sort by Tag recently used
-            <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>
+            Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+          </StyledMenuItem>,
           <StyledMenuItem
+            key="SortUntaggedEntryListDateCreated-"
             onClick={() => {
-              handleSetTagSortOrder('date_last_used');
-              handleTagsMenuClose();
+              handleSetUntaggedEntrySortOrder('date_created');
+              handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.tagSortOrder === 'date_last_used' && (
+              {appConfig.untaggedEntrySortOrder === '-date_created' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
-            Sort by Tag recently used
-            <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>
-        </StyledMenu>
-        <StyledMenu
-          id="entries-menu"
-          anchorEl={entriesMenuAnchorEl}
-          open={Boolean(entriesMenuAnchorEl)}
-          onClose={handleEntriesMenuClose}
-        >
-          {appConfig.mainPanel === 'EntryList' && [
-            <StyledMenuItem
-              key="SortMenuItemOrder"
-              onClick={() => {
-                handleSetEntrySortOrder('order');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === 'order' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by User-Defined Order
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemTextEntrySubject"
-              onClick={() => {
-                handleSetEntrySortOrder('text_entry__subject');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === 'text_entry__subject' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Subject <ArrowDownwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemTextEntrySubject-"
-              onClick={() => {
-                handleSetEntrySortOrder('-text_entry__subject');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === '-text_entry__subject' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Subject <ArrowUpwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemTextEntryBody"
-              onClick={() => {
-                handleSetEntrySortOrder('text_entry__body');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === 'text_entry__body' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Body <ArrowDownwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemTextEntryBody-"
-              onClick={() => {
-                handleSetEntrySortOrder('-text_entry__body');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === '-text_entry__body' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Body <ArrowUpwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemTextEntryDateCreated"
-              onClick={() => {
-                handleSetEntrySortOrder('text_entry__date_created');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === 'text_entry__date_created' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemTextEntryDateCreated-"
-              onClick={() => {
-                handleSetEntrySortOrder('-text_entry__date_created');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === '-text_entry__date_created' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemDateCreated"
-              onClick={() => {
-                handleSetEntrySortOrder('date_created');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === 'date_created' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemDateCreated-"
-              onClick={() => {
-                handleSetEntrySortOrder('-date_created');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === '-date_created' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemTextEntryTagCount"
-              onClick={() => {
-                handleSetEntrySortOrder('text_entry__tag_count');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === 'text_entry__tag_count' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Tag Count
-              <ArrowDownwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortMenuItemTextEntryTagCount-"
-              onClick={() => {
-                handleSetEntrySortOrder('-text_entry__tag_count');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.entrySortOrder === '-text_entry__tag_count' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Tag Count
-              <ArrowUpwardIcon fontSize="small" />
-            </StyledMenuItem>,
-          ]}
-          {appConfig.mainPanel === 'UntaggedEntryList' && [
-            <StyledMenuItem
-              key="SortUntaggedEntryListDateCreated"
-              onClick={() => {
-                handleSetUntaggedEntrySortOrder('date_created');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.untaggedEntrySortOrder === 'date_created' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-            </StyledMenuItem>,
-            <StyledMenuItem
-              key="SortUntaggedEntryListDateCreated-"
-              onClick={() => {
-                handleSetUntaggedEntrySortOrder('date_created');
-                handleEntriesMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                {appConfig.untaggedEntrySortOrder === '-date_created' && (
-                  <CheckIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-            </StyledMenuItem>,
-          ]}
-        </StyledMenu>
-        <StyledMenu
-          id="help-menu"
-          anchorEl={helpMenuAnchorEl}
-          open={Boolean(helpMenuAnchorEl)}
-          onClose={handleHelpMenuClose}
-        >
-          <StyledMenuItem onClick={handleHelpMenuClose}>Help 1</StyledMenuItem>
-          <StyledMenuItem onClick={handleHelpMenuClose}>Help 2</StyledMenuItem>
-        </StyledMenu>
-      </>
-    );
-  })
-);
-export default MenuBar;
+            Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+          </StyledMenuItem>,
+        ]}
+      </StyledMenu>
+      <StyledMenu
+        id="help-menu"
+        anchorEl={helpMenuAnchorEl}
+        open={Boolean(helpMenuAnchorEl)}
+        onClose={handleHelpMenuClose}
+      >
+        <StyledMenuItem onClick={handleHelpMenuClose}>Help 1</StyledMenuItem>
+        <StyledMenuItem onClick={handleHelpMenuClose}>Help 2</StyledMenuItem>
+      </StyledMenu>
+    </>
+  );
+};
+export default React.memo(observer(MenuBar));
