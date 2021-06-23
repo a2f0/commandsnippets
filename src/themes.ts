@@ -1,23 +1,23 @@
 import {Theme, createMuiTheme} from '@material-ui/core/styles';
 
-const darkBackground = '#0F0F0F';
-const darkForeground = '#FFF';
+const dark = '#0F0F0F';
+const light = '#FFF';
 
 export const darkTheme: Theme = createMuiTheme({
   palette: {
     type: 'dark',
     primary: {
-      main: darkBackground,
+      main: dark,
     },
     secondary: {
-      main: '#FFF',
+      main: light,
     },
     background: {
-      default: darkBackground,
-      paper: darkBackground,
+      default: dark,
+      paper: dark,
     },
     text: {
-      primary: darkForeground,
+      primary: light,
     },
   },
   shadows: [
@@ -58,17 +58,17 @@ export const lightTheme: Theme = createMuiTheme({
   palette: {
     type: 'light',
     primary: {
-      main: '#FFF',
+      main: light,
     },
     secondary: {
-      main: '#000',
+      main: dark,
     },
     background: {
-      default: '#FFF',
-      paper: '#FFF',
+      default: light,
+      paper: light,
     },
     text: {
-      primary: '#000',
+      primary: dark,
     },
   },
   typography: {
