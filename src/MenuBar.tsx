@@ -227,6 +227,7 @@ const MenuBar = React.memo(
     };
 
     const handleCreateTag = () => {
+      setFileMenuAnchorEl(null);
       appConfig.setTagNew(true);
     };
 

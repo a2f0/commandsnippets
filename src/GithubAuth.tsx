@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme: Theme) =>
 const GithubAuth = () => {
   const theme = useTheme<Theme>();
   const appConfig = useAppContext();
-  const classes = useStyles();
+  const classes = useStyles(theme);
 
   useEffect(() => {
     const queryString = window.location.search;

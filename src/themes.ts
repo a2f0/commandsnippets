@@ -9,6 +9,9 @@ export const darkTheme: Theme = createMuiTheme({
     primary: {
       main: darkBackground,
     },
+    secondary: {
+      main: '#FFF',
+    },
     background: {
       default: darkBackground,
       paper: darkBackground,
@@ -56,6 +59,9 @@ export const lightTheme: Theme = createMuiTheme({
     type: 'light',
     primary: {
       main: '#FFF',
+    },
+    secondary: {
+      main: '#000',
     },
     background: {
       default: '#FFF',

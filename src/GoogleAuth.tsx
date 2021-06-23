@@ -107,7 +107,7 @@ const GoogleAuth = () => {
           onClick={handleGitHubClick}
           startIcon={<Google />}
         >
-          Login with GitHub
+          Login with Google
         </Button>
       )}
     </>
