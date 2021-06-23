@@ -15,6 +15,7 @@ export const AppStateStoreModel = types
     mostRecentCopyType: types.maybeNull(types.string),
     mostRecentCopyID: types.maybeNull(types.string),
     currentTag: types.maybeNull(types.string),
+    showTagCounts: types.boolean,
   })
   .actions(self => ({
     setLoggedInUser(handle: string | null) {
@@ -50,6 +51,9 @@ export const AppStateStoreModel = types
     setCurrentTag(value: string | null) {
       self.currentTag = value;
     },
+    setShowTagCounts(value: boolean) {
+      self.showTagCounts = value;
+    },
   }));
 
 export interface appState {
@@ -63,6 +67,7 @@ export interface appState {
   tagSearch: boolean;
   mostRecentCopyType: string | null;
   mostRecentCopyID: string | null;
+  showTagCounts: boolean;
 }
 
 const defaultState: appState = {
@@ -76,6 +81,7 @@ const defaultState: appState = {
   tagSearch: false,
   mostRecentCopyType: null,
   mostRecentCopyID: null,
+  showTagCounts: false,
 };
 
 export const defaultStateStringified: string = JSON.stringify(defaultState);

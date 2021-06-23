@@ -379,6 +379,20 @@ const MenuBar = React.memo(
             </ListItemIcon>
             Untagged Entries
           </StyledMenuItem>
+          <Divider />
+          <StyledMenuItem
+            onClick={() => {
+              appConfig.setShowTagCounts(!appConfig.showTagCounts);
+              handleViewMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.showTagCounts === true && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
+            Show Tag Counts
+          </StyledMenuItem>
         </StyledMenu>
         <StyledMenu
           id="tags-menu"

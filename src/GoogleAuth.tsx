@@ -5,7 +5,6 @@ import Button from '@material-ui/core/Button';
 import {Google} from '@icons-pack/react-simple-icons';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-import {useTheme} from '@material-ui/styles';
 
 export const googleClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
@@ -42,7 +41,6 @@ export const redirectUrl = () => {
 };
 
 const GoogleAuth = () => {
-  const theme = useTheme<Theme>();
   const appConfig = useAppContext();
   const classes = useStyles();
 
