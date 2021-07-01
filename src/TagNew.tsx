@@ -1,19 +1,8 @@
 import React, {useState} from 'react';
 import API from './api';
-import Button from '@material-ui/core/Button';
-import {makeStyles} from '@material-ui/core/styles';
+import StyledButtonTags from './StyledButtonTags';
+import StyledTextFieldTags from './StyledTextFieldTags';
 import {useAppContext} from './AppContext';
-
-const useStyles = makeStyles({
-  tagName: {
-    display: 'inline-block',
-    fontSize: 14,
-    margin: 'auto',
-    border: '1px solid red',
-    paddingLeft: 2,
-    minWidth: '100px',
-  },
-});
 
 interface ITagNewProps {
   fetchTags: () => void;
@@ -21,11 +10,10 @@ interface ITagNewProps {
 
 const TagNew = (props: ITagNewProps) => {
   const [tagName, setTagName] = useState<string | null>();
-  const classes = useStyles();
   const appConfig = useAppContext();
 
-  const handleTagNameChange = (event: React.FocusEvent<HTMLDivElement>) => {
-    setTagName(event.currentTarget.textContent);
+  const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTagName(event.currentTarget.value);
   };
 
   const handleCancel = () => {
@@ -44,7 +32,7 @@ const TagNew = (props: ITagNewProps) => {
     };
     API.post('/tags', payload, {withCredentials: true})
       .then(() => {
-        appConfig.setTagNew(true);
+        appConfig.setTagNew(false);
         props.fetchTags();
       })
       .catch(error => {
@@ -58,36 +46,28 @@ const TagNew = (props: ITagNewProps) => {
 
   return (
     <>
-      <div>
-        <div
-          className={classes.tagName}
-          contentEditable={true}
-          suppressContentEditableWarning={true}
-          onBlur={e => {
-            handleTagNameChange(e);
-          }}
-        >
-          {tagName}
-        </div>
-      </div>
-      <Button
-        size="small"
-        variant="outlined"
+      <StyledTextFieldTags
+        id="tagNewTextField"
+        onChange={e => {
+          handleTagNameChange(e);
+        }}
+      />
+      <StyledButtonTags
+        id="tagNewSave"
         onClick={() => {
           handleSave();
         }}
       >
         Save
-      </Button>
-      <Button
-        size="small"
-        variant="outlined"
+      </StyledButtonTags>
+      <StyledButtonTags
+        id="tagNewCancel"
         onClick={() => {
           handleCancel();
         }}
       >
         Cancel
-      </Button>
+      </StyledButtonTags>
     </>
   );
 };
