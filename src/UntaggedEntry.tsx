@@ -1,7 +1,7 @@
+import * as Constants from './constants';
 import React, {useMemo, useState} from 'react';
 import API from './api';
 import {AxiosError} from 'axios';
-import DragIndicatorIcon from '@material-ui/icons/DragIndicator';
 import {IMouse} from './Entry';
 import {ITextEntry} from './Entry';
 import ItemTypes from './ItemTypes';
@@ -9,16 +9,6 @@ import UntaggedEntryContextMenu from './UntaggedEntryContextMenu';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {useDrag} from 'react-dnd';
-
-// const style = {
-//   border: '1px dashed gray',
-//   backgroundColor: 'white',
-//   padding: '0.5rem 1rem',
-//   marginRight: '1.5rem',
-//   marginBottom: '1.5rem',
-//   cursor: 'move',
-//   float: 'left',
-// }
 
 const useStyles = makeStyles({
   entry: {
@@ -34,9 +24,14 @@ const useStyles = makeStyles({
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap',
   },
-  dragIndicator: {
+  dragIndicatorContainer: {
     display: 'inline-block',
-    width: '15px',
+    fontWeight: 900,
+    textAlign: 'center',
+    width: `${Constants.dragIndicatorWidthTag}px`,
+  },
+  dragIndicator: {
+    cursor: 'grab',
   },
 });
 
@@ -153,17 +148,22 @@ const UntaggedEntry = React.memo(
         <div
           className={classes.entryWrapper}
           onContextMenu={handleContextClick}
-          ref={drag}
           style={{opacity}}
         >
           <div
-            className={classes.dragIndicator}
+            className={classes.dragIndicatorContainer}
             onMouseEnter={mouseEnter}
             onMouseLeave={mouseLeave}
           >
-            <DragIndicatorIcon
+            <div
+              ref={drag}
+              className={classes.dragIndicator}
+              onMouseEnter={mouseEnter}
+              onMouseLeave={mouseLeave}
               style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
-            />
+            >
+              ::
+            </div>
           </div>
           <div
             className={classes.entry}

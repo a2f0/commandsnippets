@@ -1,5 +1,4 @@
 import * as Constants from './constants';
-import * as React from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import API from './api';
@@ -9,6 +8,7 @@ import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
 import FileCopySharpIcon from '@material-ui/icons/FileCopySharp';
 import ItemTypes from './ItemTypes';
+import React from 'react';
 import {TagTextEntryThroughModel} from './EntryList';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
