@@ -14,7 +14,7 @@ const StyledTextFieldTags = ({id, onChange}: IStyledTextFieldProps) => {
     createStyles({
       textField: {
         fontSize: 13,
-        width: '100%%',
+        width: '100%',
       },
       root: {
         borderRadius: 0,
