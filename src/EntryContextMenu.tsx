@@ -11,6 +11,7 @@ export interface IEntryContextMenu {
   handleDeleteParent: (id: string) => void;
   handleNewEntryParent: () => void;
   handleBeginEditParent: () => void;
+  handleCopyParent: () => void;
 }
 
 const EntryContextMenu = ({
@@ -20,6 +21,7 @@ const EntryContextMenu = ({
   handleDeleteParent,
   handleNewEntryParent,
   handleBeginEditParent,
+  handleCopyParent,
 }: IEntryContextMenu) => {
   const initialMouse: IMouse = {
     mouseX: null,
@@ -49,6 +51,11 @@ const EntryContextMenu = ({
 
   const handleNewEntry = () => {
     handleNewEntryParent();
+    handleClose();
+  };
+
+  const handleCopy = () => {
+    handleCopyParent();
     handleClose();
   };
 
@@ -92,6 +99,13 @@ const EntryContextMenu = ({
           : undefined
       }
     >
+      <StyledMenuItem
+        onClick={() => {
+          handleCopy();
+        }}
+      >
+        Copy
+      </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
           handleBeginEdit();

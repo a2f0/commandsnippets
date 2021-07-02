@@ -325,6 +325,14 @@ const Entry = ({
     setShowNew(false);
   };
 
+  const handleCopyClick = () => {
+    setShowCopyIcon(false);
+    setShowCheckIcon(true);
+    navigator.clipboard.writeText(text_entry.attributes.body);
+    appConfig.setMostRecentCopyType(text_entry.type);
+    appConfig.setMostRecentCopyID(text_entry.id);
+  };
+
   const contextMenu = useMemo(
     () => (
       <EntryContextMenu
@@ -334,18 +342,11 @@ const Entry = ({
         handleDeleteParent={handleDelete}
         handleNewEntryParent={handleNewEntry}
         handleBeginEditParent={handleBeginEdit}
+        handleCopyParent={handleCopyClick}
       />
     ),
     [mouse]
   );
-
-  const handleCopyClick = () => {
-    setShowCopyIcon(false);
-    setShowCheckIcon(true);
-    navigator.clipboard.writeText(text_entry.attributes.body);
-    appConfig.setMostRecentCopyType(text_entry.type);
-    appConfig.setMostRecentCopyID(text_entry.id);
-  };
 
   const handleBodyClick = () => {
     setShowCopyIcon(false);
