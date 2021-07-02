@@ -100,7 +100,6 @@ const Entry = ({
   findEntryByIndex,
 }: IEntryProps) => {
   useEffect(() => {
-    console.info('useEffect');
     setTextEntry(text_entry);
   }, [text_entry]);
 
