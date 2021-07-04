@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import API from './api';
 import Button from '@material-ui/core/Button';
 import {ITag} from './Entry';
+import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import {makeStyles} from '@material-ui/core/styles';
 export interface IEntryNewProps {
   tag: ITag;
@@ -11,35 +12,38 @@ export interface IEntryNewProps {
 
 const useStyles = makeStyles({
   entry: {
-    display: 'inline-block',
     verticalAlign: 'top',
-  },
-  entryWrapper: {
+    width: `calc(100% - ${100}px)`,
+    display: 'inline-block',
     marginBottom: 16,
-    // "&:hover": {
-    //   color: "white"
-    // },
-    // "&:active": {
-    //   color: "white"
-    // },
+    '&:hover': {
+      color: 'white',
+    },
+    '&:active': {
+      color: 'white',
+    },
   },
   entrySubject: {
-    display: 'inline-block',
     fontSize: 14,
     margin: 'auto',
-    border: '1px solid red',
     padding: 2,
-    minWidth: '300px',
+    border: '1px solid red',
+    width: '100%',
   },
+
   entryBody: {
     display: 'inline-block',
     fontSize: 14,
     margin: 'auto',
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap',
+    wordWrap: 'break-word',
     padding: 2,
     border: '1px solid red',
     minWidth: '300px',
+  },
+  textArea: {
+    width: '100%',
   },
   dragIndicator: {
     display: 'inline-block',
@@ -48,8 +52,8 @@ const useStyles = makeStyles({
 });
 
 const EntryNew = (props: IEntryNewProps) => {
-  const [subject, setSubject] = useState<string | null>();
-  const [body, setBody] = useState<string | null>();
+  const [subject, setSubject] = useState<string>('');
+  const [body, setBody] = useState<string>('');
   const classes = useStyles();
 
   const handleSave = () => {
@@ -122,12 +126,12 @@ const EntryNew = (props: IEntryNewProps) => {
     props.handleCancelNewEntry();
   };
 
-  const handleBodyChange = (body: string | null) => {
-    setBody(body);
+  const handleBodyChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setBody(event.target.value);
   };
 
-  const handleSubjectChange = (subject: string | null) => {
-    setSubject(subject);
+  const handleSubjectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSubject(event.target.value);
   };
 
   return (
@@ -136,28 +140,20 @@ const EntryNew = (props: IEntryNewProps) => {
         <div className={classes.dragIndicator}></div>
         <div className={classes.entry}>
           <div>
-            <div
+            <input
+              type="text"
               className={classes.entrySubject}
-              contentEditable={true}
-              suppressContentEditableWarning={true}
-              onBlur={e => {
-                handleSubjectChange(e.currentTarget.textContent);
-              }}
-            >
-              {subject}
-            </div>
+              value={subject}
+              onChange={handleSubjectChange}
+            />
           </div>
           <div>
-            <div
-              className={classes.entryBody}
-              contentEditable={true}
-              suppressContentEditableWarning={true}
-              onBlur={e => {
-                handleBodyChange(e.currentTarget.textContent);
-              }}
-            >
-              {body}
-            </div>
+            <TextareaAutosize
+              className={classes.textArea}
+              placeholder="body"
+              value={body}
+              onChange={handleBodyChange}
+            />
           </div>
           <Button
             size="small"
