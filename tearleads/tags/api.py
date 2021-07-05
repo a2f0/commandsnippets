@@ -18,12 +18,12 @@ from tearleads.tags.serializers import (
 
 
 class TagViewSet(viewsets.ModelViewSet):
-    filter_backends = (OrderingFilter,)
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     ordering_fields = ("date_last_used", "date_created", "entry_count", "name", "order")
-
     permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    filterset_fields = {"name": ("exact",), "user__username": ("exact",)}
 
     def create(self, request, *args, **kwargs):
         serializer = TagCreateSerializer(data=request.data)

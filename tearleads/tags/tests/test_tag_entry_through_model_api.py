@@ -178,6 +178,14 @@ class TestTagsEntriesApi(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 1)
         self.assertEqual(json_response["data"][0]["id"], str(tag_entry1.id))
+        response = self.user1_api_client.get(
+            "/api/v1/tags_entries?filter[user.username]=random".format(
+                self.user1.username
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 0)
 
     def test_order_filter(self):
         tag1 = TagFactory(user=self.user1)
