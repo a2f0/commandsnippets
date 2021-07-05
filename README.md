@@ -2,7 +2,7 @@
 
 Bootstrap (Local dev)
 
-    pip3 install pre-commit
+    pip install pre-commit
     pre-commit install
     docker-compose build
     docker-compose run backend /app/loaddata.sh
@@ -25,38 +25,9 @@ Run tests
 
     docker-compose run backend python manage.py test --settings=tearleads.settings.test
 
-Run black
-
-    docker-compose run backend black /app
-
 Run isort
 
     docker-compose run backend isort --recursive --atomic .
-
-Change a password
-
-    docker-compose run backend python manage.py changepassword dps
-
-Configure a pre-commit hook for running tests
-
-1. Create the `pre-commit` file
-
-        touch ./.git/hooks/pre-commit
-
-2. Paste the following into `./.git/hooks/pre-commit`
-
-        #!/bin/bash
-        set -e
-        docker-compose run backend python manage.py test --noinput
-        exit 0
-
-3. Make it executable
-
-        `chmod 700 ./.git/hooks/pre-commit`
-
-Drop to shell
-
-    docker-compose run backend python manage.py shell
 
 Build an immutable container without host mounts
 
