@@ -10,6 +10,7 @@ import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
+import {useParams} from 'react-router-dom';
 
 const useStyles = makeStyles({
   root: {
@@ -34,6 +35,11 @@ const useStyles = makeStyles({
     paddingLeft: `${Constants.dragIndicatorWidthTag}px`,
   },
 });
+
+interface IParamTypes {
+  user: string;
+  tag: string;
+}
 
 interface IRelationships {
   [key: string]: IRelationshipData;
@@ -73,6 +79,7 @@ const TagList = React.memo(
   observer(() => {
     const appConfig = useAppContext();
     const [data, setData] = useState<ITagsData>({data: [], included: []});
+    const {user} = useParams<IParamTypes>();
 
     useEffect(
       () =>
@@ -92,6 +99,7 @@ const TagList = React.memo(
         const {data: response} = await API.get('/tags', {
           params: {
             'page[number]': ++page,
+            'filter[user.username]': user,
             sort: appConfig.tagSortOrder,
           },
         });
