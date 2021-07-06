@@ -7,7 +7,7 @@ from tearleads.text_entries.models import TextEntry
 
 
 class Tag(OrderedModel):
-    name = models.CharField(max_length=24, unique=True, null=False)
+    name = models.CharField(max_length=24, null=False)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
     entry_count = models.IntegerField(default=0, null=False)
@@ -24,6 +24,11 @@ class Tag(OrderedModel):
 
     class Meta:
         ordering = ["date_updated", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "user_id"], name="One tag of same name per user"
+            )
+        ]
 
 
 class TagTextEntryThroughModel(OrderedModel):

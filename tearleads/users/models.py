@@ -8,6 +8,8 @@ from django.db import models
 import string
 import random
 
+from tearleads.tags.models import Tag
+
 
 class User(AbstractUser):
     def save(self, *args, **kwargs):
@@ -35,6 +37,9 @@ class User(AbstractUser):
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
+        # create some stub data for whe the user initially logs in
+        tag1 = Tag.objects.create(user=instance, order=1, name="example-tag-1")
+        tag2 = Tag.objects.create(user=instance, order=2, name="example-tag-2")
 
 
 class TearleadsUser(models.Model):
