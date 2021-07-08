@@ -3,20 +3,18 @@ import {AxiosResponse} from 'axios';
 import React from 'react';
 import {observer} from 'mobx-react';
 
-const Logout: React.FunctionComponent = React.memo(
-  observer(() => {
-    const handleLogout = () => {
-      //const user = props.user;
-      API.get('/api-token-deauth/', {withCredentials: true})
-        .then((response: AxiosResponse<JSON>) => {
-          return response;
-        })
-        .then(() => {
-          //user.userName = '';
-        })
-        .catch(err => console.error('Error:', err));
-    };
-    return <div onClick={handleLogout}>Logout</div>;
-  })
-);
-export default Logout;
+const Logout = () => {
+  const handleLogout = () => {
+    //const user = props.user;
+    API.get('/api-token-deauth/', {withCredentials: true})
+      .then((response: AxiosResponse<JSON>) => {
+        return response;
+      })
+      .then(() => {
+        //user.userName = '';
+      })
+      .catch(err => console.error('Error:', err));
+  };
+  return <div onClick={handleLogout}>Logout</div>;
+};
+export default React.memo(observer(Logout));

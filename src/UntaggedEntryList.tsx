@@ -11,48 +11,47 @@ const width = {
   width: '100%',
 };
 
-const UntaggedEntryList = React.memo(
-  observer(() => {
-    const appConfig = useAppContext();
-    const [data, setData] = useState({data: [], included: []});
-    const location = useLocation();
+const UntaggedEntryList = () => {
+  const appConfig = useAppContext();
+  const [data, setData] = useState({data: [], included: []});
+  const location = useLocation();
 
-    useEffect(
-      () =>
-        autorun(() => {
-          retrieveEntries();
-        }),
-      [location]
-    );
+  useEffect(
+    () =>
+      autorun(() => {
+        retrieveEntries();
+      }),
+    [location]
+  );
 
-    const retrieveEntries = () => {
-      const fetchData = async () => {
-        const url_query_query_string =
-          '/entries?' +
-          'sort=' +
-          appConfig.untaggedEntrySortOrder +
-          '&filter[tag_count]=0' +
-          '&filter[is_deleted]=False';
-        const response = await API.get(url_query_query_string);
-        setData(response.data);
-      };
-      fetchData();
+  const retrieveEntries = () => {
+    const fetchData = async () => {
+      const url_query_query_string =
+        '/entries?' +
+        'sort=' +
+        appConfig.untaggedEntrySortOrder +
+        '&filter[tag_count]=0' +
+        '&filter[is_deleted]=False';
+      const response = await API.get(url_query_query_string);
+      setData(response.data);
     };
+    fetchData();
+  };
 
-    return (
-      <div style={width}>
-        {data.data.map((entry: ITextEntry) => {
-          return (
-            <UntaggedEntry
-              key={entry.id}
-              id={entry.id}
-              entry={entry}
-              retrieveEntries={retrieveEntries}
-            />
-          );
-        })}
-      </div>
-    );
-  })
-);
-export default UntaggedEntryList;
+  return (
+    <div style={width}>
+      {data.data.map((entry: ITextEntry) => {
+        return (
+          <UntaggedEntry
+            key={entry.id}
+            id={entry.id}
+            entry={entry}
+            retrieveEntries={retrieveEntries}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+export default React.memo(observer(UntaggedEntryList));

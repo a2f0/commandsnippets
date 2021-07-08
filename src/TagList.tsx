@@ -75,100 +75,98 @@ export interface ITag {
   relationships: IRelationships;
 }
 
-const TagList = React.memo(
-  observer(() => {
-    const appConfig = useAppContext();
-    const [data, setData] = useState<ITagsData>({data: [], included: []});
-    const {user} = useParams<IParamTypes>();
+const TagList = () => {
+  const appConfig = useAppContext();
+  const [data, setData] = useState<ITagsData>({data: [], included: []});
+  const {user} = useParams<IParamTypes>();
 
-    useEffect(
-      () =>
-        autorun(() => {
-          fetchTags();
-        }),
-      [window.location]
-    );
+  useEffect(
+    () =>
+      autorun(() => {
+        fetchTags();
+      }),
+    [window.location]
+  );
 
-    async function fetchTags() {
-      let data: Array<ITag> = [];
-      let included: Array<IUser> = [];
-      let nextPage = null;
-      let page = 0;
+  async function fetchTags() {
+    let data: Array<ITag> = [];
+    let included: Array<IUser> = [];
+    let nextPage = null;
+    let page = 0;
 
-      do {
-        const {data: response} = await API.get('/tags', {
-          params: {
-            'page[number]': ++page,
-            'filter[user.username]': user,
-            sort: appConfig.tagSortOrder,
-          },
-        });
-        nextPage = response.links.next;
-        data = data.concat(response.data);
-        included = included.concat(response.included);
-      } while (nextPage !== null);
-      setData({data: data, included: included});
-    }
-
-    const classes = useStyles();
-
-    const moveEntry = (id: string, atIndex: number) => {
-      const {entry, index} = findEntry(id);
-      const reordered = update(data.data, {
-        $splice: [
-          [index, 1],
-          [atIndex, 0, entry],
-        ],
+    do {
+      const {data: response} = await API.get('/tags', {
+        params: {
+          'page[number]': ++page,
+          'filter[user.username]': user,
+          sort: appConfig.tagSortOrder,
+        },
       });
-      const newData = {...data, data: reordered};
-      setData(newData);
-    };
+      nextPage = response.links.next;
+      data = data.concat(response.data);
+      included = included.concat(response.included);
+    } while (nextPage !== null);
+    setData({data: data, included: included});
+  }
 
-    const findEntry = (id: string) => {
-      const entry = data.data.filter(c => c.id === id)[0];
-      return {
-        entry: entry,
-        index: data.data.indexOf(entry),
-      };
-    };
+  const classes = useStyles();
 
-    const findEntryByIndex = (index: number) => {
-      if (index > data.data.length - 1) {
-        return null;
-      } else {
-        return data.data[index];
-      }
-    };
+  const moveEntry = (id: string, atIndex: number) => {
+    const {entry, index} = findEntry(id);
+    const reordered = update(data.data, {
+      $splice: [
+        [index, 1],
+        [atIndex, 0, entry],
+      ],
+    });
+    const newData = {...data, data: reordered};
+    setData(newData);
+  };
 
-    return (
-      <>
-        {appConfig.tagSearch && <TagSearch />}
-        <List className={classes.root}>
-          <div className={classes.ltr} id="tagList">
-            {appConfig.tagNew && <TagNew fetchTags={fetchTags} />}
-            {data.data.map((tag: ITag, i) => {
-              const user: IUser = data.included.filter(
-                i =>
-                  i.type === 'User' && i.id === tag.relationships.user.data.id
-              )[0];
-              return (
-                <Tag
-                  key={tag.id}
-                  id={tag.id}
-                  object={tag}
-                  user={user}
-                  fetchTags={fetchTags}
-                  moveEntry={moveEntry}
-                  findEntry={findEntry}
-                  index={i}
-                  findEntryByIndex={findEntryByIndex}
-                />
-              );
-            })}
-          </div>
-        </List>
-      </>
-    );
-  })
-);
-export default TagList;
+  const findEntry = (id: string) => {
+    const entry = data.data.filter(c => c.id === id)[0];
+    return {
+      entry: entry,
+      index: data.data.indexOf(entry),
+    };
+  };
+
+  const findEntryByIndex = (index: number) => {
+    if (index > data.data.length - 1) {
+      return null;
+    } else {
+      return data.data[index];
+    }
+  };
+
+  return (
+    <>
+      {appConfig.tagSearch && <TagSearch />}
+      <List className={classes.root}>
+        <div className={classes.ltr} id="tagList">
+          {appConfig.tagNew && <TagNew fetchTags={fetchTags} />}
+          {data.data.map((tag: ITag, i) => {
+            const user: IUser = data.included.filter(
+              i => i.type === 'User' && i.id === tag.relationships.user.data.id
+            )[0];
+            return (
+              <Tag
+                key={tag.id}
+                id={tag.id}
+                object={tag}
+                user={user}
+                fetchTags={fetchTags}
+                moveEntry={moveEntry}
+                findEntry={findEntry}
+                index={i}
+                findEntryByIndex={findEntryByIndex}
+              />
+            );
+          })}
+        </div>
+      </List>
+    </>
+  );
+};
+
+export default React.memo(observer(TagList));
