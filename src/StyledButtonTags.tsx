@@ -30,4 +30,4 @@ const StyledButtonSmall = ({id, children, onClick}: IStyledMenuProps) => {
   );
 };
 
-export default StyledButtonSmall;
+export default React.memo(StyledButtonSmall);

@@ -9,4 +9,4 @@ const LeftDrawer = function () {
     </CustomDrawer>
   );
 };
-export default LeftDrawer;
+export default React.memo(LeftDrawer);

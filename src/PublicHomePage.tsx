@@ -10,4 +10,4 @@ const PublicHomePage = () => {
     </div>
   );
 };
-export default PublicHomePage;
+export default React.memo(PublicHomePage);

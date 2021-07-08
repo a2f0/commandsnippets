@@ -25,4 +25,4 @@ export const MuiMenuItem = React.forwardRef<MenuItemProps, IMenuItemProps>(
 );
 MuiMenuItem.displayName = 'MuiMenuItem';
 const StyledMenuItem = withStyles(MenuItemStyle)(MuiMenuItem);
-export default StyledMenuItem;
+export default React.memo(StyledMenuItem);

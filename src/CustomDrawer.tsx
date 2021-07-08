@@ -32,4 +32,4 @@ const CustomDrawer = function ({anchor, children}: DrawerProps) {
     </Drawer>
   );
 };
-export default CustomDrawer;
+export default React.memo(CustomDrawer);

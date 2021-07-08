@@ -49,4 +49,4 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   );
 };
 
-export default StyledTextFieldTags;
+export default React.memo(StyledTextFieldTags);
