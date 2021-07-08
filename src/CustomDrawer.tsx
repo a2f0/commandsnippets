@@ -37,18 +37,18 @@ const useStyles = makeStyles({
   },
 });
 
-const CustomDrawer = function (props: DrawerProps) {
+const CustomDrawer = function ({anchor, children}: DrawerProps) {
   const classes = useStyles();
   return (
     <Drawer
-      anchor={props.anchor}
+      anchor={anchor}
       className={classes.drawer}
       variant="permanent"
       classes={{
         paper: classes.drawerPaper,
       }}
     >
-      {props.children}
+      {children}
     </Drawer>
   );
 };
