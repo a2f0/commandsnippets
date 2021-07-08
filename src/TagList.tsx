@@ -1,10 +1,11 @@
 import * as Constants from './constants';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import API from './api';
 import List from '@material-ui/core/List';
 import Tag from './Tag';
 import TagNew from './TagNew';
 import TagSearch from './TagSearch';
+import {autorun} from 'mobx';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
@@ -79,6 +80,14 @@ const TagList = () => {
   const [data, setData] = useState<ITagsData>({data: [], included: []});
   const {user} = useParams<IParamTypes>();
 
+  useEffect(
+    () =>
+      autorun(() => {
+        fetchTags();
+      }),
+    []
+  );
+
   async function fetchTags() {
     let data: Array<ITag> = [];
     let included: Array<IUser> = [];
@@ -99,7 +108,6 @@ const TagList = () => {
     } while (nextPage !== null);
     setData({data: data, included: included});
   }
-  fetchTags();
 
   const classes = useStyles();
 
