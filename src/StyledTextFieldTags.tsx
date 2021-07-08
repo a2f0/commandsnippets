@@ -5,7 +5,7 @@ import {useTheme} from '@material-ui/styles';
 
 interface IStyledTextFieldProps {
   id: string;
-  value: string;
+  value: string | null;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 

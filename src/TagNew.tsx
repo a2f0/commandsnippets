@@ -9,7 +9,7 @@ interface ITagNewProps {
 }
 
 const TagNew = (props: ITagNewProps) => {
-  const [tagName, setTagName] = useState<string | null>();
+  const [tagName, setTagName] = useState<string | null>(null);
   const appConfig = useAppContext();
 
   const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +47,7 @@ const TagNew = (props: ITagNewProps) => {
   return (
     <>
       <StyledTextFieldTags
-        value=""
+        value={tagName}
         id="tagNewTextField"
         onChange={e => {
           handleTagNameChange(e);
