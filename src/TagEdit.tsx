@@ -9,20 +9,16 @@ export interface IEntryEdit {
   handleCancelEdit: () => void;
 }
 
-const TagEdit = (props: IEntryEdit) => {
-  const [tag, setTag] = useState<ITag>(props.object);
+const TagEdit = ({object, handleSave, handleCancelEdit}: IEntryEdit) => {
+  const [tag, setTag] = useState<ITag>(object);
 
   useEffect(() => {
-    setTag(props.object);
-  }, [props.object.attributes.name]);
-
-  const handleSave = () => {
-    props.handleSave(tag.attributes.name);
-  };
+    setTag(object);
+  }, [object.attributes.name]);
 
   const handleCancel = () => {
-    setTag(props.object);
-    props.handleCancelEdit();
+    setTag(object);
+    handleCancelEdit();
   };
 
   const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,7 +39,7 @@ const TagEdit = (props: IEntryEdit) => {
       <StyledButtonTags
         id={`tagEditSave-${tag.id}`}
         onClick={() => {
-          handleSave();
+          handleSave(tag.attributes.name);
         }}
       >
         Save
