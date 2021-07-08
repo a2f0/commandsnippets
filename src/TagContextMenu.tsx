@@ -16,6 +16,7 @@ interface ITagContextMenuProps {
   id: string;
   mouse: IMouse;
   deleteTag: () => void;
+  handleBeginEditParent: () => void;
 }
 
 interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
@@ -64,7 +65,12 @@ const StyledMenu = withStyles(MenuStyle)(
   }
 );
 
-const TagContextMenu = ({id, mouse, deleteTag}: ITagContextMenuProps) => {
+const TagContextMenu = ({
+  id,
+  mouse,
+  deleteTag,
+  handleBeginEditParent,
+}: ITagContextMenuProps) => {
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
@@ -79,6 +85,11 @@ const TagContextMenu = ({id, mouse, deleteTag}: ITagContextMenuProps) => {
 
   const handleClose = () => {
     setMousePosition(initialMouse);
+  };
+
+  const handleBeginEdit = () => {
+    handleBeginEditParent();
+    handleClose();
   };
 
   const handleDelete = () => {
@@ -112,6 +123,7 @@ const TagContextMenu = ({id, mouse, deleteTag}: ITagContextMenuProps) => {
         }
       >
         <StyledMenuItem onClick={handleClose}>New Tag</StyledMenuItem>
+        <StyledMenuItem onClick={handleBeginEdit}>Edit Tag</StyledMenuItem>
         <StyledMenuItem onClick={handleDelete}>Delete Tag</StyledMenuItem>
       </StyledMenu>
       <Dialog

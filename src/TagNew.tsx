@@ -47,6 +47,7 @@ const TagNew = (props: ITagNewProps) => {
   return (
     <>
       <StyledTextFieldTags
+        value=""
         id="tagNewTextField"
         onChange={e => {
           handleTagNameChange(e);

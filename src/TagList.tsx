@@ -155,7 +155,7 @@ const TagList = React.memo(
                 <Tag
                   key={tag.id}
                   id={tag.id}
-                  tag={tag}
+                  object={tag}
                   user={user}
                   fetchTags={fetchTags}
                   moveEntry={moveEntry}

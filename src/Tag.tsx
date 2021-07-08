@@ -6,6 +6,7 @@ import API from './api';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import TagContextMenu from './TagContextMenu';
+import TagEdit from './TagEdit';
 import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/core/styles';
@@ -40,7 +41,7 @@ const useStyles = makeStyles({
 
 interface ITagProps {
   id: string;
-  tag: ITag;
+  object: ITag;
   user: IUser;
   fetchTags: () => void;
   moveEntry: (id: string, atIndex: number) => void;
@@ -51,7 +52,7 @@ interface ITagProps {
 
 const Tag = ({
   id,
-  tag,
+  object,
   user,
   fetchTags,
   moveEntry,
@@ -59,6 +60,7 @@ const Tag = ({
   index,
   findEntryByIndex,
 }: ITagProps) => {
+  const [tag, setTag] = useState<ITag>(object);
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const classes = useStyles();
@@ -140,8 +142,8 @@ const Tag = ({
 
   const handleTagClick = () => {
     appConfig.setMainPanel('EntryList');
-    appConfig.setCurrentTag(tag.attributes.name);
-    history.push(`/${user.attributes.username}/${tag.attributes.name}`);
+    appConfig.setCurrentTag(object.attributes.name);
+    history.push(`/${user.attributes.username}/${object.attributes.name}`);
   };
 
   const mouseEnter = () => {
@@ -158,8 +160,39 @@ const Tag = ({
     mouseY: null,
   };
 
+  const [mouse, setMouse] = useState(initialMouse);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  const handleSave = (updated_name: string) => {
+    setIsEditing(false);
+    const payload = {
+      data: {
+        id: id,
+        type: 'Tag',
+        attributes: {
+          name: updated_name,
+        },
+      },
+    };
+    API.patch('tags/' + id, payload, {withCredentials: true})
+      .then(response => {
+        const newTag = {...object};
+        newTag.attributes.name = response.data.data.attributes.name;
+        setTag(newTag);
+        setIsEditing(false);
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .then(() => {});
+  };
+
   const deleteTag = () => {
-    API.delete('/tags/' + tag.id, {withCredentials: true})
+    API.delete('/tags/' + object.id, {withCredentials: true})
       .then(() => {
         fetchTags();
       })
@@ -172,10 +205,13 @@ const Tag = ({
       });
   };
 
-  const [mouse, setMouse] = useState(initialMouse);
+  const handleBeginEdit = () => {
+    setIsEditing(true);
+  };
 
   const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
+    event.stopPropagation();
     const mouseData: IMouse = {...mouse};
     (mouseData.mouseX = event.clientX - 2),
       (mouseData.mouseY = event.clientY - 4),
@@ -254,49 +290,68 @@ const Tag = ({
   drop(dropRef);
 
   const contextMenu = useMemo(
-    () => <TagContextMenu id={id} mouse={mouse} deleteTag={deleteTag} />,
+    () => (
+      <TagContextMenu
+        id={id}
+        mouse={mouse}
+        deleteTag={deleteTag}
+        handleBeginEditParent={handleBeginEdit}
+      />
+    ),
     [mouse]
   );
 
   return (
-    <div
-      ref={dropRef}
-      style={{opacity}}
-      onContextMenu={handleContextClick}
-      id={`tag-${id}`}
-    >
-      <div ref={preview} className={classes.entryWrapper}>
+    <>
+      {!isEditing && (
         <div
-          className={classes.tagDragIndicatorContainer}
-          onMouseEnter={mouseEnter}
-          onMouseLeave={mouseLeave}
+          ref={dropRef}
+          style={{opacity}}
+          onContextMenu={handleContextClick}
+          id={`tag-${id}`}
         >
-          <div
-            ref={dragRef}
-            className={classes.tagDragIndicator}
-            onMouseEnter={mouseEnter}
-            onMouseLeave={mouseLeave}
-            style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
-          >
-            ::
+          <div ref={preview} className={classes.entryWrapper}>
+            <div
+              className={classes.tagDragIndicatorContainer}
+              onMouseEnter={mouseEnter}
+              onMouseLeave={mouseLeave}
+            >
+              <div
+                ref={dragRef}
+                className={classes.tagDragIndicator}
+                onMouseEnter={mouseEnter}
+                onMouseLeave={mouseLeave}
+                style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
+              >
+                ::
+              </div>
+            </div>
+            <div
+              onMouseEnter={mouseEnter}
+              onMouseLeave={mouseLeave}
+              ref={drop}
+              className={classes.tagLabel}
+              style={{backgroundColor}}
+              onClick={handleTagClick}
+              onContextMenu={handleContextClick}
+            >
+              {tag.attributes.name}
+              {appConfig.showTagCounts
+                ? ` (${tag.attributes.entry_count})`
+                : null}
+            </div>
           </div>
         </div>
-        <div
-          onMouseEnter={mouseEnter}
-          onMouseLeave={mouseLeave}
-          ref={drop}
-          className={classes.tagLabel}
-          style={{backgroundColor}}
-          onClick={handleTagClick}
-          onContextMenu={handleContextClick}
-        >
-          {tag.attributes.name}
-          {appConfig.showTagCounts ? ` (${tag.attributes.entry_count})` : null}
-        </div>
-
-        {appConfig.loggedInUser && <>{contextMenu}</>}
-      </div>
-    </div>
+      )}
+      {appConfig.loggedInUser && <>{contextMenu}</>}
+      {isEditing && (
+        <TagEdit
+          object={tag}
+          handleSave={handleSave}
+          handleCancelEdit={handleCancelEdit}
+        />
+      )}
+    </>
   );
 };
 export default React.memo(observer(Tag));

@@ -5,10 +5,11 @@ import {useTheme} from '@material-ui/styles';
 
 interface IStyledTextFieldProps {
   id: string;
+  value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const StyledTextFieldTags = ({id, onChange}: IStyledTextFieldProps) => {
+const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   const theme = useTheme<Theme>();
   const useStyles = makeStyles(() =>
     createStyles({
@@ -35,6 +36,7 @@ const StyledTextFieldTags = ({id, onChange}: IStyledTextFieldProps) => {
   const classes = useStyles();
   return (
     <TextField
+      value={value}
       className={`${classes.textField}`}
       id={id}
       onChange={onChange}

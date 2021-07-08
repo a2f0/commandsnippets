@@ -149,12 +149,8 @@ const MenuBar = (props: IMenuBarProps) => {
         appConfig.setLoggedInUser(null);
         setFileMenuAnchorEl(null);
       })
-      .catch(() => {
-        // Login failed
-      })
-      .then(() => {
-        // always executed
-      });
+      .catch(() => {})
+      .then(() => {});
   };
 
   const handleFileMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
