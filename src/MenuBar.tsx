@@ -1,3 +1,4 @@
+import * as Constants from './constants';
 import {createStyles, withStyles} from '@material-ui/core/styles';
 import {darkTheme, lightTheme} from './themes';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
@@ -99,7 +100,7 @@ const useStyles = makeStyles({
   },
   dragIndicator: {
     display: 'inline-block',
-    width: '15px',
+    width: `${Constants.dragIndicatorWidthTag}px`,
   },
 });
 

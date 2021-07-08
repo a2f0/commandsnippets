@@ -1,3 +1,4 @@
+import * as Constants from './constants';
 import React, {useState} from 'react';
 import API from './api';
 import Button from '@material-ui/core/Button';
@@ -47,7 +48,7 @@ const useStyles = makeStyles({
   },
   dragIndicator: {
     display: 'inline-block',
-    width: '15px',
+    width: `${Constants.dragIndicatorWidthTag}px`,
   },
 });
 

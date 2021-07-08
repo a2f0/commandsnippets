@@ -4,13 +4,6 @@ import Drawer, {DrawerProps} from '@material-ui/core/Drawer';
 import {makeStyles} from '@material-ui/core/styles';
 
 const useStyles = makeStyles({
-  button: {
-    textTransform: 'none',
-  },
-  root: {
-    display: 'flex',
-    background: 'red',
-  },
   drawer: {
     width: Constants.drawerWidth,
     flexShrink: 0,
@@ -21,19 +14,6 @@ const useStyles = makeStyles({
     borderLeft: 0,
     width: Constants.drawerWidth,
     overflow: 'hidden',
-  },
-  drawerContainer: {
-    overflow: 'auto',
-  },
-  toolBar: {
-    minHeight: 0,
-    padding: 0,
-  },
-  title: {
-    flexGrow: 1,
-  },
-  list: {
-    padding: 0,
   },
 });
 

@@ -1,3 +1,4 @@
+import * as Constants from './constants';
 import React, {useEffect, useState} from 'react';
 import Button from '@material-ui/core/Button';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
@@ -16,7 +17,6 @@ const useStyles = makeStyles({
     border: '1px solid red',
     width: '100%',
   },
-
   entryBody: {
     display: 'inline-block',
     fontSize: 14,
@@ -33,7 +33,7 @@ const useStyles = makeStyles({
   },
   dragIndicator: {
     display: 'inline-block',
-    width: '15px',
+    width: `${Constants.dragIndicatorWidthTag}px`,
   },
 });
 
