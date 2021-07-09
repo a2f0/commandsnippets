@@ -9,7 +9,7 @@ interface ITagNewProps {
 }
 
 const TagNew = (props: ITagNewProps) => {
-  const [tagName, setTagName] = useState<string | null>(null);
+  const [tagName, setTagName] = useState<string>('');
   const appConfig = useAppContext();
 
   const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -17,7 +17,7 @@ const TagNew = (props: ITagNewProps) => {
   };
 
   const handleCancel = () => {
-    setTagName(null);
+    setTagName('');
     appConfig.setTagNew(false);
   };
 

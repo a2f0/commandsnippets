@@ -11,7 +11,6 @@ export interface IEntryEdit {
 
 const TagEdit = ({object, handleSave, handleCancelEdit}: IEntryEdit) => {
   const [tag, setTag] = useState<ITag>(object);
-
   useEffect(() => {
     setTag(object);
   }, [object.attributes.name]);

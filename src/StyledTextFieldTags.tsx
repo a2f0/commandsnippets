@@ -1,5 +1,5 @@
+import React, {useEffect} from 'react';
 import {Theme, createStyles, makeStyles} from '@material-ui/core/styles';
-import React from 'react';
 import TextField from '@material-ui/core/TextField';
 import {useTheme} from '@material-ui/styles';
 
@@ -34,8 +34,18 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
     })
   );
   const classes = useStyles();
+  const inputRef = React.useRef<HTMLInputElement>();
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [inputRef.current]);
+
+  const setTextInputRef = (element: HTMLInputElement) => {
+    inputRef.current = element;
+  };
+
   return (
     <TextField
+      inputRef={setTextInputRef}
       value={value}
       className={`${classes.textField}`}
       id={id}
