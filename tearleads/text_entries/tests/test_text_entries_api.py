@@ -16,22 +16,24 @@ class TestTextEntriesApi(BaseTestCase):
         super(TestTextEntriesApi, cls).setUpTestData()
 
     def test_serialization_format(self):
-        entry = TextEntryFactory(user=self.user1)
-        response = self.user1_api_client.get("/api/v1/entries")
-        json_response = response.json()
-        self.assertEqual(len(json_response["data"]), 1)
-        self.assertEqual(json_response["data"][0]["id"], str(entry.id))
-        self.assertEqual(
-            json_response["data"][0]["attributes"]["subject"], entry.subject
+        entry1 = self.user1.text_entries.all().first()
+        response = self.user1_api_client.get(
+            "/api/v1/entries?filter[user.username]={}".format(self.user1)
         )
-        self.assertEqual(json_response["data"][0]["attributes"]["body"], entry.body)
+        json_response = response.json()
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
+        self.assertEqual(
+            json_response["data"][0]["attributes"]["subject"], entry1.subject
+        )
+        self.assertEqual(json_response["data"][0]["attributes"]["body"], entry1.body)
         self.assertEqual(
             json_response["data"][0]["attributes"]["date_created"],
-            str(entry.date_created.isoformat()),
+            str(entry1.date_created.isoformat()),
         )
         self.assertEqual(
             json_response["data"][0]["attributes"]["date_updated"],
-            str(entry.date_updated.isoformat()),
+            str(entry1.date_updated.isoformat()),
         )
         self.assertEqual(len(json_response["included"]), 1)
         self.assertEqual(json_response["included"][0]["type"], "User")
@@ -98,31 +100,59 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
 
     def test_filter_by_tag_count(self):
-        entry1 = TextEntryFactory(user=self.user1, tag_count=0)
-        entry2 = TextEntryFactory(user=self.user1, tag_count=1)
+        entry1 = self.user1.text_entries.all().first()
+        entry2 = self.user1.text_entries.all().last()
         response = self.user1_api_client.get(
-            "/api/v1/entries?filter[tag_count]={}".format(0)
+            "/api/v1/entries?filter[tag_count]={}&filter[user.username]={}".format(
+                0, self.user1
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 1)
+        self.assertEqual(len(json_response["data"]), 2)
         self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
 
     def test_filter_by_is_deleted(self):
-        entry1 = TextEntryFactory(user=self.user1, is_deleted=True)
-        entry2 = TextEntryFactory(user=self.user1, is_deleted=False)
+        entry1 = self.user1.text_entries.all().first()
+        entry2 = self.user1.text_entries.all().last()
         response = self.user1_api_client.get(
-            "/api/v1/entries?filter[is_deleted]={}".format(0)
+            "/api/v1/entries?filter[is_deleted]={}&filter[user.username]={}".format(
+                0, self.user1
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 1)
-        self.assertEqual(json_response["data"][0]["id"], str(entry2.id))
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
+        response = self.user1_api_client.get(
+            "/api/v1/entries?filter[is_deleted]={}&filter[user.username]={}".format(
+                1, self.user1
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 0)
+
+    def test_filter_by_username(self):
+        entry1 = self.user1.text_entries.all().first()
+        entry2 = self.user1.text_entries.all().last()
+        response = self.user1_api_client.get(
+            "/api/v1/entries?filter[user.username]={}".format(self.user1)
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
+        response = self.user1_api_client.get(
+            "/api/v1/entries?filter[user.username]=random"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 0)
 
     def test_order_filter(self):
-        entry1 = TextEntryFactory(user=self.user1, subject="a", body="z")
-        entry2 = TextEntryFactory(user=self.user1, subject="b", body="y")
-
+        entry1 = self.user1.text_entries.all().first()
+        entry2 = self.user1.text_entries.all().last()
         # invalid sort key
         response = self.user1_api_client.get("/api/v1/entries?sort=invalid_sort_key")
         json_response = response.json()
@@ -134,7 +164,9 @@ class TestTextEntriesApi(BaseTestCase):
         )
 
         # sort by body
-        response = self.user1_api_client.get("/api/v1/entries?sort=body")
+        response = self.user1_api_client.get(
+            "/api/v1/entries?sort=body&filter[user.username]={}".format(self.user1)
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)
@@ -142,7 +174,9 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][1]["id"], str(entry1.id))
 
         # reverse sort by body
-        response = self.user1_api_client.get("/api/v1/entries?sort=-body")
+        response = self.user1_api_client.get(
+            "/api/v1/entries?sort=-body&filter[user.username]={}".format(self.user1)
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)
@@ -150,7 +184,11 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][1]["id"], str(entry2.id))
 
         # sort by date_created
-        response = self.user1_api_client.get("/api/v1/entries?sort=date_created")
+        response = self.user1_api_client.get(
+            "/api/v1/entries?sort=date_created&filter[user.username]={}".format(
+                self.user1
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)
@@ -158,7 +196,11 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][1]["id"], str(entry2.id))
 
         # reverse sort by date_created
-        response = self.user1_api_client.get("/api/v1/entries?sort=-date_created")
+        response = self.user1_api_client.get(
+            "/api/v1/entries?sort=-date_created&filter[user.username]={}".format(
+                self.user1
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)
@@ -166,7 +208,11 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][1]["id"], str(entry1.id))
 
         # sort by date_updated
-        response = self.user1_api_client.get("/api/v1/entries?sort=date_updated")
+        response = self.user1_api_client.get(
+            "/api/v1/entries?sort=date_updated&filter[user.username]={}".format(
+                self.user1
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)
@@ -174,7 +220,11 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][1]["id"], str(entry2.id))
 
         # reverse sort by date_updated
-        response = self.user1_api_client.get("/api/v1/entries?sort=-date_updated")
+        response = self.user1_api_client.get(
+            "/api/v1/entries?sort=-date_updated&filter[user.username]={}".format(
+                self.user1
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)
@@ -182,7 +232,9 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][1]["id"], str(entry1.id))
 
         # sort by subject
-        response = self.user1_api_client.get("/api/v1/entries?sort=subject")
+        response = self.user1_api_client.get(
+            "/api/v1/entries?sort=subject&filter[user.username]={}".format(self.user1)
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)
@@ -190,7 +242,9 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][1]["id"], str(entry2.id))
 
         # reverse sort by subject
-        response = self.user1_api_client.get("/api/v1/entries?sort=-subject")
+        response = self.user1_api_client.get(
+            "/api/v1/entries?sort=-subject&filter[user.username]={}".format(self.user1)
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 2)

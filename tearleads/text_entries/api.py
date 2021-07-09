@@ -29,6 +29,7 @@ class TextEntryViewSet(viewsets.ModelViewSet):
     filterset_fields = {
         "id": ("exact",),
         "tags__name": ("exact",),
+        "user__username": ("exact",),
         "tags__id": ("exact",),
         "tag_count": ("exact",),
         "is_deleted": ("exact",),

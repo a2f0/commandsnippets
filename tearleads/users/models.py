@@ -9,6 +9,7 @@ import string
 import random
 
 from tearleads.tags.models import Tag
+from tearleads.text_entries.models import TextEntry
 
 
 class User(AbstractUser):
@@ -38,8 +39,25 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
         # create some stub data for whe the user initially logs in
-        tag1 = Tag.objects.create(user=instance, order=1, name="example-tag-1")
+        tag1 = Tag.objects.create(user=instance, order=1, name="example-postgres")
         tag2 = Tag.objects.create(user=instance, order=2, name="example-tag-2")
+
+        entry1_subject = "close all postgres connections other than the current one"
+        entry1_body = (
+            "SELECT pg_terminate_backend(pg_stat_activity.pid)\n"
+            "FROM pg_stat_activity\n"
+            "WHERE datname = current_database()\n"
+            "AND pid <> pg_backend_pid();\n"
+        )
+        entry1 = TextEntry.objects.create(
+            user=instance, subject=entry1_subject, body=entry1_body
+        )
+
+        entry1_subject = "show where a postgres session is originating from"
+        entry1_body = "SELECT *" "FROM pg_stat_activity" "WHERE datname = 'postgres';"
+        entry2 = TextEntry.objects.create(
+            user=instance, subject=entry1_subject, body=entry1_body
+        )
 
 
 class TearleadsUser(models.Model):
