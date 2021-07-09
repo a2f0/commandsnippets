@@ -100,16 +100,15 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
 
     def test_filter_by_tag_count(self):
-        entry1 = self.user1.text_entries.all().first()
-        entry2 = self.user1.text_entries.all().last()
+        entry1 = self.user1.text_entries.all().last()
         response = self.user1_api_client.get(
             "/api/v1/entries?filter[tag_count]={}&filter[user.username]={}".format(
-                0, self.user1
+                2, self.user1
             )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 1)
         self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
 
     def test_filter_by_is_deleted(self):

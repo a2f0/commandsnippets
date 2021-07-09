@@ -8,7 +8,7 @@ from django.db import models
 import string
 import random
 
-from tearleads.tags.models import Tag
+from tearleads.tags.models import Tag, TagTextEntryThroughModel
 from tearleads.text_entries.models import TextEntry
 
 
@@ -54,9 +54,30 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
         )
 
         entry1_subject = "show where a postgres session is originating from"
-        entry1_body = "SELECT *" "FROM pg_stat_activity" "WHERE datname = 'postgres';"
+        entry1_body = "SELECT *" "FROM pg_stat_activity\n" "WHERE datname = 'postgres';"
         entry2 = TextEntry.objects.create(
-            user=instance, subject=entry1_subject, body=entry1_body
+            user=instance,
+            subject=entry1_subject,
+            body=entry1_body,
+        )
+
+        tag_text_entry_1 = TagTextEntryThroughModel.objects.create(
+            user=instance,
+            tag=tag1,
+            text_entry=entry1,
+            order=1,
+        )
+        tag_text_entry_2 = TagTextEntryThroughModel.objects.create(
+            user=instance,
+            tag=tag1,
+            text_entry=entry2,
+            order=2,
+        )
+        tag_text_entry_3 = TagTextEntryThroughModel.objects.create(
+            user=instance,
+            tag=tag2,
+            text_entry=entry2,
+            order=3,
         )
 
 

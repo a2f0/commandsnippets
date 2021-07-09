@@ -166,18 +166,18 @@ class TestTagsEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][0]["id"], str(tag_entry1.id))
 
     def test_filter_by_user_name(self):
-        entry1 = TextEntryFactory(user=self.user1)
-        tag1 = TagFactory(user=self.user1)
-        tag_entry1 = TagTextEntryThroughModelFactory(
-            text_entry=entry1, tag=tag1, user=self.user1
-        )
+        tag_entry1 = self.user1.tags_entries.all().first()
+        tag_entry2 = self.user1.tags_entries.all()[1]
+        tag_entry3 = self.user1.tags_entries.all().last()
         response = self.user1_api_client.get(
             "/api/v1/tags_entries?filter[user.username]={}".format(self.user1.username)
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 1)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_entry1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag_entry2.id))
+        self.assertEqual(json_response["data"][2]["id"], str(tag_entry3.id))
         response = self.user1_api_client.get(
             "/api/v1/tags_entries?filter[user.username]=random".format(
                 self.user1.username
@@ -188,21 +188,9 @@ class TestTagsEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response["data"]), 0)
 
     def test_order_filter(self):
-        tag1 = TagFactory(user=self.user1)
-        tag2 = TagFactory(user=self.user1)
-        text_entry1 = TextEntryFactory(
-            user=self.user1, subject="a", body="a", tag_count=0
-        )
-        text_entry2 = TextEntryFactory(
-            user=self.user1, subject="z", body="z", tag_count=1
-        )
-        tag_text_entry1 = TagTextEntryThroughModelFactory(
-            tag=tag1, order=0, text_entry=text_entry1, user=self.user1
-        )
-        tag_text_entry2 = TagTextEntryThroughModelFactory(
-            tag=tag2, order=1, text_entry=text_entry2, user=self.user1
-        )
-
+        tag_text_entry1 = self.user1.tags_entries.all().first()
+        tag_text_entry2 = self.user1.tags_entries.all()[1]
+        tag_text_entry3 = self.user1.tags_entries.all().last()
         # invalid sort key
         response = self.user1_api_client.get(
             "/api/v1/tags_entries?sort=invalid_sort_key"
@@ -216,136 +204,175 @@ class TestTagsEntriesApi(BaseTestCase):
         )
 
         # sort by date created
-        response = self.user1_api_client.get("/api/v1/tags_entries?sort=date_created")
+        response = self.user1_api_client.get(
+            "/api/v1/tags_entries?sort=date_created&filter[user.username]={}".format(
+                self.user1.username
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
 
         # sort by date created (reversed)
-        response = self.user1_api_client.get("/api/v1/tags_entries?sort=-date_created")
+        response = self.user1_api_client.get(
+            "/api/v1/tags_entries?sort=-date_created&filter[user.username]={}".format(
+                self.user1.username
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
+        self.assertEqual(len(json_response["data"]), 3)
+        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry3.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
 
         # sort by order
-        response = self.user1_api_client.get("/api/v1/tags_entries?sort=order")
+        response = self.user1_api_client.get(
+            "/api/v1/tags_entries?sort=order&filter[user.username]={}".format(
+                self.user1.username
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
 
         # sort by order (reversed)
-        response = self.user1_api_client.get("/api/v1/tags_entries?sort=-order")
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
-
-        # sort by subject
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=text_entry__subject"
+            "/api/v1/tags_entries?sort=-order&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
+        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry3.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
+
+        # sort by subject
+        response = self.user1_api_client.get(
+            "/api/v1/tags_entries?sort=text_entry__subject&filter[user.username]={}".format(
+                self.user1.username
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
 
         # sort by subject (reversed)
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=-text_entry__subject"
+            "/api/v1/tags_entries?sort=-text_entry__subject&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry3.id))
 
         # sort by body
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=text_entry__body"
+            "/api/v1/tags_entries?sort=text_entry__body&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
-        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
+        self.assertEqual(len(json_response["data"]), 3)
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry3.id))
+        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
 
         # sort by body (reversed)
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=-text_entry__body"
+            "/api/v1/tags_entries?sort=-text_entry__body&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
+        self.assertEqual(len(json_response["data"]), 3)
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
+        self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
 
         # sort text entries by date created
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=text_entry__date_created"
+            "/api/v1/tags_entries?sort=text_entry__date_created&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
+
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
 
         # sort text entries by date created (reversed)
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=-text_entry__date_created"
+            "/api/v1/tags_entries?sort=-text_entry__date_created&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry3.id))
 
         # sort text entries by date updated
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=text_entry__date_updated"
+            "/api/v1/tags_entries?sort=text_entry__date_updated&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
+
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
 
         # sort text entries by date updated (reversed)
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=-text_entry__date_updated"
+            "/api/v1/tags_entries?sort=-text_entry__date_updated&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
+
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry3.id))
 
         # sort text entries by tag count
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=text_entry__tag_count"
+            "/api/v1/tags_entries?sort=text_entry__tag_count&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry1.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry2.id))
 
         # sort text entries by tag count (reversed)
         response = self.user1_api_client.get(
-            "/api/v1/tags_entries?sort=-text_entry__tag_count"
+            "/api/v1/tags_entries?sort=-text_entry__tag_count&filter[user.username]={}".format(
+                self.user1.username
+            )
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(len(json_response["data"]), 3)
+        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry3.id))
         self.assertEqual(json_response["data"][0]["id"], str(tag_text_entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(tag_text_entry1.id))
 
     def test_reorder_requires_authentication(self):
         tag = TagFactory(user=self.user1)
