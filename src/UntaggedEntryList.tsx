@@ -6,15 +6,21 @@ import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useLocation} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 
 const width = {
   width: '100%',
 };
 
+interface IParamTypes {
+  user: string;
+}
+
 const UntaggedEntryList = () => {
   const appConfig = useAppContext();
   const [data, setData] = useState({data: [], included: []});
   const location = useLocation();
+  const {user} = useParams<IParamTypes>();
 
   useEffect(
     () =>
@@ -26,14 +32,15 @@ const UntaggedEntryList = () => {
 
   const retrieveEntries = () => {
     const fetchData = async () => {
-      const url_query_query_string =
-        '/entries?' +
-        'sort=' +
-        appConfig.untaggedEntrySortOrder +
-        '&filter[tag_count]=0' +
-        '&filter[is_deleted]=False';
-      const response = await API.get(url_query_query_string);
-      setData(response.data);
+      const {data} = await API.get('/entries', {
+        params: {
+          'filter[tag_count]': 0,
+          'filter[is_deleted]': false,
+          'filter[user.username]': user,
+          sort: appConfig.untaggedEntrySortOrder,
+        },
+      });
+      setData(data);
     };
     fetchData();
   };
