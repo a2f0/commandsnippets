@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import API from './api';
 import StyledButtonTags from './StyledButtonTags';
 import StyledTextFieldTags from './StyledTextFieldTags';
@@ -11,6 +11,20 @@ interface ITagNewProps {
 const TagNew = (props: ITagNewProps) => {
   const [tagName, setTagName] = useState<string>('');
   const appConfig = useAppContext();
+
+  const escFunction = useCallback(event => {
+    if (event.keyCode === 27) {
+      handleCancel();
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', escFunction, false);
+
+    return () => {
+      document.removeEventListener('keydown', escFunction, false);
+    };
+  }, []);
 
   const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTagName(event.currentTarget.value);
