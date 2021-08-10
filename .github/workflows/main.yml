@@ -43,7 +43,7 @@ jobs:
         pre-commit run --all-files
     - name: Run safety
       run: |
-        safety check -r requirements/local.txt -r requirements/local.txt
+        safety check -r requirements/local.txt -r requirements/production.txt
     - name: run tests / coverage analysis
       run: |
         coverage run manage.py test -v 2

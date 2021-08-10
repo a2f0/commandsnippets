@@ -177,6 +177,30 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag1.id))
 
+        # sort by date updated
+        response = self.user1_api_client.get(
+            "/api/v1/tags?sort=date_updated&filter[user.username]={}".format(
+                self.user1.username
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag1.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag2.id))
+
+        # sort by date updated (reversed)
+        response = self.user1_api_client.get(
+            "/api/v1/tags?sort=-date_updated&filter[user.username]={}".format(
+                self.user1.username
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 2)
+        self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
+        self.assertEqual(json_response["data"][1]["id"], str(tag1.id))
+
         # sort by order
         response = self.user1_api_client.get(
             "/api/v1/tags?sort=order&filter[user.username]={}".format(
