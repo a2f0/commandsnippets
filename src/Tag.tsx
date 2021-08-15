@@ -13,6 +13,8 @@ import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/core/styles';
 import {useAppContext} from './AppContext';
+import {useHistory} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import {useTheme} from '@material-ui/styles';
 
 const useStyles = makeStyles({
@@ -48,6 +50,10 @@ interface ITagProps {
   findEntryByIndex: (id: number) => ITagJsonApi | null;
 }
 
+interface IParamTypes {
+  user: string;
+}
+
 const Tag = ({
   id,
   object,
@@ -60,9 +66,11 @@ const Tag = ({
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const classes = useStyles();
+  const history = useHistory();
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
+  const {user} = useParams<IParamTypes>();
   const [{canDrop, isOver}, drop] = useDrop({
     accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
@@ -135,7 +143,8 @@ const Tag = ({
 
   const handleTagClick = () => {
     appConfig.setMainPanel('EntryList');
-    appConfig.setCurrentTag(object.id);
+    appConfig.setCurrentTag(object.attributes.name);
+    history.push(`/${user}/${appConfig.currentTag}`);
   };
 
   const mouseEnter = () => {
