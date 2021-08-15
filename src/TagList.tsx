@@ -1,8 +1,9 @@
 import * as Constants from './constants';
 import React, {useEffect} from 'react';
-import {IT} from './AppStateStore';
+import {Instance} from 'mobx-state-tree';
 import List from '@material-ui/core/List';
 import Tag from './Tag';
+import {TagJsonAPI} from './AppStateStore';
 import TagNew from './TagNew';
 import TagSearch from './TagSearch';
 import {autorun} from 'mobx';
@@ -100,7 +101,7 @@ const TagList = () => {
       <List className={classes.root}>
         <div className={classes.ltr} id="tagList">
           {appConfig.tagNew && <TagNew />}
-          {appConfig.tagsArray.map((object: IT, i) => {
+          {appConfig.tagsArray.map((object: Instance<typeof TagJsonAPI>, i) => {
             return (
               <Tag
                 key={object.id}

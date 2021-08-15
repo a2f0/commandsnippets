@@ -1,12 +1,13 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import API from './api';
-import {IT} from './AppStateStore';
+import {Instance} from 'mobx-state-tree';
 import StyledButtonTags from './StyledButtonTags';
 import StyledTextFieldTags from './StyledTextFieldTags';
+import {TagJsonAPI} from './AppStateStore';
 import {observer} from 'mobx-react';
 
 export interface ITagEdit {
-  object: IT;
+  object: Instance<typeof TagJsonAPI>;
   handleSaveParent: () => void;
   handleCancelEdit: () => void;
 }

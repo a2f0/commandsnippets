@@ -1,5 +1,4 @@
 import {IDisposer, Instance, getParent, types} from 'mobx-state-tree';
-
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 import API from './api';
 import {ITagJsonApi} from './TagList';
@@ -22,7 +21,7 @@ const TagAtributes = types
   })
   .actions(() => ({}));
 
-const TagJsonAPI = types
+export const TagJsonAPI = types
   .model('TagJsonAPI', {
     id: types.identifier,
     type: types.string,
@@ -33,7 +32,7 @@ const TagJsonAPI = types
       Object.assign(self, object);
     },
     remove() {
-      getParent<AppStateStoreModel1>(self, 2).removeTag(self.id);
+      getParent<AppStateStoreModel>(self, 2).removeTag(self.id);
     },
   }));
 
@@ -54,10 +53,7 @@ function fetchAllTags(tags: ITagJsonApi[], user: string, page: number) {
   return f;
 }
 
-type AppStateStoreModel1 = Instance<typeof AppStateStoreModel>;
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IT extends Instance<typeof TagJsonAPI> {}
+type AppStateStoreModel = Instance<typeof AppStateStoreModel>;
 
 export const AppStateStoreModel = types
   .model({
