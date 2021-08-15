@@ -7,12 +7,25 @@ export function sortArrayByAttribute(
   let sortedArray: Array<ITagJsonApi>;
   if (order === 'name') {
     sortedArray = array.slice().sort((a, b) => {
-      const nameA = a.attributes.name.toUpperCase(); // ignore upper and lowercase
-      const nameB = b.attributes.name.toUpperCase(); // ignore upper and lowercase
-      if (nameA < nameB) {
+      const sort1 = a.attributes.name.toUpperCase(); // ignore upper and lowercase
+      const sort2 = b.attributes.name.toUpperCase(); // ignore upper and lowercase
+      if (sort1 < sort2) {
         return -1;
       }
-      if (nameA > nameB) {
+      if (sort1 > sort2) {
+        return 1;
+      }
+      // equal
+      return 0;
+    });
+  } else if (order === '-name') {
+    sortedArray = array.slice().sort((a, b) => {
+      const sort1 = a.attributes.name.toUpperCase(); // ignore upper and lowercase
+      const sort2 = b.attributes.name.toUpperCase(); // ignore upper and lowercase
+      if (sort2 < sort1) {
+        return -1;
+      }
+      if (sort2 > sort1) {
         return 1;
       }
       // equal
@@ -20,12 +33,12 @@ export function sortArrayByAttribute(
     });
   } else if (order === 'order') {
     sortedArray = array.slice().sort((a, b) => {
-      const orderA = a.attributes.order;
-      const orderB = b.attributes.order;
-      if (orderA < orderB) {
+      const sort1 = a.attributes.order;
+      const sort2 = b.attributes.order;
+      if (sort1 < sort2) {
         return -1;
       }
-      if (orderA > orderB) {
+      if (sort1 > sort2) {
         return 1;
       }
       // equal
