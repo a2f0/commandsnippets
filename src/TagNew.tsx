@@ -4,11 +4,7 @@ import StyledButtonTags from './StyledButtonTags';
 import StyledTextFieldTags from './StyledTextFieldTags';
 import {useAppContext} from './AppContext';
 
-interface ITagNewProps {
-  fetchTags: () => void;
-}
-
-const TagNew = (props: ITagNewProps) => {
+const TagNew = () => {
   const [tagName, setTagName] = useState<string>('');
   const appConfig = useAppContext();
 
@@ -47,7 +43,6 @@ const TagNew = (props: ITagNewProps) => {
     API.post('/tags', payload, {withCredentials: true})
       .then(() => {
         appConfig.setTagNew(false);
-        props.fetchTags();
       })
       .catch(error => {
         // handle error

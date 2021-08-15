@@ -1,17 +1,18 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {ITag} from './TagList';
+import API from './api';
+import {IT} from './AppStateStore';
 import StyledButtonTags from './StyledButtonTags';
 import StyledTextFieldTags from './StyledTextFieldTags';
+import {observer} from 'mobx-react';
 
-export interface IEntryEdit {
-  object: ITag;
-  handleSave: (updated_name: string) => void;
+export interface ITagEdit {
+  object: IT;
+  handleSaveParent: () => void;
   handleCancelEdit: () => void;
 }
 
-const TagEdit = ({object, handleSave, handleCancelEdit}: IEntryEdit) => {
-  const [tag, setTag] = useState<ITag>(object);
-
+const TagEdit = ({handleSaveParent, handleCancelEdit, object}: ITagEdit) => {
+  const [tagName, setTagName] = useState<string>(object.attributes.name);
   const escFunction = useCallback(event => {
     if (event.keyCode === 27) {
       handleCancel();
@@ -26,40 +27,56 @@ const TagEdit = ({object, handleSave, handleCancelEdit}: IEntryEdit) => {
     };
   }, []);
 
-  useEffect(() => {
-    setTag(object);
-  }, [object.attributes.name]);
+  const handleSave = () => {
+    const payload = {
+      data: {
+        id: object.id,
+        type: 'Tag',
+        attributes: {
+          name: tagName,
+        },
+      },
+    };
+    API.patch('tags/' + object.id, payload, {
+      withCredentials: true,
+    })
+      .then(response => {
+        object.update(response.data.data);
+        handleSaveParent();
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .then(() => {});
+  };
 
   const handleCancel = () => {
-    setTag(object);
     handleCancelEdit();
   };
 
   const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newTag = {...tag};
-    newTag.attributes.name = event.target.value;
-    setTag(newTag);
+    setTagName(event.target.value);
   };
 
   return (
     <>
       <StyledTextFieldTags
-        value={tag.attributes.name}
-        id={`tagEdit-${tag.id}`}
+        value={tagName}
+        id={`tagEdit-${object.id}`}
         onChange={e => {
           handleTagNameChange(e);
         }}
       />
       <StyledButtonTags
-        id={`tagEditSave-${tag.id}`}
+        id={`tagEditSave-${object.id}`}
         onClick={() => {
-          handleSave(tag.attributes.name);
+          handleSave();
         }}
       >
         Save
       </StyledButtonTags>
       <StyledButtonTags
-        id={`tagEditCancel-${tag.id}`}
+        id={`tagEditCancel-${object.id}`}
         onClick={() => {
           handleCancel();
         }}
@@ -70,4 +87,4 @@ const TagEdit = ({object, handleSave, handleCancelEdit}: IEntryEdit) => {
   );
 };
 
-export default React.memo(TagEdit);
+export default React.memo(observer(TagEdit));

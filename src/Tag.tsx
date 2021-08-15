@@ -1,18 +1,17 @@
 import * as Constants from './constants';
-import {ITag, IUser} from './TagList';
 import React, {useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import API from './api';
 import {IMouse} from './Entry';
+import {IT} from './AppStateStore';
+import {ITagJsonApi} from './TagList';
 import ItemTypes from './ItemTypes';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/core/styles';
-import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-import {useHistory} from 'react-router-dom';
 import {useTheme} from '@material-ui/styles';
 
 const useStyles = makeStyles({
@@ -41,26 +40,22 @@ const useStyles = makeStyles({
 
 interface ITagProps {
   id: string;
-  object: ITag;
-  user: IUser;
-  fetchTags: () => void;
+  object: IT;
   moveEntry: (id: string, atIndex: number) => void;
-  findEntry: (id: string) => {entry: ITag; index: number};
+  findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
-  findEntryByIndex: (id: number) => ITag | null;
+  findEntryByIndex: (id: number) => ITagJsonApi | null;
 }
 
 const Tag = ({
   id,
   object,
-  user,
-  fetchTags,
   moveEntry,
   findEntry,
   index,
   findEntryByIndex,
 }: ITagProps) => {
-  const [tag, setTag] = useState<ITag>(object);
+  const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const classes = useStyles();
@@ -137,13 +132,9 @@ const Tag = ({
     backgroundColor = 'gray';
   }
 
-  const appConfig = useAppContext();
-  const history = useHistory();
-
   const handleTagClick = () => {
     appConfig.setMainPanel('EntryList');
-    appConfig.setCurrentTag(object.attributes.name);
-    history.push(`/${user.attributes.username}/${object.attributes.name}`);
+    appConfig.setCurrentTag(object.id);
   };
 
   const mouseEnter = () => {
@@ -167,34 +158,14 @@ const Tag = ({
     setIsEditing(false);
   };
 
-  const handleSave = (updated_name: string) => {
+  const handleSaveParent = () => {
     setIsEditing(false);
-    const payload = {
-      data: {
-        id: id,
-        type: 'Tag',
-        attributes: {
-          name: updated_name,
-        },
-      },
-    };
-    API.patch('tags/' + id, payload, {withCredentials: true})
-      .then(response => {
-        const newTag = {...object};
-        newTag.attributes.name = response.data.data.attributes.name;
-        setTag(newTag);
-        setIsEditing(false);
-      })
-      .catch(error => {
-        console.error(error);
-      })
-      .then(() => {});
   };
 
   const deleteTag = () => {
     API.delete('/tags/' + object.id, {withCredentials: true})
       .then(() => {
-        fetchTags();
+        object.remove();
       })
       .catch(error => {
         // handle error
@@ -225,7 +196,7 @@ const Tag = ({
       isDragging: monitor.isDragging(),
     }),
     end: (dropResult, monitor) => {
-      const drop_result: ITag | null = monitor.getDropResult();
+      const drop_result: ITagJsonApi | null = monitor.getDropResult();
       const {id: droppedId, originalIndex} = monitor.getItem();
       const didDrop = monitor.didDrop();
       if (!didDrop) {
@@ -246,8 +217,8 @@ const Tag = ({
                 );
                 const entry = findEntry(id).entry;
                 const entry_below = findEntryByIndex(index + 1);
-                let ordered_top: ITag | null;
-                let ordered_bottom: ITag | null;
+                let ordered_top: ITagJsonApi | null;
+                let ordered_bottom: ITagJsonApi | null;
                 if (entry_below === null) {
                   //Then it was moved to the bottom position, get the entry before it.
                   ordered_top = findEntryByIndex(index - 1);
@@ -335,9 +306,9 @@ const Tag = ({
               onClick={handleTagClick}
               onContextMenu={handleContextClick}
             >
-              {tag.attributes.name}
+              {object.attributes.name}
               {appConfig.showTagCounts
-                ? ` (${tag.attributes.entry_count})`
+                ? ` (${object.attributes.entry_count})`
                 : null}
             </div>
           </div>
@@ -346,12 +317,12 @@ const Tag = ({
       {appConfig.loggedInUser && <>{contextMenu}</>}
       {isEditing && (
         <TagEdit
-          object={tag}
-          handleSave={handleSave}
+          object={object}
+          handleSaveParent={handleSaveParent}
           handleCancelEdit={handleCancelEdit}
         />
       )}
     </>
   );
 };
-export default React.memo(observer(Tag));
+export default React.memo(Tag);

@@ -1,9 +1,67 @@
-import {IDisposer, Instance, types} from 'mobx-state-tree';
-import {applySnapshot, destroy, onSnapshot} from 'mobx-state-tree';
+import {IDisposer, Instance, getParent, types} from 'mobx-state-tree';
+
+import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
+import API from './api';
+import {ITagJsonApi} from './TagList';
 import {environment} from './api';
+import {sortArrayByAttribute} from './lib/tags';
+import update from 'immutability-helper';
+
+interface ITagJsonApiResponse {
+  data: ITagJsonApi[];
+  links: {
+    next: string;
+  };
+}
+
+const TagAtributes = types
+  .model('TagAtributes', {
+    name: types.string,
+    entry_count: types.number,
+    order: types.number,
+  })
+  .actions(() => ({}));
+
+const TagJsonAPI = types
+  .model('TagJsonAPI', {
+    id: types.identifier,
+    type: types.string,
+    attributes: TagAtributes,
+  })
+  .actions(self => ({
+    update(object: ITagJsonApi) {
+      Object.assign(self, object);
+    },
+    remove() {
+      getParent<AppStateStoreModel1>(self, 2).removeTag(self.id);
+    },
+  }));
+
+function fetchAllTags(tags: ITagJsonApi[], user: string, page: number) {
+  const f: Promise<ITagJsonApi[]> = API.get<ITagJsonApiResponse>('/tags', {
+    params: {
+      'page[number]': page,
+      'filter[user.username]': user,
+      sort: 'date_updated',
+    },
+  }).then(response => {
+    tags = tags.concat(response.data.data);
+    if (response.data.links.next === null) {
+      return tags;
+    }
+    return fetchAllTags(tags, user, ++page);
+  });
+  return f;
+}
+
+type AppStateStoreModel1 = Instance<typeof AppStateStoreModel>;
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IT extends Instance<typeof TagJsonAPI> {}
 
 export const AppStateStoreModel = types
   .model({
+    tagsArray: types.array(TagJsonAPI),
     loggedInUser: types.maybeNull(types.string),
     selectedTheme: types.string,
     tagSortOrder: types.string,
@@ -18,14 +76,45 @@ export const AppStateStoreModel = types
     showTagCounts: types.boolean,
   })
   .actions(self => ({
+    fetchTags: flow(function* fetchTags(user: string) {
+      try {
+        const ta: ITagJsonApi[] = yield fetchAllTags([], user, 1);
+        for (const element of self.tagsArray) {
+          const existing = ta.find(o => o.id === element.id);
+          if (existing === undefined) {
+            ta.push(element);
+          }
+        }
+
+        const sortedArray: ITagJsonApi[] = sortArrayByAttribute(
+          self.tagSortOrder,
+          ta
+        );
+
+        applySnapshot(self.tagsArray, sortedArray);
+      } catch (error) {
+        console.error('An error occurred.');
+      }
+    }),
     setLoggedInUser(handle: string | null) {
       self.loggedInUser = handle;
+    },
+    removeTag(id: string) {
+      const existing: Instance<typeof TagJsonAPI> = self.tagsArray.filter(
+        c => c.id === id
+      )[0];
+      destroy(existing);
     },
     setSelectedTheme(theme: string) {
       self.selectedTheme = theme;
     },
     setTagSortOrder(order: string) {
       self.tagSortOrder = order;
+      const sortedArray: Array<ITagJsonApi> = sortArrayByAttribute(
+        self.tagSortOrder,
+        self.tagsArray
+      );
+      applySnapshot(self.tagsArray, sortedArray);
     },
     setEntrySortOrder(order: string) {
       self.entrySortOrder = order;
@@ -53,6 +142,17 @@ export const AppStateStoreModel = types
     },
     setShowTagCounts(value: boolean) {
       self.showTagCounts = value;
+    },
+    moveTagEntry(id: string, atIndex: number) {
+      const entry = self.tagsArray.filter(c => c.id === id)[0];
+      const entryIndex = self.tagsArray.indexOf(entry);
+      const reordered = update(self.tagsArray, {
+        $splice: [
+          [entryIndex, 1],
+          [atIndex, 0, entry],
+        ],
+      });
+      applySnapshot(self.tagsArray, reordered);
     },
   }));
 
