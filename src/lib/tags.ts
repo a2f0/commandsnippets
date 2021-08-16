@@ -31,6 +31,33 @@ export function sortArrayByAttribute(
       // equal
       return 0;
     });
+  } else if (order === 'date_created') {
+    sortedArray = array.slice().sort((a, b) => {
+      const sort1 = new Date(a.attributes.date_updated);
+      const sort2 = new Date(b.attributes.date_updated);
+      if (sort1 < sort2) {
+        return -1;
+      }
+      if (sort1 > sort2) {
+        return 1;
+      }
+      // equal
+      return 0;
+    });
+  } else if (order === '-date_created') {
+    sortedArray = array.slice().sort((a, b) => {
+      const sort1 = new Date(a.attributes.date_updated);
+      const sort2 = new Date(b.attributes.date_updated);
+      console.info(sort1);
+      if (sort2 < sort1) {
+        return -1;
+      }
+      if (sort2 > sort1) {
+        return 1;
+      }
+      // equal
+      return 0;
+    });
   } else if (order === 'order') {
     sortedArray = array.slice().sort((a, b) => {
       const sort1 = a.attributes.order;

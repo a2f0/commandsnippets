@@ -18,6 +18,8 @@ const TagAtributes = types
     name: types.string,
     entry_count: types.number,
     order: types.number,
+    date_updated: types.string,
+    date_created: types.string,
   })
   .actions(() => ({}));
 
