@@ -58,6 +58,32 @@ export function sortArrayByAttribute(
       // equal
       return 0;
     });
+  } else if (order === 'entry_count') {
+    sortedArray = array.slice().sort((a, b) => {
+      const sort1 = a.attributes.entry_count; // ignore upper and lowercase
+      const sort2 = b.attributes.entry_count; // ignore upper and lowercase
+      if (sort1 < sort2) {
+        return -1;
+      }
+      if (sort1 > sort2) {
+        return 1;
+      }
+      // equal
+      return 0;
+    });
+  } else if (order === '-entry_count') {
+    sortedArray = array.slice().sort((a, b) => {
+      const sort1 = a.attributes.entry_count; // ignore upper and lowercase
+      const sort2 = b.attributes.entry_count; // ignore upper and lowercase
+      if (sort2 < sort1) {
+        return -1;
+      }
+      if (sort2 > sort1) {
+        return 1;
+      }
+      // equal
+      return 0;
+    });
   } else if (order === 'order') {
     sortedArray = array.slice().sort((a, b) => {
       const sort1 = a.attributes.order;
