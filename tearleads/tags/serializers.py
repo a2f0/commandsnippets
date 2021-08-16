@@ -18,6 +18,7 @@ class TagSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "date_created",
+            "date_last_used",
             "date_updated",
             "user",
             "entry_count",

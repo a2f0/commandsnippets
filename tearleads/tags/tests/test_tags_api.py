@@ -33,6 +33,10 @@ class TestTagsApi(BaseTestCase):
             response.json()["data"][0]["attributes"]["date_updated"],
             str(tag.date_updated.isoformat()),
         )
+        self.assertEqual(
+            response.json()["data"][0]["attributes"]["date_last_used"],
+            str(tag.date_last_used.isoformat()),
+        )
         self.assertEqual(len(response.json()["included"]), 1)
         self.assertEqual(response.json()["included"][0]["type"], "User")
         self.assertEqual(len(response.json()["included"][0]["attributes"]), 1)

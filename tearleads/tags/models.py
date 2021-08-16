@@ -81,7 +81,7 @@ def update_counter_decrement(sender, instance, **kwargs):
         tag.date_last_used = None
     else:
         tag.date_last_used = most_recent_tag_to_text_entry.date_created
-    tag.save(update_fields=["entry_count", "date_last_used"])
+    tag.save(update_fields=["entry_count"])
 
 
 post_delete.connect(update_counter_decrement, sender=TagTextEntryThroughModel)
