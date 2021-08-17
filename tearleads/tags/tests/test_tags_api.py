@@ -252,3 +252,17 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(len(json_response["data"]), 2)
         self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
         self.assertEqual(json_response["data"][1]["id"], str(tag1.id))
+
+    def test_inequality_operator(self):
+        tag1 = self.user1.tags.all().first()
+        tag2 = self.user1.tags.all().last()
+
+        response = self.user1_api_client.get(
+            "/api/v1/tags?sort=-date_updated&filter[user.username]={}&filter[date_updated.gt]={}".format(
+                self.user1.username, tag1.date_updated
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 1)
+        self.assertEqual(json_response["data"][0]["id"], str(tag2.id))

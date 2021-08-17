@@ -30,7 +30,11 @@ class TagViewSet(viewsets.ModelViewSet):
     )
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
-    filterset_fields = {"name": ("exact",), "user__username": ("exact",)}
+    filterset_fields = {
+        "name": ("exact",),
+        "user__username": ("exact",),
+        "date_updated": ("gt",),
+    }
 
     def create(self, request, *args, **kwargs):
         serializer = TagCreateSerializer(data=request.data)
