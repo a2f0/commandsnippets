@@ -61,6 +61,7 @@ export interface ITagJsonApiAttributes {
   order: number;
   date_updated: string;
   date_created: string;
+  date_last_used: string;
 }
 
 const TagList = () => {

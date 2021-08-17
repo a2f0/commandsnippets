@@ -20,6 +20,7 @@ const TagAtributes = types
     order: types.number,
     date_updated: types.string,
     date_created: types.string,
+    date_last_used: types.string,
   })
   .actions(() => ({}));
 
@@ -83,15 +84,10 @@ export const AppStateStoreModel = types
             ta.push(element);
           }
         }
-
-        const sortedArray: ITagJsonApi[] = sortArrayByAttribute(
-          self.tagSortOrder,
-          ta
-        );
-
-        applySnapshot(self.tagsArray, sortedArray);
+        applySnapshot(self.tagsArray, ta);
       } catch (error) {
-        console.error('An error occurred.');
+        console.error(error);
+        throw error;
       }
     }),
     setLoggedInUser(handle: string | null) {
