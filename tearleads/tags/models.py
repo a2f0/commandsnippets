@@ -31,6 +31,15 @@ class Tag(OrderedModel):
         ]
 
 
+def initialize_date_last_used(sender, instance, created, **kwargs):
+    if created:
+        instance.date_last_used = instance.date_created
+        instance.save(update_fields=["date_last_used"])
+
+
+post_save.connect(initialize_date_last_used, sender=Tag)
+
+
 class TagTextEntryThroughModel(OrderedModel):
     tag = models.ForeignKey(
         Tag, on_delete=models.CASCADE, related_name="tag_to_text_entry"

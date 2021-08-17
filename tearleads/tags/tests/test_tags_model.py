@@ -41,7 +41,7 @@ class TestTagsModel(BaseTestCase):
         self,
     ):
         tag = TagFactory(user=self.user1)
-        self.assertEqual(tag.date_last_used, None)
+        self.assertEqual(tag.date_last_used, tag.date_created)
         text_entry = TextEntryFactory(user=self.user1)
         tag_text_entry = TagTextEntryThroughModelFactory(
             user=self.user1, tag=tag, text_entry=text_entry
