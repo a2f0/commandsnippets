@@ -39,19 +39,37 @@ export const TagJsonAPI = types
     },
   }));
 
-function fetchAllTags(tags: ITagJsonApi[], user: string, page: number) {
+function fetchAllTags(
+  tags: ITagJsonApi[],
+  user: string,
+  page: number,
+  since: string | null
+) {
+  interface IParams {
+    'page[number]': number;
+    'filter[user.username]': string;
+    sort: string;
+    'filter[date_updated.gt]'?: string;
+  }
+
+  const params: IParams = {
+    'page[number]': page,
+    'filter[user.username]': user,
+    sort: 'date_updated',
+  };
+
+  if (since !== null) {
+    params['filter[date_updated.gt]'] = since;
+  }
+
   const f: Promise<ITagJsonApi[]> = API.get<ITagJsonApiResponse>('/tags', {
-    params: {
-      'page[number]': page,
-      'filter[user.username]': user,
-      sort: 'date_updated',
-    },
+    params: params,
   }).then(response => {
     tags = tags.concat(response.data.data);
     if (response.data.links.next === null) {
       return tags;
     }
-    return fetchAllTags(tags, user, ++page);
+    return fetchAllTags(tags, user, ++page, since);
   });
   return f;
 }
@@ -77,14 +95,25 @@ export const AppStateStoreModel = types
   .actions(self => ({
     fetchTags: flow(function* fetchTags(user: string) {
       try {
-        const ta: ITagJsonApi[] = yield fetchAllTags([], user, 1);
-        for (const element of self.tagsArray) {
-          const existing = ta.find(o => o.id === element.id);
-          if (existing === undefined) {
-            ta.push(element);
+        let ta: ITagJsonApi[];
+        if (self.tagsArray.length > 0) {
+          const sortedArray: Array<ITagJsonApi> = sortArrayByAttribute(
+            '-date_updated',
+            self.tagsArray
+          );
+          const mostRecentTimestamp = sortedArray[0].attributes.date_updated;
+          ta = yield fetchAllTags([], user, 1, mostRecentTimestamp);
+          for (const element of self.tagsArray) {
+            const existing = ta.find(o => o.id === element.id);
+            if (existing === undefined) {
+              ta.push(element);
+            }
           }
+          applySnapshot(self.tagsArray, ta);
+        } else {
+          ta = yield fetchAllTags([], user, 1, null);
+          applySnapshot(self.tagsArray, ta);
         }
-        applySnapshot(self.tagsArray, ta);
       } catch (error) {
         console.error(error);
         throw error;

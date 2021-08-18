@@ -57,6 +57,32 @@ export function sortArrayByAttribute(
       // equal
       return 0;
     });
+  } else if (order === 'date_updated') {
+    sortedArray = array.slice().sort((a, b) => {
+      const sort1 = new Date(a.attributes.date_updated);
+      const sort2 = new Date(b.attributes.date_updated);
+      if (sort1 < sort2) {
+        return -1;
+      }
+      if (sort1 > sort2) {
+        return 1;
+      }
+      // equal
+      return 0;
+    });
+  } else if (order === '-date_updated') {
+    sortedArray = array.slice().sort((a, b) => {
+      const sort1 = new Date(a.attributes.date_updated);
+      const sort2 = new Date(b.attributes.date_updated);
+      if (sort2 < sort1) {
+        return -1;
+      }
+      if (sort2 > sort1) {
+        return 1;
+      }
+      // equal
+      return 0;
+    });
   } else if (order === 'date_last_used') {
     sortedArray = array.slice().sort((a, b) => {
       const sort1 = new Date(a.attributes.date_last_used);
