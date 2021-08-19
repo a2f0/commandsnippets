@@ -1,17 +1,9 @@
 import {IDisposer, Instance, getParent, types} from 'mobx-state-tree';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
-import API from './api';
 import {ITagJsonApi} from './TagList';
+import TagModel from './models/TagModel';
 import {environment} from './api';
-import {sortArrayByAttribute} from './lib/tags';
 import update from 'immutability-helper';
-
-interface ITagJsonApiResponse {
-  data: ITagJsonApi[];
-  links: {
-    next: string;
-  };
-}
 
 const TagAtributes = types
   .model('TagAtributes', {
@@ -39,41 +31,6 @@ export const TagJsonAPI = types
     },
   }));
 
-function fetchAllTags(
-  tags: ITagJsonApi[],
-  user: string,
-  page: number,
-  since: string | null
-) {
-  interface IParams {
-    'page[number]': number;
-    'filter[user.username]': string;
-    sort: string;
-    'filter[date_updated.gt]'?: string;
-  }
-
-  const params: IParams = {
-    'page[number]': page,
-    'filter[user.username]': user,
-    sort: 'date_updated',
-  };
-
-  if (since !== null) {
-    params['filter[date_updated.gt]'] = since;
-  }
-
-  const f: Promise<ITagJsonApi[]> = API.get<ITagJsonApiResponse>('/tags', {
-    params: params,
-  }).then(response => {
-    tags = tags.concat(response.data.data);
-    if (response.data.links.next === null) {
-      return tags;
-    }
-    return fetchAllTags(tags, user, ++page, since);
-  });
-  return f;
-}
-
 type AppStateStoreModel = Instance<typeof AppStateStoreModel>;
 
 export const AppStateStoreModel = types
@@ -97,12 +54,12 @@ export const AppStateStoreModel = types
       try {
         let ta: ITagJsonApi[];
         if (self.tagsArray.length > 0) {
-          const sortedArray: Array<ITagJsonApi> = sortArrayByAttribute(
+          const sortedArray: Array<ITagJsonApi> = TagModel.sort(
             '-date_updated',
             self.tagsArray
           );
           const mostRecentTimestamp = sortedArray[0].attributes.date_updated;
-          ta = yield fetchAllTags([], user, 1, mostRecentTimestamp);
+          ta = yield TagModel.fetch([], user, 1, mostRecentTimestamp);
           for (const element of self.tagsArray) {
             const existing = ta.find(o => o.id === element.id);
             if (existing === undefined) {
@@ -111,7 +68,7 @@ export const AppStateStoreModel = types
           }
           applySnapshot(self.tagsArray, ta);
         } else {
-          ta = yield fetchAllTags([], user, 1, null);
+          ta = yield TagModel.fetch([], user, 1, null);
           applySnapshot(self.tagsArray, ta);
         }
       } catch (error) {
@@ -133,7 +90,7 @@ export const AppStateStoreModel = types
     },
     setTagSortOrder(order: string) {
       self.tagSortOrder = order;
-      const sortedArray: Array<ITagJsonApi> = sortArrayByAttribute(
+      const sortedArray: Array<ITagJsonApi> = TagModel.sort(
         self.tagSortOrder,
         self.tagsArray
       );
