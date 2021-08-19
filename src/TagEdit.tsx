@@ -3,11 +3,11 @@ import API from './api';
 import {Instance} from 'mobx-state-tree';
 import StyledButtonTags from './StyledButtonTags';
 import StyledTextFieldTags from './StyledTextFieldTags';
-import {TagJsonAPI} from './AppStateStore';
+import {TagModel} from './models/TagModel';
 import {observer} from 'mobx-react';
 
 export interface ITagEdit {
-  object: Instance<typeof TagJsonAPI>;
+  object: Instance<typeof TagModel>;
   handleSaveParent: () => void;
   handleCancelEdit: () => void;
 }

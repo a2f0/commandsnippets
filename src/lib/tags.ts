@@ -1,5 +1,5 @@
 import API from '../api';
-import {ITagJsonApi} from '../TagList';
+import {ITagJsonApi} from '../models/TagModel';
 
 interface ITagJsonApiResponse {
   data: ITagJsonApi[];

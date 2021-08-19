@@ -3,12 +3,12 @@ import React, {useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import API from './api';
 import {IMouse} from './Entry';
-import {ITagJsonApi} from './TagList';
+import {ITagJsonApi} from './models/TagModel';
 import {Instance} from 'mobx-state-tree';
 import ItemTypes from './ItemTypes';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
-import {TagJsonAPI} from './AppStateStore';
+import {TagModel} from './models/TagModel';
 import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@material-ui/core/styles';
 import {makeStyles} from '@material-ui/core/styles';
@@ -43,7 +43,7 @@ const useStyles = makeStyles({
 
 interface ITagProps {
   id: string;
-  object: Instance<typeof TagJsonAPI>;
+  object: Instance<typeof TagModel>;
   moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;

@@ -3,7 +3,7 @@ import React, {useEffect} from 'react';
 import {Instance} from 'mobx-state-tree';
 import List from '@material-ui/core/List';
 import Tag from './Tag';
-import {TagJsonAPI} from './AppStateStore';
+import {TagModel} from './models/TagModel';
 import TagNew from './TagNew';
 import TagSearch from './TagSearch';
 import {autorun} from 'mobx';
@@ -49,21 +49,6 @@ export interface IUser {
   };
 }
 
-export interface ITagJsonApi {
-  id: string;
-  type: string;
-  attributes: ITagJsonApiAttributes;
-}
-
-export interface ITagJsonApiAttributes {
-  name: string;
-  entry_count: number;
-  order: number;
-  date_updated: string;
-  date_created: string;
-  date_last_used: string;
-}
-
 const TagList = () => {
   const appConfig = useAppContext();
   const {user} = useParams<IParamTypes>();
@@ -104,7 +89,7 @@ const TagList = () => {
       <List className={classes.root}>
         <div className={classes.ltr} id="tagList">
           {appConfig.tagNew && <TagNew />}
-          {appConfig.tagsArray.map((object: Instance<typeof TagJsonAPI>, i) => {
+          {appConfig.tagsArray.map((object: Instance<typeof TagModel>, i) => {
             return (
               <Tag
                 key={object.id}

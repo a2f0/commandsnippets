@@ -1,41 +1,14 @@
-import {IDisposer, Instance, getParent, types} from 'mobx-state-tree';
+import {IDisposer, Instance, types} from 'mobx-state-tree';
+import {ITagJsonApi, TagHelpers, TagModel} from './models/TagModel';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
-import {ITagJsonApi} from './TagList';
-import TagModel from './models/TagModel';
 import {environment} from './api';
 import update from 'immutability-helper';
 
-const TagAtributes = types
-  .model('TagAtributes', {
-    name: types.string,
-    entry_count: types.number,
-    order: types.number,
-    date_updated: types.string,
-    date_created: types.string,
-    date_last_used: types.string,
-  })
-  .actions(() => ({}));
-
-export const TagJsonAPI = types
-  .model('TagJsonAPI', {
-    id: types.identifier,
-    type: types.string,
-    attributes: TagAtributes,
-  })
-  .actions(self => ({
-    update(object: ITagJsonApi) {
-      Object.assign(self, object);
-    },
-    remove() {
-      getParent<AppStateStoreModel>(self, 2).removeTag(self.id);
-    },
-  }));
-
-type AppStateStoreModel = Instance<typeof AppStateStoreModel>;
+export type RootModel = Instance<typeof AppStateStoreModel>;
 
 export const AppStateStoreModel = types
   .model({
-    tagsArray: types.array(TagJsonAPI),
+    tagsArray: types.array(TagModel),
     loggedInUser: types.maybeNull(types.string),
     selectedTheme: types.string,
     tagSortOrder: types.string,
@@ -54,12 +27,12 @@ export const AppStateStoreModel = types
       try {
         let ta: ITagJsonApi[];
         if (self.tagsArray.length > 0) {
-          const sortedArray: Array<ITagJsonApi> = TagModel.sort(
+          const sortedArray: Array<ITagJsonApi> = TagHelpers.sort(
             '-date_updated',
             self.tagsArray
           );
           const mostRecentTimestamp = sortedArray[0].attributes.date_updated;
-          ta = yield TagModel.fetch([], user, 1, mostRecentTimestamp);
+          ta = yield TagHelpers.fetch([], user, 1, mostRecentTimestamp);
           for (const element of self.tagsArray) {
             const existing = ta.find(o => o.id === element.id);
             if (existing === undefined) {
@@ -68,7 +41,7 @@ export const AppStateStoreModel = types
           }
           applySnapshot(self.tagsArray, ta);
         } else {
-          ta = yield TagModel.fetch([], user, 1, null);
+          ta = yield TagHelpers.fetch([], user, 1, null);
           applySnapshot(self.tagsArray, ta);
         }
       } catch (error) {
@@ -80,7 +53,7 @@ export const AppStateStoreModel = types
       self.loggedInUser = handle;
     },
     removeTag(id: string) {
-      const existing: Instance<typeof TagJsonAPI> = self.tagsArray.filter(
+      const existing: Instance<typeof TagModel> = self.tagsArray.filter(
         c => c.id === id
       )[0];
       destroy(existing);
@@ -90,10 +63,7 @@ export const AppStateStoreModel = types
     },
     setTagSortOrder(order: string) {
       self.tagSortOrder = order;
-      const sortedArray: Array<ITagJsonApi> = TagModel.sort(
-        self.tagSortOrder,
-        self.tagsArray
-      );
+      const sortedArray = TagHelpers.sort(self.tagSortOrder, self.tagsArray);
       applySnapshot(self.tagsArray, sortedArray);
     },
     setEntrySortOrder(order: string) {
