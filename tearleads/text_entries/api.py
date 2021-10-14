@@ -33,6 +33,7 @@ class TextEntryViewSet(viewsets.ModelViewSet):
         "tags__id": ("exact",),
         "tag_count": ("exact",),
         "is_deleted": ("exact",),
+        "date_updated": ("gt",),
     }
 
     def create(self, request, *args, **kwargs):

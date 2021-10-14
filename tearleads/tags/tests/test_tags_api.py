@@ -95,7 +95,9 @@ class TestTagsApi(BaseTestCase):
 
     def test_reorder_works(self):
         tag1 = TagFactory(user=self.user1, order=1)
+        tag1_timestamp = tag1.date_updated
         tag2 = TagFactory(user=self.user1, order=2)
+        tag2_timestamp = tag2.date_updated
         payload = {
             "data": {
                 "type": "Tag",
@@ -110,8 +112,12 @@ class TestTagsApi(BaseTestCase):
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(tag1_timestamp, tag1.date_updated)
+        self.assertEqual(tag2_timestamp, tag2.date_updated)
         tag1.refresh_from_db()
         tag2.refresh_from_db()
+        self.assertNotEqual(tag1_timestamp, tag1.date_updated)
+        self.assertNotEqual(tag2_timestamp, tag2.date_updated)
         self.assertLess(tag2.order, tag1.order)
 
     def test_bad_filter(self):

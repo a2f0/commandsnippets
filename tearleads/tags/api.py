@@ -75,7 +75,6 @@ class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = TagTextEntryThroughModelCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         text_entry = serializer.validated_data.pop("text_entry")
         tag = serializer.validated_data.pop("tag")
 
@@ -85,6 +84,8 @@ class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
             text_entry=text_entry,
             defaults=dict(),
         )
+        # Cause F() expressions(s) to evaluate prior to serialization (counters)
+        instance.refresh_from_db()
 
         return response.Response(
             data=TagTextEntryThroughModelSerializer(instance=instance).data,

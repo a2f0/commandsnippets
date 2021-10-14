@@ -66,7 +66,7 @@ class TestTagsEntriesApi(BaseTestCase):
         )
         # Entry
         self.assertEqual(json_response["included"][1]["type"], "TextEntry")
-        self.assertEqual(len(json_response["included"][1]["attributes"]), 6)
+        self.assertEqual(len(json_response["included"][1]["attributes"]), 7)
         self.assertEqual(
             json_response["included"][1]["attributes"]["body"], str(text_entry.body)
         )
@@ -400,9 +400,11 @@ class TestTagsEntriesApi(BaseTestCase):
         tag_entry1 = TagTextEntryThroughModelFactory(
             text_entry=entry1, tag=tag1, user=self.user1, order=1
         )
+        tag_entry1_timestamp = tag_entry1.date_updated
         tag_entry2 = TagTextEntryThroughModelFactory(
             text_entry=entry2, tag=tag1, user=self.user1, order=2
         )
+        tag_entry2_timestamp = tag_entry2.date_updated
         payload = {
             "data": {
                 "type": "TagTextEntryThroughModel",
@@ -417,6 +419,10 @@ class TestTagsEntriesApi(BaseTestCase):
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
+        self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
         tag_entry1.refresh_from_db()
         tag_entry2.refresh_from_db()
+        self.assertNotEqual(tag_entry1_timestamp, tag_entry1.date_updated)
+        self.assertNotEqual(tag_entry2_timestamp, tag_entry2.date_updated)
         self.assertLess(tag_entry2.order, tag_entry1.order)

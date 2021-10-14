@@ -53,12 +53,12 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
             user=instance, subject=entry1_subject, body=entry1_body
         )
 
-        entry1_subject = "show where a postgres session is originating from"
-        entry1_body = "SELECT *" "FROM pg_stat_activity\n" "WHERE datname = 'postgres';"
+        entry2_subject = "show where a postgres session is originating from"
+        entry2_body = "SELECT *" "FROM pg_stat_activity\n" "WHERE datname = 'postgres';"
         entry2 = TextEntry.objects.create(
             user=instance,
-            subject=entry1_subject,
-            body=entry1_body,
+            subject=entry2_subject,
+            body=entry2_body,
         )
 
         tag_text_entry_1 = TagTextEntryThroughModel.objects.create(

@@ -1,32 +1,12 @@
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import ResourceRelatedField
 
+from django.utils import timezone
+
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
-from tearleads.users.serializers import UserSerializer
+from tearleads.users.serializers_edge import UserSerializer
 from tearleads.text_entries.serializers import TextEntrySerializer
-
-
-class TagSerializer(serializers.ModelSerializer):
-
-    included_serializers = {
-        "user": UserSerializer,
-    }
-
-    class Meta:
-        model = Tag
-        fields = (
-            "id",
-            "name",
-            "date_created",
-            "date_last_used",
-            "date_updated",
-            "user",
-            "entry_count",
-            "order",
-        )
-
-    class JSONAPIMeta:
-        included_resources = ["user"]
+from .serializers_edge import TagSerializer
 
 
 class TagCreateSerializer(serializers.ModelSerializer):
@@ -43,7 +23,7 @@ class TagReorderSerializer(serializers.Serializer):
         top = Tag.objects.get(pk=validated_data["top"])
         bottom = Tag.objects.get(pk=validated_data["bottom"])
         # Django Ordered model method to move object above reference.
-        top.above(bottom)
+        top.above(bottom, extra_update={"date_updated": timezone.now()})
         return None
 
     top = serializers.PrimaryKeyRelatedField(
@@ -86,7 +66,7 @@ class TagTextEntryThroughModelReorderSerializer(serializers.Serializer):
         top = TagTextEntryThroughModel.objects.get(pk=validated_data["top"])
         bottom = TagTextEntryThroughModel.objects.get(pk=validated_data["bottom"])
         # Django Ordered model method to move object above reference.
-        top.above(bottom)
+        top.above(bottom, extra_update={"date_updated": timezone.now()})
         return None
 
     top = serializers.PrimaryKeyRelatedField(

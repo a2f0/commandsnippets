@@ -1,15 +1,39 @@
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import ResourceRelatedField
 
-from tearleads.tags.models import Tag
+from tearleads.tags.models import Tag, TagTextEntryThroughModel
+from tearleads.tags.serializers_edge import TagSerializer
 from tearleads.text_entries.models import TextEntry, TextEntryReused
 from tearleads.users.models import User
-from tearleads.users.serializers import UserSerializer
+from tearleads.users.serializers_edge import UserSerializer
+
+
+class TagTextEntryThroughModelSerializer(serializers.ModelSerializer):
+
+    included_serializers = {"user": UserSerializer, "tag": TagSerializer}
+
+    class Meta:
+        model = TagTextEntryThroughModel
+        fields = (
+            "id",
+            "tag",
+            "text_entry",
+            "order",
+            "date_updated",
+            "date_created",
+            "user_id",
+        )
+
+    class JSONAPIMeta:
+        included_resources = ["user", "tag", "text_entry"]
 
 
 class TextEntrySerializer(serializers.ModelSerializer):
-
-    included_serializers = {"user": UserSerializer}
+    included_serializers = {
+        "user": UserSerializer,
+        "text_entry_to_tag": TagTextEntryThroughModelSerializer,
+        "text_entry_to_tag__tag": TagSerializer,
+    }
 
     class Meta:
         model = TextEntry
@@ -22,12 +46,12 @@ class TextEntrySerializer(serializers.ModelSerializer):
             "reused_count",
             "user",
             "is_deleted",
+            "text_entry_to_tag",
+            "tag_count",
         )
 
     class JSONAPIMeta:
-        included_resources = [
-            "user",
-        ]
+        included_resources = ["text_entry_to_tag", "text_entry_to_tag__tag", "user"]
 
 
 class TextEntryCreateSerializer(serializers.ModelSerializer):

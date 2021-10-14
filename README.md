@@ -23,7 +23,7 @@ Backups (Server)
 
 Run tests
 
-    docker-compose run backend python manage.py test --settings=tearleads.settings.test
+    docker-compose run backend python manage.py test
 
 Run isort
 

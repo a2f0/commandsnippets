@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from tearleads.authentication import utility
 from tearleads.users.models import User
 
-from .serializers import UserSerializer
+from .serializers_edge import UserSerializer
 
 
 class User(APIView):
