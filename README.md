@@ -1,5 +1,11 @@
 # Tearleads Frontend
 
+## Style guide
+
+1. Use `camelCase` for variable names.
+
+## Setting up
+
 install dependencies `npm ci`
 
 run `npm run server`

@@ -2,11 +2,11 @@ import * as Constants from './constants';
 import React, {useState} from 'react';
 import API from './api';
 import Button from '@material-ui/core/Button';
-import {ITag} from './Entry';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import {makeStyles} from '@material-ui/core/styles';
+import {useAppContext} from './AppContext';
+import {useParams} from 'react-router-dom';
 export interface IEntryNewProps {
-  tag: ITag;
   retrieveEntries: () => void;
   handleCancelNewEntry: () => void;
 }
@@ -52,10 +52,18 @@ const useStyles = makeStyles({
   },
 });
 
+interface IParamTypes {
+  user: string;
+  tag: string;
+}
+
 const EntryNew = (props: IEntryNewProps) => {
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
   const classes = useStyles();
+  const appConfig = useAppContext();
+  const {user} = useParams<IParamTypes>();
+  const {tag} = useParams<IParamTypes>();
 
   const handleSave = () => {
     console.log('handle save');
@@ -72,11 +80,19 @@ const EntryNew = (props: IEntryNewProps) => {
       },
     };
 
+    const userObject = appConfig.usersArray.find(
+      element => element.attributes.username === user
+    );
+
+    const tagObject = appConfig.tagsArray.find(
+      element =>
+        element.attributes.name === tag &&
+        element.relationships.user.data.id === userObject?.id
+    );
+
     API.post('/entries', text_entry_payload, {withCredentials: true})
       .then(response => {
         // handle success
-        console.log(response);
-        console.log(props.tag);
         const text_entry_through_model_payload = {
           data: {
             type: 'TagTextEntryThroughModel',
@@ -85,7 +101,7 @@ const EntryNew = (props: IEntryNewProps) => {
               tag: {
                 data: {
                   type: 'Tag',
-                  id: props.tag.id,
+                  id: tagObject?.id,
                 },
               },
               text_entry: {

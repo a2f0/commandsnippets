@@ -9,7 +9,7 @@ import MenuBar from './MenuBar';
 import React from 'react';
 import {Theme} from '@material-ui/core/styles';
 import Toolbar from '@material-ui/core/Toolbar';
-import UntaggedEntryList from './UntaggedEntryList';
+// import UntaggedEntryList from './UntaggedEntryList';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
@@ -135,7 +135,7 @@ const Main = (props: IMainProps) => {
       </AppBar>
       <LeftDrawer />
       <main className={classes.main}>
-        {appConfig.mainPanel === 'UntaggedEntryList' && <UntaggedEntryList />}
+        {/* {appConfig.mainPanel === 'UntaggedEntryList' && <UntaggedEntryList />} */}
         {appConfig.mainPanel === 'EntryList' && <EntryList />}
         {/* <Box height="auto" className={classes.entryListBlankSpace}>
           Empty Space

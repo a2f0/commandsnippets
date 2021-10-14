@@ -531,12 +531,12 @@ const MenuBar = (props: IMenuBarProps) => {
           <StyledMenuItem
             key="SortMenuItemTextEntrySubject"
             onClick={() => {
-              handleSetEntrySortOrder('text_entry__subject');
+              handleSetEntrySortOrder('subject');
               handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.entrySortOrder === 'text_entry__subject' && (
+              {appConfig.entrySortOrder === 'subject' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -545,12 +545,12 @@ const MenuBar = (props: IMenuBarProps) => {
           <StyledMenuItem
             key="SortMenuItemTextEntrySubject-"
             onClick={() => {
-              handleSetEntrySortOrder('-text_entry__subject');
+              handleSetEntrySortOrder('-subject');
               handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.entrySortOrder === '-text_entry__subject' && (
+              {appConfig.entrySortOrder === '-subject' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -559,12 +559,12 @@ const MenuBar = (props: IMenuBarProps) => {
           <StyledMenuItem
             key="SortMenuItemTextEntryBody"
             onClick={() => {
-              handleSetEntrySortOrder('text_entry__body');
+              handleSetEntrySortOrder('body');
               handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.entrySortOrder === 'text_entry__body' && (
+              {appConfig.entrySortOrder === 'body' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -573,12 +573,12 @@ const MenuBar = (props: IMenuBarProps) => {
           <StyledMenuItem
             key="SortMenuItemTextEntryBody-"
             onClick={() => {
-              handleSetEntrySortOrder('-text_entry__body');
+              handleSetEntrySortOrder('-body');
               handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.entrySortOrder === '-text_entry__body' && (
+              {appConfig.entrySortOrder === '-body' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -586,34 +586,6 @@ const MenuBar = (props: IMenuBarProps) => {
           </StyledMenuItem>,
           <StyledMenuItem
             key="SortMenuItemTextEntryDateCreated"
-            onClick={() => {
-              handleSetEntrySortOrder('text_entry__date_created');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.entrySortOrder === 'text_entry__date_created' && (
-                <CheckIcon fontSize="small" />
-              )}
-            </ListItemIcon>
-            Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            key="SortMenuItemTextEntryDateCreated-"
-            onClick={() => {
-              handleSetEntrySortOrder('-text_entry__date_created');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.entrySortOrder === '-text_entry__date_created' && (
-                <CheckIcon fontSize="small" />
-              )}
-            </ListItemIcon>
-            Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            key="SortMenuItemDateCreated"
             onClick={() => {
               handleSetEntrySortOrder('date_created');
               handleEntriesMenuClose();
@@ -624,10 +596,10 @@ const MenuBar = (props: IMenuBarProps) => {
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
-            Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
+            Sort by Date Created <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
-            key="SortMenuItemDateCreated-"
+            key="SortMenuItemTextEntryDateCreated-"
             onClick={() => {
               handleSetEntrySortOrder('-date_created');
               handleEntriesMenuClose();
@@ -638,17 +610,45 @@ const MenuBar = (props: IMenuBarProps) => {
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
+            Sort by Date Created <ArrowUpwardIcon fontSize="small" />
+          </StyledMenuItem>,
+          <StyledMenuItem
+            key="SortMenuItemTextEntryDateTagged"
+            onClick={() => {
+              handleSetEntrySortOrder('date_tagged');
+              handleEntriesMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.entrySortOrder === 'date_tagged' && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
+            Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
+          </StyledMenuItem>,
+          <StyledMenuItem
+            key="SortMenuItemTextEntryDateTagged-"
+            onClick={() => {
+              handleSetEntrySortOrder('-date_tagged');
+              handleEntriesMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              {appConfig.entrySortOrder === '-date_tagged' && (
+                <CheckIcon fontSize="small" />
+              )}
+            </ListItemIcon>
             Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
             key="SortMenuItemTextEntryTagCount"
             onClick={() => {
-              handleSetEntrySortOrder('text_entry__tag_count');
+              handleSetEntrySortOrder('tag_count');
               handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.entrySortOrder === 'text_entry__tag_count' && (
+              {appConfig.entrySortOrder === 'tag_count' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
@@ -658,12 +658,12 @@ const MenuBar = (props: IMenuBarProps) => {
           <StyledMenuItem
             key="SortMenuItemTextEntryTagCount-"
             onClick={() => {
-              handleSetEntrySortOrder('-text_entry__tag_count');
+              handleSetEntrySortOrder('-tag_count');
               handleEntriesMenuClose();
             }}
           >
             <ListItemIcon>
-              {appConfig.entrySortOrder === '-text_entry__tag_count' && (
+              {appConfig.entrySortOrder === '-tag_count' && (
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>

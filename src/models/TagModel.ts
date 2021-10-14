@@ -6,6 +6,7 @@ export interface ITagJsonApi {
   id: string;
   type: string;
   attributes: ITagJsonApiAttributes;
+  relationships: ITagJsonApiRelationships;
 }
 
 export interface ITagJsonApiAttributes {
@@ -15,6 +16,19 @@ export interface ITagJsonApiAttributes {
   date_updated: string;
   date_created: string;
   date_last_used: string;
+}
+
+interface ITagJsonApiRelationships {
+  user: ITagJsonApiRelationshipsUser;
+}
+
+interface ITagJsonApiRelationshipsUser {
+  data: ITagJsonApiRelationshipsUserData;
+}
+
+interface ITagJsonApiRelationshipsUserData {
+  id: string;
+  type: string;
 }
 
 const TagAtributes = types
@@ -28,11 +42,31 @@ const TagAtributes = types
   })
   .actions(() => ({}));
 
+const TagRelationshipsUserData = types
+  .model('TagRelationshipsUserData', {
+    id: types.string,
+    type: types.string,
+  })
+  .actions(() => ({}));
+
+const TagRelationshipsUser = types
+  .model('TagRelationshipsUser', {
+    data: TagRelationshipsUserData,
+  })
+  .actions(() => ({}));
+
+const UserRelationships = types
+  .model('UserRelationships', {
+    user: TagRelationshipsUser,
+  })
+  .actions(() => ({}));
+
 export const TagModel = types
   .model('TagJsonAPI', {
     id: types.identifier,
     type: types.string,
     attributes: TagAtributes,
+    relationships: UserRelationships,
   })
   .actions(self => ({
     update(object: ITagJsonApi) {

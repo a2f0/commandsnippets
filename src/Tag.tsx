@@ -143,8 +143,7 @@ const Tag = ({
 
   const handleTagClick = () => {
     appConfig.setMainPanel('EntryList');
-    appConfig.setCurrentTag(object.attributes.name);
-    history.push(`/${user}/${appConfig.currentTag}`);
+    history.push(`/${user}/${object.attributes.name}`);
   };
 
   const mouseEnter = () => {

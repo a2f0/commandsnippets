@@ -1,13 +1,21 @@
-import {IMouse, ITextEntry} from './Entry';
 import React, {useEffect, useState} from 'react';
 import API from './api';
+import {IMouse} from './Entry';
+import {ITextEntryJsonApi} from './models/TextEntryModel';
 import Menu from '@material-ui/core/Menu';
 import StyledMenuItem from './StyledMenuItem';
+import {useAppContext} from './AppContext';
+import {useParams} from 'react-router-dom';
+
+interface IParamTypes {
+  user: string;
+  tag: string;
+}
 
 export interface IEntryContextMenu {
   mouse: IMouse;
   id: string;
-  text_entry: ITextEntry;
+  text_entry: ITextEntryJsonApi;
   handleDeleteParent: (id: string) => void;
   handleNewEntryParent: () => void;
   handleBeginEditParent: () => void;
@@ -29,6 +37,9 @@ const EntryContextMenu = ({
   };
 
   const [mousePosition, setMousePosition] = useState(initialMouse);
+  const appConfig = useAppContext();
+  const {user} = useParams<IParamTypes>();
+  const {tag} = useParams<IParamTypes>();
 
   useEffect(() => {
     setMousePosition(mouse);
@@ -39,7 +50,27 @@ const EntryContextMenu = ({
   };
 
   const handleUntag = (id: string) => {
-    API.delete('/tags_entries/' + id, {withCredentials: true});
+    const userObject = appConfig.usersArray.find(
+      element => element.attributes.username === user
+    );
+
+    const tagObject = appConfig.tagsArray.find(
+      element =>
+        element.attributes.name === tag &&
+        element.relationships.user.data.id === userObject?.id
+    );
+
+    const tagTextEntryThroughModelObject =
+      appConfig.tagTextEntryThroughModel.find(
+        element =>
+          element.relationships.tag.data.id === tagObject?.id &&
+          element.relationships.text_entry.data.id === text_entry.id
+      );
+    API.delete('/tags_entries/' + tagTextEntryThroughModelObject?.id, {
+      withCredentials: true,
+    }).then(() => {
+      tagTextEntryThroughModelObject?.remove();
+    });
     handleDeleteParent(id);
     handleClose();
   };

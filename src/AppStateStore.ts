@@ -1,6 +1,9 @@
 import {IDisposer, Instance, types} from 'mobx-state-tree';
 import {ITagJsonApi, TagHelpers, TagModel} from './models/TagModel';
+import {TextEntryHelpers, TextEntryModel} from './models/TextEntryModel';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
+import {TagTextEntryThroughModel} from './models/TagTextEntryThroughModel';
+import {UserModel} from './models/UserModel';
 import {environment} from './api';
 import update from 'immutability-helper';
 
@@ -9,6 +12,9 @@ export type RootModel = Instance<typeof AppStateStoreModel>;
 export const AppStateStoreModel = types
   .model({
     tagsArray: types.array(TagModel),
+    textEntriesArray: types.array(TextEntryModel),
+    tagTextEntryThroughModel: types.array(TagTextEntryThroughModel),
+    usersArray: types.array(UserModel),
     loggedInUser: types.maybeNull(types.string),
     selectedTheme: types.string,
     tagSortOrder: types.string,
@@ -20,6 +26,7 @@ export const AppStateStoreModel = types
     mostRecentCopyType: types.maybeNull(types.string),
     mostRecentCopyID: types.maybeNull(types.string),
     currentTag: types.maybeNull(types.string),
+    currentUser: types.maybeNull(types.string),
     showTagCounts: types.boolean,
   })
   .actions(self => ({
@@ -33,16 +40,69 @@ export const AppStateStoreModel = types
           );
           const mostRecentTimestamp = sortedArray[0].attributes.date_updated;
           ta = yield TagHelpers.fetch([], user, 1, mostRecentTimestamp);
-          for (const element of self.tagsArray) {
-            const existing = ta.find(o => o.id === element.id);
+          for (const element of ta) {
+            const existing = self.tagsArray.find(o => o.id === element.id);
             if (existing === undefined) {
-              ta.push(element);
+              self.tagsArray.push(element);
             }
           }
-          applySnapshot(self.tagsArray, ta);
         } else {
           ta = yield TagHelpers.fetch([], user, 1, null);
           applySnapshot(self.tagsArray, ta);
+        }
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }),
+    fetchTextEntries: flow(function* fetchTextEntries(
+      user: string,
+      tag: string
+    ) {
+      try {
+        const mostRecentTimestamp: string | null =
+          TextEntryHelpers.getMostRecentTimeStamp(self.textEntriesArray);
+        const ta = yield TextEntryHelpers.fetch(
+          [],
+          user,
+          tag,
+          1,
+          mostRecentTimestamp
+        );
+        for (let i = 0; i < ta.length; i++) {
+          if (ta[i].type === 'TextEntry') {
+            const existing = self.textEntriesArray.find(o => o.id === ta[i].id);
+            if (existing === undefined) {
+              self.textEntriesArray.push(ta[i]);
+            }
+          } else if (ta[i].type === 'Tag') {
+            const existing = self.tagsArray.find(o => o.id === ta[i].id);
+            if (existing === undefined) {
+              self.tagsArray.push(ta[i]);
+            }
+          } else if (ta[i].type === 'TagTextEntryThroughModel') {
+            const existing = self.tagTextEntryThroughModel.find(
+              o => o.id === ta[i].id
+            );
+            if (existing === undefined) {
+              self.tagTextEntryThroughModel.push(ta[i]);
+            } else {
+              const existingTimestamp = new Date(
+                existing.attributes.date_updated
+              );
+              const incomingTimeStamp = new Date(ta[i].attributes.date_updated);
+              if (incomingTimeStamp > existingTimestamp) {
+                existing.update(ta[i]);
+              }
+            }
+          } else if (ta[i].type === 'User') {
+            const existing = self.usersArray.find(o => o.id === ta[i].id);
+            if (existing === undefined) {
+              self.usersArray.push(ta[i]);
+            }
+          } else {
+            throw 'Unknown object type: ' + ta[i].type;
+          }
         }
       } catch (error) {
         console.error(error);
@@ -57,6 +117,14 @@ export const AppStateStoreModel = types
         c => c.id === id
       )[0];
       destroy(existing);
+    },
+    removeTagTextEntryThroughModel(id: string) {
+      const existing: Instance<typeof TagTextEntryThroughModel> =
+        self.tagTextEntryThroughModel.filter(c => c.id === id)[0];
+      destroy(existing);
+    },
+    removeTextEntry(id: string) {
+      console.info('id: ' + id);
     },
     setSelectedTheme(theme: string) {
       self.selectedTheme = theme;
@@ -89,6 +157,9 @@ export const AppStateStoreModel = types
     },
     setCurrentTag(value: string | null) {
       self.currentTag = value;
+    },
+    setCurrentUser(value: string | null) {
+      self.currentUser = value;
     },
     setShowTagCounts(value: boolean) {
       self.showTagCounts = value;

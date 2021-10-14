@@ -7,12 +7,15 @@ import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
 import FileCopySharpIcon from '@material-ui/icons/FileCopySharp';
+import {IParamTypes} from './EntryList';
+import {ITextEntryJsonApi} from './models/TextEntryModel';
 import ItemTypes from './ItemTypes';
 import React from 'react';
 import {TagTextEntryThroughModel} from './EntryList';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
+import {useParams} from 'react-router-dom';
 
 const useStyles = makeStyles({
   entry: {
@@ -51,26 +54,6 @@ const useStyles = makeStyles({
   },
 });
 
-export interface ITag {
-  id: string;
-  type: string;
-  attributes: {};
-  data: {};
-}
-
-export interface ITextEntry {
-  id: string;
-  type: string;
-  attributes: {
-    reused_count: number;
-    subject: string;
-    body: string;
-  };
-  data: {
-    id: string;
-  };
-}
-
 export interface IMouse {
   mouseX: number | null;
   mouseY: number | null;
@@ -80,12 +63,11 @@ interface IEntryProps {
   id: string;
   index: number;
   moveEntry: (id: string, to: number) => void;
-  findEntry: (id: string) => {entry: TagTextEntryThroughModel; index: number};
+  findEntry: (id: string) => {entry: ITextEntryJsonApi; index: number};
   handleDelete: (id: string) => void;
-  text_entry: ITextEntry;
-  tag: ITag;
+  text_entry: ITextEntryJsonApi;
   retrieveEntries: () => void;
-  findEntryByIndex: (id: number) => TagTextEntryThroughModel | null;
+  findEntryByIndex: (id: number) => ITextEntryJsonApi | null;
 }
 
 const Entry = ({
@@ -95,7 +77,6 @@ const Entry = ({
   findEntry,
   handleDelete,
   text_entry,
-  tag,
   retrieveEntries,
   findEntryByIndex,
 }: IEntryProps) => {
@@ -105,7 +86,7 @@ const Entry = ({
 
   const appConfig = useAppContext();
   const [showNew, setShowNew] = useState(false);
-  const [textEntry, setTextEntry] = useState<ITextEntry | undefined>();
+  const [textEntry, setTextEntry] = useState<ITextEntryJsonApi | undefined>();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
@@ -113,6 +94,7 @@ const Entry = ({
   const [showCopyIcon, setShowCopyIcon] = useState(false);
   const [showCheckIcon, setShowCheckIcon] = useState(false);
   const classes = useStyles();
+  const {tag} = useParams<IParamTypes>();
   const [{isDragging}, drag, preview] = useDrag({
     item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
     type: ItemTypes.ENTRY,
@@ -120,7 +102,7 @@ const Entry = ({
       isDragging: monitor.isDragging(),
     }),
     end: (dropResult, monitor) => {
-      const drop_result: ITextEntry | null = monitor.getDropResult();
+      const drop_result: ITextEntryJsonApi | null = monitor.getDropResult();
       const {id: droppedId, originalIndex} = monitor.getItem();
       const didDrop = monitor.didDrop();
       if (!didDrop) {
@@ -143,7 +125,7 @@ const Entry = ({
                   text_entry: {
                     data: {
                       type: 'TextEntry',
-                      id: findEntry(id).entry.relationships.text_entry.data.id,
+                      id: findEntry(id).entry.id,
                     },
                   },
                 },
@@ -158,8 +140,8 @@ const Entry = ({
           if (originalIndex !== findEntry(id).index) {
             const entry = findEntry(id).entry;
             const entry_below = findEntryByIndex(index + 1);
-            let ordered_top: TagTextEntryThroughModel | null;
-            let ordered_bottom;
+            let ordered_top: ITextEntryJsonApi | null;
+            let ordered_bottom: ITextEntryJsonApi | null;
             if (entry_below === null) {
               //Then it was moved to the bottom position, get the entry before it.
               ordered_top = findEntryByIndex(index - 1);
@@ -169,12 +151,39 @@ const Entry = ({
               ordered_bottom = entry_below;
             }
             if (ordered_top !== null && ordered_bottom !== null) {
+              // Then find the junction entries.
+              const userObject = appConfig.usersArray.find(
+                element => element.id === text_entry.relationships.user.data.id
+              );
+
+              const tagObject = appConfig.tagsArray.find(
+                element =>
+                  element.relationships.user.data.id === userObject?.id &&
+                  element.relationships.user.data.id ===
+                    text_entry.relationships.user.data.id &&
+                  element.attributes.name === tag
+              );
+
+              const throughModelTop = appConfig.tagTextEntryThroughModel.find(
+                element =>
+                  element.relationships.tag.data.id === tagObject?.id &&
+                  element.relationships.text_entry.data.id === ordered_top?.id
+              );
+
+              const throughModelBottom =
+                appConfig.tagTextEntryThroughModel.find(
+                  element =>
+                    element.relationships.tag.data.id === tagObject?.id &&
+                    element.relationships.text_entry.data.id ===
+                      ordered_bottom?.id
+                );
+
               const payload = {
                 data: {
                   type: 'TagTextEntryThroughModel',
                   attributes: {
-                    top: ordered_top.id,
-                    bottom: ordered_bottom.id,
+                    top: throughModelTop?.id,
+                    bottom: throughModelBottom?.id,
                   },
                   relationships: {},
                 },
@@ -453,7 +462,6 @@ const Entry = ({
 
       {showNew && (
         <EntryNew
-          tag={tag}
           retrieveEntries={retrieveEntries}
           handleCancelNewEntry={handleCancelNewEntry}
         />

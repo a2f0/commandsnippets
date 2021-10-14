@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -47,7 +47,7 @@
     "@wdio/spec-reporter": "^7.7.3",
     "babel-eslint": "10.1.0",
     "babel-loader": "^8.2.2",
-    "chromedriver": "^91.0.0",
+    "chromedriver": "^94.0.0",
     "css-loader": "^5.2.6",
     "eslint": "^7.28.0",
     "eslint-config-react": "1.1.7",
