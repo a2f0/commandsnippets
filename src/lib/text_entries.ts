@@ -29,17 +29,6 @@ export function sort(): ITextEntryJsonApi[] {
       element => element.relationships.tag.data.id === tagObject?.id
     );
 
-  // Get all of the entries.
-  const textEntriesFiltered: ITextEntryJsonApi[] = [];
-  tagTextEntryThroughModelFiltered.map(element => {
-    const entry = store.textEntriesArray.find(textEntry => {
-      return textEntry.id === element.relationships.text_entry.data.id;
-    });
-    if (entry !== undefined) {
-      textEntriesFiltered.push(entry);
-    }
-  });
-
   // Rearrange the junction entries if necessary.
   if (
     store.entrySortOrder === 'order' ||
@@ -102,6 +91,18 @@ export function sort(): ITextEntryJsonApi[] {
     });
   } else {
     // Then its a sort order on directly attached attribute.
+
+    // Get all of the entries.
+    const textEntriesFiltered: ITextEntryJsonApi[] = [];
+    tagTextEntryThroughModelFiltered.map(element => {
+      const entry = store.textEntriesArray.find(textEntry => {
+        return textEntry.id === element.relationships.text_entry.data.id;
+      });
+      if (entry !== undefined) {
+        textEntriesFiltered.push(entry);
+      }
+    });
+
     if (store.entrySortOrder === 'subject') {
       sortedArray = textEntriesFiltered.slice().sort((a, b) => {
         const sort1 = a.attributes.subject.toUpperCase(); // ignore upper and lowercase
