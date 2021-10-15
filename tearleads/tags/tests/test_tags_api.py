@@ -145,6 +145,19 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 0)
 
+    def test_filter_by_date_updated_gt(self):
+        tag1 = self.user1.tags.all().first()
+        tag2 = self.user1.tags.all().last()
+        response = self.user1_api_client.get(
+            "/api/v1/tags?filter[date_updated.gt]={}&filter[user.username]={}".format(
+                tag1.date_updated, self.user1
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 1)
+        self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
+
     def test_order_filter(self):
         tag1 = self.user1.tags.all().first()
         tag2 = self.user1.tags.all().last()
