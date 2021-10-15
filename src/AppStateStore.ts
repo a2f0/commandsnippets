@@ -1,11 +1,10 @@
 import {IDisposer, Instance, types} from 'mobx-state-tree';
-import {ITagJsonApi, TagHelpers, TagModel} from './models/TagModel';
+import {TagHelpers, TagModel} from './models/TagModel';
 import {TextEntryHelpers, TextEntryModel} from './models/TextEntryModel';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 import {TagTextEntryThroughModel} from './models/TagTextEntryThroughModel';
 import {UserModel} from './models/UserModel';
 import {environment} from './api';
-import update from 'immutability-helper';
 
 export type RootModel = Instance<typeof AppStateStoreModel>;
 
@@ -32,23 +31,31 @@ export const AppStateStoreModel = types
   .actions(self => ({
     fetchTags: flow(function* fetchTags(user: string) {
       try {
-        let ta: ITagJsonApi[];
-        if (self.tagsArray.length > 0) {
-          const sortedArray: Array<ITagJsonApi> = TagHelpers.sort(
-            '-date_updated',
-            self.tagsArray
-          );
-          const mostRecentTimestamp = sortedArray[0].attributes.date_updated;
-          ta = yield TagHelpers.fetch([], user, 1, mostRecentTimestamp);
-          for (const element of ta) {
+        const mostRecentTimestamp: string | null =
+          TagHelpers.getMostRecentTimeStamp(self.tagsArray);
+        const ta = yield TagHelpers.fetch([], user, 1, mostRecentTimestamp);
+        for (const element of ta) {
+          if (element.type === 'Tag') {
             const existing = self.tagsArray.find(o => o.id === element.id);
             if (existing === undefined) {
               self.tagsArray.push(element);
+            } else {
+              const existingTimestamp = new Date(
+                existing.attributes.date_updated
+              );
+              const incomingTimeStamp = new Date(
+                element.attributes.date_updated
+              );
+              if (incomingTimeStamp > existingTimestamp) {
+                existing.update(element);
+              }
+            }
+          } else if (element.type === 'User') {
+            const existing = self.usersArray.find(o => o.id === element.id);
+            if (existing === undefined) {
+              self.usersArray.push(element);
             }
           }
-        } else {
-          ta = yield TagHelpers.fetch([], user, 1, null);
-          applySnapshot(self.tagsArray, ta);
         }
       } catch (error) {
         console.error(error);
@@ -131,8 +138,6 @@ export const AppStateStoreModel = types
     },
     setTagSortOrder(order: string) {
       self.tagSortOrder = order;
-      const sortedArray = TagHelpers.sort(self.tagSortOrder, self.tagsArray);
-      applySnapshot(self.tagsArray, sortedArray);
     },
     setEntrySortOrder(order: string) {
       self.entrySortOrder = order;
@@ -163,17 +168,6 @@ export const AppStateStoreModel = types
     },
     setShowTagCounts(value: boolean) {
       self.showTagCounts = value;
-    },
-    moveTagEntry(id: string, atIndex: number) {
-      const entry = self.tagsArray.filter(c => c.id === id)[0];
-      const entryIndex = self.tagsArray.indexOf(entry);
-      const reordered = update(self.tagsArray, {
-        $splice: [
-          [entryIndex, 1],
-          [atIndex, 0, entry],
-        ],
-      });
-      applySnapshot(self.tagsArray, reordered);
     },
   }));
 

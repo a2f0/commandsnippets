@@ -1,17 +1,29 @@
 import API from '../api';
 import {ITagJsonApi} from '../models/TagModel';
+import {IUserJsonApi} from '../models/UserModel';
+import {store} from '../AppStateStore';
 
 interface ITagJsonApiResponse {
   data: ITagJsonApi[];
   links: {
     next: string;
   };
+  included: Array<IUserJsonApi>;
 }
 
-export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
+export function sort(): ITagJsonApi[] {
   let sortedArray: Array<ITagJsonApi>;
-  if (order === 'name') {
-    sortedArray = array.slice().sort((a, b) => {
+
+  const userObject = store.usersArray.find(
+    element => element.attributes.username === store.currentUser
+  );
+
+  const tagObjects = store.tagsArray.filter(
+    element => element.relationships.user.data.id === userObject?.id
+  );
+
+  if (store.tagSortOrder === 'name') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = a.attributes.name.toUpperCase(); // ignore upper and lowercase
       const sort2 = b.attributes.name.toUpperCase(); // ignore upper and lowercase
       if (sort1 < sort2) {
@@ -23,8 +35,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === '-name') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === '-name') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = a.attributes.name.toUpperCase(); // ignore upper and lowercase
       const sort2 = b.attributes.name.toUpperCase(); // ignore upper and lowercase
       if (sort2 < sort1) {
@@ -36,8 +48,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === 'date_created') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === 'date_created') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = new Date(a.attributes.date_updated);
       const sort2 = new Date(b.attributes.date_updated);
       if (sort1 < sort2) {
@@ -49,8 +61,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === '-date_created') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === '-date_created') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = new Date(a.attributes.date_updated);
       const sort2 = new Date(b.attributes.date_updated);
       if (sort2 < sort1) {
@@ -62,8 +74,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === 'date_updated') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === 'date_updated') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = new Date(a.attributes.date_updated);
       const sort2 = new Date(b.attributes.date_updated);
       if (sort1 < sort2) {
@@ -75,8 +87,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === '-date_updated') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === '-date_updated') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = new Date(a.attributes.date_updated);
       const sort2 = new Date(b.attributes.date_updated);
       if (sort2 < sort1) {
@@ -88,8 +100,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === 'date_last_used') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === 'date_last_used') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = new Date(a.attributes.date_last_used);
       const sort2 = new Date(b.attributes.date_last_used);
       if (sort1 < sort2) {
@@ -101,8 +113,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === '-date_last_used') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === '-date_last_used') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = new Date(a.attributes.date_last_used);
       const sort2 = new Date(b.attributes.date_last_used);
       if (sort2 < sort1) {
@@ -114,8 +126,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === 'entry_count') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === 'entry_count') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = a.attributes.entry_count; // ignore upper and lowercase
       const sort2 = b.attributes.entry_count; // ignore upper and lowercase
       if (sort1 < sort2) {
@@ -127,8 +139,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === '-entry_count') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === '-entry_count') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = a.attributes.entry_count; // ignore upper and lowercase
       const sort2 = b.attributes.entry_count; // ignore upper and lowercase
       if (sort2 < sort1) {
@@ -140,8 +152,8 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
       // equal
       return 0;
     });
-  } else if (order === 'order') {
-    sortedArray = array.slice().sort((a, b) => {
+  } else if (store.tagSortOrder === 'order') {
+    sortedArray = tagObjects.sort((a, b) => {
       const sort1 = a.attributes.order;
       const sort2 = b.attributes.order;
       if (sort1 < sort2) {
@@ -159,8 +171,27 @@ export function sort(order: string, array: Array<ITagJsonApi>): ITagJsonApi[] {
   return sortedArray;
 }
 
+export function getMostRecentTimeStamp(array: ITagJsonApi[]): string | null {
+  let mostRecentTimestamp: string | null = null;
+  if (array.length > 0) {
+    const sortedArray: Array<ITagJsonApi> = array.sort((a, b) => {
+      const sort1 = new Date(a.attributes.date_updated);
+      const sort2 = new Date(b.attributes.date_updated);
+      if (sort2 < sort1) {
+        return -1;
+      }
+      if (sort2 > sort1) {
+        return 1;
+      }
+      return 0;
+    });
+    mostRecentTimestamp = sortedArray[0].attributes.date_updated;
+  }
+  return mostRecentTimestamp;
+}
+
 export function fetch(
-  tags: ITagJsonApi[],
+  entries: Array<ITagJsonApi | IUserJsonApi>,
   user: string,
   page: number,
   since: string | null
@@ -182,14 +213,20 @@ export function fetch(
     params['filter[date_updated.gt]'] = since;
   }
 
-  const f: Promise<ITagJsonApi[]> = API.get<ITagJsonApiResponse>('/tags', {
-    params: params,
-  }).then(response => {
-    tags = tags.concat(response.data.data);
-    if (response.data.links.next === null) {
-      return tags;
-    }
-    return fetch(tags, user, ++page, since);
-  });
+  const f: Promise<Array<ITagJsonApi | IUserJsonApi>> =
+    API.get<ITagJsonApiResponse>('/tags', {
+      params: params,
+    }).then(response => {
+      entries = entries.concat(response.data.data);
+      for (let i = 0; i < response.data.included?.length; i++) {
+        if (!entries.includes(response.data.included[i])) {
+          entries.push(response.data.included[i]);
+        }
+      }
+      if (response.data.links.next === null) {
+        return entries;
+      }
+      return fetch(entries, user, ++page, since);
+    });
   return f;
 }

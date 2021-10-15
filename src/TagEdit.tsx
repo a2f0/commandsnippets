@@ -1,13 +1,12 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import API from './api';
-import {Instance} from 'mobx-state-tree';
+import {ITagJsonApi} from './models/TagModel';
 import StyledButtonTags from './StyledButtonTags';
 import StyledTextFieldTags from './StyledTextFieldTags';
-import {TagModel} from './models/TagModel';
 import {observer} from 'mobx-react';
 
 export interface ITagEdit {
-  object: Instance<typeof TagModel>;
+  object: ITagJsonApi;
   handleSaveParent: () => void;
   handleCancelEdit: () => void;
 }
@@ -41,8 +40,7 @@ const TagEdit = ({handleSaveParent, handleCancelEdit, object}: ITagEdit) => {
     API.patch('tags/' + object.id, payload, {
       withCredentials: true,
     })
-      .then(response => {
-        object.update(response.data.data);
+      .then(() => {
         handleSaveParent();
       })
       .catch(error => {

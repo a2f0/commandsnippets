@@ -53,7 +53,6 @@ const EntryList = () => {
     const fetchData = async () => {
       if (tag !== undefined) {
         appConfig.setCurrentTag(tag);
-        appConfig.setCurrentUser(user);
         appConfig.fetchTextEntries(user, tag);
         setEntries(TextEntryHelpers.sort());
       }

@@ -10,7 +10,7 @@ const tagsResponse = {
       type: 'Tag',
       id: '1',
       attributes: {
-        name: 'tag-1',
+        name: 'test',
         date_created: '2020-05-07T18:20:00',
         date_updated: '2020-05-07T18:20:00',
         date_last_used: '2020-05-07T18:20:00',
@@ -26,31 +26,11 @@ const tagsResponse = {
         },
       },
     },
-    {
-      type: 'Tag',
-      id: '2',
-      attributes: {
-        name: 'tag-2',
-        date_created: '2020-12-04T00:48:52.314737',
-        date_updated: '2020-12-04T00:48:52.314757',
-        date_last_used: '2020-12-04T00:48:52.314757',
-        entry_count: 1,
-        order: 1,
-      },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
-    },
   ],
   included: [
     {
       type: 'User',
-      id: '0',
+      id: '1',
       attributes: {
         username: 'test',
       },
@@ -60,7 +40,7 @@ const tagsResponse = {
     pagination: {
       page: 1,
       pages: 1,
-      count: 2,
+      count: 1,
     },
   },
 };

@@ -22,7 +22,7 @@ describe('Tag Behavior', () => {
     const tag1 = await BasePage.tag1;
     const tags = await BasePage.tags;
     const tagContextMenu1 = await BasePage.tagContextMenu1;
-    expect(tags.length).toEqual(2);
+    expect(tags.length).toEqual(1);
 
     let tagContextVisibility = await tagContextMenu1.getCSSProperty(
       'visibility'

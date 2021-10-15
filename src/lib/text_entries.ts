@@ -1,6 +1,7 @@
 import API from '../api';
 import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
+import {IUserJsonApi} from '../models/UserModel';
 import {store} from '../AppStateStore';
 
 interface ITextEntryJsonApiResponse {
@@ -272,7 +273,9 @@ export function filter(
 }
 
 export function fetch(
-  entries: Array<ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi>,
+  entries: Array<
+    ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
+  >,
   user: string,
   tag: string,
   page: number,
@@ -296,7 +299,7 @@ export function fetch(
   };
 
   const f: Promise<
-    Array<ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi>
+    Array<ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi>
   > = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
   }).then(response => {

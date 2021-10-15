@@ -43,14 +43,14 @@ const textEntriesResponse = {
   included: [
     {
       type: 'Tag',
-      id: '9',
+      id: '1',
       attributes: {
         name: 'test',
         date_created: '2020-04-15T18:20:00',
         date_last_used: '2020-04-15T18:20:00',
         date_updated: '2020-12-28T17:36:18.397537',
         entry_count: 15,
-        order: 4,
+        order: 1,
       },
       relationships: {
         user: {
@@ -63,9 +63,9 @@ const textEntriesResponse = {
     },
     {
       type: 'TagTextEntryThroughModel',
-      id: '11',
+      id: '1',
       attributes: {
-        order: 8,
+        order: 1,
         date_updated: '2020-04-13T18:20:00',
         date_created: '2020-04-13T18:20:00',
         user_id: 1,
@@ -74,7 +74,7 @@ const textEntriesResponse = {
         tag: {
           data: {
             type: 'Tag',
-            id: '9',
+            id: '1',
           },
         },
         text_entry: {
@@ -96,8 +96,8 @@ const textEntriesResponse = {
   meta: {
     pagination: {
       page: 1,
-      pages: 368,
-      count: 368,
+      pages: 1,
+      count: 1,
     },
   },
 };

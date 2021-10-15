@@ -1,14 +1,14 @@
 import * as Constants from './constants';
-import React, {useEffect} from 'react';
-import {Instance} from 'mobx-state-tree';
+import {ITagJsonApi, TagHelpers} from './models/TagModel';
+import React, {useEffect, useState} from 'react';
 import List from '@material-ui/core/List';
 import Tag from './Tag';
-import {TagModel} from './models/TagModel';
 import TagNew from './TagNew';
 import TagSearch from './TagSearch';
 import {autorun} from 'mobx';
 import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
+import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 
@@ -52,34 +52,46 @@ export interface IUser {
 const TagList = () => {
   const appConfig = useAppContext();
   const {user} = useParams<IParamTypes>();
+  const [tags, setTags] = useState<Array<ITagJsonApi>>([]);
 
   useEffect(
     () =>
       autorun(() => {
-        appConfig.fetchTags(user);
+        appConfig.setCurrentUser(user);
+        appConfig.fetchTags(user).then(() => {
+          setTags(TagHelpers.sort());
+        });
       }),
-    []
+    [appConfig.tagSortOrder]
   );
 
   const classes = useStyles();
 
   const moveEntry = (id: string, atIndex: number) => {
-    appConfig.moveTagEntry(id, atIndex);
+    const entry = tags.filter(c => c.id === id)[0];
+    const entryIndex = tags.indexOf(entry);
+    const reordered = update(tags, {
+      $splice: [
+        [entryIndex, 1],
+        [atIndex, 0, entry],
+      ],
+    });
+    setTags(reordered);
   };
 
   const findEntry = (id: string) => {
-    const entry = appConfig.tagsArray.filter(c => c.id === id)[0];
+    const entry = tags.filter(c => c.id === id)[0];
     return {
       entry: entry,
-      index: appConfig.tagsArray.indexOf(entry),
+      index: tags.indexOf(entry),
     };
   };
 
   const findEntryByIndex = (index: number) => {
-    if (index > appConfig.tagsArray.length - 1) {
+    if (index > tags.length - 1) {
       return null;
     } else {
-      return appConfig.tagsArray[index];
+      return tags[index];
     }
   };
 
@@ -89,7 +101,7 @@ const TagList = () => {
       <List className={classes.root}>
         <div className={classes.ltr} id="tagList">
           {appConfig.tagNew && <TagNew />}
-          {appConfig.tagsArray.map((object: Instance<typeof TagModel>, i) => {
+          {tags.map((object: ITagJsonApi, i) => {
             return (
               <Tag
                 key={object.id}

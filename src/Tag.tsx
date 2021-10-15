@@ -43,7 +43,7 @@ const useStyles = makeStyles({
 
 interface ITagProps {
   id: string;
-  object: Instance<typeof TagModel>;
+  object: ITagJsonApi;
   moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
@@ -174,7 +174,7 @@ const Tag = ({
   const deleteTag = () => {
     API.delete('/tags/' + object.id, {withCredentials: true})
       .then(() => {
-        object.remove();
+        //object.remove();
       })
       .catch(error => {
         // handle error

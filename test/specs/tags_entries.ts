@@ -1,15 +1,10 @@
 import {BasePage} from '../pageobjects/base';
 import assert from 'assert';
 import tags from '../mocks/tags/tagsResponse';
-import tagsEntriesResponse from '../mocks/tags_entries/tagsEntriesResponse';
 import textEntriesResponse from '../mocks/entries/textEntriesResponse';
 
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {
-    const mockTagsEntries = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries**',
-      {}
-    );
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
       {}
@@ -19,7 +14,6 @@ describe('TagsEntries Behavior', () => {
       {}
     );
     mockTags.respond(tags, {fetchResponse: false});
-    mockTagsEntries.respond(tagsEntriesResponse, {fetchResponse: false});
     mockEntries.respond(textEntriesResponse, {fetchResponse: false});
     await BasePage.open('test/test');
     await expect(BasePage.tagsEntriesList).toBeExisting();
