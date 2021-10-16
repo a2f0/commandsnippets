@@ -11,6 +11,11 @@ interface ITagJsonApiResponse {
   included: Array<IUserJsonApi>;
 }
 
+export interface ITagJsonApiResponseSingle {
+  data: ITagJsonApi;
+  included: Array<IUserJsonApi>;
+}
+
 export function sort(): ITagJsonApi[] {
   let sortedArray: Array<ITagJsonApi>;
 

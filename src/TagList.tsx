@@ -1,6 +1,6 @@
 import * as Constants from './constants';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import List from '@material-ui/core/List';
 import Tag from './Tag';
 import TagNew from './TagNew';
@@ -67,17 +67,21 @@ const TagList = () => {
 
   const classes = useStyles();
 
-  const moveEntry = (id: string, atIndex: number) => {
-    const entry = tags.filter(c => c.id === id)[0];
-    const entryIndex = tags.indexOf(entry);
-    const reordered = update(tags, {
-      $splice: [
-        [entryIndex, 1],
-        [atIndex, 0, entry],
-      ],
-    });
-    setTags(reordered);
-  };
+  const moveEntry = useCallback(
+    (id: string, atIndex: number) => {
+      const entry = tags.filter(c => c.id === id)[0];
+      const entryIndex = tags.indexOf(entry);
+      setTags(
+        update(tags, {
+          $splice: [
+            [entryIndex, 1],
+            [atIndex, 0, entry],
+          ],
+        })
+      );
+    },
+    [tags]
+  );
 
   const findEntry = (id: string) => {
     const entry = tags.filter(c => c.id === id)[0];
