@@ -10,10 +10,14 @@ import {observer} from 'mobx-react';
 export interface ITagEdit {
   object: ITagJsonApi;
   handleSaveParent: (object: ITagJsonApiResponseSingle) => void;
-  handleCancelEdit: () => void;
+  handleCancelEditParent: () => void;
 }
 
-const TagEdit = ({handleSaveParent, handleCancelEdit, object}: ITagEdit) => {
+const TagEdit = ({
+  handleSaveParent,
+  handleCancelEditParent,
+  object,
+}: ITagEdit) => {
   const [tagName, setTagName] = useState<string>(object.attributes.name);
   const escFunction = useCallback(event => {
     if (event.keyCode === 27) {
@@ -52,7 +56,7 @@ const TagEdit = ({handleSaveParent, handleCancelEdit, object}: ITagEdit) => {
   };
 
   const handleCancel = () => {
-    handleCancelEdit();
+    handleCancelEditParent();
   };
 
   const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {

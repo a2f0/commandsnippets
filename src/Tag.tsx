@@ -144,7 +144,6 @@ const Tag = ({
   }
 
   const handleTagClick = () => {
-    appConfig.setMainPanel('EntryList');
     history.push(`/${user}/${tagObject.attributes.name}`);
   };
 
@@ -169,7 +168,7 @@ const Tag = ({
     setIsEditing(false);
   };
 
-  const handleSaveParent = (object: ITagJsonApiResponseSingle) => {
+  const handleSave = (object: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(o => o.id === object.data.id);
     existing?.update(object.data);
     setTagObject(object.data);
@@ -279,7 +278,7 @@ const Tag = ({
       <TagContextMenu
         id={id}
         mouse={mouse}
-        deleteTag={deleteTag}
+        deleteTagParent={deleteTag}
         handleBeginEditParent={handleBeginEdit}
       />
     ),
@@ -332,8 +331,8 @@ const Tag = ({
       {isEditing && (
         <TagEdit
           object={tagObject}
-          handleSaveParent={handleSaveParent}
-          handleCancelEdit={handleCancelEdit}
+          handleSaveParent={handleSave}
+          handleCancelEditParent={handleCancelEdit}
         />
       )}
     </>

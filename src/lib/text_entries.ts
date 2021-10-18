@@ -12,15 +12,20 @@ interface ITextEntryJsonApiResponse {
   included: Array<ITagTextEntryThroughModelJsonApi>;
 }
 
-export function sort(): ITextEntryJsonApi[] {
+export interface ITextEntryJsonApiResponseSingle {
+  data: ITextEntryJsonApi;
+  included: Array<ITagTextEntryThroughModelJsonApi>;
+}
+
+export function sort(username: string, tag: string): ITextEntryJsonApi[] {
   let sortedArray: Array<ITextEntryJsonApi> = [];
   const userObject = store.usersArray.find(
-    element => element.attributes.username === store.currentUser
+    element => element.attributes.username === username
   );
 
   const tagObject = store.tagsArray.find(
     element =>
-      element.attributes.name === store.currentTag &&
+      element.attributes.name === tag &&
       element.relationships.user.data.id === userObject?.id
   );
 
@@ -240,7 +245,10 @@ export function sort(): ITextEntryJsonApi[] {
       throw `Unknown sort order: ${store.entrySortOrder}`;
     }
   }
-  return sortedArray;
+  // Remove MobX Proxy
+  const plainObjects = JSON.parse(JSON.stringify(sortedArray));
+
+  return plainObjects;
 }
 
 export function getMostRecentTimeStamp(

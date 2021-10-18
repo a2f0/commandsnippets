@@ -1,6 +1,6 @@
 import * as Constants from './constants';
 import {useDrag, useDrop} from 'react-dnd';
-import {useEffect, useMemo, useRef, useState} from 'react';
+import {useMemo, useRef, useState} from 'react';
 import API from './api';
 import CheckIcon from '@material-ui/icons/Check';
 import EntryContextMenu from './EntryContextMenu';
@@ -9,6 +9,7 @@ import EntryNew from './EntryNew';
 import FileCopySharpIcon from '@material-ui/icons/FileCopySharp';
 import {IParamTypes} from './EntryList';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
+import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
 import React from 'react';
 import {TagTextEntryThroughModel} from './EntryList';
@@ -64,8 +65,8 @@ interface IEntryProps {
   index: number;
   moveEntry: (id: string, to: number) => void;
   findEntry: (id: string) => {entry: ITextEntryJsonApi; index: number};
-  handleDelete: (id: string) => void;
-  text_entry: ITextEntryJsonApi;
+  handleUntagParent: (id: string) => void;
+  object: ITextEntryJsonApi;
   retrieveEntries: () => void;
   findEntryByIndex: (id: number) => ITextEntryJsonApi | null;
 }
@@ -75,18 +76,15 @@ const Entry = ({
   index,
   moveEntry,
   findEntry,
-  handleDelete,
-  text_entry,
+  handleUntagParent,
+  object,
   retrieveEntries,
   findEntryByIndex,
 }: IEntryProps) => {
-  useEffect(() => {
-    setTextEntry(text_entry);
-  }, [text_entry]);
-
   const appConfig = useAppContext();
   const [showNew, setShowNew] = useState(false);
-  const [textEntry, setTextEntry] = useState<ITextEntryJsonApi | undefined>();
+  const [textEntryObject, setTextEntryObject] =
+    useState<ITextEntryJsonApi>(object);
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
@@ -95,6 +93,7 @@ const Entry = ({
   const [showCheckIcon, setShowCheckIcon] = useState(false);
   const classes = useStyles();
   const {tag} = useParams<IParamTypes>();
+  const {user} = useParams<IParamTypes>();
   const [{isDragging}, drag, preview] = useDrag({
     item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
     type: ItemTypes.ENTRY,
@@ -153,14 +152,15 @@ const Entry = ({
             if (ordered_top !== null && ordered_bottom !== null) {
               // Then find the junction entries.
               const userObject = appConfig.usersArray.find(
-                element => element.id === text_entry.relationships.user.data.id
+                element =>
+                  element.id === textEntryObject.relationships.user.data.id
               );
 
               const tagObject = appConfig.tagsArray.find(
                 element =>
                   element.relationships.user.data.id === userObject?.id &&
                   element.relationships.user.data.id ===
-                    text_entry.relationships.user.data.id &&
+                    textEntryObject.relationships.user.data.id &&
                   element.attributes.name === tag
               );
 
@@ -285,36 +285,13 @@ const Entry = ({
     setIsEditing(false);
   };
 
-  const handleSave = (updated_subject: string, updated_body: string) => {
-    const payload = {
-      data: {
-        id: text_entry.id,
-        type: 'TextEntry',
-        attributes: {
-          subject: updated_subject,
-          body: updated_body,
-        },
-      },
-    };
-    API.patch('entries/' + text_entry.id, payload, {withCredentials: true})
-      .then(response => {
-        // handle success
-        if (textEntry !== undefined) {
-          const new_text_entry = {...textEntry};
-          new_text_entry.attributes.subject =
-            response.data.data.attributes.subject;
-          new_text_entry.attributes.body = response.data.data.attributes.body;
-          setTextEntry(new_text_entry);
-          setIsEditing(false);
-        }
-      })
-      .catch(error => {
-        // handle error
-        console.log(error);
-      })
-      .then(() => {
-        // always executed
-      });
+  const handleSave = (object: ITextEntryJsonApiResponseSingle) => {
+    const existing = appConfig.textEntriesArray.find(
+      o => o.id === object.data.id
+    );
+    existing?.update(object.data);
+    setTextEntryObject(object.data);
+    setIsEditing(false);
   };
 
   const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -334,12 +311,36 @@ const Entry = ({
     setShowNew(false);
   };
 
+  const handleUntag = () => {
+    const userObject = appConfig.usersArray.find(
+      element => element.attributes.username === user
+    );
+
+    const tagObject = appConfig.tagsArray.find(
+      element =>
+        element.attributes.name === tag &&
+        element.relationships.user.data.id === userObject?.id
+    );
+
+    const tagTextEntryThroughModelObject =
+      appConfig.tagTextEntryThroughModel.find(
+        element =>
+          element.relationships.tag.data.id === tagObject?.id &&
+          element.relationships.text_entry.data.id === textEntryObject.id
+      );
+    API.delete('/tags_entries/' + tagTextEntryThroughModelObject?.id, {
+      withCredentials: true,
+    });
+    tagTextEntryThroughModelObject?.remove();
+    handleUntagParent(textEntryObject.id);
+  };
+
   const handleCopyClick = () => {
     setShowCopyIcon(false);
     setShowCheckIcon(true);
-    navigator.clipboard.writeText(text_entry.attributes.body);
-    appConfig.setMostRecentCopyType(text_entry.type);
-    appConfig.setMostRecentCopyID(text_entry.id);
+    navigator.clipboard.writeText(textEntryObject.attributes.body);
+    appConfig.setMostRecentCopyType(textEntryObject.type);
+    appConfig.setMostRecentCopyID(textEntryObject.id);
   };
 
   const contextMenu = useMemo(
@@ -347,8 +348,8 @@ const Entry = ({
       <EntryContextMenu
         mouse={mouse}
         id={id}
-        text_entry={text_entry}
-        handleDeleteParent={handleDelete}
+        text_entry={textEntryObject}
+        handleUntagParent={handleUntag}
         handleNewEntryParent={handleNewEntry}
         handleBeginEditParent={handleBeginEdit}
         handleCopyParent={handleCopyClick}
@@ -360,15 +361,15 @@ const Entry = ({
   const handleBodyClick = () => {
     setShowCopyIcon(false);
     setShowCheckIcon(true);
-    appConfig.setMostRecentCopyType(text_entry.type);
-    appConfig.setMostRecentCopyID(text_entry.id);
+    appConfig.setMostRecentCopyType(textEntryObject.type);
+    appConfig.setMostRecentCopyID(textEntryObject.id);
   };
 
   const mostRecentCopy = () => {
     if (
       showCheckIcon === true &&
-      appConfig.mostRecentCopyID === text_entry.id &&
-      appConfig.mostRecentCopyType === text_entry.type
+      appConfig.mostRecentCopyID === textEntryObject.id &&
+      appConfig.mostRecentCopyType === textEntryObject.type
     ) {
       return true;
     } else {
@@ -415,7 +416,7 @@ const Entry = ({
                 onMouseLeave={mouseLeave}
               >
                 <div className={classes.entrySubject}>
-                  {text_entry.attributes.subject}
+                  {textEntryObject.attributes.subject}
                 </div>
               </div>
             </div>
@@ -452,7 +453,7 @@ const Entry = ({
                 onMouseLeave={mouseLeave}
               >
                 <div onClick={handleBodyClick} className={classes.entryBody}>
-                  {text_entry.attributes.body}
+                  {textEntryObject.attributes.body}
                 </div>
               </div>
             </div>
@@ -471,10 +472,9 @@ const Entry = ({
 
       {isEditing && (
         <EntryEdit
-          subject={text_entry.attributes.subject}
-          body={text_entry.attributes.body}
-          handleSave={handleSave}
-          handleCancelEdit={handleCancelEdit}
+          object={textEntryObject}
+          handleSaveParent={handleSave}
+          handleCancelEditParent={handleCancelEdit}
         />
       )}
     </>

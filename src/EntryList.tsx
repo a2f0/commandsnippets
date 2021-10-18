@@ -52,9 +52,9 @@ const EntryList = () => {
   const retrieveEntries = () => {
     const fetchData = async () => {
       if (tag !== undefined) {
-        appConfig.setCurrentTag(tag);
-        appConfig.fetchTextEntries(user, tag);
-        setEntries(TextEntryHelpers.sort());
+        appConfig.fetchTextEntries(user, tag).then(() => {
+          setEntries(TextEntryHelpers.sort(user, tag));
+        });
       }
     };
     fetchData();
@@ -86,22 +86,26 @@ const EntryList = () => {
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
-  const handleDelete = (id: string) => {
-    console.info('handle delete id: ' + id);
+  const handleUntag = (id: string) => {
+    setEntries(
+      entries.filter(element => {
+        return element.id !== id;
+      })
+    );
   };
 
   return (
     <div ref={drop} id="tagsEntriesList">
-      {entries.map((text_entry, i) => {
+      {entries.map((element, i) => {
         return (
           <Entry
-            key={text_entry.id}
-            id={text_entry.id}
+            key={element.id}
+            id={element.id}
             index={i}
             moveEntry={moveEntry}
             findEntry={findEntry}
-            handleDelete={handleDelete}
-            text_entry={text_entry}
+            handleUntagParent={handleUntag}
+            object={element}
             retrieveEntries={retrieveEntries}
             findEntryByIndex={findEntryByIndex}
           />

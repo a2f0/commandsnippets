@@ -15,7 +15,7 @@ import {withStyles} from '@material-ui/core/styles';
 interface ITagContextMenuProps {
   id: string;
   mouse: IMouse;
-  deleteTag: () => void;
+  deleteTagParent: () => void;
   handleBeginEditParent: () => void;
 }
 
@@ -68,7 +68,7 @@ const StyledMenu = withStyles(MenuStyle)(
 const TagContextMenu = ({
   id,
   mouse,
-  deleteTag,
+  deleteTagParent,
   handleBeginEditParent,
 }: ITagContextMenuProps) => {
   const initialMouse: IMouse = {
@@ -102,9 +102,8 @@ const TagContextMenu = ({
   };
 
   const handleAcceptDialog = () => {
-    console.info('accept dialog');
     setDialogOpen(false);
-    deleteTag();
+    deleteTagParent();
   };
 
   return (

@@ -1,6 +1,10 @@
 import * as Constants from './constants';
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
+import API from './api';
+import {AxiosResponse} from 'axios';
 import Button from '@material-ui/core/Button';
+import {ITextEntryJsonApi} from './models/TextEntryModel';
+import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import {makeStyles} from '@material-ui/core/styles';
 
@@ -38,31 +42,46 @@ const useStyles = makeStyles({
 });
 
 export interface IEntryEdit {
-  subject: string;
-  body: string;
-  handleSave: (updated_subject: string, updated_body: string) => void;
-  handleCancelEdit: () => void;
+  object: ITextEntryJsonApi;
+  handleSaveParent: (object: ITextEntryJsonApiResponseSingle) => void;
+  handleCancelEditParent: () => void;
 }
 
-const EntryEdit = (props: IEntryEdit) => {
-  useEffect(() => {
-    setBody(props.body);
-    setSubject(props.subject);
-  }, [props.body, props.subject]);
-
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+const EntryEdit = ({
+  object,
+  handleSaveParent,
+  handleCancelEditParent,
+}: IEntryEdit) => {
+  const [subject, setSubject] = useState<string>(object.attributes.subject);
+  const [body, setBody] = useState<string>(object.attributes.body);
 
   const classes = useStyles();
 
   const handleSave = () => {
-    props.handleSave(subject, body);
+    const payload = {
+      data: {
+        id: object.id,
+        type: 'TextEntry',
+        attributes: {
+          subject: subject,
+          body: body,
+        },
+      },
+    };
+    API.patch('entries/' + object.id, payload, {withCredentials: true})
+      .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
+        handleSaveParent(response.data);
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .then(() => {});
   };
 
   const handleCancel = () => {
-    setBody(props.body);
-    setSubject(props.subject);
-    props.handleCancelEdit();
+    setBody(object.attributes.body);
+    setSubject(object.attributes.body);
+    handleCancelEditParent();
   };
 
   const handleBodyChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {

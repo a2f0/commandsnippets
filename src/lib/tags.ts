@@ -173,7 +173,7 @@ export function sort(): Array<ITagJsonApi> {
   } else {
     throw 'Unknown sort order';
   }
-  // Remove Mobx Proxy
+  // Remove MobX Proxy
   const plainObjects = JSON.parse(JSON.stringify(sortedArray));
 
   return plainObjects;
