@@ -63,7 +63,7 @@ const Tag = ({
   index,
   findEntryByIndex,
 }: ITagProps) => {
-  const [tagObject] = useState<ITagJsonApi>(object);
+  const [tagObject, setTagObject] = useState<ITagJsonApi>(object);
   const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -172,6 +172,7 @@ const Tag = ({
   const handleSaveParent = (object: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(o => o.id === object.data.id);
     existing?.update(object.data);
+    setTagObject(object.data);
     setIsEditing(false);
   };
 

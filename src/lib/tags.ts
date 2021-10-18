@@ -16,7 +16,7 @@ export interface ITagJsonApiResponseSingle {
   included: Array<IUserJsonApi>;
 }
 
-export function sort(): ITagJsonApi[] {
+export function sort(): Array<ITagJsonApi> {
   let sortedArray: Array<ITagJsonApi>;
 
   const userObject = store.usersArray.find(
@@ -174,9 +174,8 @@ export function sort(): ITagJsonApi[] {
     throw 'Unknown sort order';
   }
   // Remove Mobx Proxy
-  const plainObjects = sortedArray.map(element => {
-    return {...element};
-  });
+  const plainObjects = JSON.parse(JSON.stringify(sortedArray));
+
   return plainObjects;
 }
 
