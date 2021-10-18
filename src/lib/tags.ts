@@ -173,7 +173,11 @@ export function sort(): ITagJsonApi[] {
   } else {
     throw 'Unknown sort order';
   }
-  return sortedArray;
+  // Remove Mobx Proxy
+  const plainObjects = sortedArray.map(element => {
+    return {...element};
+  });
+  return plainObjects;
 }
 
 export function getMostRecentTimeStamp(array: ITagJsonApi[]): string | null {

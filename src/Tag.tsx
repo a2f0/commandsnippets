@@ -4,6 +4,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import API from './api';
 import {IMouse} from './Entry';
 import {ITagJsonApi} from './models/TagModel';
+import {ITagJsonApiResponseSingle} from './lib/tags';
 import ItemTypes from './ItemTypes';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
@@ -42,6 +43,7 @@ const useStyles = makeStyles({
 interface ITagProps {
   id: string;
   object: ITagJsonApi;
+  handleDeleteParent: (id: string) => void;
   moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
@@ -55,11 +57,13 @@ interface IParamTypes {
 const Tag = ({
   id,
   object,
+  handleDeleteParent,
   moveEntry,
   findEntry,
   index,
   findEntryByIndex,
 }: ITagProps) => {
+  const [tagObject] = useState<ITagJsonApi>(object);
   const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -141,7 +145,7 @@ const Tag = ({
 
   const handleTagClick = () => {
     appConfig.setMainPanel('EntryList');
-    history.push(`/${user}/${object.attributes.name}`);
+    history.push(`/${user}/${tagObject.attributes.name}`);
   };
 
   const mouseEnter = () => {
@@ -165,14 +169,16 @@ const Tag = ({
     setIsEditing(false);
   };
 
-  const handleSaveParent = () => {
+  const handleSaveParent = (object: ITagJsonApiResponseSingle) => {
+    const existing = appConfig.tagsArray.find(o => o.id === object.data.id);
+    existing?.update(object.data);
     setIsEditing(false);
   };
 
   const deleteTag = () => {
-    API.delete('/tags/' + object.id, {withCredentials: true})
+    API.delete('/tags/' + tagObject.id, {withCredentials: true})
       .then(() => {
-        //object.remove();
+        handleDeleteParent(tagObject.id);
       })
       .catch(error => {
         // handle error
@@ -313,9 +319,9 @@ const Tag = ({
               onClick={handleTagClick}
               onContextMenu={handleContextClick}
             >
-              {object.attributes.name}
+              {tagObject.attributes.name}
               {appConfig.showTagCounts
-                ? ` (${object.attributes.entry_count})`
+                ? ` (${tagObject.attributes.entry_count})`
                 : null}
             </div>
           </div>
@@ -324,7 +330,7 @@ const Tag = ({
       {appConfig.loggedInUser && <>{contextMenu}</>}
       {isEditing && (
         <TagEdit
-          object={object}
+          object={tagObject}
           handleSaveParent={handleSaveParent}
           handleCancelEdit={handleCancelEdit}
         />

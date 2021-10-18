@@ -83,6 +83,16 @@ const TagList = () => {
     [tags]
   );
 
+  const handleDelete = (id: string) => {
+    const existing = appConfig.tagsArray.find(c => c.id === id);
+    existing?.remove();
+    setTags(
+      tags.filter(element => {
+        return element.id !== id;
+      })
+    );
+  };
+
   const findEntry = (id: string) => {
     const entry = tags.filter(c => c.id === id)[0];
     return {
@@ -111,6 +121,7 @@ const TagList = () => {
                 key={object.id}
                 object={object}
                 id={object.id}
+                handleDeleteParent={handleDelete}
                 moveEntry={moveEntry}
                 findEntry={findEntry}
                 index={i}

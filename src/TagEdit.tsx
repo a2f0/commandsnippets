@@ -6,16 +6,14 @@ import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledButtonTags from './StyledButtonTags';
 import StyledTextFieldTags from './StyledTextFieldTags';
 import {observer} from 'mobx-react';
-import {useAppContext} from './AppContext';
 
 export interface ITagEdit {
   object: ITagJsonApi;
-  handleSaveParent: () => void;
+  handleSaveParent: (object: ITagJsonApiResponseSingle) => void;
   handleCancelEdit: () => void;
 }
 
 const TagEdit = ({handleSaveParent, handleCancelEdit, object}: ITagEdit) => {
-  const appConfig = useAppContext();
   const [tagName, setTagName] = useState<string>(object.attributes.name);
   const escFunction = useCallback(event => {
     if (event.keyCode === 27) {
@@ -45,11 +43,7 @@ const TagEdit = ({handleSaveParent, handleCancelEdit, object}: ITagEdit) => {
       withCredentials: true,
     })
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
-        const existing = appConfig.tagsArray.find(
-          o => o.id === response.data.data.id
-        );
-        existing?.update(response.data.data);
-        handleSaveParent();
+        handleSaveParent(response.data);
       })
       .catch(error => {
         console.error(error);
