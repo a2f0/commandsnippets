@@ -1,6 +1,7 @@
 import * as Constants from './constants';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
 import React, {useCallback, useEffect, useState} from 'react';
+import {ITagJsonApiResponseSingle} from './lib/tags';
 import List from '@material-ui/core/List';
 import Tag from './Tag';
 import TagNew from './TagNew';
@@ -83,12 +84,12 @@ const TagList = () => {
     [tags]
   );
 
-  const handleDelete = (id: string) => {
-    const existing = appConfig.tagsArray.find(c => c.id === id);
-    existing?.remove();
+  const handleDelete = (object: ITagJsonApiResponseSingle) => {
+    const existing = appConfig.tagsArray.find(c => c.id === object.data.id);
+    existing?.update(object.data);
     setTags(
       tags.filter(element => {
-        return element.id !== id;
+        return element.id !== object.data.id;
       })
     );
   };

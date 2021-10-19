@@ -24,7 +24,9 @@ export function sort(): Array<ITagJsonApi> {
   );
 
   const tagObjects = store.tagsArray.filter(
-    element => element.relationships.user.data.id === userObject?.id
+    element =>
+      element.relationships.user.data.id === userObject?.id &&
+      element.attributes.is_deleted === false
   );
 
   if (store.tagSortOrder === 'name') {

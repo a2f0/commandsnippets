@@ -2,6 +2,7 @@ import * as Constants from './constants';
 import React, {useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import API from './api';
+import {AxiosResponse} from 'axios';
 import {IMouse} from './Entry';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -43,7 +44,7 @@ const useStyles = makeStyles({
 interface ITagProps {
   id: string;
   object: ITagJsonApi;
-  handleDeleteParent: (id: string) => void;
+  handleDeleteParent: (object: ITagJsonApiResponseSingle) => void;
   moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
@@ -177,16 +178,13 @@ const Tag = ({
 
   const deleteTag = () => {
     API.delete('/tags/' + tagObject.id, {withCredentials: true})
-      .then(() => {
-        handleDeleteParent(tagObject.id);
+      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
+        handleDeleteParent(response.data);
       })
       .catch(error => {
-        // handle error
-        console.log(error);
+        console.error(error);
       })
-      .then(() => {
-        // always executed
-      });
+      .then(() => {});
   };
 
   const handleBeginEdit = () => {

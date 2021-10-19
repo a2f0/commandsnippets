@@ -39,6 +39,7 @@ const TagAtributes = types
     date_updated: types.string,
     date_created: types.string,
     date_last_used: types.string,
+    is_deleted: types.boolean,
   })
   .actions(() => ({}));
 

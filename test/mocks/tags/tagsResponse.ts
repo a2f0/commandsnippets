@@ -16,6 +16,7 @@ const tagsResponse = {
         date_last_used: '2020-05-07T18:20:00',
         entry_count: 2,
         order: 2,
+        is_deleted: false,
       },
       relationships: {
         user: {
