@@ -398,19 +398,10 @@ class TestTextEntriesApi(BaseTestCase):
         )
 
     def test_delete_works_when_self_owns_object(self):
-        entry1 = TextEntryFactory(user=self.user1, is_deleted=False)
-        payload = {
-            "data": {
-                "type": "TextEntry",
-                "id": str(entry1.id),
-                "attributes": {
-                    "is_deleted": "True",
-                },
-            }
-        }
-        self.assertEqual(entry1.is_deleted, False)
+        entry = TextEntryFactory(user=self.user1, is_deleted=False)
+        self.assertEqual(entry.is_deleted, False)
         response = self.user1_api_client.delete(
-            "/api/v1/entries/" + str(entry1.id), format="vnd.api+json"
+            "/api/v1/entries/" + str(entry.id), format="vnd.api+json"
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -424,15 +415,6 @@ class TestTextEntriesApi(BaseTestCase):
 
     def test_delete_fails_when_object_owned_by_other(self):
         entry1 = TextEntryFactory(user=self.user2, is_deleted=False)
-        payload = {
-            "data": {
-                "type": "TextEntry",
-                "id": str(entry1.id),
-                "attributes": {
-                    "is_deleted": "True",
-                },
-            }
-        }
         response = self.user1_api_client.delete(
             "/api/v1/entries/" + str(entry1.id), format="vnd.api+json"
         )

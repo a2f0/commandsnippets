@@ -15,6 +15,7 @@ from tearleads.tags.serializers import (
     TagTextEntryThroughModelSerializer,
     TagTextEntryThroughModelReorderSerializer,
 )
+from tearleads.core.permissions import IsOwner
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -28,7 +29,7 @@ class TagViewSet(viewsets.ModelViewSet):
         "name",
         "order",
     )
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsOwner)
 
     filterset_fields = {
         "name": ("exact",),
@@ -55,6 +56,15 @@ class TagViewSet(viewsets.ModelViewSet):
             instance = serializer.save(user=request.user)
         return response.Response(
             data=TagSerializer(instance=instance).data, status=status.HTTP_201_CREATED
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_deleted = True
+        instance.save()
+
+        return response.Response(
+            data=TagSerializer(instance=instance).data, status=status.HTTP_200_OK
         )
 
     @action(detail=False, methods=["post"])

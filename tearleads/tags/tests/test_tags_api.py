@@ -125,6 +125,33 @@ class TestTagsApi(BaseTestCase):
             self.user1.username,
         )
 
+    def test_delete_works_when_self_owns_object(self):
+        tag = TagFactory(user=self.user1, name="deleted tag", is_deleted=False)
+        response = self.user1_api_client.delete(
+            "/api/v1/tags/" + str(tag.id), format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_response["data"]["attributes"]["is_deleted"], True)
+        self.assertEqual(len(json_response["included"]), 1)
+        self.assertEqual(json_response["included"][0]["type"], "User")
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 1)
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["username"], self.user1.username
+        )
+
+    def test_delete_fails_when_object_owned_by_other(self):
+        tag = TagFactory(user=self.user2, name="deleted tag", is_deleted=False)
+        response = self.user1_api_client.delete(
+            "/api/v1/tags/" + str(tag.id), format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            json_response["errors"][0]["detail"],
+            "You do not have permission to perform this action.",
+        )
+
     def test_reorder_works(self):
         tag1 = TagFactory(user=self.user1, order=1)
         tag1_timestamp = tag1.date_updated
