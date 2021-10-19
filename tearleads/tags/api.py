@@ -37,9 +37,22 @@ class TagViewSet(viewsets.ModelViewSet):
     }
 
     def create(self, request, *args, **kwargs):
-        serializer = TagCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save(user=request.user)
+        instance = None
+        if "name" in request.data:
+            instance = (
+                Tag.objects.all()
+                .filter(user=request.user, name=request.data["name"])
+                .first()
+            )
+
+        if instance != None:
+            if instance.is_deleted == True:
+                instance.is_deleted = False
+                instance.save()
+        else:
+            serializer = TagCreateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save(user=request.user)
         return response.Response(
             data=TagSerializer(instance=instance).data, status=status.HTTP_201_CREATED
         )

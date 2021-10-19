@@ -13,6 +13,7 @@ class Migration(migrations.Migration):
     ]
 
     def forwards_func(apps, schema_editor):
+        Tag = apps.get_model("tags", "Tag")
         for tag in Tag.objects.all():
             tag.date_last_used = tag.date_created
             tag.save(update_fields=["date_last_used"])

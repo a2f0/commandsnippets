@@ -12,6 +12,7 @@ class Tag(OrderedModel):
     date_updated = models.DateTimeField(auto_now=True)
     entry_count = models.IntegerField(default=0, null=False)
     date_last_used = models.DateTimeField(auto_now=False, null=True)
+    is_deleted = models.BooleanField(default=False)
     text_entries = models.ManyToManyField(
         "text_entries.TextEntry",
         related_name="tags",

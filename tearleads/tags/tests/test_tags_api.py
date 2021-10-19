@@ -93,6 +93,30 @@ class TestTagsApi(BaseTestCase):
             self.user1.username,
         )
 
+    def test_can_resurrect_self_owned(self):
+        deleted_tag = TagFactory(user=self.user1, name="deleted tag", is_deleted=True)
+        payload = {"data": {"type": "Tag", "attributes": {"name": "deleted tag"}}}
+        response = self.user1_api_client.post(
+            "/api/v1/tags", payload, format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            json_response["data"]["attributes"]["name"],
+            payload["data"]["attributes"]["name"],
+        )
+        self.assertEqual(
+            json_response["data"]["id"],
+            str(deleted_tag.id),
+        )
+        self.assertEqual(len(response.json()["included"]), 1)
+        self.assertEqual(response.json()["included"][0]["type"], "User")
+        self.assertEqual(len(response.json()["included"][0]["attributes"]), 1)
+        self.assertEqual(
+            response.json()["included"][0]["attributes"]["username"],
+            self.user1.username,
+        )
+
     def test_reorder_works(self):
         tag1 = TagFactory(user=self.user1, order=1)
         tag1_timestamp = tag1.date_updated
