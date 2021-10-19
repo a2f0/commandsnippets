@@ -28,7 +28,7 @@ const useStyles = makeStyles({
   tagLabel: {
     display: 'inline-block',
     cursor: 'pointer',
-    width: '100%',
+    width: `calc(100% - ${Constants.dragIndicatorWidthTag}px)`,
   },
   tagDragIndicatorContainer: {
     display: 'inline-block',
