@@ -20,6 +20,7 @@ class TagSerializer(serializers.ModelSerializer):
             "user",
             "entry_count",
             "order",
+            "is_deleted",
         )
 
     class JSONAPIMeta:
