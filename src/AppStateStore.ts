@@ -2,6 +2,7 @@ import {IDisposer, Instance, types} from 'mobx-state-tree';
 import {TagHelpers, TagModel} from './models/TagModel';
 import {TextEntryHelpers, TextEntryModel} from './models/TextEntryModel';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
+import {ITagJsonApi} from './models/TagModel';
 import {TagTextEntryThroughModel} from './models/TagTextEntryThroughModel';
 import {UserModel} from './models/UserModel';
 import {environment} from './api';
@@ -118,6 +119,18 @@ export const AppStateStoreModel = types
     }),
     setLoggedInUser(handle: string | null) {
       self.loggedInUser = handle;
+    },
+    updateOrCreateTag(object: ITagJsonApi) {
+      const existing = self.tagsArray.find(o => o.id === object.id);
+      if (existing === undefined) {
+        self.tagsArray.push(object);
+      } else {
+        const existingTimestamp = new Date(existing.attributes.date_updated);
+        const incomingTimeStamp = new Date(object.attributes.date_updated);
+        if (incomingTimeStamp > existingTimestamp) {
+          existing.update(object);
+        }
+      }
     },
     removeTag(id: string) {
       const existing: Instance<typeof TagModel> = self.tagsArray.filter(

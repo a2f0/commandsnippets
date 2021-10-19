@@ -87,11 +87,7 @@ const TagList = () => {
   const handleDelete = (object: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(c => c.id === object.data.id);
     existing?.update(object.data);
-    setTags(
-      tags.filter(element => {
-        return element.id !== object.data.id;
-      })
-    );
+    setTags(TagHelpers.sort());
   };
 
   const findEntry = (id: string) => {
@@ -100,6 +96,11 @@ const TagList = () => {
       entry: entry,
       index: tags.indexOf(entry),
     };
+  };
+
+  const handleNew = (object: ITagJsonApi) => {
+    appConfig.updateOrCreateTag(object);
+    setTags(TagHelpers.sort());
   };
 
   const findEntryByIndex = (index: number) => {
@@ -115,7 +116,7 @@ const TagList = () => {
       {appConfig.tagSearch && <TagSearch />}
       <List className={classes.root}>
         <div className={classes.ltr} id="tagList">
-          {appConfig.tagNew && <TagNew />}
+          {appConfig.tagNew && <TagNew handleNewParent={handleNew} />}
           {tags.map((object: ITagJsonApi, i) => {
             return (
               <Tag

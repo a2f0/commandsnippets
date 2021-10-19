@@ -16,6 +16,7 @@ export interface ITagJsonApiAttributes {
   date_updated: string;
   date_created: string;
   date_last_used: string;
+  is_deleted: boolean;
 }
 
 interface ITagJsonApiRelationships {

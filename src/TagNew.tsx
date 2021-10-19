@@ -1,10 +1,17 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import API from './api';
+import {AxiosResponse} from 'axios';
+import {ITagJsonApi} from './models/TagModel';
+import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledButtonTags from './StyledButtonTags';
 import StyledTextFieldTags from './StyledTextFieldTags';
 import {useAppContext} from './AppContext';
 
-const TagNew = () => {
+interface IProps {
+  handleNewParent: (object: ITagJsonApi) => void;
+}
+
+const TagNew = ({handleNewParent}: IProps) => {
   const [tagName, setTagName] = useState<string>('');
   const appConfig = useAppContext();
 
@@ -41,15 +48,12 @@ const TagNew = () => {
       },
     };
     API.post('/tags', payload, {withCredentials: true})
-      .then(() => {
+      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
+        handleNewParent(response.data.data);
         appConfig.setTagNew(false);
       })
       .catch(error => {
-        // handle error
-        console.log(error);
-      })
-      .then(() => {
-        // always executed
+        console.error(error);
       });
   };
 
