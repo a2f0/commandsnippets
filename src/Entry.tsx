@@ -67,7 +67,7 @@ interface IEntryProps {
   findEntry: (id: string) => {entry: ITextEntryJsonApi; index: number};
   handleUntagParent: (id: string) => void;
   object: ITextEntryJsonApi;
-  retrieveEntries: () => void;
+  sortAndFilterParent: () => void;
   findEntryByIndex: (id: number) => ITextEntryJsonApi | null;
 }
 
@@ -78,7 +78,7 @@ const Entry = ({
   findEntry,
   handleUntagParent,
   object,
-  retrieveEntries,
+  sortAndFilterParent,
   findEntryByIndex,
 }: IEntryProps) => {
   const appConfig = useAppContext();
@@ -463,7 +463,7 @@ const Entry = ({
 
       {showNew && (
         <EntryNew
-          retrieveEntries={retrieveEntries}
+          sortAndFilterParent={sortAndFilterParent}
           handleCancelNewEntry={handleCancelNewEntry}
         />
       )}

@@ -53,12 +53,17 @@ const EntryList = () => {
     const fetchData = async () => {
       if (tag !== undefined) {
         appConfig.fetchTextEntries(user, tag).then(() => {
-          setEntries(TextEntryHelpers.sort(user, tag));
+          sortAndFilter();
         });
       }
     };
     fetchData();
   };
+
+  const sortAndFilter = () => {
+    setEntries(TextEntryHelpers.sort(user, tag));
+  };
+
   const moveEntry = (id: string, atIndex: number) => {
     const {entry, index} = findEntry(id);
     const reordered = update(entries, {
@@ -69,6 +74,7 @@ const EntryList = () => {
     });
     setEntries(reordered);
   };
+
   const findEntry = (id: string) => {
     const entry = entries.filter(c => c.id === id)[0];
     return {
@@ -106,7 +112,7 @@ const EntryList = () => {
             findEntry={findEntry}
             handleUntagParent={handleUntag}
             object={element}
-            retrieveEntries={retrieveEntries}
+            sortAndFilterParent={sortAndFilter}
             findEntryByIndex={findEntryByIndex}
           />
         );

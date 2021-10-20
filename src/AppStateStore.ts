@@ -1,9 +1,16 @@
 import {IDisposer, Instance, types} from 'mobx-state-tree';
+import {
+  ITagTextEntryThroughModelJsonApi,
+  TagTextEntryThroughModel,
+} from './models/TagTextEntryThroughModel';
+import {
+  ITextEntryJsonApi,
+  TextEntryHelpers,
+  TextEntryModel,
+} from './models/TextEntryModel';
 import {TagHelpers, TagModel} from './models/TagModel';
-import {TextEntryHelpers, TextEntryModel} from './models/TextEntryModel';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 import {ITagJsonApi} from './models/TagModel';
-import {TagTextEntryThroughModel} from './models/TagTextEntryThroughModel';
 import {UserModel} from './models/UserModel';
 import {environment} from './api';
 
@@ -124,6 +131,34 @@ export const AppStateStoreModel = types
       const existing = self.tagsArray.find(o => o.id === object.id);
       if (existing === undefined) {
         self.tagsArray.push(object);
+      } else {
+        const existingTimestamp = new Date(existing.attributes.date_updated);
+        const incomingTimeStamp = new Date(object.attributes.date_updated);
+        if (incomingTimeStamp > existingTimestamp) {
+          existing.update(object);
+        }
+      }
+    },
+    updateOrCreateTextEntry(object: ITextEntryJsonApi) {
+      const existing = self.textEntriesArray.find(o => o.id === object.id);
+      if (existing === undefined) {
+        self.textEntriesArray.push(object);
+      } else {
+        const existingTimestamp = new Date(existing.attributes.date_updated);
+        const incomingTimeStamp = new Date(object.attributes.date_updated);
+        if (incomingTimeStamp > existingTimestamp) {
+          existing.update(object);
+        }
+      }
+    },
+    updateOrCreateTagTextEntryThroughModel(
+      object: ITagTextEntryThroughModelJsonApi
+    ) {
+      const existing = self.tagTextEntryThroughModel.find(
+        o => o.id === object.id
+      );
+      if (existing === undefined) {
+        self.tagTextEntryThroughModel.push(object);
       } else {
         const existingTimestamp = new Date(existing.attributes.date_updated);
         const incomingTimeStamp = new Date(object.attributes.date_updated);

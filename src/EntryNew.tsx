@@ -1,14 +1,18 @@
 import * as Constants from './constants';
 import React, {useState} from 'react';
 import API from './api';
+import {AxiosResponse} from 'axios';
 import Button from '@material-ui/core/Button';
+import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
+import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import {makeStyles} from '@material-ui/core/styles';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
+
 export interface IEntryNewProps {
-  retrieveEntries: () => void;
   handleCancelNewEntry: () => void;
+  sortAndFilterParent: () => void;
 }
 
 const useStyles = makeStyles({
@@ -57,7 +61,10 @@ interface IParamTypes {
   tag: string;
 }
 
-const EntryNew = (props: IEntryNewProps) => {
+const EntryNew = ({
+  sortAndFilterParent,
+  handleCancelNewEntry,
+}: IEntryNewProps) => {
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
   const classes = useStyles();
@@ -66,10 +73,6 @@ const EntryNew = (props: IEntryNewProps) => {
   const {tag} = useParams<IParamTypes>();
 
   const handleSave = () => {
-    console.log('handle save');
-    //setBody()
-    //setSubject()
-    //props.handleSave(subject, body)
     const text_entry_payload = {
       data: {
         type: 'TextEntry',
@@ -91,8 +94,8 @@ const EntryNew = (props: IEntryNewProps) => {
     );
 
     API.post('/entries', text_entry_payload, {withCredentials: true})
-      .then(response => {
-        // handle success
+      .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
+        appConfig.updateOrCreateTextEntry(response.data.data);
         const text_entry_through_model_payload = {
           data: {
             type: 'TagTextEntryThroughModel',
@@ -116,31 +119,34 @@ const EntryNew = (props: IEntryNewProps) => {
         API.post('/tags_entries', text_entry_through_model_payload, {
           withCredentials: true,
         })
-          .then(() => {
-            props.retrieveEntries();
-            props.handleCancelNewEntry();
-          })
+          .then(
+            (
+              response: AxiosResponse<ITagTextEntryThroughModelJsonApiResponseSingle>
+            ) => {
+              console.info(response.data.data);
+              appConfig.updateOrCreateTagTextEntryThroughModel(
+                response.data.data
+              );
+              sortAndFilterParent();
+              handleCancelNewEntry();
+            }
+          )
           .catch(error => {
-            // handle error
-            console.log(error);
+            console.error(error);
           })
-          .then(() => {
-            // always executed
-          });
+          .then(() => {});
       })
       .catch(error => {
         // handle error
         console.log(error);
       })
-      .then(() => {
-        // always executed
-      });
+      .then(() => {});
   };
 
   const handleCancel = () => {
     setBody(body);
     setSubject(subject);
-    props.handleCancelNewEntry();
+    handleCancelNewEntry();
   };
 
   const handleBodyChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
