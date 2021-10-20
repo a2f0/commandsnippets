@@ -21,7 +21,7 @@ class TagTextEntryThroughModelSerializer(serializers.ModelSerializer):
             "order",
             "date_updated",
             "date_created",
-            "user_id",
+            "user",
         )
 
     class JSONAPIMeta:

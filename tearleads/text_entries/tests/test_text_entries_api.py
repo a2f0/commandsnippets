@@ -52,7 +52,7 @@ class TestTextEntriesApi(BaseTestCase):
 
         # Tag
         self.assertEqual(json_response["included"][0]["type"], "Tag")
-        self.assertEqual(len(json_response["included"][1]["attributes"]), 4)
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 7)
         self.assertEqual(json_response["included"][0]["attributes"]["name"], tag1.name)
         self.assertEqual(
             json_response["included"][0]["attributes"]["date_created"],
@@ -66,13 +66,22 @@ class TestTextEntriesApi(BaseTestCase):
             json_response["included"][0]["attributes"]["date_updated"],
             tag1.date_updated.isoformat(),
         )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["entry_count"], tag1.entry_count
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["order"], tag1.order
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["is_deleted"], tag1.is_deleted
+        )
 
         # Junction
         self.assertEqual(
             json_response["included"][1]["type"], "TagTextEntryThroughModel"
         )
         self.assertEqual(json_response["included"][1]["id"], str(tags_entries1.id))
-        self.assertEqual(len(json_response["included"][1]["attributes"]), 4)
+        self.assertEqual(len(json_response["included"][1]["attributes"]), 3)
         self.assertEqual(
             json_response["included"][1]["attributes"]["order"], tags_entries1.order
         )

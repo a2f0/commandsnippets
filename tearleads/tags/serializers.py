@@ -45,7 +45,15 @@ class TagTextEntryThroughModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TagTextEntryThroughModel
-        fields = ("id", "tag", "user", "text_entry")
+        fields = (
+            "id",
+            "tag",
+            "text_entry",
+            "order",
+            "date_updated",
+            "date_created",
+            "user",
+        )
 
     class JSONAPIMeta:
         included_resources = ["user", "tag", "text_entry"]
