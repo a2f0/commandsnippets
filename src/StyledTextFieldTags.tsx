@@ -45,6 +45,7 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
 
   return (
     <TextField
+      autoComplete="off"
       inputRef={setTextInputRef}
       value={value}
       className={`${classes.textField}`}
