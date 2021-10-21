@@ -3,7 +3,8 @@ import API from './api';
 import {AxiosResponse} from 'axios';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import StyledButtonTags from './StyledButtonTags';
+import {StyledTagButton} from './styled_components/tags/StyledTagButton';
+import StyledTagFormContainer from './styled_components/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './StyledTextFieldTags';
 import {observer} from 'mobx-react';
 
@@ -64,7 +65,7 @@ const TagEdit = ({
   };
 
   return (
-    <>
+    <StyledTagFormContainer>
       <StyledTextFieldTags
         value={tagName}
         id={`tagEdit-${object.id}`}
@@ -72,23 +73,23 @@ const TagEdit = ({
           handleTagNameChange(e);
         }}
       />
-      <StyledButtonTags
+      <StyledTagButton
         id={`tagEditSave-${object.id}`}
         onClick={() => {
           handleSave();
         }}
       >
         Save
-      </StyledButtonTags>
-      <StyledButtonTags
+      </StyledTagButton>
+      <StyledTagButton
         id={`tagEditCancel-${object.id}`}
         onClick={() => {
           handleCancel();
         }}
       >
         Cancel
-      </StyledButtonTags>
-    </>
+      </StyledTagButton>
+    </StyledTagFormContainer>
   );
 };
 

@@ -3,7 +3,8 @@ import API from './api';
 import {AxiosResponse} from 'axios';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import StyledButtonTags from './StyledButtonTags';
+import {StyledTagButton} from './styled_components/tags/StyledTagButton';
+import StyledTagFormContainer from './styled_components/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './StyledTextFieldTags';
 import {useAppContext} from './AppContext';
 
@@ -58,7 +59,7 @@ const TagNew = ({handleNewParent}: IProps) => {
   };
 
   return (
-    <>
+    <StyledTagFormContainer>
       <StyledTextFieldTags
         value={tagName}
         id="tagNewTextField"
@@ -66,23 +67,23 @@ const TagNew = ({handleNewParent}: IProps) => {
           handleTagNameChange(e);
         }}
       />
-      <StyledButtonTags
+      <StyledTagButton
         id="tagNewSave"
         onClick={() => {
           handleSave();
         }}
       >
-        Save
-      </StyledButtonTags>
-      <StyledButtonTags
+        S
+      </StyledTagButton>
+      <StyledTagButton
         id="tagNewCancel"
         onClick={() => {
           handleCancel();
         }}
       >
-        Cancel
-      </StyledButtonTags>
-    </>
+        C
+      </StyledTagButton>
+    </StyledTagFormContainer>
   );
 };
 export default React.memo(TagNew);

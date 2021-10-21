@@ -158,47 +158,45 @@ const EntryNew = ({
   };
 
   return (
-    <>
-      <div>
-        <div className={classes.dragIndicator}></div>
-        <div className={classes.entry}>
-          <div>
-            <input
-              type="text"
-              className={classes.entrySubject}
-              value={subject}
-              onChange={handleSubjectChange}
-            />
-          </div>
-          <div>
-            <TextareaAutosize
-              className={classes.textArea}
-              placeholder="body"
-              value={body}
-              onChange={handleBodyChange}
-            />
-          </div>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => {
-              handleSave();
-            }}
-          >
-            Save
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => {
-              handleCancel();
-            }}
-          >
-            Cancel
-          </Button>
+    <div>
+      <div className={classes.dragIndicator}></div>
+      <div className={classes.entry}>
+        <div>
+          <input
+            type="text"
+            className={classes.entrySubject}
+            value={subject}
+            onChange={handleSubjectChange}
+          />
         </div>
+        <div>
+          <TextareaAutosize
+            className={classes.textArea}
+            placeholder="body"
+            value={body}
+            onChange={handleBodyChange}
+          />
+        </div>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => {
+            handleSave();
+          }}
+        >
+          Save
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => {
+            handleCancel();
+          }}
+        >
+          Cancel
+        </Button>
       </div>
-    </>
+    </div>
   );
 };
 export default React.memo(EntryNew);

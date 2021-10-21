@@ -69,11 +69,9 @@ const StyledMenu = withStyles(MenuStyle)(
   }
 );
 
-const drawerWidth = 150;
-
 const useStyles = makeStyles({
   drawer: {
-    width: drawerWidth,
+    width: Constants.drawerWidth,
     flexShrink: 0,
   },
   toolBar: {
