@@ -3,6 +3,7 @@ import API from './api';
 import {AxiosResponse} from 'axios';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
+import {Side} from './styled_components/tags/StyledTagButton';
 import {StyledTagButton} from './styled_components/tags/StyledTagButton';
 import StyledTagFormContainer from './styled_components/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './StyledTextFieldTags';
@@ -68,20 +69,22 @@ const TagNew = ({handleNewParent}: IProps) => {
         }}
       />
       <StyledTagButton
+        side={Side.Left}
         id="tagNewSave"
         onClick={() => {
           handleSave();
         }}
       >
-        S
+        Save
       </StyledTagButton>
       <StyledTagButton
+        side={Side.Right}
         id="tagNewCancel"
         onClick={() => {
           handleCancel();
         }}
       >
-        C
+        Cancel
       </StyledTagButton>
     </StyledTagFormContainer>
   );
