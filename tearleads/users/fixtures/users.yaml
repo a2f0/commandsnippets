@@ -1,6 +1,0 @@
-- model: users.User
-  pk: 1
-  fields:
-    username: dps
-    first_name: Dan
-    last_name: Sullivan
