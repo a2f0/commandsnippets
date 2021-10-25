@@ -29,7 +29,10 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
         },
       },
       noPadding: {
-        padding: 0,
+        paddingLeft: 5,
+        paddingTop: 0,
+        paddingBottom: 0,
+        paddingRight: 0,
       },
     })
   );
