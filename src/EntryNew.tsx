@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import React, {useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
@@ -6,55 +5,14 @@ import Button from '@material-ui/core/Button';
 import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
-import {makeStyles} from '@material-ui/core/styles';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
+import {useStyles} from './EntryEdit';
 
 export interface IEntryNewProps {
   handleCancelNewEntry: () => void;
   sortAndFilterParent: () => void;
 }
-
-const useStyles = makeStyles({
-  entry: {
-    verticalAlign: 'top',
-    width: `calc(100% - ${100}px)`,
-    display: 'inline-block',
-    marginBottom: 16,
-    '&:hover': {
-      color: 'white',
-    },
-    '&:active': {
-      color: 'white',
-    },
-  },
-  entrySubject: {
-    fontSize: 14,
-    margin: 'auto',
-    padding: 2,
-    border: '1px solid red',
-    width: '100%',
-  },
-
-  entryBody: {
-    display: 'inline-block',
-    fontSize: 14,
-    margin: 'auto',
-    fontFamily: 'monospace',
-    whiteSpace: 'pre-wrap',
-    wordWrap: 'break-word',
-    padding: 2,
-    border: '1px solid red',
-    minWidth: '300px',
-  },
-  textArea: {
-    width: '100%',
-  },
-  dragIndicator: {
-    display: 'inline-block',
-    width: `${Constants.dragIndicatorWidthTag}px`,
-  },
-});
 
 interface IParamTypes {
   user: string;

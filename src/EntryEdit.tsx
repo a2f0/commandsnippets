@@ -8,7 +8,7 @@ import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import {makeStyles} from '@material-ui/core/styles';
 
-const useStyles = makeStyles({
+export const useStyles = makeStyles({
   entry: {
     verticalAlign: 'top',
     width: `calc(100% - ${100}px)`,
