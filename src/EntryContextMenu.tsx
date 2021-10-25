@@ -3,7 +3,56 @@ import API from './api';
 import {IMouse} from './Entry';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import Menu from '@material-ui/core/Menu';
+import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
+import {WithStyles} from '@material-ui/core';
+import {withStyles} from '@material-ui/core/styles';
+
+interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
+  id: string;
+  keepMounted: boolean;
+  mousePosition: IMouse;
+  open: boolean;
+  onClose: () => void;
+  anchorReference: 'anchorPosition';
+  anchorPosition: {top: number; left: number} | undefined;
+  classes: {
+    paper: string;
+    list: string;
+  };
+  children: React.PropsWithChildren<{}>;
+}
+
+const StyledMenu = withStyles(MenuStyle)(
+  ({
+    id,
+    keepMounted,
+    mousePosition,
+    open,
+    onClose,
+    anchorReference,
+    classes,
+    children,
+  }: IStyledMenuProps) => {
+    return (
+      <Menu
+        id={id}
+        keepMounted={keepMounted}
+        open={open}
+        onClose={onClose}
+        anchorReference={anchorReference}
+        anchorPosition={
+          mousePosition.mouseY !== null && mousePosition.mouseX !== null
+            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
+            : undefined
+        }
+        classes={classes}
+      >
+        {children}
+      </Menu>
+    );
+  }
+);
 
 export interface IEntryContextMenu {
   mouse: IMouse;
@@ -87,9 +136,10 @@ const EntryContextMenu = ({
   };
 
   return (
-    <Menu
+    <StyledMenu
       id={`tagsEntriesContextMenu-${id}`}
       keepMounted
+      mousePosition={mousePosition}
       open={mousePosition.mouseY !== null}
       onClose={handleClose}
       anchorReference="anchorPosition"
@@ -134,7 +184,7 @@ const EntryContextMenu = ({
       >
         Untag
       </StyledMenuItem>
-    </Menu>
+    </StyledMenu>
   );
 };
 export default React.memo(EntryContextMenu);
