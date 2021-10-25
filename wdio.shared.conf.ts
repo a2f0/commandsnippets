@@ -36,7 +36,7 @@ export const config: WebdriverIO.Config = {
       tagSortOrder: 'order',
       entrySortOrder: 'order',
       mainPanel: 'EntryList',
-      tagNew: false,
+      tagNew: null,
       tagSearch: false,
       mostRecentCopyType: null,
       mostRecentCopyID: null,

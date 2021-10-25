@@ -37,7 +37,7 @@ const TagNew = ({handleNewParent}: IProps) => {
 
   const handleCancel = () => {
     setTagName('');
-    appConfig.setTagNew(false);
+    appConfig.setTagNew(null);
   };
 
   const handleSave = () => {
@@ -52,7 +52,7 @@ const TagNew = ({handleNewParent}: IProps) => {
     API.post('/tags', payload, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
         handleNewParent(response.data.data);
-        appConfig.setTagNew(false);
+        appConfig.setTagNew(null);
       })
       .catch(error => {
         console.error(error);

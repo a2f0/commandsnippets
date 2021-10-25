@@ -1,0 +1,103 @@
+import React, {useEffect, useState} from 'react';
+import {IMouse} from './Entry';
+import Menu from '@material-ui/core/Menu';
+import {MenuStyle} from './MenuBar';
+import StyledMenuItem from './StyledMenuItem';
+import {WithStyles} from '@material-ui/core';
+import {useAppContext} from './AppContext';
+import {withStyles} from '@material-ui/core/styles';
+
+interface ITagContextMenuProps {
+  mouse: IMouse;
+}
+
+interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
+  id: string;
+  keepMounted: boolean;
+  mousePosition: IMouse;
+  open: boolean;
+  onClose: () => void;
+  anchorReference: 'anchorPosition';
+  anchorPosition: {top: number; left: number} | undefined;
+  classes: {
+    paper: string;
+    list: string;
+  };
+  children: React.PropsWithChildren<{}>;
+}
+
+const StyledMenu = withStyles(MenuStyle)(
+  ({
+    id,
+    keepMounted,
+    mousePosition,
+    open,
+    onClose,
+    anchorReference,
+    classes,
+    children,
+  }: IStyledMenuProps) => {
+    return (
+      <Menu
+        id={id}
+        keepMounted={keepMounted}
+        open={open}
+        onClose={onClose}
+        anchorReference={anchorReference}
+        anchorPosition={
+          mousePosition.mouseY !== null && mousePosition.mouseX !== null
+            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
+            : undefined
+        }
+        classes={classes}
+      >
+        {children}
+      </Menu>
+    );
+  }
+);
+
+const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
+  const initialMouse: IMouse = {
+    mouseX: null,
+    mouseY: null,
+  };
+
+  const appConfig = useAppContext();
+
+  const [mousePosition, setMousePosition] = useState<IMouse>(initialMouse);
+
+  useEffect(() => {
+    setMousePosition(mouse);
+  }, [mouse]);
+
+  const handleClose = () => {
+    setMousePosition(initialMouse);
+  };
+
+  const handleNewTag = () => {
+    appConfig.setTagNew('bottom');
+    setMousePosition(initialMouse);
+  };
+
+  return (
+    <>
+      <StyledMenu
+        id="tagListContextMenu"
+        keepMounted
+        mousePosition={mousePosition}
+        open={mousePosition.mouseY !== null}
+        onClose={handleClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          mousePosition.mouseY !== null && mousePosition.mouseX !== null
+            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
+            : undefined
+        }
+      >
+        <StyledMenuItem onClick={handleNewTag}>New Tag</StyledMenuItem>
+      </StyledMenu>
+    </>
+  );
+};
+export default React.memo(TagListContextMenu);

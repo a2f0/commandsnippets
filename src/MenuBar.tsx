@@ -216,7 +216,7 @@ const MenuBar = (props: IMenuBarProps) => {
 
   const handleCreateTag = () => {
     setFileMenuAnchorEl(null);
-    appConfig.setTagNew(true);
+    appConfig.setTagNew('top');
   };
 
   return (

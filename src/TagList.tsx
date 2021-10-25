@@ -1,9 +1,11 @@
 import * as Constants from './constants';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import List from '@material-ui/core/List';
 import Tag from './Tag';
+import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
 import TagSearch from './TagSearch';
 import {autorun} from 'mobx';
@@ -54,6 +56,13 @@ const TagList = () => {
   const appConfig = useAppContext();
   const {user} = useParams<IParamTypes>();
   const [tags, setTags] = useState<Array<ITagJsonApi>>([]);
+
+  const initialMouse: IMouse = {
+    mouseX: null,
+    mouseY: null,
+  };
+
+  const [mouse, setMouse] = useState(initialMouse);
 
   useEffect(
     () =>
@@ -111,12 +120,26 @@ const TagList = () => {
     }
   };
 
+  const handleContextClick = (event: React.MouseEvent<HTMLUListElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const mouseData: IMouse = {...mouse};
+    (mouseData.mouseX = event.clientX - 2),
+      (mouseData.mouseY = event.clientY - 4),
+      setMouse(mouseData);
+  };
+
+  const contextMenu = useMemo(
+    () => <TagListContextMenu mouse={mouse} />,
+    [mouse]
+  );
+
   return (
     <>
       {appConfig.tagSearch && <TagSearch />}
-      <List className={classes.root}>
+      <List className={classes.root} onContextMenu={handleContextClick}>
         <div className={classes.ltr} id="tagList">
-          {appConfig.tagNew && <TagNew handleNewParent={handleNew} />}
+          {appConfig.tagNew === 'top' && <TagNew handleNewParent={handleNew} />}
           {tags.map((object: ITagJsonApi, i) => {
             return (
               <Tag
@@ -131,7 +154,11 @@ const TagList = () => {
               />
             );
           })}
+          {appConfig.tagNew === 'bottom' && (
+            <TagNew handleNewParent={handleNew} />
+          )}
         </div>
+        {appConfig.loggedInUser && <>{contextMenu}</>}
       </List>
     </>
   );
