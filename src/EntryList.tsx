@@ -1,9 +1,13 @@
+import * as Constants from './constants';
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
 import Entry from './Entry';
+import EntryListContextMenu from './EntryListContextMenu';
+import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {autorun} from 'mobx';
+import {makeStyles} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
@@ -34,7 +38,14 @@ export interface TagTextEntryThroughModel {
   index: number;
 }
 
+const useStyles = makeStyles({
+  root: {
+    height: `calc(100vh - ${Constants.appBarHeight}px)`,
+  },
+});
+
 const EntryList = () => {
+  const classes = useStyles();
   const appConfig = useAppContext();
   const location = useLocation();
   const {user} = useParams<IParamTypes>();
@@ -100,8 +111,34 @@ const EntryList = () => {
     );
   };
 
+  const initialMouse: IMouse = {
+    mouseX: null,
+    mouseY: null,
+  };
+
+  const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const mouseData: IMouse = {...mouse};
+    (mouseData.mouseX = event.clientX - 2),
+      (mouseData.mouseY = event.clientY - 4),
+      setMouse(mouseData);
+  };
+
+  const [mouse, setMouse] = useState(initialMouse);
+
+  const contextMenu = useMemo(
+    () => <EntryListContextMenu mouse={mouse} />,
+    [mouse]
+  );
+
   return (
-    <div ref={drop} id="tagsEntriesList">
+    <div
+      ref={drop}
+      id="tagsEntriesList"
+      className={classes.root}
+      onContextMenu={handleContextClick}
+    >
       {entries.map((element, i) => {
         return (
           <Entry
@@ -117,6 +154,7 @@ const EntryList = () => {
           />
         );
       })}
+      {appConfig.loggedInUser && <>{contextMenu}</>}
     </div>
   );
 };
