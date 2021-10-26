@@ -82,7 +82,6 @@ const Entry = ({
   findEntryByIndex,
 }: IEntryProps) => {
   const appConfig = useAppContext();
-  const [showNew, setShowNew] = useState(false);
   const [textEntryObject, setTextEntryObject] =
     useState<ITextEntryJsonApi>(object);
   const dragRef = useRef<HTMLDivElement>(null);
@@ -193,12 +192,9 @@ const Entry = ({
               })
                 .then(() => {})
                 .catch(error => {
-                  // handle error
-                  console.log(error);
+                  console.error(error);
                 })
-                .then(() => {
-                  // always executed
-                });
+                .then(() => {});
             }
           } else {
             console.info("it wasn't moved.");
@@ -304,11 +300,7 @@ const Entry = ({
   };
 
   const handleNewEntry = () => {
-    setShowNew(true);
-  };
-
-  const handleCancelNewEntry = () => {
-    setShowNew(false);
+    appConfig.setEntryNew(`textEntry-${object.id}-top`);
   };
 
   const handleUntag = () => {
@@ -379,6 +371,9 @@ const Entry = ({
 
   return (
     <>
+      {appConfig.entryNew === `textEntry-${object.id}-top` && (
+        <EntryNew sortAndFilterParent={sortAndFilterParent} />
+      )}
       {!isEditing && (
         <div
           ref={dropRef}
@@ -460,12 +455,8 @@ const Entry = ({
           </div>
         </div>
       )}
-
-      {showNew && (
-        <EntryNew
-          sortAndFilterParent={sortAndFilterParent}
-          handleCancelNewEntry={handleCancelNewEntry}
-        />
+      {appConfig.entryNew === `textEntry-${object.id}-bottom` && (
+        <EntryNew sortAndFilterParent={sortAndFilterParent} />
       )}
 
       {appConfig.loggedInUser && <>{contextMenu}</>}

@@ -10,7 +10,6 @@ import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
 
 export interface IEntryNewProps {
-  handleCancelNewEntry: () => void;
   sortAndFilterParent: () => void;
 }
 
@@ -19,10 +18,7 @@ interface IParamTypes {
   tag: string;
 }
 
-const EntryNew = ({
-  sortAndFilterParent,
-  handleCancelNewEntry,
-}: IEntryNewProps) => {
+const EntryNew = ({sortAndFilterParent}: IEntryNewProps) => {
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
   const classes = useStyles();
@@ -86,7 +82,7 @@ const EntryNew = ({
                 response.data.data
               );
               sortAndFilterParent();
-              handleCancelNewEntry();
+              appConfig.setEntryNew(null);
             }
           )
           .catch(error => {
@@ -95,8 +91,7 @@ const EntryNew = ({
           .then(() => {});
       })
       .catch(error => {
-        // handle error
-        console.log(error);
+        console.error(error);
       })
       .then(() => {});
   };
@@ -104,7 +99,7 @@ const EntryNew = ({
   const handleCancel = () => {
     setBody(body);
     setSubject(subject);
-    handleCancelNewEntry();
+    appConfig.setEntryNew(null);
   };
 
   const handleBodyChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {

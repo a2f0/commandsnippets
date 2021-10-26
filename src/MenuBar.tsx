@@ -219,6 +219,11 @@ const MenuBar = (props: IMenuBarProps) => {
     appConfig.setTagNew('top');
   };
 
+  const handleCreateEntry = () => {
+    setFileMenuAnchorEl(null);
+    appConfig.setEntryNew('textEntry-top');
+  };
+
   return (
     <>
       <Toolbar variant="dense" className={classes.toolBar}>
@@ -280,7 +285,7 @@ const MenuBar = (props: IMenuBarProps) => {
           </StyledMenuItem>
         )}
         {appConfig.loggedInUser && (
-          <StyledMenuItem onClick={handleFileMenuClose}>
+          <StyledMenuItem onClick={handleCreateEntry}>
             Create an Entry
           </StyledMenuItem>
         )}

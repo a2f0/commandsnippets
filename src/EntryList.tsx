@@ -4,6 +4,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
 import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
+import EntryNew from './EntryNew';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {autorun} from 'mobx';
@@ -139,6 +140,9 @@ const EntryList = () => {
       className={classes.root}
       onContextMenu={handleContextClick}
     >
+      {appConfig.entryNew === 'textEntry-top' && (
+        <EntryNew sortAndFilterParent={sortAndFilter} />
+      )}
       {entries.map((element, i) => {
         return (
           <Entry
@@ -154,6 +158,9 @@ const EntryList = () => {
           />
         );
       })}
+      {appConfig.entryNew === 'textEntry-bottom' && (
+        <EntryNew sortAndFilterParent={sortAndFilter} />
+      )}
       {appConfig.loggedInUser && <>{contextMenu}</>}
     </div>
   );

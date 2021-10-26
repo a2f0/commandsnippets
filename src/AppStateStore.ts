@@ -25,6 +25,7 @@ export const AppStateStoreModel = types
     loggedInUser: types.maybeNull(types.string),
     selectedTheme: types.string,
     tagSortOrder: types.string,
+    entryNew: types.maybeNull(types.string),
     entrySortOrder: types.string,
     untaggedEntrySortOrder: types.string,
     mainPanel: types.string,
@@ -187,6 +188,9 @@ export const AppStateStoreModel = types
     setTagSortOrder(order: string) {
       self.tagSortOrder = order;
     },
+    setEntryNew(value: string | null) {
+      self.entryNew = value;
+    },
     setEntrySortOrder(order: string) {
       self.entrySortOrder = order;
     },
@@ -223,6 +227,7 @@ export interface appState {
   loggedInUser: string | null;
   selectedTheme: string;
   tagSortOrder: string;
+  entryNew: string | null;
   entrySortOrder: string;
   untaggedEntrySortOrder: string;
   mainPanel: string;
@@ -237,6 +242,7 @@ const defaultState: appState = {
   loggedInUser: null,
   selectedTheme: 'darkTheme',
   tagSortOrder: 'order',
+  entryNew: null,
   entrySortOrder: 'order',
   untaggedEntrySortOrder: 'date_updated',
   mainPanel: 'EntryList',

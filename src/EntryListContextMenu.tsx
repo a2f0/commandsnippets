@@ -4,6 +4,7 @@ import Menu from '@material-ui/core/Menu';
 import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
 import {WithStyles} from '@material-ui/core';
+import {useAppContext} from './AppContext';
 import {withStyles} from '@material-ui/core/styles';
 
 export interface IEntryContextMenu {
@@ -57,6 +58,7 @@ const StyledMenu = withStyles(MenuStyle)(
 );
 
 const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
+  const appConfig = useAppContext();
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
@@ -73,6 +75,7 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
   };
 
   const handleNewEntry = () => {
+    appConfig.setEntryNew('textEntry-bottom');
     handleClose();
   };
 
