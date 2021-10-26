@@ -117,20 +117,12 @@ const MenuBar = (props: IMenuBarProps) => {
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
-  const [editMenuAnchorEl, setEditMenuAnchorEl] =
-    React.useState<null | HTMLElement>(null);
   const [viewMenuAnchorEl, setViewMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
   const [entriesMenuAnchorEl, setEntriesMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
-  const [helpMenuAnchorEl, setHelpMenuAnchorEl] =
-    React.useState<null | HTMLElement>(null);
   const [tagsMenuAnchorEl, setTagsMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
-
-  const handleNavigateToLogin = () => {
-    history.push('/login');
-  };
 
   const handleLogout = () => {
     const base_url = baseHTTPURL();
@@ -160,14 +152,6 @@ const MenuBar = (props: IMenuBarProps) => {
     setFileMenuAnchorEl(null);
   };
 
-  // const handleEditMenuClick = event => {
-  //   setEditMenuAnchorEl(event.currentTarget);
-  // };
-
-  const handleEditMenuClose = () => {
-    setEditMenuAnchorEl(null);
-  };
-
   const handleViewMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setViewMenuAnchorEl(event.currentTarget);
   };
@@ -192,14 +176,6 @@ const MenuBar = (props: IMenuBarProps) => {
 
   const handleEntriesMenuClose = () => {
     setEntriesMenuAnchorEl(null);
-  };
-
-  // const handleHelpMenuClick = event => {
-  //   setHelpMenuAnchorEl(event.currentTarget);
-  // };
-
-  const handleHelpMenuClose = () => {
-    setHelpMenuAnchorEl(null);
   };
 
   const handleSetTagSortOrder = (order: string) => {
@@ -229,18 +205,18 @@ const MenuBar = (props: IMenuBarProps) => {
       <Toolbar variant="dense" className={classes.toolBar}>
         <Typography className={classes.drawer}></Typography>
         <Typography className={classes.dragIndicator}></Typography>
-        <Button
-          size="small"
-          aria-controls="file-menu"
-          className={classes.menuButton}
-          aria-haspopup="true"
-          onClick={handleFileMenuClick}
-        >
-          File
-        </Button>
-        {/* <Button size="small" label="Primary" aria-controls="edit-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleEditMenuClick}>
-      Edit
-        </Button> */}
+
+        {appConfig.loggedInUser && (
+          <Button
+            size="small"
+            aria-controls="file-menu"
+            className={classes.menuButton}
+            aria-haspopup="true"
+            onClick={handleFileMenuClick}
+          >
+            File
+          </Button>
+        )}
         <Button
           size="small"
           aria-controls="view-menu"
@@ -268,43 +244,21 @@ const MenuBar = (props: IMenuBarProps) => {
         >
           Entries
         </Button>
-
-        {/* <Button size="small" label="Primary" aria-controls="view-menu" className={classes.menuButton} aria-haspopup="true" onClick={handleHelpMenuClick}>
-      Help
-        </Button> */}
       </Toolbar>
+
       <StyledMenu
         id="file-menu"
         anchorEl={fileMenuAnchorEl}
         open={Boolean(fileMenuAnchorEl)}
         onClose={handleFileMenuClose}
       >
-        {appConfig.loggedInUser && (
-          <StyledMenuItem onClick={handleCreateTag}>
-            Create a Tag
-          </StyledMenuItem>
-        )}
-        {appConfig.loggedInUser && (
-          <StyledMenuItem onClick={handleCreateEntry}>
-            Create an Entry
-          </StyledMenuItem>
-        )}
-        {!appConfig.loggedInUser && (
-          <StyledMenuItem onClick={handleNavigateToLogin}>Login</StyledMenuItem>
-        )}
-        {appConfig.loggedInUser && (
-          <StyledMenuItem onClick={handleLogout}>Logout</StyledMenuItem>
-        )}
+        <StyledMenuItem onClick={handleCreateTag}>New Tag</StyledMenuItem>
+
+        <StyledMenuItem onClick={handleCreateEntry}>New Entry</StyledMenuItem>
+
+        <StyledMenuItem onClick={handleLogout}>Logout</StyledMenuItem>
       </StyledMenu>
-      <StyledMenu
-        id="edit-menu"
-        anchorEl={editMenuAnchorEl}
-        open={Boolean(editMenuAnchorEl)}
-        onClose={handleEditMenuClose}
-      >
-        <StyledMenuItem onClick={handleEditMenuClose}>Edit 1</StyledMenuItem>
-        <StyledMenuItem onClick={handleEditMenuClose}>Edit 2</StyledMenuItem>
-      </StyledMenu>
+
       <StyledMenu
         id="view-menu"
         anchorEl={viewMenuAnchorEl}
@@ -323,7 +277,6 @@ const MenuBar = (props: IMenuBarProps) => {
             )}
           </ListItemIcon>
           Light Mode
-          {/* <WbSunnyIcon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}} /> */}
         </StyledMenuItem>
         <StyledMenuItem
           onClick={() => {
@@ -337,7 +290,6 @@ const MenuBar = (props: IMenuBarProps) => {
             )}
           </ListItemIcon>
           Dark Mode
-          {/* <Brightness3Icon className={classes.themeSwitcher} style={{color: theme.palette.text.primary}}/> */}
         </StyledMenuItem>
         <Divider />
         <StyledMenuItem
@@ -704,15 +656,6 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Date Created <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
         ]}
-      </StyledMenu>
-      <StyledMenu
-        id="help-menu"
-        anchorEl={helpMenuAnchorEl}
-        open={Boolean(helpMenuAnchorEl)}
-        onClose={handleHelpMenuClose}
-      >
-        <StyledMenuItem onClick={handleHelpMenuClose}>Help 1</StyledMenuItem>
-        <StyledMenuItem onClick={handleHelpMenuClose}>Help 2</StyledMenuItem>
       </StyledMenu>
     </>
   );

@@ -84,29 +84,8 @@ const Main = (props: IMainProps) => {
   const {user} = useParams<IParamTypes>();
 
   const handleNavigateToRoot = (user: string) => {
-    console.info('go to root!');
     history.push(`/${user}`);
   };
-
-  // const initialMouse = {
-  //   mouseX: null,
-  //   mouseY: null,
-  // };
-
-  // const [mouse, setMouse] = useState(initialMouse);
-
-  // const handleContextClick = event => {
-  //   event.preventDefault();
-  //   event.stopPropagation();
-  //   let mouseData = {...mouse};
-  //   (mouseData.mouseX = event.clientX - 2),
-  //     (mouseData.mouseY = event.clientY - 4),
-  //     setMouse(mouseData);
-  // };
-
-  // const showNewEntry = () => {
-  //   console.log('showNewEntry');
-  // };
 
   return (
     <>
@@ -130,7 +109,6 @@ const Main = (props: IMainProps) => {
           <GithubAuth />
           <GoogleAuth />
         </Toolbar>
-
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
       </AppBar>
       <LeftDrawer />
