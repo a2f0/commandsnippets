@@ -228,6 +228,11 @@ export const AppStateStoreModel = types
         self.tagTextEntryThroughModel.filter(c => c.id === id)[0];
       destroy(existing);
     },
+    removeUntaggedTextEntry(id: string) {
+      const existing: Instance<typeof TextEntryModel> =
+        self.untaggedTextEntriesArray.filter(c => c.id === id)[0];
+      destroy(existing);
+    },
     removeTextEntry(id: string) {
       console.info('id: ' + id);
     },

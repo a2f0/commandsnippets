@@ -135,6 +135,7 @@ const Entry = ({
             if (tag === 'untagged') {
               //Then an untagged entry was tagged
               handleRemoveFromListParent(object.id);
+              appConfig.removeUntaggedTextEntry(object.id);
             }
           }
         } else {
