@@ -128,7 +128,7 @@ const EntryList = () => {
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
-  const handleUntag = (id: string) => {
+  const handleRemoveFromList = (id: string) => {
     setEntries(
       entries.filter(element => {
         return element.id !== id;
@@ -175,7 +175,7 @@ const EntryList = () => {
             index={i}
             moveEntry={moveEntry}
             findEntry={findEntry}
-            handleUntagParent={handleUntag}
+            handleRemoveFromListParent={handleRemoveFromList}
             object={element}
             filterAndSortParent={filterAndSort}
             findEntryByIndex={findEntryByIndex}

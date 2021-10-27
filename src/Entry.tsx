@@ -65,7 +65,7 @@ interface IEntryProps {
   index: number;
   moveEntry: (id: string, to: number) => void;
   findEntry: (id: string) => {entry: ITextEntryJsonApi; index: number};
-  handleUntagParent: (id: string) => void;
+  handleRemoveFromListParent: (id: string) => void;
   object: ITextEntryJsonApi;
   filterAndSortParent: () => void;
   findEntryByIndex: (id: number) => ITextEntryJsonApi | null;
@@ -76,7 +76,7 @@ const Entry = ({
   index,
   moveEntry,
   findEntry,
-  handleUntagParent,
+  handleRemoveFromListParent,
   object,
   filterAndSortParent,
   findEntryByIndex,
@@ -132,6 +132,10 @@ const Entry = ({
             API.post('tags_entries', payload, {
               withCredentials: true,
             });
+            if (tag === 'untagged') {
+              //Then an untagged entry was tagged
+              handleRemoveFromListParent(object.id);
+            }
           }
         } else {
           // Then it was reordered in the list.
@@ -303,7 +307,7 @@ const Entry = ({
     appConfig.setEntryNew(`textEntry-${object.id}-top`);
   };
 
-  const handleUntag = () => {
+  const handleRemoveFromList = () => {
     const userObject = appConfig.usersArray.find(
       element => element.attributes.username === user
     );
@@ -324,7 +328,7 @@ const Entry = ({
       withCredentials: true,
     });
     tagTextEntryThroughModelObject?.remove();
-    handleUntagParent(textEntryObject.id);
+    handleRemoveFromListParent(textEntryObject.id);
   };
 
   const handleCopyClick = () => {
@@ -341,7 +345,7 @@ const Entry = ({
         mouse={mouse}
         id={id}
         text_entry={textEntryObject}
-        handleUntagParent={handleUntag}
+        handleRemoveFromListParent={handleRemoveFromList}
         handleNewEntryParent={handleNewEntry}
         handleBeginEditParent={handleBeginEdit}
         handleCopyParent={handleCopyClick}

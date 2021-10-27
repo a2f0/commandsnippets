@@ -58,7 +58,7 @@ export interface IEntryContextMenu {
   mouse: IMouse;
   id: string;
   text_entry: ITextEntryJsonApi;
-  handleUntagParent: () => void;
+  handleRemoveFromListParent: () => void;
   handleNewEntryParent: () => void;
   handleBeginEditParent: () => void;
   handleCopyParent: () => void;
@@ -68,7 +68,7 @@ const EntryContextMenu = ({
   mouse,
   id,
   text_entry,
-  handleUntagParent,
+  handleRemoveFromListParent,
   handleNewEntryParent,
   handleBeginEditParent,
   handleCopyParent,
@@ -88,8 +88,8 @@ const EntryContextMenu = ({
     setMousePosition(initialMouse);
   };
 
-  const handleUntag = () => {
-    handleUntagParent();
+  const handleRemoveFromList = () => {
+    handleRemoveFromListParent();
     handleClose();
   };
 
@@ -179,7 +179,7 @@ const EntryContextMenu = ({
       </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
-          handleUntag();
+          handleRemoveFromList();
         }}
       >
         Untag
