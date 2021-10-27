@@ -78,7 +78,6 @@ interface IParamTypes {
 }
 
 const Main = (props: IMainProps) => {
-  const appConfig = useAppContext();
   const classes = useStyles();
   const history = useHistory();
   const {user} = useParams<IParamTypes>();
@@ -113,13 +112,8 @@ const Main = (props: IMainProps) => {
       </AppBar>
       <LeftDrawer />
       <main className={classes.main}>
-        {/* {appConfig.mainPanel === 'UntaggedEntryList' && <UntaggedEntryList />} */}
-        {appConfig.mainPanel === 'EntryList' && <EntryList />}
-        {/* <Box height="auto" className={classes.entryListBlankSpace}>
-          Empty Space
-        </Box> */}
+        <EntryList />
       </main>
-      {/* <MainContextMenu mouse={mouse} showNewEntry={showNewEntry} /> */}
     </>
   );
 };

@@ -17,7 +17,12 @@ export interface ITextEntryJsonApiResponseSingle {
   included: Array<ITagTextEntryThroughModelJsonApi>;
 }
 
-export function sort(username: string, tag: string): ITextEntryJsonApi[] {
+export function sort(
+  username: string,
+  tag: string | null,
+  inputArray: Array<ITextEntryJsonApi>,
+  sortOrder: string
+): ITextEntryJsonApi[] {
   let sortedArray: Array<ITextEntryJsonApi> = [];
   const userObject = store.usersArray.find(
     element => element.attributes.username === username
@@ -35,16 +40,16 @@ export function sort(username: string, tag: string): ITextEntryJsonApi[] {
       element => element.relationships.tag.data.id === tagObject?.id
     );
 
-  // Rearrange the junction entries if necessary.
+  // Sort attributes for the junction.
   if (
-    store.entrySortOrder === 'order' ||
-    store.entrySortOrder === 'date_tagged' ||
-    store.entrySortOrder === '-date_tagged'
+    sortOrder === 'order' ||
+    sortOrder === 'date_tagged' ||
+    sortOrder === '-date_tagged'
   ) {
     // Then it is a sort based on the junction table.
     let tagTextEntryThroughModelFilteredAndOrdered: ITagTextEntryThroughModelJsonApi[] =
       [];
-    if (store.entrySortOrder === 'order') {
+    if (sortOrder === 'order') {
       tagTextEntryThroughModelFilteredAndOrdered =
         tagTextEntryThroughModelFiltered.sort((a, b) => {
           const sort1 = a.attributes.order;
@@ -58,7 +63,7 @@ export function sort(username: string, tag: string): ITextEntryJsonApi[] {
           // equal
           return 0;
         });
-    } else if (store.entrySortOrder === 'date_tagged') {
+    } else if (sortOrder === 'date_tagged') {
       tagTextEntryThroughModelFilteredAndOrdered =
         tagTextEntryThroughModelFiltered.sort((a, b) => {
           const sort1 = new Date(a.attributes.date_updated);
@@ -72,7 +77,7 @@ export function sort(username: string, tag: string): ITextEntryJsonApi[] {
           // equal
           return 0;
         });
-    } else if (store.entrySortOrder === '-date_tagged') {
+    } else if (sortOrder === '-date_tagged') {
       tagTextEntryThroughModelFilteredAndOrdered =
         tagTextEntryThroughModelFiltered.sort((a, b) => {
           const sort1 = new Date(a.attributes.date_updated);
@@ -88,7 +93,7 @@ export function sort(username: string, tag: string): ITextEntryJsonApi[] {
         });
     }
     tagTextEntryThroughModelFilteredAndOrdered?.map(element => {
-      const entry = store.textEntriesArray.find(textEntry => {
+      const entry = inputArray.find(textEntry => {
         return textEntry.id === element.relationships.text_entry.data.id;
       });
       if (entry !== undefined) {
@@ -99,150 +104,154 @@ export function sort(username: string, tag: string): ITextEntryJsonApi[] {
     // Then its a sort order on directly attached attribute.
 
     // Get all of the entries.
-    const textEntriesFiltered: ITextEntryJsonApi[] = [];
-    tagTextEntryThroughModelFiltered.map(element => {
-      const entry = store.textEntriesArray.find(textEntry => {
-        return textEntry.id === element.relationships.text_entry.data.id;
-      });
-      if (entry !== undefined) {
-        textEntriesFiltered.push(entry);
-      }
-    });
+    let textEntriesFiltered: ITextEntryJsonApi[] = [];
 
-    if (store.entrySortOrder === 'subject') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = a.attributes.subject.toUpperCase(); // ignore upper and lowercase
-        const sort2 = b.attributes.subject.toUpperCase(); // ignore upper and lowercase
-        if (sort1 < sort2) {
-          return -1;
+    if (tag !== null) {
+      tagTextEntryThroughModelFiltered.map(element => {
+        const entry = inputArray.find(textEntry => {
+          return textEntry.id === element.relationships.text_entry.data.id;
+        });
+        if (entry !== undefined) {
+          textEntriesFiltered.push(entry);
         }
-        if (sort1 > sort2) {
-          return 1;
-        }
-        // equal
-        return 0;
       });
-    } else if (store.entrySortOrder === '-subject') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = a.attributes.subject.toUpperCase(); // ignore upper and lowercase
-        const sort2 = b.attributes.subject.toUpperCase(); // ignore upper and lowercase
-        if (sort2 < sort1) {
-          return -1;
-        }
-        if (sort2 > sort1) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === 'body') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
-        const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
-        if (sort2 < sort1) {
-          return -1;
-        }
-        if (sort2 > sort1) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === '-body') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
-        const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
-        if (sort1 < sort2) {
-          return -1;
-        }
-        if (sort1 > sort2) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === 'date_created') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = new Date(a.attributes.date_updated);
-        const sort2 = new Date(b.attributes.date_updated);
-        if (sort1 < sort2) {
-          return -1;
-        }
-        if (sort1 > sort2) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === '-date_created') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = new Date(a.attributes.date_updated);
-        const sort2 = new Date(b.attributes.date_updated);
-        if (sort2 < sort1) {
-          return -1;
-        }
-        if (sort2 > sort1) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === 'date_updated') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = new Date(a.attributes.date_updated);
-        const sort2 = new Date(b.attributes.date_updated);
-        if (sort1 < sort2) {
-          return -1;
-        }
-        if (sort1 > sort2) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === '-date_updated') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = new Date(a.attributes.date_updated);
-        const sort2 = new Date(b.attributes.date_updated);
-        if (sort2 < sort1) {
-          return -1;
-        }
-        if (sort2 > sort1) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === 'tag_count') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = a.attributes.tag_count; // ignore upper and lowercase
-        const sort2 = b.attributes.tag_count; // ignore upper and lowercase
-        if (sort1 < sort2) {
-          return -1;
-        }
-        if (sort1 > sort2) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === '-tag_count') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = a.attributes.tag_count; // ignore upper and lowercase
-        const sort2 = b.attributes.tag_count; // ignore upper and lowercase
-        if (sort2 < sort1) {
-          return -1;
-        }
-        if (sort2 > sort1) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (store.entrySortOrder === 'order') {
-      return store.textEntriesArray;
     } else {
-      throw `Unknown sort order: ${store.entrySortOrder}`;
+      // Then it doesn't need to be filtered by tag.
+      textEntriesFiltered = inputArray;
+    }
+
+    if (sortOrder === 'subject') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = a.attributes.subject.toUpperCase(); // ignore upper and lowercase
+        const sort2 = b.attributes.subject.toUpperCase(); // ignore upper and lowercase
+        if (sort1 < sort2) {
+          return -1;
+        }
+        if (sort1 > sort2) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === '-subject') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = a.attributes.subject.toUpperCase(); // ignore upper and lowercase
+        const sort2 = b.attributes.subject.toUpperCase(); // ignore upper and lowercase
+        if (sort2 < sort1) {
+          return -1;
+        }
+        if (sort2 > sort1) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === 'body') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
+        const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
+        if (sort2 < sort1) {
+          return -1;
+        }
+        if (sort2 > sort1) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === '-body') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
+        const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
+        if (sort1 < sort2) {
+          return -1;
+        }
+        if (sort1 > sort2) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === 'date_created') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = new Date(a.attributes.date_updated);
+        const sort2 = new Date(b.attributes.date_updated);
+        if (sort1 < sort2) {
+          return -1;
+        }
+        if (sort1 > sort2) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === '-date_created') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = new Date(a.attributes.date_updated);
+        const sort2 = new Date(b.attributes.date_updated);
+        if (sort2 < sort1) {
+          return -1;
+        }
+        if (sort2 > sort1) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === 'date_updated') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = new Date(a.attributes.date_updated);
+        const sort2 = new Date(b.attributes.date_updated);
+        if (sort1 < sort2) {
+          return -1;
+        }
+        if (sort1 > sort2) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === '-date_updated') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = new Date(a.attributes.date_updated);
+        const sort2 = new Date(b.attributes.date_updated);
+        if (sort2 < sort1) {
+          return -1;
+        }
+        if (sort2 > sort1) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === 'tag_count') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = a.attributes.tag_count; // ignore upper and lowercase
+        const sort2 = b.attributes.tag_count; // ignore upper and lowercase
+        if (sort1 < sort2) {
+          return -1;
+        }
+        if (sort1 > sort2) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else if (sortOrder === '-tag_count') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = a.attributes.tag_count; // ignore upper and lowercase
+        const sort2 = b.attributes.tag_count; // ignore upper and lowercase
+        if (sort2 < sort1) {
+          return -1;
+        }
+        if (sort2 > sort1) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
+    } else {
+      throw `Unknown sort order: ${sortOrder}`;
     }
   }
   // Remove MobX Proxy
@@ -285,26 +294,39 @@ export function fetch(
     ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
   >,
   user: string,
-  tag: string,
+  tag: string | null,
   page: number,
-  since: string | null
+  since: string | null,
+  tag_count: number | null
 ) {
   interface IParams {
     'page[number]': number;
     'filter[user.username]': string;
-    'filter[tags.name]': string;
+    'filter[tags.name]'?: string;
     sort: string;
     'filter[date_updated.gt]'?: string;
     include: string;
+    'filter[tag_count]'?: number;
   }
 
   const params: IParams = {
     'page[number]': page,
     'filter[user.username]': user,
-    'filter[tags.name]': tag,
     sort: 'date_updated',
     include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
   };
+
+  if (since !== null) {
+    params['filter[date_updated.gt]'] = since;
+  }
+
+  if (tag !== null) {
+    params['filter[tags.name]'] = tag;
+  }
+
+  if (tag_count !== null) {
+    params['filter[tag_count]'] = tag_count;
+  }
 
   const f: Promise<
     Array<ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi>
@@ -320,7 +342,7 @@ export function fetch(
     if (response.data.links.next === null) {
       return entries;
     }
-    return fetch(entries, user, tag, ++page, since);
+    return fetch(entries, user, tag, ++page, since, tag_count);
   });
   return f;
 }

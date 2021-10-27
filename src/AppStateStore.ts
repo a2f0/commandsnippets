@@ -20,6 +20,7 @@ export const AppStateStoreModel = types
   .model({
     tagsArray: types.array(TagModel),
     textEntriesArray: types.array(TextEntryModel),
+    untaggedTextEntriesArray: types.array(TextEntryModel),
     tagTextEntryThroughModel: types.array(TagTextEntryThroughModel),
     usersArray: types.array(UserModel),
     loggedInUser: types.maybeNull(types.string),
@@ -83,7 +84,8 @@ export const AppStateStoreModel = types
           user,
           tag,
           1,
-          mostRecentTimestamp
+          mostRecentTimestamp,
+          null
         );
         for (let i = 0; i < ta.length; i++) {
           if (ta[i].type === 'TextEntry') {
@@ -110,6 +112,53 @@ export const AppStateStoreModel = types
               if (incomingTimeStamp > existingTimestamp) {
                 existing.update(ta[i]);
               }
+            }
+          } else if (ta[i].type === 'User') {
+            const existing = self.usersArray.find(o => o.id === ta[i].id);
+            if (existing === undefined) {
+              self.usersArray.push(ta[i]);
+            }
+          } else {
+            throw 'Unknown object type: ' + ta[i].type;
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }),
+    fetchUntaggedTextEntries: flow(function* fetchUntaggedTextEntries(
+      user: string
+    ) {
+      try {
+        const existingUser = self.usersArray.find(
+          o => o.attributes.username === user
+        );
+        let filteredTextEntries;
+        if (existingUser !== undefined) {
+          filteredTextEntries = self.textEntriesArray.filter(element => {
+            element.relationships.user.data.id === existingUser.id;
+          });
+        } else {
+          filteredTextEntries = self.textEntriesArray;
+        }
+        const mostRecentTimestamp: string | null =
+          TextEntryHelpers.getMostRecentTimeStamp(filteredTextEntries);
+        const ta = yield TextEntryHelpers.fetch(
+          [],
+          user,
+          null,
+          1,
+          mostRecentTimestamp,
+          0
+        );
+        for (let i = 0; i < ta.length; i++) {
+          if (ta[i].type === 'TextEntry') {
+            const existing = self.untaggedTextEntriesArray.find(
+              o => o.id === ta[i].id
+            );
+            if (existing === undefined) {
+              self.untaggedTextEntriesArray.push(ta[i]);
             }
           } else if (ta[i].type === 'User') {
             const existing = self.usersArray.find(o => o.id === ta[i].id);

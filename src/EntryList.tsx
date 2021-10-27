@@ -63,7 +63,12 @@ const EntryList = () => {
 
   const retrieveEntries = () => {
     const fetchData = async () => {
-      if (tag !== undefined) {
+      if (tag === 'untagged') {
+        appConfig.fetchUntaggedTextEntries(user).then(() => {
+          console.info(appConfig.untaggedTextEntriesArray);
+          sortAndFilter();
+        });
+      } else {
         appConfig.fetchTextEntries(user, tag).then(() => {
           sortAndFilter();
         });
@@ -73,7 +78,25 @@ const EntryList = () => {
   };
 
   const sortAndFilter = () => {
-    setEntries(TextEntryHelpers.sort(user, tag));
+    if (appConfig.mainPanel === 'UntaggedEntryList') {
+      setEntries(
+        TextEntryHelpers.sort(
+          user,
+          null,
+          appConfig.untaggedTextEntriesArray,
+          appConfig.untaggedEntrySortOrder
+        )
+      );
+    } else {
+      setEntries(
+        TextEntryHelpers.sort(
+          user,
+          tag,
+          appConfig.textEntriesArray,
+          appConfig.entrySortOrder
+        )
+      );
+    }
   };
 
   const moveEntry = (id: string, atIndex: number) => {
