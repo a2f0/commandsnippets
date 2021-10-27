@@ -58,27 +58,28 @@ const EntryList = () => {
       autorun(() => {
         retrieveEntries();
       }),
-    [location]
+    [
+      location,
+      appConfig.entrySortOrder,
+      appConfig.untaggedEntrySortOrder,
+      appConfig.mainPanel,
+    ]
   );
 
   const retrieveEntries = () => {
-    const fetchData = async () => {
-      if (tag === 'untagged') {
-        appConfig.fetchUntaggedTextEntries(user).then(() => {
-          console.info(appConfig.untaggedTextEntriesArray);
-          sortAndFilter();
-        });
-      } else {
-        appConfig.fetchTextEntries(user, tag).then(() => {
-          sortAndFilter();
-        });
-      }
-    };
-    fetchData();
+    if (tag === 'untagged' && user !== undefined) {
+      appConfig.fetchUntaggedTextEntries(user).then(() => {
+        filterAndSort();
+      });
+    } else if (user !== undefined && tag !== undefined) {
+      appConfig.fetchTextEntries(user, tag).then(() => {
+        filterAndSort();
+      });
+    }
   };
 
-  const sortAndFilter = () => {
-    if (appConfig.mainPanel === 'UntaggedEntryList') {
+  const filterAndSort = () => {
+    if (appConfig.mainPanel === 'UntaggedEntryList' && user !== undefined) {
       setEntries(
         TextEntryHelpers.sort(
           user,
@@ -87,7 +88,7 @@ const EntryList = () => {
           appConfig.untaggedEntrySortOrder
         )
       );
-    } else {
+    } else if (user !== undefined && tag !== undefined) {
       setEntries(
         TextEntryHelpers.sort(
           user,
@@ -164,7 +165,7 @@ const EntryList = () => {
       onContextMenu={handleContextClick}
     >
       {appConfig.entryNew === 'textEntry-top' && (
-        <EntryNew sortAndFilterParent={sortAndFilter} />
+        <EntryNew filterAndSortParent={filterAndSort} />
       )}
       {entries.map((element, i) => {
         return (
@@ -176,13 +177,13 @@ const EntryList = () => {
             findEntry={findEntry}
             handleUntagParent={handleUntag}
             object={element}
-            sortAndFilterParent={sortAndFilter}
+            filterAndSortParent={filterAndSort}
             findEntryByIndex={findEntryByIndex}
           />
         );
       })}
       {appConfig.entryNew === 'textEntry-bottom' && (
-        <EntryNew sortAndFilterParent={sortAndFilter} />
+        <EntryNew filterAndSortParent={filterAndSort} />
       )}
       {appConfig.loggedInUser && <>{contextMenu}</>}
     </div>

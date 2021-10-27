@@ -10,7 +10,7 @@ import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
 
 export interface IEntryNewProps {
-  sortAndFilterParent: () => void;
+  filterAndSortParent: () => void;
 }
 
 interface IParamTypes {
@@ -18,7 +18,7 @@ interface IParamTypes {
   tag: string;
 }
 
-const EntryNew = ({sortAndFilterParent}: IEntryNewProps) => {
+const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
   const classes = useStyles();
@@ -81,7 +81,7 @@ const EntryNew = ({sortAndFilterParent}: IEntryNewProps) => {
               appConfig.updateOrCreateTagTextEntryThroughModel(
                 response.data.data
               );
-              sortAndFilterParent();
+              filterAndSortParent();
               appConfig.setEntryNew(null);
             }
           )

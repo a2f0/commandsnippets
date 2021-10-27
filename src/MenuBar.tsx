@@ -644,7 +644,7 @@ const MenuBar = (props: IMenuBarProps) => {
           <StyledMenuItem
             key="SortUntaggedEntryListDateCreated-"
             onClick={() => {
-              handleSetUntaggedEntrySortOrder('date_created');
+              handleSetUntaggedEntrySortOrder('-date_created');
               handleEntriesMenuClose();
             }}
           >
@@ -653,7 +653,7 @@ const MenuBar = (props: IMenuBarProps) => {
                 <CheckIcon fontSize="small" />
               )}
             </ListItemIcon>
-            Sort by Date Created <ArrowDownwardIcon fontSize="small" />
+            Sort by Date Created <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
         ]}
       </StyledMenu>

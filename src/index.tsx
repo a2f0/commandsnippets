@@ -65,9 +65,6 @@ const AppRouter = React.memo(
                       <GoogleAuth />
                     )}
                   </Route>
-                  <Route path="/:user/untagged">
-                    <Main handleThemeSwitcher={handleThemeSwitcher} />
-                  </Route>
                   <Route path="/:user/:tag">
                     <Main handleThemeSwitcher={handleThemeSwitcher} />
                   </Route>

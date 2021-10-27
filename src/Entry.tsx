@@ -67,7 +67,7 @@ interface IEntryProps {
   findEntry: (id: string) => {entry: ITextEntryJsonApi; index: number};
   handleUntagParent: (id: string) => void;
   object: ITextEntryJsonApi;
-  sortAndFilterParent: () => void;
+  filterAndSortParent: () => void;
   findEntryByIndex: (id: number) => ITextEntryJsonApi | null;
 }
 
@@ -78,7 +78,7 @@ const Entry = ({
   findEntry,
   handleUntagParent,
   object,
-  sortAndFilterParent,
+  filterAndSortParent,
   findEntryByIndex,
 }: IEntryProps) => {
   const appConfig = useAppContext();
@@ -372,7 +372,7 @@ const Entry = ({
   return (
     <>
       {appConfig.entryNew === `textEntry-${object.id}-top` && (
-        <EntryNew sortAndFilterParent={sortAndFilterParent} />
+        <EntryNew filterAndSortParent={filterAndSortParent} />
       )}
       {!isEditing && (
         <div
@@ -456,7 +456,7 @@ const Entry = ({
         </div>
       )}
       {appConfig.entryNew === `textEntry-${object.id}-bottom` && (
-        <EntryNew sortAndFilterParent={sortAndFilterParent} />
+        <EntryNew filterAndSortParent={filterAndSortParent} />
       )}
 
       {appConfig.loggedInUser && <>{contextMenu}</>}
