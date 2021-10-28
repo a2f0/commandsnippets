@@ -2,11 +2,11 @@ import * as Constants from './constants';
 import React, {useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import TextareaAutosize from '@material-ui/core/TextareaAutosize';
-import {makeStyles} from '@material-ui/core/styles';
+import TextareaAutosize from '@mui/material/TextareaAutosize';
+import makeStyles from '@mui/styles/makeStyles';
 
 export const useStyles = makeStyles({
   entry: {
@@ -114,6 +114,7 @@ const EntryEdit = ({
             />
           </div>
           <Button
+            color="secondary"
             size="small"
             variant="outlined"
             onClick={() => {
@@ -123,6 +124,7 @@ const EntryEdit = ({
             Save
           </Button>
           <Button
+            color="secondary"
             size="small"
             variant="outlined"
             onClick={() => {

@@ -2,18 +2,18 @@ import * as Constants from './constants';
 import {useDrag, useDrop} from 'react-dnd';
 import {useMemo, useRef, useState} from 'react';
 import API from './api';
-import CheckIcon from '@material-ui/icons/Check';
+import CheckIcon from '@mui/icons-material/Check';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
-import FileCopySharpIcon from '@material-ui/icons/FileCopySharp';
+import FileCopySharpIcon from '@mui/icons-material/FileCopySharp';
 import {IParamTypes} from './EntryList';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
 import React from 'react';
 import {TagTextEntryThroughModel} from './EntryList';
-import {makeStyles} from '@material-ui/core/styles';
+import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
@@ -26,8 +26,11 @@ const useStyles = makeStyles({
   entryContainer: {
     marginBottom: 16,
     whiteSpace: 'pre',
+    lineHeight: '20px',
   },
-  entrySubject: {},
+  entrySubject: {
+    fontSize: 14,
+  },
   entryBody: {
     fontSize: 14,
     fontFamily: 'monospace',

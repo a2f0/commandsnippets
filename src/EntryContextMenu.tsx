@@ -2,11 +2,11 @@ import React, {useEffect, useState} from 'react';
 import API from './api';
 import {IMouse} from './Entry';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
-import Menu from '@material-ui/core/Menu';
+import Menu from '@mui/material/Menu';
 import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
-import {WithStyles} from '@material-ui/core';
-import {withStyles} from '@material-ui/core/styles';
+import {WithStyles} from '@mui/styles';
+import withStyles from '@mui/styles/withStyles';
 
 interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
   id: string;
@@ -20,7 +20,7 @@ interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
     paper: string;
     list: string;
   };
-  children: React.PropsWithChildren<{}>;
+  children: React.ReactNode;
 }
 
 const StyledMenu = withStyles(MenuStyle)(

@@ -1,7 +1,7 @@
 import * as Constants from './constants';
 import * as React from 'react';
-import Drawer, {DrawerProps} from '@material-ui/core/Drawer';
-import {makeStyles} from '@material-ui/core/styles';
+import Drawer, {DrawerProps} from '@mui/material/Drawer';
+import makeStyles from '@mui/styles/makeStyles';
 
 const useStyles = makeStyles({
   drawer: {

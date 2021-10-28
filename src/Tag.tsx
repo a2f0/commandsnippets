@@ -10,12 +10,12 @@ import ItemTypes from './ItemTypes';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import {TagTextEntryThroughModel} from './EntryList';
-import {Theme} from '@material-ui/core/styles';
-import {makeStyles} from '@material-ui/core/styles';
+import {Theme} from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
 import {useAppContext} from './AppContext';
 import {useHistory} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
-import {useTheme} from '@material-ui/styles';
+import {useTheme} from '@mui/styles';
 
 const useStyles = makeStyles({
   entry: {
@@ -24,11 +24,13 @@ const useStyles = makeStyles({
   },
   entryWrapper: {
     whiteSpace: 'pre',
+    lineHeight: '20px',
   },
   tagLabel: {
     display: 'inline-block',
     cursor: 'pointer',
     width: `calc(100% - ${Constants.dragIndicatorWidthTag}px)`,
+    fontSize: '14px',
   },
   tagDragIndicatorContainer: {
     display: 'inline-block',

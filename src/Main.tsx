@@ -1,32 +1,30 @@
 import * as Constants from './constants';
 import {useHistory, useParams} from 'react-router-dom';
-import AppBar from '@material-ui/core/AppBar';
+import AppBar from '@mui/material/AppBar';
 import EntryList from './EntryList';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
 import React from 'react';
-import {Theme} from '@material-ui/core/styles';
-import Toolbar from '@material-ui/core/Toolbar';
-// import UntaggedEntryList from './UntaggedEntryList';
-import {makeStyles} from '@material-ui/core/styles';
+import {Theme} from '@mui/material/styles';
+import Toolbar from '@mui/material/Toolbar';
+import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
-import {useAppContext} from './AppContext';
 
 const appBarHeight = 52;
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(() => ({
   clickableDiv: {
     marginRight: '10px',
     cursor: 'pointer',
   },
   appBar: {
-    zIndex: theme.zIndex.drawer + 1,
     height: appBarHeight,
     boxShadow: 'none',
     display: 'flex', // Make this a flex container to allow the greedyExpander to gobble up space.
     flexDirection: 'column', // Make this a flex container to allow the greedyExpander to gobble up space.
+    backgroundImage: 'none', // Remove the Material UI gradient.
   },
   main: {
     flexGrow: 1,

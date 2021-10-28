@@ -1,11 +1,11 @@
-import IconButton from '@material-ui/core/IconButton';
-import InputBase from '@material-ui/core/InputBase';
-import Paper from '@material-ui/core/Paper';
+import IconButton from '@mui/material/IconButton';
+import InputBase from '@mui/material/InputBase';
+import Paper from '@mui/material/Paper';
 import React from 'react';
-import SearchIcon from '@material-ui/icons/Search';
-import {makeStyles} from '@material-ui/core/styles';
+import SearchIcon from '@mui/icons-material/Search';
+import makeStyles from '@mui/styles/makeStyles';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(() => ({
   root: {
     padding: '0px 0px',
     display: 'flex',
@@ -14,7 +14,6 @@ const useStyles = makeStyles(theme => ({
     boxShadow: 'none',
   },
   input: {
-    marginLeft: theme.spacing(1),
     flex: 1,
   },
   iconButton: {
@@ -38,6 +37,7 @@ export default function TagSearch() {
         type="submit"
         className={classes.iconButton}
         aria-label="search"
+        size="large"
       >
         <SearchIcon fontSize="small" />
       </IconButton>

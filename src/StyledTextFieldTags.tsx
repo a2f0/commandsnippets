@@ -1,7 +1,9 @@
 import React, {useEffect} from 'react';
-import {Theme, createStyles, makeStyles} from '@material-ui/core/styles';
-import TextField from '@material-ui/core/TextField';
-import {useTheme} from '@material-ui/styles';
+import TextField from '@mui/material/TextField';
+import {Theme} from '@mui/material/styles';
+import createStyles from '@mui/styles/createStyles';
+import makeStyles from '@mui/styles/makeStyles';
+import {useTheme} from '@mui/styles';
 
 interface IStyledTextFieldProps {
   id: string;

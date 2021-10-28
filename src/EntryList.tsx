@@ -8,7 +8,7 @@ import EntryNew from './EntryNew';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {autorun} from 'mobx';
-import {makeStyles} from '@material-ui/core/styles';
+import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';

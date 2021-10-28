@@ -1,8 +1,9 @@
 import React, {useState} from 'react';
 import {Route, BrowserRouter as Router, Switch} from 'react-router-dom';
+import {StyledEngineProvider, ThemeProvider} from '@mui/material/styles';
 import {darkTheme, lightTheme} from './themes';
 import {AppContextProvider} from './AppContext';
-import CssBaseline from '@material-ui/core/CssBaseline';
+import CssBaseline from '@mui/material/CssBaseline';
 import {DndProvider} from 'react-dnd';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
@@ -12,8 +13,7 @@ import PublicHomePage from './PublicHomePage';
 import ReactDOM from 'react-dom';
 import {Redirect} from 'react-router-dom';
 import RootContainer from './RootContainer';
-import {Theme} from '@material-ui/core/styles';
-import {ThemeProvider} from '@material-ui/core/styles';
+import {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import {store} from './AppStateStore';
 
@@ -35,46 +35,48 @@ const AppRouter = React.memo(
       setSelectedTheme(chosenTheme);
     };
     return (
-      <ThemeProvider theme={selectedTheme}>
-        <Router>
-          <AppContextProvider>
-            <CssBaseline />
-            <DndProvider backend={HTML5Backend}>
-              <RootContainer>
-                <Switch>
-                  <Route exact path="/oauth/github">
-                    {store.loggedInUser ? (
-                      <Redirect to={'/' + store.loggedInUser} />
-                    ) : (
-                      <GithubAuth />
-                    )}
-                  </Route>
-                  <Route exact path="/oauth/google">
-                    {store.loggedInUser ? (
-                      <Redirect to={'/' + store.loggedInUser} />
-                    ) : (
-                      <GoogleAuth />
-                    )}
-                  </Route>
-                  <Route path="/:user/:tag">
-                    <Main handleThemeSwitcher={handleThemeSwitcher} />
-                  </Route>
-                  <Route path="/:user">
-                    <Main handleThemeSwitcher={handleThemeSwitcher} />
-                  </Route>
-                  <Route exact path="/">
-                    {store.loggedInUser ? (
-                      <Redirect to={'/' + store.loggedInUser} />
-                    ) : (
-                      <PublicHomePage />
-                    )}
-                  </Route>
-                </Switch>
-              </RootContainer>
-            </DndProvider>
-          </AppContextProvider>
-        </Router>
-      </ThemeProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={selectedTheme}>
+          <Router>
+            <AppContextProvider>
+              <CssBaseline />
+              <DndProvider backend={HTML5Backend}>
+                <RootContainer>
+                  <Switch>
+                    <Route exact path="/oauth/github">
+                      {store.loggedInUser ? (
+                        <Redirect to={'/' + store.loggedInUser} />
+                      ) : (
+                        <GithubAuth />
+                      )}
+                    </Route>
+                    <Route exact path="/oauth/google">
+                      {store.loggedInUser ? (
+                        <Redirect to={'/' + store.loggedInUser} />
+                      ) : (
+                        <GoogleAuth />
+                      )}
+                    </Route>
+                    <Route path="/:user/:tag">
+                      <Main handleThemeSwitcher={handleThemeSwitcher} />
+                    </Route>
+                    <Route path="/:user">
+                      <Main handleThemeSwitcher={handleThemeSwitcher} />
+                    </Route>
+                    <Route exact path="/">
+                      {store.loggedInUser ? (
+                        <Redirect to={'/' + store.loggedInUser} />
+                      ) : (
+                        <PublicHomePage />
+                      )}
+                    </Route>
+                  </Switch>
+                </RootContainer>
+              </DndProvider>
+            </AppContextProvider>
+          </Router>
+        </ThemeProvider>
+      </StyledEngineProvider>
     );
   })
 );

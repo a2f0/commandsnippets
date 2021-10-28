@@ -1,16 +1,16 @@
 import React, {useEffect, useState} from 'react';
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import {IMouse} from './Entry';
-import Menu from '@material-ui/core/Menu';
+import Menu from '@mui/material/Menu';
 import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
-import {WithStyles} from '@material-ui/core';
-import {withStyles} from '@material-ui/core/styles';
+import {WithStyles} from '@mui/styles';
+import withStyles from '@mui/styles/withStyles';
 
 interface ITagContextMenuProps {
   id: string;
@@ -31,7 +31,7 @@ interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
     paper: string;
     list: string;
   };
-  children: React.PropsWithChildren<{}>;
+  children: React.ReactNode;
 }
 
 const StyledMenu = withStyles(MenuStyle)(

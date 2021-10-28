@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {IMouse} from './Entry';
-import Menu from '@material-ui/core/Menu';
+import Menu from '@mui/material/Menu';
 import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
-import {WithStyles} from '@material-ui/core';
+import {WithStyles} from '@mui/styles';
 import {useAppContext} from './AppContext';
-import {withStyles} from '@material-ui/core/styles';
+import withStyles from '@mui/styles/withStyles';
 
 export interface IEntryContextMenu {
   mouse: IMouse;
@@ -23,7 +23,7 @@ interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
     paper: string;
     list: string;
   };
-  children: React.PropsWithChildren<{}>;
+  children: React.ReactNode;
 }
 
 const StyledMenu = withStyles(MenuStyle)(

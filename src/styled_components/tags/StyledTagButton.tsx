@@ -1,9 +1,9 @@
 import * as Constants from '../../constants';
-import {ClassNameMap, useTheme} from '@material-ui/styles';
-import Button from '@material-ui/core/Button';
+import {ClassNameMap, useTheme} from '@mui/styles';
+import Button from '@mui/material/Button';
 import React from 'react';
-import {Theme} from '@material-ui/core/styles';
-import {makeStyles} from '@material-ui/core/styles';
+import {Theme} from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
 
 export enum Side {
   Left,
@@ -56,6 +56,7 @@ export const StyledTagButton = ({
 
   return (
     <Button
+      color="secondary"
       id={id}
       size="small"
       aria-controls="view-menu"

@@ -1,7 +1,8 @@
-import {createStyles, withStyles} from '@material-ui/core/styles';
-import MenuItem from '@material-ui/core/MenuItem';
-import {MenuItemProps} from '@material-ui/core';
+import MenuItem from '@mui/material/MenuItem';
+import {MenuItemProps} from '@mui/material';
 import React from 'react';
+import createStyles from '@mui/styles/createStyles';
+import withStyles from '@mui/styles/withStyles';
 
 const MenuItemStyle = () => {
   return createStyles({
@@ -17,11 +18,7 @@ interface IMenuItemProps {
 }
 
 export const MuiMenuItem = React.forwardRef<MenuItemProps, IMenuItemProps>(
-  (props: IMenuItemProps, ref) => (
-    <MenuItem innerRef={ref} {...props}>
-      {props.children}
-    </MenuItem>
-  )
+  (props: IMenuItemProps) => <MenuItem {...props}>{props.children}</MenuItem>
 );
 MuiMenuItem.displayName = 'MuiMenuItem';
 const StyledMenuItem = withStyles(MenuItemStyle)(MuiMenuItem);

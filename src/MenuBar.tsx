@@ -1,33 +1,36 @@
 import * as Constants from './constants';
-import {createStyles, withStyles} from '@material-ui/core/styles';
 import {darkTheme, lightTheme} from './themes';
-import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
-import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
-import Button from '@material-ui/core/Button';
-import CheckIcon from '@material-ui/icons/Check';
-import Divider from '@material-ui/core/Divider';
-import Fade from '@material-ui/core/Fade';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import Menu from '@material-ui/core/Menu';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import Button from '@mui/material/Button';
+import CheckIcon from '@mui/icons-material/Check';
+import Divider from '@mui/material/Divider';
+import Fade from '@mui/material/Fade';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import Menu from '@mui/material/Menu';
 import React from 'react';
 import StyledMenuItem from './StyledMenuItem';
-import {Theme} from '@material-ui/core/styles';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import {WithStyles} from '@material-ui/core';
+import {Theme} from '@mui/material/styles';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import {WithStyles} from '@mui/styles';
 import axios from 'axios';
 import {baseHTTPURL} from './api';
-import {makeStyles} from '@material-ui/core/styles';
+import createStyles from '@mui/styles/createStyles';
+import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useHistory} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
+import withStyles from '@mui/styles/withStyles';
 
 export const MenuStyle = () => {
   return createStyles({
     paper: {
       borderRadius: 0,
       margin: 0,
+      // Remove the Material UI gradient.
+      backgroundImage: 'none',
     },
     list: {
       padding: 0,
@@ -44,7 +47,7 @@ interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
     paper: string;
     list: string;
   };
-  children: React.PropsWithChildren<{}>;
+  children: React.ReactNode;
 }
 
 const StyledMenu = withStyles(MenuStyle)(
@@ -55,7 +58,6 @@ const StyledMenu = withStyles(MenuStyle)(
         anchorEl={anchorEl}
         onClose={onClose}
         transitionDuration={0}
-        getContentAnchorEl={null}
         anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
         transformOrigin={{vertical: 'top', horizontal: 'left'}}
         keepMounted
@@ -208,6 +210,7 @@ const MenuBar = (props: IMenuBarProps) => {
 
         {appConfig.loggedInUser && (
           <Button
+            color="secondary"
             size="small"
             aria-controls="file-menu"
             className={classes.menuButton}
@@ -218,6 +221,7 @@ const MenuBar = (props: IMenuBarProps) => {
           </Button>
         )}
         <Button
+          color="secondary"
           size="small"
           aria-controls="view-menu"
           className={classes.menuButton}
@@ -227,6 +231,7 @@ const MenuBar = (props: IMenuBarProps) => {
           View
         </Button>
         <Button
+          color="secondary"
           size="small"
           aria-controls="view-menu"
           className={classes.menuButton}
@@ -236,6 +241,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Tags
         </Button>
         <Button
+          color="secondary"
           size="small"
           aria-controls="view-menu"
           className={classes.menuButton}

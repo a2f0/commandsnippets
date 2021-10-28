@@ -1,11 +1,13 @@
 import React, {useEffect} from 'react';
-import {Theme, createStyles, makeStyles} from '@material-ui/core/styles';
 import API from './api';
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import {Github} from '@icons-pack/react-simple-icons';
+import {Theme} from '@mui/material/styles';
+import createStyles from '@mui/styles/createStyles';
+import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-import {useTheme} from '@material-ui/styles';
+import {useTheme} from '@mui/styles';
 
 export const githubClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
