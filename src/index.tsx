@@ -1,6 +1,6 @@
-import {MuiThemeProvider, makeStyles} from '@material-ui/core/styles';
 import React, {useState} from 'react';
 import {Route, BrowserRouter as Router, Switch} from 'react-router-dom';
+import {ThemeProvider, makeStyles} from '@material-ui/core/styles';
 import {darkTheme, lightTheme} from './themes';
 import {AppContextProvider} from './AppContext';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -46,7 +46,7 @@ const AppRouter = React.memo(
     return (
       <Router>
         <AppContextProvider>
-          <MuiThemeProvider theme={selectedTheme}>
+          <ThemeProvider theme={selectedTheme}>
             <CssBaseline />
             <DndProvider backend={HTML5Backend}>
               <div className={classes.root}>
@@ -81,7 +81,7 @@ const AppRouter = React.memo(
                 </Switch>
               </div>
             </DndProvider>
-          </MuiThemeProvider>
+          </ThemeProvider>
         </AppContextProvider>
       </Router>
     );
