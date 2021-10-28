@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {Route, BrowserRouter as Router, Switch} from 'react-router-dom';
-import {ThemeProvider, makeStyles} from '@material-ui/core/styles';
 import {darkTheme, lightTheme} from './themes';
 import {AppContextProvider} from './AppContext';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -12,22 +11,14 @@ import Main from './Main';
 import PublicHomePage from './PublicHomePage';
 import ReactDOM from 'react-dom';
 import {Redirect} from 'react-router-dom';
+import RootContainer from './RootContainer';
 import {Theme} from '@material-ui/core/styles';
+import {ThemeProvider} from '@material-ui/core/styles';
 import {observer} from 'mobx-react';
-import packageJson from '../package.json';
 import {store} from './AppStateStore';
-
-console.info('Package version: ' + packageJson.version);
-
-const useStyles = makeStyles({
-  root: {
-    display: 'flex',
-  },
-});
 
 const AppRouter = React.memo(
   observer(() => {
-    const classes = useStyles();
     let initialTheme = darkTheme;
     if (store.selectedTheme === 'lightTheme') {
       initialTheme = lightTheme;
@@ -44,12 +35,12 @@ const AppRouter = React.memo(
       setSelectedTheme(chosenTheme);
     };
     return (
-      <Router>
-        <AppContextProvider>
-          <ThemeProvider theme={selectedTheme}>
+      <ThemeProvider theme={selectedTheme}>
+        <Router>
+          <AppContextProvider>
             <CssBaseline />
             <DndProvider backend={HTML5Backend}>
-              <div className={classes.root}>
+              <RootContainer>
                 <Switch>
                   <Route exact path="/oauth/github">
                     {store.loggedInUser ? (
@@ -79,11 +70,11 @@ const AppRouter = React.memo(
                     )}
                   </Route>
                 </Switch>
-              </div>
+              </RootContainer>
             </DndProvider>
-          </ThemeProvider>
-        </AppContextProvider>
-      </Router>
+          </AppContextProvider>
+        </Router>
+      </ThemeProvider>
     );
   })
 );
