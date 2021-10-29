@@ -22,10 +22,8 @@ provider "aws" {
   access_key = ""
   secret_key = ""
   region     = "us-east-1"
-  version    = "~> 2.0"
 }
 provider "cloudflare" {
-  version = "~> 2.0"
   email   = var.cloudflare_email
   api_key = var.cloudflare_api_key
 }
@@ -105,7 +103,7 @@ resource "aws_instance" "ec2" {
   key_name = "dps-blackbox"
   iam_instance_profile = data.terraform_remote_state.container-registry.outputs.iam-instance-profile
   tags = {
-    Name = "${var.environment}"
+    Name = var.environment
   }
   user_data = <<-EOF
               #!/bin/bash
