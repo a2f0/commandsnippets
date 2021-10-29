@@ -26,3 +26,5 @@ override.tf.json
 /ssh_keys/tearleads-frontend-deploy-key
 /production/main.tfvars
 /production/terraform.backend
+/production-s3/main.tfvars
+/production-s3/terraform.backend
