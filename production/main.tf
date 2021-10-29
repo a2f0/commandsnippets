@@ -95,7 +95,6 @@ resource "aws_default_route_table" "route-table" {
 }
 
 resource "aws_instance" "ec2" {
-  #ami           = "ami-085925f297f89fce1" # bionic 18.04 LTS
   ami                    = "ami-068663a3c619dd892" # focal 20.04 LTS
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.aws-subnet.id
@@ -160,7 +159,8 @@ resource "cloudflare_record" "web" {
 resource "cloudflare_record" "tearleads" {
   zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
   name    = "tearleads.com"
-  value   = aws_instance.ec2.public_ip
+  # Vercel
+  value   = "76.76.21.21"
   type    = "A"
   ttl     = 1
   proxied = true
