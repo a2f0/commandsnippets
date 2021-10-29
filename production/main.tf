@@ -2,7 +2,7 @@ terraform {
   backend "s3" {}
 }
 
-//For pulling in the IAM profile
+// For pulling in the IAM profile
 data "terraform_remote_state" "container-registry" {
   backend = "s3"
   config = {
