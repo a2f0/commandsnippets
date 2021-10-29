@@ -27,3 +27,4 @@ override.tf.json
 /production/main.tfvars
 /production/terraform.backend
 /production-s3/main.tfvars
+/production-s3/terraform.backend
