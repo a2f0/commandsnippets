@@ -7,7 +7,6 @@ provider "aws" {
   access_key = ""
   secret_key = ""
   region     = "us-east-1"
-  version    = "~> 2.0"
 }
 
 data "aws_route53_zone" "tearleads-zone" {
