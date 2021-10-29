@@ -28,3 +28,4 @@ override.tf.json
 /production/terraform.backend
 /production-s3/main.tfvars
 /production-s3/terraform.backend
+/vercel/terraform.backend
