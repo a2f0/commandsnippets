@@ -7,7 +7,7 @@ on:
   schedule:
     - cron: '0 0 * * *'
 jobs:
-  push-containers:
+  code-quality:
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
@@ -30,45 +30,6 @@ jobs:
           pip install pre-commit
           pre-commit run --all-files
       - run: npm run ci-headless
-      - name: Configure AWS credentials
-        if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-      - name: Login to Amazon ECR
-        if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Build SHA image
-        if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: tftearleads
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-      - name: Tag and push staging images to Amazon ECR
-        if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: tftearleads
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-staging-latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-staging-latest
-      - name: Tag and push production images to Amazon ECR
-        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: tftearleads
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:frontend-production-latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-production-latest
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
@@ -81,28 +42,8 @@ jobs:
   deploy-code:
     runs-on: ubuntu-latest
     continue-on-error: false
-    needs: push-containers
+    needs: code-quality
     steps:
-      - name: Install SSH key
-        if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
-      - name: Deploy via SSH
-        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
-        env:
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_FQDN: ${{ secrets.DEPLOY_PRODUCTION_FQDN }}
-        run: |
-          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
-      - name: Deploy staging via SSH
-        if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
-        env:
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_FQDN: ${{ secrets.DEPLOY_STAGING_FQDN }}
-        run: |
-          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}

@@ -14,7 +14,10 @@ build `npm run build`
 
 test `npm run ci`
 
-## Testing a build locally
+## Testing builds
 
-1. Build the app with `npm run build`.
-2. Run a local webserver `cd build && python3 -m http.server 8080`
+Deploy to Vercel without having to commit or push (the randomized URL for viewing build will be in the output of this command).
+
+```bash
+npx vercel
+```
