@@ -9,9 +9,6 @@ module.exports = {
     publicPath: '/',
     filename: 'bundle.[contenthash].js',
   },
-  devServer: {
-    contentBase: './build',
-  },
   devtool: 'eval',
   module: {
     rules: [
