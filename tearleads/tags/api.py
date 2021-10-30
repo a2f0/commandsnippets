@@ -5,6 +5,7 @@ from rest_framework_json_api.filters import OrderingFilter
 from rest_framework_json_api.django_filters import DjangoFilterBackend
 
 from django.core.exceptions import PermissionDenied
+from django.utils import timezone
 from rest_framework.decorators import action
 
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
@@ -81,8 +82,8 @@ class TagViewSet(viewsets.ModelViewSet):
                 request, self, top
             ) or not permission.has_object_permission(request, self, bottom):
                 raise PermissionDenied()
-
-        serializer.save(validated_data=serializer.data)
+        # Django Ordered model method to move object above reference.
+        top.above(bottom, extra_update={"date_updated": timezone.now()})
         return response.Response(
             status=status.HTTP_200_OK,
         )
@@ -140,7 +141,8 @@ class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
                 request, self, top
             ) or not permission.has_object_permission(request, self, bottom):
                 raise PermissionDenied()
-        serializer.save(validated_data=serializer.data)
+        # Django Ordered model method to move object above reference.
+        top.above(bottom, extra_update={"date_updated": timezone.now()})
         return response.Response(
             status=status.HTTP_200_OK,
         )

@@ -16,13 +16,6 @@ class TagCreateSerializer(serializers.ModelSerializer):
 
 
 class TagReorderSerializer(serializers.Serializer):
-    def save(self, validated_data):
-        top = Tag.objects.get(pk=validated_data["top"])
-        bottom = Tag.objects.get(pk=validated_data["bottom"])
-        # Django Ordered model method to move object above reference.
-        top.above(bottom, extra_update={"date_updated": timezone.now()})
-        return None
-
     top = serializers.PrimaryKeyRelatedField(
         required=True, queryset=Tag.objects.all(), allow_empty=False, many=False
     )
@@ -64,12 +57,6 @@ class TagTextEntryThroughModelCreateSerializer(serializers.ModelSerializer):
 
 
 class TagTextEntryThroughModelReorderSerializer(serializers.Serializer):
-    def save(self, validated_data):
-        top = TagTextEntryThroughModel.objects.get(pk=validated_data["top"])
-        bottom = TagTextEntryThroughModel.objects.get(pk=validated_data["bottom"])
-        # Django Ordered model method to move object above reference.
-        top.above(bottom, extra_update={"date_updated": timezone.now()})
-        return None
 
     top = serializers.PrimaryKeyRelatedField(
         required=True,
