@@ -179,6 +179,60 @@ class TestTagsApi(BaseTestCase):
         self.assertNotEqual(tag2_timestamp, tag2.date_updated)
         self.assertLess(tag2.order, tag1.order)
 
+    def test_reorder_fails_if_not_bottom_owner(self):
+        tag1 = TagFactory(user=self.user2, order=1)
+        tag1_timestamp = tag1.date_updated
+        tag2 = TagFactory(user=self.user1, order=2)
+        tag2_timestamp = tag2.date_updated
+        payload = {
+            "data": {
+                "type": "Tag",
+                "attributes": {"top": tag2.id, "bottom": tag1.id},
+                "relationships": {},
+            }
+        }
+
+        self.assertLess(tag1.order, tag2.order)
+        response = self.user1_api_client.post(
+            "/api/v1/tags/reorder", payload, format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(tag1_timestamp, tag1.date_updated)
+        self.assertEqual(tag2_timestamp, tag2.date_updated)
+        tag1.refresh_from_db()
+        tag2.refresh_from_db()
+        self.assertEqual(tag1_timestamp, tag1.date_updated)
+        self.assertEqual(tag2_timestamp, tag2.date_updated)
+        self.assertLess(tag1.order, tag2.order)
+
+    def test_reorder_fails_if_not_tio_owner(self):
+        tag1 = TagFactory(user=self.user1, order=1)
+        tag1_timestamp = tag1.date_updated
+        tag2 = TagFactory(user=self.user2, order=2)
+        tag2_timestamp = tag2.date_updated
+        payload = {
+            "data": {
+                "type": "Tag",
+                "attributes": {"top": tag2.id, "bottom": tag1.id},
+                "relationships": {},
+            }
+        }
+
+        self.assertLess(tag1.order, tag2.order)
+        response = self.user1_api_client.post(
+            "/api/v1/tags/reorder", payload, format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(tag1_timestamp, tag1.date_updated)
+        self.assertEqual(tag2_timestamp, tag2.date_updated)
+        tag1.refresh_from_db()
+        tag2.refresh_from_db()
+        self.assertEqual(tag1_timestamp, tag1.date_updated)
+        self.assertEqual(tag2_timestamp, tag2.date_updated)
+        self.assertLess(tag1.order, tag2.order)
+
     def test_bad_filter(self):
         response = self.user1_api_client.get("/api/v1/tags?filter[bad]=1")
         json_response = response.json()

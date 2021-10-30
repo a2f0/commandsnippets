@@ -74,6 +74,14 @@ class TagViewSet(viewsets.ModelViewSet):
             data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
+        top = Tag.objects.get(pk=serializer.data["top"])
+        bottom = Tag.objects.get(pk=serializer.data["bottom"])
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(
+                request, self, top
+            ) or not permission.has_object_permission(request, self, bottom):
+                raise PermissionDenied()
+
         serializer.save(validated_data=serializer.data)
         return response.Response(
             status=status.HTTP_200_OK,

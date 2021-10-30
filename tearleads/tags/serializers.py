@@ -16,9 +16,6 @@ class TagCreateSerializer(serializers.ModelSerializer):
 
 
 class TagReorderSerializer(serializers.Serializer):
-    def validate(self, attrs):
-        return attrs
-
     def save(self, validated_data):
         top = Tag.objects.get(pk=validated_data["top"])
         bottom = Tag.objects.get(pk=validated_data["bottom"])
