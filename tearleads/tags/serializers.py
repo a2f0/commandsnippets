@@ -67,9 +67,6 @@ class TagTextEntryThroughModelCreateSerializer(serializers.ModelSerializer):
 
 
 class TagTextEntryThroughModelReorderSerializer(serializers.Serializer):
-    def validate(self, attrs):
-        return attrs
-
     def save(self, validated_data):
         top = TagTextEntryThroughModel.objects.get(pk=validated_data["top"])
         bottom = TagTextEntryThroughModel.objects.get(pk=validated_data["bottom"])

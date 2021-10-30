@@ -432,3 +432,71 @@ class TestTagsEntriesApi(BaseTestCase):
         self.assertNotEqual(tag_entry1_timestamp, tag_entry1.date_updated)
         self.assertNotEqual(tag_entry2_timestamp, tag_entry2.date_updated)
         self.assertLess(tag_entry2.order, tag_entry1.order)
+
+    def test_reorder_fails_if_not_top_owner(self):
+        entry1 = TextEntryFactory(user=self.user2)
+        entry2 = TextEntryFactory(user=self.user1)
+        tag1 = TagFactory(user=self.user1)
+        tag_entry1 = TagTextEntryThroughModelFactory(
+            text_entry=entry1, tag=tag1, user=self.user2, order=1
+        )
+        tag_entry1_timestamp = tag_entry1.date_updated
+        tag_entry2 = TagTextEntryThroughModelFactory(
+            text_entry=entry2, tag=tag1, user=self.user1, order=2
+        )
+        tag_entry2_timestamp = tag_entry2.date_updated
+        payload = {
+            "data": {
+                "type": "TagTextEntryThroughModel",
+                "attributes": {"top": tag_entry2.id, "bottom": tag_entry1.id},
+                "relationships": {},
+            }
+        }
+
+        self.assertLess(tag_entry1.order, tag_entry2.order)
+        response = self.user1_api_client.post(
+            "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
+        self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
+        tag_entry1.refresh_from_db()
+        tag_entry2.refresh_from_db()
+        self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
+        self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
+        self.assertLess(tag_entry1.order, tag_entry2.order)
+
+    def test_reorder_fails_if_not_bottom_owner(self):
+        entry1 = TextEntryFactory(user=self.user1)
+        entry2 = TextEntryFactory(user=self.user2)
+        tag1 = TagFactory(user=self.user1)
+        tag_entry1 = TagTextEntryThroughModelFactory(
+            text_entry=entry1, tag=tag1, user=self.user1, order=1
+        )
+        tag_entry1_timestamp = tag_entry1.date_updated
+        tag_entry2 = TagTextEntryThroughModelFactory(
+            text_entry=entry2, tag=tag1, user=self.user2, order=2
+        )
+        tag_entry2_timestamp = tag_entry2.date_updated
+        payload = {
+            "data": {
+                "type": "TagTextEntryThroughModel",
+                "attributes": {"top": tag_entry2.id, "bottom": tag_entry1.id},
+                "relationships": {},
+            }
+        }
+
+        self.assertLess(tag_entry1.order, tag_entry2.order)
+        response = self.user1_api_client.post(
+            "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
+        self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
+        tag_entry1.refresh_from_db()
+        tag_entry2.refresh_from_db()
+        self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
+        self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
+        self.assertLess(tag_entry1.order, tag_entry2.order)

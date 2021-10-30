@@ -4,6 +4,7 @@ from rest_framework_json_api import serializers
 from rest_framework_json_api.filters import OrderingFilter
 from rest_framework_json_api.django_filters import DjangoFilterBackend
 
+from django.core.exceptions import PermissionDenied
 from rest_framework.decorators import action
 
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
@@ -91,7 +92,10 @@ class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
         "text_entry__date_updated",
         "text_entry__tag_count",
     )
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        IsOwner,
+    )
 
     filterset_fields = {"tag__name": ("exact",), "user__username": ("exact",)}
 
@@ -121,6 +125,13 @@ class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
             data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
+        top = TagTextEntryThroughModel.objects.get(pk=serializer.data["top"])
+        bottom = TagTextEntryThroughModel.objects.get(pk=serializer.data["bottom"])
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(
+                request, self, top
+            ) or not permission.has_object_permission(request, self, bottom):
+                raise PermissionDenied()
         serializer.save(validated_data=serializer.data)
         return response.Response(
             status=status.HTTP_200_OK,
