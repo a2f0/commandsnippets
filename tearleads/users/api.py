@@ -12,6 +12,9 @@ class User(APIView):
     resource_name = "User"
 
     def get(self, request, *args, **kwargs):
+        """
+        Serialize user introspection information for the currently logged in user.
+        """
         ca = utility.CustomAuthentication()
         authenticated_info = ca.authenticate(request)
         return Response(
