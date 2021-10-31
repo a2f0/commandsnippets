@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -79,10 +79,8 @@
     "@mui/icons-material": "^5.0.5",
     "@mui/material": "^5.0.6",
     "@mui/styles": "^5.0.2",
-    "@svgr/webpack": "^5.5.0",
     "axios": "^0.21.1",
     "immutability-helper": "^3.1.1",
-    "leaflet": "^1.7.1",
     "memoize-one": "^5.2.1",
     "mobx": "^6.3.2",
     "mobx-react": "^7.2.0",
