@@ -1,5 +1,7 @@
 # Tearleads Backend
 
+## Development
+
 Bootstrap (Local dev)
 
     pip install pre-commit
@@ -15,17 +17,9 @@ Run isort
 
     docker-compose run backend isort --recursive --atomic .
 
-Build an immutable container without host mounts
-
-    ./containers.sh
-
-Run the immutable container
-
-    ./start.sh
-
 ## Administrative
 
-Backups (Server)
+Take a backup
 
     docker-compose -f container-registry.yaml run postgres backup
 
