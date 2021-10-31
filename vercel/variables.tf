@@ -10,6 +10,10 @@ variable "github_repository" {
   type = string
 }
 
+variable "github_token" {
+  type = string
+}
+
 variable "vercel_org_id" {
   type = string
 }
