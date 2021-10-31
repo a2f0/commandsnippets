@@ -41,8 +41,17 @@ export const AppStateStoreModel = types
   .actions(self => ({
     fetchTags: flow(function* fetchTags(user: string) {
       try {
+        const existingUser = self.usersArray.find(
+          o => o.attributes.username === user
+        );
+        let filteredTags: Array<ITagJsonApi> = [];
+        if (existingUser !== undefined) {
+          filteredTags = self.tagsArray.filter(element => {
+            return element.relationships.user.data.id === existingUser.id;
+          });
+        }
         const mostRecentTimestamp: string | null =
-          TagHelpers.getMostRecentTimeStamp(self.tagsArray);
+          TagHelpers.getMostRecentTimeStamp(filteredTags);
         const ta = yield TagHelpers.fetch([], user, 1, mostRecentTimestamp);
         for (const element of ta) {
           if (element.type === 'Tag') {
