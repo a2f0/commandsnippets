@@ -51,14 +51,6 @@ services:
       - LETSENCRYPT_HOST=${API_FQDN}
       - LETSENCRYPT_TEST=true
 
-  frontend:
-    image: tearleads-frontend
-    env_file: .env
-    environment:
-      - VIRTUAL_HOST=${WEB_FQDN}
-      - LETSENCRYPT_HOST=${WEB_FQDN}
-      - LETSENCRYPT_TEST=true
-
   postgres:
     build: ./compose/postgres
     volumes:

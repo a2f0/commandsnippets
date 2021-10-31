@@ -51,14 +51,6 @@ services:
       - LETSENCRYPT_HOST=${API_FQDN}
       - LETSENCRYPT_TEST=false
 
-  frontend:
-    image: ${ECR_FQDN}/${ECR_REPOSITORY}:frontend-${FLOW_BRANCH}-latest
-    env_file: .env
-    environment:
-      - VIRTUAL_HOST=${WEB_FQDN}
-      - LETSENCRYPT_HOST=${WEB_FQDN}
-      - LETSENCRYPT_TEST=false
-
   postgres:
     build: ./compose/postgres
     volumes:
