@@ -181,25 +181,6 @@ export function sort(): Array<ITagJsonApi> {
   return plainObjects;
 }
 
-export function getMostRecentTimeStamp(array: ITagJsonApi[]): string | null {
-  let mostRecentTimestamp: string | null = null;
-  if (array.length > 0) {
-    const sortedArray: Array<ITagJsonApi> = array.sort((a, b) => {
-      const sort1 = new Date(a.attributes.date_updated);
-      const sort2 = new Date(b.attributes.date_updated);
-      if (sort2 < sort1) {
-        return -1;
-      }
-      if (sort2 > sort1) {
-        return 1;
-      }
-      return 0;
-    });
-    mostRecentTimestamp = sortedArray[0].attributes.date_updated;
-  }
-  return mostRecentTimestamp;
-}
-
 export function fetch(
   entries: Array<ITagJsonApi | IUserJsonApi>,
   user: string,

@@ -1,6 +1,7 @@
-import {fetch, getMostRecentTimeStamp, sort} from '../lib/tags';
+import {fetch, sort} from '../lib/tags';
 import {getParent, types} from 'mobx-state-tree';
 import type {RootModel} from '../AppStateStore';
+import {getMostRecentTimeStamp} from '../lib/shared';
 
 export interface ITagJsonApi {
   id: string;
