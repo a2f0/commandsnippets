@@ -86,8 +86,34 @@ export const AppStateStoreModel = types
       tag: string
     ) {
       try {
+        const userObject = store.usersArray.find(
+          element => element.attributes.username === user
+        );
+
+        const textEntriesFiltered: ITextEntryJsonApi[] = [];
+
+        const tagObject = store.tagsArray.find(
+          element =>
+            element.attributes.name === tag &&
+            element.relationships.user.data.id === userObject?.id
+        );
+
+        const tagTextEntryThroughModelFiltered =
+          store.tagTextEntryThroughModel.filter(
+            element => element.relationships.tag.data.id === tagObject?.id
+          );
+
+        tagTextEntryThroughModelFiltered.map(element => {
+          const entry = self.textEntriesArray.find(textEntry => {
+            return textEntry.id === element.relationships.text_entry.data.id;
+          });
+          if (entry !== undefined) {
+            textEntriesFiltered.push(entry);
+          }
+        });
+
         const mostRecentTimestamp: string | null =
-          TextEntryHelpers.getMostRecentTimeStamp(self.textEntriesArray);
+          TextEntryHelpers.getMostRecentTimeStamp(textEntriesFiltered);
         const ta = yield TextEntryHelpers.fetch(
           [],
           user,
