@@ -134,13 +134,13 @@ export const AppStateStoreModel = types
         const existingUser = self.usersArray.find(
           o => o.attributes.username === user
         );
-        let filteredTextEntries;
+        let filteredTextEntries: Array<ITextEntryJsonApi> = [];
         if (existingUser !== undefined) {
-          filteredTextEntries = self.textEntriesArray.filter(element => {
-            element.relationships.user.data.id === existingUser.id;
-          });
-        } else {
-          filteredTextEntries = self.textEntriesArray;
+          filteredTextEntries = self.untaggedTextEntriesArray.filter(
+            element => {
+              return element.relationships.user.data.id === existingUser.id;
+            }
+          );
         }
         const mostRecentTimestamp: string | null =
           TextEntryHelpers.getMostRecentTimeStamp(filteredTextEntries);
