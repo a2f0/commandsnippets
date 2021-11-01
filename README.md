@@ -17,6 +17,10 @@ Run isort
 
     docker-compose run backend isort --recursive --atomic .
 
+Show outdated dependencies
+
+    docker-compose run backend pip-review
+
 ## Administrative
 
 Take a backup
