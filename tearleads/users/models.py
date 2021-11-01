@@ -79,15 +79,3 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
             text_entry=entry2,
             order=3,
         )
-
-
-class TearleadsUser(models.Model):
-    username = models.CharField(max_length=254, unique=True)
-    email = models.EmailField(max_length=254, unique=True)
-    date_created = models.DateTimeField(auto_now_add=True)
-    date_updated = models.DateTimeField(auto_now=True)
-    is_deleted = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ["date_updated", "id"]
