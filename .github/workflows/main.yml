@@ -49,6 +49,7 @@ jobs:
         coverage run manage.py test -v 2
         coverage report
       env:
+        DJANGO_SECRET_KEY: test
         DJANGO_SETTINGS_MODULE: tearleads.settings.test
         GITHUB_CLIENT_ID: github_client_id
         GITHUB_CLIENT_SECRET: github_client_secret

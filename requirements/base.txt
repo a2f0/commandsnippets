@@ -1,5 +1,6 @@
 djangorestframework-jsonapi[django-filter]==3.1.0
 django-cors-headers==3.10.0
+django-environ==0.8.1
 django-filter==21.1
 django-ordered-model==3.4.3
 django==3.2.9

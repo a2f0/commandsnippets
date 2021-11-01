@@ -2,6 +2,6 @@ from .base import *
 
 TEARLEADS_SETTINGS_MODULE = "production"
 
-# Do not run with DEBUG enabled in production.
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 DEBUG = False
