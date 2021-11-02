@@ -2,12 +2,12 @@ terraform {
   backend "s3" {}
 }
 
-//For pulling in the IAM profile
+// For pulling in the IAM profile
 data "terraform_remote_state" "container-registry" {
   backend = "s3"
   config = {
     bucket = var.remote_state_bucket
-    key = "container-registry/terraform.tfstate"
+    key    = "container-registry/terraform.tfstate"
     region = "us-east-1"
   }
 }
@@ -63,16 +63,16 @@ resource "aws_security_group" "security-group" {
   }
 
   egress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
 resource "aws_subnet" "aws-subnet" {
-  vpc_id     = aws_vpc.vpc.id
-  cidr_block = var.vpc_cidr
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = var.vpc_cidr
   map_public_ip_on_launch = "true"
   tags = {
     Name = "main-subnet-${var.environment}"
@@ -86,7 +86,7 @@ resource "aws_internet_gateway" "internet-gateway" {
 resource "aws_default_route_table" "route-table" {
   default_route_table_id = aws_vpc.vpc.default_route_table_id
   route {
-    gateway_id  = aws_internet_gateway.internet-gateway.id
+    gateway_id = aws_internet_gateway.internet-gateway.id
     cidr_block = "0.0.0.0/0"
   }
   tags = {
@@ -96,12 +96,12 @@ resource "aws_default_route_table" "route-table" {
 
 resource "aws_instance" "ec2" {
   #ami           = "ami-085925f297f89fce1" # bionic 18.04 LTS
-  ami           = "ami-068663a3c619dd892" # focal 20.04 LTS
-  instance_type = "t2.micro"
-  subnet_id = aws_subnet.aws-subnet.id
-  vpc_security_group_ids = [ aws_security_group.security-group.id ]
-  key_name = "dps-blackbox"
-  iam_instance_profile = data.terraform_remote_state.container-registry.outputs.iam-instance-profile
+  ami                    = "ami-068663a3c619dd892" # focal 20.04 LTS
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.aws-subnet.id
+  vpc_security_group_ids = [aws_security_group.security-group.id]
+  key_name               = "dps-blackbox"
+  iam_instance_profile   = data.terraform_remote_state.container-registry.outputs.iam-instance-profile
   tags = {
     Name = var.environment
   }
@@ -141,7 +141,7 @@ resource "cloudflare_record" "host" {
 
 resource "cloudflare_record" "api" {
   zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
-  name    = "${var.staging_api}"
+  name    = var.staging_api
   value   = aws_instance.ec2.public_ip
   type    = "A"
   ttl     = 1
@@ -150,7 +150,7 @@ resource "cloudflare_record" "api" {
 
 resource "cloudflare_record" "web" {
   zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
-  name    = "${var.staging_web}"
+  name    = var.staging_web
   value   = aws_instance.ec2.public_ip
   type    = "A"
   ttl     = 1

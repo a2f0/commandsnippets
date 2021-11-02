@@ -1,39 +1,39 @@
 variable "hostname" {
-    type = string
+  type = string
 }
 
 variable "vpc_cidr" {
-    type = string
+  type = string
 }
 
 variable "environment" {
-    type = string
+  type = string
 }
 
 variable "remote_state_bucket" {
-    type = string
+  type = string
 }
 
 variable "staging_api" {
-    type = string
+  type = string
 }
 
 variable "staging_web" {
-    type = string
+  type = string
 }
 
 variable "deployment_user" {
-    type = string
+  type = string
 }
 
 variable "deployment_public_key" {
-    type = string
+  type = string
 }
 
 variable "cloudflare_email" {
-    type = string
+  type = string
 }
 
 variable "cloudflare_api_key" {
-    type = string
+  type = string
 }

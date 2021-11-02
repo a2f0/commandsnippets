@@ -1,5 +1,5 @@
 output "aws-region" {
-  value = "${data.aws_region.current.name}"
+  value = data.aws_region.current.name
 }
 
 output "repository-fqdn" {
@@ -12,10 +12,10 @@ output "iam-instance-profile" {
 
 output "ci-cd-access-key" {
   sensitive = true
-  value = aws_iam_access_key.ci_cd.id
+  value     = aws_iam_access_key.ci_cd.id
 }
 
 output "ci-cd-secret-access-key" {
   sensitive = true
-  value = aws_iam_access_key.ci_cd.secret
+  value     = aws_iam_access_key.ci_cd.secret
 }
