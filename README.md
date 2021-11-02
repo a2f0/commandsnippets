@@ -13,6 +13,11 @@ Run tests
 
     docker-compose run backend python manage.py test
 
+Bump version
+
+    docker-compose run backend bump2version minor setup.cfg --allow-dirty
+
+
 Run isort
 
     docker-compose run backend isort --recursive --atomic .
