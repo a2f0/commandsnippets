@@ -3,9 +3,9 @@ import API from './api';
 import {AxiosResponse} from 'axios';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import {Side} from './styled_components/tags/StyledTagButton';
-import {StyledTagButton} from './styled_components/tags/StyledTagButton';
-import StyledTagFormContainer from './styled_components/tags/StyledTagFormContainer';
+import {Side} from './styled/tags/StyledTagButton';
+import {StyledTagButton} from './styled/tags/StyledTagButton';
+import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './StyledTextFieldTags';
 import {useAppContext} from './AppContext';
 
