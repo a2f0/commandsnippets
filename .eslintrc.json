@@ -8,6 +8,8 @@
     "mocha": true
   },
   "rules": {
+    // This is not a published npm package - no-unpublished-import is not required.
+    "node/no-unpublished-import": 0,
     "sort-imports": "error"
   },
   "settings": {

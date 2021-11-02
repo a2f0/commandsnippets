@@ -1,8 +1,8 @@
-/* eslint node/no-unpublished-require: 0 */
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+import {Configuration} from 'webpack';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import path from 'path';
 
-module.exports = {
+const config: Configuration = {
   entry: './src/index.tsx',
   output: {
     path: path.resolve(__dirname, 'build'),
@@ -38,3 +38,5 @@ module.exports = {
     }),
   ],
 };
+
+export default config;
