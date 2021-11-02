@@ -1,12 +1,13 @@
+import random
+import string
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.db.models.signals import post_save
 from django.core.validators import MinLengthValidator
+from django.db import models
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
-from django.db import models
-import string
-import random
 
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
 from tearleads.text_entries.models import TextEntry

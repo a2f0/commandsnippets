@@ -1,23 +1,22 @@
-from rest_framework import filters, viewsets, response, status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework_json_api import serializers
-from rest_framework_json_api.filters import OrderingFilter
-from rest_framework_json_api.django_filters import DjangoFilterBackend
-
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
+from rest_framework import filters, response, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework_json_api import serializers
+from rest_framework_json_api.django_filters import DjangoFilterBackend
+from rest_framework_json_api.filters import OrderingFilter
 
+from tearleads.core.permissions import IsOwner
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
 from tearleads.tags.serializers import (
     TagCreateSerializer,
-    TagSerializer,
     TagReorderSerializer,
+    TagSerializer,
     TagTextEntryThroughModelCreateSerializer,
-    TagTextEntryThroughModelSerializer,
     TagTextEntryThroughModelReorderSerializer,
+    TagTextEntryThroughModelSerializer,
 )
-from tearleads.core.permissions import IsOwner
 
 
 class TagViewSet(viewsets.ModelViewSet):

@@ -1,20 +1,20 @@
 from rest_framework import filters, response, status, viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework_json_api import serializers
 from rest_framework_json_api.django_filters import DjangoFilterBackend
 from rest_framework_json_api.filters import OrderingFilter
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
+from tearleads.core.permissions import IsOwner
 from tearleads.text_entries.models import TextEntry, TextEntryReused
 from tearleads.text_entries.serializers import (
     TextEntryCreateSerializer,
     TextEntrySerializer,
 )
-from tearleads.core.permissions import IsOwner
 
 from .serializers import (
-    TextEntryReusedSerializer,
-    TextEntryReusedCreateSerializer,
     TextEntryCreateSerializer,
+    TextEntryReusedCreateSerializer,
+    TextEntryReusedSerializer,
 )
 
 

@@ -1,8 +1,8 @@
-import requests
-from urllib.parse import parse_qs
 import json
 import os
+from urllib.parse import parse_qs
 
+import requests
 from django.conf import settings
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -15,7 +15,7 @@ from tearleads.users.models import User
 from tearleads.users.utils import create_collisionless_user
 
 from .serializers import GithubAuthenticationSerializer, GoogleAuthenticationSerializer
-from .services import GoogleOAuthService, GithubOAuthService
+from .services import GithubOAuthService, GoogleOAuthService
 
 
 class CustomObtainAuthToken(ObtainAuthToken):

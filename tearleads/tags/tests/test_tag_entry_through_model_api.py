@@ -1,3 +1,5 @@
+import pprint
+
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory
 
@@ -5,8 +7,6 @@ from tearleads.core.tests.core import BaseTestCase
 from tearleads.text_entries.tests.factories import TextEntryFactory
 
 from .factories import TagFactory, TagTextEntryThroughModelFactory
-
-import pprint
 
 
 class TestTagsEntriesApi(BaseTestCase):

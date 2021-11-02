@@ -1,15 +1,14 @@
 import time
-import httpretty
-
 from unittest import skip
+from urllib.parse import parse_qs
+
+import httpretty
 from django.contrib.staticfiles.testing import LiveServerTestCase
+from httpretty import httprettified
 from rest_framework.test import APIClient
 
-from tearleads.core.tests.core import BaseTestCase
 from tearleads.authentication.services import GithubOAuthService
-
-from httpretty import httprettified
-from urllib.parse import parse_qs
+from tearleads.core.tests.core import BaseTestCase
 
 
 class TestGithubAuthentication(BaseTestCase):

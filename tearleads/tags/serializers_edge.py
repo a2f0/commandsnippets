@@ -1,4 +1,5 @@
 from rest_framework_json_api import serializers
+
 from tearleads.tags.models import Tag
 from tearleads.users.serializers_edge import UserSerializer
 

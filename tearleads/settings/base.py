@@ -1,8 +1,7 @@
 import os
 
-import rest_framework_json_api
-
 import environ
+import rest_framework_json_api
 
 env = environ.Env()
 

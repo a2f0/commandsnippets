@@ -3,8 +3,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
-from tearleads.users.tests.factories import UserFactory
 from tearleads.users.models import User
+from tearleads.users.tests.factories import UserFactory
 
 
 class TestAuthentication(BaseTestCase):

@@ -15,11 +15,7 @@ Run tests
 
 Bump version
 
-    docker-compose run backend bump2version minor setup.cfg --allow-dirty
-
-Run isort
-
-    docker-compose run backend isort --recursive --atomic .
+    docker-compose run backend bump2version patch setup.cfg --allow-dirty
 
 Show outdated dependencies
 

@@ -1,7 +1,7 @@
+from http import cookies
+
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient, APITestCase
-
-from http import cookies
 
 from tearleads.users.tests.factories import UserFactory
 

@@ -1,11 +1,10 @@
-from django.contrib.staticfiles.testing import LiveServerTestCase
-
-import httpretty
+import time
 from unittest import skip
 
+import httpretty
+from django.contrib.staticfiles.testing import LiveServerTestCase
 from rest_framework import status
 from rest_framework.test import APIClient
-import time
 
 from tearleads.core.tests.core import BaseTestCase
 

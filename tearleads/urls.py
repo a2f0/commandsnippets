@@ -1,16 +1,15 @@
+from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
-from django.conf import settings
+
 from tearleads.authentication.api import (
-    CustomObtainAuthToken,
     CustomInvalidateAuthToken,
+    CustomObtainAuthToken,
     GithubLogin,
     GoogleLogin,
 )
-
-from tearleads.users.api import User
-
 from tearleads.healthcheck.api import HealthCheckAPIView
+from tearleads.users.api import User
 
 from .routers import router
 

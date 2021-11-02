@@ -1,14 +1,13 @@
 import time
-import httpretty
-
 from unittest import skip
+
+import httpretty
 from django.contrib.staticfiles.testing import LiveServerTestCase
+from httpretty import httprettified
 from rest_framework.test import APIClient
 
-from tearleads.core.tests.core import BaseTestCase
 from tearleads.authentication.services import GoogleOAuthService
-
-from httpretty import httprettified
+from tearleads.core.tests.core import BaseTestCase
 
 
 class TestGoogleAuthentication(BaseTestCase):
