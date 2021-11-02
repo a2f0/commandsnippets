@@ -1,3 +1,3 @@
 variable "registry_name" {
-    type = string
+  type = string
 }

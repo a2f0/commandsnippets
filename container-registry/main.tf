@@ -20,7 +20,7 @@ data "aws_iam_policy_document" "pull" {
       "ecr:GetAuthorizationToken",
     ]
     resources = [
-        "*",
+      "*",
     ]
   }
 
@@ -28,15 +28,15 @@ data "aws_iam_policy_document" "pull" {
   statement {
     actions = [
       "ecr:BatchCheckLayerAvailability",
-			"ecr:GetDownloadUrlForLayer",
-			"ecr:GetRepositoryPolicy",
-			"ecr:DescribeRepositories",
-			"ecr:ListImages",
-			"ecr:DescribeImages",
-			"ecr:BatchGetImage"
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:GetRepositoryPolicy",
+      "ecr:DescribeRepositories",
+      "ecr:ListImages",
+      "ecr:DescribeImages",
+      "ecr:BatchGetImage"
     ]
     resources = [
-        aws_ecr_repository.main.arn,
+      aws_ecr_repository.main.arn,
     ]
   }
 }
@@ -62,7 +62,7 @@ data "aws_iam_policy_document" "push" {
       "ecr:GetAuthorizationToken",
     ]
     resources = [
-        "*",
+      "*",
     ]
   }
 
@@ -71,18 +71,18 @@ data "aws_iam_policy_document" "push" {
     actions = [
       "ecr:BatchCheckLayerAvailability",
       "ecr:GetDownloadUrlForLayer",
-			"ecr:GetRepositoryPolicy",
-			"ecr:DescribeRepositories",
-			"ecr:ListImages",
-			"ecr:DescribeImages",
-			"ecr:BatchGetImage",
+      "ecr:GetRepositoryPolicy",
+      "ecr:DescribeRepositories",
+      "ecr:ListImages",
+      "ecr:DescribeImages",
+      "ecr:BatchGetImage",
       "ecr:InitiateLayerUpload",
       "ecr:UploadLayerPart",
       "ecr:CompleteLayerUpload",
       "ecr:PutImage"
     ]
     resources = [
-        aws_ecr_repository.main.arn,
+      aws_ecr_repository.main.arn,
     ]
   }
 }
@@ -92,13 +92,13 @@ resource "aws_ecr_repository" "main" {
 }
 
 resource "aws_iam_role_policy" "web_frontend" {
-  name = "tf-tearleads-web-frontend-role-policy"
-  role = aws_iam_role.web_frontend.id
+  name   = "tf-tearleads-web-frontend-role-policy"
+  role   = aws_iam_role.web_frontend.id
   policy = data.aws_iam_policy_document.pull.json
 }
 
 resource "aws_iam_role" "web_frontend" {
-  name = "tf-tearleads-web-iam-role"
+  name               = "tf-tearleads-web-iam-role"
   assume_role_policy = data.aws_iam_policy_document.instance-assume-role-policy.json
 }
 
@@ -113,8 +113,8 @@ resource "aws_iam_user" "ci_cd" {
 }
 
 resource "aws_iam_user_policy" "ci_cd" {
-  name = "tf-teadleads-ci-cd-user-policy"
-  user = aws_iam_user.ci_cd.name
+  name   = "tf-teadleads-ci-cd-user-policy"
+  user   = aws_iam_user.ci_cd.name
   policy = data.aws_iam_policy_document.push.json
 }
 

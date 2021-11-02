@@ -7,14 +7,14 @@ provider "vercel" {
 }
 
 resource "vercel_project" "tearleads" {
-  name         = "tearleads"
+  name             = "tearleads"
   output_directory = "build"
   git_repository {
     type = "github"
     repo = "${var.github_owner}/${var.github_repository}"
   }
-  domain   {
-    name           = var.domain
+  domain {
+    name = var.domain
   }
 }
 
