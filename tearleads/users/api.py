@@ -23,4 +23,3 @@ class User(APIView):
             ).data,
             status=status.HTTP_200_OK,
         )
-        serializer = UserSerializer(data=request.data)

@@ -11,7 +11,8 @@ Bootstrap
 
 Run tests
 
-    docker-compose run backend python manage.py test
+    docker-compose run backend coverage run manage.py test -v 2
+    docker-compose run backend coverage report
 
 Bump version
 
