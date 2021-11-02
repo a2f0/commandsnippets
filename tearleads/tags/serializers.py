@@ -24,6 +24,9 @@ class TagReorderSerializer(serializers.Serializer):
         required=True, queryset=Tag.objects.all(), allow_empty=False, many=False
     )
 
+    class Meta:
+        resource_name = False
+
 
 class TagTextEntryThroughModelSerializer(serializers.ModelSerializer):
 
@@ -71,3 +74,6 @@ class TagTextEntryThroughModelReorderSerializer(serializers.Serializer):
         allow_empty=False,
         many=False,
     )
+
+    class Meta:
+        resource_name = False

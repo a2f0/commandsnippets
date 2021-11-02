@@ -1,4 +1,4 @@
-djangorestframework-jsonapi[django-filter]==3.1.0
+djangorestframework-jsonapi[django-filter]==4.2.1
 django-cors-headers==3.10.0
 django-environ==0.8.1
 django-filter==21.1
