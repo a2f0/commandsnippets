@@ -51,6 +51,7 @@ const textEntriesResponse = {
         date_updated: '2020-12-28T17:36:18.397537',
         entry_count: 15,
         order: 1,
+        is_deleted: false,
       },
       relationships: {
         user: {

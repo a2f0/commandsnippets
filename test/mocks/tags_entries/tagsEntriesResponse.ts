@@ -42,6 +42,7 @@ const tagsEntriesResponse = {
         date_updated: '2020-03-26T18:20:00',
         entry_count: 27,
         order: 1,
+        is_deleted: false,
       },
       relationships: {
         user: {

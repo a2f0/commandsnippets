@@ -160,36 +160,17 @@ export const AppStateStoreModel = types
           mostRecentTimestamp,
           null
         );
-        for (let i = 0; i < ta.length; i++) {
-          if (ta[i].type === 'TextEntry') {
-            self.updateOrCreateTextEntry(ta[i]);
-          } else if (ta[i].type === 'Tag') {
-            const existing = self.tagsArray.find(o => o.id === ta[i].id);
-            if (existing === undefined) {
-              self.tagsArray.push(ta[i]);
-            }
-          } else if (ta[i].type === 'TagTextEntryThroughModel') {
-            const existing = self.tagTextEntryThroughModel.find(
-              o => o.id === ta[i].id
-            );
-            if (existing === undefined) {
-              self.tagTextEntryThroughModel.push(ta[i]);
-            } else {
-              const existingTimestamp = new Date(
-                existing.attributes.date_updated
-              );
-              const incomingTimeStamp = new Date(ta[i].attributes.date_updated);
-              if (incomingTimeStamp > existingTimestamp) {
-                existing.update(ta[i]);
-              }
-            }
-          } else if (ta[i].type === 'User') {
-            const existing = self.usersArray.find(o => o.id === ta[i].id);
-            if (existing === undefined) {
-              self.usersArray.push(ta[i]);
-            }
+        for (const element of ta) {
+          if (element.type === 'Tag') {
+            self.updateOrCreateTag(element);
+          } else if (element.type === 'User') {
+            self.updateOrCreateUser(element);
+          } else if (element.type === 'TextEntry') {
+            self.updateOrCreateTextEntry(element);
+          } else if (element.type === 'TagTextEntryThroughModel') {
+            self.updateOrCreateTagTextEntryThroughModel(element);
           } else {
-            throw 'Unknown object type: ' + ta[i].type;
+            throw `Unknown object type: ${element}`;
           }
         }
       } catch (error) {
@@ -222,21 +203,13 @@ export const AppStateStoreModel = types
           mostRecentTimestamp,
           0
         );
-        for (let i = 0; i < ta.length; i++) {
-          if (ta[i].type === 'TextEntry') {
-            const existing = self.untaggedTextEntriesArray.find(
-              o => o.id === ta[i].id
-            );
-            if (existing === undefined) {
-              self.untaggedTextEntriesArray.push(ta[i]);
-            }
-          } else if (ta[i].type === 'User') {
-            const existing = self.usersArray.find(o => o.id === ta[i].id);
-            if (existing === undefined) {
-              self.usersArray.push(ta[i]);
-            }
+        for (const element of ta) {
+          if (element.type === 'TextEntry') {
+            self.updateOrCreateTextEntry(element);
+          } else if (element.type === 'User') {
+            self.updateOrCreateUser(element);
           } else {
-            throw 'Unknown object type: ' + ta[i].type;
+            throw `Unknown object type: ${element}`;
           }
         }
       } catch (error) {
