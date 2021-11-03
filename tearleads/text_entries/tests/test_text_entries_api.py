@@ -97,9 +97,13 @@ class TestTextEntriesApi(BaseTestCase):
         # User
         self.assertEqual(json_response["included"][2]["type"], "User")
         self.assertEqual(json_response["included"][2]["id"], str(entry1.user.id))
-        self.assertEqual(len(json_response["included"][2]["attributes"]), 1)
+        self.assertEqual(len(json_response["included"][2]["attributes"]), 2)
         self.assertEqual(
             json_response["included"][2]["attributes"]["username"], entry1.user.username
+        )
+        self.assertEqual(
+            json_response["included"][2]["attributes"]["date_updated"],
+            str(entry1.user.date_updated.isoformat()),
         )
 
     def test_bad_filter(self):
@@ -348,9 +352,13 @@ class TestTextEntriesApi(BaseTestCase):
         )
         self.assertEqual(len(json_response["included"]), 1)
         self.assertEqual(json_response["included"][0]["type"], "User")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 1)
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 2)
         self.assertEqual(
             json_response["included"][0]["attributes"]["username"], self.user1.username
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
 
     def test_create_entry_fails_for_unauthenticated_user(self):
@@ -401,9 +409,13 @@ class TestTextEntriesApi(BaseTestCase):
         )
         self.assertEqual(len(json_response["included"]), 1)
         self.assertEqual(json_response["included"][0]["type"], "User")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 1)
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 2)
         self.assertEqual(
             json_response["included"][0]["attributes"]["username"], self.user1.username
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
 
     def test_delete_works_when_self_owns_object(self):
@@ -417,9 +429,13 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"]["attributes"]["is_deleted"], True)
         self.assertEqual(len(json_response["included"]), 1)
         self.assertEqual(json_response["included"][0]["type"], "User")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 1)
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 2)
         self.assertEqual(
             json_response["included"][0]["attributes"]["username"], self.user1.username
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
 
     def test_delete_fails_when_object_owned_by_other(self):

@@ -47,10 +47,14 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(json_response["data"][0]["attributes"]["order"], tag.order)
         self.assertEqual(len(json_response["included"]), 1)
         self.assertEqual(json_response["included"][0]["type"], "User")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 1)
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 2)
         self.assertEqual(
             json_response["included"][0]["attributes"]["username"],
             self.user1.username,
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
 
     def test_pagination(self):
@@ -95,10 +99,14 @@ class TestTagsApi(BaseTestCase):
         )
         self.assertEqual(len(response.json()["included"]), 1)
         self.assertEqual(response.json()["included"][0]["type"], "User")
-        self.assertEqual(len(response.json()["included"][0]["attributes"]), 1)
+        self.assertEqual(len(response.json()["included"][0]["attributes"]), 2)
         self.assertEqual(
             response.json()["included"][0]["attributes"]["username"],
             self.user1.username,
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
 
     def test_can_resurrect_self_owned(self):
@@ -119,10 +127,14 @@ class TestTagsApi(BaseTestCase):
         )
         self.assertEqual(len(response.json()["included"]), 1)
         self.assertEqual(response.json()["included"][0]["type"], "User")
-        self.assertEqual(len(response.json()["included"][0]["attributes"]), 1)
+        self.assertEqual(len(response.json()["included"][0]["attributes"]), 2)
         self.assertEqual(
             response.json()["included"][0]["attributes"]["username"],
             self.user1.username,
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
 
     def test_delete_works_when_self_owns_object(self):
@@ -135,9 +147,13 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(json_response["data"]["attributes"]["is_deleted"], True)
         self.assertEqual(len(json_response["included"]), 1)
         self.assertEqual(json_response["included"][0]["type"], "User")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 1)
+        self.assertEqual(len(json_response["included"][0]["attributes"]), 2)
         self.assertEqual(
             json_response["included"][0]["attributes"]["username"], self.user1.username
+        )
+        self.assertEqual(
+            json_response["included"][0]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
 
     def test_delete_fails_when_object_owned_by_other(self):

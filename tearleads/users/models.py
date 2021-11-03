@@ -14,6 +14,8 @@ from tearleads.text_entries.models import TextEntry
 
 
 class User(AbstractUser):
+    date_updated = models.DateTimeField(auto_now=True)
+
     def save(self, *args, **kwargs):
         if not self.pk:
             # then it is a new object

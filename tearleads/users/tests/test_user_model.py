@@ -50,3 +50,7 @@ class TestUserModel(TestCase):
             user1 = UserFactory(email="")
         except IntegrityError:
             pass
+
+    def test_date_updated_initialized_for_new_user(self):
+        user = UserFactory()
+        self.assertNotEqual(user.date_updated, None)

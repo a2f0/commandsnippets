@@ -93,9 +93,13 @@ class TestTagsEntriesApi(BaseTestCase):
             0,
         )
         self.assertEqual(json_response["included"][2]["type"], "User")
-        self.assertEqual(len(json_response["included"][2]["attributes"]), 1)
+        self.assertEqual(len(json_response["included"][2]["attributes"]), 2)
         self.assertEqual(
             json_response["included"][2]["attributes"]["username"], self.user1.username
+        )
+        self.assertEqual(
+            json_response["included"][2]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
 
     def test_can_tag_self_owned(self):

@@ -21,7 +21,11 @@ class TestUsersApi(BaseTestCase):
         self.assertEqual(len(json_response["data"]), 3)
         self.assertEqual(json_response["data"]["type"], "User")
         self.assertEqual(json_response["data"]["id"], str(self.user1.id))
-        self.assertEqual(len(json_response["data"]["attributes"]), 1)
+        self.assertEqual(len(json_response["data"]["attributes"]), 2)
         self.assertEqual(
             json_response["data"]["attributes"]["username"], str(self.user1.username)
+        )
+        self.assertEqual(
+            json_response["data"]["attributes"]["date_updated"],
+            str(self.user1.date_updated.isoformat()),
         )
