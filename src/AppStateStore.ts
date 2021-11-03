@@ -106,8 +106,13 @@ export const AppStateStoreModel = types
         }
         const mostRecentTimestamp: string | null =
           TagHelpers.getMostRecentTimeStamp(filteredTags);
-        const ta = yield TagHelpers.fetch([], user, 1, mostRecentTimestamp);
-        for (const element of ta) {
+        const collection = yield TagHelpers.fetch(
+          [],
+          user,
+          1,
+          mostRecentTimestamp
+        );
+        for (const element of collection) {
           if (element.type === 'Tag') {
             self.updateOrCreateTag(element);
           } else if (element.type === 'User') {
@@ -152,7 +157,7 @@ export const AppStateStoreModel = types
 
         const mostRecentTimestamp: string | null =
           TextEntryHelpers.getMostRecentTimeStamp(textEntriesFiltered);
-        const ta = yield TextEntryHelpers.fetch(
+        const collection = yield TextEntryHelpers.fetch(
           [],
           user,
           tag,
@@ -160,7 +165,7 @@ export const AppStateStoreModel = types
           mostRecentTimestamp,
           null
         );
-        for (const element of ta) {
+        for (const element of collection) {
           if (element.type === 'Tag') {
             self.updateOrCreateTag(element);
           } else if (element.type === 'User') {
@@ -195,7 +200,7 @@ export const AppStateStoreModel = types
         }
         const mostRecentTimestamp: string | null =
           TextEntryHelpers.getMostRecentTimeStamp(filteredTextEntries);
-        const ta = yield TextEntryHelpers.fetch(
+        const collection = yield TextEntryHelpers.fetch(
           [],
           user,
           null,
@@ -203,7 +208,7 @@ export const AppStateStoreModel = types
           mostRecentTimestamp,
           0
         );
-        for (const element of ta) {
+        for (const element of collection) {
           if (element.type === 'TextEntry') {
             self.updateOrCreateTextEntry(element);
           } else if (element.type === 'User') {
