@@ -1,17 +1,3 @@
-- name: install docker
-  package:
-    name: docker.io
-    state: present
-    force_apt_get: True
-    update_cache: yes
-
-- name: install docker-compose
-  package:
-    name: docker-compose
-    state: present
-    force_apt_get: True
-    update_cache: yes
-
 - name: install unzip
   package:
     name: unzip
