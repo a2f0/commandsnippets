@@ -8,10 +8,10 @@ import {
   TextEntryHelpers,
   TextEntryModel,
 } from './models/TextEntryModel';
+import {IUserJsonApi, UserModel} from './models/UserModel';
 import {TagHelpers, TagModel} from './models/TagModel';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 import {ITagJsonApi} from './models/TagModel';
-import {UserModel} from './models/UserModel';
 import {environment} from './api';
 
 export type RootModel = Instance<typeof AppStateStoreModel>;
@@ -39,6 +39,60 @@ export const AppStateStoreModel = types
     showTagCounts: types.boolean,
   })
   .actions(self => ({
+    updateOrCreateTextEntry(object: ITextEntryJsonApi) {
+      const existing = self.textEntriesArray.find(o => o.id === object.id);
+      if (existing === undefined) {
+        self.textEntriesArray.push(object);
+      } else {
+        const existingTimestamp = new Date(existing.attributes.date_updated);
+        const incomingTimeStamp = new Date(object.attributes.date_updated);
+        if (incomingTimeStamp > existingTimestamp) {
+          existing.update(object);
+        }
+      }
+    },
+    updateOrCreateTag(object: ITagJsonApi) {
+      const existing = self.tagsArray.find(o => o.id === object.id);
+      if (existing === undefined) {
+        self.tagsArray.push(object);
+      } else {
+        const existingTimestamp = new Date(existing.attributes.date_updated);
+        const incomingTimeStamp = new Date(object.attributes.date_updated);
+        if (incomingTimeStamp > existingTimestamp) {
+          existing.update(object);
+        }
+      }
+    },
+    updateOrCreateTagTextEntryThroughModel(
+      object: ITagTextEntryThroughModelJsonApi
+    ) {
+      const existing = self.tagTextEntryThroughModel.find(
+        o => o.id === object.id
+      );
+      if (existing === undefined) {
+        self.tagTextEntryThroughModel.push(object);
+      } else {
+        const existingTimestamp = new Date(existing.attributes.date_updated);
+        const incomingTimeStamp = new Date(object.attributes.date_updated);
+        if (incomingTimeStamp > existingTimestamp) {
+          existing.update(object);
+        }
+      }
+    },
+    updateOrCreateUser(object: IUserJsonApi) {
+      const existing = self.usersArray.find(o => o.id === object.id);
+      if (existing === undefined) {
+        self.usersArray.push(object);
+      } else {
+        const existingTimestamp = new Date(existing.attributes.date_updated);
+        const incomingTimeStamp = new Date(object.attributes.date_updated);
+        if (incomingTimeStamp > existingTimestamp) {
+          existing.update(object);
+        }
+      }
+    },
+  }))
+  .actions(self => ({
     fetchTags: flow(function* fetchTags(user: string) {
       try {
         const existingUser = self.usersArray.find(
@@ -55,25 +109,9 @@ export const AppStateStoreModel = types
         const ta = yield TagHelpers.fetch([], user, 1, mostRecentTimestamp);
         for (const element of ta) {
           if (element.type === 'Tag') {
-            const existing = self.tagsArray.find(o => o.id === element.id);
-            if (existing === undefined) {
-              self.tagsArray.push(element);
-            } else {
-              const existingTimestamp = new Date(
-                existing.attributes.date_updated
-              );
-              const incomingTimeStamp = new Date(
-                element.attributes.date_updated
-              );
-              if (incomingTimeStamp > existingTimestamp) {
-                existing.update(element);
-              }
-            }
+            self.updateOrCreateTag(element);
           } else if (element.type === 'User') {
-            const existing = self.usersArray.find(o => o.id === element.id);
-            if (existing === undefined) {
-              self.usersArray.push(element);
-            }
+            self.updateOrCreateUser(element);
           }
         }
       } catch (error) {
@@ -124,10 +162,7 @@ export const AppStateStoreModel = types
         );
         for (let i = 0; i < ta.length; i++) {
           if (ta[i].type === 'TextEntry') {
-            const existing = self.textEntriesArray.find(o => o.id === ta[i].id);
-            if (existing === undefined) {
-              self.textEntriesArray.push(ta[i]);
-            }
+            self.updateOrCreateTextEntry(ta[i]);
           } else if (ta[i].type === 'Tag') {
             const existing = self.tagsArray.find(o => o.id === ta[i].id);
             if (existing === undefined) {
@@ -211,46 +246,6 @@ export const AppStateStoreModel = types
     }),
     setLoggedInUser(handle: string | null) {
       self.loggedInUser = handle;
-    },
-    updateOrCreateTag(object: ITagJsonApi) {
-      const existing = self.tagsArray.find(o => o.id === object.id);
-      if (existing === undefined) {
-        self.tagsArray.push(object);
-      } else {
-        const existingTimestamp = new Date(existing.attributes.date_updated);
-        const incomingTimeStamp = new Date(object.attributes.date_updated);
-        if (incomingTimeStamp > existingTimestamp) {
-          existing.update(object);
-        }
-      }
-    },
-    updateOrCreateTextEntry(object: ITextEntryJsonApi) {
-      const existing = self.textEntriesArray.find(o => o.id === object.id);
-      if (existing === undefined) {
-        self.textEntriesArray.push(object);
-      } else {
-        const existingTimestamp = new Date(existing.attributes.date_updated);
-        const incomingTimeStamp = new Date(object.attributes.date_updated);
-        if (incomingTimeStamp > existingTimestamp) {
-          existing.update(object);
-        }
-      }
-    },
-    updateOrCreateTagTextEntryThroughModel(
-      object: ITagTextEntryThroughModelJsonApi
-    ) {
-      const existing = self.tagTextEntryThroughModel.find(
-        o => o.id === object.id
-      );
-      if (existing === undefined) {
-        self.tagTextEntryThroughModel.push(object);
-      } else {
-        const existingTimestamp = new Date(existing.attributes.date_updated);
-        const incomingTimeStamp = new Date(object.attributes.date_updated);
-        if (incomingTimeStamp > existingTimestamp) {
-          existing.update(object);
-        }
-      }
     },
     removeTag(id: string) {
       const existing: Instance<typeof TagModel> = self.tagsArray.filter(
@@ -353,8 +348,6 @@ if (initialState !== null) {
   state = defaultState;
 }
 
-// const initialState = defaultState;
-
 let snapshotListener: IDisposer;
 
 function createAppStateStore(
@@ -374,9 +367,10 @@ function createAppStateStore(
   applySnapshot(store, snapshotMergedIntoDefaults);
 
   // connect local storage
-  snapshotListener = onSnapshot(store, snapshot =>
-    localStorage.setItem(localStorageKey, JSON.stringify(snapshot))
-  );
+  snapshotListener = onSnapshot(store, snapshot => {
+    console.info('=== taking a snapshot');
+    localStorage.setItem(localStorageKey, JSON.stringify(snapshot));
+  });
   return store;
 }
 

@@ -9,11 +9,13 @@ export interface IUserJsonApi {
 
 export interface IUserJsonApiAttributes {
   username: string;
+  date_updated: string;
 }
 
 const UserAttributes = types
   .model('UserAttributes', {
     username: types.string,
+    date_updated: types.string,
   })
   .actions(() => ({}));
 
