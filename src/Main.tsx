@@ -29,7 +29,7 @@ const useStyles = makeStyles(() => ({
   main: {
     flexGrow: 1,
     marginTop: appBarHeight,
-    height: `calc(100vh - ${Constants.appBarHeight}px)`,
+    height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
     overflow: 'auto',
   },
   toolBar: {
@@ -112,6 +112,12 @@ const Main = (props: IMainProps) => {
       <main className={classes.main}>
         <EntryList />
       </main>
+      <AppBar position="fixed" color="primary" sx={{top: 'auto', bottom: 0}}>
+        <Toolbar variant="dense" className={classes.toolBar}>
+          <GithubAuth />
+          <GoogleAuth />
+        </Toolbar>
+      </AppBar>
     </>
   );
 };

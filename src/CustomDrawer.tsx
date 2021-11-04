@@ -14,6 +14,7 @@ const useStyles = makeStyles({
     borderLeft: 0,
     width: Constants.drawerWidth,
     overflow: 'hidden',
+    height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
   },
 });
 
