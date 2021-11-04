@@ -1,55 +1,55 @@
-import IconButton from '@mui/material/IconButton';
-import InputBase from '@mui/material/InputBase';
-import Paper from '@mui/material/Paper';
-import React from 'react';
-import SearchIcon from '@mui/icons-material/Search';
-import makeStyles from '@mui/styles/makeStyles';
+import React, {useCallback, useEffect, useState} from 'react';
+import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
+import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
+import {useAppContext} from './AppContext';
 
-const useStyles = makeStyles(() => ({
-  root: {
-    padding: '0px 0px',
-    display: 'flex',
-    alignItems: 'center',
-    width: 150,
-    boxShadow: 'none',
-  },
-  input: {
-    flex: 1,
-  },
-  iconButton: {
-    padding: 0,
-  },
-  divider: {
-    height: 28,
-    margin: 4,
-  },
-}));
+const TagSearch = () => {
+  const [tagName, setTagName] = useState<string>('');
+  const appConfig = useAppContext();
 
-export default function TagSearch() {
-  const classes = useStyles();
+  const escFunction = useCallback(event => {
+    if (event.keyCode === 27) {
+      handleCancel();
+    }
+  }, []);
+
+  const useVisibility = useCallback(() => {
+    if (document.visibilityState === 'visible') {
+      console.info('the document has become visible');
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('visibilitychange', useVisibility, false);
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', escFunction, false);
+
+    return () => {
+      document.removeEventListener('keydown', escFunction, false);
+    };
+  }, []);
+
+  const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTagName(event.currentTarget.value);
+  };
+
+  const handleCancel = () => {
+    setTagName('');
+    appConfig.setTagNew(null);
+  };
 
   return (
-    <Paper component="form" className={classes.root}>
-      {/* <IconButton className={classes.iconButton} aria-label="menu">
-        <MenuIcon />
-      </IconButton> */}
-      <IconButton
-        type="submit"
-        className={classes.iconButton}
-        aria-label="search"
-        size="large"
-      >
-        <SearchIcon fontSize="small" />
-      </IconButton>
-      <InputBase
-        className={classes.input}
-        placeholder=""
-        inputProps={{'aria-label': 'search tags'}}
+    <StyledTagFormContainer>
+      <StyledTextFieldTags
+        value={tagName}
+        id="tagNewTextField"
+        onChange={e => {
+          handleTagNameChange(e);
+        }}
       />
-      {/* <Divider className={classes.divider} orientation="vertical" />
-      <IconButton color="primary" className={classes.iconButton} aria-label="directions">
-        <DirectionsIcon />
-      </IconButton> */}
-    </Paper>
+    </StyledTagFormContainer>
   );
-}
+};
+export default React.memo(TagSearch);

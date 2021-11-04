@@ -7,7 +7,6 @@ import List from '@mui/material/List';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
-import TagSearch from './TagSearch';
 import {autorun} from 'mobx';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
@@ -136,7 +135,6 @@ const TagList = () => {
 
   return (
     <>
-      {appConfig.tagSearch && <TagSearch />}
       <List className={classes.root} onContextMenu={handleContextClick}>
         <div className={classes.ltr} id="tagList">
           {appConfig.tagNew === 'top' && <TagNew handleNewParent={handleNew} />}

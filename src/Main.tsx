@@ -1,11 +1,10 @@
 import * as Constants from './constants';
 import AppBar from '@mui/material/AppBar';
 import EntryList from './EntryList';
-import GithubAuth from './GithubAuth';
-import GoogleAuth from './GoogleAuth';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
 import React from 'react';
+import TagSearch from './TagSearch';
 import {Theme} from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import makeStyles from '@mui/styles/makeStyles';
@@ -46,8 +45,7 @@ const Main = (props: IMainProps) => {
       </main>
       <AppBar position="fixed" color="primary" sx={{top: 'auto', bottom: 0}}>
         <Toolbar variant="dense">
-          <GithubAuth />
-          <GoogleAuth />
+          <TagSearch />
         </Toolbar>
       </AppBar>
     </>
