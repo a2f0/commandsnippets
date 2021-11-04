@@ -12,10 +12,6 @@ import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 
 const useStyles = makeStyles(() => ({
-  clickableDiv: {
-    marginRight: '10px',
-    cursor: 'pointer',
-  },
   appBar: {
     height: `${Constants.appBarHeight}px`,
     boxShadow: 'none',
@@ -28,36 +24,7 @@ const useStyles = makeStyles(() => ({
     height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
     width: `calc(100vw - ${Constants.drawerWidth}px)`,
     overflow: 'auto',
-    // Fix overlapping issue with the sticky footer.
     zIndex: 1000,
-  },
-  positionedTitle: {
-    fontSize: '16px',
-    position: 'fixed',
-    top: '15px',
-    left: '8px',
-    userSelect: 'none' /* Non-prefixed version, currently */,
-    '-webkit-touch-callout': 'none' /* iOS Safari */,
-    '-webkit-user-select': 'none' /* Safari */,
-    '-khtml-user-select': 'none' /* Konqueror HTML */,
-    '-moz-user-select': 'none' /* Old versions of Firefox */,
-    '-ms-user-select': 'none' /* Internet Explorer/Edge */,
-    cursor: 'pointer',
-  },
-  positionedTearleads: {
-    paddingLeft: '3px',
-  },
-  greedyExpander: {
-    flexGrow: 1,
-  },
-  list: {
-    padding: 0,
-  },
-  entryListEmptySpace: {
-    backgroundColor: 'green',
-  },
-  title: {
-    flexGrow: 1,
   },
 }));
 
