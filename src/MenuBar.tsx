@@ -8,6 +8,7 @@ import Divider from '@mui/material/Divider';
 import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
+import {Grid} from '@mui/material';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import React from 'react';
@@ -257,8 +258,10 @@ const MenuBar = (props: IMenuBarProps) => {
             Entries
           </Button>
         </div>
-        <GithubAuth />
-        <GoogleAuth />
+        <Grid container justifyContent="flex-end">
+          <GithubAuth />
+          <GoogleAuth />
+        </Grid>
       </Toolbar>
 
       <StyledMenu
