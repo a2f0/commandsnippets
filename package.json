@@ -71,7 +71,6 @@
     "@babel/runtime": "^7.14.0",
     "@emotion/react": "^11.5.0",
     "@emotion/styled": "^11.3.0",
-    "@icons-pack/react-simple-icons": "^4.4.0",
     "@mui/icons-material": "^5.0.5",
     "@mui/material": "^5.0.6",
     "@mui/styles": "^5.0.2",

@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import API from './api';
 import Button from '@mui/material/Button';
-import {Google} from '@icons-pack/react-simple-icons';
+import GoogleIcon from '@mui/icons-material/Google';
 import {Theme} from '@mui/material/styles';
 import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
@@ -105,7 +105,7 @@ const GoogleAuth = () => {
           color="secondary"
           className={classes.button}
           onClick={handleGitHubClick}
-          startIcon={<Google />}
+          startIcon={<GoogleIcon />}
         >
           Login with Google
         </Button>

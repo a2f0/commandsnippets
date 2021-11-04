@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import API from './api';
 import Button from '@mui/material/Button';
-import {Github} from '@icons-pack/react-simple-icons';
+import GitHubIcon from '@mui/icons-material/GitHub';
 import {Theme} from '@mui/material/styles';
 import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
@@ -83,7 +83,7 @@ const GithubAuth = () => {
           color="secondary"
           className={classes.button}
           onClick={handleGitHubClick}
-          startIcon={<Github />}
+          startIcon={<GitHubIcon />}
         >
           Login with GitHub
         </Button>
