@@ -6,6 +6,8 @@ import Button from '@mui/material/Button';
 import CheckIcon from '@mui/icons-material/Check';
 import Divider from '@mui/material/Divider';
 import Fade from '@mui/material/Fade';
+import GithubAuth from './GithubAuth';
+import GoogleAuth from './GoogleAuth';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import React from 'react';
@@ -77,11 +79,11 @@ const useStyles = makeStyles({
     flexShrink: 0,
   },
   toolBar: {
-    minHeight: 0,
+    minHeight: `${Constants.appBarHeight}px`,
     padding: 0,
-    borderBottom: '.5px solid',
   },
   menuButton: {
+    alignSelf: 'flex-end', // Force menu buttons to the bottom of the toolbar.
     textTransform: 'none',
     padding: 0,
     minWidth: 0,
@@ -101,6 +103,10 @@ const useStyles = makeStyles({
   dragIndicator: {
     display: 'inline-block',
     width: `${Constants.dragIndicatorWidthTag}px`,
+  },
+  aligner: {
+    minHeight: `${Constants.appBarHeight}px`,
+    display: 'flex',
   },
 });
 
@@ -207,49 +213,52 @@ const MenuBar = (props: IMenuBarProps) => {
       <Toolbar variant="dense" className={classes.toolBar}>
         <Typography className={classes.drawer}></Typography>
         <Typography className={classes.dragIndicator}></Typography>
-
-        {appConfig.loggedInUser && (
+        <div className={classes.aligner}>
+          {appConfig.loggedInUser && (
+            <Button
+              color="secondary"
+              size="small"
+              aria-controls="file-menu"
+              className={classes.menuButton}
+              aria-haspopup="true"
+              onClick={handleFileMenuClick}
+            >
+              File
+            </Button>
+          )}
           <Button
             color="secondary"
             size="small"
-            aria-controls="file-menu"
+            aria-controls="view-menu"
             className={classes.menuButton}
             aria-haspopup="true"
-            onClick={handleFileMenuClick}
+            onClick={handleViewMenuClick}
           >
-            File
+            View
           </Button>
-        )}
-        <Button
-          color="secondary"
-          size="small"
-          aria-controls="view-menu"
-          className={classes.menuButton}
-          aria-haspopup="true"
-          onClick={handleViewMenuClick}
-        >
-          View
-        </Button>
-        <Button
-          color="secondary"
-          size="small"
-          aria-controls="view-menu"
-          className={classes.menuButton}
-          aria-haspopup="true"
-          onClick={handleTagsMenuClick}
-        >
-          Tags
-        </Button>
-        <Button
-          color="secondary"
-          size="small"
-          aria-controls="view-menu"
-          className={classes.menuButton}
-          aria-haspopup="true"
-          onClick={handleEntriesMenuClick}
-        >
-          Entries
-        </Button>
+          <Button
+            color="secondary"
+            size="small"
+            aria-controls="view-menu"
+            className={classes.menuButton}
+            aria-haspopup="true"
+            onClick={handleTagsMenuClick}
+          >
+            Tags
+          </Button>
+          <Button
+            color="secondary"
+            size="small"
+            aria-controls="view-menu"
+            className={classes.menuButton}
+            aria-haspopup="true"
+            onClick={handleEntriesMenuClick}
+          >
+            Entries
+          </Button>
+        </div>
+        <GithubAuth />
+        <GoogleAuth />
       </Toolbar>
 
       <StyledMenu

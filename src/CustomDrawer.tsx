@@ -4,17 +4,19 @@ import Drawer, {DrawerProps} from '@mui/material/Drawer';
 import makeStyles from '@mui/styles/makeStyles';
 
 const useStyles = makeStyles({
-  drawer: {
-    width: Constants.drawerWidth,
-    flexShrink: 0,
+  root: {
+    width: `${Constants.drawerWidth}px`,
   },
-  drawerPaper: {
-    marginTop: Constants.appBarHeight,
+  paper: {
+    marginTop: `${Constants.appBarHeight}px`,
     borderRight: 0,
     borderLeft: 0,
-    width: Constants.drawerWidth,
+    width: `${Constants.drawerWidth}px`,
     overflow: 'hidden',
+    flexShrink: 0,
+    marginBottom: `${Constants.footerHeight}px)`,
     height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
+    zIndex: 1000,
   },
 });
 
@@ -23,10 +25,10 @@ const CustomDrawer = function ({anchor, children}: DrawerProps) {
   return (
     <Drawer
       anchor={anchor}
-      className={classes.drawer}
       variant="permanent"
       classes={{
-        paper: classes.drawerPaper,
+        paper: classes.paper,
+        root: classes.root,
       }}
     >
       {children}

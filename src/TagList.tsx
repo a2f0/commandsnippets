@@ -17,13 +17,13 @@ import {useParams} from 'react-router-dom';
 
 const useStyles = makeStyles({
   root: {
-    paddingTop: 2,
+    paddingTop: 0,
     paddingBottom: 0,
     paddingLeft: 0,
     paddingRight: 0,
     overflowY: 'auto',
     direction: 'rtl',
-    height: `calc(100vh - ${Constants.appBarHeight}px)`,
+    height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
   },
   ltr: {
     direction: 'ltr',

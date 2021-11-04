@@ -1,5 +1,4 @@
 import * as Constants from './constants';
-import {useHistory, useParams} from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import EntryList from './EntryList';
 import GithubAuth from './GithubAuth';
@@ -12,29 +11,25 @@ import Toolbar from '@mui/material/Toolbar';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 
-const appBarHeight = 52;
-
 const useStyles = makeStyles(() => ({
   clickableDiv: {
     marginRight: '10px',
     cursor: 'pointer',
   },
   appBar: {
-    height: appBarHeight,
+    height: `${Constants.appBarHeight}px`,
     boxShadow: 'none',
     display: 'flex', // Make this a flex container to allow the greedyExpander to gobble up space.
     flexDirection: 'column', // Make this a flex container to allow the greedyExpander to gobble up space.
     backgroundImage: 'none', // Remove the Material UI gradient.
   },
   main: {
-    flexGrow: 1,
-    marginTop: appBarHeight,
+    marginTop: `${Constants.appBarHeight}px`,
     height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
+    width: `calc(100vw - ${Constants.drawerWidth}px)`,
     overflow: 'auto',
-  },
-  toolBar: {
-    minHeight: 0,
-    padding: 0,
+    // Fix overlapping issue with the sticky footer.
+    zIndex: 1000,
   },
   positionedTitle: {
     fontSize: '16px',
@@ -70,42 +65,12 @@ interface IMainProps {
   handleThemeSwitcher: (chosenTheme: Theme) => void;
 }
 
-interface IParamTypes {
-  user: string;
-  tag: string;
-}
-
 const Main = (props: IMainProps) => {
   const classes = useStyles();
-  const history = useHistory();
-  const {user} = useParams<IParamTypes>();
-
-  const handleNavigateToRoot = (user: string) => {
-    history.push(`/${user}`);
-  };
 
   return (
     <>
       <AppBar position="fixed" className={classes.appBar}>
-        <div className={classes.greedyExpander}>
-          {/* force the menu to be at the bottom of the app bar */}
-        </div>
-        <Toolbar variant="dense" className={classes.toolBar}>
-          <div className={classes.title}>
-            {/* Push the login buttons to the right */}
-          </div>
-          <div
-            className={classes.positionedTitle}
-            onClick={() => {
-              handleNavigateToRoot(user);
-            }}
-          >
-            <span>&#x25cf;</span>
-            <span className={classes.positionedTearleads}>Tearleads</span>
-          </div>
-          <GithubAuth />
-          <GoogleAuth />
-        </Toolbar>
         <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
       </AppBar>
       <LeftDrawer />
@@ -113,7 +78,7 @@ const Main = (props: IMainProps) => {
         <EntryList />
       </main>
       <AppBar position="fixed" color="primary" sx={{top: 'auto', bottom: 0}}>
-        <Toolbar variant="dense" className={classes.toolBar}>
+        <Toolbar variant="dense">
           <GithubAuth />
           <GoogleAuth />
         </Toolbar>

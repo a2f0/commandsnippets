@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
 import React, {useEffect, useMemo, useState} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
@@ -8,7 +7,6 @@ import EntryNew from './EntryNew';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {autorun} from 'mobx';
-import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
@@ -39,14 +37,7 @@ export interface TagTextEntryThroughModel {
   index: number;
 }
 
-const useStyles = makeStyles({
-  root: {
-    height: `calc(100vh - ${Constants.appBarHeight}px)`,
-  },
-});
-
 const EntryList = () => {
-  const classes = useStyles();
   const appConfig = useAppContext();
   const location = useLocation();
   const {user} = useParams<IParamTypes>();
@@ -158,12 +149,7 @@ const EntryList = () => {
   );
 
   return (
-    <div
-      ref={drop}
-      id="tagsEntriesList"
-      className={classes.root}
-      onContextMenu={handleContextClick}
-    >
+    <div ref={drop} id="tagsEntriesList" onContextMenu={handleContextClick}>
       {appConfig.entryNew === 'textEntry-top' && (
         <EntryNew filterAndSortParent={filterAndSort} />
       )}
