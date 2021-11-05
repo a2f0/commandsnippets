@@ -9,6 +9,7 @@ import {ITagJsonApiResponseSingle} from './lib/tags';
 import ItemTypes from './ItemTypes';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
+import TagLabel from './TagLabel';
 import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
@@ -321,7 +322,7 @@ const Tag = ({
               onClick={handleTagClick}
               onContextMenu={handleContextClick}
             >
-              {tagObject.attributes.name}
+              <TagLabel label={tagObject.attributes.name} />
               {appConfig.showTagCounts
                 ? ` (${tagObject.attributes.entry_count})`
                 : null}

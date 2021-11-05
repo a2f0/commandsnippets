@@ -18,7 +18,6 @@ export type RootModel = Instance<typeof AppStateStoreModel>;
 
 export const AppStateStoreModel = types
   .model({
-    tagSearchString: types.maybeNull(types.string),
     tagsArray: types.array(TagModel),
     textEntriesArray: types.array(TextEntryModel),
     untaggedTextEntriesArray: types.array(TextEntryModel),
@@ -39,6 +38,9 @@ export const AppStateStoreModel = types
     currentUser: types.maybeNull(types.string),
     showTagCounts: types.boolean,
   })
+  .volatile(() => ({
+    tagSearchString: '',
+  }))
   .actions(self => ({
     updateOrCreateTextEntry(object: ITextEntryJsonApi) {
       const existing = self.textEntriesArray.find(o => o.id === object.id);
@@ -269,7 +271,7 @@ export const AppStateStoreModel = types
     setTagSearch(value: boolean) {
       self.tagSearch = value;
     },
-    setTagSearchString(value: string | null) {
+    setTagSearchString(value: string) {
       self.tagSearchString = value;
     },
     setMostRecentCopyType(value: string) {
