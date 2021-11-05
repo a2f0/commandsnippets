@@ -71,7 +71,7 @@ const TagList = () => {
           setTags(TagHelpers.sort());
         });
       }),
-    [appConfig.tagSortOrder]
+    [appConfig.tagSortOrder, appConfig.tagSearchString]
   );
 
   const classes = useStyles();

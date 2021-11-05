@@ -18,6 +18,7 @@ export type RootModel = Instance<typeof AppStateStoreModel>;
 
 export const AppStateStoreModel = types
   .model({
+    tagSearchString: types.maybeNull(types.string),
     tagsArray: types.array(TagModel),
     textEntriesArray: types.array(TextEntryModel),
     untaggedTextEntriesArray: types.array(TextEntryModel),
@@ -267,6 +268,9 @@ export const AppStateStoreModel = types
     },
     setTagSearch(value: boolean) {
       self.tagSearch = value;
+    },
+    setTagSearchString(value: string | null) {
+      self.tagSearchString = value;
     },
     setMostRecentCopyType(value: string) {
       self.mostRecentCopyType = value;
