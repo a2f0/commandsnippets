@@ -16,18 +16,28 @@ export interface ITagJsonApiResponseSingle {
   included: Array<IUserJsonApi>;
 }
 
-export function sort(): Array<ITagJsonApi> {
+export function filterAndSort(): Array<ITagJsonApi> {
   let sortedArray: Array<ITagJsonApi>;
 
   const userObject = store.usersArray.find(
     element => element.attributes.username === store.currentUser
   );
 
-  const tagObjects = store.tagsArray.filter(
-    element =>
-      element.relationships.user.data.id === userObject?.id &&
-      element.attributes.is_deleted === false
-  );
+  let tagObjects: Array<ITagJsonApi>;
+  if (store.tagSearchString !== '') {
+    tagObjects = store.tagsArray.filter(
+      element =>
+        element.relationships.user.data.id === userObject?.id &&
+        element.attributes.is_deleted === false &&
+        element.attributes.name.toLowerCase().includes(store.tagSearchString)
+    );
+  } else {
+    tagObjects = store.tagsArray.filter(
+      element =>
+        element.relationships.user.data.id === userObject?.id &&
+        element.attributes.is_deleted === false
+    );
+  }
 
   if (store.tagSortOrder === 'name') {
     sortedArray = tagObjects.sort((a, b) => {

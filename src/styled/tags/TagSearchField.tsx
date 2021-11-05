@@ -31,13 +31,13 @@ const TagSearchField = () => {
   }, []);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    appConfig.setTagSearchString(event.currentTarget.value);
     setTagSearch(event.currentTarget.value);
+    appConfig.setTagSearchString(event.currentTarget.value);
   };
 
   const handleClear = () => {
     setTagSearch('');
-    console.info('handle clear');
+    appConfig.setTagSearchString('');
   };
 
   return (

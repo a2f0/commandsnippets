@@ -1,4 +1,4 @@
-import {fetch, sort} from '../lib/tags';
+import {fetch, filterAndSort} from '../lib/tags';
 import {getParent, types} from 'mobx-state-tree';
 import type {RootModel} from '../AppStateStore';
 import {getMostRecentTimeStamp} from '../lib/shared';
@@ -81,7 +81,7 @@ export const TagModel = types
   }));
 
 export const TagHelpers = {
-  sort: sort,
+  filterAndSort: filterAndSort,
   fetch: fetch,
   getMostRecentTimeStamp,
 };

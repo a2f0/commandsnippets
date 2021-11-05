@@ -68,10 +68,18 @@ const TagList = () => {
       autorun(() => {
         appConfig.setCurrentUser(user);
         appConfig.fetchTags(user).then(() => {
-          setTags(TagHelpers.sort());
+          setTags(TagHelpers.filterAndSort());
         });
       }),
-    [appConfig.tagSortOrder, appConfig.tagSearchString]
+    [appConfig.tagSortOrder]
+  );
+
+  useEffect(
+    () =>
+      autorun(() => {
+        setTags(TagHelpers.filterAndSort());
+      }),
+    [appConfig.tagSearchString]
   );
 
   const classes = useStyles();
@@ -95,7 +103,7 @@ const TagList = () => {
   const handleDelete = (object: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(c => c.id === object.data.id);
     existing?.update(object.data);
-    setTags(TagHelpers.sort());
+    setTags(TagHelpers.filterAndSort());
   };
 
   const findEntry = (id: string) => {
@@ -108,7 +116,7 @@ const TagList = () => {
 
   const handleNew = (object: ITagJsonApi) => {
     appConfig.updateOrCreateTag(object);
-    setTags(TagHelpers.sort());
+    setTags(TagHelpers.filterAndSort());
   };
 
   const findEntryByIndex = (index: number) => {
