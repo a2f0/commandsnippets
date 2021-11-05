@@ -4,9 +4,9 @@ import EntryList from './EntryList';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
 import React from 'react';
+import StyledToolbar from './styled/layout/StyledToolbar';
 import TagSearch from './TagSearch';
 import {Theme} from '@mui/material/styles';
-import Toolbar from '@mui/material/Toolbar';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 
@@ -37,16 +37,18 @@ const Main = (props: IMainProps) => {
   return (
     <>
       <AppBar position="fixed" className={classes.appBar}>
-        <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
+        <StyledToolbar>
+          <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
+        </StyledToolbar>
       </AppBar>
       <LeftDrawer />
       <main className={classes.main}>
         <EntryList />
       </main>
       <AppBar position="fixed" color="primary" sx={{top: 'auto', bottom: 0}}>
-        <Toolbar variant="dense">
+        <StyledToolbar>
           <TagSearch />
-        </Toolbar>
+        </StyledToolbar>
       </AppBar>
     </>
   );

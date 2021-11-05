@@ -14,7 +14,6 @@ import Menu from '@mui/material/Menu';
 import React from 'react';
 import StyledMenuItem from './StyledMenuItem';
 import {Theme} from '@mui/material/styles';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import {WithStyles} from '@mui/styles';
 import axios from 'axios';
@@ -79,12 +78,10 @@ const useStyles = makeStyles({
     width: Constants.drawerWidth,
     flexShrink: 0,
   },
-  toolBar: {
-    minHeight: `${Constants.appBarHeight}px`,
-    padding: 0,
-  },
   menuButton: {
-    alignSelf: 'flex-end', // Force menu buttons to the bottom of the toolbar.
+    // Force menu buttons to the bottom of the toolbar.
+    // See the 'aligner' class attached to the parent div.
+    alignSelf: 'flex-end',
     textTransform: 'none',
     padding: 0,
     minWidth: 0,
@@ -211,58 +208,56 @@ const MenuBar = (props: IMenuBarProps) => {
 
   return (
     <>
-      <Toolbar variant="dense" className={classes.toolBar}>
-        <Typography className={classes.drawer}></Typography>
-        <Typography className={classes.dragIndicator}></Typography>
-        <div className={classes.aligner}>
-          {appConfig.loggedInUser && (
-            <Button
-              color="secondary"
-              size="small"
-              aria-controls="file-menu"
-              className={classes.menuButton}
-              aria-haspopup="true"
-              onClick={handleFileMenuClick}
-            >
-              File
-            </Button>
-          )}
+      <Typography className={classes.drawer}></Typography>
+      <Typography className={classes.dragIndicator}></Typography>
+      <div className={classes.aligner}>
+        {appConfig.loggedInUser && (
           <Button
             color="secondary"
             size="small"
-            aria-controls="view-menu"
+            aria-controls="file-menu"
             className={classes.menuButton}
             aria-haspopup="true"
-            onClick={handleViewMenuClick}
+            onClick={handleFileMenuClick}
           >
-            View
+            File
           </Button>
-          <Button
-            color="secondary"
-            size="small"
-            aria-controls="view-menu"
-            className={classes.menuButton}
-            aria-haspopup="true"
-            onClick={handleTagsMenuClick}
-          >
-            Tags
-          </Button>
-          <Button
-            color="secondary"
-            size="small"
-            aria-controls="view-menu"
-            className={classes.menuButton}
-            aria-haspopup="true"
-            onClick={handleEntriesMenuClick}
-          >
-            Entries
-          </Button>
-        </div>
-        <Grid container justifyContent="flex-end">
-          <GithubAuth />
-          <GoogleAuth />
-        </Grid>
-      </Toolbar>
+        )}
+        <Button
+          color="secondary"
+          size="small"
+          aria-controls="view-menu"
+          className={classes.menuButton}
+          aria-haspopup="true"
+          onClick={handleViewMenuClick}
+        >
+          View
+        </Button>
+        <Button
+          color="secondary"
+          size="small"
+          aria-controls="view-menu"
+          className={classes.menuButton}
+          aria-haspopup="true"
+          onClick={handleTagsMenuClick}
+        >
+          Tags
+        </Button>
+        <Button
+          color="secondary"
+          size="small"
+          aria-controls="view-menu"
+          className={classes.menuButton}
+          aria-haspopup="true"
+          onClick={handleEntriesMenuClick}
+        >
+          Entries
+        </Button>
+      </div>
+      <Grid container justifyContent="flex-end">
+        <GithubAuth />
+        <GoogleAuth />
+      </Grid>
 
       <StyledMenu
         id="file-menu"
