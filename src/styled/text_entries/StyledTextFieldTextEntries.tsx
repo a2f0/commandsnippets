@@ -54,6 +54,9 @@ const StyledTextFieldTextEntries = ({
 
   useEffect(() => {
     document.addEventListener('visibilitychange', useVisibility, false);
+    return () => {
+      document.removeEventListener('visibilitychange', useVisibility, false);
+    };
   }, []);
 
   const setTextInputRef = (element: HTMLInputElement) => {

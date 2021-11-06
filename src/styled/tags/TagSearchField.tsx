@@ -19,14 +19,12 @@ const TagSearchField = () => {
   }, []);
 
   useEffect(() => {
-    document.addEventListener('visibilitychange', useVisibility, false);
-  }, []);
-
-  useEffect(() => {
     document.addEventListener('keydown', escFunction, false);
+    document.addEventListener('visibilitychange', useVisibility, false);
 
     return () => {
       document.removeEventListener('keydown', escFunction, false);
+      document.removeEventListener('visibilitychange', useVisibility, false);
     };
   }, []);
 

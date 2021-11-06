@@ -56,6 +56,11 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   useEffect(() => {
     document.addEventListener('visibilitychange', useVisibility, false);
     window.addEventListener('focus', useWindowFocus, false);
+
+    return () => {
+      document.removeEventListener('visibilitychange', useVisibility, false);
+      window.removeEventListener('focus', useWindowFocus, false);
+    };
   }, []);
 
   const setTextInputRef = (element: HTMLInputElement) => {
