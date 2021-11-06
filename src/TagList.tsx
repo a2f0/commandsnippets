@@ -21,6 +21,8 @@ const useStyles = makeStyles({
     paddingLeft: 0,
     paddingRight: 0,
     overflowY: 'auto',
+    // Remove scrollbar on Firefox and Opera
+    // scrollbarWidth: 'none',
     direction: 'rtl',
     height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
   },
@@ -78,6 +80,11 @@ const TagList = () => {
     () =>
       autorun(() => {
         setTags(TagHelpers.filterAndSort());
+        if (tags.length === 1) {
+          appConfig.setTagSelectedID(tags[0].id);
+        } else {
+          appConfig.setTagSelectedID('');
+        }
       }),
     [appConfig.tagSearchString]
   );

@@ -139,8 +139,11 @@ const Tag = ({
       }
     },
   });
-  const isActive = canDrop && isOver;
+  let isActive = canDrop && isOver;
   let backgroundColor = theme.palette.background.paper;
+  if (object.id === appConfig.tagSelectedID) {
+    isActive = true;
+  }
   if (isActive) {
     backgroundColor = 'white';
   } else if (canDrop) {

@@ -40,6 +40,7 @@ export const AppStateStoreModel = types
   })
   .volatile(() => ({
     tagSearchString: '',
+    tagSelectedID: '',
   }))
   .actions(self => ({
     updateOrCreateTextEntry(object: ITextEntryJsonApi) {
@@ -270,6 +271,9 @@ export const AppStateStoreModel = types
     },
     setTagSearch(value: boolean) {
       self.tagSearch = value;
+    },
+    setTagSelectedID(value: string) {
+      self.tagSelectedID = value;
     },
     setTagSearchString(value: string) {
       self.tagSearchString = value;
