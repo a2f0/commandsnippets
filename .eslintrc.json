@@ -1,12 +1,6 @@
 {
   "extends": ["./node_modules/gts/", "plugin:react/recommended"],
   "plugins": ["mocha"],
-  "globals": {
-    "browser": true // Mocha
-  },
-  "env": {
-    "mocha": true
-  },
   "rules": {
     // This is not a published npm package - no-unpublished-import is not required.
     "node/no-unpublished-import": 0,
