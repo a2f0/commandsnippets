@@ -49,8 +49,13 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
     }
   }, []);
 
+  const useWindowFocus = useCallback(() => {
+    inputRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     document.addEventListener('visibilitychange', useVisibility, false);
+    window.addEventListener('focus', useWindowFocus, false);
   }, []);
 
   const setTextInputRef = (element: HTMLInputElement) => {
