@@ -11,16 +11,22 @@ interface IStyledTextFieldProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
+const StyledTextFieldTextEntries = ({
+  id,
+  value,
+  onChange,
+}: IStyledTextFieldProps) => {
   const theme = useTheme<Theme>();
   const useStyles = makeStyles(() =>
     createStyles({
       textField: {
         fontSize: 13,
+        marginLeft: `${20}px`,
       },
       root: {
         borderRadius: 0,
         height: 30,
+        width: 250,
         fontSize: 14,
         '&.Mui-focused': {
           border: `2px solid ${theme.palette.secondary.main}`,
@@ -64,4 +70,4 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   );
 };
 
-export default React.memo(StyledTextFieldTags);
+export default React.memo(StyledTextFieldTextEntries);

@@ -6,6 +6,7 @@ import MenuBar from './MenuBar';
 import React from 'react';
 import StyledToolbar from './styled/layout/StyledToolbar';
 import TagSearch from './TagSearch';
+import TextEntrySearchField from './styled/text_entries/TextEntrySearchField';
 import {Theme} from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
@@ -47,7 +48,7 @@ const Main = (props: IMainProps) => {
       </main>
       <AppBar position="fixed" color="primary" sx={{top: 'auto', bottom: 0}}>
         <StyledToolbar>
-          <TagSearch />
+          <TagSearch /> <TextEntrySearchField />
         </StyledToolbar>
       </AppBar>
     </>
