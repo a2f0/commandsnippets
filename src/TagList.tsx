@@ -148,6 +148,22 @@ const TagList = () => {
     [mouse]
   );
 
+  const keyListener = useCallback(event => {
+    if (event.keyCode === 38) {
+      console.info('up arrow pressed');
+    } else if (event.keyCode === 40) {
+      console.info('down arrow pressed');
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', keyListener, false);
+
+    return () => {
+      document.removeEventListener('keydown', keyListener, false);
+    };
+  }, []);
+
   return (
     <>
       <List className={classes.root} onContextMenu={handleContextClick}>
