@@ -1,23 +1,18 @@
 # Tearleads Frontend
 
-## Style guide
+## Development
 
-1. Use `camelCase` for variable names.
+Development
 
-## Setting up
+```shell
+pip install pre-commit
+pre-commit install
+npm install
+npm run server
+```
 
-install dependencies `npm ci`
+Run tests
 
-run `npm run server`
-
-build `npm run build`
-
-test `npm run ci`
-
-## Testing builds
-
-Deploy to Vercel without having to commit or push (the randomized URL for viewing build will be in the output of this command).
-
-```bash
-npx vercel
+```shell
+npm run ci
 ```

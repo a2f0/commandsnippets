@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
 import createStyles from '@mui/styles/createStyles';
@@ -42,6 +42,16 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   useEffect(() => {
     inputRef.current?.focus();
   }, [inputRef.current]);
+
+  const useVisibility = useCallback(() => {
+    if (document.visibilityState === 'visible') {
+      inputRef.current?.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('visibilitychange', useVisibility, false);
+  }, []);
 
   const setTextInputRef = (element: HTMLInputElement) => {
     inputRef.current = element;

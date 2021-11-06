@@ -10,16 +10,6 @@ const TextEntrySearchField = () => {
     }
   }, []);
 
-  const useVisibility = useCallback(() => {
-    if (document.visibilityState === 'visible') {
-      console.info('the document has become visible');
-    }
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('visibilitychange', useVisibility, false);
-  }, []);
-
   useEffect(() => {
     document.addEventListener('keydown', escFunction, false);
 

@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
 import createStyles from '@mui/styles/createStyles';
@@ -45,9 +45,16 @@ const StyledTextFieldTextEntries = ({
   );
   const classes = useStyles();
   const inputRef = React.useRef<HTMLInputElement>();
+
+  const useVisibility = useCallback(() => {
+    if (document.visibilityState === 'visible') {
+      console.info('the text entry search has become available');
+    }
+  }, []);
+
   useEffect(() => {
-    inputRef.current?.focus();
-  }, [inputRef.current]);
+    document.addEventListener('visibilitychange', useVisibility, false);
+  }, []);
 
   const setTextInputRef = (element: HTMLInputElement) => {
     inputRef.current = element;
