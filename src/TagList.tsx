@@ -12,6 +12,7 @@ import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
+import {useHistory} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
 
 const useStyles = makeStyles({
@@ -55,6 +56,7 @@ export interface IUser {
 
 const TagList = () => {
   const appConfig = useAppContext();
+  const history = useHistory();
   const {user} = useParams<IParamTypes>();
 
   // Used to access the react state from within the listener.
@@ -161,7 +163,7 @@ const TagList = () => {
 
   const keyListener = useCallback(
     event => {
-      const trappedKeyCodes = [38, 40];
+      const trappedKeyCodes = [38, 40, 13];
       if (trappedKeyCodes.includes(event.keyCode)) {
         event.preventDefault();
         event.stopPropagation();
@@ -182,6 +184,8 @@ const TagList = () => {
             if (newIndex <= tagsRef.current.length - 1) {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
             }
+          } else if (event.keyCode === 13) {
+            history.push(`/${user}/${selected.attributes.name}`);
           }
         }
       }
