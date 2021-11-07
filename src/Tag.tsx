@@ -13,6 +13,7 @@ import TagLabel from './TagLabel';
 import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
+import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useHistory} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
@@ -344,4 +345,5 @@ const Tag = ({
     </>
   );
 };
-export default React.memo(Tag);
+
+export default React.memo(observer(Tag));

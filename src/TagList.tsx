@@ -1,6 +1,6 @@
 import * as Constants from './constants';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import List from '@mui/material/List';
@@ -56,7 +56,14 @@ export interface IUser {
 const TagList = () => {
   const appConfig = useAppContext();
   const {user} = useParams<IParamTypes>();
-  const [tags, setTags] = useState<Array<ITagJsonApi>>([]);
+
+  // Used to access the react state from within the listener.
+  const [tags, _setTags] = useState<Array<ITagJsonApi>>([]);
+  const tagsRef = useRef(tags);
+  const setTags = (data: Array<ITagJsonApi>) => {
+    tagsRef.current = data;
+    _setTags(data);
+  };
 
   const initialMouse: IMouse = {
     mouseX: null,
@@ -70,7 +77,11 @@ const TagList = () => {
       autorun(() => {
         appConfig.setCurrentUser(user);
         appConfig.fetchTags(user).then(() => {
-          setTags(TagHelpers.filterAndSort());
+          const array = TagHelpers.filterAndSort();
+          if (array.length > 1) {
+            appConfig.setTagSelectedID(array[0].id);
+          }
+          setTags(array);
         });
       }),
     [appConfig.tagSortOrder]
@@ -82,8 +93,8 @@ const TagList = () => {
         setTags(TagHelpers.filterAndSort());
         if (tags.length === 1) {
           appConfig.setTagSelectedID(tags[0].id);
-        } else {
-          appConfig.setTagSelectedID('');
+        } else if (tags.length > 1) {
+          appConfig.setTagSelectedID(tags[0].id);
         }
       }),
     [appConfig.tagSearchString]
@@ -148,13 +159,30 @@ const TagList = () => {
     [mouse]
   );
 
-  const keyListener = useCallback(event => {
-    if (event.keyCode === 38) {
-      console.info('up arrow pressed');
-    } else if (event.keyCode === 40) {
-      console.info('down arrow pressed');
-    }
-  }, []);
+  const keyListener = useCallback(
+    event => {
+      const selected = tagsRef.current.find(
+        c => c.id === appConfig.tagSelectedID
+      );
+      if (selected !== undefined) {
+        const selectedIndex = tagsRef.current.indexOf(selected);
+        if (selectedIndex !== -1) {
+          if (event.keyCode === 38) {
+            const newIndex = selectedIndex - 1;
+            if (newIndex >= 0) {
+              appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
+            }
+          } else if (event.keyCode === 40) {
+            const newIndex = selectedIndex + 1;
+            if (newIndex <= tagsRef.current.length - 1) {
+              appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
+            }
+          }
+        }
+      }
+    },
+    [tags]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', keyListener, false);
