@@ -140,10 +140,15 @@ const Tag = ({
       }
     },
   });
+
   let isActive = canDrop && isOver;
   let backgroundColor = theme.palette.background.paper;
   if (object.id === appConfig.tagSelectedID) {
     isActive = true;
+    dropRef.current?.scrollIntoView({
+      behavior: 'auto',
+      block: 'end',
+    });
   }
   if (isActive) {
     backgroundColor = 'white';
