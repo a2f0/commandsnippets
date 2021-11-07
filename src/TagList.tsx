@@ -161,8 +161,11 @@ const TagList = () => {
 
   const keyListener = useCallback(
     event => {
-      event.preventDefault();
-      event.stopPropagation();
+      const trappedKeyCodes = [38, 40];
+      if (trappedKeyCodes.includes(event.keyCode)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       const selected = tagsRef.current.find(
         c => c.id === appConfig.tagSelectedID
       );
