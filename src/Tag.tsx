@@ -160,6 +160,7 @@ const Tag = ({
     history.push(`/${user}/${tagObject.attributes.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
     appConfig.setMainPanel('EntryList');
+    appConfig.setTagSelectedID(tagObject.id);
   };
 
   const mouseEnter = () => {
