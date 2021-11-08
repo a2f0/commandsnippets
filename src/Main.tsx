@@ -12,11 +12,6 @@ import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 
 const useStyles = makeStyles(() => ({
-  appBar: {
-    height: `${Constants.appBarHeight}px`,
-    boxShadow: 'none',
-    backgroundImage: 'none', // Remove the Material UI gradient.
-  },
   main: {
     marginTop: `${Constants.appBarHeight}px`,
     height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
@@ -35,7 +30,14 @@ const Main = (props: IMainProps) => {
 
   return (
     <>
-      <AppBar position="fixed" className={classes.appBar}>
+      <AppBar
+        position="fixed"
+        sx={{
+          height: `${Constants.appBarHeight}px`,
+          boxShadow: 'none', // Remove the Material UI 'bottom border'.
+          backgroundImage: 'none', // Remove the Material UI gradient.
+        }}
+      >
         <StyledToolbar>
           <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
         </StyledToolbar>
@@ -44,7 +46,14 @@ const Main = (props: IMainProps) => {
       <main className={classes.main}>
         <EntryList />
       </main>
-      <AppBar position="fixed" sx={{top: 'auto', bottom: 0}}>
+      <AppBar
+        position="fixed"
+        sx={{
+          top: 'auto',
+          bottom: 0,
+          height: `${Constants.footerHeight}px`,
+        }}
+      >
         <StyledToolbar>
           <TagSearch /> <TextEntrySearchField />
         </StyledToolbar>
