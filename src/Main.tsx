@@ -15,8 +15,6 @@ const useStyles = makeStyles(() => ({
   appBar: {
     height: `${Constants.appBarHeight}px`,
     boxShadow: 'none',
-    display: 'flex', // Make this a flex container to allow the greedyExpander to gobble up space.
-    flexDirection: 'column', // Make this a flex container to allow the greedyExpander to gobble up space.
     backgroundImage: 'none', // Remove the Material UI gradient.
   },
   main: {
@@ -46,7 +44,7 @@ const Main = (props: IMainProps) => {
       <main className={classes.main}>
         <EntryList />
       </main>
-      <AppBar position="fixed" color="primary" sx={{top: 'auto', bottom: 0}}>
+      <AppBar position="fixed" sx={{top: 'auto', bottom: 0}}>
         <StyledToolbar>
           <TagSearch /> <TextEntrySearchField />
         </StyledToolbar>
