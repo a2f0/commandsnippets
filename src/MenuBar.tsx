@@ -213,9 +213,21 @@ const MenuBar = (props: IMenuBarProps) => {
             color="secondary"
             size="small"
             aria-controls="file-menu"
-            className={classes.menuButton}
             aria-haspopup="true"
             onClick={handleFileMenuClick}
+            sx={{
+              alignSelf: 'flex-end',
+              textTransform: 'none',
+              padding: 0,
+              minWidth: 0,
+              marginRight: 2,
+              '&:hover': {
+                color: '#FF00FF',
+              },
+              '&:active': {
+                backgroundColor: '#585858',
+              },
+            }}
           >
             File
           </Button>
@@ -224,9 +236,21 @@ const MenuBar = (props: IMenuBarProps) => {
           color="secondary"
           size="small"
           aria-controls="view-menu"
-          className={classes.menuButton}
           aria-haspopup="true"
           onClick={handleViewMenuClick}
+          sx={{
+            alignSelf: 'flex-end',
+            textTransform: 'none',
+            padding: 0,
+            minWidth: 0,
+            marginRight: 2,
+            '&:hover': {
+              color: '#FF00FF',
+            },
+            '&:active': {
+              backgroundColor: '#585858',
+            },
+          }}
         >
           View
         </Button>
@@ -234,9 +258,21 @@ const MenuBar = (props: IMenuBarProps) => {
           color="secondary"
           size="small"
           aria-controls="view-menu"
-          className={classes.menuButton}
           aria-haspopup="true"
           onClick={handleTagsMenuClick}
+          sx={{
+            alignSelf: 'flex-end',
+            textTransform: 'none',
+            padding: 0,
+            minWidth: 0,
+            marginRight: 2,
+            '&:hover': {
+              color: '#FF00FF',
+            },
+            '&:active': {
+              backgroundColor: '#585858',
+            },
+          }}
         >
           Tags
         </Button>
@@ -244,9 +280,21 @@ const MenuBar = (props: IMenuBarProps) => {
           color="secondary"
           size="small"
           aria-controls="view-menu"
-          className={classes.menuButton}
           aria-haspopup="true"
           onClick={handleEntriesMenuClick}
+          sx={{
+            alignSelf: 'flex-end',
+            textTransform: 'none',
+            padding: 0,
+            minWidth: 0,
+            marginRight: 2,
+            '&:hover': {
+              color: '#FF00FF',
+            },
+            '&:active': {
+              backgroundColor: '#585858',
+            },
+          }}
         >
           Entries
         </Button>
