@@ -1,8 +1,10 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import StyledTextFieldTextEntries from './StyledTextFieldTextEntries';
+import {useAppContext} from '../../AppContext';
 
 const TextEntrySearchField = () => {
   const [textEntrySearch, setTextEntrySearch] = useState<string>('');
+  const appConfig = useAppContext();
 
   const escFunction = useCallback(event => {
     if (event.keyCode === 27) {
@@ -19,8 +21,8 @@ const TextEntrySearchField = () => {
   }, []);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.info('handling change');
     setTextEntrySearch(event.currentTarget.value);
+    appConfig.setEntrySearchString(event.currentTarget.value);
   };
 
   const handleClear = () => {

@@ -39,6 +39,7 @@ export const AppStateStoreModel = types
     showTagCounts: types.boolean,
   })
   .volatile(() => ({
+    entrySearchString: '',
     tagSearchString: '',
     tagSelectedID: '',
   }))
@@ -47,6 +48,20 @@ export const AppStateStoreModel = types
       const existing = self.textEntriesArray.find(o => o.id === object.id);
       if (existing === undefined) {
         self.textEntriesArray.push(object);
+      } else {
+        const existingTimestamp = new Date(existing.attributes.date_updated);
+        const incomingTimeStamp = new Date(object.attributes.date_updated);
+        if (incomingTimeStamp > existingTimestamp) {
+          existing.update(object);
+        }
+      }
+    },
+    updateOrCreateUntaggedTextEntry(object: ITextEntryJsonApi) {
+      const existing = self.untaggedTextEntriesArray.find(
+        o => o.id === object.id
+      );
+      if (existing === undefined) {
+        self.untaggedTextEntriesArray.push(object);
       } else {
         const existingTimestamp = new Date(existing.attributes.date_updated);
         const incomingTimeStamp = new Date(object.attributes.date_updated);
@@ -214,7 +229,7 @@ export const AppStateStoreModel = types
         );
         for (const element of collection) {
           if (element.type === 'TextEntry') {
-            self.updateOrCreateTextEntry(element);
+            self.updateOrCreateUntaggedTextEntry(element);
           } else if (element.type === 'User') {
             self.updateOrCreateUser(element);
           } else {
@@ -277,6 +292,9 @@ export const AppStateStoreModel = types
     },
     setTagSearchString(value: string) {
       self.tagSearchString = value;
+    },
+    setEntrySearchString(value: string) {
+      self.entrySearchString = value;
     },
     setMostRecentCopyType(value: string) {
       self.mostRecentCopyType = value;

@@ -93,11 +93,23 @@ export function sort(
         });
     }
     tagTextEntryThroughModelFilteredAndOrdered?.map(element => {
-      const entry = inputArray.find(textEntry => {
-        return textEntry.id === element.relationships.text_entry.data.id;
-      });
-      if (entry !== undefined) {
-        sortedArray.push(entry);
+      if (store.entrySearchString !== '') {
+        const entry = inputArray.find(textEntry => {
+          return (
+            textEntry.id === element.relationships.text_entry.data.id &&
+            textEntry.attributes.body.includes(store.entrySearchString)
+          );
+        });
+        if (entry !== undefined) {
+          sortedArray.push(entry);
+        }
+      } else {
+        const entry = inputArray.find(textEntry => {
+          return textEntry.id === element.relationships.text_entry.data.id;
+        });
+        if (entry !== undefined) {
+          sortedArray.push(entry);
+        }
       }
     });
   } else {
@@ -108,16 +120,36 @@ export function sort(
 
     if (tag !== null) {
       tagTextEntryThroughModelFiltered.map(element => {
-        const entry = inputArray.find(textEntry => {
-          return textEntry.id === element.relationships.text_entry.data.id;
-        });
-        if (entry !== undefined) {
-          textEntriesFiltered.push(entry);
+        if (store.entrySearchString !== '') {
+          const entry = inputArray.find(textEntry => {
+            return (
+              textEntry.id === element.relationships.text_entry.data.id &&
+              textEntry.attributes.body.includes(store.entrySearchString)
+            );
+          });
+          if (entry !== undefined) {
+            textEntriesFiltered.push(entry);
+          }
+        } else {
+          const entry = inputArray.find(textEntry => {
+            return textEntry.id === element.relationships.text_entry.data.id;
+          });
+          if (entry !== undefined) {
+            textEntriesFiltered.push(entry);
+          }
         }
       });
     } else {
       // Then it doesn't need to be filtered by tag.
-      textEntriesFiltered = inputArray;
+      // But it might need to be filtered by search string.
+      if (store.entrySearchString !== '') {
+        const filtered = inputArray.filter(textEntry => {
+          return textEntry.attributes.body.includes(store.entrySearchString);
+        });
+        textEntriesFiltered = filtered;
+      } else {
+        textEntriesFiltered = inputArray;
+      }
     }
 
     if (sortOrder === 'subject') {

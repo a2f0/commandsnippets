@@ -69,6 +69,14 @@ const EntryList = () => {
     }
   };
 
+  useEffect(
+    () =>
+      autorun(() => {
+        filterAndSort();
+      }),
+    [appConfig.entrySearchString]
+  );
+
   const filterAndSort = () => {
     if (appConfig.mainPanel === 'UntaggedEntryList' && user !== undefined) {
       setEntries(
