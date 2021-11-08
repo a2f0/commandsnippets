@@ -20,6 +20,9 @@ export const darkTheme: Theme = createTheme({
       primary: light,
     },
   },
+  shape: {
+    borderRadius: 0,
+  },
   shadows: [
     'none',
     '0px 2px 1px -1px rgba(255,255,255,0.2),0px 1px 1px 0px rgba(255,255,255,0.14),0px 1px 3px 0px rgba(255,255,255,0.12)',
@@ -70,6 +73,9 @@ export const lightTheme: Theme = createTheme({
     text: {
       primary: dark,
     },
+  },
+  shape: {
+    borderRadius: 0,
   },
   typography: {
     button: {

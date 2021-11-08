@@ -29,7 +29,6 @@ import withStyles from '@mui/styles/withStyles';
 export const MenuStyle = () => {
   return createStyles({
     paper: {
-      borderRadius: 0,
       margin: 0,
       // Remove the Material UI gradient.
       backgroundImage: 'none',
@@ -87,12 +86,10 @@ const useStyles = makeStyles({
     minWidth: 0,
     marginRight: 10,
     '&:hover': {
-      borderRadius: 0,
       color: '#FF00FF',
     },
     '&:active': {
       backgroundColor: '#585858',
-      borderRadius: 0,
     },
   },
   themeSwitcher: {

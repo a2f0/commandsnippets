@@ -39,7 +39,6 @@ export const StyledTagButton = ({
 
   const useStyledShared = makeStyles({
     shared: {
-      borderRadius: 0,
       marginTop: '4px',
       border: `1px solid ${theme.palette.secondary.main}`,
       minWidth: `calc(50% - ${Constants.tagButtonSpacing}px)`,

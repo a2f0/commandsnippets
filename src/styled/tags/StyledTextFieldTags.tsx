@@ -19,7 +19,6 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
         fontSize: 13,
       },
       root: {
-        borderRadius: 0,
         height: 30,
         fontSize: 14,
         '&.Mui-focused': {

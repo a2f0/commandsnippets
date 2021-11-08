@@ -24,7 +24,6 @@ const StyledTextFieldTextEntries = ({
         marginLeft: `${20}px`,
       },
       root: {
-        borderRadius: 0,
         height: 30,
         width: 250,
         fontSize: 14,
