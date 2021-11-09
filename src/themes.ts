@@ -3,6 +3,22 @@ import {Theme, createTheme} from '@mui/material/styles';
 const dark = '#0F0F0F';
 const light = '#FFF';
 
+declare module '@mui/material/styles' {
+  interface Theme {
+    selected: {
+      foreground: string;
+      background: string;
+    };
+  }
+  // allow configuration using `createTheme`
+  interface ThemeOptions {
+    selected?: {
+      foreground?: string;
+      background?: string;
+    };
+  }
+}
+
 export const darkTheme: Theme = createTheme({
   palette: {
     mode: 'dark',
@@ -55,6 +71,11 @@ export const darkTheme: Theme = createTheme({
       textTransform: 'none',
     },
   },
+  //
+  selected: {
+    foreground: '#ffffff',
+    background: '#484848',
+  },
 });
 
 export const lightTheme: Theme = createTheme({
@@ -81,5 +102,10 @@ export const lightTheme: Theme = createTheme({
     button: {
       textTransform: 'none',
     },
+  },
+  //
+  selected: {
+    foreground: '#ff0000',
+    background: '#00ff00',
   },
 });

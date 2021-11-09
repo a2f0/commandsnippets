@@ -143,12 +143,14 @@ const Tag = ({
 
   const isActive = canDrop && isOver;
 
-  const tagtyle = {
+  const tagStyle = {
     backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
   };
 
   if (object.id === appConfig.tagSelectedID || isActive) {
-    tagtyle.backgroundColor = 'white';
+    tagStyle.backgroundColor = theme.selected.background;
+    tagStyle.color = theme.selected.foreground;
     dropRef.current?.scrollIntoView({
       behavior: 'auto',
       block: 'end',
@@ -327,7 +329,7 @@ const Tag = ({
               onMouseLeave={mouseLeave}
               ref={drop}
               className={classes.tagLabel}
-              style={tagtyle}
+              style={tagStyle}
               onClick={handleTagClick}
               onContextMenu={handleContextClick}
             >

@@ -382,10 +382,15 @@ const Entry = ({
 
   const entryStyle = {
     backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
   };
 
-  if (object.id === appConfig.entrySelectedID) {
-    entryStyle.backgroundColor = 'white';
+  if (
+    object.id === appConfig.entrySelectedID &&
+    appConfig.tagsOrEntries === 'entries'
+  ) {
+    entryStyle.backgroundColor = theme.selected.background;
+    entryStyle.color = theme.selected.foreground;
   }
 
   return (
