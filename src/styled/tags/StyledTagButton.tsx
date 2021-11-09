@@ -31,6 +31,7 @@ const useStylesRight = makeStyles({
 const useStyledShared = makeStyles({
   shared: {
     marginTop: '4px',
+    marginBottom: '4px',
     minWidth: `calc(50% - ${Constants.tagButtonSpacing}px)`,
   },
 });
