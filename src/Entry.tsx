@@ -380,9 +380,12 @@ const Entry = ({
     }
   };
 
-  let backgroundColor = theme.palette.background.paper;
+  const entryStyle = {
+    backgroundColor: theme.palette.background.paper,
+  };
+
   if (object.id === appConfig.entrySelectedID) {
-    backgroundColor = 'white';
+    entryStyle.backgroundColor = 'white';
   }
 
   return (
@@ -466,7 +469,7 @@ const Entry = ({
                 <div
                   onClick={handleBodyClick}
                   className={classes.entryBody}
-                  style={{backgroundColor}}
+                  style={entryStyle}
                 >
                   {textEntryObject.attributes.body}
                 </div>
