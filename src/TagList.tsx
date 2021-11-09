@@ -82,6 +82,12 @@ const TagList = () => {
           const array = TagHelpers.filterAndSort();
           if (array.length > 1) {
             appConfig.setTagSelectedID(array[0].id);
+            const selected = appConfig.tagsArray.find(
+              c => c.id === array[0].id
+            );
+            if (selected !== undefined) {
+              history.push(`/${user}/${selected.attributes.name}`);
+            }
           }
           setTags(array);
         });
