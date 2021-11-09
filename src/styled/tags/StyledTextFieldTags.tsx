@@ -48,14 +48,17 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   const useVisibility = useCallback(() => {
     if (document.visibilityState === 'visible') {
       inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
     }
   }, []);
 
   const useWindowFocus = useCallback(() => {
     inputRef.current?.focus();
+    inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
   }, []);
 
   const keyListener = useCallback(event => {
+    console.info('keycode: ' + event.keyCode);
     const trappedKeyCodes = [9];
     if (event.keyCode === 9) {
       if (appConfig.tagsOrEntries === 'tags') {
@@ -68,6 +71,9 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
     if (trappedKeyCodes.includes(event.keyCode)) {
       event.preventDefault();
       event.stopPropagation();
+    }
+    if (event.keyCode === 27) {
+      inputRef.current?.focus();
     }
   }, []);
 
