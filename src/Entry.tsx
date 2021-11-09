@@ -13,10 +13,12 @@ import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
 import React from 'react';
 import {TagTextEntryThroughModel} from './EntryList';
+import {Theme} from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
+import {useTheme} from '@mui/styles';
 
 const useStyles = makeStyles({
   entry: {
@@ -84,6 +86,7 @@ const Entry = ({
   filterAndSortParent,
   findEntryByIndex,
 }: IEntryProps) => {
+  const theme: Theme = useTheme();
   const appConfig = useAppContext();
   const [textEntryObject, setTextEntryObject] =
     useState<ITextEntryJsonApi>(object);
@@ -377,6 +380,11 @@ const Entry = ({
     }
   };
 
+  let backgroundColor = theme.palette.background.paper;
+  if (object.id === appConfig.entrySelectedID) {
+    backgroundColor = 'white';
+  }
+
   return (
     <>
       {appConfig.entryNew === `textEntry-${object.id}-top` && (
@@ -455,7 +463,11 @@ const Entry = ({
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <div onClick={handleBodyClick} className={classes.entryBody}>
+                <div
+                  onClick={handleBodyClick}
+                  className={classes.entryBody}
+                  style={{backgroundColor}}
+                >
                   {textEntryObject.attributes.body}
                 </div>
               </div>
