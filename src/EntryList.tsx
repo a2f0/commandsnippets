@@ -1,5 +1,5 @@
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
 import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
@@ -42,7 +42,14 @@ const EntryList = () => {
   const location = useLocation();
   const {user} = useParams<IParamTypes>();
   const {tag} = useParams<IParamTypes>();
-  const [entries, setEntries] = useState<Array<ITextEntryJsonApi>>([]);
+
+  // Used to access the react state from within the listener.
+  const [entries, _setEntries] = useState<Array<ITextEntryJsonApi>>([]);
+  const entriesRef = useRef(entries);
+  const setEntries = (data: Array<ITextEntryJsonApi>) => {
+    entriesRef.current = data;
+    _setEntries(data);
+  };
 
   useEffect(
     () =>

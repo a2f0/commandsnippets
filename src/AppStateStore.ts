@@ -39,6 +39,7 @@ export const AppStateStoreModel = types
     showTagCounts: types.boolean,
   })
   .volatile(() => ({
+    entrySelectedID: '',
     entrySearchString: '',
     tagSearchString: '',
     tagSelectedID: '',
@@ -272,6 +273,9 @@ export const AppStateStoreModel = types
     },
     setEntryNew(value: string | null) {
       self.entryNew = value;
+    },
+    setEntrySelectedID(value: string) {
+      self.entrySelectedID = value;
     },
     setEntrySortOrder(order: string) {
       self.entrySortOrder = order;
