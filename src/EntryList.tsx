@@ -1,5 +1,5 @@
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
 import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
@@ -86,25 +86,70 @@ const EntryList = () => {
 
   const filterAndSort = () => {
     if (appConfig.mainPanel === 'UntaggedEntryList' && user !== undefined) {
-      setEntries(
-        TextEntryHelpers.sort(
-          user,
-          null,
-          appConfig.untaggedTextEntriesArray,
-          appConfig.untaggedEntrySortOrder
-        )
+      const array = TextEntryHelpers.sort(
+        user,
+        null,
+        appConfig.untaggedTextEntriesArray,
+        appConfig.untaggedEntrySortOrder
       );
+      if (array.length > 1) {
+        appConfig.setEntrySelectedID(array[0].id);
+      }
+      setEntries(array);
     } else if (user !== undefined && tag !== undefined) {
-      setEntries(
-        TextEntryHelpers.sort(
-          user,
-          tag,
-          appConfig.textEntriesArray,
-          appConfig.entrySortOrder
-        )
+      const array = TextEntryHelpers.sort(
+        user,
+        tag,
+        appConfig.textEntriesArray,
+        appConfig.entrySortOrder
       );
+      if (array.length > 1) {
+        appConfig.setEntrySelectedID(array[0].id);
+      }
+      setEntries(array);
     }
   };
+
+  const keyListener = useCallback(
+    event => {
+      const trappedKeyCodes = [38, 40, 13];
+      if (
+        trappedKeyCodes.includes(event.keyCode) &&
+        appConfig.tagsOrEntries === 'entries'
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const selected = entriesRef.current.find(
+        c => c.id === appConfig.entrySelectedID
+      );
+      if (selected !== undefined && appConfig.tagsOrEntries === 'entries') {
+        const selectedIndex = entriesRef.current.indexOf(selected);
+        if (selectedIndex !== -1) {
+          if (event.keyCode === 38) {
+            const newIndex = selectedIndex - 1;
+            if (newIndex >= 0) {
+              appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
+            }
+          } else if (event.keyCode === 40) {
+            const newIndex = selectedIndex + 1;
+            if (newIndex <= entriesRef.current.length - 1) {
+              appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
+            }
+          }
+        }
+      }
+    },
+    [entries]
+  );
+
+  useEffect(() => {
+    document.addEventListener('keydown', keyListener, false);
+
+    return () => {
+      document.removeEventListener('keydown', keyListener, false);
+    };
+  }, []);
 
   const moveEntry = (id: string, atIndex: number) => {
     const {entry, index} = findEntry(id);

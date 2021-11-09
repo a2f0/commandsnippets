@@ -170,14 +170,17 @@ const TagList = () => {
   const keyListener = useCallback(
     event => {
       const trappedKeyCodes = [38, 40, 13];
-      if (trappedKeyCodes.includes(event.keyCode)) {
+      if (
+        trappedKeyCodes.includes(event.keyCode) &&
+        appConfig.tagsOrEntries === 'tags'
+      ) {
         event.preventDefault();
         event.stopPropagation();
       }
       const selected = tagsRef.current.find(
         c => c.id === appConfig.tagSelectedID
       );
-      if (selected !== undefined) {
+      if (selected !== undefined && appConfig.tagsOrEntries === 'tags') {
         const selectedIndex = tagsRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
           if (event.keyCode === 38) {
