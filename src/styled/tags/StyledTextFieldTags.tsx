@@ -3,6 +3,7 @@ import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
 import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
+import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
 
 interface IStyledTextFieldProps {
@@ -13,6 +14,7 @@ interface IStyledTextFieldProps {
 
 const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   const theme = useTheme<Theme>();
+  const appConfig = useAppContext();
   const useStyles = makeStyles(() =>
     createStyles({
       textField: {
@@ -38,6 +40,7 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   );
   const classes = useStyles();
   const inputRef = React.useRef<HTMLInputElement>();
+
   useEffect(() => {
     inputRef.current?.focus();
   }, [inputRef.current]);
@@ -52,13 +55,31 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
     inputRef.current?.focus();
   }, []);
 
+  const keyListener = useCallback(event => {
+    const trappedKeyCodes = [9];
+    if (event.keyCode === 9) {
+      if (appConfig.tagsOrEntries === 'tags') {
+        appConfig.setTagsOrEntries('entries');
+      } else {
+        appConfig.setTagsOrEntries('tags');
+        inputRef.current?.focus();
+      }
+    }
+    if (trappedKeyCodes.includes(event.keyCode)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, []);
+
   useEffect(() => {
     document.addEventListener('visibilitychange', useVisibility, false);
     window.addEventListener('focus', useWindowFocus, false);
+    document.addEventListener('keydown', keyListener, false);
 
     return () => {
       document.removeEventListener('visibilitychange', useVisibility, false);
       window.removeEventListener('focus', useWindowFocus, false);
+      document.removeEventListener('keydown', keyListener, false);
     };
   }, []);
 

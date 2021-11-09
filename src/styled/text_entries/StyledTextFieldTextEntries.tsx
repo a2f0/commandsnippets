@@ -1,8 +1,10 @@
 import React, {useCallback, useEffect} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
+import {autorun} from 'mobx';
 import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
+import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
 
 interface IStyledTextFieldProps {
@@ -17,6 +19,7 @@ const StyledTextFieldTextEntries = ({
   onChange,
 }: IStyledTextFieldProps) => {
   const theme = useTheme<Theme>();
+  const appConfig = useAppContext();
   const useStyles = makeStyles(() =>
     createStyles({
       textField: {
@@ -44,6 +47,16 @@ const StyledTextFieldTextEntries = ({
   );
   const classes = useStyles();
   const inputRef = React.useRef<HTMLInputElement>();
+
+  useEffect(
+    () =>
+      autorun(() => {
+        if (appConfig.tagsOrEntries === 'entries') {
+          inputRef.current?.focus();
+        }
+      }),
+    [appConfig.tagsOrEntries]
+  );
 
   const useVisibility = useCallback(() => {
     if (document.visibilityState === 'visible') {

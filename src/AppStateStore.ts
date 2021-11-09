@@ -42,6 +42,7 @@ export const AppStateStoreModel = types
     entrySearchString: '',
     tagSearchString: '',
     tagSelectedID: '',
+    tagsOrEntries: 'tags',
   }))
   .actions(self => ({
     updateOrCreateTextEntry(object: ITextEntryJsonApi) {
@@ -283,6 +284,9 @@ export const AppStateStoreModel = types
     },
     setTagNew(value: string | null) {
       self.tagNew = value;
+    },
+    setTagsOrEntries(value: string) {
+      self.tagsOrEntries = value;
     },
     setTagSearch(value: boolean) {
       self.tagSearch = value;
