@@ -1,25 +1,21 @@
 import MenuItem from '@mui/material/MenuItem';
-import {MenuItemProps} from '@mui/material';
 import React from 'react';
-import createStyles from '@mui/styles/createStyles';
-import withStyles from '@mui/styles/withStyles';
 
-const MenuItemStyle = () => {
-  return createStyles({
-    root: {
-      fontSize: 13,
-    },
-  });
-};
-
-interface IMenuItemProps {
-  onClick: () => void;
+interface IProps {
   children?: React.ReactNode;
+  onClick: () => void;
 }
 
-export const MuiMenuItem = React.forwardRef<MenuItemProps, IMenuItemProps>(
-  (props: IMenuItemProps) => <MenuItem {...props}>{props.children}</MenuItem>
-);
-MuiMenuItem.displayName = 'MuiMenuItem';
-const StyledMenuItem = withStyles(MenuItemStyle)(MuiMenuItem);
+const StyledMenuItem = ({children, onClick}: IProps) => {
+  return (
+    <MenuItem
+      onClick={onClick}
+      sx={{
+        fontSize: 13,
+      }}
+    >
+      {children}
+    </MenuItem>
+  );
+};
 export default React.memo(StyledMenuItem);
