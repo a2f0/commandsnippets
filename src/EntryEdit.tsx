@@ -3,9 +3,9 @@ import React, {useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
+import EntryTextArea from './styled/text_entries/EntryTextArea';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import TextareaAutosize from '@mui/material/TextareaAutosize';
 import makeStyles from '@mui/styles/makeStyles';
 
 export const useStyles = makeStyles({
@@ -31,9 +31,6 @@ export const useStyles = makeStyles({
     padding: 2,
     border: '1px solid red',
     minWidth: '300px',
-  },
-  textArea: {
-    width: '100%',
   },
   dragIndicator: {
     display: 'inline-block',
@@ -84,8 +81,8 @@ const EntryEdit = ({
     handleCancelEditParent();
   };
 
-  const handleBodyChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setBody(event.target.value);
+  const handleBodyChange = (value: string) => {
+    setBody(value);
   };
 
   const handleSubjectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,11 +103,10 @@ const EntryEdit = ({
             />
           </div>
           <div>
-            <TextareaAutosize
-              className={classes.textArea}
+            <EntryTextArea
               placeholder="body"
-              value={body}
-              onChange={handleBodyChange}
+              valueParent={body}
+              handleChangeParent={handleBodyChange}
             />
           </div>
           <Button

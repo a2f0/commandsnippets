@@ -2,9 +2,9 @@ import React, {useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
+import EntryTextArea from './styled/text_entries/EntryTextArea';
 import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import TextareaAutosize from '@mui/material/TextareaAutosize';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
@@ -102,8 +102,8 @@ const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
     appConfig.setEntryNew(null);
   };
 
-  const handleBodyChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setBody(event.target.value);
+  const handleBodyChange = (value: string) => {
+    setBody(value);
   };
 
   const handleSubjectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,11 +123,10 @@ const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
           />
         </div>
         <div>
-          <TextareaAutosize
-            className={classes.textArea}
+          <EntryTextArea
             placeholder="body"
-            value={body}
-            onChange={handleBodyChange}
+            valueParent={body}
+            handleChangeParent={handleBodyChange}
           />
         </div>
         <Button
