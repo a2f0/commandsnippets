@@ -8,6 +8,7 @@ import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
 import {autorun} from 'mobx';
+import {keyCode} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
@@ -169,7 +170,11 @@ const TagList = () => {
 
   const keyListener = useCallback(
     event => {
-      const trappedKeyCodes = [38, 40, 13];
+      const trappedKeyCodes = [
+        keyCode.UpArrow,
+        keyCode.DownArrow,
+        keyCode.Enter,
+      ];
       if (
         trappedKeyCodes.includes(event.keyCode) &&
         appConfig.tagsOrEntries === 'tags'
@@ -183,17 +188,17 @@ const TagList = () => {
       if (selected !== undefined && appConfig.tagsOrEntries === 'tags') {
         const selectedIndex = tagsRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
-          if (event.keyCode === 38) {
+          if (event.keyCode === keyCode.UpArrow) {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
             }
-          } else if (event.keyCode === 40) {
+          } else if (event.keyCode === keyCode.DownArrow) {
             const newIndex = selectedIndex + 1;
             if (newIndex <= tagsRef.current.length - 1) {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
             }
-          } else if (event.keyCode === 13) {
+          } else if (event.keyCode === keyCode.Enter) {
             history.push(`/${user}/${selected.attributes.name}`);
           }
         }

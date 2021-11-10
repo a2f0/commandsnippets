@@ -7,6 +7,7 @@ import {Side} from './styled/tags/StyledTagButton';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
+import {keyCode} from './lib/shared';
 import {useAppContext} from './AppContext';
 
 interface IProps {
@@ -18,7 +19,7 @@ const TagNew = ({handleNewParent}: IProps) => {
   const appConfig = useAppContext();
 
   const escFunction = useCallback(event => {
-    if (event.keyCode === 27) {
+    if (event.keyCode === keyCode.Escape) {
       handleCancel();
     }
   }, []);

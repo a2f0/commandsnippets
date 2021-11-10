@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import StyledTextFieldTextEntries from './StyledTextFieldTextEntries';
+import {keyCode} from '../../lib/shared';
 import {useAppContext} from '../../AppContext';
 
 const TextEntrySearchField = () => {
@@ -7,7 +8,7 @@ const TextEntrySearchField = () => {
   const appConfig = useAppContext();
 
   const escFunction = useCallback(event => {
-    if (event.keyCode === 27) {
+    if (event.keyCode === keyCode.Escape) {
       handleClear();
     }
   }, []);

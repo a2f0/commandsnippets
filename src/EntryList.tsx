@@ -7,6 +7,7 @@ import EntryNew from './EntryNew';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {autorun} from 'mobx';
+import {keyCode} from './lib/shared';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
@@ -112,7 +113,11 @@ const EntryList = () => {
 
   const keyListener = useCallback(
     event => {
-      const trappedKeyCodes = [38, 40, 13];
+      const trappedKeyCodes = [
+        keyCode.Enter,
+        keyCode.UpArrow,
+        keyCode.DownArrow,
+      ];
       if (
         trappedKeyCodes.includes(event.keyCode) &&
         appConfig.tagsOrEntries === 'entries'
@@ -126,12 +131,12 @@ const EntryList = () => {
       if (selected !== undefined && appConfig.tagsOrEntries === 'entries') {
         const selectedIndex = entriesRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
-          if (event.keyCode === 38) {
+          if (event.keyCode === keyCode.UpArrow) {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
             }
-          } else if (event.keyCode === 40) {
+          } else if (event.keyCode === keyCode.DownArrow) {
             const newIndex = selectedIndex + 1;
             if (newIndex <= entriesRef.current.length - 1) {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);

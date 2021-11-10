@@ -26,5 +26,8 @@ export function getMostRecentTimeStamp(
 
 export enum keyCode {
   Tab = 9,
+  Enter = 13,
   Escape = 27,
+  UpArrow = 38,
+  DownArrow = 40,
 }
