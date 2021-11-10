@@ -77,24 +77,6 @@ const useStyles = makeStyles({
     width: Constants.drawerWidth,
     flexShrink: 0,
   },
-  menuButton: {
-    // Force menu buttons to the bottom of the toolbar.
-    // See the 'aligner' class attached to the parent div.
-    alignSelf: 'flex-end',
-    textTransform: 'none',
-    padding: 0,
-    minWidth: 0,
-    marginRight: 10,
-    '&:hover': {
-      color: '#FF00FF',
-    },
-    '&:active': {
-      backgroundColor: '#585858',
-    },
-  },
-  themeSwitcher: {
-    height: 16,
-  },
   dragIndicator: {
     display: 'inline-block',
     width: `${Constants.dragIndicatorWidthTag}px`,
