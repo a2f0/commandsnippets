@@ -115,6 +115,7 @@ const EntryEdit = ({
           </div>
           <Button
             color="secondary"
+            sx={{marginRight: '2px'}}
             size="small"
             variant="outlined"
             onClick={() => {
