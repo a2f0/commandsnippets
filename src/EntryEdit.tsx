@@ -3,6 +3,7 @@ import React, {useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
+import EntrySubject from './styled/text_entries/EntrySubject';
 import EntryTextArea from './styled/text_entries/EntryTextArea';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
@@ -85,8 +86,8 @@ const EntryEdit = ({
     setBody(value);
   };
 
-  const handleSubjectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSubject(event.target.value);
+  const handleSubjectChange = (value: string) => {
+    setSubject(value);
   };
 
   return (
@@ -95,11 +96,10 @@ const EntryEdit = ({
         <div className={classes.dragIndicator}></div>
         <div className={classes.entry}>
           <div>
-            <input
-              type="text"
-              className={classes.entrySubject}
-              value={subject}
-              onChange={handleSubjectChange}
+            <EntrySubject
+              placeholder="subject"
+              valueParent={subject}
+              handleChangeParent={handleSubjectChange}
             />
           </div>
           <div>
