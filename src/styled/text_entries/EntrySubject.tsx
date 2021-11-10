@@ -22,11 +22,21 @@ const EntrySubject = ({
 
   return (
     <TextField
-      type="text"
-      style={{
+      sx={{
+        background: 'black',
         width: `calc(100% - (${Constants.drawerWidth}px))`,
         minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
+        marginLeft: 0,
+      }}
+      type="text"
+      inputProps={{
+        style: {
+          fontSize: 13,
+          paddingLeft: 4,
+          paddingBottom: 4,
+          paddingTop: 4,
+        },
       }}
       placeholder={placeholder}
       value={value}

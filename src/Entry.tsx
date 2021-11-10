@@ -30,14 +30,6 @@ const useStyles = makeStyles({
     whiteSpace: 'pre',
     lineHeight: '20px',
   },
-  entrySubject: {
-    fontSize: 14,
-  },
-  entryBody: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    whiteSpace: 'pre-wrap',
-  },
   dragIndicatorContainer: {
     display: 'inline-block',
     fontWeight: 900,
@@ -434,9 +426,7 @@ const Entry = ({
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <div className={classes.entrySubject}>
-                  {textEntryObject.attributes.subject}
-                </div>
+                <div>{textEntryObject.attributes.subject}</div>
               </div>
             </div>
             <div>
@@ -471,11 +461,7 @@ const Entry = ({
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <div
-                  onClick={handleBodyClick}
-                  className={classes.entryBody}
-                  style={entryStyle}
-                >
+                <div onClick={handleBodyClick} style={entryStyle}>
                   {textEntryObject.attributes.body}
                 </div>
               </div>
