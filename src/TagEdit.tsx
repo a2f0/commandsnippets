@@ -1,9 +1,9 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
+import Grid from '@mui/material/Grid';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import {Side} from './styled/tags/StyledTagButton';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
@@ -75,24 +75,28 @@ const TagEdit = ({
           handleTagNameChange(e);
         }}
       />
-      <StyledTagButton
-        side={Side.Left}
-        id={`tagEditSave-${object.id}`}
-        onClick={() => {
-          handleSave();
-        }}
-      >
-        Save
-      </StyledTagButton>
-      <StyledTagButton
-        side={Side.Right}
-        id={`tagEditCancel-${object.id}`}
-        onClick={() => {
-          handleCancel();
-        }}
-      >
-        Cancel
-      </StyledTagButton>
+      <Grid container spacing={0}>
+        <Grid item xs={6} sx={{paddingRight: '1px'}}>
+          <StyledTagButton
+            id={`tagEditSave-${object.id}`}
+            onClick={() => {
+              handleSave();
+            }}
+          >
+            Save
+          </StyledTagButton>
+        </Grid>
+        <Grid item xs={6} sx={{paddingLeft: '1px'}}>
+          <StyledTagButton
+            id={`tagEditCancel-${object.id}`}
+            onClick={() => {
+              handleCancel();
+            }}
+          >
+            Cancel
+          </StyledTagButton>
+        </Grid>
+      </Grid>
     </StyledTagFormContainer>
   );
 };
