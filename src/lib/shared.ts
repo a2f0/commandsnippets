@@ -23,3 +23,8 @@ export function getMostRecentTimeStamp(
   }
   return mostRecentTimestamp;
 }
+
+export enum keyCode {
+  Tab = 9,
+  Escape = 27,
+}

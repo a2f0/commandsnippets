@@ -2,6 +2,7 @@ import React, {useCallback, useEffect} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
 import createStyles from '@mui/styles/createStyles';
+import {keyCode} from '../../lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
@@ -58,9 +59,8 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   }, []);
 
   const keyListener = useCallback(event => {
-    console.info('keycode: ' + event.keyCode);
-    const trappedKeyCodes = [9];
-    if (event.keyCode === 9) {
+    const trappedKeyCodes = [keyCode.Tab];
+    if (event.keyCode === keyCode.Tab) {
       if (appConfig.tagsOrEntries === 'tags') {
         appConfig.setTagsOrEntries('entries');
       } else {
@@ -72,7 +72,7 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
       event.preventDefault();
       event.stopPropagation();
     }
-    if (event.keyCode === 27) {
+    if (event.keyCode === keyCode.Escape) {
       inputRef.current?.focus();
     }
   }, []);
