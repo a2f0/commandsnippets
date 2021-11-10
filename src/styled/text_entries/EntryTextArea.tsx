@@ -24,6 +24,7 @@ const EntryTextArea = ({
     <TextareaAutosize
       style={{
         width: `calc(100% - (${Constants.drawerWidth}px))`,
+        minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
       }}
       placeholder={placeholder}
