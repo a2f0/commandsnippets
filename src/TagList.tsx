@@ -102,6 +102,7 @@ const TagList = () => {
         setTags(TagHelpers.filterAndSort());
         if (tags.length === 1) {
           appConfig.setTagSelectedID(tags[0].id);
+          appConfig.setTagsOrEntries('entries');
         } else if (tags.length > 1) {
           appConfig.setTagSelectedID(tags[0].id);
         }
@@ -199,6 +200,7 @@ const TagList = () => {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
             }
           } else if (event.keyCode === keyCode.Enter) {
+            appConfig.setTagsOrEntries('entries');
             history.push(`/${user}/${selected.attributes.name}`);
           }
         }

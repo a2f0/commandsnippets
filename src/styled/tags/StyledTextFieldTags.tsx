@@ -72,9 +72,6 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
       event.preventDefault();
       event.stopPropagation();
     }
-    if (event.keyCode === keyCode.Escape) {
-      inputRef.current?.focus();
-    }
   }, []);
 
   useEffect(() => {

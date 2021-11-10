@@ -9,6 +9,7 @@ const TagSearchField = () => {
 
   const escFunction = useCallback(event => {
     if (event.keyCode === keyCode.Escape) {
+      appConfig.setTagsOrEntries('tags');
       handleClear();
     }
   }, []);
