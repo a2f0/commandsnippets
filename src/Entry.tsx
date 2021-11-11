@@ -6,6 +6,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
+import EntrySubject from './styled/text_entries/EntrySubject';
 import FileCopySharpIcon from '@mui/icons-material/FileCopySharp';
 import {IParamTypes} from './EntryList';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
@@ -426,7 +427,7 @@ const Entry = ({
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <div>{textEntryObject.attributes.subject}</div>
+                <EntrySubject value={textEntryObject.attributes.subject} />
               </div>
             </div>
             <div>
