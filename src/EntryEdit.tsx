@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
-import InputEntryTextArea from './styled/text_entries/InputEntryTextArea';
+import InputEntryTextArea from './styled/text_entries/InputEntryBody';
 import makeStyles from '@mui/styles/makeStyles';
 
 export const useStyles = makeStyles({

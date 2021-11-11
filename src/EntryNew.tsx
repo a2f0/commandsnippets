@@ -4,7 +4,7 @@ import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
 import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import InputEntryTextArea from './styled/text_entries/InputEntryTextArea';
+import InputEntryTextArea from './styled/text_entries/InputEntryBody';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
