@@ -372,6 +372,16 @@ const Entry = ({
     }
   };
 
+  if (
+    object.id === appConfig.entrySelectedID &&
+    appConfig.tagsOrEntries === 'entries'
+  ) {
+    dropRef.current?.scrollIntoView({
+      behavior: 'auto',
+      block: 'end',
+    });
+  }
+
   return (
     <>
       {appConfig.entryNew === `textEntry-${object.id}-top` && (
