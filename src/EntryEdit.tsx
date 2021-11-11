@@ -3,10 +3,10 @@ import React, {useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
-import EntrySubject from './styled/text_entries/EntrySubject';
-import EntryTextArea from './styled/text_entries/EntryTextArea';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import InputEntrySubject from './styled/text_entries/InputEntrySubject';
+import InputEntryTextArea from './styled/text_entries/InputEntryTextArea';
 import makeStyles from '@mui/styles/makeStyles';
 
 export const useStyles = makeStyles({
@@ -96,14 +96,14 @@ const EntryEdit = ({
         <div className={classes.dragIndicator}></div>
         <div className={classes.entry}>
           <div>
-            <EntrySubject
+            <InputEntrySubject
               placeholder="subject"
               valueParent={subject}
               handleChangeParent={handleSubjectChange}
             />
           </div>
           <div>
-            <EntryTextArea
+            <InputEntryTextArea
               placeholder="body"
               valueParent={body}
               handleChangeParent={handleBodyChange}

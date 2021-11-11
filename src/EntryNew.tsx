@@ -2,9 +2,9 @@ import React, {useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
-import EntryTextArea from './styled/text_entries/EntryTextArea';
 import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import InputEntryTextArea from './styled/text_entries/InputEntryTextArea';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
@@ -123,7 +123,7 @@ const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
           />
         </div>
         <div>
-          <EntryTextArea
+          <InputEntryTextArea
             placeholder="body"
             valueParent={body}
             handleChangeParent={handleBodyChange}

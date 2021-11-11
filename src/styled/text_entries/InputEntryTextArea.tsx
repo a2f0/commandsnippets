@@ -1,6 +1,6 @@
 import * as Constants from '../../constants';
 import React, {useState} from 'react';
-import TextField from '@mui/material/TextField';
+import TextareaAutosize from '@mui/material/TextareaAutosize';
 
 export interface IProps {
   handleChangeParent: (value: string) => void;
@@ -8,7 +8,7 @@ export interface IProps {
   valueParent: string;
 }
 
-const EntrySubject = ({
+const InputEntryBody = ({
   handleChangeParent,
   valueParent,
   placeholder,
@@ -21,22 +21,11 @@ const EntrySubject = ({
   };
 
   return (
-    <TextField
-      sx={{
-        background: 'black',
+    <TextareaAutosize
+      style={{
         width: `calc(100% - (${Constants.drawerWidth}px))`,
         minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
-        marginLeft: 0,
-      }}
-      type="text"
-      inputProps={{
-        style: {
-          fontSize: 13,
-          paddingLeft: 4,
-          paddingBottom: 4,
-          paddingTop: 4,
-        },
       }}
       placeholder={placeholder}
       value={value}
@@ -44,4 +33,4 @@ const EntrySubject = ({
     />
   );
 };
-export default React.memo(EntrySubject);
+export default React.memo(InputEntryBody);
