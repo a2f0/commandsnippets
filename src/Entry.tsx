@@ -3,6 +3,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import {useMemo, useRef, useState} from 'react';
 import API from './api';
 import CheckIcon from '@mui/icons-material/Check';
+import EntryBody from './styled/text_entries/EntryBody';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
@@ -462,9 +463,10 @@ const Entry = ({
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <div onClick={handleBodyClick} style={entryStyle}>
-                  {textEntryObject.attributes.body}
-                </div>
+                <EntryBody
+                  handleClick={handleBodyClick}
+                  value={textEntryObject.attributes.body}
+                />
               </div>
             </div>
           </div>
