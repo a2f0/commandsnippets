@@ -358,6 +358,7 @@ const Entry = ({
   const handleBodyClick = () => {
     setShowCopyIcon(false);
     setShowCheckIcon(true);
+    navigator.clipboard.writeText(textEntryObject.attributes.body);
     appConfig.setMostRecentCopyType(textEntryObject.type);
     appConfig.setMostRecentCopyID(textEntryObject.id);
   };
