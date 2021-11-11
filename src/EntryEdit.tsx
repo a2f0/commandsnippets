@@ -5,8 +5,8 @@ import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
-import InputEntryTextArea from './styled/text_entries/InputEntryBody';
 import makeStyles from '@mui/styles/makeStyles';
 
 export const useStyles = makeStyles({
@@ -103,7 +103,7 @@ const EntryEdit = ({
             />
           </div>
           <div>
-            <InputEntryTextArea
+            <InputEntryBody
               placeholder="body"
               valueParent={body}
               handleChangeParent={handleBodyChange}
