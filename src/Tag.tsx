@@ -141,14 +141,18 @@ const Tag = ({
     },
   });
 
-  const isActive = canDrop && isOver;
+  const isActiveHover = canDrop && isOver;
 
   const tagStyle = {
     backgroundColor: theme.palette.background.paper,
     color: theme.palette.text.primary,
   };
 
-  if (object.id === appConfig.tagSelectedID || isActive) {
+  if (
+    (object.id === appConfig.tagSelectedID &&
+      appConfig.tagsOrEntries === 'tags') ||
+    isActiveHover
+  ) {
     tagStyle.backgroundColor = theme.selected.background;
     tagStyle.color = theme.selected.foreground;
     dropRef.current?.scrollIntoView({
