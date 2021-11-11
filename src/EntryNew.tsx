@@ -5,6 +5,7 @@ import Button from '@mui/material/Button';
 import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
+import InputEntrySubject from './styled/text_entries/InputEntrySubject';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
@@ -106,8 +107,8 @@ const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
     setBody(value);
   };
 
-  const handleSubjectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSubject(event.target.value);
+  const handleSubjectChange = (value: string) => {
+    setSubject(value);
   };
 
   return (
@@ -115,11 +116,10 @@ const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
       <div className={classes.dragIndicator}></div>
       <div className={classes.entry}>
         <div>
-          <input
-            type="text"
-            className={classes.entrySubject}
-            value={subject}
-            onChange={handleSubjectChange}
+          <InputEntrySubject
+            placeholder="subject"
+            valueParent={subject}
+            handleChangeParent={handleSubjectChange}
           />
         </div>
         <div>
