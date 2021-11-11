@@ -10,7 +10,7 @@ export interface IProps {
   object: ITextEntryJsonApi;
 }
 
-const EntryBody = ({object}: IProps) => {
+const EntryBody = ({object, handleClick}: IProps) => {
   const appConfig = useAppContext();
   const theme: Theme = useTheme();
 
@@ -28,6 +28,10 @@ const EntryBody = ({object}: IProps) => {
     style.color = theme.selected.foreground;
   }
 
-  return <div style={style}>{object.attributes.body}</div>;
+  return (
+    <div style={style} onClick={handleClick}>
+      {object.attributes.body}
+    </div>
+  );
 };
 export default React.memo(observer(EntryBody));
