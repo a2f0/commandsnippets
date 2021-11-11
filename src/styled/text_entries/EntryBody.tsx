@@ -1,21 +1,33 @@
+import {ITextEntryJsonApi} from '../../models/TextEntryModel';
 import React from 'react';
-
-const style = {
-  fontSize: 14,
-  fontFamily: 'monospace',
-  'white-space': 'pre-wrap',
-};
+import {Theme} from '@mui/material/styles';
+import {observer} from 'mobx-react';
+import {useAppContext} from '../../AppContext';
+import {useTheme} from '@mui/styles';
 
 export interface IProps {
   handleClick: () => void;
-  value: string;
+  object: ITextEntryJsonApi;
 }
 
-const EntryBody = ({handleClick, value}: IProps) => {
-  return (
-    <div onClick={handleClick} style={style}>
-      {value}
-    </div>
-  );
+const EntryBody = ({object}: IProps) => {
+  const appConfig = useAppContext();
+  const theme: Theme = useTheme();
+
+  const style = {
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
+    fontSize: 14,
+  };
+
+  if (
+    object.id === appConfig.entrySelectedID &&
+    appConfig.tagsOrEntries === 'entries'
+  ) {
+    style.backgroundColor = theme.selected.background;
+    style.color = theme.selected.foreground;
+  }
+
+  return <div style={style}>{object.attributes.body}</div>;
 };
-export default React.memo(EntryBody);
+export default React.memo(observer(EntryBody));

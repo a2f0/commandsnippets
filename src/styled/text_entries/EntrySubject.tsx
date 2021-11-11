@@ -1,14 +1,16 @@
+import {ITextEntryJsonApi} from '../../models/TextEntryModel';
 import React from 'react';
+import {observer} from 'mobx-react';
+
+export interface IProps {
+  object: ITextEntryJsonApi;
+}
 
 const style = {
   fontSize: 14,
 };
 
-export interface IProps {
-  value: string;
-}
-
-const EntrySubject = ({value}: IProps) => {
-  return <div style={style}>{value}</div>;
+const EntrySubject = ({object}: IProps) => {
+  return <div style={style}>{object.attributes.subject}</div>;
 };
-export default React.memo(EntrySubject);
+export default React.memo(observer(EntrySubject));
