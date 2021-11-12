@@ -1,6 +1,6 @@
 import * as Constants from './constants';
 import {useDrag, useDrop} from 'react-dnd';
-import {useMemo, useRef, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import API from './api';
 import CheckIcon from '@mui/icons-material/Check';
 import EntryBody from './styled/text_entries/EntryBody';
@@ -15,6 +15,7 @@ import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
 import React from 'react';
 import {TagTextEntryThroughModel} from './EntryList';
+import {autorun} from 'mobx';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
@@ -28,7 +29,6 @@ const useStyles = makeStyles({
   entryContainer: {
     marginBottom: 16,
     whiteSpace: 'pre',
-    lineHeight: '20px',
   },
   dragIndicatorContainer: {
     display: 'inline-block',
@@ -256,6 +256,18 @@ const Entry = ({
   drag(dragRef);
   drop(dropRef);
 
+  useEffect(
+    () =>
+      autorun(() => {
+        if (appConfig.mostRecentCopyID === object.id) {
+          setShowCheckIcon(true);
+        } else {
+          setShowCheckIcon(false);
+        }
+      }),
+    [appConfig.mostRecentCopyID, appConfig.mostRecentCopyType]
+  );
+
   const mouseEnter = () => {
     if (appConfig.loggedInUser !== null) {
       setShowDragHandle(true);
@@ -360,18 +372,6 @@ const Entry = ({
     appConfig.setMostRecentCopyID(textEntryObject.id);
   };
 
-  const mostRecentCopy = () => {
-    if (
-      showCheckIcon === true &&
-      appConfig.mostRecentCopyID === textEntryObject.id &&
-      appConfig.mostRecentCopyType === textEntryObject.type
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
   if (
     object.id === appConfig.entrySelectedID &&
     appConfig.tagsOrEntries === 'entries'
@@ -437,7 +437,7 @@ const Entry = ({
                   className={classes.copyIndicator}
                   style={{
                     visibility: showCopyIcon ? 'visible' : 'hidden',
-                    display: mostRecentCopy() ? 'none' : 'block',
+                    display: showCopyIcon && !showCheckIcon ? 'block' : 'none',
                   }}
                 >
                   <FileCopySharpIcon fontSize="inherit" />
@@ -445,8 +445,8 @@ const Entry = ({
                 <div
                   className={classes.checkIndicator}
                   style={{
-                    visibility: mostRecentCopy() ? 'visible' : 'hidden',
-                    display: mostRecentCopy() ? 'block' : 'none',
+                    visibility: showCheckIcon ? 'visible' : 'hidden',
+                    display: showCheckIcon ? 'block' : 'none',
                   }}
                 >
                   <CheckIcon fontSize="inherit" />

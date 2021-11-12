@@ -9,13 +9,7 @@ interface IProps {
 const TagLabel = ({label}: IProps) => {
   const appConfig = useAppContext();
 
-  useEffect(
-    () =>
-      autorun(() => {
-        console.info('use effect: ' + appConfig.tagSearchString);
-      }),
-    [appConfig.tagSearchString]
-  );
+  useEffect(() => autorun(() => {}), [appConfig.tagSearchString]);
 
   return <span>{label}</span>;
 };

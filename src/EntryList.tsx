@@ -141,6 +141,10 @@ const EntryList = () => {
             if (newIndex <= entriesRef.current.length - 1) {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
             }
+          } else if (event.keyCode === keyCode.Enter) {
+            navigator.clipboard.writeText(selected.attributes.body);
+            appConfig.setMostRecentCopyID(selected.id);
+            appConfig.setMostRecentCopyType(selected.type);
           }
         }
       }

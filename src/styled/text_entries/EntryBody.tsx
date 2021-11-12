@@ -1,6 +1,7 @@
+import React, {useCallback, useEffect} from 'react';
 import {ITextEntryJsonApi} from '../../models/TextEntryModel';
-import React from 'react';
 import {Theme} from '@mui/material/styles';
+import {keyCode} from '../../lib/shared';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
@@ -18,6 +19,7 @@ const EntryBody = ({object, handleClick}: IProps) => {
     backgroundColor: theme.palette.background.paper,
     color: theme.palette.text.primary,
     fontSize: 14,
+    fontFamily: 'monospace',
   };
 
   if (
