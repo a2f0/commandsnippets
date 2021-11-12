@@ -57,7 +57,9 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
         )
 
         entry2_subject = "show where a postgres session is originating from"
-        entry2_body = "SELECT *" "FROM pg_stat_activity\n" "WHERE datname = 'postgres';"
+        entry2_body = (
+            "SELECT *\n" "FROM pg_stat_activity\n" "WHERE datname = 'postgres';"
+        )
         entry2 = TextEntry.objects.create(
             user=instance,
             subject=entry2_subject,
