@@ -36,6 +36,8 @@ const Main = (props: IMainProps) => {
           height: `${Constants.appBarHeight}px`,
           boxShadow: 'none', // Remove the Material UI 'bottom border'.
           backgroundImage: 'none', // Remove the Material UI gradient.
+          borderBottom: '1px solid #808080',
+          backgroundColor: theme => `${theme.header.background}`,
         }}
       >
         <StyledToolbar>
@@ -52,6 +54,8 @@ const Main = (props: IMainProps) => {
           top: 'auto',
           bottom: 0,
           height: `${Constants.footerHeight}px`,
+          backgroundImage: 'none', // Remove the Material UI gradient.
+          backgroundColor: theme => `${theme.footer.background}`,
         }}
       >
         <StyledToolbar>

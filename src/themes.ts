@@ -9,12 +9,24 @@ declare module '@mui/material/styles' {
       foreground: string;
       background: string;
     };
+    header: {
+      background: string;
+    };
+    footer: {
+      background: string;
+    };
   }
   // allow configuration using `createTheme`
   interface ThemeOptions {
     selected?: {
       foreground?: string;
       background?: string;
+    };
+    header?: {
+      background: string;
+    };
+    footer?: {
+      background: string;
     };
   }
 }
@@ -76,6 +88,12 @@ export const darkTheme: Theme = createTheme({
     foreground: '#ffffff',
     background: '#484848',
   },
+  header: {
+    background: '#181818',
+  },
+  footer: {
+    background: '#181818',
+  },
 });
 
 export const lightTheme: Theme = createTheme({
@@ -105,7 +123,13 @@ export const lightTheme: Theme = createTheme({
   },
   //
   selected: {
-    foreground: '#ff0000',
-    background: '#00ff00',
+    foreground: '#101010',
+    background: '#e8e8e8',
+  },
+  header: {
+    background: '#dcdcdc',
+  },
+  footer: {
+    background: '#dcdcdc',
   },
 });
