@@ -204,7 +204,8 @@ const MenuBar = (props: IMenuBarProps) => {
               minWidth: 0,
               marginRight: 2,
               '&:hover': {
-                color: '#FF00FF',
+                color: theme => `${theme.header.menuButtonHighlight}`,
+                background: 'none',
               },
               '&:active': {
                 backgroundColor: '#585858',
@@ -227,7 +228,8 @@ const MenuBar = (props: IMenuBarProps) => {
             minWidth: 0,
             marginRight: 2,
             '&:hover': {
-              color: '#FF00FF',
+              color: theme => `${theme.header.menuButtonHighlight}`,
+              background: 'none',
             },
             '&:active': {
               backgroundColor: '#585858',
@@ -249,7 +251,8 @@ const MenuBar = (props: IMenuBarProps) => {
             minWidth: 0,
             marginRight: 2,
             '&:hover': {
-              color: '#FF00FF',
+              color: theme => `${theme.header.menuButtonHighlight}`,
+              background: 'none',
             },
             '&:active': {
               backgroundColor: '#585858',
@@ -271,7 +274,8 @@ const MenuBar = (props: IMenuBarProps) => {
             minWidth: 0,
             marginRight: 2,
             '&:hover': {
-              color: '#FF00FF',
+              color: theme => `${theme.header.menuButtonHighlight}`,
+              background: 'none',
             },
             '&:active': {
               backgroundColor: '#585858',
