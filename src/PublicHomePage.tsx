@@ -39,6 +39,7 @@ const PublicHomePage = () => {
             marginTop: '250px',
             fontSize: '64px',
             textAlign: 'center',
+            color: theme => `${theme.palette.text.primary}`,
           }}
         >
           Solve, Curate, Retrieve.
@@ -49,6 +50,7 @@ const PublicHomePage = () => {
           sx={{
             fontSize: '30px',
             textAlign: 'center',
+            color: theme => `${theme.palette.text.primary}`,
           }}
         >
           An opinionated note taking system for computer programmers.
