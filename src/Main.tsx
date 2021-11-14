@@ -8,25 +8,24 @@ import StyledToolbar from './styled/layout/StyledToolbar';
 import TagSearch from './TagSearch';
 import TextEntrySearchField from './styled/text_entries/TextEntrySearchField';
 import {Theme} from '@mui/material/styles';
-import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
-
-const useStyles = makeStyles(() => ({
-  main: {
-    marginTop: `${Constants.appBarHeight}px`,
-    height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
-    width: `calc(100vw - ${Constants.drawerWidth}px)`,
-    overflow: 'auto',
-    zIndex: 1000,
-  },
-}));
+import {useTheme} from '@mui/styles';
 
 interface IMainProps {
   handleThemeSwitcher: (chosenTheme: Theme) => void;
 }
 
 const Main = (props: IMainProps) => {
-  const classes = useStyles();
+  const theme: Theme = useTheme();
+
+  const mainStyle = {
+    paddingTop: `${theme.main.paddingTop}rem`,
+    marginTop: `${Constants.appBarHeight}px`,
+    height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
+    width: `calc(100vw - ${Constants.drawerWidth}px)`,
+    overflow: 'auto',
+    zIndex: 1000,
+  };
 
   return (
     <>
@@ -45,7 +44,7 @@ const Main = (props: IMainProps) => {
         </StyledToolbar>
       </AppBar>
       <LeftDrawer />
-      <main className={classes.main}>
+      <main style={mainStyle}>
         <EntryList />
       </main>
       <AppBar

@@ -13,6 +13,9 @@ declare module '@mui/material/styles' {
       background: string;
       menuButtonHighlight: string;
     };
+    main: {
+      paddingTop: string;
+    };
     footer: {
       background: string;
     };
@@ -26,6 +29,9 @@ declare module '@mui/material/styles' {
     header?: {
       background: string;
       menuButtonHighlight: string;
+    };
+    main: {
+      paddingTop: number;
     };
     footer?: {
       background: string;
@@ -94,6 +100,9 @@ export const darkTheme: Theme = createTheme({
     background: '#181818',
     menuButtonHighlight: '#808080',
   },
+  main: {
+    paddingTop: 0.25,
+  },
   footer: {
     background: '#181818',
   },
@@ -132,6 +141,9 @@ export const lightTheme: Theme = createTheme({
   header: {
     background: '#dcdcdc',
     menuButtonHighlight: '#696969',
+  },
+  main: {
+    paddingTop: 0.25,
   },
   footer: {
     background: '#dcdcdc',

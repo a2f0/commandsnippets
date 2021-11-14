@@ -17,17 +17,6 @@ import {useHistory} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
 
 const useStyles = makeStyles({
-  root: {
-    paddingTop: 0,
-    paddingBottom: 0,
-    paddingLeft: 0,
-    paddingRight: 0,
-    overflowY: 'auto',
-    // Remove scrollbar on Firefox and Opera
-    // scrollbarWidth: 'none',
-    direction: 'rtl',
-    height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
-  },
   ltr: {
     direction: 'ltr',
   },
@@ -219,7 +208,18 @@ const TagList = () => {
 
   return (
     <>
-      <List className={classes.root} onContextMenu={handleContextClick}>
+      <List
+        sx={{
+          paddingTop: theme => `${theme.main.paddingTop}`,
+          paddingBottom: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          overflowY: 'auto',
+          direction: 'rtl',
+          height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
+        }}
+        onContextMenu={handleContextClick}
+      >
         <div className={classes.ltr} id="tagList">
           {appConfig.tagNew === 'top' && <TagNew handleNewParent={handleNew} />}
           {tags.map((object: ITagJsonApi, i) => {
