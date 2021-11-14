@@ -53,7 +53,7 @@ const PublicHomePage = () => {
             color: theme => `${theme.palette.text.primary}`,
           }}
         >
-          An opinionated note taking system for computer programmers.
+          An opinionated note-taking system for technical professionals.
         </Grid>
       </Grid>
     </>
