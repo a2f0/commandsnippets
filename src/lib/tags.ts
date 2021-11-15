@@ -29,7 +29,9 @@ export function filterAndSort(): Array<ITagJsonApi> {
       element =>
         element.relationships.user.data.id === userObject?.id &&
         element.attributes.is_deleted === false &&
-        element.attributes.name.toLowerCase().includes(store.tagSearchString)
+        element.attributes.name
+          .toLowerCase()
+          .includes(store.tagSearchString.toLowerCase())
     );
   } else {
     tagObjects = store.tagsArray.filter(

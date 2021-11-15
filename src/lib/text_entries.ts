@@ -99,7 +99,7 @@ export function sort(
             textEntry.id === element.relationships.text_entry.data.id &&
             textEntry.attributes.body
               .toLowerCase()
-              .includes(store.entrySearchString)
+              .includes(store.entrySearchString.toLowerCase())
           );
         });
         if (entry !== undefined) {
@@ -128,7 +128,7 @@ export function sort(
               textEntry.id === element.relationships.text_entry.data.id &&
               textEntry.attributes.body
                 .toLowerCase()
-                .includes(store.entrySearchString)
+                .includes(store.entrySearchString.toLowerCase())
             );
           });
           if (entry !== undefined) {
