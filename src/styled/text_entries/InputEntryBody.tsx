@@ -31,6 +31,8 @@ const InputEntryBody = ({
         minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         background: theme.textInput.background,
+        paddingLeft: 4,
+        color: theme.palette.text.primary,
       }}
       placeholder={placeholder}
       value={value}
