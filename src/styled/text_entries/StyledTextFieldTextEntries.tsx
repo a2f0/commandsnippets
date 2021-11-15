@@ -36,6 +36,7 @@ const StyledTextFieldTextEntries = ({
             border: 'none',
           },
         },
+        background: theme.textInput.background,
       },
       noPadding: {
         paddingLeft: 5,

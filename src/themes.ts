@@ -19,6 +19,9 @@ declare module '@mui/material/styles' {
     footer: {
       background: string;
     };
+    textInput: {
+      background: string;
+    };
   }
   // allow configuration using `createTheme`
   interface ThemeOptions {
@@ -34,6 +37,9 @@ declare module '@mui/material/styles' {
       paddingTop: number;
     };
     footer?: {
+      background: string;
+    };
+    textInput: {
       background: string;
     };
   }
@@ -106,6 +112,9 @@ export const darkTheme: Theme = createTheme({
   footer: {
     background: '#181818',
   },
+  textInput: {
+    background: '#181818',
+  },
 });
 
 export const lightTheme: Theme = createTheme({
@@ -147,5 +156,8 @@ export const lightTheme: Theme = createTheme({
   },
   footer: {
     background: '#dcdcdc',
+  },
+  textInput: {
+    background: 'white',
   },
 });

@@ -30,6 +30,7 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
             border: 'none',
           },
         },
+        background: theme.textInput.background,
       },
       noPadding: {
         paddingLeft: 5,

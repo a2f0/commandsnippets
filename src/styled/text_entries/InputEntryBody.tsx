@@ -1,6 +1,8 @@
 import * as Constants from '../../constants';
 import React, {useState} from 'react';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
+import {Theme} from '@mui/material/styles';
+import {useTheme} from '@mui/styles';
 
 export interface IProps {
   handleChangeParent: (value: string) => void;
@@ -15,6 +17,8 @@ const InputEntryBody = ({
 }: IProps) => {
   const [value, setValue] = useState<string>(valueParent);
 
+  const theme = useTheme<Theme>();
+
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(event.target.value);
     handleChangeParent(event.target.value);
@@ -26,6 +30,7 @@ const InputEntryBody = ({
         width: `calc(100% - (${Constants.drawerWidth}px))`,
         minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
+        background: theme.textInput.background,
       }}
       placeholder={placeholder}
       value={value}

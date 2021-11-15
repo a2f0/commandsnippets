@@ -27,6 +27,7 @@ const InputEntrySubject = ({
         minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         marginLeft: 0,
+        background: theme => `${theme.textInput.background}`,
       }}
       type="text"
       inputProps={{
