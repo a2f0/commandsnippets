@@ -26,6 +26,7 @@ const InputEntryBody = ({
 
   return (
     <TextareaAutosize
+      spellCheck="false"
       style={{
         width: `calc(100% - (${Constants.drawerWidth}px))`,
         minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
