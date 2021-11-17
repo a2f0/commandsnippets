@@ -485,3 +485,31 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 1)
         self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
+
+    def test_search_by_body(self):
+        entry1 = self.user1.text_entries.all().first()
+        response = self.user1_api_client.get(
+            "/api/v1/entries?{}={}&filter[user.username]={}".format(
+                settings.REST_FRAMEWORK["SEARCH_PARAM"],
+                "pg_terminate_backend",
+                self.user1,
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 1)
+        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
+
+    def test_search_by_subject(self):
+        entry1 = self.user1.text_entries.all().first()
+        response = self.user1_api_client.get(
+            "/api/v1/entries?{}={}&filter[user.username]={}".format(
+                settings.REST_FRAMEWORK["SEARCH_PARAM"],
+                "close all postgres connections",
+                self.user1,
+            )
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["data"]), 1)
+        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))

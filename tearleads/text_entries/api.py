@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models import Q
 from rest_framework import filters, response, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -41,9 +42,16 @@ class TextEntryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if settings.REST_FRAMEWORK["SEARCH_PARAM"] in self.request.GET:
             self.queryset = self.queryset.filter(
-                body__icontains=self.request.GET[
-                    settings.REST_FRAMEWORK["SEARCH_PARAM"]
-                ]
+                Q(
+                    body__icontains=self.request.GET[
+                        settings.REST_FRAMEWORK["SEARCH_PARAM"]
+                    ]
+                )
+                | Q(
+                    subject__icontains=self.request.GET[
+                        settings.REST_FRAMEWORK["SEARCH_PARAM"]
+                    ]
+                )
             )
         return self.queryset
 
