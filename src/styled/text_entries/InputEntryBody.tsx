@@ -2,7 +2,28 @@ import * as Constants from '../../constants';
 import React, {useState} from 'react';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import {Theme} from '@mui/material/styles';
+import styled from '@emotion/styled';
 import {useTheme} from '@mui/styles';
+
+export interface StyledTextAreaIProps {
+  theme: Theme;
+}
+
+const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
+  width: calc(100% - (${Constants.drawerWidth}px));
+  min-width: calc(100% - (${Constants.drawerWidth}px));
+  max-width: calc(100% - (${Constants.drawerWidth}px));
+  background: ${props => props.theme.textInput.background};
+  padding-left: 4px;
+  color: ${props => props.theme.palette.text.primary};
+  &:hover {
+    border: 1px solid ${props => props.theme.palette.secondary.main};
+  }
+  &:focus {
+    border: 2px solid ${props => props.theme.palette.secondary.main};
+    outline: none;
+  }
+`;
 
 export interface IProps {
   handleChangeParent: (value: string) => void;
@@ -25,16 +46,9 @@ const InputEntryBody = ({
   };
 
   return (
-    <TextareaAutosize
+    <StyledTextareaAutosize
+      theme={theme}
       spellCheck="false"
-      style={{
-        width: `calc(100% - (${Constants.drawerWidth}px))`,
-        minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
-        maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
-        background: theme.textInput.background,
-        paddingLeft: 4,
-        color: theme.palette.text.primary,
-      }}
       placeholder={placeholder}
       value={value}
       onChange={handleChange}
