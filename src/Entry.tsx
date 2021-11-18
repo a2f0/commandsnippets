@@ -370,6 +370,8 @@ const Entry = ({
     navigator.clipboard.writeText(textEntryObject.attributes.body);
     appConfig.setMostRecentCopyType(textEntryObject.type);
     appConfig.setMostRecentCopyID(textEntryObject.id);
+    appConfig.setTagsOrEntries('entries');
+    appConfig.setEntrySelectedID(textEntryObject.id);
   };
 
   if (
