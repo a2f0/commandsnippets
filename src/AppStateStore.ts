@@ -38,7 +38,13 @@ export const AppStateStoreModel = types
     currentUser: types.maybeNull(types.string),
     showTagCounts: types.boolean,
   })
-  .volatile(() => ({
+  .volatile<{
+    entrySelectedID: string;
+    entrySearchString: string;
+    tagSearchString: string;
+    tagSelectedID: string;
+    tagsOrEntries: string;
+  }>(() => ({
     entrySelectedID: '',
     entrySearchString: '',
     tagSearchString: '',
