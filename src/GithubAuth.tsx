@@ -7,6 +7,7 @@ import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
+import {useNavigate} from 'react-router-dom';
 import {useTheme} from '@mui/styles';
 
 export const githubClientID = () => {
@@ -31,6 +32,7 @@ const GithubAuth = () => {
   const theme = useTheme<Theme>();
   const appConfig = useAppContext();
   const classes = useStyles(theme);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const queryString = window.location.search;
@@ -58,6 +60,7 @@ const GithubAuth = () => {
             const username = response.data.data.attributes.username;
             appConfig.setLoggedInUser(username);
             document.cookie = 'loggedInUser=' + username;
+            navigate(`/${username}`);
           });
         })
         .catch(() => {

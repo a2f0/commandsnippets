@@ -1,14 +1,17 @@
 import * as Constants from './constants';
+import React, {useEffect} from 'react';
 import AppBar from '@mui/material/AppBar';
 import EntryList from './EntryList';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
-import React from 'react';
 import StyledToolbar from './styled/layout/StyledToolbar';
 import TagSearch from './TagSearch';
 import TextEntrySearchField from './styled/text_entries/TextEntrySearchField';
 import {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
+import {useAppContext} from './AppContext';
+import {useLocation} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {useTheme} from '@mui/styles';
 
 interface IMainProps {
@@ -17,6 +20,15 @@ interface IMainProps {
 
 const Main = (props: IMainProps) => {
   const theme: Theme = useTheme();
+  const location = useLocation();
+  const appConfig = useAppContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.pathname === '/' && appConfig.loggedInUser !== null) {
+      navigate(`/${appConfig.loggedInUser}`);
+    }
+  });
 
   const mainStyle = {
     paddingTop: `${theme.main.paddingTop}rem`,

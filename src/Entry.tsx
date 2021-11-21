@@ -9,7 +9,6 @@ import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
 import EntrySubject from './styled/text_entries/EntrySubject';
 import FileCopySharpIcon from '@mui/icons-material/FileCopySharp';
-import {IParamTypes} from './EntryList';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
@@ -88,8 +87,7 @@ const Entry = ({
   const [showCopyIcon, setShowCopyIcon] = useState(false);
   const [showCheckIcon, setShowCheckIcon] = useState(false);
   const classes = useStyles();
-  const {tag} = useParams<IParamTypes>();
-  const {user} = useParams<IParamTypes>();
+  const {tag, user} = useParams();
   const [{isDragging}, drag, preview] = useDrag({
     item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
     type: ItemTypes.ENTRY,

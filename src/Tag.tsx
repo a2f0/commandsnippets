@@ -15,7 +15,7 @@ import {Theme} from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-import {useHistory} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
 import {useTheme} from '@mui/styles';
 
@@ -55,10 +55,6 @@ interface ITagProps {
   findEntryByIndex: (id: number) => ITagJsonApi | null;
 }
 
-interface IParamTypes {
-  user: string;
-}
-
 const Tag = ({
   id,
   object,
@@ -73,11 +69,11 @@ const Tag = ({
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const classes = useStyles();
-  const history = useHistory();
+  const navigate = useNavigate();
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
-  const {user} = useParams<IParamTypes>();
+  const {user} = useParams();
   const [{canDrop, isOver}, drop] = useDrop({
     accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
@@ -162,7 +158,7 @@ const Tag = ({
   }
 
   const handleTagClick = () => {
-    history.push(`/${user}/${tagObject.attributes.name}`);
+    navigate(`/${user}/${tagObject.attributes.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
     appConfig.setMainPanel('EntryList');
     appConfig.setTagSelectedID(tagObject.id);

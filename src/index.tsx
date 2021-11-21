@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Route, BrowserRouter as Router, Switch} from 'react-router-dom';
+import {Route, BrowserRouter as Router, Routes} from 'react-router-dom';
 import {StyledEngineProvider, ThemeProvider} from '@mui/material/styles';
 import {darkTheme, lightTheme} from './themes';
 import {AppContextProvider} from './AppContext';
@@ -11,7 +11,6 @@ import {HTML5Backend} from 'react-dnd-html5-backend';
 import Main from './Main';
 import PublicHomePage from './PublicHomePage';
 import ReactDOM from 'react-dom';
-import {Redirect} from 'react-router-dom';
 import RootContainer from './RootContainer';
 import {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
@@ -42,35 +41,32 @@ const AppRouter = React.memo(
               <CssBaseline />
               <DndProvider backend={HTML5Backend}>
                 <RootContainer>
-                  <Switch>
-                    <Route exact path="/oauth/github">
-                      {store.loggedInUser ? (
-                        <Redirect to={'/' + store.loggedInUser} />
-                      ) : (
-                        <GithubAuth />
-                      )}
-                    </Route>
-                    <Route exact path="/oauth/google">
-                      {store.loggedInUser ? (
-                        <Redirect to={'/' + store.loggedInUser} />
-                      ) : (
-                        <GoogleAuth />
-                      )}
-                    </Route>
-                    <Route path="/:user/:tag">
-                      <Main handleThemeSwitcher={handleThemeSwitcher} />
-                    </Route>
-                    <Route path="/:user">
-                      <Main handleThemeSwitcher={handleThemeSwitcher} />
-                    </Route>
-                    <Route exact path="/">
-                      {store.loggedInUser ? (
-                        <Redirect to={'/' + store.loggedInUser} />
-                      ) : (
-                        <PublicHomePage />
-                      )}
-                    </Route>
-                  </Switch>
+                  <Routes>
+                    <Route path="/oauth/github" element={<GithubAuth />} />
+                    <Route path="/oauth/google" element={<GoogleAuth />} />
+                    <Route
+                      path="/:user/:tag"
+                      element={
+                        <Main handleThemeSwitcher={handleThemeSwitcher} />
+                      }
+                    />
+                    <Route
+                      path="/:user"
+                      element={
+                        <Main handleThemeSwitcher={handleThemeSwitcher} />
+                      }
+                    />
+                    {store.loggedInUser ? (
+                      <Route
+                        path="/"
+                        element={
+                          <Main handleThemeSwitcher={handleThemeSwitcher} />
+                        }
+                      />
+                    ) : (
+                      <Route path="/" element={<PublicHomePage />} />
+                    )}
+                  </Routes>
                 </RootContainer>
               </DndProvider>
             </AppContextProvider>

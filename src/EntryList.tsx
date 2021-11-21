@@ -41,8 +41,7 @@ export interface TagTextEntryThroughModel {
 const EntryList = () => {
   const appConfig = useAppContext();
   const location = useLocation();
-  const {user} = useParams<IParamTypes>();
-  const {tag} = useParams<IParamTypes>();
+  const {user, tag} = useParams();
 
   // Used to access the react state from within the listener.
   const [entries, _setEntries] = useState<Array<ITextEntryJsonApi>>([]);

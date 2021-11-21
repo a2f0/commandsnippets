@@ -7,6 +7,7 @@ import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
+import {useNavigate} from 'react-router-dom';
 
 export const googleClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
@@ -45,6 +46,7 @@ export const redirectUrl = () => {
 const GoogleAuth = () => {
   const appConfig = useAppContext();
   const classes = useStyles();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const queryString = window.location.search;
@@ -74,6 +76,7 @@ const GoogleAuth = () => {
           API.get('/user/', {withCredentials: true}).then(response => {
             const username = response.data.data.attributes.username;
             appConfig.setLoggedInUser(username);
+            navigate(`/${username}`);
             document.cookie = 'loggedInUser=' + username;
           });
         })

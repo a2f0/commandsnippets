@@ -22,7 +22,7 @@ import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-import {useHistory} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
 import withStyles from '@mui/styles/withStyles';
 
@@ -90,15 +90,12 @@ const useStyles = makeStyles({
 interface IMenuBarProps {
   handleThemeSwitcher: (theme: Theme) => void;
 }
-interface IParamTypes {
-  user: string;
-}
 
 const MenuBar = (props: IMenuBarProps) => {
   const classes = useStyles();
-  const history = useHistory();
+  const navigate = useNavigate();
   const appConfig = useAppContext();
-  const {user} = useParams<IParamTypes>();
+  const {user} = useParams();
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -339,8 +336,8 @@ const MenuBar = (props: IMenuBarProps) => {
         <StyledMenuItem
           onClick={() => {
             appConfig.currentTag
-              ? history.push(`/${user}/${appConfig.currentTag}`)
-              : history.push(`/${user}`);
+              ? navigate(`/${user}/${appConfig.currentTag}`)
+              : navigate(`/${user}`);
             appConfig.setMainPanel('EntryList');
             handleViewMenuClose();
           }}
@@ -355,7 +352,7 @@ const MenuBar = (props: IMenuBarProps) => {
         <StyledMenuItem
           onClick={() => {
             appConfig.setMainPanel('UntaggedEntryList');
-            history.push(`/${user}/untagged`);
+            navigate(`/${user}/untagged`);
             handleViewMenuClose();
           }}
         >

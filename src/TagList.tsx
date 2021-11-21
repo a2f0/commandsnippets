@@ -13,7 +13,7 @@ import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
-import {useHistory} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
 
 const useStyles = makeStyles({
@@ -31,11 +31,6 @@ const useStyles = makeStyles({
   },
 });
 
-interface IParamTypes {
-  user: string;
-  tag: string;
-}
-
 export interface IUser {
   id: number;
   type: string;
@@ -46,8 +41,8 @@ export interface IUser {
 
 const TagList = () => {
   const appConfig = useAppContext();
-  const history = useHistory();
-  const {user} = useParams<IParamTypes>();
+  const navigate = useNavigate();
+  const {user} = useParams();
 
   // Used to access the react state from within the listener.
   const [tags, _setTags] = useState<Array<ITagJsonApi>>([]);
@@ -67,22 +62,24 @@ const TagList = () => {
   useEffect(
     () =>
       autorun(() => {
-        appConfig.setCurrentUser(user);
-        appConfig.fetchTags(user).then(() => {
-          const array = TagHelpers.filterAndSort();
-          if (array.length > 1) {
-            appConfig.setTagSelectedID(array[0].id);
-            const selected = appConfig.tagsArray.find(
-              c => c.id === array[0].id
-            );
-            if (selected !== undefined) {
-              history.push(`/${user}/${selected.attributes.name}`);
+        if (user !== undefined) {
+          appConfig.setCurrentUser(user);
+          appConfig.fetchTags(user).then(() => {
+            const array = TagHelpers.filterAndSort();
+            if (array.length > 1) {
+              appConfig.setTagSelectedID(array[0].id);
+              const selected = appConfig.tagsArray.find(
+                c => c.id === array[0].id
+              );
+              if (selected !== undefined) {
+                navigate(`/${user}/${selected.attributes.name}`);
+              }
             }
-          }
-          setTags(array);
-        });
+            setTags(array);
+          });
+        }
       }),
-    [appConfig.tagSortOrder]
+    [appConfig.tagSortOrder, user]
   );
 
   useEffect(
@@ -190,7 +187,7 @@ const TagList = () => {
             }
           } else if (event.keyCode === keyCode.Enter) {
             appConfig.setTagsOrEntries('entries');
-            history.push(`/${user}/${selected.attributes.name}`);
+            navigate(`/${user}/${selected.attributes.name}`);
           }
         }
       }

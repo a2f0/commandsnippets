@@ -14,18 +14,12 @@ export interface IEntryNewProps {
   filterAndSortParent: () => void;
 }
 
-interface IParamTypes {
-  user: string;
-  tag: string;
-}
-
 const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
   const classes = useStyles();
   const appConfig = useAppContext();
-  const {user} = useParams<IParamTypes>();
-  const {tag} = useParams<IParamTypes>();
+  const {user, tag} = useParams();
 
   const handleSave = () => {
     const text_entry_payload = {
