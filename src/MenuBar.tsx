@@ -19,6 +19,7 @@ import {WithStyles} from '@mui/styles';
 import axios from 'axios';
 import {baseHTTPURL} from './api';
 import createStyles from '@mui/styles/createStyles';
+import {entrySearchMethod} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
@@ -509,6 +510,34 @@ const MenuBar = (props: IMenuBarProps) => {
         open={Boolean(entriesMenuAnchorEl)}
         onClose={handleEntriesMenuClose}
       >
+        <StyledMenuItem
+          onClick={() => {
+            appConfig.setEntrySearchMethod(entrySearchMethod.allEntries);
+            handleEntriesMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.entrySearchMethod === entrySearchMethod.allEntries && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Search all entries
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            appConfig.setEntrySearchMethod(entrySearchMethod.currentTagOnly);
+            handleEntriesMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            {appConfig.entrySearchMethod ===
+              entrySearchMethod.currentTagOnly && (
+              <CheckIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          Search current tag
+        </StyledMenuItem>
+        <Divider />
         {appConfig.mainPanel === 'EntryList' && [
           <StyledMenuItem
             key="SortMenuItemOrder"

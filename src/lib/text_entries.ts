@@ -17,6 +17,13 @@ export interface ITextEntryJsonApiResponseSingle {
   included: Array<ITagTextEntryThroughModelJsonApi>;
 }
 
+export interface IEntryFetchPage {
+  page: number;
+  username: string;
+  sort: string;
+  search?: string;
+}
+
 export function sort(
   username: string,
   tag: string | null,
@@ -306,6 +313,17 @@ export function filter(
   return filteredArray;
 }
 
+interface IFetchParams {
+  'page[number]': number;
+  'filter[user.username]': string;
+  'filter[tags.name]'?: string;
+  sort: string;
+  'filter[date_updated.gt]'?: string;
+  include: string;
+  'filter[tag_count]'?: number;
+  'filter[search]'?: string;
+}
+
 export function fetch(
   entries: Array<
     ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
@@ -316,17 +334,7 @@ export function fetch(
   since: string | null,
   tag_count: number | null
 ) {
-  interface IParams {
-    'page[number]': number;
-    'filter[user.username]': string;
-    'filter[tags.name]'?: string;
-    sort: string;
-    'filter[date_updated.gt]'?: string;
-    include: string;
-    'filter[tag_count]'?: number;
-  }
-
-  const params: IParams = {
+  const params: IFetchParams = {
     'page[number]': page,
     'filter[user.username]': user,
     sort: 'date_updated',
@@ -360,6 +368,38 @@ export function fetch(
       return entries;
     }
     return fetch(entries, user, tag, ++page, since, tag_count);
+  });
+  return f;
+}
+
+export function fetchPage({page, username, sort, search}: IEntryFetchPage) {
+  let entries: Array<
+    ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
+  > = [];
+  const params: IFetchParams = {
+    'page[number]': page,
+    'filter[user.username]': username,
+    'filter[search]': search,
+    sort: sort,
+    include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
+  };
+
+  if (search !== null) {
+    params['filter[search]'] = search;
+  }
+
+  const f: Promise<
+    Array<ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi>
+  > = API.get<ITextEntryJsonApiResponse>('/entries', {
+    params: params,
+  }).then(response => {
+    entries = entries.concat(response.data.data);
+    for (let i = 0; i < response.data.included?.length; i++) {
+      if (!entries.includes(response.data.included[i])) {
+        entries.push(response.data.included[i]);
+      }
+    }
+    return entries;
   });
   return f;
 }

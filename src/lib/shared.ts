@@ -31,3 +31,8 @@ export enum keyCode {
   UpArrow = 38,
   DownArrow = 40,
 }
+
+export enum entrySearchMethod {
+  allEntries = 1,
+  currentTagOnly = 2,
+}

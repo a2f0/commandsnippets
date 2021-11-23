@@ -12,6 +12,7 @@ import {IUserJsonApi, UserModel} from './models/UserModel';
 import {TagHelpers, TagModel} from './models/TagModel';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 import {ITagJsonApi} from './models/TagModel';
+import {entrySearchMethod} from './lib/shared';
 import {environment} from './api';
 
 export type RootModel = Instance<typeof AppStateStoreModel>;
@@ -41,12 +42,14 @@ export const AppStateStoreModel = types
   .volatile<{
     entrySelectedID: string;
     entrySearchString: string;
+    entrySearchMethod: entrySearchMethod;
     tagSearchString: string;
     tagSelectedID: string;
     tagsOrEntries: string;
   }>(() => ({
     entrySelectedID: '',
     entrySearchString: '',
+    entrySearchMethod: entrySearchMethod.currentTagOnly,
     tagSearchString: '',
     tagSelectedID: '',
     tagsOrEntries: 'tags',
@@ -282,6 +285,9 @@ export const AppStateStoreModel = types
     },
     setEntrySelectedID(value: string) {
       self.entrySelectedID = value;
+    },
+    setEntrySearchMethod(method: entrySearchMethod) {
+      self.entrySearchMethod = method;
     },
     setEntrySortOrder(order: string) {
       self.entrySortOrder = order;

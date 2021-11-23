@@ -4,9 +4,11 @@ import {useLocation, useParams} from 'react-router-dom';
 import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
 import EntryNew from './EntryNew';
+import {IEntryFetchPage} from './lib/text_entries';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {autorun} from 'mobx';
+import {entrySearchMethod} from './lib/shared';
 import {keyCode} from './lib/shared';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
@@ -96,6 +98,24 @@ const EntryList = () => {
         appConfig.setEntrySelectedID(array[0].id);
       }
       setEntries(array);
+    } else if (appConfig.entrySearchMethod === entrySearchMethod.allEntries) {
+      if (user !== undefined) {
+        const fetchParams: IEntryFetchPage = {
+          page: 1,
+          username: user,
+          sort: appConfig.entrySortOrder,
+          search: appConfig.entrySearchString,
+        };
+        TextEntryHelpers.fetchPage(fetchParams).then(e => {
+          // type guard
+          const filtered: ITextEntryJsonApi[] = e.filter(
+            (i): i is ITextEntryJsonApi => {
+              return i.type === 'TextEntry';
+            }
+          );
+          setEntries(filtered);
+        });
+      }
     } else if (user !== undefined && tag !== undefined) {
       const array = TextEntryHelpers.sort(
         user,

@@ -1,4 +1,4 @@
-import {fetch, sort} from '../lib/text_entries';
+import {fetch, fetchPage, sort} from '../lib/text_entries';
 import {getParent, types} from 'mobx-state-tree';
 import type {RootModel} from '../AppStateStore';
 import {getMostRecentTimeStamp} from '../lib/shared';
@@ -81,5 +81,6 @@ export const TextEntryModel = types
 export const TextEntryHelpers = {
   sort: sort,
   fetch: fetch,
+  fetchPage: fetchPage,
   getMostRecentTimeStamp: getMostRecentTimeStamp,
 };
