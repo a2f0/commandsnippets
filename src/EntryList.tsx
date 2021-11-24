@@ -1,13 +1,16 @@
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
+import {CancelTokenSource} from 'axios';
 import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
 import EntryNew from './EntryNew';
 import {IEntryFetchPage} from './lib/text_entries';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
+import {TagTextEntryThroughModel} from './models/TagTextEntryThroughModel';
 import {autorun} from 'mobx';
+import axios from 'axios';
 import {entrySearchMethod} from './lib/shared';
 import {keyCode} from './lib/shared';
 import {observer} from 'mobx-react';
@@ -53,6 +56,9 @@ const EntryList = () => {
     _setEntries(data);
   };
 
+  const [previousTokenSource, setPreviousTokenSource] = useState<
+    CancelTokenSource | undefined
+  >(undefined);
   useEffect(
     () =>
       autorun(() => {
@@ -96,20 +102,30 @@ const EntryList = () => {
       setEntries(array);
     } else if (appConfig.entrySearchMethod === entrySearchMethod.allEntries) {
       if (user !== undefined) {
+        const CancelToken = axios.CancelToken;
+        const source = CancelToken.source();
         const fetchParams: IEntryFetchPage = {
           page: 1,
           username: user,
           sort: appConfig.entrySortOrder,
           search: appConfig.entrySearchString,
+          source: source,
         };
-        TextEntryHelpers.fetchPage(fetchParams).then(e => {
-          // type guard
-          const filtered: ITextEntryJsonApi[] = e.filter(
-            (i): i is ITextEntryJsonApi => {
-              return i.type === 'TextEntry';
-            }
-          );
-          setEntries(filtered);
+        if (previousTokenSource !== undefined) {
+          previousTokenSource.cancel();
+        }
+        setPreviousTokenSource(source);
+        const p = TextEntryHelpers.fetchPage(fetchParams);
+        p.then(a => {
+          if (a) {
+            // type guard
+            const filtered: ITextEntryJsonApi[] = a.filter(
+              (i): i is ITextEntryJsonApi => {
+                return i.type === 'TextEntry';
+              }
+            );
+            setEntries(filtered);
+          }
         });
       }
     } else if (user !== undefined && tag !== undefined) {

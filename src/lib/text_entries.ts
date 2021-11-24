@@ -1,4 +1,5 @@
 import API from '../api';
+import {CancelTokenSource} from 'axios';
 import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {IUserJsonApi} from '../models/UserModel';
@@ -22,6 +23,7 @@ export interface IEntryFetchPage {
   username: string;
   sort: string;
   search?: string;
+  source: CancelTokenSource;
 }
 
 export function sort(
@@ -372,7 +374,13 @@ export function fetch(
   return f;
 }
 
-export function fetchPage({page, username, sort, search}: IEntryFetchPage) {
+export function fetchPage({
+  page,
+  username,
+  sort,
+  search,
+  source,
+}: IEntryFetchPage) {
   let entries: Array<
     ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
   > = [];
@@ -388,18 +396,21 @@ export function fetchPage({page, username, sort, search}: IEntryFetchPage) {
     params['filter[search]'] = search;
   }
 
-  const f: Promise<
-    Array<ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi>
-  > = API.get<ITextEntryJsonApiResponse>('/entries', {
+  const f: Promise<void | Array<
+    ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
+  >> = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
-  }).then(response => {
-    entries = entries.concat(response.data.data);
-    for (let i = 0; i < response.data.included?.length; i++) {
-      if (!entries.includes(response.data.included[i])) {
-        entries.push(response.data.included[i]);
+    cancelToken: source.token,
+  })
+    .then(response => {
+      entries = entries.concat(response.data.data);
+      for (let i = 0; i < response.data.included?.length; i++) {
+        if (!entries.includes(response.data.included[i])) {
+          entries.push(response.data.included[i]);
+        }
       }
-    }
-    return entries;
-  });
+      return entries;
+    })
+    .catch(() => {});
   return f;
 }
