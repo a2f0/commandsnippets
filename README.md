@@ -21,6 +21,7 @@ Bump version
 Show outdated dependencies
 
     docker-compose run backend pip-review
+    docker-compose run backend safety check -r requirements/local.txt -r requirements/production.txt
 
 ## Administrative
 

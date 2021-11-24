@@ -2,10 +2,10 @@
 black==21.10b0                  # this should match .pre-commit-config.yamml
 bump2version==1.0.1
 coverage==6.1.1
-django_extensions==3.1.3
+django_extensions==3.1.5
 factory_boy==3.2.1
 httpretty==1.1.4
-isort[requirements]==5.9.3      # this should match .pre-commit-config.yamml
+isort[requirements]==5.10.1     # this should match .pre-commit-config.yamml
 pip-review==1.1.0
 pre-commit==2.9.2
 safety==1.10.3
