@@ -68,7 +68,7 @@ const EntryList = () => {
       location,
       appConfig.entrySortOrder,
       appConfig.untaggedEntrySortOrder,
-      appConfig.mainPanel,
+      appConfig.entrySearchMethod,
     ]
   );
 
@@ -89,17 +89,19 @@ const EntryList = () => {
   }, [appConfig.entrySearchString]);
 
   const filterAndSort = () => {
-    if (appConfig.mainPanel === 'UntaggedEntryList' && user !== undefined) {
-      const array = TextEntryHelpers.sort(
-        user,
-        null,
-        appConfig.untaggedTextEntriesArray,
-        appConfig.untaggedEntrySortOrder
-      );
-      if (array.length > 1) {
-        appConfig.setEntrySelectedID(array[0].id);
+    if (appConfig.entrySearchMethod === entrySearchMethod.untaggedEntryList) {
+      if (user !== undefined) {
+        const array = TextEntryHelpers.sort(
+          user,
+          null,
+          appConfig.untaggedTextEntriesArray,
+          appConfig.untaggedEntrySortOrder
+        );
+        if (array.length > 1) {
+          appConfig.setEntrySelectedID(array[0].id);
+        }
+        setEntries(array);
       }
-      setEntries(array);
     } else if (appConfig.entrySearchMethod === entrySearchMethod.allEntries) {
       if (user !== undefined) {
         const CancelToken = axios.CancelToken;
@@ -128,17 +130,21 @@ const EntryList = () => {
           }
         });
       }
-    } else if (user !== undefined && tag !== undefined) {
-      const array = TextEntryHelpers.sort(
-        user,
-        tag,
-        appConfig.textEntriesArray,
-        appConfig.entrySortOrder
-      );
-      if (array.length > 1) {
-        appConfig.setEntrySelectedID(array[0].id);
+    } else if (
+      appConfig.entrySearchMethod === entrySearchMethod.currentTagOnly
+    ) {
+      if (user !== undefined && tag !== undefined) {
+        const array = TextEntryHelpers.sort(
+          user,
+          tag,
+          appConfig.textEntriesArray,
+          appConfig.entrySortOrder
+        );
+        if (array.length > 1) {
+          appConfig.setEntrySelectedID(array[0].id);
+        }
+        setEntries(array);
       }
-      setEntries(array);
     }
   };
 

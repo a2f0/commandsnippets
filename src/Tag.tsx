@@ -12,6 +12,7 @@ import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
 import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@mui/material/styles';
+import {entrySearchMethod} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
@@ -160,7 +161,7 @@ const Tag = ({
   const handleTagClick = () => {
     navigate(`/${user}/${tagObject.attributes.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
-    appConfig.setMainPanel('EntryList');
+    appConfig.setEntrySearchMethod(entrySearchMethod.currentTagOnly);
     appConfig.setTagSelectedID(tagObject.id);
   };
 

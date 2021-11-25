@@ -339,12 +339,13 @@ const MenuBar = (props: IMenuBarProps) => {
             appConfig.currentTag
               ? navigate(`/${user}/${appConfig.currentTag}`)
               : navigate(`/${user}`);
-            appConfig.setMainPanel('EntryList');
+            appConfig.setEntrySearchMethod(entrySearchMethod.currentTagOnly);
             handleViewMenuClose();
           }}
         >
           <ListItemIcon>
-            {appConfig.mainPanel === 'EntryList' && (
+            {appConfig.entrySearchMethod ===
+              entrySearchMethod.currentTagOnly && (
               <CheckIcon fontSize="small" />
             )}
           </ListItemIcon>
@@ -352,13 +353,14 @@ const MenuBar = (props: IMenuBarProps) => {
         </StyledMenuItem>
         <StyledMenuItem
           onClick={() => {
-            appConfig.setMainPanel('UntaggedEntryList');
+            appConfig.setEntrySearchMethod(entrySearchMethod.untaggedEntryList);
             navigate(`/${user}/untagged`);
             handleViewMenuClose();
           }}
         >
           <ListItemIcon>
-            {appConfig.mainPanel === 'UntaggedEntryList' && (
+            {appConfig.entrySearchMethod ===
+              entrySearchMethod.untaggedEntryList && (
               <CheckIcon fontSize="small" />
             )}
           </ListItemIcon>
@@ -538,7 +540,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Search current tag
         </StyledMenuItem>
         <Divider />
-        {appConfig.mainPanel === 'EntryList' && [
+        {appConfig.entrySearchMethod === entrySearchMethod.currentTagOnly && [
           <StyledMenuItem
             key="SortMenuItemOrder"
             onClick={() => {
@@ -696,7 +698,8 @@ const MenuBar = (props: IMenuBarProps) => {
             <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
         ]}
-        {appConfig.mainPanel === 'UntaggedEntryList' && [
+        {appConfig.entrySearchMethod ===
+          entrySearchMethod.untaggedEntryList && [
           <StyledMenuItem
             key="SortUntaggedEntryListDateCreated"
             onClick={() => {

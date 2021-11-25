@@ -1,4 +1,5 @@
 import {BasePage} from './test/pageobjects/base';
+import {entrySearchMethod} from './src/lib/shared';
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -35,7 +36,7 @@ export const config: WebdriverIO.Config = {
       selectedTheme: 'darkTheme',
       tagSortOrder: 'order',
       entrySortOrder: 'order',
-      mainPanel: 'EntryList',
+      entrySearchMethod: entrySearchMethod.currentTagOnly,
       tagNew: null,
       tagSearch: false,
       mostRecentCopyType: null,

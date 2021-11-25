@@ -30,7 +30,6 @@ export const AppStateStoreModel = types
     entryNew: types.maybeNull(types.string),
     entrySortOrder: types.string,
     untaggedEntrySortOrder: types.string,
-    mainPanel: types.string,
     tagNew: types.maybeNull(types.string),
     tagSearch: types.boolean,
     mostRecentCopyType: types.maybeNull(types.string),
@@ -295,9 +294,6 @@ export const AppStateStoreModel = types
     setUntaggedEntrySortOrder(order: string) {
       self.untaggedEntrySortOrder = order;
     },
-    setMainPanel(panelName: string) {
-      self.mainPanel = panelName;
-    },
     setTagNew(value: string | null) {
       self.tagNew = value;
     },
@@ -340,7 +336,6 @@ export interface appState {
   entryNew: string | null;
   entrySortOrder: string;
   untaggedEntrySortOrder: string;
-  mainPanel: string;
   tagNew: string | null;
   tagSearch: boolean;
   mostRecentCopyType: string | null;
@@ -355,7 +350,6 @@ const defaultState: appState = {
   entryNew: null,
   entrySortOrder: 'order',
   untaggedEntrySortOrder: 'date_updated',
-  mainPanel: 'EntryList',
   tagNew: null,
   tagSearch: false,
   mostRecentCopyType: null,
