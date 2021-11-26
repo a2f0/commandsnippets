@@ -1,3 +1,4 @@
+import Highlighter from 'react-highlight-words';
 import {ITextEntryJsonApi} from '../../models/TextEntryModel';
 import React from 'react';
 import {Theme} from '@mui/material/styles';
@@ -30,9 +31,13 @@ const EntryBody = ({object, handleClick}: IProps) => {
   }
 
   return (
-    <div style={style} onClick={handleClick}>
-      {object.attributes.body}
-    </div>
+    <Highlighter
+      style={style}
+      searchWords={[`${appConfig.entrySearchString}`]}
+      autoEscape={true}
+      onClick={handleClick}
+      textToHighlight={object.attributes.body}
+    />
   );
 };
 export default React.memo(observer(EntryBody));
