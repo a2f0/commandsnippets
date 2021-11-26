@@ -106,9 +106,12 @@ export function sort(
         const entry = inputArray.find(textEntry => {
           return (
             textEntry.id === element.relationships.text_entry.data.id &&
-            textEntry.attributes.body
+            (textEntry.attributes.body
               .toLowerCase()
-              .includes(store.entrySearchString.toLowerCase())
+              .includes(store.entrySearchString.toLowerCase()) ||
+              textEntry.attributes.subject
+                .toLowerCase()
+                .includes(store.entrySearchString.toLowerCase()))
           );
         });
         if (entry !== undefined) {
@@ -135,9 +138,12 @@ export function sort(
           const entry = inputArray.find(textEntry => {
             return (
               textEntry.id === element.relationships.text_entry.data.id &&
-              textEntry.attributes.body
+              (textEntry.attributes.body
                 .toLowerCase()
-                .includes(store.entrySearchString.toLowerCase())
+                .includes(store.entrySearchString.toLowerCase()) ||
+                textEntry.attributes.subject
+                  .toLowerCase()
+                  .includes(store.entrySearchString.toLowerCase()))
             );
           });
           if (entry !== undefined) {
@@ -157,9 +163,14 @@ export function sort(
       // But it might need to be filtered by search string.
       if (store.entrySearchString !== '') {
         const filtered = inputArray.filter(textEntry => {
-          return textEntry.attributes.body
-            .toLowerCase()
-            .includes(store.entrySearchString);
+          return (
+            textEntry.attributes.body
+              .toLowerCase()
+              .includes(store.entrySearchString) ||
+            textEntry.attributes.subject
+              .toLowerCase()
+              .includes(store.entrySearchString)
+          );
         });
         textEntriesFiltered = filtered;
       } else {
