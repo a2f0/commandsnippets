@@ -14,10 +14,12 @@ import ReactDOM from 'react-dom';
 import RootContainer from './RootContainer';
 import {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
+import packageJson from '../package.json';
 import {store} from './AppStateStore';
 
 const AppRouter = React.memo(
   observer(() => {
+    console.info(`v${packageJson.version}`);
     let initialTheme = darkTheme;
     if (store.selectedTheme === 'lightTheme') {
       initialTheme = lightTheme;
