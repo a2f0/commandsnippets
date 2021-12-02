@@ -11,6 +11,16 @@ terraform {
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
+// For pulling in the IAM profile
+data "terraform_remote_state" "production-s3" {
+  backend = "s3"
+  config = {
+    bucket = var.remote_state_bucket
+    key    = "production-s3/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
 // Pull images. For web frontends.
 data "aws_iam_policy_document" "pull" {
 
@@ -39,6 +49,17 @@ data "aws_iam_policy_document" "pull" {
       aws_ecr_repository.main.arn,
     ]
   }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+    ]
+    resources = [
+      "arn:aws:s3:::${data.terraform_remote_state.production-s3.outputs.bucket-name}/*",
+    ]
+  }
+
 }
 
 // Only allow EC2 instances to assume the role.
