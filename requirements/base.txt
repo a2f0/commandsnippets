@@ -6,6 +6,6 @@ django==3.2.9
 djangorestframework-jsonapi[django-filter]==4.2.1
 djangorestframework==3.12.4
 newrelic==7.2.4.171
-psycopg2==2.9.1
+psycopg2==2.9.2
 pyyaml==6.0
 requests==2.26.0
