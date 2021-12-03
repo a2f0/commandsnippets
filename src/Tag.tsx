@@ -162,6 +162,7 @@ const Tag = ({
     navigate(`/${user}/${tagObject.attributes.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
     appConfig.setEntrySearchMethod(entrySearchMethod.currentTagOnly);
+    appConfig.setEntrySearchString('');
     appConfig.setTagSelectedID(tagObject.id);
   };
 

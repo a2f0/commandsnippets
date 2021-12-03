@@ -1,11 +1,18 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import StyledTextFieldTextEntries from './StyledTextFieldTextEntries';
 import {keyCode} from '../../lib/shared';
+import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 
 const TextEntrySearchField = () => {
-  const [textEntrySearch, setTextEntrySearch] = useState<string>('');
   const appConfig = useAppContext();
+  const [textEntrySearch, setTextEntrySearch] = useState<string>(
+    appConfig.entrySearchString
+  );
+
+  useEffect(() => {
+    setTextEntrySearch(appConfig.entrySearchString);
+  }, [appConfig.entrySearchString]);
 
   const escFunction = useCallback(event => {
     if (event.keyCode === keyCode.Escape) {
@@ -22,7 +29,6 @@ const TextEntrySearchField = () => {
   }, []);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTextEntrySearch(event.currentTarget.value);
     appConfig.setEntrySearchString(event.currentTarget.value);
   };
 
@@ -39,4 +45,4 @@ const TextEntrySearchField = () => {
   );
 };
 
-export default React.memo(TextEntrySearchField);
+export default React.memo(observer(TextEntrySearchField));
