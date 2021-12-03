@@ -335,6 +335,7 @@ export interface appState {
   tagSortOrder: string;
   entryNew: string | null;
   entrySortOrder: string;
+  entrySearchMethod: entrySearchMethod;
   untaggedEntrySortOrder: string;
   tagNew: string | null;
   tagSearch: boolean;
@@ -349,6 +350,7 @@ const defaultState: appState = {
   tagSortOrder: 'order',
   entryNew: null,
   entrySortOrder: 'order',
+  entrySearchMethod: entrySearchMethod.currentTagOnly,
   untaggedEntrySortOrder: 'date_updated',
   tagNew: null,
   tagSearch: false,

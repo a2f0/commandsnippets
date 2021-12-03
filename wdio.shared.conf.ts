@@ -1,4 +1,5 @@
 import {BasePage} from './test/pageobjects/base';
+import {appState} from './src/AppStateStore';
 import {entrySearchMethod} from './src/lib/shared';
 
 export const config: WebdriverIO.Config = {
@@ -31,16 +32,19 @@ export const config: WebdriverIO.Config = {
     requireModule: ['@babel/register'],
   },
   before: async (capabilities, specs, browser) => {
-    const defaultState = {
+    const defaultState: appState = {
       loggedInUser: 'test',
       selectedTheme: 'darkTheme',
       tagSortOrder: 'order',
+      entryNew: null,
       entrySortOrder: 'order',
       entrySearchMethod: entrySearchMethod.currentTagOnly,
+      untaggedEntrySortOrder: 'date_updated',
       tagNew: null,
       tagSearch: false,
       mostRecentCopyType: null,
       mostRecentCopyID: null,
+      showTagCounts: false,
     };
     await BasePage.open('');
     await browser.execute(
