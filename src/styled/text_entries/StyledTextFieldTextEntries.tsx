@@ -6,6 +6,7 @@ import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
+import {verticalPanel} from '../../lib/shared';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -52,7 +53,7 @@ const StyledTextFieldTextEntries = ({
   useEffect(
     () =>
       autorun(() => {
-        if (appConfig.tagsOrEntries === 'entries') {
+        if (appConfig.tagsOrEntries === verticalPanel.entries) {
           inputRef.current?.focus();
         }
       }),

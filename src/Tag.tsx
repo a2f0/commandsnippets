@@ -19,6 +19,7 @@ import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
 import {useTheme} from '@mui/styles';
+import {verticalPanel} from './lib/shared';
 
 const useStyles = makeStyles({
   entry: {
@@ -147,7 +148,7 @@ const Tag = ({
 
   if (
     (object.id === appConfig.tagSelectedID &&
-      appConfig.tagsOrEntries === 'tags') ||
+      appConfig.tagsOrEntries === verticalPanel.tags) ||
     isActiveHover
   ) {
     tagStyle.backgroundColor = theme.selected.background;

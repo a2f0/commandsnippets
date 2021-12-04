@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import StyledTextFieldTags from './StyledTextFieldTags';
 import {keyCode} from '../../lib/shared';
 import {useAppContext} from '../../AppContext';
+import {verticalPanel} from '../../lib/shared';
 
 const TagSearchField = () => {
   const [tagSearch, setTagSearch] = useState<string>('');
@@ -9,7 +10,7 @@ const TagSearchField = () => {
 
   const escFunction = useCallback(event => {
     if (event.keyCode === keyCode.Escape) {
-      appConfig.setTagsOrEntries('tags');
+      appConfig.setTagsOrEntries(verticalPanel.tags);
       handleClear();
     }
   }, []);

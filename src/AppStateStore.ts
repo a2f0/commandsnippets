@@ -11,8 +11,8 @@ import {
 import {IUserJsonApi, UserModel} from './models/UserModel';
 import {TagHelpers, TagModel} from './models/TagModel';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
+import {entrySearchMethod, verticalPanel} from './lib/shared';
 import {ITagJsonApi} from './models/TagModel';
-import {entrySearchMethod} from './lib/shared';
 import {environment} from './api';
 
 export type RootModel = Instance<typeof AppStateStoreModel>;
@@ -44,14 +44,14 @@ export const AppStateStoreModel = types
     entrySearchMethod: entrySearchMethod;
     tagSearchString: string;
     tagSelectedID: string;
-    tagsOrEntries: string;
+    tagsOrEntries: verticalPanel;
   }>(() => ({
     entrySelectedID: '',
     entrySearchString: '',
     entrySearchMethod: entrySearchMethod.currentTagOnly,
     tagSearchString: '',
     tagSelectedID: '',
-    tagsOrEntries: 'tags',
+    tagsOrEntries: verticalPanel.tags,
   }))
   .actions(self => ({
     updateOrCreateTextEntry(object: ITextEntryJsonApi) {
@@ -297,7 +297,7 @@ export const AppStateStoreModel = types
     setTagNew(value: string | null) {
       self.tagNew = value;
     },
-    setTagsOrEntries(value: string) {
+    setTagsOrEntries(value: verticalPanel) {
       self.tagsOrEntries = value;
     },
     setTagSearch(value: boolean) {

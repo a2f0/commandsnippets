@@ -17,6 +17,7 @@ import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useDrop} from 'react-dnd';
+import {verticalPanel} from './lib/shared';
 
 export interface IParamTypes {
   user: string;
@@ -157,7 +158,7 @@ const EntryList = () => {
       ];
       if (
         trappedKeyCodes.includes(event.keyCode) &&
-        appConfig.tagsOrEntries === 'entries'
+        appConfig.tagsOrEntries === verticalPanel.entries
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -165,7 +166,10 @@ const EntryList = () => {
       const selected = entriesRef.current.find(
         c => c.id === appConfig.entrySelectedID
       );
-      if (selected !== undefined && appConfig.tagsOrEntries === 'entries') {
+      if (
+        selected !== undefined &&
+        appConfig.tagsOrEntries === verticalPanel.entries
+      ) {
         const selectedIndex = entriesRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
           if (event.keyCode === keyCode.UpArrow) {

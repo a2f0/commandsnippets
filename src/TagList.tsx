@@ -15,6 +15,7 @@ import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
+import {verticalPanel} from './lib/shared';
 
 const useStyles = makeStyles({
   ltr: {
@@ -88,7 +89,7 @@ const TagList = () => {
         setTags(TagHelpers.filterAndSort());
         if (tags.length === 1) {
           appConfig.setTagSelectedID(tags[0].id);
-          appConfig.setTagsOrEntries('entries');
+          appConfig.setTagsOrEntries(verticalPanel.entries);
         } else if (tags.length > 1) {
           appConfig.setTagSelectedID(tags[0].id);
         }
@@ -164,7 +165,7 @@ const TagList = () => {
       ];
       if (
         trappedKeyCodes.includes(event.keyCode) &&
-        appConfig.tagsOrEntries === 'tags'
+        appConfig.tagsOrEntries === verticalPanel.tags
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -172,7 +173,10 @@ const TagList = () => {
       const selected = tagsRef.current.find(
         c => c.id === appConfig.tagSelectedID
       );
-      if (selected !== undefined && appConfig.tagsOrEntries === 'tags') {
+      if (
+        selected !== undefined &&
+        appConfig.tagsOrEntries === verticalPanel.tags
+      ) {
         const selectedIndex = tagsRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
           if (event.keyCode === keyCode.UpArrow) {
@@ -186,7 +190,7 @@ const TagList = () => {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
             }
           } else if (event.keyCode === keyCode.Enter) {
-            appConfig.setTagsOrEntries('entries');
+            appConfig.setTagsOrEntries(verticalPanel.entries);
             navigate(`/${user}/${selected.attributes.name}`);
           }
         }

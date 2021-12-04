@@ -19,6 +19,7 @@ import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
+import {verticalPanel} from './lib/shared';
 
 const useStyles = makeStyles({
   entry: {
@@ -368,13 +369,13 @@ const Entry = ({
     navigator.clipboard.writeText(textEntryObject.attributes.body);
     appConfig.setMostRecentCopyType(textEntryObject.type);
     appConfig.setMostRecentCopyID(textEntryObject.id);
-    appConfig.setTagsOrEntries('entries');
+    appConfig.setTagsOrEntries(verticalPanel.entries);
     appConfig.setEntrySelectedID(textEntryObject.id);
   };
 
   if (
     object.id === appConfig.entrySelectedID &&
-    appConfig.tagsOrEntries === 'entries'
+    appConfig.tagsOrEntries === verticalPanel.entries
   ) {
     dropRef.current?.scrollIntoView({
       behavior: 'auto',

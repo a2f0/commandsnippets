@@ -6,6 +6,7 @@ import {keyCode} from '../../lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
+import {verticalPanel} from '../../lib/shared';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -62,10 +63,10 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   const keyListener = useCallback(event => {
     const trappedKeyCodes = [keyCode.Tab];
     if (event.keyCode === keyCode.Tab) {
-      if (appConfig.tagsOrEntries === 'tags') {
-        appConfig.setTagsOrEntries('entries');
+      if (appConfig.tagsOrEntries === verticalPanel.tags) {
+        appConfig.setTagsOrEntries(verticalPanel.entries);
       } else {
-        appConfig.setTagsOrEntries('tags');
+        appConfig.setTagsOrEntries(verticalPanel.tags);
         inputRef.current?.focus();
       }
     }

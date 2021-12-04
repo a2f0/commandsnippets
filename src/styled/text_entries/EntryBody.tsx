@@ -5,6 +5,7 @@ import {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
+import {verticalPanel} from '../../lib/shared';
 
 export interface IProps {
   handleClick: () => void;
@@ -24,7 +25,7 @@ const EntryBody = ({object, handleClick}: IProps) => {
 
   if (
     object.id === appConfig.entrySelectedID &&
-    appConfig.tagsOrEntries === 'entries'
+    appConfig.tagsOrEntries === verticalPanel.entries
   ) {
     style.backgroundColor = theme.selected.background;
     style.color = theme.selected.foreground;

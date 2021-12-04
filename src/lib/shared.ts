@@ -37,3 +37,8 @@ export enum entrySearchMethod {
   currentTagOnly = 2,
   untaggedEntryList = 3,
 }
+
+export enum verticalPanel {
+  tags = 1,
+  entries = 2,
+}
