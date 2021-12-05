@@ -12,14 +12,12 @@ import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useLocation} from 'react-router-dom';
 import {useNavigate} from 'react-router-dom';
-import {useTheme} from '@mui/styles';
 
 interface IMainProps {
   handleThemeSwitcher: (chosenTheme: Theme) => void;
 }
 
 const Main = (props: IMainProps) => {
-  const theme: Theme = useTheme();
   const location = useLocation();
   const appConfig = useAppContext();
   const navigate = useNavigate();
@@ -29,15 +27,6 @@ const Main = (props: IMainProps) => {
       navigate(`/${appConfig.loggedInUser}`);
     }
   });
-
-  const mainStyle = {
-    paddingTop: `${theme.main.paddingTop}rem`,
-    marginTop: `${Constants.appBarHeight}px`,
-    height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
-    width: `calc(100vw - ${Constants.drawerWidth}px)`,
-    overflow: 'auto',
-    zIndex: 1000,
-  };
 
   return (
     <>
@@ -56,7 +45,7 @@ const Main = (props: IMainProps) => {
         </StyledToolbar>
       </AppBar>
       <LeftDrawer />
-      <main style={mainStyle}>
+      <main>
         <EntryList />
       </main>
       <AppBar

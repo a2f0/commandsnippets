@@ -1,3 +1,4 @@
+import * as Constants from './constants';
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
@@ -9,6 +10,7 @@ import {IEntryFetchPage} from './lib/text_entries';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {TagTextEntryThroughModel} from './models/TagTextEntryThroughModel';
+import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
 import axios from 'axios';
 import {entrySearchMethod} from './lib/shared';
@@ -17,6 +19,7 @@ import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useDrop} from 'react-dnd';
+import {useTheme} from '@mui/styles';
 import {verticalPanel} from './lib/shared';
 
 export interface IParamTypes {
@@ -48,6 +51,7 @@ const EntryList = () => {
   const appConfig = useAppContext();
   const location = useLocation();
   const {user, tag} = useParams();
+  const theme: Theme = useTheme();
 
   // Used to access the react state from within the listener.
   const [entries, _setEntries] = useState<Array<ITextEntryJsonApi>>([]);
@@ -258,8 +262,22 @@ const EntryList = () => {
     [mouse]
   );
 
+  const tagsEntriesListStyle = {
+    paddingTop: `${theme.main.paddingTop}rem`,
+    marginTop: `${Constants.appBarHeight}px`,
+    height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
+    width: `calc(100vw - ${Constants.drawerWidth}px)`,
+    overflow: 'auto',
+    zIndex: 1000,
+  };
+
   return (
-    <div ref={drop} id="tagsEntriesList" onContextMenu={handleContextClick}>
+    <div
+      ref={drop}
+      id="tagsEntriesList"
+      style={tagsEntriesListStyle}
+      onContextMenu={handleContextClick}
+    >
       {appConfig.entryNew === 'textEntry-top' && (
         <EntryNew filterAndSortParent={filterAndSort} />
       )}
