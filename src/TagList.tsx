@@ -1,6 +1,7 @@
 import * as Constants from './constants';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useLocation, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import List from '@mui/material/List';
@@ -14,7 +15,6 @@ import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
-import {useParams} from 'react-router-dom';
 import {verticalPanel} from './lib/shared';
 
 const useStyles = makeStyles({
@@ -43,7 +43,19 @@ export interface IUser {
 const TagList = () => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation();
   const {user} = useParams();
+
+  // Used to access the react state from within the listener.
+  const [userName, _setUsername] = useState<string | undefined>(undefined);
+  const userRef = useRef(user);
+  const setUsername = (data: string | undefined) => {
+    userRef.current = data;
+    _setUsername(data);
+  };
+  useEffect(() => {
+    setUsername(user);
+  }, [location]);
 
   // Used to access the react state from within the listener.
   const [tags, _setTags] = useState<Array<ITagJsonApi>>([]);
@@ -60,28 +72,22 @@ const TagList = () => {
 
   const [mouse, setMouse] = useState(initialMouse);
 
-  useEffect(
-    () =>
-      autorun(() => {
-        if (user !== undefined) {
-          appConfig.setCurrentUser(user);
-          appConfig.fetchTags(user).then(() => {
-            const array = TagHelpers.filterAndSort();
-            if (array.length > 1) {
-              appConfig.setTagSelectedID(array[0].id);
-              const selected = appConfig.tagsArray.find(
-                c => c.id === array[0].id
-              );
-              if (selected !== undefined) {
-                navigate(`/${user}/${selected.attributes.name}`);
-              }
-            }
-            setTags(array);
-          });
+  useEffect(() => {
+    if (userName !== undefined) {
+      appConfig.setCurrentUser(userName);
+      appConfig.fetchTags(userName).then(() => {
+        const array = TagHelpers.filterAndSort();
+        if (array.length > 1) {
+          appConfig.setTagSelectedID(array[0].id);
+          const selected = appConfig.tagsArray.find(c => c.id === array[0].id);
+          if (selected !== undefined) {
+            navigate(`/${userName}/${selected.attributes.name}`);
+          }
         }
-      }),
-    [appConfig.tagSortOrder, user]
-  );
+        setTags(array);
+      });
+    }
+  }, [appConfig.tagSortOrder, userName]);
 
   useEffect(
     () =>
@@ -191,7 +197,7 @@ const TagList = () => {
             }
           } else if (event.keyCode === keyCode.Enter) {
             appConfig.setTagsOrEntries(verticalPanel.entries);
-            navigate(`/${user}/${selected.attributes.name}`);
+            navigate(`/${userRef.current}/${selected.attributes.name}`);
           }
         }
       }
