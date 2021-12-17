@@ -7,7 +7,8 @@ const config: Configuration = {
   output: {
     path: path.resolve(__dirname, 'build'),
     publicPath: '/',
-    filename: 'bundle.js',
+    filename: '[name].[contenthash].bundle.js',
+    clean: true,
   },
   devtool: 'eval',
   module: {
