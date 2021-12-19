@@ -16,7 +16,6 @@ import axios from 'axios';
 import {entrySearchMethod} from './lib/shared';
 import {keyCode} from './lib/shared';
 import {observer} from 'mobx-react';
-import {store} from './AppStateStore';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useDrop} from 'react-dnd';
@@ -148,7 +147,7 @@ const EntryList = () => {
         );
         setEntries(array);
         const current = array.find(
-          element => element.id === store.entrySelectedID
+          element => element.id === appConfig.entrySelectedID
         );
         if (current === undefined) {
           if (array.length > 0) {

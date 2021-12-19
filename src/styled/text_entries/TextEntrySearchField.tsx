@@ -34,6 +34,7 @@ const TextEntrySearchField = () => {
 
   const handleClear = () => {
     setTextEntrySearch('');
+    appConfig.setEntrySearchString('');
   };
 
   return (

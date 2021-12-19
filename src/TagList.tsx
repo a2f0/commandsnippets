@@ -12,7 +12,6 @@ import {autorun} from 'mobx';
 import {keyCode} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
-import {store} from './AppStateStore';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
@@ -95,7 +94,7 @@ const TagList = () => {
       autorun(() => {
         setTags(TagHelpers.filterAndSort());
         const current = tags.find(
-          element => element.id === store.tagSelectedID
+          element => element.id === appConfig.tagSelectedID
         );
         if (current === undefined) {
           if (tags.length > 0) {
