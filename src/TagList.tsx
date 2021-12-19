@@ -12,6 +12,7 @@ import {autorun} from 'mobx';
 import {keyCode} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
+import {store} from './AppStateStore';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
@@ -93,11 +94,13 @@ const TagList = () => {
     () =>
       autorun(() => {
         setTags(TagHelpers.filterAndSort());
-        if (tags.length === 1) {
-          appConfig.setTagSelectedID(tags[0].id);
-          appConfig.setTagsOrEntries(verticalPanel.entries);
-        } else if (tags.length > 1) {
-          appConfig.setTagSelectedID(tags[0].id);
+        const current = tags.find(
+          element => element.id === store.tagSelectedID
+        );
+        if (current === undefined) {
+          if (tags.length > 0) {
+            appConfig.setTagSelectedID(tags[0].id);
+          }
         }
       }),
     [appConfig.tagSearchString]
