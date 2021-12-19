@@ -16,6 +16,7 @@ import axios from 'axios';
 import {entrySearchMethod} from './lib/shared';
 import {keyCode} from './lib/shared';
 import {observer} from 'mobx-react';
+import {store} from './AppStateStore';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useDrop} from 'react-dnd';
@@ -145,10 +146,15 @@ const EntryList = () => {
           appConfig.textEntriesArray,
           appConfig.entrySortOrder
         );
-        if (array.length > 1) {
-          appConfig.setEntrySelectedID(array[0].id);
-        }
         setEntries(array);
+        const current = array.find(
+          element => element.id === store.entrySelectedID
+        );
+        if (current === undefined) {
+          if (array.length > 0) {
+            appConfig.setEntrySelectedID(array[0].id);
+          }
+        }
       }
     }
   };
