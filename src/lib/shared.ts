@@ -1,5 +1,7 @@
+import * as Constants from '../constants';
 import {ITagJsonApi} from '../models/TagModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
+import {Theme} from '@mui/material/styles';
 
 export function getMostRecentTimeStamp(
   array: Array<ITextEntryJsonApi> | Array<ITagJsonApi>
@@ -22,6 +24,29 @@ export function getMostRecentTimeStamp(
     mostRecentTimestamp = sortedArray[0].attributes.date_updated;
   }
   return mostRecentTimestamp;
+}
+
+export function needsScrollingIntoView(
+  element: React.RefObject<HTMLDivElement>,
+  theme: Theme
+) {
+  const rect = element.current?.getBoundingClientRect();
+  if (rect !== undefined) {
+    // Then it exists
+    const topInView =
+      rect.top >= Constants.appBarHeight + theme.main.paddingTop;
+    const bottomInView =
+      rect.bottom <=
+      (window.innerHeight - Constants.footerHeight ||
+        document.documentElement.clientHeight - Constants.footerHeight);
+    const isInView = topInView && bottomInView;
+
+    if (isInView === false) {
+      // Then it needs to be scrolled
+      return true;
+    }
+  }
+  return false;
 }
 
 export enum keyCode {

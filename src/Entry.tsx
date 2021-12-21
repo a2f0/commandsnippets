@@ -373,16 +373,6 @@ const Entry = ({
     appConfig.setEntrySelectedID(textEntryObject.id);
   };
 
-  if (
-    object.id === appConfig.entrySelectedID &&
-    appConfig.tagsOrEntries === verticalPanel.entries
-  ) {
-    dropRef.current?.scrollIntoView({
-      behavior: 'auto',
-      block: 'end',
-    });
-  }
-
   return (
     <>
       {appConfig.entryNew === `textEntry-${object.id}-top` && (

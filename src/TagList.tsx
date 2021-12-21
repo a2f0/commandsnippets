@@ -8,6 +8,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import {keyCode, needsScrollingIntoView, verticalPanel} from './lib/shared';
 import {useLocation, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -17,37 +18,12 @@ import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
 import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
-import {keyCode} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
 import {useTheme} from '@mui/styles';
-import {verticalPanel} from './lib/shared';
-
-function needsScrollingIntoView(
-  element: React.RefObject<HTMLDivElement>,
-  theme: Theme
-) {
-  const rect = element.current?.getBoundingClientRect();
-  if (rect !== undefined) {
-    // Then it exists
-    const topInView =
-      rect.top >= Constants.appBarHeight + theme.main.paddingTop;
-    const bottomInView =
-      rect.bottom <=
-      (window.innerHeight - Constants.footerHeight ||
-        document.documentElement.clientHeight - Constants.footerHeight);
-    const isInView = topInView && bottomInView;
-
-    if (isInView === false) {
-      // Then it needs to be scrolled
-      return true;
-    }
-  }
-  return false;
-}
 
 const useStyles = makeStyles({
   ltr: {

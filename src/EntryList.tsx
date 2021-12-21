@@ -1,6 +1,19 @@
 import * as Constants from './constants';
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {
+  createRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  entrySearchMethod,
+  keyCode,
+  needsScrollingIntoView,
+  verticalPanel,
+} from './lib/shared';
 import {useLocation, useParams} from 'react-router-dom';
 import {CancelTokenSource} from 'axios';
 import Entry from './Entry';
@@ -13,14 +26,11 @@ import {TagTextEntryThroughModel} from './models/TagTextEntryThroughModel';
 import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
 import axios from 'axios';
-import {entrySearchMethod} from './lib/shared';
-import {keyCode} from './lib/shared';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useDrop} from 'react-dnd';
 import {useTheme} from '@mui/styles';
-import {verticalPanel} from './lib/shared';
 
 export interface IParamTypes {
   user: string;
@@ -60,6 +70,23 @@ const EntryList = () => {
     entriesRef.current = data;
     _setEntries(data);
   };
+
+  const [elRefs, _setElRefs] = useState<Array<React.RefObject<HTMLDivElement>>>(
+    []
+  );
+  // Used to access the react state from within the listener.
+  const elRefsRef = useRef(elRefs);
+  const setElRefs = (data: Array<React.RefObject<HTMLDivElement>>) => {
+    elRefsRef.current = data;
+    _setElRefs(data);
+  };
+  useEffect(() => {
+    const refsArray = Array<React.RefObject<HTMLDivElement>>(entries.length);
+    for (let index = 0; index < refsArray.length; index++) {
+      refsArray[index] = createRef<HTMLDivElement>();
+    }
+    setElRefs(refsArray);
+  }, [entries.length]);
 
   const [previousTokenSource, setPreviousTokenSource] = useState<
     CancelTokenSource | undefined
@@ -185,11 +212,27 @@ const EntryList = () => {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
+              if (
+                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
+              ) {
+                elRefsRef.current?.[newIndex].current?.scrollIntoView({
+                  behavior: 'auto',
+                  block: 'start',
+                });
+              }
             }
           } else if (event.keyCode === keyCode.DownArrow) {
             const newIndex = selectedIndex + 1;
             if (newIndex <= entriesRef.current.length - 1) {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
+              if (
+                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
+              ) {
+                elRefsRef.current?.[newIndex].current?.scrollIntoView({
+                  behavior: 'auto',
+                  block: 'end',
+                });
+              }
             }
           } else if (event.keyCode === keyCode.Enter) {
             navigator.clipboard.writeText(selected.attributes.body);
@@ -288,17 +331,19 @@ const EntryList = () => {
       )}
       {entries.map((element, i) => {
         return (
-          <Entry
-            key={element.id}
-            id={element.id}
-            index={i}
-            moveEntry={moveEntry}
-            findEntry={findEntry}
-            handleRemoveFromListParent={handleRemoveFromList}
-            object={element}
-            filterAndSortParent={filterAndSort}
-            findEntryByIndex={findEntryByIndex}
-          />
+          <div key={element.id} ref={elRefs[i]}>
+            <Entry
+              key={element.id}
+              id={element.id}
+              index={i}
+              moveEntry={moveEntry}
+              findEntry={findEntry}
+              handleRemoveFromListParent={handleRemoveFromList}
+              object={element}
+              filterAndSortParent={filterAndSort}
+              findEntryByIndex={findEntryByIndex}
+            />
+          </div>
         );
       })}
       {appConfig.entryNew === 'textEntry-bottom' && (
