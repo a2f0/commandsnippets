@@ -69,6 +69,8 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
         appConfig.setTagsOrEntries(verticalPanel.tags);
         inputRef.current?.focus();
       }
+    } else if (event.keyCode === keyCode.Escape) {
+      inputRef.current?.focus();
     }
     if (trappedKeyCodes.includes(event.keyCode)) {
       event.preventDefault();
