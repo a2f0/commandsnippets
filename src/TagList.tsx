@@ -1,6 +1,13 @@
 import * as Constants from './constants';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {
+  createRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -8,6 +15,7 @@ import List from '@mui/material/List';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
+import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
 import {keyCode} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
@@ -15,7 +23,31 @@ import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
+import {useTheme} from '@mui/styles';
 import {verticalPanel} from './lib/shared';
+
+function needsScrollingIntoView(
+  element: React.RefObject<HTMLDivElement>,
+  theme: Theme
+) {
+  const rect = element.current?.getBoundingClientRect();
+  if (rect !== undefined) {
+    // Then it exists
+    const topInView =
+      rect.top >= Constants.appBarHeight + theme.main.paddingTop;
+    const bottomInView =
+      rect.bottom <=
+      (window.innerHeight - Constants.footerHeight ||
+        document.documentElement.clientHeight - Constants.footerHeight);
+    const isInView = topInView && bottomInView;
+
+    if (isInView === false) {
+      // Then it needs to be scrolled
+      return true;
+    }
+  }
+  return false;
+}
 
 const useStyles = makeStyles({
   ltr: {
@@ -45,9 +77,10 @@ const TagList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const {user} = useParams();
+  const theme = useTheme<Theme>();
 
-  // Used to access the react state from within the listener.
   const [userName, _setUsername] = useState<string | undefined>(undefined);
+  // Used to access the react state from within the listener.
   const userRef = useRef(user);
   const setUsername = (data: string | undefined) => {
     userRef.current = data;
@@ -57,13 +90,30 @@ const TagList = () => {
     setUsername(user);
   }, [location]);
 
-  // Used to access the react state from within the listener.
   const [tags, _setTags] = useState<Array<ITagJsonApi>>([]);
+  // Used to access the react state from within the listener.
   const tagsRef = useRef(tags);
   const setTags = (data: Array<ITagJsonApi>) => {
     tagsRef.current = data;
     _setTags(data);
   };
+
+  const [elRefs, _setElRefs] = useState<Array<React.RefObject<HTMLDivElement>>>(
+    []
+  );
+  // Used to access the react state from within the listener.
+  const elRefsRef = useRef(elRefs);
+  const setElRefs = (data: Array<React.RefObject<HTMLDivElement>>) => {
+    elRefsRef.current = data;
+    _setElRefs(data);
+  };
+  useEffect(() => {
+    const refsArray = Array<React.RefObject<HTMLDivElement>>(tags.length);
+    for (let index = 0; index < refsArray.length; index++) {
+      refsArray[index] = createRef<HTMLDivElement>();
+    }
+    setElRefs(refsArray);
+  }, [tags.length]);
 
   const initialMouse: IMouse = {
     mouseX: null,
@@ -191,11 +241,27 @@ const TagList = () => {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
+              if (
+                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
+              ) {
+                elRefsRef.current?.[newIndex].current?.scrollIntoView({
+                  behavior: 'auto',
+                  block: 'start',
+                });
+              }
             }
           } else if (event.keyCode === keyCode.DownArrow) {
             const newIndex = selectedIndex + 1;
             if (newIndex <= tagsRef.current.length - 1) {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
+              if (
+                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
+              ) {
+                elRefsRef.current?.[newIndex].current?.scrollIntoView({
+                  behavior: 'auto',
+                  block: 'end',
+                });
+              }
             }
           } else if (event.keyCode === keyCode.Enter) {
             appConfig.setTagsOrEntries(verticalPanel.entries);
@@ -233,16 +299,17 @@ const TagList = () => {
           {appConfig.tagNew === 'top' && <TagNew handleNewParent={handleNew} />}
           {tags.map((object: ITagJsonApi, i) => {
             return (
-              <Tag
-                key={object.id}
-                object={object}
-                id={object.id}
-                handleDeleteParent={handleDelete}
-                moveEntry={moveEntry}
-                findEntry={findEntry}
-                index={i}
-                findEntryByIndex={findEntryByIndex}
-              />
+              <div key={object.id} ref={elRefs[i]}>
+                <Tag
+                  object={object}
+                  id={object.id}
+                  handleDeleteParent={handleDelete}
+                  moveEntry={moveEntry}
+                  findEntry={findEntry}
+                  index={i}
+                  findEntryByIndex={findEntryByIndex}
+                />
+              </div>
             );
           })}
           {appConfig.tagNew === 'bottom' && (

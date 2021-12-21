@@ -14,7 +14,7 @@ declare module '@mui/material/styles' {
       menuButtonHighlight: string;
     };
     main: {
-      paddingTop: string;
+      paddingTop: number;
     };
     footer: {
       background: string;

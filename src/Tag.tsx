@@ -153,10 +153,6 @@ const Tag = ({
   ) {
     tagStyle.backgroundColor = theme.selected.background;
     tagStyle.color = theme.selected.foreground;
-    dropRef.current?.scrollIntoView({
-      behavior: 'auto',
-      block: 'end',
-    });
   }
 
   const handleTagClick = () => {
