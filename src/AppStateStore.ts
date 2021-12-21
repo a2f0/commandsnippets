@@ -386,7 +386,14 @@ function createAppStateStore(
     ...defaultState,
     ...snapshot,
   };
-  applySnapshot(store, snapshotMergedIntoDefaults);
+
+  // It is possible that the model structure changes which would break the ability
+  // to restore a snapshot.  If a snapshot restore fails, apply the default state.
+  try {
+    applySnapshot(store, snapshotMergedIntoDefaults);
+  } catch (e) {
+    applySnapshot(store, defaultState);
+  }
 
   // connect local storage
   snapshotListener = onSnapshot(store, snapshot => {
