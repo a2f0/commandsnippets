@@ -45,12 +45,22 @@ const InputEntryBody = ({
     handleChangeParent(event.target.value);
   };
 
+  const minRows = (value: string): number => {
+    const lines = value.split('\n');
+    if (lines.length < 20) {
+      return 20;
+    } else {
+      return lines.length + 5;
+    }
+  };
+
   return (
     <StyledTextareaAutosize
       theme={theme}
       spellCheck="false"
       placeholder={placeholder}
       value={value}
+      minRows={minRows(value)}
       onChange={handleChange}
     />
   );
