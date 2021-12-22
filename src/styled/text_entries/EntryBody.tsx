@@ -17,28 +17,36 @@ const EntryBody = ({object, handleClick}: IProps) => {
   const theme: Theme = useTheme();
 
   const style = {
-    backgroundColor: theme.palette.background.paper,
     color: theme.palette.text.primary,
     fontSize: 14,
     fontFamily: 'monospace',
+  };
+
+  // This is being done because the Highlighter component leaves whitespace between lines.
+  // so when the background color is set it seems unable to make the multi-line
+  // background color look contiguoous.
+  const styleOuterDiv = {
+    backgroundColor: theme.palette.background.paper,
   };
 
   if (
     object.id === appConfig.entrySelectedID &&
     appConfig.tagsOrEntries === verticalPanel.entries
   ) {
-    style.backgroundColor = theme.selected.background;
+    styleOuterDiv.backgroundColor = theme.selected.background;
     style.color = theme.selected.foreground;
   }
 
   return (
-    <Highlighter
-      style={style}
-      searchWords={[`${appConfig.entrySearchString}`]}
-      autoEscape={true}
-      onClick={handleClick}
-      textToHighlight={object.attributes.body}
-    />
+    <div style={styleOuterDiv}>
+      <Highlighter
+        style={style}
+        searchWords={[`${appConfig.entrySearchString}`]}
+        autoEscape={true}
+        onClick={handleClick}
+        textToHighlight={object.attributes.body}
+      />
+    </div>
   );
 };
 export default React.memo(observer(EntryBody));
