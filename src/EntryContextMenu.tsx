@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import API from './api';
 import {IMouse} from './Entry';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import Menu from '@mui/material/Menu';
@@ -67,7 +66,6 @@ export interface IEntryContextMenu {
 const EntryContextMenu = ({
   mouse,
   id,
-  text_entry,
   handleRemoveFromListParent,
   handleNewEntryParent,
   handleBeginEditParent,
@@ -108,33 +106,6 @@ const EntryContextMenu = ({
     handleClose();
   };
 
-  const handleIncrementTimesUsed = () => {
-    const entry_reuse_payload = {
-      data: {
-        type: 'TextEntryReused',
-        attributes: {},
-        relationships: {
-          text_entry: {
-            data: {
-              type: 'TextEntry',
-              id: text_entry.id,
-            },
-          },
-        },
-      },
-    };
-    API.post('/entry_reuses', entry_reuse_payload, {withCredentials: true})
-      .then(() => {})
-      .catch(error => {
-        // handle error
-        console.log(error);
-      })
-      .then(() => {
-        // always executed
-        handleClose();
-      });
-  };
-
   return (
     <StyledMenu
       id={`tagsEntriesContextMenu-${id}`}
@@ -169,13 +140,6 @@ const EntryContextMenu = ({
         }}
       >
         New Entry
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleIncrementTimesUsed();
-        }}
-      >
-        Increment Times Used
       </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
