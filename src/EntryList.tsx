@@ -98,14 +98,17 @@ const EntryList = () => {
       }),
     [
       location,
+      appConfig.tagTextEntryThroughModelSortOrder,
       appConfig.entrySortOrder,
-      appConfig.untaggedEntrySortOrder,
       appConfig.entrySearchMethod,
     ]
   );
 
   const retrieveEntries = () => {
-    if (tag === 'untagged' && user !== undefined) {
+    if (
+      appConfig.entrySearchMethod === entrySearchMethod.untaggedEntryList &&
+      user !== undefined
+    ) {
       appConfig.fetchUntaggedTextEntries(user).then(() => {
         filterAndSort();
       });
@@ -127,7 +130,7 @@ const EntryList = () => {
           user,
           null,
           appConfig.untaggedTextEntriesArray,
-          appConfig.untaggedEntrySortOrder
+          appConfig.entrySortOrder
         );
         if (array.length > 1) {
           appConfig.setEntrySelectedID(array[0].id);
@@ -170,7 +173,7 @@ const EntryList = () => {
           user,
           tag,
           appConfig.textEntriesArray,
-          appConfig.entrySortOrder
+          appConfig.tagTextEntryThroughModelSortOrder
         );
         setEntries(array);
         const current = array.find(

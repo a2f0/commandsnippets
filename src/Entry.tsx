@@ -217,7 +217,7 @@ const Entry = ({
       if (dragIndex === hoverIndex) {
         return;
       }
-      if (appConfig.entrySortOrder !== 'order') {
+      if (appConfig.tagTextEntryThroughModelSortOrder !== 'order') {
         return;
       }
       // Determine rectangle on screen

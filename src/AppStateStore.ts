@@ -28,8 +28,8 @@ export const AppStateStoreModel = types
     selectedTheme: types.string,
     tagSortOrder: types.string,
     entryNew: types.maybeNull(types.string),
+    tagTextEntryThroughModelSortOrder: types.string,
     entrySortOrder: types.string,
-    untaggedEntrySortOrder: types.string,
     tagNew: types.maybeNull(types.string),
     tagSearch: types.boolean,
     mostRecentCopyType: types.maybeNull(types.string),
@@ -288,11 +288,11 @@ export const AppStateStoreModel = types
     setEntrySearchMethod(method: entrySearchMethod) {
       self.entrySearchMethod = method;
     },
+    setTagTextEntryThroughModelSortOrder(order: string) {
+      self.tagTextEntryThroughModelSortOrder = order;
+    },
     setEntrySortOrder(order: string) {
       self.entrySortOrder = order;
-    },
-    setUntaggedEntrySortOrder(order: string) {
-      self.untaggedEntrySortOrder = order;
     },
     setTagNew(value: string | null) {
       self.tagNew = value;
@@ -334,9 +334,9 @@ export interface appState {
   selectedTheme: string;
   tagSortOrder: string;
   entryNew: string | null;
-  entrySortOrder: string;
+  tagTextEntryThroughModelSortOrder: string;
   entrySearchMethod: entrySearchMethod;
-  untaggedEntrySortOrder: string;
+  entrySortOrder: string;
   tagNew: string | null;
   tagSearch: boolean;
   mostRecentCopyType: string | null;
@@ -349,9 +349,9 @@ const defaultState: appState = {
   selectedTheme: 'darkTheme',
   tagSortOrder: 'order',
   entryNew: null,
-  entrySortOrder: 'order',
+  tagTextEntryThroughModelSortOrder: 'order',
   entrySearchMethod: entrySearchMethod.currentTagOnly,
-  untaggedEntrySortOrder: 'date_updated',
+  entrySortOrder: 'date_updated',
   tagNew: null,
   tagSearch: false,
   mostRecentCopyType: null,
