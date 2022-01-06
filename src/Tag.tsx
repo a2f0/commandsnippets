@@ -1,5 +1,6 @@
 import * as Constants from './constants';
 import React, {useMemo, useRef, useState} from 'react';
+import {activeSearch, verticalPanel} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import API from './api';
 import {AxiosResponse} from 'axios';
@@ -12,14 +13,12 @@ import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
 import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@mui/material/styles';
-import {entrySearchMethod} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
 import {useTheme} from '@mui/styles';
-import {verticalPanel} from './lib/shared';
 
 const useStyles = makeStyles({
   entry: {
@@ -158,8 +157,9 @@ const Tag = ({
   const handleTagClick = () => {
     navigate(`/${user}/${tagObject.attributes.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
-    appConfig.setEntrySearchMethod(entrySearchMethod.currentTagOnly);
     appConfig.setTagsOrEntries(verticalPanel.tags);
+    appConfig.incrementClickCount();
+    appConfig.setActiveSearch(activeSearch.entries);
     appConfig.setEntrySearchString('');
     appConfig.setTagSelectedID(tagObject.id);
   };

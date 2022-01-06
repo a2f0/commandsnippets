@@ -1,4 +1,5 @@
 import * as Constants from './constants';
+import {getSelection, verticalPanel} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import API from './api';
@@ -19,7 +20,6 @@ import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
-import {verticalPanel} from './lib/shared';
 
 const useStyles = makeStyles({
   entry: {
@@ -363,14 +363,28 @@ const Entry = ({
     [mouse]
   );
 
-  const handleBodyClick = () => {
-    setShowCopyIcon(false);
-    setShowCheckIcon(true);
-    navigator.clipboard.writeText(textEntryObject.attributes.body);
-    appConfig.setMostRecentCopyType(textEntryObject.type);
-    appConfig.setMostRecentCopyID(textEntryObject.id);
+  const handleBodyClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const selection = getSelection();
+    const selectionString = selection?.toString();
     appConfig.setTagsOrEntries(verticalPanel.entries);
-    appConfig.setEntrySelectedID(textEntryObject.id);
+    if (selectionString === undefined || selectionString.length === 0) {
+      setShowCopyIcon(false);
+      setShowCheckIcon(true);
+      navigator.clipboard.writeText(textEntryObject.attributes.body);
+      appConfig.setMostRecentCopyType(textEntryObject.type);
+      appConfig.setMostRecentCopyID(textEntryObject.id);
+      appConfig.setTagsOrEntries(verticalPanel.entries);
+      appConfig.setEntrySelectedID(textEntryObject.id);
+    } else {
+      setShowCopyIcon(false);
+      setShowCheckIcon(true);
+      navigator.clipboard.writeText(selectionString);
+      appConfig.setMostRecentCopyType(textEntryObject.type);
+      appConfig.setMostRecentCopyID(textEntryObject.id);
+      appConfig.setTagsOrEntries(verticalPanel.entries);
+    }
   };
 
   return (

@@ -8,7 +8,7 @@ import {useTheme} from '@mui/styles';
 import {verticalPanel} from '../../lib/shared';
 
 export interface IProps {
-  handleClick: () => void;
+  handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   object: ITextEntryJsonApi;
 }
 

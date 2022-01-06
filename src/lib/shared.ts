@@ -49,6 +49,16 @@ export function needsScrollingIntoView(
   return false;
 }
 
+export function getSelection() {
+  let selection: Selection | null = null;
+  if (window.getSelection) {
+    selection = window.getSelection();
+  } else if (window.document.getSelection) {
+    selection = window.document.getSelection();
+  }
+  return selection;
+}
+
 export enum keyCode {
   Tab = 9,
   Enter = 13,
@@ -64,6 +74,11 @@ export enum entrySearchMethod {
 }
 
 export enum verticalPanel {
+  tags = 1,
+  entries = 2,
+}
+
+export enum activeSearch {
   tags = 1,
   entries = 2,
 }

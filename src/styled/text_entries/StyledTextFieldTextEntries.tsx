@@ -1,12 +1,12 @@
 import React, {useCallback, useEffect} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
-import {autorun} from 'mobx';
+import {activeSearch} from '../../lib/shared';
 import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
+import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
-import {verticalPanel} from '../../lib/shared';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -50,15 +50,11 @@ const StyledTextFieldTextEntries = ({
   const classes = useStyles();
   const inputRef = React.useRef<HTMLInputElement>();
 
-  useEffect(
-    () =>
-      autorun(() => {
-        if (appConfig.tagsOrEntries === verticalPanel.entries) {
-          inputRef.current?.focus();
-        }
-      }),
-    [appConfig.tagsOrEntries]
-  );
+  useEffect(() => {
+    if (appConfig.activeSearch === activeSearch.entries) {
+      inputRef.current?.focus();
+    }
+  }, [appConfig.clickCount]);
 
   const useVisibility = useCallback(() => {
     if (document.visibilityState === 'visible') {
@@ -94,4 +90,4 @@ const StyledTextFieldTextEntries = ({
   );
 };
 
-export default React.memo(StyledTextFieldTextEntries);
+export default React.memo(observer(StyledTextFieldTextEntries));

@@ -306,6 +306,19 @@ const EntryList = () => {
       setMouse(mouseData);
   };
 
+  const handleClick = () => {
+    const selection = getSelection();
+    const selectionString = selection?.toString();
+    appConfig.setTagsOrEntries(verticalPanel.entries);
+    if (selectionString === undefined || selectionString.length === 0) {
+      appConfig.incrementClickCount();
+    }
+  };
+
+  const onMouseDown = () => {
+    appConfig.setEntrySelectedID('');
+  };
+
   const [mouse, setMouse] = useState(initialMouse);
 
   const contextMenu = useMemo(
@@ -328,6 +341,8 @@ const EntryList = () => {
       id="tagsEntriesList"
       style={tagsEntriesListStyle}
       onContextMenu={handleContextClick}
+      onClick={handleClick}
+      onMouseDown={onMouseDown}
     >
       {appConfig.entryNew === 'textEntry-top' && (
         <EntryNew filterAndSortParent={filterAndSort} />

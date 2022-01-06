@@ -10,8 +10,8 @@ import {
 } from './models/TextEntryModel';
 import {IUserJsonApi, UserModel} from './models/UserModel';
 import {TagHelpers, TagModel} from './models/TagModel';
+import {activeSearch, entrySearchMethod, verticalPanel} from './lib/shared';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
-import {entrySearchMethod, verticalPanel} from './lib/shared';
 import {ITagJsonApi} from './models/TagModel';
 import {environment} from './api';
 
@@ -39,6 +39,8 @@ export const AppStateStoreModel = types
     showTagCounts: types.boolean,
   })
   .volatile<{
+    activeSearch: activeSearch;
+    clickCount: number;
     entrySelectedID: string;
     entrySearchString: string;
     entrySearchMethod: entrySearchMethod;
@@ -46,6 +48,8 @@ export const AppStateStoreModel = types
     tagSelectedID: string;
     tagsOrEntries: verticalPanel;
   }>(() => ({
+    activeSearch: activeSearch.tags,
+    clickCount: 0,
     entrySelectedID: '',
     entrySearchString: '',
     entrySearchMethod: entrySearchMethod.currentTagOnly,
@@ -251,6 +255,9 @@ export const AppStateStoreModel = types
         throw error;
       }
     }),
+    incrementClickCount() {
+      self.clickCount += 1;
+    },
     setLoggedInUser(handle: string | null) {
       self.loggedInUser = handle;
     },
@@ -272,6 +279,9 @@ export const AppStateStoreModel = types
     },
     removeTextEntry(id: string) {
       console.info('id: ' + id);
+    },
+    setActiveSearch(activeSearch: activeSearch) {
+      self.activeSearch = activeSearch;
     },
     setSelectedTheme(theme: string) {
       self.selectedTheme = theme;

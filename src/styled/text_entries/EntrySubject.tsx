@@ -14,6 +14,7 @@ const style = {
 
 const EntrySubject = ({object}: IProps) => {
   const appConfig = useAppContext();
+
   return (
     <Highlighter
       style={style}
