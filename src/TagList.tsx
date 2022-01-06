@@ -8,7 +8,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {keyCode, needsScrollingIntoView, verticalPanel} from './lib/shared';
+import {
+  activeSearch,
+  keyCode,
+  needsScrollingIntoView,
+  verticalPanel,
+} from './lib/shared';
 import {useLocation, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -241,6 +246,7 @@ const TagList = () => {
             }
           } else if (event.keyCode === keyCode.Enter) {
             appConfig.setTagsOrEntries(verticalPanel.entries);
+            appConfig.setActiveSearch(activeSearch.entries);
             navigate(`/${userRef.current}/${selected.attributes.name}`);
           }
         }

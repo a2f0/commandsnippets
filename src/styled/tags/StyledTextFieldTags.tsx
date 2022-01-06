@@ -1,9 +1,10 @@
 import React, {useCallback, useEffect} from 'react';
+import {activeSearch, keyCode} from '../../lib/shared';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
 import createStyles from '@mui/styles/createStyles';
-import {keyCode} from '../../lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
+import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
 import {verticalPanel} from '../../lib/shared';
@@ -61,16 +62,32 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   }, []);
 
   const keyListener = useCallback(event => {
-    const trappedKeyCodes = [keyCode.Tab];
+    const trappedKeyCodes = [
+      keyCode.Tab,
+      keyCode.LeftArrow,
+      keyCode.RightArrow,
+    ];
     if (event.keyCode === keyCode.Tab) {
       if (appConfig.tagsOrEntries === verticalPanel.tags) {
         appConfig.setTagsOrEntries(verticalPanel.entries);
+        appConfig.setActiveSearch(activeSearch.entries);
       } else {
         appConfig.setTagsOrEntries(verticalPanel.tags);
+        appConfig.setActiveSearch(activeSearch.tags);
         inputRef.current?.focus();
       }
     } else if (event.keyCode === keyCode.Escape) {
       inputRef.current?.focus();
+    } else if (event.keyCode === keyCode.LeftArrow) {
+      if (appConfig.tagsOrEntries === verticalPanel.entries) {
+        appConfig.setTagsOrEntries(verticalPanel.tags);
+        appConfig.setActiveSearch(activeSearch.tags);
+      }
+    } else if (event.keyCode === keyCode.RightArrow) {
+      if (appConfig.tagsOrEntries === verticalPanel.tags) {
+        appConfig.setTagsOrEntries(verticalPanel.entries);
+        appConfig.setActiveSearch(activeSearch.entries);
+      }
     }
     if (trappedKeyCodes.includes(event.keyCode)) {
       event.preventDefault();
@@ -89,6 +106,12 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
       document.removeEventListener('keydown', keyListener, false);
     };
   }, []);
+
+  useEffect(() => {
+    if (appConfig.activeSearch === activeSearch.tags) {
+      inputRef.current?.focus();
+    }
+  }, [appConfig.activeSearch]);
 
   const setTextInputRef = (element: HTMLInputElement) => {
     inputRef.current = element;
@@ -111,4 +134,4 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   );
 };
 
-export default React.memo(StyledTextFieldTags);
+export default React.memo(observer(StyledTextFieldTags));

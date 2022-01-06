@@ -54,7 +54,7 @@ const StyledTextFieldTextEntries = ({
     if (appConfig.activeSearch === activeSearch.entries) {
       inputRef.current?.focus();
     }
-  }, [appConfig.clickCount]);
+  }, [appConfig.clickCount, appConfig.activeSearch]);
 
   const useVisibility = useCallback(() => {
     if (document.visibilityState === 'visible') {
