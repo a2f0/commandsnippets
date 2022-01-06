@@ -23,6 +23,11 @@ const InputEntrySubject = ({
     handleChangeParent(event.target.value);
   };
 
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   return (
     <TextField
       sx={{
@@ -51,6 +56,7 @@ const InputEntrySubject = ({
       placeholder={placeholder}
       value={value}
       onChange={handleChange}
+      onClick={handleClick}
     />
   );
 };

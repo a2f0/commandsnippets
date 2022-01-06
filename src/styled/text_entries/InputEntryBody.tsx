@@ -54,8 +54,14 @@ const InputEntryBody = ({
     }
   };
 
+  const handleClick = (event: React.MouseEvent<HTMLTextAreaElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   return (
     <StyledTextareaAutosize
+      onClick={handleClick}
       theme={theme}
       spellCheck="false"
       placeholder={placeholder}
