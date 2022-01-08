@@ -3,7 +3,7 @@ import React from 'react';
 
 interface IProps {
   children?: React.ReactNode;
-  onClick: () => void;
+  onClick: (event: React.MouseEvent<HTMLLIElement>) => void;
 }
 
 const StyledMenuItem = ({children, onClick}: IProps) => {

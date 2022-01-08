@@ -1,3 +1,4 @@
+import * as Constants from '../constants';
 import API from '../api';
 import {CancelTokenSource} from 'axios';
 import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
@@ -424,4 +425,20 @@ export function fetchPage({
     })
     .catch(() => {});
   return f;
+}
+
+export function needsScrollingIntoView(element: HTMLButtonElement) {
+  const rect = element.getBoundingClientRect();
+  if (rect !== undefined) {
+    // Then it exists
+    const bottomInView =
+      rect.bottom <=
+      (window.innerHeight - Constants.footerHeight ||
+        document.documentElement.clientHeight - Constants.footerHeight);
+    if (bottomInView === false) {
+      // Then it needs to be scrolled
+      return true;
+    }
+  }
+  return false;
 }

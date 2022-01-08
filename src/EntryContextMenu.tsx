@@ -128,14 +128,18 @@ const EntryContextMenu = ({
         Copy
       </StyledMenuItem>
       <StyledMenuItem
-        onClick={() => {
+        onClick={(event: React.MouseEvent<HTMLLIElement>) => {
+          event.preventDefault();
+          event.stopPropagation();
           handleBeginEdit();
         }}
       >
         Edit
       </StyledMenuItem>
       <StyledMenuItem
-        onClick={() => {
+        onClick={(event: React.MouseEvent<HTMLLIElement>) => {
+          event.preventDefault();
+          event.stopPropagation();
           handleNewEntry();
         }}
       >

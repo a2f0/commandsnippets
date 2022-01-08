@@ -1,5 +1,5 @@
 import * as Constants from './constants';
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
@@ -8,6 +8,7 @@ import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
 import makeStyles from '@mui/styles/makeStyles';
+import {needsScrollingIntoView} from './lib/text_entries';
 
 export const useStyles = makeStyles({
   entry: {
@@ -21,17 +22,6 @@ export const useStyles = makeStyles({
     padding: 2,
     border: '1px solid red',
     width: '100%',
-  },
-  entryBody: {
-    display: 'inline-block',
-    fontSize: 14,
-    margin: 'auto',
-    fontFamily: 'monospace',
-    whiteSpace: 'pre-wrap',
-    wordWrap: 'break-word',
-    padding: 2,
-    border: '1px solid red',
-    minWidth: '300px',
   },
   dragIndicator: {
     display: 'inline-block',
@@ -50,10 +40,22 @@ const EntryEdit = ({
   handleSaveParent,
   handleCancelEditParent,
 }: IEntryEdit) => {
+  const saveRef = useRef<HTMLButtonElement>();
   const [subject, setSubject] = useState<string>(object.attributes.subject);
   const [body, setBody] = useState<string>(object.attributes.body);
 
   const classes = useStyles();
+
+  useEffect(() => {
+    if (saveRef.current !== undefined) {
+      if (needsScrollingIntoView(saveRef.current)) {
+        saveRef.current?.scrollIntoView({
+          behavior: 'auto',
+          block: 'end',
+        });
+      }
+    }
+  }, [saveRef.current]);
 
   const handleSave = () => {
     const payload = {
@@ -90,6 +92,10 @@ const EntryEdit = ({
     setSubject(value);
   };
 
+  const setSaveRef = (element: HTMLButtonElement) => {
+    saveRef.current = element;
+  };
+
   return (
     <>
       <div>
@@ -111,7 +117,11 @@ const EntryEdit = ({
           </div>
           <Button
             color="secondary"
-            sx={{marginRight: '2px'}}
+            sx={{
+              marginRight: '2px',
+              scrollMarginBottom: '10px',
+              marginBottom: '10px',
+            }}
             size="small"
             variant="outlined"
             onClick={() => {
@@ -121,11 +131,16 @@ const EntryEdit = ({
             Save
           </Button>
           <Button
+            ref={setSaveRef}
             color="secondary"
             size="small"
             variant="outlined"
             onClick={() => {
               handleCancel();
+            }}
+            sx={{
+              scrollMarginBottom: '10px',
+              marginBottom: '10px',
             }}
           >
             Cancel
