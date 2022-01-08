@@ -1,5 +1,5 @@
 import * as Constants from '../../constants';
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/styles';
@@ -15,6 +15,7 @@ const InputEntrySubject = ({
   valueParent,
   placeholder,
 }: IProps) => {
+  const inputRef = useRef<HTMLInputElement>();
   const [value, setValue] = useState<string>(valueParent);
   const theme: Theme = useTheme();
 
@@ -26,6 +27,14 @@ const InputEntrySubject = ({
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
+  };
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [inputRef.current]);
+
+  const setTextInputRef = (element: HTMLInputElement) => {
+    inputRef.current = element;
   };
 
   return (
@@ -57,6 +66,7 @@ const InputEntrySubject = ({
       value={value}
       onChange={handleChange}
       onClick={handleClick}
+      inputRef={setTextInputRef}
     />
   );
 };
