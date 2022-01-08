@@ -13,6 +13,7 @@ import PublicHomePage from './PublicHomePage';
 import ReactDOM from 'react-dom';
 import RootContainer from './RootContainer';
 import {Theme} from '@mui/material/styles';
+import ThemedGlobalStyle from './styled/layout/ThemedGlobalStyles';
 import {observer} from 'mobx-react';
 import packageJson from '../package.json';
 import {store} from './AppStateStore';
@@ -41,6 +42,7 @@ const AppRouter = React.memo(
           <Router>
             <AppContextProvider>
               <CssBaseline />
+              <ThemedGlobalStyle />
               <DndProvider backend={HTML5Backend}>
                 <RootContainer>
                   <Routes>
