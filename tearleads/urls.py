@@ -1,6 +1,7 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include
 from django.contrib import admin
+from django.urls import re_path
 
 from tearleads.authentication.api import (
     CustomInvalidateAuthToken,
@@ -14,12 +15,12 @@ from tearleads.users.api import User
 from .routers import router
 
 urlpatterns = [
-    url(r"^admin/", admin.site.urls),
-    url(r"^api-token-auth/", CustomObtainAuthToken.as_view()),
-    url(r"^api-token-deauth/", CustomInvalidateAuthToken.as_view()),
-    url(r"^healthcheck/", HealthCheckAPIView.as_view(), name="healthcheck"),
-    url(r"^api/v1/user/", User.as_view()),
-    url(r"^api/v1/github-login/", GithubLogin.as_view()),
-    url(r"^api/v1/google-login/", GoogleLogin.as_view()),
-    url(r"^api/v1/", include(router.urls)),
+    re_path(r"^admin/", admin.site.urls),
+    re_path(r"^api-token-auth/", CustomObtainAuthToken.as_view()),
+    re_path(r"^api-token-deauth/", CustomInvalidateAuthToken.as_view()),
+    re_path(r"^healthcheck/", HealthCheckAPIView.as_view(), name="healthcheck"),
+    re_path(r"^api/v1/user/", User.as_view()),
+    re_path(r"^api/v1/github-login/", GithubLogin.as_view()),
+    re_path(r"^api/v1/google-login/", GoogleLogin.as_view()),
+    re_path(r"^api/v1/", include(router.urls)),
 ]
