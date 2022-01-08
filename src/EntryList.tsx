@@ -9,10 +9,10 @@ import React, {
   useState,
 } from 'react';
 import {
+  appMode,
   entrySearchMethod,
   keyCode,
   needsScrollingIntoView,
-  verticalPanel,
 } from './lib/shared';
 import {useLocation, useParams} from 'react-router-dom';
 import {CancelTokenSource} from 'axios';
@@ -197,7 +197,7 @@ const EntryList = () => {
       ];
       if (
         trappedKeyCodes.includes(event.keyCode) &&
-        appConfig.tagsOrEntries === verticalPanel.entries
+        appConfig.appMode === appMode.entriesList
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -205,10 +205,7 @@ const EntryList = () => {
       const selected = entriesRef.current.find(
         c => c.id === appConfig.entrySelectedID
       );
-      if (
-        selected !== undefined &&
-        appConfig.tagsOrEntries === verticalPanel.entries
-      ) {
+      if (selected !== undefined && appConfig.appMode === appMode.entriesList) {
         const selectedIndex = entriesRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
           if (event.keyCode === keyCode.UpArrow) {
@@ -309,7 +306,7 @@ const EntryList = () => {
   const handleClick = () => {
     const selection = getSelection();
     const selectionString = selection?.toString();
-    appConfig.setTagsOrEntries(verticalPanel.entries);
+    appConfig.setAppMode(appMode.entriesList);
     if (selectionString === undefined || selectionString.length === 0) {
       appConfig.incrementClickCount();
     }

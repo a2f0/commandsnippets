@@ -1,5 +1,5 @@
 import * as Constants from './constants';
-import {getSelection, verticalPanel} from './lib/shared';
+import {appMode, getSelection} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import API from './api';
@@ -368,14 +368,14 @@ const Entry = ({
     event.stopPropagation();
     const selection = getSelection();
     const selectionString = selection?.toString();
-    appConfig.setTagsOrEntries(verticalPanel.entries);
+    appConfig.setAppMode(appMode.entriesList);
     if (selectionString === undefined || selectionString.length === 0) {
       setShowCopyIcon(false);
       setShowCheckIcon(true);
       navigator.clipboard.writeText(textEntryObject.attributes.body);
       appConfig.setMostRecentCopyType(textEntryObject.type);
       appConfig.setMostRecentCopyID(textEntryObject.id);
-      appConfig.setTagsOrEntries(verticalPanel.entries);
+      appConfig.setAppMode(appMode.entriesList);
       appConfig.setEntrySelectedID(textEntryObject.id);
     } else {
       setShowCopyIcon(false);
@@ -383,7 +383,7 @@ const Entry = ({
       navigator.clipboard.writeText(selectionString);
       appConfig.setMostRecentCopyType(textEntryObject.type);
       appConfig.setMostRecentCopyID(textEntryObject.id);
-      appConfig.setTagsOrEntries(verticalPanel.entries);
+      appConfig.setAppMode(appMode.entriesList);
     }
   };
 

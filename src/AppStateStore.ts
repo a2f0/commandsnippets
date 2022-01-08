@@ -10,7 +10,7 @@ import {
 } from './models/TextEntryModel';
 import {IUserJsonApi, UserModel} from './models/UserModel';
 import {TagHelpers, TagModel} from './models/TagModel';
-import {activeSearch, entrySearchMethod, verticalPanel} from './lib/shared';
+import {activeSearch, appMode, entrySearchMethod} from './lib/shared';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 import {ITagJsonApi} from './models/TagModel';
 import {environment} from './api';
@@ -46,7 +46,7 @@ export const AppStateStoreModel = types
     entrySearchMethod: entrySearchMethod;
     tagSearchString: string;
     tagSelectedID: string;
-    tagsOrEntries: verticalPanel;
+    appMode: appMode;
   }>(() => ({
     activeSearch: activeSearch.tags,
     clickCount: 0,
@@ -55,7 +55,7 @@ export const AppStateStoreModel = types
     entrySearchMethod: entrySearchMethod.currentTagOnly,
     tagSearchString: '',
     tagSelectedID: '',
-    tagsOrEntries: verticalPanel.tags,
+    appMode: appMode.tagsList,
   }))
   .actions(self => ({
     updateOrCreateTextEntry(object: ITextEntryJsonApi) {
@@ -307,8 +307,8 @@ export const AppStateStoreModel = types
     setTagNew(value: string | null) {
       self.tagNew = value;
     },
-    setTagsOrEntries(value: verticalPanel) {
-      self.tagsOrEntries = value;
+    setAppMode(value: appMode) {
+      self.appMode = value;
     },
     setTagSearch(value: boolean) {
       self.tagSearch = value;

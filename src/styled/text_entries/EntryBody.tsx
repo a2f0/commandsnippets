@@ -2,10 +2,10 @@ import Highlighter from 'react-highlight-words';
 import {ITextEntryJsonApi} from '../../models/TextEntryModel';
 import React from 'react';
 import {Theme} from '@mui/material/styles';
+import {appMode} from '../../lib/shared';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
-import {verticalPanel} from '../../lib/shared';
 
 export interface IProps {
   handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -31,7 +31,7 @@ const EntryBody = ({object, handleClick}: IProps) => {
 
   if (
     object.id === appConfig.entrySelectedID &&
-    appConfig.tagsOrEntries === verticalPanel.entries
+    appConfig.appMode === appMode.entriesList
   ) {
     styleOuterDiv.backgroundColor = theme.selected.background;
     style.color = theme.selected.foreground;

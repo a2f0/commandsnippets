@@ -75,9 +75,9 @@ export enum entrySearchMethod {
   untaggedEntryList = 3,
 }
 
-export enum verticalPanel {
-  tags = 1,
-  entries = 2,
+export enum appMode {
+  tagsList = 1,
+  entriesList = 2,
 }
 
 export enum activeSearch {

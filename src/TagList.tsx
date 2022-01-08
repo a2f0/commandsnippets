@@ -10,9 +10,9 @@ import React, {
 } from 'react';
 import {
   activeSearch,
+  appMode,
   keyCode,
   needsScrollingIntoView,
-  verticalPanel,
 } from './lib/shared';
 import {useLocation, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
@@ -204,7 +204,7 @@ const TagList = () => {
       ];
       if (
         trappedKeyCodes.includes(event.keyCode) &&
-        appConfig.tagsOrEntries === verticalPanel.tags
+        appConfig.appMode === appMode.tagsList
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -212,10 +212,7 @@ const TagList = () => {
       const selected = tagsRef.current.find(
         c => c.id === appConfig.tagSelectedID
       );
-      if (
-        selected !== undefined &&
-        appConfig.tagsOrEntries === verticalPanel.tags
-      ) {
+      if (selected !== undefined && appConfig.appMode === appMode.tagsList) {
         const selectedIndex = tagsRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
           if (event.keyCode === keyCode.UpArrow) {
@@ -245,7 +242,7 @@ const TagList = () => {
               }
             }
           } else if (event.keyCode === keyCode.Enter) {
-            appConfig.setTagsOrEntries(verticalPanel.entries);
+            appConfig.setAppMode(appMode.entriesList);
             appConfig.setActiveSearch(activeSearch.entries);
             navigate(`/${userRef.current}/${selected.attributes.name}`);
           }

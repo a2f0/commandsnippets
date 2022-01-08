@@ -1,6 +1,6 @@
 import * as Constants from './constants';
 import React, {useMemo, useRef, useState} from 'react';
-import {activeSearch, verticalPanel} from './lib/shared';
+import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import API from './api';
 import {AxiosResponse} from 'axios';
@@ -147,7 +147,7 @@ const Tag = ({
 
   if (
     (object.id === appConfig.tagSelectedID &&
-      appConfig.tagsOrEntries === verticalPanel.tags) ||
+      appConfig.appMode === appMode.tagsList) ||
     isActiveHover
   ) {
     tagStyle.backgroundColor = theme.selected.background;
@@ -157,7 +157,7 @@ const Tag = ({
   const handleTagClick = () => {
     navigate(`/${user}/${tagObject.attributes.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
-    appConfig.setTagsOrEntries(verticalPanel.tags);
+    appConfig.setAppMode(appMode.tagsList);
     appConfig.incrementClickCount();
     appConfig.setActiveSearch(activeSearch.entries);
     appConfig.setEntrySearchString('');

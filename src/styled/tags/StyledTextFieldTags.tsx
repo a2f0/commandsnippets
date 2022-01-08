@@ -2,12 +2,12 @@ import React, {useCallback, useEffect} from 'react';
 import {activeSearch, keyCode} from '../../lib/shared';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
+import {appMode} from '../../lib/shared';
 import createStyles from '@mui/styles/createStyles';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
-import {verticalPanel} from '../../lib/shared';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -68,24 +68,24 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
       keyCode.RightArrow,
     ];
     if (event.keyCode === keyCode.Tab) {
-      if (appConfig.tagsOrEntries === verticalPanel.tags) {
-        appConfig.setTagsOrEntries(verticalPanel.entries);
+      if (appConfig.appMode === appMode.tagsList) {
+        appConfig.setAppMode(appMode.entriesList);
         appConfig.setActiveSearch(activeSearch.entries);
       } else {
-        appConfig.setTagsOrEntries(verticalPanel.tags);
+        appConfig.setAppMode(appMode.tagsList);
         appConfig.setActiveSearch(activeSearch.tags);
         inputRef.current?.focus();
       }
     } else if (event.keyCode === keyCode.Escape) {
       inputRef.current?.focus();
     } else if (event.keyCode === keyCode.LeftArrow) {
-      if (appConfig.tagsOrEntries === verticalPanel.entries) {
-        appConfig.setTagsOrEntries(verticalPanel.tags);
+      if (appConfig.appMode === appMode.entriesList) {
+        appConfig.setAppMode(appMode.tagsList);
         appConfig.setActiveSearch(activeSearch.tags);
       }
     } else if (event.keyCode === keyCode.RightArrow) {
-      if (appConfig.tagsOrEntries === verticalPanel.tags) {
-        appConfig.setTagsOrEntries(verticalPanel.entries);
+      if (appConfig.appMode === appMode.tagsList) {
+        appConfig.setAppMode(appMode.entriesList);
         appConfig.setActiveSearch(activeSearch.entries);
       }
     }
