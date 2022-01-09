@@ -1,9 +1,8 @@
-const tagsResponse = {
+import {ITagJsonApiResponse} from '../../../src/lib/tags';
+
+const tagsResponse: ITagJsonApiResponse = {
   links: {
-    first: 'http://localhost:9001/api/v1/tags?page%5Bnumber%5D=1&sort=name',
-    last: 'http://localhost:9001/api/v1/tags?page%5Bnumber%5D=1&sort=name',
     next: null,
-    prev: null,
   },
   data: [
     {
@@ -59,13 +58,6 @@ const tagsResponse = {
       },
     },
   ],
-  meta: {
-    pagination: {
-      page: 1,
-      pages: 1,
-      count: 2,
-    },
-  },
 };
 
 export default tagsResponse;

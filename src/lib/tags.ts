@@ -3,12 +3,12 @@ import {ITagJsonApi} from '../models/TagModel';
 import {IUserJsonApi} from '../models/UserModel';
 import {store} from '../AppStateStore';
 
-interface ITagJsonApiResponse {
+export interface ITagJsonApiResponse {
   data: ITagJsonApi[];
   links: {
-    next: string;
+    next: string | null;
   };
-  included: Array<IUserJsonApi>;
+  included?: Array<IUserJsonApi>;
 }
 
 export interface ITagJsonApiResponseSingle {
@@ -221,9 +221,11 @@ export function fetch(
       params: params,
     }).then(response => {
       entries = entries.concat(response.data.data);
-      for (let i = 0; i < response.data.included?.length; i++) {
-        if (!entries.includes(response.data.included[i])) {
-          entries.push(response.data.included[i]);
+      if (response.data.included) {
+        for (let i = 0; i < response.data.included.length; i++) {
+          if (!entries.includes(response.data.included[i])) {
+            entries.push(response.data.included[i]);
+          }
         }
       }
       if (response.data.links.next === null) {
