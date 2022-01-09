@@ -121,6 +121,7 @@ const EntryContextMenu = ({
       }
     >
       <StyledMenuItem
+        id={`tags-entries-context-menu-${id}-copy`}
         onClick={() => {
           handleCopy();
         }}
@@ -128,6 +129,7 @@ const EntryContextMenu = ({
         Copy
       </StyledMenuItem>
       <StyledMenuItem
+        id={`tags-entries-context-menu-${id}-edit`}
         onClick={(event: React.MouseEvent<HTMLLIElement>) => {
           event.preventDefault();
           event.stopPropagation();
@@ -137,6 +139,7 @@ const EntryContextMenu = ({
         Edit
       </StyledMenuItem>
       <StyledMenuItem
+        id={`tags-entries-context-menu-${id}-new-entry`}
         onClick={(event: React.MouseEvent<HTMLLIElement>) => {
           event.preventDefault();
           event.stopPropagation();
@@ -146,6 +149,7 @@ const EntryContextMenu = ({
         New Entry
       </StyledMenuItem>
       <StyledMenuItem
+        id={`tags-entries-context-menu-${id}-untag`}
         onClick={() => {
           handleRemoveFromList();
         }}

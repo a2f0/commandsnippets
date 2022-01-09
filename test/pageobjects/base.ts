@@ -1,4 +1,18 @@
 export default class Base {
+  // menu
+  get tagsMenu() {
+    return $('#tags-menu');
+  }
+  get tagsMenuButton() {
+    return $('#tags-menu-button');
+  }
+  get tagsMenuSortDateCreatedAscending() {
+    return $('#tags-menu-sort-date-created-ascending');
+  }
+  get tagsMenuSortDateCreatedDescending() {
+    return $('#tags-menu-sort-date-created-descending');
+  }
+
   // tags
   get tagList() {
     return $('#tagList');
@@ -11,6 +25,9 @@ export default class Base {
   }
   get tag1() {
     return $('#tag-1');
+  }
+  get tag2() {
+    return $('#tag-2');
   }
 
   // tagsEntries

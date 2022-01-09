@@ -121,9 +121,24 @@ const TagContextMenu = ({
             : undefined
         }
       >
-        <StyledMenuItem onClick={handleClose}>New Tag</StyledMenuItem>
-        <StyledMenuItem onClick={handleBeginEdit}>Edit Tag</StyledMenuItem>
-        <StyledMenuItem onClick={handleDelete}>Delete Tag</StyledMenuItem>
+        <StyledMenuItem
+          id={`tag-context-menu-${id}-new-tag`}
+          onClick={handleClose}
+        >
+          New Tag
+        </StyledMenuItem>
+        <StyledMenuItem
+          id={`tag-context-menu-${id}-edit-tag`}
+          onClick={handleBeginEdit}
+        >
+          Edit Tag
+        </StyledMenuItem>
+        <StyledMenuItem
+          id={`tag-context-menu-${id}-delete-tag`}
+          onClick={handleDelete}
+        >
+          Delete Tag
+        </StyledMenuItem>
       </StyledMenu>
       <Dialog
         open={dialogOpen}

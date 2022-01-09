@@ -94,6 +94,7 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
       }
     >
       <StyledMenuItem
+        id="entry-list-context-menu-new-entry"
         onClick={() => {
           handleNewEntry();
         }}

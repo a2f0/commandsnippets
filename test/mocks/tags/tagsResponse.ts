@@ -15,6 +15,27 @@ const tagsResponse = {
         date_updated: '2020-05-07T18:20:00',
         date_last_used: '2020-05-07T18:20:00',
         entry_count: 2,
+        order: 1,
+        is_deleted: false,
+      },
+      relationships: {
+        user: {
+          data: {
+            type: 'User',
+            id: '1',
+          },
+        },
+      },
+    },
+    {
+      type: 'Tag',
+      id: '2',
+      attributes: {
+        name: 'test-1',
+        date_created: '2021-05-07T18:20:00',
+        date_updated: '2021-05-07T18:20:00',
+        date_last_used: '2021-05-07T18:20:00',
+        entry_count: 0,
         order: 2,
         is_deleted: false,
       },
@@ -42,7 +63,7 @@ const tagsResponse = {
     pagination: {
       page: 1,
       pages: 1,
-      count: 1,
+      count: 2,
     },
   },
 };

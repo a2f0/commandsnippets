@@ -23,8 +23,6 @@ import {entrySearchMethod} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-import {useNavigate} from 'react-router-dom';
-import {useParams} from 'react-router-dom';
 import withStyles from '@mui/styles/withStyles';
 
 export const MenuStyle = () => {
@@ -94,9 +92,7 @@ interface IMenuBarProps {
 
 const MenuBar = (props: IMenuBarProps) => {
   const classes = useStyles();
-  const navigate = useNavigate();
   const appConfig = useAppContext();
-  const {user} = useParams();
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -185,6 +181,7 @@ const MenuBar = (props: IMenuBarProps) => {
             color="secondary"
             size="small"
             aria-controls="file-menu"
+            id="file-menu-button"
             aria-haspopup="true"
             onClick={handleFileMenuClick}
             sx={{
@@ -209,6 +206,7 @@ const MenuBar = (props: IMenuBarProps) => {
           color="secondary"
           size="small"
           aria-controls="view-menu"
+          id="view-menu-button"
           aria-haspopup="true"
           onClick={handleViewMenuClick}
           sx={{
@@ -231,7 +229,8 @@ const MenuBar = (props: IMenuBarProps) => {
         <Button
           color="secondary"
           size="small"
-          aria-controls="view-menu"
+          aria-controls="tags-menu"
+          id="tags-menu-button"
           aria-haspopup="true"
           onClick={handleTagsMenuClick}
           sx={{
@@ -254,7 +253,8 @@ const MenuBar = (props: IMenuBarProps) => {
         <Button
           color="secondary"
           size="small"
-          aria-controls="view-menu"
+          aria-controls="entries-menu"
+          id="entries-menu-button"
           aria-haspopup="true"
           onClick={handleEntriesMenuClick}
           sx={{
@@ -286,11 +286,17 @@ const MenuBar = (props: IMenuBarProps) => {
         open={Boolean(fileMenuAnchorEl)}
         onClose={handleFileMenuClose}
       >
-        <StyledMenuItem onClick={handleCreateTag}>New Tag</StyledMenuItem>
+        <StyledMenuItem id="file-menu-new-tag" onClick={handleCreateTag}>
+          New Tag
+        </StyledMenuItem>
 
-        <StyledMenuItem onClick={handleCreateEntry}>New Entry</StyledMenuItem>
+        <StyledMenuItem id="file-menu-new-entry" onClick={handleCreateEntry}>
+          New Entry
+        </StyledMenuItem>
 
-        <StyledMenuItem onClick={handleLogout}>Logout</StyledMenuItem>
+        <StyledMenuItem id="file-menu-logout" onClick={handleLogout}>
+          Logout
+        </StyledMenuItem>
       </StyledMenu>
 
       <StyledMenu
@@ -300,6 +306,7 @@ const MenuBar = (props: IMenuBarProps) => {
         onClose={handleViewMenuClose}
       >
         <StyledMenuItem
+          id="view-menu-light-theme"
           onClick={() => {
             props.handleThemeSwitcher(lightTheme);
             handleViewMenuClose();
@@ -313,6 +320,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Light Mode
         </StyledMenuItem>
         <StyledMenuItem
+          id="view-menu-dark-theme"
           onClick={() => {
             props.handleThemeSwitcher(darkTheme);
             handleViewMenuClose();
@@ -327,6 +335,7 @@ const MenuBar = (props: IMenuBarProps) => {
         </StyledMenuItem>
         <Divider />
         <StyledMenuItem
+          id="view-menu-show-tag-counts"
           onClick={() => {
             appConfig.setShowTagCounts(!appConfig.showTagCounts);
             handleViewMenuClose();
@@ -345,6 +354,7 @@ const MenuBar = (props: IMenuBarProps) => {
         onClose={handleTagsMenuClose}
       >
         <StyledMenuItem
+          id="tags-menu-sort-order"
           onClick={() => {
             handleSetTagSortOrder('order');
             handleTagsMenuClose();
@@ -358,6 +368,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Sort by User-Defined Order
         </StyledMenuItem>
         <StyledMenuItem
+          id="tags-menu-sort-name-descending"
           onClick={() => {
             handleSetTagSortOrder('name');
             handleTagsMenuClose();
@@ -371,6 +382,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Sort by Tag Name <ArrowDownwardIcon fontSize="small" />
         </StyledMenuItem>
         <StyledMenuItem
+          id="tags-menu-sort-name-ascending"
           onClick={() => {
             handleSetTagSortOrder('-name');
             handleTagsMenuClose();
@@ -384,6 +396,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Sort by Tag Name <ArrowUpwardIcon fontSize="small" />
         </StyledMenuItem>
         <StyledMenuItem
+          id="tags-menu-sort-date-created-descending"
           onClick={() => {
             handleSetTagSortOrder('-date_created');
             handleTagsMenuClose();
@@ -397,6 +410,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Sort by Date Created <ArrowDownwardIcon fontSize="small" />
         </StyledMenuItem>
         <StyledMenuItem
+          id="tags-menu-sort-date-created-ascending"
           onClick={() => {
             handleSetTagSortOrder('date_created');
             handleTagsMenuClose();
@@ -410,6 +424,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Sort by Date Created <ArrowUpwardIcon fontSize="small" />
         </StyledMenuItem>
         <StyledMenuItem
+          id="tags-menu-sort-entry-count-descending"
           onClick={() => {
             handleSetTagSortOrder('-entry_count');
             handleTagsMenuClose();
@@ -424,6 +439,7 @@ const MenuBar = (props: IMenuBarProps) => {
           <ArrowDownwardIcon fontSize="small" />
         </StyledMenuItem>
         <StyledMenuItem
+          id="tags-menu-sort-entry-count-ascending"
           onClick={() => {
             handleSetTagSortOrder('entry_count');
             handleTagsMenuClose();
@@ -437,6 +453,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Sort by Number of Tagged Entries <ArrowUpwardIcon fontSize="small" />
         </StyledMenuItem>
         <StyledMenuItem
+          id="tags-menu-sort-date-last-used-descending"
           onClick={() => {
             handleSetTagSortOrder('-date_last_used');
             handleTagsMenuClose();
@@ -451,6 +468,7 @@ const MenuBar = (props: IMenuBarProps) => {
           <ArrowDownwardIcon fontSize="small" />
         </StyledMenuItem>
         <StyledMenuItem
+          id="tags-menu-sort-date-last-used-ascending"
           onClick={() => {
             handleSetTagSortOrder('date_last_used');
             handleTagsMenuClose();
@@ -472,6 +490,7 @@ const MenuBar = (props: IMenuBarProps) => {
         onClose={handleEntriesMenuClose}
       >
         <StyledMenuItem
+          id={`entries-menu-list-method-${entrySearchMethod.allEntries}`}
           onClick={() => {
             appConfig.setEntrySearchMethod(entrySearchMethod.allEntries);
             handleEntriesMenuClose();
@@ -485,6 +504,7 @@ const MenuBar = (props: IMenuBarProps) => {
           All entries
         </StyledMenuItem>
         <StyledMenuItem
+          id={`entries-menu-list-method-${entrySearchMethod.currentTagOnly}`}
           onClick={() => {
             appConfig.setEntrySearchMethod(entrySearchMethod.currentTagOnly);
             handleEntriesMenuClose();
@@ -499,6 +519,7 @@ const MenuBar = (props: IMenuBarProps) => {
           Current tag
         </StyledMenuItem>
         <StyledMenuItem
+          id={`entries-menu-list-method-${entrySearchMethod.untaggedEntryList}`}
           onClick={() => {
             appConfig.setEntrySearchMethod(entrySearchMethod.untaggedEntryList);
             handleEntriesMenuClose();
@@ -515,6 +536,7 @@ const MenuBar = (props: IMenuBarProps) => {
         <Divider />
         {appConfig.entrySearchMethod === entrySearchMethod.currentTagOnly && [
           <StyledMenuItem
+            id="tagged-entries-menu-sort-order"
             key="SortMenuItemOrder"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('order');
@@ -529,6 +551,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by User-Defined Order
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-subject-ascending"
             key="SortMenuItemTextEntrySubject"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('subject');
@@ -543,6 +566,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Subject <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-subject-descending"
             key="SortMenuItemTextEntrySubject-"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('-subject');
@@ -557,6 +581,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Subject <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-body-ascending"
             key="SortMenuItemTextEntryBody"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('body');
@@ -571,6 +596,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Body <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-body-descending"
             key="SortMenuItemTextEntryBody-"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('-body');
@@ -585,6 +611,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Body <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-date-created-ascending"
             key="SortMenuItemTextEntryDateCreated"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('date_created');
@@ -598,6 +625,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Date Created <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-date-created-descending"
             key="SortMenuItemTextEntryDateCreated-"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('-date_created');
@@ -611,6 +639,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Date Created <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-date-tagged-ascending"
             key="SortMenuItemTextEntryDateTagged"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('date_tagged');
@@ -624,6 +653,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-date-tagged-descending"
             key="SortMenuItemTextEntryDateTagged-"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('-date_tagged');
@@ -637,6 +667,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-date-tag-count-ascending"
             key="SortMenuItemTextEntryTagCount"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('tag_count');
@@ -652,6 +683,7 @@ const MenuBar = (props: IMenuBarProps) => {
             <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="tagged-entries-menu-sort-date-tag-count-descending"
             key="SortMenuItemTextEntryTagCount-"
             onClick={() => {
               appConfig.setTagTextEntryThroughModelSortOrder('-tag_count');
@@ -672,6 +704,7 @@ const MenuBar = (props: IMenuBarProps) => {
             entrySearchMethod.untaggedEntryList) && [
           <StyledMenuItem
             key="SortUntaggedEntryListDateCreated"
+            id="entries-menu-sort-date-tag-count-descending"
             onClick={() => {
               appConfig.setEntrySortOrder('date_created');
               handleEntriesMenuClose();
@@ -685,6 +718,7 @@ const MenuBar = (props: IMenuBarProps) => {
             Sort by Date Created <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
           <StyledMenuItem
+            id="entries-menu-sort-date-tag-count-descending"
             key="SortUntaggedEntryListDateCreated-"
             onClick={() => {
               appConfig.setEntrySortOrder('-date_created');
