@@ -23,6 +23,7 @@ Start the testing webpack server (on different port than normal development serv
 
 ```shell
 npm run server-test
-# in a different tab
+# in a different console tab
 npm run test
+npm run test-headless
 ```
