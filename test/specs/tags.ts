@@ -98,6 +98,18 @@ describe('Tag Behavior', () => {
     const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
     assert.strictEqual(tagsMenuVisibility.value, 'hidden');
 
+    // check the initial browser url
+    await browser.waitUntil(
+      async () => {
+        const url = await browser.getUrl();
+        return url === 'http://localhost:8081/test/test';
+      },
+      {
+        timeout: 5000,
+        timeoutMsg: 'expected browser url to be different',
+      }
+    );
+
     // initial state of order by order
     await browser.waitUntil(
       async () => {
