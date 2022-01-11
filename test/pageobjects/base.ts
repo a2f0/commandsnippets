@@ -29,6 +29,9 @@ export default class Base {
   get tag2() {
     return $('#tag-2');
   }
+  get tagSearch() {
+    return $('#tagSearch');
+  }
 
   // tagsEntries
   get tagsEntriesList() {

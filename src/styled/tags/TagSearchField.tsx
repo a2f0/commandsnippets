@@ -44,7 +44,7 @@ const TagSearchField = () => {
   return (
     <StyledTextFieldTags
       value={tagSearch}
-      id="tag-search"
+      id="tagSearch"
       onChange={handleChange}
     />
   );

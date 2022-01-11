@@ -1,11 +1,11 @@
-import {BasePage} from '../pageobjects/base';
+import {BasePage} from '../../pageobjects/base';
 import assert from 'assert';
-import tagsEntriesResponse from '../mocks/tags_entries/tagsEntriesResponse';
-import tagsEntriesResponseEmpty from '../mocks/tags_entries/tagsEntriesResponseEmpty';
-import tagsResponse from '../mocks/tags/tagsResponse';
-import tagsResponseEmpty from '../mocks/tags_entries/tagsEntriesResponseEmpty';
+import tagsEntriesResponse from '../../mocks/tags_entries/tagsEntriesResponse';
+import tagsEntriesResponseEmpty from '../../mocks/tags_entries/tagsEntriesResponseEmpty';
+import tagsResponse from '../../mocks/tags/tagsResponse';
+import tagsResponseEmpty from '../../mocks/tags_entries/tagsEntriesResponseEmpty';
 
-describe('Tag Behavior', () => {
+describe('Tag Main Menu Behavior', () => {
   it('should list tags', async () => {
     const mockTagsEntries = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries**',
@@ -177,10 +177,11 @@ describe('Tag Behavior', () => {
       },
       {
         timeout: 5000,
-        timeoutMsg: 'expected tag-2 to be first',
+        timeoutMsg: 'expected tag-1 to be first and tag-2 to be second',
       }
     );
 
+    // click the tags menu button and make sure the menu becomes visible
     tagsMenuButton.click({button: 'left'});
     await tagsMenu.waitUntil(
       async () => {
@@ -210,7 +211,7 @@ describe('Tag Behavior', () => {
       }
     );
 
-    // make sure the oldest date is on bottom
+    // make sure the oldest date is on bottom now
     await browser.waitUntil(
       async () => {
         tags = await BasePage.tags;
@@ -220,7 +221,7 @@ describe('Tag Behavior', () => {
       },
       {
         timeout: 5000,
-        timeoutMsg: 'expected tag-2 to be first',
+        timeoutMsg: 'expected tag-2 to be first and tag-1 to be second',
       }
     );
 
@@ -236,7 +237,7 @@ describe('Tag Behavior', () => {
       },
       {
         timeout: 120000,
-        timeoutMsg: 'expected tag-2 to be first',
+        timeoutMsg: 'expected tag 1 to still be selected',
       }
     );
 
