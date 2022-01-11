@@ -97,6 +97,17 @@ describe('Tag Behavior', () => {
     expect(tagsMenu).toBeDisplayed();
     const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
     assert.strictEqual(tagsMenuVisibility.value, 'hidden');
+    const tagList = await BasePage.tagList;
+    expect(tagList).toBeExisting();
+    expect(tagList).toBeDisplayed();
+
+    // Make sure the first tag is selected
+    expect(tags.length).toEqual(2);
+    let wrapper = await tags[0].$('div[id^="tagLabelWrapper-"]');
+    let wrapperID = await wrapper.getAttribute('id');
+    assert.strictEqual(wrapperID, 'tagLabelWrapper-1');
+    let backgroundColor = await wrapper.getCSSProperty('background-color');
+    assert.strictEqual(backgroundColor.value, 'rgba(72,72,72,1)');
 
     // check the initial browser url
     await browser.waitUntil(
@@ -212,5 +223,24 @@ describe('Tag Behavior', () => {
         timeoutMsg: 'expected tag-2 to be first',
       }
     );
+
+    // Make sure the tag is on the bottom but still selected
+    await browser.waitUntil(
+      async () => {
+        tags = await BasePage.tags;
+        wrapper = await tags[1].$('div[id^="tagLabelWrapper-"]');
+        wrapperID = await wrapper.getAttribute('id');
+        assert.strictEqual(wrapperID, 'tagLabelWrapper-1');
+        backgroundColor = await wrapper.getCSSProperty('background-color');
+        return backgroundColor.value === 'rgba(72,72,72,1)';
+      },
+      {
+        timeout: 120000,
+        timeoutMsg: 'expected tag-2 to be first',
+      }
+    );
+
+    const url = await browser.getUrl();
+    assert.strictEqual(url, 'http://localhost:8081/test/test');
   });
 });

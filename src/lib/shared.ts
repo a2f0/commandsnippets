@@ -3,6 +3,62 @@ import {ITagJsonApi} from '../models/TagModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {Theme} from '@mui/material/styles';
 
+export enum keyCode {
+  Tab = 9,
+  Enter = 13,
+  Escape = 27,
+  LeftArrow = 37,
+  UpArrow = 38,
+  RightArrow = 39,
+  DownArrow = 40,
+}
+
+export enum entrySearchMethod {
+  allEntries = 1,
+  currentTagOnly = 2,
+  untaggedEntryList = 3,
+}
+
+export enum appMode {
+  tagsList = 1,
+  entriesList = 2,
+}
+
+export enum activeSearch {
+  tags = 1,
+  entries = 2,
+}
+
+export interface appState {
+  loggedInUser: string | null;
+  selectedTheme: string;
+  tagSortOrder: string;
+  entryNew: string | null;
+  tagTextEntryThroughModelSortOrder: string;
+  entrySearchMethod: entrySearchMethod;
+  entrySortOrder: string;
+  tagNew: string | null;
+  tagSearch: boolean;
+  mostRecentCopyType: string | null;
+  mostRecentCopyID: string | null;
+  showTagCounts: boolean;
+}
+
+export const defaultState: appState = {
+  loggedInUser: null,
+  selectedTheme: 'darkTheme',
+  tagSortOrder: 'order',
+  entryNew: null,
+  tagTextEntryThroughModelSortOrder: 'order',
+  entrySearchMethod: entrySearchMethod.currentTagOnly,
+  entrySortOrder: 'date_updated',
+  tagNew: null,
+  tagSearch: false,
+  mostRecentCopyType: null,
+  mostRecentCopyID: null,
+  showTagCounts: false,
+};
+
 export function getMostRecentTimeStamp(
   array: Array<ITextEntryJsonApi> | Array<ITagJsonApi>
 ): string | null {
@@ -57,30 +113,4 @@ export function getSelection() {
     selection = window.document.getSelection();
   }
   return selection;
-}
-
-export enum keyCode {
-  Tab = 9,
-  Enter = 13,
-  Escape = 27,
-  LeftArrow = 37,
-  UpArrow = 38,
-  RightArrow = 39,
-  DownArrow = 40,
-}
-
-export enum entrySearchMethod {
-  allEntries = 1,
-  currentTagOnly = 2,
-  untaggedEntryList = 3,
-}
-
-export enum appMode {
-  tagsList = 1,
-  entriesList = 2,
-}
-
-export enum activeSearch {
-  tags = 1,
-  entries = 2,
 }

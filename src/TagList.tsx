@@ -17,9 +17,11 @@ import {
 import {useLocation, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
+import {Instance} from 'mobx-state-tree';
 import List from '@mui/material/List';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
+import {TagModel} from './models/TagModel';
 import TagNew from './TagNew';
 import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
@@ -58,6 +60,7 @@ const TagList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const {user} = useParams();
+  const {tag} = useParams();
   const theme = useTheme<Theme>();
 
   const [userName, _setUsername] = useState<string | undefined>(undefined);
@@ -109,9 +112,14 @@ const TagList = () => {
       appConfig.fetchTags(userName).then(() => {
         const array = TagHelpers.filterAndSort();
         if (array.length > 1) {
-          appConfig.setTagSelectedID(array[0].id);
-          const selected = appConfig.tagsArray.find(c => c.id === array[0].id);
+          let selected: Instance<typeof TagModel> | undefined = undefined;
+          if (tag) {
+            selected = appConfig.tagsArray.find(c => c.attributes.name === tag);
+          } else {
+            selected = appConfig.tagsArray.find(c => c.id === array[0].id);
+          }
           if (selected !== undefined) {
+            appConfig.setTagSelectedID(selected.id);
             navigate(`/${userName}/${selected.attributes.name}`);
           }
         }

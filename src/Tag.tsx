@@ -325,6 +325,7 @@ const Tag = ({
               </div>
             </div>
             <div
+              id={`tagLabelWrapper-${id}`}
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
               ref={drop}

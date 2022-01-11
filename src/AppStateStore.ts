@@ -10,7 +10,13 @@ import {
 } from './models/TextEntryModel';
 import {IUserJsonApi, UserModel} from './models/UserModel';
 import {TagHelpers, TagModel} from './models/TagModel';
-import {activeSearch, appMode, entrySearchMethod} from './lib/shared';
+import {
+  activeSearch,
+  appMode,
+  appState,
+  defaultState,
+  entrySearchMethod,
+} from './lib/shared';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 import {ITagJsonApi} from './models/TagModel';
 import {environment} from './api';
@@ -338,36 +344,6 @@ export const AppStateStoreModel = types
       self.showTagCounts = value;
     },
   }));
-
-export interface appState {
-  loggedInUser: string | null;
-  selectedTheme: string;
-  tagSortOrder: string;
-  entryNew: string | null;
-  tagTextEntryThroughModelSortOrder: string;
-  entrySearchMethod: entrySearchMethod;
-  entrySortOrder: string;
-  tagNew: string | null;
-  tagSearch: boolean;
-  mostRecentCopyType: string | null;
-  mostRecentCopyID: string | null;
-  showTagCounts: boolean;
-}
-
-const defaultState: appState = {
-  loggedInUser: null,
-  selectedTheme: 'darkTheme',
-  tagSortOrder: 'order',
-  entryNew: null,
-  tagTextEntryThroughModelSortOrder: 'order',
-  entrySearchMethod: entrySearchMethod.currentTagOnly,
-  entrySortOrder: 'date_updated',
-  tagNew: null,
-  tagSearch: false,
-  mostRecentCopyType: null,
-  mostRecentCopyID: null,
-  showTagCounts: false,
-};
 
 export const defaultStateStringified: string = JSON.stringify(defaultState);
 

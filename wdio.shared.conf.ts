@@ -1,6 +1,5 @@
 import {BasePage} from './test/pageobjects/base';
-import {appState} from './src/AppStateStore';
-import {entrySearchMethod} from './src/lib/shared';
+import {defaultState} from './src/lib/shared';
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -32,27 +31,17 @@ export const config: WebdriverIO.Config = {
     requireModule: ['@babel/register'],
   },
   before: async (capabilities, specs, browser) => {
-    const defaultState: appState = {
-      loggedInUser: 'test',
-      selectedTheme: 'darkTheme',
-      tagSortOrder: 'order',
-      entryNew: null,
-      tagTextEntryThroughModelSortOrder: 'order',
-      entrySearchMethod: entrySearchMethod.currentTagOnly,
-      entrySortOrder: 'date_updated',
-      tagNew: null,
-      tagSearch: false,
-      mostRecentCopyType: null,
-      mostRecentCopyID: null,
-      showTagCounts: false,
-    };
     await BasePage.open('');
+    const appState = {
+      ...defaultState,
+      loggedInUser: 'test',
+    };
     await browser.execute(
       function (this: typeof browser, key: string, value: string) {
         this.localStorage.setItem(key, value);
       },
       'mst-tearleads-test',
-      JSON.stringify(defaultState)
+      JSON.stringify(appState)
     );
   },
 };

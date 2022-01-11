@@ -15,10 +15,10 @@ export default class Base {
 
   // tags
   get tagList() {
-    return $('#tagList');
+    return browser.react$('TagList');
   }
   get tags() {
-    return $$('div[id^="tag-"]');
+    return browser.react$$('Tag');
   }
   get tagContextMenu1() {
     return $('#tagContextMenu-1');
