@@ -271,6 +271,7 @@ const TagList = () => {
   return (
     <>
       <List
+        id="tagList"
         sx={{
           paddingTop: theme => `${theme.main.paddingTop}`,
           paddingBottom: 0,
@@ -282,7 +283,7 @@ const TagList = () => {
         }}
         onContextMenu={handleContextClick}
       >
-        <div className={classes.ltr} id="tagList">
+        <div className={classes.ltr}>
           {appConfig.tagNew === 'top' && <TagNew handleNewParent={handleNew} />}
           {tags.map((object: ITagJsonApi, i) => {
             return (

@@ -20,6 +20,9 @@ export default class Base {
   get tags() {
     return browser.react$$('Tag');
   }
+  get tagListContextMenu() {
+    return browser.react$('TagListContextMenu');
+  }
   get tagContextMenu1() {
     return $('#tagContextMenu-1');
   }
