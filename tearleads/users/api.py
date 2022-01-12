@@ -17,9 +17,12 @@ class User(APIView):
         """
         ca = utility.CustomAuthentication()
         authenticated_info = ca.authenticate(request)
-        return Response(
-            UserSerializer(
-                instance=authenticated_info[0],
-            ).data,
-            status=status.HTTP_200_OK,
-        )
+        if authenticated_info is None:
+            return Response({}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response(
+                UserSerializer(
+                    instance=authenticated_info[0],
+                ).data,
+                status=status.HTTP_200_OK,
+            )

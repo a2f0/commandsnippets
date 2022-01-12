@@ -13,8 +13,6 @@ class TestUsersApi(BaseTestCase):
         super(TestUsersApi, cls).setUpTestData()
 
     def test_serialization_format(self):
-        tag = self.user1.tags.all().first()
-
         response = self.user1_api_client.get("/api/v1/user/")
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -29,3 +27,10 @@ class TestUsersApi(BaseTestCase):
             json_response["data"]["attributes"]["date_updated"],
             str(self.user1.date_updated.isoformat()),
         )
+
+    def test_unauthenticated_user(self):
+        self.auth_user_api_client = APIClient()
+        response = self.auth_user_api_client.get("/api/v1/user/", format="json")
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(len(json_response["errors"]), 0)
