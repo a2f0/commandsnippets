@@ -40,7 +40,7 @@ const TextEntrySearchField = () => {
   return (
     <StyledTextFieldTextEntries
       value={textEntrySearch}
-      id="text-entry-search"
+      id="textEntrySearch"
       onChange={handleChange}
     />
   );

@@ -32,7 +32,7 @@ describe('Tag Search Menu Behavior', () => {
       },
       {
         timeout: 30000,
-        timeoutMsg: 'expected tag tag list to be filtered by search.',
+        timeoutMsg: 'expected tag list to be filtered by search.',
       }
     );
     assert.strictEqual(
@@ -40,8 +40,7 @@ describe('Tag Search Menu Behavior', () => {
       tagsResponse.data[1].attributes.name
     );
 
-    // The escape key
-    browser.keys('\uE00C');
+    browser.keys('Escape');
     await browser.waitUntil(
       async () => {
         const tags = await BasePage.tags;
@@ -49,7 +48,8 @@ describe('Tag Search Menu Behavior', () => {
       },
       {
         timeout: 30000,
-        timeoutMsg: 'expected tag tag list to be filtered by search.',
+        timeoutMsg:
+          'expected tag list to be unfiltered by pressing escape key.',
       }
     );
     assert.strictEqual(await tagSearch.getValue(), '');

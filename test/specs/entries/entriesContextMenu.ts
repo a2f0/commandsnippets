@@ -1,7 +1,7 @@
-import {BasePage} from '../pageobjects/base';
+import {BasePage} from '../../pageobjects/base';
 import assert from 'assert';
-import tags from '../mocks/tags/tagsResponse';
-import textEntriesResponse from '../mocks/entries/textEntriesResponse';
+import tags from '../../mocks/tags/tagsResponse';
+import textEntriesResponse from '../../mocks/entries/textEntriesResponse';
 
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {
@@ -23,7 +23,6 @@ describe('TagsEntries Behavior', () => {
     const tagsEntries = await BasePage.tagsEntries;
     const tagsEntriesContextMenu1 = await BasePage.tagsEntriesContextMenu1;
     expect(tagsEntries.length).toEqual(1);
-
     let tagsEntriesContextVisibility =
       await tagsEntriesContextMenu1.getCSSProperty('visibility');
     assert.strictEqual(tagsEntriesContextVisibility.value, 'hidden');

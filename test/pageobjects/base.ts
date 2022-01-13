@@ -49,6 +49,9 @@ export default class Base {
   get tagsEntries1() {
     return $('#tagsEntries-1');
   }
+  get entrySearch() {
+    return $('#textEntrySearch');
+  }
   open(path: string) {
     return browser.url(`http://localhost:8081/${path}`);
   }
