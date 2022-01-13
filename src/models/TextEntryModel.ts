@@ -15,6 +15,7 @@ export interface ITextEntryJsonApiAttributes {
   subject: string;
   date_updated: string;
   date_created: string;
+  reused_count: number;
   is_deleted: boolean;
   tag_count: number;
 }
@@ -32,12 +33,17 @@ interface ITextEntryJsonApiRelationshipsUserData {
   type: string;
 }
 
+interface ITextEntryJsonApiRelationshipsUser {
+  data: ITextEntryJsonApiRelationshipsUserData;
+}
+
 const TextEntryAttributes = types
   .model('TextEntryAttributes', {
     body: types.string,
     subject: types.string,
     date_updated: types.string,
     date_created: types.string,
+    reused_count: types.number,
     is_deleted: types.boolean,
     tag_count: types.number,
   })

@@ -1,17 +1,24 @@
 import * as Constants from '../constants';
 import API from '../api';
 import {CancelTokenSource} from 'axios';
+import {ITagJsonApi} from '../models/TagModel';
 import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {IUserJsonApi} from '../models/UserModel';
 import {store} from '../AppStateStore';
 
-interface ITextEntryJsonApiResponse {
+export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
   links: {
-    next: string;
+    next: string | null;
   };
-  included: Array<ITagTextEntryThroughModelJsonApi>;
+  included: Array<
+    | ITagTextEntryThroughModelJsonApi
+    | ITextEntryJsonApi
+    | ITagJsonApi
+    | IUserJsonApi
+    | ITagJsonApi
+  >;
 }
 
 export interface ITextEntryJsonApiResponseSingle {
@@ -340,7 +347,10 @@ interface IFetchParams {
 
 export function fetch(
   entries: Array<
-    ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
+    | ITextEntryJsonApi
+    | ITagTextEntryThroughModelJsonApi
+    | IUserJsonApi
+    | ITagJsonApi
   >,
   user: string,
   tag: string | null,
@@ -368,7 +378,12 @@ export function fetch(
   }
 
   const f: Promise<
-    Array<ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi>
+    Array<
+      | ITextEntryJsonApi
+      | ITagTextEntryThroughModelJsonApi
+      | IUserJsonApi
+      | ITagJsonApi
+    >
   > = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
   }).then(response => {
@@ -394,7 +409,10 @@ export function fetchPage({
   source,
 }: IEntryFetchPage) {
   let entries: Array<
-    ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
+    | ITextEntryJsonApi
+    | ITagTextEntryThroughModelJsonApi
+    | IUserJsonApi
+    | ITagJsonApi
   > = [];
   const params: IFetchParams = {
     'page[number]': page,
@@ -409,7 +427,10 @@ export function fetchPage({
   }
 
   const f: Promise<void | Array<
-    ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi | IUserJsonApi
+    | ITextEntryJsonApi
+    | ITagTextEntryThroughModelJsonApi
+    | IUserJsonApi
+    | ITagJsonApi
   >> = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
     cancelToken: source.token,

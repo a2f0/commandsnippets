@@ -1,10 +1,7 @@
-const textEntriesResponse = {
+import {ITextEntryJsonApiResponse} from '../../../src/lib/text_entries';
+const textEntriesResponse: ITextEntryJsonApiResponse = {
   links: {
-    first:
-      'http://localhost:9001/api/v1/entries?include=text_entry_to_tag.tag%2Ctext_entry_to_tag.user%2Cuser&page%5Bnumber%5D=1&page%5Bsize%5D=1',
-    last: 'http://localhost:9001/api/v1/entries?include=text_entry_to_tag.tag%2Ctext_entry_to_tag.user%2Cuser&page%5Bnumber%5D=1&page%5Bsize%5D=1',
     next: null,
-    prev: null,
   },
   data: [
     {
@@ -26,17 +23,6 @@ const textEntriesResponse = {
             id: '1',
           },
         },
-        text_entry_to_tag: {
-          meta: {
-            count: 1,
-          },
-          data: [
-            {
-              type: 'TagTextEntryThroughModel',
-              id: '1',
-            },
-          ],
-        },
       },
     },
     {
@@ -57,17 +43,6 @@ const textEntriesResponse = {
             type: 'User',
             id: '1',
           },
-        },
-        text_entry_to_tag: {
-          meta: {
-            count: 1,
-          },
-          data: [
-            {
-              type: 'TagTextEntryThroughModel',
-              id: '2',
-            },
-          ],
         },
       },
     },
@@ -151,13 +126,6 @@ const textEntriesResponse = {
       },
     },
   ],
-  meta: {
-    pagination: {
-      page: 1,
-      pages: 1,
-      count: 1,
-    },
-  },
 };
 
 export default textEntriesResponse;
