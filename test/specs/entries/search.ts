@@ -30,7 +30,7 @@ describe('TagsEntries Behavior', () => {
       },
       {
         timeout: 30000,
-        timeoutMsg: 'expected entry search to be focussed after pressing tab.',
+        timeoutMsg: 'expected entry search to be focused after pressing tab.',
       }
     );
 
@@ -45,6 +45,41 @@ describe('TagsEntries Behavior', () => {
       }
     );
 
+    assert.strictEqual(await BasePage.tagSearch.isFocused(), true);
+
+    browser.keys('Tab');
+    await browser.waitUntil(
+      async () => {
+        return (await BasePage.entrySearch.isFocused()) === true;
+      },
+      {
+        timeout: 30000,
+        timeoutMsg: 'expected entry search to be focused after pressing tab.',
+      }
+    );
+
+    expect(await BasePage.tagsEntries.length).toEqual(2);
+    browser.keys(textEntriesResponse.data[0].attributes.subject);
+    await browser.waitUntil(
+      async () => {
+        return (await BasePage.tagsEntries.length) === 1;
+      },
+      {
+        timeout: 30000,
+        timeoutMsg: 'expected entries to be filtered after search.',
+      }
+    );
+
+    browser.keys('Escape');
+    await browser.waitUntil(
+      async () => {
+        return (await BasePage.tagsEntries.length) === 2;
+      },
+      {
+        timeout: 30000,
+        timeoutMsg: 'expected entries to be unfiltered after pressing escape.',
+      }
+    );
     assert.strictEqual(await BasePage.tagSearch.isFocused(), true);
   });
 });

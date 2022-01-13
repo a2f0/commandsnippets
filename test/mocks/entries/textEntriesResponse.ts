@@ -11,8 +11,8 @@ const textEntriesResponse = {
       type: 'TextEntry',
       id: '1',
       attributes: {
-        body: 'aws rds describe-pending-maintenance-actions',
-        subject: 'show pendings aws maintenance actions',
+        body: 'entry-1-body',
+        subject: 'entry-1-subject',
         date_updated: '2019-03-17T18:20:00',
         date_created: '2019-03-17T18:20:00',
         reused_count: 0,
@@ -33,7 +33,39 @@ const textEntriesResponse = {
           data: [
             {
               type: 'TagTextEntryThroughModel',
-              id: '11',
+              id: '1',
+            },
+          ],
+        },
+      },
+    },
+    {
+      type: 'TextEntry',
+      id: '2',
+      attributes: {
+        body: 'entry-2-body',
+        subject: 'entry-2-subject',
+        date_updated: '2021-03-17T18:20:00',
+        date_created: '2021-03-17T18:20:00',
+        reused_count: 0,
+        is_deleted: false,
+        tag_count: 1,
+      },
+      relationships: {
+        user: {
+          data: {
+            type: 'User',
+            id: '1',
+          },
+        },
+        text_entry_to_tag: {
+          meta: {
+            count: 1,
+          },
+          data: [
+            {
+              type: 'TagTextEntryThroughModel',
+              id: '2',
             },
           ],
         },
@@ -82,6 +114,30 @@ const textEntriesResponse = {
           data: {
             type: 'TextEntry',
             id: '1',
+          },
+        },
+      },
+    },
+    {
+      type: 'TagTextEntryThroughModel',
+      id: '2',
+      attributes: {
+        order: 1,
+        date_updated: '2020-04-13T18:20:00',
+        date_created: '2020-04-13T18:20:00',
+        user_id: 1,
+      },
+      relationships: {
+        tag: {
+          data: {
+            type: 'Tag',
+            id: '1',
+          },
+        },
+        text_entry: {
+          data: {
+            type: 'TextEntry',
+            id: '2',
           },
         },
       },

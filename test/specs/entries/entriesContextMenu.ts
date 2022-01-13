@@ -22,7 +22,7 @@ describe('TagsEntries Behavior', () => {
     const tagsEntries1 = await BasePage.tagsEntries1;
     const tagsEntries = await BasePage.tagsEntries;
     const tagsEntriesContextMenu1 = await BasePage.tagsEntriesContextMenu1;
-    expect(tagsEntries.length).toEqual(1);
+    expect(tagsEntries.length).toEqual(2);
     let tagsEntriesContextVisibility =
       await tagsEntriesContextMenu1.getCSSProperty('visibility');
     assert.strictEqual(tagsEntriesContextVisibility.value, 'hidden');
