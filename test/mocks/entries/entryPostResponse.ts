@@ -3,7 +3,7 @@ import {ITextEntryJsonApiResponseSingle} from '../../../src/lib/text_entries';
 const textEntryPostResponse: ITextEntryJsonApiResponseSingle = {
   data: {
     type: 'TextEntry',
-    id: '390',
+    id: '3',
     attributes: {
       body: 'Body Line 1\nBody Line 2',
       subject: 'Subject',

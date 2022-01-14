@@ -2,18 +2,18 @@ import {BasePage} from '../../pageobjects/base';
 import assert from 'assert';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import entryPostResponse from '../../mocks/entries/entryPostResponse';
+import tagTextEntryThroughModelsResponse from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
 describe('Entry Main Menu Behavior', () => {
   it('should having a working menu bar', async () => {
     const mostEntriesResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
-      {}
+      {method: 'get'}
     );
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags**',
-      {}
-    );
+    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
+      method: 'get',
+    });
     mockTags.respond(tagsResponse, {fetchResponse: false});
     mostEntriesResponse.respond(entriesResponse, {fetchResponse: false});
     await BasePage.open('');
@@ -56,6 +56,7 @@ describe('Entry Main Menu Behavior', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
+    //
     const mockEntryOptionsResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
       {
@@ -68,10 +69,21 @@ describe('Entry Main Menu Behavior', () => {
         method: 'post',
       }
     );
+    const mocktagTextEntryThroughModelsResponse = await browser.mock(
+      'http://localhost:9001/api/v1/tags_entries**',
+      {
+        method: 'post',
+      }
+    );
     mockTags.respond(tagsResponse, {fetchResponse: false});
     mockEntriesGetList.respond(entriesResponse, {fetchResponse: false});
+    //
     mockEntryOptionsResponse.respond({fetchResponse: false});
     mockEntryPostResponse.respond(entryPostResponse, {fetchResponse: false});
+    mocktagTextEntryThroughModelsResponse.respond(
+      tagTextEntryThroughModelsResponse,
+      {fetchResponse: false}
+    );
     await BasePage.open('');
 
     assert.strictEqual(
@@ -139,6 +151,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewTop).not.toBeExisting();
 
     // test save
+    assert.strictEqual(await BasePage.tagsEntries.length, 2);
     await BasePage.fileMenuButton.click({button: 'left'});
     assert.strictEqual(
       (await (await BasePage.fileMenu).getCSSProperty('visibility')).value,
@@ -157,7 +170,8 @@ describe('Entry Main Menu Behavior', () => {
       await BasePage.entryNewTopBody.getValue(),
       'Body Line 1\nBody Line 2'
     );
-    // await BasePage.entryNewTopSave.click({button: 'left'});
-    // await expect(BasePage.entryNewTop).not.toBeExisting();
+    await BasePage.entryNewTopSave.click({button: 'left'});
+    await expect(BasePage.entryNewTop).not.toBeExisting();
+    assert.strictEqual(await BasePage.tagsEntries.length, 3);
   });
 });
