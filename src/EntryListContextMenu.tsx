@@ -81,7 +81,7 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
 
   return (
     <StyledMenu
-      id="tagsEntriesContextMenu"
+      id="entryListContextMenu"
       keepMounted
       mousePosition={mousePosition}
       open={mousePosition.mouseY !== null}
@@ -94,8 +94,10 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
       }
     >
       <StyledMenuItem
-        id="entry-list-context-menu-new-entry"
-        onClick={() => {
+        id="entryListContextMenuNewEntry"
+        onClick={(event: React.MouseEvent<HTMLLIElement>) => {
+          event.preventDefault();
+          event.stopPropagation();
           handleNewEntry();
         }}
       >

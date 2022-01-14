@@ -74,6 +74,24 @@ export default class Base {
   get entryNewBottom() {
     return $('#textEntryNewBottom');
   }
+  get entryNewBottomSubject() {
+    return $('#textEntryNewBottomSubject');
+  }
+  get entryNewBottomBody() {
+    return $('#textEntryNewBottomBody');
+  }
+  get entryNewBottomSave() {
+    return $('#textEntryNewBottomSave');
+  }
+  get entryNewBottomCancel() {
+    return $('#textEntryNewBottomCancel');
+  }
+  get entryListContextMenu() {
+    return $('#entryListContextMenu');
+  }
+  get entryListContextMenuNewEntry() {
+    return $('#entryListContextMenuNewEntry');
+  }
   get tagsEntriesList() {
     return $('#tagsEntriesList');
   }
