@@ -1,5 +1,24 @@
 export default class Base {
-  // menu
+  // file menu
+  get fileMenu() {
+    return $('#file-menu');
+  }
+  get fileMenuButton() {
+    return $('#file-menu-button');
+  }
+  get fileMenuNewEntry() {
+    return $('#file-menu-new-entry');
+  }
+
+  // entries menu
+  get entriesMenu() {
+    return $('#entries-menu');
+  }
+  get entriesMenuButton() {
+    return $('#entries-menu-button');
+  }
+
+  // tags menu
   get tagsMenu() {
     return $('#tags-menu');
   }
@@ -36,7 +55,25 @@ export default class Base {
     return $('#tagSearch');
   }
 
-  // tagsEntries
+  // entries
+  get entryNewTop() {
+    return $('#textEntryNewTop');
+  }
+  get entryNewTopSubject() {
+    return $('#textEntryNewTopSubject');
+  }
+  get entryNewTopBody() {
+    return $('#textEntryNewTopBody');
+  }
+  get entryNewTopCancel() {
+    return $('#textEntryNewTopCancel');
+  }
+  get entryNewTopSave() {
+    return $('#textEntryNewTopSave');
+  }
+  get entryNewBottom() {
+    return $('#textEntryNewBottom');
+  }
   get tagsEntriesList() {
     return $('#tagsEntriesList');
   }

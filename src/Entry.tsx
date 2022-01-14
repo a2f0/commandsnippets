@@ -390,7 +390,10 @@ const Entry = ({
   return (
     <>
       {appConfig.entryNew === `textEntry-${object.id}-top` && (
-        <EntryNew filterAndSortParent={filterAndSortParent} />
+        <EntryNew
+          id={`textEntryNew-${object.id}-top`}
+          filterAndSortParent={filterAndSortParent}
+        />
       )}
       {!isEditing && (
         <div
@@ -473,13 +476,17 @@ const Entry = ({
         </div>
       )}
       {appConfig.entryNew === `textEntry-${object.id}-bottom` && (
-        <EntryNew filterAndSortParent={filterAndSortParent} />
+        <EntryNew
+          id={`textEntryNew-${object.id}-bottom`}
+          filterAndSortParent={filterAndSortParent}
+        />
       )}
 
       {appConfig.loggedInUser && <>{contextMenu}</>}
 
       {isEditing && (
         <EntryEdit
+          id={`textEntryNew-${object.id}-bottom`}
           object={textEntryObject}
           handleSaveParent={handleSave}
           handleCancelEditParent={handleCancelEdit}

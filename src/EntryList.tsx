@@ -342,7 +342,7 @@ const EntryList = () => {
       onMouseDown={onMouseDown}
     >
       {appConfig.entryNew === 'textEntry-top' && (
-        <EntryNew filterAndSortParent={filterAndSort} />
+        <EntryNew id="textEntryNewTop" filterAndSortParent={filterAndSort} />
       )}
       {entries.map((element, i) => {
         return (
@@ -362,7 +362,7 @@ const EntryList = () => {
         );
       })}
       {appConfig.entryNew === 'textEntry-bottom' && (
-        <EntryNew filterAndSortParent={filterAndSort} />
+        <EntryNew id="textEntryNewBottom" filterAndSortParent={filterAndSort} />
       )}
       {appConfig.loggedInUser && <>{contextMenu}</>}
     </div>

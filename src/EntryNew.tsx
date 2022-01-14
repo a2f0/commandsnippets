@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
@@ -6,20 +6,30 @@ import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_ent
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
+import {appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
 
 export interface IEntryNewProps {
   filterAndSortParent: () => void;
+  id: string;
 }
 
-const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
+const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
   const classes = useStyles();
   const appConfig = useAppContext();
   const {user, tag} = useParams();
+
+  useEffect(() => {
+    appConfig.setAppMode(appMode.entryEditor);
+
+    return () => {
+      appConfig.setAppMode(appMode.entriesList);
+    };
+  }, []);
 
   const handleSave = () => {
     const text_entry_payload = {
@@ -97,20 +107,25 @@ const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
     appConfig.setEntryNew(null);
   };
 
-  const handleBodyChange = (value: string) => {
-    setBody(value);
-  };
-
-  const handleSubjectChange = (value: string) => {
+  const handleSubjectChange = useCallback((value: string) => {
+    // this will return the same function between re-renders.
+    // It causes the subject to not get refocused when updating the body.
     setSubject(value);
-  };
+  }, []);
+
+  const handleBodyChange = useCallback((value: string) => {
+    // this will return the same function between re-renders.
+    // It causes the subject to not get refocused when updating the body.
+    setBody(value);
+  }, []);
 
   return (
-    <div>
+    <div id={id}>
       <div className={classes.dragIndicator}></div>
       <div className={classes.entry}>
         <div>
           <InputEntrySubject
+            id={`${id}Subject`}
             placeholder="subject"
             valueParent={subject}
             handleChangeParent={handleSubjectChange}
@@ -118,12 +133,14 @@ const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
         </div>
         <div>
           <InputEntryBody
+            id={`${id}Body`}
             placeholder="body"
             valueParent={body}
             handleChangeParent={handleBodyChange}
           />
         </div>
         <Button
+          id={`${id}Save`}
           color="secondary"
           sx={{marginRight: '2px'}}
           size="small"
@@ -135,6 +152,7 @@ const EntryNew = ({filterAndSortParent}: IEntryNewProps) => {
           Save
         </Button>
         <Button
+          id={`${id}Cancel`}
           color="secondary"
           size="small"
           variant="outlined"

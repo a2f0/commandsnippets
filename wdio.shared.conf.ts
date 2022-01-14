@@ -19,7 +19,7 @@ export const config: WebdriverIO.Config = {
   logLevel: 'info',
   bail: 0,
   baseUrl: 'http://localhost:8081',
-  waitforTimeout: 60000,
+  waitforTimeout: 5000,
   connectionRetryTimeout: 90000,
   connectionRetryCount: 3,
   services: ['chromedriver'],

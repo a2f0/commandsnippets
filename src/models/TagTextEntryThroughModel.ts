@@ -10,7 +10,6 @@ export interface ITagTextEntryThroughModelJsonApi {
 
 export interface ITagTextEntryThroughModelJsonApiAttributes {
   order: number;
-  user_id: number;
   date_updated: string;
   date_created: string;
 }
@@ -41,7 +40,6 @@ interface ITagTextEntryThroughModelJsonApiRelationshipsTextEntryData {
 const TagTextEntryThroughModelAttributes = types
   .model('TagTextEntryThroughModelAttributes', {
     order: types.number,
-    user_id: types.number,
     date_updated: types.string,
     date_created: types.string,
   })

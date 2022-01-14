@@ -1,7 +1,7 @@
 import {BasePage} from '../../pageobjects/base';
 import assert from 'assert';
 import tags from '../../mocks/tags/tagsResponse';
-import textEntriesResponse from '../../mocks/entries/textEntriesResponse';
+import textEntriesResponse from '../../mocks/entries/entriesResponse';
 
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {

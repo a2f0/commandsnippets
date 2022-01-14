@@ -1,5 +1,5 @@
 import {ITextEntryJsonApiResponse} from '../../../src/lib/text_entries';
-const textEntriesResponse: ITextEntryJsonApiResponse = {
+const entriesResponse: ITextEntryJsonApiResponse = {
   links: {
     next: null,
   },
@@ -76,7 +76,6 @@ const textEntriesResponse: ITextEntryJsonApiResponse = {
         order: 1,
         date_updated: '2020-04-13T18:20:00',
         date_created: '2020-04-13T18:20:00',
-        user_id: 1,
       },
       relationships: {
         tag: {
@@ -100,7 +99,6 @@ const textEntriesResponse: ITextEntryJsonApiResponse = {
         order: 1,
         date_updated: '2020-04-13T18:20:00',
         date_created: '2020-04-13T18:20:00',
-        user_id: 1,
       },
       relationships: {
         tag: {
@@ -128,4 +126,4 @@ const textEntriesResponse: ITextEntryJsonApiResponse = {
   ],
 };
 
-export default textEntriesResponse;
+export default entriesResponse;

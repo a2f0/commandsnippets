@@ -33,12 +33,14 @@ export interface IEntryEdit {
   object: ITextEntryJsonApi;
   handleSaveParent: (object: ITextEntryJsonApiResponseSingle) => void;
   handleCancelEditParent: () => void;
+  id: string;
 }
 
 const EntryEdit = ({
   object,
   handleSaveParent,
   handleCancelEditParent,
+  id,
 }: IEntryEdit) => {
   const saveRef = useRef<HTMLButtonElement>();
   const [subject, setSubject] = useState<string>(object.attributes.subject);
@@ -103,6 +105,7 @@ const EntryEdit = ({
         <div className={classes.entry}>
           <div>
             <InputEntrySubject
+              id={`${id}Subject`}
               placeholder="subject"
               valueParent={subject}
               handleChangeParent={handleSubjectChange}
@@ -110,12 +113,14 @@ const EntryEdit = ({
           </div>
           <div>
             <InputEntryBody
+              id={`${id}Body`}
               placeholder="body"
               valueParent={body}
               handleChangeParent={handleBodyChange}
             />
           </div>
           <Button
+            id={`${id}Save`}
             color="secondary"
             sx={{
               marginRight: '2px',
@@ -131,6 +136,7 @@ const EntryEdit = ({
             Save
           </Button>
           <Button
+            id={`${id}Cancel`}
             ref={setSaveRef}
             color="secondary"
             size="small"

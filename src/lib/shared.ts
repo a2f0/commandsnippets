@@ -22,6 +22,7 @@ export enum entrySearchMethod {
 export enum appMode {
   tagsList = 1,
   entriesList = 2,
+  entryEditor = 3,
 }
 
 export enum activeSearch {

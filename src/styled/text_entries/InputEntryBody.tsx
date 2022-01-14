@@ -29,12 +29,14 @@ export interface IProps {
   handleChangeParent: (value: string) => void;
   placeholder: string;
   valueParent: string;
+  id: string;
 }
 
 const InputEntryBody = ({
   handleChangeParent,
   valueParent,
   placeholder,
+  id,
 }: IProps) => {
   const [value, setValue] = useState<string>(valueParent);
 
@@ -61,6 +63,7 @@ const InputEntryBody = ({
 
   return (
     <StyledTextareaAutosize
+      id={id}
       onClick={handleClick}
       theme={theme}
       spellCheck="false"

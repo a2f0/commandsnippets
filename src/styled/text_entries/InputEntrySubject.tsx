@@ -2,18 +2,21 @@ import * as Constants from '../../constants';
 import React, {useEffect, useRef, useState} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
+import {observer} from 'mobx-react';
 import {useTheme} from '@mui/styles';
 
 export interface IProps {
   handleChangeParent: (value: string) => void;
   placeholder: string;
   valueParent: string;
+  id: string;
 }
 
 const InputEntrySubject = ({
   handleChangeParent,
   valueParent,
   placeholder,
+  id,
 }: IProps) => {
   const inputRef = useRef<HTMLInputElement>();
   const [value, setValue] = useState<string>(valueParent);
@@ -39,6 +42,7 @@ const InputEntrySubject = ({
 
   return (
     <TextField
+      id={id}
       sx={{
         width: `calc(100% - (${Constants.drawerWidth}px))`,
         minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
@@ -70,4 +74,4 @@ const InputEntrySubject = ({
     />
   );
 };
-export default React.memo(InputEntrySubject);
+export default React.memo(observer(InputEntrySubject));
