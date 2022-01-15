@@ -33,6 +33,5 @@ class CustomAuthentication(authentication.BaseAuthentication):
             return None
 
     def deauthenticate(self, request):
-        token_from_request = self.get_token_from_request(request)
-        if token_from_request is not None:
-            token_from_request.delete()
+        None
+        # See PR #71.
