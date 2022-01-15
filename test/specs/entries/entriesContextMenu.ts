@@ -19,20 +19,27 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
-    const tagsEntries1 = await BasePage.tagsEntries1;
-    const tagsEntries = await BasePage.tagsEntries;
-    const tagsEntriesContextMenu1 = await BasePage.tagsEntriesContextMenu1;
-    expect(tagsEntries.length).toEqual(2);
-    let tagsEntriesContextVisibility =
-      await tagsEntriesContextMenu1.getCSSProperty('visibility');
-    assert.strictEqual(tagsEntriesContextVisibility.value, 'hidden');
 
-    tagsEntries1.click({button: 'right'});
-    await tagsEntriesContextMenu1.waitUntil(
+    assert.strictEqual(
+      (
+        await (
+          await BasePage.tagsEntriesContextMenu1
+        ).getCSSProperty('visibility')
+      ).value,
+      'hidden'
+    );
+
+    await BasePage.tagsEntries1.click({button: 'right'});
+
+    await browser.waitUntil(
       async () => {
-        tagsEntriesContextVisibility =
-          await tagsEntriesContextMenu1.getCSSProperty('visibility');
-        return tagsEntriesContextVisibility.value === 'visible';
+        return (
+          (
+            await (
+              await BasePage.tagsEntriesContextMenu1
+            ).getCSSProperty('visibility')
+          ).value === 'visible'
+        );
       },
       {
         timeout: 30000,
@@ -41,11 +48,16 @@ describe('TagsEntries Behavior', () => {
     );
 
     await browser.keys('Escape');
-    await tagsEntriesContextMenu1.waitUntil(
+
+    await browser.waitUntil(
       async () => {
-        tagsEntriesContextVisibility =
-          await tagsEntriesContextMenu1.getCSSProperty('visibility');
-        return tagsEntriesContextVisibility.value === 'hidden';
+        return (
+          (
+            await (
+              await BasePage.tagsEntriesContextMenu1
+            ).getCSSProperty('visibility')
+          ).value === 'hidden'
+        );
       },
       {
         timeout: 30000,
