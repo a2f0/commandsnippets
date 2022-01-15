@@ -73,7 +73,7 @@ describe('Tag Main Menu Behavior', () => {
     const tagsMenuButton = await BasePage.tagsMenuButton;
     expect(tagsMenuButton).toBeExisting();
     expect(tagsMenuButton).toBeDisplayed();
-    tagsMenuButton.click({button: 'left'});
+    await tagsMenuButton.click({button: 'left'});
     await tagsMenu.waitUntil(
       async () => {
         const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
@@ -90,7 +90,7 @@ describe('Tag Main Menu Behavior', () => {
       await BasePage.tagsMenuSortDateCreatedAscending;
     expect(tagsMenuSortDateCreatedAscending).toBeExisting();
     expect(tagsMenuSortDateCreatedAscending).toBeDisplayed();
-    tagsMenuSortDateCreatedAscending.click({button: 'left'});
+    await tagsMenuSortDateCreatedAscending.click({button: 'left'});
     await tagsMenu.waitUntil(
       async () => {
         const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
@@ -117,7 +117,7 @@ describe('Tag Main Menu Behavior', () => {
     );
 
     // click the tags menu button and make sure the menu becomes visible
-    tagsMenuButton.click({button: 'left'});
+    await tagsMenuButton.click({button: 'left'});
     await tagsMenu.waitUntil(
       async () => {
         const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');

@@ -161,7 +161,7 @@ describe('Entry Main Menu Behavior', () => {
       ).value,
       'rgba(72,72,72,1)'
     );
-    browser.keys('Tab');
+    await browser.keys('Tab');
     assert.strictEqual(
       (
         await (
@@ -170,7 +170,7 @@ describe('Entry Main Menu Behavior', () => {
       ).value,
       'rgba(15,15,15,1)'
     );
-    browser.keys('Tab');
+    await browser.keys('Tab');
     assert.strictEqual(
       (
         await (
@@ -179,7 +179,7 @@ describe('Entry Main Menu Behavior', () => {
       ).value,
       'rgba(72,72,72,1)'
     );
-    browser.keys('Left arrow');
+    await browser.keys('Left arrow');
     assert.strictEqual(
       (
         await (
@@ -188,7 +188,7 @@ describe('Entry Main Menu Behavior', () => {
       ).value,
       'rgba(15,15,15,1)'
     );
-    browser.keys('Right arrow');
+    await browser.keys('Right arrow');
     assert.strictEqual(
       (
         await (

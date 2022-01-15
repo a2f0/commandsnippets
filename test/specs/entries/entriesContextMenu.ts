@@ -40,7 +40,7 @@ describe('TagsEntries Behavior', () => {
       }
     );
 
-    browser.keys('Escape');
+    await browser.keys('Escape');
     await tagsEntriesContextMenu1.waitUntil(
       async () => {
         tagsEntriesContextVisibility =

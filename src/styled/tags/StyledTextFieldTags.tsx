@@ -62,36 +62,38 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   }, []);
 
   const keyListener = useCallback(event => {
-    const trappedKeyCodes = [
-      keyCode.Tab,
-      keyCode.LeftArrow,
-      keyCode.RightArrow,
-    ];
-    if (event.keyCode === keyCode.Tab) {
-      if (appConfig.appMode === appMode.tagsList) {
-        appConfig.setAppMode(appMode.entriesList);
-        appConfig.setActiveSearch(activeSearch.entries);
-      } else {
-        appConfig.setAppMode(appMode.tagsList);
-        appConfig.setActiveSearch(activeSearch.tags);
-        inputRef.current?.focus();
-      }
-    } else if (event.keyCode === keyCode.Escape) {
+    const trappedModes = [appMode.tagsList, appMode.entriesList];
+    const trappedKeys = [keyCode.Tab, keyCode.LeftArrow, keyCode.RightArrow];
+
+    if (event.keyCode === keyCode.Escape) {
       inputRef.current?.focus();
-    } else if (event.keyCode === keyCode.LeftArrow) {
-      if (appConfig.appMode === appMode.entriesList) {
-        appConfig.setAppMode(appMode.tagsList);
-        appConfig.setActiveSearch(activeSearch.tags);
-      }
-    } else if (event.keyCode === keyCode.RightArrow) {
-      if (appConfig.appMode === appMode.tagsList) {
-        appConfig.setAppMode(appMode.entriesList);
-        appConfig.setActiveSearch(activeSearch.entries);
-      }
     }
-    if (trappedKeyCodes.includes(event.keyCode)) {
-      event.preventDefault();
-      event.stopPropagation();
+
+    if (trappedModes.includes(appConfig.appMode)) {
+      if (event.keyCode === keyCode.Tab) {
+        if (appConfig.appMode === appMode.tagsList) {
+          appConfig.setAppMode(appMode.entriesList);
+          appConfig.setActiveSearch(activeSearch.entries);
+        } else if (appConfig.appMode === appMode.entriesList) {
+          appConfig.setAppMode(appMode.tagsList);
+          appConfig.setActiveSearch(activeSearch.tags);
+          inputRef.current?.focus();
+        }
+      } else if (event.keyCode === keyCode.LeftArrow) {
+        if (appConfig.appMode === appMode.entriesList) {
+          appConfig.setAppMode(appMode.tagsList);
+          appConfig.setActiveSearch(activeSearch.tags);
+        }
+      } else if (event.keyCode === keyCode.RightArrow) {
+        if (appConfig.appMode === appMode.tagsList) {
+          appConfig.setAppMode(appMode.entriesList);
+          appConfig.setActiveSearch(activeSearch.entries);
+        }
+      }
+      if (trappedKeys.includes(event.keyCode)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
     }
   }, []);
 

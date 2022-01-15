@@ -41,7 +41,7 @@ describe('Tag List Context Menu Behavior', () => {
       }
     );
 
-    browser.keys('Escape');
+    await browser.keys('Escape');
     await tagListContextMenu.waitUntil(
       async () => {
         tagListContextMenuVisibility = await tagListContextMenu.getCSSProperty(

@@ -7,6 +7,7 @@ import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
 import {appMode} from '../src/lib/shared';
+import {keyCode} from './lib/shared';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
@@ -117,6 +118,21 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     // this will return the same function between re-renders.
     // It causes the subject to not get refocused when updating the body.
     setBody(value);
+  }, []);
+
+  const keyListener = useCallback(event => {
+    const trappedKeyCodes = [keyCode.Tab];
+    if (trappedKeyCodes.includes(event.keyCode)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', keyListener, false);
+    return () => {
+      document.removeEventListener('keydown', keyListener, false);
+    };
   }, []);
 
   return (

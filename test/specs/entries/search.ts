@@ -23,7 +23,7 @@ describe('TagsEntries Behavior', () => {
     assert.strictEqual(await BasePage.entrySearch.isFocused(), false);
 
     assert.strictEqual(await BasePage.tagSearch.isFocused(), true);
-    browser.keys('Tab');
+    await browser.keys('Tab');
     await browser.waitUntil(
       async () => {
         return (await BasePage.entrySearch.isFocused()) === true;
@@ -34,7 +34,7 @@ describe('TagsEntries Behavior', () => {
       }
     );
 
-    browser.keys('Tab');
+    await browser.keys('Tab');
     await browser.waitUntil(
       async () => {
         return (await BasePage.entrySearch.isFocused()) === false;
@@ -47,7 +47,7 @@ describe('TagsEntries Behavior', () => {
 
     assert.strictEqual(await BasePage.tagSearch.isFocused(), true);
 
-    browser.keys('Tab');
+    await browser.keys('Tab');
     await browser.waitUntil(
       async () => {
         return (await BasePage.entrySearch.isFocused()) === true;
@@ -59,7 +59,7 @@ describe('TagsEntries Behavior', () => {
     );
 
     expect(await BasePage.tagsEntries.length).toEqual(2);
-    browser.keys(textEntriesResponse.data[0].attributes.subject);
+    await browser.keys(textEntriesResponse.data[0].attributes.subject);
     await browser.waitUntil(
       async () => {
         return (await BasePage.tagsEntries.length) === 1;
@@ -70,7 +70,7 @@ describe('TagsEntries Behavior', () => {
       }
     );
 
-    browser.keys('Escape');
+    await browser.keys('Escape');
     await browser.waitUntil(
       async () => {
         return (await BasePage.tagsEntries.length) === 2;

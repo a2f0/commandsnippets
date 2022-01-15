@@ -24,7 +24,7 @@ describe('Tag Search Menu Behavior', () => {
     const isFocused = await tagSearch.isFocused();
     assert.strictEqual(isFocused, true);
 
-    browser.keys(tagsResponse.data[1].attributes.name);
+    await browser.keys(tagsResponse.data[1].attributes.name);
     await browser.waitUntil(
       async () => {
         const tags = await BasePage.tags;
@@ -40,7 +40,7 @@ describe('Tag Search Menu Behavior', () => {
       tagsResponse.data[1].attributes.name
     );
 
-    browser.keys('Escape');
+    await browser.keys('Escape');
     await browser.waitUntil(
       async () => {
         const tags = await BasePage.tags;

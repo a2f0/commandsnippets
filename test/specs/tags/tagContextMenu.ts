@@ -54,7 +54,7 @@ describe('Tag Context Menu Behavior', () => {
       }
     );
 
-    browser.keys('Escape');
+    await browser.keys('Escape');
     await tagContextMenu1.waitUntil(
       async () => {
         tagContextVisibility = await tagContextMenu1.getCSSProperty(
