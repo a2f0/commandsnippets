@@ -38,7 +38,7 @@ const EntryBody = ({object, handleClick}: IProps) => {
   }
 
   return (
-    <div style={styleOuterDiv}>
+    <div style={styleOuterDiv} id={`entryBodyOuterDiv${object.id}`}>
       <Highlighter
         style={style}
         searchWords={[`${appConfig.entrySearchString}`]}

@@ -98,6 +98,12 @@ export default class Base {
   get tagsEntries() {
     return $$('div[id^="tagsEntries-"]');
   }
+  get entry1() {
+    return $('#tagsEntries-1');
+  }
+  get entryBodyOuterDiv3() {
+    return $('#entryBodyOuterDiv3');
+  }
   get tagsEntriesContextMenu1() {
     return $('#tagsEntriesContextMenu-1');
   }

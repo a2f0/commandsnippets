@@ -16,7 +16,6 @@ describe('Entry Main Menu Behavior', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
-    //
     const mockEntryOptionsResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
       {
@@ -153,5 +152,50 @@ describe('Entry Main Menu Behavior', () => {
     assert.strictEqual(await BasePage.tagsEntries.length, 0);
     await BasePage.entryNewBottomSave.click({button: 'left'});
     assert.strictEqual(await BasePage.tagsEntries.length, 1);
+
+    assert.strictEqual(
+      (
+        await (
+          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
+        ).getCSSProperty('background-color')
+      ).value,
+      'rgba(72,72,72,1)'
+    );
+    browser.keys('Tab');
+    assert.strictEqual(
+      (
+        await (
+          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
+        ).getCSSProperty('background-color')
+      ).value,
+      'rgba(15,15,15,1)'
+    );
+    browser.keys('Tab');
+    assert.strictEqual(
+      (
+        await (
+          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
+        ).getCSSProperty('background-color')
+      ).value,
+      'rgba(72,72,72,1)'
+    );
+    browser.keys('Left arrow');
+    assert.strictEqual(
+      (
+        await (
+          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
+        ).getCSSProperty('background-color')
+      ).value,
+      'rgba(15,15,15,1)'
+    );
+    browser.keys('Right arrow');
+    assert.strictEqual(
+      (
+        await (
+          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
+        ).getCSSProperty('background-color')
+      ).value,
+      'rgba(72,72,72,1)'
+    );
   });
 });
