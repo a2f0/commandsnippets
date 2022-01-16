@@ -197,5 +197,29 @@ describe('Entry Main Menu Behavior', () => {
       ).value,
       'rgba(72,72,72,1)'
     );
+    // test tab-based focusing
+    await BasePage.tagsEntriesList.click({button: 'right'});
+
+    await expect(BasePage.entryListContextMenu).toBeDisplayed();
+    await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
+
+    await expect(BasePage.entryNewBottom).not.toBeDisplayed();
+    await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
+
+    await expect(BasePage.entryNewBottom).toBeDisplayed();
+    assert.strictEqual(
+      (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
+        .value,
+      'visible'
+    );
+    assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
+    await browser.keys('Tab');
+    assert.strictEqual(await BasePage.entryNewBottomBody.isFocused(), true);
+    await browser.keys('Tab');
+    assert.strictEqual(await BasePage.entryNewBottomSave.isFocused(), true);
+    await browser.keys('Tab');
+    assert.strictEqual(await BasePage.entryNewBottomCancel.isFocused(), true);
+    await browser.keys('Tab');
+    assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
   });
 });
