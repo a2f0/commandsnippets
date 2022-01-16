@@ -36,6 +36,7 @@ class TestGoogleAuthentication(BaseTestCase):
         response = self.auth_user_api_client.post("/api/v1/google-login/", payload)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
+        self.assertEqual("LoggedIn" in self.auth_user_api_client.cookies, True)
         self.assertNotEqual(
             self.auth_user_api_client.cookies["Authorization"].value, ""
         )

@@ -27,7 +27,15 @@ class CustomObtainAuthToken(ObtainAuthToken):
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
         response = Response({})
-        response.set_cookie("Authorization", token.key, httponly=True)
+        response.set_cookie(
+            "Authorization",
+            token.key,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=2419200,
+        )
+        response.set_cookie("LoggedIn", None, httponly=False)
         return response
 
 
@@ -37,6 +45,7 @@ class CustomInvalidateAuthToken(APIView):
         ca.deauthenticate(request)
         response = Response({})
         response.delete_cookie("Authorization")
+        response.delete_cookie("LoggedIn")
         return response
 
 
@@ -69,7 +78,15 @@ class GithubLogin(APIView):
                             token, created = Token.objects.get_or_create(user=user)
                             response = Response({})
                             response.set_cookie(
-                                "Authorization", token.key, httponly=True
+                                "Authorization",
+                                token.key,
+                                httponly=True,
+                                secure=True,
+                                samesite="strict",
+                                max_age=2419200,
+                            )
+                            response.set_cookie(
+                                "LoggedIn", None, httponly=False, max_age=2419200
                             )
                             return response
 
@@ -98,7 +115,15 @@ class GoogleLogin(APIView):
                 user = create_collisionless_user(username, email)
                 token, created = Token.objects.get_or_create(user=user)
                 response = Response({})
-                response.set_cookie("Authorization", token.key, httponly=True)
+                response.set_cookie(
+                    "Authorization",
+                    token.key,
+                    httponly=True,
+                    secure=True,
+                    samesite="strict",
+                    max_age=2419200,
+                )
+                response.set_cookie("LoggedIn", None, httponly=False, max_age=2419200)
                 return response
 
         return Response({}, status=status.HTTP_401_UNAUTHORIZED)
