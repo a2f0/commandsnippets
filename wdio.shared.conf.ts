@@ -43,5 +43,9 @@ export const config: WebdriverIO.Config = {
       'mst-tearleads-test',
       JSON.stringify(appState)
     );
+    await browser.setCookies({
+      name: 'LoggedIn',
+      value: 'None',
+    });
   },
 };

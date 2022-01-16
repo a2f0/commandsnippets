@@ -28,6 +28,19 @@ const Main = (props: IMainProps) => {
     }
   });
 
+  // If the user has cleared their cookies, log them out from the application state.
+  // Note: this is not the Authorization cookie containing the authorization token.
+  useEffect(() => {
+    const loggedIn = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('LoggedIn='));
+    if (loggedIn === undefined) {
+      if (appConfig.loggedInUser !== null) {
+        appConfig.setLoggedInUser(null);
+      }
+    }
+  }, [location]);
+
   return (
     <>
       <AppBar
