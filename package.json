@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.3.157",
+  "version": "0.3.159",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -85,7 +85,6 @@
     "react-dnd-html5-backend": "^14.1.0",
     "react-dom": "^17.0.2",
     "react-highlight-words": "^0.17.0",
-    "react-leaflet": "^3.2.0",
     "react-router-dom": "^6.2.1"
   }
 }

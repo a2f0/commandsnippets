@@ -17,7 +17,8 @@ export const config: WebdriverIO.Config = {
     },
   ],
   logLevel: 'info',
-  bail: 0,
+  // Stop running tests after initial failure.
+  bail: 1,
   baseUrl: 'http://localhost:8081',
   waitforTimeout: 5000,
   connectionRetryTimeout: 90000,
@@ -26,6 +27,7 @@ export const config: WebdriverIO.Config = {
   framework: 'mocha',
   reporters: ['dot', 'spec'],
   mochaOpts: {
+    bail: true,
     ui: 'bdd',
     timeout: 60000,
     requireModule: ['@babel/register'],

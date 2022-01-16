@@ -59,29 +59,32 @@ describe('Entry Main Menu Behavior', () => {
     await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
 
     await expect(BasePage.entryNewBottom).toBeDisplayed();
-    assert.strictEqual(
-      (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
-        .value,
-      'visible'
-    );
-    assert.strictEqual(
-      (
-        await (
-          await BasePage.entryNewBottomSubject
-        ).getCSSProperty('visibility')
-      ).value,
-      'visible'
-    );
-    assert.strictEqual(
-      (await (await BasePage.entryNewBottomBody).getCSSProperty('visibility'))
-        .value,
-      'visible'
+    await browser.waitUntil(
+      async () => {
+        return (
+          (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
+            .value === 'visible'
+        );
+      },
+      {
+        timeout: 30000,
+        timeoutMsg: 'expected entryNewBottom to be visible after 3s.',
+      }
     );
     assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
-    assert.strictEqual(await BasePage.entryNewBottomBody.isFocused(), false);
+    await expect(BasePage.entryNewBottomBody).toBeExisting();
     await expect(BasePage.entryNewBottomBody).toBeDisplayed();
     await BasePage.entryNewBottomBody.click({button: 'left'});
-    assert.strictEqual(await BasePage.entryNewBottomBody.isFocused(), true);
+
+    await BasePage.entryNewBottomBody.waitUntil(
+      async () => {
+        return (await BasePage.entryNewBottomBody.isFocused()) === true;
+      },
+      {
+        timeout: 3000,
+        timeoutMsg: 'expected body to be focused after 3s.',
+      }
+    );
 
     await browser.keys('Body Line 1');
     await browser.keys('Enter');
@@ -113,23 +116,17 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewBottom).toBeExisting();
     await expect(BasePage.entryNewBottom).toBeDisplayed();
 
-    assert.strictEqual(
-      (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
-        .value,
-      'visible'
-    );
-    assert.strictEqual(
-      (
-        await (
-          await BasePage.entryNewBottomSubject
-        ).getCSSProperty('visibility')
-      ).value,
-      'visible'
-    );
-    assert.strictEqual(
-      (await (await BasePage.entryNewBottomBody).getCSSProperty('visibility'))
-        .value,
-      'visible'
+    await browser.waitUntil(
+      async () => {
+        return (
+          (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
+            .value === 'visible'
+        );
+      },
+      {
+        timeout: 30000,
+        timeoutMsg: 'expected entryNewBottom to be visible after 3s.',
+      }
     );
     assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
     assert.strictEqual(await BasePage.entryNewBottomSubject.getValue(), '');
@@ -207,10 +204,17 @@ describe('Entry Main Menu Behavior', () => {
     await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
 
     await expect(BasePage.entryNewBottom).toBeDisplayed();
-    assert.strictEqual(
-      (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
-        .value,
-      'visible'
+    await browser.waitUntil(
+      async () => {
+        return (
+          (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
+            .value === 'visible'
+        );
+      },
+      {
+        timeout: 30000,
+        timeoutMsg: 'expected entryNewBottom to be visible after 3s.',
+      }
     );
     assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
     await browser.keys('Tab');
