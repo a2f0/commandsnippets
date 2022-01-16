@@ -1,4 +1,5 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {activeEntryEditField, appMode} from '../src/lib/shared';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
@@ -6,8 +7,8 @@ import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_ent
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
-import {appMode} from '../src/lib/shared';
 import {keyCode} from './lib/shared';
+import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 import {useStyles} from './EntryEdit';
@@ -23,6 +24,17 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   const classes = useStyles();
   const appConfig = useAppContext();
   const {user, tag} = useParams();
+
+  const inputSaveRef = useRef<HTMLButtonElement>();
+  const inputCancelRef = useRef<HTMLButtonElement>();
+
+  const setInputSaveRef = (element: HTMLButtonElement) => {
+    inputSaveRef.current = element;
+  };
+
+  const setInputCancelRef = (element: HTMLButtonElement) => {
+    inputCancelRef.current = element;
+  };
 
   useEffect(() => {
     appConfig.setAppMode(appMode.entryEditor);
@@ -123,6 +135,17 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   const keyListener = useCallback(event => {
     const trappedKeyCodes = [keyCode.Tab];
     if (trappedKeyCodes.includes(event.keyCode)) {
+      if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
+        appConfig.setActiveEntryEditField(activeEntryEditField.body);
+      } else if (appConfig.activeEntryEditField === activeEntryEditField.body) {
+        appConfig.setActiveEntryEditField(activeEntryEditField.save);
+      } else if (appConfig.activeEntryEditField === activeEntryEditField.save) {
+        appConfig.setActiveEntryEditField(activeEntryEditField.cancel);
+      } else if (
+        appConfig.activeEntryEditField === activeEntryEditField.cancel
+      ) {
+        appConfig.setActiveEntryEditField(activeEntryEditField.subject);
+      }
       event.preventDefault();
       event.stopPropagation();
     }
@@ -134,6 +157,14 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
       document.removeEventListener('keydown', keyListener, false);
     };
   }, []);
+
+  useEffect(() => {
+    if (appConfig.activeEntryEditField === activeEntryEditField.save) {
+      inputSaveRef.current?.focus();
+    } else if (appConfig.activeEntryEditField === activeEntryEditField.cancel) {
+      inputCancelRef.current?.focus();
+    }
+  }, [appConfig.activeEntryEditField]);
 
   return (
     <div id={id}>
@@ -156,6 +187,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
           />
         </div>
         <Button
+          ref={setInputSaveRef}
           id={`${id}Save`}
           color="secondary"
           sx={{marginRight: '2px'}}
@@ -168,6 +200,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
           Save
         </Button>
         <Button
+          ref={setInputCancelRef}
           id={`${id}Cancel`}
           color="secondary"
           size="small"
@@ -182,4 +215,4 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     </div>
   );
 };
-export default React.memo(EntryNew);
+export default React.memo(observer(EntryNew));

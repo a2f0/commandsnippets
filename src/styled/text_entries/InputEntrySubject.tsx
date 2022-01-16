@@ -2,7 +2,9 @@ import * as Constants from '../../constants';
 import React, {useEffect, useRef, useState} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
+import {activeEntryEditField} from '../../../src/lib/shared';
 import {observer} from 'mobx-react';
+import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
 
 export interface IProps {
@@ -21,6 +23,7 @@ const InputEntrySubject = ({
   const inputRef = useRef<HTMLInputElement>();
   const [value, setValue] = useState<string>(valueParent);
   const theme: Theme = useTheme();
+  const appConfig = useAppContext();
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(event.target.value);
@@ -35,6 +38,12 @@ const InputEntrySubject = ({
   useEffect(() => {
     inputRef.current?.focus();
   }, [inputRef.current]);
+
+  useEffect(() => {
+    if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
+      inputRef.current?.focus();
+    }
+  }, [appConfig.activeEntryEditField]);
 
   const setTextInputRef = (element: HTMLInputElement) => {
     inputRef.current = element;

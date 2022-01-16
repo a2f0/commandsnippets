@@ -11,6 +11,7 @@ import {
 import {IUserJsonApi, UserModel} from './models/UserModel';
 import {TagHelpers, TagModel} from './models/TagModel';
 import {
+  activeEntryEditField,
   activeSearch,
   appMode,
   appState,
@@ -46,6 +47,7 @@ export const AppStateStoreModel = types
   })
   .volatile<{
     activeSearch: activeSearch;
+    activeEntryEditField: activeEntryEditField;
     clickCount: number;
     entrySelectedID: string;
     entrySearchString: string;
@@ -55,6 +57,7 @@ export const AppStateStoreModel = types
     appMode: appMode;
   }>(() => ({
     activeSearch: activeSearch.tags,
+    activeEntryEditField: activeEntryEditField.subject,
     clickCount: 0,
     entrySelectedID: '',
     entrySearchString: '',
@@ -312,6 +315,9 @@ export const AppStateStoreModel = types
     },
     setTagNew(value: string | null) {
       self.tagNew = value;
+    },
+    setActiveEntryEditField(value: activeEntryEditField) {
+      self.activeEntryEditField = value;
     },
     setAppMode(value: appMode) {
       self.appMode = value;

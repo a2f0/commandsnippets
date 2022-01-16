@@ -1,12 +1,16 @@
 import * as Constants from '../../constants';
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import {Theme} from '@mui/material/styles';
+import {activeEntryEditField} from '../../../src/lib/shared';
+import {observer} from 'mobx-react';
 import styled from '@emotion/styled';
+import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/styles';
 
 export interface StyledTextAreaIProps {
   theme: Theme;
+  ref: React.Ref<HTMLTextAreaElement>;
 }
 
 const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
@@ -39,6 +43,8 @@ const InputEntryBody = ({
   id,
 }: IProps) => {
   const [value, setValue] = useState<string>(valueParent);
+  const inputRef = useRef<HTMLTextAreaElement>();
+  const appConfig = useAppContext();
 
   const theme = useTheme<Theme>();
 
@@ -61,6 +67,16 @@ const InputEntryBody = ({
     event.stopPropagation();
   };
 
+  useEffect(() => {
+    if (appConfig.activeEntryEditField === activeEntryEditField.body) {
+      inputRef.current?.focus();
+    }
+  }, [appConfig.activeEntryEditField]);
+
+  const setTextInputRef = (element: HTMLTextAreaElement) => {
+    inputRef.current = element;
+  };
+
   return (
     <StyledTextareaAutosize
       id={id}
@@ -71,7 +87,8 @@ const InputEntryBody = ({
       value={value}
       minRows={minRows(value)}
       onChange={handleChange}
+      ref={setTextInputRef}
     />
   );
 };
-export default React.memo(InputEntryBody);
+export default React.memo(observer(InputEntryBody));
