@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import tagsEntriesResponse from '../../mocks/tags_entries/tagsEntriesResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
@@ -16,42 +15,18 @@ describe('Tag Search Menu Behavior', () => {
     mockTags.respond(tagsResponse, {fetchResponse: false});
     mockTagsEntries.respond(tagsEntriesResponse, {fetchResponse: false});
     await BasePage.open('');
-    const tags = await BasePage.tags;
-    expect(tags.length).toEqual(2);
-    const tagSearch = await BasePage.tagSearch;
-    expect(tagSearch).toBeExisting();
-    expect(tagSearch).toBeDisplayed();
-    const isFocused = await tagSearch.isFocused();
-    assert.strictEqual(isFocused, true);
-
+    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tagSearch).toBeExisting();
+    await expect(BasePage.tagSearch).toBeDisplayed();
+    await expect(BasePage.tagSearch).toBeFocused();
     await browser.keys(tagsResponse.data[1].attributes.name);
-    await browser.waitUntil(
-      async () => {
-        const tags = await BasePage.tags;
-        return tags.length === 1;
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tag list to be filtered by search.',
-      }
-    );
-    assert.strictEqual(
-      await tagSearch.getValue(),
+    await expect(BasePage.tags).toBeElementsArrayOfSize(1);
+    await expect(BasePage.tagSearch).toHaveValue(
       tagsResponse.data[1].attributes.name
     );
 
     await browser.keys('Escape');
-    await browser.waitUntil(
-      async () => {
-        const tags = await BasePage.tags;
-        return tags.length === 2;
-      },
-      {
-        timeout: 30000,
-        timeoutMsg:
-          'expected tag list to be unfiltered by pressing escape key.',
-      }
-    );
-    assert.strictEqual(await tagSearch.getValue(), '');
+    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tagSearch).toHaveValue('');
   });
 });

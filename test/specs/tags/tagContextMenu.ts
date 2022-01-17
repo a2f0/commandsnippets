@@ -21,51 +21,18 @@ describe('Tag Context Menu Behavior', () => {
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
     await expect(BasePage.tagContextMenu1).toBeExisting();
-    const tag1 = await BasePage.tag1;
-    expect(tag1).toBeExisting();
-    expect(tag1).toBeDisplayed();
-    const tag2 = await BasePage.tag2;
-    expect(tag2).toBeExisting();
-    expect(tag2).toBeDisplayed();
-    const tags = await BasePage.tags;
-    const tagContextMenu1 = await BasePage.tagContextMenu1;
-    expect(tags.length).toEqual(2);
-
-    // don't bust the cache
+    await expect(BasePage.tag1).toBeExisting();
+    await expect(BasePage.tag1).toBeDisplayed();
+    await expect(BasePage.tag2).toBeExisting();
+    await expect(BasePage.tag2).toBeDisplayed();
+    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
     mockTags.respond(tagsResponseEmpty, {fetchResponse: false});
     mockTagsEntries.respond(tagsEntriesResponseEmpty, {fetchResponse: false});
-
-    let tagContextVisibility = await tagContextMenu1.getCSSProperty(
-      'visibility'
-    );
-    assert.strictEqual(tagContextVisibility.value, 'hidden');
-
-    tag1.click({button: 'right'});
-    await tagContextMenu1.waitUntil(
-      async () => {
-        tagContextVisibility = await tagContextMenu1.getCSSProperty(
-          'visibility'
-        );
-        return tagContextVisibility.value === 'visible';
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tag context to be visible after 3s.',
-      }
-    );
-
+    await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
+    await expect(BasePage.tag1).toBeClickable();
+    await BasePage.tag1.click({button: 'right'});
+    await expect(BasePage.tagContextMenu1).toBeDisplayed();
     await browser.keys('Escape');
-    await tagContextMenu1.waitUntil(
-      async () => {
-        tagContextVisibility = await tagContextMenu1.getCSSProperty(
-          'visibility'
-        );
-        return tagContextVisibility.value === 'hidden';
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tag context to be visible after 3s.',
-      }
-    );
+    await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
   });
 });

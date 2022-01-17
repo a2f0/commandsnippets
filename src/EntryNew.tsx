@@ -37,9 +37,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   };
 
   useEffect(() => {
-    appConfig.setAppMode(appMode.entryEditor);
-
     return () => {
+      appConfig.setActiveEntryEditField(activeEntryEditField.subject);
       appConfig.setAppMode(appMode.entriesList);
     };
   }, []);

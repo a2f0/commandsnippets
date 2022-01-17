@@ -19,25 +19,23 @@ describe('Tag Main Menu Behavior', () => {
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
     await expect(BasePage.tagContextMenu1).toBeExisting();
-    const tag1 = await BasePage.tag1;
-    expect(tag1).toBeExisting();
-    expect(tag1).toBeDisplayed();
-    const tag2 = await BasePage.tag2;
-    expect(tag2).toBeExisting();
-    expect(tag2).toBeDisplayed();
-    let tags = await BasePage.tags;
-    expect(tags.length).toEqual(2);
-    const tagsMenu = await BasePage.tagsMenu;
-    expect(tagsMenu).toBeExisting();
-    expect(tagsMenu).toBeDisplayed();
-    const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
-    assert.strictEqual(tagsMenuVisibility.value, 'hidden');
-    const tagList = await BasePage.tagList;
-    expect(tagList).toBeExisting();
-    expect(tagList).toBeDisplayed();
+    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tag1).toBeExisting();
+    await expect(BasePage.tag1).toBeDisplayed();
+    await expect(BasePage.tag2).toBeExisting();
+    await expect(BasePage.tag2).toBeDisplayed();
 
-    // Make sure the first tag is selected
-    expect(tags.length).toEqual(2);
+    await expect(BasePage.tagsMenu).toBeExisting();
+    await expect(BasePage.tagsMenu).not.toBeDisplayed();
+
+    await expect(BasePage.tagList).toBeExisting();
+    await expect(BasePage.tagList).toBeDisplayed();
+
+    // // Make sure the first tag is selected
+    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    // https://webdriver.io/docs/autowait/#limitations
+
+    let tags = await BasePage.tags;
     let wrapper = await tags[0].$('div[id^="tagLabelWrapper-"]');
     let wrapperID = await wrapper.getAttribute('id');
     assert.strictEqual(wrapperID, 'tagLabelWrapper-1');
@@ -45,15 +43,9 @@ describe('Tag Main Menu Behavior', () => {
     assert.strictEqual(backgroundColor.value, 'rgba(72,72,72,1)');
 
     // check the initial browser url
-    await browser.waitUntil(
-      async () => {
-        const url = await browser.getUrl();
-        return url === 'http://localhost:8081/test/test';
-      },
-      {
-        timeout: 5000,
-        timeoutMsg: 'expected browser url to be different',
-      }
+    assert.strictEqual(
+      await browser.getUrl(),
+      'http://localhost:8081/test/test'
     );
 
     // initial state of order by order
@@ -70,37 +62,20 @@ describe('Tag Main Menu Behavior', () => {
     );
 
     // click the tags menu button and make sure the menu becomes visible
-    const tagsMenuButton = await BasePage.tagsMenuButton;
-    expect(tagsMenuButton).toBeExisting();
-    expect(tagsMenuButton).toBeDisplayed();
-    await tagsMenuButton.click({button: 'left'});
-    await tagsMenu.waitUntil(
-      async () => {
-        const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
-        return tagsMenuVisibility.value === 'visible';
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tag menu to be visible after 3s.',
-      }
-    );
+    await expect(BasePage.tagsMenuButton).toBeExisting();
+    await expect(BasePage.tagsMenuButton).toBeDisplayed();
+    await expect(BasePage.tagsMenuButton).toBeClickable();
+    await expect(BasePage.tagsMenu).not.toBeDisplayed();
+    await BasePage.tagsMenuButton.click({button: 'left'});
+    await expect(BasePage.tagsMenu).toBeDisplayed();
 
     // click the sort by date create ascending and make sure the menu disappears
-    const tagsMenuSortDateCreatedAscending =
-      await BasePage.tagsMenuSortDateCreatedAscending;
-    expect(tagsMenuSortDateCreatedAscending).toBeExisting();
-    expect(tagsMenuSortDateCreatedAscending).toBeDisplayed();
-    await tagsMenuSortDateCreatedAscending.click({button: 'left'});
-    await tagsMenu.waitUntil(
-      async () => {
-        const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
-        return tagsMenuVisibility.value === 'hidden';
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tag menu to be hidden after 3s.',
-      }
-    );
+
+    await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeExisting();
+    await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeDisplayed();
+    await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeClickable();
+    await BasePage.tagsMenuSortDateCreatedAscending.click({button: 'left'});
+    await expect(BasePage.tagsMenu).not.toBeDisplayed();
 
     // make sure the oldest date is on top
     await browser.waitUntil(
@@ -117,34 +92,17 @@ describe('Tag Main Menu Behavior', () => {
     );
 
     // click the tags menu button and make sure the menu becomes visible
-    await tagsMenuButton.click({button: 'left'});
-    await tagsMenu.waitUntil(
-      async () => {
-        const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
-        return tagsMenuVisibility.value === 'visible';
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tag menu to be visible after 3s.',
-      }
-    );
+    await expect(BasePage.tagsMenuButton).toBeClickable();
+    await expect(BasePage.tagsMenu).not.toBeDisplayed();
+    await BasePage.tagsMenuButton.click({button: 'left'});
+    await expect(BasePage.tagsMenu).toBeDisplayed();
 
     // click the sort by date create descending and make sure the menu disappears
-    const tagsMenuSortDateCreatedDescending =
-      await BasePage.tagsMenuSortDateCreatedDescending;
-    expect(tagsMenuSortDateCreatedDescending).toBeExisting();
-    expect(tagsMenuSortDateCreatedDescending).toBeDisplayed();
-    tagsMenuSortDateCreatedDescending.click({button: 'left'});
-    await tagsMenu.waitUntil(
-      async () => {
-        const tagsMenuVisibility = await tagsMenu.getCSSProperty('visibility');
-        return tagsMenuVisibility.value === 'hidden';
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tag menu to be hidden after 3s.',
-      }
-    );
+    await expect(BasePage.tagsMenuSortDateCreatedDescending).toBeExisting();
+    await expect(BasePage.tagsMenuSortDateCreatedDescending).toBeDisplayed();
+    await expect(BasePage.tagsMenuSortDateCreatedDescending).toBeClickable();
+    BasePage.tagsMenuSortDateCreatedDescending.click({button: 'left'});
+    await expect(BasePage.tagsMenu).not.toBeDisplayed();
 
     // make sure the oldest date is on bottom now
     await browser.waitUntil(
@@ -176,7 +134,9 @@ describe('Tag Main Menu Behavior', () => {
       }
     );
 
-    const url = await browser.getUrl();
-    assert.strictEqual(url, 'http://localhost:8081/test/test');
+    assert.strictEqual(
+      await browser.getUrl(),
+      'http://localhost:8081/test/test'
+    );
   });
 });

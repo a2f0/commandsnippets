@@ -16,43 +16,14 @@ describe('Tag List Context Menu Behavior', () => {
     mockTags.respond(tagsResponseEmpty, {fetchResponse: false});
     mockTagsEntries.respond(tagsEntriesResponseEmpty, {fetchResponse: false});
     await BasePage.open('');
+    await expect(BasePage.tagListContextMenu).toBeExisting();
+    await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
-    await expect(BasePage.tagListContextMenu).toBeExisting();
-
-    const tagListContextMenu = await BasePage.tagListContextMenu;
-    let tagListContextMenuVisibility = await tagListContextMenu.getCSSProperty(
-      'visibility'
-    );
-    assert.strictEqual(tagListContextMenuVisibility.value, 'hidden');
-
-    const tagList = await BasePage.tagList;
-    tagList.click({button: 'right'});
-    await tagListContextMenu.waitUntil(
-      async () => {
-        tagListContextMenuVisibility = await tagListContextMenu.getCSSProperty(
-          'visibility'
-        );
-        return tagListContextMenuVisibility.value === 'visible';
-      },
-      {
-        timeout: 1000,
-        timeoutMsg: 'expected tag list context menu to be visible after 1s.',
-      }
-    );
-
+    await expect(BasePage.tagList).toBeClickable();
+    await BasePage.tagList.click({button: 'right'});
+    await expect(BasePage.tagListContextMenu).toBeDisplayed();
     await browser.keys('Escape');
-    await tagListContextMenu.waitUntil(
-      async () => {
-        tagListContextMenuVisibility = await tagListContextMenu.getCSSProperty(
-          'visibility'
-        );
-        return tagListContextMenuVisibility.value === 'hidden';
-      },
-      {
-        timeout: 1000,
-        timeoutMsg: 'expected tag list context menu to be hidden after 1s',
-      }
-    );
+    await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
   });
 });

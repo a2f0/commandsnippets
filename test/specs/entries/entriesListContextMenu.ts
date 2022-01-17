@@ -59,55 +59,33 @@ describe('Entry Main Menu Behavior', () => {
     await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
 
     await expect(BasePage.entryNewBottom).toBeDisplayed();
-    await browser.waitUntil(
-      async () => {
-        return (
-          (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
-            .value === 'visible'
-        );
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected entryNewBottom to be visible after 3s.',
-      }
-    );
-    assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
-    await expect(BasePage.entryNewBottomBody).toBeExisting();
-    await expect(BasePage.entryNewBottomBody).toBeDisplayed();
+
+    await expect(BasePage.entryNewBottomSubject).toBeFocused();
+    await expect(BasePage.entryNewBottomBody).toBeClickable();
     await BasePage.entryNewBottomBody.click({button: 'left'});
 
-    await BasePage.entryNewBottomBody.waitUntil(
-      async () => {
-        return (await BasePage.entryNewBottomBody.isFocused()) === true;
-      },
-      {
-        timeout: 3000,
-        timeoutMsg: 'expected body to be focused after 3s.',
-      }
-    );
+    await expect(BasePage.entryNewBottomBody).toBeFocused();
 
     await browser.keys('Body Line 1');
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
 
-    assert.strictEqual(
-      await BasePage.entryNewBottomBody.getValue(),
+    await expect(BasePage.entryNewBottomBody).toHaveValue(
       'Body Line 1\nBody Line 2'
     );
 
     await BasePage.entryNewBottomSubject.click({button: 'left'});
-    assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
 
+    await expect(BasePage.entryNewBottomSubject).toBeFocused();
     await browser.keys('Subject');
-    assert.strictEqual(
-      await BasePage.entryNewBottomSubject.getValue(),
-      'Subject'
-    );
+    await expect(BasePage.entryNewBottomSubject).toHaveValue('Subject');
 
     await expect(BasePage.entryNewBottom).toBeExisting();
+    await expect(BasePage.entryNewBottomCancel).toBeClickable();
     await BasePage.entryNewBottomCancel.click({button: 'left'});
     await expect(BasePage.entryNewBottom).not.toBeExisting();
 
+    await expect(BasePage.tagsEntriesList).toBeClickable();
     await BasePage.tagsEntriesList.click({button: 'right'});
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
@@ -116,106 +94,67 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewBottom).toBeExisting();
     await expect(BasePage.entryNewBottom).toBeDisplayed();
 
-    await browser.waitUntil(
-      async () => {
-        return (
-          (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
-            .value === 'visible'
-        );
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected entryNewBottom to be visible after 3s.',
-      }
-    );
-    assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
-    assert.strictEqual(await BasePage.entryNewBottomSubject.getValue(), '');
+    await expect(BasePage.entryNewBottomSubject).toBeFocused();
+
+    await expect(BasePage.entryNewBottomSubject).toHaveValue('');
+
     await browser.keys('Subject');
-    assert.strictEqual(
-      await BasePage.entryNewBottomSubject.getValue(),
-      'Subject'
-    );
+    await expect(BasePage.entryNewBottomSubject).toHaveValue('Subject');
     await expect(BasePage.entryNewBottomBody).toBeDisplayed();
+    await expect(BasePage.entryNewBottomBody).toBeClickable();
     await BasePage.entryNewBottomBody.click({button: 'left'});
-    assert.strictEqual(await BasePage.entryNewBottomBody.isFocused(), true);
-    assert.strictEqual(await BasePage.entryNewBottomBody.getValue(), '');
+
+    await expect(BasePage.entryNewBottomBody).toBeFocused();
+    await expect(BasePage.entryNewBottomBody).toHaveValue('');
     await browser.keys('Body Line 1');
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
-    assert.strictEqual(
-      await BasePage.entryNewBottomBody.getValue(),
+
+    await expect(BasePage.entryNewBottomBody).toHaveValue(
       'Body Line 1\nBody Line 2'
     );
-    assert.strictEqual(await BasePage.tagsEntries.length, 0);
-    await BasePage.entryNewBottomSave.click({button: 'left'});
-    assert.strictEqual(await BasePage.tagsEntries.length, 1);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(0);
 
-    assert.strictEqual(
-      (
-        await (
-          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
-        ).getCSSProperty('background-color')
-      ).value,
-      'rgba(72,72,72,1)'
-    );
+    await BasePage.entryNewBottomSave.click({button: 'left'});
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
+
+    const newEntry = $(`#entryBodyOuterDiv${entryPostResponse.data.id}`);
+
+    await expect(newEntry).toExist();
+    await expect(newEntry).toBeDisplayed();
+
     await browser.keys('Tab');
     assert.strictEqual(
-      (
-        await (
-          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
-        ).getCSSProperty('background-color')
-      ).value,
+      (await (await newEntry).getCSSProperty('background-color')).value,
       'rgba(15,15,15,1)'
     );
     await browser.keys('Tab');
     assert.strictEqual(
-      (
-        await (
-          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
-        ).getCSSProperty('background-color')
-      ).value,
+      (await (await newEntry).getCSSProperty('background-color')).value,
       'rgba(72,72,72,1)'
     );
     await browser.keys('Left arrow');
     assert.strictEqual(
-      (
-        await (
-          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
-        ).getCSSProperty('background-color')
-      ).value,
+      (await (await newEntry).getCSSProperty('background-color')).value,
       'rgba(15,15,15,1)'
     );
     await browser.keys('Right arrow');
     assert.strictEqual(
-      (
-        await (
-          await $(`#entryBodyOuterDiv${entryPostResponse.data.id}`)
-        ).getCSSProperty('background-color')
-      ).value,
+      (await (await newEntry).getCSSProperty('background-color')).value,
       'rgba(72,72,72,1)'
     );
     // test tab-based focusing
+    await expect(BasePage.tagsEntriesList).toBeClickable();
     await BasePage.tagsEntriesList.click({button: 'right'});
 
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
 
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();
+    await expect(BasePage.entryListContextMenuNewEntry).toBeClickable();
     await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
 
     await expect(BasePage.entryNewBottom).toBeDisplayed();
-    await browser.waitUntil(
-      async () => {
-        return (
-          (await (await BasePage.entryNewBottom).getCSSProperty('visibility'))
-            .value === 'visible'
-        );
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected entryNewBottom to be visible after 3s.',
-      }
-    );
     assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
     await browser.keys('Tab');
     assert.strictEqual(await BasePage.entryNewBottomBody.isFocused(), true);
@@ -225,5 +164,27 @@ describe('Entry Main Menu Behavior', () => {
     assert.strictEqual(await BasePage.entryNewBottomCancel.isFocused(), true);
     await browser.keys('Tab');
     assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
+    await browser.keys('Tab');
+    assert.strictEqual(await BasePage.entryNewBottomBody.isFocused(), true);
+
+    // Make sure the subject is the default focus on the component load
+    // Note: the state of focus was the body up until this point.
+    await expect(BasePage.entryNewBottomCancel).toBeClickable();
+    await BasePage.entryNewBottomCancel.click({button: 'left'});
+    await expect(BasePage.entryNewBottom).not.toBeExisting();
+    await BasePage.tagsEntriesList.click({button: 'right'});
+    await expect(BasePage.entryListContextMenu).toBeDisplayed();
+    await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
+    await expect(BasePage.entryNewBottom).not.toBeDisplayed();
+    await expect(BasePage.entryListContextMenuNewEntry).toBeClickable();
+    await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
+    await expect(BasePage.entryNewBottom).toBeDisplayed();
+    await expect(BasePage.entryNewBottomSubject).toBeFocused();
+    await expect(BasePage.entryNewBottomBody).toBeDisplayed();
+    await expect(BasePage.entryNewBottomBody).toBeClickable();
+    await BasePage.entryNewBottomBody.click({button: 'left'});
+    await expect(BasePage.entryNewBottomBody).toBeFocused();
+    await browser.keys('Tab');
+    await expect(BasePage.entryNewBottomSave).toBeFocused();
   });
 });

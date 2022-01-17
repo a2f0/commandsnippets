@@ -33,11 +33,8 @@ const InputEntrySubject = ({
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    appConfig.setActiveEntryEditField(activeEntryEditField.subject);
   };
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, [inputRef.current]);
 
   useEffect(() => {
     if (appConfig.activeEntryEditField === activeEntryEditField.subject) {

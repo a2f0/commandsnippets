@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import tags from '../../mocks/tags/tagsResponse';
 import textEntriesResponse from '../../mocks/entries/entriesResponse';
 
@@ -19,50 +18,11 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
-
-    assert.strictEqual(
-      (
-        await (
-          await BasePage.tagsEntriesContextMenu1
-        ).getCSSProperty('visibility')
-      ).value,
-      'hidden'
-    );
-
+    await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
+    await expect(BasePage.tagsEntries1).toBeClickable();
     await BasePage.tagsEntries1.click({button: 'right'});
-
-    await browser.waitUntil(
-      async () => {
-        return (
-          (
-            await (
-              await BasePage.tagsEntriesContextMenu1
-            ).getCSSProperty('visibility')
-          ).value === 'visible'
-        );
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tagsEntries context to be visible after 3s.',
-      }
-    );
-
+    await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await browser.keys('Escape');
-
-    await browser.waitUntil(
-      async () => {
-        return (
-          (
-            await (
-              await BasePage.tagsEntriesContextMenu1
-            ).getCSSProperty('visibility')
-          ).value === 'hidden'
-        );
-      },
-      {
-        timeout: 30000,
-        timeoutMsg: 'expected tagsEntries context to be visible after 3s.',
-      }
-    );
+    await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
   });
 });

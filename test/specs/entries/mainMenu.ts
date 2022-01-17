@@ -17,33 +17,15 @@ describe('Entry Main Menu Behavior', () => {
     mockTags.respond(tagsResponse, {fetchResponse: false});
     mostEntriesResponse.respond(entriesResponse, {fetchResponse: false});
     await BasePage.open('');
-
-    expect(await BasePage.entriesMenu).toBeExisting();
-    expect(await BasePage.entriesMenu).toBeDisplayed();
-
-    assert.strictEqual(
-      (await (await BasePage.entriesMenu).getCSSProperty('visibility')).value,
-      'hidden'
-    );
-
+    await expect(BasePage.entriesMenu).toBeExisting();
+    await expect(BasePage.entriesMenu).not.toBeDisplayed();
+    await expect(BasePage.entriesMenuButton).toBeClickable();
     await BasePage.entriesMenuButton.click({button: 'left'});
-    assert.strictEqual(
-      (await (await BasePage.entriesMenu).getCSSProperty('visibility')).value,
-      'visible'
-    );
-
-    browser.keys('Escape');
-
-    assert.strictEqual(
-      (await (await BasePage.entriesMenu).getCSSProperty('visibility')).value,
-      'hidden'
-    );
-
+    await expect(BasePage.entriesMenu).toBeDisplayed();
+    await browser.keys('Escape');
+    await expect(BasePage.entriesMenu).not.toBeDisplayed();
     await BasePage.entriesMenuButton.click({button: 'left'});
-    assert.strictEqual(
-      (await (await BasePage.entriesMenu).getCSSProperty('visibility')).value,
-      'visible'
-    );
+    await expect(BasePage.entriesMenu).toBeDisplayed();
   });
 
   it('should having a working new entry from the file menu', async () => {
@@ -56,7 +38,6 @@ describe('Entry Main Menu Behavior', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
-    //
     const mockEntryOptionsResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
       {
@@ -86,92 +67,69 @@ describe('Entry Main Menu Behavior', () => {
     );
     await BasePage.open('');
 
-    assert.strictEqual(
-      (await (await BasePage.fileMenu).getCSSProperty('visibility')).value,
-      'hidden'
-    );
+    await expect(BasePage.fileMenu).toBeExisting();
+    await expect(BasePage.fileMenu).not.toBeDisplayed();
 
+    await expect(BasePage.fileMenuButton).toBeClickable();
     await BasePage.fileMenuButton.click({button: 'left'});
-    assert.strictEqual(
-      (await (await BasePage.fileMenu).getCSSProperty('visibility')).value,
-      'visible'
-    );
+
+    await expect(BasePage.fileMenu).toBeDisplayed();
 
     await browser.keys('Escape');
-
-    assert.strictEqual(
-      (await (await BasePage.fileMenu).getCSSProperty('visibility')).value,
-      'hidden'
-    );
-
+    await expect(BasePage.fileMenu).not.toBeDisplayed();
+    await expect(BasePage.fileMenuButton).toBeClickable();
     await BasePage.fileMenuButton.click({button: 'left'});
-    assert.strictEqual(
-      (await (await BasePage.fileMenu).getCSSProperty('visibility')).value,
-      'visible'
-    );
-
+    await expect(BasePage.fileMenu).toBeDisplayed();
     await expect(BasePage.entryNewTop).not.toBeExisting();
+    await expect(BasePage.fileMenuNewEntry).toBeClickable();
     await BasePage.fileMenuNewEntry.click({button: 'left'});
     await expect(BasePage.entryNewTop).toBeExisting();
-    assert.strictEqual(
-      (await (await BasePage.entryNewTop).getCSSProperty('visibility')).value,
-      'visible'
-    );
-    assert.strictEqual(
-      (await (await BasePage.entryNewTopSubject).getCSSProperty('visibility'))
-        .value,
-      'visible'
-    );
-    assert.strictEqual(
-      (await (await BasePage.entryNewTopBody).getCSSProperty('visibility'))
-        .value,
-      'visible'
-    );
-    assert.strictEqual(await BasePage.entryNewTopSubject.isFocused(), true);
-
+    await expect(BasePage.entryNewTop).toBeDisplayed();
+    await expect(BasePage.entryNewTopSubject).toBeFocused();
+    await expect(BasePage.entryNewTopBody).toBeClickable();
     await BasePage.entryNewTopBody.click({button: 'left'});
-    assert.strictEqual(await BasePage.entryNewTopBody.isFocused(), true);
-
+    await expect(BasePage.entryNewTopBody).toBeFocused();
     await browser.keys('Body Line 1');
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
 
-    assert.strictEqual(
-      await BasePage.entryNewTopBody.getValue(),
+    await expect(BasePage.entryNewTopBody).toHaveValue(
       'Body Line 1\nBody Line 2'
     );
-
     await BasePage.entryNewTopSubject.click({button: 'left'});
-    assert.strictEqual(await BasePage.entryNewTopSubject.isFocused(), true);
+    await expect(BasePage.entryNewTopSubject).toBeFocused();
     await browser.keys('Subject');
-    assert.strictEqual(await BasePage.entryNewTopSubject.getValue(), 'Subject');
+    await expect(BasePage.entryNewTopSubject).toHaveValue('Subject');
 
     await expect(BasePage.entryNewTop).toBeExisting();
+    await expect(BasePage.entryNewTopCancel).toBeClickable();
     await BasePage.entryNewTopCancel.click({button: 'left'});
     await expect(BasePage.entryNewTop).not.toBeExisting();
 
     // test save
     assert.strictEqual(await BasePage.tagsEntries.length, 2);
+    await expect(BasePage.fileMenuButton).toBeClickable();
     await BasePage.fileMenuButton.click({button: 'left'});
-    assert.strictEqual(
-      (await (await BasePage.fileMenu).getCSSProperty('visibility')).value,
-      'visible'
-    );
+
+    await expect(BasePage.fileMenu).toBeDisplayed();
+    await expect(BasePage.fileMenuNewEntry).toBeClickable();
     await BasePage.fileMenuNewEntry.click({button: 'left'});
     await expect(BasePage.entryNewTop).toBeExisting();
+    await expect(BasePage.entryNewTop).toBeDisplayed();
     await browser.keys('Subject');
-    assert.strictEqual(await BasePage.entryNewTopSubject.getValue(), 'Subject');
+    await expect(BasePage.entryNewTopSubject).toHaveValue('Subject');
+    await expect(BasePage.entryNewTopBody).toBeClickable();
     await BasePage.entryNewTopBody.click({button: 'left'});
-    assert.strictEqual(await BasePage.entryNewTopBody.isFocused(), true);
+    await expect(BasePage.entryNewTopBody).toBeFocused();
+
     await browser.keys('Body Line 1');
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
-    assert.strictEqual(
-      await BasePage.entryNewTopBody.getValue(),
+    await expect(BasePage.entryNewTopBody).toHaveValue(
       'Body Line 1\nBody Line 2'
     );
     await BasePage.entryNewTopSave.click({button: 'left'});
     await expect(BasePage.entryNewTop).not.toBeExisting();
-    assert.strictEqual(await BasePage.tagsEntries.length, 3);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(3);
   });
 });

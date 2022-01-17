@@ -1,4 +1,5 @@
 import * as Constants from './constants';
+import {appMode, entrySearchMethod} from './lib/shared';
 import {darkTheme, lightTheme} from './themes';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -19,7 +20,6 @@ import {WithStyles} from '@mui/styles';
 import axios from 'axios';
 import {baseHTTPURL} from './api';
 import createStyles from '@mui/styles/createStyles';
-import {entrySearchMethod} from './lib/shared';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
@@ -168,6 +168,7 @@ const MenuBar = (props: IMenuBarProps) => {
 
   const handleCreateEntry = () => {
     setFileMenuAnchorEl(null);
+    appConfig.setAppMode(appMode.entryEditor);
     appConfig.setEntryNew('textEntry-top');
   };
 

@@ -16,7 +16,7 @@ export const config: WebdriverIO.Config = {
       },
     },
   ],
-  logLevel: 'info',
+  logLevel: 'warn',
   // Stop running tests after initial failure.
   bail: 1,
   baseUrl: 'http://localhost:8081',

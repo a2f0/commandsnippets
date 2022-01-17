@@ -65,6 +65,7 @@ const InputEntryBody = ({
   const handleClick = (event: React.MouseEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    appConfig.setActiveEntryEditField(activeEntryEditField.body);
   };
 
   useEffect(() => {

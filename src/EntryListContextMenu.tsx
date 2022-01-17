@@ -4,6 +4,7 @@ import Menu from '@mui/material/Menu';
 import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
 import {WithStyles} from '@mui/styles';
+import {appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
 import withStyles from '@mui/styles/withStyles';
 
@@ -74,7 +75,10 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
     setMousePosition(initialMouse);
   };
 
-  const handleNewEntry = () => {
+  const handleNewEntry = (event: React.MouseEvent<HTMLLIElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    appConfig.setAppMode(appMode.entryEditor);
     appConfig.setEntryNew('textEntry-bottom');
     handleClose();
   };
@@ -95,11 +99,7 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
     >
       <StyledMenuItem
         id="entryListContextMenuNewEntry"
-        onClick={(event: React.MouseEvent<HTMLLIElement>) => {
-          event.preventDefault();
-          event.stopPropagation();
-          handleNewEntry();
-        }}
+        onClick={handleNewEntry}
       >
         New Entry
       </StyledMenuItem>
