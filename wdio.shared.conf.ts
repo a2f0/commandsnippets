@@ -49,5 +49,21 @@ export const config: WebdriverIO.Config = {
       name: 'LoggedIn',
       value: 'None',
     });
+    browser.addCommand(
+      'waitAndRightClick',
+      async function (this: WebdriverIO.Element) {
+        await this.waitForDisplayed();
+        await this.click({button: 'right'});
+      },
+      true
+    );
+    browser.addCommand(
+      'waitAndLeftClick',
+      async function (this: WebdriverIO.Element) {
+        await this.waitForDisplayed();
+        await this.click();
+      },
+      true
+    );
   },
 };

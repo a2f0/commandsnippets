@@ -19,8 +19,7 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
-    await expect(BasePage.tagsEntries1).toBeClickable();
-    await BasePage.tagsEntries1.click({button: 'right'});
+    await (await BasePage.tagsEntries1).waitAndRightClick();
     await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await browser.keys('Escape');
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();

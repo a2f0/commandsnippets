@@ -46,11 +46,12 @@ describe('Entry Main Menu Behavior', () => {
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.entryListContextMenu).not.toBeDisplayed();
-    await BasePage.tagsEntriesList.click({button: 'right'});
+    await (await BasePage.tagsEntriesList).waitAndRightClick();
+
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await browser.keys('Escape');
     await expect(BasePage.entryListContextMenu).not.toBeDisplayed();
-    await BasePage.tagsEntriesList.click({button: 'right'});
+    await (await BasePage.tagsEntriesList).waitAndRightClick();
 
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
@@ -84,9 +85,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewBottomCancel).toBeClickable();
     await BasePage.entryNewBottomCancel.click({button: 'left'});
     await expect(BasePage.entryNewBottom).not.toBeExisting();
-
-    await expect(BasePage.tagsEntriesList).toBeClickable();
-    await BasePage.tagsEntriesList.click({button: 'right'});
+    await (await BasePage.tagsEntriesList).waitAndRightClick();
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();
@@ -144,8 +143,7 @@ describe('Entry Main Menu Behavior', () => {
       'rgba(72,72,72,1)'
     );
     // test tab-based focusing
-    await expect(BasePage.tagsEntriesList).toBeClickable();
-    await BasePage.tagsEntriesList.click({button: 'right'});
+    await (await BasePage.tagsEntriesList).waitAndRightClick();
 
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
@@ -172,7 +170,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewBottomCancel).toBeClickable();
     await BasePage.entryNewBottomCancel.click({button: 'left'});
     await expect(BasePage.entryNewBottom).not.toBeExisting();
-    await BasePage.tagsEntriesList.click({button: 'right'});
+    await (await BasePage.tagsEntriesList).waitAndRightClick();
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();

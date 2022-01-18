@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import tagsEntriesResponse from '../../mocks/tags_entries/tagsEntriesResponse';
 import tagsEntriesResponseEmpty from '../../mocks/tags_entries/tagsEntriesResponseEmpty';
 import tagsResponse from '../../mocks/tags/tagsResponse';
@@ -29,8 +28,7 @@ describe('Tag Context Menu Behavior', () => {
     mockTags.respond(tagsResponseEmpty, {fetchResponse: false});
     mockTagsEntries.respond(tagsEntriesResponseEmpty, {fetchResponse: false});
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
-    await expect(BasePage.tag1).toBeClickable();
-    await BasePage.tag1.click({button: 'right'});
+    await (await BasePage.tag1).waitAndRightClick();
     await expect(BasePage.tagContextMenu1).toBeDisplayed();
     await browser.keys('Escape');
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();

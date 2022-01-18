@@ -95,7 +95,7 @@ const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
             : undefined
         }
       >
-        <StyledMenuItem id="tag-list-context-menu-new" onClick={handleNewTag}>
+        <StyledMenuItem id="tagListContextMenuNew" onClick={handleNewTag}>
           New Tag
         </StyledMenuItem>
       </StyledMenu>
