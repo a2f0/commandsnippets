@@ -19,12 +19,11 @@ describe('Entry Main Menu Behavior', () => {
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await expect(BasePage.entriesMenuButton).toBeClickable();
-    await BasePage.entriesMenuButton.click({button: 'left'});
+    await (await BasePage.entriesMenuButton).waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
     await browser.keys('Escape');
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await BasePage.entriesMenuButton.click({button: 'left'});
+    await (await BasePage.entriesMenuButton).waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
   });
 
@@ -69,25 +68,20 @@ describe('Entry Main Menu Behavior', () => {
 
     await expect(BasePage.fileMenu).toBeExisting();
     await expect(BasePage.fileMenu).not.toBeDisplayed();
-
-    await expect(BasePage.fileMenuButton).toBeClickable();
-    await BasePage.fileMenuButton.click({button: 'left'});
+    await (await BasePage.fileMenuButton).waitAndLeftClick();
 
     await expect(BasePage.fileMenu).toBeDisplayed();
 
     await browser.keys('Escape');
     await expect(BasePage.fileMenu).not.toBeDisplayed();
-    await expect(BasePage.fileMenuButton).toBeClickable();
-    await BasePage.fileMenuButton.click({button: 'left'});
+    await (await BasePage.fileMenuButton).waitAndLeftClick();
     await expect(BasePage.fileMenu).toBeDisplayed();
     await expect(BasePage.entryNewTop).not.toBeExisting();
-    await expect(BasePage.fileMenuNewEntry).toBeClickable();
-    await BasePage.fileMenuNewEntry.click({button: 'left'});
+    await (await BasePage.fileMenuNewEntry).waitAndLeftClick();
     await expect(BasePage.entryNewTop).toBeExisting();
     await expect(BasePage.entryNewTop).toBeDisplayed();
     await expect(BasePage.entryNewTopSubject).toBeFocused();
-    await expect(BasePage.entryNewTopBody).toBeClickable();
-    await BasePage.entryNewTopBody.click({button: 'left'});
+    await (await BasePage.entryNewTopBody).waitAndLeftClick();
     await expect(BasePage.entryNewTopBody).toBeFocused();
     await browser.keys('Body Line 1');
     await browser.keys('Enter');
@@ -96,30 +90,26 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewTopBody).toHaveValue(
       'Body Line 1\nBody Line 2'
     );
-    await BasePage.entryNewTopSubject.click({button: 'left'});
+    await (await BasePage.entryNewTopSubject).waitAndLeftClick();
     await expect(BasePage.entryNewTopSubject).toBeFocused();
     await browser.keys('Subject');
     await expect(BasePage.entryNewTopSubject).toHaveValue('Subject');
 
     await expect(BasePage.entryNewTop).toBeExisting();
-    await expect(BasePage.entryNewTopCancel).toBeClickable();
-    await BasePage.entryNewTopCancel.click({button: 'left'});
+    await (await BasePage.entryNewTopCancel).waitAndLeftClick();
     await expect(BasePage.entryNewTop).not.toBeExisting();
 
     // test save
     assert.strictEqual(await BasePage.tagsEntries.length, 2);
-    await expect(BasePage.fileMenuButton).toBeClickable();
-    await BasePage.fileMenuButton.click({button: 'left'});
+    await (await BasePage.fileMenuButton).waitAndLeftClick();
 
     await expect(BasePage.fileMenu).toBeDisplayed();
-    await expect(BasePage.fileMenuNewEntry).toBeClickable();
-    await BasePage.fileMenuNewEntry.click({button: 'left'});
+    await (await BasePage.fileMenuNewEntry).waitAndLeftClick();
     await expect(BasePage.entryNewTop).toBeExisting();
     await expect(BasePage.entryNewTop).toBeDisplayed();
     await browser.keys('Subject');
     await expect(BasePage.entryNewTopSubject).toHaveValue('Subject');
-    await expect(BasePage.entryNewTopBody).toBeClickable();
-    await BasePage.entryNewTopBody.click({button: 'left'});
+    await (await BasePage.entryNewTopBody).waitAndLeftClick();
     await expect(BasePage.entryNewTopBody).toBeFocused();
 
     await browser.keys('Body Line 1');
@@ -128,7 +118,8 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewTopBody).toHaveValue(
       'Body Line 1\nBody Line 2'
     );
-    await BasePage.entryNewTopSave.click({button: 'left'});
+    await (await BasePage.entryNewTopSave).waitAndLeftClick();
+
     await expect(BasePage.entryNewTop).not.toBeExisting();
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(3);
   });

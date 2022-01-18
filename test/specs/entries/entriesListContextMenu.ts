@@ -57,13 +57,12 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
 
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();
-    await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
+    await (await BasePage.entryListContextMenuNewEntry).waitAndLeftClick();
 
     await expect(BasePage.entryNewBottom).toBeDisplayed();
 
     await expect(BasePage.entryNewBottomSubject).toBeFocused();
-    await expect(BasePage.entryNewBottomBody).toBeClickable();
-    await BasePage.entryNewBottomBody.click({button: 'left'});
+    await (await BasePage.entryNewBottomBody).waitAndLeftClick();
 
     await expect(BasePage.entryNewBottomBody).toBeFocused();
 
@@ -75,34 +74,27 @@ describe('Entry Main Menu Behavior', () => {
       'Body Line 1\nBody Line 2'
     );
 
-    await BasePage.entryNewBottomSubject.click({button: 'left'});
-
+    await (await BasePage.entryNewBottomSubject).waitAndLeftClick();
     await expect(BasePage.entryNewBottomSubject).toBeFocused();
     await browser.keys('Subject');
     await expect(BasePage.entryNewBottomSubject).toHaveValue('Subject');
 
     await expect(BasePage.entryNewBottom).toBeExisting();
-    await expect(BasePage.entryNewBottomCancel).toBeClickable();
-    await BasePage.entryNewBottomCancel.click({button: 'left'});
+    await (await BasePage.entryNewBottomCancel).waitAndLeftClick();
     await expect(BasePage.entryNewBottom).not.toBeExisting();
     await (await BasePage.tagsEntriesList).waitAndRightClick();
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();
-    await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
+    await (await BasePage.entryListContextMenuNewEntry).waitAndLeftClick();
     await expect(BasePage.entryNewBottom).toBeExisting();
     await expect(BasePage.entryNewBottom).toBeDisplayed();
 
     await expect(BasePage.entryNewBottomSubject).toBeFocused();
-
     await expect(BasePage.entryNewBottomSubject).toHaveValue('');
-
     await browser.keys('Subject');
     await expect(BasePage.entryNewBottomSubject).toHaveValue('Subject');
-    await expect(BasePage.entryNewBottomBody).toBeDisplayed();
-    await expect(BasePage.entryNewBottomBody).toBeClickable();
-    await BasePage.entryNewBottomBody.click({button: 'left'});
-
+    await (await BasePage.entryNewBottomBody).waitAndLeftClick();
     await expect(BasePage.entryNewBottomBody).toBeFocused();
     await expect(BasePage.entryNewBottomBody).toHaveValue('');
     await browser.keys('Body Line 1');
@@ -114,7 +106,7 @@ describe('Entry Main Menu Behavior', () => {
     );
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(0);
 
-    await BasePage.entryNewBottomSave.click({button: 'left'});
+    await (await BasePage.entryNewBottomSave).waitAndLeftClick();
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
 
     const newEntry = $(`#entryBodyOuterDiv${entryPostResponse.data.id}`);
@@ -149,8 +141,8 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
 
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();
-    await expect(BasePage.entryListContextMenuNewEntry).toBeClickable();
-    await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
+
+    await (await BasePage.entryListContextMenuNewEntry).waitAndLeftClick();
 
     await expect(BasePage.entryNewBottom).toBeDisplayed();
     assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
@@ -167,20 +159,17 @@ describe('Entry Main Menu Behavior', () => {
 
     // Make sure the subject is the default focus on the component load
     // Note: the state of focus was the body up until this point.
-    await expect(BasePage.entryNewBottomCancel).toBeClickable();
-    await BasePage.entryNewBottomCancel.click({button: 'left'});
+    await (await BasePage.entryNewBottomCancel).waitAndLeftClick();
+
     await expect(BasePage.entryNewBottom).not.toBeExisting();
     await (await BasePage.tagsEntriesList).waitAndRightClick();
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();
-    await expect(BasePage.entryListContextMenuNewEntry).toBeClickable();
-    await BasePage.entryListContextMenuNewEntry.click({button: 'left'});
+    await (await BasePage.entryListContextMenuNewEntry).waitAndLeftClick();
     await expect(BasePage.entryNewBottom).toBeDisplayed();
     await expect(BasePage.entryNewBottomSubject).toBeFocused();
-    await expect(BasePage.entryNewBottomBody).toBeDisplayed();
-    await expect(BasePage.entryNewBottomBody).toBeClickable();
-    await BasePage.entryNewBottomBody.click({button: 'left'});
+    await (await BasePage.entryNewBottomBody).waitAndLeftClick();
     await expect(BasePage.entryNewBottomBody).toBeFocused();
     await browser.keys('Tab');
     await expect(BasePage.entryNewBottomSave).toBeFocused();
