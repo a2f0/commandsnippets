@@ -1,7 +1,12 @@
+import configparser
+
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
+
+config = configparser.RawConfigParser()
+config.read("setup.cfg")
 
 
 class TestUsersApi(BaseTestCase):
@@ -32,5 +37,8 @@ class TestUsersApi(BaseTestCase):
         self.auth_user_api_client = APIClient()
         response = self.auth_user_api_client.get("/api/v1/user/", format="json")
         json_response = response.json()
+        self.assertEqual(
+            response.headers["API-Version"], config["bumpversion"]["current_version"]
+        )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(len(json_response["errors"]), 0)

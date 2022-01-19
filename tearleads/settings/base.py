@@ -1,9 +1,14 @@
+import configparser
 import os
 
 import environ
 import rest_framework_json_api
 
 env = environ.Env()
+
+config = configparser.RawConfigParser()
+config.read("setup.cfg")
+VERSION = config["bumpversion"]["current_version"]
 
 TEARLEADS_SETTINGS_MODULE = "base"
 
@@ -46,6 +51,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "tearleads.core.middleware.ApiVersion",
 ]
 
 ROOT_URLCONF = "tearleads.urls"
