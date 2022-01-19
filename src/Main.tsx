@@ -36,6 +36,7 @@ const Main = (props: IMainProps) => {
       .find(row => row.startsWith('LoggedIn='));
     if (loggedIn === undefined) {
       if (appConfig.loggedInUser !== null) {
+        console.warn('Cookie logout occurred.');
         appConfig.setLoggedInUser(null);
       }
     }
