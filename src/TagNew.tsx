@@ -12,9 +12,10 @@ import {useAppContext} from './AppContext';
 
 interface IProps {
   handleNewParent: (object: ITagJsonApi) => void;
+  id: string;
 }
 
-const TagNew = ({handleNewParent}: IProps) => {
+const TagNew = ({handleNewParent, id}: IProps) => {
   const [tagName, setTagName] = useState<string>('');
   const appConfig = useAppContext();
 
@@ -61,7 +62,7 @@ const TagNew = ({handleNewParent}: IProps) => {
   };
 
   return (
-    <StyledTagFormContainer>
+    <StyledTagFormContainer id={id}>
       <StyledTextFieldTags
         value={tagName}
         id="tagNewTextField"

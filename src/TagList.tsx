@@ -284,7 +284,9 @@ const TagList = () => {
         onContextMenu={handleContextClick}
       >
         <div className={classes.ltr}>
-          {appConfig.tagNew === 'top' && <TagNew handleNewParent={handleNew} />}
+          {appConfig.tagNew === 'top' && (
+            <TagNew id="tagNewTop" handleNewParent={handleNew} />
+          )}
           {tags.map((object: ITagJsonApi, i) => {
             return (
               <div key={object.id} ref={elRefs[i]}>
@@ -301,7 +303,7 @@ const TagList = () => {
             );
           })}
           {appConfig.tagNew === 'bottom' && (
-            <TagNew handleNewParent={handleNew} />
+            <TagNew id="tagNewBottom" handleNewParent={handleNew} />
           )}
         </div>
         {appConfig.loggedInUser && <>{contextMenu}</>}

@@ -67,10 +67,10 @@ const TagEdit = ({
   };
 
   return (
-    <StyledTagFormContainer>
+    <StyledTagFormContainer id={`tagEdit${object.id}`}>
       <StyledTextFieldTags
+        id={`tagEditTagName${object.id}`}
         value={tagName}
-        id={`tagEdit-${object.id}`}
         onChange={e => {
           handleTagNameChange(e);
         }}
@@ -78,7 +78,7 @@ const TagEdit = ({
       <Grid container spacing={0}>
         <Grid item xs={6} sx={{paddingRight: '1px'}}>
           <StyledTagButton
-            id={`tagEditSave-${object.id}`}
+            id={`tagEditSave${object.id}`}
             onClick={() => {
               handleSave();
             }}
@@ -88,7 +88,7 @@ const TagEdit = ({
         </Grid>
         <Grid item xs={6} sx={{paddingLeft: '1px'}}>
           <StyledTagButton
-            id={`tagEditCancel-${object.id}`}
+            id={`tagEditCancel${object.id}`}
             onClick={() => {
               handleCancel();
             }}

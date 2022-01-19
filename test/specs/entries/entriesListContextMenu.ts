@@ -145,17 +145,17 @@ describe('Entry Main Menu Behavior', () => {
     await (await BasePage.entryListContextMenuNewEntry).waitAndLeftClick();
 
     await expect(BasePage.entryNewBottom).toBeDisplayed();
-    assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
+    await expect(BasePage.entryNewBottomSubject).toBeFocused();
     await browser.keys('Tab');
-    assert.strictEqual(await BasePage.entryNewBottomBody.isFocused(), true);
+    await expect(BasePage.entryNewBottomBody).toBeFocused();
     await browser.keys('Tab');
-    assert.strictEqual(await BasePage.entryNewBottomSave.isFocused(), true);
+    await expect(BasePage.entryNewBottomSave).toBeFocused();
     await browser.keys('Tab');
-    assert.strictEqual(await BasePage.entryNewBottomCancel.isFocused(), true);
+    await expect(BasePage.entryNewBottomCancel).toBeFocused();
     await browser.keys('Tab');
-    assert.strictEqual(await BasePage.entryNewBottomSubject.isFocused(), true);
+    await expect(BasePage.entryNewBottomSubject).toBeFocused();
     await browser.keys('Tab');
-    assert.strictEqual(await BasePage.entryNewBottomBody.isFocused(), true);
+    await expect(BasePage.entryNewBottomBody).toBeFocused();
 
     // Make sure the subject is the default focus on the component load
     // Note: the state of focus was the body up until this point.

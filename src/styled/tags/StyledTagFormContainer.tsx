@@ -11,10 +11,15 @@ const useStyles = makeStyles({
 
 interface IProps {
   children?: React.ReactNode;
+  id: string;
 }
 
-const StyledTagFormContainer = ({children}: IProps) => {
+const StyledTagFormContainer = ({children, id}: IProps) => {
   const classes = useStyles();
-  return <div className={classes.container}>{children}</div>;
+  return (
+    <div id={id} className={classes.container}>
+      {children}
+    </div>
+  );
 };
 export default React.memo(StyledTagFormContainer);

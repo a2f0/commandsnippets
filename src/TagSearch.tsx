@@ -4,7 +4,7 @@ import TagSearchField from './styled/tags/TagSearchField';
 
 const TagSearch = () => {
   return (
-    <StyledTagFormContainer>
+    <StyledTagFormContainer id="tagSearchContainer">
       <TagSearchField />
     </StyledTagFormContainer>
   );

@@ -133,7 +133,10 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
 
   const keyListener = useCallback(event => {
     const trappedKeyCodes = [keyCode.Tab];
-    if (trappedKeyCodes.includes(event.keyCode)) {
+    if (
+      trappedKeyCodes.includes(event.keyCode) &&
+      appConfig.appMode === appMode.entryEditor
+    ) {
       if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
         appConfig.setActiveEntryEditField(activeEntryEditField.body);
       } else if (appConfig.activeEntryEditField === activeEntryEditField.body) {
