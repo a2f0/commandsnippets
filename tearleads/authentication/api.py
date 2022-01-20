@@ -35,7 +35,14 @@ class CustomObtainAuthToken(ObtainAuthToken):
             samesite="strict",
             max_age=2419200,
         )
-        response.set_cookie("LoggedIn", None, httponly=False)
+        response.set_cookie(
+            "LoggedIn",
+            None,
+            httponly=False,
+            max_age=2419200,
+            samesite="strict",
+            domain=settings.COOKIE_DOMAIN,
+        ),
         return response
 
 
@@ -86,8 +93,13 @@ class GithubLogin(APIView):
                                 max_age=2419200,
                             )
                             response.set_cookie(
-                                "LoggedIn", None, httponly=False, max_age=2419200
-                            )
+                                "LoggedIn",
+                                None,
+                                httponly=False,
+                                max_age=2419200,
+                                samesite="strict",
+                                domain=settings.COOKIE_DOMAIN,
+                            ),
                             return response
 
         return Response({}, status=status.HTTP_401_UNAUTHORIZED)
@@ -123,7 +135,14 @@ class GoogleLogin(APIView):
                     samesite="strict",
                     max_age=2419200,
                 )
-                response.set_cookie("LoggedIn", None, httponly=False, max_age=2419200)
+                response.set_cookie(
+                    "LoggedIn",
+                    None,
+                    httponly=False,
+                    max_age=2419200,
+                    samesite="strict",
+                    domain=settings.COOKIE_DOMAIN,
+                ),
                 return response
 
         return Response({}, status=status.HTTP_401_UNAUTHORIZED)

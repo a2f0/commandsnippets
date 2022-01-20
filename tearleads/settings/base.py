@@ -16,6 +16,7 @@ TEARLEADS_SETTINGS_MODULE = "base"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = env("DJANGO_SECRET_KEY")
+COOKIE_DOMAIN = env("COOKIE_DOMAIN")
 
 DEBUG = True
 
