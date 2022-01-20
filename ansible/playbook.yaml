@@ -3,12 +3,16 @@
   become_user: root
   tasks:
     - include: tasks/install-packages-ubuntu-20.yaml
-    - include: tasks/install-microk8s.yaml
+    - include: tasks/install-docker.yaml
+   #- include: tasks/install-microk8s.yaml
+    - include: tasks/authorized_keys.yaml
 
 - hosts: staging
   tasks:
     - include: tasks/copy-deploy-keys.yaml
-    - include: tasks/authorized_keys.yaml
+    - include: tasks/clone-repos.yaml
+    - include: tasks/schedule-api-backup.yaml
+
 
 - hosts: production
   become: yes
