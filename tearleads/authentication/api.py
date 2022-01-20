@@ -33,6 +33,7 @@ class CustomObtainAuthToken(ObtainAuthToken):
             httponly=True,
             secure=True,
             samesite="strict",
+            domain=settings.COOKIE_DOMAIN,
             max_age=2419200,
         )
         response.set_cookie(
@@ -90,6 +91,7 @@ class GithubLogin(APIView):
                                 httponly=True,
                                 secure=True,
                                 samesite="strict",
+                                domain=settings.COOKIE_DOMAIN,
                                 max_age=2419200,
                             )
                             response.set_cookie(
@@ -133,6 +135,7 @@ class GoogleLogin(APIView):
                     httponly=True,
                     secure=True,
                     samesite="strict",
+                    domain=settings.COOKIE_DOMAIN,
                     max_age=2419200,
                 )
                 response.set_cookie(

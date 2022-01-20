@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient, APIRequestFactory
@@ -17,6 +18,7 @@ class TestAuthentication(BaseTestCase):
 
     def test_successful_authentication_then_deauthentication(self):
         self.auth_user = UserFactory()
+        existing_token = Token.objects.get(user=self.auth_user)
         self.auth_user_api_client = APIClient()
         payload = {"username": self.auth_user.username, "password": "password"}
         response = self.auth_user_api_client.post(
@@ -29,20 +31,37 @@ class TestAuthentication(BaseTestCase):
         )
         self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
         self.assertEqual(
+            self.auth_user_api_client.cookies["Authorization"].value, existing_token.key
+        )
+        self.assertEqual(
+            self.auth_user_api_client.cookies["Authorization"]["domain"],
+            settings.COOKIE_DOMAIN,
+        )
+        self.assertEqual(
+            self.auth_user_api_client.cookies["Authorization"]["max-age"], 2419200
+        )
+        self.assertEqual("LoggedIn" in self.auth_user_api_client.cookies, True)
+        self.assertEqual(
+            self.auth_user_api_client.cookies["LoggedIn"]["max-age"], 2419200
+        )
+        self.assertEqual(
+            self.auth_user_api_client.cookies["LoggedIn"]["domain"],
+            settings.COOKIE_DOMAIN,
+        )
+        self.assertEqual(
             self.auth_user_api_client.cookies["Authorization"].value,
             Token.objects.filter(user=self.auth_user)[0].key,
         )
-        # will raise a DoesNotExist exception if it cannot be found
-        existing_token = Token.objects.get(user=self.auth_user)
         response = self.auth_user_api_client.post("/api-token-deauth/", format="json")
         # Make sure the token still exists after de-authenticating.
-        # The reason this exists is because the current authentication system is one token per-user only.
+        # The reason this persists is because the current authentication system is one token per-user only.
         # This will cause an issue if a user logs out of one browser because the existing token would be
         # destroyed and a new one provisioned upon next login.
         existing_token.refresh_from_db()
         self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
         self.assertEqual("LoggedIn" in self.auth_user_api_client.cookies, True)
         self.assertEqual(self.auth_user_api_client.cookies["Authorization"].value, "")
+        self.assertEqual(self.auth_user_api_client.cookies["LoggedIn"]["max-age"], 0)
 
     def test_failed_authentication(self):
         payload = {"username": "user1", "password": "wrongpassword"}
