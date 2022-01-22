@@ -19,27 +19,19 @@ const TagSearchField = () => {
     }
   }, []);
 
-  useEffect(() => {
-    document.addEventListener('keydown', escFunction, false);
-    document.addEventListener('visibilitychange', useVisibility, false);
-
-    return () => {
-      document.removeEventListener('keydown', escFunction, false);
-      document.removeEventListener('visibilitychange', useVisibility, false);
-    };
-  }, []);
-
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTagSearch(event.currentTarget.value);
     appConfig.setTagSearchString(event.currentTarget.value);
   };
 
   useEffect(() => {
+    document.addEventListener('keydown', escFunction, false);
     document.addEventListener('visibilitychange', useVisibility, false);
-    window.addEventListener('focus', useWindowFocus, false);
+    document.addEventListener('focus', useWindowFocus, false);
     return () => {
+      document.addEventListener('keydown', escFunction, false);
       document.removeEventListener('visibilitychange', useVisibility, false);
-      window.removeEventListener('focus', useWindowFocus, false);
+      document.removeEventListener('focus', useWindowFocus, false);
     };
   }, []);
 
