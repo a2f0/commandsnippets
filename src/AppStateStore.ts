@@ -138,7 +138,7 @@ export const AppStateStoreModel = types
     },
   }))
   .actions(self => ({
-    reconcileIncluded(
+    reconcileCollection(
       collection: Array<
         | ITextEntryJsonApi
         | ITagTextEntryThroughModelJsonApi
@@ -201,13 +201,7 @@ export const AppStateStoreModel = types
           1,
           mostRecentTimestamp
         );
-        for (const element of collection) {
-          if (element.type === 'Tag') {
-            self.updateOrCreateTag(element);
-          } else if (element.type === 'User') {
-            self.updateOrCreateUser(element);
-          }
-        }
+        self.reconcileCollection(collection);
       } catch (error) {
         console.error(error);
         throw error;
@@ -254,19 +248,7 @@ export const AppStateStoreModel = types
           mostRecentTimestamp,
           null
         );
-        for (const element of collection) {
-          if (element.type === 'Tag') {
-            self.updateOrCreateTag(element);
-          } else if (element.type === 'User') {
-            self.updateOrCreateUser(element);
-          } else if (element.type === 'TextEntry') {
-            self.updateOrCreateTextEntry(element);
-          } else if (element.type === 'TagTextEntryThroughModel') {
-            self.updateOrCreateTagTextEntryThroughModel(element);
-          } else {
-            throw `Unknown object type: ${element}`;
-          }
-        }
+        self.reconcileCollection(collection);
       } catch (error) {
         console.error(error);
         throw error;
@@ -297,15 +279,7 @@ export const AppStateStoreModel = types
           mostRecentTimestamp,
           0
         );
-        for (const element of collection) {
-          if (element.type === 'TextEntry') {
-            self.updateOrCreateUntaggedTextEntry(element);
-          } else if (element.type === 'User') {
-            self.updateOrCreateUser(element);
-          } else {
-            throw `Unknown object type: ${element}`;
-          }
-        }
+        self.reconcileCollection(collection);
       } catch (error) {
         console.error(error);
         throw error;
