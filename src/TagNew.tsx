@@ -3,7 +3,6 @@ import {activeTagEditField, appMode, keyCode} from './lib/shared';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Grid from '@mui/material/Grid';
-import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
@@ -12,7 +11,7 @@ import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 
 interface IProps {
-  handleNewParent: (object: ITagJsonApi) => void;
+  handleNewParent: () => void;
   id: string;
 }
 
@@ -79,7 +78,8 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     API.post('/tags', payload, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
         appConfig.reconcileCollection(response.data.included);
-        handleNewParent(response.data.data);
+        appConfig.updateOrCreateTag(response.data.data);
+        handleNewParent();
         appConfig.setTagNew(null);
       })
       .catch(error => {

@@ -1,19 +1,19 @@
 import {BasePage} from '../../pageobjects/base';
-import tagsEntriesResponseEmpty from '../../mocks/tags_entries/tagsEntriesResponseEmpty';
+import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
 import tagsResponseEmpty from '../../mocks/tags_entries/tagsEntriesResponseEmpty';
 
 describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
-    const mockTagsEntries = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries**',
-      {}
+    const mockEntries = await browser.mock(
+      'http://localhost:9001/api/v1/entries**',
+      {method: 'get'}
     );
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags**',
       {}
     );
     mockTags.respond(tagsResponseEmpty, {fetchResponse: false});
-    mockTagsEntries.respond(tagsEntriesResponseEmpty, {fetchResponse: false});
+    mockEntries.respond(entriesResponseEmpty, {fetchResponse: false});
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();

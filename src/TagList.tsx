@@ -176,8 +176,7 @@ const TagList = () => {
     };
   };
 
-  const handleNew = (object: ITagJsonApi) => {
-    appConfig.updateOrCreateTag(object);
+  const handleNew = () => {
     setTags(TagHelpers.filterAndSort());
   };
 

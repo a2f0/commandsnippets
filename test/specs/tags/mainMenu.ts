@@ -1,20 +1,20 @@
 import {BasePage} from '../../pageobjects/base';
 import assert from 'assert';
-import tagsEntriesResponse from '../../mocks/tags_entries/tagsEntriesResponse';
+import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
 describe('Tag Main Menu Behavior', () => {
   it('should having a working menu bar', async () => {
-    const mockTagsEntries = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries**',
-      {}
+    const mockEntries = await browser.mock(
+      'http://localhost:9001/api/v1/entries**',
+      {method: 'get'}
     );
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags**',
       {}
     );
     mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockTagsEntries.respond(tagsEntriesResponse, {fetchResponse: false});
+    mockEntries.respond(entriesResponse, {fetchResponse: false});
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
