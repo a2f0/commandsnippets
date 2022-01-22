@@ -4,6 +4,7 @@ import Menu from '@mui/material/Menu';
 import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
 import {WithStyles} from '@mui/styles';
+import {appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
 import withStyles from '@mui/styles/withStyles';
 
@@ -77,6 +78,7 @@ const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
 
   const handleNewTag = () => {
     appConfig.setTagNew('bottom');
+    appConfig.setAppMode(appMode.tagEditor);
     setMousePosition(initialMouse);
   };
 

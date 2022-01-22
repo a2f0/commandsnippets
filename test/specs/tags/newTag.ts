@@ -26,5 +26,16 @@ describe('Tag List Context Menu Behavior', () => {
 
     await (await BasePage.tagListContextMenuNew).waitAndLeftClick();
     await expect(BasePage.tagNewBottom).toBeDisplayed();
+
+    await expect(BasePage.tagNewBottomTextField).toBeDisplayed();
+    await expect(BasePage.tagNewBottomTextField).toBeFocused();
+    await expect(BasePage.tagNewBottomSave).toBeDisplayed();
+    await browser.keys('Tab');
+    await expect(BasePage.tagNewBottomSave).toBeFocused();
+    await expect(BasePage.tagNewBottomCancel).toBeDisplayed();
+    await browser.keys('Tab');
+    await expect(BasePage.tagNewBottomCancel).toBeFocused();
+    await browser.keys('Tab');
+    await expect(BasePage.tagNewBottomTextField).toBeFocused();
   });
 });

@@ -42,8 +42,17 @@ export default class Base {
   get tagListContextMenu() {
     return browser.react$('TagListContextMenu');
   }
+  get tagNewBottomTextField() {
+    return $('#tagNewBottomTextField');
+  }
   get tagNewBottom() {
     return $('#tagNewBottom');
+  }
+  get tagNewBottomCancel() {
+    return $('#tagNewBottomCancel');
+  }
+  get tagNewBottomSave() {
+    return $('#tagNewBottomSave');
   }
   get tagListContextMenuNew() {
     return $('#tagListContextMenuNew');

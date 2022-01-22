@@ -21,6 +21,11 @@ const TagNew = ({handleNewParent, id}: IProps) => {
   const appConfig = useAppContext();
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
+  const inputTagNameRef = React.useRef<HTMLInputElement>();
+
+  const setInputTagNameRef = (element: HTMLInputElement) => {
+    inputTagNameRef.current = element;
+  };
 
   const escFunction = useCallback(event => {
     if (event.keyCode === keyCode.Escape) {
@@ -35,6 +40,15 @@ const TagNew = ({handleNewParent, id}: IProps) => {
       inputCancelRef.current?.focus();
     }
   }, [appConfig.activeTagEditField]);
+
+  useEffect(() => {
+    if (appConfig.activeTagEditField === activeTagEditField.name) {
+      inputTagNameRef.current?.focus();
+    }
+    return () => {
+      appConfig.setActiveTagEditField(activeTagEditField.name);
+    };
+  }, []);
 
   useEffect(() => {
     document.addEventListener('keydown', escFunction, false);
@@ -84,6 +98,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
         appConfig.setActiveTagEditField(activeTagEditField.cancel);
       } else if (appConfig.activeTagEditField === activeTagEditField.cancel) {
         appConfig.setActiveTagEditField(activeTagEditField.name);
+        inputTagNameRef.current?.focus();
       }
       event.preventDefault();
       event.stopPropagation();
@@ -100,8 +115,9 @@ const TagNew = ({handleNewParent, id}: IProps) => {
   return (
     <StyledTagFormContainer id={id}>
       <StyledTextFieldTags
+        ref={setInputTagNameRef}
         value={tagName}
-        id="tagNewTextField"
+        id={`${id}TextField`}
         onChange={e => {
           handleTagNameChange(e);
         }}
@@ -110,7 +126,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
         <Grid item xs={6} sx={{paddingRight: '1px'}}>
           <StyledTagButton
             ref={inputSaveRef}
-            id="tagNewSave"
+            id={`${id}Save`}
             onClick={() => {
               handleSave();
             }}
@@ -121,7 +137,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
         <Grid item xs={6} sx={{paddingLeft: '1px'}}>
           <StyledTagButton
             ref={inputCancelRef}
-            id="tagNewCancel"
+            id={`${id}Cancel`}
             onClick={() => {
               handleCancel();
             }}
