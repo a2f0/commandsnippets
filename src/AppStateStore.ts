@@ -13,6 +13,7 @@ import {TagHelpers, TagModel} from './models/TagModel';
 import {
   activeEntryEditField,
   activeSearch,
+  activeTagEditField,
   appMode,
   appState,
   defaultState,
@@ -48,6 +49,7 @@ export const AppStateStoreModel = types
   .volatile<{
     activeSearch: activeSearch;
     activeEntryEditField: activeEntryEditField;
+    activeTagEditField: activeTagEditField;
     clickCount: number;
     entrySelectedID: string;
     entrySearchString: string;
@@ -58,6 +60,7 @@ export const AppStateStoreModel = types
   }>(() => ({
     activeSearch: activeSearch.tags,
     activeEntryEditField: activeEntryEditField.subject,
+    activeTagEditField: activeTagEditField.name,
     clickCount: 0,
     entrySelectedID: '',
     entrySearchString: '',
@@ -318,6 +321,9 @@ export const AppStateStoreModel = types
     },
     setActiveEntryEditField(value: activeEntryEditField) {
       self.activeEntryEditField = value;
+    },
+    setActiveTagEditField(value: activeTagEditField) {
+      self.activeTagEditField = value;
     },
     setAppMode(value: appMode) {
       self.appMode = value;

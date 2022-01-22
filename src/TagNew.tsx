@@ -1,13 +1,14 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {activeTagEditField, appMode, keyCode} from './lib/shared';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Grid from '@mui/material/Grid';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import {StyledTagButton} from './styled/tags/StyledTagButton';
+import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
-import {keyCode} from './lib/shared';
+import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 
 interface IProps {
@@ -18,12 +19,22 @@ interface IProps {
 const TagNew = ({handleNewParent, id}: IProps) => {
   const [tagName, setTagName] = useState<string>('');
   const appConfig = useAppContext();
+  const inputSaveRef = useRef<HTMLButtonElement>(null);
+  const inputCancelRef = useRef<HTMLButtonElement>(null);
 
   const escFunction = useCallback(event => {
     if (event.keyCode === keyCode.Escape) {
       handleCancel();
     }
   }, []);
+
+  useEffect(() => {
+    if (appConfig.activeTagEditField === activeTagEditField.save) {
+      inputSaveRef.current?.focus();
+    } else if (appConfig.activeTagEditField === activeTagEditField.cancel) {
+      inputCancelRef.current?.focus();
+    }
+  }, [appConfig.activeTagEditField]);
 
   useEffect(() => {
     document.addEventListener('keydown', escFunction, false);
@@ -61,6 +72,31 @@ const TagNew = ({handleNewParent, id}: IProps) => {
       });
   };
 
+  const keyListener = useCallback(event => {
+    const trappedKeyCodes = [keyCode.Tab];
+    if (
+      trappedKeyCodes.includes(event.keyCode) &&
+      appConfig.appMode === appMode.tagEditor
+    ) {
+      if (appConfig.activeTagEditField === activeTagEditField.name) {
+        appConfig.setActiveTagEditField(activeTagEditField.save);
+      } else if (appConfig.activeTagEditField === activeTagEditField.save) {
+        appConfig.setActiveTagEditField(activeTagEditField.cancel);
+      } else if (appConfig.activeTagEditField === activeTagEditField.cancel) {
+        appConfig.setActiveTagEditField(activeTagEditField.name);
+      }
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', keyListener, false);
+    return () => {
+      document.removeEventListener('keydown', keyListener, false);
+    };
+  }, []);
+
   return (
     <StyledTagFormContainer id={id}>
       <StyledTextFieldTags
@@ -73,6 +109,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
       <Grid container spacing={0}>
         <Grid item xs={6} sx={{paddingRight: '1px'}}>
           <StyledTagButton
+            ref={inputSaveRef}
             id="tagNewSave"
             onClick={() => {
               handleSave();
@@ -83,6 +120,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
         </Grid>
         <Grid item xs={6} sx={{paddingLeft: '1px'}}>
           <StyledTagButton
+            ref={inputCancelRef}
             id="tagNewCancel"
             onClick={() => {
               handleCancel();
@@ -95,4 +133,4 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     </StyledTagFormContainer>
   );
 };
-export default React.memo(TagNew);
+export default React.memo(observer(TagNew));

@@ -1,10 +1,10 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Grid from '@mui/material/Grid';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import {StyledTagButton} from './styled/tags/StyledTagButton';
+import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
 import {keyCode} from './lib/shared';
@@ -35,6 +35,9 @@ const TagEdit = ({
       document.removeEventListener('keydown', escFunction, false);
     };
   }, []);
+
+  const inputSaveRef = useRef<HTMLButtonElement>(null);
+  const inputCancelRef = useRef<HTMLButtonElement>(null);
 
   const handleSave = () => {
     const payload = {
@@ -78,6 +81,7 @@ const TagEdit = ({
       <Grid container spacing={0}>
         <Grid item xs={6} sx={{paddingRight: '1px'}}>
           <StyledTagButton
+            ref={inputSaveRef}
             id={`tagEditSave${object.id}`}
             onClick={() => {
               handleSave();
@@ -88,6 +92,7 @@ const TagEdit = ({
         </Grid>
         <Grid item xs={6} sx={{paddingLeft: '1px'}}>
           <StyledTagButton
+            ref={inputCancelRef}
             id={`tagEditCancel${object.id}`}
             onClick={() => {
               handleCancel();

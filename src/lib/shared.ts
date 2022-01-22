@@ -23,6 +23,7 @@ export enum appMode {
   tagsList = 1,
   entriesList = 2,
   entryEditor = 3,
+  tagEditor = 4,
 }
 
 export enum activeSearch {
@@ -35,6 +36,12 @@ export enum activeEntryEditField {
   body = 2,
   save = 3,
   cancel = 4,
+}
+
+export enum activeTagEditField {
+  name = 1,
+  save = 2,
+  cancel = 3,
 }
 
 export interface appState {
@@ -51,6 +58,7 @@ export interface appState {
   mostRecentCopyID: string | null;
   showTagCounts: boolean;
   activeEntryEditField: activeEntryEditField;
+  activeTagEditField: activeTagEditField;
 }
 
 export const defaultState: appState = {
@@ -67,6 +75,7 @@ export const defaultState: appState = {
   mostRecentCopyID: null,
   showTagCounts: false,
   activeEntryEditField: activeEntryEditField.subject,
+  activeTagEditField: activeTagEditField.name,
 };
 
 export function getMostRecentTimeStamp(

@@ -162,6 +162,7 @@ const MenuBar = (props: IMenuBarProps) => {
   };
 
   const handleCreateTag = () => {
+    appConfig.setAppMode(appMode.tagEditor);
     setFileMenuAnchorEl(null);
     appConfig.setTagNew('top');
   };
