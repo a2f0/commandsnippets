@@ -1,23 +1,21 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import StyledTextFieldTags from './StyledTextFieldTags';
+import {activeSearch} from '../../lib/shared';
 import {appMode} from '../../lib/shared';
 import {keyCode} from '../../lib/shared';
+import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 
 const TagSearchField = () => {
   const [tagSearch, setTagSearch] = useState<string>('');
   const appConfig = useAppContext();
+  const inputRef = React.useRef<HTMLInputElement>();
 
   const escFunction = useCallback(event => {
     if (event.keyCode === keyCode.Escape) {
       appConfig.setAppMode(appMode.tagsList);
+      inputRef.current?.focus();
       handleClear();
-    }
-  }, []);
-
-  const useVisibility = useCallback(() => {
-    if (document.visibilityState === 'visible') {
-      console.info('the document has become visible');
     }
   }, []);
 
@@ -36,6 +34,37 @@ const TagSearchField = () => {
     appConfig.setTagSearchString(event.currentTarget.value);
   };
 
+  useEffect(() => {
+    document.addEventListener('visibilitychange', useVisibility, false);
+    window.addEventListener('focus', useWindowFocus, false);
+    return () => {
+      document.removeEventListener('visibilitychange', useVisibility, false);
+      window.removeEventListener('focus', useWindowFocus, false);
+    };
+  }, []);
+
+  const useVisibility = useCallback(() => {
+    if (document.visibilityState === 'visible') {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
+    }
+  }, []);
+
+  const useWindowFocus = useCallback(() => {
+    inputRef.current?.focus();
+    inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
+  }, []);
+
+  const setTextInputRef = (element: HTMLInputElement) => {
+    inputRef.current = element;
+  };
+
+  useEffect(() => {
+    if (appConfig.activeSearch === activeSearch.tags) {
+      inputRef.current?.focus();
+    }
+  }, [appConfig.activeSearch]);
+
   const handleClear = () => {
     setTagSearch('');
     appConfig.setTagSearchString('');
@@ -43,6 +72,7 @@ const TagSearchField = () => {
 
   return (
     <StyledTextFieldTags
+      ref={setTextInputRef}
       value={tagSearch}
       id="tagSearch"
       onChange={handleChange}
@@ -50,4 +80,4 @@ const TagSearchField = () => {
   );
 };
 
-export default React.memo(TagSearchField);
+export default React.memo(observer(TagSearchField));

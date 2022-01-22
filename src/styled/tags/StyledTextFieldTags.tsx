@@ -15,7 +15,10 @@ interface IStyledTextFieldProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
+const StyledTextFieldTags = React.forwardRef<
+  HTMLInputElement,
+  IStyledTextFieldProps
+>(({id, value, onChange}: IStyledTextFieldProps, ref) => {
   const theme = useTheme<Theme>();
   const appConfig = useAppContext();
   const useStyles = makeStyles(() =>
@@ -43,30 +46,13 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
     })
   );
   const classes = useStyles();
-  const inputRef = React.useRef<HTMLInputElement>();
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, [inputRef.current]);
-
-  const useVisibility = useCallback(() => {
-    if (document.visibilityState === 'visible') {
-      inputRef.current?.focus();
-      inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
-    }
-  }, []);
-
-  const useWindowFocus = useCallback(() => {
-    inputRef.current?.focus();
-    inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
-  }, []);
 
   const keyListener = useCallback(event => {
     const trappedModes = [appMode.tagsList, appMode.entriesList];
     const trappedKeys = [keyCode.Tab, keyCode.LeftArrow, keyCode.RightArrow];
 
     if (event.keyCode === keyCode.Escape) {
-      inputRef.current?.focus();
+      appConfig.setActiveSearch(activeSearch.tags);
     }
 
     if (trappedModes.includes(appConfig.appMode)) {
@@ -77,7 +63,6 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
         } else if (appConfig.appMode === appMode.entriesList) {
           appConfig.setAppMode(appMode.tagsList);
           appConfig.setActiveSearch(activeSearch.tags);
-          inputRef.current?.focus();
         }
       } else if (event.keyCode === keyCode.LeftArrow) {
         if (appConfig.appMode === appMode.entriesList) {
@@ -98,31 +83,17 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
   }, []);
 
   useEffect(() => {
-    document.addEventListener('visibilitychange', useVisibility, false);
-    window.addEventListener('focus', useWindowFocus, false);
     document.addEventListener('keydown', keyListener, false);
 
     return () => {
-      document.removeEventListener('visibilitychange', useVisibility, false);
-      window.removeEventListener('focus', useWindowFocus, false);
       document.removeEventListener('keydown', keyListener, false);
     };
   }, []);
 
-  useEffect(() => {
-    if (appConfig.activeSearch === activeSearch.tags) {
-      inputRef.current?.focus();
-    }
-  }, [appConfig.activeSearch]);
-
-  const setTextInputRef = (element: HTMLInputElement) => {
-    inputRef.current = element;
-  };
-
   return (
     <TextField
       autoComplete="off"
-      inputRef={setTextInputRef}
+      inputRef={ref}
       value={value}
       className={`${classes.textField}`}
       id={id}
@@ -134,6 +105,7 @@ const StyledTextFieldTags = ({id, value, onChange}: IStyledTextFieldProps) => {
       }}
     />
   );
-};
+});
 
+StyledTextFieldTags.displayName = 'StyledTextFieldTags';
 export default React.memo(observer(StyledTextFieldTags));
