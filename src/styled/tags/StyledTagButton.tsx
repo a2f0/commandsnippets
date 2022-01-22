@@ -8,17 +8,17 @@ interface IButtonItemProps {
 }
 
 const StyledTagButton = React.forwardRef<HTMLButtonElement, IButtonItemProps>(
-  (props, ref) => {
+  ({id, onClick, children}: IButtonItemProps, ref) => {
     return (
       <Button
         ref={ref}
         color="secondary"
-        id={props.id}
+        id={id}
         size="small"
         aria-controls="view-menu"
         variant="outlined"
         aria-haspopup="true"
-        onClick={props.onClick}
+        onClick={onClick}
         sx={{
           display: 'flex',
           minWidth: '100%',
@@ -26,7 +26,7 @@ const StyledTagButton = React.forwardRef<HTMLButtonElement, IButtonItemProps>(
           marginBottom: '4px',
         }}
       >
-        {props.children}
+        {children}
       </Button>
     );
   }
