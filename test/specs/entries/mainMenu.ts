@@ -57,7 +57,6 @@ describe('Entry Main Menu Behavior', () => {
     );
     mockTags.respond(tagsResponse, {fetchResponse: false});
     mockEntriesGetList.respond(entriesResponse, {fetchResponse: false});
-    //
     mockEntryOptionsResponse.respond({fetchResponse: false});
     mockEntryPostResponse.respond(entryPostResponse, {fetchResponse: false});
     mocktagTextEntryThroughModelsResponse.respond(

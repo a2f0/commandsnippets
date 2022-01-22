@@ -138,6 +138,50 @@ export const AppStateStoreModel = types
     },
   }))
   .actions(self => ({
+    reconcileIncluded(
+      collection: Array<
+        | ITextEntryJsonApi
+        | ITagTextEntryThroughModelJsonApi
+        | IUserJsonApi
+        | ITagJsonApi
+      >
+    ) {
+      // type guard
+      const text_entries: ITextEntryJsonApi[] = collection.filter(
+        (i): i is ITextEntryJsonApi => {
+          return i.type === 'TextEntry';
+        }
+      );
+      text_entries.map(element => {
+        self.updateOrCreateTextEntry(element);
+      });
+
+      const tag_text_entry_through_models: ITagTextEntryThroughModelJsonApi[] =
+        collection.filter((i): i is ITagTextEntryThroughModelJsonApi => {
+          return i.type === 'TagTextEntryThroughModel';
+        });
+      tag_text_entry_through_models.map(element => {
+        self.updateOrCreateTagTextEntryThroughModel(element);
+      });
+
+      const users: IUserJsonApi[] = collection.filter(
+        (i): i is IUserJsonApi => {
+          return i.type === 'User';
+        }
+      );
+      users.map(element => {
+        self.updateOrCreateUser(element);
+      });
+
+      const tags: ITagJsonApi[] = collection.filter((i): i is ITagJsonApi => {
+        return i.type === 'Tag';
+      });
+      tags.map(element => {
+        self.updateOrCreateTag(element);
+      });
+    },
+  }))
+  .actions(self => ({
     fetchTags: flow(function* fetchTags(user: string) {
       try {
         const existingUser = self.usersArray.find(

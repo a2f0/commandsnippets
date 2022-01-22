@@ -78,6 +78,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     };
     API.post('/tags', payload, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
+        appConfig.reconcileIncluded(response.data.included);
         handleNewParent(response.data.data);
         appConfig.setTagNew(null);
       })

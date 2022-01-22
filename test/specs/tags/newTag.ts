@@ -1,19 +1,33 @@
 import {BasePage} from '../../pageobjects/base';
-import tagsEntriesResponseEmpty from '../../mocks/tags_entries/tagsEntriesResponseEmpty';
-import tagsResponseEmpty from '../../mocks/tags_entries/tagsEntriesResponseEmpty';
+import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
+import tagsPostResponse from '../../mocks/tags/tagsPostResponse';
+import tagsResponseEmpty from '../../mocks/tags/tagsResponseEmpty';
 
 describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
-    const mockTagsEntries = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries**',
-      {}
+    const mockEntries = await browser.mock(
+      'http://localhost:9001/api/v1/entries**',
+      {method: 'get'}
     );
-    const mockTags = await browser.mock(
+    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
+      method: 'get',
+    });
+    const mockTagOptionsResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags**',
-      {}
+      {
+        method: 'options',
+      }
+    );
+    const mockTagPostResponse = await browser.mock(
+      'http://localhost:9001/api/v1/tags**',
+      {
+        method: 'post',
+      }
     );
     mockTags.respond(tagsResponseEmpty, {fetchResponse: false});
-    mockTagsEntries.respond(tagsEntriesResponseEmpty, {fetchResponse: false});
+    mockEntries.respond(entriesResponseEmpty, {fetchResponse: false});
+    mockTagOptionsResponse.respond({fetchResponse: false});
+    mockTagPostResponse.respond(tagsPostResponse, {fetchResponse: false});
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
@@ -37,5 +51,11 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tagNewBottomCancel).toBeFocused();
     await browser.keys('Tab');
     await expect(BasePage.tagNewBottomTextField).toBeFocused();
+    browser.keys('test-3');
+    await expect(BasePage.tagNewBottomTextField).toHaveValue('test-3');
+    await expect(BasePage.tags).toBeElementsArrayOfSize(0);
+    await (await BasePage.tagNewBottomSave).waitAndLeftClick();
+    await expect(BasePage.tags).toBeElementsArrayOfSize(1);
+    await expect(BasePage.tagNewBottom).not.toBeDisplayed();
   });
 });
