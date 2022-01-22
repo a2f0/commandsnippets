@@ -1,5 +1,12 @@
 export default class Base {
   // file menu
+  get githubAuthButton() {
+    return $('#githubAuthButton');
+  }
+  get googleAuthButton() {
+    return $('#googleAuthButton');
+  }
+  // file menu
   get fileMenu() {
     return $('#file-menu');
   }
@@ -8,6 +15,9 @@ export default class Base {
   }
   get fileMenuNewEntry() {
     return $('#file-menu-new-entry');
+  }
+  get fileMenuLogout() {
+    return $('#file-menu-logout');
   }
 
   // entries menu

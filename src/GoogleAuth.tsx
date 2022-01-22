@@ -103,6 +103,7 @@ const GoogleAuth = () => {
     <>
       {!appConfig.loggedInUser && !window.location.href.includes('oauth/') && (
         <Button
+          id="googleAuthButton"
           size="small"
           variant="contained"
           color="secondary"

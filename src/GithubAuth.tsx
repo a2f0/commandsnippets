@@ -81,6 +81,7 @@ const GithubAuth = () => {
     <>
       {!appConfig.loggedInUser && !window.location.href.includes('oauth/') && (
         <Button
+          id="githubAuthButton"
           size="small"
           variant="contained"
           color="secondary"
