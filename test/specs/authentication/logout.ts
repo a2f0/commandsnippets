@@ -34,20 +34,37 @@ describe('Logged Out User Behavior', () => {
       await browser.getUrl(),
       'http://localhost:8081/test/test'
     );
+    // Establish initial view
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.googleAuthButton).not.toBeExisting();
+    await expect(BasePage.googleAuthButton).not.toBeDisplayed();
+    await expect(BasePage.githubAuthButton).not.toBeExisting();
+    await expect(BasePage.githubAuthButton).not.toBeDisplayed();
+    await expect(BasePage.tagListContextMenu).toBeExisting();
+    await expect(BasePage.entryListContextMenu).toBeExisting();
+
+    // Log out
     await expect(BasePage.fileMenu).toBeExisting();
     await expect(BasePage.fileMenu).not.toBeDisplayed();
     await (await BasePage.fileMenuButton).waitAndLeftClick();
     await expect(BasePage.fileMenu).toBeDisplayed();
     await expect(BasePage.fileMenuLogout).toBeDisplayed();
-    await expect(BasePage.googleAuthButton).not.toBeDisplayed();
-    await expect(BasePage.githubAuthButton).not.toBeDisplayed();
     await expect(mockLogoutResponse).toBeRequestedTimes(0);
     await (await BasePage.fileMenuLogout).waitAndLeftClick();
     await expect(mockLogoutResponse).toBeRequestedTimes(1);
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
-    await expect(BasePage.githubAuthButton).toBeExisting();
-    await expect(BasePage.githubAuthButton).toBeDisplayed();
+
+    // Confirm state after logout
+    assert.strictEqual(
+      await browser.getUrl(),
+      'http://localhost:8081/test/test'
+    );
     await expect(BasePage.googleAuthButton).toBeExisting();
     await expect(BasePage.googleAuthButton).toBeDisplayed();
+    await expect(BasePage.githubAuthButton).toBeExisting();
+    await expect(BasePage.githubAuthButton).toBeDisplayed();
+    await expect(BasePage.fileMenuButton).not.toBeDisplayed();
+    await expect(BasePage.tagListContextMenu).not.toBeExisting();
+    await expect(BasePage.entryListContextMenu).not.toBeExisting();
   });
 });
