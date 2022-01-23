@@ -3,6 +3,7 @@ import {appMode, entrySearchMethod} from './lib/shared';
 import {darkTheme, lightTheme} from './themes';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
 import CheckIcon from '@mui/icons-material/Check';
 import Divider from '@mui/material/Divider';
@@ -10,6 +11,7 @@ import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {Grid} from '@mui/material';
+import {ILogoutJsonApiResponse} from './lib/authentication';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import React from 'react';
@@ -115,9 +117,10 @@ const MenuBar = (props: IMenuBarProps) => {
 
     logout_api
       .post('/api-token-deauth/', {}, {withCredentials: true})
-      .then(() => {
+      .then((response: AxiosResponse<ILogoutJsonApiResponse>) => {
         appConfig.setLoggedInUser(null);
         setFileMenuAnchorEl(null);
+        return response;
       })
       .catch(() => {})
       .then(() => {});

@@ -1,3 +1,5 @@
-const logOutResponse = {data: {}};
+import {ILogoutJsonApiResponse} from '../../../src/lib/authentication';
 
-export default logOutResponse;
+const logOutPostResponse: ILogoutJsonApiResponse = {data: {}};
+
+export default logOutPostResponse;
