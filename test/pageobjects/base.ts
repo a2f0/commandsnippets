@@ -70,6 +70,18 @@ export default class Base {
   get tagContextMenu1() {
     return $('#tagContextMenu-1');
   }
+  get tagContextMenu1DeleteTagMenuItem() {
+    return $('#tagContextMenu1DeleteTagMenuItem');
+  }
+  get tagContextMenu1DeleteTagDialog() {
+    return $('#tagContextMenu1DeleteTagDialog');
+  }
+  get tagContextMenu1DeleteTagDialogDeleteButton() {
+    return $('#tagContextMenu1DeleteTagDialogDeleteButton');
+  }
+  get tagContextMenu1DeleteTagDialogCancelButton() {
+    return $('#tagContextMenu1DeleteTagDialogCancelButton');
+  }
   get tag1() {
     return $('#tag-1');
   }

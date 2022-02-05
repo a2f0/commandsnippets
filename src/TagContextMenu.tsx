@@ -10,7 +10,43 @@ import Menu from '@mui/material/Menu';
 import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
 import {WithStyles} from '@mui/styles';
+import createStyles from '@mui/styles/createStyles';
 import withStyles from '@mui/styles/withStyles';
+
+export const DialogStyle = () => {
+  return createStyles({
+    paper: {
+      backgroundImage: 'none',
+    },
+  });
+};
+
+interface IStyledDialogProps extends WithStyles<typeof DialogStyle> {
+  id: string;
+  open: boolean;
+  onClose: () => void;
+  classes: {
+    paper: string;
+  };
+  children: React.ReactNode;
+}
+
+const StyledDialog = withStyles(DialogStyle)(
+  ({id, open, onClose, classes, children}: IStyledDialogProps) => {
+    return (
+      <Dialog
+        id={id}
+        classes={classes}
+        open={open}
+        onClose={onClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        {children}
+      </Dialog>
+    );
+  }
+);
 
 interface ITagContextMenuProps {
   id: string;
@@ -134,13 +170,14 @@ const TagContextMenu = ({
           Edit Tag
         </StyledMenuItem>
         <StyledMenuItem
-          id={`tag-context-menu-${id}-delete-tag`}
+          id={`tagContextMenu${id}DeleteTagMenuItem`}
           onClick={handleDelete}
         >
           Delete Tag
         </StyledMenuItem>
       </StyledMenu>
-      <Dialog
+      <StyledDialog
+        id={`tagContextMenu${id}DeleteTagDialog`}
         open={dialogOpen}
         onClose={handleClose}
         aria-labelledby="alert-dialog-title"
@@ -153,12 +190,25 @@ const TagContextMenu = ({
           <DialogContentText id="alert-dialog-description"></DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDialog}>Cancel</Button>
-          <Button onClick={handleAcceptDialog} autoFocus>
+          <Button
+            id={`tagContextMenu${id}DeleteTagDialogCancelButton`}
+            color="secondary"
+            variant="outlined"
+            onClick={handleCancelDialog}
+          >
+            Cancel
+          </Button>
+          <Button
+            id={`tagContextMenu${id}DeleteTagDialogDeleteButton`}
+            color="secondary"
+            variant="outlined"
+            onClick={handleAcceptDialog}
+            autoFocus
+          >
             Delete
           </Button>
         </DialogActions>
-      </Dialog>
+      </StyledDialog>
     </>
   );
 };

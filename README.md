@@ -31,5 +31,6 @@ npm run test-headless
 Run a specific spec
 
 ```shell
+npm run server-test
 npx wdio wdio.shared.conf.ts --spec=./specs/tags/search
 ```
