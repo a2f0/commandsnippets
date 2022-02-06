@@ -14,7 +14,12 @@ resource "vercel_project" "tearleads" {
     repo = "${var.github_owner}/${var.github_repository}"
   }
   domain {
-    name = var.domain
+    git_branch = "production"
+    name       = var.domain
+  }
+  domain {
+    git_branch = "staging"
+    name       = "staging.tearleads.com"
   }
 }
 

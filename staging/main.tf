@@ -96,9 +96,9 @@ resource "aws_default_route_table" "route-table" {
 
 resource "aws_instance" "ec2" {
   #ami                   = "ami-085925f297f89fce1" # bionic 18.04 LTS
-  ami           = "ami-068663a3c619dd892" # focal 20.04 LTS
-  instance_type = "t2.medium"             # 2 vCPU, 4 GiB memory (4 GiB reccomended for Microk8s)
-  #instance_type          = "t2.micro"
+  ami = "ami-068663a3c619dd892" # focal 20.04 LTS
+  #instance_type = "t2.medium"             # 2 vCPU, 4 GiB memory (4 GiB reccomended for Microk8s)
+  instance_type          = "t2.micro"
   subnet_id              = aws_subnet.aws-subnet.id
   vpc_security_group_ids = [aws_security_group.security-group.id]
   key_name               = "dps-blackbox"
@@ -156,8 +156,8 @@ resource "cloudflare_record" "api" {
 resource "cloudflare_record" "web" {
   zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
   name    = var.staging_web
-  value   = aws_instance.ec2.public_ip
-  type    = "A"
+  value   = "cname.vercel-dns.com"
+  type    = "CNAME"
   ttl     = 1
   proxied = true
 }
