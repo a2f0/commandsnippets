@@ -129,7 +129,7 @@ const EntryContextMenu = ({
         Copy
       </StyledMenuItem>
       <StyledMenuItem
-        id={`tags-entries-context-menu-${id}-edit`}
+        id={`tagsEntriesContextMenu${id}Edit`}
         onClick={(event: React.MouseEvent<HTMLLIElement>) => {
           event.preventDefault();
           event.stopPropagation();

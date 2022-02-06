@@ -287,6 +287,7 @@ const Entry = ({
   const [isEditing, setIsEditing] = useState(false);
 
   const handleBeginEdit = () => {
+    appConfig.setAppMode(appMode.entryEditor);
     setIsEditing(true);
   };
 
@@ -486,7 +487,7 @@ const Entry = ({
 
       {isEditing && (
         <EntryEdit
-          id={`textEntryNew-${object.id}-bottom`}
+          id={`textEntryEdit${object.id}`}
           object={textEntryObject}
           handleSaveParent={handleSave}
           handleCancelEditParent={handleCancelEdit}

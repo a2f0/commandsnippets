@@ -144,6 +144,24 @@ export default class Base {
   get tagsEntriesContextMenu1() {
     return $('#tagsEntriesContextMenu-1');
   }
+  get tagsEntriesContextMenu1Edit() {
+    return $('#tagsEntriesContextMenu1Edit');
+  }
+  get textEntryEdit1() {
+    return $('#textEntryEdit1');
+  }
+  get textEntryEdit1Subject() {
+    return $('#textEntryEdit1Subject');
+  }
+  get textEntryEdit1Body() {
+    return $('#textEntryEdit1Body');
+  }
+  get textEntryEdit1Save() {
+    return $('#textEntryEdit1Save');
+  }
+  get textEntryEdit1Cancel() {
+    return $('#textEntryEdit1Cancel');
+  }
   get tagsEntries1() {
     return $('#tagsEntries-1');
   }

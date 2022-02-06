@@ -1,6 +1,6 @@
 import {ITagJsonApiResponseSingle} from '../../../src/lib/tags';
 
-const textEntryPostResponse: ITagJsonApiResponseSingle = {
+const tagPostResponse: ITagJsonApiResponseSingle = {
   data: {
     type: 'Tag',
     id: '3',
@@ -34,4 +34,4 @@ const textEntryPostResponse: ITagJsonApiResponseSingle = {
   ],
 };
 
-export default textEntryPostResponse;
+export default tagPostResponse;
