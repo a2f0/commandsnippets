@@ -6,7 +6,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v7.28.0
+    rev: ''
     hooks:
       - id: eslint
         files: \.[jt]sx?$
