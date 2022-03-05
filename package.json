@@ -53,7 +53,7 @@
     "eslint-config-react": "1.1.7",
     "eslint-loader": "^4.0.2",
     "eslint-plugin-mocha": "^9.0.0",
-    "eslint-plugin-react": "^7.28.0",
+    "eslint-plugin-react": "^7.29.3",
     "expect-webdriverio": "^3.1.0",
     "gts": "^3.1.0",
     "html-webpack-plugin": "^5.3.1",
