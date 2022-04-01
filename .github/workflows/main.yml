@@ -32,12 +32,9 @@ jobs:
       with:
         python-version: '3.9'
         architecture: 'x64'
+    - uses: pre-commit/action@v2.0.3
     - name: install and configure python dependencies
       run: pip install -r ./requirements/local.txt
-    - name: Run pre-commit
-      run: |
-        pre-commit install
-        pre-commit run --all-files
     - name: Run safety
       run: |
         safety check -r requirements/local.txt -r requirements/production.txt

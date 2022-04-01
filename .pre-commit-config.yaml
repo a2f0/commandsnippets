@@ -6,10 +6,12 @@ repos:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
 -   repo: https://github.com/PyCQA/isort
+    # should match what is inside of requirements/local.txt
     rev: 5.10.1
     hooks:
     -   id: isort
 -   repo: https://github.com/psf/black
-    rev: 21.10b0
+    # should match what is inside of requirements/local.txt
+    rev: 22.3.0
     hooks:
     -   id: black

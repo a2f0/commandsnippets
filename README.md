@@ -6,6 +6,7 @@ Bootstrap
 
     pip install pre-commit
     pre-commit install
+    pre-commit run --all-files
     docker-compose build
     docker-compose up
 
