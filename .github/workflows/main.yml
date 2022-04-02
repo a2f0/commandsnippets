@@ -41,6 +41,7 @@ jobs:
     - name: run tests / coverage analysis
       run: |
         coverage run manage.py test -v 2
+        # Configuration for the coverage report command can be found in .coveragerc
         coverage report
       env:
         COOKIE_DOMAIN: localhost

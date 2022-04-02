@@ -13,6 +13,9 @@ Bootstrap
 Run tests
 
     docker-compose run backend coverage run manage.py test -v 2
+
+Run a coverage report (note: the configuration of the coverage tool is in `.coveragerc` )
+
     docker-compose run backend coverage report
 
 Bump version
