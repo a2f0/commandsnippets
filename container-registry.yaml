@@ -10,11 +10,16 @@ volumes:
   certs:
   acme:
 
+networks:
+  tearleads:
+
 services:
   nginx-proxy:
     build:
       context: .
       dockerfile: ./compose/nginx-proxy/Dockerfile
+    networks:
+      - tearleads
     ports:
       # Port 80 is required for nginx-proxy-letsencrypt
       # Full (Strict) end-to-end encryption is enabled on the SSL/TLS tab of Cloudflare.
@@ -30,6 +35,8 @@ services:
 
   nginx-proxy-letsencrypt:
     image: jrcs/letsencrypt-nginx-proxy-companion
+    networks:
+      - tearleads
     volumes:
       - certs:/etc/nginx/certs:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -41,6 +48,8 @@ services:
 
   backend:
     image: ${ECR_FQDN}/${ECR_REPOSITORY}:backend-${FLOW_BRANCH}-latest
+    networks:
+      - tearleads
     depends_on:
       - postgres
     env_file: .env
@@ -55,6 +64,8 @@ services:
 
   postgres:
     build: ./compose/postgres
+    networks:
+      - tearleads
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - postgres_backup:/backups
