@@ -21,8 +21,6 @@ jobs:
         with:
           python-version: '3.7'
           architecture: 'x64'
-      - name: npm audit
-        run: npm audit --audit-level=critical
       - name: npm install
         run: npm install
       - name: pre-commit
