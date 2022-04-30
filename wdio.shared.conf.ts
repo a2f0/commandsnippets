@@ -30,7 +30,6 @@ export const config: WebdriverIO.Config = {
     bail: true,
     ui: 'bdd',
     timeout: 60000,
-    requireModule: ['@babel/register'],
   },
   before: async (capabilities, specs, browser) => {
     await BasePage.open('');
