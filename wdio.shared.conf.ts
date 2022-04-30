@@ -4,7 +4,7 @@ import {defaultState} from './src/lib/shared';
 export const config: WebdriverIO.Config = {
   runner: 'local',
   path: '/',
-  specs: ['./test/**/*.ts'],
+  specs: ['./test/**/*.spec.ts'],
   exclude: [],
   maxInstances: 1,
   capabilities: [
