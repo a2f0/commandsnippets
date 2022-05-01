@@ -16,3 +16,7 @@
   user:
     name: "{{ ansible_user }}"
     groups: docker
+
+- name: Create the network
+  community.docker.docker_network:
+    name: tearleads

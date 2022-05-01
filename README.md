@@ -7,7 +7,6 @@ Secrets in this repo are managed by [BlackBox](https://github.com/StackExchange/
 ## Devlopment
 
 Boostrap
-
-    ansible-galaxy collection install community.general
+    ansible-galaxy install -r ansible/requirements.yaml
     pip install pre-commit
     pre-commit install
