@@ -35,3 +35,9 @@ Run a specific spec
 npm run server-test
 npx wdio wdio.shared.conf.ts --spec=./specs/tags/search
 ```
+
+Run jest tests
+
+```shell
+npx jest
+```

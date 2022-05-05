@@ -38,6 +38,7 @@ jobs:
       - run: npm run ci-headless
         env:
           CUSTOM_CHROME_PATH: '/tmp/custom-chrome/chrome'
+      - run: npx jest
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
