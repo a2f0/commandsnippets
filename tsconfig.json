@@ -10,7 +10,7 @@
     "strict": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "react-jsx",
+    "jsx": "react",
     "outDir": "src/ts-out",
     "incremental": true
   },
