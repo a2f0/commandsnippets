@@ -12,7 +12,8 @@
     "resolveJsonModule": true,
     "jsx": "react",
     "outDir": "src/ts-out",
-    "incremental": true
+    "incremental": true,
+    "removeComments": false
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["src/ts-out", "node_modules"]

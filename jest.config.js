@@ -1,6 +1,9 @@
 /** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'jest-environment-jsdom',
+  testEnvironment: 'jsdom',
   testMatch: ['**/*.spec.tsx'],
+  testEnvironmentOptions: {
+    url: 'http://localhost:8081/',
+  },
 };

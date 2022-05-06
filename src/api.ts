@@ -15,7 +15,7 @@ export const environment = () => {
   ) {
     return 'test';
   } else {
-    throw 'Unknown environment';
+    throw 'Unknown Tearleads environment';
   }
 };
 
