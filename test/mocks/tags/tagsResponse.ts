@@ -30,7 +30,7 @@ const tagsResponse: ITagJsonApiResponse = {
       type: 'Tag',
       id: '2',
       attributes: {
-        name: 'test-1',
+        name: 'test-tag-2',
         date_created: '2021-05-07T18:20:00',
         date_updated: '2021-05-07T18:20:00',
         date_last_used: '2021-05-07T18:20:00',

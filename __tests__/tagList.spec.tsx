@@ -49,7 +49,7 @@ describe('TagList', () => {
         </Router>
       );
       await new Promise(res => setTimeout(res, 3000));
-      //expect(screen.getByTestId('location-display')).toHaveTextContent(route);
+      expect(screen.getByText(/test-tag-2/i)).toBeInTheDocument();
     });
   });
 });

@@ -8,7 +8,6 @@ import {DndProvider} from 'react-dnd';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {HTML5Backend} from 'react-dnd-html5-backend';
-import {LocationDisplay} from './lib/util/locationDisplay';
 import Main from './Main';
 import PublicHomePage from './PublicHomePage';
 import RootContainer from './RootContainer';
