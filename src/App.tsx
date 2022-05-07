@@ -8,6 +8,7 @@ import {DndProvider} from 'react-dnd';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {HTML5Backend} from 'react-dnd-html5-backend';
+import {LocationDisplay} from './lib/util/locationDisplay';
 import Main from './Main';
 import PublicHomePage from './PublicHomePage';
 import RootContainer from './RootContainer';
@@ -46,6 +47,7 @@ const App = React.memo(
                 <Routes>
                   <Route path="/oauth/github" element={<GithubAuth />} />
                   <Route path="/oauth/google" element={<GoogleAuth />} />
+                  {/* <Route path="/test/test" element={<LocationDisplay />} /> */}
                   <Route
                     path="/:user/:tag"
                     element={<Main handleThemeSwitcher={handleThemeSwitcher} />}

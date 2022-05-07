@@ -4,13 +4,13 @@
  */
 
 import '@testing-library/jest-dom';
+import {render, screen} from '@testing-library/react';
 import App from '../src/App';
 import React from 'react';
 import {Router} from 'react-router-dom';
 import {act} from 'react-dom/test-utils';
 import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
-import {render} from '@testing-library/react';
 import {rest} from 'msw';
 import {setupServer} from 'msw/node';
 import tagsResponse from '../test/mocks/tags/tagsResponse';
@@ -40,7 +40,8 @@ describe('TagList', () => {
   it('Renders', async () => {
     expect(window.location.href).toBe('http://localhost:8081/test/test');
     const history = createMemoryHistory();
-    history.push('/test/test');
+    const route = '/test/test';
+    history.push(route);
     await act(async () => {
       render(
         <Router location={history.location} navigator={history}>
@@ -48,6 +49,7 @@ describe('TagList', () => {
         </Router>
       );
       await new Promise(res => setTimeout(res, 3000));
+      //expect(screen.getByTestId('location-display')).toHaveTextContent(route);
     });
   });
 });
