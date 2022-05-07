@@ -3,9 +3,9 @@ import {ITagJsonApiResponseSingle} from '../../../src/lib/tags';
 const tagPostResponse: ITagJsonApiResponseSingle = {
   data: {
     type: 'Tag',
-    id: '3',
+    id: '5',
     attributes: {
-      name: 'tag-3',
+      name: 'test-tag-5',
       date_updated: '2022-01-14T07:26:20.559650',
       date_created: '2022-01-14T07:26:20.559640',
       date_last_used: '2022-01-14T07:26:20.559640',

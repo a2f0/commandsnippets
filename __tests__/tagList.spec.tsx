@@ -51,6 +51,8 @@ describe('TagList', () => {
       await new Promise(res => setTimeout(res, 3000));
       expect(screen.getByText(/test-tag-1/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-2/i)).toBeInTheDocument();
+      const tags = screen.getAllByRole('tag');
+      expect(tags).toHaveLength(2);
     });
   });
 });

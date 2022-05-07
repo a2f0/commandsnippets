@@ -307,6 +307,7 @@ const Tag = ({
           style={{opacity}}
           onContextMenu={handleContextClick}
           id={`tag-${id}`}
+          role="tag"
         >
           <div ref={preview} className={classes.entryWrapper}>
             <div
