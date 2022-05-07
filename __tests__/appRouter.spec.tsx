@@ -9,5 +9,6 @@ describe('appRouter', () => {
     render(<AppRouter />);
     expect(screen.getByText(/Login with Google/i)).toBeInTheDocument();
     expect(screen.getByText(/Login with GitHub/i)).toBeInTheDocument();
+    expect(screen.getByText(/Solve, Curate, Retrieve./i)).toBeInTheDocument();
   });
 });
