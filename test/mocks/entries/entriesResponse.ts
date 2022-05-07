@@ -52,7 +52,7 @@ const entriesResponse: ITextEntryJsonApiResponse = {
       type: 'Tag',
       id: '1',
       attributes: {
-        name: 'test',
+        name: 'test-tag-1',
         date_created: '2020-04-15T18:20:00',
         date_last_used: '2020-04-15T18:20:00',
         date_updated: '2020-12-28T17:36:18.397537',

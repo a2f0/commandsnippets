@@ -1,6 +1,6 @@
 /**
  * @jest-environment jsdom
- * @jest-environment-options {"url": "http://localhost:8081/test/test"}
+ * @jest-environment-options {"url": "http://localhost:8081/test/test-tag-1"}
  */
 
 import '@testing-library/jest-dom';
@@ -38,7 +38,7 @@ afterAll(() => server.close());
 
 describe('TagList', () => {
   it('Renders', async () => {
-    expect(window.location.href).toBe('http://localhost:8081/test/test');
+    expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const history = createMemoryHistory();
     const route = '/test/test';
     history.push(route);
@@ -49,6 +49,7 @@ describe('TagList', () => {
         </Router>
       );
       await new Promise(res => setTimeout(res, 3000));
+      expect(screen.getByText(/test-tag-1/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-2/i)).toBeInTheDocument();
     });
   });

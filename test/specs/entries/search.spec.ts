@@ -14,7 +14,7 @@ describe('TagsEntries Behavior', () => {
     );
     mockTags.respond(tags, {fetchResponse: false});
     mockEntries.respond(textEntriesResponse, {fetchResponse: false});
-    await BasePage.open('test/test');
+    await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.entrySearch).toBeExisting();

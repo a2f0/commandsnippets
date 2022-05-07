@@ -32,7 +32,7 @@ describe('Logged Out User Behavior', () => {
     await BasePage.open('');
     assert.strictEqual(
       await browser.getUrl(),
-      'http://localhost:8081/test/test'
+      'http://localhost:8081/test/test-tag-1'
     );
     // Establish initial view
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(2);
@@ -57,7 +57,7 @@ describe('Logged Out User Behavior', () => {
     // Confirm state after logout
     assert.strictEqual(
       await browser.getUrl(),
-      'http://localhost:8081/test/test'
+      'http://localhost:8081/test/test-tag-1'
     );
     await expect(BasePage.googleAuthButton).toBeExisting();
     await expect(BasePage.googleAuthButton).toBeDisplayed();

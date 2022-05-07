@@ -45,7 +45,7 @@ describe('Tag Main Menu Behavior', () => {
     // check the initial browser url
     assert.strictEqual(
       await browser.getUrl(),
-      'http://localhost:8081/test/test'
+      'http://localhost:8081/test/test-tag-1'
     );
 
     // initial state of order by order
@@ -136,7 +136,7 @@ describe('Tag Main Menu Behavior', () => {
 
     assert.strictEqual(
       await browser.getUrl(),
-      'http://localhost:8081/test/test'
+      'http://localhost:8081/test/test-tag-1'
     );
   });
 });
