@@ -22,7 +22,7 @@ describe('Tag Context Menu Behavior', () => {
     await expect(BasePage.tag1).toBeDisplayed();
     await expect(BasePage.tag2).toBeExisting();
     await expect(BasePage.tag2).toBeDisplayed();
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
     await (await BasePage.tag1).waitAndRightClick();
     await expect(BasePage.tagContextMenu1).toBeDisplayed();
@@ -54,7 +54,7 @@ describe('Tag Context Menu Behavior', () => {
     await expect(BasePage.tag1).toBeDisplayed();
     await expect(BasePage.tag2).toBeExisting();
     await expect(BasePage.tag2).toBeDisplayed();
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
 
     // Test cancel delete
@@ -76,7 +76,7 @@ describe('Tag Context Menu Behavior', () => {
     await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeDisplayed();
 
     // Test confirm delete
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await (await BasePage.tag1).waitAndRightClick();
     await expect(BasePage.tagContextMenu1).toBeDisplayed();
     await expect(BasePage.tagContextMenu1DeleteTagMenuItem).toBeDisplayed();
@@ -95,6 +95,6 @@ describe('Tag Context Menu Behavior', () => {
     ).waitAndLeftClick();
     await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeDisplayed();
     await expect(mockTagDelete).toBeRequestedTimes(1);
-    await expect(BasePage.tags).toBeElementsArrayOfSize(1);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(3);
   });
 });

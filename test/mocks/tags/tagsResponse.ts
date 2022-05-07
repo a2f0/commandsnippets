@@ -47,6 +47,48 @@ const tagsResponse: ITagJsonApiResponse = {
         },
       },
     },
+    {
+      type: 'Tag',
+      id: '3',
+      attributes: {
+        name: 'test-tag-3',
+        date_created: '2022-05-07T18:20:00',
+        date_updated: '2022-05-07T18:20:00',
+        date_last_used: '2021-05-07T18:20:00',
+        entry_count: 0,
+        order: 2,
+        is_deleted: false,
+      },
+      relationships: {
+        user: {
+          data: {
+            type: 'User',
+            id: '1',
+          },
+        },
+      },
+    },
+    {
+      type: 'Tag',
+      id: '4',
+      attributes: {
+        name: 'test-tag-4',
+        date_created: '2022-05-08T18:20:00',
+        date_updated: '2022-05-08T18:20:00',
+        date_last_used: '2021-05-08T18:20:00',
+        entry_count: 0,
+        order: 2,
+        is_deleted: false,
+      },
+      relationships: {
+        user: {
+          data: {
+            type: 'User',
+            id: '1',
+          },
+        },
+      },
+    },
   ],
   included: [
     {

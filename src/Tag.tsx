@@ -316,6 +316,7 @@ const Tag = ({
               onMouseLeave={mouseLeave}
             >
               <div
+                role="tagDragHandle"
                 ref={dragRef}
                 className={classes.tagDragIndicator}
                 onMouseEnter={mouseEnter}

@@ -15,7 +15,7 @@ describe('Tag Search Menu Behavior', () => {
     mockTags.respond(tagsResponse, {fetchResponse: false});
     mockEntries.respond(entriesResponse, {fetchResponse: false});
     await BasePage.open('');
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeExisting();
     await expect(BasePage.tagSearch).toBeDisplayed();
     await expect(BasePage.tagSearch).toBeFocused();
@@ -26,7 +26,7 @@ describe('Tag Search Menu Behavior', () => {
     );
 
     await browser.keys('Escape');
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toHaveValue('');
   });
 });

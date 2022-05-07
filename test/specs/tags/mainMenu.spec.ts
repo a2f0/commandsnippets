@@ -19,7 +19,7 @@ describe('Tag Main Menu Behavior', () => {
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
     await expect(BasePage.tagContextMenu1).toBeExisting();
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tag1).toBeExisting();
     await expect(BasePage.tag1).toBeDisplayed();
     await expect(BasePage.tag2).toBeExisting();
@@ -32,7 +32,7 @@ describe('Tag Main Menu Behavior', () => {
     await expect(BasePage.tagList).toBeDisplayed();
 
     // // Make sure the first tag is selected
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     // https://webdriver.io/docs/autowait/#limitations
 
     let tags = await BasePage.tags;
@@ -110,11 +110,11 @@ describe('Tag Main Menu Behavior', () => {
         tags = await BasePage.tags;
         const firstId = await tags[0].getAttribute('id');
         const secondId = await tags[1].getAttribute('id');
-        return firstId === 'tag-2' && secondId === 'tag-1';
+        return firstId === 'tag-4' && secondId === 'tag-3';
       },
       {
         timeout: 5000,
-        timeoutMsg: 'expected tag-2 to be first and tag-1 to be second',
+        timeoutMsg: 'expected tag-4 to be first and tag-3 to be second',
       }
     );
 
@@ -122,14 +122,14 @@ describe('Tag Main Menu Behavior', () => {
     await browser.waitUntil(
       async () => {
         tags = await BasePage.tags;
-        wrapper = await tags[1].$('div[id^="tagLabelWrapper-"]');
+        wrapper = await tags[3].$('div[id^="tagLabelWrapper-"]');
         wrapperID = await wrapper.getAttribute('id');
         assert.strictEqual(wrapperID, 'tagLabelWrapper-1');
         backgroundColor = await wrapper.getCSSProperty('background-color');
         return backgroundColor.value === 'rgba(72,72,72,1)';
       },
       {
-        timeout: 120000,
+        timeout: 5000,
         timeoutMsg: 'expected tag 1 to still be selected',
       }
     );

@@ -36,7 +36,7 @@ describe('Logged Out User Behavior', () => {
     );
     // Establish initial view
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(2);
-    await expect(BasePage.tags).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.googleAuthButton).not.toBeExisting();
     await expect(BasePage.googleAuthButton).not.toBeDisplayed();
     await expect(BasePage.githubAuthButton).not.toBeExisting();
