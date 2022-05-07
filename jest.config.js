@@ -6,4 +6,9 @@ module.exports = {
   testEnvironmentOptions: {
     url: 'http://localhost:8081/',
   },
+  globals: {
+    'ts-jest': {
+      tsconfig: '__tests__/tsconfig.json',
+    },
+  },
 };
