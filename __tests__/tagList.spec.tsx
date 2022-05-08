@@ -4,7 +4,7 @@
  */
 
 import '@testing-library/jest-dom';
-import {act, render, screen} from '@testing-library/react';
+import {act, fireEvent, render, screen} from '@testing-library/react';
 import App from '../src/App';
 import React from 'react';
 import {Router} from 'react-router-dom';
@@ -48,12 +48,12 @@ describe('TagList', () => {
           <App />
         </Router>
       );
-      await new Promise(res => setTimeout(res, 3000));
+      await new Promise(res => setTimeout(res, 500));
       expect(screen.getByText(/test-tag-1/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-2/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-3/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-4/i)).toBeInTheDocument();
-      const tags = screen.getAllByRole('tag');
+      let tags = screen.getAllByRole('tag');
       expect(tags).toHaveLength(4);
       expect(tags[0]).toHaveTextContent('test-tag-1');
       expect(tags[1]).toHaveTextContent('test-tag-2');
@@ -67,10 +67,17 @@ describe('TagList', () => {
       await user.pointer({target: tagDragHandleContainers[0]});
       const tagDragHandles = screen.getAllByRole('tagDragHandle');
       expect(tagDragHandles).toHaveLength(1);
-      await user.pointer({
-        target: tagDragHandleContainers[1],
-        keys: '[MouseLeft]',
-      });
+      fireEvent.dragStart(tagDragHandles[0]);
+      fireEvent.dragEnter(tags[2]);
+      fireEvent.dragOver(tags[2]);
+      await new Promise(res => setTimeout(res, 0));
+      fireEvent.drop(tags[3]);
+      tags = screen.getAllByRole('tag');
+      expect(tags).toHaveLength(4);
+      expect(tags[0]).toHaveTextContent('test-tag-2');
+      expect(tags[1]).toHaveTextContent('test-tag-3');
+      expect(tags[2]).toHaveTextContent('test-tag-4');
+      expect(tags[3]).toHaveTextContent('test-tag-1');
     });
   });
 });
