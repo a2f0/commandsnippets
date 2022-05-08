@@ -55,6 +55,10 @@ describe('TagList', () => {
       expect(screen.getByText(/test-tag-4/i)).toBeInTheDocument();
       const tags = screen.getAllByRole('tag');
       expect(tags).toHaveLength(4);
+      expect(tags[0]).toHaveTextContent('test-tag-1');
+      expect(tags[1]).toHaveTextContent('test-tag-2');
+      expect(tags[2]).toHaveTextContent('test-tag-3');
+      expect(tags[3]).toHaveTextContent('test-tag-4');
       const tagDragHandleContainers = screen.getAllByRole(
         'tagDragHandleContainer'
       );
@@ -63,6 +67,10 @@ describe('TagList', () => {
       await user.pointer({target: tagDragHandleContainers[0]});
       const tagDragHandles = screen.getAllByRole('tagDragHandle');
       expect(tagDragHandles).toHaveLength(1);
+      await user.pointer({
+        target: tagDragHandleContainers[1],
+        keys: '[MouseLeft]',
+      });
     });
   });
 });
