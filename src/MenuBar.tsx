@@ -188,6 +188,7 @@ const MenuBar = () => {
         {appConfig.loggedInUser && (
           <Button
             color="secondary"
+            role="fileMenu"
             size="small"
             aria-controls="file-menu"
             id="file-menu-button"

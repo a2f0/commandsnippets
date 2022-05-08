@@ -13,6 +13,7 @@ import entriesResponse from '../test/mocks/entries/entriesResponse';
 import {rest} from 'msw';
 import {setupServer} from 'msw/node';
 import tagsResponse from '../test/mocks/tags/tagsResponse';
+import userEvent from '@testing-library/user-event';
 
 const server = setupServer(
   rest.get('http://localhost:9001/api/v1/tags', (req, res, ctx) => {
@@ -52,13 +53,16 @@ describe('TagList', () => {
       expect(screen.getByText(/test-tag-2/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-3/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-4/i)).toBeInTheDocument();
-      expect(screen.getByText(/Login with Google/i)).toBeInTheDocument();
       const tags = screen.getAllByRole('tag');
       expect(tags).toHaveLength(4);
       const tagDragHandleContainers = screen.getAllByRole(
         'tagDragHandleContainer'
       );
       expect(tagDragHandleContainers).toHaveLength(4);
+      const user = userEvent.setup();
+      await user.pointer({target: tagDragHandleContainers[0]});
+      const tagDragHandles = screen.getAllByRole('tagDragHandle');
+      expect(tagDragHandles).toHaveLength(1);
     });
   });
 });
