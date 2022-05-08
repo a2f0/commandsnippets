@@ -4,11 +4,10 @@
  */
 
 import '@testing-library/jest-dom';
-import {render, screen} from '@testing-library/react';
+import {act, render, screen} from '@testing-library/react';
 import App from '../src/App';
 import React from 'react';
 import {Router} from 'react-router-dom';
-import {act} from 'react-dom/test-utils';
 import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
 import {rest} from 'msw';
@@ -53,8 +52,13 @@ describe('TagList', () => {
       expect(screen.getByText(/test-tag-2/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-3/i)).toBeInTheDocument();
       expect(screen.getByText(/test-tag-4/i)).toBeInTheDocument();
+      expect(screen.getByText(/Login with Google/i)).toBeInTheDocument();
       const tags = screen.getAllByRole('tag');
       expect(tags).toHaveLength(4);
+      const tagDragHandleContainers = screen.getAllByRole(
+        'tagDragHandleContainer'
+      );
+      expect(tagDragHandleContainers).toHaveLength(4);
     });
   });
 });

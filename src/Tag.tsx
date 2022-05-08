@@ -314,6 +314,7 @@ const Tag = ({
               className={classes.tagDragIndicatorContainer}
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
+              role="tagDragHandleContainer"
             >
               <div
                 role="tagDragHandle"

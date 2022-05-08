@@ -46,7 +46,6 @@ const App = React.memo(
                 <Routes>
                   <Route path="/oauth/github" element={<GithubAuth />} />
                   <Route path="/oauth/google" element={<GoogleAuth />} />
-                  {/* <Route path="/test/test" element={<LocationDisplay />} /> */}
                   <Route
                     path="/:user/:tag"
                     element={<Main handleThemeSwitcher={handleThemeSwitcher} />}
