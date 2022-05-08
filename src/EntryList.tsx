@@ -130,7 +130,8 @@ const EntryList = () => {
           user,
           null,
           appConfig.untaggedTextEntriesArray,
-          appConfig.entrySortOrder
+          appConfig.entrySortOrder,
+          appConfig
         );
         if (array.length > 1) {
           appConfig.setEntrySelectedID(array[0].id);
@@ -173,7 +174,8 @@ const EntryList = () => {
           user,
           tag,
           appConfig.textEntriesArray,
-          appConfig.tagTextEntryThroughModelSortOrder
+          appConfig.tagTextEntryThroughModelSortOrder,
+          appConfig
         );
         setEntries(array);
         const current = array.find(

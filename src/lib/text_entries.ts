@@ -5,7 +5,7 @@ import {ITagJsonApi} from '../models/TagModel';
 import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {IUserJsonApi} from '../models/UserModel';
-import {store} from '../AppStateStore';
+import type {TStore} from '../AppStateStore';
 
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
@@ -38,7 +38,8 @@ export function sort(
   username: string,
   tag: string | null,
   inputArray: Array<ITextEntryJsonApi>,
-  sortOrder: string
+  sortOrder: string,
+  store: TStore
 ): ITextEntryJsonApi[] {
   let sortedArray: Array<ITextEntryJsonApi> = [];
   const userObject = store.usersArray.find(

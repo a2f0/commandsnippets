@@ -7,17 +7,12 @@ import MenuBar from './MenuBar';
 import StyledToolbar from './styled/layout/StyledToolbar';
 import TagSearch from './TagSearch';
 import TextEntrySearchField from './styled/text_entries/TextEntrySearchField';
-import {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useLocation} from 'react-router-dom';
 import {useNavigate} from 'react-router-dom';
 
-interface IMainProps {
-  handleThemeSwitcher: (chosenTheme: Theme) => void;
-}
-
-const Main = (props: IMainProps) => {
+const Main = () => {
   const location = useLocation();
   const appConfig = useAppContext();
   const navigate = useNavigate();
@@ -55,7 +50,7 @@ const Main = (props: IMainProps) => {
         }}
       >
         <StyledToolbar>
-          <MenuBar handleThemeSwitcher={props.handleThemeSwitcher} />
+          <MenuBar />
         </StyledToolbar>
       </AppBar>
       <LeftDrawer />

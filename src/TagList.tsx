@@ -110,7 +110,7 @@ const TagList = () => {
     if (userName !== undefined) {
       appConfig.setCurrentUser(userName);
       appConfig.fetchTags(userName).then(() => {
-        const array = TagHelpers.filterAndSort();
+        const array = TagHelpers.filterAndSort(appConfig);
         if (array.length > 1) {
           let selected: Instance<typeof TagModel> | undefined = undefined;
           if (tag) {
@@ -131,7 +131,7 @@ const TagList = () => {
   useEffect(
     () =>
       autorun(() => {
-        setTags(TagHelpers.filterAndSort());
+        setTags(TagHelpers.filterAndSort(appConfig));
         const current = tags.find(
           element => element.id === appConfig.tagSelectedID
         );
@@ -165,7 +165,7 @@ const TagList = () => {
   const handleDelete = (object: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(c => c.id === object.data.id);
     existing?.update(object.data);
-    setTags(TagHelpers.filterAndSort());
+    setTags(TagHelpers.filterAndSort(appConfig));
   };
 
   const findEntry = (id: string) => {
@@ -177,7 +177,7 @@ const TagList = () => {
   };
 
   const handleNew = () => {
-    setTags(TagHelpers.filterAndSort());
+    setTags(TagHelpers.filterAndSort(appConfig));
   };
 
   const findEntryByIndex = (index: number) => {

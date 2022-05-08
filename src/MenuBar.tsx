@@ -88,11 +88,7 @@ const useStyles = makeStyles({
   },
 });
 
-interface IMenuBarProps {
-  handleThemeSwitcher: (theme: Theme) => void;
-}
-
-const MenuBar = (props: IMenuBarProps) => {
+const MenuBar = () => {
   const classes = useStyles();
   const appConfig = useAppContext();
 
@@ -174,6 +170,14 @@ const MenuBar = (props: IMenuBarProps) => {
     setFileMenuAnchorEl(null);
     appConfig.setAppMode(appMode.entryEditor);
     appConfig.setEntryNew('textEntry-top');
+  };
+
+  const handleThemeSwitcher = (chosenTheme: Theme) => {
+    if (chosenTheme === lightTheme) {
+      appConfig.setSelectedTheme('lightTheme');
+    } else {
+      appConfig.setSelectedTheme('darkTheme');
+    }
   };
 
   return (
@@ -313,7 +317,7 @@ const MenuBar = (props: IMenuBarProps) => {
         <StyledMenuItem
           id="view-menu-light-theme"
           onClick={() => {
-            props.handleThemeSwitcher(lightTheme);
+            handleThemeSwitcher(lightTheme);
             handleViewMenuClose();
           }}
         >
@@ -327,7 +331,7 @@ const MenuBar = (props: IMenuBarProps) => {
         <StyledMenuItem
           id="view-menu-dark-theme"
           onClick={() => {
-            props.handleThemeSwitcher(darkTheme);
+            handleThemeSwitcher(darkTheme);
             handleViewMenuClose();
           }}
         >
