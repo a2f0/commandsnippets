@@ -398,6 +398,7 @@ const Entry = ({
       )}
       {!isEditing && (
         <div
+          role="entry"
           ref={dropRef}
           style={{opacity}}
           onContextMenu={handleContextClick}
