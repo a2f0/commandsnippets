@@ -72,9 +72,8 @@ describe('TagList', () => {
       expect(tagDragHandleContainers).toHaveLength(4);
       const user = userEvent.setup();
       await user.pointer({target: tagDragHandleContainers[0]});
-      const tagDragHandles = screen.getAllByRole('tagDragHandle');
-      expect(tagDragHandles).toHaveLength(1);
-      fireEvent.dragStart(tagDragHandles[0]);
+      const tagDragHandle = screen.getByRole('tagDragHandle');
+      fireEvent.dragStart(tagDragHandle);
       fireEvent.dragEnter(tags[2]);
       fireEvent.dragOver(tags[2]);
       await new Promise(res => setTimeout(res, 0));
