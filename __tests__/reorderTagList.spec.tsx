@@ -29,6 +29,13 @@ const server = setupServer(
       ctx.status(200, 'Mocked status'),
       ctx.json(entriesResponse)
     );
+  }),
+  rest.post('http://localhost:9001/api/v1/tags/reorder', (req, res, ctx) => {
+    return res(
+      ctx.delay(0),
+      ctx.status(200, 'Mocked status'),
+      ctx.json({data: null})
+    );
   })
 );
 

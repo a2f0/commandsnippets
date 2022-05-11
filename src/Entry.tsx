@@ -137,6 +137,12 @@ const Entry = ({
         } else {
           // Then it was reordered in the list.
           if (originalIndex !== findEntry(id).index) {
+            console.info(
+              'it moved from index ' +
+                originalIndex +
+                ' to ' +
+                findEntry(id).index
+            );
             const entry = findEntry(id).entry;
             const entry_below = findEntryByIndex(index + 1);
             let ordered_top: ITextEntryJsonApi | null;
@@ -407,11 +413,13 @@ const Entry = ({
           <div ref={preview} className={classes.entryContainer}>
             <div>
               <div
+                role="entryDragHandleContainer"
                 className={classes.dragIndicatorContainer}
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
                 <div
+                  role="entryDragHandle"
                   ref={dragRef}
                   className={classes.dragIndicator}
                   onMouseEnter={mouseEnter}
