@@ -29,12 +29,12 @@ describe('TagsEntries Behavior', () => {
     await browser.keys('Tab');
     await expect(BasePage.entrySearch).toBeFocused();
 
-    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await browser.keys(textEntriesResponse.data[0].attributes.subject);
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
 
     await browser.keys('Escape');
-    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeFocused();
   });
 });

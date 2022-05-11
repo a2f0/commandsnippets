@@ -35,7 +35,7 @@ describe('Logged Out User Behavior', () => {
       'http://localhost:8081/test/test-tag-1'
     );
     // Establish initial view
-    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(2);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.googleAuthButton).not.toBeExisting();
     await expect(BasePage.googleAuthButton).not.toBeDisplayed();

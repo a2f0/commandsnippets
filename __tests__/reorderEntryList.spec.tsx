@@ -64,16 +64,20 @@ describe('Entries List', () => {
       expect(screen.getByText(/entry-2-subject/i)).toBeInTheDocument();
       expect(screen.getByText(/entry-2-body/i)).toBeInTheDocument();
       let entries = screen.getAllByRole('entry');
-      expect(entries).toHaveLength(2);
+      expect(entries).toHaveLength(4);
       expect(entries[0]).toHaveTextContent('entry-1-subject');
       expect(entries[0]).toHaveTextContent('entry-1-body');
       expect(entries[1]).toHaveTextContent('entry-2-subject');
       expect(entries[1]).toHaveTextContent('entry-2-body');
+      expect(entries[2]).toHaveTextContent('entry-3-subject');
+      expect(entries[2]).toHaveTextContent('entry-3-body');
+      expect(entries[3]).toHaveTextContent('entry-4-subject');
+      expect(entries[3]).toHaveTextContent('entry-4-body');
       const user = userEvent.setup();
       const entryDragHandleContainers = screen.getAllByRole(
         'entryDragHandleContainer'
       );
-      expect(entryDragHandleContainers).toHaveLength(2);
+      expect(entryDragHandleContainers).toHaveLength(4);
       await user.pointer({target: entryDragHandleContainers[0]});
       const entryDragHandle = screen.getByRole('entryDragHandle');
       fireEvent.dragStart(entryDragHandle);
@@ -83,7 +87,7 @@ describe('Entries List', () => {
       fireEvent.drop(entries[1]);
       await new Promise(res => setTimeout(res, 3000));
       entries = screen.getAllByRole('entry');
-      expect(entries).toHaveLength(2);
+      expect(entries).toHaveLength(4);
     });
   });
 });

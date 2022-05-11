@@ -99,7 +99,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewTop).not.toBeExisting();
 
     // test save
-    assert.strictEqual(await BasePage.tagsEntries.length, 2);
+    assert.strictEqual(await BasePage.tagsEntries.length, 4);
     await (await BasePage.fileMenuButton).waitAndLeftClick();
 
     await expect(BasePage.fileMenu).toBeDisplayed();
@@ -120,6 +120,6 @@ describe('Entry Main Menu Behavior', () => {
     await (await BasePage.entryNewTopSave).waitAndLeftClick();
 
     await expect(BasePage.entryNewTop).not.toBeExisting();
-    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(3);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(5);
   });
 });

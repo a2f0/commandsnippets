@@ -4,11 +4,11 @@ const tagTextEntryThroughModelsResponse: ITagTextEntryThroughModelJsonApiRespons
   {
     data: {
       type: 'TagTextEntryThroughModel',
-      id: '3',
+      id: '5',
       attributes: {
-        order: 3,
-        date_updated: '2022-01-14T10:10:31.684433',
-        date_created: '2022-01-14T10:10:31.684418',
+        order: 5,
+        date_updated: '2022-01-15T10:10:31.684433',
+        date_created: '2022-01-15T10:10:31.684418',
       },
       relationships: {
         tag: {
@@ -20,7 +20,7 @@ const tagTextEntryThroughModelsResponse: ITagTextEntryThroughModelJsonApiRespons
         text_entry: {
           data: {
             type: 'TextEntry',
-            id: '3',
+            id: '5',
           },
         },
       },
