@@ -127,6 +127,8 @@ const Entry = ({
             };
             API.post('tags_entries', payload, {
               withCredentials: true,
+            }).then(resp => {
+              appConfig.updateOrCreateTagTextEntryThroughModel(resp.data.data);
             });
             if (tag === 'untagged') {
               //Then an untagged entry was tagged
