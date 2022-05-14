@@ -75,13 +75,12 @@ const Tag = ({
   const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
   const {user} = useParams();
-  const [{canDrop, isOver}, drop] = useDrop({
+  const [{canDrop, isOver}, drop] = useDrop(() => ({
     accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
       return true;
     },
     drop: () => ({
-      //name: name,
       id: id,
       type: 'Tag',
     }),
@@ -89,7 +88,7 @@ const Tag = ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
-    hover(item: TagTextEntryThroughModel, monitor) {
+    hover: (item: any, monitor) => {
       if (!dragRef.current) {
         return;
       }
@@ -136,7 +135,7 @@ const Tag = ({
         item.index = hoverIndex;
       }
     },
-  });
+  }));
 
   const isActiveHover = canDrop && isOver;
 
