@@ -11,7 +11,6 @@ import ItemTypes from './ItemTypes';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
-import {TagTextEntryThroughModel} from './EntryList';
 import {Theme} from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
@@ -46,6 +45,23 @@ const useStyles = makeStyles({
   },
 });
 
+interface DraggableItem {
+  id: string;
+  type: string;
+  originalIndex: number;
+  index: number;
+}
+
+interface DroppableItem {
+  isOver: boolean;
+  canDrop: boolean;
+}
+
+interface DropResult {
+  id: string;
+  type: string;
+}
+
 interface ITagProps {
   id: string;
   object: ITagJsonApi;
@@ -75,7 +91,11 @@ const Tag = ({
   const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
   const {user} = useParams();
-  const [{canDrop, isOver}, drop] = useDrop(() => ({
+  const [{canDrop, isOver}, drop] = useDrop<
+    DraggableItem,
+    DropResult,
+    DroppableItem
+  >(() => ({
     accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
       return true;
@@ -88,7 +108,7 @@ const Tag = ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
-    hover: (item: any, monitor) => {
+    hover: (item: DraggableItem, monitor) => {
       if (!dragRef.current) {
         return;
       }
@@ -216,7 +236,12 @@ const Tag = ({
   };
 
   const [{isDragging}, drag, preview] = useDrag({
-    item: () => ({id, originalIndex, type: ItemTypes.TAG}),
+    item: (): DraggableItem => ({
+      id,
+      originalIndex,
+      type: ItemTypes.TAG,
+      index,
+    }),
     type: ItemTypes.TAG,
     collect: monitor => ({
       isDragging: monitor.isDragging(),
