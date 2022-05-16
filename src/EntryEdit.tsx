@@ -115,10 +115,10 @@ const EntryEdit = ({
     setSubject(value);
   };
 
-  const keyListener = useCallback(event => {
-    const trappedKeyCodes = [keyCode.Tab];
+  const keyListener = useCallback((event: KeyboardEvent) => {
+    const trappedKeyCodes = ['Tab'];
     if (
-      trappedKeyCodes.includes(event.keyCode) &&
+      trappedKeyCodes.includes(event.code) &&
       appConfig.appMode === appMode.entryEditor
     ) {
       if (appConfig.activeEntryEditField === activeEntryEditField.subject) {

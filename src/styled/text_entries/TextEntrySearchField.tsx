@@ -14,8 +14,8 @@ const TextEntrySearchField = () => {
     setTextEntrySearch(appConfig.entrySearchString);
   }, [appConfig.entrySearchString]);
 
-  const escFunction = useCallback(event => {
-    if (event.keyCode === keyCode.Escape) {
+  const escFunction = useCallback((event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
       handleClear();
     }
   }, []);

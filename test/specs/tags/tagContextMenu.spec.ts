@@ -73,7 +73,7 @@ describe('Tag Context Menu Behavior', () => {
     await (
       await BasePage.tagContextMenu1DeleteTagDialogCancelButton
     ).waitAndLeftClick();
-    await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeDisplayed();
+    await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeExisting();
 
     // Test confirm delete
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);

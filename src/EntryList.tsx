@@ -191,14 +191,10 @@ const EntryList = () => {
   };
 
   const keyListener = useCallback(
-    event => {
-      const trappedKeyCodes = [
-        keyCode.Enter,
-        keyCode.UpArrow,
-        keyCode.DownArrow,
-      ];
+    (event: KeyboardEvent) => {
+      const trappedKeyCodes = ['Enter', 'ArrowUp', 'ArrowDown'];
       if (
-        trappedKeyCodes.includes(event.keyCode) &&
+        trappedKeyCodes.includes(event.code) &&
         appConfig.appMode === appMode.entriesList
       ) {
         event.preventDefault();

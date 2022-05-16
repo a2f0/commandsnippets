@@ -22,8 +22,8 @@ const TagEdit = ({
   object,
 }: ITagEdit) => {
   const [tagName, setTagName] = useState<string>(object.attributes.name);
-  const escFunction = useCallback(event => {
-    if (event.keyCode === keyCode.Escape) {
+  const escFunction = useCallback((event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
       handleCancel();
     }
   }, []);

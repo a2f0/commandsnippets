@@ -11,8 +11,8 @@ const TagSearchField = () => {
   const appConfig = useAppContext();
   const inputRef = React.useRef<HTMLInputElement>();
 
-  const escFunction = useCallback(event => {
-    if (event.keyCode === keyCode.Escape) {
+  const escFunction = useCallback((event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
       appConfig.setAppMode(appMode.tagsList);
       inputRef.current?.focus();
       handleClear();

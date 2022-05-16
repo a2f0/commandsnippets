@@ -26,8 +26,8 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     inputTagNameRef.current = element;
   };
 
-  const escFunction = useCallback(event => {
-    if (event.keyCode === keyCode.Escape) {
+  const escFunction = useCallback((event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
       handleCancel();
     }
   }, []);
@@ -87,10 +87,10 @@ const TagNew = ({handleNewParent, id}: IProps) => {
       });
   };
 
-  const keyListener = useCallback(event => {
-    const trappedKeyCodes = [keyCode.Tab];
+  const keyListener = useCallback((event: KeyboardEvent) => {
+    const trappedKeyCodes = ['Tab'];
     if (
-      trappedKeyCodes.includes(event.keyCode) &&
+      trappedKeyCodes.includes(event.code) &&
       appConfig.appMode === appMode.tagEditor
     ) {
       if (appConfig.activeTagEditField === activeTagEditField.name) {

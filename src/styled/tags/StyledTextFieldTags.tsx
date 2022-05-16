@@ -47,11 +47,11 @@ const StyledTextFieldTags = React.forwardRef<
   );
   const classes = useStyles();
 
-  const keyListener = useCallback(event => {
+  const keyListener = useCallback((event: KeyboardEvent) => {
     const trappedModes = [appMode.tagsList, appMode.entriesList];
-    const trappedKeys = [keyCode.Tab, keyCode.LeftArrow, keyCode.RightArrow];
+    const trappedKeys = ['Tab', 'ArrowLeft', 'ArrowRight'];
 
-    if (event.keyCode === keyCode.Escape) {
+    if (event.code === 'Escape') {
       appConfig.setActiveSearch(activeSearch.tags);
     }
 
@@ -75,7 +75,7 @@ const StyledTextFieldTags = React.forwardRef<
           appConfig.setActiveSearch(activeSearch.entries);
         }
       }
-      if (trappedKeys.includes(event.keyCode)) {
+      if (trappedKeys.includes(event.code)) {
         event.preventDefault();
         event.stopPropagation();
       }

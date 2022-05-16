@@ -203,14 +203,10 @@ const TagList = () => {
   );
 
   const keyListener = useCallback(
-    event => {
-      const trappedKeyCodes = [
-        keyCode.UpArrow,
-        keyCode.DownArrow,
-        keyCode.Enter,
-      ];
+    (event: KeyboardEvent) => {
+      const trappedKeyCodes = ['ArrowUp', 'ArrowDown', 'Enter'];
       if (
-        trappedKeyCodes.includes(event.keyCode) &&
+        trappedKeyCodes.includes(event.code) &&
         appConfig.appMode === appMode.tagsList
       ) {
         event.preventDefault();
