@@ -9,6 +9,7 @@ provider "vercel" {
 resource "vercel_project" "tearleads" {
   name             = "tearleads"
   output_directory = "build"
+  node_version     = "16.x"
   git_repository {
     type = "github"
     repo = "${var.github_owner}/${var.github_repository}"
