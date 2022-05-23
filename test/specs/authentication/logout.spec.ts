@@ -30,9 +30,16 @@ describe('Logged Out User Behavior', () => {
     mockLogoutOptionsResponse.respond({fetchResponse: false});
     mockLogoutResponse.respond(logoutResponse, {fetchResponse: false});
     await BasePage.open('');
-    assert.strictEqual(
-      await browser.getUrl(),
-      'http://localhost:8081/test/test-tag-1'
+    // Make sure to wait to route the logged in user
+    await browser.waitUntil(
+      async () => {
+        const url = await browser.getUrl();
+        return url === 'http://localhost:8081/test/test-tag-1';
+      },
+      {
+        timeout: 5000,
+        timeoutMsg: 'http://localhost:8081/test/test-tag-1',
+      }
     );
     // Establish initial view
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);

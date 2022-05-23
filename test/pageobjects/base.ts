@@ -44,13 +44,13 @@ export default class Base {
 
   // tags
   get tagList() {
-    return browser.react$('TagList');
+    return $('#tagList');
   }
   get tags() {
-    return browser.react$$('Tag');
+    return $$('div[id^="tag-"]');
   }
   get tagListContextMenu() {
-    return browser.react$('TagListContextMenu');
+    return $('#tagListContextMenu');
   }
   get tagNewBottomTextField() {
     return $('#tagNewBottomTextField');

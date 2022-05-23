@@ -30,7 +30,14 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.entrySearch).toBeFocused();
 
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
-    await browser.keys(textEntriesResponse.data[0].attributes.subject);
+    expect(BasePage.entrySearch).toBeFocused();
+    await browser.keys('e');
+    await browser.keys('n');
+    await browser.keys('t');
+    await browser.keys('r');
+    await browser.keys('y');
+    await browser.keys('-');
+    await browser.keys('1');
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
 
     await browser.keys('Escape');

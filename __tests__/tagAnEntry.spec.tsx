@@ -77,85 +77,88 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
 describe('Tag An Entry', () => {
-  it('works', async () => {
+  it('Is Taggable', async () => {
     expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const history = createMemoryHistory();
     const route = '/test/test-tag-1';
     history.push(route);
+    const {rerender} = render(
+      <Router location={history.location} navigator={history}>
+        <App />
+      </Router>
+    );
+    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    expect(history.location.pathname).toBe('/test/test-tag-1');
+    const entries = screen.getAllByRole('entry');
+    expect(entries).toHaveLength(4);
+    expect(entries[0]).toHaveTextContent('entry-1-subject');
+    expect(entries[0]).toHaveTextContent('entry-1-body');
+    expect(entries[1]).toHaveTextContent('entry-2-subject');
+    expect(entries[1]).toHaveTextContent('entry-2-body');
+    expect(entries[2]).toHaveTextContent('entry-3-subject');
+    expect(entries[2]).toHaveTextContent('entry-3-body');
+    expect(entries[3]).toHaveTextContent('entry-4-subject');
+    expect(entries[3]).toHaveTextContent('entry-4-body');
+
+    let tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
+    expect(tagLabelWrappers).toHaveLength(4);
+
+    const user = userEvent.setup();
+    await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
+    expect(history.location.pathname).toBe('/test/test-tag-2');
+    rerender(
+      <Router location={history.location} navigator={history}>
+        <App />
+      </Router>
+    );
+    await waitFor(
+      () => expect(screen.queryAllByRole('entry')).toHaveLength(0),
+      {timeout: 3000}
+    );
+    tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
+    expect(tagLabelWrappers).toHaveLength(4);
+    await user.pointer({target: tagLabelWrappers[0], keys: '[MouseLeft]'});
+    expect(history.location.pathname).toBe('/test/test-tag-1');
+
+    rerender(
+      <Router location={history.location} navigator={history}>
+        <App />
+      </Router>
+    );
+    await waitFor(
+      () => expect(screen.queryAllByRole('entry')).toHaveLength(4),
+      {timeout: 3000}
+    );
+    const entryDragHandleContainers = screen.getAllByRole(
+      'entryDragHandleContainer'
+    );
+    expect(entryDragHandleContainers).toHaveLength(4);
+    await user.pointer({target: entryDragHandleContainers[0]});
+    const tags = screen.getAllByRole('tag');
+    expect(tags).toHaveLength(4);
+    const entryDragHandle = screen.getByRole('entryDragHandle');
     await act(async () => {
-      const {rerender} = render(
-        <Router location={history.location} navigator={history}>
-          <App />
-        </Router>
-      );
-      await new Promise(res => setTimeout(res, 500));
-      expect(history.location.pathname).toBe('/test/test-tag-1');
-      expect(screen.getByText(/entry-1-subject/i)).toBeInTheDocument();
-      expect(screen.getByText(/entry-1-body/i)).toBeInTheDocument();
-      expect(screen.getByText(/entry-2-subject/i)).toBeInTheDocument();
-      expect(screen.getByText(/entry-2-body/i)).toBeInTheDocument();
-      let entries = screen.getAllByRole('entry');
-      expect(entries).toHaveLength(4);
-      expect(entries[0]).toHaveTextContent('entry-1-subject');
-      expect(entries[0]).toHaveTextContent('entry-1-body');
-      expect(entries[1]).toHaveTextContent('entry-2-subject');
-      expect(entries[1]).toHaveTextContent('entry-2-body');
-      expect(entries[2]).toHaveTextContent('entry-3-subject');
-      expect(entries[2]).toHaveTextContent('entry-3-body');
-      expect(entries[3]).toHaveTextContent('entry-4-subject');
-      expect(entries[3]).toHaveTextContent('entry-4-body');
-
-      ///
-      const route2 = '/test/test-tag-2';
-      history.push(route2);
-      expect(history.location.pathname).toBe('/test/test-tag-2');
-      rerender(
-        <Router location={history.location} navigator={history}>
-          <App />
-        </Router>
-      );
-      await new Promise(res => setTimeout(res, 500));
-      let entry = screen.queryByText('entry-1-subject');
-      expect(entry).not.toBeInTheDocument();
-
-      ///
-      const route3 = '/test/test-tag-1';
-      history.push(route3);
-      expect(history.location.pathname).toBe('/test/test-tag-1');
-      rerender(
-        <Router location={history.location} navigator={history}>
-          <App />
-        </Router>
-      );
-      await new Promise(res => setTimeout(res, 500));
-      entries = screen.getAllByRole('entry');
-      expect(entries).toHaveLength(4);
-      const user = userEvent.setup();
-      const entryDragHandleContainers = screen.getAllByRole(
-        'entryDragHandleContainer'
-      );
-      expect(entryDragHandleContainers).toHaveLength(4);
-      await user.pointer({target: entryDragHandleContainers[0]});
-      const tags = screen.getAllByRole('tag');
-      expect(tags).toHaveLength(4);
-      const entryDragHandle = screen.getByRole('entryDragHandle');
       fireEvent.dragStart(entryDragHandle);
       fireEvent.dragEnter(tags[1]);
       fireEvent.dragOver(tags[1]);
       await new Promise(res => setTimeout(res, 0));
       fireEvent.drop(tags[1]);
-      ///
-      const route4 = '/test/test-tag-2';
-      history.push(route4);
-      expect(history.location.pathname).toBe('/test/test-tag-2');
-      rerender(
-        <Router location={history.location} navigator={history}>
-          <App />
-        </Router>
-      );
-      await new Promise(res => setTimeout(res, 500));
-      entry = screen.queryByText('entry-1-subject');
-      expect(entry).toBeInTheDocument();
     });
+    tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
+    expect(tagLabelWrappers).toHaveLength(4);
+    await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
+    expect(history.location.pathname).toBe('/test/test-tag-2');
+    rerender(
+      <Router location={history.location} navigator={history}>
+        <App />
+      </Router>
+    );
+    await waitFor(
+      () => expect(screen.queryAllByRole('entry')).toHaveLength(1),
+      {timeout: 3000}
+    );
   });
 });
