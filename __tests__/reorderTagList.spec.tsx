@@ -49,13 +49,11 @@ describe('TagList', () => {
     const history = createMemoryHistory();
     const route = '/test/test';
     history.push(route);
-    await act(async () => {
-      render(
-        <Router location={history.location} navigator={history}>
-          <App />
-        </Router>
-      );
-    });
+    render(
+      <Router location={history.location} navigator={history}>
+        <App />
+      </Router>
+    );
     await waitFor(() => screen.getByText(/test-tag-1/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/test-tag-2/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/test-tag-3/i), {timeout: 3000});

@@ -52,13 +52,11 @@ describe('Entries List', () => {
     const history = createMemoryHistory();
     const route = '/test/test-tag-1';
     history.push(route);
-    await act(async () => {
-      render(
-        <Router location={history.location} navigator={history}>
-          <App />
-        </Router>
-      );
-    });
+    render(
+      <Router location={history.location} navigator={history}>
+        <App />
+      </Router>
+    );
     await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
