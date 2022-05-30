@@ -25,6 +25,7 @@ DEBUG = True
 THIRD_PARTY_APPS = ["corsheaders", "rest_framework", "rest_framework.authtoken"]
 
 LOCAL_APPS = [
+    "tearleads.core",
     "tearleads.authentication",
     "tearleads.healthcheck",
     "tearleads.tags",
