@@ -2,9 +2,6 @@ import React, {useEffect} from 'react';
 import API from './api';
 import Button from '@mui/material/Button';
 import GoogleIcon from '@mui/icons-material/Google';
-import {Theme} from '@mui/material/styles';
-import createStyles from '@mui/styles/createStyles';
-import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
@@ -18,14 +15,6 @@ export const googleClientID = () => {
     return '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
   }
 };
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    button: {
-      margin: theme.spacing(1),
-    },
-  })
-);
 
 export const redirectUrl = () => {
   console.info(
@@ -45,7 +34,6 @@ export const redirectUrl = () => {
 
 const GoogleAuth = () => {
   const appConfig = useAppContext();
-  const classes = useStyles();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -108,7 +96,9 @@ const GoogleAuth = () => {
           size="small"
           variant="contained"
           color="secondary"
-          className={classes.button}
+          sx={theme => ({
+            margin: theme.spacing(0.75),
+          })}
           onClick={handleGitHubClick}
           startIcon={<GoogleIcon />}
         >

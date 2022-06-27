@@ -1,3 +1,4 @@
+import {EntryContainer, EntryDragHandleContainer} from './Entry';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import API from './api';
@@ -7,11 +8,9 @@ import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_ent
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
-import {keyCode} from './lib/shared';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
-import {useStyles} from './EntryEdit';
 
 export interface IEntryNewProps {
   filterAndSortParent: () => void;
@@ -21,7 +20,6 @@ export interface IEntryNewProps {
 const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
-  const classes = useStyles();
   const appConfig = useAppContext();
   const {user, tag} = useParams();
 
@@ -170,8 +168,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
 
   return (
     <div id={id}>
-      <div className={classes.dragIndicator}></div>
-      <div className={classes.entry}>
+      <EntryDragHandleContainer />
+      <EntryContainer>
         <div>
           <InputEntrySubject
             id={`${id}Subject`}
@@ -213,7 +211,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         >
           Cancel
         </Button>
-      </div>
+      </EntryContainer>
     </div>
   );
 };

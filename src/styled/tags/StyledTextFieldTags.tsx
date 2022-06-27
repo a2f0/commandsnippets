@@ -1,13 +1,9 @@
 import React, {useCallback, useEffect} from 'react';
 import {activeSearch, keyCode} from '../../lib/shared';
 import TextField from '@mui/material/TextField';
-import {Theme} from '@mui/material/styles';
 import {appMode} from '../../lib/shared';
-import createStyles from '@mui/styles/createStyles';
-import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
-import {useTheme} from '@mui/styles';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -19,34 +15,7 @@ const StyledTextFieldTags = React.forwardRef<
   HTMLInputElement,
   IStyledTextFieldProps
 >(({id, value, onChange}: IStyledTextFieldProps, ref) => {
-  const theme = useTheme<Theme>();
   const appConfig = useAppContext();
-  const useStyles = makeStyles(() =>
-    createStyles({
-      textField: {
-        fontSize: 13,
-      },
-      root: {
-        height: 30,
-        fontSize: 14,
-        '&.Mui-focused': {
-          border: `2px solid ${theme.palette.secondary.main}`,
-          '& .MuiOutlinedInput-notchedOutline': {
-            border: 'none',
-          },
-        },
-        background: theme.textInput.background,
-      },
-      noPadding: {
-        paddingLeft: 5,
-        paddingTop: 0,
-        paddingBottom: 0,
-        paddingRight: 0,
-      },
-    })
-  );
-  const classes = useStyles();
-
   const keyListener = useCallback((event: KeyboardEvent) => {
     const trappedModes = [appMode.tagsList, appMode.entriesList];
     const trappedKeys = ['Tab', 'ArrowLeft', 'ArrowRight'];
@@ -95,13 +64,15 @@ const StyledTextFieldTags = React.forwardRef<
       autoComplete="off"
       inputRef={ref}
       value={value}
-      className={`${classes.textField}`}
       id={id}
+      color="secondary"
       onChange={onChange}
       variant="outlined"
-      inputProps={{className: classes.noPadding}}
-      InputProps={{
-        className: classes.root,
+      inputProps={{sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}
+      sx={{
+        ml: 0.5,
+        width: 100,
+        p: 0,
       }}
     />
   );

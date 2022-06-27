@@ -6,7 +6,7 @@ import {activeEntryEditField} from '../../../src/lib/shared';
 import {observer} from 'mobx-react';
 import styled from '@emotion/styled';
 import {useAppContext} from '../../AppContext';
-import {useTheme} from '@mui/styles';
+import {useTheme} from '@mui/material/styles';
 
 export interface StyledTextAreaIProps {
   theme: Theme;

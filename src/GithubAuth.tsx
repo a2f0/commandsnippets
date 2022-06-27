@@ -2,13 +2,9 @@ import React, {useEffect} from 'react';
 import API from './api';
 import Button from '@mui/material/Button';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import {Theme} from '@mui/material/styles';
-import createStyles from '@mui/styles/createStyles';
-import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
-import {useTheme} from '@mui/styles';
 
 export const githubClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {
@@ -20,18 +16,8 @@ export const githubClientID = () => {
   }
 };
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    button: {
-      margin: theme.spacing(1),
-    },
-  })
-);
-
 const GithubAuth = () => {
-  const theme = useTheme<Theme>();
   const appConfig = useAppContext();
-  const classes = useStyles(theme);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,7 +71,9 @@ const GithubAuth = () => {
           size="small"
           variant="contained"
           color="secondary"
-          className={classes.button}
+          sx={theme => ({
+            margin: theme.spacing(0.75),
+          })}
           onClick={handleGitHubClick}
           startIcon={<GitHubIcon />}
         >

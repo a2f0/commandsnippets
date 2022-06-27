@@ -12,9 +12,10 @@ const StyledMenuItem = ({children, onClick, id}: IProps) => {
     <MenuItem
       id={id}
       onClick={onClick}
-      sx={{
+      sx={theme => ({
         fontSize: 13,
-      }}
+        background: theme.palette.background.default,
+      })}
     >
       {children}
     </MenuItem>

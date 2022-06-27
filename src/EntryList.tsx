@@ -30,7 +30,7 @@ import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useDrop} from 'react-dnd';
-import {useTheme} from '@mui/styles';
+import {useTheme} from '@mui/material/styles';
 
 export interface IParamTypes {
   user: string;

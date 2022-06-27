@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import StyledTextFieldTextEntries from './StyledTextFieldTextEntries';
-import {keyCode} from '../../lib/shared';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 

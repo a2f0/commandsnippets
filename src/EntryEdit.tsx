@@ -1,4 +1,4 @@
-import * as Constants from './constants';
+import {EntryContainer, EntryDragHandleContainer} from './Entry';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import API from './api';
@@ -8,30 +8,9 @@ import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
-import {keyCode} from './lib/shared';
-import makeStyles from '@mui/styles/makeStyles';
 import {needsScrollingIntoView} from './lib/text_entries';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
-
-export const useStyles = makeStyles({
-  entry: {
-    verticalAlign: 'top',
-    width: `calc(100% - ${100}px)`,
-    display: 'inline-block',
-  },
-  entrySubject: {
-    fontSize: 14,
-    margin: 'auto',
-    padding: 2,
-    border: '1px solid red',
-    width: '100%',
-  },
-  dragIndicator: {
-    display: 'inline-block',
-    width: `${Constants.dragIndicatorWidthTag}px`,
-  },
-});
 
 export interface IEntryEdit {
   object: ITextEntryJsonApi;
@@ -49,7 +28,6 @@ const EntryEdit = ({
   const saveRef = useRef<HTMLButtonElement>();
   const [subject, setSubject] = useState<string>(object.attributes.subject);
   const [body, setBody] = useState<string>(object.attributes.body);
-  const classes = useStyles();
   const appConfig = useAppContext();
   const inputSaveRef = useRef<HTMLButtonElement>();
   const inputCancelRef = useRef<HTMLButtonElement>();
@@ -154,8 +132,8 @@ const EntryEdit = ({
 
   return (
     <div id={id}>
-      <div className={classes.dragIndicator}></div>
-      <div className={classes.entry}>
+      <EntryDragHandleContainer />
+      <EntryContainer>
         <div>
           <InputEntrySubject
             id={`${id}Subject`}
@@ -205,7 +183,7 @@ const EntryEdit = ({
         >
           Cancel
         </Button>
-      </div>
+      </EntryContainer>
     </div>
   );
 };

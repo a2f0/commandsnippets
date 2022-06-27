@@ -1,4 +1,5 @@
 import * as Constants from './constants';
+import {EntryDragHandle, EntryDragHandleContainer} from './Entry';
 import React, {useMemo, useRef, useState} from 'react';
 import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
@@ -12,38 +13,24 @@ import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
 import {Theme} from '@mui/material/styles';
-import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
+import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
 import {useParams} from 'react-router-dom';
-import {useTheme} from '@mui/styles';
+import {useTheme} from '@mui/material/styles';
 
-const useStyles = makeStyles({
-  entry: {
-    display: 'inline-block',
-    verticalAlign: 'top',
-  },
-  entryWrapper: {
-    whiteSpace: 'pre',
-    lineHeight: '20px',
-  },
-  tagLabel: {
-    display: 'inline-block',
-    cursor: 'pointer',
-    width: `calc(100% - ${Constants.dragIndicatorWidthTag}px)`,
-    fontSize: '14px',
-  },
-  tagDragIndicatorContainer: {
-    display: 'inline-block',
-    fontWeight: 900,
-    textAlign: 'center',
-    width: `${Constants.dragIndicatorWidthTag}px`,
-  },
-  tagDragIndicator: {
-    cursor: 'grab',
-  },
-});
+const TagContainer = styled('div')(() => ({
+  whiteSpace: 'pre',
+  lineHeight: '20px',
+}));
+
+export const TagLabelWrapper = styled('div')(() => ({
+  display: 'inline-block',
+  cursor: 'pointer',
+  width: `calc(100% - ${Constants.dragIndicatorWidthTag}px)`,
+  fontSize: '14px',
+}));
 
 interface DraggableItem {
   id: string;
@@ -85,7 +72,6 @@ const Tag = ({
   const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
-  const classes = useStyles();
   const navigate = useNavigate();
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
@@ -333,31 +319,28 @@ const Tag = ({
           id={`tag-${id}`}
           role="tag"
         >
-          <div ref={preview} className={classes.entryWrapper}>
-            <div
-              className={classes.tagDragIndicatorContainer}
+          <TagContainer ref={preview}>
+            <EntryDragHandleContainer
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
               role="tagDragHandleContainer"
             >
-              <div
+              <EntryDragHandle
                 role="tagDragHandle"
                 ref={dragRef}
-                className={classes.tagDragIndicator}
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
                 style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
               >
                 ::
-              </div>
-            </div>
-            <div
+              </EntryDragHandle>
+            </EntryDragHandleContainer>
+            <TagLabelWrapper
               id={`tagLabelWrapper-${id}`}
               role="tagLabelWrapper"
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
               ref={drop}
-              className={classes.tagLabel}
               style={tagStyle}
               onClick={handleTagClick}
               onContextMenu={handleContextClick}
@@ -366,8 +349,8 @@ const Tag = ({
               {appConfig.showTagCounts
                 ? ` (${tagObject.attributes.entry_count})`
                 : null}
-            </div>
-          </div>
+            </TagLabelWrapper>
+          </TagContainer>
         </div>
       )}
       {appConfig.loggedInUser && <>{contextMenu}</>}

@@ -1,11 +1,10 @@
 import GlobalStyles from '@mui/material/GlobalStyles';
 import React from 'react';
-import {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
-import {useTheme} from '@mui/styles';
+import {useTheme} from '@mui/material/styles';
 
 const ThemedGlobalStyle = () => {
-  const theme: Theme = useTheme();
+  const theme = useTheme();
   return (
     <GlobalStyles
       styles={{

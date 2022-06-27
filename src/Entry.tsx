@@ -16,41 +16,45 @@ import ItemTypes from './ItemTypes';
 import React from 'react';
 import {TagTextEntryThroughModel} from './EntryList';
 import {autorun} from 'mobx';
-import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
+import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
 
-const useStyles = makeStyles({
-  entry: {
-    display: 'inline-block',
-    verticalAlign: 'top',
-  },
-  entryContainer: {
-    marginBottom: 16,
-    whiteSpace: 'pre',
-  },
-  dragIndicatorContainer: {
-    display: 'inline-block',
-    fontWeight: 900,
-    textAlign: 'center',
-    width: `${Constants.dragIndicatorWidthTag}px`,
-  },
-  dragIndicator: {
-    cursor: 'grab',
-  },
-  checkIndicator: {
-    fontSize: '13px',
-  },
-  copyIndicator: {
-    fontSize: '13px',
-    cursor: 'pointer',
-  },
-  reuseCount: {
-    display: 'inline-block',
-    verticalAlign: 'top',
-  },
-});
+const EntryText = styled('div')(() => ({
+  display: 'inline-block',
+  verticalAlign: 'top',
+}));
+
+export const EntryContainer = styled('div')(() => ({
+  marginBottom: '16px',
+  whiteSpace: 'pre',
+}));
+
+export const EntryDragHandleContainer = styled('div')(() => ({
+  display: 'inline-block',
+  fontWeight: 900,
+  textAlign: 'center',
+  width: `${Constants.dragIndicatorWidthTag}px`,
+}));
+
+export const EntryDragHandle = styled('div')(() => ({
+  cursor: 'grab',
+}));
+
+const CheckIndicator = styled('div')(() => ({
+  fontSize: '13px',
+}));
+
+const CopyIndicator = styled('div')(() => ({
+  fontSize: '13px',
+  cursor: 'pointer',
+}));
+
+const ReuseCount = styled('div')(() => ({
+  display: 'inline-block',
+  verticalAlign: 'top',
+}));
 
 export interface IMouse {
   mouseX: number | null;
@@ -87,7 +91,6 @@ const Entry = ({
   const [showDragHandle, setShowDragHandle] = useState(false);
   const [showCopyIcon, setShowCopyIcon] = useState(false);
   const [showCheckIcon, setShowCheckIcon] = useState(false);
-  const classes = useStyles();
   const {tag, user} = useParams();
   const [{isDragging}, drag, preview] = useDrag({
     item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
@@ -412,79 +415,62 @@ const Entry = ({
           onContextMenu={handleContextClick}
           id={`tagsEntries-${id}`}
         >
-          <div ref={preview} className={classes.entryContainer}>
+          <EntryContainer ref={preview}>
             <div>
-              <div
+              <EntryDragHandleContainer
                 role="entryDragHandleContainer"
-                className={classes.dragIndicatorContainer}
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <div
+                <EntryDragHandle
                   role="entryDragHandle"
                   ref={dragRef}
-                  className={classes.dragIndicator}
                   onMouseEnter={mouseEnter}
                   onMouseLeave={mouseLeave}
                   style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
                 >
                   ::
-                </div>
-              </div>
-              <div
-                className={classes.reuseCount}
-                onMouseEnter={mouseEnter}
-                onMouseLeave={mouseLeave}
-              >
+                </EntryDragHandle>
+              </EntryDragHandleContainer>
+              <ReuseCount onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
                 {/* {text_entry.attributes.reused_count} */}
-              </div>
-              <div
-                className={classes.entry}
-                onMouseEnter={mouseEnter}
-                onMouseLeave={mouseLeave}
-              >
+              </ReuseCount>
+              <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
                 <EntrySubject object={textEntryObject} />
-              </div>
+              </EntryText>
             </div>
             <div>
-              <div
-                className={classes.dragIndicatorContainer}
+              <EntryDragHandleContainer
                 onClick={handleCopyClick}
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <div
-                  className={classes.copyIndicator}
+                <CopyIndicator
                   style={{
                     visibility: showCopyIcon ? 'visible' : 'hidden',
                     display: showCopyIcon && !showCheckIcon ? 'block' : 'none',
                   }}
                 >
                   <FileCopySharpIcon fontSize="inherit" />
-                </div>
-                <div
-                  className={classes.checkIndicator}
+                </CopyIndicator>
+                <CheckIndicator
                   style={{
                     visibility: showCheckIcon ? 'visible' : 'hidden',
                     display: showCheckIcon ? 'block' : 'none',
                   }}
                 >
                   <CheckIcon fontSize="inherit" />
-                </div>
-              </div>
-              <div className={classes.reuseCount}></div>
-              <div
-                className={classes.entry}
-                onMouseEnter={mouseEnter}
-                onMouseLeave={mouseLeave}
-              >
+                </CheckIndicator>
+              </EntryDragHandleContainer>
+              <ReuseCount />
+              <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
                 <EntryBody
                   handleClick={handleBodyClick}
                   object={textEntryObject}
                 />
-              </div>
+              </EntryText>
             </div>
-          </div>
+          </EntryContainer>
         </div>
       )}
       {appConfig.entryNew === `textEntry-${object.id}-bottom` && (

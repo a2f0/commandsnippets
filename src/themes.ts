@@ -1,3 +1,4 @@
+import * as Constants from './constants';
 import {Theme, createTheme} from '@mui/material/styles';
 
 const dark = '#0F0F0F';
@@ -115,6 +116,41 @@ export const darkTheme: Theme = createTheme({
   textInput: {
     background: '#181818',
   },
+  components: {
+    MuiMenu: {
+      styleOverrides: {
+        list: {
+          padding: 0,
+          background: dark,
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundImage: 'none',
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        root: {
+          width: `${Constants.drawerWidth}px`,
+        },
+        paper: {
+          marginTop: `${Constants.appBarHeight}px`,
+          borderRight: 0,
+          borderLeft: 0,
+          width: `${Constants.drawerWidth}px`,
+          overflow: 'hidden',
+          flexShrink: 0,
+          marginBottom: `${Constants.footerHeight}px)`,
+          height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
+          zIndex: 1000,
+        },
+      },
+    },
+  },
 });
 
 export const lightTheme: Theme = createTheme({
@@ -159,5 +195,39 @@ export const lightTheme: Theme = createTheme({
   },
   textInput: {
     background: 'white',
+  },
+  components: {
+    MuiMenu: {
+      styleOverrides: {
+        list: {
+          padding: 0,
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundImage: 'none',
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        root: {
+          width: `${Constants.drawerWidth}px`,
+        },
+        paper: {
+          marginTop: `${Constants.appBarHeight}px`,
+          borderRight: 0,
+          borderLeft: 0,
+          width: `${Constants.drawerWidth}px`,
+          overflow: 'hidden',
+          flexShrink: 0,
+          marginBottom: `${Constants.footerHeight}px)`,
+          height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
+          zIndex: 1000,
+        },
+      },
+    },
   },
 });

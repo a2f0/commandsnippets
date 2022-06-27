@@ -23,29 +23,14 @@ import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import {TagModel} from './models/TagModel';
 import TagNew from './TagNew';
-import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
-import makeStyles from '@mui/styles/makeStyles';
+
 import {observer} from 'mobx-react';
+import {styled} from '@mui/material/styles';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
-import {useTheme} from '@mui/styles';
-
-const useStyles = makeStyles({
-  ltr: {
-    direction: 'ltr',
-  },
-  item: {
-    display: 'inline-block',
-    marginLeft: `${Constants.dragIndicatorWidthTag}px`,
-  },
-  untaggedEntries: {
-    width: '100%',
-    direction: 'ltr',
-    paddingLeft: `${Constants.dragIndicatorWidthTag}px`,
-  },
-});
+import {useTheme} from '@mui/material/styles';
 
 export interface IUser {
   id: number;
@@ -55,13 +40,17 @@ export interface IUser {
   };
 }
 
+export const LeftToRight = styled('div')(() => ({
+  direction: 'ltr',
+}));
+
 const TagList = () => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
   const {user} = useParams();
   const {tag} = useParams();
-  const theme = useTheme<Theme>();
+  const theme = useTheme();
 
   const [userName, _setUsername] = useState<string | undefined>(undefined);
   // Used to access the react state from within the listener.
@@ -143,8 +132,6 @@ const TagList = () => {
       }),
     [appConfig.tagSearchString]
   );
-
-  const classes = useStyles();
 
   const moveEntry = useCallback(
     (id: string, atIndex: number) => {
@@ -278,7 +265,7 @@ const TagList = () => {
         }}
         onContextMenu={handleContextClick}
       >
-        <div className={classes.ltr}>
+        <LeftToRight>
           {appConfig.tagNew === 'top' && (
             <TagNew id="tagNewTop" handleNewParent={handleNew} />
           )}
@@ -300,7 +287,7 @@ const TagList = () => {
           {appConfig.tagNew === 'bottom' && (
             <TagNew id="tagNewBottom" handleNewParent={handleNew} />
           )}
-        </div>
+        </LeftToRight>
         {appConfig.loggedInUser && <>{contextMenu}</>}
       </List>
     </>

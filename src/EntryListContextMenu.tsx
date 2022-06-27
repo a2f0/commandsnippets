@@ -1,18 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import {IMouse} from './Entry';
 import Menu from '@mui/material/Menu';
-import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
-import {WithStyles} from '@mui/styles';
 import {appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import withStyles from '@mui/styles/withStyles';
 
 export interface IEntryContextMenu {
   mouse: IMouse;
 }
 
-interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
+interface IStyledMenuProps {
   id: string;
   keepMounted: boolean;
   mousePosition: IMouse;
@@ -20,43 +17,35 @@ interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
   onClose: () => void;
   anchorReference: 'anchorPosition';
   anchorPosition: {top: number; left: number} | undefined;
-  classes: {
-    paper: string;
-    list: string;
-  };
   children: React.ReactNode;
 }
 
-const StyledMenu = withStyles(MenuStyle)(
-  ({
-    id,
-    keepMounted,
-    mousePosition,
-    open,
-    onClose,
-    anchorReference,
-    classes,
-    children,
-  }: IStyledMenuProps) => {
-    return (
-      <Menu
-        id={id}
-        keepMounted={keepMounted}
-        open={open}
-        onClose={onClose}
-        anchorReference={anchorReference}
-        anchorPosition={
-          mousePosition.mouseY !== null && mousePosition.mouseX !== null
-            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-            : undefined
-        }
-        classes={classes}
-      >
-        {children}
-      </Menu>
-    );
-  }
-);
+const StyledMenu = ({
+  id,
+  keepMounted,
+  mousePosition,
+  open,
+  onClose,
+  anchorReference,
+  children,
+}: IStyledMenuProps) => {
+  return (
+    <Menu
+      id={id}
+      keepMounted={keepMounted}
+      open={open}
+      onClose={onClose}
+      anchorReference={anchorReference}
+      anchorPosition={
+        mousePosition.mouseY !== null && mousePosition.mouseX !== null
+          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
+          : undefined
+      }
+    >
+      {children}
+    </Menu>
+  );
+};
 
 const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
   const appConfig = useAppContext();

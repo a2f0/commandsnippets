@@ -5,7 +5,7 @@ import {Theme} from '@mui/material/styles';
 import {activeEntryEditField} from '../../../src/lib/shared';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
-import {useTheme} from '@mui/styles';
+import {useTheme} from '@mui/material/styles';
 
 export interface IProps {
   handleChangeParent: (value: string) => void;

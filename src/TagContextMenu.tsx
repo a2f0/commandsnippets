@@ -7,46 +7,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import {IMouse} from './Entry';
 import Menu from '@mui/material/Menu';
-import {MenuStyle} from './MenuBar';
 import StyledMenuItem from './StyledMenuItem';
-import {WithStyles} from '@mui/styles';
-import createStyles from '@mui/styles/createStyles';
-import withStyles from '@mui/styles/withStyles';
-
-export const DialogStyle = () => {
-  return createStyles({
-    paper: {
-      backgroundImage: 'none',
-    },
-  });
-};
-
-interface IStyledDialogProps extends WithStyles<typeof DialogStyle> {
-  id: string;
-  open: boolean;
-  onClose: () => void;
-  classes: {
-    paper: string;
-  };
-  children: React.ReactNode;
-}
-
-const StyledDialog = withStyles(DialogStyle)(
-  ({id, open, onClose, classes, children}: IStyledDialogProps) => {
-    return (
-      <Dialog
-        id={id}
-        classes={classes}
-        open={open}
-        onClose={onClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        {children}
-      </Dialog>
-    );
-  }
-);
 
 interface ITagContextMenuProps {
   id: string;
@@ -55,7 +16,7 @@ interface ITagContextMenuProps {
   handleBeginEditParent: () => void;
 }
 
-interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
+interface IStyledMenuProps {
   id: string;
   keepMounted: boolean;
   mousePosition: IMouse;
@@ -63,43 +24,35 @@ interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
   onClose: () => void;
   anchorReference: 'anchorPosition';
   anchorPosition: {top: number; left: number} | undefined;
-  classes: {
-    paper: string;
-    list: string;
-  };
   children: React.ReactNode;
 }
 
-const StyledMenu = withStyles(MenuStyle)(
-  ({
-    id,
-    keepMounted,
-    mousePosition,
-    open,
-    onClose,
-    anchorReference,
-    classes,
-    children,
-  }: IStyledMenuProps) => {
-    return (
-      <Menu
-        id={id}
-        keepMounted={keepMounted}
-        open={open}
-        onClose={onClose}
-        anchorReference={anchorReference}
-        anchorPosition={
-          mousePosition.mouseY !== null && mousePosition.mouseX !== null
-            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-            : undefined
-        }
-        classes={classes}
-      >
-        {children}
-      </Menu>
-    );
-  }
-);
+const StyledMenu = ({
+  id,
+  keepMounted,
+  mousePosition,
+  open,
+  onClose,
+  anchorReference,
+  children,
+}: IStyledMenuProps) => {
+  return (
+    <Menu
+      id={id}
+      keepMounted={keepMounted}
+      open={open}
+      onClose={onClose}
+      anchorReference={anchorReference}
+      anchorPosition={
+        mousePosition.mouseY !== null && mousePosition.mouseX !== null
+          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
+          : undefined
+      }
+    >
+      {children}
+    </Menu>
+  );
+};
 
 const TagContextMenu = ({
   id,
@@ -176,7 +129,7 @@ const TagContextMenu = ({
           Delete Tag
         </StyledMenuItem>
       </StyledMenu>
-      <StyledDialog
+      <Dialog
         id={`tagContextMenu${id}DeleteTagDialog`}
         open={dialogOpen}
         onClose={handleClose}
@@ -208,7 +161,7 @@ const TagContextMenu = ({
             Delete
           </Button>
         </DialogActions>
-      </StyledDialog>
+      </Dialog>
     </>
   );
 };

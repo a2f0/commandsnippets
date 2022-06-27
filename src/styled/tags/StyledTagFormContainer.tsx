@@ -1,13 +1,10 @@
 import * as Constants from '../../constants';
 import React from 'react';
-import makeStyles from '@mui/styles/makeStyles';
 
-const useStyles = makeStyles({
-  container: {
-    marginLeft: `${Constants.dragIndicatorWidthTag}px`,
-    width: `100% - ${Constants.dragIndicatorWidthTag}px`,
-  },
-});
+const style = {
+  marginLeft: `${Constants.dragIndicatorWidthTag}px`,
+  width: `100% - ${Constants.dragIndicatorWidthTag}px`,
+};
 
 interface IProps {
   children?: React.ReactNode;
@@ -15,9 +12,8 @@ interface IProps {
 }
 
 const StyledTagFormContainer = ({children, id}: IProps) => {
-  const classes = useStyles();
   return (
-    <div id={id} className={classes.container}>
+    <div id={id} style={style}>
       {children}
     </div>
   );

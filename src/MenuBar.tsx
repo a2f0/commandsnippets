@@ -6,7 +6,6 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
 import CheckIcon from '@mui/icons-material/Check';
-import Divider from '@mui/material/Divider';
 import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
@@ -15,81 +14,54 @@ import {ILogoutJsonApiResponse} from './lib/authentication';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import React from 'react';
+import StyledDivider from './styled/StyledDivider';
 import StyledMenuItem from './StyledMenuItem';
 import {Theme} from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import {WithStyles} from '@mui/styles';
 import axios from 'axios';
 import {baseHTTPURL} from './api';
-import createStyles from '@mui/styles/createStyles';
-import makeStyles from '@mui/styles/makeStyles';
 import {observer} from 'mobx-react';
+import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
-import withStyles from '@mui/styles/withStyles';
 
-export const MenuStyle = () => {
-  return createStyles({
-    paper: {
-      margin: 0,
-      // Remove the Material UI gradient.
-      backgroundImage: 'none',
-    },
-    list: {
-      padding: 0,
-    },
-  });
-};
-
-interface IStyledMenuProps extends WithStyles<typeof MenuStyle> {
+interface IStyledMenuProps {
   id: string;
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
-  classes: {
-    paper: string;
-    list: string;
-  };
   children: React.ReactNode;
 }
 
-const StyledMenu = withStyles(MenuStyle)(
-  ({id, anchorEl, open, onClose, classes, children}: IStyledMenuProps) => {
-    return (
-      <Menu
-        id={id}
-        anchorEl={anchorEl}
-        onClose={onClose}
-        transitionDuration={0}
-        anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
-        transformOrigin={{vertical: 'top', horizontal: 'left'}}
-        keepMounted
-        classes={classes}
-        open={open}
-        TransitionComponent={Fade}
-      >
-        {children}
-      </Menu>
-    );
-  }
-);
+const StyledMenu = ({
+  id,
+  anchorEl,
+  open,
+  onClose,
+  children,
+}: IStyledMenuProps) => {
+  return (
+    <Menu
+      id={id}
+      anchorEl={anchorEl}
+      onClose={onClose}
+      transitionDuration={0}
+      anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+      transformOrigin={{vertical: 'top', horizontal: 'left'}}
+      keepMounted
+      open={open}
+      TransitionComponent={Fade}
+    >
+      {children}
+    </Menu>
+  );
+};
 
-const useStyles = makeStyles({
-  drawer: {
-    width: Constants.drawerWidth,
-    flexShrink: 0,
-  },
-  dragIndicator: {
-    display: 'inline-block',
-    width: `${Constants.dragIndicatorWidthTag}px`,
-  },
-  aligner: {
-    minHeight: `${Constants.appBarHeight}px`,
-    display: 'flex',
-  },
-});
+const Aligner = styled('div')(() => ({
+  minHeight: `${Constants.appBarHeight}px`,
+  display: 'flex',
+}));
 
 const MenuBar = () => {
-  const classes = useStyles();
   const appConfig = useAppContext();
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
@@ -182,9 +154,19 @@ const MenuBar = () => {
 
   return (
     <>
-      <Typography className={classes.drawer}></Typography>
-      <Typography className={classes.dragIndicator}></Typography>
-      <div className={classes.aligner}>
+      <Typography
+        sx={{
+          width: Constants.drawerWidth,
+          flexShrink: 0,
+        }}
+      />
+      <Typography
+        sx={{
+          display: 'inline-block',
+          width: `${Constants.dragIndicatorWidthTag}px`,
+        }}
+      />
+      <Aligner>
         {appConfig.loggedInUser && (
           <Button
             color="secondary"
@@ -284,7 +266,7 @@ const MenuBar = () => {
         >
           Entries
         </Button>
-      </div>
+      </Aligner>
       <Grid container justifyContent="flex-end">
         <GithubAuth />
         <GoogleAuth />
@@ -343,7 +325,7 @@ const MenuBar = () => {
           </ListItemIcon>
           Dark Mode
         </StyledMenuItem>
-        <Divider />
+        <StyledDivider />
         <StyledMenuItem
           id="view-menu-show-tag-counts"
           onClick={() => {
@@ -543,7 +525,7 @@ const MenuBar = () => {
           </ListItemIcon>
           Untagged Entries
         </StyledMenuItem>
-        <Divider />
+        <StyledDivider />
         {appConfig.entrySearchMethod === entrySearchMethod.currentTagOnly && [
           <StyledMenuItem
             id="tagged-entries-menu-sort-order"
