@@ -23,8 +23,8 @@ jobs:
         with:
           python-version: '3.7'
           architecture: 'x64'
-      - name: npm install
-        run: npm install
+      - name: npm ci
+        run: npm ci
       - name: pre-commit
         run: |
           pip install pre-commit
