@@ -15,3 +15,10 @@ repos:
     rev: v2.3.1
     hooks:
       - id: prettier
+  - repo: local
+    hooks:
+      - id: check-for-unpinned-dependencies
+        name: check-for-unpinned-dependencies
+        entry: npx check-for-unpinned-dependencies
+        pass_filenames: false
+        language: node
