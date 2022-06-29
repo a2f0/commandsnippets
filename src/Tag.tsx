@@ -1,10 +1,11 @@
 import * as Constants from './constants';
-import {EntryDragHandle, EntryDragHandleContainer} from './Entry';
 import React, {useMemo, useRef, useState} from 'react';
 import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import API from './api';
 import {AxiosResponse} from 'axios';
+import DragHandle from './DragHandle';
+import {EntryDragHandleContainer} from './Entry';
 import {IMouse} from './Entry';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -325,7 +326,7 @@ const Tag = ({
               onMouseLeave={mouseLeave}
               role="tagDragHandleContainer"
             >
-              <EntryDragHandle
+              <DragHandle
                 role="tagDragHandle"
                 ref={dragRef}
                 onMouseEnter={mouseEnter}
@@ -333,7 +334,7 @@ const Tag = ({
                 style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
               >
                 ::
-              </EntryDragHandle>
+              </DragHandle>
             </EntryDragHandleContainer>
             <TagLabelWrapper
               id={`tagLabelWrapper-${id}`}

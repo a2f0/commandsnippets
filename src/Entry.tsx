@@ -4,6 +4,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import API from './api';
 import CheckIcon from '@mui/icons-material/Check';
+import DragHandle from './DragHandle';
 import EntryBody from './styled/text_entries/EntryBody';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
@@ -36,10 +37,6 @@ export const EntryDragHandleContainer = styled('div')(() => ({
   fontWeight: 900,
   textAlign: 'center',
   width: `${Constants.dragIndicatorWidthTag}px`,
-}));
-
-export const EntryDragHandle = styled('div')(() => ({
-  cursor: 'grab',
 }));
 
 const CheckIndicator = styled('div')(() => ({
@@ -422,7 +419,7 @@ const Entry = ({
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
               >
-                <EntryDragHandle
+                <DragHandle
                   role="entryDragHandle"
                   ref={dragRef}
                   onMouseEnter={mouseEnter}
@@ -430,7 +427,7 @@ const Entry = ({
                   style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
                 >
                   ::
-                </EntryDragHandle>
+                </DragHandle>
               </EntryDragHandleContainer>
               <ReuseCount onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
                 {/* {text_entry.attributes.reused_count} */}
