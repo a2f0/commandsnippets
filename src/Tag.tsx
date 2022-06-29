@@ -5,7 +5,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import DragHandle from './DragHandle';
-import {EntryDragHandleContainer} from './Entry';
+import DragHandleContainer from './DragHandleContainer';
 import {IMouse} from './Entry';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -321,7 +321,7 @@ const Tag = ({
           role="tag"
         >
           <TagContainer ref={preview}>
-            <EntryDragHandleContainer
+            <DragHandleContainer
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
               role="tagDragHandleContainer"
@@ -335,7 +335,7 @@ const Tag = ({
               >
                 ::
               </DragHandle>
-            </EntryDragHandleContainer>
+            </DragHandleContainer>
             <TagLabelWrapper
               id={`tagLabelWrapper-${id}`}
               role="tagLabelWrapper"

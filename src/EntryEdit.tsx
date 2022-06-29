@@ -1,9 +1,10 @@
-import {EntryContainer, EntryDragHandleContainer} from './Entry';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
+import DragHandleContainer from './DragHandleContainer';
+import {EntryContainer} from './Entry';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
@@ -132,7 +133,7 @@ const EntryEdit = ({
 
   return (
     <div id={id}>
-      <EntryDragHandleContainer />
+      <DragHandleContainer />
       <EntryContainer>
         <div>
           <InputEntrySubject

@@ -1,10 +1,10 @@
-import * as Constants from './constants';
 import {appMode, getSelection} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import API from './api';
 import CheckIcon from '@mui/icons-material/Check';
 import DragHandle from './DragHandle';
+import DragHandleContainer from './DragHandleContainer';
 import EntryBody from './styled/text_entries/EntryBody';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
@@ -30,13 +30,6 @@ const EntryText = styled('div')(() => ({
 export const EntryContainer = styled('div')(() => ({
   marginBottom: '16px',
   whiteSpace: 'pre',
-}));
-
-export const EntryDragHandleContainer = styled('div')(() => ({
-  display: 'inline-block',
-  fontWeight: 900,
-  textAlign: 'center',
-  width: `${Constants.dragIndicatorWidthTag}px`,
 }));
 
 const CheckIndicator = styled('div')(() => ({
@@ -414,7 +407,7 @@ const Entry = ({
         >
           <EntryContainer ref={preview}>
             <div>
-              <EntryDragHandleContainer
+              <DragHandleContainer
                 role="entryDragHandleContainer"
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
@@ -428,7 +421,7 @@ const Entry = ({
                 >
                   ::
                 </DragHandle>
-              </EntryDragHandleContainer>
+              </DragHandleContainer>
               <ReuseCount onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
                 {/* {text_entry.attributes.reused_count} */}
               </ReuseCount>
@@ -437,7 +430,7 @@ const Entry = ({
               </EntryText>
             </div>
             <div>
-              <EntryDragHandleContainer
+              <DragHandleContainer
                 onClick={handleCopyClick}
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
@@ -458,7 +451,7 @@ const Entry = ({
                 >
                   <CheckIcon fontSize="inherit" />
                 </CheckIndicator>
-              </EntryDragHandleContainer>
+              </DragHandleContainer>
               <ReuseCount />
               <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
                 <EntryBody
