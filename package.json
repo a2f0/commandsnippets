@@ -57,7 +57,7 @@
     "html-webpack-plugin": "5.3.1",
     "jest": "28.1.2",
     "jest-environment-jsdom": "28.1.2",
-    "jsdom": "19.0.0",
+    "jsdom": "20.0.0",
     "msw": "0.41.0",
     "prettier": "2.6.2",
     "start-server-and-test": "1.12.5",
