@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {activeTagEditField, appMode, keyCode} from './lib/shared';
+import {activeTagEditField, appMode} from './lib/shared';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Grid from '@mui/material/Grid';

@@ -2,7 +2,6 @@ import React, {useCallback, useEffect, useState} from 'react';
 import StyledTextFieldTags from './StyledTextFieldTags';
 import {activeSearch} from '../../lib/shared';
 import {appMode} from '../../lib/shared';
-import {keyCode} from '../../lib/shared';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 
