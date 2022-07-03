@@ -70,8 +70,6 @@ const StyledTextFieldTags = React.forwardRef<
       variant="outlined"
       inputProps={{sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}
       sx={{
-        ml: 0.5,
-        width: 100,
         p: 0,
       }}
     />
