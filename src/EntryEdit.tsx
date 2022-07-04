@@ -3,7 +3,6 @@ import {activeEntryEditField, appMode} from '../src/lib/shared';
 import API from './api';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
-import DragHandleContainer from './DragHandleContainer';
 import {EntryContainer} from './Entry';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
@@ -133,7 +132,6 @@ const EntryEdit = ({
 
   return (
     <div id={id}>
-      <DragHandleContainer />
       <EntryContainer>
         <div>
           <InputEntrySubject
