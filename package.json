@@ -54,7 +54,7 @@
     "expect-webdriverio": "3.4.0",
     "gts": "3.1.0",
     "history": "5.3.0",
-    "html-webpack-plugin": "5.3.1",
+    "html-webpack-plugin": "5.5.0",
     "jest": "28.1.2",
     "jest-environment-jsdom": "28.1.2",
     "jsdom": "20.0.0",
