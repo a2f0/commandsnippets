@@ -17,7 +17,6 @@ const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
   width: calc(100% - (${Constants.drawerWidth}px));
   min-width: calc(100% - (${Constants.drawerWidth}px));
   max-width: calc(100% - (${Constants.drawerWidth}px));
-  background: ${props => props.theme.textInput.background};
   padding-left: 4px;
   color: ${props => props.theme.palette.text.primary};
   &:hover {

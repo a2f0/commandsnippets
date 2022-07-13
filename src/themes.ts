@@ -1,52 +1,11 @@
 import * as Constants from './constants';
 import {Theme, createTheme} from '@mui/material/styles';
+import themeBase from './themeBase';
 
 const dark = '#0F0F0F';
 const light = '#FFF';
 
-declare module '@mui/material/styles' {
-  interface Theme {
-    selected: {
-      foreground: string;
-      background: string;
-    };
-    header: {
-      background: string;
-      menuButtonHighlight: string;
-    };
-    main: {
-      paddingTop: number;
-    };
-    footer: {
-      background: string;
-    };
-    textInput: {
-      background: string;
-    };
-  }
-  // allow configuration using `createTheme`
-  interface ThemeOptions {
-    selected?: {
-      foreground?: string;
-      background?: string;
-    };
-    header?: {
-      background: string;
-      menuButtonHighlight: string;
-    };
-    main: {
-      paddingTop: number;
-    };
-    footer?: {
-      background: string;
-    };
-    textInput: {
-      background: string;
-    };
-  }
-}
-
-export const darkTheme: Theme = createTheme({
+export const darkTheme: Theme = createTheme(themeBase, {
   palette: {
     mode: 'dark',
     primary: {
@@ -107,13 +66,7 @@ export const darkTheme: Theme = createTheme({
     background: '#181818',
     menuButtonHighlight: '#808080',
   },
-  main: {
-    paddingTop: 0.25,
-  },
   footer: {
-    background: '#181818',
-  },
-  textInput: {
     background: '#181818',
   },
   components: {
@@ -153,7 +106,7 @@ export const darkTheme: Theme = createTheme({
   },
 });
 
-export const lightTheme: Theme = createTheme({
+export const lightTheme: Theme = createTheme(themeBase, {
   palette: {
     mode: 'light',
     primary: {
@@ -187,14 +140,8 @@ export const lightTheme: Theme = createTheme({
     background: '#dcdcdc',
     menuButtonHighlight: '#696969',
   },
-  main: {
-    paddingTop: 0.25,
-  },
   footer: {
     background: '#dcdcdc',
-  },
-  textInput: {
-    background: 'white',
   },
   components: {
     MuiMenu: {

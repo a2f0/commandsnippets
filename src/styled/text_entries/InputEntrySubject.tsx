@@ -55,7 +55,6 @@ const InputEntrySubject = ({
         maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
         marginLeft: 0,
         marginBottom: '4px',
-        background: theme => `${theme.textInput.background}`,
         '& .Mui-focused': {
           border: `2px solid ${theme.palette.secondary.main}`,
           '& .MuiOutlinedInput-notchedOutline': {

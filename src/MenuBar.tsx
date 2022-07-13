@@ -5,7 +5,6 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
-import CheckIcon from '@mui/icons-material/Check';
 import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
@@ -14,6 +13,7 @@ import {ILogoutJsonApiResponse} from './lib/authentication';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import React from 'react';
+import StyledCheckIcon from './styled/StyledCheckIcon';
 import StyledDivider from './styled/StyledDivider';
 import StyledMenuItem from './StyledMenuItem';
 import {Theme} from '@mui/material/styles';
@@ -305,9 +305,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.selectedTheme === 'lightTheme' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.selectedTheme === 'lightTheme' && <StyledCheckIcon />}
           </ListItemIcon>
           Light Mode
         </StyledMenuItem>
@@ -319,9 +317,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.selectedTheme === 'darkTheme' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.selectedTheme === 'darkTheme' && <StyledCheckIcon />}
           </ListItemIcon>
           Dark Mode
         </StyledMenuItem>
@@ -334,7 +330,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.showTagCounts === true && <CheckIcon fontSize="small" />}
+            {appConfig.showTagCounts === true && <StyledCheckIcon />}
           </ListItemIcon>
           Show Tag Counts
         </StyledMenuItem>
@@ -353,9 +349,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.tagSortOrder === 'order' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.tagSortOrder === 'order' && <StyledCheckIcon />}
           </ListItemIcon>
           Sort by User-Defined Order
         </StyledMenuItem>
@@ -367,9 +361,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.tagSortOrder === 'name' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.tagSortOrder === 'name' && <StyledCheckIcon />}
           </ListItemIcon>
           Sort by Tag Name <ArrowDownwardIcon fontSize="small" />
         </StyledMenuItem>
@@ -381,9 +373,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.tagSortOrder === '-name' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.tagSortOrder === '-name' && <StyledCheckIcon />}
           </ListItemIcon>
           Sort by Tag Name <ArrowUpwardIcon fontSize="small" />
         </StyledMenuItem>
@@ -395,9 +385,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.tagSortOrder === '-date_created' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.tagSortOrder === '-date_created' && <StyledCheckIcon />}
           </ListItemIcon>
           Sort by Date Created <ArrowDownwardIcon fontSize="small" />
         </StyledMenuItem>
@@ -409,9 +397,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.tagSortOrder === 'date_created' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.tagSortOrder === 'date_created' && <StyledCheckIcon />}
           </ListItemIcon>
           Sort by Date Created <ArrowUpwardIcon fontSize="small" />
         </StyledMenuItem>
@@ -423,9 +409,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.tagSortOrder === '-entry_count' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.tagSortOrder === '-entry_count' && <StyledCheckIcon />}
           </ListItemIcon>
           Sort by Number of Tagged Entries
           <ArrowDownwardIcon fontSize="small" />
@@ -438,9 +422,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.tagSortOrder === 'entry_count' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.tagSortOrder === 'entry_count' && <StyledCheckIcon />}
           </ListItemIcon>
           Sort by Number of Tagged Entries <ArrowUpwardIcon fontSize="small" />
         </StyledMenuItem>
@@ -453,7 +435,7 @@ const MenuBar = () => {
         >
           <ListItemIcon>
             {appConfig.tagSortOrder === '-date_last_used' && (
-              <CheckIcon fontSize="small" />
+              <StyledCheckIcon />
             )}
           </ListItemIcon>
           Sort by Tag recently used
@@ -467,9 +449,7 @@ const MenuBar = () => {
           }}
         >
           <ListItemIcon>
-            {appConfig.tagSortOrder === 'date_last_used' && (
-              <CheckIcon fontSize="small" />
-            )}
+            {appConfig.tagSortOrder === 'date_last_used' && <StyledCheckIcon />}
           </ListItemIcon>
           Sort by Tag recently used
           <ArrowUpwardIcon fontSize="small" />
@@ -490,7 +470,7 @@ const MenuBar = () => {
         >
           <ListItemIcon>
             {appConfig.entrySearchMethod === entrySearchMethod.allEntries && (
-              <CheckIcon fontSize="small" />
+              <StyledCheckIcon />
             )}
           </ListItemIcon>
           All entries
@@ -504,9 +484,7 @@ const MenuBar = () => {
         >
           <ListItemIcon>
             {appConfig.entrySearchMethod ===
-              entrySearchMethod.currentTagOnly && (
-              <CheckIcon fontSize="small" />
-            )}
+              entrySearchMethod.currentTagOnly && <StyledCheckIcon />}
           </ListItemIcon>
           Current tag
         </StyledMenuItem>
@@ -519,9 +497,7 @@ const MenuBar = () => {
         >
           <ListItemIcon>
             {appConfig.entrySearchMethod ===
-              entrySearchMethod.untaggedEntryList && (
-              <CheckIcon fontSize="small" />
-            )}
+              entrySearchMethod.untaggedEntryList && <StyledCheckIcon />}
           </ListItemIcon>
           Untagged Entries
         </StyledMenuItem>
@@ -537,7 +513,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder === 'order' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by User-Defined Order
@@ -552,7 +528,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder === 'subject' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by Subject <ArrowDownwardIcon fontSize="small" />
@@ -567,7 +543,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder === '-subject' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by Subject <ArrowUpwardIcon fontSize="small" />
@@ -582,7 +558,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder === 'body' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by Body <ArrowDownwardIcon fontSize="small" />
@@ -597,7 +573,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder === '-body' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by Body <ArrowUpwardIcon fontSize="small" />
@@ -612,7 +588,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder ===
-                'date_created' && <CheckIcon fontSize="small" />}
+                'date_created' && <StyledCheckIcon />}
             </ListItemIcon>
             Sort by Date Created <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
@@ -626,7 +602,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder ===
-                '-date_created' && <CheckIcon fontSize="small" />}
+                '-date_created' && <StyledCheckIcon />}
             </ListItemIcon>
             Sort by Date Created <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
@@ -640,7 +616,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder ===
-                'date_tagged' && <CheckIcon fontSize="small" />}
+                'date_tagged' && <StyledCheckIcon />}
             </ListItemIcon>
             Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
           </StyledMenuItem>,
@@ -654,7 +630,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder ===
-                '-date_tagged' && <CheckIcon fontSize="small" />}
+                '-date_tagged' && <StyledCheckIcon />}
             </ListItemIcon>
             Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
           </StyledMenuItem>,
@@ -668,7 +644,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder === 'tag_count' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by Tag Count
@@ -684,7 +660,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.tagTextEntryThroughModelSortOrder === '-tag_count' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by Tag Count
@@ -704,7 +680,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.entrySortOrder === 'date_created' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by Date Created <ArrowDownwardIcon fontSize="small" />
@@ -719,7 +695,7 @@ const MenuBar = () => {
           >
             <ListItemIcon>
               {appConfig.entrySortOrder === '-date_created' && (
-                <CheckIcon fontSize="small" />
+                <StyledCheckIcon />
               )}
             </ListItemIcon>
             Sort by Date Created <ArrowUpwardIcon fontSize="small" />
