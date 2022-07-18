@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import API from './api';
-import Button from '@mui/material/Button';
 import GoogleIcon from '@mui/icons-material/Google';
+import LoginButton from './styled/LoginButton';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
@@ -90,20 +90,14 @@ const GoogleAuth = () => {
   return (
     <>
       {!appConfig.loggedInUser && !window.location.href.includes('oauth/') && (
-        <Button
+        <LoginButton
           id="googleAuthButton"
           role="googleAuth"
-          size="small"
-          variant="contained"
-          color="secondary"
-          sx={theme => ({
-            margin: theme.spacing(0.75),
-          })}
           onClick={handleGitHubClick}
           startIcon={<GoogleIcon />}
         >
           Login with Google
-        </Button>
+        </LoginButton>
       )}
     </>
   );

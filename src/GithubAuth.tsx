@@ -2,6 +2,7 @@ import React, {useEffect} from 'react';
 import API from './api';
 import Button from '@mui/material/Button';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import LoginButton from './styled/LoginButton';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
@@ -66,19 +67,14 @@ const GithubAuth = () => {
   return (
     <>
       {!appConfig.loggedInUser && !window.location.href.includes('oauth/') && (
-        <Button
+        <LoginButton
           id="githubAuthButton"
-          size="small"
-          variant="contained"
-          color="secondary"
-          sx={theme => ({
-            margin: theme.spacing(0.75),
-          })}
           onClick={handleGitHubClick}
+          role="githubAuth"
           startIcon={<GitHubIcon />}
         >
           Login with GitHub
-        </Button>
+        </LoginButton>
       )}
     </>
   );
