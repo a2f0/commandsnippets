@@ -1,10 +1,6 @@
 import * as Constants from '../../constants';
+import Box from '@mui/material/Box';
 import React from 'react';
-
-const style = {
-  marginLeft: `${Constants.dragIndicatorWidthTag}px`,
-  width: `100% - ${Constants.dragIndicatorWidthTag}px`,
-};
 
 interface IProps {
   children?: React.ReactNode;
@@ -13,9 +9,15 @@ interface IProps {
 
 const StyledTagFormContainer = ({children, id}: IProps) => {
   return (
-    <div id={id} style={style}>
+    <Box
+      id={id}
+      sx={{
+        width: theme => `100% - ${theme.main.dragIndicatorWidth}px`,
+        ml: theme => `${theme.main.dragIndicatorWidth}px`,
+      }}
+    >
       {children}
-    </div>
+    </Box>
   );
 };
 export default React.memo(StyledTagFormContainer);

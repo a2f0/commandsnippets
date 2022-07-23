@@ -26,12 +26,16 @@ const TagContainer = styled('div')(() => ({
   lineHeight: '20px',
 }));
 
-export const TagLabelWrapper = styled('div')(() => ({
-  display: 'inline-block',
-  cursor: 'pointer',
-  width: `calc(100% - ${Constants.dragIndicatorWidthTag}px)`,
-  fontSize: '14px',
-}));
+interface ITagLabelWrapperProps {
+  theme: Theme;
+}
+
+const TagLabelWrapper = styled('div')<ITagLabelWrapperProps>`
+  display: inline-block;
+  cursor: pointer;
+  width: calc(100% - ${props => props.theme.main.dragIndicatorWidth}px);
+  font-size: 14px;
+`;
 
 interface DraggableItem {
   id: string;
@@ -322,6 +326,7 @@ const Tag = ({
         >
           <TagContainer ref={preview}>
             <DragHandleContainer
+              theme={theme}
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
               role="tagDragHandleContainer"
@@ -337,6 +342,7 @@ const Tag = ({
               </DragHandle>
             </DragHandleContainer>
             <TagLabelWrapper
+              theme={theme}
               id={`tagLabelWrapper-${id}`}
               role="tagLabelWrapper"
               onMouseEnter={mouseEnter}

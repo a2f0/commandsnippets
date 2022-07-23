@@ -170,7 +170,7 @@ const MenuBar = () => {
       <Typography
         sx={{
           display: 'inline-block',
-          width: `${Constants.dragIndicatorWidthTag}px`,
+          width: `${theme.main.dragIndicatorWidth}px`,
         }}
       />
       <Aligner theme={theme}>

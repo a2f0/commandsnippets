@@ -15,6 +15,7 @@ declare module '@mui/material/styles' {
     };
     main: {
       paddingTop: number;
+      dragIndicatorWidth: number;
     };
     footer: {
       height: number;
@@ -35,6 +36,7 @@ declare module '@mui/material/styles' {
     };
     main: {
       paddingTop: number;
+      dragIndicatorWidth: number;
     };
     footer: {
       height: number;
@@ -48,6 +50,7 @@ const themeBase = createTheme({
   },
   main: {
     paddingTop: 0.25,
+    dragIndicatorWidth: 15,
   },
   footer: {
     height: 46,
