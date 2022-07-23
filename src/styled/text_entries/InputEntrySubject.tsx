@@ -1,4 +1,3 @@
-import * as Constants from '../../constants';
 import React, {useEffect, useRef, useState} from 'react';
 import TextField from '@mui/material/TextField';
 import {Theme} from '@mui/material/styles';
@@ -50,9 +49,9 @@ const InputEntrySubject = ({
     <TextField
       id={id}
       sx={{
-        width: `calc(100% - (${Constants.drawerWidth}px))`,
-        minWidth: `calc(100% - (${Constants.drawerWidth}px))`,
-        maxWidth: `calc(100% - (${Constants.drawerWidth}px))`,
+        width: `calc(100% - (${theme.drawer.width}px))`,
+        minWidth: `calc(100% - (${theme.drawer.width}px))`,
+        maxWidth: `calc(100% - (${theme.drawer.width}px))`,
         marginLeft: 0,
         marginBottom: '4px',
         '& .Mui-focused': {

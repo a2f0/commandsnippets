@@ -1,4 +1,3 @@
-import * as Constants from '../../constants';
 import Box from '@mui/material/Box';
 import React from 'react';
 

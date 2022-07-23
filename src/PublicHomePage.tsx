@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import AppBar from '@mui/material/AppBar';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';

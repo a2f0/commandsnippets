@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import React, {useMemo, useRef, useState} from 'react';
 import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';

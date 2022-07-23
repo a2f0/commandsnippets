@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import {Theme, createTheme} from '@mui/material/styles';
 import themeBase from './themeBase';
 
@@ -88,13 +87,13 @@ export const darkTheme: Theme = createTheme(themeBase, {
     MuiDrawer: {
       styleOverrides: {
         root: {
-          width: `${Constants.drawerWidth}px`,
+          width: `${themeBase.drawer.width}px`,
         },
         paper: {
           marginTop: `${themeBase.appBar.height}px`,
           borderRight: 0,
           borderLeft: 0,
-          width: `${Constants.drawerWidth}px`,
+          width: `${themeBase.drawer.width}px`,
           overflow: 'hidden',
           flexShrink: 0,
           marginBottom: themeBase.footer.height,
@@ -161,13 +160,13 @@ export const lightTheme: Theme = createTheme(themeBase, {
     MuiDrawer: {
       styleOverrides: {
         root: {
-          width: `${Constants.drawerWidth}px`,
+          width: `${themeBase.drawer.width}px`,
         },
         paper: {
           marginTop: `${themeBase.appBar.height}px`,
           borderRight: 0,
           borderLeft: 0,
-          width: `${Constants.drawerWidth}px`,
+          width: `${themeBase.drawer.width}px`,
           overflow: 'hidden',
           flexShrink: 0,
           marginBottom: themeBase.footer.height,

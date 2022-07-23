@@ -1,4 +1,3 @@
-import * as Constants from '../../constants';
 import React, {useEffect, useRef, useState} from 'react';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import {Theme} from '@mui/material/styles';
@@ -14,9 +13,9 @@ export interface StyledTextAreaIProps {
 }
 
 const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
-  width: calc(100% - (${Constants.drawerWidth}px));
-  min-width: calc(100% - (${Constants.drawerWidth}px));
-  max-width: calc(100% - (${Constants.drawerWidth}px));
+  width: calc(100% - (${props => props.theme.drawer.width}px));
+  min-width: calc(100% - (${props => props.theme.drawer.width}px));
+  max-width: calc(100% - (${props => props.theme.drawer.width}px));
   padding-left: 4px;
   color: ${props => props.theme.palette.text.primary};
   &:hover {

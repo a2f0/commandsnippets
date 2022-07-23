@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import React, {useEffect} from 'react';
 import AppBar from '@mui/material/AppBar';
 import EntryList from './EntryList';

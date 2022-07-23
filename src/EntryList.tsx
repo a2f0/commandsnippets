@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
 import React, {
   createRef,
@@ -325,7 +324,7 @@ const EntryList = () => {
     paddingTop: `${theme.main.paddingTop}rem`,
     marginTop: `${theme.appBar.height}px`,
     height: `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
-    width: `calc(100vw - ${Constants.drawerWidth}px)`,
+    width: `calc(100vw - ${theme.drawer.width}px)`,
     overflow: 'auto',
     zIndex: 1000,
   };

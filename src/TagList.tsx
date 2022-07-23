@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
 import React, {
   createRef,

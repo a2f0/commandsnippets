@@ -1,4 +1,3 @@
-import * as Constants from '../constants';
 import {ITagJsonApi} from '../models/TagModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {Theme} from '@mui/material/styles';

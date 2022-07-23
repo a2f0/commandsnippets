@@ -13,6 +13,9 @@ declare module '@mui/material/styles' {
     appBar: {
       height: number;
     };
+    drawer: {
+      width: number;
+    };
     main: {
       paddingTop: number;
       dragIndicatorWidth: number;
@@ -34,6 +37,9 @@ declare module '@mui/material/styles' {
     appBar: {
       height: number;
     };
+    drawer: {
+      width: number;
+    };
     main: {
       paddingTop: number;
       dragIndicatorWidth: number;
@@ -47,6 +53,9 @@ declare module '@mui/material/styles' {
 const themeBase = createTheme({
   appBar: {
     height: 52,
+  },
+  drawer: {
+    width: 160,
   },
   main: {
     paddingTop: 0.25,

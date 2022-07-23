@@ -1,4 +1,3 @@
-import * as Constants from './constants';
 import {appMode, entrySearchMethod} from './lib/shared';
 import {darkTheme, lightTheme} from './themes';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -163,7 +162,7 @@ const MenuBar = () => {
     <>
       <Typography
         sx={{
-          width: Constants.drawerWidth,
+          width: theme => theme.drawer.width,
           flexShrink: 0,
         }}
       />
