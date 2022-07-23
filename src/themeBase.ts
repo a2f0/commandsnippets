@@ -10,11 +10,11 @@ declare module '@mui/material/styles' {
       background: string;
       menuButtonHighlight: string;
     };
-    footer: {
-      background: string;
-    };
     main: {
-      paddingTop: 0.25;
+      paddingTop: number;
+    };
+    footer: {
+      height: number;
     };
   }
   // allow configuration using `createTheme`
@@ -27,11 +27,11 @@ declare module '@mui/material/styles' {
       background: string;
       menuButtonHighlight: string;
     };
-    footer?: {
-      background: string;
-    };
     main: {
       paddingTop: number;
+    };
+    footer: {
+      height: number;
     };
   }
 }
@@ -39,6 +39,9 @@ declare module '@mui/material/styles' {
 const themeBase = createTheme({
   main: {
     paddingTop: 0.25,
+  },
+  footer: {
+    height: 46,
   },
 });
 

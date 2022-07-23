@@ -11,6 +11,7 @@ import InputEntrySubject from './styled/text_entries/InputEntrySubject';
 import {needsScrollingIntoView} from './lib/text_entries';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
+import {useTheme} from '@mui/material/styles';
 
 export interface IEntryEdit {
   object: ITextEntryJsonApi;
@@ -31,6 +32,7 @@ const EntryEdit = ({
   const appConfig = useAppContext();
   const inputSaveRef = useRef<HTMLButtonElement>();
   const inputCancelRef = useRef<HTMLButtonElement>();
+  const theme = useTheme();
 
   const setInputSaveRef = (element: HTMLButtonElement) => {
     inputSaveRef.current = element;
@@ -49,7 +51,7 @@ const EntryEdit = ({
 
   useEffect(() => {
     if (saveRef.current !== undefined) {
-      if (needsScrollingIntoView(saveRef.current)) {
+      if (needsScrollingIntoView(saveRef.current, theme)) {
         saveRef.current?.scrollIntoView({
           behavior: 'auto',
           block: 'end',

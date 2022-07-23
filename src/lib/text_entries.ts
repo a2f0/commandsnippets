@@ -1,4 +1,3 @@
-import * as Constants from '../constants';
 import API from '../api';
 import {CancelTokenSource} from 'axios';
 import {ITagJsonApi} from '../models/TagModel';
@@ -6,6 +5,7 @@ import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughMod
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {IUserJsonApi} from '../models/UserModel';
 import type {TStore} from '../AppStateStore';
+import {Theme} from '@mui/material/styles';
 
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
@@ -449,14 +449,17 @@ export function fetchPage({
   return f;
 }
 
-export function needsScrollingIntoView(element: HTMLButtonElement) {
+export function needsScrollingIntoView(
+  element: HTMLButtonElement,
+  theme: Theme
+) {
   const rect = element.getBoundingClientRect();
   if (rect !== undefined) {
     // Then it exists
     const bottomInView =
       rect.bottom <=
-      (window.innerHeight - Constants.footerHeight ||
-        document.documentElement.clientHeight - Constants.footerHeight);
+      (window.innerHeight - theme.footer.height ||
+        document.documentElement.clientHeight - theme.footer.height);
     if (bottomInView === false) {
       // Then it needs to be scrolled
       return true;

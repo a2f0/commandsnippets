@@ -62,9 +62,8 @@ const Main = () => {
         sx={{
           top: 'auto',
           bottom: 0,
-          height: `${Constants.footerHeight}px`,
+          height: theme => `${theme.footer.height}px`,
           backgroundImage: 'none', // Remove the Material UI gradient.
-          backgroundColor: theme => `${theme.footer.background}`,
         }}
       >
         <StyledToolbar>

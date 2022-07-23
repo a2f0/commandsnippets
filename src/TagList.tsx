@@ -261,7 +261,8 @@ const TagList = () => {
           paddingRight: 0,
           overflowY: 'auto',
           direction: 'rtl',
-          height: `calc(100vh - ${Constants.appBarHeight}px - ${Constants.footerHeight}px)`,
+          height: theme =>
+            `calc(100vh - ${Constants.appBarHeight}px - ${theme.footer.height}px)`,
         }}
         onContextMenu={handleContextClick}
       >

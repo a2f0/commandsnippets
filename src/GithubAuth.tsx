@@ -1,6 +1,5 @@
 import React, {useEffect} from 'react';
 import API from './api';
-import Button from '@mui/material/Button';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LoginButton from './styled/LoginButton';
 import {observer} from 'mobx-react';

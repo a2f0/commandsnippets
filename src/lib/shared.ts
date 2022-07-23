@@ -112,8 +112,8 @@ export function needsScrollingIntoView(
       rect.top >= Constants.appBarHeight + theme.main.paddingTop;
     const bottomInView =
       rect.bottom <=
-      (window.innerHeight - Constants.footerHeight ||
-        document.documentElement.clientHeight - Constants.footerHeight);
+      (window.innerHeight - theme.footer.height ||
+        document.documentElement.clientHeight - theme.footer.height);
     const isInView = topInView && bottomInView;
 
     if (isInView === false) {
