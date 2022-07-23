@@ -108,8 +108,7 @@ export function needsScrollingIntoView(
   const rect = element.current?.getBoundingClientRect();
   if (rect !== undefined) {
     // Then it exists
-    const topInView =
-      rect.top >= Constants.appBarHeight + theme.main.paddingTop;
+    const topInView = rect.top >= theme.appBar.height + theme.main.paddingTop;
     const bottomInView =
       rect.bottom <=
       (window.innerHeight - theme.footer.height ||

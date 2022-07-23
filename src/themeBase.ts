@@ -10,6 +10,9 @@ declare module '@mui/material/styles' {
       background: string;
       menuButtonHighlight: string;
     };
+    appBar: {
+      height: number;
+    };
     main: {
       paddingTop: number;
     };
@@ -27,6 +30,9 @@ declare module '@mui/material/styles' {
       background: string;
       menuButtonHighlight: string;
     };
+    appBar: {
+      height: number;
+    };
     main: {
       paddingTop: number;
     };
@@ -37,6 +43,9 @@ declare module '@mui/material/styles' {
 }
 
 const themeBase = createTheme({
+  appBar: {
+    height: 52,
+  },
   main: {
     paddingTop: 0.25,
   },

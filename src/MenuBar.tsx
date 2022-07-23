@@ -23,6 +23,7 @@ import {baseHTTPURL} from './api';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
+import {useTheme} from '@mui/material/styles';
 
 interface IStyledMenuProps {
   id: string;
@@ -56,10 +57,14 @@ const StyledMenu = ({
   );
 };
 
-const Aligner = styled('div')(() => ({
-  minHeight: `${Constants.appBarHeight}px`,
-  display: 'flex',
-}));
+interface AlignerIProps {
+  theme: Theme;
+}
+
+const Aligner = styled('div')<AlignerIProps>`
+  min-height: ${props => props.theme.appBar.height}px;
+  display: flex;
+`;
 
 const MenuBar = () => {
   const appConfig = useAppContext();
@@ -72,6 +77,8 @@ const MenuBar = () => {
     React.useState<null | HTMLElement>(null);
   const [tagsMenuAnchorEl, setTagsMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
+
+  const theme = useTheme();
 
   const handleLogout = () => {
     const base_url = baseHTTPURL();
@@ -166,7 +173,7 @@ const MenuBar = () => {
           width: `${Constants.dragIndicatorWidthTag}px`,
         }}
       />
-      <Aligner>
+      <Aligner theme={theme}>
         {appConfig.loggedInUser && (
           <Button
             color="secondary"

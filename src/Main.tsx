@@ -42,7 +42,7 @@ const Main = () => {
       <AppBar
         position="fixed"
         sx={{
-          height: `${Constants.appBarHeight}px`,
+          height: theme => `${theme.appBar.height}px`,
           boxShadow: 'none', // Remove the Material UI 'bottom border'.
           backgroundImage: 'none', // Remove the Material UI gradient.
           borderBottom: '1px solid #808080',

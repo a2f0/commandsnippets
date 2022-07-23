@@ -323,8 +323,8 @@ const EntryList = () => {
 
   const tagsEntriesListStyle = {
     paddingTop: `${theme.main.paddingTop}rem`,
-    marginTop: `${Constants.appBarHeight}px`,
-    height: `calc(100vh - ${Constants.appBarHeight}px - ${theme.footer.height}px)`,
+    marginTop: `${theme.appBar.height}px`,
+    height: `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
     width: `calc(100vw - ${Constants.drawerWidth}px)`,
     overflow: 'auto',
     zIndex: 1000,
