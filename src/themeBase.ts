@@ -51,6 +51,11 @@ declare module '@mui/material/styles' {
 }
 
 const themeBase = createTheme({
+  typography: {
+    button: {
+      textTransform: 'none',
+    },
+  },
   appBar: {
     height: 52,
   },
