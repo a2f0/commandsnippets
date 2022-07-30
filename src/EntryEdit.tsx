@@ -2,8 +2,8 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import API from './api';
 import {AxiosResponse} from 'axios';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import {EntryContainer} from './Entry';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
@@ -133,59 +133,62 @@ const EntryEdit = ({
   }, [appConfig.activeEntryEditField]);
 
   return (
-    <div id={id}>
-      <EntryContainer>
-        <div>
-          <InputEntrySubject
-            id={`${id}Subject`}
-            placeholder="subject"
-            valueParent={subject}
-            handleChangeParent={handleSubjectChange}
-          />
-        </div>
-        <div>
-          <InputEntryBody
-            id={`${id}Body`}
-            placeholder="body"
-            valueParent={body}
-            handleChangeParent={handleBodyChange}
-          />
-        </div>
-        <Button
-          ref={setInputSaveRef}
-          id={`${id}Save`}
-          color="secondary"
-          sx={{
-            marginRight: '2px',
-            scrollMarginBottom: '10px',
-            marginBottom: '10px',
-          }}
-          size="small"
-          variant="outlined"
-          onClick={() => {
-            handleSave();
-          }}
-        >
-          Save
-        </Button>
-        <Button
-          ref={setInputCancelRef}
-          id={`${id}Cancel`}
-          color="secondary"
-          size="small"
-          variant="outlined"
-          onClick={() => {
-            handleCancel();
-          }}
-          sx={{
-            scrollMarginBottom: '10px',
-            marginBottom: '10px',
-          }}
-        >
-          Cancel
-        </Button>
-      </EntryContainer>
-    </div>
+    <Box
+      id={id}
+      sx={theme => ({
+        ml: theme => `${theme.main.dragIndicatorWidth}px`,
+      })}
+    >
+      <div>
+        <InputEntrySubject
+          id={`${id}Subject`}
+          placeholder="subject"
+          valueParent={subject}
+          handleChangeParent={handleSubjectChange}
+        />
+      </div>
+      <div>
+        <InputEntryBody
+          id={`${id}Body`}
+          placeholder="body"
+          valueParent={body}
+          handleChangeParent={handleBodyChange}
+        />
+      </div>
+      <Button
+        ref={setInputSaveRef}
+        id={`${id}Save`}
+        color="secondary"
+        sx={{
+          marginRight: '2px',
+          scrollMarginBottom: '10px',
+          marginBottom: '10px',
+        }}
+        size="small"
+        variant="outlined"
+        onClick={() => {
+          handleSave();
+        }}
+      >
+        Save
+      </Button>
+      <Button
+        ref={setInputCancelRef}
+        id={`${id}Cancel`}
+        color="secondary"
+        size="small"
+        variant="outlined"
+        onClick={() => {
+          handleCancel();
+        }}
+        sx={{
+          scrollMarginBottom: '10px',
+          marginBottom: '10px',
+        }}
+      >
+        Cancel
+      </Button>
+    </Box>
   );
 };
 

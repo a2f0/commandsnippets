@@ -2,9 +2,8 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import API from './api';
 import {AxiosResponse} from 'axios';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import DragHandleContainer from './DragHandleContainer';
-import {EntryContainer} from './Entry';
 import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
@@ -168,52 +167,54 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   }, [appConfig.activeEntryEditField]);
 
   return (
-    <div id={id}>
-      <DragHandleContainer />
-      <EntryContainer>
-        <div>
-          <InputEntrySubject
-            id={`${id}Subject`}
-            placeholder="subject"
-            valueParent={subject}
-            handleChangeParent={handleSubjectChange}
-          />
-        </div>
-        <div>
-          <InputEntryBody
-            id={`${id}Body`}
-            placeholder="body"
-            valueParent={body}
-            handleChangeParent={handleBodyChange}
-          />
-        </div>
-        <Button
-          ref={setInputSaveRef}
-          id={`${id}Save`}
-          color="secondary"
-          sx={{marginRight: '2px'}}
-          size="small"
-          variant="outlined"
-          onClick={() => {
-            handleSave();
-          }}
-        >
-          Save
-        </Button>
-        <Button
-          ref={setInputCancelRef}
-          id={`${id}Cancel`}
-          color="secondary"
-          size="small"
-          variant="outlined"
-          onClick={() => {
-            handleCancel();
-          }}
-        >
-          Cancel
-        </Button>
-      </EntryContainer>
-    </div>
+    <Box
+      id={id}
+      sx={theme => ({
+        ml: theme => `${theme.main.dragIndicatorWidth}px`,
+      })}
+    >
+      <div>
+        <InputEntrySubject
+          id={`${id}Subject`}
+          placeholder="subject"
+          valueParent={subject}
+          handleChangeParent={handleSubjectChange}
+        />
+      </div>
+      <div>
+        <InputEntryBody
+          id={`${id}Body`}
+          placeholder="body"
+          valueParent={body}
+          handleChangeParent={handleBodyChange}
+        />
+      </div>
+      <Button
+        ref={setInputSaveRef}
+        id={`${id}Save`}
+        color="secondary"
+        sx={{marginRight: '2px'}}
+        size="small"
+        variant="outlined"
+        onClick={() => {
+          handleSave();
+        }}
+      >
+        Save
+      </Button>
+      <Button
+        ref={setInputCancelRef}
+        id={`${id}Cancel`}
+        color="secondary"
+        size="small"
+        variant="outlined"
+        onClick={() => {
+          handleCancel();
+        }}
+      >
+        Cancel
+      </Button>
+    </Box>
   );
 };
 export default React.memo(observer(EntryNew));
