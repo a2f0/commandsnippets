@@ -250,47 +250,45 @@ const TagList = () => {
   }, []);
 
   return (
-    <>
-      <List
-        id="tagList"
-        sx={{
-          paddingTop: theme => `${theme.main.paddingTop}`,
-          paddingBottom: 0,
-          paddingLeft: 0,
-          paddingRight: 0,
-          overflowY: 'auto',
-          direction: 'rtl',
-          height: theme =>
-            `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
-        }}
-        onContextMenu={handleContextClick}
-      >
-        <LeftToRight>
-          {appConfig.tagNew === 'top' && (
-            <TagNew id="tagNewTop" handleNewParent={handleNew} />
-          )}
-          {tags.map((object: ITagJsonApi, i) => {
-            return (
-              <div key={object.id} ref={elRefs[i]}>
-                <Tag
-                  object={object}
-                  id={object.id}
-                  handleDeleteParent={handleDelete}
-                  moveEntry={moveEntry}
-                  findEntry={findEntry}
-                  index={i}
-                  findEntryByIndex={findEntryByIndex}
-                />
-              </div>
-            );
-          })}
-          {appConfig.tagNew === 'bottom' && (
-            <TagNew id="tagNewBottom" handleNewParent={handleNew} />
-          )}
-        </LeftToRight>
-        {appConfig.loggedInUser && <>{contextMenu}</>}
-      </List>
-    </>
+    <List
+      id="tagList"
+      sx={{
+        paddingTop: theme => `${theme.main.paddingTop}`,
+        paddingBottom: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
+        overflowY: 'auto',
+        direction: 'rtl',
+        height: theme =>
+          `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
+      }}
+      onContextMenu={handleContextClick}
+    >
+      <LeftToRight>
+        {appConfig.tagNew === 'top' && (
+          <TagNew id="tagNewTop" handleNewParent={handleNew} />
+        )}
+        {tags.map((object: ITagJsonApi, i) => {
+          return (
+            <div key={object.id} ref={elRefs[i]}>
+              <Tag
+                object={object}
+                id={object.id}
+                handleDeleteParent={handleDelete}
+                moveEntry={moveEntry}
+                findEntry={findEntry}
+                index={i}
+                findEntryByIndex={findEntryByIndex}
+              />
+            </div>
+          );
+        })}
+        {appConfig.tagNew === 'bottom' && (
+          <TagNew id="tagNewBottom" handleNewParent={handleNew} />
+        )}
+      </LeftToRight>
+      {appConfig.loggedInUser && <>{contextMenu}</>}
+    </List>
   );
 };
 

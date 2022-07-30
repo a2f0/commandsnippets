@@ -15,6 +15,9 @@ const StyledMenuItem = ({children, onClick, id}: IProps) => {
       sx={theme => ({
         fontSize: 13,
         background: theme.palette.background.default,
+        '&:hover': {
+          backgroundColor: theme.selected.background,
+        },
       })}
     >
       {children}
