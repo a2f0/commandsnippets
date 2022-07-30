@@ -169,9 +169,9 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   return (
     <Box
       id={id}
-      sx={theme => ({
+      sx={{
         ml: theme => `${theme.main.dragIndicatorWidth}px`,
-      })}
+      }}
     >
       <div>
         <InputEntrySubject
