@@ -4,6 +4,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import {AxiosResponse} from 'axios';
 import Button from '@mui/material/Button';
+import DragHandleContainer from './DragHandleContainer';
 import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
@@ -166,12 +167,7 @@ const MenuBar = () => {
           flexShrink: 0,
         }}
       />
-      <Typography
-        sx={{
-          display: 'inline-block',
-          width: `${theme.main.dragIndicatorWidth}px`,
-        }}
-      />
+      <DragHandleContainer />
       <Aligner theme={theme}>
         {appConfig.loggedInUser && (
           <Button
