@@ -2,7 +2,7 @@
 black==22.6.0                   # this should match .pre-commit-config.yamml
 bump2version==1.0.1
 coverage==6.4.2
-django_extensions==3.1.5
+django_extensions==3.2.0
 factory_boy==3.2.1
 httpretty==1.1.4
 isort[requirements]==5.10.1     # this should match .pre-commit-config.yamml
