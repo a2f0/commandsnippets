@@ -10,14 +10,6 @@ Bootstrap
     docker-compose build
     docker-compose up
 
-Run tests
-
-    docker-compose run backend coverage run manage.py test -v 2
-
-Run a coverage report (note: the configuration of the coverage tool is in `.coveragerc` )
-
-    docker-compose run backend coverage report
-
 Bump version
 
     docker-compose run backend bump2version patch setup.cfg --allow-dirty
@@ -26,6 +18,24 @@ Show outdated dependencies
 
     docker-compose run backend safety check -r requirements/local.txt -r requirements/production.txt
     docker-compose run backend pur -r requirements/local.txt -r requirements/production.txt
+
+## Testing
+
+Run tests
+
+    docker-compose run backend coverage run manage.py test -v 2
+
+Run a coverage report (note: the configuration of the coverage tool is in `.coveragerc` )
+
+    docker-compose run backend coverage report
+
+Run a specific class of tests
+
+    docker-compose run backend python manage.py test tearleads.text_entries.tests.test_text_entries_api.TestTextEntriesApi
+
+Run a specific test
+
+    docker-compose run backend python manage.py test tearleads.users.tests.test_users_api.TestUsersApi.test_unauthenticated_user
 
 ## Administrative
 
@@ -36,3 +46,7 @@ Take a backup
 Delete a user
 
     docker-compose run backend python manage.py delete_user <username>
+
+List users
+
+    docker-compose run backend python manage.py list_users
