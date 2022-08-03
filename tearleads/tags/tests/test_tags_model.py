@@ -1,3 +1,5 @@
+from django.db.utils import DataError
+
 from tearleads.core.tests.core import BaseTestCase
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
 from tearleads.text_entries.tests.factories import TextEntryFactory
@@ -66,3 +68,14 @@ class TestTagsModel(BaseTestCase):
         tag_text_entry.delete()
         tag.refresh_from_db()
         self.assertEqual(tag.entry_count, 0)
+
+    def test_invalid_name_length(
+        self,
+    ):
+        max_length = Tag._meta.get_field("name").max_length
+        too_large = max_length + 1
+        oversized_name = "x" * too_large
+        with self.assertRaisesMessage(
+            DataError, f"value too long for type character varying({24})\n"
+        ):
+            tag = TagFactory(user=self.user1, name=oversized_name)

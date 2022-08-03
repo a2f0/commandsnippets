@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
+from tearleads.tags.models import Tag
 from tearleads.text_entries.tests.factories import TextEntryFactory
 
 from .factories import TagFactory, TagTextEntryThroughModelFactory
@@ -84,6 +85,22 @@ class TestTagsApi(BaseTestCase):
         self.assertEqual(
             json_response["errors"][0]["detail"],
             "Authentication credentials were not provided.",
+        )
+
+    def test_name_too_large(self):
+        max_length = Tag._meta.get_field("name").max_length
+        too_large = max_length + 1
+        oversized_name = "x" * too_large
+        payload = {"data": {"type": "Tag", "attributes": {"name": oversized_name}}}
+        response = self.user1_api_client.post(
+            "/api/v1/tags", payload, format="vnd.api+json"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(json_response["errors"]), 1)
+        self.assertEqual(
+            json_response["errors"][0]["detail"],
+            f"Ensure this field has no more than {24} characters.",
         )
 
     def test_can_create_self_owned(self):
