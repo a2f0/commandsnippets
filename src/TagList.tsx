@@ -7,12 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  activeSearch,
-  appMode,
-  keyCode,
-  needsScrollingIntoView,
-} from './lib/shared';
+import {activeSearch, appMode, needsScrollingIntoView} from './lib/shared';
 import {useLocation, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -204,7 +199,7 @@ const TagList = () => {
       if (selected !== undefined && appConfig.appMode === appMode.tagsList) {
         const selectedIndex = tagsRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
-          if (event.keyCode === keyCode.UpArrow) {
+          if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
@@ -217,7 +212,7 @@ const TagList = () => {
                 });
               }
             }
-          } else if (event.keyCode === keyCode.DownArrow) {
+          } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
             if (newIndex <= tagsRef.current.length - 1) {
               appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
@@ -230,7 +225,7 @@ const TagList = () => {
                 });
               }
             }
-          } else if (event.keyCode === keyCode.Enter) {
+          } else if (event.key === 'Enter') {
             appConfig.setAppMode(appMode.entriesList);
             appConfig.setActiveSearch(activeSearch.entries);
             navigate(`/${userRef.current}/${selected.attributes.name}`);

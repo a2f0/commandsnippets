@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect} from 'react';
-import {activeSearch, keyCode} from '../../lib/shared';
 import TextField from '@mui/material/TextField';
+import {activeSearch} from '../../lib/shared';
 import {appMode} from '../../lib/shared';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
@@ -25,7 +25,7 @@ const StyledTextFieldTags = React.forwardRef<
     }
 
     if (trappedModes.includes(appConfig.appMode)) {
-      if (event.keyCode === keyCode.Tab) {
+      if (event.key === 'Tab') {
         if (appConfig.appMode === appMode.tagsList) {
           appConfig.setAppMode(appMode.entriesList);
           appConfig.setActiveSearch(activeSearch.entries);
@@ -33,12 +33,12 @@ const StyledTextFieldTags = React.forwardRef<
           appConfig.setAppMode(appMode.tagsList);
           appConfig.setActiveSearch(activeSearch.tags);
         }
-      } else if (event.keyCode === keyCode.LeftArrow) {
+      } else if (event.key === 'ArrowLeft') {
         if (appConfig.appMode === appMode.entriesList) {
           appConfig.setAppMode(appMode.tagsList);
           appConfig.setActiveSearch(activeSearch.tags);
         }
-      } else if (event.keyCode === keyCode.RightArrow) {
+      } else if (event.key === 'ArrowRight') {
         if (appConfig.appMode === appMode.tagsList) {
           appConfig.setAppMode(appMode.entriesList);
           appConfig.setActiveSearch(activeSearch.entries);

@@ -7,12 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  appMode,
-  entrySearchMethod,
-  keyCode,
-  needsScrollingIntoView,
-} from './lib/shared';
+import {appMode, entrySearchMethod, needsScrollingIntoView} from './lib/shared';
 import {useLocation, useParams} from 'react-router-dom';
 import {CancelTokenSource} from 'axios';
 import Entry from './Entry';
@@ -205,7 +200,7 @@ const EntryList = () => {
       if (selected !== undefined && appConfig.appMode === appMode.entriesList) {
         const selectedIndex = entriesRef.current.indexOf(selected);
         if (selectedIndex !== -1) {
-          if (event.keyCode === keyCode.UpArrow) {
+          if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
@@ -218,7 +213,7 @@ const EntryList = () => {
                 });
               }
             }
-          } else if (event.keyCode === keyCode.DownArrow) {
+          } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
             if (newIndex <= entriesRef.current.length - 1) {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
@@ -231,7 +226,7 @@ const EntryList = () => {
                 });
               }
             }
-          } else if (event.keyCode === keyCode.Enter) {
+          } else if (event.key === 'Enter') {
             navigator.clipboard.writeText(selected.attributes.body);
             appConfig.setMostRecentCopyID(selected.id);
             appConfig.setMostRecentCopyType(selected.type);
