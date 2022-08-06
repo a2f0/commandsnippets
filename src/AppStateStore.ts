@@ -21,7 +21,7 @@ import {
 } from './lib/shared';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 import {ITagJsonApi} from './models/TagModel';
-import {environment} from './api';
+import {environment} from './lib/environment';
 
 export type RootModel = Instance<typeof AppStateStoreModel>;
 
@@ -377,7 +377,7 @@ export const AppStateStoreModel = types
 
 export const defaultStateStringified: string = JSON.stringify(defaultState);
 
-const localStorageKey = 'mst-tearleads-' + environment();
+const localStorageKey = `mst-tearleads-${environment}`;
 const initialState = localStorage.getItem(localStorageKey);
 let state: appState;
 if (initialState !== null) {
