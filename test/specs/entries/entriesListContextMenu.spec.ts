@@ -69,14 +69,12 @@ describe('Entry Main Menu Behavior', () => {
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
 
-    await expect(BasePage.entryNewBottomBody).toHaveValue(
-      'Body Line 1\nBody Line 2'
-    );
+    expect(BasePage.entryNewBottomBody).toHaveValue('Body Line 1\nBody Line 2');
 
     await (await BasePage.entryNewBottomSubject).waitAndLeftClick();
     await expect(BasePage.entryNewBottomSubject).toBeFocused();
     await browser.keys('Subject');
-    await expect(BasePage.entryNewBottomSubject).toHaveValue('Subject');
+    expect(BasePage.entryNewBottomSubject).toHaveValue('Subject');
 
     await expect(BasePage.entryNewBottom).toBeExisting();
     await (await BasePage.entryNewBottomCancel).waitAndLeftClick();
@@ -89,20 +87,22 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewBottom).toBeExisting();
     await expect(BasePage.entryNewBottom).toBeDisplayed();
 
+    await expect(BasePage.entryNewBottomSubject).toBeExisting();
+    await expect(BasePage.entryNewBottomSubject).toBeDisplayed();
     await expect(BasePage.entryNewBottomSubject).toBeFocused();
+    // Removing this await causes a stale element warning.
     await expect(BasePage.entryNewBottomSubject).toHaveValue('');
     await browser.keys('Subject');
-    await expect(BasePage.entryNewBottomSubject).toHaveValue('Subject');
+    expect(BasePage.entryNewBottomSubject).toHaveValue('Subject');
     await (await BasePage.entryNewBottomBody).waitAndLeftClick();
     await expect(BasePage.entryNewBottomBody).toBeFocused();
+    // Removing this await causes a stale element warning.
     await expect(BasePage.entryNewBottomBody).toHaveValue('');
     await browser.keys('Body Line 1');
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
 
-    await expect(BasePage.entryNewBottomBody).toHaveValue(
-      'Body Line 1\nBody Line 2'
-    );
+    expect(BasePage.entryNewBottomBody).toHaveValue('Body Line 1\nBody Line 2');
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(0);
 
     await (await BasePage.entryNewBottomSave).waitAndLeftClick();
