@@ -21,7 +21,7 @@ describe('Tag Search Menu Behavior', () => {
     await expect(BasePage.tagSearch).toBeFocused();
     await browser.keys(tagsResponse.data[1].attributes.name);
     await expect(BasePage.tags).toBeElementsArrayOfSize(1);
-    await expect(BasePage.tagSearch).toHaveValue(
+    expect(BasePage.tagSearch).toHaveValue(
       tagsResponse.data[1].attributes.name
     );
 

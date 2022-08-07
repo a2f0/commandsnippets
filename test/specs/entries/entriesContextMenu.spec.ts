@@ -61,10 +61,10 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.textEntryEdit1Body).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Save).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Cancel).toBeDisplayed();
-    await expect(BasePage.textEntryEdit1Body).toHaveValue(
+    expect(BasePage.textEntryEdit1Body).toHaveValue(
       entriesResponse.data[0].attributes.body
     );
-    await expect(BasePage.textEntryEdit1Subject).toHaveValue(
+    expect(BasePage.textEntryEdit1Subject).toHaveValue(
       entriesResponse.data[0].attributes.subject
     );
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
@@ -90,7 +90,7 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.textEntryEdit1).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
     await browser.keys('-modified');
-    await expect(BasePage.textEntryEdit1Subject).toHaveValue(
+    expect(BasePage.textEntryEdit1Subject).toHaveValue(
       entriesResponse.data[0].attributes.subject + '-modified'
     );
 
@@ -101,7 +101,7 @@ describe('TagsEntries Behavior', () => {
     // Create a blank line
     await browser.keys('Enter');
     await browser.keys('entry-1-body-line-2');
-    await expect(BasePage.textEntryEdit1Body).toHaveValue(
+    expect(BasePage.textEntryEdit1Body).toHaveValue(
       entriesResponse.data[0].attributes.body + '\n' + 'entry-1-body-line-2'
     );
     await browser.keys('Tab');

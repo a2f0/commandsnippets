@@ -86,13 +86,11 @@ describe('Entry Main Menu Behavior', () => {
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
 
-    await expect(BasePage.entryNewTopBody).toHaveValue(
-      'Body Line 1\nBody Line 2'
-    );
+    expect(BasePage.entryNewTopBody).toHaveValue('Body Line 1\nBody Line 2');
     await (await BasePage.entryNewTopSubject).waitAndLeftClick();
     await expect(BasePage.entryNewTopSubject).toBeFocused();
     await browser.keys('Subject');
-    await expect(BasePage.entryNewTopSubject).toHaveValue('Subject');
+    expect(BasePage.entryNewTopSubject).toHaveValue('Subject');
 
     await expect(BasePage.entryNewTop).toBeExisting();
     await (await BasePage.entryNewTopCancel).waitAndLeftClick();
@@ -107,16 +105,14 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewTop).toBeExisting();
     await expect(BasePage.entryNewTop).toBeDisplayed();
     await browser.keys('Subject');
-    await expect(BasePage.entryNewTopSubject).toHaveValue('Subject');
+    expect(BasePage.entryNewTopSubject).toHaveValue('Subject');
     await (await BasePage.entryNewTopBody).waitAndLeftClick();
     await expect(BasePage.entryNewTopBody).toBeFocused();
 
     await browser.keys('Body Line 1');
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
-    await expect(BasePage.entryNewTopBody).toHaveValue(
-      'Body Line 1\nBody Line 2'
-    );
+    expect(BasePage.entryNewTopBody).toHaveValue('Body Line 1\nBody Line 2');
     await (await BasePage.entryNewTopSave).waitAndLeftClick();
 
     await expect(BasePage.entryNewTop).not.toBeExisting();

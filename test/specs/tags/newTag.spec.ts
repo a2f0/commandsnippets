@@ -52,7 +52,7 @@ describe('Tag List Context Menu Behavior', () => {
     await browser.keys('Tab');
     await expect(BasePage.tagNewBottomTextField).toBeFocused();
     browser.keys('test-3');
-    await expect(BasePage.tagNewBottomTextField).toHaveValue('test-3');
+    expect(BasePage.tagNewBottomTextField).toHaveValue('test-3');
     await expect(BasePage.tags).toBeElementsArrayOfSize(0);
     await expect(mockTagPostResponse).toBeRequestedTimes(0);
     await (await BasePage.tagNewBottomSave).waitAndLeftClick();
