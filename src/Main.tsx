@@ -53,9 +53,7 @@ const Main = () => {
         </StyledToolbar>
       </AppBar>
       <LeftDrawer />
-      <main>
-        <EntryList />
-      </main>
+      <EntryList />
       <AppBar
         position="fixed"
         sx={{

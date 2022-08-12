@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import {appMode, entrySearchMethod, needsScrollingIntoView} from './lib/shared';
 import {useLocation, useParams} from 'react-router-dom';
+import Box from '@mui/material/Box';
 import {CancelTokenSource} from 'axios';
 import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
@@ -315,23 +316,19 @@ const EntryList = () => {
     [mouse]
   );
 
-  const tagsEntriesListStyle = {
-    paddingTop: `${theme.main.paddingTop}rem`,
-    marginTop: `${theme.appBar.height}px`,
-    height: `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
-    width: `calc(100vw - ${theme.drawer.width}px)`,
-    overflow: 'auto',
-    zIndex: 1000,
-  };
-
   return (
-    <div
+    <Box
       ref={drop}
       id="tagsEntriesList"
-      style={tagsEntriesListStyle}
-      onContextMenu={handleContextClick}
-      onClick={handleClick}
       onMouseDown={onMouseDown}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        paddingTop: `${theme.appBar.height}px`,
+        paddingLeft: `${theme.drawer.width}px`,
+        width: `calc(100vw - ${theme.drawer.width}px)`,
+        minHeight: `calc(100vh - ${theme.footer.height}px)`,
+      }}
     >
       {appConfig.entryNew === 'textEntry-top' && (
         <EntryNew id="textEntryNewTop" filterAndSortParent={filterAndSort} />
@@ -356,8 +353,16 @@ const EntryList = () => {
       {appConfig.entryNew === 'textEntry-bottom' && (
         <EntryNew id="textEntryNewBottom" filterAndSortParent={filterAndSort} />
       )}
+      <Box
+        onContextMenu={handleContextClick}
+        sx={{
+          display: 'flex',
+          flexGrow: '1',
+          paddingBottom: `${theme.footer.height}px`,
+        }}
+      />
       {appConfig.loggedInUser && <>{contextMenu}</>}
-    </div>
+    </Box>
   );
 };
 
