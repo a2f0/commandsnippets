@@ -46,12 +46,14 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.textEntryEdit1Save).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Cancel).toBeDisplayed();
 
-    expect(BasePage.textEntryEdit1Body).toHaveValue(
-      entriesResponse.data[0].attributes.body
-    );
     expect(BasePage.textEntryEdit1Subject).toHaveValue(
       entriesResponse.data[0].attributes.subject
     );
+    expect(BasePage.textEntryEdit1Body).toHaveValue(
+      entriesResponse.data[0].attributes.body
+    );
+
+    await expect(BasePage.textEntryEdit1Subject).toBeFocused();
 
     // Window change behavior
     await browser.newWindow('https://google.com');
@@ -59,5 +61,6 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.tagsEntriesList).not.toBeDisplayed();
     await browser.switchWindow('http://localhost:8081');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
+    await expect(BasePage.textEntryEdit1Subject).toBeFocused();
   });
 });

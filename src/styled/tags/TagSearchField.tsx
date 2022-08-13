@@ -34,14 +34,22 @@ const TagSearchField = () => {
     };
   }, []);
 
+  // Fires when switching tabs (Brave 1.42.88)
   const useVisibility = useCallback(() => {
+    console.info('useVisibility');
     if (document.visibilityState === 'visible') {
-      inputRef.current?.focus();
-      inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
+      if (
+        appConfig.appMode !== appMode.entryEditor &&
+        appConfig.appMode !== appMode.tagEditor
+      ) {
+        inputRef.current?.focus();
+        inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
+      }
     }
   }, []);
 
   const useWindowFocus = useCallback(() => {
+    console.info('useWindowFocus');
     inputRef.current?.focus();
     inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
   }, []);
