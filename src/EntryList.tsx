@@ -296,15 +296,6 @@ const EntryList = () => {
       setMouse(mouseData);
   };
 
-  const handleClick = () => {
-    const selection = getSelection();
-    const selectionString = selection?.toString();
-    appConfig.setAppMode(appMode.entriesList);
-    if (selectionString === undefined || selectionString.length === 0) {
-      appConfig.incrementClickCount();
-    }
-  };
-
   const onMouseDown = () => {
     appConfig.setEntrySelectedID('');
   };
