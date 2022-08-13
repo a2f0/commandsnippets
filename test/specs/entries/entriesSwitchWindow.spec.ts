@@ -1,7 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
-import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
+import entriesResponse from '../../mocks/entries/entriesResponse';
 import entryPostResponse from '../../mocks/entries/entryPostResponse';
-import tagTextEntryThroughModelsResponse from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
 describe('Tab Switching Behavior', () => {
@@ -27,22 +26,32 @@ describe('Tab Switching Behavior', () => {
         method: 'post',
       }
     );
-    const mocktagTextEntryThroughModelsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries**',
-      {
-        method: 'post',
-      }
-    );
     mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntriesGetList.respond(entriesResponseEmpty, {fetchResponse: false});
+    mockEntriesGetList.respond(entriesResponse, {fetchResponse: false});
     mockEntryOptionsResponse.respond({fetchResponse: false});
     mockEntryPostResponse.respond(entryPostResponse, {fetchResponse: false});
-    mocktagTextEntryThroughModelsResponse.respond(
-      tagTextEntryThroughModelsResponse,
-      {fetchResponse: false}
-    );
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
+
+    await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
+    await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
+    await (await BasePage.tagsEntries1).waitAndRightClick();
+    await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
+    await expect(BasePage.tagsEntriesContextMenu1Edit).toBeDisplayed();
+    await expect(BasePage.textEntryEdit1).not.toBeDisplayed();
+    await (await BasePage.tagsEntriesContextMenu1Edit).waitAndLeftClick();
+    await expect(BasePage.textEntryEdit1).toBeDisplayed();
+    await expect(BasePage.textEntryEdit1Subject).toBeDisplayed();
+    await expect(BasePage.textEntryEdit1Body).toBeDisplayed();
+    await expect(BasePage.textEntryEdit1Save).toBeDisplayed();
+    await expect(BasePage.textEntryEdit1Cancel).toBeDisplayed();
+
+    expect(BasePage.textEntryEdit1Body).toHaveValue(
+      entriesResponse.data[0].attributes.body
+    );
+    expect(BasePage.textEntryEdit1Subject).toHaveValue(
+      entriesResponse.data[0].attributes.subject
+    );
 
     // Window change behavior
     await browser.newWindow('https://google.com');

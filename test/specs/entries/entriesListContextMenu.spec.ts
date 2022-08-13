@@ -133,16 +133,13 @@ describe('Entry Main Menu Behavior', () => {
       (await (await newEntry).getCSSProperty('background-color')).value,
       'rgba(72,72,72,1)'
     );
+
     // test tab-based focusing
     await (await BasePage.tagsEntriesList).waitAndRightClick();
-
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
-
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();
-
     await (await BasePage.entryListContextMenuNewEntry).waitAndLeftClick();
-
     await expect(BasePage.entryNewBottom).toBeDisplayed();
     await expect(BasePage.entryNewBottomSubject).toBeFocused();
     await browser.keys('Tab');
@@ -159,7 +156,6 @@ describe('Entry Main Menu Behavior', () => {
     // Make sure the subject is the default focus on the component load
     // Note: the state of focus was the body up until this point.
     await (await BasePage.entryNewBottomCancel).waitAndLeftClick();
-
     await expect(BasePage.entryNewBottom).not.toBeExisting();
     await (await BasePage.tagsEntriesList).waitAndRightClick();
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
