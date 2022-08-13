@@ -1,4 +1,5 @@
 import {BasePage} from '../../pageobjects/base';
+import assert from 'assert';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import entryPostResponse from '../../mocks/entries/entryPostResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
@@ -56,11 +57,32 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
 
     // Window change behavior
-    await browser.newWindow('https://google.com');
-    await browser.switchWindow('google.com');
+    await browser.newWindow('https://www.google.com/');
+    // Entry Subject
+    await browser.switchWindow('www.google.com');
+    assert.strictEqual(await browser.getUrl(), 'https://www.google.com/');
     await expect(BasePage.tagsEntriesList).not.toBeDisplayed();
     await browser.switchWindow('http://localhost:8081');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
+
+    // Entry Body
+    await (await BasePage.textEntryEdit1Body).waitAndLeftClick();
+    await expect(BasePage.textEntryEdit1Body).toBeFocused();
+    await browser.keys('Enter');
+    await browser.keys('Body Line 2');
+    // Removing this await causes invalid session id.
+    await expect(BasePage.textEntryEdit1Body).toHaveValue(
+      'entry-1-body\nBody Line 2'
+    );
+    await browser.switchWindow('google.com');
+    assert.strictEqual(await browser.getUrl(), 'https://www.google.com/');
+    await browser.switchWindow('http://localhost:8081');
+    await expect(BasePage.textEntryEdit1Body).toBeFocused();
+    await browser.keys('Enter');
+    await browser.keys('Body Line 3');
+    await expect(BasePage.textEntryEdit1Body).toHaveValue(
+      'entry-1-body\nBody Line 2\nBody Line 3'
+    );
   });
 });
