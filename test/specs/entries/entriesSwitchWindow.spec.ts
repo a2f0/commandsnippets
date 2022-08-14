@@ -60,7 +60,7 @@ describe('Tab Switching Behavior', () => {
     await browser.newWindow('https://www.google.com/');
     // Entry Subject
     await browser.switchWindow('www.google.com');
-    assert.strictEqual(await browser.getUrl(), 'https://www.google.com/');
+    await expect(browser).toHaveUrl('https://www.google.com/');
     await expect(BasePage.tagsEntriesList).not.toBeDisplayed();
     await browser.switchWindow('http://localhost:8081');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
@@ -76,7 +76,7 @@ describe('Tab Switching Behavior', () => {
       'entry-1-body\nBody Line 2'
     );
     await browser.switchWindow('google.com');
-    assert.strictEqual(await browser.getUrl(), 'https://www.google.com/');
+    await expect(browser).toHaveUrl('https://www.google.com/');
     await browser.switchWindow('http://localhost:8081');
     await expect(BasePage.textEntryEdit1Body).toBeFocused();
     await browser.keys('Enter');

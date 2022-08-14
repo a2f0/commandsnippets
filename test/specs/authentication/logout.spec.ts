@@ -30,17 +30,7 @@ describe('Logged Out User Behavior', () => {
     mockLogoutOptionsResponse.respond({fetchResponse: false});
     mockLogoutResponse.respond(logoutResponse, {fetchResponse: false});
     await BasePage.open('');
-    // Make sure to wait to route the logged in user
-    await browser.waitUntil(
-      async () => {
-        const url = await browser.getUrl();
-        return url === 'http://localhost:8081/test/test-tag-1';
-      },
-      {
-        timeout: 5000,
-        timeoutMsg: 'http://localhost:8081/test/test-tag-1',
-      }
-    );
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
@@ -62,10 +52,7 @@ describe('Logged Out User Behavior', () => {
     await expect(mockLogoutResponse).toBeRequestedTimes(1);
 
     // Confirm state after logout
-    assert.strictEqual(
-      await browser.getUrl(),
-      'http://localhost:8081/test/test-tag-1'
-    );
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.googleAuthButton).toBeExisting();
     await expect(BasePage.googleAuthButton).toBeDisplayed();
     await expect(BasePage.githubAuthButton).toBeExisting();
