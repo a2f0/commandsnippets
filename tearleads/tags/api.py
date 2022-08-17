@@ -1,8 +1,9 @@
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
-from rest_framework import filters, response, status, viewsets
+from rest_framework import filters, mixins, response, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_json_api import serializers
 from rest_framework_json_api.django_filters import DjangoFilterBackend
 from rest_framework_json_api.filters import OrderingFilter
@@ -89,7 +90,9 @@ class TagViewSet(viewsets.ModelViewSet):
         )
 
 
-class TagTextEntryThroughModelViewSet(viewsets.ModelViewSet):
+class TagTextEntryThroughModelViewSet(
+    GenericViewSet, mixins.CreateModelMixin, mixins.DestroyModelMixin
+):
     queryset = TagTextEntryThroughModel.objects.all()
     serializer_class = TagTextEntryThroughModelSerializer
     ordering_fields = (
