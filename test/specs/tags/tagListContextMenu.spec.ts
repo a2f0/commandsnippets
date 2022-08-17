@@ -1,6 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
 import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
-import tagsResponseEmpty from '../../mocks/tags_entries/tagsEntriesResponseEmpty';
+import tagsResponseEmpty from '../../mocks/tags/tagsResponseEmpty';
 
 describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
@@ -21,5 +21,7 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tagListContextMenu).toBeDisplayed();
     await browser.keys('Escape');
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
+    await expect(mockEntries).toBeRequestedTimes(0);
+    await expect(mockTags).toBeRequestedTimes(1);
   });
 });
