@@ -19,6 +19,14 @@ Show outdated dependencies
     docker-compose run backend safety check -r requirements/local.txt -r requirements/production.txt
     docker-compose run backend pur -r requirements/local.txt -r requirements/production.txt
 
+Accessing the local Postgresql Database
+
+    psql -h localhost -p 1337 -U tearleads
+    \c tearleads
+    \dt
+    select * from users_user
+    \q
+
 ## Testing
 
 Run tests
