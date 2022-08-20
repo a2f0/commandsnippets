@@ -3,7 +3,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import React from 'react';
-import RootContainer from './RootContainer';
+import Routes from './Routes';
 import {StyledEngineProvider} from '@mui/material/styles';
 import Theme from './Theme';
 import ThemedGlobalStyle from './styled/layout/ThemedGlobalStyles';
@@ -20,7 +20,7 @@ const App = React.memo(
             <CssBaseline />
             <ThemedGlobalStyle />
             <DndProvider backend={HTML5Backend}>
-              <RootContainer />
+              <Routes />
             </DndProvider>
           </Theme>
         </AppContextProvider>

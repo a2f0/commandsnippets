@@ -1,17 +1,17 @@
 import {darkTheme, lightTheme} from './themes';
+import {Theme as MuiTheme} from '@mui/material/styles';
 import React from 'react';
-import {Theme} from '@mui/material/styles';
 import {ThemeProvider} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 
-interface IRootContainerProps {
+interface IThemeProps {
   children?: React.ReactNode;
 }
 
-const Theme = ({children}: IRootContainerProps) => {
+const Theme = ({children}: IThemeProps) => {
   const appConfig = useAppContext();
-  let theme: Theme;
+  let theme: MuiTheme;
   if (appConfig.selectedTheme === 'lightTheme') {
     theme = lightTheme;
   } else {

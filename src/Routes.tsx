@@ -1,4 +1,4 @@
-import {Route, Routes} from 'react-router-dom';
+import {Routes as ReactRouterRoutes, Route} from 'react-router-dom';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import Main from './Main';
@@ -6,11 +6,11 @@ import PublicHomePage from './PublicHomePage';
 import React from 'react';
 import {useAppContext} from './AppContext';
 
-const RootContainer = () => {
+const Routes = () => {
   const appConfig = useAppContext();
 
   return (
-    <Routes>
+    <ReactRouterRoutes>
       <Route path="/oauth/github" element={<GithubAuth />} />
       <Route path="/oauth/google" element={<GoogleAuth />} />
       <Route path="/:user/:tag" element={<Main />} />
@@ -20,8 +20,8 @@ const RootContainer = () => {
       ) : (
         <Route path="/" element={<PublicHomePage />} />
       )}
-    </Routes>
+    </ReactRouterRoutes>
   );
 };
 
-export default React.memo(RootContainer);
+export default React.memo(Routes);
