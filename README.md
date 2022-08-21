@@ -23,8 +23,11 @@ Accessing the local Postgresql Database
 
     psql -h localhost -p 1337 -U tearleads
     \c tearleads
+    -- list tables
     \dt
-    select * from users_user
+    select * from users_user;
+    -- show colums for table
+    \d users_user
     \q
 
 ## Testing
