@@ -1,5 +1,6 @@
 import {appMode, entrySearchMethod} from './lib/shared';
 import {darkTheme, lightTheme} from './themes';
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import {AxiosResponse} from 'axios';
@@ -68,6 +69,10 @@ const Aligner = styled('div')<AlignerIProps>`
 
 const MenuBar = () => {
   const appConfig = useAppContext();
+  const {user} = useParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const entriesFilter = searchParams.get('entries');
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -466,40 +471,28 @@ const MenuBar = () => {
         <StyledMenuItem
           id={`entries-menu-list-method-${entrySearchMethod.allEntries}`}
           onClick={() => {
-            appConfig.setEntrySearchMethod(entrySearchMethod.allEntries);
             handleEntriesMenuClose();
+            if (user !== undefined) {
+              navigate(`/${user}?entries=all`);
+            }
           }}
         >
           <ListItemIcon>
-            {appConfig.entrySearchMethod === entrySearchMethod.allEntries && (
-              <StyledCheckIcon />
-            )}
+            {entriesFilter === 'all' && <StyledCheckIcon />}
           </ListItemIcon>
           All entries
         </StyledMenuItem>
         <StyledMenuItem
-          id={`entries-menu-list-method-${entrySearchMethod.currentTagOnly}`}
-          onClick={() => {
-            appConfig.setEntrySearchMethod(entrySearchMethod.currentTagOnly);
-            handleEntriesMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.entrySearchMethod ===
-              entrySearchMethod.currentTagOnly && <StyledCheckIcon />}
-          </ListItemIcon>
-          Current tag
-        </StyledMenuItem>
-        <StyledMenuItem
           id={`entries-menu-list-method-${entrySearchMethod.untaggedEntryList}`}
           onClick={() => {
-            appConfig.setEntrySearchMethod(entrySearchMethod.untaggedEntryList);
+            if (user !== undefined) {
+              navigate(`/${user}?entries=untagged`);
+            }
             handleEntriesMenuClose();
           }}
         >
           <ListItemIcon>
-            {appConfig.entrySearchMethod ===
-              entrySearchMethod.untaggedEntryList && <StyledCheckIcon />}
+            {entriesFilter === 'untagged' && <StyledCheckIcon />}
           </ListItemIcon>
           Untagged Entries
         </StyledMenuItem>

@@ -1,6 +1,7 @@
 import {appMode, getSelection} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
+import {useParams, useSearchParams} from 'react-router-dom';
 import API from './api';
 import CheckIcon from '@mui/icons-material/Check';
 import DragHandle from './DragHandle';
@@ -20,7 +21,6 @@ import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
-import {useParams} from 'react-router-dom';
 
 const EntryText = styled('div')(() => ({
   display: 'inline-block',
@@ -82,6 +82,8 @@ const Entry = ({
   const [showCopyIcon, setShowCopyIcon] = useState(false);
   const [showCheckIcon, setShowCheckIcon] = useState(false);
   const {tag, user} = useParams();
+  const [searchParams] = useSearchParams();
+  const entriesFilter = searchParams.get('entries');
   const [{isDragging}, drag, preview] = useDrag({
     item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
     type: ItemTypes.ENTRY,
@@ -123,7 +125,7 @@ const Entry = ({
             }).then(resp => {
               appConfig.updateOrCreateTagTextEntryThroughModel(resp.data.data);
             });
-            if (tag === 'untagged') {
+            if (entriesFilter === 'untagged') {
               //Then an untagged entry was tagged
               handleRemoveFromListParent(object.id);
               appConfig.removeUntaggedTextEntry(object.id);

@@ -7,8 +7,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {appMode, entrySearchMethod, needsScrollingIntoView} from './lib/shared';
-import {useLocation, useParams} from 'react-router-dom';
+import {appMode, needsScrollingIntoView} from './lib/shared';
+import {useLocation, useParams, useSearchParams} from 'react-router-dom';
 import Box from '@mui/material/Box';
 import {CancelTokenSource} from 'axios';
 import Entry from './Entry';
@@ -57,6 +57,8 @@ const EntryList = () => {
   const location = useLocation();
   const {user, tag} = useParams();
   const theme: Theme = useTheme();
+  const [searchParams] = useSearchParams();
+  const entriesFilter = searchParams.get('entries');
 
   // Used to access the react state from within the listener.
   const [entries, _setEntries] = useState<Array<ITextEntryJsonApi>>([]);
@@ -93,6 +95,7 @@ const EntryList = () => {
       }),
     [
       location,
+      searchParams,
       appConfig.tagTextEntryThroughModelSortOrder,
       appConfig.entrySortOrder,
       appConfig.entrySearchMethod,
@@ -100,13 +103,12 @@ const EntryList = () => {
   );
 
   const retrieveEntries = () => {
-    if (
-      appConfig.entrySearchMethod === entrySearchMethod.untaggedEntryList &&
-      user !== undefined
-    ) {
+    if (entriesFilter === 'untagged' && user !== undefined) {
       appConfig.fetchUntaggedTextEntries(user).then(() => {
         filterAndSort();
       });
+    } else if (entriesFilter === 'all') {
+      filterAndSort();
     } else if (user !== undefined && tag !== undefined) {
       appConfig.fetchTextEntries(user, tag).then(() => {
         filterAndSort();
@@ -119,9 +121,10 @@ const EntryList = () => {
   }, [appConfig.entrySearchString]);
 
   const filterAndSort = () => {
-    if (appConfig.entrySearchMethod === entrySearchMethod.untaggedEntryList) {
+    let array: ITextEntryJsonApi[] = [];
+    if (entriesFilter === 'untagged') {
       if (user !== undefined) {
-        const array = TextEntryHelpers.sort(
+        array = TextEntryHelpers.sort(
           user,
           null,
           appConfig.untaggedTextEntriesArray,
@@ -133,7 +136,7 @@ const EntryList = () => {
         }
         setEntries(array);
       }
-    } else if (appConfig.entrySearchMethod === entrySearchMethod.allEntries) {
+    } else if (entriesFilter === 'all') {
       if (user !== undefined) {
         const CancelToken = axios.CancelToken;
         const source = CancelToken.source();
@@ -161,9 +164,7 @@ const EntryList = () => {
           }
         });
       }
-    } else if (
-      appConfig.entrySearchMethod === entrySearchMethod.currentTagOnly
-    ) {
+    } else {
       if (user !== undefined && tag !== undefined) {
         const array = TextEntryHelpers.sort(
           user,

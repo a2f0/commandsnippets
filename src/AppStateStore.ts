@@ -271,7 +271,12 @@ export const AppStateStoreModel = types
         }
         const mostRecentTimestamp: string | null =
           TextEntryHelpers.getMostRecentTimeStamp(filteredTextEntries);
-        const collection = yield TextEntryHelpers.fetch(
+        const collection: Array<
+          | ITextEntryJsonApi
+          | ITagTextEntryThroughModelJsonApi
+          | IUserJsonApi
+          | ITagJsonApi
+        > = yield TextEntryHelpers.fetch(
           [],
           user,
           null,
@@ -279,7 +284,15 @@ export const AppStateStoreModel = types
           mostRecentTimestamp,
           0
         );
-        self.reconcileCollection(collection);
+        // type guard
+        const text_entries: ITextEntryJsonApi[] = collection.filter(
+          (i): i is ITextEntryJsonApi => {
+            return i.type === 'TextEntry';
+          }
+        );
+        text_entries.map(element => {
+          self.updateOrCreateUntaggedTextEntry(element);
+        });
       } catch (error) {
         console.error(error);
         throw error;
