@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
-import API from './api';
 import {AxiosResponse} from 'axios';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -8,6 +7,7 @@ import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_ent
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
+import apiBase from './apiBase';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';
@@ -62,7 +62,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         element.relationships.user.data.id === userObject?.id
     );
 
-    API.post('/entries', text_entry_payload, {withCredentials: true})
+    apiBase
+      .post('/entries', text_entry_payload, {withCredentials: true})
       .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
         appConfig.updateOrCreateTextEntry(response.data.data);
         const text_entry_through_model_payload = {
@@ -85,9 +86,10 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
             },
           },
         };
-        API.post('/tags_entries', text_entry_through_model_payload, {
-          withCredentials: true,
-        })
+        apiBase
+          .post('/tags_entries', text_entry_through_model_payload, {
+            withCredentials: true,
+          })
           .then(
             (
               response: AxiosResponse<ITagTextEntryThroughModelJsonApiResponseSingle>

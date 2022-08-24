@@ -20,7 +20,7 @@ import StyledMenuItem from './StyledMenuItem';
 import {Theme} from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import axios from 'axios';
-import {baseHTTPURL} from './api';
+import {baseHTTPURL} from './apiBase';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';

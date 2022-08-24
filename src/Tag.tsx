@@ -1,7 +1,6 @@
 import React, {useMemo, useRef, useState} from 'react';
 import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
-import API from './api';
 import {AxiosResponse} from 'axios';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
@@ -13,6 +12,7 @@ import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
 import {Theme} from '@mui/material/styles';
+import apiBase from './apiBase';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
@@ -202,7 +202,8 @@ const Tag = ({
   };
 
   const deleteTag = () => {
-    API.delete('/tags/' + tagObject.id, {withCredentials: true})
+    apiBase
+      .delete('/tags/' + tagObject.id, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
         handleDeleteParent(response.data);
       })
@@ -279,7 +280,8 @@ const Tag = ({
                       relationships: {},
                     },
                   };
-                  API.post('/tags/reorder', payload, {withCredentials: true})
+                  apiBase
+                    .post('/tags/reorder', payload, {withCredentials: true})
                     .then(() => {})
                     .catch(() => {
                       // handle error

@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import logoutResponse from '../../mocks/authentication/logoutResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';

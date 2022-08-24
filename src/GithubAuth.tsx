@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
-import API from './api';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LoginButton from './styled/LoginButton';
+import apiBase from './apiBase';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
@@ -40,9 +40,10 @@ const GithubAuth = () => {
           },
         },
       };
-      API.post('/github-login/', payload, {withCredentials: true})
+      apiBase
+        .post('/github-login/', payload, {withCredentials: true})
         .then(() => {
-          API.get('/user/', {withCredentials: true}).then(response => {
+          apiBase.get('/user/', {withCredentials: true}).then(response => {
             const username = response.data.data.attributes.username;
             appConfig.setLoggedInUser(username);
             document.cookie = 'loggedInUser=' + username;

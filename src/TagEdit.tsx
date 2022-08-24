@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import API from './api';
 import {AxiosResponse} from 'axios';
 import Grid from '@mui/material/Grid';
 import {ITagJsonApi} from './models/TagModel';
@@ -7,6 +6,7 @@ import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
+import apiBase from './apiBase';
 import {observer} from 'mobx-react';
 
 export interface ITagEdit {
@@ -48,9 +48,10 @@ const TagEdit = ({
         },
       },
     };
-    API.patch('tags/' + object.id, payload, {
-      withCredentials: true,
-    })
+    apiBase
+      .patch('tags/' + object.id, payload, {
+        withCredentials: true,
+      })
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
         handleSaveParent(response.data);
       })

@@ -2,7 +2,6 @@ import {appMode, getSelection} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
-import API from './api';
 import CheckIcon from '@mui/icons-material/Check';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
@@ -17,6 +16,7 @@ import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
 import React from 'react';
 import {TagTextEntryThroughModel} from './EntryList';
+import apiBase from './apiBase';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
@@ -120,11 +120,15 @@ const Entry = ({
                 },
               },
             };
-            API.post('tags_entries', payload, {
-              withCredentials: true,
-            }).then(resp => {
-              appConfig.updateOrCreateTagTextEntryThroughModel(resp.data.data);
-            });
+            apiBase
+              .post('tags_entries', payload, {
+                withCredentials: true,
+              })
+              .then(resp => {
+                appConfig.updateOrCreateTagTextEntryThroughModel(
+                  resp.data.data
+                );
+              });
             if (entriesFilter === 'untagged') {
               //Then an untagged entry was tagged
               handleRemoveFromListParent(object.id);
@@ -191,9 +195,10 @@ const Entry = ({
                   relationships: {},
                 },
               };
-              API.post('/tags_entries/reorder', payload, {
-                withCredentials: true,
-              })
+              apiBase
+                .post('/tags_entries/reorder', payload, {
+                  withCredentials: true,
+                })
                 .then(() => {})
                 .catch(error => {
                   console.error(error);
@@ -337,7 +342,7 @@ const Entry = ({
           element.relationships.tag.data.id === tagObject?.id &&
           element.relationships.text_entry.data.id === textEntryObject.id
       );
-    API.delete('/tags_entries/' + tagTextEntryThroughModelObject?.id, {
+    apiBase.delete('/tags_entries/' + tagTextEntryThroughModelObject?.id, {
       withCredentials: true,
     });
     tagTextEntryThroughModelObject?.remove();

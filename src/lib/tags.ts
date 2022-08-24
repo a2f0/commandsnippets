@@ -1,7 +1,7 @@
-import API from '../api';
 import {ITagJsonApi} from '../models/TagModel';
 import {IUserJsonApi} from '../models/UserModel';
 import type {TStore} from '../AppStateStore';
+import apiBase from '../apiBase';
 
 export interface ITagJsonApiResponse {
   data: ITagJsonApi[];
@@ -216,10 +216,11 @@ export function fetch(
     params['filter[date_updated.gt]'] = since;
   }
 
-  const f: Promise<Array<ITagJsonApi | IUserJsonApi>> =
-    API.get<ITagJsonApiResponse>('/tags', {
+  const f: Promise<Array<ITagJsonApi | IUserJsonApi>> = apiBase
+    .get<ITagJsonApiResponse>('/tags', {
       params: params,
-    }).then(response => {
+    })
+    .then(response => {
       entries = entries.concat(response.data.data);
       if (response.data.included) {
         for (let i = 0; i < response.data.included.length; i++) {

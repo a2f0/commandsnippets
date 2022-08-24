@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
-import API from './api';
 import GoogleIcon from '@mui/icons-material/Google';
 import LoginButton from './styled/LoginButton';
+import apiBase from './apiBase';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
@@ -59,9 +59,10 @@ const GoogleAuth = () => {
           },
         },
       };
-      API.post('/google-login/', payload, {withCredentials: true})
+      apiBase
+        .post('/google-login/', payload, {withCredentials: true})
         .then(() => {
-          API.get('/user/', {withCredentials: true}).then(response => {
+          apiBase.get('/user/', {withCredentials: true}).then(response => {
             const username = response.data.data.attributes.username;
             appConfig.setLoggedInUser(username);
             navigate(`/${username}`);

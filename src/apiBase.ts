@@ -16,7 +16,7 @@ const baseAPIURL = () => {
   return baseHTTPURL() + '/api/v1';
 };
 
-const API = axios.create({
+const apiBase = axios.create({
   baseURL: baseAPIURL(),
   responseType: 'json',
   headers: {
@@ -24,7 +24,7 @@ const API = axios.create({
   },
 });
 
-API.interceptors.response.use(
+apiBase.interceptors.response.use(
   response => response,
   error => {
     console.error(error);
@@ -32,4 +32,4 @@ API.interceptors.response.use(
   }
 );
 
-export default API;
+export default apiBase;

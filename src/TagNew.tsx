@@ -1,12 +1,12 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeTagEditField, appMode} from './lib/shared';
-import API from './api';
 import {AxiosResponse} from 'axios';
 import Grid from '@mui/material/Grid';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
+import apiBase from './apiBase';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 
@@ -75,7 +75,8 @@ const TagNew = ({handleNewParent, id}: IProps) => {
         },
       },
     };
-    API.post('/tags', payload, {withCredentials: true})
+    apiBase
+      .post('/tags', payload, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
         appConfig.reconcileCollection(response.data.included);
         appConfig.updateOrCreateTag(response.data.data);
