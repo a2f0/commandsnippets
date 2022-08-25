@@ -1,3 +1,4 @@
+import {entrySearchMethod} from '../../src/lib/shared';
 export default class Base {
   // file menu
   get githubAuthButton() {
@@ -26,6 +27,11 @@ export default class Base {
   }
   get entriesMenuButton() {
     return $('#entries-menu-button');
+  }
+  get entriesMenuUntagged() {
+    return $(
+      `#entries-menu-list-method-${entrySearchMethod.untaggedEntryList}`
+    );
   }
 
   // tags menu
