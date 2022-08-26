@@ -138,7 +138,7 @@ const EntryContextMenu = ({
         New Entry
       </StyledMenuItem>
       <StyledMenuItem
-        id={`tags-entries-context-menu-${id}-untag`}
+        id={`tagsEntriesContextMenu${id}Untag`}
         onClick={() => {
           handleRemoveFromList();
         }}

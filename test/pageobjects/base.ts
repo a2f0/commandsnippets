@@ -153,6 +153,9 @@ export default class Base {
   get tagsEntriesContextMenu1Edit() {
     return $('#tagsEntriesContextMenu1Edit');
   }
+  get tagsEntriesContextMenu1Untag() {
+    return $('#tagsEntriesContextMenu1Untag');
+  }
   get textEntryEdit1() {
     return $('#textEntryEdit1');
   }

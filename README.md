@@ -11,6 +11,10 @@ npm install
 npm run server
 ```
 
+## Coding Standards
+
+1. Use camel case for element IDs, i.e. `id=tagsEntriesContextMenu1Untag`
+
 ## Testing
 
 Start the server and run tests
