@@ -9,6 +9,8 @@ import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {Grid} from '@mui/material';
+import HelpMenu from './menu/help/HelpMenu';
+import HelpMenuButton from './menu/help/HelpMenuButton';
 import {ILogoutJsonApiResponse} from './lib/authentication';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
@@ -34,7 +36,7 @@ interface IStyledMenuProps {
   children: React.ReactNode;
 }
 
-const StyledMenu = ({
+export const StyledMenu = ({
   id,
   anchorEl,
   open,
@@ -82,6 +84,8 @@ const MenuBar = () => {
     React.useState<null | HTMLElement>(null);
   const [tagsMenuAnchorEl, setTagsMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
+  const [helpMenuAnchorEl, setHelpMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
 
   const theme = useTheme();
 
@@ -128,6 +132,10 @@ const MenuBar = () => {
     setEntriesMenuAnchorEl(event.currentTarget);
   };
 
+  const handleHelpMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setHelpMenuAnchorEl(event.currentTarget);
+  };
+
   const handleViewMenuClose = () => {
     setViewMenuAnchorEl(null);
   };
@@ -138,6 +146,10 @@ const MenuBar = () => {
 
   const handleEntriesMenuClose = () => {
     setEntriesMenuAnchorEl(null);
+  };
+
+  const handleHelpMenuClose = () => {
+    setHelpMenuAnchorEl(null);
   };
 
   const handleSetTagSortOrder = (order: string) => {
@@ -208,6 +220,7 @@ const MenuBar = () => {
         >
           Entries
         </MenuBarButton>
+        <HelpMenuButton onClick={handleHelpMenuClick} />
       </Aligner>
       <Grid container justifyContent="flex-end">
         <GithubAuth />
@@ -632,6 +645,7 @@ const MenuBar = () => {
           </StyledMenuItem>,
         ]}
       </StyledMenu>
+      <HelpMenu onClose={handleHelpMenuClose} anchorEl={helpMenuAnchorEl} />
     </>
   );
 };
