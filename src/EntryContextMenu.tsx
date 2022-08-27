@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useParams, useSearchParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import Menu from '@mui/material/Menu';
@@ -66,6 +67,9 @@ const EntryContextMenu = ({
   };
 
   const [mousePosition, setMousePosition] = useState(initialMouse);
+  const {user, tag} = useParams();
+  const [searchParams] = useSearchParams();
+  const entriesFilter = searchParams.get('entries');
 
   useEffect(() => {
     setMousePosition(mouse);
@@ -137,14 +141,26 @@ const EntryContextMenu = ({
       >
         New Entry
       </StyledMenuItem>
-      <StyledMenuItem
-        id={`tagsEntriesContextMenu${id}Untag`}
-        onClick={() => {
-          handleRemoveFromList();
-        }}
-      >
-        Untag
-      </StyledMenuItem>
+      {user !== undefined && tag !== undefined && (
+        <StyledMenuItem
+          id={`tagsEntriesContextMenu${id}Untag`}
+          onClick={() => {
+            handleRemoveFromList();
+          }}
+        >
+          Untag
+        </StyledMenuItem>
+      )}
+      {entriesFilter === 'untagged' && (
+        <StyledMenuItem
+          id={`tagsEntriesContextMenu${id}Delete`}
+          onClick={() => {
+            handleRemoveFromList();
+          }}
+        >
+          Delete
+        </StyledMenuItem>
+      )}
     </StyledMenu>
   );
 };
