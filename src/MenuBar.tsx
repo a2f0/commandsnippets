@@ -4,7 +4,6 @@ import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import {AxiosResponse} from 'axios';
-import Button from '@mui/material/Button';
 import DragHandleContainer from './DragHandleContainer';
 import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
@@ -13,6 +12,7 @@ import {Grid} from '@mui/material';
 import {ILogoutJsonApiResponse} from './lib/authentication';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
+import MenuBarButton from './MenuBarButton';
 import React from 'react';
 import StyledCheckIcon from './styled/StyledCheckIcon';
 import StyledDivider from './styled/StyledDivider';
@@ -175,104 +175,39 @@ const MenuBar = () => {
       <DragHandleContainer />
       <Aligner theme={theme}>
         {appConfig.loggedInUser && (
-          <Button
-            color="secondary"
-            role="fileMenu"
-            size="small"
-            aria-controls="file-menu"
+          <MenuBarButton
             id="file-menu-button"
-            aria-haspopup="true"
+            ariaControls="file-menu"
+            ariaLabel="File"
             onClick={handleFileMenuClick}
-            sx={{
-              alignSelf: 'flex-end',
-              textTransform: 'none',
-              padding: 0,
-              minWidth: 0,
-              marginRight: 2,
-              '&:hover': {
-                color: theme => `${theme.header.menuButtonHighlight}`,
-                background: 'none',
-              },
-              '&:active': {
-                backgroundColor: '#585858',
-              },
-            }}
           >
             File
-          </Button>
+          </MenuBarButton>
         )}
-        <Button
-          color="secondary"
-          size="small"
-          aria-controls="view-menu"
+        <MenuBarButton
           id="view-menu-button"
-          aria-haspopup="true"
+          ariaControls="view-menu"
+          ariaLabel="View"
           onClick={handleViewMenuClick}
-          sx={{
-            alignSelf: 'flex-end',
-            textTransform: 'none',
-            padding: 0,
-            minWidth: 0,
-            marginRight: 2,
-            '&:hover': {
-              color: theme => `${theme.header.menuButtonHighlight}`,
-              background: 'none',
-            },
-            '&:active': {
-              backgroundColor: '#585858',
-            },
-          }}
         >
           View
-        </Button>
-        <Button
-          color="secondary"
-          size="small"
-          aria-controls="tags-menu"
+        </MenuBarButton>
+        <MenuBarButton
           id="tags-menu-button"
-          aria-haspopup="true"
+          ariaControls="tags-menu"
+          ariaLabel="Tags"
           onClick={handleTagsMenuClick}
-          sx={{
-            alignSelf: 'flex-end',
-            textTransform: 'none',
-            padding: 0,
-            minWidth: 0,
-            marginRight: 2,
-            '&:hover': {
-              color: theme => `${theme.header.menuButtonHighlight}`,
-              background: 'none',
-            },
-            '&:active': {
-              backgroundColor: '#585858',
-            },
-          }}
         >
           Tags
-        </Button>
-        <Button
-          color="secondary"
-          size="small"
-          aria-controls="entries-menu"
+        </MenuBarButton>
+        <MenuBarButton
           id="entries-menu-button"
-          aria-haspopup="true"
+          ariaControls="entries-menu"
+          ariaLabel="Entries"
           onClick={handleEntriesMenuClick}
-          sx={{
-            alignSelf: 'flex-end',
-            textTransform: 'none',
-            padding: 0,
-            minWidth: 0,
-            marginRight: 2,
-            '&:hover': {
-              color: theme => `${theme.header.menuButtonHighlight}`,
-              background: 'none',
-            },
-            '&:active': {
-              backgroundColor: '#585858',
-            },
-          }}
         >
           Entries
-        </Button>
+        </MenuBarButton>
       </Aligner>
       <Grid container justifyContent="flex-end">
         <GithubAuth />

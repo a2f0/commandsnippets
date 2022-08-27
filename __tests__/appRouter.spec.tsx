@@ -10,7 +10,7 @@ describe('appRouter', () => {
     expect(window.location.href).toBe('http://localhost:8081/');
     render(<AppRouter />);
     const user = userEvent.setup();
-    const fileMenu = screen.getByRole('fileMenu');
+    const fileMenu = screen.getByRole('menu', {name: 'File'});
     await user.pointer({target: fileMenu, keys: '[MouseLeft]'});
     // expect(screen.getByText(/Login with Google/i)).toBeInTheDocument();
     // expect(screen.getByText(/Login with GitHub/i)).toBeInTheDocument();
