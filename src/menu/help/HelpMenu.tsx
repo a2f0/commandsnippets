@@ -1,6 +1,6 @@
+import About from './menu_items/About';
 import React from 'react';
 import {StyledMenu} from '../../MenuBar';
-import StyledMenuItem from '../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -8,10 +8,6 @@ interface IProps {
 }
 
 const HelpMenu = function ({onClose, anchorEl}: IProps) {
-  const handleAbout = () => {
-    onClose();
-  };
-
   return (
     <StyledMenu
       id="help-menu"
@@ -19,9 +15,7 @@ const HelpMenu = function ({onClose, anchorEl}: IProps) {
       open={Boolean(anchorEl)}
       onClose={onClose}
     >
-      <StyledMenuItem id="HelpMenuAbout" onClick={handleAbout}>
-        About
-      </StyledMenuItem>
+      <About onClose={onClose} />
     </StyledMenu>
   );
 };
