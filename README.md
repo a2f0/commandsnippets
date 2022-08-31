@@ -44,4 +44,5 @@ Run jest tests
 
 ```shell
 npx jest
+npx jest --watch
 ```

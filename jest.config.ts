@@ -20,6 +20,10 @@ const config: Config.InitialOptions = {
     '^.+\\.tsx?$': 'ts-jest',
     '^.+\\.jsx?$': 'ts-jest',
   },
+  watchPlugins: [
+    'jest-watch-typeahead/filename',
+    'jest-watch-typeahead/testname',
+  ],
 };
 
 export default config;
