@@ -65,7 +65,7 @@ jobs:
           vercel-args: '--prod'
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
-      # non-production deploy
+      # staging deploy
       - uses: amondnet/vercel-action@v25
         name: non-production deploy
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
