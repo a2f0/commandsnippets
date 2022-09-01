@@ -45,8 +45,9 @@ afterAll(() => server.close());
 
 describe('TagList', () => {
   it('Reorders', async () => {
-    expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
+    const user = userEvent.setup();
     const history = createMemoryHistory();
+    expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const route = '/test/test';
     history.push(route);
     render(
@@ -68,7 +69,6 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    const user = userEvent.setup();
     await user.pointer({target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     await act(async () => {

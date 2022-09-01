@@ -10,7 +10,7 @@ const HelpMenuButton = function ({onClick}: IProps) {
     <MenuBarButton
       id="helpMenuButton"
       ariaControls="help-menu"
-      ariaLabel="Entries"
+      ariaLabel="Help"
       onClick={onClick}
     >
       Help

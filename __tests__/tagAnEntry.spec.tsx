@@ -78,8 +78,9 @@ afterAll(() => server.close());
 
 describe('Tag An Entry', () => {
   it('Is Taggable', async () => {
-    expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
+    const user = userEvent.setup();
     const history = createMemoryHistory();
+    expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const route = '/test/test-tag-1';
     history.push(route);
     const {rerender} = render(
@@ -106,7 +107,6 @@ describe('Tag An Entry', () => {
     let tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
     expect(tagLabelWrappers).toHaveLength(4);
 
-    const user = userEvent.setup();
     await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-2');
     rerender(

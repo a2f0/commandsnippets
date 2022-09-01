@@ -48,6 +48,7 @@ afterAll(() => server.close());
 
 describe('Entries List', () => {
   it('Reorders', async () => {
+    const user = userEvent.setup();
     expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const history = createMemoryHistory();
     const route = '/test/test-tag-1';
@@ -71,7 +72,6 @@ describe('Entries List', () => {
     expect(entries[2]).toHaveTextContent('entry-3-body');
     expect(entries[3]).toHaveTextContent('entry-4-subject');
     expect(entries[3]).toHaveTextContent('entry-4-body');
-    const user = userEvent.setup();
     const entryDragHandleContainers = screen.getAllByRole(
       'entryDragHandleContainer'
     );
