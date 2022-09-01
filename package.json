@@ -46,7 +46,7 @@
     "@wdio/mocha-framework": "7.23.0",
     "@wdio/spec-reporter": "7.23.0",
     "chromedriver": "104.0.0",
-    "eslint": "8.22.0",
+    "eslint": "8.23.0",
     "eslint-config-react": "1.1.7",
     "eslint-plugin-mocha": "10.1.0",
     "eslint-plugin-react": "7.30.1",
