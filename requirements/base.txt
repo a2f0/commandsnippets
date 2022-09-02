@@ -5,7 +5,7 @@ django-ordered-model==3.6
 django==4.0.7
 djangorestframework-jsonapi[django-filter]==5.0.0
 djangorestframework==3.13.1
-newrelic==7.16.0.178
+newrelic==8.0.0.179
 psycopg2==2.9.3
 pyyaml==6.0
 requests==2.28.1
