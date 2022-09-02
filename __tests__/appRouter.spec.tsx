@@ -17,8 +17,10 @@ describe('appRouter', () => {
     render(<AppRouter />);
     const fileMenu = screen.getByRole('menu', {name: 'File'});
     await user.pointer({target: fileMenu, keys: '[MouseLeft]'});
-    // expect(screen.getByText(/Login with Google/i)).toBeInTheDocument();
-    // expect(screen.getByText(/Login with GitHub/i)).toBeInTheDocument();
+    const logoutButton = screen.getByText('Logout');
+    await user.pointer({target: logoutButton, keys: '[MouseLeft]'});
+    expect(screen.getByText(/Login with Google/i)).toBeInTheDocument();
+    expect(screen.getByText(/Login with GitHub/i)).toBeInTheDocument();
     // expect(screen.getByText(/Solve, Curate, Retrieve./i)).toBeInTheDocument();
   });
 });

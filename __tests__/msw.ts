@@ -27,7 +27,14 @@ const server = setupServer(
         ctx.json({data: null})
       );
     }
-  )
+  ),
+  rest.post('http://localhost:9001/api-token-deauth', (req, res, ctx) => {
+    return res(
+      ctx.delay(0),
+      ctx.status(200, 'Mocked status'),
+      ctx.json({data: {}})
+    );
+  })
 );
 
 export default server;
