@@ -2,7 +2,12 @@ import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
 import AppRouter from '../src/AppRouter';
 import React from 'react';
+import server from './msw';
 import userEvent from '@testing-library/user-event';
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 describe('appRouter', () => {
   it('Renders', async () => {

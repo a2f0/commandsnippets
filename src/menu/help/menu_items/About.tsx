@@ -20,7 +20,7 @@ const About = function ({onClose}: IProps) {
 
   return (
     <>
-      <StyledMenuItem id="HelpMenuAbout" onClick={handleClick}>
+      <StyledMenuItem id="about" onClick={handleClick}>
         About
       </StyledMenuItem>
       <AboutDialog
