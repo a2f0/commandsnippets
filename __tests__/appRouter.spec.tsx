@@ -18,9 +18,11 @@ describe('appRouter', () => {
     const fileMenu = screen.getByRole('menu', {name: 'File'});
     await user.pointer({target: fileMenu, keys: '[MouseLeft]'});
     const logoutButton = screen.getByText('Logout');
+    expect(screen.queryByText('Login with Google')).toBeNull();
+    expect(screen.queryByText('Login with GitHub')).toBeNull();
     await user.pointer({target: logoutButton, keys: '[MouseLeft]'});
-    expect(screen.getByText(/Login with Google/i)).toBeInTheDocument();
-    expect(screen.getByText(/Login with GitHub/i)).toBeInTheDocument();
+    expect(screen.getByText('Login with Google')).toBeInTheDocument();
+    expect(screen.getByText('Login with GitHub')).toBeInTheDocument();
     // expect(screen.getByText(/Solve, Curate, Retrieve./i)).toBeInTheDocument();
   });
 });
