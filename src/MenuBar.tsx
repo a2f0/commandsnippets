@@ -4,7 +4,7 @@ import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import {AxiosResponse} from 'axios';
-import DragHandleContainer from './DragHandleContainer';
+import Box from '@mui/material/Box';
 import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
@@ -20,7 +20,6 @@ import StyledCheckIcon from './styled/StyledCheckIcon';
 import StyledDivider from './styled/StyledDivider';
 import StyledMenuItem from './StyledMenuItem';
 import {Theme} from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
 import axios from 'axios';
 import {baseHTTPURL} from './apiBase';
 import {observer} from 'mobx-react';
@@ -178,13 +177,13 @@ const MenuBar = () => {
 
   return (
     <>
-      <Typography
+      <Box
+        id="menuBarDrawerSpacer"
         sx={{
-          width: theme => theme.drawer.width,
+          width: `calc(${theme.drawer.width}px + ${theme.main.dragIndicatorWidth}px)`,
           flexShrink: 0,
         }}
       />
-      <DragHandleContainer />
       <Aligner theme={theme}>
         {appConfig.loggedInUser && (
           <MenuBarButton
