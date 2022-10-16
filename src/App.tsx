@@ -14,8 +14,8 @@ const App = React.memo(
   observer(() => {
     console.info(`v${packageJson.version}`);
     return (
-      <StyledEngineProvider injectFirst>
-        <AppContextProvider>
+      <AppContextProvider>
+        <StyledEngineProvider injectFirst>
           <Theme>
             <CssBaseline />
             <ThemedGlobalStyle />
@@ -23,8 +23,8 @@ const App = React.memo(
               <Routes />
             </DndProvider>
           </Theme>
-        </AppContextProvider>
-      </StyledEngineProvider>
+        </StyledEngineProvider>
+      </AppContextProvider>
     );
   })
 );

@@ -401,6 +401,14 @@ if (initialState !== null) {
 
 let snapshotListener: IDisposer;
 
+export function getInitialState(snapshot: appState) {
+  const initialState = {
+    ...defaultState,
+    ...snapshot,
+  };
+  return initialState;
+}
+
 function createAppStateStore(
   snapshot: appState
 ): Instance<typeof AppStateStoreModel> {
@@ -411,15 +419,12 @@ function createAppStateStore(
 
   // create new one
   store = AppStateStoreModel.create(defaultState);
-  const snapshotMergedIntoDefaults = {
-    ...defaultState,
-    ...snapshot,
-  };
+  const initialState = getInitialState(snapshot);
 
   // It is possible that the model structure changes which would break the ability
   // to restore a snapshot.  If a snapshot restore fails, apply the default state.
   try {
-    applySnapshot(store, snapshotMergedIntoDefaults);
+    applySnapshot(store, initialState);
   } catch (e) {
     applySnapshot(store, defaultState);
   }
