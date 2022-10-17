@@ -401,16 +401,18 @@ if (initialState !== null) {
 
 let snapshotListener: IDisposer;
 
-export function getInitialState(snapshot: appState) {
-  const initialState = {
+// Merge in the default state to incorporate any new configuraiton options
+function defaultStateWithSnapshot(snapshot: appState) {
+  const initialState: appState = {
     ...defaultState,
     ...snapshot,
   };
   return initialState;
 }
 
-function createAppStateStore(
-  snapshot: appState
+export function createAppStateStore(
+  snapshot: appState,
+  getInitialState: (snapshot: appState) => appState
 ): Instance<typeof AppStateStoreModel> {
   // clean up snapshot listener
   if (snapshotListener) snapshotListener();
@@ -438,7 +440,7 @@ function createAppStateStore(
 }
 
 let store: ReturnType<typeof createAppStateStore>;
-store = createAppStateStore(state);
+store = createAppStateStore(state, defaultStateWithSnapshot);
 
 export type TStore = ReturnType<typeof createAppStateStore>;
 export {store};
