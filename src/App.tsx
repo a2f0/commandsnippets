@@ -1,4 +1,3 @@
-import {AppContextProvider} from './AppContext';
 import CssBaseline from '@mui/material/CssBaseline';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
@@ -14,17 +13,15 @@ const App = React.memo(
   observer(() => {
     console.info(`v${packageJson.version}`);
     return (
-      <AppContextProvider>
-        <StyledEngineProvider injectFirst>
-          <Theme>
-            <CssBaseline />
-            <ThemedGlobalStyle />
-            <DndProvider backend={HTML5Backend}>
-              <Routes />
-            </DndProvider>
-          </Theme>
-        </StyledEngineProvider>
-      </AppContextProvider>
+      <StyledEngineProvider injectFirst>
+        <Theme>
+          <CssBaseline />
+          <ThemedGlobalStyle />
+          <DndProvider backend={HTML5Backend}>
+            <Routes />
+          </DndProvider>
+        </Theme>
+      </StyledEngineProvider>
     );
   })
 );

@@ -5,9 +5,8 @@
 
 import '@testing-library/jest-dom';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import App from '../src/App';
 import React from 'react';
-import {Router} from 'react-router-dom';
+import TestAppRouter from './TestAppRouter';
 import {createMemoryHistory} from 'history';
 import server from './msw';
 import userEvent from '@testing-library/user-event';
@@ -23,11 +22,7 @@ describe('Entries List', () => {
     const history = createMemoryHistory();
     const route = '/test/test-tag-1';
     history.push(route);
-    render(
-      <Router location={history.location} navigator={history}>
-        <App />
-      </Router>
-    );
+    render(<TestAppRouter history={history} />);
     await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});

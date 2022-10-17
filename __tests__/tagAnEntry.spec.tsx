@@ -5,9 +5,8 @@
 
 import '@testing-library/jest-dom';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import App from '../src/App';
 import React from 'react';
-import {Router} from 'react-router-dom';
+import TestAppRouter from './TestAppRouter';
 import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
 import {rest} from 'msw';
@@ -83,11 +82,7 @@ describe('Tag An Entry', () => {
     expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const route = '/test/test-tag-1';
     history.push(route);
-    const {rerender} = render(
-      <Router location={history.location} navigator={history}>
-        <App />
-      </Router>
-    );
+    const {rerender} = render(<TestAppRouter history={history} />);
     await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
@@ -109,11 +104,7 @@ describe('Tag An Entry', () => {
 
     await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-2');
-    rerender(
-      <Router location={history.location} navigator={history}>
-        <App />
-      </Router>
-    );
+    rerender(<TestAppRouter history={history} />);
     await waitFor(
       () => expect(screen.queryAllByRole('entry')).toHaveLength(0),
       {timeout: 3000}
@@ -123,11 +114,7 @@ describe('Tag An Entry', () => {
     await user.pointer({target: tagLabelWrappers[0], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-1');
 
-    rerender(
-      <Router location={history.location} navigator={history}>
-        <App />
-      </Router>
-    );
+    rerender(<TestAppRouter history={history} />);
     await waitFor(
       () => expect(screen.queryAllByRole('entry')).toHaveLength(4),
       {timeout: 3000}
@@ -151,11 +138,7 @@ describe('Tag An Entry', () => {
     expect(tagLabelWrappers).toHaveLength(4);
     await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-2');
-    rerender(
-      <Router location={history.location} navigator={history}>
-        <App />
-      </Router>
-    );
+    rerender(<TestAppRouter history={history} />);
     await waitFor(
       () => expect(screen.queryAllByRole('entry')).toHaveLength(1),
       {timeout: 3000}

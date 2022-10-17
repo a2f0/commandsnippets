@@ -5,9 +5,8 @@
 
 import '@testing-library/jest-dom';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import App from '../src/App';
 import React from 'react';
-import {Router} from 'react-router-dom';
+import TestAppRouter from './TestAppRouter';
 import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
 import {rest} from 'msw';
@@ -50,11 +49,7 @@ describe('TagList', () => {
     expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const route = '/test/test';
     history.push(route);
-    render(
-      <Router location={history.location} navigator={history}>
-        <App />
-      </Router>
-    );
+    render(<TestAppRouter history={history} />);
     await waitFor(() => screen.getByText(/test-tag-1/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/test-tag-2/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/test-tag-3/i), {timeout: 3000});
