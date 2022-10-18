@@ -1,5 +1,5 @@
 import App from '../src/App';
-import {AppContextProvider} from '../src/AppContext';
+import LoggedInAppContextProvider from './LoggedInAppContextProvider';
 import type {MemoryHistory} from 'history';
 import React from 'react';
 import {Router} from 'react-router-dom';
@@ -11,9 +11,9 @@ export interface IProps {
 const TestAppRouter = ({history}: IProps) => {
   return (
     <Router location={history.location} navigator={history}>
-      <AppContextProvider>
+      <LoggedInAppContextProvider>
         <App />
-      </AppContextProvider>
+      </LoggedInAppContextProvider>
     </Router>
   );
 };
