@@ -16,11 +16,10 @@ afterAll(() => server.close());
 
 describe('Help Menu', () => {
   it('Is clickable', async () => {
+    const user = userEvent.setup();
     const history = createMemoryHistory();
     const route = '/test/test';
     history.push(route);
-    const user = userEvent.setup();
-    expect(window.location.href).toBe('http://localhost:8081/');
     render(<TestAppRouter history={history} />);
     const helpMenu = screen.getByRole('menu', {name: 'Help'});
     await user.pointer({target: helpMenu, keys: '[MouseLeft]'});
