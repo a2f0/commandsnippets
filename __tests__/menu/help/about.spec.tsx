@@ -4,8 +4,9 @@ import {
   screen,
   waitForElementToBeRemoved,
 } from '@testing-library/react';
-import AppRouter from '../../../src/AppRouter';
 import React from 'react';
+import TestAppRouter from '../../TestAppRouter';
+import {createMemoryHistory} from 'history';
 import server from '../../msw';
 import userEvent from '@testing-library/user-event';
 
@@ -15,9 +16,12 @@ afterAll(() => server.close());
 
 describe('Help Menu', () => {
   it('Is clickable', async () => {
+    const history = createMemoryHistory();
+    const route = '/test/test';
+    history.push(route);
     const user = userEvent.setup();
     expect(window.location.href).toBe('http://localhost:8081/');
-    render(<AppRouter />);
+    render(<TestAppRouter history={history} />);
     const helpMenu = screen.getByRole('menu', {name: 'Help'});
     await user.pointer({target: helpMenu, keys: '[MouseLeft]'});
     const about = screen.getByText('About');
