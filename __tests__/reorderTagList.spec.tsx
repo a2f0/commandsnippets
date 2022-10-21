@@ -7,6 +7,7 @@ import '@testing-library/jest-dom';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import React from 'react';
 import TestAppRouter from './TestAppRouter';
+import {assignLoggedInCookie} from './util';
 import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
 import {rest} from 'msw';
@@ -41,6 +42,7 @@ const server = setupServer(
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+beforeEach(() => assignLoggedInCookie());
 
 describe('TagList', () => {
   it('Reorders', async () => {

@@ -6,6 +6,7 @@ import {
 } from '@testing-library/react';
 import React from 'react';
 import TestAppRouter from '../../TestAppRouter';
+import {assignLoggedInCookie} from '../../util';
 import {createMemoryHistory} from 'history';
 import server from '../../msw';
 import userEvent from '@testing-library/user-event';
@@ -13,6 +14,7 @@ import userEvent from '@testing-library/user-event';
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+beforeEach(() => assignLoggedInCookie());
 
 describe('Help Menu', () => {
   it('Is clickable', async () => {

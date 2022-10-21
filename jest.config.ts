@@ -7,7 +7,6 @@ const config: Config.InitialOptions = {
   testEnvironmentOptions: {
     url: 'http://localhost:8081/',
   },
-  setupFiles: ['./__tests__/setupGlobals.ts'],
   globals: {
     'ts-jest': {
       tsconfig: '__tests__/tsconfig.json',
