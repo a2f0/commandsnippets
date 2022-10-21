@@ -391,10 +391,10 @@ export const AppStateStoreModel = types
 export const defaultStateStringified: string = JSON.stringify(defaultState);
 
 const localStorageKey = `mst-tearleads-${environment}`;
-const initialState = localStorage.getItem(localStorageKey);
+const localStorateState = localStorage.getItem(localStorageKey);
 let state: appState;
-if (initialState !== null) {
-  state = JSON.parse(initialState);
+if (localStorateState !== null) {
+  state = JSON.parse(localStorateState);
 } else {
   state = defaultState;
 }
@@ -402,17 +402,16 @@ if (initialState !== null) {
 let snapshotListener: IDisposer;
 
 // Merge in the default state to incorporate any new configuraiton options
-function defaultStateWithSnapshot(snapshot: appState) {
-  const initialState: appState = {
+function mergeInDefaultState(state: appState) {
+  const newState: appState = {
     ...defaultState,
-    ...snapshot,
+    ...state,
   };
-  return initialState;
+  return newState;
 }
 
 export function createAppStateStore(
-  snapshot: appState,
-  getInitialState: (snapshot: appState) => appState
+  snapshot: appState
 ): Instance<typeof AppStateStoreModel> {
   // clean up snapshot listener
   if (snapshotListener) snapshotListener();
@@ -421,12 +420,11 @@ export function createAppStateStore(
 
   // create new one
   store = AppStateStoreModel.create(defaultState);
-  const initialState = getInitialState(snapshot);
 
   // It is possible that the model structure changes which would break the ability
   // to restore a snapshot.  If a snapshot restore fails, apply the default state.
   try {
-    applySnapshot(store, initialState);
+    applySnapshot(store, snapshot);
   } catch (e) {
     applySnapshot(store, defaultState);
   }
@@ -440,7 +438,8 @@ export function createAppStateStore(
 }
 
 let store: ReturnType<typeof createAppStateStore>;
-store = createAppStateStore(state, defaultStateWithSnapshot);
+state = mergeInDefaultState(state);
+store = createAppStateStore(state);
 
 export type TStore = ReturnType<typeof createAppStateStore>;
 export {store};

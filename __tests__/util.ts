@@ -2,13 +2,14 @@ import {appState, defaultState} from '../src/lib/shared';
 import {createAppStateStore} from '../src/AppStateStore';
 
 // Log the user in for the purpose of testing.
-function defaultStateWithSnapshot(snapshot: appState) {
+function mergeInLoggedInUser(state: appState) {
   const initialState: appState = {
-    ...snapshot,
+    ...state,
     loggedInUser: 'test',
   };
   return initialState;
 }
-const snapshot: appState = defaultState;
-const store = createAppStateStore(snapshot, defaultStateWithSnapshot);
+let state: appState = defaultState;
+state = mergeInLoggedInUser(state);
+const store = createAppStateStore(state);
 export {store};
