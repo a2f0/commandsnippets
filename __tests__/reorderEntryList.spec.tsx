@@ -6,7 +6,7 @@
 import '@testing-library/jest-dom';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import React from 'react';
-import TestAppRouter from './TestAppRouter';
+import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util';
 import {createMemoryHistory} from 'history';
 import server from './msw';

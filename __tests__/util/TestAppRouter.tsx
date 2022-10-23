@@ -1,4 +1,4 @@
-import App from '../src/App';
+import App from '../../src/App';
 import LoggedInAppContextProvider from './LoggedInAppContextProvider';
 import type {MemoryHistory} from 'history';
 import React from 'react';
