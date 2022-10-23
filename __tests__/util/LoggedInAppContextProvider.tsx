@@ -1,6 +1,6 @@
 import {AppContext} from '../../src/AppContext';
 import React from 'react';
-import {store} from '.././loggedInStore';
+import {store} from './loggedInStore';
 
 export default function LoggedInAppContextProvider({
   children,

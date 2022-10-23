@@ -9,7 +9,7 @@ import React from 'react';
 import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
-import server from './msw';
+import server from './util/msw';
 import userEvent from '@testing-library/user-event';
 
 beforeAll(() => server.listen());

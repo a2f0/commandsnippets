@@ -1,5 +1,5 @@
-import {appState, defaultState} from '../src/lib/shared';
-import {createAppStateStore} from '../src/AppStateStore';
+import {appState, defaultState} from '../../src/lib/shared';
+import {createAppStateStore} from '../../src/AppStateStore';
 
 // Log the user in for the purpose of testing.
 function mergeInLoggedInUser(state: appState) {

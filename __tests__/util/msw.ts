@@ -1,7 +1,7 @@
-import entriesResponse from '../test/mocks/entries/entriesResponse';
+import entriesResponse from '../../test/mocks/entries/entriesResponse';
 import {rest} from 'msw';
 import {setupServer} from 'msw/node';
-import tagsResponse from '../test/mocks/tags/tagsResponse';
+import tagsResponse from '../../test/mocks/tags/tagsResponse';
 
 const server = setupServer(
   rest.get('http://localhost:9001/api/v1/tags', (req, res, ctx) => {
