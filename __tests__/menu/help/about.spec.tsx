@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react';
 import React from 'react';
 import TestAppRouter from '../../util/TestAppRouter';
-import {assignLoggedInCookie} from '../../util';
+import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
 import server from '../../msw';
 import userEvent from '@testing-library/user-event';
