@@ -16,9 +16,10 @@ describe('File Menu', () => {
   it('Logs out', async () => {
     const user = userEvent.setup();
     const history = createMemoryHistory();
-    const route = '/test/test';
+    const route = '/test/test-tag-1';
     history.push(route);
     render(<TestAppRouter history={history} />);
+    expect(history.location.pathname).toBe('/test/test-tag-1');
     const fileMenu = screen.getByRole('menu', {name: 'File'});
     await user.pointer({target: fileMenu, keys: '[MouseLeft]'});
     const logoutButton = screen.getByText('Logout');
@@ -27,6 +28,6 @@ describe('File Menu', () => {
     await user.pointer({target: logoutButton, keys: '[MouseLeft]'});
     await waitFor(() => screen.getByText(/Login with Google/i));
     await waitFor(() => screen.getByText(/Login with GitHub/i));
-    // expect(screen.getByText(/Solve, Curate, Retrieve./i)).toBeInTheDocument();
+    expect(history.location.pathname).toBe('/test/test-tag-1');
   });
 });
