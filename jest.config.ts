@@ -13,7 +13,7 @@ const config: Config.InitialOptions = {
     },
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-dnd/dist|react-dnd-html5-backend/dist|dnd-core/dist|@react-dnd/invariant/dist|@react-dnd/asap/dist||@react-dnd/shallowequal/dist)/)',
+    'node_modules/(?!(react-dnd/dist|react-dnd-html5-backend/dist|dnd-core/dist|@react-dnd/invariant/dist|@react-dnd/asap/dist|@react-dnd/shallowequal/dist)/)',
   ],
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
