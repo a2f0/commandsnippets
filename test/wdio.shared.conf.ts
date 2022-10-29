@@ -1,5 +1,5 @@
-import {BasePage} from './test/pageobjects/base';
-import {defaultState} from './src/lib/shared';
+import {BasePage} from './pageobjects/base';
+import {defaultState} from '../src/lib/shared';
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -16,7 +16,7 @@ export const config: WebdriverIO.Config = {
       },
     },
   ],
-  logLevel: 'warn',
+  logLevel: 'debug',
   // Stop running tests after initial failure.
   bail: 1,
   baseUrl: 'http://localhost:8081',
