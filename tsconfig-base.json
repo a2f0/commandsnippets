@@ -10,7 +10,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "jsx": "react",
-    "incremental": true,
-    "removeComments": false
+    "incremental": true
   }
 }
