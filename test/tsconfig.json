@@ -1,8 +1,11 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../tsconfig-base.json",
   "compilerOptions": {
+    "composite": true,
+    "outDir": "./.ts-out",
     "types": ["webdriverio/async", "mocha", "expect-webdriverio"]
   },
-  "include": ["**/*.ts"],
-  "exclude": []
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["./.ts-out"],
+  "references": [{"path": ".."}]
 }

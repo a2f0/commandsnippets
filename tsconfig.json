@@ -1,19 +1,9 @@
 {
-  "extends": "./node_modules/gts/tsconfig-google.json",
+  "extends": "./tsconfig-base.json",
   "compilerOptions": {
-    "target": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "strict": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "jsx": "react",
-    "outDir": "src/ts-out",
-    "incremental": true,
-    "removeComments": false
+    "composite": true,
+    "outDir": "./.ts-out"
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["src/ts-out", "node_modules", "test"]
+  "include": ["**/*.ts", "**/*.tsx", "./package.json"],
+  "exclude": ["./ts-out", "test", "__tests__"]
 }
