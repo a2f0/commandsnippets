@@ -1,4 +1,4 @@
-import {Configuration} from 'webpack';
+import {Configuration, ProvidePlugin} from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import path from 'path';
 
@@ -22,11 +22,24 @@ const config: Configuration = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    fallback: {
+      url: false,
+      http: false,
+      https: false,
+      // eslint-disable-next-line node/no-unpublished-require
+      stream: require.resolve('stream-browserify'),
+      assert: false,
+      zlib: false,
+    },
   },
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve('./index.html'),
       favicon: './public/favicon.svg',
+    }),
+    new ProvidePlugin({
+      // https://github.com/browserify/node-util/issues/57
+      process: 'process',
     }),
   ],
 };
