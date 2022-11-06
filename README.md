@@ -8,6 +8,7 @@ Bootstrap
     pre-commit install
     pre-commit run --all-files
     docker-compose build
+    docker-compose run backend python manage.py migrate
     docker-compose up
 
 Bump version
