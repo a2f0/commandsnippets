@@ -30,6 +30,10 @@ Accessing the local Postgresql Database
     -- show colums for table
     \d users_user
     \q
+    -- show counts by user
+    select users_user.username,COUNT(*) as "number of entries"
+    from text_entries_textentry left join users_user on users_user.id = text_entries_textentry.user_id
+    group by users_user.username;
 
 ## Testing
 
