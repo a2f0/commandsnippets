@@ -66,3 +66,14 @@ Delete a user
 List users
 
     docker-compose run backend python manage.py list_users
+
+# Upgrading the Postgres Docker Container
+
+1. Run `./refresh.sh` to obtain the most recent backup.
+2. Update (compose/postgres/Dockerfile)[compose/postgres/Dockerfile to the new image.
+3. Update the `postgresXX_data_dev` volume in `docker-compose.yaml` to the new version.
+4. Start the compose with `docker-compose up`.  This should show a new database being created in the `postgres` container.
+5. Kill the backend container with `docker-compose kill backend` to free up the database connections.
+6. List backups with `docker-compose run postgres list-backups`
+7. Do a restore with `docker-compose run postgres restore backup-pg_dump-Fc`
+8. Update the data volume in `staging.yaml` and `container-registry.yaml`.

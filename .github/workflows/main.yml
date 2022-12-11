@@ -30,11 +30,11 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
         architecture: 'x64'
     - uses: pre-commit/action@v3.0.0
     - name: install and configure python dependencies
-      run: pip install -r ./requirements/local.txt
+      run: pip install --no-cache-dir -r ./requirements/local.txt
     - name: Run safety
       run: |
         safety check -r requirements/local.txt -r requirements/production.txt

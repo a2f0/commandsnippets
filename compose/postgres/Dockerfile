@@ -1,6 +1,6 @@
-FROM postgres:11
+FROM postgres:15
 
-RUN apt-get update && apt-get --assume-yes install python-pip curl && \
+RUN apt-get update && apt-get --assume-yes install python3-pip curl && \
     pip install awscli --upgrade && \
     curl https://raw.githubusercontent.com/a2f0/pg-container-utils/main/bin/backup.sh > /bin/backup && \
     chmod 500 /bin/backup && \

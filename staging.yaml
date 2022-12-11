@@ -1,7 +1,7 @@
 version: '2'
 
 volumes:
-  postgres_data_dev: {}
+  postgres15_data_dev: {}
   postgres_backup_dev: {}
   conf:
   vhost:

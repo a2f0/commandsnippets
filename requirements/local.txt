@@ -8,4 +8,4 @@ httpretty==1.1.4
 isort[requirements]==5.10.1     # this should match .pre-commit-config.yamml
 pre-commit==2.20.0
 pur==7.0.0                      # for checking out of date dependencies
-safety==2.3.3
+safety==2.3.5
