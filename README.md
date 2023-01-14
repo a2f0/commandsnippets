@@ -7,6 +7,7 @@ Development
 ```shell
 pip install pre-commit
 pre-commit install
+pre-commit run --all-files
 npm install
 npm run server
 ```

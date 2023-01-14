@@ -237,7 +237,7 @@ const Tag = ({
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
-    end: (dropResult, monitor) => {
+    end: async (dropResult, monitor) => {
       const drop_result: ITagJsonApi | null = monitor.getDropResult();
       const {id: droppedId, originalIndex} = monitor.getItem();
       const didDrop = monitor.didDrop();
@@ -280,15 +280,9 @@ const Tag = ({
                       relationships: {},
                     },
                   };
-                  apiBase
-                    .post('/tags/reorder', payload, {withCredentials: true})
-                    .then(() => {})
-                    .catch(() => {
-                      // handle error
-                    })
-                    .then(() => {
-                      // always executed
-                    });
+                  await apiBase.post('/tags/reorder', payload, {
+                    withCredentials: true,
+                  });
                 }
               } else {
                 console.info("it wasn't moved.");
