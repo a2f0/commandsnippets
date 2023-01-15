@@ -1,4 +1,5 @@
 import React, {useMemo, useRef, useState} from 'react';
+import {ReorderTag, tearleadsApi} from './tearleadsApi';
 import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {AxiosResponse} from 'axios';
@@ -246,10 +247,13 @@ const Tag = ({
         moveEntry(droppedId, originalIndex);
       } else {
         console.info('didDrop Tag');
+        console.info(dropResult);
         if (drop_result?.type) {
           if ('type' in drop_result) {
             if (drop_result.type === 'Tag') {
               // Then it was reordered in the list.
+              console.info(`originalIndex: ${originalIndex}`);
+              console.info(`findEntryIndex: ${findEntry(id).index}`);
               if (originalIndex !== findEntry(id).index) {
                 console.info(
                   'it moved from index ' +
@@ -270,7 +274,7 @@ const Tag = ({
                   ordered_bottom = entry_below;
                 }
                 if (ordered_top !== null && ordered_bottom !== null) {
-                  const payload = {
+                  const payload: ReorderTag = {
                     data: {
                       type: 'Tag',
                       attributes: {
@@ -280,9 +284,7 @@ const Tag = ({
                       relationships: {},
                     },
                   };
-                  await apiBase.post('/tags/reorder', payload, {
-                    withCredentials: true,
-                  });
+                  await tearleadsApi.reorderTag(payload);
                 }
               } else {
                 console.info("it wasn't moved.");

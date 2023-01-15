@@ -13,6 +13,7 @@ import entriesResponse from '../test/mocks/entries/entriesResponse';
 import {rest} from 'msw';
 import {setupServer} from 'msw/node';
 import tagsResponse from '../test/mocks/tags/tagsResponse';
+import {tearleadsApi} from '../src/tearleadsApi';
 import userEvent from '@testing-library/user-event';
 
 const server = setupServer(
@@ -45,6 +46,13 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('TagList', () => {
+  let reorderTagSpy: jest.SpyInstance;
+  beforeEach(() => {
+    reorderTagSpy = jest.spyOn(tearleadsApi, 'reorderTag');
+  });
+  afterEach(() => {
+    reorderTagSpy.mockRestore();
+  });
   it('Reorders', async () => {
     const user = userEvent.setup();
     const history = createMemoryHistory();
@@ -68,6 +76,7 @@ describe('TagList', () => {
     expect(tagDragHandleContainers).toHaveLength(4);
     await user.pointer({target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
+    expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
       fireEvent.dragEnter(tags[2]);
