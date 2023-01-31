@@ -5,6 +5,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import {AxiosResponse} from 'axios';
 import Box from '@mui/material/Box';
+import EntriesMenuButton from './menu/entries/EntriesMenuButton';
 import Fade from '@mui/material/Fade';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
@@ -211,14 +212,7 @@ const MenuBar = () => {
         >
           Tags
         </MenuBarButton>
-        <MenuBarButton
-          id="entries-menu-button"
-          ariaControls="entries-menu"
-          ariaLabel="Entries"
-          onClick={handleEntriesMenuClick}
-        >
-          Entries
-        </MenuBarButton>
+        <EntriesMenuButton onClick={handleEntriesMenuClick} />
         <HelpMenuButton onClick={handleHelpMenuClick} />
       </Aligner>
       <Grid container justifyContent="flex-end">
