@@ -7,6 +7,7 @@ import {AxiosResponse} from 'axios';
 import Box from '@mui/material/Box';
 import EntriesMenuButton from './menu/entries/EntriesMenuButton';
 import Fade from '@mui/material/Fade';
+import FileMenuButton from './menu/file/FileMenuButton';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {Grid} from '@mui/material';
@@ -189,14 +190,7 @@ const MenuBar = () => {
       />
       <Aligner theme={theme}>
         {appConfig.loggedInUser && (
-          <MenuBarButton
-            id="file-menu-button"
-            ariaControls="file-menu"
-            ariaLabel="File"
-            onClick={handleFileMenuClick}
-          >
-            File
-          </MenuBarButton>
+          <FileMenuButton onClick={handleFileMenuClick} />
         )}
         <ViewMenuButton onClick={handleTagsMenuClick} />
         <TagsMenuButton onClick={handleTagsMenuClick} />
