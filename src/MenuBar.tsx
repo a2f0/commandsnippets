@@ -20,6 +20,7 @@ import React from 'react';
 import StyledCheckIcon from './styled/StyledCheckIcon';
 import StyledDivider from './styled/StyledDivider';
 import StyledMenuItem from './StyledMenuItem';
+import TagsMenuButton from './menu/tags/TagsMenuButton';
 import {Theme} from '@mui/material/styles';
 import axios from 'axios';
 import {baseHTTPURL} from './apiBase';
@@ -212,6 +213,7 @@ const MenuBar = () => {
         >
           Tags
         </MenuBarButton>
+        <TagsMenuButton onClick={handleTagsMenuClick} />
         <EntriesMenuButton onClick={handleEntriesMenuClick} />
         <HelpMenuButton onClick={handleHelpMenuClick} />
       </Aligner>
