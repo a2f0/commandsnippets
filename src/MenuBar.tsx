@@ -22,6 +22,7 @@ import StyledDivider from './styled/StyledDivider';
 import StyledMenuItem from './StyledMenuItem';
 import TagsMenuButton from './menu/tags/TagsMenuButton';
 import {Theme} from '@mui/material/styles';
+import ViewMenuButton from './menu/view/ViewMenuButton';
 import axios from 'axios';
 import {baseHTTPURL} from './apiBase';
 import {observer} from 'mobx-react';
@@ -197,22 +198,7 @@ const MenuBar = () => {
             File
           </MenuBarButton>
         )}
-        <MenuBarButton
-          id="view-menu-button"
-          ariaControls="view-menu"
-          ariaLabel="View"
-          onClick={handleViewMenuClick}
-        >
-          View
-        </MenuBarButton>
-        <MenuBarButton
-          id="tags-menu-button"
-          ariaControls="tags-menu"
-          ariaLabel="Tags"
-          onClick={handleTagsMenuClick}
-        >
-          Tags
-        </MenuBarButton>
+        <ViewMenuButton onClick={handleTagsMenuClick} />
         <TagsMenuButton onClick={handleTagsMenuClick} />
         <EntriesMenuButton onClick={handleEntriesMenuClick} />
         <HelpMenuButton onClick={handleHelpMenuClick} />
