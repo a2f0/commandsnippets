@@ -1,18 +1,17 @@
-import {appMode, entrySearchMethod} from './lib/shared';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import {AxiosResponse} from 'axios';
+
 import Box from '@mui/material/Box';
 import EntriesMenuButton from './menu/entries/EntriesMenuButton';
 import Fade from '@mui/material/Fade';
+import FileMenu from './menu/file/FileMenu';
 import FileMenuButton from './menu/file/FileMenuButton';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {Grid} from '@mui/material';
 import HelpMenu from './menu/help/HelpMenu';
 import HelpMenuButton from './menu/help/HelpMenuButton';
-import {ILogoutJsonApiResponse} from './lib/authentication';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import React from 'react';
@@ -23,8 +22,7 @@ import TagsMenuButton from './menu/tags/TagsMenuButton';
 import {Theme} from '@mui/material/styles';
 import ViewMenu from './menu/view/ViewMenu';
 import ViewMenuButton from './menu/view/ViewMenuButton';
-import axios from 'axios';
-import {baseHTTPURL} from './apiBase';
+import {entrySearchMethod} from './lib/shared';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
@@ -91,27 +89,6 @@ const MenuBar = () => {
 
   const theme = useTheme();
 
-  const handleLogout = () => {
-    const base_url = baseHTTPURL();
-    const logout_api = axios.create({
-      baseURL: base_url,
-      responseType: 'json',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    logout_api
-      .post('/api-token-deauth/', {}, {withCredentials: true})
-      .then((response: AxiosResponse<ILogoutJsonApiResponse>) => {
-        appConfig.setLoggedInUser(null);
-        setFileMenuAnchorEl(null);
-        return response;
-      })
-      .catch(() => {})
-      .then(() => {});
-  };
-
   const handleFileMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setFileMenuAnchorEl(event.currentTarget);
   };
@@ -158,18 +135,6 @@ const MenuBar = () => {
     appConfig.setTagSortOrder(order);
   };
 
-  const handleCreateTag = () => {
-    appConfig.setAppMode(appMode.tagEditor);
-    setFileMenuAnchorEl(null);
-    appConfig.setTagNew('top');
-  };
-
-  const handleCreateEntry = () => {
-    setFileMenuAnchorEl(null);
-    appConfig.setAppMode(appMode.entryEditor);
-    appConfig.setEntryNew('textEntry-top');
-  };
-
   return (
     <>
       <Box
@@ -193,24 +158,7 @@ const MenuBar = () => {
         <GoogleAuth />
       </Grid>
 
-      <StyledMenu
-        id="file-menu"
-        anchorEl={fileMenuAnchorEl}
-        open={Boolean(fileMenuAnchorEl)}
-        onClose={handleFileMenuClose}
-      >
-        <StyledMenuItem id="file-menu-new-tag" onClick={handleCreateTag}>
-          New Tag
-        </StyledMenuItem>
-
-        <StyledMenuItem id="file-menu-new-entry" onClick={handleCreateEntry}>
-          New Entry
-        </StyledMenuItem>
-
-        <StyledMenuItem id="file-menu-logout" onClick={handleLogout}>
-          Logout
-        </StyledMenuItem>
-      </StyledMenu>
+      <FileMenu onClose={handleFileMenuClose} anchorEl={fileMenuAnchorEl} />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
 
       <StyledMenu
