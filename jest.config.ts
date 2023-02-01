@@ -18,10 +18,6 @@ const config: JestConfigWithTsJest = {
       },
     ],
   },
-  watchPlugins: [
-    'jest-watch-typeahead/filename',
-    'jest-watch-typeahead/testname',
-  ],
 };
 
 export default config;
