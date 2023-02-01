@@ -1,5 +1,4 @@
 import {appMode, entrySearchMethod} from './lib/shared';
-import {darkTheme, lightTheme} from './themes';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -16,13 +15,13 @@ import HelpMenuButton from './menu/help/HelpMenuButton';
 import {ILogoutJsonApiResponse} from './lib/authentication';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
-import MenuBarButton from './MenuBarButton';
 import React from 'react';
 import StyledCheckIcon from './styled/StyledCheckIcon';
 import StyledDivider from './styled/StyledDivider';
 import StyledMenuItem from './StyledMenuItem';
 import TagsMenuButton from './menu/tags/TagsMenuButton';
 import {Theme} from '@mui/material/styles';
+import ViewMenu from './menu/view/ViewMenu';
 import ViewMenuButton from './menu/view/ViewMenuButton';
 import axios from 'axios';
 import {baseHTTPURL} from './apiBase';
@@ -171,14 +170,6 @@ const MenuBar = () => {
     appConfig.setEntryNew('textEntry-top');
   };
 
-  const handleThemeSwitcher = (chosenTheme: Theme) => {
-    if (chosenTheme === lightTheme) {
-      appConfig.setSelectedTheme('lightTheme');
-    } else {
-      appConfig.setSelectedTheme('darkTheme');
-    }
-  };
-
   return (
     <>
       <Box
@@ -192,7 +183,7 @@ const MenuBar = () => {
         {appConfig.loggedInUser && (
           <FileMenuButton onClick={handleFileMenuClick} />
         )}
-        <ViewMenuButton onClick={handleTagsMenuClick} />
+        <ViewMenuButton onClick={handleViewMenuClick} />
         <TagsMenuButton onClick={handleTagsMenuClick} />
         <EntriesMenuButton onClick={handleEntriesMenuClick} />
         <HelpMenuButton onClick={handleHelpMenuClick} />
@@ -220,51 +211,8 @@ const MenuBar = () => {
           Logout
         </StyledMenuItem>
       </StyledMenu>
+      <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
 
-      <StyledMenu
-        id="view-menu"
-        anchorEl={viewMenuAnchorEl}
-        open={Boolean(viewMenuAnchorEl)}
-        onClose={handleViewMenuClose}
-      >
-        <StyledMenuItem
-          id="view-menu-light-theme"
-          onClick={() => {
-            handleThemeSwitcher(lightTheme);
-            handleViewMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.selectedTheme === 'lightTheme' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Light Mode
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="view-menu-dark-theme"
-          onClick={() => {
-            handleThemeSwitcher(darkTheme);
-            handleViewMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.selectedTheme === 'darkTheme' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Dark Mode
-        </StyledMenuItem>
-        <StyledDivider />
-        <StyledMenuItem
-          id="view-menu-show-tag-counts"
-          onClick={() => {
-            appConfig.setShowTagCounts(!appConfig.showTagCounts);
-            handleViewMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.showTagCounts === true && <StyledCheckIcon />}
-          </ListItemIcon>
-          Show Tag Counts
-        </StyledMenuItem>
-      </StyledMenu>
       <StyledMenu
         id="tags-menu"
         anchorEl={tagsMenuAnchorEl}
