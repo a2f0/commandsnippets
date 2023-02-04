@@ -18,6 +18,7 @@ import React from 'react';
 import StyledCheckIcon from './styled/StyledCheckIcon';
 import StyledDivider from './styled/StyledDivider';
 import StyledMenuItem from './StyledMenuItem';
+import TagsMenu from './menu/tags/TagsMenu';
 import TagsMenuButton from './menu/tags/TagsMenuButton';
 import {Theme} from '@mui/material/styles';
 import ViewMenu from './menu/view/ViewMenu';
@@ -160,127 +161,7 @@ const MenuBar = () => {
 
       <FileMenu onClose={handleFileMenuClose} anchorEl={fileMenuAnchorEl} />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
-
-      <StyledMenu
-        id="tags-menu"
-        anchorEl={tagsMenuAnchorEl}
-        open={Boolean(tagsMenuAnchorEl)}
-        onClose={handleTagsMenuClose}
-      >
-        <StyledMenuItem
-          id="tags-menu-sort-order"
-          onClick={() => {
-            handleSetTagSortOrder('order');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === 'order' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Sort by User-Defined Order
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="tags-menu-sort-name-descending"
-          onClick={() => {
-            handleSetTagSortOrder('name');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === 'name' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Sort by Tag Name <ArrowDownwardIcon fontSize="small" />
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="tags-menu-sort-name-ascending"
-          onClick={() => {
-            handleSetTagSortOrder('-name');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === '-name' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Sort by Tag Name <ArrowUpwardIcon fontSize="small" />
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="tags-menu-sort-date-created-descending"
-          onClick={() => {
-            handleSetTagSortOrder('-date_created');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === '-date_created' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="tags-menu-sort-date-created-ascending"
-          onClick={() => {
-            handleSetTagSortOrder('date_created');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === 'date_created' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="tags-menu-sort-entry-count-descending"
-          onClick={() => {
-            handleSetTagSortOrder('-entry_count');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === '-entry_count' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Sort by Number of Tagged Entries
-          <ArrowDownwardIcon fontSize="small" />
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="tags-menu-sort-entry-count-ascending"
-          onClick={() => {
-            handleSetTagSortOrder('entry_count');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === 'entry_count' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Sort by Number of Tagged Entries <ArrowUpwardIcon fontSize="small" />
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="tags-menu-sort-date-last-used-descending"
-          onClick={() => {
-            handleSetTagSortOrder('-date_last_used');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === '-date_last_used' && (
-              <StyledCheckIcon />
-            )}
-          </ListItemIcon>
-          Sort by Tag recently used
-          <ArrowDownwardIcon fontSize="small" />
-        </StyledMenuItem>
-        <StyledMenuItem
-          id="tags-menu-sort-date-last-used-ascending"
-          onClick={() => {
-            handleSetTagSortOrder('date_last_used');
-            handleTagsMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {appConfig.tagSortOrder === 'date_last_used' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Sort by Tag recently used
-          <ArrowUpwardIcon fontSize="small" />
-        </StyledMenuItem>
-      </StyledMenu>
+      <TagsMenu onClose={handleTagsMenuClose} anchorEl={tagsMenuAnchorEl} />
       <StyledMenu
         id="entries-menu"
         anchorEl={entriesMenuAnchorEl}
