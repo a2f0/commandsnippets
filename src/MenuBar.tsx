@@ -1,8 +1,7 @@
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 
 import Box from '@mui/material/Box';
+import EntriesMenu from './menu/entries/EntriesMenu';
 import EntriesMenuButton from './menu/entries/EntriesMenuButton';
 import Fade from '@mui/material/Fade';
 import FileMenu from './menu/file/FileMenu';
@@ -12,18 +11,13 @@ import GoogleAuth from './GoogleAuth';
 import {Grid} from '@mui/material';
 import HelpMenu from './menu/help/HelpMenu';
 import HelpMenuButton from './menu/help/HelpMenuButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import React from 'react';
-import StyledCheckIcon from './styled/StyledCheckIcon';
-import StyledDivider from './styled/StyledDivider';
-import StyledMenuItem from './StyledMenuItem';
 import TagsMenu from './menu/tags/TagsMenu';
 import TagsMenuButton from './menu/tags/TagsMenuButton';
 import {Theme} from '@mui/material/styles';
 import ViewMenu from './menu/view/ViewMenu';
 import ViewMenuButton from './menu/view/ViewMenuButton';
-import {entrySearchMethod} from './lib/shared';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
@@ -132,10 +126,6 @@ const MenuBar = () => {
     setHelpMenuAnchorEl(null);
   };
 
-  const handleSetTagSortOrder = (order: string) => {
-    appConfig.setTagSortOrder(order);
-  };
-
   return (
     <>
       <Box
@@ -162,241 +152,10 @@ const MenuBar = () => {
       <FileMenu onClose={handleFileMenuClose} anchorEl={fileMenuAnchorEl} />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
       <TagsMenu onClose={handleTagsMenuClose} anchorEl={tagsMenuAnchorEl} />
-      <StyledMenu
-        id="entries-menu"
-        anchorEl={entriesMenuAnchorEl}
-        open={Boolean(entriesMenuAnchorEl)}
+      <EntriesMenu
         onClose={handleEntriesMenuClose}
-      >
-        <StyledMenuItem
-          id={`entries-menu-list-method-${entrySearchMethod.allEntries}`}
-          onClick={() => {
-            handleEntriesMenuClose();
-            if (user !== undefined) {
-              navigate(`/${user}?entries=all`);
-            }
-          }}
-        >
-          <ListItemIcon>
-            {entriesFilter === 'all' && <StyledCheckIcon />}
-          </ListItemIcon>
-          All entries
-        </StyledMenuItem>
-        <StyledMenuItem
-          id={`entries-menu-list-method-${entrySearchMethod.untaggedEntryList}`}
-          onClick={() => {
-            if (user !== undefined) {
-              navigate(`/${user}?entries=untagged`);
-            }
-            handleEntriesMenuClose();
-          }}
-        >
-          <ListItemIcon>
-            {entriesFilter === 'untagged' && <StyledCheckIcon />}
-          </ListItemIcon>
-          Untagged Entries
-        </StyledMenuItem>
-        <StyledDivider />
-        {appConfig.entrySearchMethod === entrySearchMethod.currentTagOnly && [
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-order"
-            key="SortMenuItemOrder"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('order');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder === 'order' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by User-Defined Order
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-subject-ascending"
-            key="SortMenuItemTextEntrySubject"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('subject');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder === 'subject' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by Subject <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-subject-descending"
-            key="SortMenuItemTextEntrySubject-"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('-subject');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder === '-subject' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by Subject <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-body-ascending"
-            key="SortMenuItemTextEntryBody"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('body');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder === 'body' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by Body <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-body-descending"
-            key="SortMenuItemTextEntryBody-"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('-body');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder === '-body' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by Body <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-date-created-ascending"
-            key="SortMenuItemTextEntryDateCreated"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('date_created');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder ===
-                'date_created' && <StyledCheckIcon />}
-            </ListItemIcon>
-            Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-date-created-descending"
-            key="SortMenuItemTextEntryDateCreated-"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('-date_created');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder ===
-                '-date_created' && <StyledCheckIcon />}
-            </ListItemIcon>
-            Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-date-tagged-ascending"
-            key="SortMenuItemTextEntryDateTagged"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('date_tagged');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder ===
-                'date_tagged' && <StyledCheckIcon />}
-            </ListItemIcon>
-            Sort by Date Tagged <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-date-tagged-descending"
-            key="SortMenuItemTextEntryDateTagged-"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('-date_tagged');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder ===
-                '-date_tagged' && <StyledCheckIcon />}
-            </ListItemIcon>
-            Sort by Date Tagged <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-date-tag-count-ascending"
-            key="SortMenuItemTextEntryTagCount"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('tag_count');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder === 'tag_count' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by Tag Count
-            <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="tagged-entries-menu-sort-date-tag-count-descending"
-            key="SortMenuItemTextEntryTagCount-"
-            onClick={() => {
-              appConfig.setTagTextEntryThroughModelSortOrder('-tag_count');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.tagTextEntryThroughModelSortOrder === '-tag_count' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by Tag Count
-            <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>,
-        ]}
-        {(appConfig.entrySearchMethod === entrySearchMethod.allEntries ||
-          appConfig.entrySearchMethod ===
-            entrySearchMethod.untaggedEntryList) && [
-          <StyledMenuItem
-            key="SortUntaggedEntryListDateCreated"
-            id="entries-menu-sort-date-tag-count-descending"
-            onClick={() => {
-              appConfig.setEntrySortOrder('date_created');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.entrySortOrder === 'date_created' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by Date Created <ArrowDownwardIcon fontSize="small" />
-          </StyledMenuItem>,
-          <StyledMenuItem
-            id="entries-menu-sort-date-tag-count-descending"
-            key="SortUntaggedEntryListDateCreated-"
-            onClick={() => {
-              appConfig.setEntrySortOrder('-date_created');
-              handleEntriesMenuClose();
-            }}
-          >
-            <ListItemIcon>
-              {appConfig.entrySortOrder === '-date_created' && (
-                <StyledCheckIcon />
-              )}
-            </ListItemIcon>
-            Sort by Date Created <ArrowUpwardIcon fontSize="small" />
-          </StyledMenuItem>,
-        ]}
-      </StyledMenu>
+        anchorEl={entriesMenuAnchorEl}
+      />
       <HelpMenu onClose={handleHelpMenuClose} anchorEl={helpMenuAnchorEl} />
     </>
   );
