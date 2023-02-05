@@ -1,5 +1,3 @@
-import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
-
 import Box from '@mui/material/Box';
 import EntriesMenu from './menu/entries/EntriesMenu';
 import EntriesMenuButton from './menu/entries/EntriesMenuButton';
@@ -66,10 +64,6 @@ const Aligner = styled('div')<AlignerIProps>`
 
 const MenuBar = () => {
   const appConfig = useAppContext();
-  const {user} = useParams();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const entriesFilter = searchParams.get('entries');
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -148,7 +142,6 @@ const MenuBar = () => {
         <GithubAuth />
         <GoogleAuth />
       </Grid>
-
       <FileMenu onClose={handleFileMenuClose} anchorEl={fileMenuAnchorEl} />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
       <TagsMenu onClose={handleTagsMenuClose} anchorEl={tagsMenuAnchorEl} />

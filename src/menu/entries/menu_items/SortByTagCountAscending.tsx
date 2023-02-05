@@ -18,7 +18,7 @@ const SortByTagCountAscending = function ({onClose}: IProps) {
       key="SortMenuItemTextEntryTagCount"
       onClick={() => {
         appConfig.setTagTextEntryThroughModelSortOrder('tag_count');
-        close();
+        onClose();
       }}
     >
       <ListItemIcon>
