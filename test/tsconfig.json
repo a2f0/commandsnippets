@@ -3,7 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./.ts-out",
-    "types": ["webdriverio/async", "mocha", "expect-webdriverio"]
+    "types": ["@wdio/globals/types"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["./.ts-out"],
