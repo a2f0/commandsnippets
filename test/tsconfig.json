@@ -3,7 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./.ts-out",
-    "types": ["@wdio/globals/types"]
+    "types": ["@wdio/globals/types", "@types/mocha"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["./.ts-out"],
