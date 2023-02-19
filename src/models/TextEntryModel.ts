@@ -85,8 +85,8 @@ export const TextEntryModel = types
   }));
 
 export const TextEntryHelpers = {
-  sort: sort,
-  fetch: fetch,
-  fetchPage: fetchPage,
-  getMostRecentTimeStamp: getMostRecentTimeStamp,
+  sort,
+  fetch,
+  fetchPage,
+  getMostRecentTimeStamp,
 };
