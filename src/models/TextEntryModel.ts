@@ -7,7 +7,9 @@ export interface ITextEntryJsonApi {
   id: string;
   type: string;
   attributes: ITextEntryJsonApiAttributes;
-  relationships: ITextEntryJsonApiRelationships;
+  relationships: {
+    user: ITextEntryJsonApiRelationshipsUser;
+  };
 }
 
 export interface ITextEntryJsonApiAttributes {
@@ -18,10 +20,6 @@ export interface ITextEntryJsonApiAttributes {
   reused_count: number;
   is_deleted: boolean;
   tag_count: number;
-}
-
-interface ITextEntryJsonApiRelationships {
-  user: ITextEntryJsonApiRelationshipsUser;
 }
 
 interface ITextEntryJsonApiRelationshipsUser {
