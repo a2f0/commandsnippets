@@ -6,31 +6,23 @@ import {getMostRecentTimeStamp} from '../lib/shared';
 export interface ITagJsonApi {
   id: string;
   type: string;
-  attributes: ITagJsonApiAttributes;
-  relationships: ITagJsonApiRelationships;
-}
-
-export interface ITagJsonApiAttributes {
-  name: string;
-  entry_count: number;
-  order: number;
-  date_updated: string;
-  date_created: string;
-  date_last_used: string;
-  is_deleted: boolean;
-}
-
-interface ITagJsonApiRelationships {
-  user: ITagJsonApiRelationshipsUser;
-}
-
-interface ITagJsonApiRelationshipsUser {
-  data: ITagJsonApiRelationshipsUserData;
-}
-
-interface ITagJsonApiRelationshipsUserData {
-  id: string;
-  type: string;
+  attributes: {
+    name: string;
+    entry_count: number;
+    order: number;
+    date_updated: string;
+    date_created: string;
+    date_last_used: string;
+    is_deleted: boolean;
+  };
+  relationships: {
+    user: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+  };
 }
 
 const TagAtributes = types

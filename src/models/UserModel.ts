@@ -4,12 +4,10 @@ import type {RootModel} from '../AppStateStore';
 export interface IUserJsonApi {
   id: string;
   type: string;
-  attributes: IUserJsonApiAttributes;
-}
-
-export interface IUserJsonApiAttributes {
-  username: string;
-  date_updated: string;
+  attributes: {
+    username: string;
+    date_updated: string;
+  };
 }
 
 const UserAttributes = types
