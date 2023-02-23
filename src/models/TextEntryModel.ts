@@ -8,7 +8,12 @@ export interface ITextEntryJsonApi {
   type: string;
   attributes: ITextEntryJsonApiAttributes;
   relationships: {
-    user: ITextEntryJsonApiRelationshipsUser;
+    user: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
   };
 }
 
@@ -20,19 +25,6 @@ export interface ITextEntryJsonApiAttributes {
   reused_count: number;
   is_deleted: boolean;
   tag_count: number;
-}
-
-interface ITextEntryJsonApiRelationshipsUser {
-  data: ITextEntryJsonApiRelationshipsUserData;
-}
-
-interface ITextEntryJsonApiRelationshipsUserData {
-  id: string;
-  type: string;
-}
-
-interface ITextEntryJsonApiRelationshipsUser {
-  data: ITextEntryJsonApiRelationshipsUserData;
 }
 
 const TextEntryAttributes = types
