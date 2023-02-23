@@ -6,7 +6,15 @@ import {getMostRecentTimeStamp} from '../lib/shared';
 export interface ITextEntryJsonApi {
   id: string;
   type: string;
-  attributes: ITextEntryJsonApiAttributes;
+  attributes: {
+    body: string;
+    subject: string;
+    date_updated: string;
+    date_created: string;
+    reused_count: number;
+    is_deleted: boolean;
+    tag_count: number;
+  };
   relationships: {
     user: {
       data: {
@@ -15,16 +23,6 @@ export interface ITextEntryJsonApi {
       };
     };
   };
-}
-
-export interface ITextEntryJsonApiAttributes {
-  body: string;
-  subject: string;
-  date_updated: string;
-  date_created: string;
-  reused_count: number;
-  is_deleted: boolean;
-  tag_count: number;
 }
 
 const TextEntryAttributes = types

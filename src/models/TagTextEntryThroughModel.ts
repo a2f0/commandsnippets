@@ -4,37 +4,25 @@ import type {RootModel} from '../AppStateStore';
 export interface ITagTextEntryThroughModelJsonApi {
   id: string;
   type: string;
-  attributes: ITagTextEntryThroughModelJsonApiAttributes;
-  relationships: ITagTextEntryThroughModelJsonApiRelationships;
-}
-
-export interface ITagTextEntryThroughModelJsonApiAttributes {
-  order: number;
-  date_updated: string;
-  date_created: string;
-}
-
-interface ITagTextEntryThroughModelJsonApiRelationships {
-  tag: ITagTextEntryThroughModelJsonApiRelationshipsTag;
-  text_entry: ITagTextEntryThroughModelJsonApiRelationshipsTextEntry;
-}
-
-interface ITagTextEntryThroughModelJsonApiRelationshipsTag {
-  data: ITagTextEntryThroughModelJsonApiRelationshipsTagData;
-}
-
-interface ITagTextEntryThroughModelJsonApiRelationshipsTagData {
-  id: string;
-  type: string;
-}
-
-interface ITagTextEntryThroughModelJsonApiRelationshipsTextEntry {
-  data: ITagTextEntryThroughModelJsonApiRelationshipsTextEntryData;
-}
-
-interface ITagTextEntryThroughModelJsonApiRelationshipsTextEntryData {
-  id: string;
-  type: string;
+  attributes: {
+    order: number;
+    date_updated: string;
+    date_created: string;
+  };
+  relationships: {
+    tag: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+    text_entry: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+  };
 }
 
 const TagTextEntryThroughModelAttributes = types
