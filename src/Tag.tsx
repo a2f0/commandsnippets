@@ -37,7 +37,7 @@ const TagLabelWrapper = styled('div')<ITagLabelWrapperProps>`
   font-size: 14px;
 `;
 
-interface DraggableItem {
+export interface DraggableItem {
   id: string;
   type: string;
   originalIndex: number;

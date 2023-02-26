@@ -17,7 +17,6 @@ import EntryNew from './EntryNew';
 import {IEntryFetchPage} from './lib/text_entries';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
-import {TagTextEntryThroughModel} from './models/TagTextEntryThroughModel';
 import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
 import axios from 'axios';
@@ -30,26 +29,6 @@ import {useTheme} from '@mui/material/styles';
 export interface IParamTypes {
   user: string;
   tag: string;
-}
-
-interface IRelationships {
-  [key: string]: IRelationship;
-}
-
-interface IRelationship {
-  [key: string]: IRelationshipData;
-}
-
-interface IRelationshipData {
-  type: string;
-  id: string;
-}
-
-export interface TagTextEntryThroughModel {
-  type: string;
-  id: string;
-  relationships: IRelationships;
-  index: number;
 }
 
 const EntryList = () => {

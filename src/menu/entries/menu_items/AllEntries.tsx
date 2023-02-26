@@ -4,7 +4,6 @@ import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
 import {entrySearchMethod} from '../../../lib/shared';
-import {useAppContext} from '../../../AppContext';
 
 interface IProps {
   onClose: () => void;

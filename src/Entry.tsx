@@ -5,6 +5,7 @@ import {useParams, useSearchParams} from 'react-router-dom';
 import CheckIcon from '@mui/icons-material/Check';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
+import type {DraggableItem} from './Tag';
 import EntryBody from './styled/text_entries/EntryBody';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
@@ -15,7 +16,6 @@ import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
 import React from 'react';
-import {TagTextEntryThroughModel} from './EntryList';
 import apiBase from './apiBase';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
@@ -216,7 +216,7 @@ const Entry = ({
   const opacity = isDragging ? 0 : 1;
   const [, drop] = useDrop({
     accept: ItemTypes.ENTRY,
-    hover(item: TagTextEntryThroughModel, monitor) {
+    hover(item: DraggableItem, monitor) {
       if (!dragRef.current) {
         return;
       }
