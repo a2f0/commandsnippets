@@ -10,18 +10,16 @@ export interface IUserJsonApi {
   };
 }
 
-const UserAttributes = types
-  .model('UserAttributes', {
-    username: types.string,
-    date_updated: types.string,
-  })
-  .actions(() => ({}));
-
 export const UserModel = types
   .model('UserJsonApi', {
     id: types.identifier,
     type: types.string,
-    attributes: UserAttributes,
+    attributes: types
+      .model('UserAttributes', {
+        username: types.string,
+        date_updated: types.string,
+      })
+      .actions(() => ({})),
   })
   .actions(self => ({
     update(object: IUserJsonApi) {
