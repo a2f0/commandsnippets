@@ -25,43 +25,35 @@ export interface ITagJsonApi {
   };
 }
 
-const TagAtributes = types
-  .model('TagAtributes', {
-    name: types.string,
-    entry_count: types.number,
-    order: types.number,
-    date_updated: types.string,
-    date_created: types.string,
-    date_last_used: types.string,
-    is_deleted: types.boolean,
-  })
-  .actions(() => ({}));
-
-const TagRelationshipsUserData = types
-  .model('TagRelationshipsUserData', {
-    id: types.string,
-    type: types.string,
-  })
-  .actions(() => ({}));
-
-const TagRelationshipsUser = types
-  .model('TagRelationshipsUser', {
-    data: TagRelationshipsUserData,
-  })
-  .actions(() => ({}));
-
-const UserRelationships = types
-  .model('UserRelationships', {
-    user: TagRelationshipsUser,
-  })
-  .actions(() => ({}));
-
 export const TagModel = types
   .model('TagJsonAPI', {
     id: types.identifier,
     type: types.string,
-    attributes: TagAtributes,
-    relationships: UserRelationships,
+    attributes: types
+      .model('TagAtributes', {
+        name: types.string,
+        entry_count: types.number,
+        order: types.number,
+        date_updated: types.string,
+        date_created: types.string,
+        date_last_used: types.string,
+        is_deleted: types.boolean,
+      })
+      .actions(() => ({})),
+    relationships: types
+      .model('UserRelationships', {
+        user: types
+          .model('TagRelationshipsUser', {
+            data: types
+              .model('TagRelationshipsUserData', {
+                id: types.string,
+                type: types.string,
+              })
+              .actions(() => ({})),
+          })
+          .actions(() => ({})),
+      })
+      .actions(() => ({})),
   })
   .actions(self => ({
     update(object: ITagJsonApi) {
