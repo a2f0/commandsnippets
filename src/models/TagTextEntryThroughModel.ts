@@ -25,53 +25,44 @@ export interface ITagTextEntryThroughModelJsonApi {
   };
 }
 
-const TagTextEntryThroughModelAttributes = types
-  .model('TagTextEntryThroughModelAttributes', {
-    order: types.number,
-    date_updated: types.string,
-    date_created: types.string,
-  })
-  .actions(() => ({}));
-
-const TagTextEntryThroughModelJsonApiRelationshipsTagData = types
-  .model('TagTextEntryThroughModelJsonApiRelationshipsTagData', {
-    id: types.string,
-    type: types.string,
-  })
-  .actions(() => ({}));
-
-const TagTextEntryThroughModelRelationshipsTag = types
-  .model('TagTextEntryThroughModelRelationshipsTag ', {
-    data: TagTextEntryThroughModelJsonApiRelationshipsTagData,
-  })
-  .actions(() => ({}));
-
-const TagTextEntryThroughModelJsonApiRelationshipsTextEntryData = types
-  .model('TagTextEntryThroughModelJsonApiRelationshipsTextEntryData', {
-    id: types.string,
-    type: types.string,
-  })
-  .actions(() => ({}));
-
-const TagTextEntryThroughModelRelationshipsTextEntry = types
-  .model('TagTextEntryThroughModelRelationshipsTextEntry ', {
-    data: TagTextEntryThroughModelJsonApiRelationshipsTextEntryData,
-  })
-  .actions(() => ({}));
-
-const TagTextEntryThroughModelRelationships = types
-  .model('TextEntryRelationships', {
-    tag: TagTextEntryThroughModelRelationshipsTag,
-    text_entry: TagTextEntryThroughModelRelationshipsTextEntry,
-  })
-  .actions(() => ({}));
-
 export const TagTextEntryThroughModel = types
   .model('TagTextEntryThroughModelJsonAPI', {
     id: types.identifier,
     type: types.string,
-    attributes: TagTextEntryThroughModelAttributes,
-    relationships: TagTextEntryThroughModelRelationships,
+    attributes: types
+      .model('TagTextEntryThroughModelAttributes', {
+        order: types.number,
+        date_updated: types.string,
+        date_created: types.string,
+      })
+      .actions(() => ({})),
+    relationships: types
+      .model('TextEntryRelationships', {
+        tag: types
+          .model('TagTextEntryThroughModelRelationshipsTag ', {
+            data: types
+              .model('TagTextEntryThroughModelJsonApiRelationshipsTagData', {
+                id: types.string,
+                type: types.string,
+              })
+              .actions(() => ({})),
+          })
+          .actions(() => ({})),
+        text_entry: types
+          .model('TagTextEntryThroughModelRelationshipsTextEntry ', {
+            data: types
+              .model(
+                'TagTextEntryThroughModelJsonApiRelationshipsTextEntryData',
+                {
+                  id: types.string,
+                  type: types.string,
+                }
+              )
+              .actions(() => ({})),
+          })
+          .actions(() => ({})),
+      })
+      .actions(() => ({})),
   })
   .actions(self => ({
     update(object: ITagTextEntryThroughModelJsonApi) {
