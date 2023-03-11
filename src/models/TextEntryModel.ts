@@ -25,43 +25,35 @@ export interface ITextEntryJsonApi {
   };
 }
 
-const TextEntryAttributes = types
-  .model('TextEntryAttributes', {
-    body: types.string,
-    subject: types.string,
-    date_updated: types.string,
-    date_created: types.string,
-    reused_count: types.number,
-    is_deleted: types.boolean,
-    tag_count: types.number,
-  })
-  .actions(() => ({}));
-
-const TextEntryRelationshipsUserData = types
-  .model('TextEntryRelationshipsUserData', {
-    id: types.string,
-    type: types.string,
-  })
-  .actions(() => ({}));
-
-const TextEntryRelationshipsUser = types
-  .model('TextEntryRelationshipsUser', {
-    data: TextEntryRelationshipsUserData,
-  })
-  .actions(() => ({}));
-
-const TextEntryRelationships = types
-  .model('TextEntryRelationships', {
-    user: TextEntryRelationshipsUser,
-  })
-  .actions(() => ({}));
-
 export const TextEntryModel = types
   .model('TextEntryJsonApi', {
     id: types.identifier,
     type: types.string,
-    attributes: TextEntryAttributes,
-    relationships: TextEntryRelationships,
+    attributes: types
+      .model('TextEntryAttributes', {
+        body: types.string,
+        subject: types.string,
+        date_updated: types.string,
+        date_created: types.string,
+        reused_count: types.number,
+        is_deleted: types.boolean,
+        tag_count: types.number,
+      })
+      .actions(() => ({})),
+    relationships: types
+      .model('TextEntryRelationships', {
+        user: types
+          .model('TextEntryRelationshipsUser', {
+            data: types
+              .model('TextEntryRelationshipsUserData', {
+                id: types.string,
+                type: types.string,
+              })
+              .actions(() => ({})),
+          })
+          .actions(() => ({})),
+      })
+      .actions(() => ({})),
   })
   .actions(self => ({
     update(object: ITextEntryJsonApi) {
