@@ -65,7 +65,7 @@ export const TagModel = types
   }));
 
 export const TagHelpers = {
-  filterAndSort: filterAndSort,
-  fetch: fetch,
+  filterAndSort,
+  fetch,
   getMostRecentTimeStamp,
 };
