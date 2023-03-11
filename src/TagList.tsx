@@ -8,14 +8,11 @@ import React, {
   useState,
 } from 'react';
 import {activeSearch, appMode, needsScrollingIntoView} from './lib/shared';
-import {useLocation, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import {Instance} from 'mobx-state-tree';
 import List from '@mui/material/List';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
-import {TagModel} from './models/TagModel';
 import TagNew from './TagNew';
 import {autorun} from 'mobx';
 
@@ -38,26 +35,16 @@ export const LeftToRight = styled('div')(() => ({
   direction: 'ltr',
 }));
 
-const TagList = () => {
+interface IProps {
+  tagsFromWrapper: ITagJsonApi[];
+  username: string;
+}
+const TagList = ({tagsFromWrapper, username}: IProps) => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
-  const location = useLocation();
-  const {user} = useParams();
-  const {tag} = useParams();
   const theme = useTheme();
 
-  const [userName, _setUsername] = useState<string | undefined>(undefined);
-  // Used to access the react state from within the listener.
-  const userRef = useRef(user);
-  const setUsername = (data: string | undefined) => {
-    userRef.current = data;
-    _setUsername(data);
-  };
-  useEffect(() => {
-    setUsername(user);
-  }, [location]);
-
-  const [tags, _setTags] = useState<Array<ITagJsonApi>>([]);
+  const [tags, _setTags] = useState<Array<ITagJsonApi>>(tagsFromWrapper);
   // Used to access the react state from within the listener.
   const tagsRef = useRef(tags);
   const setTags = (data: Array<ITagJsonApi>) => {
@@ -88,28 +75,6 @@ const TagList = () => {
   };
 
   const [mouse, setMouse] = useState(initialMouse);
-
-  useEffect(() => {
-    if (userName !== undefined) {
-      appConfig.setCurrentUser(userName);
-      appConfig.fetchTags(userName).then(() => {
-        const array = TagHelpers.filterAndSort(appConfig);
-        if (array.length > 1) {
-          let selected: Instance<typeof TagModel> | undefined = undefined;
-          if (tag) {
-            selected = appConfig.tagsArray.find(c => c.attributes.name === tag);
-          } else {
-            selected = appConfig.tagsArray.find(c => c.id === array[0].id);
-          }
-          if (selected !== undefined) {
-            appConfig.setTagSelectedID(selected.id);
-            navigate(`/${userName}/${selected.attributes.name}`);
-          }
-        }
-        setTags(array);
-      });
-    }
-  }, [appConfig.tagSortOrder, userName]);
 
   useEffect(
     () =>
@@ -228,7 +193,7 @@ const TagList = () => {
           } else if (event.key === 'Enter') {
             appConfig.setAppMode(appMode.entriesList);
             appConfig.setActiveSearch(activeSearch.entries);
-            navigate(`/${userRef.current}/${selected.attributes.name}`);
+            navigate(`/${username}/${selected.attributes.name}`);
           }
         }
       }

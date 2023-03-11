@@ -1,11 +1,11 @@
 import CustomDrawer from './CustomDrawer';
 import React from 'react';
-import TagList from './TagList';
+import TagListWrapper from './TagListWrapper';
 
 const LeftDrawer = function () {
   return (
     <CustomDrawer anchor="left">
-      <TagList />
+      <TagListWrapper />
     </CustomDrawer>
   );
 };
