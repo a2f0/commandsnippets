@@ -45,7 +45,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const theme = useTheme();
 
   const [tags, _setTags] = useState<Array<ITagJsonApi>>(tagsFromWrapper);
-  // Used to access the react state from within the listener.
+  // Used to access the react state from keyListener.
   const tagsRef = useRef(tags);
   const setTags = (data: Array<ITagJsonApi>) => {
     tagsRef.current = data;
@@ -55,7 +55,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const [elRefs, _setElRefs] = useState<Array<React.RefObject<HTMLDivElement>>>(
     []
   );
-  // Used to access the react state from within the listener.
+  // Used to access the react state from keyListener.
   const elRefsRef = useRef(elRefs);
   const setElRefs = (data: Array<React.RefObject<HTMLDivElement>>) => {
     elRefsRef.current = data;
