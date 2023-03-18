@@ -81,14 +81,14 @@ describe('TagList', () => {
       fireEvent.dragStart(tagDragHandle);
       fireEvent.dragEnter(tags[2]);
       fireEvent.dragOver(tags[2]);
-      await new Promise(res => setTimeout(res, 0));
-      fireEvent.drop(tags[3]);
+      fireEvent.drop(tags[2]);
     });
     tags = screen.getAllByRole('tag');
     expect(tags).toHaveLength(4);
     expect(tags[0]).toHaveTextContent('test-tag-2');
     expect(tags[1]).toHaveTextContent('test-tag-3');
-    expect(tags[2]).toHaveTextContent('test-tag-4');
-    expect(tags[3]).toHaveTextContent('test-tag-1');
+    expect(tags[2]).toHaveTextContent('test-tag-1');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
+    expect(reorderTagSpy).toBeCalled();
   });
 });

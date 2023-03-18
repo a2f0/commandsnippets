@@ -58,7 +58,7 @@ interface ITagProps {
   id: string;
   object: ITagJsonApi;
   handleDeleteParent: (object: ITagJsonApiResponseSingle) => void;
-  moveEntry: (id: string, atIndex: number) => void;
+  moveEntry: (dragIndex: number, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
   findEntryByIndex: (id: number) => ITagJsonApi | null;
@@ -138,7 +138,8 @@ const Tag = ({
           return;
         }
 
-        moveEntry(item.id, hoverIndex);
+        const {index} = findEntry(item.id);
+        moveEntry(index, hoverIndex);
         // Note: we're mutating the monitor item here!
         // Generally it's better to avoid mutations,
         // but it's good here for the sake of performance
@@ -244,23 +245,22 @@ const Tag = ({
       const didDrop = monitor.didDrop();
       if (!didDrop) {
         console.info('didDrop Tag moveEntry');
-        moveEntry(droppedId, originalIndex);
+        const {index} = findEntry(droppedId);
+        moveEntry(index, originalIndex);
       } else {
-        console.info('didDrop Tag');
-        console.info(dropResult);
         if (drop_result?.type) {
           if ('type' in drop_result) {
             if (drop_result.type === 'Tag') {
-              // Then it was reordered in the list.
               console.info(`originalIndex: ${originalIndex}`);
               console.info(`findEntryIndex: ${findEntry(id).index}`);
-              if (originalIndex !== findEntry(id).index) {
+              if (originalIndex !== dropResult.index) {
                 console.info(
                   'it moved from index ' +
                     originalIndex +
                     ' to ' +
-                    findEntry(id).index
+                    dropResult.index
                 );
+                // Then it was reordered in the list.
                 const entry = findEntry(id).entry;
                 const entry_below = findEntryByIndex(index + 1);
                 let ordered_top: ITagJsonApi | null;
