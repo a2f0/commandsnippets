@@ -89,6 +89,15 @@ describe('TagList', () => {
     expect(tags[1]).toHaveTextContent('test-tag-3');
     expect(tags[2]).toHaveTextContent('test-tag-1');
     expect(tags[3]).toHaveTextContent('test-tag-4');
-    expect(reorderTagSpy).toBeCalled();
+    expect(reorderTagSpy).toBeCalledWith({
+      data: {
+        attributes: {
+          bottom: '2',
+          top: '1',
+        },
+        relationships: {},
+        type: 'Tag',
+      },
+    });
   });
 });
