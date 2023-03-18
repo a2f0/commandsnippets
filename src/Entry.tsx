@@ -20,6 +20,7 @@ import apiBase from './apiBase';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
+import {tearleadsApi} from './tearleadsApi';
 import {useAppContext} from './AppContext';
 
 const EntryText = styled('div')(() => ({
@@ -85,12 +86,17 @@ const Entry = ({
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
   const [{isDragging}, drag, preview] = useDrag({
-    item: () => ({id, originalIndex, type: ItemTypes.ENTRY}),
+    item: (): DraggableItem => ({
+      id,
+      originalIndex,
+      type: ItemTypes.ENTRY,
+      index,
+    }),
     type: ItemTypes.ENTRY,
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
-    end: (dropResult, monitor) => {
+    end: async (dropResult, monitor) => {
       const drop_result: ITextEntryJsonApi | null = monitor.getDropResult();
       const {id: droppedId, originalIndex} = monitor.getItem();
       const didDrop = monitor.didDrop();
@@ -137,12 +143,10 @@ const Entry = ({
           }
         } else {
           // Then it was reordered in the list.
-          if (originalIndex !== findEntry(id).index) {
+          const {index} = dropResult;
+          if (originalIndex !== index) {
             console.info(
-              'it moved from index ' +
-                originalIndex +
-                ' to ' +
-                findEntry(id).index
+              'it moved from index ' + originalIndex + ' to ' + index
             );
             const entry = findEntry(id).entry;
             const entry_below = findEntryByIndex(index + 1);
@@ -184,26 +188,16 @@ const Entry = ({
                     element.relationships.text_entry.data.id ===
                       ordered_bottom?.id
                 );
-
-              const payload = {
-                data: {
-                  type: 'TagTextEntryThroughModel',
-                  attributes: {
-                    top: throughModelTop?.id,
-                    bottom: throughModelBottom?.id,
-                  },
-                  relationships: {},
-                },
-              };
-              apiBase
-                .post('/tags_entries/reorder', payload, {
-                  withCredentials: true,
-                })
-                .then(() => {})
-                .catch(error => {
-                  console.error(error);
-                })
-                .then(() => {});
+              if (throughModelTop === undefined) {
+                throw new Error('Top must be defined.');
+              }
+              if (throughModelBottom === undefined) {
+                throw new Error('Bottom must be defined.');
+              }
+              await tearleadsApi.reorderEntry(
+                throughModelTop.id,
+                throughModelBottom.id
+              );
             }
           } else {
             console.info("it wasn't moved.");

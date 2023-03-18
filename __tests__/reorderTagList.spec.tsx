@@ -81,6 +81,7 @@ describe('TagList', () => {
       fireEvent.dragStart(tagDragHandle);
       fireEvent.dragEnter(tags[2]);
       fireEvent.dragOver(tags[2]);
+      await new Promise(res => setTimeout(res, 0));
       fireEvent.drop(tags[2]);
     });
     tags = screen.getAllByRole('tag');

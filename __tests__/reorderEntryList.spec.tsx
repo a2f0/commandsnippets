@@ -10,6 +10,7 @@ import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
 import server from './util/msw';
+import {tearleadsApi} from '../src/tearleadsApi';
 import userEvent from '@testing-library/user-event';
 
 beforeAll(() => server.listen());
@@ -18,6 +19,13 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('Entries List', () => {
+  let reorderEntrySpy: jest.SpyInstance;
+  beforeEach(() => {
+    reorderEntrySpy = jest.spyOn(tearleadsApi, 'reorderEntry');
+  });
+  afterEach(() => {
+    reorderEntrySpy.mockRestore();
+  });
   it('Reorders', async () => {
     const user = userEvent.setup();
     expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
@@ -45,6 +53,7 @@ describe('Entries List', () => {
     expect(entryDragHandleContainers).toHaveLength(4);
     await user.pointer({target: entryDragHandleContainers[0]});
     const entryDragHandle = screen.getByRole('entryDragHandle');
+    expect(reorderEntrySpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(entryDragHandle);
       fireEvent.dragEnter(entries[2]);
@@ -52,7 +61,6 @@ describe('Entries List', () => {
       await new Promise(res => setTimeout(res, 0));
       fireEvent.drop(entries[3]);
     });
-
     entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-2-subject');
@@ -63,5 +71,6 @@ describe('Entries List', () => {
     expect(entries[2]).toHaveTextContent('entry-4-body');
     expect(entries[3]).toHaveTextContent('entry-1-subject');
     expect(entries[3]).toHaveTextContent('entry-1-body');
+    expect(reorderEntrySpy).toBeCalledWith('3', '1');
   });
 });
