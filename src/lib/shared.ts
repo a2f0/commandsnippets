@@ -1,6 +1,6 @@
 import {ITagJsonApi} from '../models/TagModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
-import {Theme} from '@mui/material/styles';
+import Theme from '../themeBase';
 
 export enum entrySearchMethod {
   allEntries = 1,
@@ -92,7 +92,7 @@ export function getMostRecentTimeStamp(
 
 export function needsScrollingIntoView(
   element: React.RefObject<HTMLDivElement>,
-  theme: Theme
+  theme: typeof Theme
 ) {
   const rect = element.current?.getBoundingClientRect();
   if (rect !== undefined) {
