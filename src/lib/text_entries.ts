@@ -435,17 +435,15 @@ export function fetchPage({
   >> = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
     cancelToken: source.token,
-  })
-    .then(response => {
-      entries = entries.concat(response.data.data);
-      for (let i = 0; i < response.data.included?.length; i++) {
-        if (!entries.includes(response.data.included[i])) {
-          entries.push(response.data.included[i]);
-        }
+  }).then(response => {
+    entries = entries.concat(response.data.data);
+    for (let i = 0; i < response.data.included?.length; i++) {
+      if (!entries.includes(response.data.included[i])) {
+        entries.push(response.data.included[i]);
       }
-      return entries;
-    })
-    .catch(() => {});
+    }
+    return entries;
+  });
   return f;
 }
 

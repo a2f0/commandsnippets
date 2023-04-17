@@ -101,16 +101,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
               filterAndSortParent();
               appConfig.setEntryNew(null);
             }
-          )
-          .catch(error => {
-            console.error(error);
-          })
-          .then(() => {});
-      })
-      .catch(error => {
-        console.error(error);
-      })
-      .then(() => {});
+          );
+      });
   };
 
   const handleCancel = () => {

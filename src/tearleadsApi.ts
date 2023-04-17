@@ -44,20 +44,13 @@ class TearleadsApi {
         relationships: {},
       },
     };
-    try {
-      await apiBase
-        .post('/tags_entries/reorder', payload, {
-          withCredentials: true,
-        })
-        .then(() => {})
-        .catch(error => {
-          console.error(error);
-        })
-        .then(() => {});
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      throw new Error(error);
-    }
+    await apiBase
+      .post('/tags_entries/reorder', payload, {
+        withCredentials: true,
+      })
+      .catch(error => {
+        console.error(error);
+      });
   }
 }
 

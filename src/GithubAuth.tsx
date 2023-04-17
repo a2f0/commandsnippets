@@ -52,8 +52,7 @@ const GithubAuth = () => {
         })
         .catch(() => {
           appConfig.setLoggedInUser(null);
-        })
-        .then(() => {});
+        });
     }
   }, []);
 

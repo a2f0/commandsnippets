@@ -29,9 +29,7 @@ const Logout = function ({onClose}: IProps) {
         appConfig.setLoggedInUser(null);
         onClose();
         return response;
-      })
-      .catch(() => {})
-      .then(() => {});
+      });
   };
 
   return (

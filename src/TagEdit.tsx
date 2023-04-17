@@ -57,8 +57,7 @@ const TagEdit = ({
       })
       .catch(error => {
         console.error(error);
-      })
-      .then(() => {});
+      });
   };
 
   const handleCancel = () => {

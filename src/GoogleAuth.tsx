@@ -71,8 +71,7 @@ const GoogleAuth = () => {
         })
         .catch(() => {
           appConfig.setLoggedInUser(null);
-        })
-        .then(() => {});
+        });
     }
   }, []);
 

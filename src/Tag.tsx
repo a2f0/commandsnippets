@@ -211,8 +211,7 @@ const Tag = ({
       })
       .catch(error => {
         console.error(error);
-      })
-      .then(() => {});
+      });
   };
 
   const handleBeginEdit = () => {
