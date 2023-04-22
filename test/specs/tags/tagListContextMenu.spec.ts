@@ -21,7 +21,7 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tagListContextMenu).toBeDisplayed();
     await browser.keys('Escape');
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
-    await expect(mockEntries).toBeRequestedTimes(0);
-    await expect(mockTags).toBeRequestedTimes(1);
+    expect(mockEntries).toBeRequestedTimes(0);
+    expect(mockTags).toBeRequestedTimes(1);
   });
 });

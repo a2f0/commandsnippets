@@ -29,7 +29,7 @@ describe('Logged Out User Behavior', () => {
     mockLogoutOptionsResponse.respond({fetchResponse: false});
     mockLogoutResponse.respond(logoutResponse, {fetchResponse: false});
     await BasePage.open('');
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
@@ -46,12 +46,12 @@ describe('Logged Out User Behavior', () => {
     await (await BasePage.fileMenuButton).waitAndLeftClick();
     await expect(BasePage.fileMenu).toBeDisplayed();
     await expect(BasePage.fileMenuLogout).toBeDisplayed();
-    await expect(mockLogoutResponse).toBeRequestedTimes(0);
+    expect(mockLogoutResponse).toBeRequestedTimes(0);
     await (await BasePage.fileMenuLogout).waitAndLeftClick();
-    await expect(mockLogoutResponse).toBeRequestedTimes(1);
+    expect(mockLogoutResponse).toBeRequestedTimes(1);
 
     // Confirm state after logout
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.googleAuthButton).toBeExisting();
     await expect(BasePage.googleAuthButton).toBeDisplayed();
     await expect(BasePage.githubAuthButton).toBeExisting();

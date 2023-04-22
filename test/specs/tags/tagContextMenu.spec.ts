@@ -89,12 +89,12 @@ describe('Tag Context Menu Behavior', () => {
     await expect(
       BasePage.tagContextMenu1DeleteTagDialogCancelButton
     ).toBeDisplayed();
-    await expect(mockTagDelete).toBeRequestedTimes(0);
+    expect(mockTagDelete).toBeRequestedTimes(0);
     await (
       await BasePage.tagContextMenu1DeleteTagDialogDeleteButton
     ).waitAndLeftClick();
     await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeDisplayed();
-    await expect(mockTagDelete).toBeRequestedTimes(1);
+    expect(mockTagDelete).toBeRequestedTimes(1);
     await expect(BasePage.tags).toBeElementsArrayOfSize(3);
   });
 });

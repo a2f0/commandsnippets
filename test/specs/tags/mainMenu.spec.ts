@@ -42,7 +42,7 @@ describe('Tag Main Menu Behavior', () => {
     let backgroundColor = await wrapper.getCSSProperty('background-color');
     assert.strictEqual(backgroundColor.value, 'rgba(72,72,72,1)');
 
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
     // initial state of order by order
     await browser.waitUntil(
@@ -129,6 +129,6 @@ describe('Tag Main Menu Behavior', () => {
         timeoutMsg: 'expected tag 1 to still be selected',
       }
     );
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
   });
 });

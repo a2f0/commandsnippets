@@ -54,9 +54,9 @@ describe('Tag List Context Menu Behavior', () => {
     browser.keys('test-3');
     expect(BasePage.tagNewBottomTextField).toHaveValue('test-3');
     await expect(BasePage.tags).toBeElementsArrayOfSize(0);
-    await expect(mockTagPostResponse).toBeRequestedTimes(0);
+    expect(mockTagPostResponse).toBeRequestedTimes(0);
     await (await BasePage.tagNewBottomSave).waitAndLeftClick();
-    await expect(mockTagPostResponse).toBeRequestedTimes(1);
+    expect(mockTagPostResponse).toBeRequestedTimes(1);
     await expect(BasePage.tags).toBeElementsArrayOfSize(1);
     await expect(BasePage.tagNewBottom).not.toBeDisplayed();
   });
