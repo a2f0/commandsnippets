@@ -165,3 +165,13 @@ resource "cloudflare_record" "tearleads" {
   ttl     = 1
   proxied = true
 }
+
+resource "cloudflare_record" "app" {
+  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  name    = "app.tearleads.com"
+  # Vercel
+  value   = "76.76.21.21"
+  type    = "A"
+  ttl     = 1
+  proxied = true
+}
