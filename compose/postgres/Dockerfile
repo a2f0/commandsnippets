@@ -1,7 +1,13 @@
 FROM postgres:15
 
-RUN apt-get update && apt-get --assume-yes install python3-pip curl && \
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+
+RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && \
+    apt-get update && apt-get --assume-yes install python3-pip curl && \
     apt install awscli --assume-yes && \
+    locale-gen en_US.utf8 && update-locale && \
     curl https://raw.githubusercontent.com/a2f0/pg-container-utils/main/bin/backup.sh > /bin/backup && \
     chmod 500 /bin/backup && \
     curl https://raw.githubusercontent.com/a2f0/pg-container-utils/main/bin/list-backups.sh > /bin/list-backups && \
