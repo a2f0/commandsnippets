@@ -57,6 +57,8 @@ Run a specific test
 
 ## Administrative
 
+### General
+
 Take a backup
 
     docker-compose -f container-registry.yaml run postgres backup
@@ -69,13 +71,21 @@ List users
 
     docker-compose run backend python manage.py list_users
 
-# Upgrading the Postgres Docker Container
+### Upgrading the Postgres Docker Container
 
 1. Run `./refresh.sh` to obtain the most recent backup.
-2. Update [compose/postgres/Dockerfile](compose/postgres/Dockerfile) to the new image.
+2. Update the backend's [Dockerfile](compose/postgres/Dockerfile) to the new image.
 3. Update the `postgresXX_data_dev` volume in `docker-compose.yaml` to the new version.
 4. Start the compose with `docker-compose up`.  This should show a new database being created in the `postgres` container.
 5. Kill the backend container with `docker-compose kill backend` to free up the database connections.
 6. List backups with `docker-compose run postgres list-backups`
 7. Do a restore with `docker-compose run postgres restore backup-pg_dump-Fc`
 8. Update the data volume in `staging.yaml` and `container-registry.yaml`.
+
+### Upgrading the python version
+
+1. Update `.python-version`
+2. Update the version used in the Dockerfiles [Dockerfile.dev](compose/django/Dockerfile.dev), [Dockerfile.prod](compose/django/Dockerfile.prod)
+3. Update the version used by Github actions in `main.yml`
+4. Run `docker-compose build --no-cache` to do a clean container build.
+5. Run unit and integration tests to make sure they pass.
