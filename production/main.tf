@@ -95,7 +95,7 @@ resource "aws_default_route_table" "route-table" {
 }
 
 resource "aws_instance" "ec2" {
-  ami                    = "ami-068663a3c619dd892" # focal 20.04 LTS
+  ami                    = "ami-02675d30b814d1daa" # 22.04 LTS https://cloud-images.ubuntu.com/locator/ec2/ 
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.aws-subnet.id
   vpc_security_group_ids = [aws_security_group.security-group.id]

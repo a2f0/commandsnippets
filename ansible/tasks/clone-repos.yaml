@@ -13,11 +13,3 @@
     accept_hostkey=yes
     force=no
     recursive=no
-
-- name: Clone frontend repository
-  git:
-    repo=github-frontend.com:tearleads/tearleads-frontend.git
-    dest="/home/{{ ansible_user }}/tearleads-frontend"
-    accept_hostkey=yes
-    force=no
-    recursive=no
