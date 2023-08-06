@@ -9,7 +9,7 @@ import React from 'react';
 import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
-import {jest} from '@jest/globals'; // eslint-disable-line node/no-extraneous-import
+import {jest} from '@jest/globals';
 import server from './util/msw';
 import {tearleadsApi} from '../src/tearleadsApi';
 import userEvent from '@testing-library/user-event';

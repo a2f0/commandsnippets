@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -30,6 +30,7 @@
   "author": "Dan Sullivan",
   "devDependencies": {
     "@a2f0/check-for-unpinned-dependencies": "1.0.4",
+    "@jest/globals": "29.6.2",
     "@jest/types": "29.6.1",
     "@testing-library/jest-dom": "5.17.0",
     "@testing-library/react": "14.0.0",
