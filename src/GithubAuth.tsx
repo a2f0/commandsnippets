@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import GitHubIcon from '@mui/icons-material/GitHub';
+import {GitHub} from '@mui/icons-material';
 import LoginButton from './styled/LoginButton';
 import apiBase from './apiBase';
 import {observer} from 'mobx-react';
@@ -70,7 +70,7 @@ const GithubAuth = () => {
           id="githubAuthButton"
           onClick={handleGitHubClick}
           role="githubAuth"
-          startIcon={<GitHubIcon />}
+          startIcon={<GitHub />}
         >
           Login with GitHub
         </LoginButton>

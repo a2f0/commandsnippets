@@ -1,6 +1,10 @@
-import {Configuration, ProvidePlugin} from 'webpack';
+import webpack, {Configuration} from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import {fileURLToPath} from 'url';
 import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const config: Configuration = {
   entry: './src/index.tsx',
@@ -26,8 +30,6 @@ const config: Configuration = {
       url: false,
       http: false,
       https: false,
-      // eslint-disable-next-line node/no-unpublished-require
-      stream: require.resolve('stream-browserify'),
       assert: false,
       zlib: false,
     },
@@ -37,7 +39,7 @@ const config: Configuration = {
       template: path.resolve('./index.html'),
       favicon: './public/favicon.svg',
     }),
-    new ProvidePlugin({
+    new webpack.ProvidePlugin({
       // https://github.com/browserify/node-util/issues/57
       process: 'process',
     }),

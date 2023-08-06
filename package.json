@@ -1,21 +1,23 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.3.181",
+  "version": "0.4.1",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "engines": {
     "node": ">=16.15.0 <17"
   },
   "scripts": {
-    "server": "webpack serve --mode development --history-api-fallback",
-    "server-test": "webpack serve --port 8081 --mode development --history-api-fallback",
-    "test": "./node_modules/.bin/wdio test/wdio.shared.conf.ts",
-    "test-headless": "./node_modules/.bin/wdio test/wdio.headless.conf.ts",
+    "server": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm'  webpack serve --mode development --history-api-fallback",
+    "server-test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack serve --port 8081 --mode development --history-api-fallback",
+    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.shared.conf.ts",
+    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.headless.conf.ts",
     "ci": "start-server-and-test server-test http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test server-test http-get://localhost:8081 test-headless",
+    "unit": "NODE_OPTIONS=--experimental-vm-modules npx jest",
     "format": "prettier --write \"src/**/*.js\"",
     "eslint-fix": "eslint --fix \"src/**/*.js\"",
-    "build": "webpack --mode production",
+    "build": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack --mode production",
     "lint": "gts lint",
     "clean": "gts clean",
     "compile": "tsc",
@@ -28,6 +30,7 @@
   "author": "Dan Sullivan",
   "devDependencies": {
     "@a2f0/check-for-unpinned-dependencies": "1.0.4",
+    "@jest/globals": "29.6.2",
     "@jest/types": "29.6.1",
     "@testing-library/jest-dom": "5.17.0",
     "@testing-library/react": "14.0.0",

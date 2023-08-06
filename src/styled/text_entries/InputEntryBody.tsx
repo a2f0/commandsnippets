@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import TextareaAutosize from '@mui/material/TextareaAutosize';
+import {TextareaAutosize} from '@mui/material';
 import {Theme} from '@mui/material/styles';
 import {activeEntryEditField} from '../../../src/lib/shared';
 import {observer} from 'mobx-react';

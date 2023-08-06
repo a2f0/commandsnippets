@@ -1,4 +1,4 @@
-import AppBar from '@mui/material/AppBar';
+import {AppBar} from '@mui/material';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {Grid} from '@mui/material';

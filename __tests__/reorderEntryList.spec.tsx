@@ -9,6 +9,7 @@ import React from 'react';
 import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
+import {jest} from '@jest/globals';
 import server from './util/msw';
 import {tearleadsApi} from '../src/tearleadsApi';
 import userEvent from '@testing-library/user-event';
@@ -19,7 +20,7 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('Entries List', () => {
-  let reorderEntrySpy: jest.SpyInstance;
+  let reorderEntrySpy: jest.Spied<typeof tearleadsApi.reorderEntry>;
   beforeEach(() => {
     reorderEntrySpy = jest.spyOn(tearleadsApi, 'reorderEntry');
   });

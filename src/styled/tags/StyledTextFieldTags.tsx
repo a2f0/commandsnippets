@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect} from 'react';
-import TextField from '@mui/material/TextField';
+import {TextField} from '@mui/material';
 import {activeSearch} from '../../lib/shared';
 import {appMode} from '../../lib/shared';
 import {observer} from 'mobx-react';

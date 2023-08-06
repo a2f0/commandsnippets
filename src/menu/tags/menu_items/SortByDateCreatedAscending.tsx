@@ -1,5 +1,5 @@
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import {ArrowUpward} from '@mui/icons-material';
+import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
@@ -23,7 +23,7 @@ const SortByDateCreatedAscending = function ({onClose}: IProps) {
       <ListItemIcon>
         {appConfig.tagSortOrder === 'date_created' && <StyledCheckIcon />}
       </ListItemIcon>
-      Sort by Date Created <ArrowUpwardIcon fontSize="small" />
+      Sort by Date Created <ArrowUpward fontSize="small" />
     </StyledMenuItem>
   );
 };

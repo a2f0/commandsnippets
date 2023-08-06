@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import {appMode, needsScrollingIntoView} from './lib/shared';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
-import Box from '@mui/material/Box';
+import {Box} from '@mui/material';
 import {CancelTokenSource} from 'axios';
 import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';

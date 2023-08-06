@@ -1,5 +1,5 @@
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import {ArrowDownward} from '@mui/icons-material';
+import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
@@ -23,7 +23,7 @@ const SortByNameDescending = function ({onClose}: IProps) {
       <ListItemIcon>
         {appConfig.tagSortOrder === 'name' && <StyledCheckIcon />}
       </ListItemIcon>
-      Sort by Tag Name <ArrowDownwardIcon fontSize="small" />
+      Sort by Tag Name <ArrowDownward fontSize="small" />
     </StyledMenuItem>
   );
 };

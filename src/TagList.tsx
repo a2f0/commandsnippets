@@ -10,7 +10,7 @@ import React, {
 import {activeSearch, appMode, needsScrollingIntoView} from './lib/shared';
 import {IMouse} from './Entry';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import List from '@mui/material/List';
+import {List} from '@mui/material';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';

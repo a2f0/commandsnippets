@@ -1,5 +1,5 @@
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import {ArrowUpward} from '@mui/icons-material';
+import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
@@ -23,7 +23,7 @@ const SortEntryCountAscending = function ({onClose}: IProps) {
       <ListItemIcon>
         {appConfig.tagSortOrder === 'entry_count' && <StyledCheckIcon />}
       </ListItemIcon>
-      Sort by Number of Tagged Entries <ArrowUpwardIcon fontSize="small" />
+      Sort by Number of Tagged Entries <ArrowUpward fontSize="small" />
     </StyledMenuItem>
   );
 };

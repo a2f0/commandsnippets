@@ -1,5 +1,5 @@
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import {ArrowUpward} from '@mui/icons-material';
+import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
@@ -26,7 +26,7 @@ const SortByBodyAscending = function ({onClose}: IProps) {
           <StyledCheckIcon />
         )}
       </ListItemIcon>
-      Sort by Body <ArrowUpwardIcon fontSize="small" />
+      Sort by Body <ArrowUpward fontSize="small" />
     </StyledMenuItem>
   );
 };

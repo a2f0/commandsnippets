@@ -2,7 +2,7 @@ import {appMode, getSelection} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
-import CheckIcon from '@mui/icons-material/Check';
+import {Check} from '@mui/icons-material';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
 import type {DraggableItem} from './Tag';
@@ -11,7 +11,7 @@ import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
 import EntrySubject from './styled/text_entries/EntrySubject';
-import FileCopySharpIcon from '@mui/icons-material/FileCopySharp';
+import {FileCopySharp} from '@mui/icons-material';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
@@ -442,7 +442,7 @@ const Entry = ({
                     display: showCopyIcon && !showCheckIcon ? 'block' : 'none',
                   }}
                 >
-                  <FileCopySharpIcon fontSize="inherit" />
+                  <FileCopySharp fontSize="inherit" />
                 </CopyIndicator>
                 <CheckIndicator
                   style={{
@@ -450,7 +450,7 @@ const Entry = ({
                     display: showCheckIcon ? 'block' : 'none',
                   }}
                 >
-                  <CheckIcon fontSize="inherit" />
+                  <Check fontSize="inherit" />
                 </CheckIndicator>
               </DragHandleContainer>
               <ReuseCount />

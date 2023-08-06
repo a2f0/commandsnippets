@@ -1,5 +1,5 @@
 import React from 'react';
-import Toolbar from '@mui/material/Toolbar';
+import {Toolbar} from '@mui/material';
 
 interface IProps {
   children?: React.ReactNode;

@@ -1,4 +1,4 @@
-import GlobalStyles from '@mui/material/GlobalStyles';
+import {GlobalStyles} from '@mui/material';
 import React from 'react';
 import {observer} from 'mobx-react';
 import {useTheme} from '@mui/material/styles';
