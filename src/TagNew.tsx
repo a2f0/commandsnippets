@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeTagEditField, appMode} from './lib/shared';
 import {AxiosResponse} from 'axios';
-import Grid from '@mui/material/Grid';
+import {Grid} from '@mui/material';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';

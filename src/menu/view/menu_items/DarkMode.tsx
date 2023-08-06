@@ -1,4 +1,4 @@
-import ListItemIcon from '@mui/material/ListItemIcon';
+import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';

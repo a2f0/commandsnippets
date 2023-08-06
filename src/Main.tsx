@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import AppBar from '@mui/material/AppBar';
+import {AppBar} from '@mui/material';
 import EntryList from './EntryList';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';

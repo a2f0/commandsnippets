@@ -1,6 +1,16 @@
 import {BasePage} from './pageobjects/base';
 import {defaultState} from '../src/lib/shared';
 
+/* eslint-disable @typescript-eslint/no-namespace */
+declare global {
+  namespace WebdriverIO {
+    interface Element {
+      waitAndRightClick: (this: WebdriverIO.Element) => Promise<void>;
+      waitAndLeftClick: (this: WebdriverIO.Element) => Promise<void>;
+    }
+  }
+}
+
 export const config: WebdriverIO.Config = {
   runner: 'local',
   path: '/',
@@ -31,7 +41,8 @@ export const config: WebdriverIO.Config = {
     ui: 'bdd',
     timeout: 60000,
   },
-  before: async (capabilities, specs, browser) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  before: async (capabilities: typeof browser, specs, browser: any) => {
     await BasePage.open('');
     const appState = {
       ...defaultState,

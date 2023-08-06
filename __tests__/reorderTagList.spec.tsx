@@ -10,6 +10,7 @@ import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
+import {jest} from '@jest/globals'; // eslint-disable-line node/no-extraneous-import
 import {rest} from 'msw';
 import {setupServer} from 'msw/node';
 import tagsResponse from '../test/mocks/tags/tagsResponse';
@@ -46,7 +47,7 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('TagList', () => {
-  let reorderTagSpy: jest.SpyInstance;
+  let reorderTagSpy: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   beforeEach(() => {
     reorderTagSpy = jest.spyOn(tearleadsApi, 'reorderTag');
   });

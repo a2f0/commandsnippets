@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import GoogleIcon from '@mui/icons-material/Google';
+import {Google} from '@mui/icons-material';
 import LoginButton from './styled/LoginButton';
 import apiBase from './apiBase';
 import {observer} from 'mobx-react';
@@ -94,7 +94,7 @@ const GoogleAuth = () => {
           id="googleAuthButton"
           role="googleAuth"
           onClick={handleGitHubClick}
-          startIcon={<GoogleIcon />}
+          startIcon={<Google />}
         >
           Login with Google
         </LoginButton>

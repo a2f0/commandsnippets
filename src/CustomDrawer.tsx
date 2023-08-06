@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Drawer, {DrawerProps} from '@mui/material/Drawer';
+import {Drawer, DrawerProps} from '@mui/material';
 
 const CustomDrawer = function ({anchor, children}: DrawerProps) {
   return (

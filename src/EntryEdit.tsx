@@ -1,8 +1,8 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {AxiosResponse} from 'axios';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import {Box} from '@mui/material';
+import {Button} from '@mui/material';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';

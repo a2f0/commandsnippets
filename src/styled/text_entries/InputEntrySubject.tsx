@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import TextField from '@mui/material/TextField';
+import {TextField} from '@mui/material';
 import {Theme} from '@mui/material/styles';
 import {activeEntryEditField} from '../../../src/lib/shared';
 import {observer} from 'mobx-react';

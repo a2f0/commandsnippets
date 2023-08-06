@@ -29,7 +29,7 @@ jobs:
         run: |
           pip install pre-commit
           pre-commit run --all-files
-      - run: npx jest
+      - run: npm run unit
       - uses: browser-actions/setup-chrome@latest
         name: Setup Chrome
         with:

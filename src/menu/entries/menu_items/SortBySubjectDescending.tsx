@@ -1,5 +1,5 @@
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import {ArrowDownward} from '@mui/icons-material';
+import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
@@ -26,7 +26,7 @@ const SortByUserDefinedOrder = function ({onClose}: IProps) {
           <StyledCheckIcon />
         )}
       </ListItemIcon>
-      Sort by Subject <ArrowDownwardIcon fontSize="small" />
+      Sort by Subject <ArrowDownward fontSize="small" />
     </StyledMenuItem>
   );
 };

@@ -1,5 +1,5 @@
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import {ArrowUpward} from '@mui/icons-material';
+import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
@@ -24,7 +24,7 @@ const SortByDateCreatedAscending = function ({onClose}: IProps) {
         {appConfig.tagSortOrder === 'date_last_used' && <StyledCheckIcon />}
       </ListItemIcon>
       Sort by Tag recently used
-      <ArrowUpwardIcon fontSize="small" />
+      <ArrowUpward fontSize="small" />
     </StyledMenuItem>
   );
 };

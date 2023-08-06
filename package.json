@@ -3,16 +3,18 @@
   "version": "0.3.181",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "engines": {
     "node": ">=16.15.0 <17"
   },
   "scripts": {
-    "server": "webpack serve --mode development --history-api-fallback",
-    "server-test": "webpack serve --port 8081 --mode development --history-api-fallback",
-    "test": "./node_modules/.bin/wdio test/wdio.shared.conf.ts",
-    "test-headless": "./node_modules/.bin/wdio test/wdio.headless.conf.ts",
+    "server": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm'  webpack serve --mode development --history-api-fallback",
+    "server-test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' webpack serve --port 8081 --mode development --history-api-fallback",
+    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.shared.conf.ts",
+    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.headless.conf.ts",
     "ci": "start-server-and-test server-test http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test server-test http-get://localhost:8081 test-headless",
+    "unit": "NODE_OPTIONS=--experimental-vm-modules npx jest",
     "format": "prettier --write \"src/**/*.js\"",
     "eslint-fix": "eslint --fix \"src/**/*.js\"",
     "build": "webpack --mode production",
