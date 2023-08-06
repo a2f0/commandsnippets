@@ -47,7 +47,7 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('TagList', () => {
-  let reorderTagSpy: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let reorderTagSpy: jest.Spied<typeof tearleadsApi.reorderTag>;
   beforeEach(() => {
     reorderTagSpy = jest.spyOn(tearleadsApi, 'reorderTag');
   });

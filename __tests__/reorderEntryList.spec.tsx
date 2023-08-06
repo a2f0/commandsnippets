@@ -20,7 +20,7 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('Entries List', () => {
-  let reorderEntrySpy: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let reorderEntrySpy: jest.Spied<typeof tearleadsApi.reorderEntry>;
   beforeEach(() => {
     reorderEntrySpy = jest.spyOn(tearleadsApi, 'reorderEntry');
   });
