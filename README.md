@@ -12,20 +12,20 @@ npm install
 npm run server
 ```
 
-## Coding Standards
+## Wiki
 
-1. Use camel case for element IDs, i.e. `id=tagsEntriesContextMenu1Untag`
+Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information.
 
 ## Testing
 
-Start the server and run tests
+Start the server and run tests in a single command.
 
 ```shell
 npm run ci
 npm run ci-headless
 ```
 
-Start the testing webpack server (on different port than normal development server) and run tests manually.
+Start the testing webpack server (on different port than normal development server), and then run tests manually in a separate command.
 
 ```shell
 npm run server-test
@@ -44,6 +44,7 @@ npx wdio test/wdio.shared.conf.ts --spec=./specs/tags/search
 Run jest tests
 
 ```shell
-npx jest
-npx jest --watch
+npm run unit
+npm run unit --  --watch
+npm run unit -- __tests__/reorderEntryList.spec.tsx
 ```
