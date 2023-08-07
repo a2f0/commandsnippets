@@ -7,11 +7,9 @@ import {StyledEngineProvider} from '@mui/material/styles';
 import Theme from './Theme';
 import ThemedGlobalStyle from './styled/layout/ThemedGlobalStyles';
 import {observer} from 'mobx-react';
-import packageJson from '../package.json';
 
 const App = React.memo(
   observer(() => {
-    console.info(`v${packageJson.version}`);
     return (
       <StyledEngineProvider injectFirst>
         <Theme>

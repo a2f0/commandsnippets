@@ -5,6 +5,7 @@ import {DialogContent} from '@mui/material';
 import {DialogContentText} from '@mui/material';
 import {DialogTitle} from '@mui/material';
 import React from 'react';
+import packageJson from '../../../../package.json';
 
 interface IProps {
   dialogOpen: boolean;
@@ -15,6 +16,8 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
   return (
     <Dialog
       id="HelpMenuAboutDialog"
+      fullWidth={true}
+      maxWidth="sm"
       open={dialogOpen}
       onClose={closeDialog}
       aria-labelledby="alert-dialog-title"
@@ -22,7 +25,9 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
     >
       <DialogTitle>About Tearleads</DialogTitle>
       <DialogContent>
-        <DialogContentText></DialogContentText>
+        <DialogContentText color="secondary">
+          v{packageJson.version}
+        </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button
