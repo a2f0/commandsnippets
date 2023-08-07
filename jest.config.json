@@ -1,0 +1,11 @@
+{
+  "extensionsToTreatAsEsm": [".ts", ".tsx"],
+  "testEnvironment": "jsdom",
+  "testMatch": ["**/*.spec.tsx"],
+  "testEnvironmentOptions": {
+    "url": "http://localhost:8081/"
+  },
+  "transform": {
+    "^.+\\.[tj]sx?$": "@swc/jest"
+  }
+}

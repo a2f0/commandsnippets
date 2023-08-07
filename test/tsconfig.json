@@ -2,10 +2,8 @@
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "composite": true,
-    "outDir": "./.ts-out",
     "types": ["@wdio/globals/types", "@wdio/mocha-framework"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["./.ts-out"],
-  "references": [{"path": ".."}]
+  "references": [{"path": "../src"}]
 }
