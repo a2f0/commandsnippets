@@ -2,9 +2,7 @@
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "composite": true,
-    "allowJs": true,
-    "types": ["jest", "@testing-library/jest-dom"],
-    "outDir": "./.ts-out"
+    "types": ["jest", "@testing-library/jest-dom"]
   },
-  "references": [{"path": ".."}, {"path": "../test"}]
+  "references": [{"path": "../src"}, {"path": "../test"}]
 }

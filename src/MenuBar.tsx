@@ -1,4 +1,6 @@
 import {Box} from '@mui/material';
+import DebugMenu from './menu/debug/DebugMenu';
+import DebugMenuButton from './menu/debug/DebugMenuButton';
 import EntriesMenu from './menu/entries/EntriesMenu';
 import EntriesMenuButton from './menu/entries/EntriesMenuButton';
 import {Fade} from '@mui/material';
@@ -16,6 +18,7 @@ import TagsMenuButton from './menu/tags/TagsMenuButton';
 import {Theme} from '@mui/material/styles';
 import ViewMenu from './menu/view/ViewMenu';
 import ViewMenuButton from './menu/view/ViewMenuButton';
+import {environment} from './lib/environment';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
@@ -73,6 +76,8 @@ const MenuBar = () => {
     React.useState<null | HTMLElement>(null);
   const [tagsMenuAnchorEl, setTagsMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
+  const [debugMenuAnchorEl, setDebugMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
   const [helpMenuAnchorEl, setHelpMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
 
@@ -100,6 +105,10 @@ const MenuBar = () => {
     setEntriesMenuAnchorEl(event.currentTarget);
   };
 
+  const handleDebugMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setDebugMenuAnchorEl(event.currentTarget);
+  };
+
   const handleHelpMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setHelpMenuAnchorEl(event.currentTarget);
   };
@@ -114,6 +123,10 @@ const MenuBar = () => {
 
   const handleEntriesMenuClose = () => {
     setEntriesMenuAnchorEl(null);
+  };
+
+  const handleDebugMenuClose = () => {
+    setDebugMenuAnchorEl(null);
   };
 
   const handleHelpMenuClose = () => {
@@ -136,6 +149,9 @@ const MenuBar = () => {
         <ViewMenuButton onClick={handleViewMenuClick} />
         <TagsMenuButton onClick={handleTagsMenuClick} />
         <EntriesMenuButton onClick={handleEntriesMenuClick} />
+        {environment !== 'production' && (
+          <DebugMenuButton onClick={handleDebugMenuClick} />
+        )}
         <HelpMenuButton onClick={handleHelpMenuClick} />
       </Aligner>
       <Grid container justifyContent="flex-end">
@@ -149,6 +165,7 @@ const MenuBar = () => {
         onClose={handleEntriesMenuClose}
         anchorEl={entriesMenuAnchorEl}
       />
+      <DebugMenu onClose={handleDebugMenuClose} anchorEl={debugMenuAnchorEl} />
       <HelpMenu onClose={handleHelpMenuClose} anchorEl={helpMenuAnchorEl} />
     </>
   );
