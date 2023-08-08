@@ -19,7 +19,7 @@ const config: Configuration = {
     rules: [
       {
         test: /\.(ts|tsx)$/,
-        use: 'ts-loader',
+        use: 'swc-loader',
         exclude: /node_modules/,
       },
     ],
