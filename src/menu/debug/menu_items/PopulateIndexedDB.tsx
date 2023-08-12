@@ -1,16 +1,21 @@
 import React from 'react';
 import StyledMenuItem from '../../../StyledMenuItem';
+import {fetchAllEntriesForUser} from '../../../lib/text_entries';
+import {useParams} from 'react-router-dom';
 
 interface IProps {
   onClose: () => void;
 }
 
-const SortByUserDefinedOrder = function ({onClose}: IProps) {
+const PopulateIndexedDB = function ({onClose}: IProps) {
+  const {user} = useParams();
+
   return (
     <StyledMenuItem
       id="debug-menu-populate-indexed-db"
       key="Populate IndexedDB"
       onClick={() => {
+        fetchAllEntriesForUser(user);
         onClose();
       }}
     >
@@ -19,4 +24,4 @@ const SortByUserDefinedOrder = function ({onClose}: IProps) {
   );
 };
 
-export default React.memo(SortByUserDefinedOrder);
+export default React.memo(PopulateIndexedDB);

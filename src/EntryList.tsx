@@ -20,6 +20,8 @@ import ItemTypes from './ItemTypes';
 import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
 import axios from 'axios';
+import {environment} from './lib/environment';
+import {fetchAllEntriesForUser} from './lib/text_entries';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
@@ -38,6 +40,10 @@ const EntryList = () => {
   const theme: Theme = useTheme();
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
+
+  if (environment === 'development') {
+    fetchAllEntriesForUser(user);
+  }
 
   // Used to access the react state from within the listener.
   const [entries, _setEntries] = useState<Array<ITextEntryJsonApi>>([]);
