@@ -7,5 +7,5 @@ factory_boy==3.2.1
 httpretty==1.1.4
 isort[requirements]==5.12.0     # this should match .pre-commit-config.yamml
 pre-commit==3.3.3
-pur==7.1.0                      # for checking out of date dependencies
+pur==7.1.1                      # for checking out of date dependencies
 safety==2.3.5
