@@ -108,6 +108,13 @@ class TestTextEntriesApi(BaseTestCase):
             str(entry1.user.date_updated.isoformat()),
         )
 
+    def test_no_filter(self):
+        response = self.user1_api_client.get("/api/v1/entries")
+        json_response = response.json()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotEqual(len(json_response["data"][0]), 0)
+
     def test_bad_filter(self):
         # invalid filter
         response = self.user1_api_client.get("/api/v1/entries?filter[bad]=1")
