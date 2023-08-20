@@ -1,7 +1,7 @@
 {
   "extensionsToTreatAsEsm": [".ts", ".tsx"],
   "testEnvironment": "jsdom",
-  "testMatch": ["**/*.spec.tsx"],
+  "testMatch": ["**/__tests__/**/*.spec.tsx", "**/__tests__/**/*.spec.ts"],
   "testEnvironmentOptions": {
     "url": "http://localhost:8081/"
   },
