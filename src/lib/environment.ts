@@ -2,7 +2,10 @@ let environment: string;
 
 if (window.location.hostname === 'staging.tearleads.com') {
   environment = 'staging';
-} else if (window.location.hostname === 'tearleads.com') {
+} else if (
+  window.location.hostname === 'tearleads.com' ||
+  window.location.hostname === 'app.tearleads.com'
+) {
   environment = 'production';
 } else if (
   window.location.hostname === 'localhost' &&
