@@ -5,7 +5,9 @@ import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughMod
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {IUserJsonApi} from '../models/UserModel';
 import type {TStore} from '../AppStateStore';
+import {TearleadsDexie} from './db/dexie';
 import {Theme} from '@mui/material/styles';
+import {convertISO8601ToUnixTime} from './util/dateTime';
 
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
@@ -464,4 +466,49 @@ export function needsScrollingIntoView(
     }
   }
   return false;
+}
+
+function isAUser(
+  obj:
+    | ITextEntryJsonApi
+    | ITagTextEntryThroughModelJsonApi
+    | IUserJsonApi
+    | ITagJsonApi
+): obj is IUserJsonApi {
+  return obj.type === 'User';
+}
+
+function isATag(
+  obj:
+    | ITextEntryJsonApi
+    | ITagTextEntryThroughModelJsonApi
+    | IUserJsonApi
+    | ITagJsonApi
+): obj is ITagJsonApi {
+  return obj.type === 'Tag';
+}
+
+export async function fetchAllEntriesForUser(username: string | undefined) {
+  const db = new TearleadsDexie();
+  if (username === undefined) {
+    console.info('Cannot fetch all entried for undefined user.');
+  } else {
+    const entries = await fetch([], username, null, 13, null, null);
+    for (const entry of entries) {
+      const updated = convertISO8601ToUnixTime(entry.attributes.date_updated);
+      if (isAUser(entry)) {
+        await db.users.put({
+          id: entry.id,
+          username: entry.attributes.username,
+          updated,
+        });
+      } else if (isATag(entry)) {
+        await db.tags.put({
+          id: entry.id,
+          name: entry.attributes.name,
+          updated,
+        });
+      }
+    }
+  }
 }
