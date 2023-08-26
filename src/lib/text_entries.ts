@@ -488,6 +488,26 @@ function isATag(
   return obj.type === 'Tag';
 }
 
+function isATextEntry(
+  obj:
+    | ITextEntryJsonApi
+    | ITagTextEntryThroughModelJsonApi
+    | IUserJsonApi
+    | ITagJsonApi
+): obj is ITextEntryJsonApi {
+  return obj.type === 'TextEntry';
+}
+
+function isAJunction(
+  obj:
+    | ITextEntryJsonApi
+    | ITagTextEntryThroughModelJsonApi
+    | IUserJsonApi
+    | ITagJsonApi
+): obj is ITextEntryJsonApi {
+  return obj.type === 'TagTextEntryThroughModel';
+}
+
 export async function fetchAllEntriesForUser(username: string | undefined) {
   const db = new TearleadsDexie();
   if (username === undefined) {
@@ -508,6 +528,24 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
           name: entry.attributes.name,
           updated,
         });
+      } else if (isATextEntry(entry)) {
+        await db.entries.put({
+          id: entry.id,
+          subject: entry.attributes.subject,
+          body: entry.attributes.body,
+          updated,
+        });
+      } else if (isAJunction(entry)) {
+        db.junction.put({
+          id: entry.id,
+          entryId: entry.relationships.text_entry.data.id,
+          userId: entry.relationships.tag.data.id,
+          tagId: entry.relationships.tag.data.id,
+          order: entry.attributes.order,
+          updated,
+        });
+      } else {
+        throw new Error('unexpected type!');
       }
     }
   }
