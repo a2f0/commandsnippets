@@ -128,3 +128,5 @@ dmypy.json
 /.env-staging
 /.env-local-development
 /.env-production
+
+venv

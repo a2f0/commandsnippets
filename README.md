@@ -12,6 +12,12 @@ Bootstrap
     docker-compose run backend python manage.py migrate
     docker-compose up
 
+    # Optional
+    # Create a virtual environment for IDE, linting, etc.
+    python -m venv venv
+    source ./venv/bin/activate
+    pip install -r requirements/base.txt -r requirements/local.txt
+
 Bump version
 
     docker-compose run backend bump2version patch setup.cfg --allow-dirty
