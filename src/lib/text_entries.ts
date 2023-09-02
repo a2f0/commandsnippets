@@ -509,6 +509,7 @@ function isAJunction(
 }
 
 export async function fetchAllEntriesForUser(username: string | undefined) {
+  await TearleadsDexie.delete('Tearleads');
   const db = new TearleadsDexie();
   if (username === undefined) {
     console.info('Cannot fetch all entried for undefined user.');
@@ -527,6 +528,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
           id: entry.id,
           name: entry.attributes.name,
           updated,
+          userId: entry.relationships.user.data.id,
         });
       } else if (isATextEntry(entry)) {
         await db.entries.put({
