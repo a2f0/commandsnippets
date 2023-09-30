@@ -9,6 +9,11 @@ import {TearleadsDexie} from './db/dexie';
 import {Theme} from '@mui/material/styles';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 
+const db = new TearleadsDexie();
+db.close();
+await TearleadsDexie.delete('Tearleads');
+await db.open();
+
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
   links: {
@@ -509,8 +514,6 @@ function isAJunction(
 }
 
 export async function fetchAllEntriesForUser(username: string | undefined) {
-  await TearleadsDexie.delete('Tearleads');
-  const db = new TearleadsDexie();
   if (username === undefined) {
     console.info('Cannot fetch all entried for undefined user.');
   } else {
