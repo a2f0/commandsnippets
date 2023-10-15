@@ -8,12 +8,16 @@ import type {TStore} from '../AppStateStore';
 import {TearleadsDexie} from './db/dexie';
 import {Theme} from '@mui/material/styles';
 import {convertISO8601ToUnixTime} from './util/dateTime';
+import {environment} from './environment';
 
-const db = new TearleadsDexie();
-await db.open();
-db.close();
-await TearleadsDexie.delete('Tearleads');
-await db.open();
+let db: TearleadsDexie | undefined;
+if (environment !== 'production') {
+  const db = new TearleadsDexie();
+  await db.open();
+  db.close();
+  await TearleadsDexie.delete('Tearleads');
+  await db.open();
+}
 
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
@@ -515,43 +519,45 @@ function isAJunction(
 }
 
 export async function fetchAllEntriesForUser(username: string | undefined) {
-  if (username === undefined) {
-    console.info('Cannot fetch all entried for undefined user.');
-  } else {
-    const entries = await fetch([], username, null, 13, null, null);
-    for (const entry of entries) {
-      const updated = convertISO8601ToUnixTime(entry.attributes.date_updated);
-      if (isAUser(entry)) {
-        await db.users.put({
-          id: entry.id,
-          username: entry.attributes.username,
-          updated,
-        });
-      } else if (isATag(entry)) {
-        await db.tags.put({
-          id: entry.id,
-          name: entry.attributes.name,
-          updated,
-          userId: entry.relationships.user.data.id,
-        });
-      } else if (isATextEntry(entry)) {
-        await db.entries.put({
-          id: entry.id,
-          subject: entry.attributes.subject,
-          body: entry.attributes.body,
-          updated,
-        });
-      } else if (isAJunction(entry)) {
-        db.junction.put({
-          id: entry.id,
-          entryId: entry.relationships.text_entry.data.id,
-          userId: entry.relationships.tag.data.id,
-          tagId: entry.relationships.tag.data.id,
-          order: entry.attributes.order,
-          updated,
-        });
-      } else {
-        throw new Error('unexpected type!');
+  if (db !== undefined) {
+    if (username === undefined) {
+      console.info('Cannot fetch all entried for undefined user.');
+    } else {
+      const entries = await fetch([], username, null, 13, null, null);
+      for (const entry of entries) {
+        const updated = convertISO8601ToUnixTime(entry.attributes.date_updated);
+        if (isAUser(entry)) {
+          await db.users.put({
+            id: entry.id,
+            username: entry.attributes.username,
+            updated,
+          });
+        } else if (isATag(entry)) {
+          await db.tags.put({
+            id: entry.id,
+            name: entry.attributes.name,
+            updated,
+            userId: entry.relationships.user.data.id,
+          });
+        } else if (isATextEntry(entry)) {
+          await db.entries.put({
+            id: entry.id,
+            subject: entry.attributes.subject,
+            body: entry.attributes.body,
+            updated,
+          });
+        } else if (isAJunction(entry)) {
+          db.junction.put({
+            id: entry.id,
+            entryId: entry.relationships.text_entry.data.id,
+            userId: entry.relationships.tag.data.id,
+            tagId: entry.relationships.tag.data.id,
+            order: entry.attributes.order,
+            updated,
+          });
+        } else {
+          throw new Error('unexpected type!');
+        }
       }
     }
   }
