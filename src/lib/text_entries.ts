@@ -10,6 +10,7 @@ import {Theme} from '@mui/material/styles';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 
 const db = new TearleadsDexie();
+await db.open();
 db.close();
 await TearleadsDexie.delete('Tearleads');
 await db.open();
