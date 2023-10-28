@@ -2,7 +2,9 @@
 
 ## Development
 
-Bootstrap
+### Bootstrap
+
+#### Required
 
     pyenv install `cat .python-version`
     pip install pre-commit
@@ -13,7 +15,10 @@ Bootstrap
     docker-compose up
 
     # Optional
-    # Create a virtual environment for IDE, linting, etc.
+    # Create Create a virtual environment for IDE, linting, etc.
+    # MacOS
+    brew install postgresql # Provides `pg_config`
+    # All platforms
     python -m venv venv
     source ./venv/bin/activate
     pip install -r requirements/base.txt -r requirements/local.txt
