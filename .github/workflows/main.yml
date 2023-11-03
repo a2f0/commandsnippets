@@ -82,7 +82,7 @@ jobs:
       - name: Login to Amazon ECR
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Build SHA image
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         env:
