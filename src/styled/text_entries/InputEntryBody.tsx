@@ -21,10 +21,6 @@ const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
   &:hover {
     border: 1px solid ${props => props.theme.palette.secondary.main};
   }
-  &:focus {
-    border: 2px solid ${props => props.theme.palette.secondary.main};
-    outline: none;
-  }
   background-color: ${props => props.theme.palette.primary.main};
 `;
 
