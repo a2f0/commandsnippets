@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         node-version: [18]
+        chrome-version: [119]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,10 +31,11 @@ jobs:
           pip install pre-commit
           pre-commit run --all-files
       - run: npm run unit
+      - run: npm -g i chromedriver@${{ matrix.chrome-version }} --save-exact
       - uses: browser-actions/setup-chrome@latest
         name: Setup Chrome
         with:
-          chrome-version: stable
+          chrome-version: ${{ matrix.chrome-version }}
       # Move the setup-chrome version to /tmp/custom/chrome
       # This binary path is hardcoded in wdio.headless.conf.js
       # See: https://github.com/browser-ations/setup-chrome
