@@ -35,7 +35,7 @@ jobs:
       - uses: browser-actions/setup-chrome@latest
         name: Setup Chrome
         with:
-          chrome-version: ${{ matrix.chrome-version }}
+          chrome-version: ${{ matrix.chrome-version }}.0
       # Move the setup-chrome version to /tmp/custom/chrome
       # This binary path is hardcoded in wdio.headless.conf.js
       # See: https://github.com/browser-ations/setup-chrome
