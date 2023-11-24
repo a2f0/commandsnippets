@@ -10,3 +10,5 @@ node_modules/
 /.blackbox/secring.gpg/.env
 
 .vercel
+chrome
+chromedriver

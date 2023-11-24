@@ -1,11 +1,35 @@
+import {dirname} from 'path';
+import {fileURLToPath} from 'url';
+import os from 'os';
+import path from 'path';
+
 import {config as sharedConfig} from './wdio.shared.conf';
 
-if (process.env.CUSTOM_CHROME_PATH) {
+const currentFileUrl = import.meta.url;
+const currentFilePath = fileURLToPath(currentFileUrl);
+const currentDirectory = dirname(currentFilePath);
+
+const platform = os.platform();
+
+if (process.env.CHROME_VERSION) {
   console.info(
     '=== using custom chrome path: ' + process.env.CUSTOM_CHROME_PATH
   );
 } else {
   console.info('=== not using custom chrome path');
+}
+
+let chromePath;
+if (platform === 'darwin') {
+  chromePath = path.join(
+    currentDirectory,
+    `../chrome/mac_arm-${process.env.CHROME_VERSION}/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`
+  );
+} else {
+  chromePath = path.join(
+    currentDirectory,
+    `../chrome/linux-${process.env.CHROME_VERSION}/chrome-linux64/chrome`
+  );
 }
 
 export const config: WebdriverIO.Config = {
@@ -15,9 +39,8 @@ export const config: WebdriverIO.Config = {
       {
         browserName: 'chrome',
         'goog:chromeOptions': {
-          // If this is undefined it will default to launching Chrome from the existing path.
           // See .github/workflows/main.yml for a deterministic configuration of this value.
-          binary: process.env.CUSTOM_CHROME_PATH,
+          binary: chromePath,
           args: [
             '--headless',
             '--disable-gpu',
