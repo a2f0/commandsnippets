@@ -33,7 +33,6 @@ jobs:
       - run: npm run unit
       - run: npx @puppeteer/browsers install chromedriver@${{ matrix.chrome-version }}
       - run: npx @puppeteer/browsers install chrome@${{ matrix.chrome-version }}
-      - run: rm -rf /tmp/custom-chrome && mv $(dirname `which chrome`) /tmp/custom-chrome
       - run: npm run ci-headless
         env:
           CHROME_VERSION: ${{ matrix.chrome-version }}
