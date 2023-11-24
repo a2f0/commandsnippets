@@ -1,6 +1,30 @@
 import {BasePage} from './pageobjects/base';
 import {defaultState} from '../src/lib/shared';
 
+import {dirname} from 'path';
+import {fileURLToPath} from 'url';
+import os from 'os';
+import path from 'path';
+
+const platform = os.platform();
+
+const currentFileUrl = import.meta.url;
+const currentFilePath = fileURLToPath(currentFileUrl);
+const currentDirectory = dirname(currentFilePath);
+
+let chromeDriverPath;
+if (platform === 'darwin') {
+  chromeDriverPath = path.join(
+    currentDirectory,
+    `../chromedriver/mac_arm-${process.env.CHROME_VERSION}/chromedriver-mac-arm64/chromedriver`
+  );
+} else {
+  chromeDriverPath = path.join(
+    currentDirectory,
+    `../chromedriver/linux-${process.env.CHROME_VERSION}/chromedriver-linux64/chromedriver`
+  );
+}
+
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace WebdriverIO {
@@ -33,7 +57,14 @@ export const config: WebdriverIO.Config = {
   waitforTimeout: 5000,
   connectionRetryTimeout: 90000,
   connectionRetryCount: 3,
-  services: ['chromedriver'],
+  services: [
+    [
+      'chromedriver',
+      {
+        args: [`--path=${chromeDriverPath}`, '--log-level=DEBUG'],
+      },
+    ],
+  ],
   framework: 'mocha',
   reporters: ['dot', 'spec'],
   mochaOpts: {
