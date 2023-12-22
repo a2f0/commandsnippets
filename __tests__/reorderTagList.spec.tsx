@@ -4,13 +4,13 @@
  */
 
 import '@testing-library/jest-dom';
+import {MockInstance, vi} from 'vitest';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import React from 'react';
 import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
-import {jest} from '@jest/globals';
 import {rest} from 'msw';
 import {setupServer} from 'msw/node';
 import tagsResponse from '../test/mocks/tags/tagsResponse';
@@ -47,9 +47,9 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('TagList', () => {
-  let reorderTagSpy: jest.Spied<typeof tearleadsApi.reorderTag>;
+  let reorderTagSpy: MockInstance;
   beforeEach(() => {
-    reorderTagSpy = jest.spyOn(tearleadsApi, 'reorderTag');
+    reorderTagSpy = vi.spyOn(tearleadsApi, 'reorderTag');
   });
   afterEach(() => {
     reorderTagSpy.mockRestore();
