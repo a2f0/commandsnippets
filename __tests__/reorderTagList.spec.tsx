@@ -4,6 +4,7 @@
  */
 
 import '@testing-library/jest-dom';
+import {MockInstance, vi} from 'vitest';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import React from 'react';
 import TestAppRouter from './util/TestAppRouter';
@@ -46,9 +47,9 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('TagList', () => {
-  let reorderTagSpy: jest.Spied<typeof tearleadsApi.reorderTag>;
+  let reorderTagSpy: MockInstance;
   beforeEach(() => {
-    reorderTagSpy = jest.spyOn(tearleadsApi, 'reorderTag');
+    reorderTagSpy = vi.spyOn(tearleadsApi, 'reorderTag');
   });
   afterEach(() => {
     reorderTagSpy.mockRestore();
