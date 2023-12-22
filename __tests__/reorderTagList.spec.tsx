@@ -10,36 +10,9 @@ import React from 'react';
 import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
-import entriesResponse from '../test/mocks/entries/entriesResponse';
-import {rest} from 'msw';
-import {setupServer} from 'msw/node';
-import tagsResponse from '../test/mocks/tags/tagsResponse';
+import server from './util/msw';
 import {tearleadsApi} from '../src/tearleadsApi';
 import userEvent from '@testing-library/user-event';
-
-const server = setupServer(
-  rest.get('http://localhost:9001/api/v1/tags', (req, res, ctx) => {
-    return res(
-      ctx.delay(0),
-      ctx.status(200, 'Mocked status'),
-      ctx.json(tagsResponse)
-    );
-  }),
-  rest.get('http://localhost:9001/api/v1/entries', (req, res, ctx) => {
-    return res(
-      ctx.delay(0),
-      ctx.status(200, 'Mocked status'),
-      ctx.json(entriesResponse)
-    );
-  }),
-  rest.post('http://localhost:9001/api/v1/tags/reorder', (req, res, ctx) => {
-    return res(
-      ctx.delay(0),
-      ctx.status(200, 'Mocked status'),
-      ctx.json({data: null})
-    );
-  })
-);
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
