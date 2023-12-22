@@ -4,13 +4,15 @@
  */
 
 import '@testing-library/jest-dom';
+import {HttpResponse, http} from 'msw';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import type {ITagJsonApiResponse} from '../src/lib/tags';
+import type {ITextEntryJsonApiResponse} from '../src/lib/text_entries';
 import React from 'react';
 import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util//assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
-import {rest} from 'msw';
 import {setupServer} from 'msw/node';
 import tagsResponse from '../test/mocks/tags/tagsResponse';
 import userEvent from '@testing-library/user-event';
@@ -49,26 +51,18 @@ const response = {
 };
 
 const server = setupServer(
-  rest.get('http://localhost:9001/api/v1/tags', (req, res, ctx) => {
-    return res(
-      ctx.delay(0),
-      ctx.status(200, 'Mocked status'),
-      ctx.json(tagsResponse)
-    );
+  http.get('http://localhost:9001/api/v1/tags', () => {
+    return HttpResponse.json<ITagJsonApiResponse>(tagsResponse, {status: 200});
   }),
-  rest.get('http://localhost:9001/api/v1/entries', (req, res, ctx) => {
-    return res(
-      ctx.delay(0),
-      ctx.status(200, 'Mocked status'),
-      ctx.json(entriesResponse)
-    );
+  http.get('http://localhost:9001/api/v1/entries', () => {
+    return HttpResponse.json<ITextEntryJsonApiResponse>(entriesResponse, {
+      status: 200,
+    });
   }),
-  rest.post('http://localhost:9001/api/v1/tags_entries', (req, res, ctx) => {
-    return res(
-      ctx.delay(0),
-      ctx.status(201, 'Mocked status'),
-      ctx.json(response)
-    );
+  http.post('http://localhost:9001/api/v1/tags_entries', () => {
+    return HttpResponse.json(response, {
+      status: 200,
+    });
   })
 );
 
