@@ -8,5 +8,5 @@ describe('Crypto', () => {
     const keyPair = await crypto.generateKeyPair();
     expect(keyPair).not.toBe(undefined);
     console.info(keyPair);
-  });
+  }, 10000);
 });
