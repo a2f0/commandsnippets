@@ -17,6 +17,12 @@ if (window.location.hostname === 'staging.tearleads.com') {
   window.location.port === '8081'
 ) {
   environment = 'test';
+} else if (
+  // vitest
+  window.location.hostname === 'localhost' &&
+  window.location.port === '3000'
+) {
+  environment = 'test';
 } else {
   throw 'Unknown Tearleads environment';
 }

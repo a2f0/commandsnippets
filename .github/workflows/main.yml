@@ -30,7 +30,7 @@ jobs:
         run: |
           pip install pre-commit
           pre-commit run --all-files
-      - run: npm run unit
+      - run: npx vitest --no-watch
       - run: npx @puppeteer/browsers install chromedriver@${{ matrix.chrome-version }}
       - run: npx @puppeteer/browsers install chrome@${{ matrix.chrome-version }}
       - run: npm run ci-headless
