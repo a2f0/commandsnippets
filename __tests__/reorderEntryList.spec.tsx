@@ -4,12 +4,12 @@
  */
 
 import '@testing-library/jest-dom';
+import {MockInstance, vi} from 'vitest';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import React from 'react';
 import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
-import {jest} from '@jest/globals';
 import server from './util/msw';
 import {tearleadsApi} from '../src/tearleadsApi';
 import userEvent from '@testing-library/user-event';
@@ -20,9 +20,9 @@ afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 
 describe('Entries List', () => {
-  let reorderEntrySpy: jest.Spied<typeof tearleadsApi.reorderEntry>;
+  let reorderEntrySpy: MockInstance;
   beforeEach(() => {
-    reorderEntrySpy = jest.spyOn(tearleadsApi, 'reorderEntry');
+    reorderEntrySpy = vi.spyOn(tearleadsApi, 'reorderEntry');
   });
   afterEach(() => {
     reorderEntrySpy.mockRestore();
