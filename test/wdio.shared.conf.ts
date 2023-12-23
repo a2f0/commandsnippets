@@ -1,5 +1,4 @@
 import {BasePage} from './pageobjects/base';
-import type {Options} from '@wdio/types';
 import {defaultState} from '../src/lib/shared';
 
 import {dirname} from 'path';
@@ -46,7 +45,7 @@ export const chromeCapabilities: WebdriverIO.Capabilities = {
   },
 };
 
-export const config: Options.Testrunner = {
+export const config: WebdriverIO.Config = {
   runner: 'local',
   path: '/',
   specs: ['specs/**/*.spec.ts'],
