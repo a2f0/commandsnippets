@@ -20,7 +20,7 @@
     "build": "vite build",
     "lint": "gts lint",
     "clean": "gts clean",
-    "compile": "tsc",
+    "compile": "tsc -b",
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest": "npm run compile",

@@ -31,13 +31,13 @@ if (platform === 'darwin') {
   );
 }
 
-const headlessChromeCapabilities = {
+const headlessChromeCapabilities: WebdriverIO.Capabilities = {
   ...chromeCapabilities,
   'goog:chromeOptions': {
     ...chromeCapabilities['goog:chromeOptions'],
     binary: chromePath,
     args: [
-      ...chromeCapabilities['goog:chromeOptions']['args'],
+      ...(chromeCapabilities['goog:chromeOptions']?.args || []),
       '--headless',
       '--disable-gpu',
       '--disable-features=NetworkService',

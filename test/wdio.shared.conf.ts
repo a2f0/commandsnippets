@@ -35,15 +35,13 @@ declare global {
   }
 }
 
-export const chromeCapabilities = {
-  maxInstances: 1,
+export const chromeCapabilities: WebdriverIO.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
     args: ['--disable-web-security', '--auto-open-devtools-for-tabs'],
   },
   'wdio:chromedriverOptions': {
-    logLevel: 'OFF',
-    path: chromeDriverPath,
+    binary: chromeDriverPath,
   },
 };
 
