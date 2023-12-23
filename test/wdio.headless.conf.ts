@@ -1,9 +1,8 @@
+import {chromeCapabilities, config as sharedConfig} from './wdio.shared.conf';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 import os from 'os';
 import path from 'path';
-
-import {config as sharedConfig} from './wdio.shared.conf';
 
 const currentFileUrl = import.meta.url;
 const currentFilePath = fileURLToPath(currentFileUrl);
@@ -32,26 +31,25 @@ if (platform === 'darwin') {
   );
 }
 
+const headlessChromeCapabilities = {
+  ...chromeCapabilities,
+  'goog:chromeOptions': {
+    ...chromeCapabilities['goog:chromeOptions'],
+    binary: chromePath,
+    args: [
+      ...chromeCapabilities['goog:chromeOptions']['args'],
+      '--headless',
+      '--disable-gpu',
+      '--disable-features=NetworkService',
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
+    ],
+  },
+};
+
 export const config: WebdriverIO.Config = {
   ...sharedConfig,
   ...{
-    capabilities: [
-      {
-        browserName: 'chrome',
-        'goog:chromeOptions': {
-          // See .github/workflows/main.yml for a deterministic configuration of this value.
-          binary: chromePath,
-          args: [
-            '--headless',
-            '--disable-gpu',
-            '--disable-features=NetworkService',
-            '--disable-web-security',
-            '--no-sandbox',
-            '--disable-dev-shm-usage',
-            '--window-size=1920,1080',
-          ],
-        },
-      },
-    ],
+    capabilities: [headlessChromeCapabilities],
   },
 };
