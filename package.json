@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.6.12",
+  "version": "0.6.13",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -55,12 +55,10 @@
     "eslint-plugin-mocha": "10.2.0",
     "eslint-plugin-prettier": "5.1.1",
     "eslint-plugin-react": "7.33.2",
-    "eslint-webpack-plugin": "4.0.1",
     "expect-webdriverio": "4.7.2",
     "fake-indexeddb": "5.0.1",
     "gts": "5.2.0",
     "history": "5.3.0",
-    "html-webpack-plugin": "5.6.0",
     "jsdom": "23.0.1",
     "msw": "2.0.11",
     "prettier": "3.1.1",
@@ -73,10 +71,7 @@
     "vite": "5.0.10",
     "vite-plugin-simple-html": "0.1.2",
     "vitest": "1.1.0",
-    "wdio-chromedriver-service": "8.1.1",
-    "webpack": "5.88.2",
-    "webpack-cli": "5.1.4",
-    "webpack-dev-server": "4.15.1"
+    "wdio-chromedriver-service": "8.1.1"
   },
   "dependencies": {
     "@emotion/css": "11.11.2",
