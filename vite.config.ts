@@ -1,6 +1,13 @@
-import {defineConfig} from 'vite';
+import {defineConfig} from 'vitest/config';
 
 export default defineConfig({
+  build: {
+    outDir: 'build',
+    target: 'esnext',
+  },
+  server: {
+    port: 8080,
+  },
   test: {
     globals: true,
     environment: 'jsdom',

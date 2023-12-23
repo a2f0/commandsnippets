@@ -35,11 +35,13 @@ declare global {
   }
 }
 
-export const chromeCapabilities = {
-  maxInstances: 1,
+export const chromeCapabilities: WebdriverIO.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
     args: ['--disable-web-security', '--auto-open-devtools-for-tabs'],
+  },
+  'wdio:chromedriverOptions': {
+    binary: chromeDriverPath,
   },
 };
 
@@ -50,21 +52,13 @@ export const config: WebdriverIO.Config = {
   exclude: [],
   maxInstances: 1,
   capabilities: [chromeCapabilities],
-  logLevel: 'debug',
+  logLevel: 'info',
   // Stop running tests after initial failure.
   bail: 1,
   baseUrl: 'http://localhost:8081',
   waitforTimeout: 5000,
   connectionRetryTimeout: 90000,
   connectionRetryCount: 3,
-  services: [
-    [
-      'chromedriver',
-      {
-        args: [`--path=${chromeDriverPath}`, '--log-level=DEBUG'],
-      },
-    ],
-  ],
   framework: 'mocha',
   reporters: ['dot', 'spec'],
   mochaOpts: {
