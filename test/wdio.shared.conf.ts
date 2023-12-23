@@ -1,4 +1,5 @@
 import {BasePage} from './pageobjects/base';
+import type {Options} from '@wdio/types';
 import {defaultState} from '../src/lib/shared';
 
 import {dirname} from 'path';
@@ -35,19 +36,17 @@ declare global {
   }
 }
 
-export const chromeCapabilities = {
-  maxInstances: 1,
+export const chromeCapabilities: WebdriverIO.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
     args: ['--disable-web-security', '--auto-open-devtools-for-tabs'],
   },
   'wdio:chromedriverOptions': {
-    logLevel: 'OFF',
-    path: chromeDriverPath,
+    binary: chromeDriverPath,
   },
 };
 
-export const config: WebdriverIO.Config = {
+export const config: Options.Testrunner = {
   runner: 'local',
   path: '/',
   specs: ['specs/**/*.spec.ts'],
