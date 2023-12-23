@@ -20,7 +20,7 @@ describe('Entries Context Menu Delete Entry', () => {
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
       wait: 5000,
     });
-    assert.strictEqual(await BasePage.tagsEntries.length, 4);
+    await expect(await BasePage.tagsEntries.length).toEqual(4);
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
 
