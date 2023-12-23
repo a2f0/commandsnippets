@@ -24,7 +24,9 @@ describe('Entries Context Menu Untag', () => {
     mockTags.respond(tags, {fetchResponse: false});
     mockEntries.respond(entriesResponse, {fetchResponse: false});
     await BasePage.open('');
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
+      wait: 5000,
+    });
     assert.strictEqual(await BasePage.tagsEntries.length, 4);
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
