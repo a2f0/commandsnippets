@@ -35,21 +35,21 @@ declare global {
   }
 }
 
+export const chromeCapabilities = {
+  maxInstances: 1,
+  browserName: 'chrome',
+  'goog:chromeOptions': {
+    args: ['--disable-web-security', '--auto-open-devtools-for-tabs'],
+  },
+};
+
 export const config: WebdriverIO.Config = {
   runner: 'local',
   path: '/',
   specs: ['specs/**/*.spec.ts'],
   exclude: [],
   maxInstances: 1,
-  capabilities: [
-    {
-      maxInstances: 1,
-      browserName: 'chrome',
-      'goog:chromeOptions': {
-        args: ['--disable-web-security', '--auto-open-devtools-for-tabs'],
-      },
-    },
-  ],
+  capabilities: [chromeCapabilities],
   logLevel: 'debug',
   // Stop running tests after initial failure.
   bail: 1,
