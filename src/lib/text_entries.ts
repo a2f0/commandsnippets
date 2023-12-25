@@ -5,19 +5,9 @@ import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughMod
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {IUserJsonApi} from '../models/UserModel';
 import type {TStore} from '../AppStateStore';
-import {TearleadsDexie} from './db/dexie';
 import {Theme} from '@mui/material/styles';
 import {convertISO8601ToUnixTime} from './util/dateTime';
-import {environment} from './environment';
-
-let db: TearleadsDexie | undefined;
-if (environment !== 'production') {
-  const db = new TearleadsDexie();
-  await db.open();
-  db.close();
-  await TearleadsDexie.delete('Tearleads');
-  await db.open();
-}
+import {db} from '../../src/lib/db/db';
 
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
@@ -527,27 +517,27 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
       for (const entry of entries) {
         const updated = convertISO8601ToUnixTime(entry.attributes.date_updated);
         if (isAUser(entry)) {
-          await db.users.put({
+          await db.putUser({
             id: entry.id,
             username: entry.attributes.username,
             updated,
           });
         } else if (isATag(entry)) {
-          await db.tags.put({
+          await db.putTag({
             id: entry.id,
             name: entry.attributes.name,
             updated,
             userId: entry.relationships.user.data.id,
           });
         } else if (isATextEntry(entry)) {
-          await db.entries.put({
+          await db.putEntry({
             id: entry.id,
             subject: entry.attributes.subject,
             body: entry.attributes.body,
             updated,
           });
         } else if (isAJunction(entry)) {
-          db.junction.put({
+          db.putJunction({
             id: entry.id,
             entryId: entry.relationships.text_entry.data.id,
             userId: entry.relationships.tag.data.id,
@@ -560,5 +550,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
         }
       }
     }
+  } else {
+    throw new Error('db is undefined');
   }
 }
