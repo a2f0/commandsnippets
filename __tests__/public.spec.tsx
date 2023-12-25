@@ -15,7 +15,7 @@ describe('Public Homepage', () => {
     expect(window.innerHeight).toBe(768);
   });
 
-  it('has a window that cen be resized', async () => {
+  it('Has a window that cen be resized', async () => {
     render(<AppRouter />);
     expect(window.innerWidth).toBe(1024);
     expect(window.innerHeight).toBe(768);
