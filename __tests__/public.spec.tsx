@@ -8,4 +8,10 @@ describe('Public Homepage', () => {
     render(<AppRouter />);
     await waitFor(() => screen.getByText(/Solve, Curate, Retrieve./i));
   });
+
+  it('Has a window size', async () => {
+    render(<AppRouter />);
+    expect(window.innerHeight).toBe(768);
+    expect(window.innerWidth).toBe(1024);
+  });
 });
