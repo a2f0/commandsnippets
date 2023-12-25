@@ -22,14 +22,4 @@ if (platform === 'darwin') {
   );
 }
 
-/* eslint-disable @typescript-eslint/no-namespace */
-declare global {
-  namespace WebdriverIO {
-    interface Element {
-      waitAndRightClick: (this: WebdriverIO.Element) => Promise<void>;
-      waitAndLeftClick: (this: WebdriverIO.Element) => Promise<void>;
-    }
-  }
-}
-
 export {chromedriverPath};

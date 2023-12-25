@@ -3,6 +3,16 @@ import {chromePath} from './util/getChromePath';
 import {chromedriverPath} from './util/getChromedriverPath';
 import {defaultState} from '../src/lib/shared';
 
+/* eslint-disable @typescript-eslint/no-namespace */
+declare global {
+  namespace WebdriverIO {
+    interface Element {
+      waitAndRightClick: (this: WebdriverIO.Element) => Promise<void>;
+      waitAndLeftClick: (this: WebdriverIO.Element) => Promise<void>;
+    }
+  }
+}
+
 export const chromeCapabilities: WebdriverIO.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
