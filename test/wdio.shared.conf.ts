@@ -1,47 +1,16 @@
 import {BasePage} from './pageobjects/base';
+import {chromePath} from './util/getChromePath';
+import {chromedriverPath} from './util/getChromedriverPath';
 import {defaultState} from '../src/lib/shared';
-
-import {dirname} from 'path';
-import {fileURLToPath} from 'url';
-import os from 'os';
-import path from 'path';
-
-const platform = os.platform();
-
-const currentFileUrl = import.meta.url;
-const currentFilePath = fileURLToPath(currentFileUrl);
-const currentDirectory = dirname(currentFilePath);
-
-let chromeDriverPath;
-if (platform === 'darwin') {
-  chromeDriverPath = path.join(
-    currentDirectory,
-    `../chromedriver/mac_arm-${process.env.CHROME_VERSION}/chromedriver-mac-arm64/chromedriver`
-  );
-} else {
-  chromeDriverPath = path.join(
-    currentDirectory,
-    `../chromedriver/linux-${process.env.CHROME_VERSION}/chromedriver-linux64/chromedriver`
-  );
-}
-
-/* eslint-disable @typescript-eslint/no-namespace */
-declare global {
-  namespace WebdriverIO {
-    interface Element {
-      waitAndRightClick: (this: WebdriverIO.Element) => Promise<void>;
-      waitAndLeftClick: (this: WebdriverIO.Element) => Promise<void>;
-    }
-  }
-}
 
 export const chromeCapabilities: WebdriverIO.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
-    args: ['--disable-web-security', '--auto-open-devtools-for-tabs'],
+    binary: chromePath,
+    args: ['--disable-web-security'],
   },
   'wdio:chromedriverOptions': {
-    binary: chromeDriverPath,
+    binary: chromedriverPath,
   },
 };
 
