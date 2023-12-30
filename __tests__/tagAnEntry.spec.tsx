@@ -1,8 +1,3 @@
-/**
- * @jest-environment jsdom
- * @jest-environment-options {"url": "http://localhost:8081/test/test-tag-1"}
- */
-
 import '@testing-library/jest-dom';
 import {HttpResponse, http} from 'msw';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
@@ -75,10 +70,10 @@ describe('Tag An Entry', () => {
   it('Is Taggable', async () => {
     const user = userEvent.setup();
     const history = createMemoryHistory();
-    expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const route = '/test/test-tag-1';
     history.push(route);
     const {rerender} = render(<TestAppRouter history={history} />);
+    expect(history.location.pathname).toBe('/test/test-tag-1');
     await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});

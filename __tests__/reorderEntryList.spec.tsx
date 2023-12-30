@@ -1,8 +1,3 @@
-/**
- * @jest-environment jsdom
- * @jest-environment-options {"url": "http://localhost:8081/test/test-tag-1"}
- */
-
 import '@testing-library/jest-dom';
 import {MockInstance, vi} from 'vitest';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
@@ -29,11 +24,11 @@ describe('Entries List', () => {
   });
   it('Reorders', async () => {
     const user = userEvent.setup();
-    expect(window.location.href).toBe('http://localhost:8081/test/test-tag-1');
     const history = createMemoryHistory();
     const route = '/test/test-tag-1';
     history.push(route);
     render(<TestAppRouter history={history} />);
+    expect(history.location.pathname).toBe('/test/test-tag-1');
     await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});

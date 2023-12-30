@@ -1,26 +1,27 @@
 import Dexie from 'dexie';
+import {ITearleadsDB} from './db';
 
-interface IUser {
+export interface IUser {
   id: string;
   username: string;
   updated: number;
 }
 
-interface ITag {
+export interface ITag {
   id: string;
   name: string;
   userId: string;
   updated: number;
 }
 
-interface IEntry {
+export interface IEntry {
   id: string;
   subject: string;
   body: string;
   updated: number;
 }
 
-interface IJunction {
+export interface IJunction {
   id: string;
   entryId: string;
   tagId: string;
@@ -29,7 +30,7 @@ interface IJunction {
   order: number;
 }
 
-class TearleadsDexie extends Dexie {
+class TearleadsDexie extends Dexie implements ITearleadsDB {
   users!: Dexie.Table<IUser, number>; // number is the type of the primary key
   tags!: Dexie.Table<ITag, number>;
   entries!: Dexie.Table<IEntry, number>;
@@ -43,6 +44,22 @@ class TearleadsDexie extends Dexie {
       entries: 'id&, subject, body, updated',
       junction: 'id&, [userId+tagId], updated',
     });
+  }
+
+  async putUser(user: IUser): Promise<void> {
+    await this.users.put(user);
+  }
+
+  async putTag(tag: ITag): Promise<void> {
+    await this.tags.put(tag);
+  }
+
+  async putEntry(entry: IEntry): Promise<void> {
+    await this.entries.put(entry);
+  }
+
+  async putJunction(junction: IJunction): Promise<void> {
+    await this.junction.put(junction);
   }
 
   async getTagsForUserName(username: string): Promise<ITag[]> {
