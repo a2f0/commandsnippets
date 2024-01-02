@@ -3,7 +3,7 @@ django-environ==0.10.0
 django-filter==23.5
 django-ordered-model==3.7.4
 django==4.1.13
-djangorestframework-jsonapi[django-filter]==6.0.0
+djangorestframework-jsonapi[django-filter]==6.1.0
 djangorestframework==3.14.0
 newrelic==8.9.0
 psycopg2==2.9.9
