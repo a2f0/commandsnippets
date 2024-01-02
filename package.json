@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.6.19",
+  "version": "0.6.20",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -69,6 +69,7 @@
     "typescript": "5.1.6",
     "url-loader": "4.1.1",
     "vite": "5.0.10",
+    "vite-plugin-pwa": "0.17.4",
     "vite-plugin-simple-html": "0.1.2",
     "vitest": "1.1.0",
     "wdio-chromedriver-service": "8.1.1"
