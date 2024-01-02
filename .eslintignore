@@ -1,3 +1,5 @@
 build/
 /**/*.d.ts
 src/ts-out/**/*
+# Vite PWA
+dev-dist/
