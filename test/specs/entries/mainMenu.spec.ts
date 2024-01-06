@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import entryPostResponse from '../../mocks/entries/entryPostResponse';
 import tagTextEntryThroughModelsResponse from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
@@ -97,7 +96,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewTop).not.toBeExisting();
 
     // test save
-    assert.strictEqual(await BasePage.tagsEntries.length, 4);
+    await expect(await BasePage.tagsEntries.length).toBe(4);
     await (await BasePage.fileMenuButton).waitAndLeftClick();
 
     await expect(BasePage.fileMenu).toBeDisplayed();
