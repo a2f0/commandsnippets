@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tags from '../../mocks/tags/tagsResponse';
 
@@ -34,7 +33,7 @@ describe('Entries Context Menu Delete Entry', () => {
     );
     await expect(mockEntries).toBeRequestedTimes(2);
     await expect(mockTags).toBeRequestedTimes(1);
-    assert.strictEqual(await BasePage.tagsEntries.length, 4);
+    await expect(await BasePage.tagsEntries.length).toBe(4);
 
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
