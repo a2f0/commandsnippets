@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
 import entryPostResponse from '../../mocks/entries/entryPostResponse';
 import tagTextEntryThroughModelsResponse from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
@@ -114,25 +113,24 @@ describe('Entry Main Menu Behavior', () => {
     await expect(newEntry).toBeDisplayed();
 
     await browser.keys('Tab');
-    assert.strictEqual(
-      (await (await newEntry).getCSSProperty('background-color')).value,
-      'rgba(15,15,15,1)'
-    );
+
+    await expect(
+      (await newEntry.getCSSProperty('background-color')).value
+    ).toBe('rgba(15,15,15,1)');
+
     await browser.keys('Tab');
-    assert.strictEqual(
-      (await (await newEntry).getCSSProperty('background-color')).value,
-      'rgba(72,72,72,1)'
-    );
+    await expect(
+      (await newEntry.getCSSProperty('background-color')).value
+    ).toBe('rgba(72,72,72,1)');
+
     await browser.keys('Left arrow');
-    assert.strictEqual(
-      (await (await newEntry).getCSSProperty('background-color')).value,
-      'rgba(15,15,15,1)'
-    );
+    await expect(
+      (await newEntry.getCSSProperty('background-color')).value
+    ).toBe('rgba(15,15,15,1)');
     await browser.keys('Right arrow');
-    assert.strictEqual(
-      (await (await newEntry).getCSSProperty('background-color')).value,
-      'rgba(72,72,72,1)'
-    );
+    await expect(
+      (await newEntry.getCSSProperty('background-color')).value
+    ).toBe('rgba(72,72,72,1)');
 
     // test tab-based focusing
     await (await BasePage.tagsEntriesList).waitAndRightClick();
