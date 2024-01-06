@@ -1,6 +1,4 @@
 import {BasePage} from './pageobjects/base';
-import {chromePath} from './util/getChromePath';
-import {chromedriverPath} from './util/getChromedriverPath';
 import {defaultState} from '../src/lib/shared';
 
 /* eslint-disable @typescript-eslint/no-namespace */
@@ -16,12 +14,9 @@ declare global {
 export const chromeCapabilities: WebdriverIO.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
-    binary: chromePath,
     args: ['--disable-web-security'],
   },
-  'wdio:chromedriverOptions': {
-    binary: chromedriverPath,
-  },
+  'wdio:chromedriverOptions': {},
 };
 
 export const config: WebdriverIO.Config = {
