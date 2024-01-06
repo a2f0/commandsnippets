@@ -1,5 +1,5 @@
+import {AppBar, Box} from '@mui/material';
 import React, {useEffect} from 'react';
-import {AppBar} from '@mui/material';
 import EntryList from './EntryList';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
@@ -39,27 +39,33 @@ const Main = () => {
   return (
     <>
       <AppBar
-        position="fixed"
+        position="sticky"
         sx={{
-          height: theme => `${theme.appBar.height}px`,
           boxShadow: 'none', // Remove the Material UI 'bottom border'.
           backgroundImage: 'none', // Remove the Material UI gradient.
           borderBottom: '1px solid #808080',
           backgroundColor: theme => `${theme.header.background}`,
+          top: 0,
         }}
       >
         <StyledToolbar>
           <MenuBar />
         </StyledToolbar>
       </AppBar>
-      <LeftDrawer />
-      <EntryList />
-      <AppBar
-        position="fixed"
+      <Box
+        display="flex"
+        flex-direction="column"
         sx={{
-          top: 'auto',
+          minHeight: '100vh',
+        }}
+      >
+        <LeftDrawer />
+        <EntryList />
+      </Box>
+      <AppBar
+        position="sticky"
+        sx={{
           bottom: 0,
-          height: theme => `${theme.footer.height}px`,
           backgroundImage: 'none', // Remove the Material UI gradient.
         }}
       >
