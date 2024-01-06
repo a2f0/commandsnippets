@@ -96,7 +96,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewTop).not.toBeExisting();
 
     // test save
-    await expect(BasePage.tagsEntries.length).toBe(4);
+    await expect(await BasePage.tagsEntries.length).toBe(4);
     await (await BasePage.fileMenuButton).waitAndLeftClick();
 
     await expect(BasePage.fileMenu).toBeDisplayed();
