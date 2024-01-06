@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tags from '../../mocks/tags/tagsResponse';
 
@@ -27,7 +26,7 @@ describe('Entries Context Menu Untag', () => {
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
       wait: 5000,
     });
-    assert.strictEqual(await BasePage.tagsEntries.length, 4);
+    await expect(await BasePage.tagsEntries.length).toBe(4);
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
     await expect(mockTagsEntries).toBeRequestedTimes(0);
