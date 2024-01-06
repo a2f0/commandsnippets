@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
@@ -18,7 +17,7 @@ describe('Entry Main Menu Behavior', () => {
     mockEntries.respond(entriesResponse, {fetchResponse: false});
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-    assert.strictEqual(await BasePage.tagsEntries.length, 4);
+    await expect(BasePage.tagsEntries.length).toBe(4);
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
 
