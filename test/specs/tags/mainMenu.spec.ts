@@ -1,5 +1,4 @@
 import {BasePage} from '../../pageobjects/base';
-import assert from 'assert';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
@@ -36,11 +35,11 @@ describe('Tag Main Menu Behavior', () => {
     // https://webdriver.io/docs/autowait/#limitations
 
     let tags = await BasePage.tags;
-    let wrapper = await tags[0].$('div[id^="tagLabelWrapper-"]');
-    let wrapperID = await wrapper.getAttribute('id');
-    assert.strictEqual(wrapperID, 'tagLabelWrapper-1');
-    let backgroundColor = await wrapper.getCSSProperty('background-color');
-    assert.strictEqual(backgroundColor.value, 'rgba(72,72,72,1)');
+    await expect(
+      await BasePage.tags[0]
+        .$('div[id="tagLabelWrapper-1"]')
+        .getCSSProperty('background-color')
+    ).toBe('rgba(72,72,72,1)');
 
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
@@ -66,7 +65,6 @@ describe('Tag Main Menu Behavior', () => {
     await expect(BasePage.tagsMenu).toBeDisplayed();
 
     // click the sort by date create ascending and make sure the menu disappears
-
     await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeExisting();
     await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeDisplayed();
     await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeClickable();
@@ -114,21 +112,11 @@ describe('Tag Main Menu Behavior', () => {
       }
     );
 
-    // Make sure the tag is on the bottom but still selected
-    await browser.waitUntil(
-      async () => {
-        tags = await BasePage.tags;
-        wrapper = await tags[3].$('div[id^="tagLabelWrapper-"]');
-        wrapperID = await wrapper.getAttribute('id');
-        assert.strictEqual(wrapperID, 'tagLabelWrapper-1');
-        backgroundColor = await wrapper.getCSSProperty('background-color');
-        return backgroundColor.value === 'rgba(72,72,72,1)';
-      },
-      {
-        timeout: 5000,
-        timeoutMsg: 'expected tag 1 to still be selected',
-      }
-    );
+    await expect(
+      await BasePage.tags[3]
+        .$('div[id="tagLabelWrapper-1"]')
+        .getCSSProperty('background-color')
+    ).toBe('rgba(72,72,72,1)');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
   });
 });
