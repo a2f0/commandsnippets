@@ -36,9 +36,11 @@ describe('Tag Main Menu Behavior', () => {
 
     let tags = await BasePage.tags;
     await expect(
-      await BasePage.tags[0]
-        .$('div[id="tagLabelWrapper-1"]')
-        .getCSSProperty('background-color')
+      (
+        await BasePage.tags[0]
+          .$('div[id="tagLabelWrapper-1"]')
+          .getCSSProperty('background-color')
+      ).value
     ).toBe('rgba(72,72,72,1)');
 
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
@@ -113,9 +115,11 @@ describe('Tag Main Menu Behavior', () => {
     );
 
     await expect(
-      await BasePage.tags[3]
-        .$('div[id="tagLabelWrapper-1"]')
-        .getCSSProperty('background-color')
+      (
+        await BasePage.tags[3]
+          .$('div[id="tagLabelWrapper-1"]')
+          .getCSSProperty('background-color')
+      ).value
     ).toBe('rgba(72,72,72,1)');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
   });
