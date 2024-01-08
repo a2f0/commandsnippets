@@ -3,7 +3,7 @@ import React from 'react';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
 import {Theme} from '@mui/material/styles';
-import {darkTheme} from '../../../themes';
+import {darkTheme} from '../../../theme/themes';
 import {useAppContext} from '../../../AppContext';
 
 interface IProps {

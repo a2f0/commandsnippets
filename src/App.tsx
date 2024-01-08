@@ -4,7 +4,7 @@ import {HTML5Backend} from 'react-dnd-html5-backend';
 import React from 'react';
 import Routes from './Routes';
 import {StyledEngineProvider} from '@mui/material/styles';
-import Theme from './Theme';
+import Theme from './theme/Theme';
 import ThemedGlobalStyle from './styled/layout/ThemedGlobalStyles';
 import {observer} from 'mobx-react';
 

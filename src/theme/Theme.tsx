@@ -3,7 +3,7 @@ import {Theme as MuiTheme} from '@mui/material/styles';
 import React from 'react';
 import {ThemeProvider} from '@mui/material/styles';
 import {observer} from 'mobx-react';
-import {useAppContext} from './AppContext';
+import {useAppContext} from '../AppContext';
 
 interface IThemeProps {
   children?: React.ReactNode;
