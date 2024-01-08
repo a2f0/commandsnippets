@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import {GitHub} from '@mui/icons-material';
 import LoginButton from './styled/LoginButton';
-import apiBase from './apiBase';
+import apiBase from './lib/api/apiBase';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';

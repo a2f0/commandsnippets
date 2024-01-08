@@ -1,5 +1,5 @@
 import React, {useMemo, useRef, useState} from 'react';
-import {ReorderTag, tearleadsApi} from './tearleadsApi';
+import {ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
 import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {AxiosResponse} from 'axios';
@@ -13,7 +13,7 @@ import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
 import {Theme} from '@mui/material/styles';
-import apiBase from './apiBase';
+import apiBase from './lib/api/apiBase';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';

@@ -1,4 +1,4 @@
-import API from '../apiBase';
+import API from './api/apiBase';
 import {CancelTokenSource} from 'axios';
 import {ITagJsonApi} from '../models/TagModel';
 import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';

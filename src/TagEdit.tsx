@@ -6,7 +6,7 @@ import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
-import apiBase from './apiBase';
+import apiBase from './lib/api/apiBase';
 import {observer} from 'mobx-react';
 
 export interface ITagEdit {

@@ -3,7 +3,7 @@ import {ILogoutJsonApiResponse} from '../../../lib/authentication';
 import React from 'react';
 import StyledMenuItem from '../../../StyledMenuItem';
 import axios from 'axios';
-import {baseHTTPURL} from '../../../apiBase';
+import {baseHTTPURL} from '../../../lib/api/apiBase';
 import {useAppContext} from '../../../AppContext';
 
 interface IProps {
