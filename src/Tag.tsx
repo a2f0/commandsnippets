@@ -65,7 +65,6 @@ interface ITagProps {
 }
 
 const Tag = ({
-  id,
   object,
   handleDeleteParent,
   moveEntry,
@@ -73,6 +72,7 @@ const Tag = ({
   index,
   findEntryByIndex,
 }: ITagProps) => {
+  const {id} = object;
   const [tagObject, setTagObject] = useState<ITagJsonApi>(object);
   const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
@@ -92,7 +92,7 @@ const Tag = ({
       return true;
     },
     drop: () => ({
-      id: id,
+      id,
       type: 'Tag',
     }),
     collect: monitor => ({
@@ -157,7 +157,7 @@ const Tag = ({
   };
 
   if (
-    (object.id === appConfig.tagSelectedID &&
+    (id === appConfig.tagSelectedID &&
       appConfig.appMode === appMode.tagsList) ||
     isActiveHover
   ) {
