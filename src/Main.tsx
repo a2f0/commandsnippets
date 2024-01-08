@@ -1,6 +1,6 @@
 import {AppBar, Box} from '@mui/material';
 import React, {useEffect} from 'react';
-import BottomBar from './BottomBar';
+import BottomBar from './lib/bottom_bar.tsx/BottomBar';
 import EntryList from './EntryList';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
