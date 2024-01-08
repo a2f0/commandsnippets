@@ -26,7 +26,7 @@ export const config: WebdriverIO.Config = {
   exclude: [],
   maxInstances: 1,
   capabilities: [chromeCapabilities],
-  logLevel: 'info',
+  logLevel: 'error',
   // Stop running tests after initial failure.
   bail: 1,
   baseUrl: 'http://localhost:8081',
