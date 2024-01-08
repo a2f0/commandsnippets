@@ -5,9 +5,8 @@ import React from 'react';
 import TagSearch from '../../TagSearch';
 import TextEntrySearchField from '../../styled/text_entries/TextEntrySearchField';
 import {Theme} from '@mui/material/styles';
-import {Typography} from '@mui/material';
+import Version from './Version';
 import {observer} from 'mobx-react';
-import packageJson from '../../../package.json';
 import {styled} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 
@@ -35,14 +34,13 @@ const BottomBar = () => {
       >
         <Box
           sx={{
-            mr: theme => theme.spacing(0.5),
             height: theme => theme.footer.height,
             display: 'flex',
             alignItems: 'flex-end',
           }}
         >
           <Mode />
-          <Typography variant="subtitle2">[{packageJson.version}]</Typography>
+          <Version />
         </Box>
       </Grid>
     </>
