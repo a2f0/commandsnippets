@@ -225,17 +225,17 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         )}
         {tags.map((object: ITagJsonApi, i) => {
           return (
-            <div key={object.id} ref={elRefs[i]}>
-              <Tag
-                object={object}
-                id={object.id}
-                handleDeleteParent={handleDelete}
-                moveEntry={moveEntry}
-                findEntry={findEntry}
-                index={i}
-                findEntryByIndex={findEntryByIndex}
-              />
-            </div>
+            <Tag
+              object={object}
+              id={object.id}
+              key={object.id}
+              handleDeleteParent={handleDelete}
+              moveEntry={moveEntry}
+              findEntry={findEntry}
+              index={i}
+              findEntryByIndex={findEntryByIndex}
+              ref={elRefs[i]}
+            />
           );
         })}
         {appConfig.tagNew === 'bottom' && (
