@@ -64,308 +64,314 @@ interface ITagProps {
   findEntryByIndex: (id: number) => ITagJsonApi | null;
 }
 
-const Tag = ({
-  id,
-  object,
-  handleDeleteParent,
-  moveEntry,
-  findEntry,
-  index,
-  findEntryByIndex,
-}: ITagProps) => {
-  const [tagObject, setTagObject] = useState<ITagJsonApi>(object);
-  const appConfig = useAppContext();
-  const dragRef = useRef<HTMLDivElement>(null);
-  const dropRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const originalIndex = findEntry(id).index;
-  const [showDragHandle, setShowDragHandle] = useState(false);
-  const theme: Theme = useTheme();
-  const {user} = useParams();
-  const [{canDrop, isOver}, drop] = useDrop<
-    DraggableItem,
-    DropResult,
-    DroppableItem
-  >(() => ({
-    accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
-    canDrop: () => {
-      return true;
-    },
-    drop: () => ({
-      id: id,
-      type: 'Tag',
-    }),
-    collect: monitor => ({
-      isOver: monitor.isOver(),
-      canDrop: monitor.canDrop(),
-    }),
-    hover: (item: DraggableItem, monitor) => {
-      if (!dragRef.current) {
-        return;
-      }
-      if (
-        item.type === ItemTypes.ENTRY ||
-        item.type === ItemTypes.UNTAGGEDENTRY
-      ) {
-        return;
-      }
-
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-      // Determine rectangle on screen
-      const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
-      // Get vertical middle
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      // Determine mouse position
-      const clientOffset = monitor.getClientOffset();
-      // Get pixels to the top
-      if (clientOffset !== null) {
-        const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-        // Only perform the move when the mouse has crossed half of the items height
-        // When dragging downwards, only move when the cursor is below 50%
-        // When dragging upwards, only move when the cursor is above 50%
-        // Dragging downwards
-        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+const Tag = React.forwardRef<HTMLDivElement, ITagProps>(
+  ({
+    id,
+    object,
+    handleDeleteParent,
+    moveEntry,
+    findEntry,
+    index,
+    findEntryByIndex,
+  }: ITagProps) => {
+    const [tagObject, setTagObject] = useState<ITagJsonApi>(object);
+    const appConfig = useAppContext();
+    const dragRef = useRef<HTMLDivElement>(null);
+    const dropRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+    const originalIndex = findEntry(id).index;
+    const [showDragHandle, setShowDragHandle] = useState(false);
+    const theme: Theme = useTheme();
+    const {user} = useParams();
+    const [{canDrop, isOver}, drop] = useDrop<
+      DraggableItem,
+      DropResult,
+      DroppableItem
+    >(() => ({
+      accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
+      canDrop: () => {
+        return true;
+      },
+      drop: () => ({
+        id: id,
+        type: 'Tag',
+      }),
+      collect: monitor => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+      hover: (item: DraggableItem, monitor) => {
+        if (!dragRef.current) {
           return;
         }
-        // Dragging upwards
-        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        if (
+          item.type === ItemTypes.ENTRY ||
+          item.type === ItemTypes.UNTAGGEDENTRY
+        ) {
           return;
         }
 
-        const {index} = findEntry(item.id);
-        moveEntry(index, hoverIndex);
-        // Note: we're mutating the monitor item here!
-        // Generally it's better to avoid mutations,
-        // but it's good here for the sake of performance
-        // to avoid expensive index searches.
-        item.index = hoverIndex;
-      }
-    },
-  }));
+        const dragIndex = item.index;
+        const hoverIndex = index;
+        if (dragIndex === hoverIndex) {
+          return;
+        }
+        // Determine rectangle on screen
+        const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
+        // Get vertical middle
+        const hoverMiddleY =
+          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        // Determine mouse position
+        const clientOffset = monitor.getClientOffset();
+        // Get pixels to the top
+        if (clientOffset !== null) {
+          const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
-  const isActiveHover = canDrop && isOver;
+          // Only perform the move when the mouse has crossed half of the items height
+          // When dragging downwards, only move when the cursor is below 50%
+          // When dragging upwards, only move when the cursor is above 50%
+          // Dragging downwards
+          if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+            return;
+          }
+          // Dragging upwards
+          if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+            return;
+          }
 
-  const tagStyle = {
-    backgroundColor: theme.palette.background.paper,
-    color: theme.palette.text.primary,
-  };
+          const {index} = findEntry(item.id);
+          moveEntry(index, hoverIndex);
+          // Note: we're mutating the monitor item here!
+          // Generally it's better to avoid mutations,
+          // but it's good here for the sake of performance
+          // to avoid expensive index searches.
+          item.index = hoverIndex;
+        }
+      },
+    }));
 
-  if (
-    (object.id === appConfig.tagSelectedID &&
-      appConfig.appMode === appMode.tagsList) ||
-    isActiveHover
-  ) {
-    tagStyle.backgroundColor = theme.selected.background;
-    tagStyle.color = theme.selected.foreground;
-  }
+    const isActiveHover = canDrop && isOver;
 
-  const handleTagClick = () => {
-    navigate(`/${user}/${tagObject.attributes.name}`);
-    // Reset the main panel in case Untagged Entries were being viewed.
-    appConfig.setAppMode(appMode.tagsList);
-    appConfig.incrementClickCount();
-    appConfig.setActiveSearch(activeSearch.entries);
-    appConfig.setEntrySearchString('');
-    appConfig.setTagSelectedID(tagObject.id);
-  };
+    const tagStyle = {
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    };
 
-  const mouseEnter = () => {
-    if (appConfig.loggedInUser !== null && appConfig.tagSortOrder === 'order') {
-      setShowDragHandle(true);
+    if (
+      (object.id === appConfig.tagSelectedID &&
+        appConfig.appMode === appMode.tagsList) ||
+      isActiveHover
+    ) {
+      tagStyle.backgroundColor = theme.selected.background;
+      tagStyle.color = theme.selected.foreground;
     }
-  };
-  const mouseLeave = () => {
-    setShowDragHandle(false);
-  };
 
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
-  };
+    const handleTagClick = () => {
+      navigate(`/${user}/${tagObject.attributes.name}`);
+      // Reset the main panel in case Untagged Entries were being viewed.
+      appConfig.setAppMode(appMode.tagsList);
+      appConfig.incrementClickCount();
+      appConfig.setActiveSearch(activeSearch.entries);
+      appConfig.setEntrySearchString('');
+      appConfig.setTagSelectedID(tagObject.id);
+    };
 
-  const [mouse, setMouse] = useState(initialMouse);
-  const [isEditing, setIsEditing] = useState(false);
+    const mouseEnter = () => {
+      if (
+        appConfig.loggedInUser !== null &&
+        appConfig.tagSortOrder === 'order'
+      ) {
+        setShowDragHandle(true);
+      }
+    };
+    const mouseLeave = () => {
+      setShowDragHandle(false);
+    };
 
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
+    const initialMouse: IMouse = {
+      mouseX: null,
+      mouseY: null,
+    };
 
-  const handleSave = (object: ITagJsonApiResponseSingle) => {
-    const existing = appConfig.tagsArray.find(o => o.id === object.data.id);
-    existing?.update(object.data);
-    setTagObject(object.data);
-    setIsEditing(false);
-  };
+    const [mouse, setMouse] = useState(initialMouse);
+    const [isEditing, setIsEditing] = useState(false);
 
-  const deleteTag = () => {
-    apiBase
-      .delete('/tags/' + tagObject.id, {withCredentials: true})
-      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
-        handleDeleteParent(response.data);
-      })
-      .catch(error => {
-        console.error(error);
-      });
-  };
+    const handleCancelEdit = () => {
+      setIsEditing(false);
+    };
 
-  const handleBeginEdit = () => {
-    setIsEditing(true);
-  };
+    const handleSave = (object: ITagJsonApiResponseSingle) => {
+      const existing = appConfig.tagsArray.find(o => o.id === object.data.id);
+      existing?.update(object.data);
+      setTagObject(object.data);
+      setIsEditing(false);
+    };
 
-  const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
-  };
+    const deleteTag = () => {
+      apiBase
+        .delete('/tags/' + tagObject.id, {withCredentials: true})
+        .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
+          handleDeleteParent(response.data);
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    };
 
-  const [{isDragging}, drag, preview] = useDrag({
-    item: (): DraggableItem => ({
-      id,
-      originalIndex,
+    const handleBeginEdit = () => {
+      setIsEditing(true);
+    };
+
+    const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const mouseData: IMouse = {...mouse};
+      (mouseData.mouseX = event.clientX - 2),
+        (mouseData.mouseY = event.clientY - 4),
+        setMouse(mouseData);
+    };
+
+    const [{isDragging}, drag, preview] = useDrag({
+      item: (): DraggableItem => ({
+        id,
+        originalIndex,
+        type: ItemTypes.TAG,
+        index,
+      }),
       type: ItemTypes.TAG,
-      index,
-    }),
-    type: ItemTypes.TAG,
-    collect: monitor => ({
-      isDragging: monitor.isDragging(),
-    }),
-    end: async (dropResult, monitor) => {
-      const drop_result: ITagJsonApi | null = monitor.getDropResult();
-      const {id: droppedId, originalIndex} = monitor.getItem();
-      const didDrop = monitor.didDrop();
-      if (!didDrop) {
-        console.info('didDrop Tag moveEntry');
-        const {index} = findEntry(droppedId);
-        moveEntry(index, originalIndex);
-      } else {
-        if (drop_result?.type) {
-          if ('type' in drop_result) {
-            if (drop_result.type === 'Tag') {
-              console.info(`originalIndex: ${originalIndex}`);
-              console.info(`findEntryIndex: ${findEntry(id).index}`);
-              if (originalIndex !== dropResult.index) {
-                console.info(
-                  'it moved from index ' +
-                    originalIndex +
-                    ' to ' +
-                    dropResult.index
-                );
-                // Then it was reordered in the list.
-                const entry = findEntry(id).entry;
-                const entry_below = findEntryByIndex(index + 1);
-                let ordered_top: ITagJsonApi | null;
-                let ordered_bottom: ITagJsonApi | null;
-                if (entry_below === null) {
-                  //Then it was moved to the bottom position, get the entry before it.
-                  ordered_top = findEntryByIndex(index - 1);
-                  ordered_bottom = entry;
-                } else {
-                  ordered_top = entry;
-                  ordered_bottom = entry_below;
-                }
-                if (ordered_top !== null && ordered_bottom !== null) {
-                  const payload: ReorderTag = {
-                    data: {
-                      type: 'Tag',
-                      attributes: {
-                        top: ordered_top.id,
-                        bottom: ordered_bottom.id,
+      collect: monitor => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: async (dropResult, monitor) => {
+        const drop_result: ITagJsonApi | null = monitor.getDropResult();
+        const {id: droppedId, originalIndex} = monitor.getItem();
+        const didDrop = monitor.didDrop();
+        if (!didDrop) {
+          console.info('didDrop Tag moveEntry');
+          const {index} = findEntry(droppedId);
+          moveEntry(index, originalIndex);
+        } else {
+          if (drop_result?.type) {
+            if ('type' in drop_result) {
+              if (drop_result.type === 'Tag') {
+                console.info(`originalIndex: ${originalIndex}`);
+                console.info(`findEntryIndex: ${findEntry(id).index}`);
+                if (originalIndex !== dropResult.index) {
+                  console.info(
+                    'it moved from index ' +
+                      originalIndex +
+                      ' to ' +
+                      dropResult.index
+                  );
+                  // Then it was reordered in the list.
+                  const entry = findEntry(id).entry;
+                  const entry_below = findEntryByIndex(index + 1);
+                  let ordered_top: ITagJsonApi | null;
+                  let ordered_bottom: ITagJsonApi | null;
+                  if (entry_below === null) {
+                    //Then it was moved to the bottom position, get the entry before it.
+                    ordered_top = findEntryByIndex(index - 1);
+                    ordered_bottom = entry;
+                  } else {
+                    ordered_top = entry;
+                    ordered_bottom = entry_below;
+                  }
+                  if (ordered_top !== null && ordered_bottom !== null) {
+                    const payload: ReorderTag = {
+                      data: {
+                        type: 'Tag',
+                        attributes: {
+                          top: ordered_top.id,
+                          bottom: ordered_bottom.id,
+                        },
+                        relationships: {},
                       },
-                      relationships: {},
-                    },
-                  };
-                  await tearleadsApi.reorderTag(payload);
+                    };
+                    await tearleadsApi.reorderTag(payload);
+                  }
+                } else {
+                  console.info("it wasn't moved.");
                 }
-              } else {
-                console.info("it wasn't moved.");
               }
             }
           }
         }
-      }
-    },
-  });
-  const opacity = isDragging ? 0 : 1;
-  drag(dragRef);
-  drop(dropRef);
+      },
+    });
+    const opacity = isDragging ? 0 : 1;
+    drag(dragRef);
+    drop(dropRef);
 
-  const contextMenu = useMemo(
-    () => (
-      <TagContextMenu
-        id={id}
-        mouse={mouse}
-        deleteTagParent={deleteTag}
-        handleBeginEditParent={handleBeginEdit}
-      />
-    ),
-    [mouse]
-  );
+    const contextMenu = useMemo(
+      () => (
+        <TagContextMenu
+          id={id}
+          mouse={mouse}
+          deleteTagParent={deleteTag}
+          handleBeginEditParent={handleBeginEdit}
+        />
+      ),
+      [mouse]
+    );
 
-  return (
-    <>
-      {!isEditing && (
-        <div
-          ref={dropRef}
-          style={{opacity}}
-          onContextMenu={handleContextClick}
-          id={`tag-${id}`}
-          role="tag"
-        >
-          <TagContainer ref={preview}>
-            <DragHandleContainer
-              theme={theme}
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
-              role="tagDragHandleContainer"
-            >
-              <DragHandle
-                role="tagDragHandle"
-                ref={dragRef}
+    return (
+      <>
+        {!isEditing && (
+          <div
+            ref={dropRef}
+            style={{opacity}}
+            onContextMenu={handleContextClick}
+            id={`tag-${id}`}
+            role="tag"
+          >
+            <TagContainer ref={preview}>
+              <DragHandleContainer
+                theme={theme}
                 onMouseEnter={mouseEnter}
                 onMouseLeave={mouseLeave}
-                style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
+                role="tagDragHandleContainer"
               >
-                ::
-              </DragHandle>
-            </DragHandleContainer>
-            <TagLabelWrapper
-              theme={theme}
-              id={`tagLabelWrapper-${id}`}
-              role="tagLabelWrapper"
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
-              ref={drop}
-              style={tagStyle}
-              onClick={handleTagClick}
-              onContextMenu={handleContextClick}
-            >
-              <TagLabel label={tagObject.attributes.name} />
-              {appConfig.showTagCounts
-                ? ` (${tagObject.attributes.entry_count})`
-                : null}
-            </TagLabelWrapper>
-          </TagContainer>
-        </div>
-      )}
-      {appConfig.loggedInUser && <>{contextMenu}</>}
-      {isEditing && (
-        <TagEdit
-          object={tagObject}
-          handleSaveParent={handleSave}
-          handleCancelEditParent={handleCancelEdit}
-        />
-      )}
-    </>
-  );
-};
+                <DragHandle
+                  role="tagDragHandle"
+                  ref={dragRef}
+                  onMouseEnter={mouseEnter}
+                  onMouseLeave={mouseLeave}
+                  style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
+                >
+                  ::
+                </DragHandle>
+              </DragHandleContainer>
+              <TagLabelWrapper
+                theme={theme}
+                id={`tagLabelWrapper-${id}`}
+                role="tagLabelWrapper"
+                onMouseEnter={mouseEnter}
+                onMouseLeave={mouseLeave}
+                ref={drop}
+                style={tagStyle}
+                onClick={handleTagClick}
+                onContextMenu={handleContextClick}
+              >
+                <TagLabel label={tagObject.attributes.name} />
+                {appConfig.showTagCounts
+                  ? ` (${tagObject.attributes.entry_count})`
+                  : null}
+              </TagLabelWrapper>
+            </TagContainer>
+          </div>
+        )}
+        {appConfig.loggedInUser && <>{contextMenu}</>}
+        {isEditing && (
+          <TagEdit
+            object={tagObject}
+            handleSaveParent={handleSave}
+            handleCancelEditParent={handleCancelEdit}
+          />
+        )}
+      </>
+    );
+  }
+);
 
+Tag.displayName = 'Tag';
 export default React.memo(observer(Tag));
