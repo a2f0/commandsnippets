@@ -50,6 +50,10 @@ class TearleadsDexie extends Dexie implements ITearleadsDB {
     await this.users.put(user);
   }
 
+  async getUser(username: string) {
+    return await this.users.where('username').equals(username).first();
+  }
+
   async putTag(tag: ITag): Promise<void> {
     await this.tags.put(tag);
   }
