@@ -1,11 +1,10 @@
 import {AppBar, Box} from '@mui/material';
 import React, {useEffect} from 'react';
+import BottomBar from './BottomBar';
 import EntryList from './EntryList';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
 import StyledToolbar from './styled/layout/StyledToolbar';
-import TagSearch from './TagSearch';
-import TextEntrySearchField from './styled/text_entries/TextEntrySearchField';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useLocation} from 'react-router-dom';
@@ -70,7 +69,7 @@ const Main = () => {
         }}
       >
         <StyledToolbar>
-          <TagSearch /> <TextEntrySearchField />
+          <BottomBar />
         </StyledToolbar>
       </AppBar>
     </>
