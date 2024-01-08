@@ -1,34 +1,6 @@
+import type {IEntry, IJunction, ITag, IUser} from './types';
 import Dexie from 'dexie';
 import {ITearleadsDB} from './db';
-
-export interface IUser {
-  id: string;
-  username: string;
-  updated: number;
-}
-
-export interface ITag {
-  id: string;
-  name: string;
-  userId: string;
-  updated: number;
-}
-
-export interface IEntry {
-  id: string;
-  subject: string;
-  body: string;
-  updated: number;
-}
-
-export interface IJunction {
-  id: string;
-  entryId: string;
-  tagId: string;
-  userId: string;
-  updated: number;
-  order: number;
-}
 
 class TearleadsDexie extends Dexie implements ITearleadsDB {
   users!: Dexie.Table<IUser, number>; // number is the type of the primary key

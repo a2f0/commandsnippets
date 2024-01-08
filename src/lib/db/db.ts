@@ -1,4 +1,4 @@
-import type {IEntry, IJunction, ITag, IUser} from './dexie';
+import type {IEntry, IJunction, ITag, IUser} from './types';
 import {TearleadsDexie} from './dexie';
 
 export interface ITearleadsDB {
