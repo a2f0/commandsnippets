@@ -1,0 +1,19 @@
+import React from 'react';
+import {Typography} from '@mui/material';
+import {observer} from 'mobx-react';
+import {useAppContext} from '../../AppContext';
+
+const BottomBar = () => {
+  const appConfig = useAppContext();
+  return (
+    <Typography
+      variant="subtitle2"
+      sx={{
+        mr: theme => theme.spacing(0.5),
+      }}
+    >
+      [mode: {appConfig.appMode} ]
+    </Typography>
+  );
+};
+export default React.memo(observer(BottomBar));
