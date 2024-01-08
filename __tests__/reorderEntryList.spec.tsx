@@ -6,7 +6,7 @@ import TestAppRouter from './util/TestAppRouter';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
 import server from './util/msw';
-import {tearleadsApi} from '../src/tearleadsApi';
+import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import userEvent from '@testing-library/user-event';
 
 beforeAll(() => server.listen());

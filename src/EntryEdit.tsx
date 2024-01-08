@@ -7,7 +7,7 @@ import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
-import apiBase from './apiBase';
+import apiBase from './lib/api/apiBase';
 import {needsScrollingIntoView} from './lib/text_entries';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
