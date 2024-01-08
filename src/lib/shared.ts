@@ -1,6 +1,6 @@
 import {ITagJsonApi} from '../models/TagModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
-import Theme from '../themeBase';
+import Theme from '../theme/themeBase';
 
 export enum entrySearchMethod {
   allEntries = 1,
