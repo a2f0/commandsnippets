@@ -1,30 +1,27 @@
 import '@testing-library/jest-dom';
 import 'fake-indexeddb/auto';
-import {TearleadsDexie} from '../../../../src/lib/db/dexie';
+import {db} from '../../../../src/lib/db/db';
 
 describe('TearleadsDexie', () => {
   describe('Models', () => {
     describe('User', () => {
       it('Inserts and retrieves a User', async () => {
-        const db = new TearleadsDexie();
-        await db.users.put({
+        await db.putUser({
           id: '1',
           username: 'u1',
           updated: 1,
         });
-        const user = await db.users.where('username').equals('u1').first();
+        const user = await db.getUser('u1');
         expect(user).toBeDefined();
       });
       it('Returns undefined when a user cannot be found', async () => {
-        const db = new TearleadsDexie();
-        const user = await db.users.where('username').equals('u2').first();
+        const user = await db.getUser('username');
         expect(user).toBeUndefined();
       });
     });
     describe('Tag', () => {
       it('Inserts and retrieves a tag for a user', async () => {
-        const db = new TearleadsDexie();
-        await db.tags.put({
+        await db.putTag({
           id: '1',
           updated: 1,
           userId: '1',
@@ -35,13 +32,12 @@ describe('TearleadsDexie', () => {
     });
     describe('Static Methods', () => {
       it('implements getTagsForUserName', async () => {
-        const db = new TearleadsDexie();
-        await db.users.put({
+        await db.putUser({
           id: '1',
           username: 'u1',
           updated: 1,
         });
-        await db.tags.put({
+        await db.putTag({
           id: '1',
           updated: 1,
           userId: '1',

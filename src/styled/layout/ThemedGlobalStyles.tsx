@@ -10,13 +10,6 @@ const ThemedGlobalStyle = () => {
       styles={{
         '::selection': {background: theme.selected.background},
         '::-webkit-selection': {background: theme.selected.background},
-        '::-moz-selection': {background: theme.selected.background},
-        body: {
-          height: '100%',
-        },
-        html: {
-          height: '100%',
-        },
         '#©': {
           height: '100%',
         },

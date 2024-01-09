@@ -16,11 +16,11 @@ import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
 import React from 'react';
-import apiBase from './apiBase';
+import apiBase from './lib/api/apiBase';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
-import {tearleadsApi} from './tearleadsApi';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import {useAppContext} from './AppContext';
 
 const EntryText = styled('div')(() => ({

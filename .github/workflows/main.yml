@@ -13,14 +13,13 @@ jobs:
     strategy:
       matrix:
         node-version: [18]
-        chrome-version: [119.0.6045.105]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.7'
           architecture: 'x64'
@@ -31,11 +30,7 @@ jobs:
           pip install pre-commit
           pre-commit run --all-files
       - run: npx vitest --no-watch
-      - run: npx @puppeteer/browsers install chromedriver@${{ matrix.chrome-version }}
-      - run: npx @puppeteer/browsers install chrome@${{ matrix.chrome-version }}
       - run: npm run ci-headless
-        env:
-          CHROME_VERSION: ${{ matrix.chrome-version }}
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}

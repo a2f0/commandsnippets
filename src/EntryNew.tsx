@@ -7,7 +7,7 @@ import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_ent
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
-import apiBase from './apiBase';
+import apiBase from './lib/api/apiBase';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
 import {useParams} from 'react-router-dom';

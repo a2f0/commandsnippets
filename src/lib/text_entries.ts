@@ -1,4 +1,4 @@
-import API from '../apiBase';
+import API from './api/apiBase';
 import {CancelTokenSource} from 'axios';
 import {ITagJsonApi} from '../models/TagModel';
 import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
@@ -526,6 +526,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
           await db.putTag({
             id: entry.id,
             name: entry.attributes.name,
+            entryCount: entry.attributes.entry_count,
             updated,
             userId: entry.relationships.user.data.id,
           });

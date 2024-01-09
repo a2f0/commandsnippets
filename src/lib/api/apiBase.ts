@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import {environment} from './lib/environment';
+import {environment} from '../environment';
 
 export const baseHTTPURL = () => {
   if (environment === 'staging') {

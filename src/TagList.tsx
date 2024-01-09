@@ -9,13 +9,14 @@ import React, {
 } from 'react';
 import {activeSearch, appMode, needsScrollingIntoView} from './lib/shared';
 import {IMouse} from './Entry';
+import type {ITag} from './lib/db/types';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import {List} from '@mui/material';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
 import {autorun} from 'mobx';
-
+import {convertISO8601ToUnixTime} from './lib/util/dateTime';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import update from 'immutability-helper';
@@ -224,10 +225,20 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           <TagNew id="tagNewTop" handleNewParent={handleNew} />
         )}
         {tags.map((object: ITagJsonApi, i) => {
+          const updated = convertISO8601ToUnixTime(
+            object.attributes.date_updated
+          );
+          const tag: ITag = {
+            id: object.id,
+            name: object.attributes.name,
+            entryCount: object.attributes.entry_count,
+            updated,
+            userId: object.relationships.user.data.id,
+          };
           return (
             <div key={object.id} ref={elRefs[i]}>
               <Tag
-                object={object}
+                object={tag}
                 id={object.id}
                 handleDeleteParent={handleDelete}
                 moveEntry={moveEntry}

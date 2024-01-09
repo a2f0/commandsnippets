@@ -299,12 +299,9 @@ const EntryList = () => {
       id="tagsEntriesList"
       onMouseDown={onMouseDown}
       sx={{
+        flexGrow: '1',
         display: 'flex',
         flexDirection: 'column',
-        paddingTop: `${theme.appBar.height}px`,
-        paddingLeft: `${theme.drawer.width}px`,
-        width: `calc(100vw - ${theme.drawer.width}px)`,
-        minHeight: `calc(100vh - ${theme.footer.height}px)`,
       }}
     >
       {appConfig.entryNew === 'textEntry-top' && (
@@ -333,9 +330,7 @@ const EntryList = () => {
       <Box
         onContextMenu={handleContextClick}
         sx={{
-          display: 'flex',
           flexGrow: '1',
-          paddingBottom: `${theme.footer.height}px`,
         }}
       />
       {appConfig.loggedInUser && <>{contextMenu}</>}
