@@ -6,7 +6,8 @@ import packageJson from '../../../package.json';
 const BottomBar = () => {
   return (
     <Typography
-      variant="subtitle2"
+      variant="caption"
+      fontFamily="monospace"
       sx={{
         mr: theme => theme.spacing(0.5),
       }}
