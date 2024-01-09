@@ -137,11 +137,20 @@ const MenuBar = () => {
     <>
       <Box
         id="menuBarDrawerSpacer"
+        display="flex"
+        flexDirection="row"
+        alignItems="flex-end"
+        justifyContent="flex-start"
         sx={{
           width: `calc(${theme.drawer.width}px + ${theme.main.dragIndicatorWidth}px)`,
+          height: theme.appBar.height,
           flexShrink: 0,
+          pl: 2.5,
+          pb: 0.5,
         }}
-      />
+      >
+        <img src="/tearleads-logo-small.svg" alt="Tearleads Logo" />
+      </Box>
       <Aligner theme={theme}>
         {appConfig.loggedInUser && (
           <FileMenuButton onClick={handleFileMenuClick} />
