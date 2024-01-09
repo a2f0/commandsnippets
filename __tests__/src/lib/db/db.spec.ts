@@ -26,6 +26,7 @@ describe('TearleadsDexie', () => {
           updated: 1,
           userId: '1',
           name: 't1',
+          entryCount: 0,
         });
       });
     });
@@ -41,6 +42,7 @@ describe('TearleadsDexie', () => {
           updated: 1,
           userId: '1',
           name: 't1',
+          entryCount: 0,
         });
         const tags = await db.getTagsForUserName('u1');
         expect(tags.length).toEqual(1);
