@@ -6,6 +6,7 @@ import {AxiosResponse} from 'axios';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
 import {IMouse} from './Entry';
+import type {ITag} from './lib/db/types';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import ItemTypes from './ItemTypes';
@@ -14,6 +15,7 @@ import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
 import {Theme} from '@mui/material/styles';
 import apiBase from './lib/api/apiBase';
+import {convertISO8601ToUnixTime} from './lib/util/dateTime';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
@@ -56,7 +58,7 @@ interface DropResult {
 
 interface ITagProps {
   id: string;
-  object: ITagJsonApi;
+  object: ITag;
   handleDeleteParent: (object: ITagJsonApiResponseSingle) => void;
   moveEntry: (dragIndex: number, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
@@ -73,7 +75,7 @@ const Tag = ({
   findEntryByIndex,
 }: ITagProps) => {
   const {id} = object;
-  const [tagObject, setTagObject] = useState<ITagJsonApi>(object);
+  const [tagObject, setTagObject] = useState<ITag>(object);
   const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -166,7 +168,7 @@ const Tag = ({
   }
 
   const handleTagClick = () => {
-    navigate(`/${user}/${tagObject.attributes.name}`);
+    navigate(`/${user}/${tagObject.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
     appConfig.setAppMode(appMode.tagsList);
     appConfig.incrementClickCount();
@@ -199,7 +201,20 @@ const Tag = ({
   const handleSave = (object: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(o => o.id === object.data.id);
     existing?.update(object.data);
-    setTagObject(object.data);
+
+    const updated = convertISO8601ToUnixTime(
+      object.data.attributes.date_updated
+    );
+    const tag: ITag = {
+      id: object.data.id,
+      name: object.data.attributes.name,
+      entryCount: object.data.attributes.entry_count,
+      updated,
+      userId: object.data.relationships.user.data.id,
+    };
+
+    setTagObject(tag);
+
     setIsEditing(false);
   };
 
@@ -348,10 +363,8 @@ const Tag = ({
               onClick={handleTagClick}
               onContextMenu={handleContextClick}
             >
-              <TagLabel label={tagObject.attributes.name} />
-              {appConfig.showTagCounts
-                ? ` (${tagObject.attributes.entry_count})`
-                : null}
+              <TagLabel label={tagObject.name} />
+              {appConfig.showTagCounts ? ` (${tagObject.entryCount})` : null}
             </TagLabelWrapper>
           </TagContainer>
         </div>
