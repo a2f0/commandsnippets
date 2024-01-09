@@ -526,6 +526,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
           await db.putTag({
             id: entry.id,
             name: entry.attributes.name,
+            entryCount: entry.attributes.entry_count,
             updated,
             userId: entry.relationships.user.data.id,
           });
