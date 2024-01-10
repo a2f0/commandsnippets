@@ -41,6 +41,7 @@ describe('TearleadsDexie', () => {
           userId: undefined,
           name: 't1',
           entryCount: 0,
+          synced: false,
         });
       });
     });
