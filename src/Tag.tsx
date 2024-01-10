@@ -102,6 +102,7 @@ const Tag = ({
       canDrop: monitor.canDrop(),
     }),
     hover: (item: DraggableItem, monitor) => {
+      console.debug('hover (tag)');
       if (!dragRef.current) {
         return;
       }
@@ -269,10 +270,7 @@ const Tag = ({
               console.info(`findEntryIndex: ${findEntry(id).index}`);
               if (originalIndex !== dropResult.index) {
                 console.info(
-                  'it moved from index ' +
-                    originalIndex +
-                    ' to ' +
-                    dropResult.index
+                  `it moved from index ${originalIndex} to ${index} (tags)`
                 );
                 // Then it was reordered in the list.
                 const entry = findEntry(id).entry;
@@ -301,7 +299,7 @@ const Tag = ({
                   await tearleadsApi.reorderTag(payload);
                 }
               } else {
-                console.info("it wasn't moved.");
+                console.info("it wasn't moved within the list (tag)");
               }
             }
           }
