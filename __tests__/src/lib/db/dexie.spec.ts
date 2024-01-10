@@ -32,6 +32,16 @@ describe('TearleadsDexie', () => {
           entryCount: 0,
         });
       });
+      it('Inserts a tag without a userid', async () => {
+        const db = new TearleadsDexie();
+        await db.tags.put({
+          id: '1',
+          updated: 1,
+          userId: undefined,
+          name: 't1',
+          entryCount: 0,
+        });
+      });
     });
     describe('Static Methods', () => {
       it('implements getTagsForUserName', async () => {

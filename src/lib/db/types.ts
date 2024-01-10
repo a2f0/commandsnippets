@@ -7,7 +7,7 @@ export interface IUser {
 export interface ITag {
   id: string;
   name: string;
-  userId: string;
+  userId: string | undefined;
   updated: number;
   entryCount: number;
 }
