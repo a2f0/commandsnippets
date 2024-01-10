@@ -27,6 +27,7 @@ describe('TearleadsDexie', () => {
           userId: '1',
           name: 't1',
           entryCount: 0,
+          synced: false,
         });
       });
     });
@@ -43,6 +44,7 @@ describe('TearleadsDexie', () => {
           userId: '1',
           name: 't1',
           entryCount: 0,
+          synced: false,
         });
         const tags = await db.getTagsForUserName('u1');
         expect(tags.length).toEqual(1);

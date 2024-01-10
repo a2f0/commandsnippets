@@ -212,6 +212,7 @@ const Tag = ({
       entryCount: object.data.attributes.entry_count,
       updated,
       userId: object.data.relationships.user.data.id,
+      synced: false,
     };
 
     setTagObject(tag);

@@ -30,6 +30,7 @@ describe('TearleadsDexie', () => {
           userId: '1',
           name: 't1',
           entryCount: 0,
+          synced: false,
         });
       });
       it('Inserts a tag without a userid', async () => {
@@ -40,6 +41,7 @@ describe('TearleadsDexie', () => {
           userId: undefined,
           name: 't1',
           entryCount: 0,
+          synced: false,
         });
       });
     });
@@ -57,6 +59,7 @@ describe('TearleadsDexie', () => {
           userId: '1',
           name: 't1',
           entryCount: 0,
+          synced: false,
         });
         const tags = await db.getTagsForUserName('u1');
         expect(tags.length).toEqual(1);
