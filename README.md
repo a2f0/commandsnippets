@@ -38,7 +38,7 @@ Run a specific spec
 
 ```shell
 npm run server-test
-NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.shared.conf.ts --spec=test/specs/entries/entriesContextMenu.spec.ts
+npm run test -- --spec=test/specs/entries/entriesContextMenu.spec.ts
 ```
 
 Run jest tests
