@@ -11,6 +11,7 @@ export interface ITag {
   updated: number;
   entryCount: number;
   synced: boolean;
+  deleted: boolean;
 }
 
 export interface IEntry {
@@ -20,6 +21,7 @@ export interface IEntry {
   body: string;
   updated: number;
   synced: boolean;
+  deleted: boolean;
 }
 
 export interface IJunction {
@@ -30,4 +32,5 @@ export interface IJunction {
   updated: number;
   order: number;
   synced: boolean;
+  deleted: boolean;
 }

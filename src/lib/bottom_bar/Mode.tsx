@@ -13,7 +13,7 @@ const BottomBar = () => {
         mr: theme => theme.spacing(0.5),
       }}
     >
-      [mode: {appConfig.appMode} ]
+      [mode: {appConfig.appMode}]
     </Typography>
   );
 };
