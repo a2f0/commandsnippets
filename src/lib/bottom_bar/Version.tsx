@@ -12,7 +12,7 @@ const BottomBar = () => {
         mr: theme => theme.spacing(0.5),
       }}
     >
-      [{packageJson.version}]
+      [version: {packageJson.version}]
     </Typography>
   );
 };
