@@ -30,6 +30,20 @@ describe('TearleadsDexie', () => {
           userId: '1',
           name: 't1',
           entryCount: 0,
+          synced: false,
+          deleted: false,
+        });
+      });
+      it('Inserts a tag without a userid', async () => {
+        const db = new TearleadsDexie();
+        await db.tags.put({
+          id: '1',
+          updated: 1,
+          userId: undefined,
+          name: 't1',
+          entryCount: 0,
+          synced: false,
+          deleted: false,
         });
       });
     });
@@ -47,6 +61,8 @@ describe('TearleadsDexie', () => {
           userId: '1',
           name: 't1',
           entryCount: 0,
+          synced: false,
+          deleted: false,
         });
         const tags = await db.getTagsForUserName('u1');
         expect(tags.length).toEqual(1);

@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.6.32",
+  "version": "0.6.38",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -10,8 +10,8 @@
   "scripts": {
     "server": "vite serve",
     "server-test": "vite serve --port 8081",
-    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.shared.conf.ts",
-    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.headless.conf.ts",
+    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm --no-warnings' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.shared.conf.ts",
+    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm --no-warnings' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.headless.conf.ts",
     "ci": "start-server-and-test server-test http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test server-test http-get://localhost:8081 test-headless",
     "unit": "npx vitest --no-watch",
@@ -22,9 +22,7 @@
     "clean": "gts clean",
     "compile": "tsc -b",
     "fix": "gts fix",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile",
-    "posttest": "npm run lint"
+    "prepare": "npm run compile"
   },
   "keywords": [],
   "author": "Dan Sullivan",

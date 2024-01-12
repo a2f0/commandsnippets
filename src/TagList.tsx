@@ -234,6 +234,8 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
             entryCount: object.attributes.entry_count,
             updated,
             userId: object.relationships.user.data.id,
+            synced: false,
+            deleted: object.attributes.is_deleted,
           };
           return (
             <div key={object.id} ref={elRefs[i]}>

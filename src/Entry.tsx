@@ -101,6 +101,8 @@ const Entry = ({
       const {id: droppedId, originalIndex} = monitor.getItem();
       const didDrop = monitor.didDrop();
       if (!didDrop) {
+        // Then the target did not handle the drop.
+        // Move the entry in the state of the list.
         moveEntry(droppedId, originalIndex);
       } else {
         if (drop_result?.type) {
@@ -146,7 +148,7 @@ const Entry = ({
           const {index} = dropResult;
           if (originalIndex !== index) {
             console.info(
-              'it moved from index ' + originalIndex + ' to ' + index
+              `it moved from index ${originalIndex} to ${index} (entries)`
             );
             const entry = findEntry(id).entry;
             const entry_below = findEntryByIndex(index + 1);
@@ -200,7 +202,7 @@ const Entry = ({
               );
             }
           } else {
-            console.info("it wasn't moved.");
+            console.info("it wasn't moved within the list (entry).");
           }
         }
       }

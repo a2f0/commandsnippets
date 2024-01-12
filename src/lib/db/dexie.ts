@@ -8,13 +8,14 @@ class TearleadsDexie extends Dexie implements ITearleadsDB {
   entries!: Dexie.Table<IEntry, number>;
   junction!: Dexie.Table<IJunction, number>;
 
+  // https://dexie.org/docs/Version/Version.stores()#description
   constructor() {
     super('Tearleads');
-    this.version(1).stores({
+    this.version(2).stores({
       users: 'id&, username, updated',
-      tags: 'id&, userId, name, entryCount, updated',
-      entries: 'id&, subject, body, updated',
-      junction: 'id&, [userId+tagId], updated',
+      tags: 'id&, userId, entryCount, updated, synced, deleted',
+      entries: 'id&, userId, subject, body, updated, synced, deleted',
+      junction: 'id&, [userId+tagId], updated, synced, deleted',
     });
   }
 

@@ -529,13 +529,18 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             entryCount: entry.attributes.entry_count,
             updated,
             userId: entry.relationships.user.data.id,
+            synced: false,
+            deleted: false,
           });
         } else if (isATextEntry(entry)) {
           await db.putEntry({
             id: entry.id,
+            userId: entry.relationships.user.data.id,
             subject: entry.attributes.subject,
             body: entry.attributes.body,
             updated,
+            synced: false,
+            deleted: false,
           });
         } else if (isAJunction(entry)) {
           db.putJunction({
@@ -545,6 +550,8 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             tagId: entry.relationships.tag.data.id,
             order: entry.attributes.order,
             updated,
+            synced: false,
+            deleted: false,
           });
         } else {
           throw new Error('unexpected type!');
