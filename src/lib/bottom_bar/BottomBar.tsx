@@ -2,6 +2,7 @@ import {Box} from '@mui/material';
 import {Grid} from '@mui/material';
 import Mode from './Mode';
 import React from 'react';
+import TagCount from './TagCount';
 import TagSearch from '../../TagSearch';
 import TextEntrySearchField from '../../styled/text_entries/TextEntrySearchField';
 import {Theme} from '@mui/material/styles';
@@ -40,6 +41,7 @@ const BottomBar = () => {
           }}
         >
           <Mode />
+          <TagCount />
           <Version />
         </Box>
       </Grid>
