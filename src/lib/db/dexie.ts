@@ -13,9 +13,9 @@ class TearleadsDexie extends Dexie implements ITearleadsDB {
     super('Tearleads');
     this.version(2).stores({
       users: 'id&, username, updated',
-      tags: 'id&, userId, entryCount, updated, synced',
-      entries: 'id&, userId, subject, body, updated, synced',
-      junction: 'id&, [userId+tagId], updated, synced',
+      tags: 'id&, userId, entryCount, updated, synced, deleted',
+      entries: 'id&, userId, subject, body, updated, synced, deleted',
+      junction: 'id&, [userId+tagId], updated, synced, deleted',
     });
   }
 

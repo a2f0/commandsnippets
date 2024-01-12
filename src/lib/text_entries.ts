@@ -530,6 +530,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             updated,
             userId: entry.relationships.user.data.id,
             synced: false,
+            deleted: false,
           });
         } else if (isATextEntry(entry)) {
           await db.putEntry({
@@ -539,6 +540,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             body: entry.attributes.body,
             updated,
             synced: false,
+            deleted: false,
           });
         } else if (isAJunction(entry)) {
           db.putJunction({
@@ -549,6 +551,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             order: entry.attributes.order,
             updated,
             synced: false,
+            deleted: false,
           });
         } else {
           throw new Error('unexpected type!');

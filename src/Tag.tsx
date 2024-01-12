@@ -213,6 +213,7 @@ const Tag = ({
       updated,
       userId: object.data.relationships.user.data.id,
       synced: false,
+      deleted: false,
     };
 
     setTagObject(tag);
