@@ -91,7 +91,7 @@ export function getMostRecentTimeStamp(
 }
 
 export function needsScrollingIntoView(
-  element: React.RefObject<HTMLDivElement>,
+  element: React.RefObject<HTMLLIElement | HTMLDivElement>,
   theme: typeof Theme
 ) {
   const rect = element.current?.getBoundingClientRect();

@@ -1,4 +1,5 @@
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
+import {List, ListItem} from '@mui/material';
 import React, {
   createRef,
   useCallback,
@@ -11,7 +12,6 @@ import {activeSearch, appMode, needsScrollingIntoView} from './lib/shared';
 import {IMouse} from './Entry';
 import type {ITag} from './lib/db/types';
 import {ITagJsonApiResponseSingle} from './lib/tags';
-import {List} from '@mui/material';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
@@ -53,19 +53,19 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     _setTags(data);
   };
 
-  const [elRefs, _setElRefs] = useState<Array<React.RefObject<HTMLDivElement>>>(
+  const [elRefs, _setElRefs] = useState<Array<React.RefObject<HTMLLIElement>>>(
     []
   );
   // Used to access the react state from keyListener.
   const elRefsRef = useRef(elRefs);
-  const setElRefs = (data: Array<React.RefObject<HTMLDivElement>>) => {
+  const setElRefs = (data: Array<React.RefObject<HTMLLIElement>>) => {
     elRefsRef.current = data;
     _setElRefs(data);
   };
   useEffect(() => {
-    const refsArray = Array<React.RefObject<HTMLDivElement>>(tags.length);
+    const refsArray = Array<React.RefObject<HTMLLIElement>>(tags.length);
     for (let index = 0; index < refsArray.length; index++) {
-      refsArray[index] = createRef<HTMLDivElement>();
+      refsArray[index] = createRef<HTMLLIElement>();
     }
     setElRefs(refsArray);
   }, [tags.length]);
@@ -206,57 +206,66 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   }, []);
 
   return (
-    <List
-      id="tagList"
-      sx={{
-        paddingTop: theme => `${theme.main.paddingTop}`,
-        paddingBottom: 0,
-        paddingLeft: 0,
-        paddingRight: 0,
-        overflowY: 'auto',
-        direction: 'rtl',
-        height: theme =>
-          `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
-      }}
-      onContextMenu={handleContextClick}
-    >
-      <LeftToRight>
-        {appConfig.tagNew === 'top' && (
-          <TagNew id="tagNewTop" handleNewParent={handleNew} />
-        )}
-        {tags.map((object: ITagJsonApi, i) => {
-          const updated = convertISO8601ToUnixTime(
-            object.attributes.date_updated
-          );
-          const tag: ITag = {
-            id: object.id,
-            name: object.attributes.name,
-            entryCount: object.attributes.entry_count,
-            updated,
-            userId: object.relationships.user.data.id,
-            synced: false,
-            deleted: object.attributes.is_deleted,
-          };
-          return (
-            <div key={object.id} ref={elRefs[i]}>
-              <Tag
-                object={tag}
-                id={object.id}
-                handleDeleteParent={handleDelete}
-                moveEntry={moveEntry}
-                findEntry={findEntry}
-                index={i}
-                findEntryByIndex={findEntryByIndex}
-              />
-            </div>
-          );
-        })}
+    <>
+      {appConfig.tagNew === 'top' && (
+        <TagNew id="tagNewTop" handleNewParent={handleNew} />
+      )}
+      <List
+        dense={true}
+        id="tagList"
+        sx={{
+          paddingTop: theme => `${theme.main.paddingTop}`,
+          paddingBottom: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          overflowY: 'auto',
+          direction: 'rtl',
+          height: theme =>
+            `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
+        }}
+        onContextMenu={handleContextClick}
+      >
+        <LeftToRight>
+          {tags.map((object: ITagJsonApi, i) => {
+            const updated = convertISO8601ToUnixTime(
+              object.attributes.date_updated
+            );
+            const tag: ITag = {
+              id: object.id,
+              name: object.attributes.name,
+              entryCount: object.attributes.entry_count,
+              updated,
+              userId: object.relationships.user.data.id,
+              synced: false,
+              deleted: object.attributes.is_deleted,
+            };
+            return (
+              <ListItem
+                key={object.id}
+                sx={{
+                  padding: 0,
+                }}
+                ref={elRefs[i]}
+              >
+                <Tag
+                  object={tag}
+                  id={object.id}
+                  handleDeleteParent={handleDelete}
+                  moveEntry={moveEntry}
+                  findEntry={findEntry}
+                  index={i}
+                  findEntryByIndex={findEntryByIndex}
+                />
+              </ListItem>
+            );
+          })}
+        </LeftToRight>
         {appConfig.tagNew === 'bottom' && (
           <TagNew id="tagNewBottom" handleNewParent={handleNew} />
         )}
-      </LeftToRight>
-      {appConfig.loggedInUser && <>{contextMenu}</>}
-    </List>
+        {appConfig.loggedInUser && <>{contextMenu}</>}
+      </List>
+    </>
   );
 };
 
