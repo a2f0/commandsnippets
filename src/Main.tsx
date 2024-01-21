@@ -4,6 +4,7 @@ import BottomBar from './lib/bottom_bar/BottomBar';
 import EntryList from './EntryList';
 import LeftDrawer from './LeftDrawer';
 import MenuBar from './MenuBar';
+import RightDrawer from './LeftDrawer';
 import StyledToolbar from './styled/layout/StyledToolbar';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
@@ -60,6 +61,7 @@ const Main = () => {
       >
         <LeftDrawer />
         <EntryList />
+        <RightDrawer />
       </Box>
       <AppBar
         position="sticky"
