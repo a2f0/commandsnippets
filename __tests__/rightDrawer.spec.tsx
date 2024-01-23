@@ -1,5 +1,5 @@
 import React from 'react';
-import RightDrawer from '../src/RightDrawer';
+import RightDrawer from '../src/drawer/RightDrawer';
 import {render} from '@testing-library/react';
 
 describe('Drawers', () => {

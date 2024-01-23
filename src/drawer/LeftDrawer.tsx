@@ -1,6 +1,6 @@
 import CustomDrawer from './CustomDrawer';
 import React from 'react';
-import TagListWrapper from './TagListWrapper';
+import TagListWrapper from '../TagListWrapper';
 
 const LeftDrawer = function () {
   return (
