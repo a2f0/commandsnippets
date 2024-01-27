@@ -22,10 +22,11 @@ const LoginButton = ({
       role={role}
       size="small"
       variant="contained"
-      color="secondary"
+      color="primary"
       disableElevation
       sx={theme => ({
-        color: theme.palette.primary.main,
+        color: theme.palette.background.default,
+        backgroundColor: theme.palette.text.primary,
         margin: theme.spacing(0.75),
       })}
       onClick={onClick}
