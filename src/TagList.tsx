@@ -1,5 +1,5 @@
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
-import {List, ListItem} from '@mui/material';
+import {List, ListItem, ListItemButton} from '@mui/material';
 import React, {
   createRef,
   useCallback,
@@ -8,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {activeSearch, appMode, needsScrollingIntoView} from './lib/shared';
+import {activeSearch, appMode} from './lib/shared';
 import {IMouse} from './Entry';
 import type {ITag} from './lib/db/types';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -17,6 +17,7 @@ import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
 import {autorun} from 'mobx';
 import {convertISO8601ToUnixTime} from './lib/util/dateTime';
+import {needsScrollingIntoView} from './lib/text_entries';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import update from 'immutability-helper';
@@ -247,15 +248,21 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
                 }}
                 ref={elRefs[i]}
               >
-                <Tag
-                  object={tag}
-                  id={object.id}
-                  handleDeleteParent={handleDelete}
-                  moveEntry={moveEntry}
-                  findEntry={findEntry}
-                  index={i}
-                  findEntryByIndex={findEntryByIndex}
-                />
+                <ListItemButton
+                  sx={{
+                    padding: 0,
+                  }}
+                >
+                  <Tag
+                    object={tag}
+                    id={object.id}
+                    handleDeleteParent={handleDelete}
+                    moveEntry={moveEntry}
+                    findEntry={findEntry}
+                    index={i}
+                    findEntryByIndex={findEntryByIndex}
+                  />
+                </ListItemButton>
               </ListItem>
             );
           })}

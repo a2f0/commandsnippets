@@ -1,3 +1,4 @@
+import {MutableRefObject, RefObject} from 'react';
 import API from './api/apiBase';
 import {CancelTokenSource} from 'axios';
 import {ITagJsonApi} from '../models/TagModel';
@@ -8,7 +9,6 @@ import type {TStore} from '../AppStateStore';
 import {Theme} from '@mui/material/styles';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 import {db} from '../../src/lib/db/db';
-
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
   links: {
@@ -450,10 +450,13 @@ export function fetchPage({
 }
 
 export function needsScrollingIntoView(
-  element: HTMLButtonElement,
+  element:
+    | RefObject<HTMLDivElement>
+    | MutableRefObject<HTMLButtonElement | undefined>
+    | RefObject<HTMLLIElement>,
   theme: Theme
 ) {
-  const rect = element.getBoundingClientRect();
+  const rect = element.current?.getBoundingClientRect();
   if (rect !== undefined) {
     // Then it exists
     const bottomInView =

@@ -1,6 +1,5 @@
 import {ITagJsonApi} from '../models/TagModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
-import Theme from '../theme/themeBase';
 
 export enum entrySearchMethod {
   allEntries = 1,
@@ -88,28 +87,6 @@ export function getMostRecentTimeStamp(
     mostRecentTimestamp = sortedArray[0].attributes.date_updated;
   }
   return mostRecentTimestamp;
-}
-
-export function needsScrollingIntoView(
-  element: React.RefObject<HTMLLIElement | HTMLDivElement>,
-  theme: typeof Theme
-) {
-  const rect = element.current?.getBoundingClientRect();
-  if (rect !== undefined) {
-    // Then it exists
-    const topInView = rect.top >= theme.appBar.height + theme.main.paddingTop;
-    const bottomInView =
-      rect.bottom <=
-      (window.innerHeight - theme.footer.height ||
-        document.documentElement.clientHeight - theme.footer.height);
-    const isInView = topInView && bottomInView;
-
-    if (isInView === false) {
-      // Then it needs to be scrolled
-      return true;
-    }
-  }
-  return false;
 }
 
 export function getSelection() {

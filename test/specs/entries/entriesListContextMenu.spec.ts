@@ -116,7 +116,7 @@ describe('Entry Main Menu Behavior', () => {
 
     await expect(
       (await newEntry.getCSSProperty('background-color')).value
-    ).toBe('rgba(15,15,15,1)');
+    ).toBe('rgba(18,18,18,1)');
 
     await browser.keys('Tab');
     await expect(
@@ -126,7 +126,7 @@ describe('Entry Main Menu Behavior', () => {
     await browser.keys('Left arrow');
     await expect(
       (await newEntry.getCSSProperty('background-color')).value
-    ).toBe('rgba(15,15,15,1)');
+    ).toBe('rgba(18,18,18,1)');
     await browser.keys('Right arrow');
     await expect(
       (await newEntry.getCSSProperty('background-color')).value
