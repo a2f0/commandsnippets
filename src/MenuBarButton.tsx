@@ -39,6 +39,9 @@ const MenuBarButton = function ({
         '&:active': {
           backgroundColor: '#585858',
         },
+        '&.MuiButton-root': {
+          color: theme => theme.palette.text.primary,
+        },
       }}
     >
       {children}
