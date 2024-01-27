@@ -50,13 +50,11 @@ const EntryEdit = ({
   }, []);
 
   useEffect(() => {
-    if (saveRef.current !== undefined) {
-      if (needsScrollingIntoView(saveRef, theme)) {
-        saveRef.current?.scrollIntoView({
-          behavior: 'auto',
-          block: 'end',
-        });
-      }
+    if (needsScrollingIntoView(saveRef, theme)) {
+      saveRef.current?.scrollIntoView({
+        behavior: 'auto',
+        block: 'end',
+      });
     }
   }, [saveRef.current]);
 

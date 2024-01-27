@@ -467,6 +467,8 @@ export function needsScrollingIntoView(
       // Then it needs to be scrolled
       return true;
     }
+  } else {
+    console.warn('current was undefined when scrolling into view.');
   }
   return false;
 }
