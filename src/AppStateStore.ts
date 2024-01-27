@@ -431,7 +431,7 @@ export function createAppStateStore(
 
   // connect local storage
   snapshotListener = onSnapshot(store, snapshot => {
-    console.info('=== taking a snapshot');
+    console.debug('=== taking a snapshot');
     localStorage.setItem(localStorageKey, JSON.stringify(snapshot));
   });
   return store;
