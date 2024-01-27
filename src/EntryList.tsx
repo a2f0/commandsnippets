@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {appMode, needsScrollingIntoView} from './lib/shared';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
 import {Box} from '@mui/material';
 import {CancelTokenSource} from 'axios';
@@ -18,8 +17,10 @@ import {IEntryFetchPage} from './lib/text_entries';
 import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {Theme} from '@mui/material/styles';
+import {appMode} from './lib/shared';
 import {autorun} from 'mobx';
 import axios from 'axios';
+import {needsScrollingIntoView} from './lib/text_entries';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';

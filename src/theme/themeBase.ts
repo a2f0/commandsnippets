@@ -1,4 +1,4 @@
-import {createTheme} from '@mui/material/styles';
+import {ThemeOptions} from '@mui/material/styles';
 
 declare module '@mui/material/styles' {
   interface Theme {
@@ -50,7 +50,7 @@ declare module '@mui/material/styles' {
   }
 }
 
-const themeBase = createTheme({
+const defaultThemeOptions: ThemeOptions = {
   typography: {
     button: {
       textTransform: 'none',
@@ -69,6 +69,6 @@ const themeBase = createTheme({
   footer: {
     height: 46,
   },
-});
+};
 
-export default themeBase;
+export {defaultThemeOptions};
