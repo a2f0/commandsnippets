@@ -25,7 +25,7 @@ const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
     border: 1px solid ${props => props.theme.palette.secondary.main};
     outline: none;
   }
-  background-color: ${props => props.theme.palette.primary.main};
+  background-color: ${props => props.theme.palette.background.default};
 `;
 
 export interface IProps {
