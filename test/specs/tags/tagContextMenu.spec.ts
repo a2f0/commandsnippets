@@ -3,7 +3,7 @@ import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsDeleteResponse from '../../mocks/tags/tagsDeleteResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
-describe('Tag Context Menu Behavior', () => {
+describe('Tag Context Menu', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
