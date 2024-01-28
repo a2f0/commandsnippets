@@ -9,7 +9,6 @@ import React, {
   useState,
 } from 'react';
 import {activeSearch, appMode} from './lib/shared';
-import {useNavigate, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import type {ITag} from './lib/db/types';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -23,6 +22,7 @@ import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
+import {useNavigate} from 'react-router-dom';
 import {useTheme} from '@mui/material/styles';
 
 export interface IUser {
@@ -45,7 +45,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
   const theme = useTheme();
-  const {user} = useParams();
 
   const [tags, _setTags] = useState<Array<ITagJsonApi>>(tagsFromWrapper);
   // Used to access the react state from keyListener.
@@ -106,11 +105,11 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     );
   }, []);
 
-  const handleDelete = (object: ITagJsonApiResponseSingle) => {
-    const existing = appConfig.tagsArray.find(c => c.id === object.data.id);
-    existing?.update(object.data);
+  const handleDelete = useCallback((o: ITagJsonApiResponseSingle) => {
+    const existing = appConfig.tagsArray.find(c => c.id === o.data.id);
+    existing?.update(o.data);
     setTags(TagHelpers.filterAndSort(appConfig));
-  };
+  }, []);
 
   const findEntry = (id: string) => {
     const entry = tags.filter(c => c.id === id)[0];
@@ -132,14 +131,17 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     }
   };
 
-  const handleContextClick = (event: React.MouseEvent<HTMLUListElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
-  };
+  const handleContextClick = useCallback(
+    (event: React.MouseEvent<HTMLUListElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const mouseData: IMouse = {...mouse};
+      (mouseData.mouseX = event.clientX - 2),
+        (mouseData.mouseY = event.clientY - 4),
+        setMouse(mouseData);
+    },
+    []
+  );
 
   const contextMenu = useMemo(
     () => <TagListContextMenu mouse={mouse} />,
@@ -207,16 +209,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     };
   }, []);
 
-  function handleTagClick(object: ITag): void {
-    navigate(`/${user}/${object.name}`);
-    // Reset the main panel in case Untagged Entries were being viewed.
-    appConfig.setAppMode(appMode.tagsList);
-    appConfig.incrementClickCount();
-    appConfig.setActiveSearch(activeSearch.entries);
-    appConfig.setEntrySearchString('');
-    appConfig.setTagSelectedID(object.id);
-  }
-
   return (
     <>
       {appConfig.tagNew === 'top' && (
@@ -264,6 +256,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
             return (
               <ListItem
+                // key={tag.id}
                 key={object.id}
                 sx={{
                   padding: 0,
@@ -271,12 +264,10 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
                 ref={elRefs[i]}
               >
                 <ListItemButton
+                  data-testid={`tagListButton-${object.id}`}
                   sx={{
                     padding: 0,
                     backgroundColor,
-                  }}
-                  onClick={() => {
-                    handleTagClick(tag);
                   }}
                 >
                   <Tag
