@@ -9,6 +9,7 @@ import React, {
   useState,
 } from 'react';
 import {activeSearch, appMode} from './lib/shared';
+import {useNavigate, useParams} from 'react-router-dom';
 import {IMouse} from './Entry';
 import type {ITag} from './lib/db/types';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -22,7 +23,6 @@ import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
-import {useNavigate} from 'react-router-dom';
 import {useTheme} from '@mui/material/styles';
 
 export interface IUser {
@@ -45,6 +45,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
   const theme = useTheme();
+  const {user} = useParams();
 
   const [tags, _setTags] = useState<Array<ITagJsonApi>>(tagsFromWrapper);
   // Used to access the react state from keyListener.
@@ -206,6 +207,16 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     };
   }, []);
 
+  function handleTagClick(object: ITag): void {
+    navigate(`/${user}/${object.name}`);
+    // Reset the main panel in case Untagged Entries were being viewed.
+    appConfig.setAppMode(appMode.tagsList);
+    appConfig.incrementClickCount();
+    appConfig.setActiveSearch(activeSearch.entries);
+    appConfig.setEntrySearchString('');
+    appConfig.setTagSelectedID(object.id);
+  }
+
   return (
     <>
       {appConfig.tagNew === 'top' && (
@@ -240,6 +251,17 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
               synced: false,
               deleted: object.attributes.is_deleted,
             };
+
+            let backgroundColor;
+            if (
+              tag.id === appConfig.tagSelectedID &&
+              appConfig.appMode === appMode.tagsList
+            ) {
+              backgroundColor = theme.selected.background;
+            } else {
+              backgroundColor = theme.palette.background.default;
+            }
+
             return (
               <ListItem
                 key={object.id}
@@ -251,6 +273,10 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
                 <ListItemButton
                   sx={{
                     padding: 0,
+                    backgroundColor,
+                  }}
+                  onClick={() => {
+                    handleTagClick(tag);
                   }}
                 >
                   <Tag
