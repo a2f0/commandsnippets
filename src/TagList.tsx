@@ -105,11 +105,11 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     );
   }, []);
 
-  const handleDelete = (object: ITagJsonApiResponseSingle) => {
-    const existing = appConfig.tagsArray.find(c => c.id === object.data.id);
-    existing?.update(object.data);
+  const handleDelete = useCallback((o: ITagJsonApiResponseSingle) => {
+    const existing = appConfig.tagsArray.find(c => c.id === o.data.id);
+    existing?.update(o.data);
     setTags(TagHelpers.filterAndSort(appConfig));
-  };
+  }, []);
 
   const findEntry = (id: string) => {
     const entry = tags.filter(c => c.id === id)[0];
@@ -131,14 +131,17 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     }
   };
 
-  const handleContextClick = (event: React.MouseEvent<HTMLUListElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
-  };
+  const handleContextClick = useCallback(
+    (event: React.MouseEvent<HTMLUListElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const mouseData: IMouse = {...mouse};
+      (mouseData.mouseX = event.clientX - 2),
+        (mouseData.mouseY = event.clientY - 4),
+        setMouse(mouseData);
+    },
+    []
+  );
 
   const contextMenu = useMemo(
     () => <TagListContextMenu mouse={mouse} />,
@@ -240,8 +243,20 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
               synced: false,
               deleted: object.attributes.is_deleted,
             };
+
+            let backgroundColor;
+            if (
+              tag.id === appConfig.tagSelectedID &&
+              appConfig.appMode === appMode.tagsList
+            ) {
+              backgroundColor = theme.selected.background;
+            } else {
+              backgroundColor = theme.palette.background.default;
+            }
+
             return (
               <ListItem
+                // key={tag.id}
                 key={object.id}
                 sx={{
                   padding: 0,
@@ -249,8 +264,10 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
                 ref={elRefs[i]}
               >
                 <ListItemButton
+                  data-testid={`tagListButton-${object.id}`}
                   sx={{
                     padding: 0,
+                    backgroundColor,
                   }}
                 >
                   <Tag

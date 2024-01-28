@@ -2,7 +2,9 @@ import React, {useMemo, useRef, useState} from 'react';
 import {ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
 import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
+import {useNavigate, useParams} from 'react-router-dom';
 import {AxiosResponse} from 'axios';
+import {Box} from '@mui/material';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
 import {IMouse} from './Entry';
@@ -19,8 +21,6 @@ import {convertISO8601ToUnixTime} from './lib/util/dateTime';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
-import {useNavigate} from 'react-router-dom';
-import {useParams} from 'react-router-dom';
 import {useTheme} from '@mui/material/styles';
 
 const TagContainer = styled('div')(() => ({
@@ -79,16 +79,12 @@ const Tag = ({
   const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
   const {user} = useParams();
-  const [{canDrop, isOver}, drop] = useDrop<
-    DraggableItem,
-    DropResult,
-    DroppableItem
-  >(() => ({
+  const navigate = useNavigate();
+  const [, drop] = useDrop<DraggableItem, DropResult, DroppableItem>(() => ({
     accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
       return true;
@@ -152,32 +148,6 @@ const Tag = ({
     },
   }));
 
-  const isActiveHover = canDrop && isOver;
-
-  const tagStyle = {
-    backgroundColor: theme.palette.background.paper,
-    color: theme.palette.text.primary,
-  };
-
-  if (
-    (id === appConfig.tagSelectedID &&
-      appConfig.appMode === appMode.tagsList) ||
-    isActiveHover
-  ) {
-    tagStyle.backgroundColor = theme.selected.background;
-    tagStyle.color = theme.selected.foreground;
-  }
-
-  const handleTagClick = () => {
-    navigate(`/${user}/${tagObject.name}`);
-    // Reset the main panel in case Untagged Entries were being viewed.
-    appConfig.setAppMode(appMode.tagsList);
-    appConfig.incrementClickCount();
-    appConfig.setActiveSearch(activeSearch.entries);
-    appConfig.setEntrySearchString('');
-    appConfig.setTagSelectedID(tagObject.id);
-  };
-
   const mouseEnter = () => {
     if (appConfig.loggedInUser !== null && appConfig.tagSortOrder === 'order') {
       setShowDragHandle(true);
@@ -225,6 +195,8 @@ const Tag = ({
     apiBase
       .delete('/tags/' + tagObject.id, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
+        console.info('RESPONSE');
+        console.info(response);
         handleDeleteParent(response.data);
       })
       .catch(error => {
@@ -325,28 +297,39 @@ const Tag = ({
     [mouse]
   );
 
+  const handleTagClick = (object: ITag): void => {
+    navigate(`/${user}/${object.name}`);
+    // Reset the main panel in case Untagged Entries were being viewed.
+    appConfig.setAppMode(appMode.tagsList);
+    appConfig.incrementClickCount();
+    appConfig.setActiveSearch(activeSearch.entries);
+    appConfig.setEntrySearchString('');
+    appConfig.setTagSelectedID(object.id);
+  };
+
   return (
     <>
       {!isEditing && (
-        <div
+        <Box
           ref={dropRef}
           style={{opacity}}
           onContextMenu={handleContextClick}
+          onClick={() => {
+            handleTagClick(object);
+          }}
           id={`tag-${id}`}
           role="tag"
+          onMouseEnter={mouseEnter}
+          onMouseLeave={mouseLeave}
+          sx={{
+            width: '100%',
+          }}
         >
           <TagContainer ref={preview}>
-            <DragHandleContainer
-              theme={theme}
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
-              role="tagDragHandleContainer"
-            >
+            <DragHandleContainer theme={theme} role="tagDragHandleContainer">
               <DragHandle
                 role="tagDragHandle"
                 ref={dragRef}
-                onMouseEnter={mouseEnter}
-                onMouseLeave={mouseLeave}
                 style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
               >
                 ::
@@ -356,18 +339,13 @@ const Tag = ({
               theme={theme}
               id={`tagLabelWrapper-${id}`}
               role="tagLabelWrapper"
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
               ref={drop}
-              style={tagStyle}
-              onClick={handleTagClick}
-              onContextMenu={handleContextClick}
             >
               <TagLabel label={tagObject.name} />
               {appConfig.showTagCounts ? ` (${tagObject.entryCount})` : null}
             </TagLabelWrapper>
           </TagContainer>
-        </div>
+        </Box>
       )}
       {appConfig.loggedInUser && <>{contextMenu}</>}
       {isEditing && (
