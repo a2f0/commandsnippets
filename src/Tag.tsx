@@ -84,6 +84,72 @@ const Tag = ({
   const theme: Theme = useTheme();
   const {user} = useParams();
   const navigate = useNavigate();
+
+  const [{isDragging}, drag, preview] = useDrag({
+    item: (): DraggableItem => ({
+      id,
+      originalIndex,
+      type: ItemTypes.TAG,
+      index,
+    }),
+    type: ItemTypes.TAG,
+    collect: monitor => ({
+      isDragging: monitor.isDragging(),
+    }),
+    end: async (dropResult, monitor) => {
+      const drop_result: ITagJsonApi | null = monitor.getDropResult();
+      const {id: droppedId, originalIndex} = monitor.getItem();
+      const didDrop = monitor.didDrop();
+      if (!didDrop) {
+        console.info('didDrop Tag moveEntry');
+        const {index} = findEntry(droppedId);
+        moveEntry(index, originalIndex);
+      } else {
+        if (drop_result?.type) {
+          if ('type' in drop_result) {
+            if (drop_result.type === 'Tag') {
+              console.info(`originalIndex: ${originalIndex}`);
+              console.info(`findEntryIndex: ${findEntry(id).index}`);
+              if (originalIndex !== dropResult.index) {
+                console.info(
+                  `it moved from index ${originalIndex} to ${index} (tags)`
+                );
+                // Then it was reordered in the list.
+                const entry = findEntry(id).entry;
+                const entry_below = findEntryByIndex(index + 1);
+                let ordered_top: ITagJsonApi | null;
+                let ordered_bottom: ITagJsonApi | null;
+                if (entry_below === null) {
+                  //Then it was moved to the bottom position, get the entry before it.
+                  ordered_top = findEntryByIndex(index - 1);
+                  ordered_bottom = entry;
+                } else {
+                  ordered_top = entry;
+                  ordered_bottom = entry_below;
+                }
+                if (ordered_top !== null && ordered_bottom !== null) {
+                  const payload: ReorderTag = {
+                    data: {
+                      type: 'Tag',
+                      attributes: {
+                        top: ordered_top.id,
+                        bottom: ordered_bottom.id,
+                      },
+                      relationships: {},
+                    },
+                  };
+                  await tearleadsApi.reorderTag(payload);
+                }
+              } else {
+                console.info("it wasn't moved within the list (tag)");
+              }
+            }
+          }
+        }
+      }
+    },
+  });
+
   const [, drop] = useDrop<DraggableItem, DropResult, DroppableItem>(() => ({
     accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
@@ -217,70 +283,6 @@ const Tag = ({
       setMouse(mouseData);
   };
 
-  const [{isDragging}, drag, preview] = useDrag({
-    item: (): DraggableItem => ({
-      id,
-      originalIndex,
-      type: ItemTypes.TAG,
-      index,
-    }),
-    type: ItemTypes.TAG,
-    collect: monitor => ({
-      isDragging: monitor.isDragging(),
-    }),
-    end: async (dropResult, monitor) => {
-      const drop_result: ITagJsonApi | null = monitor.getDropResult();
-      const {id: droppedId, originalIndex} = monitor.getItem();
-      const didDrop = monitor.didDrop();
-      if (!didDrop) {
-        console.info('didDrop Tag moveEntry');
-        const {index} = findEntry(droppedId);
-        moveEntry(index, originalIndex);
-      } else {
-        if (drop_result?.type) {
-          if ('type' in drop_result) {
-            if (drop_result.type === 'Tag') {
-              console.info(`originalIndex: ${originalIndex}`);
-              console.info(`findEntryIndex: ${findEntry(id).index}`);
-              if (originalIndex !== dropResult.index) {
-                console.info(
-                  `it moved from index ${originalIndex} to ${index} (tags)`
-                );
-                // Then it was reordered in the list.
-                const entry = findEntry(id).entry;
-                const entry_below = findEntryByIndex(index + 1);
-                let ordered_top: ITagJsonApi | null;
-                let ordered_bottom: ITagJsonApi | null;
-                if (entry_below === null) {
-                  //Then it was moved to the bottom position, get the entry before it.
-                  ordered_top = findEntryByIndex(index - 1);
-                  ordered_bottom = entry;
-                } else {
-                  ordered_top = entry;
-                  ordered_bottom = entry_below;
-                }
-                if (ordered_top !== null && ordered_bottom !== null) {
-                  const payload: ReorderTag = {
-                    data: {
-                      type: 'Tag',
-                      attributes: {
-                        top: ordered_top.id,
-                        bottom: ordered_bottom.id,
-                      },
-                      relationships: {},
-                    },
-                  };
-                  await tearleadsApi.reorderTag(payload);
-                }
-              } else {
-                console.info("it wasn't moved within the list (tag)");
-              }
-            }
-          }
-        }
-      }
-    },
-  });
   const opacity = isDragging ? 0 : 1;
   drag(dragRef);
   drop(dropRef);
