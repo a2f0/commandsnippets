@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
-import {IMouse} from './Entry';
+import {IMouse} from './lib/shared';
 import {ITextEntryJsonApi} from './models/TextEntryModel';
 import {Menu} from '@mui/material';
 import StyledMenuItem from './StyledMenuItem';

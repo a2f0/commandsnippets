@@ -1,3 +1,4 @@
+import {IMouse, initialMouse} from './lib/shared';
 import React, {useMemo, useRef, useState} from 'react';
 import {ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
 import {activeSearch, appMode} from './lib/shared';
@@ -7,7 +8,6 @@ import {AxiosResponse} from 'axios';
 import {Box} from '@mui/material';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
-import {IMouse} from './Entry';
 import type {ITag} from './lib/db/types';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
@@ -221,11 +221,6 @@ const Tag = ({
   };
   const mouseLeave = () => {
     setShowDragHandle(false);
-  };
-
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
   };
 
   const [mouse, setMouse] = useState(initialMouse);

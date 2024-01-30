@@ -1,5 +1,5 @@
+import {IMouse, initialMouse} from './lib/shared';
 import React, {useCallback, useEffect, useState} from 'react';
-import {IMouse} from './Entry';
 import {Menu} from '@mui/material';
 import StyledMenuItem from './StyledMenuItem';
 import TagDeleteDialog from './TagDeleteDialog';
@@ -55,11 +55,6 @@ const TagContextMenu = ({
   deleteTagParent,
   handleBeginEditParent,
 }: ITagContextMenuProps) => {
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
-  };
-
   const [mousePosition, setMousePosition] = useState<IMouse>(initialMouse);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 

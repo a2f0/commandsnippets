@@ -1,3 +1,4 @@
+import {IMouse, appMode, initialMouse} from './lib/shared';
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
 import React, {
   createRef,
@@ -14,10 +15,8 @@ import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
 import EntryNew from './EntryNew';
 import {IEntryFetchPage} from './lib/text_entries';
-import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {Theme} from '@mui/material/styles';
-import {appMode} from './lib/shared';
 import {autorun} from 'mobx';
 import axios from 'axios';
 import {needsScrollingIntoView} from './lib/text_entries';
@@ -261,11 +260,6 @@ const EntryList = () => {
         return element.id !== id;
       })
     );
-  };
-
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
   };
 
   const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {

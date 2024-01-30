@@ -1,3 +1,4 @@
+import {IMouse, activeSearch, appMode, initialMouse} from './lib/shared';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
 import {List, ListItem, ListItemButton} from '@mui/material';
 import React, {
@@ -8,8 +9,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {activeSearch, appMode} from './lib/shared';
-import {IMouse} from './Entry';
 import type {ITag} from './lib/db/types';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import Tag from './Tag';
@@ -70,11 +69,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     }
     setElRefs(refsArray);
   }, [tags.length]);
-
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
-  };
 
   const [mouse, setMouse] = useState(initialMouse);
 

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {IMouse} from './Entry';
+import {IMouse} from '../src/lib/shared';
 import {Menu} from '@mui/material';
 import StyledMenuItem from './StyledMenuItem';
 import {appMode} from '../src/lib/shared';
