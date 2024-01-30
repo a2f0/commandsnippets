@@ -1,3 +1,4 @@
+import {IMouse, initialMouse} from './lib/shared';
 import {appMode, getSelection} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {useEffect, useMemo, useRef, useState} from 'react';
@@ -46,11 +47,6 @@ const ReuseCount = styled('div')(() => ({
   display: 'inline-block',
   verticalAlign: 'top',
 }));
-
-export interface IMouse {
-  mouseX: number | null;
-  mouseY: number | null;
-}
 
 interface IEntryProps {
   id: string;
@@ -280,11 +276,6 @@ const Entry = ({
   const mouseLeave = () => {
     setShowDragHandle(false);
     setShowCopyIcon(false);
-  };
-
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
   };
 
   const [mouse, setMouse] = useState(initialMouse);

@@ -98,3 +98,13 @@ export function getSelection() {
   }
   return selection;
 }
+
+export interface IMouse {
+  mouseX: number | null;
+  mouseY: number | null;
+}
+
+export const initialMouse: IMouse = {
+  mouseX: null,
+  mouseY: null,
+};
