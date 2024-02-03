@@ -164,7 +164,7 @@ const Tag = ({
       canDrop: monitor.canDrop(),
     }),
     hover: (item: DraggableItem, monitor) => {
-      console.debug('hover (tag)');
+      console.info('hover (tag)');
       if (!dragRef.current) {
         return;
       }
