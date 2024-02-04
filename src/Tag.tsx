@@ -325,6 +325,7 @@ const Tag = ({
             handleTagClick(object);
           }}
           id={`tag-${id}`}
+          data-testid={`tag-${id}`}
           role="tag"
           onMouseEnter={mouseEnter}
           onMouseLeave={mouseLeave}
