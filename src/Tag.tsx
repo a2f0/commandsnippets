@@ -60,7 +60,7 @@ interface ITagProps {
   id: string;
   object: ITag;
   handleDeleteParent: (object: ITagJsonApiResponseSingle) => void;
-  moveEntry: (dragIndex: number, atIndex: number) => void;
+  moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
   findEntryByIndex: (id: number) => ITagJsonApi | null;
@@ -102,8 +102,7 @@ const Tag = ({
       const didDrop = monitor.didDrop();
       if (!didDrop) {
         console.info('didDrop Tag moveEntry');
-        const {index} = findEntry(droppedId);
-        moveEntry(index, originalIndex);
+        moveEntry(droppedId, originalIndex);
       } else {
         if (drop_result?.type) {
           if ('type' in drop_result) {
@@ -210,8 +209,7 @@ const Tag = ({
           return;
         }
 
-        const {index} = findEntry(item.id);
-        moveEntry(index, hoverIndex);
+        moveEntry(item.id, hoverIndex);
         // Note: we're mutating the monitor item here!
         // Generally it's better to avoid mutations,
         // but it's good here for the sake of performance

@@ -88,16 +88,21 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     [appConfig.tagSearchString]
   );
 
-  const moveEntry = useCallback((dragIndex: number, hoverIndex: number) => {
-    _setTags((prevTags: ITagJsonApi[]) =>
-      update(prevTags, {
-        $splice: [
-          [dragIndex, 1],
-          [hoverIndex, 0, prevTags[dragIndex] as ITagJsonApi],
-        ],
-      })
-    );
-  }, []);
+  const moveEntry = useCallback(
+    (id: string, atIndex: number) => {
+      const entry = tags.filter(c => c.id === id)[0];
+      const entryIndex = tags.indexOf(entry);
+      setTags(
+        update(tags, {
+          $splice: [
+            [entryIndex, 1],
+            [atIndex, 0, entry],
+          ],
+        })
+      );
+    },
+    [tags]
+  );
 
   const handleDelete = useCallback((o: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(c => c.id === o.data.id);
