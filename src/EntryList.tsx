@@ -228,6 +228,9 @@ const EntryList = () => {
 
   const moveEntry = (id: string, atIndex: number) => {
     const {entry, index} = findEntry(id);
+    console.info(
+      `entry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
+    );
     const reordered = update(entries, {
       $splice: [
         [index, 1],
