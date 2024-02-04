@@ -128,6 +128,7 @@ const Tag = ({
                   ordered_bottom = entry_below;
                 }
                 if (ordered_top !== null && ordered_bottom !== null) {
+                  console.info(`reordered top: ${ordered_top.attributes.name} bottom: ${ordered_bottom.attributes.name}`)
                   const payload: ReorderTag = {
                     data: {
                       type: 'Tag',
