@@ -88,24 +88,19 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     [appConfig.tagSearchString]
   );
 
-  const moveEntry = useCallback(
-    (id: string, atIndex: number) => {
-      const entry = tags.filter(c => c.id === id)[0];
-      const entryIndex = tags.indexOf(entry);
-      console.info(
-        `entry: ${entry.attributes.name} index ${entryIndex} moving to ${atIndex}`
-      );
-      setTags(
-        update(tags, {
-          $splice: [
-            [entryIndex, 1],
-            [atIndex, 0, entry],
-          ],
-        })
-      );
-    },
-    [tags]
-  );
+  const moveEntry = (id: string, atIndex: number) => {
+    const {entry, index} = findEntry(id);
+    console.info(
+      `entry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
+    );
+    const reordered = update(tags, {
+      $splice: [
+        [index, 1],
+        [atIndex, 0, entry],
+      ],
+    });
+    setTags(reordered);
+  };
 
   const handleDelete = useCallback((o: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(c => c.id === o.data.id);
