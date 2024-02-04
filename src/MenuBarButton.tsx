@@ -32,15 +32,15 @@ const MenuBarButton = function ({
         padding: 0,
         minWidth: 0,
         marginRight: 2,
-        '&:hover': {
-          color: theme => `${theme.header.menuButtonHighlight}`,
-          background: 'none',
-        },
         '&:active': {
           backgroundColor: '#585858',
         },
         '&.MuiButton-root': {
           color: theme => theme.palette.text.primary,
+          '&:hover': {
+            background: 'none',
+            color: theme => theme.palette.text.secondary,
+          },
         },
       }}
     >

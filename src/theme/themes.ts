@@ -1,8 +1,6 @@
 import {Theme, createTheme} from '@mui/material/styles';
 import {defaultThemeOptions} from './themeBase';
 
-const dark = '#0F0F0F';
-
 export const darkTheme: Theme = createTheme({
   ...defaultThemeOptions,
   palette: {
@@ -45,14 +43,13 @@ export const darkTheme: Theme = createTheme({
   },
   header: {
     background: '#181818',
-    menuButtonHighlight: '#808080',
   },
   components: {
     MuiMenu: {
       styleOverrides: {
         list: {
           padding: 0,
-          background: dark,
+          background: '#0F0F0F',
         },
       },
     },
@@ -99,7 +96,6 @@ export const lightTheme: Theme = createTheme({
   },
   header: {
     background: '#dcdcdc',
-    menuButtonHighlight: '#696969',
   },
   components: {
     MuiMenu: {

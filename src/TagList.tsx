@@ -238,16 +238,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
               deleted: object.attributes.is_deleted,
             };
 
-            let backgroundColor;
-            if (
-              tag.id === appConfig.tagSelectedID &&
-              appConfig.appMode === appMode.tagsList
-            ) {
-              backgroundColor = theme.selected.background;
-            } else {
-              backgroundColor = theme.palette.background.default;
-            }
-
             return (
               <ListItem
                 // key={tag.id}
@@ -261,7 +251,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
                   data-testid={`tagListButton-${object.id}`}
                   sx={{
                     padding: 0,
-                    backgroundColor,
                   }}
                 >
                   <Tag

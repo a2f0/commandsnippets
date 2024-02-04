@@ -35,12 +35,10 @@ describe('Tag Main Menu', () => {
     // https://webdriver.io/docs/autowait/#limitations
 
     let tags = await BasePage.tags;
+    await browser.pause(2000);
     await expect(
-      (
-        await $('div[data-testid="tagListButton-1"]').getCSSProperty(
-          'background-color'
-        )
-      ).value
+      (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
+        .value
     ).toBe('rgba(72,72,72,1)');
 
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
@@ -115,11 +113,8 @@ describe('Tag Main Menu', () => {
     );
 
     await expect(
-      (
-        await $('div[data-testid="tagListButton-1"]').getCSSProperty(
-          'background-color'
-        )
-      ).value
+      (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
+        .value
     ).toBe('rgba(72,72,72,1)');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
   });
