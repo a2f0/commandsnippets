@@ -116,7 +116,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const findEntry = (id: string) => {
     const entry = tags.filter(c => c.id === id)[0];
     return {
-      entry: entry,
+      entry,
       index: tags.indexOf(entry),
     };
   };
