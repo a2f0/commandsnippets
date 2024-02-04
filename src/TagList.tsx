@@ -92,6 +92,9 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     (id: string, atIndex: number) => {
       const entry = tags.filter(c => c.id === id)[0];
       const entryIndex = tags.indexOf(entry);
+      console.info(
+        `entry: ${entry.attributes.name} index ${entryIndex} moving to ${atIndex}`
+      );
       setTags(
         update(tags, {
           $splice: [
