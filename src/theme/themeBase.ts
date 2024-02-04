@@ -8,7 +8,6 @@ declare module '@mui/material/styles' {
     };
     header: {
       background: string;
-      menuButtonHighlight: string;
     };
     appBar: {
       height: number;
@@ -32,7 +31,6 @@ declare module '@mui/material/styles' {
     };
     header?: {
       background: string;
-      menuButtonHighlight: string;
     };
     appBar: {
       height: number;

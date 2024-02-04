@@ -150,7 +150,11 @@ const Tag = ({
     },
   });
 
-  const [, drop] = useDrop<DraggableItem, DropResult, DroppableItem>(() => ({
+  const [{canDrop, isOver}, drop] = useDrop<
+    DraggableItem,
+    DropResult,
+    DroppableItem
+  >(() => ({
     accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
     canDrop: () => {
       return true;
@@ -256,8 +260,6 @@ const Tag = ({
     apiBase
       .delete('/tags/' + tagObject.id, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
-        console.info('RESPONSE');
-        console.info(response);
         handleDeleteParent(response.data);
       })
       .catch(error => {
@@ -304,6 +306,14 @@ const Tag = ({
     appConfig.setTagSelectedID(object.id);
   };
 
+  const isActiveHover = canDrop && isOver;
+  let backgroundColor = theme.palette.background.default;
+  if (isActiveHover) {
+    backgroundColor = theme.palette.action.hover;
+  } else if (id === appConfig.tagSelectedID) {
+    backgroundColor = theme.selected.background;
+  }
+
   return (
     <>
       {!isEditing && (
@@ -320,6 +330,10 @@ const Tag = ({
           onMouseLeave={mouseLeave}
           sx={{
             width: '100%',
+            backgroundColor,
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+            },
           }}
         >
           <TagContainer ref={preview}>
