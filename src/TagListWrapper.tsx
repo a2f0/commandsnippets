@@ -5,9 +5,7 @@ import {Instance} from 'mobx-state-tree';
 import TagList from './TagList';
 import {TagModel} from './models/TagModel';
 import {autorun} from 'mobx';
-
 import {observer} from 'mobx-react';
-import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
 import {useNavigate} from 'react-router-dom';
 
@@ -18,10 +16,6 @@ export interface IUser {
     username: string;
   };
 }
-
-export const LeftToRight = styled('div')(() => ({
-  direction: 'ltr',
-}));
 
 const TagListWrapper = () => {
   const appConfig = useAppContext();
