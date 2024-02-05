@@ -16,11 +16,50 @@ beforeEach(() => assignLoggedInCookie());
 
 describe('TagList', () => {
   let reorderTagSpy: MockInstance;
+  let consoleMock: MockInstance;
   beforeEach(() => {
     reorderTagSpy = vi.spyOn(tearleadsApi, 'reorderTag');
+    consoleMock = vi
+      .spyOn(global.console, 'info')
+      .mockImplementation(() => undefined);
   });
   afterEach(() => {
     reorderTagSpy.mockRestore();
+    consoleMock.mockReset();
+  });
+  it('Hovers', async () => {
+    const user = userEvent.setup();
+    const history = createMemoryHistory();
+    const route = '/test/test';
+    history.push(route);
+    render(<TestAppRouter history={history} />);
+    expect(history.location.pathname).toBe('/test/test');
+    await waitFor(() => screen.getByText(/test-tag-1/i));
+    await waitFor(() => screen.getByText(/test-tag-2/i));
+    await waitFor(() => screen.getByText(/test-tag-3/i));
+    await waitFor(() => screen.getByText(/test-tag-4/i));
+    const tags = screen.getAllByRole('tag');
+    expect(tags).toHaveLength(4);
+    expect(tags[0]).toHaveTextContent('test-tag-1');
+    expect(tags[1]).toHaveTextContent('test-tag-2');
+    expect(tags[2]).toHaveTextContent('test-tag-3');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
+    const tagDragHandleContainers = screen.getAllByRole(
+      'tagDragHandleContainer'
+    );
+    expect(tagDragHandleContainers).toHaveLength(4);
+    await user.pointer({target: tagDragHandleContainers[0]});
+    const tagDragHandle = screen.getByRole('tagDragHandle');
+    expect(reorderTagSpy).not.toBeCalled();
+    await act(async () => {
+      fireEvent.dragStart(tagDragHandle);
+      fireEvent.dragEnter(tags[1]);
+      fireEvent.dragOver(tags[1]);
+      await new Promise(res => setTimeout(res, 1));
+    });
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: test-tag-1 index 0 moving to 1'
+    );
   });
   it('Reorders', async () => {
     const user = userEvent.setup();
