@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 import type {ITag} from './lib/db/types';
 import {ITagJsonApiResponseSingle} from './lib/tags';
+import ItemTypes from './ItemTypes';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
@@ -21,6 +22,7 @@ import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
+import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
 import {useTheme} from '@mui/material/styles';
 
@@ -88,37 +90,45 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     [appConfig.tagSearchString]
   );
 
-  const moveEntry = (id: string, atIndex: number) => {
-    const {entry, index} = findEntry(id);
-    console.info(
-      `entry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
-    );
-    const reordered = update(tags, {
-      $splice: [
-        [index, 1],
-        [atIndex, 0, entry],
-      ],
-    });
-    setTags(reordered);
-  };
-
   const handleDelete = useCallback((o: ITagJsonApiResponseSingle) => {
     const existing = appConfig.tagsArray.find(c => c.id === o.data.id);
     existing?.update(o.data);
     setTags(TagHelpers.filterAndSort(appConfig));
   }, []);
 
-  const findEntry = (id: string) => {
-    const entry = tags.filter(c => c.id === id)[0];
-    return {
-      entry,
-      index: tags.indexOf(entry),
-    };
-  };
+  const findEntry = useCallback(
+    (id: string) => {
+      const entry = tags.filter(c => c.id === id)[0];
+      return {
+        entry,
+        index: tags.indexOf(entry),
+      };
+    },
+    [tags]
+  );
+
+  const moveEntry = useCallback(
+    (id: string, atIndex: number) => {
+      const {entry, index} = findEntry(id);
+      console.info(
+        `moveEntry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
+      );
+      const reordered = update(tags, {
+        $splice: [
+          [index, 1],
+          [atIndex, 0, entry],
+        ],
+      });
+      setTags(reordered);
+    },
+    [findEntry, tags, setTags]
+  );
 
   const handleNew = () => {
     setTags(TagHelpers.filterAndSort(appConfig));
   };
+
+  const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
   const findEntryByIndex = (index: number) => {
     if (index > tags.length - 1) {
@@ -212,6 +222,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         <TagNew id="tagNewTop" handleNewParent={handleNew} />
       )}
       <List
+        ref={drop}
         dense={true}
         id="tagList"
         sx={{

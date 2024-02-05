@@ -226,27 +226,34 @@ const EntryList = () => {
     };
   }, []);
 
-  const moveEntry = (id: string, atIndex: number) => {
-    const {entry, index} = findEntry(id);
-    console.info(
-      `entry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
-    );
-    const reordered = update(entries, {
-      $splice: [
-        [index, 1],
-        [atIndex, 0, entry],
-      ],
-    });
-    setEntries(reordered);
-  };
+  const findEntry = useCallback(
+    (id: string) => {
+      const entry = entries.filter(c => c.id === id)[0];
+      return {
+        entry,
+        index: entries.indexOf(entry),
+      };
+    },
+    [entries]
+  );
 
-  const findEntry = (id: string) => {
-    const entry = entries.filter(c => c.id === id)[0];
-    return {
-      entry,
-      index: entries.indexOf(entry),
-    };
-  };
+  const moveEntry = useCallback(
+    (id: string, atIndex: number) => {
+      const {entry, index} = findEntry(id);
+      console.info(
+        `entry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
+      );
+      const reordered = update(entries, {
+        $splice: [
+          [index, 1],
+          [atIndex, 0, entry],
+        ],
+      });
+      setEntries(reordered);
+    },
+    [findEntry, entries, setEntries]
+  );
+
   const findEntryByIndex = (index: number) => {
     if (index > entries.length - 1) {
       return null;

@@ -156,68 +156,71 @@ const Tag = ({
     DraggableItem,
     DropResult,
     DroppableItem
-  >(() => ({
-    accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
-    canDrop: () => {
-      return true;
-    },
-    drop: () => ({
-      id,
-      type: 'Tag',
-    }),
-    collect: monitor => ({
-      isOver: monitor.isOver(),
-      canDrop: monitor.canDrop(),
-    }),
-    hover: (item: DraggableItem, monitor) => {
-      console.info('hover (tag)');
-      if (!dragRef.current) {
-        return;
-      }
-      if (
-        item.type === ItemTypes.ENTRY ||
-        item.type === ItemTypes.UNTAGGEDENTRY
-      ) {
-        return;
-      }
-
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-      // Determine rectangle on screen
-      const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
-      // Get vertical middle
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      // Determine mouse position
-      const clientOffset = monitor.getClientOffset();
-      // Get pixels to the top
-      if (clientOffset !== null) {
-        const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-        // Only perform the move when the mouse has crossed half of the items height
-        // When dragging downwards, only move when the cursor is below 50%
-        // When dragging upwards, only move when the cursor is above 50%
-        // Dragging downwards
-        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+  >(
+    () => ({
+      accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
+      canDrop: () => {
+        return true;
+      },
+      drop: () => ({
+        id,
+        type: 'Tag',
+      }),
+      collect: monitor => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+      hover: (item: DraggableItem, monitor) => {
+        console.info('hover (tag)');
+        if (!dragRef.current) {
           return;
         }
-        // Dragging upwards
-        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        if (
+          item.type === ItemTypes.ENTRY ||
+          item.type === ItemTypes.UNTAGGEDENTRY
+        ) {
           return;
         }
 
-        moveEntry(item.id, hoverIndex);
-        // Note: we're mutating the monitor item here!
-        // Generally it's better to avoid mutations,
-        // but it's good here for the sake of performance
-        // to avoid expensive index searches.
-        item.index = hoverIndex;
-      }
-    },
-  }));
+        const dragIndex = item.index;
+        const hoverIndex = index;
+        if (dragIndex === hoverIndex) {
+          return;
+        }
+        // Determine rectangle on screen
+        const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
+        // Get vertical middle
+        const hoverMiddleY =
+          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        // Determine mouse position
+        const clientOffset = monitor.getClientOffset();
+        // Get pixels to the top
+        if (clientOffset !== null) {
+          const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+
+          // Only perform the move when the mouse has crossed half of the items height
+          // When dragging downwards, only move when the cursor is below 50%
+          // When dragging upwards, only move when the cursor is above 50%
+          // Dragging downwards
+          if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+            return;
+          }
+          // Dragging upwards
+          if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+            return;
+          }
+
+          moveEntry(item.id, hoverIndex);
+          // Note: we're mutating the monitor item here!
+          // Generally it's better to avoid mutations,
+          // but it's good here for the sake of performance
+          // to avoid expensive index searches.
+          item.index = hoverIndex;
+        }
+      },
+    }),
+    [findEntry, moveEntry]
+  );
 
   const mouseEnter = () => {
     if (appConfig.loggedInUser !== null && appConfig.tagSortOrder === 'order') {
