@@ -20,7 +20,7 @@ describe('TagList', () => {
   beforeEach(() => {
     reorderTagSpy = vi.spyOn(tearleadsApi, 'reorderTag');
     consoleMock = vi
-      .spyOn(global.console, 'info')
+      .spyOn(global.console, 'debug')
       .mockImplementation(() => undefined);
   });
   afterEach(() => {
@@ -61,7 +61,7 @@ describe('TagList', () => {
       'moveEntry: test-tag-1 index 0 moving to 1'
     );
   });
-  it('Reorders', async () => {
+  it('Reorders 0 -> 2', async () => {
     const user = userEvent.setup();
     const history = createMemoryHistory();
     const route = '/test/test';
@@ -90,7 +90,6 @@ describe('TagList', () => {
       fireEvent.dragEnter(tags[2]);
       fireEvent.dragOver(tags[2]);
       await new Promise(res => setTimeout(res, 0));
-      fireEvent.drop(tags[2]);
     });
     tags = screen.getAllByRole('tag');
     expect(tags).toHaveLength(4);
@@ -98,11 +97,18 @@ describe('TagList', () => {
     expect(tags[1]).toHaveTextContent('test-tag-3');
     expect(tags[2]).toHaveTextContent('test-tag-1');
     expect(tags[3]).toHaveTextContent('test-tag-4');
+
+    // This is dropping it onto itself after reordering the list.
+    // To my knowledge, this emulates what is going on in the screen in a real world scenario.
+    await act(async () => {
+      fireEvent.drop(tags[2]);
+    });
+
     expect(reorderTagSpy).toBeCalledWith({
       data: {
         attributes: {
-          bottom: '2',
           top: '1',
+          bottom: '4',
         },
         relationships: {},
         type: 'Tag',

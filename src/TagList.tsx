@@ -107,10 +107,21 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     [tags]
   );
 
+  const findEntryByIndex = useCallback(
+    (index: number) => {
+      if (index > tags.length - 1) {
+        return null;
+      } else {
+        return tags[index];
+      }
+    },
+    [tags]
+  );
+
   const moveEntry = useCallback(
     (id: string, atIndex: number) => {
       const {entry, index} = findEntry(id);
-      console.info(
+      console.debug(
         `moveEntry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
       );
       const reordered = update(tags, {
@@ -121,7 +132,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       });
       setTags(reordered);
     },
-    [findEntry, tags, setTags]
+    [findEntry, findEntryByIndex, tags, setTags]
   );
 
   const handleNew = () => {
@@ -129,14 +140,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   };
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
-
-  const findEntryByIndex = (index: number) => {
-    if (index > tags.length - 1) {
-      return null;
-    } else {
-      return tags[index];
-    }
-  };
 
   const handleContextClick = useCallback(
     (event: React.MouseEvent<HTMLUListElement>) => {
