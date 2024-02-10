@@ -146,7 +146,9 @@ const Tag = ({
                     await tearleadsApi.reorderTag(payload);
                   }
                 } else {
-                  console.info("it wasn't moved within the list (tag)");
+                  console.debug(
+                    'useDrag end: it was not moved within the list.'
+                  );
                 }
               }
             }
