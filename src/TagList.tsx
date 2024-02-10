@@ -121,7 +121,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const moveEntry = useCallback(
     (id: string, atIndex: number) => {
       const {entry, index} = findEntry(id);
-      console.info(
+      console.debug(
         `moveEntry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
       );
       const reordered = update(tags, {
