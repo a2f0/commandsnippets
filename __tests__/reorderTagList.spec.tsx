@@ -271,4 +271,58 @@ describe('TagList', () => {
       },
     });
   });
+  it('Reorders 1 -> 2', async () => {
+    const user = userEvent.setup();
+    const history = createMemoryHistory();
+    const route = '/test/test';
+    history.push(route);
+    render(<TestAppRouter history={history} />);
+    expect(history.location.pathname).toBe('/test/test');
+    await waitFor(() => screen.getByText(/test-tag-1/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/test-tag-2/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/test-tag-3/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/test-tag-4/i), {timeout: 3000});
+    let tags = screen.getAllByRole('tag');
+    expect(tags).toHaveLength(4);
+    expect(tags[0]).toHaveTextContent('test-tag-1');
+    expect(tags[1]).toHaveTextContent('test-tag-2');
+    expect(tags[2]).toHaveTextContent('test-tag-3');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
+    const tagDragHandleContainers = screen.getAllByRole(
+      'tagDragHandleContainer'
+    );
+    expect(tagDragHandleContainers).toHaveLength(4);
+    await user.pointer({target: tagDragHandleContainers[1]});
+    const tagDragHandle = screen.getByRole('tagDragHandle');
+    expect(reorderTagSpy).not.toBeCalled();
+    await act(async () => {
+      fireEvent.dragStart(tagDragHandle);
+      fireEvent.dragEnter(tags[2]);
+      fireEvent.dragOver(tags[2]);
+      await new Promise(res => setTimeout(res, 0));
+    });
+    tags = screen.getAllByRole('tag');
+    expect(tags).toHaveLength(4);
+    expect(tags[0]).toHaveTextContent('test-tag-1');
+    expect(tags[1]).toHaveTextContent('test-tag-3');
+    expect(tags[2]).toHaveTextContent('test-tag-2');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
+
+    // This is dropping it onto itself after reordering the list.
+    // To my knowledge, this emulates what is going on in the screen in a real world scenario.
+    await act(async () => {
+      fireEvent.drop(tags[3]);
+    });
+
+    expect(reorderTagSpy).toBeCalledWith({
+      data: {
+        attributes: {
+          top: '2',
+          bottom: '4',
+        },
+        relationships: {},
+        type: 'Tag',
+      },
+    });
+  });
 });
