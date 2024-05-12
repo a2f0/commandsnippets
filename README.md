@@ -57,6 +57,8 @@ Accessing the local Postgresql Database
 
 Run tests
 
+    docker-compose run backend python manage.py test -v 2
+    docker-compose run backend python -Wa manage.py test -v 2 # show warnings
     docker-compose run backend coverage run manage.py test -v 2
 
 Run a coverage report (note: the configuration of the coverage tool is in `.coveragerc` )
