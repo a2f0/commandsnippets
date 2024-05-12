@@ -12,6 +12,6 @@ repos:
     -   id: isort
 -   repo: https://github.com/psf/black
     # should match what is inside of requirements/local.txt
-    rev: 22.12.0
+    rev: 24.4.2
     hooks:
     -   id: black

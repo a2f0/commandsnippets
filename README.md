@@ -2,7 +2,9 @@
 
 ## Development
 
-Bootstrap
+### Bootstrap
+
+#### Required
 
     pyenv install `cat .python-version`
     pip install pre-commit
@@ -11,6 +13,15 @@ Bootstrap
     docker-compose build
     docker-compose run backend python manage.py migrate
     docker-compose up
+
+    # Optional
+    # Create Create a virtual environment for IDE, linting, etc.
+    # MacOS
+    brew install postgresql # Provides `pg_config`
+    # All platforms
+    python -m venv venv
+    source ./venv/bin/activate
+    pip install -r requirements/base.txt -r requirements/local.txt
 
 Bump version
 
@@ -21,6 +32,11 @@ Show outdated dependencies
     docker-compose build --no-cache
     docker-compose run backend safety check -r requirements/local.txt -r requirements/production.txt
     docker-compose run backend pur -r requirements/local.txt -r requirements/production.txt
+
+    # venv
+    safety check -r requirements/local.txt -r requirements/production.txt
+    pur -r requirements/local.txt -r requirements/production.txt
+
 
 Accessing the local Postgresql Database
 
@@ -41,6 +57,8 @@ Accessing the local Postgresql Database
 
 Run tests
 
+    docker-compose run backend python manage.py test -v 2
+    docker-compose run backend python -Wa manage.py test -v 2 # show warnings
     docker-compose run backend coverage run manage.py test -v 2
 
 Run a coverage report (note: the configuration of the coverage tool is in `.coveragerc` )
@@ -81,6 +99,7 @@ List users
 6. List backups with `docker-compose run postgres list-backups`
 7. Do a restore with `docker-compose run postgres restore backup-pg_dump-Fc`
 8. Update the data volume in `staging.yaml` and `container-registry.yaml`.
+9. Update the container in `.github/workflows/main.yml`.
 
 ### Upgrading the python version
 

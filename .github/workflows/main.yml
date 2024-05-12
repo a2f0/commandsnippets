@@ -12,7 +12,7 @@ jobs:
     continue-on-error: false
     services:
       postgres:
-        image: postgres:11
+        image: postgres:15
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -26,13 +26,13 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         architecture: 'x64'
-    - uses: pre-commit/action@v3.0.0
+    - uses: pre-commit/action@v3.0.1
     - name: install and configure python dependencies
       run: pip install --no-cache-dir -r ./requirements/local.txt
     - name: Run safety
@@ -71,10 +71,10 @@ jobs:
     continue-on-error: false
     needs: code-quality
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Configure AWS credentials
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -82,7 +82,7 @@ jobs:
       - name: Login to Amazon ECR
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Build SHA image
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         env:
