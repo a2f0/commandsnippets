@@ -33,6 +33,11 @@ Show outdated dependencies
     docker-compose run backend safety check -r requirements/local.txt -r requirements/production.txt
     docker-compose run backend pur -r requirements/local.txt -r requirements/production.txt
 
+    # venv
+    safety check -r requirements/local.txt -r requirements/production.txt
+    pur -r requirements/local.txt -r requirements/production.txt
+
+
 Accessing the local Postgresql Database
 
     psql -h localhost -p 1337 -U tearleads
@@ -92,6 +97,7 @@ List users
 6. List backups with `docker-compose run postgres list-backups`
 7. Do a restore with `docker-compose run postgres restore backup-pg_dump-Fc`
 8. Update the data volume in `staging.yaml` and `container-registry.yaml`.
+9. Update the container in `.github/workflows/main.yml`.
 
 ### Upgrading the python version
 

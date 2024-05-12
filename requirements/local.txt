@@ -1,5 +1,5 @@
 -r base.txt
-black==24.1.1                   # this should match .pre-commit-config.yamml
+black==24.4.2                   # this should match .pre-commit-config.yamml
 bump2version==1.0.1
 coverage==7.3.2
 django_extensions==3.2.3
