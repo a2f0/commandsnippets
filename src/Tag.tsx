@@ -60,7 +60,7 @@ interface ITagProps {
   id: string;
   object: ITag;
   handleDeleteParent: (object: ITagJsonApiResponseSingle) => void;
-  moveEntry: (dragIndex: number, atIndex: number) => void;
+  moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
   findEntryByIndex: (id: number) => ITagJsonApi | null;
@@ -85,141 +85,150 @@ const Tag = ({
   const {user} = useParams();
   const navigate = useNavigate();
 
-  const [{isDragging}, drag, preview] = useDrag({
-    item: (): DraggableItem => ({
-      id,
-      originalIndex,
+  const [{isDragging}, drag, preview] = useDrag(
+    {
+      item: (): DraggableItem => ({
+        id,
+        originalIndex,
+        type: ItemTypes.TAG,
+        index,
+      }),
       type: ItemTypes.TAG,
-      index,
-    }),
-    type: ItemTypes.TAG,
-    collect: monitor => ({
-      isDragging: monitor.isDragging(),
-    }),
-    end: async (dropResult, monitor) => {
-      const drop_result: ITagJsonApi | null = monitor.getDropResult();
-      const {id: droppedId, originalIndex} = monitor.getItem();
-      const didDrop = monitor.didDrop();
-      if (!didDrop) {
-        console.info('didDrop Tag moveEntry');
-        const {index} = findEntry(droppedId);
-        moveEntry(index, originalIndex);
-      } else {
-        if (drop_result?.type) {
-          if ('type' in drop_result) {
-            if (drop_result.type === 'Tag') {
-              console.info(`originalIndex: ${originalIndex}`);
-              console.info(`findEntryIndex: ${findEntry(id).index}`);
-              if (originalIndex !== dropResult.index) {
-                console.info(
-                  `it moved from index ${originalIndex} to ${index} (tags)`
-                );
-                // Then it was reordered in the list.
-                const entry = findEntry(id).entry;
-                const entry_below = findEntryByIndex(index + 1);
-                let ordered_top: ITagJsonApi | null;
-                let ordered_bottom: ITagJsonApi | null;
-                if (entry_below === null) {
-                  //Then it was moved to the bottom position, get the entry before it.
-                  ordered_top = findEntryByIndex(index - 1);
-                  ordered_bottom = entry;
-                } else {
-                  ordered_top = entry;
-                  ordered_bottom = entry_below;
-                }
-                if (ordered_top !== null && ordered_bottom !== null) {
-                  console.info(
-                    `reordered top: ${ordered_top.attributes.name} bottom: ${ordered_bottom.attributes.name}`
+      collect: monitor => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: async (draggedItem, monitor) => {
+        const {id: droppedId, originalIndex} = monitor.getItem();
+        console.debug(
+          `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
+        );
+        console.debug(
+          `useDrag end: droppedId: ${droppedId} originalIndex ${originalIndex}`
+        );
+        const didDrop = monitor.didDrop();
+        if (!didDrop) {
+          console.debug('!didDrop');
+          moveEntry(droppedId, originalIndex);
+        } else {
+          if (draggedItem?.type) {
+            if ('type' in draggedItem) {
+              if (draggedItem.type === 'tag') {
+                if (originalIndex !== draggedItem.index) {
+                  console.debug(
+                    `useDrag end: it moved from index ${originalIndex} to ${draggedItem.index}`
                   );
-                  const payload: ReorderTag = {
-                    data: {
-                      type: 'Tag',
-                      attributes: {
-                        top: ordered_top.id,
-                        bottom: ordered_bottom.id,
+                  console.debug(
+                    `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
+                  );
+                  const {entry, index} = findEntry(draggedItem.id);
+                  const entryBelow = findEntryByIndex(index + 1);
+                  let orderedTop: ITagJsonApi | null;
+                  let orderedBottom: ITagJsonApi | null;
+                  if (entryBelow === null) {
+                    //Then it was moved to the bottom position, get the entry before it.
+                    orderedTop = findEntryByIndex(index - 1);
+                    orderedBottom = entry;
+                  } else {
+                    orderedTop = entry;
+                    orderedBottom = entryBelow;
+                  }
+                  if (orderedTop !== null && orderedBottom !== null) {
+                    const payload: ReorderTag = {
+                      data: {
+                        type: 'Tag',
+                        attributes: {
+                          top: orderedTop.id,
+                          bottom: orderedBottom.id,
+                        },
+                        relationships: {},
                       },
-                      relationships: {},
-                    },
-                  };
-                  await tearleadsApi.reorderTag(payload);
+                    };
+                    await tearleadsApi.reorderTag(payload);
+                  }
+                } else {
+                  console.debug(
+                    'useDrag end: it was not moved within the list.'
+                  );
                 }
-              } else {
-                console.info("it wasn't moved within the list (tag)");
               }
             }
           }
         }
-      }
+      },
     },
-  });
+    [id, originalIndex, moveEntry]
+  );
 
   const [{canDrop, isOver}, drop] = useDrop<
     DraggableItem,
     DropResult,
     DroppableItem
-  >(() => ({
-    accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
-    canDrop: () => {
-      return true;
-    },
-    drop: () => ({
-      id,
-      type: 'Tag',
-    }),
-    collect: monitor => ({
-      isOver: monitor.isOver(),
-      canDrop: monitor.canDrop(),
-    }),
-    hover: (item: DraggableItem, monitor) => {
-      console.info('hover (tag)');
-      if (!dragRef.current) {
-        return;
-      }
-      if (
-        item.type === ItemTypes.ENTRY ||
-        item.type === ItemTypes.UNTAGGEDENTRY
-      ) {
-        return;
-      }
-
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-      // Determine rectangle on screen
-      const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
-      // Get vertical middle
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      // Determine mouse position
-      const clientOffset = monitor.getClientOffset();
-      // Get pixels to the top
-      if (clientOffset !== null) {
-        const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-        // Only perform the move when the mouse has crossed half of the items height
-        // When dragging downwards, only move when the cursor is below 50%
-        // When dragging upwards, only move when the cursor is above 50%
-        // Dragging downwards
-        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+  >(
+    () => ({
+      accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
+      canDrop: () => {
+        return true;
+      },
+      drop: (): DraggableItem => ({
+        id,
+        type: 'Tag',
+        index,
+        originalIndex,
+      }),
+      collect: monitor => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+      hover: (item: DraggableItem, monitor) => {
+        if (!dragRef.current) {
           return;
         }
-        // Dragging upwards
-        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        if (
+          item.type === ItemTypes.ENTRY ||
+          item.type === ItemTypes.UNTAGGEDENTRY
+        ) {
           return;
         }
 
-        const {index} = findEntry(item.id);
-        moveEntry(index, hoverIndex);
-        // Note: we're mutating the monitor item here!
-        // Generally it's better to avoid mutations,
-        // but it's good here for the sake of performance
-        // to avoid expensive index searches.
-        item.index = hoverIndex;
-      }
-    },
-  }));
+        const dragIndex = item.index;
+        const hoverIndex = index;
+        if (dragIndex === hoverIndex) {
+          return;
+        }
+        // Determine rectangle on screen
+        const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
+        // Get vertical middle
+        const hoverMiddleY =
+          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        // Determine mouse position
+        const clientOffset = monitor.getClientOffset();
+        // Get pixels to the top
+        if (clientOffset !== null) {
+          const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+
+          // Only perform the move when the mouse has crossed half of the items height
+          // When dragging downwards, only move when the cursor is below 50%
+          // When dragging upwards, only move when the cursor is above 50%
+          // Dragging downwards
+          if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+            return;
+          }
+          // Dragging upwards
+          if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+            return;
+          }
+
+          moveEntry(item.id, hoverIndex);
+          // Note: we're mutating the monitor item here!
+          // Generally it's better to avoid mutations,
+          // but it's good here for the sake of performance
+          // to avoid expensive index searches.
+          item.index = hoverIndex;
+        }
+      },
+    }),
+    [findEntry, moveEntry]
+  );
 
   const mouseEnter = () => {
     if (appConfig.loggedInUser !== null && appConfig.tagSortOrder === 'order') {
