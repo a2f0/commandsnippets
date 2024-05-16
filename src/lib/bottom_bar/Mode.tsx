@@ -3,7 +3,7 @@ import {Typography} from '@mui/material';
 import {observer} from 'mobx-react';
 import {useAppContext} from '../../AppContext';
 
-const BottomBar = () => {
+const Mode = () => {
   const appConfig = useAppContext();
   return (
     <Typography
@@ -11,10 +11,11 @@ const BottomBar = () => {
       fontFamily="monospace"
       sx={{
         mr: theme => theme.spacing(0.5),
+        color: theme => theme.palette.text.primary,
       }}
     >
       [mode: {appConfig.appMode}]
     </Typography>
   );
 };
-export default React.memo(observer(BottomBar));
+export default React.memo(observer(Mode));
