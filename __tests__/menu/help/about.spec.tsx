@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {
   render,
   screen,
@@ -11,6 +11,8 @@ import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
 import server from '../../util/msw';
 import userEvent from '@testing-library/user-event';
+
+Element.prototype.scrollIntoView = vi.fn();
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());

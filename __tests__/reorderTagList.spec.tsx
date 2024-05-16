@@ -9,6 +9,8 @@ import server from './util/msw';
 import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import userEvent from '@testing-library/user-event';
 
+Element.prototype.scrollIntoView = vi.fn();
+
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
@@ -53,12 +55,13 @@ describe('TagList', () => {
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
-      fireEvent.dragEnter(tags[1]);
-      fireEvent.dragOver(tags[1]);
-      await new Promise(res => setTimeout(res, 1));
+    });
+
+    await act(async () => {
+      fireEvent.dragEnter(tags[0]);
     });
     expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: test-tag-1 index 0 moving to 1'
+      'hover: index 0 originalIndex 0'
     );
   });
   it('Reorders 0 -> 0', async () => {
@@ -134,10 +137,16 @@ describe('TagList', () => {
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
-      fireEvent.dragEnter(tags[1]);
-      fireEvent.dragOver(tags[1]);
-      await new Promise(res => setTimeout(res, 0));
     });
+
+    await act(async () => {
+      fireEvent.dragEnter(tags[1]);
+    });
+
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: test-tag-1 index 0 moving to 1'
+    );
+
     tags = screen.getAllByRole('tag');
     expect(tags).toHaveLength(4);
     expect(tags[0]).toHaveTextContent('test-tag-2');
@@ -146,7 +155,6 @@ describe('TagList', () => {
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
     // This is dropping it onto itself after reordering the list.
-    // To my knowledge, this emulates what is going on in the screen in a real world scenario.
     await act(async () => {
       fireEvent.drop(tags[1]);
     });
@@ -189,22 +197,34 @@ describe('TagList', () => {
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
-      fireEvent.dragEnter(tags[2]);
-      fireEvent.dragOver(tags[2]);
-      await new Promise(res => setTimeout(res, 0));
     });
+
+    await act(async () => {
+      fireEvent.dragEnter(tags[1]);
+    });
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: test-tag-1 index 0 moving to 1'
+    );
+
     tags = screen.getAllByRole('tag');
-    expect(tags).toHaveLength(4);
     expect(tags[0]).toHaveTextContent('test-tag-2');
-    expect(tags[1]).toHaveTextContent('test-tag-3');
-    expect(tags[2]).toHaveTextContent('test-tag-1');
+    expect(tags[1]).toHaveTextContent('test-tag-1');
+    expect(tags[2]).toHaveTextContent('test-tag-3');
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
+    await act(async () => {
+      fireEvent.dragEnter(tags[2]);
+    });
     // This is dropping it onto itself after reordering the list.
-    // To my knowledge, this emulates what is going on in the screen in a real world scenario.
     await act(async () => {
       fireEvent.drop(tags[2]);
     });
+
+    tags = screen.getAllByRole('tag');
+    expect(tags[0]).toHaveTextContent('test-tag-2');
+    expect(tags[1]).toHaveTextContent('test-tag-1');
+    expect(tags[2]).toHaveTextContent('test-tag-3');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
 
     expect(reorderTagSpy).toBeCalledWith({
       data: {
@@ -243,12 +263,42 @@ describe('TagList', () => {
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
-      fireEvent.dragEnter(tags[3]);
-      fireEvent.dragOver(tags[3]);
-      await new Promise(res => setTimeout(res, 0));
     });
+    await act(async () => {
+      fireEvent.dragEnter(tags[1]);
+      await new Promise(res => setTimeout(res, 1));
+    });
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: test-tag-1 index 0 moving to 1'
+    );
+
     tags = screen.getAllByRole('tag');
-    expect(tags).toHaveLength(4);
+    expect(tags[0]).toHaveTextContent('test-tag-2');
+    expect(tags[1]).toHaveTextContent('test-tag-1');
+    expect(tags[2]).toHaveTextContent('test-tag-3');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
+
+    await act(async () => {
+      fireEvent.dragEnter(tags[2]);
+    });
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: test-tag-1 index 1 moving to 2'
+    );
+
+    tags = screen.getAllByRole('tag');
+    expect(tags[0]).toHaveTextContent('test-tag-2');
+    expect(tags[1]).toHaveTextContent('test-tag-3');
+    expect(tags[2]).toHaveTextContent('test-tag-1');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
+
+    await act(async () => {
+      fireEvent.dragEnter(tags[3]);
+    });
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: test-tag-1 index 2 moving to 3'
+    );
+
+    tags = screen.getAllByRole('tag');
     expect(tags[0]).toHaveTextContent('test-tag-2');
     expect(tags[1]).toHaveTextContent('test-tag-3');
     expect(tags[2]).toHaveTextContent('test-tag-4');
@@ -259,6 +309,12 @@ describe('TagList', () => {
     await act(async () => {
       fireEvent.drop(tags[3]);
     });
+
+    tags = screen.getAllByRole('tag');
+    expect(tags[0]).toHaveTextContent('test-tag-2');
+    expect(tags[1]).toHaveTextContent('test-tag-3');
+    expect(tags[2]).toHaveTextContent('test-tag-4');
+    expect(tags[3]).toHaveTextContent('test-tag-1');
 
     expect(reorderTagSpy).toBeCalledWith({
       data: {
@@ -297,10 +353,15 @@ describe('TagList', () => {
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
-      fireEvent.dragEnter(tags[2]);
-      fireEvent.dragOver(tags[2]);
-      await new Promise(res => setTimeout(res, 0));
     });
+    await act(async () => {
+      fireEvent.dragEnter(tags[2]);
+    });
+
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: test-tag-2 index 1 moving to 2'
+    );
+
     tags = screen.getAllByRole('tag');
     expect(tags).toHaveLength(4);
     expect(tags[0]).toHaveTextContent('test-tag-1');
@@ -309,10 +370,15 @@ describe('TagList', () => {
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
     // This is dropping it onto itself after reordering the list.
-    // To my knowledge, this emulates what is going on in the screen in a real world scenario.
     await act(async () => {
-      fireEvent.drop(tags[3]);
+      fireEvent.drop(tags[2]);
     });
+    tags = screen.getAllByRole('tag');
+    expect(tags).toHaveLength(4);
+    expect(tags[0]).toHaveTextContent('test-tag-1');
+    expect(tags[1]).toHaveTextContent('test-tag-3');
+    expect(tags[2]).toHaveTextContent('test-tag-2');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
 
     expect(reorderTagSpy).toBeCalledWith({
       data: {
@@ -351,10 +417,13 @@ describe('TagList', () => {
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
-      fireEvent.dragEnter(tags[1]);
-      fireEvent.dragOver(tags[1]);
-      await new Promise(res => setTimeout(res, 0));
     });
+    await act(async () => {
+      fireEvent.dragEnter(tags[1]);
+    });
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: test-tag-3 index 2 moving to 1'
+    );
     tags = screen.getAllByRole('tag');
     expect(tags).toHaveLength(4);
     expect(tags[0]).toHaveTextContent('test-tag-1');
@@ -363,10 +432,16 @@ describe('TagList', () => {
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
     // This is dropping it onto itself after reordering the list.
-    // To my knowledge, this emulates what is going on in the screen in a real world scenario.
     await act(async () => {
-      fireEvent.drop(tags[3]);
+      fireEvent.drop(tags[1]);
     });
+
+    tags = screen.getAllByRole('tag');
+    expect(tags).toHaveLength(4);
+    expect(tags[0]).toHaveTextContent('test-tag-1');
+    expect(tags[1]).toHaveTextContent('test-tag-3');
+    expect(tags[2]).toHaveTextContent('test-tag-2');
+    expect(tags[3]).toHaveTextContent('test-tag-4');
 
     expect(reorderTagSpy).toBeCalledWith({
       data: {
