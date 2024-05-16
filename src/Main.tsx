@@ -46,6 +46,7 @@ const Main = () => {
           borderBottom: '1px solid #808080',
           backgroundColor: theme => `${theme.header.background}`,
           top: 0,
+          height: theme => `${theme.appBar.height}`,
         }}
       >
         <StyledToolbar>

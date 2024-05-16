@@ -11,6 +11,9 @@ import entriesResponse from '../test/mocks/entries/entriesResponse';
 import {setupServer} from 'msw/node';
 import tagsResponse from '../test/mocks/tags/tagsResponse';
 import userEvent from '@testing-library/user-event';
+import {vi} from 'vitest';
+
+Element.prototype.scrollIntoView = vi.fn();
 
 const response = {
   data: {

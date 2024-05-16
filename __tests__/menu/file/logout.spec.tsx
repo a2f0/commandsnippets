@@ -6,6 +6,9 @@ import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
 import {createMemoryHistory} from 'history';
 import server from '../../util/msw';
 import userEvent from '@testing-library/user-event';
+import {vi} from 'vitest';
+
+Element.prototype.scrollIntoView = vi.fn();
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());

@@ -1,5 +1,6 @@
 import {IMouse, initialMouse} from './lib/shared';
-import React, {useMemo, useRef, useState} from 'react';
+import {ListItem, ListItemButton} from '@mui/material';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
 import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
@@ -8,7 +9,6 @@ import {AxiosResponse} from 'axios';
 import {Box} from '@mui/material';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
-import type {ITag} from './lib/db/types';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import ItemTypes from './ItemTypes';
@@ -17,8 +17,7 @@ import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
 import {Theme} from '@mui/material/styles';
 import apiBase from './lib/api/apiBase';
-import {convertISO8601ToUnixTime} from './lib/util/dateTime';
-import {observer} from 'mobx-react';
+import {needsScrollingIntoView} from './lib/text_entries';
 import {styled} from '@mui/material/styles';
 import {useAppContext} from './AppContext';
 import {useTheme} from '@mui/material/styles';
@@ -58,24 +57,30 @@ interface DropResult {
 
 interface ITagProps {
   id: string;
-  object: ITag;
+  object: ITagJsonApi;
   handleDeleteParent: (object: ITagJsonApiResponseSingle) => void;
   moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
   findEntryByIndex: (id: number) => ITagJsonApi | null;
+  isSelected: boolean;
+  movedSelectedUp: boolean;
+  setSelectedTag: (id: string) => void;
 }
 
 const Tag = ({
+  id,
   object,
   handleDeleteParent,
   moveEntry,
   findEntry,
   index,
   findEntryByIndex,
+  isSelected,
+  movedSelectedUp,
+  setSelectedTag,
 }: ITagProps) => {
-  const {id} = object;
-  const [tagObject, setTagObject] = useState<ITag>(object);
+  const [tagObject, setTagObject] = useState<ITagJsonApi>(object);
   const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -84,6 +89,27 @@ const Tag = ({
   const theme: Theme = useTheme();
   const {user} = useParams();
   const navigate = useNavigate();
+  const tagRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    if (
+      tagRef.current &&
+      isSelected === true &&
+      needsScrollingIntoView(tagRef, theme)
+    ) {
+      if (movedSelectedUp === true) {
+        tagRef.current?.scrollIntoView({
+          behavior: 'auto',
+          block: 'start',
+        });
+      } else {
+        tagRef.current?.scrollIntoView({
+          behavior: 'auto',
+          block: 'end',
+        });
+      }
+    }
+  }, [isSelected]);
 
   const [{isDragging}, drag, preview] = useDrag(
     {
@@ -180,6 +206,7 @@ const Tag = ({
         canDrop: monitor.canDrop(),
       }),
       hover: (item: DraggableItem, monitor) => {
+        console.debug(`hover: index ${index} originalIndex ${originalIndex}`);
         if (!dragRef.current) {
           return;
         }
@@ -246,24 +273,11 @@ const Tag = ({
     setIsEditing(false);
   };
 
-  const handleSave = (object: ITagJsonApiResponseSingle) => {
-    const existing = appConfig.tagsArray.find(o => o.id === object.data.id);
-    existing?.update(object.data);
+  const handleSave = (object: ITagJsonApi) => {
+    const existing = appConfig.tagsArray.find(o => o.id === object.id);
+    existing?.update(object);
 
-    const updated = convertISO8601ToUnixTime(
-      object.data.attributes.date_updated
-    );
-    const tag: ITag = {
-      id: object.data.id,
-      name: object.data.attributes.name,
-      entryCount: object.data.attributes.entry_count,
-      updated,
-      userId: object.data.relationships.user.data.id,
-      synced: false,
-      deleted: false,
-    };
-
-    setTagObject(tag);
+    setTagObject(object);
 
     setIsEditing(false);
   };
@@ -308,68 +322,89 @@ const Tag = ({
     [mouse]
   );
 
-  const handleTagClick = (object: ITag): void => {
-    navigate(`/${user}/${object.name}`);
+  const handleTagClick = (object: ITagJsonApi): void => {
+    navigate(`/${user}/${object.attributes.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
     appConfig.setAppMode(appMode.tagsList);
     appConfig.incrementClickCount();
     appConfig.setActiveSearch(activeSearch.entries);
     appConfig.setEntrySearchString('');
     appConfig.setTagSelectedID(object.id);
+    setSelectedTag(object.id);
   };
 
   const isActiveHover = canDrop && isOver;
   let backgroundColor = theme.palette.background.default;
   if (isActiveHover) {
     backgroundColor = theme.palette.action.hover;
-  } else if (id === appConfig.tagSelectedID) {
+  } else if (isSelected) {
     backgroundColor = theme.selected.background;
   }
 
   return (
     <>
       {!isEditing && (
-        <Box
-          ref={dropRef}
-          style={{opacity}}
-          onContextMenu={handleContextClick}
-          onClick={() => {
-            handleTagClick(object);
-          }}
-          id={`tag-${id}`}
-          data-testid={`tag-${id}`}
-          role="tag"
-          onMouseEnter={mouseEnter}
-          onMouseLeave={mouseLeave}
+        <ListItem
+          key={object.id}
           sx={{
-            width: '100%',
-            backgroundColor,
-            '&:hover': {
-              backgroundColor: theme.palette.action.hover,
-            },
+            padding: 0,
           }}
+          ref={tagRef}
         >
-          <TagContainer ref={preview}>
-            <DragHandleContainer theme={theme} role="tagDragHandleContainer">
-              <DragHandle
-                role="tagDragHandle"
-                ref={dragRef}
-                style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
-              >
-                ::
-              </DragHandle>
-            </DragHandleContainer>
-            <TagLabelWrapper
-              theme={theme}
-              id={`tagLabelWrapper-${id}`}
-              role="tagLabelWrapper"
-              ref={drop}
+          <ListItemButton
+            data-testid={`tagListButton-${object.id}`}
+            sx={{
+              padding: 0,
+            }}
+          >
+            <Box
+              ref={dropRef}
+              style={{opacity}}
+              onContextMenu={handleContextClick}
+              onClick={() => {
+                handleTagClick(object);
+              }}
+              id={`tag-${id}`}
+              data-testid={`tag-${id}`}
+              role="tag"
+              onMouseEnter={mouseEnter}
+              onMouseLeave={mouseLeave}
+              sx={{
+                width: '100%',
+                backgroundColor,
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
             >
-              <TagLabel label={tagObject.name} />
-              {appConfig.showTagCounts ? ` (${tagObject.entryCount})` : null}
-            </TagLabelWrapper>
-          </TagContainer>
-        </Box>
+              <TagContainer ref={preview}>
+                <DragHandleContainer
+                  theme={theme}
+                  role="tagDragHandleContainer"
+                >
+                  <DragHandle
+                    role="tagDragHandle"
+                    ref={dragRef}
+                    style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
+                  >
+                    ::
+                  </DragHandle>
+                </DragHandleContainer>
+                <TagLabelWrapper
+                  theme={theme}
+                  id={`tagLabelWrapper-${id}`}
+                  role="tagLabelWrapper"
+                  ref={drop}
+                >
+                  <TagLabel label={tagObject.attributes.name} />
+                  {appConfig.showTagCounts
+                    ? ` (${tagObject.attributes.entry_count})`
+                    : null}
+                </TagLabelWrapper>
+              </TagContainer>
+            </Box>
+          </ListItemButton>
+        </ListItem>
       )}
       {appConfig.loggedInUser && <>{contextMenu}</>}
       {isEditing && (
@@ -383,4 +418,4 @@ const Tag = ({
   );
 };
 
-export default React.memo(observer(Tag));
+export default React.memo(Tag);

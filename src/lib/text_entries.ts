@@ -458,17 +458,21 @@ export function needsScrollingIntoView(
 ) {
   const rect = element.current?.getBoundingClientRect();
   if (rect !== undefined) {
-    // Then it exists
     const bottomInView =
       rect.bottom <=
       (window.innerHeight - theme.footer.height ||
         document.documentElement.clientHeight - theme.footer.height);
     if (bottomInView === false) {
-      // Then it needs to be scrolled
+      return true;
+    }
+
+    const topInView = rect.top >= theme.appBar.height;
+
+    if (topInView === false) {
       return true;
     }
   } else {
-    console.warn('current was undefined when scrolling into view.');
+    throw new Error('needsScrollingIntoView expects rectangle');
   }
   return false;
 }

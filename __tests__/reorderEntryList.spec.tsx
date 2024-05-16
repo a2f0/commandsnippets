@@ -9,6 +9,8 @@ import server from './util/msw';
 import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import userEvent from '@testing-library/user-event';
 
+Element.prototype.scrollIntoView = vi.fn();
+
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
