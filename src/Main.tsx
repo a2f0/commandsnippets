@@ -67,6 +67,7 @@ const Main = () => {
       <AppBar
         position="sticky"
         sx={{
+          backgroundColor: theme => theme.palette.background.default,
           bottom: 0,
           backgroundImage: 'none', // Remove the Material UI gradient.
         }}
