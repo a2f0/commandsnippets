@@ -3,17 +3,18 @@ import {Typography} from '@mui/material';
 import {observer} from 'mobx-react';
 import packageJson from '../../../package.json';
 
-const BottomBar = () => {
+const Version = () => {
   return (
     <Typography
       variant="caption"
       fontFamily="monospace"
       sx={{
         mr: theme => theme.spacing(0.5),
+        color: theme => theme.palette.text.primary,
       }}
     >
       [version: {packageJson.version}]
     </Typography>
   );
 };
-export default React.memo(observer(BottomBar));
+export default React.memo(observer(Version));

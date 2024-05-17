@@ -54,10 +54,15 @@ const InputEntrySubject = ({
         maxWidth: `calc(100% - (${theme.drawer.width}px))`,
         marginLeft: 0,
         marginBottom: '4px',
-        '& .Mui-focused': {
-          border: `2px solid ${theme.palette.secondary.main}`,
-          '& .MuiOutlinedInput-notchedOutline': {
-            border: 'none',
+        '& .MuiOutlinedInput-root': {
+          '& fieldset': {
+            borderColor: theme => theme.palette.text.secondary,
+          },
+          '&:hover fieldset': {
+            borderColor: theme => theme.palette.text.primary,
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: theme => theme.palette.text.primary,
           },
         },
       }}

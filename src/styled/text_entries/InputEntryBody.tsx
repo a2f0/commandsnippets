@@ -18,14 +18,16 @@ const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
   max-width: calc(100% - (${props => props.theme.drawer.width}px));
   padding-left: 4px;
   color: ${props => props.theme.palette.text.primary};
+  background-color: ${props => props.theme.palette.background.default};
+  font-size: 13.333px;
+  border-radius: 0px;
   &:hover {
-    border: 1px solid ${props => props.theme.palette.secondary.main};
+    border: 1px solid ${props => props.theme.palette.text.primary};
   }
   &:focus {
-    border: 1px solid ${props => props.theme.palette.secondary.main};
+    border: 2px solid ${props => props.theme.palette.text.primary};
     outline: none;
   }
-  background-color: ${props => props.theme.palette.primary.main};
 `;
 
 export interface IProps {

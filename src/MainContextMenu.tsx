@@ -1,5 +1,5 @@
+import {IMouse, initialMouse} from './lib/shared';
 import React, {useEffect, useState} from 'react';
-import {IMouse} from './Entry';
 import {Menu} from '@mui/material';
 import {MenuItem} from '@mui/material';
 
@@ -9,11 +9,6 @@ interface IMainContextMenu {
 }
 
 const MainContextMenu = (props: IMainContextMenu) => {
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
-  };
-
   const [mouse, setMouse] = useState<IMouse>(initialMouse);
 
   useEffect(() => {

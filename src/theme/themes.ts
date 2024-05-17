@@ -1,25 +1,10 @@
 import {Theme, createTheme} from '@mui/material/styles';
-import themeBase from './themeBase';
+import {defaultThemeOptions} from './themeBase';
 
-const dark = '#0F0F0F';
-const light = '#FFF';
-
-export const darkTheme: Theme = createTheme(themeBase, {
+export const darkTheme: Theme = createTheme({
+  ...defaultThemeOptions,
   palette: {
     mode: 'dark',
-    primary: {
-      main: dark,
-    },
-    secondary: {
-      main: light,
-    },
-    background: {
-      default: dark,
-      paper: dark,
-    },
-    text: {
-      primary: light,
-    },
   },
   shape: {
     borderRadius: 0,
@@ -58,17 +43,13 @@ export const darkTheme: Theme = createTheme(themeBase, {
   },
   header: {
     background: '#181818',
-    menuButtonHighlight: '#808080',
-  },
-  footer: {
-    background: '#181818',
   },
   components: {
     MuiMenu: {
       styleOverrides: {
         list: {
           padding: 0,
-          background: dark,
+          background: '#0F0F0F',
         },
       },
     },
@@ -82,17 +63,17 @@ export const darkTheme: Theme = createTheme(themeBase, {
     MuiDrawer: {
       styleOverrides: {
         root: {
-          width: `${themeBase.drawer.width}px`,
+          width: `${defaultThemeOptions.drawer.width}px`,
         },
         paper: {
-          marginTop: `${themeBase.appBar.height}px`,
+          marginTop: `${defaultThemeOptions.appBar.height}px`,
           borderRight: 0,
           borderLeft: 0,
-          width: `${themeBase.drawer.width}px`,
+          width: `${defaultThemeOptions.drawer.width}px`,
           overflow: 'hidden',
           flexShrink: 0,
-          marginBottom: themeBase.footer.height,
-          height: `calc(100vh - ${themeBase.appBar.height}px - ${themeBase.footer.height}px)`,
+          marginBottom: defaultThemeOptions.footer.height,
+          height: `calc(100vh - ${defaultThemeOptions.appBar.height}px - ${defaultThemeOptions.footer.height}px)`,
           zIndex: 1000,
         },
       },
@@ -100,22 +81,10 @@ export const darkTheme: Theme = createTheme(themeBase, {
   },
 });
 
-export const lightTheme: Theme = createTheme(themeBase, {
+export const lightTheme: Theme = createTheme({
+  ...defaultThemeOptions,
   palette: {
     mode: 'light',
-    primary: {
-      main: light,
-    },
-    secondary: {
-      main: dark,
-    },
-    background: {
-      default: light,
-      paper: light,
-    },
-    text: {
-      primary: dark,
-    },
   },
   shape: {
     borderRadius: 0,
@@ -127,10 +96,6 @@ export const lightTheme: Theme = createTheme(themeBase, {
   },
   header: {
     background: '#dcdcdc',
-    menuButtonHighlight: '#696969',
-  },
-  footer: {
-    background: '#dcdcdc',
   },
   components: {
     MuiMenu: {
@@ -150,17 +115,17 @@ export const lightTheme: Theme = createTheme(themeBase, {
     MuiDrawer: {
       styleOverrides: {
         root: {
-          width: `${themeBase.drawer.width}px`,
+          width: `${defaultThemeOptions.drawer.width}px`,
         },
         paper: {
-          marginTop: `${themeBase.appBar.height}px`,
+          marginTop: `${defaultThemeOptions.appBar.height}px`,
           borderRight: 0,
           borderLeft: 0,
-          width: `${themeBase.drawer.width}px`,
+          width: `${defaultThemeOptions.drawer.width}px`,
           overflow: 'hidden',
           flexShrink: 0,
-          marginBottom: themeBase.footer.height,
-          height: `calc(100vh - ${themeBase.appBar.height}px - ${themeBase.footer.height}px)`,
+          marginBottom: defaultThemeOptions.footer.height,
+          height: `calc(100vh - ${defaultThemeOptions.appBar.height}px - ${defaultThemeOptions.footer.height}px)`,
           zIndex: 1000,
         },
       },

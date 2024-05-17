@@ -25,7 +25,7 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
     >
       <DialogTitle>About Tearleads</DialogTitle>
       <DialogContent>
-        <DialogContentText color="secondary">
+        <DialogContentText sx={{color: theme => theme.palette.text.primary}}>
           v{packageJson.version}
         </DialogContentText>
       </DialogContent>
@@ -36,6 +36,13 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
           variant="outlined"
           onClick={closeDialog}
           autoFocus
+          sx={{
+            color: theme => theme.palette.text.primary,
+            borderColor: theme => theme.palette.text.secondary,
+            '&:hover': {
+              borderColor: theme => theme.palette.text.primary,
+            },
+          }}
         >
           Dismiss
         </Button>

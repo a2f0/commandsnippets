@@ -50,13 +50,11 @@ const EntryEdit = ({
   }, []);
 
   useEffect(() => {
-    if (saveRef.current !== undefined) {
-      if (needsScrollingIntoView(saveRef.current, theme)) {
-        saveRef.current?.scrollIntoView({
-          behavior: 'auto',
-          block: 'end',
-        });
-      }
+    if (saveRef.current && needsScrollingIntoView(saveRef, theme)) {
+      saveRef.current?.scrollIntoView({
+        behavior: 'auto',
+        block: 'end',
+      });
     }
   }, [saveRef.current]);
 
@@ -159,11 +157,15 @@ const EntryEdit = ({
       <Button
         ref={setInputSaveRef}
         id={`${id}Save`}
-        color="secondary"
         sx={{
           marginRight: '2px',
           scrollMarginBottom: '10px',
           marginBottom: '10px',
+          color: theme => theme.palette.text.primary,
+          borderColor: theme => theme.palette.text.secondary,
+          '&:hover': {
+            borderColor: theme => theme.palette.text.primary,
+          },
         }}
         size="small"
         variant="outlined"
@@ -176,7 +178,6 @@ const EntryEdit = ({
       <Button
         ref={setInputCancelRef}
         id={`${id}Cancel`}
-        color="secondary"
         size="small"
         variant="outlined"
         onClick={() => {
@@ -185,6 +186,11 @@ const EntryEdit = ({
         sx={{
           scrollMarginBottom: '10px',
           marginBottom: '10px',
+          color: theme => theme.palette.text.primary,
+          borderColor: theme => theme.palette.text.secondary,
+          '&:hover': {
+            borderColor: theme => theme.palette.text.primary,
+          },
         }}
       >
         Cancel

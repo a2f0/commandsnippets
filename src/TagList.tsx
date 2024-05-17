@@ -1,5 +1,6 @@
+import {IMouse, activeSearch, appMode, initialMouse} from './lib/shared';
 import {ITagJsonApi, TagHelpers} from './models/TagModel';
-import {List, ListItem} from '@mui/material';
+
 import React, {
   createRef,
   useCallback,
@@ -8,21 +9,19 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {activeSearch, appMode, needsScrollingIntoView} from './lib/shared';
-import {IMouse} from './Entry';
-import type {ITag} from './lib/db/types';
 import {ITagJsonApiResponseSingle} from './lib/tags';
+import ItemTypes from './ItemTypes';
+import {List} from '@mui/material';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
 import {autorun} from 'mobx';
-import {convertISO8601ToUnixTime} from './lib/util/dateTime';
 import {observer} from 'mobx-react';
 import {styled} from '@mui/material/styles';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
+import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
-import {useTheme} from '@mui/material/styles';
 
 export interface IUser {
   id: number;
@@ -43,15 +42,27 @@ interface IProps {
 const TagList = ({tagsFromWrapper, username}: IProps) => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
-  const theme = useTheme();
+
+  const [selectedTag, _setSelectedTag] = useState<string>();
+  const selectedTagRef = useRef(selectedTag);
+
+  const [movedSelectedUp, setMovedSelectedUp] = useState<boolean>(false);
+
+  const setSelectedTag = useCallback((id: string) => {
+    selectedTagRef.current = id;
+    _setSelectedTag(id);
+  }, []);
 
   const [tags, _setTags] = useState<Array<ITagJsonApi>>(tagsFromWrapper);
   // Used to access the react state from keyListener.
   const tagsRef = useRef(tags);
-  const setTags = (data: Array<ITagJsonApi>) => {
-    tagsRef.current = data;
-    _setTags(data);
-  };
+  const setTags = useCallback(
+    (data: Array<ITagJsonApi>) => {
+      tagsRef.current = data;
+      _setTags(data);
+    },
+    [_setTags]
+  );
 
   const [elRefs, _setElRefs] = useState<Array<React.RefObject<HTMLLIElement>>>(
     []
@@ -70,74 +81,90 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     setElRefs(refsArray);
   }, [tags.length]);
 
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
-  };
-
   const [mouse, setMouse] = useState(initialMouse);
 
   useEffect(
     () =>
       autorun(() => {
+        const tags = TagHelpers.filterAndSort(appConfig);
         setTags(TagHelpers.filterAndSort(appConfig));
         const current = tags.find(
           element => element.id === appConfig.tagSelectedID
         );
         if (current === undefined) {
           if (tags.length > 0) {
-            appConfig.setTagSelectedID(tags[0].id);
+            console.info(
+              `set selected tag ${tags[0].attributes.name} id ${tags[0].id}`
+            );
+            setSelectedTag(tags[0].id);
           }
         }
       }),
     [appConfig.tagSearchString]
   );
 
-  const moveEntry = useCallback((dragIndex: number, hoverIndex: number) => {
-    _setTags((prevTags: ITagJsonApi[]) =>
-      update(prevTags, {
-        $splice: [
-          [dragIndex, 1],
-          [hoverIndex, 0, prevTags[dragIndex] as ITagJsonApi],
-        ],
-      })
-    );
+  const handleDelete = useCallback((o: ITagJsonApiResponseSingle) => {
+    const existing = appConfig.tagsArray.find(c => c.id === o.data.id);
+    existing?.update(o.data);
+    setTags(TagHelpers.filterAndSort(appConfig));
   }, []);
 
-  const handleDelete = (object: ITagJsonApiResponseSingle) => {
-    const existing = appConfig.tagsArray.find(c => c.id === object.data.id);
-    existing?.update(object.data);
-    setTags(TagHelpers.filterAndSort(appConfig));
-  };
+  const findEntry = useCallback(
+    (id: string) => {
+      const entry = tags.filter(c => c.id === id)[0];
+      return {
+        entry,
+        index: tags.indexOf(entry),
+      };
+    },
+    [tags]
+  );
 
-  const findEntry = (id: string) => {
-    const entry = tags.filter(c => c.id === id)[0];
-    return {
-      entry: entry,
-      index: tags.indexOf(entry),
-    };
-  };
+  const findEntryByIndex = useCallback(
+    (index: number) => {
+      if (index > tags.length - 1) {
+        return null;
+      } else {
+        return tags[index];
+      }
+    },
+    [tags]
+  );
+
+  const moveEntry = useCallback(
+    (id: string, atIndex: number) => {
+      const {entry, index} = findEntry(id);
+      console.debug(
+        `moveEntry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
+      );
+      const reordered = update(tags, {
+        $splice: [
+          [index, 1],
+          [atIndex, 0, entry],
+        ],
+      });
+      setTags(reordered);
+    },
+    [findEntry, findEntryByIndex, tags]
+  );
 
   const handleNew = () => {
     setTags(TagHelpers.filterAndSort(appConfig));
   };
 
-  const findEntryByIndex = (index: number) => {
-    if (index > tags.length - 1) {
-      return null;
-    } else {
-      return tags[index];
-    }
-  };
+  const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
-  const handleContextClick = (event: React.MouseEvent<HTMLUListElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
-  };
+  const handleContextClick = useCallback(
+    (event: React.MouseEvent<HTMLUListElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const mouseData: IMouse = {...mouse};
+      (mouseData.mouseX = event.clientX - 2),
+        (mouseData.mouseY = event.clientY - 4),
+        setMouse(mouseData);
+    },
+    []
+  );
 
   const contextMenu = useMemo(
     () => <TagListContextMenu mouse={mouse} />,
@@ -155,7 +182,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         event.stopPropagation();
       }
       const selected = tagsRef.current.find(
-        c => c.id === appConfig.tagSelectedID
+        c => c.id === selectedTagRef.current
       );
       if (selected !== undefined && appConfig.appMode === appMode.tagsList) {
         const selectedIndex = tagsRef.current.indexOf(selected);
@@ -163,28 +190,14 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
-              appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
-              if (
-                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
-              ) {
-                elRefsRef.current?.[newIndex].current?.scrollIntoView({
-                  behavior: 'auto',
-                  block: 'start',
-                });
-              }
+              setSelectedTag(tagsRef.current[newIndex].id);
+              setMovedSelectedUp(true);
             }
           } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
             if (newIndex <= tagsRef.current.length - 1) {
-              appConfig.setTagSelectedID(tagsRef.current[newIndex].id);
-              if (
-                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
-              ) {
-                elRefsRef.current?.[newIndex].current?.scrollIntoView({
-                  behavior: 'auto',
-                  block: 'end',
-                });
-              }
+              setSelectedTag(tagsRef.current[newIndex].id);
+              setMovedSelectedUp(false);
             }
           } else if (event.key === 'Enter') {
             appConfig.setAppMode(appMode.entriesList);
@@ -211,6 +224,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         <TagNew id="tagNewTop" handleNewParent={handleNew} />
       )}
       <List
+        ref={drop}
         dense={true}
         id="tagList"
         sx={{
@@ -227,36 +241,22 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       >
         <LeftToRight>
           {tags.map((object: ITagJsonApi, i) => {
-            const updated = convertISO8601ToUnixTime(
-              object.attributes.date_updated
-            );
-            const tag: ITag = {
-              id: object.id,
-              name: object.attributes.name,
-              entryCount: object.attributes.entry_count,
-              updated,
-              userId: object.relationships.user.data.id,
-              synced: false,
-              deleted: object.attributes.is_deleted,
-            };
             return (
-              <ListItem
+              <Tag
+                object={object}
                 key={object.id}
-                sx={{
-                  padding: 0,
-                }}
-                ref={elRefs[i]}
-              >
-                <Tag
-                  object={tag}
-                  id={object.id}
-                  handleDeleteParent={handleDelete}
-                  moveEntry={moveEntry}
-                  findEntry={findEntry}
-                  index={i}
-                  findEntryByIndex={findEntryByIndex}
-                />
-              </ListItem>
+                id={object.id}
+                handleDeleteParent={handleDelete}
+                moveEntry={moveEntry}
+                findEntry={findEntry}
+                index={i}
+                findEntryByIndex={findEntryByIndex}
+                isSelected={object.id === selectedTag}
+                movedSelectedUp={
+                  object.id === selectedTag ? movedSelectedUp : false
+                }
+                setSelectedTag={setSelectedTag}
+              />
             );
           })}
         </LeftToRight>

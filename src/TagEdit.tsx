@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AxiosResponse} from 'axios';
 import {Grid} from '@mui/material';
-import {ITag} from './lib/db/types';
+import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
@@ -10,8 +10,8 @@ import apiBase from './lib/api/apiBase';
 import {observer} from 'mobx-react';
 
 export interface ITagEdit {
-  object: ITag;
-  handleSaveParent: (object: ITagJsonApiResponseSingle) => void;
+  object: ITagJsonApi;
+  handleSaveParent: (object: ITagJsonApi) => void;
   handleCancelEditParent: () => void;
 }
 
@@ -20,7 +20,7 @@ const TagEdit = ({
   handleCancelEditParent,
   object,
 }: ITagEdit) => {
-  const [tagName, setTagName] = useState<string>(object.name);
+  const [tagName, setTagName] = useState<string>(object.attributes.name);
   const escFunction = useCallback((event: KeyboardEvent) => {
     if (event.code === 'Escape') {
       handleCancel();
@@ -53,7 +53,7 @@ const TagEdit = ({
         withCredentials: true,
       })
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
-        handleSaveParent(response.data);
+        handleSaveParent(response.data.data);
       })
       .catch(error => {
         console.error(error);

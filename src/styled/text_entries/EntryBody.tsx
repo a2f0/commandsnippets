@@ -18,7 +18,6 @@ const EntryBody = ({object, handleClick}: IProps) => {
 
   const style = {
     color: theme.palette.text.primary,
-    fontSize: 14,
     fontFamily: 'monospace',
   };
 
@@ -27,6 +26,8 @@ const EntryBody = ({object, handleClick}: IProps) => {
   // background color look contiguoous.
   const styleOuterDiv = {
     backgroundColor: theme.palette.background.paper,
+    fontSize: '13.333px', // Same as StyledTextareaAutosize
+    lineHeight: 'normal',
   };
 
   if (

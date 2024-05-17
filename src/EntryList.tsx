@@ -1,3 +1,4 @@
+import {IMouse, appMode, initialMouse} from './lib/shared';
 import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
 import React, {
   createRef,
@@ -7,7 +8,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {appMode, needsScrollingIntoView} from './lib/shared';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
 import {Box} from '@mui/material';
 import {CancelTokenSource} from 'axios';
@@ -15,11 +15,11 @@ import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
 import EntryNew from './EntryNew';
 import {IEntryFetchPage} from './lib/text_entries';
-import {IMouse} from './Entry';
 import ItemTypes from './ItemTypes';
 import {Theme} from '@mui/material/styles';
 import {autorun} from 'mobx';
 import axios from 'axios';
+import {needsScrollingIntoView} from './lib/text_entries';
 import {observer} from 'mobx-react';
 import update from 'immutability-helper';
 import {useAppContext} from './AppContext';
@@ -226,24 +226,34 @@ const EntryList = () => {
     };
   }, []);
 
-  const moveEntry = (id: string, atIndex: number) => {
-    const {entry, index} = findEntry(id);
-    const reordered = update(entries, {
-      $splice: [
-        [index, 1],
-        [atIndex, 0, entry],
-      ],
-    });
-    setEntries(reordered);
-  };
+  const findEntry = useCallback(
+    (id: string) => {
+      const entry = entries.filter(c => c.id === id)[0];
+      return {
+        entry,
+        index: entries.indexOf(entry),
+      };
+    },
+    [entries]
+  );
 
-  const findEntry = (id: string) => {
-    const entry = entries.filter(c => c.id === id)[0];
-    return {
-      entry,
-      index: entries.indexOf(entry),
-    };
-  };
+  const moveEntry = useCallback(
+    (id: string, atIndex: number) => {
+      const {entry, index} = findEntry(id);
+      console.info(
+        `entry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
+      );
+      const reordered = update(entries, {
+        $splice: [
+          [index, 1],
+          [atIndex, 0, entry],
+        ],
+      });
+      setEntries(reordered);
+    },
+    [findEntry, entries, setEntries]
+  );
+
   const findEntryByIndex = (index: number) => {
     if (index > entries.length - 1) {
       return null;
@@ -260,11 +270,6 @@ const EntryList = () => {
         return element.id !== id;
       })
     );
-  };
-
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
   };
 
   const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {

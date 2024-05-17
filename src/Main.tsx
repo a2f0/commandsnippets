@@ -2,8 +2,9 @@ import {AppBar, Box} from '@mui/material';
 import React, {useEffect} from 'react';
 import BottomBar from './lib/bottom_bar/BottomBar';
 import EntryList from './EntryList';
-import LeftDrawer from './LeftDrawer';
+import LeftDrawer from './drawer/LeftDrawer';
 import MenuBar from './MenuBar';
+import RightDrawer from './drawer/RightDrawer';
 import StyledToolbar from './styled/layout/StyledToolbar';
 import {observer} from 'mobx-react';
 import {useAppContext} from './AppContext';
@@ -45,6 +46,7 @@ const Main = () => {
           borderBottom: '1px solid #808080',
           backgroundColor: theme => `${theme.header.background}`,
           top: 0,
+          height: theme => `${theme.appBar.height}`,
         }}
       >
         <StyledToolbar>
@@ -60,10 +62,12 @@ const Main = () => {
       >
         <LeftDrawer />
         <EntryList />
+        <RightDrawer />
       </Box>
       <AppBar
         position="sticky"
         sx={{
+          backgroundColor: theme => theme.palette.background.default,
           bottom: 0,
           backgroundImage: 'none', // Remove the Material UI gradient.
         }}

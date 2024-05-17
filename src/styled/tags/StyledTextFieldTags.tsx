@@ -65,12 +65,22 @@ const StyledTextFieldTags = React.forwardRef<
       inputRef={ref}
       value={value}
       id={id}
-      color="secondary"
       onChange={onChange}
       variant="outlined"
       inputProps={{sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}
       sx={{
         p: 0,
+        '& .MuiOutlinedInput-root': {
+          '& fieldset': {
+            borderColor: theme => theme.palette.text.secondary,
+          },
+          '&:hover fieldset': {
+            borderColor: theme => theme.palette.text.primary,
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: theme => theme.palette.text.primary,
+          },
+        },
       }}
     />
   );

@@ -4,7 +4,7 @@ import entryPostResponse from '../../mocks/entries/entryPostResponse';
 import tagTextEntryThroughModelsResponse from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
-describe('Entry Main Menu Behavior', () => {
+describe('Entry Main Menu', () => {
   it('should having a working menu bar', async () => {
     const mostEntriesResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries**',

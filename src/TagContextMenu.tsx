@@ -1,13 +1,8 @@
-import React, {useEffect, useState} from 'react';
-import {Button} from '@mui/material';
-import {Dialog} from '@mui/material';
-import {DialogActions} from '@mui/material';
-import {DialogContent} from '@mui/material';
-import {DialogContentText} from '@mui/material';
-import {DialogTitle} from '@mui/material';
-import {IMouse} from './Entry';
+import {IMouse, initialMouse} from './lib/shared';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Menu} from '@mui/material';
 import StyledMenuItem from './StyledMenuItem';
+import TagDeleteDialog from './TagDeleteDialog';
 
 interface ITagContextMenuProps {
   id: string;
@@ -60,11 +55,6 @@ const TagContextMenu = ({
   deleteTagParent,
   handleBeginEditParent,
 }: ITagContextMenuProps) => {
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
-  };
-
   const [mousePosition, setMousePosition] = useState<IMouse>(initialMouse);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
@@ -72,28 +62,32 @@ const TagContextMenu = ({
     setMousePosition(mouse);
   }, [mouse]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setMousePosition(initialMouse);
-  };
+  }, []);
 
-  const handleBeginEdit = () => {
+  const handleBeginEdit = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     handleBeginEditParent();
     handleClose();
-  };
+  }, []);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     setMousePosition(initialMouse);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleCancelDialog = () => {
+  const handleCancelDialog = useCallback(() => {
     setDialogOpen(false);
-  };
+  }, []);
 
-  const handleAcceptDialog = () => {
+  const handleAcceptDialog = useCallback(() => {
     setDialogOpen(false);
     deleteTagParent();
-  };
+  }, []);
 
   return (
     <>
@@ -129,39 +123,13 @@ const TagContextMenu = ({
           Delete Tag
         </StyledMenuItem>
       </StyledMenu>
-      <Dialog
-        id={`tagContextMenu${id}DeleteTagDialog`}
+      <TagDeleteDialog
+        id={id}
         open={dialogOpen}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {'Are you sure you want to delete this tag?'}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description"></DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            id={`tagContextMenu${id}DeleteTagDialogCancelButton`}
-            color="secondary"
-            variant="outlined"
-            onClick={handleCancelDialog}
-          >
-            Cancel
-          </Button>
-          <Button
-            id={`tagContextMenu${id}DeleteTagDialogDeleteButton`}
-            color="secondary"
-            variant="outlined"
-            onClick={handleAcceptDialog}
-            autoFocus
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        handleClose={handleClose}
+        handleAcceptDialog={handleAcceptDialog}
+        handleCancelDialog={handleCancelDialog}
+      />
     </>
   );
 };

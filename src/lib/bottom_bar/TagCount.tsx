@@ -21,6 +21,7 @@ const TagCount = () => {
       fontFamily="monospace"
       sx={{
         mr: theme => theme.spacing(0.5),
+        color: theme => theme.palette.text.primary,
       }}
     >
       [tags: {tags.length}]

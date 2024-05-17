@@ -22,11 +22,14 @@ const LoginButton = ({
       role={role}
       size="small"
       variant="contained"
-      color="secondary"
       disableElevation
       sx={theme => ({
-        color: theme.palette.primary.main,
+        color: theme.palette.background.default,
+        backgroundColor: theme.palette.text.primary,
         margin: theme.spacing(0.75),
+        '&:hover': {
+          backgroundColor: theme.palette.grey['600'],
+        },
       })}
       onClick={onClick}
       startIcon={startIcon}

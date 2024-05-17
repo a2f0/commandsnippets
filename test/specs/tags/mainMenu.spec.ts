@@ -2,7 +2,7 @@ import {BasePage} from '../../pageobjects/base';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 
-describe('Tag Main Menu Behavior', () => {
+describe('Tag Main Menu', () => {
   it('should having a working menu bar', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
@@ -35,12 +35,10 @@ describe('Tag Main Menu Behavior', () => {
     // https://webdriver.io/docs/autowait/#limitations
 
     let tags = await BasePage.tags;
+    await browser.pause(2000);
     await expect(
-      (
-        await BasePage.tags[0]
-          .$('div[id="tagLabelWrapper-1"]')
-          .getCSSProperty('background-color')
-      ).value
+      (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
+        .value
     ).toBe('rgba(72,72,72,1)');
 
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
@@ -115,11 +113,8 @@ describe('Tag Main Menu Behavior', () => {
     );
 
     await expect(
-      (
-        await BasePage.tags[3]
-          .$('div[id="tagLabelWrapper-1"]')
-          .getCSSProperty('background-color')
-      ).value
+      (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
+        .value
     ).toBe('rgba(72,72,72,1)');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
   });
