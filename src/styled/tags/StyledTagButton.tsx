@@ -12,7 +12,6 @@ const StyledTagButton = React.forwardRef<HTMLButtonElement, IButtonItemProps>(
     return (
       <Button
         ref={ref}
-        color="secondary"
         id={id}
         size="small"
         aria-controls="view-menu"
@@ -24,6 +23,11 @@ const StyledTagButton = React.forwardRef<HTMLButtonElement, IButtonItemProps>(
           minWidth: '100%',
           marginTop: '4px',
           marginBottom: '4px',
+          color: theme => theme.palette.text.primary,
+          borderColor: theme => theme.palette.text.secondary,
+          '&:hover': {
+            borderColor: theme => theme.palette.text.primary,
+          },
         }}
       >
         {children}

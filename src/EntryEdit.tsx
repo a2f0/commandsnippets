@@ -157,11 +157,15 @@ const EntryEdit = ({
       <Button
         ref={setInputSaveRef}
         id={`${id}Save`}
-        color="secondary"
         sx={{
           marginRight: '2px',
           scrollMarginBottom: '10px',
           marginBottom: '10px',
+          color: theme => theme.palette.text.primary,
+          borderColor: theme => theme.palette.text.secondary,
+          '&:hover': {
+            borderColor: theme => theme.palette.text.primary,
+          },
         }}
         size="small"
         variant="outlined"
@@ -174,7 +178,6 @@ const EntryEdit = ({
       <Button
         ref={setInputCancelRef}
         id={`${id}Cancel`}
-        color="secondary"
         size="small"
         variant="outlined"
         onClick={() => {
@@ -183,6 +186,11 @@ const EntryEdit = ({
         sx={{
           scrollMarginBottom: '10px',
           marginBottom: '10px',
+          color: theme => theme.palette.text.primary,
+          borderColor: theme => theme.palette.text.secondary,
+          '&:hover': {
+            borderColor: theme => theme.palette.text.primary,
+          },
         }}
       >
         Cancel
