@@ -187,7 +187,14 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         ref={setInputSaveRef}
         id={`${id}Save`}
         color="secondary"
-        sx={{marginRight: '2px'}}
+        sx={{
+          marginRight: '2px',
+          color: theme => theme.palette.text.primary,
+          borderColor: theme => theme.palette.text.secondary,
+          '&:hover': {
+            borderColor: theme => theme.palette.text.primary,
+          },
+        }}
         size="small"
         variant="outlined"
         onClick={() => {
@@ -204,6 +211,13 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         variant="outlined"
         onClick={() => {
           handleCancel();
+        }}
+        sx={{
+          color: theme => theme.palette.text.primary,
+          borderColor: theme => theme.palette.text.secondary,
+          '&:hover': {
+            borderColor: theme => theme.palette.text.primary,
+          },
         }}
       >
         Cancel
