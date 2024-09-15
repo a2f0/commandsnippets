@@ -6,6 +6,6 @@ django_extensions==3.2.3
 factory_boy==3.3.0
 httpretty==1.1.4
 isort[requirements]==5.12.0     # this should match .pre-commit-config.yamml
-pre-commit==3.5.0
+pre-commit==3.8.0
 pur==7.3.1                      # for checking out of date dependencies
 safety==3.2.7
