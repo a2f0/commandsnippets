@@ -69,7 +69,7 @@ export const config: WebdriverIO.Config = {
     browser.addCommand(
       'waitAndLeftClick',
       async function (this: WebdriverIO.Element) {
-        await this.waitForDisplayed();
+        await this.waitForClickable();
         await this.click();
       },
       true
