@@ -8,14 +8,13 @@ import FileMenu from './menu/file/FileMenu';
 import FileMenuButton from './menu/file/FileMenuButton';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
-import {Grid} from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import HelpMenu from './menu/help/HelpMenu';
 import HelpMenuButton from './menu/help/HelpMenuButton';
 import {Menu} from '@mui/material';
 import React from 'react';
 import TagsMenu from './menu/tags/TagsMenu';
 import TagsMenuButton from './menu/tags/TagsMenuButton';
-import {Theme} from '@mui/material/styles';
 import ViewMenu from './menu/view/ViewMenu';
 import ViewMenuButton from './menu/view/ViewMenuButton';
 import {environment} from './lib/environment';
@@ -56,11 +55,7 @@ export const StyledMenu = ({
   );
 };
 
-interface AlignerIProps {
-  theme: Theme;
-}
-
-const Aligner = styled('div')<AlignerIProps>`
+const Aligner = styled('div')`
   min-height: ${props => props.theme.appBar.height}px;
   display: flex;
 `;
@@ -151,7 +146,7 @@ const MenuBar = () => {
       >
         <img src="/tearleads-logo-small.svg" alt="Tearleads Logo" />
       </Box>
-      <Aligner theme={theme}>
+      <Aligner>
         {appConfig.loggedInUser && (
           <FileMenuButton onClick={handleFileMenuClick} />
         )}

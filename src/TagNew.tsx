@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeTagEditField, appMode} from './lib/shared';
 import {AxiosResponse} from 'axios';
-import {Grid} from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
@@ -125,7 +125,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
         }}
       />
       <Grid container spacing={0}>
-        <Grid item xs={6} sx={{paddingRight: '1px'}}>
+        <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
           <StyledTagButton
             ref={inputSaveRef}
             id={`${id}Save`}
@@ -136,7 +136,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
             Save
           </StyledTagButton>
         </Grid>
-        <Grid item xs={6} sx={{paddingLeft: '1px'}}>
+        <Grid sx={{paddingLeft: '1px'}} size={{xs: 6}}>
           <StyledTagButton
             ref={inputCancelRef}
             id={`${id}Cancel`}
