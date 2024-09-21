@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AxiosResponse} from 'axios';
-import {Grid} from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import {ITagJsonApi} from './models/TagModel';
 import {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
@@ -78,7 +78,7 @@ const TagEdit = ({
         }}
       />
       <Grid container spacing={0}>
-        <Grid item xs={6} sx={{paddingRight: '1px'}}>
+        <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
           <StyledTagButton
             ref={inputSaveRef}
             id={`tagEditSave${object.id}`}
@@ -89,7 +89,7 @@ const TagEdit = ({
             Save
           </StyledTagButton>
         </Grid>
-        <Grid item xs={6} sx={{paddingLeft: '1px'}}>
+        <Grid sx={{paddingLeft: '1px'}} size={{xs: 6}}>
           <StyledTagButton
             ref={inputCancelRef}
             id={`tagEditCancel${object.id}`}
