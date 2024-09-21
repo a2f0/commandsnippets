@@ -1,5 +1,5 @@
 import {Box} from '@mui/material';
-import {Grid} from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import Mode from './Mode';
 import React from 'react';
 import TagSearch from '../../TagSearch';
