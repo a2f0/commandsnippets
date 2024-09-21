@@ -24,10 +24,10 @@ describe('Tag List Context Menu Behavior', () => {
         method: 'post',
       }
     );
-    mockTags.respond(tagsResponseEmpty, {fetchResponse: false});
-    mockEntries.respond(entriesResponseEmpty, {fetchResponse: false});
+    mockTags.respond(tagsResponseEmpty);
+    mockEntries.respond(entriesResponseEmpty);
     mockTagOptionsResponse.respond({fetchResponse: false});
-    mockTagPostResponse.respond(tagsPostResponse, {fetchResponse: false});
+    mockTagPostResponse.respond(tagsPostResponse);
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();

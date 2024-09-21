@@ -12,8 +12,8 @@ describe('TagsEntries Behavior', () => {
       'http://localhost:9001/api/v1/tags**',
       {}
     );
-    mockTags.respond(tags, {fetchResponse: false});
-    mockEntries.respond(textEntriesResponse, {fetchResponse: false});
+    mockTags.respond(tags);
+    mockEntries.respond(textEntriesResponse);
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();

@@ -14,8 +14,8 @@ describe('TagsEntries Behavior', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
-    mockTags.respond(tags, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tags);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
@@ -43,9 +43,9 @@ describe('TagsEntries Behavior', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
-    mockTags.respond(tags, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
-    mockEntriesPatch.respond(entriesPatchResponse, {fetchResponse: false});
+    mockTags.respond(tags);
+    mockEntries.respond(entriesResponse);
+    mockEntriesPatch.respond(entriesPatchResponse);
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();

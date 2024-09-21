@@ -12,8 +12,8 @@ describe('Tag Search Menu Behavior', () => {
       'http://localhost:9001/api/v1/tags**',
       {}
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeExisting();

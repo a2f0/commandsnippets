@@ -24,10 +24,10 @@ describe('Logged Out User Behavior', () => {
         method: 'post',
       }
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mostEntriesResponse.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mostEntriesResponse.respond(entriesResponse);
     mockLogoutOptionsResponse.respond({fetchResponse: false});
-    mockLogoutResponse.respond(logoutResponse, {fetchResponse: false});
+    mockLogoutResponse.respond(logoutResponse);
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view

@@ -13,8 +13,8 @@ describe('Entry Main Menu Behavior', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(await BasePage.tagsEntries.length).toBe(4);

@@ -12,8 +12,8 @@ describe('Tag Context Menu', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
@@ -43,9 +43,9 @@ describe('Tag Context Menu', () => {
         method: 'delete',
       }
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockTagDelete.respond(tagsDeleteResponse, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockTagDelete.respond(tagsDeleteResponse);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();

@@ -26,10 +26,10 @@ describe('Tab Switching Behavior', () => {
         method: 'post',
       }
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntriesGetList.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntriesGetList.respond(entriesResponse);
     mockEntryOptionsResponse.respond({fetchResponse: false});
-    mockEntryPostResponse.respond(entryPostResponse, {fetchResponse: false});
+    mockEntryPostResponse.respond(entryPostResponse);
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 

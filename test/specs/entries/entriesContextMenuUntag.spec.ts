@@ -19,9 +19,9 @@ describe('Entries Context Menu Untag', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
-    mockTagsEntries.respond(tags, {fetchResponse: false, statusCode: 204});
-    mockTags.respond(tags, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTagsEntries.respond(tags, {statusCode: 204});
+    mockTags.respond(tags);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
       wait: 5000,

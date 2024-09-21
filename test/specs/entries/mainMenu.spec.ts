@@ -13,8 +13,8 @@ describe('Entry Main Menu', () => {
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
       method: 'get',
     });
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mostEntriesResponse.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mostEntriesResponse.respond(entriesResponse);
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
@@ -54,13 +54,12 @@ describe('Entry Main Menu', () => {
         method: 'post',
       }
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntriesGetList.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntriesGetList.respond(entriesResponse);
     mockEntryOptionsResponse.respond({fetchResponse: false});
-    mockEntryPostResponse.respond(entryPostResponse, {fetchResponse: false});
+    mockEntryPostResponse.respond(entryPostResponse);
     mocktagTextEntryThroughModelsResponse.respond(
-      tagTextEntryThroughModelsResponse,
-      {fetchResponse: false}
+      tagTextEntryThroughModelsResponse
     );
     await BasePage.open('');
 

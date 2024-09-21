@@ -33,13 +33,12 @@ describe('Entry Main Menu Behavior', () => {
         method: 'post',
       }
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntriesGetList.respond(entriesResponseEmpty, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntriesGetList.respond(entriesResponseEmpty);
     mockEntryOptionsResponse.respond({fetchResponse: false});
-    mockEntryPostResponse.respond(entryPostResponse, {fetchResponse: false});
+    mockEntryPostResponse.respond(entryPostResponse);
     mocktagTextEntryThroughModelsResponse.respond(
-      tagTextEntryThroughModelsResponse,
-      {fetchResponse: false}
+      tagTextEntryThroughModelsResponse
     );
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
