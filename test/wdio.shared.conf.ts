@@ -11,12 +11,11 @@ declare global {
   }
 }
 
-export const chromeCapabilities: WebdriverIO.Capabilities = {
+export const chromeCapabilities: WebDriver.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
     args: ['--disable-web-security'],
   },
-  'wdio:chromedriverOptions': {},
 };
 
 export const config: WebdriverIO.Config = {
