@@ -1,30 +1,31 @@
 import {ITagTextEntryThroughModelJsonApiResponseSingle} from '../../../src/lib/tag_text_entry_through_models';
+import {JsonObject} from '@wdio/types';
 
-const tagTextEntryThroughModelsResponse: ITagTextEntryThroughModelJsonApiResponseSingle =
-  {
-    data: {
-      type: 'TagTextEntryThroughModel',
-      id: '5',
-      attributes: {
-        order: 5,
-        date_updated: '2022-01-15T10:10:31.684433',
-        date_created: '2022-01-15T10:10:31.684418',
-      },
-      relationships: {
-        tag: {
-          data: {
-            type: 'Tag',
-            id: '1',
-          },
+const tagTextEntryThroughModelsResponse: ITagTextEntryThroughModelJsonApiResponseSingle &
+  JsonObject = {
+  data: {
+    type: 'TagTextEntryThroughModel',
+    id: '5',
+    attributes: {
+      order: 5,
+      date_updated: '2022-01-15T10:10:31.684433',
+      date_created: '2022-01-15T10:10:31.684418',
+    },
+    relationships: {
+      tag: {
+        data: {
+          type: 'Tag',
+          id: '1',
         },
-        text_entry: {
-          data: {
-            type: 'TextEntry',
-            id: '5',
-          },
+      },
+      text_entry: {
+        data: {
+          type: 'TextEntry',
+          id: '5',
         },
       },
     },
-  };
+  },
+};
 
 export default tagTextEntryThroughModelsResponse;
