@@ -21,6 +21,7 @@ const BottomBar = () => {
       <Grid
         container
         justifyContent="flex-end"
+        flex={1}
         sx={{
           height: theme => theme.footer.height,
         }}
