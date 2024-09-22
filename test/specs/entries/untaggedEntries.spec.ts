@@ -17,7 +17,7 @@ describe('Entry Main Menu Behavior', () => {
     mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-    await expect(await BasePage.tagsEntries.length).toBe(4);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
 

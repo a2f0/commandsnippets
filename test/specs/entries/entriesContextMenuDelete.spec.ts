@@ -19,7 +19,7 @@ describe('Entries Context Menu Delete Entry', () => {
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
       wait: 5000,
     });
-    await expect(await BasePage.tagsEntries.length).toEqual(4);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
 
@@ -33,7 +33,7 @@ describe('Entries Context Menu Delete Entry', () => {
     );
     await expect(mockEntries).toBeRequestedTimes(2);
     await expect(mockTags).toBeRequestedTimes(1);
-    await expect(await BasePage.tagsEntries.length).toBe(4);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
 
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
