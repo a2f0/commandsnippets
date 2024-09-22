@@ -5,10 +5,12 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 describe('Tag Search Menu Behavior', () => {
   it('should have a functional search bar', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**');
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**'
+    );
     mockTags.respond(tagsResponse);
     mockEntries.respond(entriesResponse);
     await BasePage.open('');

@@ -73,7 +73,7 @@ describe('Entry Main Menu', () => {
 
     // test save
     await expect(mockEntriesGetList).toBeRequestedTimes(1);
-    await expect(await BasePage.tagsEntries.length).toBe(4);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await (await BasePage.fileMenuButton).waitAndLeftClick();
 
     await expect(BasePage.fileMenu).toBeDisplayed();
