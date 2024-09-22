@@ -18,11 +18,14 @@ describe('Entry Main Menu Behavior', () => {
         method: 'GET',
       }
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'GET',
-    });
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
     const mocktagTextEntryThroughModelsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries**',
+      'http://localhost:9001/api/v1/tags_entries',
       {
         method: 'POST',
       }
