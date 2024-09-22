@@ -114,5 +114,7 @@ describe('Tag Main Menu', () => {
         .value
     ).toBe('rgba(72,72,72,1)');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    mockEntries.restore();
+    mockTags.restore();
   });
 });
