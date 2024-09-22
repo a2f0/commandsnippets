@@ -17,7 +17,7 @@ describe('Entries Context Menu Untag', () => {
       }
     );
     const mockTagsEntries = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries/**',
+      'http://localhost:9001/api/v1/tags_entries/1',
       {
         method: 'DELETE',
       }
