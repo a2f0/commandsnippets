@@ -6,14 +6,17 @@ import tags from '../../mocks/tags/tagsResponse';
 describe('TagsEntries Behavior', () => {
   it('should list entries', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {
         method: 'GET',
       }
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'GET',
-    });
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
     mockTags.respond(tags);
     mockEntries.respond(entriesResponse);
     await BasePage.open('test/test-tag-1');
@@ -35,17 +38,19 @@ describe('TagsEntries Behavior', () => {
       }
     );
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {
         method: 'GET',
       }
     );
 
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'GET',
-    });
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
     mockTags.respond(tags);
-    //mockEntriesPatch.respond(entriesPatchResponse);
     mockEntries.respond(entriesResponse);
     mockEntriesPatch.respond(entriesPatchResponse);
 
