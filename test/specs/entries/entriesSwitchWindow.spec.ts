@@ -28,6 +28,8 @@ describe('Tab Switching Behavior', () => {
     mockEntryPostResponse.respond(entryPostResponse);
     mockEntriesGetList.respond(entriesResponse);
     await BasePage.open('');
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    await expect(await BasePage.tagsEntries.length).toBe(4);
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
