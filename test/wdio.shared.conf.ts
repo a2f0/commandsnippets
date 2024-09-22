@@ -1,5 +1,6 @@
 import {BasePage} from './pageobjects/base';
 import {defaultState} from '../src/lib/shared';
+import {setOptions} from 'expect-webdriverio';
 
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {
@@ -11,7 +12,7 @@ declare global {
   }
 }
 
-export const chromeCapabilities: WebDriver.Capabilities = {
+export const chromeCapabilities: WebdriverIO.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
     args: ['--disable-web-security'],
@@ -41,6 +42,8 @@ export const config: WebdriverIO.Config = {
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   before: async (capabilities: typeof browser, specs, browser: any) => {
+    // Set the default timeout to 5000ms for expect
+    setOptions({wait: 5000});
     await BasePage.open('');
     const appState = {
       ...defaultState,

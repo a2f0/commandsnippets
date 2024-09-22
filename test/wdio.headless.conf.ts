@@ -1,6 +1,6 @@
 import {chromeCapabilities, config as sharedConfig} from './wdio.shared.conf';
 
-const headlessChromeCapabilities: WebDriver.Capabilities = {
+const headlessChromeCapabilities: WebdriverIO.Capabilities = {
   ...chromeCapabilities,
   'goog:chromeOptions': {
     ...chromeCapabilities['goog:chromeOptions'],

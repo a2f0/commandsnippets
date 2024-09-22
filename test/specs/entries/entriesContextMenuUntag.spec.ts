@@ -17,7 +17,7 @@ describe('Entries Context Menu Untag', () => {
       }
     );
     const mockTagsEntries = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries/**',
+      'http://localhost:9001/api/v1/tags_entries/1',
       {
         method: 'DELETE',
       }
@@ -26,12 +26,10 @@ describe('Entries Context Menu Untag', () => {
     mockTags.respond(tags);
     mockEntries.respond(entriesResponse);
     await BasePage.open('');
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
-      wait: 5000,
-    });
-    await expect(await BasePage.tagsEntries.length).toBe(4);
+    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
+    await expect(await BasePage.tagsEntries.length).toBe(4);
     await expect(mockTagsEntries).toBeRequestedTimes(0);
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
@@ -41,7 +39,8 @@ describe('Entries Context Menu Untag', () => {
     await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1Untag).toBeDisplayed();
     await (await BasePage.tagsEntriesContextMenu1Untag).waitAndLeftClick();
-    await expect(await BasePage.tagsEntries.length).toBe(3);
     await expect(mockTagsEntries).toBeRequestedTimes(1);
+    await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
+    await expect(await BasePage.tagsEntries.length).toBe(3);
   });
 });
