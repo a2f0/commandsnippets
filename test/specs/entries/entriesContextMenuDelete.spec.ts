@@ -7,14 +7,14 @@ describe('Entries Context Menu Delete Entry', () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
       {
-        method: 'get',
+        method: 'GET',
       }
     );
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
+      method: 'GET',
     });
-    mockTags.respond(tags, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tags);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
       wait: 5000,

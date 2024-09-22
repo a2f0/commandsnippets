@@ -6,28 +6,23 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 describe('Logged Out User Behavior', () => {
   it('should have different context menus for logged out users', async () => {
     const mostEntriesResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      {method: 'GET'}
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    const mockLogoutOptionsResponse = await browser.mock(
-      'http://localhost:9001/api-token-deauth**',
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
       {
-        method: 'options',
+        method: 'GET',
       }
     );
+
     const mockLogoutResponse = await browser.mock(
       'http://localhost:9001/api-token-deauth**',
-      {
-        method: 'post',
-      }
+      {method: 'POST'}
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mostEntriesResponse.respond(entriesResponse, {fetchResponse: false});
-    mockLogoutOptionsResponse.respond({fetchResponse: false});
-    mockLogoutResponse.respond(logoutResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mostEntriesResponse.respond(entriesResponse);
+    mockLogoutResponse.respond(logoutResponse);
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view

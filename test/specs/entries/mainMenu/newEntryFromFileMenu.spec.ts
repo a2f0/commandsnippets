@@ -1,66 +1,42 @@
-import {BasePage} from '../../pageobjects/base';
-import entriesResponse from '../../mocks/entries/entriesResponse';
-import entryPostResponse from '../../mocks/entries/entryPostResponse';
-import tagTextEntryThroughModelsResponse from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
-import tagsResponse from '../../mocks/tags/tagsResponse';
+import {BasePage} from '../../../pageobjects/base';
+import entriesResponse from '../../../mocks/entries/entriesResponse';
+import entryPostResponse from '../../../mocks/entries/entryPostResponse';
+import tagTextEntryThroughModelsResponse from '../../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
+import tagsResponse from '../../../mocks/tags/tagsResponse';
 
 describe('Entry Main Menu', () => {
-  it('should having a working menu bar', async () => {
-    const mostEntriesResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
-    );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mostEntriesResponse.respond(entriesResponse, {fetchResponse: false});
-    await BasePage.open('');
-    await expect(BasePage.entriesMenu).toBeExisting();
-    await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await (await BasePage.entriesMenuButton).waitAndLeftClick();
-    await expect(BasePage.entriesMenu).toBeDisplayed();
-    await browser.keys('Escape');
-    await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await (await BasePage.entriesMenuButton).waitAndLeftClick();
-    await expect(BasePage.entriesMenu).toBeDisplayed();
-  });
-
   it('should having a working new entry from the file menu', async () => {
-    const mockEntriesGetList = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {
-        method: 'get',
-      }
-    );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    const mockEntryOptionsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {
-        method: 'options',
-      }
-    );
     const mockEntryPostResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries',
       {
-        method: 'post',
+        method: 'POST',
       }
     );
+    const mockEntriesGetList = await browser.mock(
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
+
     const mocktagTextEntryThroughModelsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries**',
+      'http://localhost:9001/api/v1/tags_entries',
       {
-        method: 'post',
+        method: 'POST',
       }
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntriesGetList.respond(entriesResponse, {fetchResponse: false});
-    mockEntryOptionsResponse.respond({fetchResponse: false});
-    mockEntryPostResponse.respond(entryPostResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntryPostResponse.respond(entryPostResponse);
+    mockEntriesGetList.respond(entriesResponse);
+
     mocktagTextEntryThroughModelsResponse.respond(
-      tagTextEntryThroughModelsResponse,
-      {fetchResponse: false}
+      tagTextEntryThroughModelsResponse
     );
     await BasePage.open('');
 
@@ -96,6 +72,7 @@ describe('Entry Main Menu', () => {
     await expect(BasePage.entryNewTop).not.toBeExisting();
 
     // test save
+
     await expect(await BasePage.tagsEntries.length).toBe(4);
     await (await BasePage.fileMenuButton).waitAndLeftClick();
 

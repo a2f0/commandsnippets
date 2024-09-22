@@ -6,14 +6,11 @@ describe('Tag Search Menu Behavior', () => {
   it('should have a functional search bar', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      {method: 'GET'}
     );
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags**',
-      {}
-    );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**');
+    mockTags.respond(tagsResponse);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeExisting();

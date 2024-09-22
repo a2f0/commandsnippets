@@ -6,14 +6,17 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 describe('Tag Context Menu', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      {method: 'GET'}
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
+    mockTags.respond(tagsResponse);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
@@ -31,21 +34,24 @@ describe('Tag Context Menu', () => {
   });
   it('tag should allow deleting a tag', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      {method: 'GET'}
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    const mockTagDelete = await browser.mock(
-      'http://localhost:9001/api/v1/tags/**',
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
       {
-        method: 'delete',
+        method: 'GET',
       }
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockTagDelete.respond(tagsDeleteResponse, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    const mockTagDelete = await browser.mock(
+      'http://localhost:9001/api/v1/tags/1',
+      {
+        method: 'DELETE',
+      }
+    );
+    mockTags.respond(tagsResponse);
+    mockTagDelete.respond(tagsDeleteResponse);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
