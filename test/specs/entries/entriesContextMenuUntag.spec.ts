@@ -41,6 +41,7 @@ describe('Entries Context Menu Untag', () => {
     await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1Untag).toBeDisplayed();
     await (await BasePage.tagsEntriesContextMenu1Untag).waitAndLeftClick();
+    await expect(await BasePage.tagsEntries.length).toBe(3);
     await expect(mockTagsEntries).toBeRequestedTimes(1);
   });
 });
