@@ -6,12 +6,15 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 describe('Tag Context Menu', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'GET',
-    });
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
     mockTags.respond(tagsResponse);
     mockEntries.respond(entriesResponse);
     await BasePage.open('');
@@ -31,11 +34,11 @@ describe('Tag Context Menu', () => {
   });
   it('tag should allow deleting a tag', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1',
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
       {
         method: 'GET',
       }
