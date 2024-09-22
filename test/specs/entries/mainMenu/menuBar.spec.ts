@@ -8,9 +8,12 @@ describe('Entry Main Menu', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'GET',
-    });
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
     mockTags.respond(tagsResponse);
     mockEntriesResponse.respond(entriesResponse);
     await BasePage.open('');
