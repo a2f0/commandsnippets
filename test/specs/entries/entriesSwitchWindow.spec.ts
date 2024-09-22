@@ -5,18 +5,19 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 
 describe('Tab Switching Behavior', () => {
   it('should allow tab switching while editing', async () => {
-    const mockEntryPostResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries',
-      {
-        method: 'POST',
-      }
-    );
     const mockEntriesGetList = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {
         method: 'GET',
       }
     );
+    const mockEntryPostResponse = await browser.mock(
+      'http://localhost:9001/api/v1/entries',
+      {
+        method: 'POST',
+      }
+    );
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
       {
