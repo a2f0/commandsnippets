@@ -7,26 +7,19 @@ describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      {method: 'GET'}
     );
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
+      method: 'GET',
     });
-    const mockTagOptionsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/tags**',
-      {
-        method: 'options',
-      }
-    );
     const mockTagPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags**',
       {
-        method: 'post',
+        method: 'POST',
       }
     );
     mockTags.respond(tagsResponseEmpty);
     mockEntries.respond(entriesResponseEmpty);
-    mockTagOptionsResponse.respond({fetchResponse: false});
     mockTagPostResponse.respond(tagsPostResponse);
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();

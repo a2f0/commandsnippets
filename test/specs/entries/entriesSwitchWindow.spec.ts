@@ -5,34 +5,27 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 
 describe('Tab Switching Behavior', () => {
   it('should allow tab switching while editing', async () => {
-    const mockEntriesGetList = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+    const mockEntryPostResponse = await browser.mock(
+      'http://localhost:9001/api/v1/entries',
       {
-        method: 'get',
+        method: 'POST',
+      }
+    );
+    const mockEntriesGetList = await browser.mock(
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      {
+        method: 'GET',
       }
     );
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
+      method: 'GET',
     });
-    const mockEntryOptionsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {
-        method: 'options',
-      }
-    );
-    const mockEntryPostResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {
-        method: 'post',
-      }
-    );
+
     mockTags.respond(tagsResponse);
     mockEntriesGetList.respond(entriesResponse);
-    mockEntryOptionsResponse.respond({fetchResponse: false});
     mockEntryPostResponse.respond(entryPostResponse);
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
-
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
     await (await BasePage.tagsEntries1).waitAndRightClick();
@@ -60,8 +53,8 @@ describe('Tab Switching Behavior', () => {
     // Entry Subject
     await browser.switchWindow('www.google.com');
     await expect(browser).toHaveUrl('https://www.google.com/');
-    await expect(BasePage.tagsEntriesList).not.toBeDisplayed();
     await browser.switchWindow('http://localhost:8081');
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
 

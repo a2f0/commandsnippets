@@ -7,10 +7,10 @@ describe('Tag Context Menu', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      {method: 'GET'}
     );
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
+      method: 'GET',
     });
     mockTags.respond(tagsResponse);
     mockEntries.respond(entriesResponse);
@@ -32,15 +32,18 @@ describe('Tag Context Menu', () => {
   it('tag should allow deleting a tag', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      {method: 'GET'}
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    const mockTagDelete = await browser.mock(
-      'http://localhost:9001/api/v1/tags/**',
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1',
       {
-        method: 'delete',
+        method: 'GET',
+      }
+    );
+    const mockTagDelete = await browser.mock(
+      'http://localhost:9001/api/v1/tags/1',
+      {
+        method: 'DELETE',
       }
     );
     mockTags.respond(tagsResponse);

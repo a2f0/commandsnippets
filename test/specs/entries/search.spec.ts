@@ -5,13 +5,9 @@ import textEntriesResponse from '../../mocks/entries/entriesResponse';
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {}
+      'http://localhost:9001/api/v1/entries**'
     );
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags**',
-      {}
-    );
+    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**');
     mockTags.respond(tags);
     mockEntries.respond(textEntriesResponse);
     await BasePage.open('test/test-tag-1');

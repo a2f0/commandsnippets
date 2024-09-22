@@ -7,22 +7,19 @@ describe('Logged Out User Behavior', () => {
   it('should have different context menus for logged out users', async () => {
     const mostEntriesResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      {method: 'GET'}
     );
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
+      method: 'GET',
     });
+
     const mockLogoutOptionsResponse = await browser.mock(
       'http://localhost:9001/api-token-deauth**',
-      {
-        method: 'options',
-      }
+      {method: 'OPTIONS'}
     );
     const mockLogoutResponse = await browser.mock(
       'http://localhost:9001/api-token-deauth**',
-      {
-        method: 'post',
-      }
+      {method: 'POST'}
     );
     mockTags.respond(tagsResponse);
     mostEntriesResponse.respond(entriesResponse);

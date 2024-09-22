@@ -6,12 +6,9 @@ describe('Tag Main Menu', () => {
   it('should having a working menu bar', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      {method: 'GET'}
     );
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags**',
-      {}
-    );
+    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**');
     mockTags.respond(tagsResponse);
     mockEntries.respond(entriesResponse);
     await BasePage.open('');

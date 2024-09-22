@@ -6,37 +6,31 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 
 describe('Entry Main Menu Behavior', () => {
   it('should having a working context menu to create new entries', async () => {
-    const mockEntriesGetList = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+    const mockEntryPostResponse = await browser.mock(
+      'http://localhost:9001/api/v1/entries',
       {
-        method: 'get',
+        method: 'POST',
+      }
+    );
+    const mockEntriesGetList = await browser.mock(
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      {
+        method: 'GET',
       }
     );
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
+      method: 'GET',
     });
-    const mockEntryOptionsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {
-        method: 'options',
-      }
-    );
-    const mockEntryPostResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {
-        method: 'post',
-      }
-    );
     const mocktagTextEntryThroughModelsResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries**',
       {
-        method: 'post',
+        method: 'POST',
       }
     );
     mockTags.respond(tagsResponse);
-    mockEntriesGetList.respond(entriesResponseEmpty);
-    mockEntryOptionsResponse.respond({fetchResponse: false});
     mockEntryPostResponse.respond(entryPostResponse);
+    mockEntriesGetList.respond(entriesResponseEmpty);
+
     mocktagTextEntryThroughModelsResponse.respond(
       tagTextEntryThroughModelsResponse
     );
@@ -104,6 +98,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(0);
 
     await (await BasePage.entryNewBottomSave).waitAndLeftClick();
+
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
 
     const newEntry = $(`#entryBodyOuterDiv${entryPostResponse.data.id}`);

@@ -7,11 +7,11 @@ describe('Entry Main Menu Behavior', () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries**',
       {
-        method: 'get',
+        method: 'GET',
       }
     );
     const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
+      method: 'GET',
     });
     mockTags.respond(tagsResponse);
     mockEntries.respond(entriesResponse);
