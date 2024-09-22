@@ -5,7 +5,7 @@ import tags from '../../mocks/tags/tagsResponse';
 describe('Entries Context Menu Untag', () => {
   it('should untag', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {
         method: 'GET',
       }
