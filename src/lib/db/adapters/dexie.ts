@@ -1,12 +1,12 @@
-import type {IEntry, IJunction, ITag, IUser} from './types';
-import Dexie from 'dexie';
-import {ITearleadsDB} from './db';
+import type {IEntry, IJunction, ITag, IUser} from '../types';
+import {default as DexieDefault} from 'dexie';
+import {ITearleadsDB} from '../types';
 
-class TearleadsDexie extends Dexie implements ITearleadsDB {
-  users!: Dexie.Table<IUser, number>; // number is the type of the primary key
-  tags!: Dexie.Table<ITag, number>;
-  entries!: Dexie.Table<IEntry, number>;
-  junction!: Dexie.Table<IJunction, number>;
+class TearleadsDexie extends DexieDefault implements ITearleadsDB {
+  users!: DexieDefault.Table<IUser, number>; // number is the type of the primary key
+  tags!: DexieDefault.Table<ITag, number>;
+  entries!: DexieDefault.Table<IEntry, number>;
+  junction!: DexieDefault.Table<IJunction, number>;
 
   // https://dexie.org/docs/Version/Version.stores()#description
   constructor() {
