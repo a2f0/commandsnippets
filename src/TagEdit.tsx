@@ -1,13 +1,14 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {AxiosResponse} from 'axios';
 import Grid from '@mui/material/Grid2';
-import {ITagJsonApi} from './models/TagModel';
+import {AxiosResponse} from 'axios';
+import {observer} from 'mobx-react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+
+import apiBase from './lib/api/apiBase';
 import {ITagJsonApiResponseSingle} from './lib/tags';
+import {ITagJsonApi} from './models/TagModel';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
-import apiBase from './lib/api/apiBase';
-import {observer} from 'mobx-react';
 
 export interface ITagEdit {
   object: ITagJsonApi;

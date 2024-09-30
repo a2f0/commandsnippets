@@ -1,6 +1,7 @@
-import AboutDialog from './AboutDialog';
 import React from 'react';
+
 import StyledMenuItem from '../../../StyledMenuItem';
+import AboutDialog from './AboutDialog';
 
 interface IProps {
   onClose: () => void;

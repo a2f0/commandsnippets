@@ -1,9 +1,10 @@
-import React, {useEffect, useState} from 'react';
-import {ITag} from '../db/types';
 import {Typography} from '@mui/material';
-import {db} from '../db/db';
 import {observer} from 'mobx-react';
+import React, {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
+
+import {db} from '../db/db';
+import {ITag} from '../db/types';
 
 const TagCount = () => {
   const {user} = useParams();

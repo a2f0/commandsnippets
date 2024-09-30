@@ -1,6 +1,7 @@
-import PopulateIndexedDB from './menu_items/PopulateIndexedDB';
 import React from 'react';
+
 import {StyledMenu} from '../../MenuBar';
+import PopulateIndexedDB from './menu_items/PopulateIndexedDB';
 
 interface IProps {
   onClose: () => void;

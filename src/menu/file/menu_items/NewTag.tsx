@@ -1,7 +1,8 @@
 import React from 'react';
-import StyledMenuItem from '../../../StyledMenuItem';
-import {appMode} from '../../../lib/shared';
+
 import {useAppContext} from '../../../AppContext';
+import {appMode} from '../../../lib/shared';
+import StyledMenuItem from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

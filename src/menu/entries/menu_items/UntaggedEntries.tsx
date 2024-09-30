@@ -1,9 +1,10 @@
-import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {ListItemIcon} from '@mui/material';
 import React from 'react';
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
+
+import {entrySearchMethod} from '../../../lib/shared';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
-import {entrySearchMethod} from '../../../lib/shared';
 
 interface IProps {
   onClose: () => void;

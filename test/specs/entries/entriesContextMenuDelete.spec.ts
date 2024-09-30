@@ -1,6 +1,6 @@
-import {BasePage} from '../../pageobjects/base';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tags from '../../mocks/tags/tagsResponse';
+import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Delete Entry', () => {
   it('Should allow delete entries from untagged entries', async () => {

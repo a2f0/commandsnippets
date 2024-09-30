@@ -1,10 +1,11 @@
-import React, {useEffect} from 'react';
 import {GitHub} from '@mui/icons-material';
-import LoginButton from './styled/LoginButton';
-import apiBase from './lib/api/apiBase';
 import {observer} from 'mobx-react';
-import {useAppContext} from './AppContext';
+import React, {useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
+
+import {useAppContext} from './AppContext';
+import apiBase from './lib/api/apiBase';
+import LoginButton from './styled/LoginButton';
 
 export const githubClientID = () => {
   if (window.location.hostname === 'staging.tearleads.com') {

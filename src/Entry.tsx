@@ -1,28 +1,29 @@
-import {IMouse, initialMouse} from './lib/shared';
-import {appMode, getSelection} from './lib/shared';
-import {useDrag, useDrop} from 'react-dnd';
-import {useEffect, useMemo, useRef, useState} from 'react';
-import {useParams, useSearchParams} from 'react-router-dom';
 import {Check} from '@mui/icons-material';
+import {FileCopySharp} from '@mui/icons-material';
+import {styled} from '@mui/material/styles';
+import {autorun} from 'mobx';
+import {observer} from 'mobx-react';
+import {useEffect, useMemo, useRef, useState} from 'react';
+import React from 'react';
+import {useDrag, useDrop} from 'react-dnd';
+import {useParams, useSearchParams} from 'react-router-dom';
+
+import {useAppContext} from './AppContext';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
-import type {DraggableItem} from './Tag';
-import EntryBody from './styled/text_entries/EntryBody';
 import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
-import EntrySubject from './styled/text_entries/EntrySubject';
-import {FileCopySharp} from '@mui/icons-material';
-import {ITextEntryJsonApi} from './models/TextEntryModel';
-import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import ItemTypes from './ItemTypes';
-import React from 'react';
 import apiBase from './lib/api/apiBase';
-import {autorun} from 'mobx';
-import {observer} from 'mobx-react';
-import {styled} from '@mui/material/styles';
 import {tearleadsApi} from './lib/api/tearleadsApi';
-import {useAppContext} from './AppContext';
+import {IMouse, initialMouse} from './lib/shared';
+import {appMode, getSelection} from './lib/shared';
+import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import {ITextEntryJsonApi} from './models/TextEntryModel';
+import EntryBody from './styled/text_entries/EntryBody';
+import EntrySubject from './styled/text_entries/EntrySubject';
+import type {DraggableItem} from './Tag';
 
 const EntryText = styled('div')(() => ({
   display: 'inline-block',

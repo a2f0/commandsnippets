@@ -1,27 +1,28 @@
 import {Box} from '@mui/material';
+import {Fade} from '@mui/material';
+import {Menu} from '@mui/material';
+import Grid from '@mui/material/Grid2';
+import {styled} from '@mui/material/styles';
+import {useTheme} from '@mui/material/styles';
+import {observer} from 'mobx-react';
+import React from 'react';
+
+import {useAppContext} from './AppContext';
+import GithubAuth from './GithubAuth';
+import GoogleAuth from './GoogleAuth';
+import {environment} from './lib/environment';
 import DebugMenu from './menu/debug/DebugMenu';
 import DebugMenuButton from './menu/debug/DebugMenuButton';
 import EntriesMenu from './menu/entries/EntriesMenu';
 import EntriesMenuButton from './menu/entries/EntriesMenuButton';
-import {Fade} from '@mui/material';
 import FileMenu from './menu/file/FileMenu';
 import FileMenuButton from './menu/file/FileMenuButton';
-import GithubAuth from './GithubAuth';
-import GoogleAuth from './GoogleAuth';
-import Grid from '@mui/material/Grid2';
 import HelpMenu from './menu/help/HelpMenu';
 import HelpMenuButton from './menu/help/HelpMenuButton';
-import {Menu} from '@mui/material';
-import React from 'react';
 import TagsMenu from './menu/tags/TagsMenu';
 import TagsMenuButton from './menu/tags/TagsMenuButton';
 import ViewMenu from './menu/view/ViewMenu';
 import ViewMenuButton from './menu/view/ViewMenuButton';
-import {environment} from './lib/environment';
-import {observer} from 'mobx-react';
-import {styled} from '@mui/material/styles';
-import {useAppContext} from './AppContext';
-import {useTheme} from '@mui/material/styles';
 
 interface IStyledMenuProps {
   id: string;

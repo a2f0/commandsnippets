@@ -1,5 +1,5 @@
-import type {IDatabase, ITearleadsDB} from './types';
 import {TearleadsDexie} from './adapters/dexie';
+import type {IDatabase, ITearleadsDB} from './types';
 
 export class DB implements IDatabase {
   db: ITearleadsDB;

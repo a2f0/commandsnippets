@@ -1,26 +1,27 @@
-import {IMouse, initialMouse} from './lib/shared';
 import {ListItem, ListItemButton} from '@mui/material';
+import {Box} from '@mui/material';
+import {Theme} from '@mui/material/styles';
+import {styled} from '@mui/material/styles';
+import {useTheme} from '@mui/material/styles';
+import {AxiosResponse} from 'axios';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
-import {activeSearch, appMode} from './lib/shared';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
-import {AxiosResponse} from 'axios';
-import {Box} from '@mui/material';
+
+import {useAppContext} from './AppContext';
 import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
-import {ITagJsonApi} from './models/TagModel';
-import {ITagJsonApiResponseSingle} from './lib/tags';
 import ItemTypes from './ItemTypes';
+import apiBase from './lib/api/apiBase';
+import {ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
+import {IMouse, initialMouse} from './lib/shared';
+import {activeSearch, appMode} from './lib/shared';
+import {ITagJsonApiResponseSingle} from './lib/tags';
+import {needsScrollingIntoView} from './lib/text_entries';
+import {ITagJsonApi} from './models/TagModel';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
-import {Theme} from '@mui/material/styles';
-import apiBase from './lib/api/apiBase';
-import {needsScrollingIntoView} from './lib/text_entries';
-import {styled} from '@mui/material/styles';
-import {useAppContext} from './AppContext';
-import {useTheme} from '@mui/material/styles';
 
 const TagContainer = styled('div')(() => ({
   whiteSpace: 'pre',

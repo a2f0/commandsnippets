@@ -1,8 +1,8 @@
-import {BasePage} from '../../pageobjects/base';
 import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
 import entryPostResponse from '../../mocks/entries/entryPostResponse';
 import tagTextEntryThroughModelsResponse from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
+import {BasePage} from '../../pageobjects/base';
 
 describe('Entry Main Menu Behavior', () => {
   it('should having a working context menu to create new entries', async () => {

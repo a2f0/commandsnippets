@@ -1,8 +1,8 @@
-import {BasePage} from '../../../pageobjects/base';
 import entriesResponse from '../../../mocks/entries/entriesResponse';
 import entryPostResponse from '../../../mocks/entries/entryPostResponse';
 import tagTextEntryThroughModelsResponse from '../../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
 import tagsResponse from '../../../mocks/tags/tagsResponse';
+import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
   it('should having a working new entry from the file menu', async () => {

@@ -1,4 +1,5 @@
 import {getParent, types} from 'mobx-state-tree';
+
 import type {RootModel} from '../AppStateStore';
 
 export interface IUserJsonApi {

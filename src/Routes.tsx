@@ -1,10 +1,11 @@
-import {Routes as ReactRouterRoutes, Route} from 'react-router-dom';
+import React from 'react';
+import {Route, Routes as ReactRouterRoutes} from 'react-router-dom';
+
+import {useAppContext} from './AppContext';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import Main from './Main';
 import PublicHomePage from './PublicHomePage';
-import React from 'react';
-import {useAppContext} from './AppContext';
 
 const Routes = () => {
   const appConfig = useAppContext();

@@ -1,17 +1,18 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {activeEntryEditField, appMode} from '../src/lib/shared';
-import {AxiosResponse} from 'axios';
 import {Box} from '@mui/material';
 import {Button} from '@mui/material';
-import {ITextEntryJsonApi} from './models/TextEntryModel';
+import {useTheme} from '@mui/material/styles';
+import {AxiosResponse} from 'axios';
+import {observer} from 'mobx-react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+
+import {activeEntryEditField, appMode} from '../src/lib/shared';
+import {useAppContext} from './AppContext';
+import apiBase from './lib/api/apiBase';
 import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import {needsScrollingIntoView} from './lib/text_entries';
+import {ITextEntryJsonApi} from './models/TextEntryModel';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
-import apiBase from './lib/api/apiBase';
-import {needsScrollingIntoView} from './lib/text_entries';
-import {observer} from 'mobx-react';
-import {useAppContext} from './AppContext';
-import {useTheme} from '@mui/material/styles';
 
 export interface IEntryEdit {
   object: ITextEntryJsonApi;

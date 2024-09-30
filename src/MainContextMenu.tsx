@@ -1,7 +1,8 @@
-import {IMouse, initialMouse} from './lib/shared';
-import React, {useEffect, useState} from 'react';
 import {Menu} from '@mui/material';
 import {MenuItem} from '@mui/material';
+import React, {useEffect, useState} from 'react';
+
+import {IMouse, initialMouse} from './lib/shared';
 
 interface IMainContextMenu {
   mouse: IMouse;

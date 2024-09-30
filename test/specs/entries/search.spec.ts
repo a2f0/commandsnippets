@@ -1,6 +1,6 @@
-import {BasePage} from '../../pageobjects/base';
-import tags from '../../mocks/tags/tagsResponse';
 import textEntriesResponse from '../../mocks/entries/entriesResponse';
+import tags from '../../mocks/tags/tagsResponse';
+import {BasePage} from '../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {
