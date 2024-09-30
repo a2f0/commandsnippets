@@ -75,6 +75,7 @@
     "@emotion/css": "11.11.2",
     "@emotion/react": "11.11.4",
     "@emotion/styled": "11.11.5",
+    "@libsql/client": "0.9.0",
     "@mui/icons-material": "5.15.17",
     "@mui/material": "5.15.17",
     "@puppeteer/browsers": "2.2.3",

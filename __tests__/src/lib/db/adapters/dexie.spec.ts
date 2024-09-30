@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import 'fake-indexeddb/auto';
-import {TearleadsDexie} from '../../../../src/lib/db/dexie';
+import {TearleadsDexie} from '../../../../../src/lib/db/adapters/dexie';
 
 describe('TearleadsDexie', () => {
   describe('Models', () => {
