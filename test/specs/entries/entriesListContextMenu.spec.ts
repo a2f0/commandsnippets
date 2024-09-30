@@ -6,40 +6,36 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 
 describe('Entry Main Menu Behavior', () => {
   it('should having a working context menu to create new entries', async () => {
-    const mockEntriesGetList = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {
-        method: 'get',
-      }
-    );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    const mockEntryOptionsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {
-        method: 'options',
-      }
-    );
     const mockEntryPostResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries',
       {
-        method: 'post',
+        method: 'POST',
+      }
+    );
+    const mockEntriesGetList = await browser.mock(
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
       }
     );
     const mocktagTextEntryThroughModelsResponse = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries**',
+      'http://localhost:9001/api/v1/tags_entries',
       {
-        method: 'post',
+        method: 'POST',
       }
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntriesGetList.respond(entriesResponseEmpty, {fetchResponse: false});
-    mockEntryOptionsResponse.respond({fetchResponse: false});
-    mockEntryPostResponse.respond(entryPostResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntryPostResponse.respond(entryPostResponse);
+    mockEntriesGetList.respond(entriesResponseEmpty);
+
     mocktagTextEntryThroughModelsResponse.respond(
-      tagTextEntryThroughModelsResponse,
-      {fetchResponse: false}
+      tagTextEntryThroughModelsResponse
     );
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
@@ -105,6 +101,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(0);
 
     await (await BasePage.entryNewBottomSave).waitAndLeftClick();
+
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
 
     const newEntry = $(`#entryBodyOuterDiv${entryPostResponse.data.id}`);
@@ -166,5 +163,9 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewBottomBody).toBeFocused();
     await browser.keys('Tab');
     await expect(BasePage.entryNewBottomSave).toBeFocused();
+    mockEntryPostResponse.restore();
+    mockEntriesGetList.restore();
+    mockTags.restore();
+    mocktagTextEntryThroughModelsResponse.restore();
   });
 });

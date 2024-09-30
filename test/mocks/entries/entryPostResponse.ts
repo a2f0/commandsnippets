@@ -1,6 +1,7 @@
 import {ITextEntryJsonApiResponseSingle} from '../../../src/lib/text_entries';
+import {JsonObject} from '@wdio/types';
 
-const textEntryPostResponse: ITextEntryJsonApiResponseSingle = {
+const textEntryPostResponse: ITextEntryJsonApiResponseSingle & JsonObject = {
   data: {
     type: 'TextEntry',
     id: '5',

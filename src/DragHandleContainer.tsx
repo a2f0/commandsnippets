@@ -1,12 +1,10 @@
 import {styled} from '@mui/material/styles';
 
-const DragHandleContainer = styled('div')(
-  ({theme}) => `
+const DragHandleContainer = styled('div')`
   display: inline-block;
   font-weight: 900;
   text-align: center;
-  width: ${theme.main.dragIndicatorWidth}px;
-`
-);
+  width: ${props => props.theme.main.dragIndicatorWidth}px;
+`;
 
 export default DragHandleContainer;

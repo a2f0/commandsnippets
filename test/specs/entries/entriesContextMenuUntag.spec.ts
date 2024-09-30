@@ -5,28 +5,30 @@ import tags from '../../mocks/tags/tagsResponse';
 describe('Entries Context Menu Untag', () => {
   it('should untag', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {
-        method: 'get',
+        method: 'GET',
+      }
+    );
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
       }
     );
     const mockTagsEntries = await browser.mock(
-      'http://localhost:9001/api/v1/tags_entries/**',
+      'http://localhost:9001/api/v1/tags_entries/1',
       {
-        method: 'delete',
+        method: 'DELETE',
       }
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    mockTagsEntries.respond(tags, {fetchResponse: false, statusCode: 204});
-    mockTags.respond(tags, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTagsEntries.respond(tags, {statusCode: 204});
+    mockTags.respond(tags);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
-      wait: 5000,
-    });
-    await expect(await BasePage.tagsEntries.length).toBe(4);
+    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
     await expect(mockTagsEntries).toBeRequestedTimes(0);
@@ -39,5 +41,10 @@ describe('Entries Context Menu Untag', () => {
     await expect(BasePage.tagsEntriesContextMenu1Untag).toBeDisplayed();
     await (await BasePage.tagsEntriesContextMenu1Untag).waitAndLeftClick();
     await expect(mockTagsEntries).toBeRequestedTimes(1);
+    await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(3);
+    mockTagsEntries.restore();
+    mockTags.restore();
+    mockEntries.restore();
   });
 });

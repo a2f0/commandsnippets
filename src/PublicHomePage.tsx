@@ -1,7 +1,7 @@
 import {AppBar} from '@mui/material';
 import GithubAuth from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
-import {Grid} from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import React from 'react';
 import StyledToolbar from './styled/layout/StyledToolbar';
 
@@ -32,25 +32,23 @@ const PublicHomePage = () => {
         }}
       >
         <Grid
-          item
-          xs={12}
           sx={{
             marginTop: '250px',
             fontSize: '64px',
             textAlign: 'center',
             color: theme => `${theme.palette.text.primary}`,
           }}
+          size={{xs: 12}}
         >
           Solve, Curate, Retrieve.
         </Grid>
         <Grid
-          item
-          xs={12}
           sx={{
             fontSize: '30px',
             textAlign: 'center',
             color: theme => `${theme.palette.text.primary}`,
           }}
+          size={{xs: 12}}
         >
           An opinionated note-taking system for technical professionals.
         </Grid>

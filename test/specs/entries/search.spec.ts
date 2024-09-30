@@ -5,15 +5,13 @@ import textEntriesResponse from '../../mocks/entries/entriesResponse';
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {}
+      'http://localhost:9001/api/v1/entries?page[number]=1**'
     );
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags**',
-      {}
+      'http://localhost:9001/api/v1/tags?page[number]=1**'
     );
-    mockTags.respond(tags, {fetchResponse: false});
-    mockEntries.respond(textEntriesResponse, {fetchResponse: false});
+    mockTags.respond(tags);
+    mockEntries.respond(textEntriesResponse);
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
@@ -43,5 +41,7 @@ describe('TagsEntries Behavior', () => {
     await browser.keys('Escape');
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeFocused();
+    mockEntries.restore();
+    mockTags.restore();
   });
 });

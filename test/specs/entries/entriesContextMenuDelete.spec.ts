@@ -5,21 +5,23 @@ import tags from '../../mocks/tags/tagsResponse';
 describe('Entries Context Menu Delete Entry', () => {
   it('Should allow delete entries from untagged entries', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {
-        method: 'get',
+        method: 'GET',
       }
     );
-    const mockTags = await browser.mock('http://localhost:9001/api/v1/tags**', {
-      method: 'get',
-    });
-    mockTags.respond(tags, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      {
+        method: 'GET',
+      }
+    );
+    mockTags.respond(tags);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1', {
-      wait: 5000,
-    });
-    await expect(await BasePage.tagsEntries.length).toEqual(4);
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(mockEntries).toBeRequestedTimes(1);
     await expect(mockTags).toBeRequestedTimes(1);
 
@@ -33,7 +35,7 @@ describe('Entries Context Menu Delete Entry', () => {
     );
     await expect(mockEntries).toBeRequestedTimes(2);
     await expect(mockTags).toBeRequestedTimes(1);
-    await expect(await BasePage.tagsEntries.length).toBe(4);
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
 
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
@@ -41,5 +43,7 @@ describe('Entries Context Menu Delete Entry', () => {
     await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1Delete).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1Untag).not.toBeDisplayed();
+    mockEntries.restore();
+    mockTags.restore();
   });
 });

@@ -27,11 +27,7 @@ const TagContainer = styled('div')(() => ({
   lineHeight: '20px',
 }));
 
-interface ITagLabelWrapperProps {
-  theme: Theme;
-}
-
-const TagLabelWrapper = styled('div')<ITagLabelWrapperProps>`
+const TagLabelWrapper = styled('div')`
   display: inline-block;
   cursor: pointer;
   width: calc(100% - ${props => props.theme.main.dragIndicatorWidth}px);
@@ -378,10 +374,7 @@ const Tag = ({
               }}
             >
               <TagContainer ref={preview}>
-                <DragHandleContainer
-                  theme={theme}
-                  role="tagDragHandleContainer"
-                >
+                <DragHandleContainer role="tagDragHandleContainer">
                   <DragHandle
                     role="tagDragHandle"
                     ref={dragRef}
@@ -391,7 +384,6 @@ const Tag = ({
                   </DragHandle>
                 </DragHandleContainer>
                 <TagLabelWrapper
-                  theme={theme}
                   id={`tagLabelWrapper-${id}`}
                   role="tagLabelWrapper"
                   ref={drop}

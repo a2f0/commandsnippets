@@ -5,15 +5,14 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 describe('Tag Search Menu Behavior', () => {
   it('should have a functional search bar', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
-      {method: 'get'}
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      {method: 'GET'}
     );
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags**',
-      {}
+      'http://localhost:9001/api/v1/tags?page[number]=1**'
     );
-    mockTags.respond(tagsResponse, {fetchResponse: false});
-    mockEntries.respond(entriesResponse, {fetchResponse: false});
+    mockTags.respond(tagsResponse);
+    mockEntries.respond(entriesResponse);
     await BasePage.open('');
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeExisting();
@@ -28,5 +27,7 @@ describe('Tag Search Menu Behavior', () => {
     await browser.keys('Escape');
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toHaveValue('');
+    mockEntries.restore();
+    mockTags.restore();
   });
 });

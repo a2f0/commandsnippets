@@ -16,7 +16,6 @@ export const chromeCapabilities: WebdriverIO.Capabilities = {
   'goog:chromeOptions': {
     args: ['--disable-web-security'],
   },
-  'wdio:chromedriverOptions': {},
 };
 
 export const config: WebdriverIO.Config = {
@@ -61,7 +60,7 @@ export const config: WebdriverIO.Config = {
     browser.addCommand(
       'waitAndRightClick',
       async function (this: WebdriverIO.Element) {
-        await this.waitForDisplayed();
+        await this.waitForClickable();
         await this.click({button: 'right'});
       },
       true
@@ -69,7 +68,7 @@ export const config: WebdriverIO.Config = {
     browser.addCommand(
       'waitAndLeftClick',
       async function (this: WebdriverIO.Element) {
-        await this.waitForDisplayed();
+        await this.waitForClickable();
         await this.click();
       },
       true
