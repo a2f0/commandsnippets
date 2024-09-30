@@ -29,8 +29,11 @@ describe('Tab Switching Behavior', () => {
     mockEntriesGetList.respond(entriesResponse);
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-    await expect(await BasePage.tagsEntries.length).toBe(4);
+    await expect(mockEntriesGetList).toBeRequestedTimes(1);
+    await expect(mockTags).toBeRequestedTimes(1);
+    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
     await (await BasePage.tagsEntries1).waitAndRightClick();
@@ -64,7 +67,7 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
 
     // Entry Body
-    await (await BasePage.textEntryEdit1Body).waitAndLeftClick();
+    await BasePage.textEntryEdit1Body.waitAndLeftClick();
     await expect(BasePage.textEntryEdit1Body).toBeFocused();
     await browser.keys('Enter');
     await browser.keys('Body Line 2');
@@ -81,5 +84,8 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.textEntryEdit1Body).toHaveValue(
       'entry-1-body\nBody Line 2\nBody Line 3'
     );
+    mockEntryPostResponse.restore();
+    mockEntriesGetList.restore();
+    mockTags.restore();
   });
 });

@@ -6,7 +6,7 @@ import tagsResponseEmpty from '../../mocks/tags/tagsResponseEmpty';
 describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries**',
+      'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
     const mockTags = await browser.mock(
@@ -55,5 +55,8 @@ describe('Tag List Context Menu Behavior', () => {
     expect(mockTagPostResponse).toBeRequestedTimes(1);
     await expect(BasePage.tags).toBeElementsArrayOfSize(1);
     await expect(BasePage.tagNewBottom).not.toBeDisplayed();
+    mockTagPostResponse.restore();
+    mockTags.restore();
+    mockEntries.restore();
   });
 });

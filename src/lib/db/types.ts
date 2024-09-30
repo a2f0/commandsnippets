@@ -34,3 +34,16 @@ export interface IJunction {
   synced: boolean;
   deleted: boolean;
 }
+
+export interface ITearleadsDB {
+  getTagsForUserName: (username: string) => Promise<ITag[]>;
+  putUser: (user: IUser) => Promise<void>;
+  getUser: (username: string) => Promise<IUser | undefined>;
+  putTag: (tag: ITag) => Promise<void>;
+  putEntry: (entry: IEntry) => Promise<void>;
+  putJunction: (junction: IJunction) => Promise<void>;
+}
+
+export interface IDatabase {
+  db: ITearleadsDB;
+}
