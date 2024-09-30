@@ -1,6 +1,6 @@
-import {BasePage} from '../../pageobjects/base';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
+import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Main Menu', () => {
   it('should having a working menu bar', async () => {

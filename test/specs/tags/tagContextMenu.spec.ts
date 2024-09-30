@@ -1,7 +1,7 @@
-import {BasePage} from '../../pageobjects/base';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsDeleteResponse from '../../mocks/tags/tagsDeleteResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
+import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Context Menu', () => {
   it('tag should have a working context menu', async () => {

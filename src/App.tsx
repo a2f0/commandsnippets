@@ -1,12 +1,13 @@
 import {CssBaseline} from '@mui/material';
+import {StyledEngineProvider} from '@mui/material/styles';
+import {observer} from 'mobx-react';
+import React from 'react';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
-import React from 'react';
+
 import Routes from './Routes';
-import {StyledEngineProvider} from '@mui/material/styles';
-import Theme from './theme/Theme';
 import ThemedGlobalStyle from './styled/layout/ThemedGlobalStyles';
-import {observer} from 'mobx-react';
+import Theme from './theme/Theme';
 
 const App = React.memo(
   observer(() => {

@@ -1,14 +1,15 @@
-import {MutableRefObject, RefObject} from 'react';
-import API from './api/apiBase';
+import {Theme} from '@mui/material/styles';
 import {CancelTokenSource} from 'axios';
+import {MutableRefObject, RefObject} from 'react';
+
+import {db} from '../../src/lib/db/db';
+import type {TStore} from '../AppStateStore';
 import {ITagJsonApi} from '../models/TagModel';
 import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
 import {ITextEntryJsonApi} from '../models/TextEntryModel';
 import {IUserJsonApi} from '../models/UserModel';
-import type {TStore} from '../AppStateStore';
-import {Theme} from '@mui/material/styles';
+import API from './api/apiBase';
 import {convertISO8601ToUnixTime} from './util/dateTime';
-import {db} from '../../src/lib/db/db';
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
   links: {

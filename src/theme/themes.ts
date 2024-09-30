@@ -1,4 +1,5 @@
-import {Theme, createTheme} from '@mui/material/styles';
+import {createTheme, Theme} from '@mui/material/styles';
+
 import {defaultThemeOptions} from './themeBase';
 
 export const darkTheme: Theme = createTheme({

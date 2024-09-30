@@ -1,5 +1,6 @@
-import {ITagJsonApiResponseSingle} from '../../../src/lib/tags';
 import {JsonObject} from '@wdio/types';
+
+import {ITagJsonApiResponseSingle} from '../../../src/lib/tags';
 
 const tagsDeleteResponse: ITagJsonApiResponseSingle & JsonObject = {
   data: {

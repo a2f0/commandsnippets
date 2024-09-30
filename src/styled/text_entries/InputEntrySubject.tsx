@@ -1,10 +1,11 @@
-import React, {useEffect, useRef, useState} from 'react';
 import {TextField} from '@mui/material';
 import {Theme} from '@mui/material/styles';
-import {activeEntryEditField} from '../../../src/lib/shared';
-import {observer} from 'mobx-react';
-import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/material/styles';
+import {observer} from 'mobx-react';
+import React, {useEffect, useRef, useState} from 'react';
+
+import {activeEntryEditField} from '../../../src/lib/shared';
+import {useAppContext} from '../../AppContext';
 
 export interface IProps {
   handleChangeParent: (value: string) => void;

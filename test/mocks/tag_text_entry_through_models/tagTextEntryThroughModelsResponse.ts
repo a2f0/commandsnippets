@@ -1,5 +1,6 @@
-import {ITagTextEntryThroughModelJsonApiResponseSingle} from '../../../src/lib/tag_text_entry_through_models';
 import {JsonObject} from '@wdio/types';
+
+import {ITagTextEntryThroughModelJsonApiResponseSingle} from '../../../src/lib/tag_text_entry_through_models';
 
 const tagTextEntryThroughModelsResponse: ITagTextEntryThroughModelJsonApiResponseSingle &
   JsonObject = {

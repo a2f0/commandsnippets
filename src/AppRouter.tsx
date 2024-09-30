@@ -1,8 +1,9 @@
-import App from './App';
-import {AppContextProvider} from './AppContext';
+import {observer} from 'mobx-react';
 import React from 'react';
 import {BrowserRouter as Router} from 'react-router-dom';
-import {observer} from 'mobx-react';
+
+import App from './App';
+import {AppContextProvider} from './AppContext';
 
 const AppRouter = React.memo(
   observer(() => {

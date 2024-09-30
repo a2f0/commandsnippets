@@ -1,8 +1,9 @@
-import React, {useCallback, useEffect} from 'react';
 import {TextField} from '@mui/material';
-import {activeSearch} from '../../lib/shared';
 import {observer} from 'mobx-react';
+import React, {useCallback, useEffect} from 'react';
+
 import {useAppContext} from '../../AppContext';
+import {activeSearch} from '../../lib/shared';
 
 interface IStyledTextFieldProps {
   id: string;

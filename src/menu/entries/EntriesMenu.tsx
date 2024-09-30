@@ -1,5 +1,10 @@
-import AllEntries from './menu_items/AllEntries';
 import React from 'react';
+
+import {useAppContext} from '../../AppContext';
+import {entrySearchMethod} from '../../lib/shared';
+import {StyledMenu} from '../../MenuBar';
+import StyledDivider from '../../styled/StyledDivider';
+import AllEntries from './menu_items/AllEntries';
 import SortByBodyAscending from './menu_items/SortByBodyAscending';
 import SortByBodyDescending from './menu_items/SortByBodyDescending';
 import SortByDateCreatedAscending from './menu_items/SortByDateCreatedAscending';
@@ -11,11 +16,7 @@ import SortBySubjectDescending from './menu_items/SortBySubjectDescending';
 import SortByTagCountAscending from './menu_items/SortByTagCountAscending';
 import SortByTagCountDescending from './menu_items/SortByTagCountDescending';
 import SortByUserDefinedOrder from './menu_items/SortByUserDefinedOrder';
-import StyledDivider from '../../styled/StyledDivider';
-import {StyledMenu} from '../../MenuBar';
 import UntaggedEntries from './menu_items/UntaggedEntries';
-import {entrySearchMethod} from '../../lib/shared';
-import {useAppContext} from '../../AppContext';
 
 interface IProps {
   onClose: () => void;

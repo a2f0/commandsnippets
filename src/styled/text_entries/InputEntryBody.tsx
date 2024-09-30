@@ -1,11 +1,12 @@
-import React, {useEffect, useRef, useState} from 'react';
+import styled from '@emotion/styled';
 import {TextareaAutosize} from '@mui/material';
 import {Theme} from '@mui/material/styles';
-import {activeEntryEditField} from '../../../src/lib/shared';
-import {observer} from 'mobx-react';
-import styled from '@emotion/styled';
-import {useAppContext} from '../../AppContext';
 import {useTheme} from '@mui/material/styles';
+import {observer} from 'mobx-react';
+import React, {useEffect, useRef, useState} from 'react';
+
+import {activeEntryEditField} from '../../../src/lib/shared';
+import {useAppContext} from '../../AppContext';
 
 export interface StyledTextAreaIProps {
   theme: Theme;

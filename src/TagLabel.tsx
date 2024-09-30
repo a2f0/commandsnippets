@@ -1,7 +1,8 @@
-import React, {useEffect} from 'react';
-import Highlighter from 'react-highlight-words';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
+import React, {useEffect} from 'react';
+import Highlighter from 'react-highlight-words';
+
 import {useAppContext} from './AppContext';
 
 interface IProps {

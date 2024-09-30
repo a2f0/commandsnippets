@@ -1,6 +1,6 @@
-import {BasePage} from '../../pageobjects/base';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
+import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Search Menu Behavior', () => {
   it('should have a functional search bar', async () => {

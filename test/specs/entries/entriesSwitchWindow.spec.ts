@@ -1,7 +1,7 @@
-import {BasePage} from '../../pageobjects/base';
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import entryPostResponse from '../../mocks/entries/entryPostResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
+import {BasePage} from '../../pageobjects/base';
 
 describe('Tab Switching Behavior', () => {
   it('should allow tab switching while editing', async () => {
