@@ -1,8 +1,9 @@
 import {AppBar} from '@mui/material';
-import GithubAuth from './GithubAuth';
-import GoogleAuth from './GoogleAuth';
 import Grid from '@mui/material/Grid2';
 import React from 'react';
+
+import GithubAuth from './GithubAuth';
+import GoogleAuth from './GoogleAuth';
 import StyledToolbar from './styled/layout/StyledToolbar';
 
 const PublicHomePage = () => {

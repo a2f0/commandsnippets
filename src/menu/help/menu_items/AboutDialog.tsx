@@ -5,6 +5,7 @@ import {DialogContent} from '@mui/material';
 import {DialogContentText} from '@mui/material';
 import {DialogTitle} from '@mui/material';
 import React from 'react';
+
 import packageJson from '../../../../package.json';
 
 interface IProps {

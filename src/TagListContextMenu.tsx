@@ -1,9 +1,10 @@
-import {IMouse, initialMouse} from '../src/lib/shared';
-import React, {useEffect, useState} from 'react';
 import {Menu} from '@mui/material';
-import StyledMenuItem from './StyledMenuItem';
+import React, {useEffect, useState} from 'react';
+
+import {IMouse, initialMouse} from '../src/lib/shared';
 import {appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
+import StyledMenuItem from './StyledMenuItem';
 
 interface ITagContextMenuProps {
   mouse: IMouse;

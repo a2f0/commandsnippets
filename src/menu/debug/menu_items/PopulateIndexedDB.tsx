@@ -1,7 +1,8 @@
 import React from 'react';
-import StyledMenuItem from '../../../StyledMenuItem';
-import {fetchAllEntriesForUser} from '../../../lib/text_entries';
 import {useParams} from 'react-router-dom';
+
+import {fetchAllEntriesForUser} from '../../../lib/text_entries';
+import StyledMenuItem from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

@@ -1,10 +1,11 @@
 import {AxiosResponse} from 'axios';
-import {ILogoutJsonApiResponse} from '../../../lib/authentication';
-import React from 'react';
-import StyledMenuItem from '../../../StyledMenuItem';
 import axios from 'axios';
-import {baseHTTPURL} from '../../../lib/api/apiBase';
+import React from 'react';
+
 import {useAppContext} from '../../../AppContext';
+import {baseHTTPURL} from '../../../lib/api/apiBase';
+import {ILogoutJsonApiResponse} from '../../../lib/authentication';
+import StyledMenuItem from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

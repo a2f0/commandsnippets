@@ -1,10 +1,11 @@
 import {ListItemIcon} from '@mui/material';
+import {Theme} from '@mui/material/styles';
 import React from 'react';
+
+import {useAppContext} from '../../../AppContext';
 import StyledCheckIcon from '../../../styled/StyledCheckIcon';
 import StyledMenuItem from '../../../StyledMenuItem';
-import {Theme} from '@mui/material/styles';
 import {darkTheme} from '../../../theme/themes';
-import {useAppContext} from '../../../AppContext';
 
 interface IProps {
   onClose: () => void;

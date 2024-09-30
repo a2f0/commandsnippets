@@ -1,6 +1,8 @@
-import {IMouse, activeSearch, appMode, initialMouse} from './lib/shared';
-import {ITagJsonApi, TagHelpers} from './models/TagModel';
-
+import {List} from '@mui/material';
+import {styled} from '@mui/material/styles';
+import update from 'immutability-helper';
+import {autorun} from 'mobx';
+import {observer} from 'mobx-react';
 import React, {
   createRef,
   useCallback,
@@ -9,19 +11,17 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {ITagJsonApiResponseSingle} from './lib/tags';
+import {useDrop} from 'react-dnd';
+import {useNavigate} from 'react-router-dom';
+
+import {useAppContext} from './AppContext';
 import ItemTypes from './ItemTypes';
-import {List} from '@mui/material';
+import {activeSearch, appMode, IMouse, initialMouse} from './lib/shared';
+import {ITagJsonApiResponseSingle} from './lib/tags';
+import {ITagJsonApi, TagHelpers} from './models/TagModel';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
-import {autorun} from 'mobx';
-import {observer} from 'mobx-react';
-import {styled} from '@mui/material/styles';
-import update from 'immutability-helper';
-import {useAppContext} from './AppContext';
-import {useDrop} from 'react-dnd';
-import {useNavigate} from 'react-router-dom';
 
 export interface IUser {
   id: number;

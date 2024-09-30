@@ -1,5 +1,6 @@
-import type {IEntry, IJunction, ITag, IUser} from '../types';
 import {default as DexieDefault} from 'dexie';
+
+import type {IEntry, IJunction, ITag, IUser} from '../types';
 import {ITearleadsDB} from '../types';
 
 class TearleadsDexie extends DexieDefault implements ITearleadsDB {

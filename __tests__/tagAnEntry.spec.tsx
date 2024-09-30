@@ -1,17 +1,19 @@
 import '@testing-library/jest-dom';
-import {HttpResponse, http} from 'msw';
+
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {createMemoryHistory} from 'history';
+import {http, HttpResponse} from 'msw';
+import {setupServer} from 'msw/node';
+import React from 'react';
+import {vi} from 'vitest';
+
 import type {ITagJsonApiResponse} from '../src/lib/tags';
 import type {ITextEntryJsonApiResponse} from '../src/lib/text_entries';
-import React from 'react';
-import TestAppRouter from './util/TestAppRouter';
-import {assignLoggedInCookie} from './util//assignLoggedInCookie';
-import {createMemoryHistory} from 'history';
 import entriesResponse from '../test/mocks/entries/entriesResponse';
-import {setupServer} from 'msw/node';
 import tagsResponse from '../test/mocks/tags/tagsResponse';
-import userEvent from '@testing-library/user-event';
-import {vi} from 'vitest';
+import {assignLoggedInCookie} from './util//assignLoggedInCookie';
+import TestAppRouter from './util/TestAppRouter';
 
 Element.prototype.scrollIntoView = vi.fn();
 

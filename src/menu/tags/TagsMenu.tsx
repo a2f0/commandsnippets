@@ -1,4 +1,6 @@
 import React from 'react';
+
+import {StyledMenu} from '../../MenuBar';
 import SortByDateCreatedAscending from './menu_items/SortByDateCreatedAscending';
 import SortByDateCreatedDescending from './menu_items/SortByDateCreatedDescending';
 import SortByDateLastUsedAscending from './menu_items/SortByDateLastUsedAscending';
@@ -8,7 +10,6 @@ import SortByEntryCountDescending from './menu_items/SortByEntryCountDescending'
 import SortByNameAscending from './menu_items/SortByNameAscending';
 import SortByNameDescending from './menu_items/SortByNameDescending';
 import SortByUserDefinedOrder from './menu_items/SortByUserDefinedOrder';
-import {StyledMenu} from '../../MenuBar';
 
 interface IProps {
   onClose: () => void;

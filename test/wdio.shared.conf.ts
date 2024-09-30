@@ -1,5 +1,5 @@
-import {BasePage} from './pageobjects/base';
 import {defaultState} from '../src/lib/shared';
+import {BasePage} from './pageobjects/base';
 
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {

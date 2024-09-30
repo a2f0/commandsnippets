@@ -1,15 +1,16 @@
 import {AppBar, Box} from '@mui/material';
-import React, {useEffect} from 'react';
-import BottomBar from './lib/bottom_bar/BottomBar';
-import EntryList from './EntryList';
-import LeftDrawer from './drawer/LeftDrawer';
-import MenuBar from './MenuBar';
-import RightDrawer from './drawer/RightDrawer';
-import StyledToolbar from './styled/layout/StyledToolbar';
 import {observer} from 'mobx-react';
-import {useAppContext} from './AppContext';
+import React, {useEffect} from 'react';
 import {useLocation} from 'react-router-dom';
 import {useNavigate} from 'react-router-dom';
+
+import {useAppContext} from './AppContext';
+import LeftDrawer from './drawer/LeftDrawer';
+import RightDrawer from './drawer/RightDrawer';
+import EntryList from './EntryList';
+import BottomBar from './lib/bottom_bar/BottomBar';
+import MenuBar from './MenuBar';
+import StyledToolbar from './styled/layout/StyledToolbar';
 
 const Main = () => {
   const location = useLocation();

@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import 'fake-indexeddb/auto';
+
 import {TearleadsTurso} from '../../../../../src/lib/db/adapters/turso';
 
 describe('TearleadsDexie', () => {

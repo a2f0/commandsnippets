@@ -1,6 +1,7 @@
-import {IMouse, initialMouse} from './lib/shared';
-import React, {useCallback, useEffect, useState} from 'react';
 import {Menu} from '@mui/material';
+import React, {useCallback, useEffect, useState} from 'react';
+
+import {IMouse, initialMouse} from './lib/shared';
 import StyledMenuItem from './StyledMenuItem';
 import TagDeleteDialog from './TagDeleteDialog';
 
