@@ -61,7 +61,7 @@
     "msw": "2.0.12",
     "start-server-and-test": "2.0.3",
     "stream-browserify": "3.0.0",
-    "swc-loader": "0.2.3",
+    "swc-loader": "0.2.6",
     "ts-node": "10.9.2",
     "typescript": "5.3.3",
     "url-loader": "4.1.1",
