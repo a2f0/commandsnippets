@@ -51,7 +51,7 @@
     "eslint": "8.56.0",
     "eslint-config-react": "1.1.7",
     "eslint-plugin-mocha": "10.2.0",
-    "eslint-plugin-prettier": "5.1.2",
+    "eslint-plugin-prettier": "5.2.1",
     "eslint-plugin-react": "7.33.2",
     "eslint-plugin-simple-import-sort": "12.1.1",
     "fake-indexeddb": "5.0.2",
