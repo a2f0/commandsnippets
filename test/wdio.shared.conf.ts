@@ -75,7 +75,11 @@ export const config: WebdriverIO.Config = {
     await browser.sessionSubscribe({events: ['log.entryAdded']});
 
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
-      console.log(`${logEntry.level}: ${logEntry.text}`);
+      if (logEntry.level === 'error') {
+        console.info(JSON.stringify(logEntry, null, '  '));
+      } else {
+        console.log(`${logEntry.level}: ${logEntry.text}`);
+      }
     });
 
     await BasePage.open('');
