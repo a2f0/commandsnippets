@@ -29,6 +29,9 @@ declare global {
       waitAndRightClick: (this: WebdriverIO.Element) => Promise<void>;
       waitAndLeftClick: (this: WebdriverIO.Element) => Promise<void>;
     }
+    interface Browser {
+      currentTestErrors: LogEntry[];
+    }
   }
 }
 
@@ -62,6 +65,7 @@ export const config: WebdriverIO.Config = {
       {
         saveAllVideos: false,
         videoSlowdownMultiplier: 3,
+        videoRenderTimeout: 30000,
       },
     ],
   ],
@@ -72,10 +76,15 @@ export const config: WebdriverIO.Config = {
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   before: async (capabilities: typeof browser, specs, browser: any) => {
+    // Initialize currentTestErrors as a property of the browser object
+    browser.currentTestErrors = [];
+
     await browser.sessionSubscribe({events: ['log.entryAdded']});
 
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
-      console.log(`${logEntry.level}: ${logEntry.text}`);
+      if (logEntry.level === 'error') {
+        browser.currentTestErrors.push(logEntry);
+      }
     });
 
     await BasePage.open('');
@@ -110,5 +119,26 @@ export const config: WebdriverIO.Config = {
       },
       true
     );
+  },
+  afterTest: async function (test) {
+    try {
+      if (browser.currentTestErrors.length > 0) {
+        console.error(
+          `Test "${test.title}" encountered ${browser.currentTestErrors.length} browser console errors:`
+        );
+        browser.currentTestErrors.forEach((error, index) => {
+          console.error(
+            `Error ${index + 1}:`,
+            JSON.stringify(error, null, '  ')
+          );
+        });
+        throw new Error(
+          `Test failed due to ${browser.currentTestErrors.length} browser console errors`
+        );
+      }
+    } finally {
+      // Reset errors for the next test, regardless of whether an error was thrown
+      browser.currentTestErrors = [];
+    }
   },
 };

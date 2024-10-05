@@ -35,7 +35,6 @@ jobs:
           name: wdio-video-reporter
           path: |
             _results_
-            !_results_/**/*.png
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
