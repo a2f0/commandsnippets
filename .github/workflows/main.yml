@@ -29,6 +29,12 @@ jobs:
           pre-commit run --all-files
       - run: npx vitest --no-watch
       - run: npm run ci-headless
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wdio-video-reporter
+          path: |
+            _results_
+            !_results_/**/*.png
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
