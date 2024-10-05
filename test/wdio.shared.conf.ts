@@ -1,3 +1,5 @@
+import video from 'wdio-video-reporter';
+
 import {defaultState} from '../src/lib/shared';
 import {BasePage} from './pageobjects/base';
 
@@ -52,7 +54,17 @@ export const config: WebdriverIO.Config = {
   connectionRetryTimeout: 90000,
   connectionRetryCount: 3,
   framework: 'mocha',
-  reporters: ['dot', 'spec'],
+  reporters: [
+    'dot',
+    'spec',
+    [
+      video,
+      {
+        saveAllVideos: false,
+        videoSlowdownMultiplier: 3,
+      },
+    ],
+  ],
   mochaOpts: {
     bail: true,
     ui: 'bdd',
