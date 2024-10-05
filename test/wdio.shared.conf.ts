@@ -60,8 +60,9 @@ export const config: WebdriverIO.Config = {
     [
       video,
       {
-        saveAllVideos: true,
+        saveAllVideos: false,
         videoSlowdownMultiplier: 3,
+        videoRenderTimeout: 30000,
       },
     ],
   ],
