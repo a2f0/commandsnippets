@@ -1,5 +1,26 @@
+import video from 'wdio-video-reporter';
+
 import {defaultState} from '../src/lib/shared';
 import {BasePage} from './pageobjects/base';
+
+interface LogEntry {
+  type: 'console' | 'javascript';
+  level: 'debug' | 'info' | 'warn' | 'error';
+  text: string;
+  timestamp: number;
+  stackTrace?: {
+    url: string;
+    realm: string;
+    function?: string;
+    line: number;
+    column: number;
+  };
+  args?: Array<{
+    type: string;
+    value: string;
+  }>;
+  method?: string;
+}
 
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {
@@ -33,7 +54,17 @@ export const config: WebdriverIO.Config = {
   connectionRetryTimeout: 90000,
   connectionRetryCount: 3,
   framework: 'mocha',
-  reporters: ['dot', 'spec'],
+  reporters: [
+    'dot',
+    'spec',
+    [
+      video,
+      {
+        saveAllVideos: false,
+        videoSlowdownMultiplier: 3,
+      },
+    ],
+  ],
   mochaOpts: {
     bail: true,
     ui: 'bdd',
@@ -41,6 +72,12 @@ export const config: WebdriverIO.Config = {
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   before: async (capabilities: typeof browser, specs, browser: any) => {
+    await browser.sessionSubscribe({events: ['log.entryAdded']});
+
+    browser.on('log.entryAdded', (logEntry: LogEntry) => {
+      console.log(`${logEntry.level}: ${logEntry.text}`);
+    });
+
     await BasePage.open('');
     const appState = {
       ...defaultState,

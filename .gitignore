@@ -18,3 +18,5 @@ dev-dist
 
 # Turso Databases
 *.db
+
+_results_
