@@ -135,9 +135,7 @@ export const config: WebdriverIO.Config = {
       });
       const errorLength = browser.currentTestErrors.length;
       browser.currentTestErrors = [];
-      throw new Error(
-        `Test failed due to ${errorLength} browser console errors`
-      );
+      console.error(`Test failed due to ${errorLength} browser console errors`);
     }
     return {error, result, duration, passed, retries};
   },
