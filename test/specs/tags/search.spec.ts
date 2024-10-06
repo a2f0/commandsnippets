@@ -29,5 +29,6 @@ describe('Tag Search Menu Behavior', () => {
     await expect(BasePage.tagSearch).toHaveValue('');
     await mockEntries.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

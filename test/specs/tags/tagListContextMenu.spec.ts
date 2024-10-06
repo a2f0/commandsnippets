@@ -24,5 +24,6 @@ describe('Tag List Context Menu Behavior', () => {
     expect(mockTags).toBeRequestedTimes(1);
     await mockEntries.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

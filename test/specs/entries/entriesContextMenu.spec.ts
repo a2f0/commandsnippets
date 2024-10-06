@@ -30,6 +30,7 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
     await mockEntries.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 
   it('should have a working editor', async () => {
@@ -119,5 +120,6 @@ describe('TagsEntries Behavior', () => {
     await mockEntriesPatch.restore();
     await mockEntries.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

@@ -27,5 +27,6 @@ describe('Entry Main Menu', () => {
     await expect(BasePage.entriesMenu).toBeDisplayed();
     await mockEntriesResponse.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

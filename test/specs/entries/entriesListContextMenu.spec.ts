@@ -167,5 +167,6 @@ describe('Entry Main Menu Behavior', () => {
     await mockEntriesGetList.restore();
     await mockTags.restore();
     await mocktagTextEntryThroughModelsResponse.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

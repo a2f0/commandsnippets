@@ -43,5 +43,6 @@ describe('Entries Context Menu Untag', () => {
     await mockTagsEntries.restore();
     await mockTags.restore();
     await mockEntries.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

@@ -2,7 +2,6 @@ import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
 import {BasePage} from './pageobjects/base';
-import {ConsoleErrorReporter} from './util/consoleErrorReporter';
 interface LogEntry {
   type: 'console' | 'javascript';
   level: 'debug' | 'info' | 'warn' | 'error';
@@ -68,7 +67,6 @@ export const config: WebdriverIO.Config = {
         videoRenderTimeout: 30000,
       },
     ],
-    [ConsoleErrorReporter, {}],
   ],
   mochaOpts: {
     bail: true,

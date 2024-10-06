@@ -36,5 +36,6 @@ describe('Entry Main Menu Behavior', () => {
     await expect(mockTags).toBeRequestedTimes(1);
     await mockEntries.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

@@ -118,5 +118,6 @@ describe('Tag Main Menu', () => {
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await mockEntries.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

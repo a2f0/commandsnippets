@@ -97,5 +97,6 @@ describe('Entry Main Menu', () => {
     await mockEntryPostResponse.restore();
     await mocktagTextEntryThroughModelsResponse.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

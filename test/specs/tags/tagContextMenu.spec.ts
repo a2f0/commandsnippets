@@ -105,5 +105,6 @@ describe('Tag Context Menu', () => {
     await mockEntries.restore();
     await mockTags.restore();
     await mockTagDelete.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

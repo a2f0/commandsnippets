@@ -43,5 +43,6 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagSearch).toBeFocused();
     await mockEntries.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

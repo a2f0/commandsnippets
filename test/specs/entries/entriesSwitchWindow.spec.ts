@@ -87,5 +87,6 @@ describe('Tab Switching Behavior', () => {
     await mockEntryPostResponse.restore();
     await mockEntriesGetList.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

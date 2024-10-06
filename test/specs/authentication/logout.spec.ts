@@ -58,5 +58,6 @@ describe('Logged Out User Behavior', () => {
     await mockLogoutResponse.restore();
     await mockEntriesResponse.restore();
     await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
