@@ -33,28 +33,29 @@ describe('TagsEntries Behavior', () => {
   });
 
   it('should have a working editor', async () => {
-    const mockEntriesPatch = await browser.mock(
-      'http://localhost:9001/api/v1/entries/1',
-      {
-        method: 'PATCH',
-      }
-    );
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {
         method: 'GET',
       }
     );
+    const mockEntriesPatch = await browser.mock(
+      'http://localhost:9001/api/v1/entries/1',
+      {
+        method: 'PATCH',
+      }
+    );
 
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
       {
         method: 'GET',
       }
     );
-    mockTags.respond(tags);
+
     mockEntries.respond(entriesResponse);
     mockEntriesPatch.respond(entriesPatchResponse);
+    mockTags.respond(tags);
 
     await BasePage.open('test/test-tag-1');
 
