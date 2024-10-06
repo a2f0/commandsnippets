@@ -121,23 +121,4 @@ export const config: WebdriverIO.Config = {
       true
     );
   },
-  afterTest: async function (
-    test,
-    context,
-    {error, result, duration, passed, retries}
-  ) {
-    if (browser.currentTestErrors.length > 0) {
-      passed = false;
-      console.error(
-        `Test "${test.title}" encountered ${browser.currentTestErrors.length} browser console errors:`
-      );
-      browser.currentTestErrors.forEach((error, index) => {
-        console.error(`Error ${index + 1}:`, JSON.stringify(error, null, '  '));
-      });
-      const errorLength = browser.currentTestErrors.length;
-      browser.currentTestErrors = [];
-      console.error(`Test failed due to ${errorLength} browser console errors`);
-    }
-    return {error, result, duration, passed, retries};
-  },
 };
