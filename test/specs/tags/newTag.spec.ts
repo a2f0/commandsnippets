@@ -9,18 +9,19 @@ describe('Tag List Context Menu Behavior', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
-    const mockTagPostResponse = await browser.mock(
-      'http://localhost:9001/api/v1/tags',
-      {
-        method: 'POST',
-      }
-    );
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
       {
         method: 'GET',
       }
     );
+    const mockTagPostResponse = await browser.mock(
+      'http://localhost:9001/api/v1/tags',
+      {
+        method: 'POST',
+      }
+    );
+
     mockTags.respond(tagsResponseEmpty);
     mockEntries.respond(entriesResponseEmpty);
     mockTagPostResponse.respond(tagsPostResponse);
