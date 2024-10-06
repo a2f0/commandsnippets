@@ -22,7 +22,7 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
     expect(mockEntries).toBeRequestedTimes(0);
     expect(mockTags).toBeRequestedTimes(1);
-    mockEntries.restore();
-    mockTags.restore();
+    await mockEntries.restore();
+    await mockTags.restore();
   });
 });

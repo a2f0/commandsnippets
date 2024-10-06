@@ -93,9 +93,9 @@ describe('Entry Main Menu', () => {
 
     await expect(BasePage.entryNewTop).not.toBeExisting();
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(5);
-    mockEntriesGetList.restore();
-    mockEntryPostResponse.restore();
-    mocktagTextEntryThroughModelsResponse.restore();
-    mockTags.restore();
+    await mockEntriesGetList.restore();
+    await mockEntryPostResponse.restore();
+    await mocktagTextEntryThroughModelsResponse.restore();
+    await mockTags.restore();
   });
 });

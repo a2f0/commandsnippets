@@ -28,8 +28,8 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await browser.keys('Escape');
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
-    mockEntries.restore();
-    mockTags.restore();
+    await mockEntries.restore();
+    await mockTags.restore();
   });
 
   it('should have a working editor', async () => {
@@ -121,8 +121,8 @@ describe('TagsEntries Behavior', () => {
     await browser.keys('Enter');
     await expect(BasePage.textEntryEdit1).not.toBeDisplayed();
     await expect(mockEntriesPatch).toBeRequestedTimes(1);
-    mockEntriesPatch.restore();
-    mockEntries.restore();
-    mockTags.restore();
+    await mockEntriesPatch.restore();
+    await mockEntries.restore();
+    await mockTags.restore();
   });
 });

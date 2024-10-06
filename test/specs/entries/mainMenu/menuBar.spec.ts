@@ -25,7 +25,7 @@ describe('Entry Main Menu', () => {
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
     await (await BasePage.entriesMenuButton).waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
-    mockEntriesResponse.restore();
-    mockTags.restore();
+    await mockEntriesResponse.restore();
+    await mockTags.restore();
   });
 });

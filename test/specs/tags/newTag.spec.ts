@@ -55,8 +55,8 @@ describe('Tag List Context Menu Behavior', () => {
     expect(mockTagPostResponse).toBeRequestedTimes(1);
     await expect(BasePage.tags).toBeElementsArrayOfSize(1);
     await expect(BasePage.tagNewBottom).not.toBeDisplayed();
-    mockTagPostResponse.restore();
-    mockTags.restore();
-    mockEntries.restore();
+    await mockTagPostResponse.restore();
+    await mockTags.restore();
+    await mockEntries.restore();
   });
 });

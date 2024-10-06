@@ -84,8 +84,8 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.textEntryEdit1Body).toHaveValue(
       'entry-1-body\nBody Line 2\nBody Line 3'
     );
-    mockEntryPostResponse.restore();
-    mockEntriesGetList.restore();
-    mockTags.restore();
+    await mockEntryPostResponse.restore();
+    await mockEntriesGetList.restore();
+    await mockTags.restore();
   });
 });
