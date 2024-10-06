@@ -120,8 +120,13 @@ export const config: WebdriverIO.Config = {
       true
     );
   },
-  afterTest: async function (test) {
+  afterTest: async function (
+    test,
+    context,
+    {error, result, duration, passed, retries}
+  ) {
     if (browser.currentTestErrors.length > 0) {
+      passed = false;
       console.error(
         `Test "${test.title}" encountered ${browser.currentTestErrors.length} browser console errors:`
       );
@@ -134,5 +139,6 @@ export const config: WebdriverIO.Config = {
         `Test failed due to ${errorLength} browser console errors`
       );
     }
+    return {error, result, duration, passed, retries};
   },
 };
