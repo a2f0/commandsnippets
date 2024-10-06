@@ -77,7 +77,6 @@ export const config: WebdriverIO.Config = {
   before: async (capabilities: typeof browser, specs, browser: any) => {
     // Initialize currentTestErrors as a property of the browser object
     browser.currentTestErrors = [];
-    await browser.mockRestoreAll();
 
     await browser.sessionSubscribe({events: ['log.entryAdded']});
 
@@ -119,5 +118,8 @@ export const config: WebdriverIO.Config = {
       },
       true
     );
+  },
+  afterTest: async function () {
+    await browser.mockRestoreAll();
   },
 };

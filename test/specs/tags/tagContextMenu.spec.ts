@@ -102,9 +102,6 @@ describe('Tag Context Menu', () => {
     await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeDisplayed();
     expect(mockTagDelete).toBeRequestedTimes(1);
     await expect(BasePage.tags).toBeElementsArrayOfSize(3);
-    await mockEntries.restore();
-    await mockTags.restore();
-    await mockTagDelete.restore();
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

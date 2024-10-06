@@ -43,8 +43,6 @@ describe('Entries Context Menu Delete Entry', () => {
     await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1Delete).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1Untag).not.toBeDisplayed();
-    await mockEntries.restore();
-    await mockTags.restore();
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

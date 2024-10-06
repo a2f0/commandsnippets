@@ -41,8 +41,6 @@ describe('TagsEntries Behavior', () => {
     await browser.keys('Escape');
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeFocused();
-    await mockEntries.restore();
-    await mockTags.restore();
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

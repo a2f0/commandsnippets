@@ -163,10 +163,6 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewBottomBody).toBeFocused();
     await browser.keys('Tab');
     await expect(BasePage.entryNewBottomSave).toBeFocused();
-    await mockEntryPostResponse.restore();
-    await mockEntriesGetList.restore();
-    await mockTags.restore();
-    await mocktagTextEntryThroughModelsResponse.restore();
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

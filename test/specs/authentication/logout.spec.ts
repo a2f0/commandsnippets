@@ -55,9 +55,6 @@ describe('Logged Out User Behavior', () => {
     await expect(BasePage.tagListContextMenu).not.toBeExisting();
     await expect(BasePage.entryListContextMenu).not.toBeExisting();
 
-    await mockLogoutResponse.restore();
-    await mockEntriesResponse.restore();
-    await mockTags.restore();
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
