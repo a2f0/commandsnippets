@@ -8,36 +8,29 @@ describe('Entry Main Menu', () => {
   it('should having a working new entry from the file menu', async () => {
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
+    mockEntryPostResponse.respond(entryPostResponse);
     const mockEntriesGetList = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
+    mockEntriesGetList.respond(entriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
+    mockTags.respond(tagsResponse);
 
     const mocktagTextEntryThroughModelsResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
-    mockTags.respond(tagsResponse);
-    mockEntryPostResponse.respond(entryPostResponse);
-    mockEntriesGetList.respond(entriesResponse);
-
     mocktagTextEntryThroughModelsResponse.respond(
       tagTextEntryThroughModelsResponse
     );
+
     await BasePage.open('');
 
     await expect(BasePage.fileMenu).toBeExisting();

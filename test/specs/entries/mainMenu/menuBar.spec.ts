@@ -8,14 +8,14 @@ describe('Entry Main Menu', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
+    mockEntriesResponse.respond(entriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
     mockTags.respond(tagsResponse);
-    mockEntriesResponse.respond(entriesResponse);
+
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();

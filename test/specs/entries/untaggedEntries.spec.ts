@@ -6,18 +6,16 @@ describe('Entry Main Menu Behavior', () => {
   it('should having a working context menu to create new entries', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
+    mockEntries.respond(entriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
     mockTags.respond(tagsResponse);
-    mockEntries.respond(entriesResponse);
+
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);

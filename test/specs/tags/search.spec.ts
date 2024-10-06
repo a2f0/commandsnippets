@@ -8,11 +8,13 @@ describe('Tag Search Menu Behavior', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
+    mockEntries.respond(entriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**'
     );
     mockTags.respond(tagsResponse);
-    mockEntries.respond(entriesResponse);
+
     await BasePage.open('');
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeExisting();

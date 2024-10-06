@@ -7,18 +7,16 @@ describe('TagsEntries Behavior', () => {
   it('should list entries', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
+    mockEntries.respond(entriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
     mockTags.respond(tags);
-    mockEntries.respond(entriesResponse);
+
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();

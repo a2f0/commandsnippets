@@ -7,26 +7,22 @@ describe('Tab Switching Behavior', () => {
   it('should allow tab switching while editing', async () => {
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
+    mockEntryPostResponse.respond(entryPostResponse);
+
     const mockEntriesGetList = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
+    mockEntriesGetList.respond(entriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
-
     mockTags.respond(tagsResponse);
-    mockEntryPostResponse.respond(entryPostResponse);
-    mockEntriesGetList.respond(entriesResponse);
+
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(mockEntriesGetList).toBeRequestedTimes(1);

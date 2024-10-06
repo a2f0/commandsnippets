@@ -9,20 +9,20 @@ describe('Logged Out User Behavior', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
+    mockEntriesResponse.respond(entriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
+    mockTags.respond(tagsResponse);
 
     const mockLogoutResponse = await browser.mock(
       'http://localhost:9001/api-token-deauth**',
       {method: 'POST'}
     );
-    mockTags.respond(tagsResponse);
-    mockEntriesResponse.respond(entriesResponse);
     mockLogoutResponse.respond(logoutResponse);
+
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view

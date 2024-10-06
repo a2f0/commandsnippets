@@ -7,11 +7,13 @@ describe('TagsEntries Behavior', () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**'
     );
+    mockEntries.respond(textEntriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**'
     );
     mockTags.respond(tags);
-    mockEntries.respond(textEntriesResponse);
+
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
