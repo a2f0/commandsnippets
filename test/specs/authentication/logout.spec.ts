@@ -5,7 +5,7 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Logged Out User Behavior', () => {
   it('should have different context menus for logged out users', async () => {
-    const mostEntriesResponse = await browser.mock(
+    const mockEntriesResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
@@ -21,7 +21,7 @@ describe('Logged Out User Behavior', () => {
       {method: 'POST'}
     );
     mockTags.respond(tagsResponse);
-    mostEntriesResponse.respond(entriesResponse);
+    mockEntriesResponse.respond(entriesResponse);
     mockLogoutResponse.respond(logoutResponse);
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
@@ -54,5 +54,9 @@ describe('Logged Out User Behavior', () => {
     await expect(BasePage.fileMenuButton).not.toBeDisplayed();
     await expect(BasePage.tagListContextMenu).not.toBeExisting();
     await expect(BasePage.entryListContextMenu).not.toBeExisting();
+
+    await mockLogoutResponse.restore();
+    await mockEntriesResponse.restore();
+    await mockTags.restore();
   });
 });

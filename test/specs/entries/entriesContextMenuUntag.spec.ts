@@ -43,8 +43,8 @@ describe('Entries Context Menu Untag', () => {
     await expect(mockTagsEntries).toBeRequestedTimes(1);
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(3);
-    mockTagsEntries.restore();
-    mockTags.restore();
-    mockEntries.restore();
+    await mockTagsEntries.restore();
+    await mockTags.restore();
+    await mockEntries.restore();
   });
 });

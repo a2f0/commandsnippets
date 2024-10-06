@@ -34,7 +34,7 @@ describe('Entry Main Menu Behavior', () => {
     );
     await expect(mockEntries).toBeRequestedTimes(2);
     await expect(mockTags).toBeRequestedTimes(1);
-    mockEntries.restore();
-    mockTags.restore();
+    await mockEntries.restore();
+    await mockTags.restore();
   });
 });

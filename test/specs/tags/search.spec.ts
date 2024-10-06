@@ -27,7 +27,7 @@ describe('Tag Search Menu Behavior', () => {
     await browser.keys('Escape');
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toHaveValue('');
-    mockEntries.restore();
-    mockTags.restore();
+    await mockEntries.restore();
+    await mockTags.restore();
   });
 });
