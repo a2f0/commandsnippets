@@ -8,11 +8,13 @@ describe('Tag List Context Menu Behavior', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
+    mockEntries.respond(entriesResponseEmpty);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**'
     );
     mockTags.respond(tagsResponseEmpty);
-    mockEntries.respond(entriesResponseEmpty);
+
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
