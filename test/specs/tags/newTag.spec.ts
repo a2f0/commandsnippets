@@ -9,12 +9,8 @@ describe('Tag List Context Menu Behavior', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1**',
       {method: 'GET'}
     );
-    const mockTagPostResponse = await browser.mock(
-      'http://localhost:9001/api/v1/tags',
-      {
-        method: 'POST',
-      }
-    );
+    mockEntries.respond(entriesResponseEmpty);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
       {
@@ -22,8 +18,15 @@ describe('Tag List Context Menu Behavior', () => {
       }
     );
     mockTags.respond(tagsResponseEmpty);
-    mockEntries.respond(entriesResponseEmpty);
+
+    const mockTagPostResponse = await browser.mock(
+      'http://localhost:9001/api/v1/tags',
+      {
+        method: 'POST',
+      }
+    );
     mockTagPostResponse.respond(tagsPostResponse);
+
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();

@@ -6,25 +6,22 @@ describe('Entries Context Menu Untag', () => {
   it('should untag', async () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
+    mockEntries.respond(entriesResponse);
+
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      {method: 'GET'}
     );
+    mockTags.respond(tags);
+
     const mockTagsEntries = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries/1',
-      {
-        method: 'DELETE',
-      }
+      {method: 'DELETE'}
     );
     mockTagsEntries.respond(tags, {statusCode: 204});
-    mockTags.respond(tags);
-    mockEntries.respond(entriesResponse);
+
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
