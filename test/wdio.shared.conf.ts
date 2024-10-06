@@ -82,6 +82,7 @@ export const config: WebdriverIO.Config = {
 
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
       if (logEntry.level === 'error') {
+        console.info(JSON.stringify(logEntry, null, '  '));
         browser.currentTestErrors.push(logEntry);
       }
     });
