@@ -9,19 +9,19 @@ describe('TagsEntries Behavior', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
-    mockEntries.respond(entriesResponse);
+    mockEntries.respond(entriesResponse, {statusCode: 200});
 
     const mockEntriesPatch = await browser.mock(
       'http://localhost:9001/api/v1/entries/1',
       {method: 'PATCH'}
     );
-    mockEntriesPatch.respond(entriesPatchResponse);
+    mockEntriesPatch.respond(entriesPatchResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    mockTags.respond(tags);
+    mockTags.respond(tags, {statusCode: 200});
 
     await BasePage.open('test/test-tag-1');
 

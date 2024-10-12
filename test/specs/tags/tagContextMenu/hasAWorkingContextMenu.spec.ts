@@ -14,8 +14,8 @@ describe('Tag Context Menu', () => {
         method: 'GET',
       }
     );
-    mockTags.respond(tagsResponse);
-    mockEntries.respond(entriesResponse);
+    mockTags.respond(tagsResponse, {statusCode: 200});
+    mockEntries.respond(entriesResponse, {statusCode: 200});
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();

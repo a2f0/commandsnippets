@@ -9,19 +9,19 @@ describe('Tag List Context Menu Behavior', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
-    mockEntries.respond(entriesResponseEmpty);
+    mockEntries.respond(entriesResponseEmpty, {statusCode: 200});
 
     const mockTagPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags',
       {method: 'POST'}
     );
-    mockTagPostResponse.respond(tagsPostResponse);
+    mockTagPostResponse.respond(tagsPostResponse, {statusCode: 201});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    mockTags.respond(tagsResponseEmpty);
+    mockTags.respond(tagsResponseEmpty, {statusCode: 200});
 
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();

@@ -8,13 +8,13 @@ describe('Entry Main Menu', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
-    mockEntriesResponse.respond(entriesResponse);
+    mockEntriesResponse.respond(entriesResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    mockTags.respond(tagsResponse);
+    mockTags.respond(tagsResponse, {statusCode: 200});
 
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();

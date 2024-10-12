@@ -9,7 +9,7 @@ describe('Tag Context Menu', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
-    mockEntries.respond(entriesResponse);
+    mockEntries.respond(entriesResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',
@@ -17,7 +17,7 @@ describe('Tag Context Menu', () => {
         method: 'GET',
       }
     );
-    mockTags.respond(tagsResponse);
+    mockTags.respond(tagsResponse, {statusCode: 200});
 
     const mockTagDelete = await browser.mock(
       'http://localhost:9001/api/v1/tags/1',
@@ -25,7 +25,7 @@ describe('Tag Context Menu', () => {
         method: 'DELETE',
       }
     );
-    mockTagDelete.respond(tagsDeleteResponse);
+    mockTagDelete.respond(tagsDeleteResponse, {statusCode: 204});
 
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();

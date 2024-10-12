@@ -8,13 +8,13 @@ describe('Entries Context Menu Untag', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
-    mockEntries.respond(entriesResponse);
+    mockEntries.respond(entriesResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    mockTags.respond(tags);
+    mockTags.respond(tags, {statusCode: 200});
 
     const mockTagsEntries = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries/1',

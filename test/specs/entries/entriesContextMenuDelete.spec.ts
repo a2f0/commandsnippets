@@ -8,13 +8,13 @@ describe('Entries Context Menu Delete Entry', () => {
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
-    mockEntries.respond(entriesResponse);
+    mockEntries.respond(entriesResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    mockTags.respond(tags);
+    mockTags.respond(tags, {statusCode: 200});
 
     await BasePage.open('test/test-tag-1');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

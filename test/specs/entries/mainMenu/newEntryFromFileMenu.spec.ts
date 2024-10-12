@@ -10,25 +10,26 @@ describe('Entry Main Menu', () => {
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
     );
-    mockEntryPostResponse.respond(entryPostResponse);
+    mockEntryPostResponse.respond(entryPostResponse, {statusCode: 201});
     const mockEntriesGetList = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
-    mockEntriesGetList.respond(entriesResponse);
+    mockEntriesGetList.respond(entriesResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    mockTags.respond(tagsResponse);
+    mockTags.respond(tagsResponse, {statusCode: 200});
 
     const mocktagTextEntryThroughModelsResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries',
       {method: 'POST'}
     );
     mocktagTextEntryThroughModelsResponse.respond(
-      tagTextEntryThroughModelsResponse
+      tagTextEntryThroughModelsResponse,
+      {statusCode: 201}
     );
 
     await BasePage.open('');
