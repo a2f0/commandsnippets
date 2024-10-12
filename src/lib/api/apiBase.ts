@@ -2,22 +2,19 @@ import axios from 'axios';
 
 import {environment} from '../environment';
 
-export const baseHTTPURL = () => {
-  if (environment === 'staging') {
-    return 'https://api-staging.tearleads.com';
-  } else if (environment === 'production') {
-    return 'https://api.tearleads.com';
-  } else {
-    return 'http://localhost:9001';
-  }
-};
+export let baseHTTPURL: string;
+if (environment === 'staging') {
+  baseHTTPURL = 'https://api-staging.tearleads.com';
+} else if (environment === 'production') {
+  baseHTTPURL = 'https://api.tearleads.com';
+} else {
+  baseHTTPURL = 'http://localhost:9001';
+}
 
-const baseAPIURL = () => {
-  return baseHTTPURL() + '/api/v1';
-};
+const baseURL = baseHTTPURL + '/api/v1';
 
 const apiBase = axios.create({
-  baseURL: baseAPIURL(),
+  baseURL,
   responseType: 'json',
   headers: {
     'Content-Type': 'application/vnd.api+json',
