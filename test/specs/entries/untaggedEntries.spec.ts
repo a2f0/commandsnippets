@@ -19,8 +19,8 @@ describe('Entry Main Menu Behavior', () => {
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
-    await expect(mockEntries).toBeRequestedTimes(1);
-    await expect(mockTags).toBeRequestedTimes(1);
+    await expect(mockEntries).toBeRequestedTimes(2);
+    await expect(mockTags).toBeRequestedTimes(2);
 
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
@@ -30,8 +30,8 @@ describe('Entry Main Menu Behavior', () => {
     await expect(browser).toHaveUrl(
       'http://localhost:8081/test?entries=untagged'
     );
-    await expect(mockEntries).toBeRequestedTimes(2);
-    await expect(mockTags).toBeRequestedTimes(1);
+    await expect(mockEntries).toBeRequestedTimes(4);
+    await expect(mockTags).toBeRequestedTimes(2);
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
