@@ -21,12 +21,4 @@ const apiBase = axios.create({
   },
 });
 
-apiBase.interceptors.response.use(
-  response => response,
-  error => {
-    console.error(error);
-    throw error;
-  }
-);
-
 export default apiBase;
