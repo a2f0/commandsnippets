@@ -5,12 +5,12 @@ import {BasePage} from '../../pageobjects/base';
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**'
+      'http://localhost:9001/api/v1/entries?page[number]=1*'
     );
     mockEntries.respond(textEntriesResponse);
 
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**'
+      'http://localhost:9001/api/v1/tags?page[number]=1*'
     );
     mockTags.respond(tags);
 

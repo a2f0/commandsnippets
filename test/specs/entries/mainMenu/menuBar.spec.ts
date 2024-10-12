@@ -5,13 +5,13 @@ import {BasePage} from '../../../pageobjects/base';
 describe('Entry Main Menu', () => {
   it('should having a working menu bar', async () => {
     const mockEntriesResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
     mockEntriesResponse.respond(entriesResponse);
 
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
     mockTags.respond(tagsResponse);

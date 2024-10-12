@@ -6,7 +6,7 @@ import {BasePage} from '../../../pageobjects/base';
 describe('TagsEntries Behavior', () => {
   it('has a working editor', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
     mockEntries.respond(entriesResponse);

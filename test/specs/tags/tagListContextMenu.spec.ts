@@ -5,13 +5,13 @@ import {BasePage} from '../../pageobjects/base';
 describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
     mockEntries.respond(entriesResponseEmpty);
 
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**'
+      'http://localhost:9001/api/v1/tags?page[number]=1*'
     );
     mockTags.respond(tagsResponseEmpty);
 

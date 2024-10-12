@@ -5,13 +5,13 @@ import {BasePage} from '../../pageobjects/base';
 describe('Entries Context Menu Delete Entry', () => {
   it('Should allow delete entries from untagged entries', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
     mockEntries.respond(entriesResponse);
 
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
     mockTags.respond(tags);

@@ -13,13 +13,13 @@ describe('Entry Main Menu Behavior', () => {
     mockEntryPostResponse.respond(entryPostResponse);
 
     const mockEntriesGetList = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
     mockEntriesGetList.respond(entriesResponseEmpty);
 
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
     mockTags.respond(tagsResponse);

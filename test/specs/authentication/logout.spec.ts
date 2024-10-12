@@ -6,19 +6,19 @@ import {BasePage} from '../../pageobjects/base';
 describe('Logged Out User Behavior', () => {
   it('should have different context menus for logged out users', async () => {
     const mockEntriesResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
     mockEntriesResponse.respond(entriesResponse);
 
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
     mockTags.respond(tagsResponse);
 
     const mockLogoutResponse = await browser.mock(
-      'http://localhost:9001/api-token-deauth**',
+      'http://localhost:9001/api-token-deauth*',
       {method: 'POST'}
     );
     mockLogoutResponse.respond(logoutResponse);
