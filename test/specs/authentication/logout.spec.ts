@@ -5,24 +5,24 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Logged Out User Behavior', () => {
   it('should have different context menus for logged out users', async () => {
-    const mostEntriesResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+    const mockEntriesResponse = await browser.mock(
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
-    );
+    mockEntriesResponse.respond(entriesResponse);
 
-    const mockLogoutResponse = await browser.mock(
-      'http://localhost:9001/api-token-deauth**',
-      {method: 'POST'}
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
+      {method: 'GET'}
     );
     mockTags.respond(tagsResponse);
-    mostEntriesResponse.respond(entriesResponse);
+
+    const mockLogoutResponse = await browser.mock(
+      'http://localhost:9001/api-token-deauth*',
+      {method: 'POST'}
+    );
     mockLogoutResponse.respond(logoutResponse);
+
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view
@@ -54,5 +54,7 @@ describe('Logged Out User Behavior', () => {
     await expect(BasePage.fileMenuButton).not.toBeDisplayed();
     await expect(BasePage.tagListContextMenu).not.toBeExisting();
     await expect(BasePage.entryListContextMenu).not.toBeExisting();
+
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

@@ -8,35 +8,31 @@ describe('Entry Main Menu Behavior', () => {
   it('should having a working context menu to create new entries', async () => {
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
+    mockEntryPostResponse.respond(entryPostResponse, {statusCode: 201});
+
     const mockEntriesGetList = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
+      {method: 'GET'}
     );
+    mockEntriesGetList.respond(entriesResponseEmpty, {statusCode: 200});
+
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
+      {method: 'GET'}
     );
+    mockTags.respond(tagsResponse, {statusCode: 200});
+
     const mocktagTextEntryThroughModelsResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
-    mockTags.respond(tagsResponse);
-    mockEntryPostResponse.respond(entryPostResponse);
-    mockEntriesGetList.respond(entriesResponseEmpty);
-
     mocktagTextEntryThroughModelsResponse.respond(
-      tagTextEntryThroughModelsResponse
+      tagTextEntryThroughModelsResponse,
+      {statusCode: 201}
     );
+
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.entryListContextMenu).not.toBeDisplayed();
@@ -163,9 +159,6 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryNewBottomBody).toBeFocused();
     await browser.keys('Tab');
     await expect(BasePage.entryNewBottomSave).toBeFocused();
-    mockEntryPostResponse.restore();
-    mockEntriesGetList.restore();
-    mockTags.restore();
-    mocktagTextEntryThroughModelsResponse.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

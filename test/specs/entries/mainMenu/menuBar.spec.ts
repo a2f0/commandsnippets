@@ -5,17 +5,17 @@ import {BasePage} from '../../../pageobjects/base';
 describe('Entry Main Menu', () => {
   it('should having a working menu bar', async () => {
     const mockEntriesResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
+    mockEntriesResponse.respond(entriesResponse, {statusCode: 200});
+
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
+      {method: 'GET'}
     );
-    mockTags.respond(tagsResponse);
-    mockEntriesResponse.respond(entriesResponse);
+    mockTags.respond(tagsResponse, {statusCode: 200});
+
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
@@ -25,7 +25,6 @@ describe('Entry Main Menu', () => {
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
     await (await BasePage.entriesMenuButton).waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
-    mockEntriesResponse.restore();
-    mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

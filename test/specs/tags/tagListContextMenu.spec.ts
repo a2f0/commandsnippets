@@ -5,14 +5,17 @@ import {BasePage} from '../../pageobjects/base';
 describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
+    mockEntries.respond(entriesResponseEmpty, {statusCode: 200});
+
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**'
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
+      {method: 'GET'}
     );
-    mockTags.respond(tagsResponseEmpty);
-    mockEntries.respond(entriesResponseEmpty);
+    mockTags.respond(tagsResponseEmpty, {statusCode: 200});
+
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
@@ -22,7 +25,6 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
     expect(mockEntries).toBeRequestedTimes(0);
     expect(mockTags).toBeRequestedTimes(1);
-    mockEntries.restore();
-    mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

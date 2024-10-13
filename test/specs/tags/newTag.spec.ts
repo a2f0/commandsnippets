@@ -6,24 +6,23 @@ import {BasePage} from '../../pageobjects/base';
 describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
+    mockEntries.respond(entriesResponseEmpty, {statusCode: 200});
+
     const mockTagPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
+    mockTagPostResponse.respond(tagsPostResponse, {statusCode: 201});
+
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
+      {method: 'GET'}
     );
-    mockTags.respond(tagsResponseEmpty);
-    mockEntries.respond(entriesResponseEmpty);
-    mockTagPostResponse.respond(tagsPostResponse);
+    mockTags.respond(tagsResponseEmpty, {statusCode: 200});
+
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
@@ -55,8 +54,6 @@ describe('Tag List Context Menu Behavior', () => {
     expect(mockTagPostResponse).toBeRequestedTimes(1);
     await expect(BasePage.tags).toBeElementsArrayOfSize(1);
     await expect(BasePage.tagNewBottom).not.toBeDisplayed();
-    mockTagPostResponse.restore();
-    mockTags.restore();
-    mockEntries.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

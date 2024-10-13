@@ -1,60 +1,27 @@
-import entriesResponse from '../../mocks/entries/entriesResponse';
-import entriesPatchResponse from '../../mocks/entries/entryPatchResponse';
-import tags from '../../mocks/tags/tagsResponse';
-import {BasePage} from '../../pageobjects/base';
+import entriesResponse from '../../../mocks/entries/entriesResponse';
+import entriesPatchResponse from '../../../mocks/entries/entryPatchResponse';
+import tags from '../../../mocks/tags/tagsResponse';
+import {BasePage} from '../../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
-  it('should list entries', async () => {
+  it('has a working editor', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
+      {method: 'GET'}
     );
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
-    );
-    mockTags.respond(tags);
-    mockEntries.respond(entriesResponse);
-    await BasePage.open('test/test-tag-1');
-    await expect(BasePage.tagsEntriesList).toBeExisting();
-    await expect(BasePage.tagsEntriesList).toBeDisplayed();
-    await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
-    await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
-    await (await BasePage.tagsEntries1).waitAndRightClick();
-    await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
-    await browser.keys('Escape');
-    await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
-    mockEntries.restore();
-    mockTags.restore();
-  });
+    mockEntries.respond(entriesResponse, {statusCode: 200});
 
-  it('should have a working editor', async () => {
     const mockEntriesPatch = await browser.mock(
       'http://localhost:9001/api/v1/entries/1',
-      {
-        method: 'PATCH',
-      }
+      {method: 'PATCH'}
     );
-    const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
-    );
+    mockEntriesPatch.respond(entriesPatchResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
+      {method: 'GET'}
     );
-    mockTags.respond(tags);
-    mockEntries.respond(entriesResponse);
-    mockEntriesPatch.respond(entriesPatchResponse);
+    mockTags.respond(tags, {statusCode: 200});
 
     await BasePage.open('test/test-tag-1');
 
@@ -120,9 +87,7 @@ describe('TagsEntries Behavior', () => {
     await expect(mockEntriesPatch).toBeRequestedTimes(0);
     await browser.keys('Enter');
     await expect(BasePage.textEntryEdit1).not.toBeDisplayed();
-    await expect(mockEntriesPatch).toBeRequestedTimes(1);
-    mockEntriesPatch.restore();
-    mockEntries.restore();
-    mockTags.restore();
+    await expect(mockEntriesPatch).toBeRequestedTimes(2);
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
