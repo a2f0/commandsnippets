@@ -5,14 +5,16 @@ import {BasePage} from '../../pageobjects/base';
 describe('Tag Main Menu', () => {
   it('should having a working menu bar', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
     );
+    mockEntries.respond(entriesResponse, {statusCode: 200});
+
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**'
+      'http://localhost:9001/api/v1/tags?page[number]=1*'
     );
-    mockTags.respond(tagsResponse);
-    mockEntries.respond(entriesResponse);
+    mockTags.respond(tagsResponse, {statusCode: 200});
+
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
@@ -116,7 +118,6 @@ describe('Tag Main Menu', () => {
         .value
     ).toBe('rgba(72,72,72,1)');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-    await mockEntries.restore();
-    await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

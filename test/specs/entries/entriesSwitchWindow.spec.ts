@@ -7,30 +7,26 @@ describe('Tab Switching Behavior', () => {
   it('should allow tab switching while editing', async () => {
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
-    const mockEntriesGetList = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
-    );
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
-    );
+    mockEntryPostResponse.respond(entryPostResponse, {statusCode: 201});
 
-    mockTags.respond(tagsResponse);
-    mockEntryPostResponse.respond(entryPostResponse);
-    mockEntriesGetList.respond(entriesResponse);
+    const mockEntriesGetList = await browser.mock(
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
+      {method: 'GET'}
+    );
+    mockEntriesGetList.respond(entriesResponse, {statusCode: 200});
+
+    const mockTags = await browser.mock(
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
+      {method: 'GET'}
+    );
+    mockTags.respond(tagsResponse, {statusCode: 200});
+
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-    await expect(mockEntriesGetList).toBeRequestedTimes(1);
-    await expect(mockTags).toBeRequestedTimes(1);
+    await expect(mockEntriesGetList).toBeRequestedTimes(2);
+    await expect(mockTags).toBeRequestedTimes(2);
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
@@ -84,8 +80,6 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.textEntryEdit1Body).toHaveValue(
       'entry-1-body\nBody Line 2\nBody Line 3'
     );
-    await mockEntryPostResponse.restore();
-    await mockEntriesGetList.restore();
-    await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

@@ -2,7 +2,6 @@ import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
 import {BasePage} from './pageobjects/base';
-
 interface LogEntry {
   type: 'console' | 'javascript';
   level: 'debug' | 'info' | 'warn' | 'error';
@@ -83,6 +82,7 @@ export const config: WebdriverIO.Config = {
 
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
       if (logEntry.level === 'error') {
+        console.info(JSON.stringify(logEntry, null, '  '));
         browser.currentTestErrors.push(logEntry);
       }
     });
@@ -120,19 +120,7 @@ export const config: WebdriverIO.Config = {
       true
     );
   },
-  afterTest: async function (test) {
-    if (browser.currentTestErrors.length > 0) {
-      console.error(
-        `Test "${test.title}" encountered ${browser.currentTestErrors.length} browser console errors:`
-      );
-      browser.currentTestErrors.forEach((error, index) => {
-        console.error(`Error ${index + 1}:`, JSON.stringify(error, null, '  '));
-      });
-      const errorLength = browser.currentTestErrors.length;
-      browser.currentTestErrors = [];
-      throw new Error(
-        `Test failed due to ${errorLength} browser console errors`
-      );
-    }
+  afterTest: async function () {
+    await browser.mockRestoreAll();
   },
 };

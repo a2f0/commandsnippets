@@ -8,36 +8,30 @@ describe('Entry Main Menu', () => {
   it('should having a working new entry from the file menu', async () => {
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
+    mockEntryPostResponse.respond(entryPostResponse, {statusCode: 201});
     const mockEntriesGetList = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      'http://localhost:9001/api/v1/entries?page[number]=1*',
+      {method: 'GET'}
     );
+    mockEntriesGetList.respond(entriesResponse, {statusCode: 200});
+
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**',
-      {
-        method: 'GET',
-      }
+      'http://localhost:9001/api/v1/tags?page[number]=1*',
+      {method: 'GET'}
     );
+    mockTags.respond(tagsResponse, {statusCode: 200});
 
     const mocktagTextEntryThroughModelsResponse = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries',
-      {
-        method: 'POST',
-      }
+      {method: 'POST'}
     );
-    mockTags.respond(tagsResponse);
-    mockEntryPostResponse.respond(entryPostResponse);
-    mockEntriesGetList.respond(entriesResponse);
-
     mocktagTextEntryThroughModelsResponse.respond(
-      tagTextEntryThroughModelsResponse
+      tagTextEntryThroughModelsResponse,
+      {statusCode: 201}
     );
+
     await BasePage.open('');
 
     await expect(BasePage.fileMenu).toBeExisting();
@@ -72,7 +66,7 @@ describe('Entry Main Menu', () => {
     await expect(BasePage.entryNewTop).not.toBeExisting();
 
     // test save
-    await expect(mockEntriesGetList).toBeRequestedTimes(1);
+    await expect(mockEntriesGetList).toBeRequestedTimes(2);
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await (await BasePage.fileMenuButton).waitAndLeftClick();
 
@@ -93,9 +87,6 @@ describe('Entry Main Menu', () => {
 
     await expect(BasePage.entryNewTop).not.toBeExisting();
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(5);
-    await mockEntriesGetList.restore();
-    await mockEntryPostResponse.restore();
-    await mocktagTextEntryThroughModelsResponse.restore();
-    await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

@@ -15,7 +15,7 @@ const Logout = function ({onClose}: IProps) {
   const appConfig = useAppContext();
 
   const handleLogout = () => {
-    const base_url = baseHTTPURL();
+    const base_url = baseHTTPURL;
     const logout_api = axios.create({
       baseURL: base_url,
       responseType: 'json',

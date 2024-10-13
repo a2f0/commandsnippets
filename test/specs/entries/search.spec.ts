@@ -5,13 +5,15 @@ import {BasePage} from '../../pageobjects/base';
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {
     const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1**'
+      'http://localhost:9001/api/v1/entries?page[number]=1*'
     );
+    mockEntries.respond(textEntriesResponse, {statusCode: 200});
+
     const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1**'
+      'http://localhost:9001/api/v1/tags?page[number]=1*'
     );
-    mockTags.respond(tags);
-    mockEntries.respond(textEntriesResponse);
+    mockTags.respond(tags, {statusCode: 200});
+
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
@@ -41,7 +43,6 @@ describe('TagsEntries Behavior', () => {
     await browser.keys('Escape');
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeFocused();
-    await mockEntries.restore();
-    await mockTags.restore();
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
