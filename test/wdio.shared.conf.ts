@@ -88,6 +88,7 @@ export const config: WebdriverIO.Config = {
     });
 
     await BasePage.open('');
+    expect(browser).toHaveUrl('http://localhost:8081');
     const appState = {
       ...defaultState,
       loggedInUser: 'test',

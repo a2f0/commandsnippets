@@ -1,17 +1,19 @@
 import {AxiosResponse} from 'axios';
 import axios from 'axios';
+import {applySnapshot} from 'mobx-state-tree';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
 import {baseHTTPURL} from '../../../lib/api/apiBase';
 import {ILogoutJsonApiResponse} from '../../../lib/authentication';
+import {defaultState} from '../../../lib/shared';
 import StyledMenuItem from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
 }
 
-const Logout = function ({onClose}: IProps) {
+const Logout = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   const handleLogout = () => {
@@ -27,7 +29,7 @@ const Logout = function ({onClose}: IProps) {
     logout_api
       .post('/api-token-deauth/', {}, {withCredentials: true})
       .then((response: AxiosResponse<ILogoutJsonApiResponse>) => {
-        appConfig.setLoggedInUser(null);
+        applySnapshot(appConfig, defaultState);
         onClose();
         return response;
       });
