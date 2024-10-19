@@ -30,6 +30,7 @@ declare global {
     }
     interface Browser {
       currentTestErrors: LogEntry[];
+      logout: () => Promise<void>;
       login: () => Promise<void>;
     }
   }
@@ -81,15 +82,26 @@ export const config: WebdriverIO.Config = {
 
     await browser.sessionSubscribe({events: ['log.entryAdded']});
 
+    browser.addCommand('logout', async () => {
+      await browser.execute(
+        function (this: typeof browser, key: string, value: string) {
+          this.localStorage.setItem(key, value);
+        },
+        'mst-tearleads-test',
+        JSON.stringify(defaultState)
+      );
+      await browser.deleteCookies();
+    });
+
+    await BasePage.open('');
+    await browser.logout();
+
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
       if (logEntry.level === 'error') {
         console.info(JSON.stringify(logEntry, null, '  '));
         browser.currentTestErrors.push(logEntry);
       }
     });
-
-    await BasePage.open('');
-    expect(browser).toHaveUrl('http://localhost:8081');
     browser.addCommand(
       'waitAndRightClick',
       async function (this: WebdriverIO.Element) {
