@@ -13,7 +13,7 @@ describe('TagsEntries Behavior', () => {
       'http://localhost:9001/api/v1/tags?page[number]=1*'
     );
     mockTags.respond(tags, {statusCode: 200});
-
+    await browser.login();
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();

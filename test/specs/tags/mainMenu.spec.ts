@@ -14,7 +14,7 @@ describe('Tag Main Menu', () => {
       'http://localhost:9001/api/v1/tags?page[number]=1*'
     );
     mockTags.respond(tagsResponse, {statusCode: 200});
-
+    await browser.login();
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();

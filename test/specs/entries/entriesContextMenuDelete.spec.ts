@@ -15,7 +15,7 @@ describe('Entries Context Menu Delete Entry', () => {
       {method: 'GET'}
     );
     mockTags.respond(tags, {statusCode: 200});
-
+    await browser.login();
     await BasePage.open('test/test-tag-1');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);

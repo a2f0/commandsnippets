@@ -32,7 +32,7 @@ describe('Entry Main Menu Behavior', () => {
       tagTextEntryThroughModelsResponse,
       {statusCode: 201}
     );
-
+    await browser.login();
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.entryListContextMenu).not.toBeDisplayed();

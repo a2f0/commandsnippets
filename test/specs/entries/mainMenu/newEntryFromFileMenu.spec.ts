@@ -31,7 +31,7 @@ describe('Entry Main Menu', () => {
       tagTextEntryThroughModelsResponse,
       {statusCode: 201}
     );
-
+    await browser.login();
     await BasePage.open('');
 
     await expect(BasePage.fileMenu).toBeExisting();

@@ -22,7 +22,7 @@ describe('Logged Out User Behavior', () => {
       {method: 'POST'}
     );
     mockLogoutResponse.respond(logoutResponse);
-
+    await browser.login();
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view

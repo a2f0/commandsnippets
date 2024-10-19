@@ -30,6 +30,7 @@ declare global {
     }
     interface Browser {
       currentTestErrors: LogEntry[];
+      login: () => Promise<void>;
     }
   }
 }
@@ -89,21 +90,6 @@ export const config: WebdriverIO.Config = {
 
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081');
-    const appState = {
-      ...defaultState,
-      loggedInUser: 'test',
-    };
-    await browser.execute(
-      function (this: typeof browser, key: string, value: string) {
-        this.localStorage.setItem(key, value);
-      },
-      'mst-tearleads-test',
-      JSON.stringify(appState)
-    );
-    await browser.setCookies({
-      name: 'LoggedIn',
-      value: 'None',
-    });
     browser.addCommand(
       'waitAndRightClick',
       async function (this: WebdriverIO.Element) {
@@ -120,6 +106,23 @@ export const config: WebdriverIO.Config = {
       },
       true
     );
+    browser.addCommand('login', async () => {
+      const appState = {
+        ...defaultState,
+        loggedInUser: 'test',
+      };
+      await browser.execute(
+        function (this: typeof browser, key: string, value: string) {
+          this.localStorage.setItem(key, value);
+        },
+        'mst-tearleads-test',
+        JSON.stringify(appState)
+      );
+      await browser.setCookies({
+        name: 'LoggedIn',
+        value: 'None',
+      });
+    });
   },
   afterTest: async function () {
     await browser.mockRestoreAll();

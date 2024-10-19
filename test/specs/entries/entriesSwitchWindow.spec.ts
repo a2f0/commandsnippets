@@ -21,6 +21,7 @@ describe('Tab Switching Behavior', () => {
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
+    await browser.login();
     mockTags.respond(tagsResponse, {statusCode: 200});
 
     await BasePage.open('');

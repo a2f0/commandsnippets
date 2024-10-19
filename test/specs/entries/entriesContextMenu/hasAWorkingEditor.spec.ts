@@ -22,7 +22,7 @@ describe('TagsEntries Behavior', () => {
       {method: 'GET'}
     );
     mockTags.respond(tags, {statusCode: 200});
-
+    await browser.login();
     await BasePage.open('test/test-tag-1');
 
     await expect(BasePage.tagsEntriesList).toBeExisting();

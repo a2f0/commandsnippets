@@ -26,7 +26,7 @@ describe('Tag Context Menu', () => {
       }
     );
     mockTagDelete.respond(tagsDeleteResponse, {statusCode: 204});
-
+    await browser.login();
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
