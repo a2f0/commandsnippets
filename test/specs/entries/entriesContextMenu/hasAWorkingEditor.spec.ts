@@ -5,6 +5,9 @@ import {BasePage} from '../../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
   it('has a working editor', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
@@ -22,7 +25,7 @@ describe('TagsEntries Behavior', () => {
       {method: 'GET'}
     );
     mockTags.respond(tags, {statusCode: 200});
-    await expect(BasePage.tagLine).toBeDisplayed();
+
     await browser.login();
     await BasePage.open('test/test-tag-1');
 

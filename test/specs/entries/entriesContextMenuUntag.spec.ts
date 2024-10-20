@@ -4,6 +4,9 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Untag', () => {
   it('should untag', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
@@ -21,7 +24,6 @@ describe('Entries Context Menu Untag', () => {
       {method: 'DELETE'}
     );
     mockTagsEntries.respond(tags, {statusCode: 204});
-    await expect(BasePage.tagLine).toBeDisplayed();
     await browser.login();
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

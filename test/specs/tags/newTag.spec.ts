@@ -5,6 +5,8 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Tag List Context Menu Behavior', () => {
   it('tag should have a working context menu', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}

@@ -4,6 +4,9 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Delete Entry', () => {
   it('Should allow delete entries from untagged entries', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
@@ -15,7 +18,6 @@ describe('Entries Context Menu Delete Entry', () => {
       {method: 'GET'}
     );
     mockTags.respond(tags, {statusCode: 200});
-    await expect(BasePage.tagLine).toBeDisplayed();
     await browser.login();
     await BasePage.open('test/test-tag-1');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

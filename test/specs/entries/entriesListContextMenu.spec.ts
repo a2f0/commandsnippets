@@ -6,6 +6,8 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Entry Main Menu Behavior', () => {
   it('should having a working context menu to create new entries', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
@@ -33,7 +35,6 @@ describe('Entry Main Menu Behavior', () => {
       {statusCode: 201}
     );
     await browser.login();
-    await expect(BasePage.tagLine).toBeDisplayed();
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.entryListContextMenu).not.toBeDisplayed();

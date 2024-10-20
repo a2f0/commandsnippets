@@ -5,6 +5,9 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Logged Out User Behavior', () => {
   it('should have different context menus for logged out users', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
     const mockEntriesResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
@@ -23,7 +26,6 @@ describe('Logged Out User Behavior', () => {
     );
     mockLogoutResponse.respond(logoutResponse);
 
-    await expect(BasePage.tagLine).toBeDisplayed();
     await browser.login();
     await BasePage.open('');
 

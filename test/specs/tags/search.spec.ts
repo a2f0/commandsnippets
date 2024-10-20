@@ -4,6 +4,8 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Search Menu Behavior', () => {
   it('should have a functional search bar', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}

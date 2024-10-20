@@ -4,6 +4,9 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
   it('should list tags_entries', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*'
     );

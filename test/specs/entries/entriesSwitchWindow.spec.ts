@@ -5,6 +5,8 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Tab Switching Behavior', () => {
   it('should allow tab switching while editing', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
@@ -21,9 +23,9 @@ describe('Tab Switching Behavior', () => {
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    await browser.login();
-    await expect(BasePage.tagLine).toBeDisplayed();
     mockTags.respond(tagsResponse, {statusCode: 200});
+
+    await browser.login();
 
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

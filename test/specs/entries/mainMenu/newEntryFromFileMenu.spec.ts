@@ -6,6 +6,9 @@ import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
   it('should having a working new entry from the file menu', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
@@ -31,7 +34,6 @@ describe('Entry Main Menu', () => {
       tagTextEntryThroughModelsResponse,
       {statusCode: 201}
     );
-    await expect(BasePage.tagLine).toBeDisplayed();
     await browser.login();
     await BasePage.open('');
 

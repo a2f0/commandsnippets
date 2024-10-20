@@ -1,7 +1,10 @@
+import type {
+  RequestedMultiremoteCapabilities,
+  RequestedStandaloneCapabilities,
+} from '@wdio/types/build/Capabilities';
 import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
-import {BasePage} from './pageobjects/base';
 interface LogEntry {
   type: 'console' | 'javascript';
   level: 'debug' | 'info' | 'warn' | 'error';
@@ -75,8 +78,14 @@ export const config: WebdriverIO.Config = {
     ui: 'bdd',
     timeout: 60000,
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  before: async (capabilities: typeof browser, specs, browser: any) => {
+
+  before: async (
+    capabilities:
+      | RequestedStandaloneCapabilities
+      | RequestedMultiremoteCapabilities,
+    specs: string[],
+    browser: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  ) => {
     // Initialize currentTestErrors as a property of the browser object
     browser.currentTestErrors = [];
 
@@ -92,7 +101,6 @@ export const config: WebdriverIO.Config = {
       );
       await browser.deleteCookies();
     });
-    await BasePage.open('');
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
       if (logEntry.level === 'error') {
         console.info(JSON.stringify(logEntry, null, '  '));
