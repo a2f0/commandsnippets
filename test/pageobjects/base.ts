@@ -1,5 +1,10 @@
 import {entrySearchMethod} from '../../src/lib/shared';
 export default class Base {
+  // home screen
+  get tagLine(): ChainablePromiseElement {
+    return $('#tagLine');
+  }
+
   // file menu
   get githubAuthButton(): ChainablePromiseElement {
     return $('#githubAuthButton');

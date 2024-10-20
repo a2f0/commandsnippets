@@ -15,6 +15,7 @@ describe('Entry Main Menu', () => {
       {method: 'GET'}
     );
     mockTags.respond(tagsResponse, {statusCode: 200});
+    await expect(BasePage.tagLine).toBeDisplayed();
     await browser.login();
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();

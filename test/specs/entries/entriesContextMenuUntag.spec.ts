@@ -21,6 +21,7 @@ describe('Entries Context Menu Untag', () => {
       {method: 'DELETE'}
     );
     mockTagsEntries.respond(tags, {statusCode: 204});
+    await expect(BasePage.tagLine).toBeDisplayed();
     await browser.login();
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

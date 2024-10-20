@@ -22,6 +22,7 @@ describe('Tab Switching Behavior', () => {
       {method: 'GET'}
     );
     await browser.login();
+    await expect(BasePage.tagLine).toBeDisplayed();
     mockTags.respond(tagsResponse, {statusCode: 200});
 
     await BasePage.open('');

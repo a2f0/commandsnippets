@@ -14,6 +14,7 @@ describe('TagsEntries Behavior', () => {
     );
     mockTags.respond(tags, {statusCode: 200});
     await browser.login();
+    await expect(BasePage.tagLine).toBeDisplayed();
     await BasePage.open('test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();

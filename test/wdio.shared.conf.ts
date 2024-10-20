@@ -92,10 +92,7 @@ export const config: WebdriverIO.Config = {
       );
       await browser.deleteCookies();
     });
-
     await BasePage.open('');
-    await browser.logout();
-
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
       if (logEntry.level === 'error') {
         console.info(JSON.stringify(logEntry, null, '  '));
