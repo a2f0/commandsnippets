@@ -24,6 +24,9 @@ describe('Tag List Context Menu Behavior', () => {
       {method: 'GET'}
     );
     mockTags.respond(tagsResponseEmpty, {statusCode: 200});
+    await expect(mockEntries).toBeRequestedTimes(0);
+    await expect(mockTagPostResponse).toBeRequestedTimes(0);
+    await expect(mockTags).toBeRequestedTimes(0);
     await browser.login();
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
