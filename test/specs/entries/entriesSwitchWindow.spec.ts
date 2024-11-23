@@ -29,8 +29,8 @@ describe('Tab Switching Behavior', () => {
 
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-    await expect(mockEntriesGetList).toBeRequestedTimes(2);
-    await expect(mockTags).toBeRequestedTimes(2);
+    await expect(mockEntriesGetList).toBeRequestedTimes(1);
+    await expect(mockTags).toBeRequestedTimes(1);
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);

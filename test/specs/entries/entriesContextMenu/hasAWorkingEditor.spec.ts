@@ -91,7 +91,7 @@ describe('TagsEntries Behavior', () => {
     await expect(mockEntriesPatch).toBeRequestedTimes(0);
     await browser.keys('Enter');
     await expect(BasePage.textEntryEdit1).not.toBeDisplayed();
-    await expect(mockEntriesPatch).toBeRequestedTimes(2);
+    await expect(mockEntriesPatch).toBeRequestedTimes(1);
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
