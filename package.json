@@ -95,6 +95,7 @@
     "react-router-dom": "7.0.1"
   },
   "optionalDependencies": {
+    "@libsql/linux-x64-gnu": "0.5.0-pre.5",
     "@swc/core-linux-x64-gnu": "1.10.3",
     "@rollup/rollup-linux-x64-gnu": "4.29.1"
   }
