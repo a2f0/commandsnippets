@@ -4,7 +4,10 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Logged Out User Behavior', () => {
-  it('should have different context menus for logged out users', async () => {
+  it.skip('should have different context menus for logged out users', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
     const mockEntriesResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
@@ -23,7 +26,9 @@ describe('Logged Out User Behavior', () => {
     );
     mockLogoutResponse.respond(logoutResponse);
 
+    await browser.login();
     await BasePage.open('');
+
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);

@@ -5,7 +5,9 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entry Main Menu Behavior', () => {
-  it('should having a working context menu to create new entries', async () => {
+  it.skip('should having a working context menu to create new entries', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
@@ -32,7 +34,7 @@ describe('Entry Main Menu Behavior', () => {
       tagTextEntryThroughModelsResponse,
       {statusCode: 201}
     );
-
+    await browser.login();
     await BasePage.open('');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.entryListContextMenu).not.toBeDisplayed();

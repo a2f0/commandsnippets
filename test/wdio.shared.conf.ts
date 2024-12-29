@@ -1,7 +1,10 @@
+import type {
+  RequestedMultiremoteCapabilities,
+  RequestedStandaloneCapabilities,
+} from '@wdio/types/build/Capabilities';
 import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
-import {BasePage} from './pageobjects/base';
 interface LogEntry {
   type: 'console' | 'javascript';
   level: 'debug' | 'info' | 'warn' | 'error';
@@ -30,6 +33,8 @@ declare global {
     }
     interface Browser {
       currentTestErrors: LogEntry[];
+      logout: () => Promise<void>;
+      login: () => Promise<void>;
     }
   }
 }
@@ -73,36 +78,34 @@ export const config: WebdriverIO.Config = {
     ui: 'bdd',
     timeout: 60000,
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  before: async (capabilities: typeof browser, specs, browser: any) => {
+
+  before: async (
+    capabilities:
+      | RequestedStandaloneCapabilities
+      | RequestedMultiremoteCapabilities,
+    specs: string[],
+    browser: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  ) => {
     // Initialize currentTestErrors as a property of the browser object
     browser.currentTestErrors = [];
 
     await browser.sessionSubscribe({events: ['log.entryAdded']});
 
+    browser.addCommand('logout', async () => {
+      await browser.execute(
+        function (this: typeof browser, key: string, value: string) {
+          this.localStorage.setItem(key, value);
+        },
+        'mst-tearleads-test',
+        JSON.stringify(defaultState)
+      );
+      await browser.deleteCookies();
+    });
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
       if (logEntry.level === 'error') {
         console.info(JSON.stringify(logEntry, null, '  '));
         browser.currentTestErrors.push(logEntry);
       }
-    });
-
-    await BasePage.open('');
-    expect(browser).toHaveUrl('http://localhost:8081');
-    const appState = {
-      ...defaultState,
-      loggedInUser: 'test',
-    };
-    await browser.execute(
-      function (this: typeof browser, key: string, value: string) {
-        this.localStorage.setItem(key, value);
-      },
-      'mst-tearleads-test',
-      JSON.stringify(appState)
-    );
-    await browser.setCookies({
-      name: 'LoggedIn',
-      value: 'None',
     });
     browser.addCommand(
       'waitAndRightClick',
@@ -120,6 +123,23 @@ export const config: WebdriverIO.Config = {
       },
       true
     );
+    browser.addCommand('login', async () => {
+      const appState = {
+        ...defaultState,
+        loggedInUser: 'test',
+      };
+      await browser.execute(
+        function (this: typeof browser, key: string, value: string) {
+          this.localStorage.setItem(key, value);
+        },
+        'mst-tearleads-test',
+        JSON.stringify(appState)
+      );
+      await browser.setCookies({
+        name: 'LoggedIn',
+        value: 'None',
+      });
+    });
   },
   afterTest: async function () {
     await browser.mockRestoreAll();

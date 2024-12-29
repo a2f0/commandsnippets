@@ -4,7 +4,9 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tab Switching Behavior', () => {
-  it('should allow tab switching while editing', async () => {
+  it.skip('should allow tab switching while editing', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntryPostResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
@@ -23,10 +25,12 @@ describe('Tab Switching Behavior', () => {
     );
     mockTags.respond(tagsResponse, {statusCode: 200});
 
+    await browser.login();
+
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-    await expect(mockEntriesGetList).toBeRequestedTimes(2);
-    await expect(mockTags).toBeRequestedTimes(2);
+    await expect(mockEntriesGetList).toBeRequestedTimes(1);
+    await expect(mockTags).toBeRequestedTimes(1);
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(4);

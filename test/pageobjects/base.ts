@@ -1,5 +1,10 @@
 import {entrySearchMethod} from '../../src/lib/shared';
 export default class Base {
+  // home screen
+  get tagLine(): ChainablePromiseElement {
+    return $('#tagLine');
+  }
+
   // file menu
   get githubAuthButton(): ChainablePromiseElement {
     return $('#githubAuthButton');
@@ -180,8 +185,8 @@ export default class Base {
   get entrySearch(): ChainablePromiseElement {
     return $('#textEntrySearch');
   }
-  open(path: string): ReturnType<WebdriverIO.Browser['url']> {
-    return browser.url(`http://localhost:8081/${path}`);
+  async open(path: string): Promise<ReturnType<WebdriverIO.Browser['url']>> {
+    await browser.url(`http://localhost:8081/${path}`);
   }
 }
 
