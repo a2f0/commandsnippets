@@ -70,7 +70,8 @@
     "vite-plugin-pwa": "0.21.0",
     "vite-plugin-simple-html": "0.1.2",
     "vitest": "2.1.5",
-    "wdio-video-reporter": "6.1.1"
+    "wdio-video-reporter": "6.0.1",
+    "@ffmpeg-installer/ffmpeg": "1.1.0"
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
