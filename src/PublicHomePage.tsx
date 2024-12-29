@@ -44,6 +44,7 @@ const PublicHomePage = () => {
           Solve, Curate, Retrieve.
         </Grid>
         <Grid
+          id="tagLine"
           sx={{
             fontSize: '30px',
             textAlign: 'center',

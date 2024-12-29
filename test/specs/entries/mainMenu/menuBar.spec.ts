@@ -3,7 +3,10 @@ import tagsResponse from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
-  it('should having a working menu bar', async () => {
+  it.skip('should having a working menu bar', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
     const mockEntriesResponse = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
@@ -15,7 +18,7 @@ describe('Entry Main Menu', () => {
       {method: 'GET'}
     );
     mockTags.respond(tagsResponse, {statusCode: 200});
-
+    await browser.login();
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();

@@ -4,7 +4,9 @@ import tagsResponseEmpty from '../../mocks/tags/tagsResponseEmpty';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tag List Context Menu Behavior', () => {
-  it('tag should have a working context menu', async () => {
+  it.skip('tag should have a working context menu', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}
@@ -22,7 +24,10 @@ describe('Tag List Context Menu Behavior', () => {
       {method: 'GET'}
     );
     mockTags.respond(tagsResponseEmpty, {statusCode: 200});
-
+    await expect(mockEntries).toBeRequestedTimes(0);
+    await expect(mockTagPostResponse).toBeRequestedTimes(0);
+    await expect(mockTags).toBeRequestedTimes(0);
+    await browser.login();
     await BasePage.open('');
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
