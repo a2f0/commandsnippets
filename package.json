@@ -60,7 +60,7 @@
     "history": "5.3.0",
     "jsdom": "25.0.1",
     "msw": "2.7.0",
-    "start-server-and-test": "2.0.8",
+    "start-server-and-test": "2.0.3",
     "stream-browserify": "3.0.0",
     "swc-loader": "0.2.6",
     "ts-node": "10.9.2",
