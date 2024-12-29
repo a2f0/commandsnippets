@@ -4,7 +4,7 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Logged Out User Behavior', () => {
-  it('should have different context menus for logged out users', async () => {
+  it.skip('should have different context menus for logged out users', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

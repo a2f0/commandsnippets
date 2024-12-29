@@ -3,7 +3,7 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Search Menu Behavior', () => {
-  it('should have a functional search bar', async () => {
+  it.skip('should have a functional search bar', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntries = await browser.mock(

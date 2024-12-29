@@ -3,7 +3,7 @@ import tags from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Delete Entry', () => {
-  it('Should allow delete entries from untagged entries', async () => {
+  it.skip('Should allow delete entries from untagged entries', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

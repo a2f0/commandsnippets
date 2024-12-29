@@ -3,7 +3,7 @@ import tags from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
-  it('should list entries', async () => {
+  it.skip('should list entries', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

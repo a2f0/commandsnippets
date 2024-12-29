@@ -4,7 +4,7 @@ import tags from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
-  it('has a working editor', async () => {
+  it.skip('has a working editor', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

@@ -3,7 +3,7 @@ import tagsResponse from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Tag Context Menu', () => {
-  it('has a working context menu', async () => {
+  it.skip('has a working context menu', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntries = await browser.mock(

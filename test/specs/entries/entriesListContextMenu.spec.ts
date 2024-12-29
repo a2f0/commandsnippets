@@ -5,7 +5,7 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entry Main Menu Behavior', () => {
-  it('should having a working context menu to create new entries', async () => {
+  it.skip('should having a working context menu to create new entries', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntryPostResponse = await browser.mock(

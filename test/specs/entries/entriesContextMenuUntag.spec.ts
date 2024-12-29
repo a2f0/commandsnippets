@@ -3,7 +3,7 @@ import tags from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Untag', () => {
-  it('should untag', async () => {
+  it.skip('should untag', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

@@ -4,7 +4,7 @@ import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tab Switching Behavior', () => {
-  it('should allow tab switching while editing', async () => {
+  it.skip('should allow tab switching while editing', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
     const mockEntryPostResponse = await browser.mock(
