@@ -20,7 +20,7 @@ class TestGithubAuthentication(BaseTestCase):
     def tearDownClass(cls):
         super().tearDownClass()
 
-    @httpretty.activate(verbose=True, allow_net_connect=False)
+    @httpretty.activate(verbose=True, allow_net_connect=True)
     def test_successful_github_login(self):
         self.auth_user_api_client = APIClient()
         httpretty.register_uri(
