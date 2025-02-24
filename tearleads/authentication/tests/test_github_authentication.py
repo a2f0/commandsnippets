@@ -2,7 +2,7 @@ import os
 import time
 from unittest import skip
 
-import httpretty
+import responses
 from django.conf import settings
 from django.contrib.staticfiles.testing import LiveServerTestCase
 from rest_framework import status
@@ -20,33 +20,33 @@ class TestGithubAuthentication(BaseTestCase):
         os.environ["GITHUB_CLIENT_ID"] = "test_client_id"
         os.environ["GITHUB_CLIENT_SECRET"] = "test_client_secret"
 
-    @httpretty.activate
+    @responses.activate
     def test_successful_github_login(self):
-        # Mock GitHub OAuth token endpoint with expected response format
-        httpretty.register_uri(
-            httpretty.POST,
+        # Mock GitHub OAuth token endpoint
+        responses.add(
+            responses.POST,
             "https://github.com/login/oauth/access_token",
             body="access_token=test_access_token&scope=user%3Aemail&token_type=bearer",
             status=200,
-            adding_headers={"content-type": "application/x-www-form-urlencoded"},
+            content_type="application/x-www-form-urlencoded",
         )
 
-        # Mock GitHub user endpoint with expected JSON response
-        httpretty.register_uri(
-            httpretty.GET,
+        # Mock GitHub user endpoint
+        responses.add(
+            responses.GET,
             "https://api.github.com/user",
-            body='{"login": "login"}',
+            json={"login": "login"},
             status=200,
-            adding_headers={"content-type": "application/json"},
+            content_type="application/json",
         )
 
-        # Mock GitHub emails endpoint with expected JSON response
-        httpretty.register_uri(
-            httpretty.GET,
+        # Mock GitHub emails endpoint
+        responses.add(
+            responses.GET,
             "https://api.github.com/user/emails",
-            body='[{"email":"user@example.com","primary":true,"verified":true}]',
+            json=[{"email": "user@example.com", "primary": True, "verified": True}],
             status=200,
-            adding_headers={"content-type": "application/json"},
+            content_type="application/json",
         )
 
         self.auth_user_api_client = APIClient()
@@ -59,11 +59,6 @@ class TestGithubAuthentication(BaseTestCase):
             user = User.objects.get(username="login")
 
         response = self.auth_user_api_client.post("/api/v1/github-login/", payload)
-
-        # Print debug info about the requests
-        print("\nLast request:", httpretty.last_request())
-        print("Last request headers:", httpretty.last_request().headers)
-        print("Last request body:", httpretty.last_request().body)
 
         # Continue with assertions...
         user = User.objects.get(username="login")

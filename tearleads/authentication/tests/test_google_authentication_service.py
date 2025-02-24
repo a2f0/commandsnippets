@@ -1,9 +1,8 @@
 import time
 from unittest import skip
 
-import httpretty
+import responses
 from django.contrib.staticfiles.testing import LiveServerTestCase
-from httpretty import httprettified
 from rest_framework.test import APIClient
 
 from tearleads.authentication.services import GoogleOAuthService
@@ -18,24 +17,28 @@ class TestGoogleAuthentication(BaseTestCase):
     def setUpTestData(cls):
         super(TestGoogleAuthentication, cls).setUpTestData()
 
-    @httprettified
+    @responses.activate
     def test_access_token(self):
         service = GoogleOAuthService()
-        httpretty.register_uri(
-            httpretty.POST,
+        responses.add(
+            responses.POST,
             "https://oauth2.googleapis.com/token",
-            body='{"access_token": "access_token"}',
+            json={"access_token": "access_token"},
+            status=200,
+            content_type="application/json",
         )
         response = service.access_token(code="code")
         self.assertEqual(response.json(), {"access_token": "access_token"})
 
-    @httprettified
+    @responses.activate
     def test_user(self):
         service = GoogleOAuthService()
-        httpretty.register_uri(
-            httpretty.GET,
+        responses.add(
+            responses.GET,
             "https://www.googleapis.com/oauth2/v3/userinfo",
-            body='{"email": "user@example.com"}',
+            json={"email": "user@example.com"},
+            status=200,
+            content_type="application/json",
         )
         response = service.user(access_token="access_token")
         self.assertEqual(response.json(), {"email": "user@example.com"})
