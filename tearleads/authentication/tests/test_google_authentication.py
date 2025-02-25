@@ -56,7 +56,6 @@ class TestGoogleAuthentication(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/google-login/", payload)
 
-        # Continue with assertions...
         user = User.objects.get(username="user")
         existing_token = Token.objects.get(user=user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
