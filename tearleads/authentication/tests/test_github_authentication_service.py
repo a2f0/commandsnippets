@@ -2,9 +2,8 @@ import time
 from unittest import skip
 from urllib.parse import parse_qs
 
-import httpretty
+import responses
 from django.contrib.staticfiles.testing import LiveServerTestCase
-from httpretty import httprettified
 from rest_framework.test import APIClient
 
 from tearleads.authentication.services import GithubOAuthService
@@ -19,34 +18,42 @@ class TestGithubAuthentication(BaseTestCase):
     def setUpTestData(cls):
         super(TestGithubAuthentication, cls).setUpTestData()
 
-    @httprettified
+    @responses.activate
     def test_access_token(self):
         service = GithubOAuthService()
-        httpretty.register_uri(
-            httpretty.POST,
+        responses.add(
+            responses.POST,
             "https://github.com/login/oauth/access_token",
             body="access_token=access_token&scope=user%3Aemail&token_type=bearer",
+            status=200,
+            content_type="application/x-www-form-urlencoded",
         )
         response = service.access_token(code="code")
         qs = parse_qs(response.text)
         self.assertEqual(qs["access_token"][0], "access_token")
 
-    @httprettified
+    @responses.activate
     def test_user(self):
         service = GithubOAuthService()
-        httpretty.register_uri(
-            httpretty.GET, "https://api.github.com/user", body='{"login": "login"}'
+        responses.add(
+            responses.GET,
+            "https://api.github.com/user",
+            json={"login": "login"},
+            status=200,
+            content_type="application/json",
         )
         response = service.user(access_token="access_token")
         self.assertEqual(response.json(), {"login": "login"})
 
-    @httprettified
+    @responses.activate
     def test_emails(self):
         service = GithubOAuthService()
-        httpretty.register_uri(
-            httpretty.GET,
+        responses.add(
+            responses.GET,
             "https://api.github.com/user/emails",
-            body='[{"email":"user@example.com","primary":true}]',
+            json=[{"email": "user@example.com", "primary": True}],
+            status=200,
+            content_type="application/json",
         )
         response = service.emails(access_token="access_token")
         self.assertEqual(

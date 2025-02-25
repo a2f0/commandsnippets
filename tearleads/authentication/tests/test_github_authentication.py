@@ -1,7 +1,8 @@
+import os
 import time
 from unittest import skip
 
-import httpretty
+import responses
 from django.conf import settings
 from django.contrib.staticfiles.testing import LiveServerTestCase
 from rest_framework import status
@@ -15,35 +16,50 @@ from tearleads.users.models import User
 class TestGithubAuthentication(BaseTestCase):
     def setUp(self):
         super(TestGithubAuthentication, self).setUp()
+        # Set up environment variables needed by the service
+        os.environ["GITHUB_CLIENT_ID"] = "test_client_id"
+        os.environ["GITHUB_CLIENT_SECRET"] = "test_client_secret"
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-
-    @httpretty.activate(verbose=True, allow_net_connect=False)
+    @responses.activate
     def test_successful_github_login(self):
-        self.auth_user_api_client = APIClient()
-        httpretty.register_uri(
-            httpretty.POST,
+        # Mock GitHub OAuth token endpoint
+        responses.add(
+            responses.POST,
             "https://github.com/login/oauth/access_token",
-            body="access_token=access_token&scope=user%3Aemail&token_type=bearer",
+            body="access_token=test_access_token&scope=user%3Aemail&token_type=bearer",
+            status=200,
+            content_type="application/x-www-form-urlencoded",
         )
-        httpretty.register_uri(
-            httpretty.GET, "https://api.github.com/user", body='{"login": "login"}'
+
+        # Mock GitHub user endpoint
+        responses.add(
+            responses.GET,
+            "https://api.github.com/user",
+            json={"login": "login"},
+            status=200,
+            content_type="application/json",
         )
-        httpretty.register_uri(
-            httpretty.GET,
+
+        # Mock GitHub emails endpoint
+        responses.add(
+            responses.GET,
             "https://api.github.com/user/emails",
-            body='[{"email":"user@example.com","primary":true}]',
+            json=[{"email": "user@example.com", "primary": True, "verified": True}],
+            status=200,
+            content_type="application/json",
         )
+
+        self.auth_user_api_client = APIClient()
         payload = {
             "data": {"type": "GithubLogin", "attributes": {"code": "valid_code"}}
         }
+
         # test to make sure the user doesnt exist before the login.
         with self.assertRaises(User.DoesNotExist):
             user = User.objects.get(username="login")
+
         response = self.auth_user_api_client.post("/api/v1/github-login/", payload)
-        # see that the user was created
+
         user = User.objects.get(username="login")
         existing_token = Token.objects.get(user=user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
