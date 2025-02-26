@@ -2,28 +2,28 @@
   become: yes
   become_user: root
   tasks:
-    - include: tasks/install-packages-ubuntu-20.yaml
-    - include: tasks/install-docker.yaml
-   #- include: tasks/install-microk8s.yaml
-    - include: tasks/authorized_keys.yaml
+    - include_tasks: tasks/install-packages-ubuntu-20.yaml
+    - include_tasks: tasks/install-docker.yaml
+   #- include_tasks: tasks/install-microk8s.yaml
+    - include_tasks: tasks/authorized_keys.yaml
 
 - hosts: staging
   tasks:
-    - include: tasks/copy-deploy-keys.yaml
-    - include: tasks/clone-repos.yaml
-    - include: tasks/schedule-api-backup.yaml
+    - include_tasks: tasks/copy-deploy-keys.yaml
+    - include_tasks: tasks/clone-repos.yaml
+    - include_tasks: tasks/schedule-api-backup.yaml
 
 
 - hosts: production
   become: yes
   become_user: root
   tasks:
-    - include: tasks/install-packages-ubuntu-20.yaml
-    - include: tasks/install-docker.yaml
-    - include: tasks/authorized_keys.yaml
+    - include_tasks: tasks/install-packages-ubuntu-20.yaml
+    - include_tasks: tasks/install-docker.yaml
+    - include_tasks: tasks/authorized_keys.yaml
 
 - hosts: production
   tasks:
-    - include: tasks/copy-deploy-keys.yaml
-    - include: tasks/clone-repos.yaml
-    - include: tasks/schedule-api-backup.yaml
+    - include_tasks: tasks/copy-deploy-keys.yaml
+    - include_tasks: tasks/clone-repos.yaml
+    - include_tasks: tasks/schedule-api-backup.yaml
