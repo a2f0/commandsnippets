@@ -96,7 +96,7 @@ resource "aws_default_route_table" "route-table" {
 }
 
 resource "aws_instance" "ec2" {
-  ami                    = "ami-029f33a91738d30e9" # 24.04 LTS https://cloud-images.ubuntu.com/locator/ec2/ 
+  ami                    = "ami-029f33a91738d30e9" # 24.04 LTS https://cloud-images.ubuntu.com/locator/ec2/
   instance_type          = "t3.micro"
   subnet_id              = aws_subnet.aws-subnet.id
   vpc_security_group_ids = [aws_security_group.security-group.id]
@@ -133,7 +133,7 @@ data "aws_route53_zone" "tearleads-zone" {
 resource "cloudflare_record" "host" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "${var.hostname}.${data.aws_route53_zone.tearleads-zone.name}"
-  value   = aws_instance.ec2.public_ip
+  content = aws_instance.ec2.public_ip
   type    = "A"
   ttl     = 120
   proxied = false
@@ -142,7 +142,7 @@ resource "cloudflare_record" "host" {
 resource "cloudflare_record" "api" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "api"
-  value   = aws_instance.ec2.public_ip
+  content = aws_instance.ec2.public_ip
   type    = "A"
   ttl     = 1
   proxied = true
@@ -151,7 +151,7 @@ resource "cloudflare_record" "api" {
 resource "cloudflare_record" "web" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "web"
-  value   = aws_instance.ec2.public_ip
+  content = aws_instance.ec2.public_ip
   type    = "A"
   ttl     = 1
   proxied = true
@@ -161,7 +161,7 @@ resource "cloudflare_record" "tearleads" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "tearleads.com"
   # Vercel
-  value   = "76.76.21.21"
+  content = "76.76.21.21"
   type    = "A"
   ttl     = 1
   proxied = true
@@ -171,7 +171,7 @@ resource "cloudflare_record" "app" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "app.tearleads.com"
   # Vercel
-  value   = "76.76.21.21"
+  content = "76.76.21.21"
   type    = "A"
   ttl     = 1
   proxied = true

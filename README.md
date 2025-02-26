@@ -20,6 +20,11 @@ Linting
     tflint --recursive
     tflint --recursive --fix
 
+Upgrading
+    upgrade version in `versions.tf` file
+    terraform init -upgrade
+    ./apply.sh
+
 ## Staging
 
 ### Reconfigure / Deploy
@@ -37,7 +42,3 @@ Linting
     <copy environment variables to .env>
     cd ~/tearleads-backend
     ./deploy-containers.sh
-
-
-
-
