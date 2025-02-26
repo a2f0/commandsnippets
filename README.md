@@ -20,11 +20,11 @@ Configur environment variables
 ### Reconfigure / Deploy
 
     cd staging
-   ./init.sh
-   ./apply.sh
-   ./destroy.sh
+    ./init.sh
+    ./apply.sh
+    ./destroy.sh
 
-   ./apply.sh
-   <login via ssh to add key to ~/.ssh/known_hosts>
+    ./apply.sh
+    <login via ssh to add key to ~/.ssh/known_hosts>
     cd ../ansible
     ./staging.sh
