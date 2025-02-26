@@ -20,3 +20,9 @@
 - name: Create the network
   community.docker.docker_network:
     name: tearleads
+
+- name: Enable and start Docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
