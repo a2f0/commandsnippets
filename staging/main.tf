@@ -131,7 +131,7 @@ data "aws_route53_zone" "tearleads-zone" {
 }
 
 resource "cloudflare_record" "host" {
-  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "${var.hostname}.${data.aws_route53_zone.tearleads-zone.name}"
   value   = aws_instance.ec2.public_ip
   type    = "A"
@@ -140,7 +140,7 @@ resource "cloudflare_record" "host" {
 }
 
 resource "cloudflare_record" "api" {
-  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = var.staging_api
   value   = aws_instance.ec2.public_ip
   type    = "A"
@@ -149,7 +149,7 @@ resource "cloudflare_record" "api" {
 }
 
 resource "cloudflare_record" "web" {
-  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = var.staging_web
   value   = "cname.vercel-dns.com"
   type    = "CNAME"

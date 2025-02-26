@@ -9,7 +9,11 @@ repos:
     rev: v0.1.17
     hooks:
       - id: terraform-fmt
+        args:
+          - --recursive
       - id: tflint
+        args:
+          - --recursive
       - id: shellcheck
       - id: gofmt
       - id: golint

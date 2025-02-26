@@ -103,7 +103,7 @@ resource "aws_instance" "ec2" {
   key_name               = "dps-blackbox"
   iam_instance_profile   = data.terraform_remote_state.container-registry.outputs.iam-instance-profile
   tags = {
-    Name = "${var.environment}"
+    Name = var.environment
   }
   user_data = <<-EOF
               #!/bin/bash
@@ -131,7 +131,7 @@ data "aws_route53_zone" "tearleads-zone" {
 }
 
 resource "cloudflare_record" "host" {
-  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "${var.hostname}.${data.aws_route53_zone.tearleads-zone.name}"
   value   = aws_instance.ec2.public_ip
   type    = "A"
@@ -140,7 +140,7 @@ resource "cloudflare_record" "host" {
 }
 
 resource "cloudflare_record" "api" {
-  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "api"
   value   = aws_instance.ec2.public_ip
   type    = "A"
@@ -149,7 +149,7 @@ resource "cloudflare_record" "api" {
 }
 
 resource "cloudflare_record" "web" {
-  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "web"
   value   = aws_instance.ec2.public_ip
   type    = "A"
@@ -158,7 +158,7 @@ resource "cloudflare_record" "web" {
 }
 
 resource "cloudflare_record" "tearleads" {
-  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "tearleads.com"
   # Vercel
   value   = "76.76.21.21"
@@ -168,7 +168,7 @@ resource "cloudflare_record" "tearleads" {
 }
 
 resource "cloudflare_record" "app" {
-  zone_id = lookup(data.cloudflare_zones.zone.zones[0], "id")
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "app.tearleads.com"
   # Vercel
   value   = "76.76.21.21"

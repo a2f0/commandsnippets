@@ -14,14 +14,6 @@ variable "remote_state_bucket" {
   type = string
 }
 
-variable "production_api" {
-  type = string
-}
-
-variable "production_web" {
-  type = string
-}
-
 variable "deployment_user" {
   type = string
 }

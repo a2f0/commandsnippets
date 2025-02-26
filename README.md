@@ -11,9 +11,14 @@ Boostrap
     pip install pre-commit
     pre-commit install
 
-Configur environment variables
+Configure environment variables
     export AWS_ACCESS_KEY_ID=<key>
     export AWS_SECRET_ACCESS_KEY=<secret access key>
+
+Linting
+    terraform fmt --recursive
+    tflint --recursive
+    tflint --recursive --fix
 
 ## Staging
 
