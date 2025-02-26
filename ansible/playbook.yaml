@@ -2,7 +2,7 @@
   become: yes
   become_user: root
   tasks:
-    - include_tasks: tasks/install-packages-ubuntu-20.yaml
+    - include_tasks: tasks/install-aws-cli.yaml
     - include_tasks: tasks/install-docker.yaml
    #- include_tasks: tasks/install-microk8s.yaml
     - include_tasks: tasks/authorized_keys.yaml
@@ -19,7 +19,7 @@
   become: yes
   become_user: root
   tasks:
-    - include_tasks: tasks/install-packages-ubuntu-20.yaml
+    - include_tasks: tasks/install-aws-cli.yaml
     - include_tasks: tasks/install-docker.yaml
     - include_tasks: tasks/authorized_keys.yaml
     - include_tasks: tasks/start-api-on-boot.yaml

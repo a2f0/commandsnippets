@@ -28,3 +28,11 @@ Configur environment variables
     <login via ssh to add key to ~/.ssh/known_hosts>
     cd ../ansible
     ./staging.sh
+    <login via ssh>
+    <copy environment variables to ~/tearleads-backend/.env>
+    cd ~/tearleads-backend
+    ./deploy-containers.sh
+    
+
+
+

@@ -95,8 +95,8 @@ resource "aws_default_route_table" "route-table" {
 }
 
 resource "aws_instance" "ec2" {
-  ami                    = "ami-02675d30b814d1daa" # 22.04 LTS https://cloud-images.ubuntu.com/locator/ec2/ 
-  instance_type          = "t2.micro"
+  ami                    = "ami-029f33a91738d30e9" # 24.04 LTS https://cloud-images.ubuntu.com/locator/ec2/ 
+  instance_type          = "t3.micro"
   subnet_id              = aws_subnet.aws-subnet.id
   vpc_security_group_ids = [aws_security_group.security-group.id]
   key_name               = "dps-blackbox"
