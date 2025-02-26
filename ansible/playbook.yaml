@@ -13,6 +13,7 @@
     - include_tasks: tasks/clone-repos.yaml
     - include_tasks: tasks/schedule-api-backup.yaml
     - include_tasks: tasks/start-api-on-boot.yaml
+    - include_tasks: tasks/patch-and-reboot-daily.yaml
 
 - hosts: production
   become: yes
@@ -22,6 +23,7 @@
     - include_tasks: tasks/install-docker.yaml
     - include_tasks: tasks/authorized_keys.yaml
     - include_tasks: tasks/start-api-on-boot.yaml
+    - include_tasks: tasks/patch-and-reboot-daily.yaml
 
 - hosts: production
   tasks:
