@@ -10,7 +10,7 @@
     pip install pre-commit
     pre-commit install
     pre-commit run --all-files
-    docker-compose build
+    docker-compose build --no-cache
     docker-compose run backend python manage.py migrate
     docker-compose up
 
