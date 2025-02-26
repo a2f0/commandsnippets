@@ -6,8 +6,8 @@
     mode: '0755'
     content: |
       #!/bin/bash
-      sudo apt-get update
-      sudo apt-get -y dist-upgrade
+      export DEBIAN_FRONTEND=noninteractive
+      sudo apt-get -y update
       sudo apt-get -y autoremove
       sudo apt-get -y autoclean
       sudo /sbin/shutdown -r now
