@@ -29,10 +29,10 @@ Configur environment variables
     cd ../ansible
     ./staging.sh
     <login via ssh>
-    <copy environment variables to ~/tearleads-backend/.env>
+    <copy environment variables to .env>
     cd ~/tearleads-backend
     ./deploy-containers.sh
-    
+
 
 
 
