@@ -49,7 +49,9 @@ restore_latest() {
   echo "=== restoring: $MOST_RECENT_FILE"
   ssh $1 "mkdir -p /tmp/dbback"
   scp $MOST_RECENT_FILE $1:/tmp/dbback/db-to-restore.sql
-  ssh $1 "sudo mv /tmp/dbback/db-to-restore.sql /var/lib/docker/volumes/tearleads-backend_postgres_backup/_data"
+  echo "=== listing backups on remote"
+  ssh $1 "sudo ls -l /tmp/dbback/"
+  ssh $1 "sudo mv /tmp/dbback/db-to-restore.sql /var/lib/docker/volumes/tearleads_postgres_backup/_data"
   ssh $1 "cd ~/tearleads-backend && docker-compose -f container-registry.yaml up -d"
   ssh $1 "cd ~/tearleads-backend && docker-compose -f container-registry.yaml stop backend"
   ssh $1 "cd ~/tearleads-backend && docker-compose -f container-registry.yaml run postgres list-backups"
