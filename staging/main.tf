@@ -125,6 +125,8 @@ resource "aws_instance" "ec2" {
               EOF
 }
 
+
+
 data "aws_route53_zone" "tearleads-zone" {
   name         = "tearleads.com."
   private_zone = false
@@ -155,4 +157,28 @@ resource "cloudflare_record" "web" {
   type    = "CNAME"
   ttl     = 1
   proxied = true
+}
+
+resource "null_resource" "cleanup" {
+  depends_on = [github_actions_secret.ssh_host_keys]
+
+  provisioner "local-exec" {
+    command = "rm -f ./ssh_host_keys.txt"
+  }
+}
+
+resource "null_resource" "capture_ssh_host_keys" {
+  depends_on = [aws_instance.ec2, cloudflare_record.host]
+
+  provisioner "local-exec" {
+    command = "ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt"
+  }
+}
+
+resource "github_actions_secret" "ssh_host_keys" {
+  depends_on = [null_resource.capture_ssh_host_keys]
+
+  repository      = var.github_repository
+  secret_name     = "EC2_SSH_HOST_KEYS"
+  plaintext_value = file("./ssh_host_keys.txt")
 }
