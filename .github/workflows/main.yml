@@ -134,6 +134,8 @@ jobs:
         if: ${{ ( github.event.ref == 'refs/heads/deploy-test' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         run: |
           mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}" >> ./whatever.txt
+          cat whatever.txt
           echo "${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}" | base64 -d > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
       - name: Deploy production via SSH
