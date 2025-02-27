@@ -169,6 +169,7 @@ resource "null_resource" "capture_ssh_host_keys" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      set -e
       # Capture SSH host keys
       ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt
 
@@ -179,7 +180,7 @@ resource "null_resource" "capture_ssh_host_keys" {
       cat ./ssh_host_keys.txt | base64 > ./github_secret.txt
 
       # Use GitHub CLI to set the secret directly
-      gh secret set STAGING_KNOWN_HOSTS_BASE64 -R ${var.github_repository} --body "$(cat ./ssh_host_keys.txt | base64 -w 0)"
+      gh secret set STAGING_KNOWN_HOSTS_BASE64 -R "${var.github_owner}/${var.github_repository}" --body "$(cat ./ssh_host_keys.txt)"
 
       # Clean up
       rm -f ./ssh_host_keys.txt ./github_secret.txt
