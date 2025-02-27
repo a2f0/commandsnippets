@@ -165,8 +165,6 @@ resource "null_resource" "capture_ssh_host_keys" {
   # Add triggers to ensure this runs when the instance changes
   triggers = {
     instance_id = aws_instance.ec2.id
-    # Add a timestamp or random value to force recreation
-    force_recreation = timestamp()  # or uuid()
   }
 
   provisioner "local-exec" {
@@ -174,14 +172,17 @@ resource "null_resource" "capture_ssh_host_keys" {
       # Capture SSH host keys
       ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt
 
-      # Base64 encode the file to avoid issues with special characters
-      cat ./ssh_host_keys.txt | base64 > ./ssh_host_keys_base64.txt
+      # Create a temporary file for the GitHub secret
+      echo -n "STAGING_KNOWN_HOSTS=" > ./github_secret.txt
 
-      # Use GitHub CLI to set the secret with the base64 encoded content
-      gh secret set STAGING_KNOWN_HOSTS_BASE64 -R ${var.github_repository} -f ./ssh_host_keys_base64.txt
+      # Base64 encode the file without newlines and append to the secret file
+      cat ./ssh_host_keys.txt | base64 > ./github_secret.txt
+
+      # Use GitHub CLI to set the secret directly
+      gh secret set STAGING_KNOWN_HOSTS_BASE64 -R ${var.github_repository} --body "$(cat ./ssh_host_keys.txt | base64 -w 0)"
 
       # Clean up
-      rm -f ./ssh_host_keys.txt ./ssh_host_keys_base64.txt
+      rm -f ./ssh_host_keys.txt ./github_secret.txt
     EOT
   }
 }
