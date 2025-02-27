@@ -130,7 +130,12 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_KEY }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      - name: Configure Known Hosts (Staging)
+        if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}" | base64 -d > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
       - name: Deploy production via SSH
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         env:
