@@ -3,29 +3,25 @@ terraform {
 }
 
 provider "vercel" {
-  token = var.vercel_token
+  api_token = var.vercel_token
 }
 
 resource "vercel_project" "tearleads" {
   name             = "tearleads"
   output_directory = "build"
-  node_version     = "16.x"
-  git_repository {
-    type = "github"
-    repo = "${var.github_owner}/${var.github_repository}"
-  }
-  domain {
-    git_branch = "production"
-    name       = var.domain
-  }
-  domain {
-    git_branch = "staging"
-    name       = "staging.tearleads.com"
-  }
+  framework        = "nextjs"
+  enable_affected_projects_deployments = false
+  
 }
 
-resource "vercel_domain" "tearleads" {
-  name = var.domain
+resource "vercel_project_domain" "tearleads_production" {
+  project_id = vercel_project.tearleads.id
+  domain     = var.domain
+}
+
+resource "vercel_project_domain" "tearleads_staging" {
+  project_id = vercel_project.tearleads.id
+  domain     = "staging.tearleads.com"
 }
 
 provider "github" {

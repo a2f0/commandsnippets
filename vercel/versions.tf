@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     vercel = {
-      source  = "chronark/vercel"
-      version = "0.14.0"
+      source  = "vercel/vercel"
+      version = "~> 2.0"
     }
     github = {
       source  = "integrations/github"
