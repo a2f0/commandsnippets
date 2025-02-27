@@ -165,15 +165,23 @@ resource "null_resource" "capture_ssh_host_keys" {
   # Add triggers to ensure this runs when the instance changes
   triggers = {
     instance_id = aws_instance.ec2.id
+    # Add a timestamp or random value to force recreation
+    force_recreation = timestamp()  # or uuid()
   }
 
   provisioner "local-exec" {
     command = <<-EOT
+      # Capture SSH host keys
       ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt
-      # Use GitHub CLI to set the secret directly
-      # Make sure gh CLI is installed and authenticated
-      gh secret set STAGING_KNOWN_HOSTS -R ${var.github_repository} -f ./ssh_host_keys.txt
-      rm -f ./ssh_host_keys.txt
+
+      # Base64 encode the file to avoid issues with special characters
+      cat ./ssh_host_keys.txt | base64 > ./ssh_host_keys_base64.txt
+
+      # Use GitHub CLI to set the secret with the base64 encoded content
+      gh secret set STAGING_KNOWN_HOSTS_BASE64 -R ${var.github_repository} -f ./ssh_host_keys_base64.txt
+
+      # Clean up
+      rm -f ./ssh_host_keys.txt ./ssh_host_keys_base64.txt
     EOT
   }
 }
