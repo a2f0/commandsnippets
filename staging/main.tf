@@ -159,26 +159,21 @@ resource "cloudflare_record" "web" {
   proxied = true
 }
 
-resource "null_resource" "cleanup" {
-  depends_on = [github_actions_secret.ssh_host_keys]
-
-  provisioner "local-exec" {
-    command = "rm -f ./ssh_host_keys.txt"
-  }
-}
-
 resource "null_resource" "capture_ssh_host_keys" {
   depends_on = [aws_instance.ec2, cloudflare_record.host]
 
-  provisioner "local-exec" {
-    command = "ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt"
+  # Add triggers to ensure this runs when the instance changes
+  triggers = {
+    instance_id = aws_instance.ec2.id
   }
-}
 
-resource "github_actions_secret" "ssh_host_keys" {
-  depends_on = [null_resource.capture_ssh_host_keys]
-
-  repository      = var.github_repository
-  secret_name     = "EC2_SSH_HOST_KEYS"
-  plaintext_value = file("./ssh_host_keys.txt")
+  provisioner "local-exec" {
+    command = <<-EOT
+      ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt
+      # Use GitHub CLI to set the secret directly
+      # Make sure gh CLI is installed and authenticated
+      gh secret set STAGING_KNOWN_HOSTS -R ${var.github_repository} -f ./ssh_host_keys.txt
+      rm -f ./ssh_host_keys.txt
+    EOT
+  }
 }
