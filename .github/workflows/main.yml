@@ -131,7 +131,7 @@ jobs:
         with:
           key: ${{ secrets.SSH_KEY }}
       - name: Configure Known Hosts (Staging)
-        if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
+        if: ${{ ( github.event.ref == 'refs/heads/deploy-test' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}" | base64 -d > ~/.ssh/known_hosts
