@@ -125,6 +125,8 @@ resource "aws_instance" "ec2" {
               EOF
 }
 
+
+
 data "aws_route53_zone" "tearleads-zone" {
   name         = "tearleads.com."
   private_zone = false
@@ -155,4 +157,29 @@ resource "cloudflare_record" "web" {
   type    = "CNAME"
   ttl     = 1
   proxied = true
+}
+
+resource "null_resource" "capture_ssh_host_keys" {
+  depends_on = [aws_instance.ec2, cloudflare_record.host]
+
+  # Add triggers to ensure this runs when the instance changes
+  triggers = {
+    instance_id = aws_instance.ec2.id
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      set -e
+      # Capture SSH host keys
+      ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt
+
+      # Use GitHub CLI to set the secret directly with proper base64 encoding
+      gh secret set STAGING_KNOWN_HOSTS_BASE64 -R "${var.github_owner}/${var.github_repository}" --body "$(cat ./ssh_host_keys.txt | base64)"
+
+      gh secret set DEPLOY_STAGING_FQDN -R "${var.github_owner}/${var.github_repository}" --body "${aws_instance.ec2.public_ip}"
+
+      # Clean up
+      rm -f ./ssh_host_keys.txt
+    EOT
+  }
 }
