@@ -126,7 +126,7 @@ jobs:
     needs: push-containers
     steps:
       - name: Install SSH key
-        if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
+        if: ${{ ( github.event.ref == 'refs/heads/deploy-test' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_KEY }}
