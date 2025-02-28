@@ -20,7 +20,7 @@ const InputEntrySubject = ({
   placeholder,
   id,
 }: IProps) => {
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [value, setValue] = useState<string>(valueParent);
   const theme: Theme = useTheme();
   const appConfig = useAppContext();
@@ -42,7 +42,7 @@ const InputEntrySubject = ({
     }
   }, [appConfig.activeEntryEditField]);
 
-  const setTextInputRef = (element: HTMLInputElement) => {
+  const setTextInputRef = (element: HTMLInputElement | null) => {
     inputRef.current = element;
   };
 

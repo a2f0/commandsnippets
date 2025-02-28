@@ -45,7 +45,7 @@ const InputEntryBody = ({
   id,
 }: IProps) => {
   const [value, setValue] = useState<string>(valueParent);
-  const inputRef = useRef<HTMLTextAreaElement>();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const appConfig = useAppContext();
 
   const theme = useTheme<Theme>();

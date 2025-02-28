@@ -24,8 +24,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   const appConfig = useAppContext();
   const {user, tag} = useParams();
 
-  const inputSaveRef = useRef<HTMLButtonElement>();
-  const inputCancelRef = useRef<HTMLButtonElement>();
+  const inputSaveRef = useRef<HTMLButtonElement>(null);
+  const inputCancelRef = useRef<HTMLButtonElement>(null);
 
   const setInputSaveRef = (element: HTMLButtonElement) => {
     inputSaveRef.current = element;
