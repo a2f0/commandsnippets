@@ -152,7 +152,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_FQDN: ${{ secrets.DEPLOY_STAGING_FQDN }}
         run: |
-          ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
+          ssh -vvv $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
