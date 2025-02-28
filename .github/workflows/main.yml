@@ -125,18 +125,19 @@ jobs:
     continue-on-error: false
     needs: push-containers
     steps:
-      - name: Install SSH key
-        if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      - name: Setup SSH Private Key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
       - name: Deploy production via SSH
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_FQDN: ${{ secrets.DEPLOY_PRODUCTION_FQDN }}
         run: |
+          echo "${{ secrets.PRODUCTION_KNOWN_HOSTS_BASE64 }}" | base64 -d > ~/.ssh/known_hosts
           ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
       - name: Deploy staging via SSH
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
@@ -144,6 +145,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_FQDN: ${{ secrets.DEPLOY_STAGING_FQDN }}
         run: |
+          echo "${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}" | base64 -d > ~/.ssh/known_hosts
           ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
       - name: Post to slack
         uses: 8398a7/action-slack@v3
