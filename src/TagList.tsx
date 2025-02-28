@@ -154,6 +154,11 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
+  // Add this function to properly connect the drop ref
+  const dropBoxRef = (el: HTMLUListElement | null) => {
+    drop(el);
+  };
+
   const handleContextClick = useCallback(
     (event: React.MouseEvent<HTMLUListElement>) => {
       event.preventDefault();
@@ -224,7 +229,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         <TagNew id="tagNewTop" handleNewParent={handleNew} />
       )}
       <List
-        ref={drop}
+        ref={dropBoxRef}
         dense={true}
         id="tagList"
         sx={{

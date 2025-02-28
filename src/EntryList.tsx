@@ -267,6 +267,11 @@ const EntryList = () => {
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
+  // Add this function to properly connect the drop ref
+  const dropBoxRef = (el: HTMLDivElement | null) => {
+    drop(el);
+  };
+
   const handleRemoveFromList = (id: string) => {
     setEntries(
       entries.filter(element => {
@@ -297,7 +302,7 @@ const EntryList = () => {
 
   return (
     <Box
-      ref={drop}
+      ref={dropBoxRef}
       id="tagsEntriesList"
       onMouseDown={onMouseDown}
       sx={{
