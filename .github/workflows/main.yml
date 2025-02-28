@@ -125,19 +125,15 @@ jobs:
     continue-on-error: false
     needs: push-containers
     steps:
-      - name: Install SSH key
-        if: ${{ ( github.event.ref == 'refs/heads/deploy-test' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY }}
       - name: Configure Known Hosts (Staging)
         if: ${{ ( github.event.ref == 'refs/heads/deploy-test' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}" >> ./whatever.txt
-          cat whatever.txt
+          chmod 700 ~/.ssh
+          echo ${{ secrets.SSH_KEY }} >> ~/.ssh/id_rsa
+          chmod 700 ~/.ssh/id_rsa
           echo "${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}" | base64 -d > ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
           cat ~/.ssh/known_hosts
       - name: Deploy production via SSH
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
