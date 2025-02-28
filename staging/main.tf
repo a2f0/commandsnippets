@@ -173,17 +173,13 @@ resource "null_resource" "capture_ssh_host_keys" {
       # Capture SSH host keys
       ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt
 
-      # Create a temporary file for the GitHub secret
-      echo -n "STAGING_KNOWN_HOSTS=" > ./github_secret.txt
+      # Use GitHub CLI to set the secret directly with proper base64 encoding
+      gh secret set STAGING_KNOWN_HOSTS_BASE64 -R "${var.github_owner}/${var.github_repository}" --body "$(cat ./ssh_host_keys.txt | base64)"
 
-      # Base64 encode the file without newlines and append to the secret file
-      cat ./ssh_host_keys.txt | base64 > ./github_secret.txt
-
-      # Use GitHub CLI to set the secret directly
-      gh secret set STAGING_KNOWN_HOSTS_BASE64 -R "${var.github_owner}/${var.github_repository}" --body "$(cat ./ssh_host_keys.txt)"
+      gh secret set DEPLOY_STAGING_FQDN -R "${var.github_owner}/${var.github_repository}" --body "${aws_instance.ec2.public_ip}"
 
       # Clean up
-      rm -f ./ssh_host_keys.txt ./github_secret.txt
+      rm -f ./ssh_host_keys.txt
     EOT
   }
 }
