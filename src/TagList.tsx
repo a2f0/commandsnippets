@@ -64,17 +64,17 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     [_setTags]
   );
 
-  const [elRefs, _setElRefs] = useState<Array<React.RefObject<HTMLLIElement>>>(
-    []
-  );
+  const [elRefs, _setElRefs] = useState<
+    Array<React.RefObject<HTMLLIElement | null>>
+  >([]);
   // Used to access the react state from keyListener.
   const elRefsRef = useRef(elRefs);
-  const setElRefs = (data: Array<React.RefObject<HTMLLIElement>>) => {
+  const setElRefs = (data: Array<React.RefObject<HTMLLIElement | null>>) => {
     elRefsRef.current = data;
     _setElRefs(data);
   };
   useEffect(() => {
-    const refsArray = Array<React.RefObject<HTMLLIElement>>(tags.length);
+    const refsArray = Array<React.RefObject<HTMLLIElement | null>>(tags.length);
     for (let index = 0; index < refsArray.length; index++) {
       refsArray[index] = createRef<HTMLLIElement>();
     }
@@ -154,6 +154,11 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
+  // Add this function to properly connect the drop ref
+  const dropBoxRef = (el: HTMLUListElement | null) => {
+    drop(el);
+  };
+
   const handleContextClick = useCallback(
     (event: React.MouseEvent<HTMLUListElement>) => {
       event.preventDefault();
@@ -224,7 +229,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         <TagNew id="tagNewTop" handleNewParent={handleNew} />
       )}
       <List
-        ref={drop}
+        ref={dropBoxRef}
         dense={true}
         id="tagList"
         sx={{

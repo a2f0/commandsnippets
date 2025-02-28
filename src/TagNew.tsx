@@ -21,7 +21,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
   const appConfig = useAppContext();
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
-  const inputTagNameRef = React.useRef<HTMLInputElement>();
+  const inputTagNameRef = React.useRef<HTMLInputElement>(null);
 
   const setInputTagNameRef = (element: HTMLInputElement) => {
     inputTagNameRef.current = element;

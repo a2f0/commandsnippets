@@ -9,7 +9,7 @@ import StyledTextFieldTags from './StyledTextFieldTags';
 const TagSearchField = () => {
   const [tagSearch, setTagSearch] = useState<string>('');
   const appConfig = useAppContext();
-  const inputRef = React.useRef<HTMLInputElement>();
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const escFunction = useCallback((event: KeyboardEvent) => {
     if (event.code === 'Escape') {

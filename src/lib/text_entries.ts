@@ -1,6 +1,6 @@
 import {Theme} from '@mui/material/styles';
 import {CancelTokenSource} from 'axios';
-import {MutableRefObject, RefObject} from 'react';
+import {RefObject} from 'react';
 
 import {db} from '../../src/lib/db/db';
 import type {TStore} from '../AppStateStore';
@@ -452,11 +452,15 @@ export function fetchPage({
 
 export function needsScrollingIntoView(
   element:
-    | RefObject<HTMLDivElement>
-    | MutableRefObject<HTMLButtonElement | undefined>
-    | RefObject<HTMLLIElement>,
+    | RefObject<HTMLDivElement | null>
+    | RefObject<HTMLButtonElement | null>
+    | RefObject<HTMLLIElement | null>
+    | null,
   theme: Theme
 ) {
+  if (element === null) {
+    return false;
+  }
   const rect = element.current?.getBoundingClientRect();
   if (rect !== undefined) {
     const bottomInView =
