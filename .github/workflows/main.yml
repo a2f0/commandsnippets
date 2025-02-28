@@ -67,6 +67,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
+          alias-domains: ${{ secrets.STAGING_DOMAIN }}
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
