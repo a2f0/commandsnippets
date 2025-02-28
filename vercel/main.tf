@@ -9,9 +9,9 @@ provider "vercel" {
 resource "vercel_project" "tearleads" {
   name             = "tearleads"
   output_directory = "build"
-  framework        = "nextjs"
+  framework        = "vite"
   enable_affected_projects_deployments = false
-  
+
 }
 
 resource "vercel_project_domain" "tearleads_production" {
