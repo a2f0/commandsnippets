@@ -14,10 +14,10 @@ variable "github_token" {
   type = string
 }
 
-variable "vercel_org_id" {
+variable "cloudflare_email" {
   type = string
 }
 
-variable "vercel_token" {
+variable "cloudflare_api_key" {
   type = string
 }
