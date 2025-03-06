@@ -144,7 +144,7 @@ resource "cloudflare_record" "host" {
 resource "cloudflare_record" "api" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = var.staging_api
-  content   = aws_instance.ec2.public_ip
+  content = aws_instance.ec2.public_ip
   type    = "A"
   ttl     = 1
   proxied = true
@@ -153,7 +153,7 @@ resource "cloudflare_record" "api" {
 resource "cloudflare_record" "web" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = var.staging_web
-  content = "cname.vercel-dns.com"
+  content = aws_instance.ec2.public_ip
   type    = "CNAME"
   ttl     = 1
   proxied = true
