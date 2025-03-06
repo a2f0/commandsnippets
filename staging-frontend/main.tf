@@ -7,8 +7,19 @@ provider "aws" {
   region = "us-east-1"
 }
 
+provider "cloudflare" {
+  email   = var.cloudflare_email
+  api_key = var.cloudflare_api_key
+}
+
 data "aws_route53_zone" "zone" {
-  name = "tearleads.com"
+  name = "staging.tearleads.com."
+}
+
+data "cloudflare_zones" "zone" {
+  filter {
+    name = "tearleads.com"
+  }
 }
 
 resource "aws_s3_bucket" "main" {
@@ -78,14 +89,14 @@ resource "aws_s3_bucket_policy" "main" {
 resource "aws_acm_certificate" "cert" {
   provider                  = aws.us_east_1
   domain_name               = var.domain
-  subject_alternative_names = ["*.${var.domain}"]
+  subject_alternative_names = ["www.${var.domain}"]
   validation_method         = "DNS"
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "aws_route53_record" "cert_validation" {
+resource "cloudflare_record" "cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
@@ -94,18 +105,25 @@ resource "aws_route53_record" "cert_validation" {
     }
   }
 
-  allow_overwrite = true
-  name            = each.value.name
-  records         = [each.value.record]
-  ttl             = 60
-  type            = each.value.type
-  zone_id         = data.aws_route53_zone.zone.zone_id
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+  name    = each.value.name
+  content   = each.value.record
+  type    = each.value.type
+  ttl     = 60
+  proxied = false
+  allow_overwrite = false
 }
 
 resource "aws_acm_certificate_validation" "cert" {
   provider                = aws.us_east_1
   certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+  validation_record_fqdns = [for record in aws_acm_certificate.cert.domain_validation_options : record.resource_record_name]
+
+  depends_on = [cloudflare_record.cert_validation]
+
+  timeouts {
+    create = "45m"
+  }
 }
 
 # CloudFront distribution
