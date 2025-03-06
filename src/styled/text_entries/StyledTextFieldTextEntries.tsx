@@ -17,7 +17,7 @@ const StyledTextFieldTextEntries = ({
   onChange,
 }: IStyledTextFieldProps) => {
   const appConfig = useAppContext();
-  const inputRef = React.useRef<HTMLInputElement>();
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (appConfig.activeSearch === activeSearch.entries) {

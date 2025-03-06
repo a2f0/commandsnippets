@@ -48,17 +48,19 @@ const EntryList = () => {
     _setEntries(data);
   };
 
-  const [elRefs, _setElRefs] = useState<Array<React.RefObject<HTMLDivElement>>>(
-    []
-  );
+  const [elRefs, _setElRefs] = useState<
+    Array<React.RefObject<HTMLDivElement | null>>
+  >([]);
   // Used to access the react state from within the listener.
   const elRefsRef = useRef(elRefs);
-  const setElRefs = (data: Array<React.RefObject<HTMLDivElement>>) => {
+  const setElRefs = (data: Array<React.RefObject<HTMLDivElement | null>>) => {
     elRefsRef.current = data;
     _setElRefs(data);
   };
   useEffect(() => {
-    const refsArray = Array<React.RefObject<HTMLDivElement>>(entries.length);
+    const refsArray = Array<React.RefObject<HTMLDivElement | null>>(
+      entries.length
+    );
     for (let index = 0; index < refsArray.length; index++) {
       refsArray[index] = createRef<HTMLDivElement>();
     }
@@ -265,6 +267,11 @@ const EntryList = () => {
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
+  // Add this function to properly connect the drop ref
+  const dropBoxRef = (el: HTMLDivElement | null) => {
+    drop(el);
+  };
+
   const handleRemoveFromList = (id: string) => {
     setEntries(
       entries.filter(element => {
@@ -295,7 +302,7 @@ const EntryList = () => {
 
   return (
     <Box
-      ref={drop}
+      ref={dropBoxRef}
       id="tagsEntriesList"
       onMouseDown={onMouseDown}
       sx={{

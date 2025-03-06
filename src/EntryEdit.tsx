@@ -27,12 +27,12 @@ const EntryEdit = ({
   handleCancelEditParent,
   id,
 }: IEntryEdit) => {
-  const saveRef = useRef<HTMLButtonElement>();
+  const saveRef = useRef<HTMLButtonElement>(null);
   const [subject, setSubject] = useState<string>(object.attributes.subject);
   const [body, setBody] = useState<string>(object.attributes.body);
   const appConfig = useAppContext();
-  const inputSaveRef = useRef<HTMLButtonElement>();
-  const inputCancelRef = useRef<HTMLButtonElement>();
+  const inputSaveRef = useRef<HTMLButtonElement>(null);
+  const inputCancelRef = useRef<HTMLButtonElement>(null);
   const theme = useTheme();
 
   const setInputSaveRef = (element: HTMLButtonElement) => {

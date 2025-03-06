@@ -82,6 +82,7 @@ const Entry = ({
   const {tag, user} = useParams();
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
+  const previewRef = useRef<HTMLDivElement>(null);
   const [{isDragging}, drag, preview] = useDrag({
     item: (): DraggableItem => ({
       id,
@@ -387,6 +388,11 @@ const Entry = ({
     }
   };
 
+  const previewBoxRef = (el: HTMLDivElement | null) => {
+    previewRef.current = el;
+    preview(el);
+  };
+
   return (
     <>
       {appConfig.entryNew === `textEntry-${object.id}-top` && (
@@ -403,7 +409,7 @@ const Entry = ({
           onContextMenu={handleContextClick}
           id={`tagsEntries-${id}`}
         >
-          <EntryContainer ref={preview}>
+          <EntryContainer ref={previewBoxRef}>
             <div>
               <DragHandleContainer
                 role="entryDragHandleContainer"

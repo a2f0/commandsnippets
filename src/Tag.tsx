@@ -1,3 +1,4 @@
+import {StyledComponent} from '@emotion/styled';
 import {ListItem, ListItemButton} from '@mui/material';
 import {Box} from '@mui/material';
 import {Theme} from '@mui/material/styles';
@@ -28,12 +29,20 @@ const TagContainer = styled('div')(() => ({
   lineHeight: '20px',
 }));
 
-const TagLabelWrapper = styled('div')`
+// Update TagLabelWrapper definition
+const TagLabelWrapper = styled('div', {
+  shouldForwardProp: prop => prop !== 'ref',
+})`
   display: inline-block;
   cursor: pointer;
   width: calc(100% - ${props => props.theme.main.dragIndicatorWidth}px);
   font-size: 14px;
-`;
+` as StyledComponent<{
+  ref?: React.RefCallback<HTMLDivElement>;
+  id?: string;
+  role?: string;
+  children?: React.ReactNode;
+}>;
 
 export interface DraggableItem {
   id: string;
@@ -108,7 +117,11 @@ const Tag = ({
     }
   }, [isSelected]);
 
-  const [{isDragging}, drag, preview] = useDrag(
+  const [{isDragging}, drag, preview] = useDrag<
+    DraggableItem,
+    void,
+    {isDragging: boolean}
+  >(
     {
       item: (): DraggableItem => ({
         id,
@@ -304,8 +317,20 @@ const Tag = ({
   };
 
   const opacity = isDragging ? 0 : 1;
-  drag(dragRef);
-  drop(dropRef);
+
+  const dragHandleRef = (el: HTMLDivElement | null) => {
+    dragRef.current = el;
+    drag(el);
+  };
+
+  const dropBoxRef = (el: HTMLDivElement | null) => {
+    dropRef.current = el;
+    drop(el);
+  };
+
+  const previewRef = (el: HTMLDivElement | null) => {
+    preview(el);
+  };
 
   const contextMenu = useMemo(
     () => (
@@ -338,6 +363,10 @@ const Tag = ({
     backgroundColor = theme.selected.background;
   }
 
+  const dropLabelRef = (el: HTMLDivElement | null) => {
+    drop(el);
+  };
+
   return (
     <>
       {!isEditing && (
@@ -355,7 +384,7 @@ const Tag = ({
             }}
           >
             <Box
-              ref={dropRef}
+              ref={dropBoxRef}
               style={{opacity}}
               onContextMenu={handleContextClick}
               onClick={() => {
@@ -374,11 +403,11 @@ const Tag = ({
                 },
               }}
             >
-              <TagContainer ref={preview}>
+              <TagContainer ref={previewRef}>
                 <DragHandleContainer role="tagDragHandleContainer">
                   <DragHandle
                     role="tagDragHandle"
-                    ref={dragRef}
+                    ref={dragHandleRef}
                     style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
                   >
                     ::
@@ -387,7 +416,7 @@ const Tag = ({
                 <TagLabelWrapper
                   id={`tagLabelWrapper-${id}`}
                   role="tagLabelWrapper"
-                  ref={drop}
+                  ref={dropLabelRef}
                 >
                   <TagLabel label={tagObject.attributes.name} />
                   {appConfig.showTagCounts
