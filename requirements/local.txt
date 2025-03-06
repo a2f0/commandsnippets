@@ -1,11 +1,11 @@
 -r base.txt
-black==24.10.0                   # this should match .pre-commit-config.yamml
+black==25.1.0                   # this should match .pre-commit-config.yamml
 bump2version==1.0.1
-coverage==7.6.9
+coverage==7.6.12
 django_extensions==3.2.3
-factory_boy==3.3.1
+factory_boy==3.3.3
 responses==0.25.6
-isort[requirements]==5.12.0     # this should match .pre-commit-config.yamml
+isort[requirements]==6.0.1     # this should match .pre-commit-config.yamml
 pre-commit==4.1.0
 pur==7.3.2                      # for checking out of date dependencies
-safety==3.2.8
+safety==3.2.14

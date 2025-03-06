@@ -44,7 +44,7 @@ Accessing the local Postgresql Database
     \c tearleads
     -- list tables
     \dt
-    select * from users_user;
+    select * from users_user order by date_joined desc;
     -- show colums for table
     \d users_user
     \q
