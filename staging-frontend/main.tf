@@ -12,10 +12,6 @@ provider "cloudflare" {
   api_key = var.cloudflare_api_key
 }
 
-data "aws_route53_zone" "zone" {
-  name = "staging.tearleads.com."
-}
-
 data "cloudflare_zones" "zone" {
   filter {
     name = "tearleads.com"
@@ -94,6 +90,15 @@ resource "aws_acm_certificate" "cert" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+resource "cloudflare_record" "caa_aws" {
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+  name    = "@"  # @ represents the apex/root domain
+  type    = "CAA"
+  content = "0 issue \"awstrust.com\""
+  ttl     = 3600
+  proxied = false
 }
 
 resource "cloudflare_record" "cert_validation" {
