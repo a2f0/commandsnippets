@@ -229,7 +229,7 @@ resource "cloudflare_record" "staging" {
 
 resource "cloudflare_record" "www" {
   zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
-  name            = "www"
+  name            = "www.${var.domain}"
   content           = aws_cloudfront_distribution.website.domain_name
   type            = "CNAME"
   allow_overwrite = true
