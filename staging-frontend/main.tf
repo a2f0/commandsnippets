@@ -190,20 +190,18 @@ resource "aws_cloudfront_distribution" "website" {
 }
 
 resource "cloudflare_record" "staging" {
-  zone_id         = var.cloudflare_zone_id
+  zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
   name            = var.domain
   content         = aws_cloudfront_distribution.website.domain_name
   type            = "CNAME"
-  proxied         = true
   allow_overwrite = true
 }
 
 resource "cloudflare_record" "www" {
-  zone_id         = var.cloudflare_zone_id
+  zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
   name            = "www"
   content           = aws_cloudfront_distribution.website.domain_name
   type            = "CNAME"
-  proxied         = true
   allow_overwrite = true
 }
 
