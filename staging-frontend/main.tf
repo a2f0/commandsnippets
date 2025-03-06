@@ -96,7 +96,11 @@ resource "cloudflare_record" "caa_aws" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
   name    = "@"  # @ represents the apex/root domain
   type    = "CAA"
-  content = "0 issue \"awstrust.com\""
+  data {
+    flags = "0"
+    tag   = "issue"
+    value = "awstrust.com"
+  }
   ttl     = 3600
   proxied = false
 }
@@ -185,30 +189,22 @@ resource "aws_cloudfront_distribution" "website" {
   }
 }
 
-resource "aws_route53_record" "production" {
-  allow_overwrite = true
+resource "cloudflare_record" "staging" {
+  zone_id         = var.cloudflare_zone_id
   name            = var.domain
-  type            = "A"
-  zone_id         = data.aws_route53_zone.zone.zone_id
-
-  alias {
-    name                   = aws_cloudfront_distribution.website.domain_name
-    zone_id                = aws_cloudfront_distribution.website.hosted_zone_id
-    evaluate_target_health = false
-  }
+  content         = aws_cloudfront_distribution.website.domain_name
+  type            = "CNAME"
+  proxied         = true
+  allow_overwrite = true
 }
 
-resource "aws_route53_record" "www" {
+resource "cloudflare_record" "www" {
+  zone_id         = var.cloudflare_zone_id
+  name            = "www"
+  content           = aws_cloudfront_distribution.website.domain_name
+  type            = "CNAME"
+  proxied         = true
   allow_overwrite = true
-  name            = "www.${var.domain}"
-  type            = "A"
-  zone_id         = data.aws_route53_zone.zone.zone_id
-
-  alias {
-    name                   = aws_cloudfront_distribution.website.domain_name
-    zone_id                = aws_cloudfront_distribution.website.hosted_zone_id
-    evaluate_target_health = false
-  }
 }
 
 resource "aws_iam_policy" "s3_sync_policy" {
