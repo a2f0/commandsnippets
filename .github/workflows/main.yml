@@ -51,18 +51,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # production deploy
-      - uses: amondnet/vercel-action@v25
-        name: production deploy
-        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-args: '--prod'
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
       # staging deploy
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
-        if: ${{ github.event.ref == 'refs/heads/fix-deploy-staging-to-cloudfront' && github.event_name == 'push' }}
+        if: ${{ github.event.ref == 'refs/heads/staging && github.event_name == 'push' }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_STAGING }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
@@ -71,13 +63,5 @@ jobs:
         run: npm ci
       - run: npm run build
       - name: deploy to s3
+        if: ${{ github.event.ref == 'refs/heads/staging && github.event_name == 'push' }}
         run: aws s3 sync --acl=public-read --delete ./build s3://${{ secrets.STAGING_DOMAIN }}
-      - name: Post to slack
-        uses: 8398a7/action-slack@v3
-        if: ${{ failure() }}
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
