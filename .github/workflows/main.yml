@@ -50,9 +50,14 @@ jobs:
     needs: code-quality
     steps:
       - uses: actions/checkout@v4
-      # production deploy
-      # staging deploy
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (Production)
+        uses: aws-actions/configure-aws-credentials@v2
+        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_PRODUCTION }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION }}
+          aws-region: us-east-1
+      - name: Configure AWS credentials (Staging)
         uses: aws-actions/configure-aws-credentials@v2
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         with:
@@ -62,6 +67,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - run: npm run build
-      - name: deploy to s3
+      - name: Deploy to S3 (Production)
+        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
+        run: aws s3 sync --acl=public-read --delete ./build s3://${{ secrets.PRODUCTION_DOMAIN }}
+      - name: Deploy to S3 (Staging)
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         run: aws s3 sync --acl=public-read --delete ./build s3://${{ secrets.STAGING_DOMAIN }}
