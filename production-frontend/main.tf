@@ -284,3 +284,9 @@ resource "github_actions_secret" "aws_secret_key" {
   secret_name     = "AWS_SECRET_ACCESS_KEY_PRODUCTION"
   plaintext_value = aws_iam_access_key.s3_sync_key.secret
 }
+
+resource "github_actions_secret" "production_domain" {
+  repository      = var.github_repository
+  secret_name     = "PRODUCTION_DOMAIN"
+  plaintext_value = var.domain
+}
