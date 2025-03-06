@@ -136,6 +136,30 @@ resource "aws_acm_certificate_validation" "cert" {
 }
 
 # CloudFront distribution
+resource "aws_cloudfront_function" "url_rewrite" {
+  name    = "url-rewrite-staging"
+  runtime = "cloudfront-js-1.0"
+  comment = "Rewrite URLs to serve root index.html for all paths"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+
+      // Check if the request is for a file with an extension (has a dot and not ending with /)
+      if (uri.includes('.') && !uri.endsWith('/')) {
+        // If it's a file request, leave it as is
+        return request;
+      }
+
+      // For all other requests (paths without extensions or ending with /), serve the root index.html
+      request.uri = '/index.html';
+
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "website" {
   # Add explicit dependency on certificate validation
   depends_on = [aws_acm_certificate_validation.cert]
@@ -172,6 +196,12 @@ resource "aws_cloudfront_distribution" "website" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+
+    # Add the function association
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.url_rewrite.arn
+    }
   }
 
   price_class = "PriceClass_100"
