@@ -148,35 +148,6 @@ resource "cloudflare_record" "api" {
   proxied = true
 }
 
-resource "cloudflare_record" "web" {
-  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
-  name    = "web"
-  content = aws_instance.ec2.public_ip
-  type    = "A"
-  ttl     = 1
-  proxied = true
-}
-
-resource "cloudflare_record" "tearleads" {
-  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
-  name    = "tearleads.com"
-  # Vercel
-  content = "76.76.21.21"
-  type    = "A"
-  ttl     = 1
-  proxied = true
-}
-
-resource "cloudflare_record" "app" {
-  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
-  name    = "app.tearleads.com"
-  # Vercel
-  content = "76.76.21.21"
-  type    = "A"
-  ttl     = 1
-  proxied = true
-}
-
 resource "null_resource" "capture_ssh_host_keys" {
   depends_on = [aws_instance.ec2, cloudflare_record.host]
 
