@@ -20,7 +20,12 @@ const PublicHomePage = () => {
         }}
       >
         <StyledToolbar>
-          <Grid container justifyContent="flex-end">
+          <Grid
+            container
+            justifyContent="flex-end"
+            alignItems="center"
+            width="100%"
+          >
             <GithubAuth />
             <GoogleAuth />
           </Grid>
