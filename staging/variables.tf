@@ -18,10 +18,6 @@ variable "staging_api" {
   type = string
 }
 
-variable "staging_web" {
-  type = string
-}
-
 variable "deployment_user" {
   type = string
 }

@@ -8,6 +8,9 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 4.0"
     }
+    null = {
+      source = "hashicorp/null"
+    }
   }
   required_version = ">= 1.1.0"
 }
