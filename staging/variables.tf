@@ -41,4 +41,3 @@ variable "github_owner" {
 variable "github_repository" {
   type = string
 }
-
