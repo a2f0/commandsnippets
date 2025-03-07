@@ -12,6 +12,10 @@ provider "cloudflare" {
   api_key = var.cloudflare_api_key
 }
 
+provider "github" {
+  token = var.github_token
+}
+
 data "cloudflare_zones" "zone" {
   filter {
     name = "tearleads.com"
