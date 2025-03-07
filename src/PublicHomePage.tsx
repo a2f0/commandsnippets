@@ -1,4 +1,4 @@
-import {AppBar} from '@mui/material';
+import {AppBar, Box} from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import React from 'react';
 
@@ -20,10 +20,16 @@ const PublicHomePage = () => {
         }}
       >
         <StyledToolbar>
-          <Grid container justifyContent="flex-end">
+          <Box
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="center" // vertically center the items
+            flexGrow={1}
+            mr={1}
+          >
             <GithubAuth />
             <GoogleAuth />
-          </Grid>
+          </Box>
         </StyledToolbar>
       </AppBar>
       <Grid
