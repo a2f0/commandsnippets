@@ -25,7 +25,7 @@ npm run ci
 npm run ci-headless
 ```
 
-Start the testing webpack server (on different port than normal development server), and then run tests manually in a separate command.
+Start the testing server (on different port than normal development server), and then run tests manually in a separate command.
 
 ```shell
 npm run server-test

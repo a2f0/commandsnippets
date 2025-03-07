@@ -1,7 +1,6 @@
 import {Box} from '@mui/material';
 import {Fade} from '@mui/material';
 import {Menu} from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import {styled} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
@@ -159,10 +158,16 @@ const MenuBar = () => {
         )}
         <HelpMenuButton onClick={handleHelpMenuClick} />
       </Aligner>
-      <Grid container justifyContent="flex-end">
+      <Box
+        display="flex"
+        justifyContent="flex-end"
+        alignItems="center" // vertically center the items
+        flexGrow={1}
+        mr={1}
+      >
         <GithubAuth />
         <GoogleAuth />
-      </Grid>
+      </Box>
       <FileMenu onClose={handleFileMenuClose} anchorEl={fileMenuAnchorEl} />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
       <TagsMenu onClose={handleTagsMenuClose} anchorEl={tagsMenuAnchorEl} />

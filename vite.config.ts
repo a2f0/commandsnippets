@@ -1,3 +1,4 @@
+import react from '@vitejs/plugin-react';
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
 
@@ -16,6 +17,7 @@ export default defineConfig({
     include: ['__tests__/**/*.{test,spec}.{ts,tsx}'],
   },
   plugins: [
+    react(),
     VitePWA({
       devOptions: {
         enabled: true,
