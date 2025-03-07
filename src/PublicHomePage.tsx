@@ -20,7 +20,13 @@ const PublicHomePage = () => {
         }}
       >
         <StyledToolbar>
-          <Box display="flex" justifyContent="flex-end" width="100%">
+          <Box
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="center" // vertically center the items
+            flexGrow={1}
+            mr={1}
+          >
             <GithubAuth />
             <GoogleAuth />
           </Box>
