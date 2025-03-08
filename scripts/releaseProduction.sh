@@ -12,6 +12,20 @@ fi
 
 echo "Current branch is staging. Proceeding with production release..."
 
+# Check for staged changes
+if [ -n "$(git diff --staged)" ]; then
+    echo "Error: You have staged changes. Please commit or unstage them before releasing to production"
+    exit 1
+fi
+
+# Check for unstaged changes
+if [ -n "$(git diff)" ]; then
+    echo "Error: You have unstaged changes. Please commit or stash them before releasing to production"
+    exit 1
+fi
+
+echo "No uncommitted changes detected. Continuing with release..."
+
 # Additional release steps would go here
 
 echo "Production release completed successfully"
