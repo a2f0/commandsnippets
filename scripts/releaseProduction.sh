@@ -18,6 +18,15 @@ git pull origin staging
 
 echo "Staging branch updated from remote. Continuing..."
 
+# Make sure production branch is also up to date
+echo "Ensuring production branch is in sync with remote..."
+git fetch origin production
+git checkout production
+git pull origin production
+git checkout staging
+
+echo "Production branch synced with remote. Continuing..."
+
 # Check for staged changes
 if [ -n "$(git diff --staged)" ]; then
     echo "Error: You have staged changes. Please commit or unstage them before releasing to production"
