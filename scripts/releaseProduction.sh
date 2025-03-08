@@ -32,6 +32,10 @@ fi
 
 echo "No uncommitted changes detected. Continuing with release..."
 
+# Pull production changes back into staging
+echo "Pulling production changes back into staging branch..."
+git pull origin production
+
 # Get version from package.json
 VERSION=$(node -p "require('./package.json').version")
 echo "Current version from package.json: $VERSION"
@@ -51,8 +55,5 @@ gh pr merge --auto --merge
 
 echo "Production release PR created successfully with auto-merge enabled"
 
-# Pull production changes back into staging
-echo "Pulling production changes back into staging branch..."
-git pull origin production
 
 echo "Staging branch is now up-to-date with production"
