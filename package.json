@@ -10,8 +10,8 @@
   "scripts": {
     "server": "vite serve",
     "server-test": "vite serve --port 8081",
-    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm --no-warnings' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.shared.conf.ts",
-    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --loader ts-node/esm --no-warnings' TS_NODE_PROJECT=test/tsconfig.json npx wdio test/wdio.headless.conf.ts",
+    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --no-warnings' npx wdio test/wdio.shared.conf.ts",
+    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --no-warnings' npx wdio test/wdio.headless.conf.ts",
     "ci": "start-server-and-test server-test http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test server-test http-get://localhost:8081 test-headless",
     "unit": "npx vitest --no-watch",
@@ -66,6 +66,7 @@
     "stream-browserify": "3.0.0",
     "swc-loader": "0.2.6",
     "ts-node": "10.9.2",
+    "tsx": "4.19.3",
     "typescript": "5.3.3",
     "url-loader": "4.1.1",
     "vite": "5.4.14",
