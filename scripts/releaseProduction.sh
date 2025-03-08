@@ -43,8 +43,7 @@ gh pr create \
   --head staging \
   --title "Release v$VERSION to production" \
   --body "Automated release of version $VERSION to production." \
-  --label "release" \
-  --repo "$(git remote get-url origin | sed 's/.*github.com[:\/]\(.*\)\.git/\1/')"
+  --label "release"
 
 # Enable auto-merge on the PR
 PR_URL=$(gh pr view --json url -q .url)
