@@ -32,9 +32,26 @@ fi
 
 echo "No uncommitted changes detected. Continuing with release..."
 
-# Additional release steps would go here
+# Get version from package.json
+VERSION=$(node -p "require('./package.json').version")
+echo "Current version from package.json: $VERSION"
 
-echo "Production release completed successfully"
+# Create PR from staging to production using GitHub CLI
+echo "Creating PR from staging to production..."
+gh pr create \
+  --base production \
+  --head staging \
+  --title "Release v$VERSION to production" \
+  --body "Automated release of version $VERSION to production." \
+  --label "release" \
+  --repo "$(git remote get-url origin | sed 's/.*github.com[:\/]\(.*\)\.git/\1/')"
+
+# Enable auto-merge on the PR
+PR_URL=$(gh pr view --json url -q .url)
+echo "Enabling auto-merge on PR: $PR_URL"
+gh pr merge --auto --merge
+
+echo "Production release PR created successfully with auto-merge enabled"
 
 # Pull production changes back into staging
 echo "Pulling production changes back into staging branch..."
