@@ -12,6 +12,12 @@ fi
 
 echo "Current branch is staging. Proceeding with production release..."
 
+# Pull the latest changes from remote staging
+echo "Pulling latest changes from remote staging branch..."
+git pull origin staging
+
+echo "Staging branch updated from remote. Continuing..."
+
 # Check for staged changes
 if [ -n "$(git diff --staged)" ]; then
     echo "Error: You have staged changes. Please commit or unstage them before releasing to production"
