@@ -36,6 +36,8 @@ echo "No uncommitted changes detected. Continuing with release..."
 echo "Pulling production changes back into staging branch..."
 git pull origin production
 
+git push -u origin staging
+
 # Get version from package.json
 VERSION=$(node -p "require('./package.json').version")
 echo "Current version from package.json: $VERSION"
