@@ -224,8 +224,9 @@ export function fetch(
       entries = entries.concat(response.data.data);
       if (response.data.included) {
         for (let i = 0; i < response.data.included.length; i++) {
-          if (!entries.includes(response.data.included[i])) {
-            entries.push(response.data.included[i]);
+          const item = response.data.included[i];
+          if (item && !entries.includes(item)) {
+            entries.push(item);
           }
         }
       }

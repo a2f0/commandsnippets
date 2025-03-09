@@ -393,8 +393,9 @@ export function fetch(
   }).then(response => {
     entries = entries.concat(response.data.data);
     for (let i = 0; i < response.data.included?.length; i++) {
-      if (!entries.includes(response.data.included[i])) {
-        entries.push(response.data.included[i]);
+      const item = response.data.included[i];
+      if (item && !entries.includes(item)) {
+        entries.push(item);
       }
     }
     if (response.data.links.next === null) {
@@ -426,7 +427,7 @@ export function fetchPage({
     include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
   };
 
-  if (search !== null) {
+  if (search != null) {
     params['filter[search]'] = search;
   }
 
@@ -441,8 +442,9 @@ export function fetchPage({
   }).then(response => {
     entries = entries.concat(response.data.data);
     for (let i = 0; i < response.data.included?.length; i++) {
-      if (!entries.includes(response.data.included[i])) {
-        entries.push(response.data.included[i]);
+      const item = response.data.included[i];
+      if (item && !entries.includes(item)) {
+        entries.push(item);
       }
     }
     return entries;
