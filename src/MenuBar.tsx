@@ -48,7 +48,7 @@ export const StyledMenu = ({
       transformOrigin={{vertical: 'top', horizontal: 'left'}}
       keepMounted
       open={open}
-      TransitionComponent={Fade}
+      slots={{transition: Fade}}
     >
       {children}
     </Menu>
