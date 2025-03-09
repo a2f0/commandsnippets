@@ -1,5 +1,1 @@
-build/
-/**/*.d.ts
-src/ts-out/**/*
-# Vite PWA
-dev-dist/
+// This file can be deleted as we're migrating to Biome
