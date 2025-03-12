@@ -3,6 +3,7 @@ import {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import {CancelTokenSource} from 'axios';
 import axios from 'axios';
+import invariant from 'invariant';
 import update from 'immutability-helper';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
@@ -113,7 +114,7 @@ const EntryList = () => {
           appConfig.entrySortOrder,
           appConfig
         );
-        if (array.length > 1) {
+        if (array[0]) {
           appConfig.setEntrySelectedID(array[0].id);
         }
         setEntries(array);
@@ -160,7 +161,7 @@ const EntryList = () => {
           element => element.id === appConfig.entrySelectedID
         );
         if (current === undefined) {
-          if (array.length > 0) {
+          if (array[0]) {
             appConfig.setEntrySelectedID(array[0].id);
           }
         }
@@ -187,7 +188,9 @@ const EntryList = () => {
           if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
+              invariant(entriesRef.current[newIndex], 'entry is undefined');
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
+              invariant(elRefsRef.current[newIndex], 'entry is undefined');
               if (
                 needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
               ) {
@@ -200,7 +203,9 @@ const EntryList = () => {
           } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
             if (newIndex <= entriesRef.current.length - 1) {
+              invariant(entriesRef.current[newIndex], 'entry is undefined');
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
+              invariant(elRefsRef.current[newIndex], 'entry is undefined');
               if (
                 needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
               ) {
@@ -232,6 +237,7 @@ const EntryList = () => {
   const findEntry = useCallback(
     (id: string) => {
       const entry = entries.filter(c => c.id === id)[0];
+      invariant(entry, 'entry is undefined');
       return {
         entry,
         index: entries.indexOf(entry),
@@ -257,10 +263,11 @@ const EntryList = () => {
     [findEntry, entries, setEntries]
   );
 
-  const findEntryByIndex = (index: number) => {
+  const findEntryByIndex = (index: number): ITextEntryJsonApi | null => {
     if (index > entries.length - 1) {
       return null;
     } else {
+      invariant(entries[index], 'entry is undefined');
       return entries[index];
     }
   };
