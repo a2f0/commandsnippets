@@ -13,7 +13,7 @@ import React, {
 } from 'react';
 import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
-
+import invariant from 'invariant';
 import {useAppContext} from './AppContext';
 import ItemTypes from './ItemTypes';
 import {activeSearch, appMode, IMouse, initialMouse} from './lib/shared';
@@ -92,7 +92,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           element => element.id === appConfig.tagSelectedID
         );
         if (current === undefined) {
-          if (tags.length > 0) {
+          if (tags[0]) {
             console.info(
               `set selected tag ${tags[0].attributes.name} id ${tags[0].id}`
             );
@@ -112,6 +112,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const findEntry = useCallback(
     (id: string) => {
       const entry = tags.filter(c => c.id === id)[0];
+      invariant(entry, 'entry is not defined');
       return {
         entry,
         index: tags.indexOf(entry),
@@ -121,10 +122,11 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   );
 
   const findEntryByIndex = useCallback(
-    (index: number) => {
+    (index: number): ITagJsonApi | null => {
       if (index > tags.length - 1) {
         return null;
       } else {
+        invariant(tags[index], 'tag is undefined');
         return tags[index];
       }
     },
@@ -134,6 +136,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const moveEntry = useCallback(
     (id: string, atIndex: number) => {
       const {entry, index} = findEntry(id);
+      invariant(entry, 'entry is undefined');
       console.debug(
         `moveEntry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
       );
@@ -194,12 +197,14 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         if (selectedIndex !== -1) {
           if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
+            invariant(tagsRef.current[newIndex], 'tag is undefined');
             if (newIndex >= 0) {
               setSelectedTag(tagsRef.current[newIndex].id);
               setMovedSelectedUp(true);
             }
           } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
+            invariant(tagsRef.current[newIndex], 'tagRef is undefined');
             if (newIndex <= tagsRef.current.length - 1) {
               setSelectedTag(tagsRef.current[newIndex].id);
               setMovedSelectedUp(false);

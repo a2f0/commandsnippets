@@ -34,7 +34,7 @@ const MainContextMenu = (props: IMainContextMenu) => {
       anchorPosition={
         mouse.mouseY !== null && mouse.mouseX !== null
           ? {top: mouse.mouseY, left: mouse.mouseX}
-          : undefined
+          : {top: 0, left: 0}
       }
     >
       <MenuItem

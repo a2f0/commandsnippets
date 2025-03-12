@@ -192,9 +192,9 @@ const EntryList = () => {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
               invariant(elRefsRef.current[newIndex], 'entry is undefined');
               if (
-                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
+                needsScrollingIntoView(elRefsRef.current[newIndex], theme)
               ) {
-                elRefsRef.current?.[newIndex].current?.scrollIntoView({
+                elRefsRef.current[newIndex].current?.scrollIntoView({
                   behavior: 'auto',
                   block: 'start',
                 });
@@ -207,9 +207,9 @@ const EntryList = () => {
               appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
               invariant(elRefsRef.current[newIndex], 'entry is undefined');
               if (
-                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
+                needsScrollingIntoView(elRefsRef.current[newIndex], theme)
               ) {
-                elRefsRef.current?.[newIndex].current?.scrollIntoView({
+                elRefsRef.current[newIndex].current?.scrollIntoView({
                   behavior: 'auto',
                   block: 'end',
                 });
