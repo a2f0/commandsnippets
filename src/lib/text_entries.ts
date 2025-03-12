@@ -331,7 +331,6 @@ export function sort(
 }
 
 export function filter(
-  order: string,
   array: Array<ITextEntryJsonApi>
 ): ITextEntryJsonApi[] {
   const filteredArray: Array<ITextEntryJsonApi> = array;
