@@ -42,7 +42,7 @@ const StyledMenu = ({
       anchorPosition={
         mousePosition.mouseY !== null && mousePosition.mouseX !== null
           ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : undefined
+          : {top: 0, left: 0}
       }
     >
       {children}
@@ -102,7 +102,7 @@ const TagContextMenu = ({
         anchorPosition={
           mousePosition.mouseY !== null && mousePosition.mouseX !== null
             ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-            : undefined
+            : {top: 0, left: 0}
         }
       >
         <StyledMenuItem

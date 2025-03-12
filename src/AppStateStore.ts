@@ -306,20 +306,22 @@ export const AppStateStoreModel = types
       self.loggedInUser = handle;
     },
     removeTag(id: string) {
-      const existing: Instance<typeof TagModel> = self.tagsArray.filter(
-        c => c.id === id
-      )[0];
-      destroy(existing);
+      const existingTag = self.tagsArray.find(c => c.id === id);
+      if (existingTag) {
+        destroy(existingTag);
+      }
     },
     removeTagTextEntryThroughModel(id: string) {
-      const existing: Instance<typeof TagTextEntryThroughModel> =
-        self.tagTextEntryThroughModel.filter(c => c.id === id)[0];
-      destroy(existing);
+      const existingJunction = self.tagTextEntryThroughModel.find(c => c.id === id);
+      if (existingJunction) {
+        destroy(existingJunction);
+      }
     },
     removeUntaggedTextEntry(id: string) {
-      const existing: Instance<typeof TextEntryModel> =
-        self.untaggedTextEntriesArray.filter(c => c.id === id)[0];
-      destroy(existing);
+      const existingEntry = self.untaggedTextEntriesArray.find(c => c.id === id);
+      if (existingEntry) {
+        destroy(existingEntry);
+      }
     },
     removeTextEntry(id: string) {
       console.info('id: ' + id);
