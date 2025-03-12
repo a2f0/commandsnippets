@@ -126,8 +126,9 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       if (index > tags.length - 1) {
         return null;
       } else {
-        invariant(tags[index], 'tag is undefined');
-        return tags[index];
+        const tag = tags[index];
+        invariant(tag, 'tag is undefined');
+        return tag;
       }
     },
     [tags]
@@ -197,16 +198,18 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         if (selectedIndex !== -1) {
           if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
-            invariant(tagsRef.current[newIndex], 'tag is undefined');
             if (newIndex >= 0) {
-              setSelectedTag(tagsRef.current[newIndex].id);
+              const tag = tagsRef.current[newIndex];
+              invariant(tag, 'tag is undefined');
+              setSelectedTag(tag.id);
               setMovedSelectedUp(true);
             }
           } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
-            invariant(tagsRef.current[newIndex], 'tagRef is undefined');
             if (newIndex <= tagsRef.current.length - 1) {
-              setSelectedTag(tagsRef.current[newIndex].id);
+              const tag = tagsRef.current[newIndex];
+              invariant(tag, 'tag is undefined');
+              setSelectedTag(tag.id);
               setMovedSelectedUp(false);
             }
           } else if (event.key === 'Enter') {

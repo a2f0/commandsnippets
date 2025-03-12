@@ -43,7 +43,7 @@ const EntryList = () => {
 
   // Used to access the react state from within the listener.
   const [entries, _setEntries] = useState<Array<ITextEntryJsonApi>>([]);
-  const entriesRef = useRef(entries);
+  const entriesRef = useRef<Array<ITextEntryJsonApi>>(entries);
   const setEntries = (data: Array<ITextEntryJsonApi>) => {
     entriesRef.current = data;
     _setEntries(data);
@@ -188,28 +188,29 @@ const EntryList = () => {
           if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
-              invariant(entriesRef.current[newIndex], 'entry is undefined');
-              appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
-              invariant(elRefsRef.current[newIndex], 'entry is undefined');
-              if (
-                needsScrollingIntoView(elRefsRef.current[newIndex], theme)
-              ) {
-                elRefsRef.current[newIndex].current?.scrollIntoView({
-                  behavior: 'auto',
-                  block: 'start',
-                });
+              const entry = entriesRef.current[newIndex];
+              if (entry) {
+                appConfig.setEntrySelectedID(entry.id);
+                const elRef = elRefsRef.current[newIndex];
+                invariant(elRef, 'entry ref is undefined');
+                if (needsScrollingIntoView(elRef, theme)) {
+                  elRef.current?.scrollIntoView({
+                    behavior: 'auto',
+                    block: 'start',
+                  });
+                }
               }
             }
           } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
             if (newIndex <= entriesRef.current.length - 1) {
-              invariant(entriesRef.current[newIndex], 'entry is undefined');
-              appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
-              invariant(elRefsRef.current[newIndex], 'entry is undefined');
-              if (
-                needsScrollingIntoView(elRefsRef.current[newIndex], theme)
-              ) {
-                elRefsRef.current[newIndex].current?.scrollIntoView({
+              const entry = entriesRef.current[newIndex];
+              invariant(entry, 'entry is undefined');
+              appConfig.setEntrySelectedID(entry.id);
+              const elRef = elRefsRef.current[newIndex];
+              invariant(elRef, 'entry ref is undefined');
+              if (needsScrollingIntoView(elRef, theme)) {
+                elRef.current?.scrollIntoView({
                   behavior: 'auto',
                   block: 'end',
                 });
@@ -267,8 +268,9 @@ const EntryList = () => {
     if (index > entries.length - 1) {
       return null;
     } else {
-      invariant(entries[index], 'entry is undefined');
-      return entries[index];
+      const entry = entries[index];
+      invariant(entry, 'entry is undefined');
+      return entry;
     }
   };
 

@@ -4,6 +4,7 @@ import type {IEntry, IJunction, ITag, IUser} from '../types';
 import type {ITearleadsDB} from '../types';
 
 class TearleadsTurso implements ITearleadsDB {
+  // @ts-ignore undeclared variable
   private client: Client;
 
   constructor() {
@@ -12,24 +13,25 @@ class TearleadsTurso implements ITearleadsDB {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async putUser(user: IUser): Promise<void> {}
+  // @ts-ignore undeclared variable
+  async putUser(user: IUser): Promise<void> {
+  }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore undeclared variable
   async getUser(username: string): Promise<IUser | undefined> {
     return undefined;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore undeclared variable
   async putTag(tag: ITag): Promise<void> {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore undeclared variable
   async putEntry(entry: IEntry): Promise<void> {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore undeclared variable
   async putJunction(junction: IJunction): Promise<void> {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore undeclared variable
   async getTagsForUserName(username: string): Promise<ITag[]> {
     const tags: ITag[] = [];
     return tags;

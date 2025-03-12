@@ -421,7 +421,6 @@ export function fetchPage({
   const params: IFetchParams = {
     'page[number]': page,
     'filter[user.username]': username,
-    'filter[search]': search,
     sort: sort,
     include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
   };
