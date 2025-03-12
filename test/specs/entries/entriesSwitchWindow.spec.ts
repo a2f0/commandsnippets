@@ -48,10 +48,10 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.textEntryEdit1Cancel).toBeDisplayed();
 
     expect(BasePage.textEntryEdit1Subject).toHaveValue(
-      entriesResponse.data[0].attributes.subject
+      entriesResponse!.data[0]!.attributes.subject
     );
     expect(BasePage.textEntryEdit1Body).toHaveValue(
-      entriesResponse.data[0].attributes.body
+      entriesResponse!.data[0]!.attributes.body
     );
 
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();

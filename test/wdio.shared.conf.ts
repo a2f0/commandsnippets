@@ -1,7 +1,3 @@
-import type {
-  RequestedMultiremoteCapabilities,
-  RequestedStandaloneCapabilities,
-} from '@wdio/types/build/Capabilities';
 import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
@@ -80,10 +76,6 @@ export const config: WebdriverIO.Config = {
   },
 
   before: async (
-    capabilities:
-      | RequestedStandaloneCapabilities
-      | RequestedMultiremoteCapabilities,
-    specs: string[],
     browser: any // eslint-disable-line @typescript-eslint/no-explicit-any
   ) => {
     // Initialize currentTestErrors as a property of the browser object

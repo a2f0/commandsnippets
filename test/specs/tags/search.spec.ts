@@ -22,10 +22,10 @@ describe('Tag Search Menu Behavior', () => {
     await expect(BasePage.tagSearch).toBeExisting();
     await expect(BasePage.tagSearch).toBeDisplayed();
     await expect(BasePage.tagSearch).toBeFocused();
-    await browser.keys(tagsResponse.data[1].attributes.name);
+    await browser.keys(tagsResponse!.data[1]!.attributes.name);
     await expect(BasePage.tags).toBeElementsArrayOfSize(1);
     expect(BasePage.tagSearch).toHaveValue(
-      tagsResponse.data[1].attributes.name
+      tagsResponse!.data[1]!.attributes.name
     );
 
     await browser.keys('Escape');
