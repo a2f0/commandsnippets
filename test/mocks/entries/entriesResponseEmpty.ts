@@ -1,6 +1,6 @@
-import {JsonObject} from '@wdio/types';
+import type {JsonObject} from '@wdio/types';
 
-import {ITextEntryJsonApiResponse} from '../../../src/lib/text_entries';
+import type {ITextEntryJsonApiResponse} from '../../../src/lib/text_entries';
 const entriesResponseEmpty: ITextEntryJsonApiResponse & JsonObject = {
   links: {
     next: null,

@@ -9,7 +9,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const LightMode = function ({onClose}: IProps) {
+const LightMode = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   return (

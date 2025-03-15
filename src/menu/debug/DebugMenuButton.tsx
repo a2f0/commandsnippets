@@ -6,8 +6,7 @@ interface IProps {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const DebugMenuButton = function ({onClick}: IProps) {
-  return (
+const DebugMenuButton = ({onClick}: IProps) => (
     <MenuBarButton
       id="debug-menu-button"
       ariaControls="debug-menu"
@@ -17,5 +16,4 @@ const DebugMenuButton = function ({onClick}: IProps) {
       Debug
     </MenuBarButton>
   );
-};
 export default React.memo(DebugMenuButton);

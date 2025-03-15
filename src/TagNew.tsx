@@ -1,12 +1,12 @@
 import Grid from '@mui/material/Grid2';
-import {AxiosResponse} from 'axios';
+import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {useAppContext} from './AppContext';
 import apiBase from './lib/api/apiBase';
 import {activeTagEditField, appMode} from './lib/shared';
-import {ITagJsonApiResponseSingle} from './lib/tags';
+import type {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';

@@ -8,7 +8,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const PopulateIndexedDB = function ({onClose}: IProps) {
+const PopulateIndexedDB = ({onClose}: IProps) => {
   const {user} = useParams();
 
   return (

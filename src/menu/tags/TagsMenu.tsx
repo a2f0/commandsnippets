@@ -16,8 +16,7 @@ interface IProps {
   anchorEl: HTMLElement | null;
 }
 
-const TagsMenu = function ({onClose, anchorEl}: IProps) {
-  return (
+const TagsMenu = ({onClose, anchorEl}: IProps) => (
     <StyledMenu
       id="tags-menu"
       anchorEl={anchorEl}
@@ -35,6 +34,5 @@ const TagsMenu = function ({onClose, anchorEl}: IProps) {
       <SortByDateLastUsedAscending onClose={onClose} />
     </StyledMenu>
   );
-};
 
 export default React.memo(TagsMenu);

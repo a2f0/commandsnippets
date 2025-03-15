@@ -76,7 +76,8 @@ export const config: WebdriverIO.Config = {
   },
 
   before: async (
-    browser: any // eslint-disable-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint: suspicious/noExplicitAny
+    browser: any 
   ) => {
     // Initialize currentTestErrors as a property of the browser object
     browser.currentTestErrors = [];
@@ -133,7 +134,7 @@ export const config: WebdriverIO.Config = {
       });
     });
   },
-  afterTest: async function () {
+  afterTest: async () => {
     await browser.mockRestoreAll();
   },
 };

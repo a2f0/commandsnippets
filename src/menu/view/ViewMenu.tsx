@@ -11,8 +11,7 @@ interface IProps {
   anchorEl: HTMLElement | null;
 }
 
-const ViewMenu = function ({onClose, anchorEl}: IProps) {
-  return (
+const ViewMenu = ({onClose, anchorEl}: IProps) => (
     <StyledMenu
       id="view-menu"
       anchorEl={anchorEl}
@@ -25,6 +24,5 @@ const ViewMenu = function ({onClose, anchorEl}: IProps) {
       <ShowTagCounts onClose={onClose} />
     </StyledMenu>
   );
-};
 
 export default React.memo(ViewMenu);

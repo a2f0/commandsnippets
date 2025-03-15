@@ -10,8 +10,7 @@ interface IProps {
   anchorEl: HTMLElement | null;
 }
 
-const FileMenu = function ({onClose, anchorEl}: IProps) {
-  return (
+const FileMenu = ({onClose, anchorEl}: IProps) => (
     <StyledMenu
       id="file-menu"
       anchorEl={anchorEl}
@@ -23,6 +22,5 @@ const FileMenu = function ({onClose, anchorEl}: IProps) {
       <Logout onClose={onClose} />
     </StyledMenu>
   );
-};
 
 export default React.memo(FileMenu);

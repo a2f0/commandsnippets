@@ -1,7 +1,7 @@
 import {Box} from '@mui/material';
-import {Theme} from '@mui/material/styles';
+import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import {CancelTokenSource} from 'axios';
+import type {CancelTokenSource} from 'axios';
 import axios from 'axios';
 import invariant from 'invariant';
 import update from 'immutability-helper';
@@ -23,10 +23,10 @@ import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
 import EntryNew from './EntryNew';
 import ItemTypes from './ItemTypes';
-import {appMode, IMouse, initialMouse} from './lib/shared';
-import {IEntryFetchPage} from './lib/text_entries';
+import {appMode, type IMouse, initialMouse} from './lib/shared';
+import type {IEntryFetchPage} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
-import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
+import {type ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
 
 export interface IParamTypes {
   user: string;

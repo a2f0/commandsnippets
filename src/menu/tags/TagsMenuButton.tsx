@@ -6,8 +6,7 @@ interface IProps {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const TagsMenuButton = function ({onClick}: IProps) {
-  return (
+const TagsMenuButton = ({onClick}: IProps) => (
     <MenuBarButton
       id="tags-menu-button"
       ariaControls="tags-menu"
@@ -17,5 +16,4 @@ const TagsMenuButton = function ({onClick}: IProps) {
       Tags
     </MenuBarButton>
   );
-};
 export default React.memo(TagsMenuButton);

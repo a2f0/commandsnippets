@@ -23,7 +23,7 @@ interface IProps {
   anchorEl: HTMLElement | null;
 }
 
-const FileMenu = function ({onClose, anchorEl}: IProps) {
+const FileMenu = ({onClose, anchorEl}: IProps) => {
   const appConfig = useAppContext();
   return (
     <StyledMenu

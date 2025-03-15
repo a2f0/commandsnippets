@@ -1,4 +1,5 @@
 import {Toolbar} from '@mui/material';
+// biome-ignore lint: style/useImportType
 import React from 'react';
 
 interface IProps {

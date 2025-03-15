@@ -1,6 +1,6 @@
 import type {TStore} from '../AppStateStore';
-import {ITagJsonApi} from '../models/TagModel';
-import {IUserJsonApi} from '../models/UserModel';
+import type {ITagJsonApi} from '../models/TagModel';
+import type {IUserJsonApi} from '../models/UserModel';
 import apiBase from './api/apiBase';
 
 export interface ITagJsonApiResponse {

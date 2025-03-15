@@ -1,4 +1,4 @@
-import {Client, createClient} from '@libsql/client';
+import {type Client, createClient} from '@libsql/client';
 
 import type {IEntry, IJunction, ITag, IUser} from '../types';
 import type {ITearleadsDB} from '../types';

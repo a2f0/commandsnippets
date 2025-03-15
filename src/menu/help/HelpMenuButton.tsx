@@ -6,8 +6,7 @@ interface IProps {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const HelpMenuButton = function ({onClick}: IProps) {
-  return (
+const HelpMenuButton = ({onClick}: IProps) => (
     <MenuBarButton
       id="helpMenuButton"
       ariaControls="help-menu"
@@ -17,5 +16,4 @@ const HelpMenuButton = function ({onClick}: IProps) {
       Help
     </MenuBarButton>
   );
-};
 export default React.memo(HelpMenuButton);

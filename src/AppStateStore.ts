@@ -1,4 +1,4 @@
-import {IDisposer, Instance, types} from 'mobx-state-tree';
+import {type IDisposer, type Instance, types} from 'mobx-state-tree';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 
 import {environment} from './lib/environment';
@@ -7,22 +7,22 @@ import {
   activeSearch,
   activeTagEditField,
   appMode,
-  appState,
+  type appState,
   defaultState,
   entrySearchMethod,
 } from './lib/shared';
 import {TagHelpers, TagModel} from './models/TagModel';
-import {ITagJsonApi} from './models/TagModel';
+import type {ITagJsonApi} from './models/TagModel';
 import {
-  ITagTextEntryThroughModelJsonApi,
+  type ITagTextEntryThroughModelJsonApi,
   TagTextEntryThroughModel,
 } from './models/TagTextEntryThroughModel';
 import {
-  ITextEntryJsonApi,
+  type ITextEntryJsonApi,
   TextEntryHelpers,
   TextEntryModel,
 } from './models/TextEntryModel';
-import {IUserJsonApi, UserModel} from './models/UserModel';
+import {type IUserJsonApi, UserModel} from './models/UserModel';
 
 export type RootModel = Instance<typeof AppStateStoreModel>;
 

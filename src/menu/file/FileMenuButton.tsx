@@ -6,8 +6,7 @@ interface IProps {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const FileMenuButton = function ({onClick}: IProps) {
-  return (
+const FileMenuButton = ({onClick}: IProps) => (
     <MenuBarButton
       id="file-menu-button"
       ariaControls="file-menu"
@@ -17,5 +16,4 @@ const FileMenuButton = function ({onClick}: IProps) {
       File
     </MenuBarButton>
   );
-};
 export default React.memo(FileMenuButton);

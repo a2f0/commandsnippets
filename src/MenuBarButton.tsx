@@ -9,14 +9,13 @@ interface IProps {
   ariaLabel: string;
 }
 
-const MenuBarButton = function ({
+const MenuBarButton = ({
   onClick,
   children,
   id,
   ariaControls,
   ariaLabel,
-}: IProps) {
-  return (
+}: IProps) => (
     <Button
       color="secondary"
       role="menu"
@@ -47,5 +46,4 @@ const MenuBarButton = function ({
       {children}
     </Button>
   );
-};
 export default React.memo(MenuBarButton);

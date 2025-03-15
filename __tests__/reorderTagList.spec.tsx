@@ -4,7 +4,7 @@ import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import React from 'react';
-import {MockInstance, vi} from 'vitest';
+import {type MockInstance, vi} from 'vitest';
 import invariant from 'invariant';
 import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';

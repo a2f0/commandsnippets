@@ -1,7 +1,7 @@
 import {default as DexieDefault} from 'dexie';
 
 import type {IEntry, IJunction, ITag, IUser} from '../types';
-import {ITearleadsDB} from '../types';
+import type {ITearleadsDB} from '../types';
 
 class TearleadsDexie extends DexieDefault implements ITearleadsDB {
   users!: DexieDefault.Table<IUser, number>; // number is the type of the primary key

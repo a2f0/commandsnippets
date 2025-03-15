@@ -1,10 +1,10 @@
 import React from 'react';
 
-import {store, TStore} from './AppStateStore';
+import {store, type TStore} from './AppStateStore';
 
 export const AppContext = React.createContext<TStore | undefined>(undefined);
 
-function AppContextProvider({children}: React.PropsWithChildren<{}>) {
+function AppContextProvider({children}: React.PropsWithChildren) {
   return <AppContext.Provider value={store}>{children}</AppContext.Provider>;
 }
 

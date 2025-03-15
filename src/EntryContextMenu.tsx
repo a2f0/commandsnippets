@@ -2,8 +2,8 @@ import {Menu} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
 
-import {IMouse} from './lib/shared';
-import {ITextEntryJsonApi} from './models/TextEntryModel';
+import type {IMouse} from './lib/shared';
+import type {ITextEntryJsonApi} from './models/TextEntryModel';
 import StyledMenuItem from './StyledMenuItem';
 
 interface IStyledMenuProps {

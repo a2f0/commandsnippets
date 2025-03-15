@@ -1,6 +1,6 @@
-import {JsonObject} from '@wdio/types';
+import type {JsonObject} from '@wdio/types';
 
-import {ITagJsonApiResponse} from '../../../src/lib/tags';
+import type {ITagJsonApiResponse} from '../../../src/lib/tags';
 const tagsResponse: ITagJsonApiResponse & JsonObject = {
   links: {
     next: null,

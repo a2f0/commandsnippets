@@ -1,6 +1,6 @@
 import {Box} from '@mui/material';
 import {Button} from '@mui/material';
-import {AxiosResponse} from 'axios';
+import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
@@ -8,8 +8,8 @@ import {useParams} from 'react-router-dom';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
 import apiBase from './lib/api/apiBase';
-import {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
-import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import type {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
+import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
 
