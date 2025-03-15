@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import React from 'react';
 import {MockInstance, vi} from 'vitest';
-
+import invariant from 'invariant';
 import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import server from './util/msw';
@@ -52,7 +52,8 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    await user.pointer({target: tagDragHandleContainers[0]});
+    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
+    await user.pointer({ target: tagDragHandleContainers[0] });
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
@@ -60,6 +61,7 @@ describe('TagList', () => {
     });
 
     await act(async () => {
+      invariant(tags[0], 'tag is undefined');
       fireEvent.dragEnter(tags[0]);
     });
     expect(consoleMock).toHaveBeenLastCalledWith(
@@ -87,11 +89,13 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    await user.pointer({target: tagDragHandleContainers[0]});
+    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
+    await user.pointer({ target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
+      invariant(tags[0], 'tag is undefined');
       fireEvent.dragEnter(tags[0]);
       fireEvent.dragOver(tags[0]);
       await new Promise(res => setTimeout(res, 0));
@@ -106,6 +110,7 @@ describe('TagList', () => {
     // This is dropping it onto itself after reordering the list.
     // To my knowledge, this emulates what is going on in the screen in a real world scenario.
     await act(async () => {
+      invariant(tags[0], 'tag is undefined');
       fireEvent.drop(tags[0]);
     });
     expect(reorderTagSpy).not.toBeCalled();
@@ -134,6 +139,7 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
+    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
     await user.pointer({target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
@@ -142,6 +148,7 @@ describe('TagList', () => {
     });
 
     await act(async () => {
+      invariant(tags[1], 'tag is undefined');
       fireEvent.dragEnter(tags[1]);
     });
 
@@ -158,6 +165,7 @@ describe('TagList', () => {
 
     // This is dropping it onto itself after reordering the list.
     await act(async () => {
+      invariant(tags[1], 'tag is undefined');
       fireEvent.drop(tags[1]);
     });
 
@@ -194,7 +202,8 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    await user.pointer({target: tagDragHandleContainers[0]});
+    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
+    await user.pointer({ target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
@@ -202,6 +211,7 @@ describe('TagList', () => {
     });
 
     await act(async () => {
+      invariant(tags[1], 'tag is undefined');
       fireEvent.dragEnter(tags[1]);
     });
     expect(consoleMock).toHaveBeenLastCalledWith(
@@ -215,10 +225,12 @@ describe('TagList', () => {
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
     await act(async () => {
+      invariant(tags[2], 'tag is undefined');
       fireEvent.dragEnter(tags[2]);
     });
     // This is dropping it onto itself after reordering the list.
     await act(async () => {
+      invariant(tags[2], 'tag is undefined');
       fireEvent.drop(tags[2]);
     });
 
@@ -260,13 +272,15 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    await user.pointer({target: tagDragHandleContainers[0]});
+    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
+    await user.pointer({ target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
     });
     await act(async () => {
+      invariant(tags[1], 'tag is undefined');
       fireEvent.dragEnter(tags[1]);
       await new Promise(res => setTimeout(res, 1));
     });
@@ -281,6 +295,7 @@ describe('TagList', () => {
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
     await act(async () => {
+      invariant(tags[2], 'tag is undefined');
       fireEvent.dragEnter(tags[2]);
     });
     expect(consoleMock).toHaveBeenLastCalledWith(
@@ -294,6 +309,7 @@ describe('TagList', () => {
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
     await act(async () => {
+      invariant(tags[3], 'tag is undefined');
       fireEvent.dragEnter(tags[3]);
     });
     expect(consoleMock).toHaveBeenLastCalledWith(
@@ -309,6 +325,7 @@ describe('TagList', () => {
     // This is dropping it onto itself after reordering the list.
     // To my knowledge, this emulates what is going on in the screen in a real world scenario.
     await act(async () => {
+      invariant(tags[3], 'tag is undefined');
       fireEvent.drop(tags[3]);
     });
 
@@ -350,13 +367,15 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    await user.pointer({target: tagDragHandleContainers[1]});
+    invariant(tagDragHandleContainers[1], 'tagDragHandleContainer is undefined');
+    await user.pointer({ target: tagDragHandleContainers[1]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(tagDragHandle);
     });
     await act(async () => {
+      invariant(tags[2], 'tag is undefined');
       fireEvent.dragEnter(tags[2]);
     });
 
@@ -373,6 +392,7 @@ describe('TagList', () => {
 
     // This is dropping it onto itself after reordering the list.
     await act(async () => {
+      invariant(tags[2], 'tag is undefined');
       fireEvent.drop(tags[2]);
     });
     tags = screen.getAllByRole('tag');
@@ -414,6 +434,7 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
+    invariant(tagDragHandleContainers[2], 'tagDragHandleContainer is undefined');
     await user.pointer({target: tagDragHandleContainers[2]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
@@ -421,6 +442,7 @@ describe('TagList', () => {
       fireEvent.dragStart(tagDragHandle);
     });
     await act(async () => {
+      invariant(tags[1], 'tag is undefined');
       fireEvent.dragEnter(tags[1]);
     });
     expect(consoleMock).toHaveBeenLastCalledWith(
@@ -435,6 +457,7 @@ describe('TagList', () => {
 
     // This is dropping it onto itself after reordering the list.
     await act(async () => {
+      invariant(tags[1], 'tag is undefined');
       fireEvent.drop(tags[1]);
     });
 

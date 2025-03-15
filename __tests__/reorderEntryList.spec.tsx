@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import React from 'react';
 import {MockInstance, vi} from 'vitest';
-
+import invariant from 'invariant';
 import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import server from './util/msw';
@@ -51,11 +51,14 @@ describe('Entries List', () => {
       'entryDragHandleContainer'
     );
     expect(entryDragHandleContainers).toHaveLength(4);
+    invariant(entryDragHandleContainers[0], 'entryDragHandleContainer is undefined');
     await user.pointer({target: entryDragHandleContainers[0]});
     const entryDragHandle = screen.getByRole('entryDragHandle');
     expect(reorderEntrySpy).not.toBeCalled();
     await act(async () => {
       fireEvent.dragStart(entryDragHandle);
+      invariant(entries[2], 'entry is undefined');
+      invariant(entries[3], 'entry is undefined');
       fireEvent.dragEnter(entries[2]);
       fireEvent.dragOver(entries[2]);
       await new Promise(res => setTimeout(res, 0));
