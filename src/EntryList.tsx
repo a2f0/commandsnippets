@@ -270,11 +270,10 @@ const EntryList = () => {
   const findEntryByIndex = (index: number): ITextEntryJsonApi | null => {
     if (index > entries.length - 1) {
       return null;
-    } else {
-      const entry = entries[index];
-      invariant(entry, 'entry is undefined');
-      return entry;
     }
+    const entry = entries[index];
+    invariant(entry, 'entry is undefined');
+    return entry;
   };
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
