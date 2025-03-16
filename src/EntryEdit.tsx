@@ -48,7 +48,7 @@ const EntryEdit = ({
       appConfig.setActiveEntryEditField(activeEntryEditField.subject);
       appConfig.setAppMode(appMode.entriesList);
     };
-  }, []);
+  }, [appConfig.setActiveEntryEditField, appConfig.setAppMode]);
 
   useEffect(() => {
     if (saveRef.current && needsScrollingIntoView(saveRef, theme)) {
@@ -57,7 +57,7 @@ const EntryEdit = ({
         block: 'end',
       });
     }
-  }, [saveRef.current]);
+  }, [theme]);
 
   const handleSave = () => {
     const payload = {
@@ -71,7 +71,7 @@ const EntryEdit = ({
       },
     };
     apiBase
-      .patch('entries/' + object.id, payload, {withCredentials: true})
+      .patch(`entries/${object.id}`, payload, {withCredentials: true})
       .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
         handleSaveParent(response.data);
       })
@@ -115,14 +115,14 @@ const EntryEdit = ({
       event.preventDefault();
       event.stopPropagation();
     }
-  }, []);
+  }, [appConfig.activeEntryEditField, appConfig.appMode, appConfig.setActiveEntryEditField]);
 
   useEffect(() => {
     document.addEventListener('keydown', keyListener, false);
     return () => {
       document.removeEventListener('keydown', keyListener, false);
     };
-  }, []);
+  }, [keyListener]);
 
   useEffect(() => {
     if (appConfig.activeEntryEditField === activeEntryEditField.save) {
