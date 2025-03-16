@@ -144,14 +144,14 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
       event.preventDefault();
       event.stopPropagation();
     }
-  }, []);
+  }, [appConfig.activeEntryEditField, appConfig.appMode, appConfig.setActiveEntryEditField]);
 
   useEffect(() => {
     document.addEventListener('keydown', keyListener, false);
     return () => {
       document.removeEventListener('keydown', keyListener, false);
     };
-  }, []);
+  }, [keyListener]);
 
   useEffect(() => {
     if (appConfig.activeEntryEditField === activeEntryEditField.save) {

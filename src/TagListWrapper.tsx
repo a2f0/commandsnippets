@@ -88,7 +88,7 @@ const TagListWrapper = () => {
   );
 
   if (!user) {
-    return <></>;
+    return;
   }
 
   return <TagList tagsFromWrapper={tags} username={user} />;
