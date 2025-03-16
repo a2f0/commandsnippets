@@ -1,7 +1,7 @@
 import entriesResponse from '../../mocks/entries/entriesResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
-
+import invariant from 'invariant';
 describe('Tag Search Menu Behavior', () => {
   it.skip('should have a functional search bar', async () => {
     await BasePage.open('');
@@ -22,10 +22,11 @@ describe('Tag Search Menu Behavior', () => {
     await expect(BasePage.tagSearch).toBeExisting();
     await expect(BasePage.tagSearch).toBeDisplayed();
     await expect(BasePage.tagSearch).toBeFocused();
-    await browser.keys(tagsResponse!.data[1]!.attributes.name);
+    invariant(tagsResponse.data[1], 'tagsResponse.data[1] is undefined');
+    await browser.keys(tagsResponse.data[1].attributes.name);
     await expect(BasePage.tags).toBeElementsArrayOfSize(1);
     expect(BasePage.tagSearch).toHaveValue(
-      tagsResponse!.data[1]!.attributes.name
+      tagsResponse.data[1].attributes.name
     );
 
     await browser.keys('Escape');

@@ -2,7 +2,7 @@ import entriesResponse from '../../mocks/entries/entriesResponse';
 import entryPostResponse from '../../mocks/entries/entryPostResponse';
 import tagsResponse from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
-
+import invariant from 'invariant';
 describe('Tab Switching Behavior', () => {
   it.skip('should allow tab switching while editing', async () => {
     await BasePage.open('');
@@ -46,12 +46,12 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.textEntryEdit1Body).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Save).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Cancel).toBeDisplayed();
-
+    invariant(entriesResponse.data[0], 'entriesResponse.data[0] is undefined');
     expect(BasePage.textEntryEdit1Subject).toHaveValue(
-      entriesResponse!.data[0]!.attributes.subject
+      entriesResponse.data[0].attributes.subject
     );
     expect(BasePage.textEntryEdit1Body).toHaveValue(
-      entriesResponse!.data[0]!.attributes.body
+      entriesResponse.data[0].attributes.body
     );
 
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();

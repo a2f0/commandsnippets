@@ -324,7 +324,7 @@ export const AppStateStoreModel = types
       }
     },
     removeTextEntry(id: string) {
-      console.info('id: ' + id);
+      console.info`(id: ${id})`;
     },
     setActiveSearch(activeSearch: activeSearch) {
       self.activeSearch = activeSearch;

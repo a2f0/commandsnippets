@@ -233,7 +233,7 @@ const EntryList = () => {
     return () => {
       document.removeEventListener('keydown', keyListener, false);
     };
-  }, []);
+  }, [keyListener]);
 
   const findEntry = useCallback(
     (id: string) => {

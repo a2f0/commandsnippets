@@ -40,7 +40,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
       appConfig.setActiveEntryEditField(activeEntryEditField.subject);
       appConfig.setAppMode(appMode.entriesList);
     };
-  }, []);
+  }, [appConfig.setActiveEntryEditField, appConfig.setAppMode]);
 
   const handleSave = () => {
     const text_entry_payload = {

@@ -1,5 +1,6 @@
-// biome-ignore: React is needed as a value for JSX
-import type React from 'react';
+
+// biome-ignore lint: style/useImportType
+import React from 'react';
 
 import {AppContext} from '../../src/AppContext';
 import {store} from './loggedInStore';
