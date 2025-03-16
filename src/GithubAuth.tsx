@@ -7,15 +7,15 @@ import {useAppContext} from './AppContext';
 import apiBase from './lib/api/apiBase';
 import LoginButton from './styled/LoginButton';
 
-export const githubClientID = () => {
-  if (window.location.hostname === 'staging.tearleads.com') {
-    return '3be8b14684de28d54a0d';
-  } else if (window.location.hostname === 'tearleads.com') {
-    return 'a3cf7c1dfabc3df68b06';
-  } else {
-    return 'a94dc4b2bb6ed4fc63a0';
-  }
-};
+
+let githubClientID: string
+if (window.location.hostname === 'staging.tearleads.com') {
+  githubClientID = '3be8b14684de28d54a0d';
+} else if (window.location.hostname === 'tearleads.com') {
+  githubClientID = 'a3cf7c1dfabc3df68b06';
+} else {
+  githubClientID = 'a94dc4b2bb6ed4fc63a0';
+}
 
 const GithubAuth = () => {
   const appConfig = useAppContext();
@@ -27,11 +27,10 @@ const GithubAuth = () => {
     const is_github_oauth = window.location.href.includes('oauth/github');
     const urlParams = new URLSearchParams(queryString);
     const code = urlParams.get('code');
-    console.info('code (github auth): ' + code);
-    console.info('is_github_oauth (github auth): ' + is_github_oauth);
+    console.info(`code (github auth): ${code}`);
+    console.info(`is_github_oauth (github auth): ${is_github_oauth}`);
     if (code !== '' && is_github_oauth === true) {
-      const newURL =
-        window.location.protocol + '//' + window.location.host + '/';
+      const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
       const payload = {
         data: {
@@ -47,7 +46,7 @@ const GithubAuth = () => {
           apiBase.get('/user/', {withCredentials: true}).then(response => {
             const username = response.data.data.attributes.username;
             appConfig.setLoggedInUser(username);
-            document.cookie = 'loggedInUser=' + username;
+            document.cookie = `loggedInUser=' ${username}`;
             navigate(`/${username}`);
           });
         })
@@ -55,13 +54,10 @@ const GithubAuth = () => {
           appConfig.setLoggedInUser(null);
         });
     }
-  }, []);
+  }, [appConfig.setLoggedInUser, navigate]);
 
   const handleGitHubClick = () => {
-    window.location.assign(
-      'https://github.com/login/oauth/authorize?scope=user:email&client_id=' +
-        githubClientID()
-    );
+    window.location.assign(`https://github.com/login/oauth/authorize?scope=user:email&client_id=${githubClientID}`);
   };
 
   return (
@@ -70,7 +66,6 @@ const GithubAuth = () => {
         <LoginButton
           id="githubAuthButton"
           onClick={handleGitHubClick}
-          role="githubAuth"
           startIcon={<GitHub />}
         >
           Login with GitHub

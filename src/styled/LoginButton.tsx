@@ -7,20 +7,17 @@ interface IButtonItemProps {
   onClick: () => void;
   children?: React.ReactNode;
   startIcon: React.ReactNode;
-  role: string;
 }
 
 const LoginButton = ({
   id,
   onClick,
   children,
-  role,
   startIcon,
 }: IButtonItemProps) => {
   return (
     <Button
       id={id}
-      role={role}
       size="small"
       variant="contained"
       disableElevation

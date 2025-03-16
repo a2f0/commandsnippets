@@ -89,7 +89,6 @@ const GoogleAuth = () => {
       {!appConfig.loggedInUser && !window.location.href.includes('oauth/') && (
         <LoginButton
           id="googleAuthButton"
-          role="googleAuth"
           onClick={handleGitHubClick}
           startIcon={<Google />}
         >
