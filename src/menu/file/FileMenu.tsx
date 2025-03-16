@@ -11,16 +11,16 @@ interface IProps {
 }
 
 const FileMenu = ({onClose, anchorEl}: IProps) => (
-    <StyledMenu
-      id="file-menu"
-      anchorEl={anchorEl}
-      open={Boolean(anchorEl)}
-      onClose={onClose}
-    >
-      <NewTag onClose={onClose} />
-      <NewEntry onClose={onClose} />
-      <Logout onClose={onClose} />
-    </StyledMenu>
-  );
+  <StyledMenu
+    id="file-menu"
+    anchorEl={anchorEl}
+    open={Boolean(anchorEl)}
+    onClose={onClose}
+  >
+    <NewTag onClose={onClose} />
+    <NewEntry onClose={onClose} />
+    <Logout onClose={onClose} />
+  </StyledMenu>
+);
 
 export default React.memo(FileMenu);

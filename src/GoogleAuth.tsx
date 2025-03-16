@@ -7,14 +7,18 @@ import {useAppContext} from './AppContext';
 import apiBase from './lib/api/apiBase';
 import LoginButton from './styled/LoginButton';
 
-let googleClientID = '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
+let googleClientID =
+  '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 if (window.location.hostname === 'staging.tearleads.com') {
-  googleClientID = '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
+  googleClientID =
+    '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 } else if (window.location.hostname === 'tearleads.com') {
-  googleClientID = '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
+  googleClientID =
+    '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 } else {
   // Development
-  googleClientID = '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
+  googleClientID =
+    '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 }
 
 export const redirectUrl = () => {

@@ -95,27 +95,38 @@ const EntryEdit = ({
     setSubject(value);
   };
 
-  const keyListener = useCallback((event: KeyboardEvent) => {
-    const trappedKeyCodes = ['Tab'];
-    if (
-      trappedKeyCodes.includes(event.code) &&
-      appConfig.appMode === appMode.entryEditor
-    ) {
-      if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
-        appConfig.setActiveEntryEditField(activeEntryEditField.body);
-      } else if (appConfig.activeEntryEditField === activeEntryEditField.body) {
-        appConfig.setActiveEntryEditField(activeEntryEditField.save);
-      } else if (appConfig.activeEntryEditField === activeEntryEditField.save) {
-        appConfig.setActiveEntryEditField(activeEntryEditField.cancel);
-      } else if (
-        appConfig.activeEntryEditField === activeEntryEditField.cancel
+  const keyListener = useCallback(
+    (event: KeyboardEvent) => {
+      const trappedKeyCodes = ['Tab'];
+      if (
+        trappedKeyCodes.includes(event.code) &&
+        appConfig.appMode === appMode.entryEditor
       ) {
-        appConfig.setActiveEntryEditField(activeEntryEditField.subject);
+        if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
+          appConfig.setActiveEntryEditField(activeEntryEditField.body);
+        } else if (
+          appConfig.activeEntryEditField === activeEntryEditField.body
+        ) {
+          appConfig.setActiveEntryEditField(activeEntryEditField.save);
+        } else if (
+          appConfig.activeEntryEditField === activeEntryEditField.save
+        ) {
+          appConfig.setActiveEntryEditField(activeEntryEditField.cancel);
+        } else if (
+          appConfig.activeEntryEditField === activeEntryEditField.cancel
+        ) {
+          appConfig.setActiveEntryEditField(activeEntryEditField.subject);
+        }
+        event.preventDefault();
+        event.stopPropagation();
       }
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  }, [appConfig.activeEntryEditField, appConfig.appMode, appConfig.setActiveEntryEditField]);
+    },
+    [
+      appConfig.activeEntryEditField,
+      appConfig.appMode,
+      appConfig.setActiveEntryEditField,
+    ]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', keyListener, false);

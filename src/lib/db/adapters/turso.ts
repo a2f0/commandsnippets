@@ -14,8 +14,7 @@ class TearleadsTurso implements ITearleadsDB {
   }
 
   // @ts-ignore undeclared variable
-  async putUser(user: IUser): Promise<void> {
-  }
+  async putUser(user: IUser): Promise<void> {}
 
   // @ts-ignore undeclared variable
   async getUser(username: string): Promise<IUser | undefined> {

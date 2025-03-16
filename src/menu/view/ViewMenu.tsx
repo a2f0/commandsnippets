@@ -12,17 +12,17 @@ interface IProps {
 }
 
 const ViewMenu = ({onClose, anchorEl}: IProps) => (
-    <StyledMenu
-      id="view-menu"
-      anchorEl={anchorEl}
-      open={Boolean(anchorEl)}
-      onClose={onClose}
-    >
-      <LightMode onClose={onClose} />
-      <DarkMode onClose={onClose} />
-      <StyledDivider />
-      <ShowTagCounts onClose={onClose} />
-    </StyledMenu>
-  );
+  <StyledMenu
+    id="view-menu"
+    anchorEl={anchorEl}
+    open={Boolean(anchorEl)}
+    onClose={onClose}
+  >
+    <LightMode onClose={onClose} />
+    <DarkMode onClose={onClose} />
+    <StyledDivider />
+    <ShowTagCounts onClose={onClose} />
+  </StyledMenu>
+);
 
 export default React.memo(ViewMenu);

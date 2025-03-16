@@ -312,13 +312,17 @@ export const AppStateStoreModel = types
       }
     },
     removeTagTextEntryThroughModel(id: string) {
-      const existingJunction = self.tagTextEntryThroughModel.find(c => c.id === id);
+      const existingJunction = self.tagTextEntryThroughModel.find(
+        c => c.id === id
+      );
       if (existingJunction) {
         destroy(existingJunction);
       }
     },
     removeUntaggedTextEntry(id: string) {
-      const existingEntry = self.untaggedTextEntriesArray.find(c => c.id === id);
+      const existingEntry = self.untaggedTextEntriesArray.find(
+        c => c.id === id
+      );
       if (existingEntry) {
         destroy(existingEntry);
       }

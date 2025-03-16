@@ -99,7 +99,7 @@ describe('Tag An Entry', () => {
     let tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
     expect(tagLabelWrappers).toHaveLength(4);
     invariant(tagLabelWrappers[1], 'tagLabelWrapper is undefined');
-    await user.pointer({ target: tagLabelWrappers[1], keys: '[MouseLeft]' });
+    await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-2');
     rerender(<TestAppRouter history={history} />);
     await waitFor(
@@ -121,7 +121,10 @@ describe('Tag An Entry', () => {
       'entryDragHandleContainer'
     );
     expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(entryDragHandleContainers[0], 'entryDragHandleContainer is undefined');
+    invariant(
+      entryDragHandleContainers[0],
+      'entryDragHandleContainer is undefined'
+    );
     await user.pointer({target: entryDragHandleContainers[0]});
     const tags = screen.getAllByRole('tag');
     expect(tags).toHaveLength(4);

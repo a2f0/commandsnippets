@@ -52,8 +52,11 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
-    await user.pointer({ target: tagDragHandleContainers[0] });
+    invariant(
+      tagDragHandleContainers[0],
+      'tagDragHandleContainer is undefined'
+    );
+    await user.pointer({target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
@@ -89,8 +92,11 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
-    await user.pointer({ target: tagDragHandleContainers[0]});
+    invariant(
+      tagDragHandleContainers[0],
+      'tagDragHandleContainer is undefined'
+    );
+    await user.pointer({target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
@@ -139,7 +145,10 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
+    invariant(
+      tagDragHandleContainers[0],
+      'tagDragHandleContainer is undefined'
+    );
     await user.pointer({target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
@@ -202,8 +211,11 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
-    await user.pointer({ target: tagDragHandleContainers[0]});
+    invariant(
+      tagDragHandleContainers[0],
+      'tagDragHandleContainer is undefined'
+    );
+    await user.pointer({target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
@@ -272,8 +284,11 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    invariant(tagDragHandleContainers[0], 'tagDragHandleContainer is undefined');
-    await user.pointer({ target: tagDragHandleContainers[0]});
+    invariant(
+      tagDragHandleContainers[0],
+      'tagDragHandleContainer is undefined'
+    );
+    await user.pointer({target: tagDragHandleContainers[0]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
@@ -367,8 +382,11 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    invariant(tagDragHandleContainers[1], 'tagDragHandleContainer is undefined');
-    await user.pointer({ target: tagDragHandleContainers[1]});
+    invariant(
+      tagDragHandleContainers[1],
+      'tagDragHandleContainer is undefined'
+    );
+    await user.pointer({target: tagDragHandleContainers[1]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();
     await act(async () => {
@@ -434,7 +452,10 @@ describe('TagList', () => {
       'tagDragHandleContainer'
     );
     expect(tagDragHandleContainers).toHaveLength(4);
-    invariant(tagDragHandleContainers[2], 'tagDragHandleContainer is undefined');
+    invariant(
+      tagDragHandleContainers[2],
+      'tagDragHandleContainer is undefined'
+    );
     await user.pointer({target: tagDragHandleContainers[2]});
     const tagDragHandle = screen.getByRole('tagDragHandle');
     expect(reorderTagSpy).not.toBeCalled();

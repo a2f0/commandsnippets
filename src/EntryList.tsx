@@ -26,7 +26,10 @@ import ItemTypes from './ItemTypes';
 import {appMode, type IMouse, initialMouse} from './lib/shared';
 import type {IEntryFetchPage} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
-import {type ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
+import {
+  type ITextEntryJsonApi,
+  TextEntryHelpers,
+} from './models/TextEntryModel';
 
 export interface IParamTypes {
   user: string;

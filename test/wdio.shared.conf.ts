@@ -77,7 +77,7 @@ export const config: WebdriverIO.Config = {
 
   before: async (
     // biome-ignore lint: suspicious/noExplicitAny
-    browser: any 
+    browser: any
   ) => {
     // Initialize currentTestErrors as a property of the browser object
     browser.currentTestErrors = [];

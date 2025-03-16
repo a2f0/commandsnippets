@@ -7,13 +7,13 @@ interface IProps {
 }
 
 const DebugMenuButton = ({onClick}: IProps) => (
-    <MenuBarButton
-      id="debug-menu-button"
-      ariaControls="debug-menu"
-      ariaLabel="Debug"
-      onClick={onClick}
-    >
-      Debug
-    </MenuBarButton>
-  );
+  <MenuBarButton
+    id="debug-menu-button"
+    ariaControls="debug-menu"
+    ariaLabel="Debug"
+    onClick={onClick}
+  >
+    Debug
+  </MenuBarButton>
+);
 export default React.memo(DebugMenuButton);

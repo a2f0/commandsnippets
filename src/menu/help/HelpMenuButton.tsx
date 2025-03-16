@@ -7,13 +7,13 @@ interface IProps {
 }
 
 const HelpMenuButton = ({onClick}: IProps) => (
-    <MenuBarButton
-      id="helpMenuButton"
-      ariaControls="help-menu"
-      ariaLabel="Help"
-      onClick={onClick}
-    >
-      Help
-    </MenuBarButton>
-  );
+  <MenuBarButton
+    id="helpMenuButton"
+    ariaControls="help-menu"
+    ariaLabel="Help"
+    onClick={onClick}
+  >
+    Help
+  </MenuBarButton>
+);
 export default React.memo(HelpMenuButton);

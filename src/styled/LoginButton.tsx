@@ -9,12 +9,7 @@ interface IButtonItemProps {
   startIcon: React.ReactNode;
 }
 
-const LoginButton = ({
-  id,
-  onClick,
-  children,
-  startIcon,
-}: IButtonItemProps) => {
+const LoginButton = ({id, onClick, children, startIcon}: IButtonItemProps) => {
   return (
     <Button
       id={id}

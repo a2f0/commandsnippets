@@ -7,13 +7,13 @@ interface IProps {
 }
 
 const TagsMenuButton = ({onClick}: IProps) => (
-    <MenuBarButton
-      id="tags-menu-button"
-      ariaControls="tags-menu"
-      ariaLabel="Tags"
-      onClick={onClick}
-    >
-      Tags
-    </MenuBarButton>
-  );
+  <MenuBarButton
+    id="tags-menu-button"
+    ariaControls="tags-menu"
+    ariaLabel="Tags"
+    onClick={onClick}
+  >
+    Tags
+  </MenuBarButton>
+);
 export default React.memo(TagsMenuButton);

@@ -7,8 +7,7 @@ import {useAppContext} from './AppContext';
 import apiBase from './lib/api/apiBase';
 import LoginButton from './styled/LoginButton';
 
-
-let githubClientID: string
+let githubClientID: string;
 if (window.location.hostname === 'staging.tearleads.com') {
   githubClientID = '3be8b14684de28d54a0d';
 } else if (window.location.hostname === 'tearleads.com') {
@@ -57,7 +56,9 @@ const GithubAuth = () => {
   }, [appConfig.setLoggedInUser, navigate]);
 
   const handleGitHubClick = () => {
-    window.location.assign(`https://github.com/login/oauth/authorize?scope=user:email&client_id=${githubClientID}`);
+    window.location.assign(
+      `https://github.com/login/oauth/authorize?scope=user:email&client_id=${githubClientID}`
+    );
   };
 
   return (

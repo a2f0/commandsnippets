@@ -7,13 +7,13 @@ interface IProps {
 }
 
 const ViewMenuButton = ({onClick}: IProps) => (
-    <MenuBarButton
-      id="view-menu-button"
-      ariaControls="view-menu"
-      ariaLabel="View"
-      onClick={onClick}
-    >
-      View
-    </MenuBarButton>
-  );
+  <MenuBarButton
+    id="view-menu-button"
+    ariaControls="view-menu"
+    ariaLabel="View"
+    onClick={onClick}
+  >
+    View
+  </MenuBarButton>
+);
 export default React.memo(ViewMenuButton);

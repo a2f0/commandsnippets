@@ -51,7 +51,10 @@ describe('Entries List', () => {
       'entryDragHandleContainer'
     );
     expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(entryDragHandleContainers[0], 'entryDragHandleContainer is undefined');
+    invariant(
+      entryDragHandleContainers[0],
+      'entryDragHandleContainer is undefined'
+    );
     await user.pointer({target: entryDragHandleContainers[0]});
     const entryDragHandle = screen.getByRole('entryDragHandle');
     expect(reorderEntrySpy).not.toBeCalled();
