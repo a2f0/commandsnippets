@@ -89,24 +89,31 @@ const TagNew = ({handleNewParent, id}: IProps) => {
       });
   };
 
-  const keyListener = useCallback((event: KeyboardEvent) => {
-    const trappedKeyCodes = ['Tab'];
-    if (
-      trappedKeyCodes.includes(event.code) &&
-      appConfig.appMode === appMode.tagEditor
-    ) {
-      if (appConfig.activeTagEditField === activeTagEditField.name) {
-        appConfig.setActiveTagEditField(activeTagEditField.save);
-      } else if (appConfig.activeTagEditField === activeTagEditField.save) {
-        appConfig.setActiveTagEditField(activeTagEditField.cancel);
-      } else if (appConfig.activeTagEditField === activeTagEditField.cancel) {
-        appConfig.setActiveTagEditField(activeTagEditField.name);
-        inputTagNameRef.current?.focus();
+  const keyListener = useCallback(
+    (event: KeyboardEvent) => {
+      const trappedKeyCodes = ['Tab'];
+      if (
+        trappedKeyCodes.includes(event.code) &&
+        appConfig.appMode === appMode.tagEditor
+      ) {
+        if (appConfig.activeTagEditField === activeTagEditField.name) {
+          appConfig.setActiveTagEditField(activeTagEditField.save);
+        } else if (appConfig.activeTagEditField === activeTagEditField.save) {
+          appConfig.setActiveTagEditField(activeTagEditField.cancel);
+        } else if (appConfig.activeTagEditField === activeTagEditField.cancel) {
+          appConfig.setActiveTagEditField(activeTagEditField.name);
+          inputTagNameRef.current?.focus();
+        }
+        event.preventDefault();
+        event.stopPropagation();
       }
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  }, [appConfig.activeTagEditField, appConfig.setActiveTagEditField, appConfig.appMode]);
+    },
+    [
+      appConfig.activeTagEditField,
+      appConfig.setActiveTagEditField,
+      appConfig.appMode,
+    ]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', keyListener, false);

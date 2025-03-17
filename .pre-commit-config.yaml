@@ -17,8 +17,13 @@ repos:
         entry: npx check-for-unpinned-dependencies
         pass_filenames: false
         language: node
-      - id: biome
-        name: biome
+      - id: biome format
+        name: biome format
+        entry: npx biome format
+        pass_filenames: false
+        language: node
+      - id: biome lint
+        name: biome lint
         entry: npx biome lint
         pass_filenames: false
         language: node

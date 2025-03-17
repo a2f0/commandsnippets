@@ -24,10 +24,7 @@ const About = ({onClose}: IProps) => {
       <StyledMenuItem id="about" onClick={handleClick}>
         About
       </StyledMenuItem>
-      <AboutDialog
-        dialogOpen={dialogOpen}
-        closeDialog={closeDialog}
-      />
+      <AboutDialog dialogOpen={dialogOpen} closeDialog={closeDialog} />
     </>
   );
 };

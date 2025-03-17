@@ -427,12 +427,15 @@ export function fetchPage({
     params['filter[search]'] = search;
   }
 
-  const f: Promise<Array<
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-  > | undefined> = API.get<ITextEntryJsonApiResponse>('/entries', {
+  const f: Promise<
+    | Array<
+        | ITextEntryJsonApi
+        | ITagTextEntryThroughModelJsonApi
+        | IUserJsonApi
+        | ITagJsonApi
+      >
+    | undefined
+  > = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
     cancelToken: source.token,
   }).then(response => {
