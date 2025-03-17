@@ -34,7 +34,7 @@ const TagEdit = ({
     return () => {
       document.removeEventListener('keydown', escFunction, false);
     };
-  }, []);
+  }, [escFunction]);
 
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
@@ -50,7 +50,7 @@ const TagEdit = ({
       },
     };
     apiBase
-      .patch('tags/' + object.id, payload, {
+      .patch(`tags/${object.id}`, payload, {
         withCredentials: true,
       })
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
