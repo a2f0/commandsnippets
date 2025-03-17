@@ -308,9 +308,9 @@ const Entry = ({
     event.preventDefault();
     event.stopPropagation();
     const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
+    mouseData.mouseX = event.clientX - 2;
+    mouseData.mouseY = event.clientY - 4;
+    setMouse(mouseData);
   };
 
   const handleNewEntry = () => {
@@ -334,7 +334,7 @@ const Entry = ({
           element.relationships.tag.data.id === tagObject?.id &&
           element.relationships.text_entry.data.id === textEntryObject.id
       );
-    apiBase.delete('/tags_entries/' + tagTextEntryThroughModelObject?.id, {
+    apiBase.delete(`/tags_entries/${tagTextEntryThroughModelObject?.id}`, {
       withCredentials: true,
     });
     tagTextEntryThroughModelObject?.remove();
