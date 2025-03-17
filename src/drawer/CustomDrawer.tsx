@@ -1,11 +1,9 @@
-import {Drawer, DrawerProps} from '@mui/material';
+import {Drawer, type DrawerProps} from '@mui/material';
 import * as React from 'react';
 
-const CustomDrawer = function ({anchor, children}: DrawerProps) {
-  return (
-    <Drawer anchor={anchor} variant="permanent">
-      {children}
-    </Drawer>
-  );
-};
+const CustomDrawer = ({anchor = 'left', children}: DrawerProps) => (
+  <Drawer anchor={anchor} variant="permanent">
+    {children}
+  </Drawer>
+);
 export default React.memo(CustomDrawer);

@@ -16,25 +16,23 @@ interface IProps {
   anchorEl: HTMLElement | null;
 }
 
-const TagsMenu = function ({onClose, anchorEl}: IProps) {
-  return (
-    <StyledMenu
-      id="tags-menu"
-      anchorEl={anchorEl}
-      open={Boolean(anchorEl)}
-      onClose={onClose}
-    >
-      <SortByUserDefinedOrder onClose={onClose} />
-      <SortByNameDescending onClose={onClose} />
-      <SortByNameAscending onClose={onClose} />
-      <SortByDateCreatedDescending onClose={onClose} />
-      <SortByDateCreatedAscending onClose={onClose} />
-      <SortByEntryCountDescending onClose={onClose} />
-      <SortByEntryCountAscending onClose={onClose} />
-      <SortByDateLastUsedDescending onClose={onClose} />
-      <SortByDateLastUsedAscending onClose={onClose} />
-    </StyledMenu>
-  );
-};
+const TagsMenu = ({onClose, anchorEl}: IProps) => (
+  <StyledMenu
+    id="tags-menu"
+    anchorEl={anchorEl}
+    open={Boolean(anchorEl)}
+    onClose={onClose}
+  >
+    <SortByUserDefinedOrder onClose={onClose} />
+    <SortByNameDescending onClose={onClose} />
+    <SortByNameAscending onClose={onClose} />
+    <SortByDateCreatedDescending onClose={onClose} />
+    <SortByDateCreatedAscending onClose={onClose} />
+    <SortByEntryCountDescending onClose={onClose} />
+    <SortByEntryCountAscending onClose={onClose} />
+    <SortByDateLastUsedDescending onClose={onClose} />
+    <SortByDateLastUsedAscending onClose={onClose} />
+  </StyledMenu>
+);
 
 export default React.memo(TagsMenu);

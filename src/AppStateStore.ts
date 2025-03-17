@@ -1,4 +1,4 @@
-import {IDisposer, Instance, types} from 'mobx-state-tree';
+import {type IDisposer, type Instance, types} from 'mobx-state-tree';
 import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
 
 import {environment} from './lib/environment';
@@ -7,22 +7,22 @@ import {
   activeSearch,
   activeTagEditField,
   appMode,
-  appState,
+  type appState,
   defaultState,
   entrySearchMethod,
 } from './lib/shared';
 import {TagHelpers, TagModel} from './models/TagModel';
-import {ITagJsonApi} from './models/TagModel';
+import type {ITagJsonApi} from './models/TagModel';
 import {
-  ITagTextEntryThroughModelJsonApi,
+  type ITagTextEntryThroughModelJsonApi,
   TagTextEntryThroughModel,
 } from './models/TagTextEntryThroughModel';
 import {
-  ITextEntryJsonApi,
+  type ITextEntryJsonApi,
   TextEntryHelpers,
   TextEntryModel,
 } from './models/TextEntryModel';
-import {IUserJsonApi, UserModel} from './models/UserModel';
+import {type IUserJsonApi, UserModel} from './models/UserModel';
 
 export type RootModel = Instance<typeof AppStateStoreModel>;
 
@@ -306,23 +306,29 @@ export const AppStateStoreModel = types
       self.loggedInUser = handle;
     },
     removeTag(id: string) {
-      const existing: Instance<typeof TagModel> = self.tagsArray.filter(
-        c => c.id === id
-      )[0];
-      destroy(existing);
+      const existingTag = self.tagsArray.find(c => c.id === id);
+      if (existingTag) {
+        destroy(existingTag);
+      }
     },
     removeTagTextEntryThroughModel(id: string) {
-      const existing: Instance<typeof TagTextEntryThroughModel> =
-        self.tagTextEntryThroughModel.filter(c => c.id === id)[0];
-      destroy(existing);
+      const existingJunction = self.tagTextEntryThroughModel.find(
+        c => c.id === id
+      );
+      if (existingJunction) {
+        destroy(existingJunction);
+      }
     },
     removeUntaggedTextEntry(id: string) {
-      const existing: Instance<typeof TextEntryModel> =
-        self.untaggedTextEntriesArray.filter(c => c.id === id)[0];
-      destroy(existing);
+      const existingEntry = self.untaggedTextEntriesArray.find(
+        c => c.id === id
+      );
+      if (existingEntry) {
+        destroy(existingEntry);
+      }
     },
     removeTextEntry(id: string) {
-      console.info('id: ' + id);
+      console.info`(id: ${id})`;
     },
     setActiveSearch(activeSearch: activeSearch) {
       self.activeSearch = activeSearch;

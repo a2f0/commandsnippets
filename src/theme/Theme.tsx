@@ -1,4 +1,4 @@
-import {Theme as MuiTheme} from '@mui/material/styles';
+import type {Theme as MuiTheme} from '@mui/material/styles';
 import {ThemeProvider} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React from 'react';

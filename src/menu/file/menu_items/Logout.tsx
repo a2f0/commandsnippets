@@ -1,11 +1,11 @@
-import {AxiosResponse} from 'axios';
+import type {AxiosResponse} from 'axios';
 import axios from 'axios';
 import {applySnapshot} from 'mobx-state-tree';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
 import {baseHTTPURL} from '../../../lib/api/apiBase';
-import {ILogoutJsonApiResponse} from '../../../lib/authentication';
+import type {ILogoutJsonApiResponse} from '../../../lib/authentication';
 import {defaultState} from '../../../lib/shared';
 import StyledMenuItem from '../../../StyledMenuItem';
 

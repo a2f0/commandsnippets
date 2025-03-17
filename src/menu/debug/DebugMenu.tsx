@@ -8,17 +8,15 @@ interface IProps {
   anchorEl: HTMLElement | null;
 }
 
-const DebugMenu = function ({onClose, anchorEl}: IProps) {
-  return (
-    <StyledMenu
-      id="debug-menu"
-      anchorEl={anchorEl}
-      open={Boolean(anchorEl)}
-      onClose={onClose}
-    >
-      <PopulateIndexedDB onClose={onClose} />
-    </StyledMenu>
-  );
-};
+const DebugMenu = ({onClose, anchorEl}: IProps) => (
+  <StyledMenu
+    id="debug-menu"
+    anchorEl={anchorEl}
+    open={Boolean(anchorEl)}
+    onClose={onClose}
+  >
+    <PopulateIndexedDB onClose={onClose} />
+  </StyledMenu>
+);
 
 export default React.memo(DebugMenu);

@@ -1,7 +1,7 @@
 import {Menu} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 
-import {IMouse, initialMouse} from '../src/lib/shared';
+import {type IMouse, initialMouse} from '../src/lib/shared';
 import {appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
 import StyledMenuItem from './StyledMenuItem';
@@ -40,7 +40,7 @@ const StyledMenu = ({
       anchorPosition={
         mousePosition.mouseY !== null && mousePosition.mouseX !== null
           ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : undefined
+          : {top: 0, left: 0}
       }
     >
       {children}

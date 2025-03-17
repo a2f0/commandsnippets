@@ -1,6 +1,4 @@
 class TearleadsCrypto {
-  constructor() {}
-
   async generateKeyPair() {
     const keyPair = await window.crypto.subtle.generateKey(
       {

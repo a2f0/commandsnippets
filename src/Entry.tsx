@@ -17,10 +17,10 @@ import EntryNew from './EntryNew';
 import ItemTypes from './ItemTypes';
 import apiBase from './lib/api/apiBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
-import {IMouse, initialMouse} from './lib/shared';
+import {type IMouse, initialMouse} from './lib/shared';
 import {appMode, getSelection} from './lib/shared';
-import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import {ITextEntryJsonApi} from './models/TextEntryModel';
+import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import type {ITextEntryJsonApi} from './models/TextEntryModel';
 import EntryBody from './styled/text_entries/EntryBody';
 import EntrySubject from './styled/text_entries/EntrySubject';
 import type {DraggableItem} from './Tag';
@@ -308,9 +308,9 @@ const Entry = ({
     event.preventDefault();
     event.stopPropagation();
     const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
+    mouseData.mouseX = event.clientX - 2;
+    mouseData.mouseY = event.clientY - 4;
+    setMouse(mouseData);
   };
 
   const handleNewEntry = () => {
@@ -334,7 +334,7 @@ const Entry = ({
           element.relationships.tag.data.id === tagObject?.id &&
           element.relationships.text_entry.data.id === textEntryObject.id
       );
-    apiBase.delete('/tags_entries/' + tagTextEntryThroughModelObject?.id, {
+    apiBase.delete(`/tags_entries/${tagTextEntryThroughModelObject?.id}`, {
       withCredentials: true,
     });
     tagTextEntryThroughModelObject?.remove();

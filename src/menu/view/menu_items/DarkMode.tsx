@@ -1,5 +1,5 @@
 import {ListItemIcon} from '@mui/material';
-import {Theme} from '@mui/material/styles';
+import type {Theme} from '@mui/material/styles';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
@@ -11,7 +11,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const DarkMode = function ({onClose}: IProps) {
+const DarkMode = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   const handleThemeSwitcher = (chosenTheme: Theme) => {

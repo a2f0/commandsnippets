@@ -1,4 +1,4 @@
-import {createTheme, Theme} from '@mui/material/styles';
+import {createTheme, type Theme} from '@mui/material/styles';
 
 import {defaultThemeOptions} from './themeBase';
 

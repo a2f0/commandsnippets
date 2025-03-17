@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import {TextareaAutosize} from '@mui/material';
-import {Theme} from '@mui/material/styles';
+import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useEffect, useRef, useState} from 'react';
@@ -59,9 +59,8 @@ const InputEntryBody = ({
     const lines = value.split('\n');
     if (lines.length < 20) {
       return 20;
-    } else {
-      return lines.length + 5;
     }
+    return lines.length + 5;
   };
 
   const handleClick = (event: React.MouseEvent<HTMLTextAreaElement>) => {

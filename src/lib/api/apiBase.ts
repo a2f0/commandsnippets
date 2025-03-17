@@ -11,7 +11,7 @@ if (environment === 'staging') {
   baseHTTPURL = 'http://localhost:9001';
 }
 
-const baseURL = baseHTTPURL + '/api/v1';
+const baseURL = `${baseHTTPURL}/api/v1`;
 
 const apiBase = axios.create({
   baseURL,

@@ -1,6 +1,6 @@
-import {JsonObject} from '@wdio/types';
+import type {JsonObject} from '@wdio/types';
 
-import {ITextEntryJsonApiResponseSingle} from '../../../src/lib/text_entries';
+import type {ITextEntryJsonApiResponseSingle} from '../../../src/lib/text_entries';
 import entriesResponse from './entriesResponse';
 
 // create a deep clone

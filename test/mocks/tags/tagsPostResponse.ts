@@ -1,6 +1,6 @@
-import {JsonObject} from '@wdio/types';
+import type {JsonObject} from '@wdio/types';
 
-import {ITagJsonApiResponseSingle} from '../../../src/lib/tags';
+import type {ITagJsonApiResponseSingle} from '../../../src/lib/tags';
 
 const tagPostResponse: ITagJsonApiResponseSingle & JsonObject = {
   data: {

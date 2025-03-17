@@ -1,10 +1,10 @@
-import {StyledComponent} from '@emotion/styled';
+import type {StyledComponent} from '@emotion/styled';
 import {ListItem, ListItemButton} from '@mui/material';
 import {Box} from '@mui/material';
-import {Theme} from '@mui/material/styles';
+import type {Theme} from '@mui/material/styles';
 import {styled} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import {AxiosResponse} from 'axios';
+import type {AxiosResponse} from 'axios';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
@@ -14,12 +14,12 @@ import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
 import ItemTypes from './ItemTypes';
 import apiBase from './lib/api/apiBase';
-import {ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
-import {IMouse, initialMouse} from './lib/shared';
+import {type ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
+import {type IMouse, initialMouse} from './lib/shared';
 import {activeSearch, appMode} from './lib/shared';
-import {ITagJsonApiResponseSingle} from './lib/tags';
+import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {needsScrollingIntoView} from './lib/text_entries';
-import {ITagJsonApi} from './models/TagModel';
+import type {ITagJsonApi} from './models/TagModel';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
@@ -294,7 +294,7 @@ const Tag = ({
 
   const deleteTag = () => {
     apiBase
-      .delete('/tags/' + tagObject.id, {withCredentials: true})
+      .delete(`/tags/${tagObject.id}`, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
         handleDeleteParent(response.data);
       })
@@ -311,9 +311,9 @@ const Tag = ({
     event.preventDefault();
     event.stopPropagation();
     const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
+    mouseData.mouseX = event.clientX - 2;
+    mouseData.mouseY = event.clientY - 4;
+    setMouse(mouseData);
   };
 
   const opacity = isDragging ? 0 : 1;

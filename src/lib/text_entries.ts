@@ -1,13 +1,13 @@
-import {Theme} from '@mui/material/styles';
-import {CancelTokenSource} from 'axios';
-import {RefObject} from 'react';
+import type {Theme} from '@mui/material/styles';
+import type {CancelTokenSource} from 'axios';
+import type {RefObject} from 'react';
 
 import {db} from '../../src/lib/db/db';
 import type {TStore} from '../AppStateStore';
-import {ITagJsonApi} from '../models/TagModel';
-import {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
-import {ITextEntryJsonApi} from '../models/TextEntryModel';
-import {IUserJsonApi} from '../models/UserModel';
+import type {ITagJsonApi} from '../models/TagModel';
+import type {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
+import type {ITextEntryJsonApi} from '../models/TextEntryModel';
+import type {IUserJsonApi} from '../models/UserModel';
 import API from './api/apiBase';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 export interface ITextEntryJsonApiResponse {
@@ -330,10 +330,7 @@ export function sort(
   return plainObjects;
 }
 
-export function filter(
-  order: string,
-  array: Array<ITextEntryJsonApi>
-): ITextEntryJsonApi[] {
+export function filter(array: Array<ITextEntryJsonApi>): ITextEntryJsonApi[] {
   const filteredArray: Array<ITextEntryJsonApi> = array;
   return filteredArray;
 }
@@ -391,16 +388,17 @@ export function fetch(
   > = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
   }).then(response => {
-    entries = entries.concat(response.data.data);
+    const updatedEntries = entries.concat(response.data.data);
     for (let i = 0; i < response.data.included?.length; i++) {
-      if (!entries.includes(response.data.included[i])) {
-        entries.push(response.data.included[i]);
+      const item = response.data.included[i];
+      if (item && !updatedEntries.includes(item)) {
+        updatedEntries.push(item);
       }
     }
     if (response.data.links.next === null) {
-      return entries;
+      return updatedEntries;
     }
-    return fetch(entries, user, tag, ++page, since, tag_count);
+    return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
   });
   return f;
 }
@@ -421,28 +419,31 @@ export function fetchPage({
   const params: IFetchParams = {
     'page[number]': page,
     'filter[user.username]': username,
-    'filter[search]': search,
     sort: sort,
     include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
   };
 
-  if (search !== null) {
+  if (search != null) {
     params['filter[search]'] = search;
   }
 
-  const f: Promise<void | Array<
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-  >> = API.get<ITextEntryJsonApiResponse>('/entries', {
+  const f: Promise<
+    | Array<
+        | ITextEntryJsonApi
+        | ITagTextEntryThroughModelJsonApi
+        | IUserJsonApi
+        | ITagJsonApi
+      >
+    | undefined
+  > = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
     cancelToken: source.token,
   }).then(response => {
     entries = entries.concat(response.data.data);
     for (let i = 0; i < response.data.included?.length; i++) {
-      if (!entries.includes(response.data.included[i])) {
-        entries.push(response.data.included[i]);
+      const item = response.data.included[i];
+      if (item && !entries.includes(item)) {
+        entries.push(item);
       }
     }
     return entries;

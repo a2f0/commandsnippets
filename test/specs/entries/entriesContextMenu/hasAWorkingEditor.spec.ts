@@ -2,7 +2,7 @@ import entriesResponse from '../../../mocks/entries/entriesResponse';
 import entriesPatchResponse from '../../../mocks/entries/entryPatchResponse';
 import tags from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
-
+import invariant from 'invariant';
 describe('TagsEntries Behavior', () => {
   it.skip('has a working editor', async () => {
     await BasePage.open('');
@@ -43,9 +43,11 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.textEntryEdit1Body).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Save).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Cancel).toBeDisplayed();
+    invariant(entriesResponse.data[0], 'entriesResponse.data[0] is undefined');
     expect(BasePage.textEntryEdit1Body).toHaveValue(
       entriesResponse.data[0].attributes.body
     );
+    invariant(entriesResponse.data[0], 'entriesResponse.data[0] is undefined');
     expect(BasePage.textEntryEdit1Subject).toHaveValue(
       entriesResponse.data[0].attributes.subject
     );
@@ -72,8 +74,9 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.textEntryEdit1).toBeDisplayed();
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
     await browser.keys('-modified');
+    invariant(entriesResponse.data[0], 'entriesResponse.data[0] is undefined');
     expect(BasePage.textEntryEdit1Subject).toHaveValue(
-      entriesResponse.data[0].attributes.subject + '-modified'
+      `${entriesResponse.data[0].attributes.subject}-modified`
     );
 
     await browser.keys('Tab');
@@ -83,8 +86,9 @@ describe('TagsEntries Behavior', () => {
     // Create a blank line
     await browser.keys('Enter');
     await browser.keys('entry-1-body-line-2');
+    invariant(entriesResponse.data[0], 'entriesResponse.data[0] is undefined');
     expect(BasePage.textEntryEdit1Body).toHaveValue(
-      entriesResponse.data[0].attributes.body + '\n' + 'entry-1-body-line-2'
+      `${entriesResponse.data[0].attributes.body}\nentry-1-body-line-2`
     );
     await browser.keys('Tab');
     await expect(BasePage.textEntryEdit1Save).toBeFocused();

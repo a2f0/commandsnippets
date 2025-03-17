@@ -9,7 +9,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const SortByUserDefinedOrder = function ({onClose}: IProps) {
+const SortByUserDefinedOrder = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   return (

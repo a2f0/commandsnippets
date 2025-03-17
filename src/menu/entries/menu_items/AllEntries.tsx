@@ -10,7 +10,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const AllEntries = function ({onClose}: IProps) {
+const AllEntries = ({onClose}: IProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const {user} = useParams();

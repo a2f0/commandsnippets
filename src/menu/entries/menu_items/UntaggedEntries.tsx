@@ -10,7 +10,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const UntaggedEntries = function ({onClose}: IProps) {
+const UntaggedEntries = ({onClose}: IProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const {user} = useParams();

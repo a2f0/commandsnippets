@@ -1,11 +1,12 @@
 {
-  "extends": "./node_modules/gts/tsconfig-google.json",
+  "extends": "@tsconfig/strictest",
   "compilerOptions": {
     "outDir": "./.ts-out",
     "rootDir": ".",
     "target": "esnext",
     "module": "esnext",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "checkJs": false,
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
