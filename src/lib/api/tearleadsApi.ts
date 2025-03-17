@@ -7,7 +7,7 @@ export interface ReorderTag {
       top: string;
       bottom: string;
     };
-    relationships: {};
+    relationships: Record<string, never>;
   };
 }
 
@@ -18,7 +18,7 @@ interface ReorderEntry {
       top: string;
       bottom: string;
     };
-    relationships: {};
+    relationships: Record<string, never>;
   };
 }
 
@@ -28,9 +28,11 @@ class TearleadsApi {
       await apiBase.post('/tags/reorder', payload, {
         withCredentials: true,
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      throw new Error(error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error('An unknown error occurred');
     }
   }
   public async reorderEntry(top: string, bottom: string): Promise<void> {
