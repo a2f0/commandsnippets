@@ -347,7 +347,7 @@ interface IFetchParams {
 }
 
 export function fetch(
-  initialEntries: Array<
+  entries: Array<
     | ITextEntryJsonApi
     | ITagTextEntryThroughModelJsonApi
     | IUserJsonApi
@@ -355,13 +355,10 @@ export function fetch(
   >,
   user: string,
   tag: string | null,
-  initialPage: number,
+  page: number,
   since: string | null,
   tag_count: number | null
 ) {
-  const entries = [...initialEntries];
-  const page = initialPage;
-
   const params: IFetchParams = {
     'page[number]': page,
     'filter[user.username]': user,

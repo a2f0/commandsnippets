@@ -221,19 +221,19 @@ export function fetch(
       params: params,
     })
     .then(response => {
-      entries = entries.concat(response.data.data);
+      const updatedEntries = entries.concat(response.data.data);
       if (response.data.included) {
         for (let i = 0; i < response.data.included.length; i++) {
           const item = response.data.included[i];
-          if (item && !entries.includes(item)) {
-            entries.push(item);
+          if (item && !updatedEntries.includes(item)) {
+            updatedEntries.push(item);
           }
         }
       }
       if (response.data.links.next === null) {
-        return entries;
+        return updatedEntries;
       }
-      return fetch(entries, user, ++page, since);
+      return fetch(updatedEntries, user, page + 1, since);
     });
   return f;
 }
