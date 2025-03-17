@@ -1,3 +1,3 @@
 export interface ILogoutJsonApiResponse {
-  data: {};
+  data: Record<string, never>;
 }
