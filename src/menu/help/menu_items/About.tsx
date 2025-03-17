@@ -27,7 +27,7 @@ const About = ({onClose}: IProps) => {
       <AboutDialog
         dialogOpen={dialogOpen}
         closeDialog={closeDialog}
-      ></AboutDialog>
+      />
     </>
   );
 };
