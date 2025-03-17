@@ -125,11 +125,10 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     (index: number): ITagJsonApi | null => {
       if (index > tags.length - 1) {
         return null;
-      } else {
-        const tag = tags[index];
-        invariant(tag, 'tag is undefined');
-        return tag;
       }
+      const tag = tags[index];
+      invariant(tag, 'tag is undefined');
+      return tag;
     },
     [tags]
   );
