@@ -347,7 +347,7 @@ interface IFetchParams {
 }
 
 export function fetch(
-  entries: Array<
+  initialEntries: Array<
     | ITextEntryJsonApi
     | ITagTextEntryThroughModelJsonApi
     | IUserJsonApi
@@ -355,10 +355,13 @@ export function fetch(
   >,
   user: string,
   tag: string | null,
-  page: number,
+  initialPage: number,
   since: string | null,
   tag_count: number | null
 ) {
+  const entries = [...initialEntries];
+  const page = initialPage;
+
   const params: IFetchParams = {
     'page[number]': page,
     'filter[user.username]': user,
@@ -388,17 +391,17 @@ export function fetch(
   > = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
   }).then(response => {
-    entries = entries.concat(response.data.data);
+    const updatedEntries = entries.concat(response.data.data);
     for (let i = 0; i < response.data.included?.length; i++) {
       const item = response.data.included[i];
-      if (item && !entries.includes(item)) {
-        entries.push(item);
+      if (item && !updatedEntries.includes(item)) {
+        updatedEntries.push(item);
       }
     }
     if (response.data.links.next === null) {
-      return entries;
+      return updatedEntries;
     }
-    return fetch(entries, user, tag, ++page, since, tag_count);
+    return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
   });
   return f;
 }
@@ -427,12 +430,12 @@ export function fetchPage({
     params['filter[search]'] = search;
   }
 
-  const f: Promise<void | Array<
+  const f: Promise<Array<
     | ITextEntryJsonApi
     | ITagTextEntryThroughModelJsonApi
     | IUserJsonApi
     | ITagJsonApi
-  >> = API.get<ITextEntryJsonApiResponse>('/entries', {
+  > | undefined> = API.get<ITextEntryJsonApiResponse>('/entries', {
     params: params,
     cancelToken: source.token,
   }).then(response => {
