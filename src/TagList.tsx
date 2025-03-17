@@ -167,9 +167,9 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       event.preventDefault();
       event.stopPropagation();
       const mouseData: IMouse = {...mouse};
-      (mouseData.mouseX = event.clientX - 2),
-        (mouseData.mouseY = event.clientY - 4),
-        setMouse(mouseData);
+      mouseData.mouseX = event.clientX - 2;
+      mouseData.mouseY = event.clientY - 4;
+      setMouse(mouseData);
     },
     []
   );
