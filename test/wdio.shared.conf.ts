@@ -1,3 +1,7 @@
+import type {
+  RequestedMultiremoteCapabilities,
+  RequestedStandaloneCapabilities,
+} from '@wdio/types/build/Capabilities';
 import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
@@ -76,6 +80,10 @@ export const config: WebdriverIO.Config = {
   },
 
   before: async (
+    _capabilities:
+      | RequestedStandaloneCapabilities
+      | RequestedMultiremoteCapabilities,
+    _specs: string[],
     // biome-ignore lint: suspicious/noExplicitAny
     browser: any
   ) => {
