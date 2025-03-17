@@ -294,7 +294,7 @@ const Tag = ({
 
   const deleteTag = () => {
     apiBase
-      .delete('/tags/' + tagObject.id, {withCredentials: true})
+      .delete(`/tags/${tagObject.id}`, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
         handleDeleteParent(response.data);
       })
@@ -311,9 +311,9 @@ const Tag = ({
     event.preventDefault();
     event.stopPropagation();
     const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
+    mouseData.mouseX = event.clientX - 2;
+    mouseData.mouseY = event.clientY - 4;
+    setMouse(mouseData);
   };
 
   const opacity = isDragging ? 0 : 1;
