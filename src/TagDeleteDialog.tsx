@@ -33,7 +33,7 @@ const TagDeleteDialog = ({
         {'Are you sure you want to delete this tag?'}
       </DialogTitle>
       <DialogContent>
-        <DialogContentText id="alert-dialog-description"></DialogContentText>
+        <DialogContentText id="alert-dialog-description"/>
       </DialogContent>
       <DialogActions>
         <Button
