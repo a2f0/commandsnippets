@@ -59,9 +59,8 @@ const InputEntryBody = ({
     const lines = value.split('\n');
     if (lines.length < 20) {
       return 20;
-    } else {
-      return lines.length + 5;
     }
+    return lines.length + 5;
   };
 
   const handleClick = (event: React.MouseEvent<HTMLTextAreaElement>) => {
