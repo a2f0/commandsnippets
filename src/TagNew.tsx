@@ -48,7 +48,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     return () => {
       appConfig.setActiveTagEditField(activeTagEditField.name);
     };
-  }, []);
+  }, [appConfig.activeTagEditField, appConfig.setActiveTagEditField]);
 
   useEffect(() => {
     document.addEventListener('keydown', escFunction, false);
@@ -56,7 +56,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     return () => {
       document.removeEventListener('keydown', escFunction, false);
     };
-  }, []);
+  }, [escFunction]);
 
   const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTagName(event.currentTarget.value);
@@ -106,14 +106,14 @@ const TagNew = ({handleNewParent, id}: IProps) => {
       event.preventDefault();
       event.stopPropagation();
     }
-  }, []);
+  }, [appConfig.activeTagEditField, appConfig.setActiveTagEditField, appConfig.appMode]);
 
   useEffect(() => {
     document.addEventListener('keydown', keyListener, false);
     return () => {
       document.removeEventListener('keydown', keyListener, false);
     };
-  }, []);
+  }, [keyListener]);
 
   return (
     <StyledTagFormContainer id={id}>
