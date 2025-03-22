@@ -211,7 +211,8 @@ const Entry = ({
   const [, drop] = useDrop(
     {
       accept: ItemTypes.ENTRY,
-      hover(item: DraggableItem, monitor) {
+      hover: (item: DraggableItem, monitor) => {
+        console.debug(`hover: index ${index} originalIndex ${originalIndex}`);
         if (!dragRef.current) {
           return;
         }

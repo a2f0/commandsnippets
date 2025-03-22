@@ -20,11 +20,60 @@ beforeEach(() => assignLoggedInCookie());
 
 describe('Entries List', () => {
   let reorderEntrySpy: MockInstance;
+  let consoleMock: MockInstance;
   beforeEach(() => {
     reorderEntrySpy = vi.spyOn(tearleadsApi, 'reorderEntry');
+    consoleMock = vi
+      .spyOn(global.console, 'debug')
+      .mockImplementation(() => undefined);
   });
   afterEach(() => {
     reorderEntrySpy.mockRestore();
+    consoleMock.mockReset();
+  });
+  it('Hovers', async () => {
+    const user = userEvent.setup();
+    const history = createMemoryHistory();
+    const route = '/test/test-tag-1';
+    history.push(route);
+    render(<TestAppRouter history={history} />);
+    expect(history.location.pathname).toBe('/test/test-tag-1');
+    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    const entries = screen.getAllByRole('entry');
+    expect(entries).toHaveLength(4);
+    expect(entries[0]).toHaveTextContent('entry-1-subject');
+    expect(entries[0]).toHaveTextContent('entry-1-body');
+    expect(entries[1]).toHaveTextContent('entry-2-subject');
+    expect(entries[1]).toHaveTextContent('entry-2-body');
+    expect(entries[2]).toHaveTextContent('entry-3-subject');
+    expect(entries[2]).toHaveTextContent('entry-3-body');
+    expect(entries[3]).toHaveTextContent('entry-4-subject');
+    expect(entries[3]).toHaveTextContent('entry-4-body');
+    const entryDragHandleContainers = screen.getAllByRole(
+      'entryDragHandleContainer'
+    );
+    expect(entryDragHandleContainers).toHaveLength(4);
+    invariant(
+      entryDragHandleContainers[0],
+      'entryDragHandleContainer is undefined'
+    );
+    await user.pointer({target: entryDragHandleContainers[0]});
+    const entryDragHandle = screen.getByRole('entryDragHandle');
+    expect(reorderEntrySpy).not.toBeCalled();
+    await act(async () => {
+      fireEvent.dragStart(entryDragHandle);
+    });
+
+    await act(async () => {
+      invariant(entries[0], 'entry is undefined');
+      fireEvent.dragEnter(entries[0]);
+    });
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'hover: index 0 originalIndex 0'
+    );
   });
   it('Reorders', async () => {
     const user = userEvent.setup();
