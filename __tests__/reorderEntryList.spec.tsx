@@ -145,7 +145,7 @@ describe('Entries List', () => {
     await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
-    const entries = screen.getAllByRole('entry');
+    let entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-1-subject');
     expect(entries[0]).toHaveTextContent('entry-1-body');
@@ -178,13 +178,20 @@ describe('Entries List', () => {
       'moveEntry: entry-1-subject index 0 moving to 1'
     );
 
+    entries = screen.getAllByRole('entry');
+    expect(entries).toHaveLength(4);
+    expect(entries[0]).toHaveTextContent('entry-2-subject');
+    expect(entries[1]).toHaveTextContent('entry-1-subject');
+    expect(entries[2]).toHaveTextContent('entry-3-subject');
+    expect(entries[3]).toHaveTextContent('entry-4-subject');
+
     // This is dropping it onto itself after reordering the list.
     await act(async () => {
       invariant(entries[1], 'entry is undefined');
       fireEvent.drop(entries[1]);
     });
 
-    expect(reorderEntrySpy).toBeCalledWith('1', '0');
+    expect(reorderEntrySpy).toBeCalledWith('1', '3');
   });
 
   // it('Reorders', async () => {
