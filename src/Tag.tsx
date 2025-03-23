@@ -144,48 +144,48 @@ const Tag = ({
         const didDrop = monitor.didDrop();
         if (!didDrop) {
           console.debug('!didDrop');
+          // Then the target did not handle the drop.
+          // Move the entry in the state of the list.
           moveEntry(droppedId, originalIndex);
         } else {
           if (draggedItem?.type) {
-            if ('type' in draggedItem) {
-              if (draggedItem.type === 'tag') {
-                if (originalIndex !== draggedItem.index) {
-                  console.debug(
-                    `useDrag end: it moved from index ${originalIndex} to ${draggedItem.index}`
-                  );
-                  console.debug(
-                    `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
-                  );
-                  const {entry, index} = findEntry(draggedItem.id);
-                  const entryBelow = findEntryByIndex(index + 1);
-                  let orderedTop: ITagJsonApi | null;
-                  let orderedBottom: ITagJsonApi | null;
-                  if (entryBelow === null) {
-                    //Then it was moved to the bottom position, get the entry before it.
-                    orderedTop = findEntryByIndex(index - 1);
-                    orderedBottom = entry;
-                  } else {
-                    orderedTop = entry;
-                    orderedBottom = entryBelow;
-                  }
-                  if (orderedTop !== null && orderedBottom !== null) {
-                    const payload: ReorderTag = {
-                      data: {
-                        type: 'Tag',
-                        attributes: {
-                          top: orderedTop.id,
-                          bottom: orderedBottom.id,
-                        },
-                        relationships: {},
-                      },
-                    };
-                    await tearleadsApi.reorderTag(payload);
-                  }
+            // Then it was dropped on something.
+            if (draggedItem.type === 'tag') {
+              // Then it was dropped on a tag. So we need to reorder the tags.
+              if (originalIndex !== draggedItem.index) {
+                console.debug(
+                  `useDrag end: it moved from index ${originalIndex} to ${draggedItem.index}`
+                );
+                console.debug(
+                  `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
+                );
+                const {entry, index} = findEntry(draggedItem.id);
+                const entryBelow = findEntryByIndex(index + 1);
+                let orderedTop: ITagJsonApi | null;
+                let orderedBottom: ITagJsonApi | null;
+                if (entryBelow === null) {
+                  //Then it was moved to the bottom position, get the entry before it.
+                  orderedTop = findEntryByIndex(index - 1);
+                  orderedBottom = entry;
                 } else {
-                  console.debug(
-                    'useDrag end: it was not moved within the list.'
-                  );
+                  orderedTop = entry;
+                  orderedBottom = entryBelow;
                 }
+                if (orderedTop !== null && orderedBottom !== null) {
+                  const payload: ReorderTag = {
+                    data: {
+                      type: 'Tag',
+                      attributes: {
+                        top: orderedTop.id,
+                        bottom: orderedBottom.id,
+                      },
+                      relationships: {},
+                    },
+                  };
+                  await tearleadsApi.reorderTag(payload);
+                }
+              } else {
+                console.debug('useDrag end: it was not moved within the list.');
               }
             }
           }
