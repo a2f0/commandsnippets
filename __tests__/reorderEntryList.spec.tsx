@@ -116,12 +116,16 @@ describe('Entries List', () => {
       fireEvent.dragOver(entries[0]);
       await new Promise(res => setTimeout(res, 0));
     });
-    entries = screen.getAllByRole('tag');
+    entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('test-tag-1');
-    expect(entries[1]).toHaveTextContent('test-tag-2');
-    expect(entries[2]).toHaveTextContent('test-tag-3');
-    expect(entries[3]).toHaveTextContent('test-tag-4');
+    expect(entries[0]).toHaveTextContent('entry-1-subject');
+    expect(entries[0]).toHaveTextContent('entry-1-body');
+    expect(entries[1]).toHaveTextContent('entry-2-subject');
+    expect(entries[1]).toHaveTextContent('entry-2-body');
+    expect(entries[2]).toHaveTextContent('entry-3-subject');
+    expect(entries[2]).toHaveTextContent('entry-3-body');
+    expect(entries[3]).toHaveTextContent('entry-4-subject');
+    expect(entries[3]).toHaveTextContent('entry-4-body');
 
     // This is dropping it onto itself after reordering the list.
     // To my knowledge, this emulates what is going on in the screen in a real world scenario.

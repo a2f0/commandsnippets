@@ -56,7 +56,7 @@ interface DroppableItem {
   canDrop: boolean;
 }
 
-interface DropResult {
+export interface DropResult {
   id: string;
   type: string;
 }

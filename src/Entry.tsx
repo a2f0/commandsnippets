@@ -23,7 +23,7 @@ import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import type {ITextEntryJsonApi} from './models/TextEntryModel';
 import EntryBody from './styled/text_entries/EntryBody';
 import EntrySubject from './styled/text_entries/EntrySubject';
-import type {DraggableItem} from './Tag';
+import type {DraggableItem, DropResult} from './Tag';
 
 const EntryText = styled('div')(() => ({
   display: 'inline-block',
@@ -83,7 +83,11 @@ const Entry = ({
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
   const previewRef = useRef<HTMLDivElement>(null);
-  const [{isDragging}, drag, preview] = useDrag(
+  const [{isDragging}, drag, preview] = useDrag<
+    DraggableItem,
+    DropResult,
+    {isDragging: boolean}
+  >(
     {
       item: (): DraggableItem => ({
         id,
@@ -110,9 +114,10 @@ const Entry = ({
           // Move the entry in the state of the list.
           moveEntry(droppedId, originalIndex);
         } else {
-          if (draggedItem?.type) {
-            // Then it was dropped on something.
-            if (draggedItem.type === 'Tag') {
+          // Then it was dropped on something.
+          const dropResult = monitor.getDropResult();
+          if (dropResult) {
+            if (dropResult.type === 'Tag') {
               const payload = {
                 data: {
                   type: 'TagTextEntryThroughModel',
@@ -121,7 +126,7 @@ const Entry = ({
                     tag: {
                       data: {
                         type: 'Tag',
-                        id: draggedItem.id,
+                        id: dropResult.id,
                       },
                     },
                     text_entry: {
@@ -148,6 +153,7 @@ const Entry = ({
                 appConfig.removeUntaggedTextEntry(object.id);
               }
             } else if (draggedItem.type === 'entry') {
+              // Then it was dropped on an entry (this is being reordered in the list).
               const {index} = draggedItem;
               if (originalIndex !== index) {
                 console.info(
@@ -209,6 +215,8 @@ const Entry = ({
               } else {
                 console.debug('useDrag end: it was not moved within the list.');
               }
+            } else {
+              throw new Error(`Unknown drop result type: ${dropResult.type}`);
             }
           }
         }
