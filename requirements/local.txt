@@ -8,4 +8,3 @@ responses==0.25.6
 isort[requirements]==6.0.1     # this should match .pre-commit-config.yamml
 pre-commit==4.1.0
 pur==7.3.2                      # for checking out of date dependencies
-safety==3.2.14

@@ -30,11 +30,9 @@ Bump version
 Show outdated dependencies
 
     docker-compose build --no-cache
-    docker-compose run backend safety check -r requirements/local.txt -r requirements/production.txt
     docker-compose run backend pur -r requirements/local.txt -r requirements/production.txt
 
     # venv
-    safety check -r requirements/local.txt -r requirements/production.txt
     pur -r requirements/local.txt -r requirements/production.txt
 
 ## Testing
