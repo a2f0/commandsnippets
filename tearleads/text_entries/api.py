@@ -40,20 +40,13 @@ class TextEntryViewSet(viewsets.ModelViewSet):
     }
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         if settings.REST_FRAMEWORK["SEARCH_PARAM"] in self.request.GET:
-            self.queryset = self.queryset.filter(
-                Q(
-                    body__icontains=self.request.GET[
-                        settings.REST_FRAMEWORK["SEARCH_PARAM"]
-                    ]
-                )
-                | Q(
-                    subject__icontains=self.request.GET[
-                        settings.REST_FRAMEWORK["SEARCH_PARAM"]
-                    ]
-                )
+            search_term = self.request.GET[settings.REST_FRAMEWORK["SEARCH_PARAM"]]
+            queryset = queryset.filter(
+                Q(body__icontains=search_term) | Q(subject__icontains=search_term)
             )
-        return self.queryset
+        return queryset
 
     def create(self, request, *args, **kwargs):
         serializer = TextEntryCreateSerializer(data=request.data)
