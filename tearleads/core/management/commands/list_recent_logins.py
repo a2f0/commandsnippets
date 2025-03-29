@@ -24,24 +24,33 @@ class Command(BaseCommand):
         # Only include specified fields
         fields = ["username", "email", "last_login", "date_joined"]
 
+        widths = {"username": 25, "email": 40, "last_login": 25, "date_joined": 25}
+
         # Print header
         self.stdout.write(self.style.SUCCESS(f"Total users: {user_count}"))
 
         # Print headers
-        self.stdout.write(
-            self.style.MIGRATE_HEADING(" | ".join(f"{field:<25}" for field in fields))
-        )
-        self.stdout.write("-" * (27 * len(fields)))
+        header_row = []
+        for field in fields:
+            header_row.append(f"{field:<{widths[field]}}")
+        self.stdout.write(self.style.MIGRATE_HEADING(" | ".join(header_row)))
+
+        # Calculate total line length for separator
+        total_width = (
+            sum(widths.values()) + (3 * len(fields)) - 3
+        )  # Account for separators
+        self.stdout.write("-" * total_width)
 
         # Print user data row by row
         for user in users:
             row_data = []
             for field in fields:
                 value = getattr(user, field)
+                field_width = widths[field]
                 # Truncate and format values that might be too long
-                if isinstance(value, str) and len(value) > 25:
-                    value = value[:22] + "..."
-                row_data.append(f"{str(value):<25}")
+                if isinstance(value, str) and len(value) > field_width:
+                    value = value[: field_width - 3] + "..."
+                row_data.append(f"{str(value):<{field_width}}")
 
             self.stdout.write(" | ".join(row_data))
 
