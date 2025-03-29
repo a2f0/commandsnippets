@@ -61,7 +61,8 @@ class TestGithubAuthentication(BaseTestCase):
         response = self.auth_user_api_client.post("/api/v1/github-login/", payload)
 
         user = User.objects.get(username="login")
-        self.assertEqual(user.last_login, None)
+        self.assertNotEqual(user.last_login, None)
+        self.assertEqual(user.last_login, user.date_joined)
         existing_token = Token.objects.get(user=user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)

@@ -34,6 +34,10 @@ class User(AbstractUser):
                     random_length += 1
                 if collides == False:
                     self.username = username_to_test
+
+            # Set last_login to the same as date_joined for new users
+            self.last_login = self.date_joined
+
         super(User, self).save(*args, **kwargs)
 
 
