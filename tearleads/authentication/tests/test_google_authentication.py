@@ -59,6 +59,7 @@ class TestGoogleAuthentication(BaseTestCase):
         user = User.objects.get(username="user")
         self.assertNotEqual(user.last_login, None)
         self.assertEqual(user.last_login, user.date_joined)
+        self.assertEqual(user.login_count, 1)
         existing_token = Token.objects.get(user=user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
@@ -91,6 +92,9 @@ class TestGoogleAuthentication(BaseTestCase):
             username="user", email="user@example.com"
         )
         old_login_time = existing_user.last_login
+
+        # Verify initial login count is 1
+        self.assertEqual(existing_user.login_count, 1)
 
         # Mock Google OAuth token endpoint
         responses.add(
@@ -129,6 +133,9 @@ class TestGoogleAuthentication(BaseTestCase):
         user_after = User.objects.get(username="user")
         self.assertEqual(user_after.id, existing_user.id)  # Same user
         self.assertNotEqual(user_after.last_login, old_login_time)  # Login time updated
+
+        # Login count should be incremented to 2 since this is the second login
+        self.assertEqual(user_after.login_count, 2)
 
         # Check for token and cookies
         existing_token = Token.objects.get(user=user_after)

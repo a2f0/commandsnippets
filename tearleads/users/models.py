@@ -15,6 +15,7 @@ from tearleads.text_entries.models import TextEntry
 
 class User(AbstractUser):
     date_updated = models.DateTimeField(auto_now=True)
+    login_count = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -37,7 +38,8 @@ class User(AbstractUser):
 
             # Set last_login to the same as date_joined for new users
             self.last_login = self.date_joined
-
+            # Initialize the login count for new user
+            self.login_count = 1
         super(User, self).save(*args, **kwargs)
 
 

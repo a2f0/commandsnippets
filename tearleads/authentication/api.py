@@ -89,7 +89,8 @@ class GithubLogin(APIView):
                             if created == False:
                                 # Then it is a login for an existing user
                                 user.last_login = timezone.now()
-                                user.save(update_fields=["last_login"])
+                                user.login_count += 1
+                                user.save(update_fields=["last_login", "login_count"])
                             token, created = Token.objects.get_or_create(user=user)
                             response = Response({})
                             response.set_cookie(
@@ -137,7 +138,8 @@ class GoogleLogin(APIView):
                 if created == False:
                     # Then it is a login for an existing user
                     user.last_login = timezone.now()
-                    user.save(update_fields=["last_login"])
+                    user.login_count += 1
+                    user.save(update_fields=["last_login", "login_count"])
                 token, created = Token.objects.get_or_create(user=user)
                 response = Response({})
                 response.set_cookie(
