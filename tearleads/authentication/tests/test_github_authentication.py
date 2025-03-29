@@ -87,3 +87,80 @@ class TestGithubAuthentication(BaseTestCase):
         self.assertNotEqual(
             self.auth_user_api_client.cookies["Authorization"].value, ""
         )
+
+    @responses.activate
+    def test_successful_github_login_for_existing_user(self):
+        # Create user beforehand
+        existing_user = User.objects.create_user(
+            username="login", email="user@example.com"
+        )
+        old_login_time = existing_user.last_login
+
+        # Mock GitHub OAuth token endpoint
+        responses.add(
+            responses.POST,
+            "https://github.com/login/oauth/access_token",
+            body="access_token=test_access_token&scope=user%3Aemail&token_type=bearer",
+            status=200,
+            content_type="application/x-www-form-urlencoded",
+        )
+
+        # Mock GitHub user endpoint
+        responses.add(
+            responses.GET,
+            "https://api.github.com/user",
+            json={"login": "login"},
+            status=200,
+            content_type="application/json",
+        )
+
+        # Mock GitHub emails endpoint
+        responses.add(
+            responses.GET,
+            "https://api.github.com/user/emails",
+            json=[{"email": "user@example.com", "primary": True, "verified": True}],
+            status=200,
+            content_type="application/json",
+        )
+
+        self.auth_user_api_client = APIClient()
+        payload = {
+            "data": {"type": "GithubLogin", "attributes": {"code": "valid_code"}}
+        }
+
+        # Verify user exists before login attempt
+        user_before = User.objects.get(username="login")
+        self.assertEqual(user_before.id, existing_user.id)
+
+        response = self.auth_user_api_client.post("/api/v1/github-login/", payload)
+
+        # Get the user after login
+        user_after = User.objects.get(username="login")
+        self.assertEqual(user_after.id, existing_user.id)  # Same user
+        self.assertNotEqual(user_after.last_login, old_login_time)  # Login time updated
+
+        # Check for token and cookies
+        existing_token = Token.objects.get(user=user_after)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
+        self.assertEqual(
+            self.auth_user_api_client.cookies["Authorization"].value, existing_token.key
+        )
+        self.assertEqual(
+            self.auth_user_api_client.cookies["Authorization"]["domain"],
+            settings.COOKIE_DOMAIN,
+        )
+        self.assertEqual(
+            self.auth_user_api_client.cookies["Authorization"]["max-age"], 2419200
+        )
+        self.assertEqual("LoggedIn" in self.auth_user_api_client.cookies, True)
+        self.assertEqual(
+            self.auth_user_api_client.cookies["LoggedIn"]["max-age"], 2419200
+        )
+        self.assertEqual(
+            self.auth_user_api_client.cookies["LoggedIn"]["domain"],
+            settings.COOKIE_DOMAIN,
+        )
+        self.assertNotEqual(
+            self.auth_user_api_client.cookies["Authorization"].value, ""
+        )

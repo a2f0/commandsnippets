@@ -4,6 +4,7 @@ from urllib.parse import parse_qs
 
 import requests
 from django.conf import settings
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -82,7 +83,13 @@ class GithubLogin(APIView):
 
                     for email in data:
                         if email["primary"] == True:
-                            user = create_collisionless_user(username, email["email"])
+                            user, created = create_collisionless_user(
+                                username, email["email"]
+                            )
+                            if created == False:
+                                # Then it is a login for an existing user
+                                user.last_login = timezone.now()
+                                user.save(update_fields=["last_login"])
                             token, created = Token.objects.get_or_create(user=user)
                             response = Response({})
                             response.set_cookie(
@@ -126,7 +133,11 @@ class GoogleLogin(APIView):
                 response_dict = json.loads(response.text)
                 email = response_dict["email"]
                 username = email.split("@", 1)[0]
-                user = create_collisionless_user(username, email)
+                user, created = create_collisionless_user(username, email)
+                if created == False:
+                    # Then it is a login for an existing user
+                    user.last_login = timezone.now()
+                    user.save(update_fields=["last_login"])
                 token, created = Token.objects.get_or_create(user=user)
                 response = Response({})
                 response.set_cookie(
