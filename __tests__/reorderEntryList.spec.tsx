@@ -363,58 +363,123 @@ describe('Entries List', () => {
 
     expect(reorderEntrySpy).toBeCalledWith('4', '1');
   });
+  it('Reorders 1 -> 2', async () => {
+    const user = userEvent.setup();
+    const history = createMemoryHistory();
+    const route = '/test/test-tag-1';
+    history.push(route);
+    render(<TestAppRouter history={history} />);
+    expect(history.location.pathname).toBe('/test/test-tag-1');
+    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    let entries = screen.getAllByRole('entry');
+    expect(entries).toHaveLength(4);
+    expect(entries[0]).toHaveTextContent('entry-1-subject');
+    expect(entries[0]).toHaveTextContent('entry-1-body');
+    expect(entries[1]).toHaveTextContent('entry-2-subject');
+    expect(entries[1]).toHaveTextContent('entry-2-body');
+    expect(entries[2]).toHaveTextContent('entry-3-subject');
+    expect(entries[2]).toHaveTextContent('entry-3-body');
+    expect(entries[3]).toHaveTextContent('entry-4-subject');
+    expect(entries[3]).toHaveTextContent('entry-4-body');
+    const entryDragHandleContainers = screen.getAllByRole(
+      'entryDragHandleContainer'
+    );
+    expect(entryDragHandleContainers).toHaveLength(4);
+    invariant(
+      entryDragHandleContainers[1],
+      'entryDragHandleContainer is undefined'
+    );
+    await user.pointer({target: entryDragHandleContainers[1]});
+    const entryDragHandle = screen.getByRole('entryDragHandle');
+    await act(async () => {
+      fireEvent.dragStart(entryDragHandle);
+    });
 
-  // it('Reorders', async () => {
-  //   const user = userEvent.setup();
-  //   const history = createMemoryHistory();
-  //   const route = '/test/test-tag-1';
-  //   history.push(route);
-  //   render(<TestAppRouter history={history} />);
-  //   expect(history.location.pathname).toBe('/test/test-tag-1');
-  //   await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
-  //   await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
-  //   await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
-  //   await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
-  //   let entries = screen.getAllByRole('entry');
-  //   expect(entries).toHaveLength(4);
-  //   expect(entries[0]).toHaveTextContent('entry-1-subject');
-  //   expect(entries[0]).toHaveTextContent('entry-1-body');
-  //   expect(entries[1]).toHaveTextContent('entry-2-subject');
-  //   expect(entries[1]).toHaveTextContent('entry-2-body');
-  //   expect(entries[2]).toHaveTextContent('entry-3-subject');
-  //   expect(entries[2]).toHaveTextContent('entry-3-body');
-  //   expect(entries[3]).toHaveTextContent('entry-4-subject');
-  //   expect(entries[3]).toHaveTextContent('entry-4-body');
-  //   const entryDragHandleContainers = screen.getAllByRole(
-  //     'entryDragHandleContainer'
-  //   );
-  //   expect(entryDragHandleContainers).toHaveLength(4);
-  //   invariant(
-  //     entryDragHandleContainers[0],
-  //     'entryDragHandleContainer is undefined'
-  //   );
-  //   await user.pointer({target: entryDragHandleContainers[0]});
-  //   const entryDragHandle = screen.getByRole('entryDragHandle');
-  //   expect(reorderEntrySpy).not.toBeCalled();
-  //   await act(async () => {
-  //     fireEvent.dragStart(entryDragHandle);
-  //     invariant(entries[2], 'entry is undefined');
-  //     invariant(entries[3], 'entry is undefined');
-  //     fireEvent.dragEnter(entries[2]);
-  //     fireEvent.dragOver(entries[2]);
-  //     await new Promise(res => setTimeout(res, 0));
-  //     fireEvent.drop(entries[3]);
-  //   });
-  //   entries = screen.getAllByRole('entry');
-  //   expect(entries).toHaveLength(4);
-  //   expect(entries[0]).toHaveTextContent('entry-2-subject');
-  //   expect(entries[0]).toHaveTextContent('entry-2-body');
-  //   expect(entries[1]).toHaveTextContent('entry-3-subject');
-  //   expect(entries[1]).toHaveTextContent('entry-3-body');
-  //   expect(entries[2]).toHaveTextContent('entry-4-subject');
-  //   expect(entries[2]).toHaveTextContent('entry-4-body');
-  //   expect(entries[3]).toHaveTextContent('entry-1-subject');
-  //   expect(entries[3]).toHaveTextContent('entry-1-body');
-  //   expect(reorderEntrySpy).toBeCalledWith('3', '1');
-  // });
+    await act(async () => {
+      invariant(entries[2], 'entry is undefined');
+      fireEvent.dragEnter(entries[2]);
+    });
+
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: entry-2-subject index 1 moving to 2'
+    );
+
+    entries = screen.getAllByRole('entry');
+    expect(entries).toHaveLength(4);
+    expect(entries[0]).toHaveTextContent('entry-1-subject');
+    expect(entries[1]).toHaveTextContent('entry-3-subject');
+    expect(entries[2]).toHaveTextContent('entry-2-subject');
+    expect(entries[3]).toHaveTextContent('entry-4-subject');
+
+    // This is dropping it onto itself after reordering the list.
+    await act(async () => {
+      invariant(entries[2], 'entry is undefined');
+      fireEvent.drop(entries[2]);
+    });
+
+    expect(reorderEntrySpy).toBeCalledWith('2', '4');
+  });
+
+  it('Reorders 2 -> 1', async () => {
+    const user = userEvent.setup();
+    const history = createMemoryHistory();
+    const route = '/test/test-tag-1';
+    history.push(route);
+    render(<TestAppRouter history={history} />);
+    expect(history.location.pathname).toBe('/test/test-tag-1');
+    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    let entries = screen.getAllByRole('entry');
+    expect(entries).toHaveLength(4);
+    expect(entries[0]).toHaveTextContent('entry-1-subject');
+    expect(entries[0]).toHaveTextContent('entry-1-body');
+    expect(entries[1]).toHaveTextContent('entry-2-subject');
+    expect(entries[1]).toHaveTextContent('entry-2-body');
+    expect(entries[2]).toHaveTextContent('entry-3-subject');
+    expect(entries[2]).toHaveTextContent('entry-3-body');
+    expect(entries[3]).toHaveTextContent('entry-4-subject');
+    expect(entries[3]).toHaveTextContent('entry-4-body');
+    const entryDragHandleContainers = screen.getAllByRole(
+      'entryDragHandleContainer'
+    );
+    expect(entryDragHandleContainers).toHaveLength(4);
+    invariant(
+      entryDragHandleContainers[2],
+      'entryDragHandleContainer is undefined'
+    );
+    await user.pointer({target: entryDragHandleContainers[2]});
+    const entryDragHandle = screen.getByRole('entryDragHandle');
+    await act(async () => {
+      fireEvent.dragStart(entryDragHandle);
+    });
+
+    await act(async () => {
+      invariant(entries[1], 'entry is undefined');
+      fireEvent.dragEnter(entries[1]);
+    });
+
+    expect(consoleMock).toHaveBeenLastCalledWith(
+      'moveEntry: entry-3-subject index 2 moving to 1'
+    );
+
+    entries = screen.getAllByRole('entry');
+    expect(entries).toHaveLength(4);
+    expect(entries[0]).toHaveTextContent('entry-1-subject');
+    expect(entries[1]).toHaveTextContent('entry-3-subject');
+    expect(entries[2]).toHaveTextContent('entry-2-subject');
+    expect(entries[3]).toHaveTextContent('entry-4-subject');
+
+    // This is dropping it onto itself after reordering the list.
+    await act(async () => {
+      invariant(entries[1], 'entry is undefined');
+      fireEvent.drop(entries[1]);
+    });
+
+    expect(reorderEntrySpy).toBeCalledWith('3', '2');
+  });
 });
