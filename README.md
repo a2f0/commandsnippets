@@ -70,6 +70,7 @@ Delete a user
 List users
 
     docker-compose run backend python manage.py list_users
+    docker-compose run backend python manage.py list_recent_logins
 
 Accessing the local Postgresql Database
 
