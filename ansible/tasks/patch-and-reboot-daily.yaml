@@ -19,4 +19,4 @@
     user: "{{ ansible_user }}"
     hour: "3"
     minute: "0"
-    job: "/home/{{ ansible_user }}/patch-and-reboot.sh >/home/{{ ansible_user }}/patch-reboot-log 2>&1"
+    job: "/home/{{ ansible_user }}/patch-and-reboot.sh >>/home/{{ ansible_user }}/patch-reboot-log 2>&1"
