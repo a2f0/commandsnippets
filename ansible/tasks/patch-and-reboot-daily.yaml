@@ -6,6 +6,10 @@
     mode: '0755'
     content: |
       #!/bin/bash
+
+      echo ""
+      echo "=== Patch and reboot started at $(date) ==="
+
       export DEBIAN_FRONTEND=noninteractive
       sudo apt-get -y update
       sudo apt-get -y autoremove
