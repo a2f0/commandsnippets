@@ -253,8 +253,8 @@ const EntryList = () => {
   const moveEntry = useCallback(
     (id: string, atIndex: number) => {
       const {entry, index} = findEntry(id);
-      console.info(
-        `entry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
+      console.debug(
+        `moveEntry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
       );
       const reordered = update(entries, {
         $splice: [
