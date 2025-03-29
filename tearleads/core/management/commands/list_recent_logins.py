@@ -7,7 +7,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Lists all users ordered by most recently joined"
+    help = "Lists all users ordered by most recently logged in"
 
     def handle(self, *args, **options):
         # Get the current timestamp
@@ -17,23 +17,21 @@ class Command(BaseCommand):
             )
         )
 
-        # Query users using the ORM
-        users = User.objects.all().order_by("-date_joined")
+        users = User.objects.all().order_by("-last_login")
 
-        # Prepare data for display
         user_count = users.count()
 
-        # Get field names for the headers
-        fields = [field.name for field in User._meta.fields]
+        # Only include specified fields
+        fields = ["username", "email", "last_login", "date_joined"]
 
         # Print header
         self.stdout.write(self.style.SUCCESS(f"Total users: {user_count}"))
 
         # Print headers
         self.stdout.write(
-            self.style.MIGRATE_HEADING(" | ".join(f"{field:<20}" for field in fields))
+            self.style.MIGRATE_HEADING(" | ".join(f"{field:<25}" for field in fields))
         )
-        self.stdout.write("-" * (22 * len(fields)))
+        self.stdout.write("-" * (27 * len(fields)))
 
         # Print user data row by row
         for user in users:
@@ -41,9 +39,9 @@ class Command(BaseCommand):
             for field in fields:
                 value = getattr(user, field)
                 # Truncate and format values that might be too long
-                if isinstance(value, str) and len(value) > 20:
-                    value = value[:17] + "..."
-                row_data.append(f"{str(value):<20}")
+                if isinstance(value, str) and len(value) > 25:
+                    value = value[:22] + "..."
+                row_data.append(f"{str(value):<25}")
 
             self.stdout.write(" | ".join(row_data))
 
