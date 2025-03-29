@@ -22,7 +22,7 @@ class TestGoogleAuthentication(BaseTestCase):
         os.environ["GOOGLE_REDIRECT_URI"] = "test_redirect_uri"
 
     @responses.activate
-    def test_successful_google_login(self):
+    def test_successful_google_login_for_new_user(self):
         # Mock Google OAuth token endpoint
         responses.add(
             responses.POST,

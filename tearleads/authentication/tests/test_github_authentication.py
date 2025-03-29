@@ -21,7 +21,7 @@ class TestGithubAuthentication(BaseTestCase):
         os.environ["GITHUB_CLIENT_SECRET"] = "test_client_secret"
 
     @responses.activate
-    def test_successful_github_login(self):
+    def test_successful_github_login_for_new_user(self):
         # Mock GitHub OAuth token endpoint
         responses.add(
             responses.POST,
