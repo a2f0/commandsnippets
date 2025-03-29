@@ -11,7 +11,7 @@
       sudo apt-get -y autoremove
       sudo apt-get -y autoclean
       sudo /sbin/shutdown -r now
-    
+
 - name: Set up daily patching cron job
   become: true
   cron:
@@ -19,4 +19,4 @@
     user: "{{ ansible_user }}"
     hour: "3"
     minute: "0"
-    job: "/home/{{ ansible_user }}/patch-and-reboot.sh"
+    job: "/home/{{ ansible_user }}/patch-and-reboot.sh >/home/{{ ansible_user }}/patch-reboot-log 2>&1"
