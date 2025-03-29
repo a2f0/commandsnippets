@@ -15,7 +15,7 @@ from tearleads.text_entries.models import TextEntry
 
 class User(AbstractUser):
     date_updated = models.DateTimeField(auto_now=True)
-    login_count = models.PositiveIntegerField(default=0)
+    login_count = models.PositiveIntegerField(default=1)
 
     def save(self, *args, **kwargs):
         if not self.pk:
