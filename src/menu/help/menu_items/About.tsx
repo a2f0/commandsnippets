@@ -7,7 +7,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const About = function ({onClose}: IProps) {
+const About = ({onClose}: IProps) => {
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
   const handleClick = () => {
@@ -24,10 +24,7 @@ const About = function ({onClose}: IProps) {
       <StyledMenuItem id="about" onClick={handleClick}>
         About
       </StyledMenuItem>
-      <AboutDialog
-        dialogOpen={dialogOpen}
-        closeDialog={closeDialog}
-      ></AboutDialog>
+      <AboutDialog dialogOpen={dialogOpen} closeDialog={closeDialog} />
     </>
   );
 };

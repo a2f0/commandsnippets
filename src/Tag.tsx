@@ -1,10 +1,10 @@
-import {StyledComponent} from '@emotion/styled';
+import type {StyledComponent} from '@emotion/styled';
 import {ListItem, ListItemButton} from '@mui/material';
 import {Box} from '@mui/material';
-import {Theme} from '@mui/material/styles';
+import type {Theme} from '@mui/material/styles';
 import {styled} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import {AxiosResponse} from 'axios';
+import type {AxiosResponse} from 'axios';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
@@ -14,12 +14,12 @@ import DragHandle from './DragHandle';
 import DragHandleContainer from './DragHandleContainer';
 import ItemTypes from './ItemTypes';
 import apiBase from './lib/api/apiBase';
-import {ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
-import {IMouse, initialMouse} from './lib/shared';
+import {type ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
+import {type IMouse, initialMouse} from './lib/shared';
 import {activeSearch, appMode} from './lib/shared';
-import {ITagJsonApiResponseSingle} from './lib/tags';
+import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {needsScrollingIntoView} from './lib/text_entries';
-import {ITagJsonApi} from './models/TagModel';
+import type {ITagJsonApi} from './models/TagModel';
 import TagContextMenu from './TagContextMenu';
 import TagEdit from './TagEdit';
 import TagLabel from './TagLabel';
@@ -56,7 +56,7 @@ interface DroppableItem {
   canDrop: boolean;
 }
 
-interface DropResult {
+export interface DropResult {
   id: string;
   type: string;
 }
@@ -144,48 +144,48 @@ const Tag = ({
         const didDrop = monitor.didDrop();
         if (!didDrop) {
           console.debug('!didDrop');
+          // Then the target did not handle the drop.
+          // Move the entry in the state of the list.
           moveEntry(droppedId, originalIndex);
         } else {
           if (draggedItem?.type) {
-            if ('type' in draggedItem) {
-              if (draggedItem.type === 'tag') {
-                if (originalIndex !== draggedItem.index) {
-                  console.debug(
-                    `useDrag end: it moved from index ${originalIndex} to ${draggedItem.index}`
-                  );
-                  console.debug(
-                    `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
-                  );
-                  const {entry, index} = findEntry(draggedItem.id);
-                  const entryBelow = findEntryByIndex(index + 1);
-                  let orderedTop: ITagJsonApi | null;
-                  let orderedBottom: ITagJsonApi | null;
-                  if (entryBelow === null) {
-                    //Then it was moved to the bottom position, get the entry before it.
-                    orderedTop = findEntryByIndex(index - 1);
-                    orderedBottom = entry;
-                  } else {
-                    orderedTop = entry;
-                    orderedBottom = entryBelow;
-                  }
-                  if (orderedTop !== null && orderedBottom !== null) {
-                    const payload: ReorderTag = {
-                      data: {
-                        type: 'Tag',
-                        attributes: {
-                          top: orderedTop.id,
-                          bottom: orderedBottom.id,
-                        },
-                        relationships: {},
-                      },
-                    };
-                    await tearleadsApi.reorderTag(payload);
-                  }
+            // Then it was dropped on something.
+            if (draggedItem.type === 'tag') {
+              // Then it was dropped on a tag. So we need to reorder the tags.
+              if (originalIndex !== draggedItem.index) {
+                console.debug(
+                  `useDrag end: it moved from index ${originalIndex} to ${draggedItem.index}`
+                );
+                console.debug(
+                  `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
+                );
+                const {entry, index} = findEntry(draggedItem.id);
+                const entryBelow = findEntryByIndex(index + 1);
+                let orderedTop: ITagJsonApi | null;
+                let orderedBottom: ITagJsonApi | null;
+                if (entryBelow === null) {
+                  //Then it was moved to the bottom position, get the entry before it.
+                  orderedTop = findEntryByIndex(index - 1);
+                  orderedBottom = entry;
                 } else {
-                  console.debug(
-                    'useDrag end: it was not moved within the list.'
-                  );
+                  orderedTop = entry;
+                  orderedBottom = entryBelow;
                 }
+                if (orderedTop !== null && orderedBottom !== null) {
+                  const payload: ReorderTag = {
+                    data: {
+                      type: 'Tag',
+                      attributes: {
+                        top: orderedTop.id,
+                        bottom: orderedBottom.id,
+                      },
+                      relationships: {},
+                    },
+                  };
+                  await tearleadsApi.reorderTag(payload);
+                }
+              } else {
+                console.debug('useDrag end: it was not moved within the list.');
               }
             }
           }
@@ -294,7 +294,7 @@ const Tag = ({
 
   const deleteTag = () => {
     apiBase
-      .delete('/tags/' + tagObject.id, {withCredentials: true})
+      .delete(`/tags/${tagObject.id}`, {withCredentials: true})
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
         handleDeleteParent(response.data);
       })
@@ -311,9 +311,9 @@ const Tag = ({
     event.preventDefault();
     event.stopPropagation();
     const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
+    mouseData.mouseX = event.clientX - 2;
+    mouseData.mouseY = event.clientY - 4;
+    setMouse(mouseData);
   };
 
   const opacity = isDragging ? 0 : 1;

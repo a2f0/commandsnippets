@@ -35,7 +35,7 @@ const Main = () => {
         appConfig.setLoggedInUser(null);
       }
     }
-  }, [location]);
+  }, [appConfig.loggedInUser, appConfig.setLoggedInUser]);
 
   return (
     <>

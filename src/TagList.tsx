@@ -13,12 +13,12 @@ import React, {
 } from 'react';
 import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
-
+import invariant from 'invariant';
 import {useAppContext} from './AppContext';
 import ItemTypes from './ItemTypes';
-import {activeSearch, appMode, IMouse, initialMouse} from './lib/shared';
-import {ITagJsonApiResponseSingle} from './lib/tags';
-import {ITagJsonApi, TagHelpers} from './models/TagModel';
+import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
+import type {ITagJsonApiResponseSingle} from './lib/tags';
+import {type ITagJsonApi, TagHelpers} from './models/TagModel';
 import Tag from './Tag';
 import TagListContextMenu from './TagListContextMenu';
 import TagNew from './TagNew';
@@ -92,7 +92,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           element => element.id === appConfig.tagSelectedID
         );
         if (current === undefined) {
-          if (tags.length > 0) {
+          if (tags[0]) {
             console.info(
               `set selected tag ${tags[0].attributes.name} id ${tags[0].id}`
             );
@@ -112,6 +112,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const findEntry = useCallback(
     (id: string) => {
       const entry = tags.filter(c => c.id === id)[0];
+      invariant(entry, 'entry is not defined');
       return {
         entry,
         index: tags.indexOf(entry),
@@ -121,12 +122,13 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   );
 
   const findEntryByIndex = useCallback(
-    (index: number) => {
+    (index: number): ITagJsonApi | null => {
       if (index > tags.length - 1) {
         return null;
-      } else {
-        return tags[index];
       }
+      const tag = tags[index];
+      invariant(tag, 'tag is undefined');
+      return tag;
     },
     [tags]
   );
@@ -134,6 +136,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const moveEntry = useCallback(
     (id: string, atIndex: number) => {
       const {entry, index} = findEntry(id);
+      invariant(entry, 'entry is undefined');
       console.debug(
         `moveEntry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
       );
@@ -164,9 +167,9 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       event.preventDefault();
       event.stopPropagation();
       const mouseData: IMouse = {...mouse};
-      (mouseData.mouseX = event.clientX - 2),
-        (mouseData.mouseY = event.clientY - 4),
-        setMouse(mouseData);
+      mouseData.mouseX = event.clientX - 2;
+      mouseData.mouseY = event.clientY - 4;
+      setMouse(mouseData);
     },
     []
   );
@@ -195,13 +198,17 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
-              setSelectedTag(tagsRef.current[newIndex].id);
+              const tag = tagsRef.current[newIndex];
+              invariant(tag, 'tag is undefined');
+              setSelectedTag(tag.id);
               setMovedSelectedUp(true);
             }
           } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
             if (newIndex <= tagsRef.current.length - 1) {
-              setSelectedTag(tagsRef.current[newIndex].id);
+              const tag = tagsRef.current[newIndex];
+              invariant(tag, 'tag is undefined');
+              setSelectedTag(tag.id);
               setMovedSelectedUp(false);
             }
           } else if (event.key === 'Enter') {

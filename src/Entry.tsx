@@ -17,13 +17,13 @@ import EntryNew from './EntryNew';
 import ItemTypes from './ItemTypes';
 import apiBase from './lib/api/apiBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
-import {IMouse, initialMouse} from './lib/shared';
+import {type IMouse, initialMouse} from './lib/shared';
 import {appMode, getSelection} from './lib/shared';
-import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import {ITextEntryJsonApi} from './models/TextEntryModel';
+import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import type {ITextEntryJsonApi} from './models/TextEntryModel';
 import EntryBody from './styled/text_entries/EntryBody';
 import EntrySubject from './styled/text_entries/EntrySubject';
-import type {DraggableItem} from './Tag';
+import type {DraggableItem, DropResult} from './Tag';
 
 const EntryText = styled('div')(() => ({
   display: 'inline-block',
@@ -83,135 +83,154 @@ const Entry = ({
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
   const previewRef = useRef<HTMLDivElement>(null);
-  const [{isDragging}, drag, preview] = useDrag({
-    item: (): DraggableItem => ({
-      id,
-      originalIndex,
+  const [{isDragging}, drag, preview] = useDrag<
+    DraggableItem,
+    DropResult,
+    {isDragging: boolean}
+  >(
+    {
+      item: (): DraggableItem => ({
+        id,
+        originalIndex,
+        type: ItemTypes.ENTRY,
+        index,
+      }),
       type: ItemTypes.ENTRY,
-      index,
-    }),
-    type: ItemTypes.ENTRY,
-    collect: monitor => ({
-      isDragging: monitor.isDragging(),
-    }),
-    end: async (dropResult, monitor) => {
-      const drop_result: ITextEntryJsonApi | null = monitor.getDropResult();
-      const {id: droppedId, originalIndex} = monitor.getItem();
-      const didDrop = monitor.didDrop();
-      if (!didDrop) {
-        // Then the target did not handle the drop.
-        // Move the entry in the state of the list.
-        moveEntry(droppedId, originalIndex);
-      } else {
-        if (drop_result?.type) {
+      collect: monitor => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: async (draggedItem, monitor) => {
+        const {id: droppedId, originalIndex} = monitor.getItem();
+        console.debug(
+          `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
+        );
+        console.debug(
+          `useDrag end: droppedId: ${droppedId} originalIndex ${originalIndex}`
+        );
+        const didDrop = monitor.didDrop();
+        if (!didDrop) {
+          console.debug('!didDrop');
+          // Then the target did not handle the drop.
+          // Move the entry in the state of the list.
+          moveEntry(droppedId, originalIndex);
+        } else {
           // Then it was dropped on something.
-          if (drop_result.type === 'Tag') {
-            const payload = {
-              data: {
-                type: 'TagTextEntryThroughModel',
-                attributes: {},
-                relationships: {
-                  tag: {
-                    data: {
-                      type: 'Tag',
-                      id: drop_result.id,
+          const dropResult = monitor.getDropResult();
+          if (dropResult) {
+            if (dropResult.type === 'Tag') {
+              const payload = {
+                data: {
+                  type: 'TagTextEntryThroughModel',
+                  attributes: {},
+                  relationships: {
+                    tag: {
+                      data: {
+                        type: 'Tag',
+                        id: dropResult.id,
+                      },
                     },
-                  },
-                  text_entry: {
-                    data: {
-                      type: 'TextEntry',
-                      id: findEntry(id).entry.id,
+                    text_entry: {
+                      data: {
+                        type: 'TextEntry',
+                        id: findEntry(id).entry.id,
+                      },
                     },
                   },
                 },
-              },
-            };
-            apiBase
-              .post('tags_entries', payload, {
-                withCredentials: true,
-              })
-              .then(resp => {
-                appConfig.updateOrCreateTagTextEntryThroughModel(
-                  resp.data.data
+              };
+              apiBase
+                .post('tags_entries', payload, {
+                  withCredentials: true,
+                })
+                .then(resp => {
+                  appConfig.updateOrCreateTagTextEntryThroughModel(
+                    resp.data.data
+                  );
+                });
+              if (entriesFilter === 'untagged') {
+                //Then an untagged entry was tagged
+                handleRemoveFromListParent(object.id);
+                appConfig.removeUntaggedTextEntry(object.id);
+              }
+            } else if (draggedItem.type === 'entry') {
+              // Then it was dropped on an entry (this is being reordered in the list).
+              const {index} = draggedItem;
+              if (originalIndex !== index) {
+                console.info(
+                  `it moved from index ${originalIndex} to ${index}`
                 );
-              });
-            if (entriesFilter === 'untagged') {
-              //Then an untagged entry was tagged
-              handleRemoveFromListParent(object.id);
-              appConfig.removeUntaggedTextEntry(object.id);
-            }
-          }
-        } else {
-          // Then it was reordered in the list.
-          const {index} = dropResult;
-          if (originalIndex !== index) {
-            console.info(
-              `it moved from index ${originalIndex} to ${index} (entries)`
-            );
-            const entry = findEntry(id).entry;
-            const entry_below = findEntryByIndex(index + 1);
-            let ordered_top: ITextEntryJsonApi | null;
-            let ordered_bottom: ITextEntryJsonApi | null;
-            if (entry_below === null) {
-              //Then it was moved to the bottom position, get the entry before it.
-              ordered_top = findEntryByIndex(index - 1);
-              ordered_bottom = entry;
+                const entry = findEntry(id).entry;
+                const entry_below = findEntryByIndex(index + 1);
+                let ordered_top: ITextEntryJsonApi | null;
+                let ordered_bottom: ITextEntryJsonApi | null;
+                if (entry_below === null) {
+                  //Then it was moved to the bottom position, get the entry before it.
+                  ordered_top = findEntryByIndex(index - 1);
+                  ordered_bottom = entry;
+                } else {
+                  ordered_top = entry;
+                  ordered_bottom = entry_below;
+                }
+                if (ordered_top !== null && ordered_bottom !== null) {
+                  // Then find the junction entries.
+                  const userObject = appConfig.usersArray.find(
+                    element =>
+                      element.id === textEntryObject.relationships.user.data.id
+                  );
+
+                  const tagObject = appConfig.tagsArray.find(
+                    element =>
+                      element.relationships.user.data.id === userObject?.id &&
+                      element.relationships.user.data.id ===
+                        textEntryObject.relationships.user.data.id &&
+                      element.attributes.name === tag
+                  );
+
+                  const throughModelTop =
+                    appConfig.tagTextEntryThroughModel.find(
+                      element =>
+                        element.relationships.tag.data.id === tagObject?.id &&
+                        element.relationships.text_entry.data.id ===
+                          ordered_top?.id
+                    );
+
+                  const throughModelBottom =
+                    appConfig.tagTextEntryThroughModel.find(
+                      element =>
+                        element.relationships.tag.data.id === tagObject?.id &&
+                        element.relationships.text_entry.data.id ===
+                          ordered_bottom?.id
+                    );
+                  if (throughModelTop === undefined) {
+                    throw new Error('Top must be defined.');
+                  }
+                  if (throughModelBottom === undefined) {
+                    throw new Error('Bottom must be defined.');
+                  }
+                  await tearleadsApi.reorderEntry(
+                    throughModelTop.id,
+                    throughModelBottom.id
+                  );
+                }
+              } else {
+                console.debug('useDrag end: it was not moved within the list.');
+              }
             } else {
-              ordered_top = entry;
-              ordered_bottom = entry_below;
+              throw new Error(`Unknown drop result type: ${dropResult.type}`);
             }
-            if (ordered_top !== null && ordered_bottom !== null) {
-              // Then find the junction entries.
-              const userObject = appConfig.usersArray.find(
-                element =>
-                  element.id === textEntryObject.relationships.user.data.id
-              );
-
-              const tagObject = appConfig.tagsArray.find(
-                element =>
-                  element.relationships.user.data.id === userObject?.id &&
-                  element.relationships.user.data.id ===
-                    textEntryObject.relationships.user.data.id &&
-                  element.attributes.name === tag
-              );
-
-              const throughModelTop = appConfig.tagTextEntryThroughModel.find(
-                element =>
-                  element.relationships.tag.data.id === tagObject?.id &&
-                  element.relationships.text_entry.data.id === ordered_top?.id
-              );
-
-              const throughModelBottom =
-                appConfig.tagTextEntryThroughModel.find(
-                  element =>
-                    element.relationships.tag.data.id === tagObject?.id &&
-                    element.relationships.text_entry.data.id ===
-                      ordered_bottom?.id
-                );
-              if (throughModelTop === undefined) {
-                throw new Error('Top must be defined.');
-              }
-              if (throughModelBottom === undefined) {
-                throw new Error('Bottom must be defined.');
-              }
-              await tearleadsApi.reorderEntry(
-                throughModelTop.id,
-                throughModelBottom.id
-              );
-            }
-          } else {
-            console.info("it wasn't moved within the list (entry).");
           }
         }
-      }
+      },
     },
-  });
+    [id, originalIndex, moveEntry]
+  );
   // Make sure opacity is above the useDrag call above
   const opacity = isDragging ? 0 : 1;
   const [, drop] = useDrop(
     {
       accept: ItemTypes.ENTRY,
-      hover(item: DraggableItem, monitor) {
+      hover: (item: DraggableItem, monitor) => {
+        console.debug(`hover: index ${index} originalIndex ${originalIndex}`);
         if (!dragRef.current) {
           return;
         }
@@ -308,9 +327,9 @@ const Entry = ({
     event.preventDefault();
     event.stopPropagation();
     const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
+    mouseData.mouseX = event.clientX - 2;
+    mouseData.mouseY = event.clientY - 4;
+    setMouse(mouseData);
   };
 
   const handleNewEntry = () => {
@@ -334,7 +353,7 @@ const Entry = ({
           element.relationships.tag.data.id === tagObject?.id &&
           element.relationships.text_entry.data.id === textEntryObject.id
       );
-    apiBase.delete('/tags_entries/' + tagTextEntryThroughModelObject?.id, {
+    apiBase.delete(`/tags_entries/${tagTextEntryThroughModelObject?.id}`, {
       withCredentials: true,
     });
     tagTextEntryThroughModelObject?.remove();

@@ -8,7 +8,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const NewTag = function ({onClose}: IProps) {
+const NewTag = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   const handleCreateTag = () => {

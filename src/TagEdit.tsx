@@ -1,11 +1,11 @@
-import Grid from '@mui/material/Grid2';
-import {AxiosResponse} from 'axios';
+import Grid from '@mui/material/Grid';
+import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import apiBase from './lib/api/apiBase';
-import {ITagJsonApiResponseSingle} from './lib/tags';
-import {ITagJsonApi} from './models/TagModel';
+import type {ITagJsonApiResponseSingle} from './lib/tags';
+import type {ITagJsonApi} from './models/TagModel';
 import StyledTagButton from './styled/tags/StyledTagButton';
 import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
 import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
@@ -34,7 +34,7 @@ const TagEdit = ({
     return () => {
       document.removeEventListener('keydown', escFunction, false);
     };
-  }, []);
+  }, [escFunction]);
 
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
@@ -50,7 +50,7 @@ const TagEdit = ({
       },
     };
     apiBase
-      .patch('tags/' + object.id, payload, {
+      .patch(`tags/${object.id}`, payload, {
         withCredentials: true,
       })
       .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {

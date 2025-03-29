@@ -1,4 +1,5 @@
 import {Button} from '@mui/material';
+// biome-ignore lint: style/useImportType
 import React from 'react';
 
 interface IButtonItemProps {
@@ -6,20 +7,12 @@ interface IButtonItemProps {
   onClick: () => void;
   children?: React.ReactNode;
   startIcon: React.ReactNode;
-  role: string;
 }
 
-const LoginButton = ({
-  id,
-  onClick,
-  children,
-  role,
-  startIcon,
-}: IButtonItemProps) => {
+const LoginButton = ({id, onClick, children, startIcon}: IButtonItemProps) => {
   return (
     <Button
       id={id}
-      role={role}
       size="small"
       variant="contained"
       disableElevation

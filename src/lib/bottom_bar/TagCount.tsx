@@ -4,7 +4,7 @@ import React, {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 
 import {db} from '../db/db';
-import {ITag} from '../db/types';
+import type {ITag} from '../db/types';
 
 const TagCount = () => {
   const {user} = useParams();

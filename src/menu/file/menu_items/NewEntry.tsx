@@ -8,7 +8,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const NewEntry = function ({onClose}: IProps) {
+const NewEntry = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   const handleCreateEntry = () => {

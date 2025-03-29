@@ -1,8 +1,9 @@
 import {Box} from '@mui/material';
-import {Theme} from '@mui/material/styles';
+import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import {CancelTokenSource} from 'axios';
+import type {CancelTokenSource} from 'axios';
 import axios from 'axios';
+import invariant from 'invariant';
 import update from 'immutability-helper';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
@@ -22,10 +23,13 @@ import Entry from './Entry';
 import EntryListContextMenu from './EntryListContextMenu';
 import EntryNew from './EntryNew';
 import ItemTypes from './ItemTypes';
-import {appMode, IMouse, initialMouse} from './lib/shared';
-import {IEntryFetchPage} from './lib/text_entries';
+import {appMode, type IMouse, initialMouse} from './lib/shared';
+import type {IEntryFetchPage} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
-import {ITextEntryJsonApi, TextEntryHelpers} from './models/TextEntryModel';
+import {
+  type ITextEntryJsonApi,
+  TextEntryHelpers,
+} from './models/TextEntryModel';
 
 export interface IParamTypes {
   user: string;
@@ -42,7 +46,7 @@ const EntryList = () => {
 
   // Used to access the react state from within the listener.
   const [entries, _setEntries] = useState<Array<ITextEntryJsonApi>>([]);
-  const entriesRef = useRef(entries);
+  const entriesRef = useRef<Array<ITextEntryJsonApi>>(entries);
   const setEntries = (data: Array<ITextEntryJsonApi>) => {
     entriesRef.current = data;
     _setEntries(data);
@@ -113,7 +117,7 @@ const EntryList = () => {
           appConfig.entrySortOrder,
           appConfig
         );
-        if (array.length > 1) {
+        if (array[0]) {
           appConfig.setEntrySelectedID(array[0].id);
         }
         setEntries(array);
@@ -160,7 +164,7 @@ const EntryList = () => {
           element => element.id === appConfig.entrySelectedID
         );
         if (current === undefined) {
-          if (array.length > 0) {
+          if (array[0]) {
             appConfig.setEntrySelectedID(array[0].id);
           }
         }
@@ -187,24 +191,29 @@ const EntryList = () => {
           if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
-              appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
-              if (
-                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
-              ) {
-                elRefsRef.current?.[newIndex].current?.scrollIntoView({
-                  behavior: 'auto',
-                  block: 'start',
-                });
+              const entry = entriesRef.current[newIndex];
+              if (entry) {
+                appConfig.setEntrySelectedID(entry.id);
+                const elRef = elRefsRef.current[newIndex];
+                invariant(elRef, 'entry ref is undefined');
+                if (needsScrollingIntoView(elRef, theme)) {
+                  elRef.current?.scrollIntoView({
+                    behavior: 'auto',
+                    block: 'start',
+                  });
+                }
               }
             }
           } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
             if (newIndex <= entriesRef.current.length - 1) {
-              appConfig.setEntrySelectedID(entriesRef.current[newIndex].id);
-              if (
-                needsScrollingIntoView(elRefsRef.current?.[newIndex], theme)
-              ) {
-                elRefsRef.current?.[newIndex].current?.scrollIntoView({
+              const entry = entriesRef.current[newIndex];
+              invariant(entry, 'entry is undefined');
+              appConfig.setEntrySelectedID(entry.id);
+              const elRef = elRefsRef.current[newIndex];
+              invariant(elRef, 'entry ref is undefined');
+              if (needsScrollingIntoView(elRef, theme)) {
+                elRef.current?.scrollIntoView({
                   behavior: 'auto',
                   block: 'end',
                 });
@@ -227,11 +236,12 @@ const EntryList = () => {
     return () => {
       document.removeEventListener('keydown', keyListener, false);
     };
-  }, []);
+  }, [keyListener]);
 
   const findEntry = useCallback(
     (id: string) => {
       const entry = entries.filter(c => c.id === id)[0];
+      invariant(entry, 'entry is undefined');
       return {
         entry,
         index: entries.indexOf(entry),
@@ -243,8 +253,8 @@ const EntryList = () => {
   const moveEntry = useCallback(
     (id: string, atIndex: number) => {
       const {entry, index} = findEntry(id);
-      console.info(
-        `entry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
+      console.debug(
+        `moveEntry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
       );
       const reordered = update(entries, {
         $splice: [
@@ -257,12 +267,13 @@ const EntryList = () => {
     [findEntry, entries, setEntries]
   );
 
-  const findEntryByIndex = (index: number) => {
+  const findEntryByIndex = (index: number): ITextEntryJsonApi | null => {
     if (index > entries.length - 1) {
       return null;
-    } else {
-      return entries[index];
     }
+    const entry = entries[index];
+    invariant(entry, 'entry is undefined');
+    return entry;
   };
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
@@ -284,9 +295,9 @@ const EntryList = () => {
     event.preventDefault();
     event.stopPropagation();
     const mouseData: IMouse = {...mouse};
-    (mouseData.mouseX = event.clientX - 2),
-      (mouseData.mouseY = event.clientY - 4),
-      setMouse(mouseData);
+    mouseData.mouseX = event.clientX - 2;
+    mouseData.mouseY = event.clientY - 4;
+    setMouse(mouseData);
   };
 
   const onMouseDown = () => {

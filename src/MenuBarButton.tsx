@@ -9,43 +9,41 @@ interface IProps {
   ariaLabel: string;
 }
 
-const MenuBarButton = function ({
+const MenuBarButton = ({
   onClick,
   children,
   id,
   ariaControls,
   ariaLabel,
-}: IProps) {
-  return (
-    <Button
-      color="secondary"
-      role="menu"
-      size="small"
-      aria-controls={ariaControls}
-      id={id}
-      aria-haspopup="true"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      sx={{
-        alignSelf: 'flex-end',
-        textTransform: 'none',
-        padding: 0,
-        minWidth: 0,
-        marginRight: 2,
-        '&:active': {
-          backgroundColor: '#585858',
+}: IProps) => (
+  <Button
+    color="secondary"
+    role="menu"
+    size="small"
+    aria-controls={ariaControls}
+    id={id}
+    aria-haspopup="true"
+    onClick={onClick}
+    aria-label={ariaLabel}
+    sx={{
+      alignSelf: 'flex-end',
+      textTransform: 'none',
+      padding: 0,
+      minWidth: 0,
+      marginRight: 2,
+      '&:active': {
+        backgroundColor: '#585858',
+      },
+      '&.MuiButton-root': {
+        color: theme => theme.palette.text.primary,
+        '&:hover': {
+          background: 'none',
+          color: theme => theme.palette.text.secondary,
         },
-        '&.MuiButton-root': {
-          color: theme => theme.palette.text.primary,
-          '&:hover': {
-            background: 'none',
-            color: theme => theme.palette.text.secondary,
-          },
-        },
-      }}
-    >
-      {children}
-    </Button>
-  );
-};
+      },
+    }}
+  >
+    {children}
+  </Button>
+);
 export default React.memo(MenuBarButton);

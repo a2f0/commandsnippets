@@ -1,16 +1,16 @@
 import {Box} from '@mui/material';
 import {Button} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
-import {AxiosResponse} from 'axios';
+import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
 import apiBase from './lib/api/apiBase';
-import {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
-import {ITextEntryJsonApi} from './models/TextEntryModel';
+import type {ITextEntryJsonApi} from './models/TextEntryModel';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
 import InputEntrySubject from './styled/text_entries/InputEntrySubject';
 
@@ -48,7 +48,7 @@ const EntryEdit = ({
       appConfig.setActiveEntryEditField(activeEntryEditField.subject);
       appConfig.setAppMode(appMode.entriesList);
     };
-  }, []);
+  }, [appConfig.setActiveEntryEditField, appConfig.setAppMode]);
 
   useEffect(() => {
     if (saveRef.current && needsScrollingIntoView(saveRef, theme)) {
@@ -57,7 +57,7 @@ const EntryEdit = ({
         block: 'end',
       });
     }
-  }, [saveRef.current]);
+  }, [theme]);
 
   const handleSave = () => {
     const payload = {
@@ -71,7 +71,7 @@ const EntryEdit = ({
       },
     };
     apiBase
-      .patch('entries/' + object.id, payload, {withCredentials: true})
+      .patch(`entries/${object.id}`, payload, {withCredentials: true})
       .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
         handleSaveParent(response.data);
       })
@@ -95,34 +95,45 @@ const EntryEdit = ({
     setSubject(value);
   };
 
-  const keyListener = useCallback((event: KeyboardEvent) => {
-    const trappedKeyCodes = ['Tab'];
-    if (
-      trappedKeyCodes.includes(event.code) &&
-      appConfig.appMode === appMode.entryEditor
-    ) {
-      if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
-        appConfig.setActiveEntryEditField(activeEntryEditField.body);
-      } else if (appConfig.activeEntryEditField === activeEntryEditField.body) {
-        appConfig.setActiveEntryEditField(activeEntryEditField.save);
-      } else if (appConfig.activeEntryEditField === activeEntryEditField.save) {
-        appConfig.setActiveEntryEditField(activeEntryEditField.cancel);
-      } else if (
-        appConfig.activeEntryEditField === activeEntryEditField.cancel
+  const keyListener = useCallback(
+    (event: KeyboardEvent) => {
+      const trappedKeyCodes = ['Tab'];
+      if (
+        trappedKeyCodes.includes(event.code) &&
+        appConfig.appMode === appMode.entryEditor
       ) {
-        appConfig.setActiveEntryEditField(activeEntryEditField.subject);
+        if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
+          appConfig.setActiveEntryEditField(activeEntryEditField.body);
+        } else if (
+          appConfig.activeEntryEditField === activeEntryEditField.body
+        ) {
+          appConfig.setActiveEntryEditField(activeEntryEditField.save);
+        } else if (
+          appConfig.activeEntryEditField === activeEntryEditField.save
+        ) {
+          appConfig.setActiveEntryEditField(activeEntryEditField.cancel);
+        } else if (
+          appConfig.activeEntryEditField === activeEntryEditField.cancel
+        ) {
+          appConfig.setActiveEntryEditField(activeEntryEditField.subject);
+        }
+        event.preventDefault();
+        event.stopPropagation();
       }
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  }, []);
+    },
+    [
+      appConfig.activeEntryEditField,
+      appConfig.appMode,
+      appConfig.setActiveEntryEditField,
+    ]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', keyListener, false);
     return () => {
       document.removeEventListener('keydown', keyListener, false);
     };
-  }, []);
+  }, [keyListener]);
 
   useEffect(() => {
     if (appConfig.activeEntryEditField === activeEntryEditField.save) {

@@ -2,8 +2,8 @@ import {Menu} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
 
-import {IMouse} from './lib/shared';
-import {ITextEntryJsonApi} from './models/TextEntryModel';
+import type {IMouse} from './lib/shared';
+import type {ITextEntryJsonApi} from './models/TextEntryModel';
 import StyledMenuItem from './StyledMenuItem';
 
 interface IStyledMenuProps {
@@ -36,7 +36,7 @@ const StyledMenu = ({
       anchorPosition={
         mousePosition.mouseY !== null && mousePosition.mouseX !== null
           ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : undefined
+          : {top: 0, left: 0}
       }
     >
       {children}
@@ -111,7 +111,7 @@ const EntryContextMenu = ({
       anchorPosition={
         mousePosition.mouseY !== null && mousePosition.mouseX !== null
           ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : undefined
+          : {top: 0, left: 0}
       }
     >
       <StyledMenuItem

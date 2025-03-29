@@ -1,6 +1,6 @@
 import type {TStore} from '../AppStateStore';
-import {ITagJsonApi} from '../models/TagModel';
-import {IUserJsonApi} from '../models/UserModel';
+import type {ITagJsonApi} from '../models/TagModel';
+import type {IUserJsonApi} from '../models/UserModel';
 import apiBase from './api/apiBase';
 
 export interface ITagJsonApiResponse {
@@ -221,18 +221,19 @@ export function fetch(
       params: params,
     })
     .then(response => {
-      entries = entries.concat(response.data.data);
+      const updatedEntries = entries.concat(response.data.data);
       if (response.data.included) {
         for (let i = 0; i < response.data.included.length; i++) {
-          if (!entries.includes(response.data.included[i])) {
-            entries.push(response.data.included[i]);
+          const item = response.data.included[i];
+          if (item && !updatedEntries.includes(item)) {
+            updatedEntries.push(item);
           }
         }
       }
       if (response.data.links.next === null) {
-        return entries;
+        return updatedEntries;
       }
-      return fetch(entries, user, ++page, since);
+      return fetch(updatedEntries, user, page + 1, since);
     });
   return f;
 }

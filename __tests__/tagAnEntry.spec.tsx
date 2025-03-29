@@ -7,6 +7,7 @@ import {http, HttpResponse} from 'msw';
 import {setupServer} from 'msw/node';
 import React from 'react';
 import {vi} from 'vitest';
+import invariant from 'invariant';
 
 import type {ITagJsonApiResponse} from '../src/lib/tags';
 import type {ITextEntryJsonApiResponse} from '../src/lib/text_entries';
@@ -97,7 +98,7 @@ describe('Tag An Entry', () => {
 
     let tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
     expect(tagLabelWrappers).toHaveLength(4);
-
+    invariant(tagLabelWrappers[1], 'tagLabelWrapper is undefined');
     await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-2');
     rerender(<TestAppRouter history={history} />);
@@ -107,6 +108,7 @@ describe('Tag An Entry', () => {
     );
     tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
     expect(tagLabelWrappers).toHaveLength(4);
+    invariant(tagLabelWrappers[0], 'tagLabelWrapper is undefined');
     await user.pointer({target: tagLabelWrappers[0], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-1');
 
@@ -119,12 +121,17 @@ describe('Tag An Entry', () => {
       'entryDragHandleContainer'
     );
     expect(entryDragHandleContainers).toHaveLength(4);
+    invariant(
+      entryDragHandleContainers[0],
+      'entryDragHandleContainer is undefined'
+    );
     await user.pointer({target: entryDragHandleContainers[0]});
     const tags = screen.getAllByRole('tag');
     expect(tags).toHaveLength(4);
     const entryDragHandle = screen.getByRole('entryDragHandle');
     await act(async () => {
       fireEvent.dragStart(entryDragHandle);
+      invariant(tags[1], 'tag is undefined');
       fireEvent.dragEnter(tags[1]);
       fireEvent.dragOver(tags[1]);
       await new Promise(res => setTimeout(res, 0));
@@ -132,6 +139,7 @@ describe('Tag An Entry', () => {
     });
     tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
     expect(tagLabelWrappers).toHaveLength(4);
+    invariant(tagLabelWrappers[1], 'tagLabelWrapper is undefined');
     await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-2');
     rerender(<TestAppRouter history={history} />);
@@ -139,5 +147,6 @@ describe('Tag An Entry', () => {
       () => expect(screen.queryAllByRole('entry')).toHaveLength(1),
       {timeout: 3000}
     );
+    invariant(tags[1], 'tag is undefined');
   });
 });

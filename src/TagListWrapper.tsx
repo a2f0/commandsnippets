@@ -1,13 +1,13 @@
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
-import {Instance} from 'mobx-state-tree';
+import type {Instance} from 'mobx-state-tree';
 import React, {useEffect, useRef, useState} from 'react';
 import {useLocation, useParams} from 'react-router-dom';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {ITagJsonApi, TagHelpers} from './models/TagModel';
-import {TagModel} from './models/TagModel';
+import {type ITagJsonApi, TagHelpers} from './models/TagModel';
+import type {TagModel} from './models/TagModel';
 import TagList from './TagList';
 
 export interface IUser {
@@ -52,9 +52,14 @@ const TagListWrapper = () => {
         if (array.length > 1) {
           let selected: Instance<typeof TagModel> | undefined = undefined;
           if (tag) {
+            // Then its a URL query param
             selected = appConfig.tagsArray.find(c => c.attributes.name === tag);
           } else {
-            selected = appConfig.tagsArray.find(c => c.id === array[0].id);
+            // Then its the first tag in the list
+            const firstTag = array[0];
+            if (firstTag !== undefined) {
+              selected = appConfig.tagsArray.find(c => c.id === firstTag.id);
+            }
           }
           if (selected !== undefined) {
             appConfig.setTagSelectedID(selected.id);
@@ -74,7 +79,7 @@ const TagListWrapper = () => {
           element => element.id === appConfig.tagSelectedID
         );
         if (current === undefined) {
-          if (tags.length > 0) {
+          if (tags[0]) {
             appConfig.setTagSelectedID(tags[0].id);
           }
         }
@@ -83,7 +88,7 @@ const TagListWrapper = () => {
   );
 
   if (!user) {
-    return <></>;
+    return;
   }
 
   return <TagList tagsFromWrapper={tags} username={user} />;

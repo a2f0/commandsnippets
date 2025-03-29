@@ -1,4 +1,4 @@
-import {Theme} from '@mui/material/styles';
+import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React from 'react';
@@ -6,7 +6,7 @@ import Highlighter from 'react-highlight-words';
 
 import {useAppContext} from '../../AppContext';
 import {appMode} from '../../lib/shared';
-import {ITextEntryJsonApi} from '../../models/TextEntryModel';
+import type {ITextEntryJsonApi} from '../../models/TextEntryModel';
 
 export interface IProps {
   handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;

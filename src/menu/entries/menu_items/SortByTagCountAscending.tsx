@@ -10,7 +10,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const SortByTagCountAscending = function ({onClose}: IProps) {
+const SortByTagCountAscending = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   return (

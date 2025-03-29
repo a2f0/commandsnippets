@@ -10,7 +10,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const SortByEntryCountDescending = function ({onClose}: IProps) {
+const SortByEntryCountDescending = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   return (

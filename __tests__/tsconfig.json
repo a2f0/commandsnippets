@@ -4,5 +4,5 @@
     "composite": true,
     "types": ["node", "vitest/globals"]
   },
-  "references": [{"path": "../src"}, {"path": "../test"}]
+  "references": [{ "path": "../src" }, { "path": "../test" }]
 }

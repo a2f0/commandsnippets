@@ -1,5 +1,5 @@
 import {TextField} from '@mui/material';
-import {Theme} from '@mui/material/styles';
+import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useEffect, useRef, useState} from 'react';
