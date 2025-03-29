@@ -22,9 +22,15 @@ class Command(BaseCommand):
         user_count = users.count()
 
         # Only include specified fields
-        fields = ["username", "email", "last_login", "date_joined"]
+        fields = ["username", "email", "last_login", "date_joined", "login_count"]
 
-        widths = {"username": 25, "email": 40, "last_login": 25, "date_joined": 25}
+        widths = {
+            "username": 25,
+            "email": 40,
+            "last_login": 25,
+            "date_joined": 25,
+            "login_count": 10,
+        }
 
         # Print header
         self.stdout.write(self.style.SUCCESS(f"Total users: {user_count}"))
