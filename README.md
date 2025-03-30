@@ -71,6 +71,7 @@ List users
 
     docker-compose run backend python manage.py list_users
     docker-compose run backend python manage.py list_recent_logins
+    docker-compose run backend python manage.py usage_report
 
 Accessing the local Postgresql Database
 
