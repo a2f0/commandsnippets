@@ -112,9 +112,9 @@ class Command(BaseCommand):
         top_tag_users = User.objects.annotate(tag_count=Count("tags")).order_by(
             "-tag_count"
         )[:5]
-        top_entry_users = User.objects.annotate(entry_count=Count("entries")).order_by(
-            "-entry_count"
-        )[:5]
+        top_entry_users = User.objects.annotate(
+            entry_count=Count("text_entries")
+        ).order_by("-entry_count")[:5]
 
         self.stdout.write("\nTop 5 Users by Tag Count:")
         for user in top_tag_users:
