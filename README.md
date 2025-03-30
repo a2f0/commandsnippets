@@ -30,11 +30,9 @@ Bump version
 Show outdated dependencies
 
     docker-compose build --no-cache
-    docker-compose run backend safety check -r requirements/local.txt -r requirements/production.txt
     docker-compose run backend pur -r requirements/local.txt -r requirements/production.txt
 
     # venv
-    safety check -r requirements/local.txt -r requirements/production.txt
     pur -r requirements/local.txt -r requirements/production.txt
 
 ## Testing
@@ -72,6 +70,8 @@ Delete a user
 List users
 
     docker-compose run backend python manage.py list_users
+    docker-compose run backend python manage.py list_recent_logins
+    docker-compose run backend python manage.py usage_report
 
 Accessing the local Postgresql Database
 
