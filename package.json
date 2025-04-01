@@ -66,7 +66,7 @@
     "vite": "6.2.3",
     "vite-plugin-pwa": "0.21.2",
     "vite-plugin-simple-html": "0.2.0",
-    "vitest": "3.0.9",
+    "vitest": "3.1.1",
     "wdio-video-reporter": "6.1.1"
   },
   "dependencies": {
