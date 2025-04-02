@@ -8,8 +8,9 @@
 
 - name: Clone backend repository
   git:
-    repo=github-backend.com:tearleads/tearleads-backend.git
-    dest="/home/{{ ansible_user }}/tearleads-backend"
-    accept_hostkey=yes
-    force=no
-    recursive=no
+    repo: github-backend.com:tearleads/tearleads-backend.git
+    dest: "/home/{{ ansible_user }}/tearleads-backend"
+    accept_hostkey: yes
+    force: no
+    recursive: no
+    version: "{{ git_branch }}"
