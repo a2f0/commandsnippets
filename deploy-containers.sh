@@ -1,5 +1,4 @@
 #!/bin/bash
-# Deploy containers to a frontend.
 set -e
 START=`date +%s`
 
@@ -7,6 +6,10 @@ START=`date +%s`
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo "=== Entering directory $DIR"
 cd $DIR
+echo "=== running git branch"
+git branch
+echo "=== running git status"
+git status
 echo "=== calling ecr login"
 $DIR/ecr-login-aws-v2.sh
 echo "=== Running git pull..."
