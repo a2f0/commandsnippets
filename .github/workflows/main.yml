@@ -64,6 +64,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_STAGING }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
           aws-region: us-east-1
+          role-session-name: GitHubActions
       - name: Install dependencies
         run: npm ci
       - run: npm run build
