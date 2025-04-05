@@ -57,6 +57,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_PRODUCTION }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION }}
           aws-region: us-east-1
+          role-session-name: GitHubActions
       - name: Configure AWS credentials (Staging)
         uses: aws-actions/configure-aws-credentials@v4
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
