@@ -9,6 +9,7 @@ export default defineConfig({
   },
   server: {
     port: 8080,
+    hmr: true,
   },
   test: {
     globals: true,
@@ -20,7 +21,7 @@ export default defineConfig({
     react(),
     VitePWA({
       devOptions: {
-        enabled: true,
+        enabled: false,
       },
       manifest: {
         name: 'Tearleads',
@@ -32,6 +33,22 @@ export default defineConfig({
             src: 'pwa-icon-144x144.svg',
             sizes: '144x144',
             type: 'image/svg+xml',
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.(js|css|html|ico|svg)$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'tearleads-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+            },
           },
         ],
       },
