@@ -98,7 +98,7 @@ resource "aws_acm_certificate" "cert" {
 
 resource "cloudflare_record" "caa_aws" {
   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
-  name    = "@"  # @ represents the apex/root domain
+  name    = "@" # @ represents the apex/root domain
   type    = "CAA"
   data {
     flags = "0"
@@ -118,12 +118,12 @@ resource "cloudflare_record" "cert_validation" {
     }
   }
 
-  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
-  name    = each.value.name
-  content   = each.value.record
-  type    = each.value.type
-  ttl     = 60
-  proxied = false
+  zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
+  name            = each.value.name
+  content         = each.value.record
+  type            = each.value.type
+  ttl             = 60
+  proxied         = false
   allow_overwrite = false
 }
 
@@ -189,19 +189,15 @@ resource "aws_cloudfront_distribution" "website" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "S3-${var.domain}"
 
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
+    # Add the cache policy ID for CachingDisabled managed policy
+    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
 
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
+    default_ttl            = 0
+    max_ttl                = 0
 
-    # Add the function association
+    # Add the function association if it exists
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.url_rewrite.arn
@@ -234,7 +230,7 @@ resource "cloudflare_record" "production" {
 resource "cloudflare_record" "www" {
   zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
   name            = "www"
-  content           = aws_cloudfront_distribution.website.domain_name
+  content         = aws_cloudfront_distribution.website.domain_name
   type            = "CNAME"
   allow_overwrite = true
 }
