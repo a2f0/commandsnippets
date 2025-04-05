@@ -7,4 +7,3 @@
 - name: Display server's SSH RSA public key
   debug:
     var: server_ssh_key.stdout
-
