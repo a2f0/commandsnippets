@@ -69,7 +69,19 @@ jobs:
       - run: npm run build
       - name: Deploy to S3 (Production)
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
-        run: aws s3 sync --acl=public-read ./build s3://${{ secrets.PRODUCTION_DOMAIN }}
+        run: |
+          # First sync all assets (excluding index.html)
+          aws s3 sync --acl=public-read ./build s3://${{ secrets.PRODUCTION_DOMAIN }} --exclude "index.html"
+          # Then copy index.html separately
+          aws s3 cp --acl=public-read ./build/index.html s3://${{ secrets.PRODUCTION_DOMAIN }}/index.html
+          # Finally cleanup old files
+          aws s3 sync --acl=public-read --delete ./build s3://${{ secrets.PRODUCTION_DOMAIN }}
       - name: Deploy to S3 (Staging)
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
-        run: aws s3 sync --acl=public-read ./build s3://${{ secrets.STAGING_DOMAIN }}
+        run: |
+          # First sync all assets (excluding index.html)
+          aws s3 sync --acl=public-read ./build s3://${{ secrets.STAGING_DOMAIN }} --exclude "index.html"
+          # Then copy index.html separately
+          aws s3 cp --acl=public-read ./build/index.html s3://${{ secrets.STAGING_DOMAIN }}/index.html
+          # Finally cleanup old files
+          aws s3 sync --acl=public-read --delete ./build s3://${{ secrets.STAGING_DOMAIN }}
