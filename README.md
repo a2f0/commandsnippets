@@ -14,7 +14,7 @@ npm run server
 
 ## Wiki
 
-Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information.
+Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information, including bundle sizes.
 
 ## Testing
 
