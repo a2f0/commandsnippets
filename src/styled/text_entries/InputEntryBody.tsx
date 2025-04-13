@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import {TextareaAutosize} from '@mui/material';
-import type {Theme} from '@mui/material/styles';
+import type {Theme} from '@tearleads/theme';
 import {useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useEffect, useRef, useState} from 'react';
