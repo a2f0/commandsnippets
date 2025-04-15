@@ -9,8 +9,6 @@
     "checkJs": false,
     "allowJs": false,
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "strict": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "jsx": "react",
