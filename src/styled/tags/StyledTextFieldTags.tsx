@@ -88,4 +88,6 @@ const StyledTextFieldTags = React.forwardRef<
 });
 
 StyledTextFieldTags.displayName = 'StyledTextFieldTags';
-export default React.memo(observer(StyledTextFieldTags));
+
+const memoizedStyledTextFieldTags = React.memo(observer(StyledTextFieldTags));
+export {memoizedStyledTextFieldTags as StyledTextFieldTags};

@@ -2,6 +2,6 @@ import type {JsonObject} from '@wdio/types';
 
 import type {ILogoutJsonApiResponse} from '../../../src/lib/authentication';
 
-const logOutPostResponse: ILogoutJsonApiResponse & JsonObject = {data: {}};
-
-export default logOutPostResponse;
+export const logOutPostResponse: ILogoutJsonApiResponse & JsonObject = {
+  data: {},
+};

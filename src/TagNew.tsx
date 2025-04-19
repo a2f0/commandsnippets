@@ -7,9 +7,9 @@ import {useAppContext} from './AppContext';
 import {apiBase} from './lib/api/apiBase';
 import {activeTagEditField, appMode} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
-import StyledTagButton from './styled/tags/StyledTagButton';
-import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
-import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
+import {StyledTagButton} from './styled/tags/StyledTagButton';
+import {StyledTagFormContainer} from './styled/tags/StyledTagFormContainer';
+import {StyledTextFieldTags} from './styled/tags/StyledTextFieldTags';
 
 interface IProps {
   handleNewParent: () => void;

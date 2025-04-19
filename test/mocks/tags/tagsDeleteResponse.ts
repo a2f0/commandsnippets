@@ -2,7 +2,7 @@ import type {JsonObject} from '@wdio/types';
 
 import type {ITagJsonApiResponseSingle} from '../../../src/lib/tags';
 
-const tagsDeleteResponse: ITagJsonApiResponseSingle & JsonObject = {
+export const tagsDeleteResponse: ITagJsonApiResponseSingle & JsonObject = {
   data: {
     type: 'Tag',
     id: '1',
@@ -35,5 +35,3 @@ const tagsDeleteResponse: ITagJsonApiResponseSingle & JsonObject = {
     },
   ],
 };
-
-export default tagsDeleteResponse;

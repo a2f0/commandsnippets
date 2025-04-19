@@ -1,6 +1,6 @@
-import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
-import tagsPostResponse from '../../mocks/tags/tagsPostResponse';
-import tagsResponseEmpty from '../../mocks/tags/tagsResponseEmpty';
+import {entriesResponseEmpty} from '../../mocks/entries/entriesResponseEmpty';
+import {tagPostResponse} from '../../mocks/tags/tagsPostResponse';
+import {tagsResponseEmpty} from '../../mocks/tags/tagsResponseEmpty';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tag List Context Menu Behavior', () => {
@@ -17,7 +17,7 @@ describe('Tag List Context Menu Behavior', () => {
       'http://localhost:9001/api/v1/tags',
       {method: 'POST'}
     );
-    mockTagPostResponse.respond(tagsPostResponse, {statusCode: 201});
+    mockTagPostResponse.respond(tagPostResponse, {statusCode: 201});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',

@@ -1,7 +1,7 @@
-import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
-import entryPostResponse from '../../mocks/entries/entryPostResponse';
-import tagTextEntryThroughModelsResponse from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
-import tagsResponse from '../../mocks/tags/tagsResponse';
+import {entriesResponseEmpty} from '../../mocks/entries/entriesResponseEmpty';
+import {textEntryPostResponse} from '../../mocks/entries/entryPostResponse';
+import {tagTextEntryThroughModelsResponse} from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
+import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entry Main Menu Behavior', () => {
@@ -12,7 +12,7 @@ describe('Entry Main Menu Behavior', () => {
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
     );
-    mockEntryPostResponse.respond(entryPostResponse, {statusCode: 201});
+    mockEntryPostResponse.respond(textEntryPostResponse, {statusCode: 201});
 
     const mockEntriesGetList = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
@@ -102,7 +102,7 @@ describe('Entry Main Menu Behavior', () => {
 
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
 
-    const newEntry = $(`#entryBodyOuterDiv${entryPostResponse.data.id}`);
+    const newEntry = $(`#entryBodyOuterDiv${textEntryPostResponse.data.id}`);
 
     await expect(newEntry).toExist();
     await expect(newEntry).toBeDisplayed();

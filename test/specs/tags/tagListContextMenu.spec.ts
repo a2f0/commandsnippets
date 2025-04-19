@@ -1,5 +1,5 @@
-import entriesResponseEmpty from '../../mocks/entries/entriesResponseEmpty';
-import tagsResponseEmpty from '../../mocks/tags/tagsResponseEmpty';
+import {entriesResponseEmpty} from '../../mocks/entries/entriesResponseEmpty';
+import {tagsResponseEmpty} from '../../mocks/tags/tagsResponseEmpty';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tag List Context Menu Behavior', () => {

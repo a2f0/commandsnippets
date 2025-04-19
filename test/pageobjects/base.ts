@@ -1,5 +1,5 @@
 import {entrySearchMethod} from '../../src/lib/shared';
-export default class Base {
+export class Base {
   // home screen
   get tagLine(): ChainablePromiseElement {
     return $('#tagLine');

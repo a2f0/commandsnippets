@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react';
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
 
+// biome-ignore lint/style/noDefaultExport: Vite requires default export for config
 export default defineConfig({
   build: {
     outDir: 'build',

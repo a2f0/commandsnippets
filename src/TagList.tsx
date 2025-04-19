@@ -15,7 +15,7 @@ import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
 import invariant from 'invariant';
 import {useAppContext} from './AppContext';
-import ItemTypes from './ItemTypes';
+import {ItemTypes} from './ItemTypes';
 import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {type ITagJsonApi, TagHelpers} from './models/TagModel';

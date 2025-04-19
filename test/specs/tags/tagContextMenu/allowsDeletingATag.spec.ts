@@ -1,6 +1,6 @@
-import entriesResponse from '../../../mocks/entries/entriesResponse';
-import tagsDeleteResponse from '../../../mocks/tags/tagsDeleteResponse';
-import tagsResponse from '../../../mocks/tags/tagsResponse';
+import {entriesResponse} from '../../../mocks/entries/entriesResponse';
+import {tagsDeleteResponse} from '../../../mocks/tags/tagsDeleteResponse';
+import {tagsResponse} from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Tag Context Menu', () => {

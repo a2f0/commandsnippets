@@ -14,15 +14,15 @@ import {DragHandleContainer} from './DragHandleContainer';
 import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';
 import {EntryNew} from './EntryNew';
-import ItemTypes from './ItemTypes';
+import {ItemTypes} from './ItemTypes';
 import {apiBase} from './lib/api/apiBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {type IMouse, initialMouse} from './lib/shared';
 import {appMode, getSelection} from './lib/shared';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import type {ITextEntryJsonApi} from './models/TextEntryModel';
-import EntryBody from './styled/text_entries/EntryBody';
-import EntrySubject from './styled/text_entries/EntrySubject';
+import {MemoizedEntryBody} from './styled/text_entries/EntryBody';
+import {MemoizedEntrySubject} from './styled/text_entries/EntrySubject';
 import type {DraggableItem, DropResult} from './Tag';
 
 const EntryText = styled('div')(() => ({
@@ -449,7 +449,7 @@ const Entry = ({
                 {/* {text_entry.attributes.reused_count} */}
               </ReuseCount>
               <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
-                <EntrySubject object={textEntryObject} />
+                <MemoizedEntrySubject object={textEntryObject} />
               </EntryText>
             </div>
             <div>
@@ -477,7 +477,7 @@ const Entry = ({
               </DragHandleContainer>
               <ReuseCount />
               <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
-                <EntryBody
+                <MemoizedEntryBody
                   handleClick={handleBodyClick}
                   object={textEntryObject}
                 />

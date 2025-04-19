@@ -2,7 +2,8 @@ import type {JsonObject} from '@wdio/types';
 
 import type {ITextEntryJsonApiResponseSingle} from '../../../src/lib/text_entries';
 
-const textEntryPostResponse: ITextEntryJsonApiResponseSingle & JsonObject = {
+export const textEntryPostResponse: ITextEntryJsonApiResponseSingle &
+  JsonObject = {
   data: {
     type: 'TextEntry',
     id: '5',
@@ -26,5 +27,3 @@ const textEntryPostResponse: ITextEntryJsonApiResponseSingle & JsonObject = {
   },
   included: [],
 };
-
-export default textEntryPostResponse;

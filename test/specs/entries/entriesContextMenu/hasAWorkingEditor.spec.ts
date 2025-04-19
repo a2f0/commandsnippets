@@ -1,6 +1,6 @@
-import entriesResponse from '../../../mocks/entries/entriesResponse';
-import entriesPatchResponse from '../../../mocks/entries/entryPatchResponse';
-import tags from '../../../mocks/tags/tagsResponse';
+import {entriesResponse} from '../../../mocks/entries/entriesResponse';
+import {entryPatchResponse} from '../../../mocks/entries/entryPatchResponse';
+import {tagsResponse} from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 import invariant from 'invariant';
 describe('TagsEntries Behavior', () => {
@@ -18,13 +18,13 @@ describe('TagsEntries Behavior', () => {
       'http://localhost:9001/api/v1/entries/1',
       {method: 'PATCH'}
     );
-    mockEntriesPatch.respond(entriesPatchResponse, {statusCode: 200});
+    mockEntriesPatch.respond(entryPatchResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    mockTags.respond(tags, {statusCode: 200});
+    mockTags.respond(tagsResponse, {statusCode: 200});
 
     await browser.login();
     await BasePage.open('test/test-tag-1');
