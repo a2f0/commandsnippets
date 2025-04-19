@@ -25,4 +25,5 @@ const EntrySubject = ({object}: IProps) => {
     />
   );
 };
-export default React.memo(observer(EntrySubject));
+
+export const MemoizedEntrySubject = React.memo(observer(EntrySubject));

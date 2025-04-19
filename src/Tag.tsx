@@ -12,7 +12,7 @@ import {useNavigate, useParams} from 'react-router-dom';
 import {useAppContext} from './AppContext';
 import {DragHandle} from './DragHandle';
 import {DragHandleContainer} from './DragHandleContainer';
-import ItemTypes from './ItemTypes';
+import {ItemTypes} from './ItemTypes';
 import {apiBase} from './lib/api/apiBase';
 import {type ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
 import {type IMouse, initialMouse} from './lib/shared';

@@ -2,7 +2,7 @@ import type {JsonObject} from '@wdio/types';
 
 import type {ITagTextEntryThroughModelJsonApiResponseSingle} from '../../../src/lib/tag_text_entry_through_models';
 
-const tagTextEntryThroughModelsResponse: ITagTextEntryThroughModelJsonApiResponseSingle &
+export const tagTextEntryThroughModelsResponse: ITagTextEntryThroughModelJsonApiResponseSingle &
   JsonObject = {
   data: {
     type: 'TagTextEntryThroughModel',
@@ -28,5 +28,3 @@ const tagTextEntryThroughModelsResponse: ITagTextEntryThroughModelJsonApiRespons
     },
   },
 };
-
-export default tagTextEntryThroughModelsResponse;

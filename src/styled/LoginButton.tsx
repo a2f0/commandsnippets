@@ -9,7 +9,12 @@ interface IButtonItemProps {
   startIcon: React.ReactNode;
 }
 
-const LoginButton = ({id, onClick, children, startIcon}: IButtonItemProps) => {
+export const LoginButton = ({
+  id,
+  onClick,
+  children,
+  startIcon,
+}: IButtonItemProps) => {
   return (
     <Button
       id={id}
@@ -31,5 +36,3 @@ const LoginButton = ({id, onClick, children, startIcon}: IButtonItemProps) => {
     </Button>
   );
 };
-
-export default LoginButton;

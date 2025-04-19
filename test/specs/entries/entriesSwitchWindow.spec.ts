@@ -1,6 +1,6 @@
-import entriesResponse from '../../mocks/entries/entriesResponse';
-import entryPostResponse from '../../mocks/entries/entryPostResponse';
-import tagsResponse from '../../mocks/tags/tagsResponse';
+import {entriesResponse} from '../../mocks/entries/entriesResponse';
+import {textEntryPostResponse} from '../../mocks/entries/entryPostResponse';
+import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 import invariant from 'invariant';
 describe('Tab Switching Behavior', () => {
@@ -11,7 +11,7 @@ describe('Tab Switching Behavior', () => {
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
     );
-    mockEntryPostResponse.respond(entryPostResponse, {statusCode: 201});
+    mockEntryPostResponse.respond(textEntryPostResponse, {statusCode: 201});
 
     const mockEntriesGetList = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',

@@ -5,7 +5,7 @@ import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
 import {apiBase} from './lib/api/apiBase';
-import LoginButton from './styled/LoginButton';
+import {LoginButton} from './styled/LoginButton';
 
 let googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';

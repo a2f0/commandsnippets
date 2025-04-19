@@ -22,7 +22,7 @@ import {useAppContext} from './AppContext';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
-import ItemTypes from './ItemTypes';
+import {ItemTypes} from './ItemTypes';
 import {appMode, type IMouse, initialMouse} from './lib/shared';
 import type {IEntryFetchPage} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';

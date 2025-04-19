@@ -9,12 +9,10 @@ interface IThemeProps {
   children?: React.ReactNode;
 }
 
-const ThemeProvider = ({children}: IThemeProps): React.ReactNode => {
+export const ThemeProvider = ({children}: IThemeProps): React.ReactNode => {
   const appConfig = useAppContext();
   if (appConfig.selectedTheme === 'lightTheme') {
     return <MuiThemeProvider theme={lightTheme}>{children}</MuiThemeProvider>;
   }
   return <MuiThemeProvider theme={darkTheme}>{children}</MuiThemeProvider>;
 };
-
-export default ThemeProvider;

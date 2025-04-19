@@ -18,4 +18,6 @@ const ThemedGlobalStyle = () => {
   );
 };
 
-export default React.memo(observer(ThemedGlobalStyle));
+export const MemoizedThemedGlobalStyle = React.memo(
+  observer(ThemedGlobalStyle)
+);

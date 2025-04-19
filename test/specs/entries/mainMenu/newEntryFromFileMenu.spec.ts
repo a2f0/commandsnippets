@@ -1,7 +1,7 @@
-import entriesResponse from '../../../mocks/entries/entriesResponse';
-import entryPostResponse from '../../../mocks/entries/entryPostResponse';
-import tagTextEntryThroughModelsResponse from '../../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
-import tagsResponse from '../../../mocks/tags/tagsResponse';
+import {entriesResponse} from '../../../mocks/entries/entriesResponse';
+import {textEntryPostResponse} from '../../../mocks/entries/entryPostResponse';
+import {tagTextEntryThroughModelsResponse} from '../../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
+import {tagsResponse} from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
@@ -13,7 +13,7 @@ describe('Entry Main Menu', () => {
       'http://localhost:9001/api/v1/entries',
       {method: 'POST'}
     );
-    mockEntryPostResponse.respond(entryPostResponse, {statusCode: 201});
+    mockEntryPostResponse.respond(textEntryPostResponse, {statusCode: 201});
     const mockEntriesGetList = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*',
       {method: 'GET'}

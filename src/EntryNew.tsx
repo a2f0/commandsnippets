@@ -10,8 +10,8 @@ import {useAppContext} from './AppContext';
 import {apiBase} from './lib/api/apiBase';
 import type {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import InputEntryBody from './styled/text_entries/InputEntryBody';
-import InputEntrySubject from './styled/text_entries/InputEntrySubject';
+import {InputEntryBody} from './styled/text_entries/InputEntryBody';
+import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
 
 export interface IEntryNewProps {
   filterAndSortParent: () => void;

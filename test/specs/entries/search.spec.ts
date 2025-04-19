@@ -1,5 +1,5 @@
-import textEntriesResponse from '../../mocks/entries/entriesResponse';
-import tags from '../../mocks/tags/tagsResponse';
+import {entriesResponse} from '../../mocks/entries/entriesResponse';
+import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
@@ -10,12 +10,12 @@ describe('TagsEntries Behavior', () => {
     const mockEntries = await browser.mock(
       'http://localhost:9001/api/v1/entries?page[number]=1*'
     );
-    mockEntries.respond(textEntriesResponse, {statusCode: 200});
+    mockEntries.respond(entriesResponse, {statusCode: 200});
 
     const mockTags = await browser.mock(
       'http://localhost:9001/api/v1/tags?page[number]=1*'
     );
-    mockTags.respond(tags, {statusCode: 200});
+    mockTags.respond(tagsResponse, {statusCode: 200});
     await browser.login();
     await expect(BasePage.tagLine).toBeDisplayed();
     await BasePage.open('test/test-tag-1');
