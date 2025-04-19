@@ -7,7 +7,7 @@ import {useParams} from 'react-router-dom';
 
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
+import {apiBase} from './lib/api/apiBase';
 import type {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import InputEntryBody from './styled/text_entries/InputEntryBody';
@@ -237,4 +237,6 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     </Box>
   );
 };
-export default React.memo(observer(EntryNew));
+
+const memoizedEntryNew = React.memo(observer(EntryNew));
+export {memoizedEntryNew as EntryNew};

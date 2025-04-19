@@ -46,6 +46,7 @@ export const AppStateStoreModel = types
     currentTag: types.maybeNull(types.string),
     currentUser: types.maybeNull(types.string),
     showTagCounts: types.boolean,
+    allEntriesCacheTimestamp: types.string,
   })
   .volatile<{
     activeSearch: activeSearch;
@@ -208,6 +209,8 @@ export const AppStateStoreModel = types
         throw error;
       }
     }),
+    // Sync All Text Entries Based on a Cache Timestamp
+    syncTextEntries() {},
     fetchTextEntries: flow(function* fetchTextEntries(
       user: string,
       tag: string

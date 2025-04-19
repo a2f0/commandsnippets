@@ -9,13 +9,13 @@ import {useDrag, useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import DragHandle from './DragHandle';
-import DragHandleContainer from './DragHandleContainer';
-import EntryContextMenu from './EntryContextMenu';
-import EntryEdit from './EntryEdit';
-import EntryNew from './EntryNew';
+import {DragHandle} from './DragHandle';
+import {DragHandleContainer} from './DragHandleContainer';
+import {EntryContextMenu} from './EntryContextMenu';
+import {EntryEdit} from './EntryEdit';
+import {EntryNew} from './EntryNew';
 import ItemTypes from './ItemTypes';
-import apiBase from './lib/api/apiBase';
+import {apiBase} from './lib/api/apiBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {type IMouse, initialMouse} from './lib/shared';
 import {appMode, getSelection} from './lib/shared';
@@ -507,4 +507,6 @@ const Entry = ({
   );
 };
 
-export default React.memo(observer(Entry));
+const memoizedEntry = React.memo(observer(Entry));
+
+export {memoizedEntry as Entry};

@@ -48,6 +48,7 @@ export interface appState {
   showTagCounts: boolean;
   activeEntryEditField: activeEntryEditField;
   activeTagEditField: activeTagEditField;
+  allEntriesCacheTimestamp: string;
 }
 
 export const defaultState: appState = {
@@ -65,6 +66,7 @@ export const defaultState: appState = {
   showTagCounts: false,
   activeEntryEditField: activeEntryEditField.subject,
   activeTagEditField: activeTagEditField.name,
+  allEntriesCacheTimestamp: '1970-01-01T00:00:00.000Z',
 };
 
 export function getMostRecentTimeStamp(

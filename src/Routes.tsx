@@ -2,7 +2,7 @@ import React from 'react';
 import {Route, Routes as ReactRouterRoutes} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import GithubAuth from './GithubAuth';
+import {GithubAuth} from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import Main from './Main';
 import PublicHomePage from './PublicHomePage';

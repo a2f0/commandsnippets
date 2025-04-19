@@ -21,4 +21,4 @@ const apiBase = axios.create({
   },
 });
 
-export default apiBase;
+export {apiBase};

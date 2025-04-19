@@ -7,7 +7,7 @@ import {useNavigate} from 'react-router-dom';
 import {useAppContext} from './AppContext';
 import LeftDrawer from './drawer/LeftDrawer';
 import RightDrawer from './drawer/RightDrawer';
-import EntryList from './EntryList';
+import {EntryList} from './EntryList';
 import BottomBar from './lib/bottom_bar/BottomBar';
 import MenuBar from './MenuBar';
 import StyledToolbar from './styled/layout/StyledToolbar';

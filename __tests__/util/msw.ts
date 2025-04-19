@@ -29,4 +29,4 @@ const server = setupServer(
   })
 );
 
-export default server;
+export {server};

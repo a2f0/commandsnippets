@@ -1,4 +1,4 @@
-import apiBase from './apiBase';
+import {apiBase} from './apiBase';
 
 export interface ReorderTag {
   data: {
