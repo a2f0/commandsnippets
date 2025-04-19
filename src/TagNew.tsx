@@ -159,4 +159,6 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     </StyledTagFormContainer>
   );
 };
-export default React.memo(observer(TagNew));
+
+const memoizedTagNew = React.memo(observer(TagNew));
+export {memoizedTagNew as TagNew};

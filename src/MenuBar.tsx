@@ -8,20 +8,20 @@ import React from 'react';
 
 import {useAppContext} from './AppContext';
 import {GithubAuth} from './GithubAuth';
-import GoogleAuth from './GoogleAuth';
+import {GoogleAuth} from './GoogleAuth';
 import {environment} from './lib/environment';
-import DebugMenu from './menu/debug/DebugMenu';
-import DebugMenuButton from './menu/debug/DebugMenuButton';
-import EntriesMenu from './menu/entries/EntriesMenu';
-import EntriesMenuButton from './menu/entries/EntriesMenuButton';
-import FileMenu from './menu/file/FileMenu';
-import FileMenuButton from './menu/file/FileMenuButton';
-import HelpMenu from './menu/help/HelpMenu';
-import HelpMenuButton from './menu/help/HelpMenuButton';
-import TagsMenu from './menu/tags/TagsMenu';
-import TagsMenuButton from './menu/tags/TagsMenuButton';
-import ViewMenu from './menu/view/ViewMenu';
-import ViewMenuButton from './menu/view/ViewMenuButton';
+import {DebugMenu} from './menu/debug/DebugMenu';
+import {DebugMenuButton} from './menu/debug/DebugMenuButton';
+import {EntriesMenu} from './menu/entries/EntriesMenu';
+import {EntriesMenuButton} from './menu/entries/EntriesMenuButton';
+import {FileMenu} from './menu/file/FileMenu';
+import {FileMenuButton} from './menu/file/FileMenuButton';
+import {HelpMenu} from './menu/help/HelpMenu';
+import {HelpMenuButton} from './menu/help/HelpMenuButton';
+import {TagsMenu} from './menu/tags/TagsMenu';
+import {TagsMenuButton} from './menu/tags/TagsMenuButton';
+import {ViewMenu} from './menu/view/ViewMenu';
+import {ViewMenuButton} from './menu/view/ViewMenuButton';
 
 interface IStyledMenuProps {
   id: string;
@@ -180,4 +180,6 @@ const MenuBar = () => {
     </>
   );
 };
-export default React.memo(observer(MenuBar));
+
+const memoizedMenuBar = React.memo(observer(MenuBar));
+export {memoizedMenuBar as MenuBar};

@@ -46,4 +46,5 @@ const TextEntrySearchField = () => {
   );
 };
 
-export default React.memo(observer(TextEntrySearchField));
+const memoizedTextEntrySearchField = React.memo(observer(TextEntrySearchField));
+export {memoizedTextEntrySearchField as TextEntrySearchField};

@@ -2,7 +2,7 @@ import React from 'react';
 import {useParams} from 'react-router-dom';
 
 import {fetchAllEntriesForUser} from '../../../lib/text_entries';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -25,4 +25,5 @@ const PopulateIndexedDB = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(PopulateIndexedDB);
+const memoizedPopulateIndexedDB = React.memo(PopulateIndexedDB);
+export {memoizedPopulateIndexedDB as PopulateIndexedDB};

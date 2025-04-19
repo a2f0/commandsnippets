@@ -4,4 +4,6 @@ import React from 'react';
 const StyledDivider = () => {
   return <Divider />;
 };
-export default React.memo(StyledDivider);
+
+const memoizedStyledDivider = React.memo(StyledDivider);
+export {memoizedStyledDivider as StyledDivider};

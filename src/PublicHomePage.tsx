@@ -3,8 +3,8 @@ import Grid from '@mui/material/Grid';
 import React from 'react';
 
 import {GithubAuth} from './GithubAuth';
-import GoogleAuth from './GoogleAuth';
-import StyledToolbar from './styled/layout/StyledToolbar';
+import {GoogleAuth} from './GoogleAuth';
+import {StyledToolbar} from './styled/layout/StyledToolbar';
 
 const PublicHomePage = () => {
   return (
@@ -64,4 +64,6 @@ const PublicHomePage = () => {
     </>
   );
 };
-export default React.memo(PublicHomePage);
+
+const memoizedPublicHomePage = React.memo(PublicHomePage);
+export {memoizedPublicHomePage as PublicHomePage};

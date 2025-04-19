@@ -5,12 +5,12 @@ import {useLocation} from 'react-router-dom';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import LeftDrawer from './drawer/LeftDrawer';
-import RightDrawer from './drawer/RightDrawer';
+import {LeftDrawer} from './drawer/LeftDrawer';
+import {RightDrawer} from './drawer/RightDrawer';
 import {EntryList} from './EntryList';
-import BottomBar from './lib/bottom_bar/BottomBar';
-import MenuBar from './MenuBar';
-import StyledToolbar from './styled/layout/StyledToolbar';
+import {BottomBar} from './lib/bottom_bar/BottomBar';
+import {MenuBar} from './MenuBar';
+import {StyledToolbar} from './styled/layout/StyledToolbar';
 
 const Main = () => {
   const location = useLocation();
@@ -80,4 +80,6 @@ const Main = () => {
     </>
   );
 };
-export default React.memo(observer(Main));
+
+const memoizedMain = React.memo(observer(Main));
+export {memoizedMain as Main};

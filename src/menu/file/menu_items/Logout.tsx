@@ -7,7 +7,7 @@ import {useAppContext} from '../../../AppContext';
 import {baseHTTPURL} from '../../../lib/api/apiBase';
 import type {ILogoutJsonApiResponse} from '../../../lib/authentication';
 import {defaultState} from '../../../lib/shared';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -42,4 +42,5 @@ const Logout = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(Logout);
+const memoizedLogout = React.memo(Logout);
+export {memoizedLogout as Logout};

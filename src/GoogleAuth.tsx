@@ -103,4 +103,5 @@ const GoogleAuth = () => {
   );
 };
 
-export default React.memo(observer(GoogleAuth));
+const memoizedGoogleAuth = React.memo(observer(GoogleAuth));
+export {memoizedGoogleAuth as GoogleAuth};

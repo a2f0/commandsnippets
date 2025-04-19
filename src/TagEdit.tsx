@@ -106,4 +106,5 @@ const TagEdit = ({
   );
 };
 
-export default React.memo(observer(TagEdit));
+const memoizedTagEdit = React.memo(observer(TagEdit));
+export {memoizedTagEdit as TagEdit};

@@ -1,15 +1,15 @@
 import React from 'react';
 
 import {StyledMenu} from '../../MenuBar';
-import SortByDateCreatedAscending from './menu_items/SortByDateCreatedAscending';
-import SortByDateCreatedDescending from './menu_items/SortByDateCreatedDescending';
-import SortByDateLastUsedAscending from './menu_items/SortByDateLastUsedAscending';
-import SortByDateLastUsedDescending from './menu_items/SortByDateLastUsedDescending';
-import SortByEntryCountAscending from './menu_items/SortByEntryCountAscending';
-import SortByEntryCountDescending from './menu_items/SortByEntryCountDescending';
-import SortByNameAscending from './menu_items/SortByNameAscending';
-import SortByNameDescending from './menu_items/SortByNameDescending';
-import SortByUserDefinedOrder from './menu_items/SortByUserDefinedOrder';
+import {SortByDateCreatedAscending} from './menu_items/SortByDateCreatedAscending';
+import {SortByDateCreatedDescending} from './menu_items/SortByDateCreatedDescending';
+import {SortByDateLastUsedAscending} from './menu_items/SortByDateLastUsedAscending';
+import {SortByDateLastUsedDescending} from './menu_items/SortByDateLastUsedDescending';
+import {SortByEntryCountAscending} from './menu_items/SortByEntryCountAscending';
+import {SortByEntryCountDescending} from './menu_items/SortByEntryCountDescending';
+import {SortByNameAscending} from './menu_items/SortByNameAscending';
+import {SortByNameDescending} from './menu_items/SortByNameDescending';
+import {SortByUserDefinedOrder} from './menu_items/SortByUserDefinedOrder';
 
 interface IProps {
   onClose: () => void;
@@ -35,4 +35,5 @@ const TagsMenu = ({onClose, anchorEl}: IProps) => (
   </StyledMenu>
 );
 
-export default React.memo(TagsMenu);
+const memoizedTagsMenu = React.memo(TagsMenu);
+export {memoizedTagsMenu as TagsMenu};

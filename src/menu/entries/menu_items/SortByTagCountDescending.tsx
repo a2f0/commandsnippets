@@ -3,8 +3,8 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -32,5 +32,6 @@ const SortByTagCountDescending = ({onClose}: IProps) => {
     </StyledMenuItem>
   );
 };
+const memoizedSortByTagCountDescending = React.memo(SortByTagCountDescending);
 
-export default React.memo(SortByTagCountDescending);
+export {memoizedSortByTagCountDescending as SortByTagCountDescending};

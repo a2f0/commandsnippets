@@ -10,4 +10,6 @@ const TagSearch = () => {
     </StyledTagFormContainer>
   );
 };
-export default React.memo(TagSearch);
+
+const memoizedTagSearch = React.memo(TagSearch);
+export {memoizedTagSearch as TagSearch};
