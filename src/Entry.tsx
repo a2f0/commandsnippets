@@ -15,7 +15,7 @@ import EntryContextMenu from './EntryContextMenu';
 import EntryEdit from './EntryEdit';
 import EntryNew from './EntryNew';
 import ItemTypes from './ItemTypes';
-import apiBase from './lib/api/apiBase';
+import {apiBase} from './lib/api/apiBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {type IMouse, initialMouse} from './lib/shared';
 import {appMode, getSelection} from './lib/shared';

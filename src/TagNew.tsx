@@ -4,7 +4,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
+import {apiBase} from './lib/api/apiBase';
 import {activeTagEditField, appMode} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import StyledTagButton from './styled/tags/StyledTagButton';

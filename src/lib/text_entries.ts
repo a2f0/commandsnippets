@@ -8,7 +8,7 @@ import type {ITagJsonApi} from '../models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
 import type {ITextEntryJsonApi} from '../models/TextEntryModel';
 import type {IUserJsonApi} from '../models/UserModel';
-import API from './api/apiBase';
+import {apiBase} from './api/apiBase';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
@@ -385,21 +385,23 @@ export function fetch(
       | IUserJsonApi
       | ITagJsonApi
     >
-  > = API.get<ITextEntryJsonApiResponse>('/entries', {
-    params: params,
-  }).then(response => {
-    const updatedEntries = entries.concat(response.data.data);
-    for (let i = 0; i < response.data.included?.length; i++) {
-      const item = response.data.included[i];
-      if (item && !updatedEntries.includes(item)) {
-        updatedEntries.push(item);
+  > = apiBase
+    .get<ITextEntryJsonApiResponse>('/entries', {
+      params: params,
+    })
+    .then(response => {
+      const updatedEntries = entries.concat(response.data.data);
+      for (let i = 0; i < response.data.included?.length; i++) {
+        const item = response.data.included[i];
+        if (item && !updatedEntries.includes(item)) {
+          updatedEntries.push(item);
+        }
       }
-    }
-    if (response.data.links.next === null) {
-      return updatedEntries;
-    }
-    return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
-  });
+      if (response.data.links.next === null) {
+        return updatedEntries;
+      }
+      return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
+    });
   return f;
 }
 
@@ -435,19 +437,21 @@ export function fetchPage({
         | ITagJsonApi
       >
     | undefined
-  > = API.get<ITextEntryJsonApiResponse>('/entries', {
-    params: params,
-    cancelToken: source.token,
-  }).then(response => {
-    entries = entries.concat(response.data.data);
-    for (let i = 0; i < response.data.included?.length; i++) {
-      const item = response.data.included[i];
-      if (item && !entries.includes(item)) {
-        entries.push(item);
+  > = apiBase
+    .get<ITextEntryJsonApiResponse>('/entries', {
+      params: params,
+      cancelToken: source.token,
+    })
+    .then(response => {
+      entries = entries.concat(response.data.data);
+      for (let i = 0; i < response.data.included?.length; i++) {
+        const item = response.data.included[i];
+        if (item && !entries.includes(item)) {
+          entries.push(item);
+        }
       }
-    }
-    return entries;
-  });
+      return entries;
+    });
   return f;
 }
 

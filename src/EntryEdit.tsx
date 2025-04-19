@@ -7,7 +7,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
+import {apiBase} from './lib/api/apiBase';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
 import type {ITextEntryJsonApi} from './models/TextEntryModel';

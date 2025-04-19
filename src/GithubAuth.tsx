@@ -4,7 +4,7 @@ import React, {useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
+import {apiBase} from './lib/api/apiBase';
 import LoginButton from './styled/LoginButton';
 
 let githubClientID: string;
