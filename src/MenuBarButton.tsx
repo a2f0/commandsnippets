@@ -46,4 +46,6 @@ const MenuBarButton = ({
     {children}
   </Button>
 );
-export default React.memo(MenuBarButton);
+
+const memoizedMenuBarButton = React.memo(MenuBarButton);
+export {memoizedMenuBarButton as MenuBarButton};

@@ -2,8 +2,8 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -28,4 +28,5 @@ const SortByUserDefinedOrder = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(SortByUserDefinedOrder);
+const memoizedSortByUserDefinedOrder = React.memo(SortByUserDefinedOrder);
+export {memoizedSortByUserDefinedOrder as SortByUserDefinedOrder};

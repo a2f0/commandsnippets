@@ -20,9 +20,9 @@ import {activeSearch, appMode} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {needsScrollingIntoView} from './lib/text_entries';
 import type {ITagJsonApi} from './models/TagModel';
-import TagContextMenu from './TagContextMenu';
-import TagEdit from './TagEdit';
-import TagLabel from './TagLabel';
+import {TagContextMenu} from './TagContextMenu';
+import {TagEdit} from './TagEdit';
+import {TagLabel} from './TagLabel';
 
 const TagContainer = styled('div')(() => ({
   whiteSpace: 'pre',
@@ -440,4 +440,5 @@ const Tag = ({
   );
 };
 
-export default React.memo(Tag);
+const memoizedTag = React.memo(Tag);
+export {memoizedTag as Tag};

@@ -18,4 +18,6 @@ const Version = () => {
     </Typography>
   );
 };
-export default React.memo(observer(Version));
+
+const memoizedVersion = React.memo(observer(Version));
+export {memoizedVersion as Version};

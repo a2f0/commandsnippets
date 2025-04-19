@@ -2,8 +2,8 @@ import {Menu} from '@mui/material';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import {type IMouse, initialMouse} from './lib/shared';
-import StyledMenuItem from './StyledMenuItem';
-import TagDeleteDialog from './TagDeleteDialog';
+import {StyledMenuItem} from './StyledMenuItem';
+import {TagDeleteDialog} from './TagDeleteDialog';
 
 interface ITagContextMenuProps {
   id: string;
@@ -134,4 +134,6 @@ const TagContextMenu = ({
     </>
   );
 };
-export default React.memo(TagContextMenu);
+
+const memoizedTagContextMenu = React.memo(TagContextMenu);
+export {memoizedTagContextMenu as TagContextMenu};

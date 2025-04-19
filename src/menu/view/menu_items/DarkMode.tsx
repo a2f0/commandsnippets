@@ -5,8 +5,8 @@ import React from 'react';
 import {darkTheme, type Theme} from '@tearleads/theme';
 
 import {useAppContext} from '../../../AppContext';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -39,4 +39,5 @@ const DarkMode = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(DarkMode);
+const memoizedDarkMode = React.memo(DarkMode);
+export {memoizedDarkMode as DarkMode};

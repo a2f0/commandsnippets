@@ -4,7 +4,7 @@ import React, {useEffect, useState} from 'react';
 import type {IMouse} from '../src/lib/shared';
 import {appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import StyledMenuItem from './StyledMenuItem';
+import {StyledMenuItem} from './StyledMenuItem';
 
 export interface IEntryContextMenu {
   mouse: IMouse;

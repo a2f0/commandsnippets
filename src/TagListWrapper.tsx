@@ -8,7 +8,7 @@ import {useNavigate} from 'react-router-dom';
 import {useAppContext} from './AppContext';
 import {type ITagJsonApi, TagHelpers} from './models/TagModel';
 import type {TagModel} from './models/TagModel';
-import TagList from './TagList';
+import {TagList} from './TagList';
 
 export interface IUser {
   id: number;
@@ -94,4 +94,5 @@ const TagListWrapper = () => {
   return <TagList tagsFromWrapper={tags} username={user} />;
 };
 
-export default React.memo(observer(TagListWrapper));
+const memoizedTagListWrapper = React.memo(observer(TagListWrapper));
+export {memoizedTagListWrapper as TagListWrapper};

@@ -3,8 +3,8 @@ import React from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 
 import {entrySearchMethod} from '../../../lib/shared';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -34,4 +34,5 @@ const AllEntries = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(AllEntries);
+const memoizedAllEntries = React.memo(AllEntries);
+export {memoizedAllEntries as AllEntries};

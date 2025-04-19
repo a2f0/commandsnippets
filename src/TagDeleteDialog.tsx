@@ -58,4 +58,5 @@ const TagDeleteDialog = ({
   );
 };
 
-export default React.memo(TagDeleteDialog);
+const memoizedTagDeleteDialog = React.memo(TagDeleteDialog);
+export {memoizedTagDeleteDialog as TagDeleteDialog};
