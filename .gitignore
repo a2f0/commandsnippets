@@ -32,3 +32,4 @@ override.tf.json
 /vercel/main.tfvars
 /staging-frontend/main.tfvars
 /production-frontend/main.tfvars
+/staging-frontend/terraform.backend
