@@ -8,8 +8,8 @@ import {type MockInstance, vi} from 'vitest';
 import invariant from 'invariant';
 import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-import server from './util/msw';
-import TestAppRouter from './util/TestAppRouter';
+import {server} from './util/msw';
+import {TestAppRouter} from './util/TestAppRouter';
 
 Element.prototype.scrollIntoView = vi.fn();
 

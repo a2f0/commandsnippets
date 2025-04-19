@@ -165,4 +165,6 @@ const EntryContextMenu = ({
     </StyledMenu>
   );
 };
-export default React.memo(EntryContextMenu);
+
+const memoizedEntryContextMenu = React.memo(EntryContextMenu);
+export {memoizedEntryContextMenu as EntryContextMenu};

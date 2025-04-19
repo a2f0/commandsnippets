@@ -11,8 +11,8 @@ import React from 'react';
 import {describe, expect, it, vi} from 'vitest';
 
 import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
-import server from '../../util/msw';
-import TestAppRouter from '../../util/TestAppRouter';
+import {server} from '../../util/msw';
+import {TestAppRouter} from '../../util/TestAppRouter';
 
 Element.prototype.scrollIntoView = vi.fn();
 

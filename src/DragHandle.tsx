@@ -4,4 +4,4 @@ const DragHandle = styled('div')(() => ({
   cursor: 'grab',
 }));
 
-export default DragHandle;
+export {DragHandle};

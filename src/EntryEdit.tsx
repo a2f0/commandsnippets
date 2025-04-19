@@ -211,4 +211,6 @@ const EntryEdit = ({
   );
 };
 
-export default React.memo(observer(EntryEdit));
+const memoizedEntryEdit = React.memo(observer(EntryEdit));
+
+export {memoizedEntryEdit as EntryEdit};

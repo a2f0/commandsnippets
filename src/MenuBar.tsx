@@ -7,7 +7,7 @@ import {observer} from 'mobx-react';
 import React from 'react';
 
 import {useAppContext} from './AppContext';
-import GithubAuth from './GithubAuth';
+import {GithubAuth} from './GithubAuth';
 import GoogleAuth from './GoogleAuth';
 import {environment} from './lib/environment';
 import DebugMenu from './menu/debug/DebugMenu';

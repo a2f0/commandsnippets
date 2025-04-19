@@ -25,4 +25,4 @@ const App = React.memo(
   })
 );
 
-export default App;
+export {App};

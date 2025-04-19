@@ -237,4 +237,6 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     </Box>
   );
 };
-export default React.memo(observer(EntryNew));
+
+const memoizedEntryNew = React.memo(observer(EntryNew));
+export {memoizedEntryNew as EntryNew};

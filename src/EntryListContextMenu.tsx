@@ -96,4 +96,6 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
     </StyledMenu>
   );
 };
-export default React.memo(EntryListContextMenu);
+
+const memoizedEntryListContextMenu = React.memo(EntryListContextMenu);
+export {memoizedEntryListContextMenu as EntryListContextMenu};
