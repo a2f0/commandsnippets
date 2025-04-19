@@ -33,3 +33,4 @@ override.tf.json
 /staging-frontend/main.tfvars
 /production-frontend/main.tfvars
 /staging-frontend/terraform.backend
+/production-frontend/terraform.backend
