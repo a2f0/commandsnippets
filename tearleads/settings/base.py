@@ -82,6 +82,7 @@ CORS_ORIGIN_REGEX_WHITELIST = [
     r"^http://localhost:*",
     r"^https://tearleads\.com$",
     r"^https://\w+\.tearleads\.com$",
+    r"^https://\w+\.staging\.tearleads\.com$",
 ]
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".tearleads.com", "tearleads.com"]
