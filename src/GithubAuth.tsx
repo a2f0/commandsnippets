@@ -8,7 +8,7 @@ import {apiBase} from './lib/api/apiBase';
 import {LoginButton} from './styled/LoginButton';
 
 let githubClientID: string;
-if (window.location.hostname === 'staging.tearleads.com') {
+if (window.location.hostname === 'app.staging.tearleads.com') {
   githubClientID = '3be8b14684de28d54a0d';
 } else if (window.location.hostname === 'tearleads.com') {
   githubClientID = 'a3cf7c1dfabc3df68b06';
