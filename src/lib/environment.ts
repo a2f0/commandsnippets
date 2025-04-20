@@ -17,7 +17,7 @@ if (hostname === 'app.staging.tearleads.com') {
 ) {
   environment = 'test';
 } else {
-  throw 'Unknown Tearleads environment';
+  throw `Unknown Tearleads environment for hostname ${hostname} and port ${port}`;
 }
 
 export {environment};
