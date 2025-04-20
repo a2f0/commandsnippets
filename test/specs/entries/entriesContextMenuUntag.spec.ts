@@ -1,5 +1,5 @@
-import entriesResponse from '../../mocks/entries/entriesResponse';
-import tags from '../../mocks/tags/tagsResponse';
+import {entriesResponse} from '../../mocks/entries/entriesResponse';
+import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Untag', () => {
@@ -17,13 +17,13 @@ describe('Entries Context Menu Untag', () => {
       'http://localhost:9001/api/v1/tags?page[number]=1*',
       {method: 'GET'}
     );
-    mockTags.respond(tags, {statusCode: 200});
+    mockTags.respond(tagsResponse, {statusCode: 200});
 
     const mockTagsEntries = await browser.mock(
       'http://localhost:9001/api/v1/tags_entries/1',
       {method: 'DELETE'}
     );
-    mockTagsEntries.respond(tags, {statusCode: 204});
+    mockTagsEntries.respond(tagsResponse, {statusCode: 204});
     await browser.login();
     await BasePage.open('');
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

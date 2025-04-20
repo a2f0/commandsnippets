@@ -4,12 +4,12 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
+import {apiBase} from './lib/api/apiBase';
 import {activeTagEditField, appMode} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
-import StyledTagButton from './styled/tags/StyledTagButton';
-import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
-import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
+import {StyledTagButton} from './styled/tags/StyledTagButton';
+import {StyledTagFormContainer} from './styled/tags/StyledTagFormContainer';
+import {StyledTextFieldTags} from './styled/tags/StyledTextFieldTags';
 
 interface IProps {
   handleNewParent: () => void;
@@ -159,4 +159,6 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     </StyledTagFormContainer>
   );
 };
-export default React.memo(observer(TagNew));
+
+const memoizedTagNew = React.memo(observer(TagNew));
+export {memoizedTagNew as TagNew};

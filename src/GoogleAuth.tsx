@@ -4,12 +4,12 @@ import React, {useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
-import LoginButton from './styled/LoginButton';
+import {apiBase} from './lib/api/apiBase';
+import {LoginButton} from './styled/LoginButton';
 
 let googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
-if (window.location.hostname === 'staging.tearleads.com') {
+if (window.location.hostname === 'app.staging.tearleads.com') {
   googleClientID =
     '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 } else if (window.location.hostname === 'tearleads.com') {
@@ -25,9 +25,9 @@ export const redirectUrl = () => {
   console.info(
     `window.location.hostname (redirectUrl): ${window.location.hostname}`
   );
-  if (window.location.hostname === 'staging.tearleads.com') {
-    console.info('returning https%3A//staging.tearleads.com/oauth/google');
-    return 'https%3A//staging.tearleads.com/oauth/google';
+  if (window.location.hostname === 'app.staging.tearleads.com') {
+    console.info('returning https%3A//app.staging.tearleads.com/oauth/google');
+    return 'https%3A//app.staging.tearleads.com/oauth/google';
   }
   if (window.location.hostname === 'tearleads.com') {
     console.info('returning https%3A//tearleads.com/oauth/google');
@@ -103,4 +103,5 @@ const GoogleAuth = () => {
   );
 };
 
-export default React.memo(observer(GoogleAuth));
+const memoizedGoogleAuth = React.memo(observer(GoogleAuth));
+export {memoizedGoogleAuth as GoogleAuth};

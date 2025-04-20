@@ -1,5 +1,5 @@
-import entriesResponse from '../../mocks/entries/entriesResponse';
-import tagsResponse from '../../mocks/tags/tagsResponse';
+import {entriesResponse} from '../../mocks/entries/entriesResponse';
+import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 import invariant from 'invariant';
 describe('Tag Search Menu Behavior', () => {

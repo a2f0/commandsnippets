@@ -15,13 +15,13 @@ import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
 import invariant from 'invariant';
 import {useAppContext} from './AppContext';
-import ItemTypes from './ItemTypes';
+import {ItemTypes} from './ItemTypes';
 import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {type ITagJsonApi, TagHelpers} from './models/TagModel';
-import Tag from './Tag';
-import TagListContextMenu from './TagListContextMenu';
-import TagNew from './TagNew';
+import {Tag} from './Tag';
+import {TagListContextMenu} from './TagListContextMenu';
+import {TagNew} from './TagNew';
 
 export interface IUser {
   id: number;
@@ -281,4 +281,5 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   );
 };
 
-export default React.memo(observer(TagList));
+const memoizedTagList = React.memo(observer(TagList));
+export {memoizedTagList as TagList};

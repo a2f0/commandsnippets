@@ -4,11 +4,11 @@ import React, {useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
-import LoginButton from './styled/LoginButton';
+import {apiBase} from './lib/api/apiBase';
+import {LoginButton} from './styled/LoginButton';
 
 let githubClientID: string;
-if (window.location.hostname === 'staging.tearleads.com') {
+if (window.location.hostname === 'app.staging.tearleads.com') {
   githubClientID = '3be8b14684de28d54a0d';
 } else if (window.location.hostname === 'tearleads.com') {
   githubClientID = 'a3cf7c1dfabc3df68b06';
@@ -76,4 +76,5 @@ const GithubAuth = () => {
   );
 };
 
-export default React.memo(observer(GithubAuth));
+const memoizedGithubAuth = React.memo(observer(GithubAuth));
+export {memoizedGithubAuth as GithubAuth};

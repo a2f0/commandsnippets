@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {StyledMenu} from '../../MenuBar';
-import About from './menu_items/About';
+import {About} from './menu_items/About';
 
 interface IProps {
   onClose: () => void;
@@ -19,4 +19,5 @@ const HelpMenu = ({onClose, anchorEl}: IProps) => (
   </StyledMenu>
 );
 
-export default React.memo(HelpMenu);
+const memoizedHelpMenu = React.memo(HelpMenu);
+export {memoizedHelpMenu as HelpMenu};

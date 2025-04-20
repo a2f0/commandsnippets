@@ -2,7 +2,7 @@ let environment: string;
 
 const {hostname, port} = window.location;
 
-if (hostname === 'staging.tearleads.com') {
+if (hostname === 'app.staging.tearleads.com') {
   environment = 'staging';
 } else if (hostname === 'tearleads.com' || hostname === 'app.tearleads.com') {
   environment = 'production';
@@ -17,7 +17,7 @@ if (hostname === 'staging.tearleads.com') {
 ) {
   environment = 'test';
 } else {
-  throw 'Unknown Tearleads environment';
+  throw `Unknown Tearleads environment for hostname ${hostname} and port ${port}`;
 }
 
 export {environment};

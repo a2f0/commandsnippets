@@ -12,6 +12,9 @@
       },
       "a11y": {
         "useValidAriaRole": "off"
+      },
+      "style": {
+        "noDefaultExport": "error"
       }
     }
   },

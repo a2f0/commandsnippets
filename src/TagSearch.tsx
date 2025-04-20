@@ -1,7 +1,7 @@
 import React from 'react';
 
-import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
-import TagSearchField from './styled/tags/TagSearchField';
+import {StyledTagFormContainer} from './styled/tags/StyledTagFormContainer';
+import {TagSearchField} from './styled/tags/TagSearchField';
 
 const TagSearch = () => {
   return (
@@ -10,4 +10,6 @@ const TagSearch = () => {
     </StyledTagFormContainer>
   );
 };
-export default React.memo(TagSearch);
+
+const memoizedTagSearch = React.memo(TagSearch);
+export {memoizedTagSearch as TagSearch};

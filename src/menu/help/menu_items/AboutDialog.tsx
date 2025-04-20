@@ -51,4 +51,6 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
     </Dialog>
   );
 };
-export default React.memo(AboutDialog);
+
+const memoizedAboutDialog = React.memo(AboutDialog);
+export {memoizedAboutDialog as AboutDialog};

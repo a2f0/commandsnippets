@@ -2,8 +2,8 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../../StyledMenuItem';
 import {lightTheme, type Theme} from '@tearleads/theme';
 
 interface IProps {
@@ -37,4 +37,5 @@ const LightMode = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(LightMode);
+const memoizedLightMode = React.memo(LightMode);
+export {memoizedLightMode as LightMode};

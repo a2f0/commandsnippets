@@ -4,7 +4,7 @@ import {environment} from '../environment';
 
 export let baseHTTPURL: string;
 if (environment === 'staging') {
-  baseHTTPURL = 'https://api-staging.tearleads.com';
+  baseHTTPURL = 'https://api.staging.tearleads.com';
 } else if (environment === 'production') {
   baseHTTPURL = 'https://api.tearleads.com';
 } else {
@@ -21,4 +21,4 @@ const apiBase = axios.create({
   },
 });
 
-export default apiBase;
+export {apiBase};

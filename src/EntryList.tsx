@@ -19,10 +19,10 @@ import {useDrop} from 'react-dnd';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import Entry from './Entry';
-import EntryListContextMenu from './EntryListContextMenu';
-import EntryNew from './EntryNew';
-import ItemTypes from './ItemTypes';
+import {Entry} from './Entry';
+import {EntryListContextMenu} from './EntryListContextMenu';
+import {EntryNew} from './EntryNew';
+import {ItemTypes} from './ItemTypes';
 import {appMode, type IMouse, initialMouse} from './lib/shared';
 import type {IEntryFetchPage} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
@@ -356,4 +356,5 @@ const EntryList = () => {
   );
 };
 
-export default React.memo(observer(EntryList));
+const memoizedEntryList = React.memo(observer(EntryList));
+export {memoizedEntryList as EntryList};

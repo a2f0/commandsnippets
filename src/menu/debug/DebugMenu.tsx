@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {StyledMenu} from '../../MenuBar';
-import PopulateIndexedDB from './menu_items/PopulateIndexedDB';
+import {PopulateIndexedDB} from './menu_items/PopulateIndexedDB';
 
 interface IProps {
   onClose: () => void;
@@ -19,4 +19,5 @@ const DebugMenu = ({onClose, anchorEl}: IProps) => (
   </StyledMenu>
 );
 
-export default React.memo(DebugMenu);
+const memoizedDebugMenu = React.memo(DebugMenu);
+export {memoizedDebugMenu as DebugMenu};

@@ -3,8 +3,8 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -30,4 +30,5 @@ const SortByNameDescending = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(SortByNameDescending);
+const memoizedSortByDateLastUsedDescending = React.memo(SortByNameDescending);
+export {memoizedSortByDateLastUsedDescending as SortByDateLastUsedDescending};

@@ -4,7 +4,7 @@ import React, {useEffect, useState} from 'react';
 import {type IMouse, initialMouse} from '../src/lib/shared';
 import {appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import StyledMenuItem from './StyledMenuItem';
+import {StyledMenuItem} from './StyledMenuItem';
 
 interface ITagContextMenuProps {
   mouse: IMouse;
@@ -89,4 +89,6 @@ const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
     </>
   );
 };
-export default React.memo(TagListContextMenu);
+
+const memoizedTagListContextMenu = React.memo(TagListContextMenu);
+export {memoizedTagListContextMenu as TagListContextMenu};

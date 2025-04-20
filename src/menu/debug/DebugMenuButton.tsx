@@ -1,6 +1,6 @@
 import React from 'react';
 
-import MenuBarButton from '../../MenuBarButton';
+import {MenuBarButton} from '../../MenuBarButton';
 
 interface IProps {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -16,4 +16,6 @@ const DebugMenuButton = ({onClick}: IProps) => (
     Debug
   </MenuBarButton>
 );
-export default React.memo(DebugMenuButton);
+
+const memoizedDebugMenuButton = React.memo(DebugMenuButton);
+export {memoizedDebugMenuButton as DebugMenuButton};

@@ -93,4 +93,6 @@ const InputEntryBody = ({
     />
   );
 };
-export default React.memo(observer(InputEntryBody));
+
+const memoizedInputEntryBody = React.memo(observer(InputEntryBody));
+export {memoizedInputEntryBody as InputEntryBody};

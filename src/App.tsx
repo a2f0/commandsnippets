@@ -5,24 +5,24 @@ import React from 'react';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
-import Routes from './Routes';
-import ThemedGlobalStyle from './styled/layout/ThemedGlobalStyles';
-import Theme from './theme/Theme';
+import {Routes} from './Routes';
+import {MemoizedThemedGlobalStyle} from './styled/layout/ThemedGlobalStyles';
+import {ThemeProvider} from './theme/Theme';
 
 const App = React.memo(
   observer(() => {
     return (
       <StyledEngineProvider injectFirst>
-        <Theme>
+        <ThemeProvider>
           <CssBaseline />
-          <ThemedGlobalStyle />
+          <MemoizedThemedGlobalStyle />
           <DndProvider backend={HTML5Backend}>
             <Routes />
           </DndProvider>
-        </Theme>
+        </ThemeProvider>
       </StyledEngineProvider>
     );
   })
 );
 
-export default App;
+export {App};

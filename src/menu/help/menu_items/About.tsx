@@ -1,7 +1,7 @@
 import React from 'react';
 
-import StyledMenuItem from '../../../StyledMenuItem';
-import AboutDialog from './AboutDialog';
+import {StyledMenuItem} from '../../../StyledMenuItem';
+import {AboutDialog} from './AboutDialog';
 
 interface IProps {
   onClose: () => void;
@@ -29,4 +29,5 @@ const About = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(About);
+const memoizedAbout = React.memo(About);
+export {memoizedAbout as About};

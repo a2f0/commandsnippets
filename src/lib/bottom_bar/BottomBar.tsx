@@ -4,10 +4,10 @@ import {styled} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React from 'react';
 
-import TextEntrySearchField from '../../styled/text_entries/TextEntrySearchField';
-import TagSearch from '../../TagSearch';
-import Mode from './Mode';
-import Version from './Version';
+import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
+import {TagSearch} from '../../TagSearch';
+import {Mode} from './Mode';
+import {Version} from './Version';
 
 const Aligner = styled('div')`
   display: flex;
@@ -42,4 +42,6 @@ const BottomBar = () => {
     </>
   );
 };
-export default React.memo(observer(BottomBar));
+
+const memoizedBottomBar = React.memo(observer(BottomBar));
+export {memoizedBottomBar as BottomBar};

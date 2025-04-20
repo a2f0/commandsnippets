@@ -11,10 +11,10 @@ import invariant from 'invariant';
 
 import type {ITagJsonApiResponse} from '../src/lib/tags';
 import type {ITextEntryJsonApiResponse} from '../src/lib/text_entries';
-import entriesResponse from '../test/mocks/entries/entriesResponse';
-import tagsResponse from '../test/mocks/tags/tagsResponse';
+import {entriesResponse} from '../test/mocks/entries/entriesResponse';
+import {tagsResponse} from '../test/mocks/tags/tagsResponse';
 import {assignLoggedInCookie} from './util//assignLoggedInCookie';
-import TestAppRouter from './util/TestAppRouter';
+import {TestAppRouter} from './util/TestAppRouter';
 
 Element.prototype.scrollIntoView = vi.fn();
 

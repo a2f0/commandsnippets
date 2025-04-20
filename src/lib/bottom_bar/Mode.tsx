@@ -19,4 +19,6 @@ const Mode = () => {
     </Typography>
   );
 };
-export default React.memo(observer(Mode));
+
+const memoizedMode = React.memo(observer(Mode));
+export {memoizedMode as Mode};

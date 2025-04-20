@@ -7,4 +7,4 @@ const DragHandleContainer = styled('div')`
   width: ${props => props.theme.main.dragIndicatorWidth}px;
 `;
 
-export default DragHandleContainer;
+export {DragHandleContainer};

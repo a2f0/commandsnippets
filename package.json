@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.14",
+  "version": "0.7.19",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -33,7 +33,7 @@
     "@jest/types": "29.6.3",
     "@swc/core": "1.11.16",
     "@swc/helpers": "0.5.15",
-    "@tearleads/theme": "1.0.2",
+    "@tearleads/theme": "1.0.4",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",

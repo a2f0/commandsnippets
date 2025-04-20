@@ -51,4 +51,5 @@ const EntryBody = ({object, handleClick}: IProps) => {
     </div>
   );
 };
-export default React.memo(observer(EntryBody));
+
+export const MemoizedEntryBody = React.memo(observer(EntryBody));

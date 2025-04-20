@@ -68,12 +68,14 @@ const InputEntrySubject = ({
         },
       }}
       type="text"
-      inputProps={{
-        style: {
-          fontSize: 13,
-          paddingLeft: 4,
-          paddingBottom: 4,
-          paddingTop: 4,
+      slotProps={{
+        input: {
+          style: {
+            fontSize: 13,
+            paddingLeft: 4,
+            paddingBottom: 4,
+            paddingTop: 4,
+          },
         },
       }}
       placeholder={placeholder}
@@ -84,4 +86,6 @@ const InputEntrySubject = ({
     />
   );
 };
-export default React.memo(observer(InputEntrySubject));
+
+const memoizedInputEntrySubject = React.memo(observer(InputEntrySubject));
+export {memoizedInputEntrySubject as InputEntrySubject};
