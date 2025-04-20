@@ -68,7 +68,7 @@ const StyledTextFieldTags = React.forwardRef<
       id={id}
       onChange={onChange}
       variant="outlined"
-      slotProps={{input: {sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}}
+      slotProps={{htmlInput: {sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}}
       sx={{
         p: 0,
         '& .MuiOutlinedInput-root': {
