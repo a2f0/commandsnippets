@@ -29,13 +29,6 @@ resource "aws_s3_bucket" "main" {
   }
 }
 
-resource "aws_s3_bucket" "www" {
-  bucket = "www.${var.domain}"
-  tags = {
-    Name = "www.${var.domain}"
-  }
-}
-
 resource "aws_s3_bucket_website_configuration" "main" {
   bucket = aws_s3_bucket.main.id
   index_document {
@@ -43,14 +36,6 @@ resource "aws_s3_bucket_website_configuration" "main" {
   }
   error_document {
     key = "error.html"
-  }
-}
-
-resource "aws_s3_bucket_website_configuration" "www" {
-  bucket = aws_s3_bucket.www.id
-  redirect_all_requests_to {
-    host_name = var.domain
-    protocol  = "https"
   }
 }
 
@@ -87,10 +72,9 @@ resource "aws_s3_bucket_policy" "main" {
 }
 
 resource "aws_acm_certificate" "cert" {
-  provider                  = aws.us_east_1
-  domain_name               = var.domain
-  subject_alternative_names = ["www.${var.domain}"]
-  validation_method         = "DNS"
+  provider          = aws.us_east_1
+  domain_name       = var.domain
+  validation_method = "DNS"
   lifecycle {
     create_before_destroy = true
   }
@@ -182,7 +166,7 @@ resource "aws_cloudfront_distribution" "website" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
-  aliases             = [var.domain, "www.${var.domain}"]
+  aliases             = [var.domain]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -222,14 +206,6 @@ resource "aws_cloudfront_distribution" "website" {
 resource "cloudflare_record" "staging" {
   zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
   name            = var.domain
-  content         = aws_cloudfront_distribution.website.domain_name
-  type            = "CNAME"
-  allow_overwrite = true
-}
-
-resource "cloudflare_record" "www" {
-  zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
-  name            = "www.${var.domain}"
   content         = aws_cloudfront_distribution.website.domain_name
   type            = "CNAME"
   allow_overwrite = true
