@@ -69,7 +69,7 @@ const InputEntrySubject = ({
       }}
       type="text"
       slotProps={{
-        input: {
+        htmlInput: {
           style: {
             fontSize: 13,
             paddingLeft: 4,

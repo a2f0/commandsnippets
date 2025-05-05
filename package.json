@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.19",
+  "version": "0.7.20",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -47,7 +47,7 @@
     "@types/react-router-dom": "5.3.3",
     "@vitejs/plugin-react": "4.3.4",
     "@wdio/cli": "9.12.4",
-    "@wdio/dot-reporter": "9.12.3",
+    "@wdio/dot-reporter": "9.12.6",
     "@wdio/local-runner": "9.12.4",
     "@wdio/mocha-framework": "9.12.3",
     "@wdio/reporter": "9.12.3",
