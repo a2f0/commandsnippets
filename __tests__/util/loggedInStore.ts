@@ -1,4 +1,4 @@
-import {createAppStateStore} from '../../src/AppStateStore';
+import {createAppStateStore} from '../../src/lib/store/AppStateStore';
 import {type appState, defaultState} from '../../src/lib/shared';
 
 // Log the user in for the purpose of testing.

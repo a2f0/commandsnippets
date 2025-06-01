@@ -1,6 +1,6 @@
 import {getParent, types} from 'mobx-state-tree';
 
-import type {RootModel} from '../AppStateStore';
+import type {RootModel} from '../lib/store/AppStateStore';
 import {getMostRecentTimeStamp} from '../lib/shared';
 import {fetch, filterAndSort} from '../lib/tags';
 

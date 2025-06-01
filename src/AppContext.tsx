@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {store, type TStore} from './AppStateStore';
+import {store, type TStore} from './lib/store/AppStateStore';
 
 export const AppContext = React.createContext<TStore | undefined>(undefined);
 
