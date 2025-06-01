@@ -62,17 +62,29 @@ class TestTagsApi(BaseTestCase):
         tag1 = self.user1.tags.all().first()
         tag2 = self.user1.tags.all().last()
 
-        response = self.user1_api_client.get("/api/v1/tags?page[number]=1&page[size]=1")
+        self.assertEqual(self.user1.tags.count(), 2)
+
+        response = self.user1_api_client.get(
+            "/api/v1/tags?page[number]=1&page[size]=1&filter[user.username]={}".format(
+                self.user1.username
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 1)
         self.assertEqual(json_response["data"][0]["id"], str(tag1.id))
+        self.assertEqual(json_response["meta"]["pagination"]["count"], 2)
 
-        response = self.user1_api_client.get("/api/v1/tags?page[number]=2&page[size]=1")
+        response = self.user1_api_client.get(
+            "/api/v1/tags?page[number]=2&page[size]=1&filter[user.username]={}".format(
+                self.user1.username
+            )
+        )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response["data"]), 1)
         self.assertEqual(json_response["data"][0]["id"], str(tag2.id))
+        self.assertEqual(json_response["meta"]["pagination"]["count"], 2)
 
     def test_create_requires_authentication(self):
         payload = {}
