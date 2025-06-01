@@ -4,10 +4,10 @@ import type {RefObject} from 'react';
 
 import {db} from '../../src/lib/db/db';
 import type {TStore} from './store/AppStateStore';
-import type {ITagJsonApi} from '../models/TagModel';
-import type {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
-import type {ITextEntryJsonApi} from '../models/TextEntryModel';
-import type {IUserJsonApi} from '../models/UserModel';
+import type {ITagJsonApi} from './store/models/TagModel';
+import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
+import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
+import type {IUserJsonApi} from './store/models/UserModel';
 import {apiBase} from './api/apiBase';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 export interface ITextEntryJsonApiResponse {

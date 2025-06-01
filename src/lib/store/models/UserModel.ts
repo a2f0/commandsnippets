@@ -1,6 +1,6 @@
 import {getParent, types} from 'mobx-state-tree';
 
-import type {RootModel} from '../lib/store/AppStateStore';
+import type {RootModel} from './RootModel';
 
 export interface IUserJsonApi {
   id: string;
@@ -27,6 +27,6 @@ export const UserModel = types
       Object.assign(self, object);
     },
     remove() {
-      getParent<RootModel>(self, 2).removeTag(self.id);
+      getParent<typeof RootModel>(self, 2).removeTag(self.id);
     },
   }));
