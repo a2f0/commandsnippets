@@ -1,4 +1,4 @@
-import type {TStore} from './store/AppStateStore';
+import type {TStore} from './store/store';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {IUserJsonApi} from './store/models/UserModel';
 import {apiBase} from './api/apiBase';
