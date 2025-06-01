@@ -12,6 +12,12 @@ npm install
 npm run server
 ```
 
+Working on the theme
+
+```shell
+npm install ../tearleads-theme
+```
+
 ## Wiki
 
 Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information, including bundle sizes.
