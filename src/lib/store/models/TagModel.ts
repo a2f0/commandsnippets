@@ -1,20 +1,19 @@
 import {getParent, types} from 'mobx-state-tree';
+import type {RootModel} from './RootModel';
+import {getMostRecentTimeStamp} from '../../shared';
+import {fetch, filterAndSort} from '../../tags';
 
-import type {RootModel} from '../lib/store/AppStateStore';
-import {getMostRecentTimeStamp} from '../lib/shared';
-import {fetch, fetchPage, sort} from '../lib/text_entries';
-
-export interface ITextEntryJsonApi {
+export interface ITagJsonApi {
   id: string;
   type: string;
   attributes: {
-    body: string;
-    subject: string;
+    name: string;
+    entry_count: number;
+    order: number;
     date_updated: string;
     date_created: string;
-    reused_count: number;
+    date_last_used: string;
     is_deleted: boolean;
-    tag_count: number;
   };
   relationships: {
     user: {
@@ -26,27 +25,27 @@ export interface ITextEntryJsonApi {
   };
 }
 
-export const TextEntryModel = types
-  .model('TextEntryJsonApi', {
+export const TagModel = types
+  .model('TagJsonAPI', {
     id: types.identifier,
     type: types.string,
     attributes: types
-      .model('TextEntryAttributes', {
-        body: types.string,
-        subject: types.string,
+      .model('TagAtributes', {
+        name: types.string,
+        entry_count: types.number,
+        order: types.number,
         date_updated: types.string,
         date_created: types.string,
-        reused_count: types.number,
+        date_last_used: types.string,
         is_deleted: types.boolean,
-        tag_count: types.number,
       })
       .actions(() => ({})),
     relationships: types
-      .model('TextEntryRelationships', {
+      .model('UserRelationships', {
         user: types
-          .model('TextEntryRelationshipsUser', {
+          .model('TagRelationshipsUser', {
             data: types
-              .model('TextEntryRelationshipsUserData', {
+              .model('TagRelationshipsUserData', {
                 id: types.string,
                 type: types.string,
               })
@@ -57,17 +56,16 @@ export const TextEntryModel = types
       .actions(() => ({})),
   })
   .actions(self => ({
-    update(object: ITextEntryJsonApi) {
+    update(object: ITagJsonApi) {
       Object.assign(self, object);
     },
     remove() {
-      getParent<RootModel>(self, 2).removeTextEntry(self.id);
+      getParent<typeof RootModel>(self, 2).removeTag(self.id);
     },
   }));
 
-export const TextEntryHelpers = {
-  sort,
+export const TagHelpers = {
+  filterAndSort,
   fetch,
-  fetchPage,
   getMostRecentTimeStamp,
 };

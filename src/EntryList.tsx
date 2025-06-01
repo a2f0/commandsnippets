@@ -29,7 +29,7 @@ import {needsScrollingIntoView} from './lib/text_entries';
 import {
   type ITextEntryJsonApi,
   TextEntryHelpers,
-} from './models/TextEntryModel';
+} from './lib/store/models/TextEntryModel';
 
 export interface IParamTypes {
   user: string;

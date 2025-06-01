@@ -6,7 +6,7 @@ import Highlighter from 'react-highlight-words';
 
 import {useAppContext} from '../../AppContext';
 import {appMode} from '../../lib/shared';
-import type {ITextEntryJsonApi} from '../../models/TextEntryModel';
+import type {ITextEntryJsonApi} from '../../lib/store/models/TextEntryModel';
 
 export interface IProps {
   handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;
