@@ -57,5 +57,5 @@ let store: ReturnType<typeof createAppStateStore>;
 state = mergeInDefaultState(state);
 store = createAppStateStore(state);
 
-export type TStore = ReturnType<typeof createAppStateStore>;
+export type Store = ReturnType<typeof createAppStateStore>;
 export {store};
