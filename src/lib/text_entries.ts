@@ -3,7 +3,7 @@ import type {CancelTokenSource} from 'axios';
 import type {RefObject} from 'react';
 
 import {db} from '../../src/lib/db/db';
-import type {TStore} from '../AppStateStore';
+import type {TStore} from './store/AppStateStore';
 import type {ITagJsonApi} from '../models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
 import type {ITextEntryJsonApi} from '../models/TextEntryModel';
