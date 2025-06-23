@@ -1,11 +1,10 @@
 -r base.txt
 black==25.1.0                   # this should match .pre-commit-config.yamml
 bump2version==1.0.1
-coverage==7.6.12
-django_extensions==3.2.3
+coverage==7.8.2
+django_extensions==4.1
 factory_boy==3.3.3
-responses==0.25.6
+responses==0.25.7
 isort[requirements]==6.0.1     # this should match .pre-commit-config.yamml
-pre-commit==4.1.0
+pre-commit==4.2.0
 pur==7.3.2                      # for checking out of date dependencies
-safety==3.2.14
