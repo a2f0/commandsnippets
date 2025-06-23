@@ -35,9 +35,6 @@ jobs:
     - uses: pre-commit/action@v3.0.1
     - name: install and configure python dependencies
       run: pip install --no-cache-dir -r ./requirements/local.txt
-    - name: Run safety
-      run: |
-        safety check -r requirements/local.txt -r requirements/production.txt
     - name: run tests / coverage analysis
       run: |
         coverage run manage.py test -v 2

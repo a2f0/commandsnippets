@@ -4,8 +4,7 @@
 
 ### Bootstrap
 
-#### Required
-
+```shell
     pyenv install `cat .python-version`
     pip install pre-commit
     pre-commit install
@@ -22,6 +21,7 @@
     python -m venv venv
     source ./venv/bin/activate
     pip install -r requirements/base.txt -r requirements/local.txt
+```
 
 Bump version
 
@@ -30,28 +30,10 @@ Bump version
 Show outdated dependencies
 
     docker-compose build --no-cache
-    docker-compose run backend safety check -r requirements/local.txt -r requirements/production.txt
     docker-compose run backend pur -r requirements/local.txt -r requirements/production.txt
 
     # venv
-    safety check -r requirements/local.txt -r requirements/production.txt
     pur -r requirements/local.txt -r requirements/production.txt
-
-
-Accessing the local Postgresql Database
-
-    psql -h localhost -p 1337 -U tearleads
-    \c tearleads
-    -- list tables
-    \dt
-    select * from users_user order by date_joined desc;
-    -- show colums for table
-    \d users_user
-    \q
-    -- show counts by user
-    select users_user.username,COUNT(*) as "number of entries"
-    from text_entries_textentry left join users_user on users_user.id = text_entries_textentry.user_id
-    group by users_user.username;
 
 ## Testing
 
@@ -88,6 +70,23 @@ Delete a user
 List users
 
     docker-compose run backend python manage.py list_users
+    docker-compose run backend python manage.py list_recent_logins
+    docker-compose run backend python manage.py usage_report
+
+Accessing the local Postgresql Database
+
+    psql -h localhost -p 1337 -U tearleads
+    \c tearleads
+    -- list tables
+    \dt
+    select * from users_user order by date_joined desc;
+    -- show colums for table
+    \d users_user
+    \q
+    -- show counts by user
+    select users_user.username,COUNT(*) as "number of entries"
+    from text_entries_textentry left join users_user on users_user.id = text_entries_textentry.user_id
+    group by users_user.username;
 
 ### Upgrading the Postgres Docker Container
 
