@@ -1,7 +1,7 @@
 version: '2'
 
 volumes:
-  postgres15_data: {}
+  postgres17_data: {}
   postgres_backup: {}
   conf:
   vhost:
@@ -61,6 +61,6 @@ services:
   postgres:
     build: ./compose/postgres
     volumes:
-      - postgres15_data:/var/lib/postgresql/data
+      - postgres17_data:/var/lib/postgresql/data
       - postgres_backup:/backups
     env_file: .env
