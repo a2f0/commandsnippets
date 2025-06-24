@@ -12,8 +12,8 @@ WORKDIR /app
 
 # This block is what should be used for ongoing development
 EXPOSE 9001
-CMD python /app/manage.py runserver 0.0.0.0:9001 --settings=tearleads.settings.development
+CMD ["python", "/app/manage.py", "runserver", "0.0.0.0:9001", "--settings=tearleads.settings.development"]
 
 # Uncomment this block to emulate production, change the Django settings module, etc.
 # RUN pip install -r /requirements/production.txt
-# CMD gunicorn tearleads.wsgi:application --bind 0.0.0.0:9001 --env DJANGO_SETTINGS_MODULE=tearleads.settings.development
+# CMD ["gunicorn", "tearleads.wsgi:application", "--bind", "0.0.0.0:9001", "--env", "DJANGO_SETTINGS_MODULE=tearleads.settings.development"]
