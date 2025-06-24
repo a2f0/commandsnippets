@@ -1,8 +1,7 @@
 import {getParent, types} from 'mobx-state-tree';
-
-import type {RootModel} from '../AppStateStore';
-import {getMostRecentTimeStamp} from '../lib/shared';
-import {fetch, filterAndSort} from '../lib/tags';
+import type {RootModel} from './RootModel';
+import {getMostRecentTimeStamp} from '../../shared';
+import {fetch, filterAndSort} from '../../tags';
 
 export interface ITagJsonApi {
   id: string;
@@ -61,7 +60,7 @@ export const TagModel = types
       Object.assign(self, object);
     },
     remove() {
-      getParent<RootModel>(self, 2).removeTag(self.id);
+      getParent<typeof RootModel>(self, 2).removeTag(self.id);
     },
   }));
 

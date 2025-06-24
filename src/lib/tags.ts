@@ -1,6 +1,6 @@
-import type {TStore} from '../AppStateStore';
-import type {ITagJsonApi} from '../models/TagModel';
-import type {IUserJsonApi} from '../models/UserModel';
+import type {Store} from './store/store';
+import type {ITagJsonApi} from './store/models/TagModel';
+import type {IUserJsonApi} from './store/models/UserModel';
 import {apiBase} from './api/apiBase';
 
 export interface ITagJsonApiResponse {
@@ -16,7 +16,7 @@ export interface ITagJsonApiResponseSingle {
   included: Array<IUserJsonApi>;
 }
 
-export function filterAndSort(store: TStore): Array<ITagJsonApi> {
+export function filterAndSort(store: Store): Array<ITagJsonApi> {
   let sortedArray: Array<ITagJsonApi>;
 
   const userObject = store.usersArray.find(

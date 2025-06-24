@@ -3,11 +3,11 @@ import type {CancelTokenSource} from 'axios';
 import type {RefObject} from 'react';
 
 import {db} from '../../src/lib/db/db';
-import type {TStore} from '../AppStateStore';
-import type {ITagJsonApi} from '../models/TagModel';
-import type {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
-import type {ITextEntryJsonApi} from '../models/TextEntryModel';
-import type {IUserJsonApi} from '../models/UserModel';
+import type {Store} from './store/store';
+import type {ITagJsonApi} from './store/models/TagModel';
+import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
+import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
+import type {IUserJsonApi} from './store/models/UserModel';
 import {apiBase} from './api/apiBase';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 export interface ITextEntryJsonApiResponse {
@@ -42,7 +42,7 @@ export function sort(
   tag: string | null,
   inputArray: Array<ITextEntryJsonApi>,
   sortOrder: string,
-  store: TStore
+  store: Store
 ): ITextEntryJsonApi[] {
   let sortedArray: Array<ITextEntryJsonApi> = [];
   const userObject = store.usersArray.find(

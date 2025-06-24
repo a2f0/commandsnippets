@@ -19,7 +19,7 @@ import {type IMouse, initialMouse} from './lib/shared';
 import {activeSearch, appMode} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {needsScrollingIntoView} from './lib/text_entries';
-import type {ITagJsonApi} from './models/TagModel';
+import type {ITagJsonApi} from './lib/store/models/TagModel';
 import {TagContextMenu} from './TagContextMenu';
 import {TagEdit} from './TagEdit';
 import {TagLabel} from './TagLabel';

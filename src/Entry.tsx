@@ -20,7 +20,7 @@ import {tearleadsApi} from './lib/api/tearleadsApi';
 import {type IMouse, initialMouse} from './lib/shared';
 import {appMode, getSelection} from './lib/shared';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import type {ITextEntryJsonApi} from './models/TextEntryModel';
+import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
 import {MemoizedEntryBody} from './styled/text_entries/EntryBody';
 import {MemoizedEntrySubject} from './styled/text_entries/EntrySubject';
 import type {DraggableItem, DropResult} from './Tag';

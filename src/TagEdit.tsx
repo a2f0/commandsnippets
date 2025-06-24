@@ -5,7 +5,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {apiBase} from './lib/api/apiBase';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
-import type {ITagJsonApi} from './models/TagModel';
+import type {ITagJsonApi} from './lib/store/models/TagModel';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
 import {StyledTagFormContainer} from './styled/tags/StyledTagFormContainer';
 import {StyledTextFieldTags} from './styled/tags/StyledTextFieldTags';

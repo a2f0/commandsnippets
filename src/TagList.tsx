@@ -18,7 +18,7 @@ import {useAppContext} from './AppContext';
 import {ItemTypes} from './ItemTypes';
 import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
-import {type ITagJsonApi, TagHelpers} from './models/TagModel';
+import {type ITagJsonApi, TagHelpers} from './lib/store/models/TagModel';
 import {Tag} from './Tag';
 import {TagListContextMenu} from './TagListContextMenu';
 import {TagNew} from './TagNew';

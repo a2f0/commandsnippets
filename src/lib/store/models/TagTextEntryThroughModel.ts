@@ -1,6 +1,6 @@
 import {getParent, types} from 'mobx-state-tree';
 
-import type {RootModel} from '../AppStateStore';
+import type {RootModel} from './RootModel';
 
 export interface ITagTextEntryThroughModelJsonApi {
   id: string;
@@ -70,6 +70,8 @@ export const TagTextEntryThroughModel = types
       Object.assign(self, object);
     },
     remove() {
-      getParent<RootModel>(self, 2).removeTagTextEntryThroughModel(self.id);
+      getParent<typeof RootModel>(self, 2).removeTagTextEntryThroughModel(
+        self.id
+      );
     },
   }));
