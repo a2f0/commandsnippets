@@ -31,9 +31,10 @@ export interface IUser {
   };
 }
 
-export const LeftToRight = styled('div')(() => ({
-  direction: 'ltr',
-}));
+export const LeftToRight: React.FC<React.HTMLAttributes<HTMLDivElement>> =
+  styled('div')(() => ({
+    direction: 'ltr',
+  }));
 
 interface IProps {
   tagsFromWrapper: ITagJsonApi[];
