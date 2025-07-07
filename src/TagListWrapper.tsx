@@ -50,7 +50,7 @@ const TagListWrapper = () => {
       appConfig.fetchTags(userName).then(() => {
         const array = TagHelpers.filterAndSort(appConfig);
         if (array.length > 1) {
-          let selected: Instance<typeof TagModel> | undefined = undefined;
+          let selected: Instance<typeof TagModel> | undefined;
           if (tag) {
             // Then its a URL query param
             selected = appConfig.tagsArray.find(c => c.attributes.name === tag);
