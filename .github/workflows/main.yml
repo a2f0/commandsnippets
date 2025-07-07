@@ -27,7 +27,7 @@ jobs:
           version: latest
       - run: pnpm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: pre-commit
         run: |
           pip install pre-commit
@@ -78,9 +78,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
           aws-region: us-east-1
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build
       - name: Deploy to S3 (Production)
         # yamllint disable-line rule:line-length
