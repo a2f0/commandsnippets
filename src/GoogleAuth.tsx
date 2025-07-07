@@ -41,7 +41,7 @@ export const redirectUrl = () => {
 const GoogleAuth = () => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
-  const [,setCookie] = useCookies(['loggedInUser']);
+  const [, setCookie] = useCookies(['loggedInUser']);
 
   useEffect(() => {
     const queryString = window.location.search;
@@ -75,7 +75,7 @@ const GoogleAuth = () => {
             setCookie('loggedInUser', username, {
               path: '/',
               secure: window.location.protocol === 'https:',
-              sameSite: 'strict'
+              sameSite: 'strict',
             });
           });
         })

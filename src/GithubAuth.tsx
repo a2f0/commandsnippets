@@ -20,7 +20,7 @@ if (window.location.hostname === 'app.staging.tearleads.com') {
 const GithubAuth = () => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
-  const [,setCookie] = useCookies(['loggedInUser']);
+  const [, setCookie] = useCookies(['loggedInUser']);
 
   useEffect(() => {
     const queryString = window.location.search;
@@ -50,7 +50,7 @@ const GithubAuth = () => {
             setCookie('loggedInUser', username, {
               path: '/',
               secure: window.location.protocol === 'https:',
-              sameSite: 'strict'
+              sameSite: 'strict',
             });
             navigate(`/${username}`);
           });

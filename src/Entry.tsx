@@ -431,6 +431,7 @@ const Entry = ({
         />
       )}
       {!isEditing && (
+        // biome-ignore lint/a11y/noStaticElementInteractions: Custom role 'entry' is required for tests and drag-and-drop, not a standard ARIA role.
         <div
           role="entry"
           ref={dropRef}
