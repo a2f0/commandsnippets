@@ -20,6 +20,10 @@ class TearleadsDexie extends DexieDefault implements ITearleadsDB {
     });
   }
 
+  override async close(): Promise<void> {
+    super.close();
+  }
+
   async putUser(user: IUser): Promise<void> {
     await this.users.put(user);
   }

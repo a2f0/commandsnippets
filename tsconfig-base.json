@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "incremental": true
   },
   "ts-node": {
