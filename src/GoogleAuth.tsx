@@ -2,6 +2,7 @@ import {Google} from '@mui/icons-material';
 import {observer} from 'mobx-react';
 import React, {useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
+import {useCookies} from 'react-cookie';
 
 import {useAppContext} from './AppContext';
 import {apiBase} from './lib/api/apiBase';
@@ -40,6 +41,7 @@ export const redirectUrl = () => {
 const GoogleAuth = () => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
+  const [,setCookie] = useCookies(['loggedInUser']);
 
   useEffect(() => {
     const queryString = window.location.search;
@@ -70,14 +72,18 @@ const GoogleAuth = () => {
             const username = response.data.data.attributes.username;
             appConfig.setLoggedInUser(username);
             navigate(`/${username}`);
-            document.cookie = `loggedInUser=${username}`;
+            setCookie('loggedInUser', username, {
+              path: '/',
+              secure: window.location.protocol === 'https:',
+              sameSite: 'strict'
+            });
           });
         })
         .catch(() => {
           appConfig.setLoggedInUser(null);
         });
     }
-  }, [appConfig.setLoggedInUser, navigate]);
+  }, [appConfig.setLoggedInUser, navigate, setCookie]);
 
   const handleGitHubClick = () => {
     const redirect = redirectUrl();

@@ -53,9 +53,12 @@ importers:
       react:
         specifier: 19.1.0
         version: 19.1.0
+      react-cookie:
+        specifier: 8.0.1
+        version: 8.0.1(react@19.1.0)
       react-dnd:
         specifier: 16.0.1
-        version: 16.0.1(@types/node@22.15.29)(@types/react@19.1.6)(react@19.1.0)
+        version: 16.0.1(@types/hoist-non-react-statics@3.3.6)(@types/node@22.15.29)(@types/react@19.1.6)(react@19.1.0)
       react-dnd-html5-backend:
         specifier: 16.0.1
         version: 16.0.1
@@ -1768,6 +1771,9 @@ packages:
 
   '@types/history@4.7.11':
     resolution: {integrity: sha512-qjDJRrmvBMiTx+jyLxvLfJU7UznFuokDv4f3WRuriHKERccVpFU+8XMQUAbDzoiJCsmexxRExQeMwwCdamSKDA==}
+
+  '@types/hoist-non-react-statics@3.3.6':
+    resolution: {integrity: sha512-lPByRJUer/iN/xa4qpyL0qmL11DqNW81iU/IG1S3uvRUq4oKagz8VCxZjiWkumgt66YT3vOdDgZ0o32sGKtCEw==}
 
   '@types/invariant@2.2.37':
     resolution: {integrity: sha512-IwpIMieE55oGWiXkQPSBY1nw1nFs6bsKXTFskNY8sdS17K24vyEBRQZEwlRS7ZmXCWnJcQtbxWzly+cODWGs2A==}
@@ -3850,6 +3856,11 @@ packages:
   randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
 
+  react-cookie@8.0.1:
+    resolution: {integrity: sha512-QNdAd0MLuAiDiLcDU/2s/eyKmmfMHtjPUKJ2dZ/5CcQ9QKUium4B3o61/haq6PQl/YWFqC5PO8GvxeHKhy3GFA==}
+    peerDependencies:
+      react: '>= 16.3.0'
+
   react-dnd-html5-backend@16.0.1:
     resolution: {integrity: sha512-Wu3dw5aDJmOGw8WjH1I1/yTH+vlXEL4vmjk5p+MHxP8HuHJS1lAGeIdG/hze1AvNeXWo/JgULV87LyQOr+r5jw==}
 
@@ -4525,6 +4536,9 @@ packages:
   unique-string@2.0.0:
     resolution: {integrity: sha512-uNaeirEPvpZWSgzwsPGtU2zVSTrn/8L5q/IexZmH0eH6SA73CmAA5U4GwORTxQAZs95TAXLNqeLoPPNO5gZfWg==}
     engines: {node: '>=8'}
+
+  universal-cookie@8.0.1:
+    resolution: {integrity: sha512-B6ks9FLLnP1UbPPcveOidfvB9pHjP+wekP2uRYB9YDfKVpvcjKgy1W5Zj+cEXJ9KTPnqOKGfVDQBmn8/YCQfRg==}
 
   universalify@0.2.0:
     resolution: {integrity: sha512-CJ1QgKmNg3CwvAv/kOFmtnEN05f0D/cn9QntgNOQlQF9dgvVTHj3t+8JPdjqawCHk7V/KA+fbUqzZ9XWhcqPUg==}
@@ -6577,6 +6591,11 @@ snapshots:
   '@types/estree@1.0.6': {}
 
   '@types/history@4.7.11': {}
+
+  '@types/hoist-non-react-statics@3.3.6':
+    dependencies:
+      '@types/react': 19.1.6
+      hoist-non-react-statics: 3.3.2
 
   '@types/invariant@2.2.37': {}
 
@@ -8948,11 +8967,18 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
+  react-cookie@8.0.1(react@19.1.0):
+    dependencies:
+      '@types/hoist-non-react-statics': 3.3.6
+      hoist-non-react-statics: 3.3.2
+      react: 19.1.0
+      universal-cookie: 8.0.1
+
   react-dnd-html5-backend@16.0.1:
     dependencies:
       dnd-core: 16.0.1
 
-  react-dnd@16.0.1(@types/node@22.15.29)(@types/react@19.1.6)(react@19.1.0):
+  react-dnd@16.0.1(@types/hoist-non-react-statics@3.3.6)(@types/node@22.15.29)(@types/react@19.1.6)(react@19.1.0):
     dependencies:
       '@react-dnd/invariant': 4.0.2
       '@react-dnd/shallowequal': 4.0.2
@@ -8961,6 +8987,7 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 19.1.0
     optionalDependencies:
+      '@types/hoist-non-react-statics': 3.3.6
       '@types/node': 22.15.29
       '@types/react': 19.1.6
 
@@ -9663,6 +9690,10 @@ snapshots:
   unique-string@2.0.0:
     dependencies:
       crypto-random-string: 2.0.0
+
+  universal-cookie@8.0.1:
+    dependencies:
+      cookie: 1.0.2
 
   universalify@0.2.0: {}
 

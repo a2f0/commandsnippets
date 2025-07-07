@@ -44,8 +44,7 @@
     "includes": [
       "**",
       "!**/.ts-out/**/*",
-      "!**/build/",
-      "!**/*.d.ts",
+      "!**/build/**",
       "!**/src/ts-out/**/*",
       "!**/dev-dist/**/*",
       "!**/dist/",
