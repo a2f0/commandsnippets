@@ -68,25 +68,23 @@ const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
   };
 
   return (
-    <>
-      <StyledMenu
-        id="tagListContextMenu"
-        keepMounted
-        mousePosition={mousePosition}
-        open={mousePosition.mouseY !== null}
-        onClose={handleClose}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          mousePosition.mouseY !== null && mousePosition.mouseX !== null
-            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-            : undefined
-        }
-      >
-        <StyledMenuItem id="tagListContextMenuNew" onClick={handleNewTag}>
-          New Tag
-        </StyledMenuItem>
-      </StyledMenu>
-    </>
+    <StyledMenu
+      id="tagListContextMenu"
+      keepMounted
+      mousePosition={mousePosition}
+      open={mousePosition.mouseY !== null}
+      onClose={handleClose}
+      anchorReference="anchorPosition"
+      anchorPosition={
+        mousePosition.mouseY !== null && mousePosition.mouseX !== null
+          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
+          : undefined
+      }
+    >
+      <StyledMenuItem id="tagListContextMenuNew" onClick={handleNewTag}>
+        New Tag
+      </StyledMenuItem>
+    </StyledMenu>
   );
 };
 
