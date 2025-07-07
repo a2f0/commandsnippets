@@ -1,8 +1,8 @@
+---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py
@@ -32,3 +32,8 @@ repos:
         entry: npx tsc -b
         pass_filenames: false
         language: node
+      - id: yamllint
+        name: yamllint
+        entry: yamllint .
+        pass_filenames: false
+        language: system

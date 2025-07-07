@@ -1,4 +1,7 @@
+---
+
 name: Github Actions
+# yamllint disable-line rule:truthy
 on:
   push:
     branches: '**'
@@ -18,8 +21,11 @@ jobs:
         with:
           python-version: '3.13'
           architecture: 'x64'
-      - name: npm ci
-        run: npm ci
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      - run: pnpm install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: pre-commit
@@ -39,6 +45,7 @@ jobs:
         if: ${{ failure() }}
         with:
           status: ${{ job.status }}
+          # yamllint disable-line rule:line-length
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -56,6 +63,7 @@ jobs:
           scope: '@tearleads'
       - name: Configure AWS credentials (Production)
         uses: aws-actions/configure-aws-credentials@v4
+        # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_PRODUCTION }}
@@ -63,6 +71,7 @@ jobs:
           aws-region: us-east-1
       - name: Configure AWS credentials (Staging)
         uses: aws-actions/configure-aws-credentials@v4
+        # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_STAGING }}
@@ -74,6 +83,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build
       - name: Deploy to S3 (Production)
+        # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         run: |
           # First sync all assets (excluding index.html)

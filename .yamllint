@@ -1,0 +1,14 @@
+---
+
+extends: default
+
+ignore: |
+  node_modules
+
+rules:
+  line-length:
+    ignore:
+      /pnpm-lock.yaml
+  document-start:
+    ignore:
+      /pnpm-lock.yaml
