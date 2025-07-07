@@ -42,7 +42,7 @@ export function createAppStateStore(
   // to restore a snapshot.  If a snapshot restore fails, apply the default state.
   try {
     applySnapshot(store, snapshot);
-  } catch (e) {
+  } catch {
     applySnapshot(store, defaultState);
   }
 
