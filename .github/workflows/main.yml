@@ -1,4 +1,7 @@
+---
+
 name: Github Actions
+# yamllint disable-line rule:truthy
 on:
   push:
     branches: '**'
@@ -18,10 +21,13 @@ jobs:
         with:
           python-version: '3.13'
           architecture: 'x64'
-      - name: npm ci
-        run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      # yamllint disable-line rule:line-length
+      - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+      - run: pnpm install
       - name: pre-commit
         run: |
           pip install pre-commit
@@ -39,6 +45,7 @@ jobs:
         if: ${{ failure() }}
         with:
           status: ${{ job.status }}
+          # yamllint disable-line rule:line-length
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -56,6 +63,7 @@ jobs:
           scope: '@tearleads'
       - name: Configure AWS credentials (Production)
         uses: aws-actions/configure-aws-credentials@v4
+        # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_PRODUCTION }}
@@ -63,31 +71,43 @@ jobs:
           aws-region: us-east-1
       - name: Configure AWS credentials (Staging)
         uses: aws-actions/configure-aws-credentials@v4
+        # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_STAGING }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
           aws-region: us-east-1
-      - name: Install dependencies
-        run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      # yamllint disable-line rule:line-length
+      - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+      - run: pnpm install
       - run: npm run build
       - name: Deploy to S3 (Production)
+        # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         run: |
           # First sync all assets (excluding index.html)
-          aws s3 sync --acl=public-read ./build s3://${{ secrets.PRODUCTION_DOMAIN }} --exclude "index.html"
+          aws s3 sync --acl=public-read ./build \
+            s3://${{ secrets.PRODUCTION_DOMAIN }} --exclude "index.html"
           # Then copy index.html separately
-          aws s3 cp --acl=public-read ./build/index.html s3://${{ secrets.PRODUCTION_DOMAIN }}/index.html
+          aws s3 cp --acl=public-read ./build/index.html \
+            s3://${{ secrets.PRODUCTION_DOMAIN }}/index.html
           # Finally cleanup old files
-          aws s3 sync --acl=public-read --delete ./build s3://${{ secrets.PRODUCTION_DOMAIN }}
+          aws s3 sync --acl=public-read --delete ./build \
+            s3://${{ secrets.PRODUCTION_DOMAIN }}
       - name: Deploy to S3 (Staging)
+        # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         run: |
           # First sync all assets (excluding index.html)
-          aws s3 sync --acl=public-read ./build s3://${{ secrets.STAGING_DOMAIN }} --exclude "index.html"
+          aws s3 sync --acl=public-read ./build \
+            s3://${{ secrets.STAGING_DOMAIN }} --exclude "index.html"
           # Then copy index.html separately
-          aws s3 cp --acl=public-read ./build/index.html s3://${{ secrets.STAGING_DOMAIN }}/index.html
+          aws s3 cp --acl=public-read ./build/index.html \
+            s3://${{ secrets.STAGING_DOMAIN }}/index.html
           # Finally cleanup old files
-          aws s3 sync --acl=public-read --delete ./build s3://${{ secrets.STAGING_DOMAIN }}
+          aws s3 sync --acl=public-read --delete ./build \
+            s3://${{ secrets.STAGING_DOMAIN }}

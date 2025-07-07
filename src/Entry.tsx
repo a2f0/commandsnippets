@@ -30,7 +30,17 @@ const EntryText = styled('div')(() => ({
   verticalAlign: 'top',
 }));
 
-export const EntryContainer = styled('div')(() => ({
+type EntryContainerProps = React.HTMLAttributes<HTMLDivElement> &
+  React.RefAttributes<HTMLDivElement>;
+
+const EntryContainerBase = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => <div {...props} ref={ref} />);
+
+export const EntryContainer: React.ComponentType<EntryContainerProps> = styled(
+  EntryContainerBase
+)(() => ({
   marginBottom: '16px',
   whiteSpace: 'pre',
 }));
