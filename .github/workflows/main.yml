@@ -77,10 +77,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_STAGING }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
           aws-region: us-east-1
-      - name: Install dependencies
-        run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      # yamllint disable-line rule:line-length
+      - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+      - run: pnpm install
       - run: npm run build
       - name: Deploy to S3 (Production)
         # yamllint disable-line rule:line-length
