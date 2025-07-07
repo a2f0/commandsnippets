@@ -27,7 +27,7 @@
   "author": "Dan Sullivan",
   "devDependencies": {
     "@a2f0/check-for-unpinned-dependencies": "https://github.com/a2f0/check-for-unpinned-dependencies#chore-package-maintenance",
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.0.6",
     "@ffmpeg-installer/ffmpeg": "1.1.0",
     "@swc/core": "1.11.29",
     "@swc/helpers": "0.5.17",
