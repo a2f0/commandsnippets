@@ -27,7 +27,7 @@ jobs:
           version: latest
       - run: pnpm install
         env:
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: pre-commit
         run: |
           pip install pre-commit
@@ -80,7 +80,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
         env:
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build
       - name: Deploy to S3 (Production)
         # yamllint disable-line rule:line-length
