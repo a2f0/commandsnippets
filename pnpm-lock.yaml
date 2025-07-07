@@ -70,8 +70,8 @@ importers:
         version: 7.6.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
     devDependencies:
       '@a2f0/check-for-unpinned-dependencies':
-        specifier: github:a2f0/check-for-unpinned-dependencies#chore-package-maintenance
-        version: git+https://git@github.com:a2f0/check-for-unpinned-dependencies.git#529c3eb861369920bbb1e47dfca39425f084ac03
+        specifier: https://github.com/a2f0/check-for-unpinned-dependencies#chore-package-maintenance
+        version: https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/529c3eb861369920bbb1e47dfca39425f084ac03
       '@biomejs/biome':
         specifier: 1.9.4
         version: 1.9.4
@@ -201,8 +201,8 @@ importers:
 
 packages:
 
-  '@a2f0/check-for-unpinned-dependencies@git+https://git@github.com:a2f0/check-for-unpinned-dependencies.git#529c3eb861369920bbb1e47dfca39425f084ac03':
-    resolution: {commit: 529c3eb861369920bbb1e47dfca39425f084ac03, repo: git@github.com:a2f0/check-for-unpinned-dependencies.git, type: git}
+  '@a2f0/check-for-unpinned-dependencies@https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/529c3eb861369920bbb1e47dfca39425f084ac03':
+    resolution: {tarball: https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/529c3eb861369920bbb1e47dfca39425f084ac03}
     version: 1.0.6
     hasBin: true
 
@@ -4916,7 +4916,7 @@ packages:
 
 snapshots:
 
-  '@a2f0/check-for-unpinned-dependencies@git+https://git@github.com:a2f0/check-for-unpinned-dependencies.git#529c3eb861369920bbb1e47dfca39425f084ac03': {}
+  '@a2f0/check-for-unpinned-dependencies@https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/529c3eb861369920bbb1e47dfca39425f084ac03': {}
 
   '@adobe/css-tools@4.4.0': {}
 
