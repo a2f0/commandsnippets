@@ -71,7 +71,7 @@ importers:
     devDependencies:
       '@a2f0/check-for-unpinned-dependencies':
         specifier: https://github.com/a2f0/check-for-unpinned-dependencies#chore-package-maintenance
-        version: https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/529c3eb861369920bbb1e47dfca39425f084ac03
+        version: https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/53e9a7262c70e1fb60d0f10bd3af388de849a8d3
       '@biomejs/biome':
         specifier: 1.9.4
         version: 1.9.4
@@ -201,8 +201,8 @@ importers:
 
 packages:
 
-  '@a2f0/check-for-unpinned-dependencies@https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/529c3eb861369920bbb1e47dfca39425f084ac03':
-    resolution: {tarball: https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/529c3eb861369920bbb1e47dfca39425f084ac03}
+  '@a2f0/check-for-unpinned-dependencies@https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/53e9a7262c70e1fb60d0f10bd3af388de849a8d3':
+    resolution: {tarball: https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/53e9a7262c70e1fb60d0f10bd3af388de849a8d3}
     version: 1.0.6
     hasBin: true
 
@@ -4916,7 +4916,7 @@ packages:
 
 snapshots:
 
-  '@a2f0/check-for-unpinned-dependencies@https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/529c3eb861369920bbb1e47dfca39425f084ac03': {}
+  '@a2f0/check-for-unpinned-dependencies@https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/53e9a7262c70e1fb60d0f10bd3af388de849a8d3': {}
 
   '@adobe/css-tools@4.4.0': {}
 
