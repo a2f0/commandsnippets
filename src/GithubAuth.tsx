@@ -2,6 +2,7 @@ import {GitHub} from '@mui/icons-material';
 import {observer} from 'mobx-react';
 import React, {useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
+import {useCookies} from 'react-cookie';
 
 import {useAppContext} from './AppContext';
 import {apiBase} from './lib/api/apiBase';
@@ -19,6 +20,7 @@ if (window.location.hostname === 'app.staging.tearleads.com') {
 const GithubAuth = () => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
+  const [, setCookie] = useCookies(['loggedInUser']);
 
   useEffect(() => {
     const queryString = window.location.search;
@@ -45,7 +47,11 @@ const GithubAuth = () => {
           apiBase.get('/user/', {withCredentials: true}).then(response => {
             const username = response.data.data.attributes.username;
             appConfig.setLoggedInUser(username);
-            document.cookie = `loggedInUser=' ${username}`;
+            setCookie('loggedInUser', username, {
+              path: '/',
+              secure: window.location.protocol === 'https:',
+              sameSite: 'strict',
+            });
             navigate(`/${username}`);
           });
         })
@@ -53,7 +59,7 @@ const GithubAuth = () => {
           appConfig.setLoggedInUser(null);
         });
     }
-  }, [appConfig.setLoggedInUser, navigate]);
+  }, [appConfig.setLoggedInUser, navigate, setCookie]);
 
   const handleGitHubClick = () => {
     window.location.assign(

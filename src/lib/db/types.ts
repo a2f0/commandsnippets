@@ -36,6 +36,7 @@ export interface IJunction {
 }
 
 export interface ITearleadsDB {
+  close: () => Promise<void>;
   getTagsForUserName: (username: string) => Promise<ITag[]>;
   putUser: (user: IUser) => Promise<void>;
   getUser: (username: string) => Promise<IUser | undefined>;
