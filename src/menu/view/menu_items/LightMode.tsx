@@ -4,7 +4,7 @@ import React from 'react';
 import {useAppContext} from '../../../AppContext';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../../StyledMenuItem';
-import {lightTheme, type Theme} from '@tearleads/theme';
+import {lightTheme, type Theme} from '../../../../src/theme/themes';
 
 interface IProps {
   onClose: () => void;
