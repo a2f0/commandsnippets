@@ -1,6 +1,0 @@
----
-description:
-globs:
-alwaysApply: true
----
-When using `tsc` to check for TypeScript compilation, always use `tsc -b`.
