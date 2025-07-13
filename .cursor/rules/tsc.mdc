@@ -1,0 +1,5 @@
+---
+globs: *.tsx,*.ts
+alwaysApply: false
+---
+When using `tsc` to check for TypeScript compilation, always use `tsc -b`. Also, never use `any` for a typing or `as` to cast.
