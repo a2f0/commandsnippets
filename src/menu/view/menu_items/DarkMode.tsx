@@ -2,7 +2,7 @@ import {ListItemIcon} from '@mui/material';
 
 import React from 'react';
 
-import {darkTheme, type Theme} from '@tearleads/theme';
+import {darkTheme, type Theme} from '../../../../src/theme/themes';
 
 import {useAppContext} from '../../../AppContext';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';

@@ -1,6 +1,6 @@
 // biome-ignore lint: style/useImportType
 import React from 'react';
-import {darkTheme, lightTheme} from '@tearleads/theme';
+import {darkTheme, lightTheme} from './themes';
 import {ThemeProvider as MuiThemeProvider} from '@mui/material/styles';
 
 import {useAppContext} from '../AppContext';
