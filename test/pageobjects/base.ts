@@ -1,188 +1,201 @@
 import {entrySearchMethod} from '../../src/lib/shared';
+
 export class Base {
   // home screen
-  get tagLine(): ChainablePromiseElement {
+  get tagLine(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagLine');
   }
 
   // file menu
-  get githubAuthButton(): ChainablePromiseElement {
+  get githubAuthButton(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#githubAuthButton');
   }
-  get googleAuthButton(): ChainablePromiseElement {
+  get googleAuthButton(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#googleAuthButton');
   }
   // file menu
-  get fileMenu(): ChainablePromiseElement {
+  get fileMenu(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#file-menu');
   }
-  get fileMenuButton(): ChainablePromiseElement {
+  get fileMenuButton(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#file-menu-button');
   }
-  get fileMenuNewEntry(): ChainablePromiseElement {
+  get fileMenuNewEntry(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#file-menu-new-entry');
   }
-  get fileMenuLogout(): ChainablePromiseElement {
+  get fileMenuLogout(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#file-menu-logout');
   }
 
   // entries menu
-  get entriesMenu(): ChainablePromiseElement {
+  get entriesMenu(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#entries-menu');
   }
-  get entriesMenuButton(): ChainablePromiseElement {
+  get entriesMenuButton(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#entries-menu-button');
   }
-  get entriesMenuUntagged(): ChainablePromiseElement {
+  get entriesMenuUntagged(): ReturnType<WebdriverIO.Browser['$']> {
     return $(
       `#entries-menu-list-method-${entrySearchMethod.untaggedEntryList}`
     );
   }
 
   // tags menu
-  get tagsMenu(): ChainablePromiseElement {
+  get tagsMenu(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tags-menu');
   }
-  get tagsMenuButton(): ChainablePromiseElement {
+  get tagsMenuButton(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tags-menu-button');
   }
-  get tagsMenuSortDateCreatedAscending(): ChainablePromiseElement {
+  get tagsMenuSortDateCreatedAscending(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tags-menu-sort-date-created-ascending');
   }
-  get tagsMenuSortDateCreatedDescending(): ChainablePromiseElement {
+  get tagsMenuSortDateCreatedDescending(): ReturnType<
+    WebdriverIO.Browser['$']
+  > {
     return $('#tags-menu-sort-date-created-descending');
   }
 
   // tags
-  get tagList(): ChainablePromiseElement {
+  get tagList(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagList');
   }
-  get tags(): ChainablePromiseElement {
+  /**
+   * Returns all tag elements. This is a WebdriverIO array-like object.
+   */
+  get tags(): ReturnType<WebdriverIO.Browser['$$']> {
     return $$('div[id^="tag-"]');
   }
-  get tagListContextMenu(): ChainablePromiseElement {
+  get tagListContextMenu(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagListContextMenu');
   }
-  get tagNewBottomTextField(): ChainablePromiseElement {
+  get tagNewBottomTextField(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagNewBottomTextField');
   }
-  get tagNewBottom(): ChainablePromiseElement {
+  get tagNewBottom(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagNewBottom');
   }
-  get tagNewBottomCancel(): ChainablePromiseElement {
+  get tagNewBottomCancel(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagNewBottomCancel');
   }
-  get tagNewBottomSave(): ChainablePromiseElement {
+  get tagNewBottomSave(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagNewBottomSave');
   }
-  get tagListContextMenuNew(): ChainablePromiseElement {
+  get tagListContextMenuNew(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagListContextMenuNew');
   }
-  get tagContextMenu1(): ChainablePromiseElement {
+  get tagContextMenu1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagContextMenu-1');
   }
-  get tagContextMenu1DeleteTagMenuItem(): ChainablePromiseElement {
+  get tagContextMenu1DeleteTagMenuItem(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagContextMenu1DeleteTagMenuItem');
   }
-  get tagContextMenu1DeleteTagDialog(): ChainablePromiseElement {
+  get tagContextMenu1DeleteTagDialog(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagContextMenu1DeleteTagDialog');
   }
-  get tagContextMenu1DeleteTagDialogDeleteButton(): ChainablePromiseElement {
+  get tagContextMenu1DeleteTagDialogDeleteButton(): ReturnType<
+    WebdriverIO.Browser['$']
+  > {
     return $('#tagContextMenu1DeleteTagDialogDeleteButton');
   }
-  get tagContextMenu1DeleteTagDialogCancelButton(): ChainablePromiseElement {
+  get tagContextMenu1DeleteTagDialogCancelButton(): ReturnType<
+    WebdriverIO.Browser['$']
+  > {
     return $('#tagContextMenu1DeleteTagDialogCancelButton');
   }
-  get tag1(): ChainablePromiseElement {
+  get tag1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tag-1');
   }
-  get tag2(): ChainablePromiseElement {
+  get tag2(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tag-2');
   }
-  get tagSearch(): ChainablePromiseElement {
+  get tagSearch(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagSearch');
   }
 
   // entries
-  get entryNewTop(): ChainablePromiseElement {
+  get entryNewTop(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewTop');
   }
-  get entryNewTopSubject(): ChainablePromiseElement {
+  get entryNewTopSubject(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewTopSubject');
   }
-  get entryNewTopBody(): ChainablePromiseElement {
+  get entryNewTopBody(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewTopBody');
   }
-  get entryNewTopCancel(): ChainablePromiseElement {
+  get entryNewTopCancel(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewTopCancel');
   }
-  get entryNewTopSave(): ChainablePromiseElement {
+  get entryNewTopSave(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewTopSave');
   }
-  get entryNewBottom(): ChainablePromiseElement {
+  get entryNewBottom(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewBottom');
   }
-  get entryNewBottomSubject(): ChainablePromiseElement {
+  get entryNewBottomSubject(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewBottomSubject');
   }
-  get entryNewBottomBody(): ChainablePromiseElement {
+  get entryNewBottomBody(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewBottomBody');
   }
-  get entryNewBottomSave(): ChainablePromiseElement {
+  get entryNewBottomSave(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewBottomSave');
   }
-  get entryNewBottomCancel(): ChainablePromiseElement {
+  get entryNewBottomCancel(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewBottomCancel');
   }
-  get entryListContextMenu(): ChainablePromiseElement {
+  get entryListContextMenu(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#entryListContextMenu');
   }
-  get entryListContextMenuNewEntry(): ChainablePromiseElement {
+  get entryListContextMenuNewEntry(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#entryListContextMenuNewEntry');
   }
-  get tagsEntriesList(): ChainablePromiseElement {
+  get tagsEntriesList(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntriesList');
   }
-  get tagsEntries(): ChainablePromiseElement {
+  /**
+   * Returns all tagsEntries elements. This is a WebdriverIO array-like object.
+   */
+  get tagsEntries(): ReturnType<WebdriverIO.Browser['$$']> {
     return $$('div[id^="tagsEntries-"]');
   }
-  get entry1(): ChainablePromiseElement {
+  get entry1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntries-1');
   }
-  get entryBodyOuterDiv3(): ChainablePromiseElement {
+  get entryBodyOuterDiv3(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#entryBodyOuterDiv3');
   }
-  get tagsEntriesContextMenu1(): ChainablePromiseElement {
+  get tagsEntriesContextMenu1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntriesContextMenu-1');
   }
-  get tagsEntriesContextMenu1Edit(): ChainablePromiseElement {
+  get tagsEntriesContextMenu1Edit(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntriesContextMenu1Edit');
   }
-  get tagsEntriesContextMenu1Untag(): ChainablePromiseElement {
+  get tagsEntriesContextMenu1Untag(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntriesContextMenu1Untag');
   }
-  get tagsEntriesContextMenu1Delete(): ChainablePromiseElement {
+  get tagsEntriesContextMenu1Delete(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntriesContextMenu1Delete');
   }
-  get textEntryEdit1(): ChainablePromiseElement {
+  get textEntryEdit1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryEdit1');
   }
-  get textEntryEdit1Subject(): ChainablePromiseElement {
+  get textEntryEdit1Subject(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryEdit1Subject');
   }
-  get textEntryEdit1Body(): ChainablePromiseElement {
+  get textEntryEdit1Body(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryEdit1Body');
   }
-  get textEntryEdit1Save(): ChainablePromiseElement {
+  get textEntryEdit1Save(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryEdit1Save');
   }
-  get textEntryEdit1Cancel(): ChainablePromiseElement {
+  get textEntryEdit1Cancel(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryEdit1Cancel');
   }
-  get tagsEntries1(): ChainablePromiseElement {
+  get tagsEntries1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntries-1');
   }
-  get entrySearch(): ChainablePromiseElement {
+  get entrySearch(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntrySearch');
   }
   async open(path: string): Promise<ReturnType<WebdriverIO.Browser['url']>> {
