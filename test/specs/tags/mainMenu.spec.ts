@@ -50,7 +50,7 @@ describe('Tag Main Menu', () => {
     await browser.waitUntil(
       async () => {
         tags = await BasePage.tags;
-        const firstId = await tags[0].getAttribute('id');
+        const firstId = await tags[0]?.getAttribute('id');
         return firstId === 'tag-1';
       },
       {
@@ -78,8 +78,8 @@ describe('Tag Main Menu', () => {
     await browser.waitUntil(
       async () => {
         tags = await BasePage.tags;
-        const firstId = await tags[0].getAttribute('id');
-        const secondId = await tags[1].getAttribute('id');
+        const firstId = await tags[0]?.getAttribute('id');
+        const secondId = await tags[1]?.getAttribute('id');
         return firstId === 'tag-1' && secondId === 'tag-2';
       },
       {
@@ -105,8 +105,8 @@ describe('Tag Main Menu', () => {
     await browser.waitUntil(
       async () => {
         tags = await BasePage.tags;
-        const firstId = await tags[0].getAttribute('id');
-        const secondId = await tags[1].getAttribute('id');
+        const firstId = await tags[0]?.getAttribute('id');
+        const secondId = await tags[1]?.getAttribute('id');
         return firstId === 'tag-4' && secondId === 'tag-3';
       },
       {

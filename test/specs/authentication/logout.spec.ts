@@ -43,11 +43,11 @@ describe('Logged Out User Behavior', () => {
     // Log out
     await expect(BasePage.fileMenu).toBeExisting();
     await expect(BasePage.fileMenu).not.toBeDisplayed();
-    await (await BasePage.fileMenuButton).waitAndLeftClick();
+    await BasePage.fileMenuButton.waitAndLeftClick();
     await expect(BasePage.fileMenu).toBeDisplayed();
     await expect(BasePage.fileMenuLogout).toBeDisplayed();
     expect(mockLogoutResponse).toBeRequestedTimes(0);
-    await (await BasePage.fileMenuLogout).waitAndLeftClick();
+    await BasePage.fileMenuLogout.waitAndLeftClick();
     expect(mockLogoutResponse).toBeRequestedTimes(1);
 
     // Confirm state after logout

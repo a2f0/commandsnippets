@@ -28,8 +28,12 @@ interface LogEntry {
 declare global {
   namespace WebdriverIO {
     interface Element {
-      waitAndRightClick: (this: WebdriverIO.Element) => Promise<void>;
-      waitAndLeftClick: (this: WebdriverIO.Element) => Promise<void>;
+      waitAndRightClick: (
+        this: ReturnType<WebdriverIO.Browser['$']>
+      ) => Promise<void>;
+      waitAndLeftClick: (
+        this: ReturnType<WebdriverIO.Browser['$']>
+      ) => Promise<void>;
     }
     interface Browser {
       currentTestErrors: LogEntry[];
