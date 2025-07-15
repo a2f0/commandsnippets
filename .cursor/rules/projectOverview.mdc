@@ -3,4 +3,4 @@ description:
 globs:
 alwaysApply: true
 ---
-This project is a command snippet tool for computer programmers and system administrators.  It is a tagging system that allows for user-defined ordering of both [Tag.tsx](mdc:src/Tag.tsx) and [Entry.tsx](mdc:src/Entry.tsx) objects. The system using MobX-State-Tree for local data persistence and synchronization.
+- This project is a command snippet tool for computer programmers and system administrators.  It is a tagging system that allows for user-defined ordering of both [Tag.tsx](mdc:src/Tag.tsx) and [Entry.tsx](mdc:src/Entry.tsx) objects. The system using MobX-State-Tree for local data persistence and synchronization. The MobX-State-Tree root model can be found in [RootModel.ts](mdc:src/lib/store/models/RootModel.ts).
