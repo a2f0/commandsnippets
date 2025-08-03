@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Always run `pnpm run lint` and `pnpm run format` when writing code.  Never add linting or formatting exceptions in code.
