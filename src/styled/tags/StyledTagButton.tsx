@@ -11,9 +11,10 @@ export const StyledTagButton = React.forwardRef<
   HTMLButtonElement,
   IButtonItemProps
 >(({id, onClick, children}: IButtonItemProps, ref) => {
+  const refValue = ref;
   return (
     <Button
-      ref={ref}
+      ref={refValue}
       id={id}
       size="small"
       aria-controls="view-menu"
