@@ -5,8 +5,8 @@
  * Analyzes the build output and reports bundle sizes
  */
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const BUILD_DIR = 'build';
 const ASSETS_DIR = path.join(BUILD_DIR, 'assets');
@@ -26,7 +26,7 @@ function formatBytes(bytes) {
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
 function analyzeBundle() {
@@ -50,7 +50,7 @@ function analyzeBundle() {
     fileSizes.push({
       name: file,
       size,
-      formattedSize: formatBytes(size)
+      formattedSize: formatBytes(size),
     });
   });
 
@@ -66,7 +66,8 @@ function analyzeBundle() {
   console.log(`\n📊 Total Bundle Size: ${formatBytes(totalSize)}`);
 
   // Warning for large bundles
-  if (totalSize > 500 * 1024) { // 500KB
+  if (totalSize > 500 * 1024) {
+    // 500KB
     console.log('\n⚠️  Warning: Bundle size is larger than 500KB');
     console.log('💡 Consider:');
     console.log('   - Code splitting with dynamic imports');
@@ -78,13 +79,10 @@ function analyzeBundle() {
   const analysis = {
     timestamp: new Date().toISOString(),
     totalSize,
-    files: fileSizes
+    files: fileSizes,
   };
 
-  fs.writeFileSync(
-    'bundle-analysis.json',
-    JSON.stringify(analysis, null, 2)
-  );
+  fs.writeFileSync('bundle-analysis.json', JSON.stringify(analysis, null, 2));
 
   console.log('\n💾 Analysis saved to bundle-analysis.json');
 }

@@ -12,7 +12,10 @@ interface ErrorBoundaryProps {
   fallback?: React.ComponentType<{error: Error; resetError: () => void}>;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {hasError: false, error: undefined, errorInfo: undefined};
@@ -45,9 +48,14 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   override render() {
     if (this.state.hasError) {
-      if (this.props.fallback) {
+      if (this.props.fallback && this.state.error) {
         const FallbackComponent = this.props.fallback;
-        return <FallbackComponent error={this.state.error!} resetError={this.resetError} />;
+        return (
+          <FallbackComponent
+            error={this.state.error}
+            resetError={this.resetError}
+          />
+        );
       }
 
       return (
@@ -65,11 +73,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
           <Typography variant="body1" color="text.secondary" gutterBottom>
             An unexpected error occurred. Please try refreshing the page.
           </Typography>
-          <Button
-            variant="contained"
-            onClick={this.resetError}
-            sx={{mt: 2}}
-          >
+          <Button variant="contained" onClick={this.resetError} sx={{mt: 2}}>
             Try Again
           </Button>
           {process.env['NODE_ENV'] === 'development' && this.state.error && (

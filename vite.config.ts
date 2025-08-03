@@ -63,7 +63,12 @@ export default defineConfig(({mode}) => {
         output: {
           manualChunks: {
             vendor: ['react', 'react-dom'],
-            mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+            mui: [
+              '@mui/material',
+              '@mui/icons-material',
+              '@emotion/react',
+              '@emotion/styled',
+            ],
             mobx: ['mobx', 'mobx-react', 'mobx-state-tree'],
             router: ['react-router-dom'],
             dnd: ['react-dnd', 'react-dnd-html5-backend'],

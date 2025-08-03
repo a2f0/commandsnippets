@@ -65,7 +65,10 @@ class PerformanceMonitor {
 
     if (componentMetrics.length === 0) return 0;
 
-    const totalTime = componentMetrics.reduce((sum, m) => sum + m.componentRenderTime, 0);
+    const totalTime = componentMetrics.reduce(
+      (sum, m) => sum + m.componentRenderTime,
+      0
+    );
     return totalTime / componentMetrics.length;
   }
 }
