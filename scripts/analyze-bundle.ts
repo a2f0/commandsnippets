@@ -11,17 +11,29 @@ import path from 'node:path';
 const BUILD_DIR = 'build';
 const ASSETS_DIR = path.join(BUILD_DIR, 'assets');
 
-function getFileSize(filePath) {
+interface FileSize {
+  name: string;
+  size: number;
+  formattedSize: string;
+}
+
+interface BundleAnalysis {
+  timestamp: string;
+  totalSize: number;
+  files: FileSize[];
+}
+
+function getFileSize(filePath: string): number {
   try {
     const stats = fs.statSync(filePath);
     return stats.size;
   } catch (error) {
-    console.error(`Error reading file ${filePath}:`, error.message);
+    console.error(`Error reading file ${filePath}:`, (error as Error).message);
     return 0;
   }
 }
 
-function formatBytes(bytes) {
+function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -29,7 +41,7 @@ function formatBytes(bytes) {
   return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
-function analyzeBundle() {
+function analyzeBundle(): void {
   console.log('🔍 Analyzing bundle size...\n');
 
   if (!fs.existsSync(ASSETS_DIR)) {
@@ -41,7 +53,7 @@ function analyzeBundle() {
   const jsFiles = files.filter(file => file.endsWith('.js'));
 
   let totalSize = 0;
-  const fileSizes = [];
+  const fileSizes: FileSize[] = [];
 
   jsFiles.forEach(file => {
     const filePath = path.join(ASSETS_DIR, file);
@@ -76,7 +88,7 @@ function analyzeBundle() {
   }
 
   // Save analysis to file
-  const analysis = {
+  const analysis: BundleAnalysis = {
     timestamp: new Date().toISOString(),
     totalSize,
     files: fileSizes,

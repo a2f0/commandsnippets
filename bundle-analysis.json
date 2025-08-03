@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-08-03T17:32:36.157Z",
+  "totalSize": 906447,
+  "files": [
+    {
+      "name": "index-DSP3IIlg.js",
+      "size": 274567,
+      "formattedSize": "268.13 KB"
+    },
+    {
+      "name": "mui-Cy7_T2ud.js",
+      "size": 236077,
+      "formattedSize": "230.54 KB"
+    },
+    {
+      "name": "mobx-2jXeN97R.js",
+      "size": 167801,
+      "formattedSize": "163.87 KB"
+    },
+    {
+      "name": "utils-w7k8R1NE.js",
+      "size": 134894,
+      "formattedSize": "131.73 KB"
+    },
+    {
+      "name": "dnd-tB5RlhS-.js",
+      "size": 48706,
+      "formattedSize": "47.56 KB"
+    },
+    {
+      "name": "router-CjdsRhWZ.js",
+      "size": 32453,
+      "formattedSize": "31.69 KB"
+    },
+    {
+      "name": "vendor-c5ypKtDW.js",
+      "size": 11949,
+      "formattedSize": "11.67 KB"
+    }
+  ]
+}

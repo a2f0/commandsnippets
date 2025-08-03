@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Use conventional commit syntax when committing files.
