@@ -3,4 +3,5 @@ description:
 globs:
 alwaysApply: true
 ---
-Use conventional commit syntax when committing files.
+- Use conventional commit syntax when committing files.
+- Do not commit changes unless you are explicitly asked to.
