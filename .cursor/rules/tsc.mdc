@@ -3,4 +3,4 @@ description:
 globs:
 alwaysApply: true
 ---
-When using `tsc` to check for TypeScript compilation, always use `tsc -b`. Also, never use `any` as a type, or `as` for type assertion.
+Always use `tsc -b` after making changes to make sure TypeScript compiles. Also, never use `any` as a type, or `as` for type assertion.

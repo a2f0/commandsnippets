@@ -8,6 +8,7 @@ import type {AxiosResponse} from 'axios';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
+import {observer} from 'mobx-react';
 
 import {useAppContext} from './AppContext';
 import {DragHandle} from './DragHandle';
@@ -440,5 +441,5 @@ const Tag = ({
   );
 };
 
-const memoizedTag = React.memo(Tag);
+const memoizedTag = React.memo(observer(Tag));
 export {memoizedTag as Tag};
