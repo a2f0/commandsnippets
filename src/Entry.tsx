@@ -36,7 +36,10 @@ type EntryContainerProps = React.HTMLAttributes<HTMLDivElement> &
 const EntryContainerBase = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->((props, ref) => <div {...props} ref={ref} />);
+>((props, ref) => {
+  const refValue = ref;
+  return <div {...props} ref={refValue} />;
+});
 
 export const EntryContainer: React.ComponentType<EntryContainerProps> = styled(
   EntryContainerBase

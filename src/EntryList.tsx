@@ -326,12 +326,13 @@ const EntryList = () => {
         <EntryNew id="textEntryNewTop" filterAndSortParent={filterAndSort} />
       )}
       {entries.map((element, i) => {
+        const index = i;
         return (
-          <div key={element.id} ref={elRefs[i]}>
+          <div key={element.id} ref={elRefs[index]}>
             <Entry
               key={element.id}
               id={element.id}
-              index={i}
+              index={index}
               moveEntry={moveEntry}
               findEntry={findEntry}
               handleRemoveFromListParent={handleRemoveFromList}

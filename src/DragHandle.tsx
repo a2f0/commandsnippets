@@ -7,7 +7,10 @@ type DragHandleProps = React.HTMLAttributes<HTMLDivElement> &
 const DragHandleBase = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->((props, ref) => <div {...props} ref={ref} />);
+>((props, ref) => {
+  const refValue = ref;
+  return <div {...props} ref={refValue} />;
+});
 
 const DragHandle: React.ComponentType<DragHandleProps> = styled(DragHandleBase)(
   () => ({
