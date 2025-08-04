@@ -6,12 +6,10 @@ A command snippet tool for computer programmers and system administrators. It's 
 
 ### Prerequisites
 
-- Node.js v20.17.0 (specified in `.nvmrc`)
-- pnpm package manager
-
 ### Setup
 
 ```shell
+npm i -g pnpm
 # Install dependencies
 pnpm install
 
@@ -23,24 +21,6 @@ pre-commit run --all-files
 # Start development server
 pnpm run dev
 ```
-
-The development server will be available at `http://localhost:8080/`
-
-### Working on the theme
-
-```shell
-pnpm install ../tearleads-theme
-```
-
-## Technology Stack
-
-- **Frontend Framework**: React with TypeScript
-- **Build Tool**: Vite
-- **State Management**: MobX-State-Tree
-- **UI Library**: Material-UI (MUI)
-- **Package Manager**: pnpm
-- **Linting & Formatting**: Biome
-- **Testing**: Jest
 
 ## Code Quality
 
@@ -57,9 +37,10 @@ Run TypeScript compilation check:
 npx tsc -b
 ```
 
-## Wiki
+## Other
 
-Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information, including bundle sizes.
+- Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information
+- Bundle sizes are in `./bundle-analysis.json`, and can be computed with `./scripts/analyzeBundle.ts`
 
 ## Testing
 
@@ -90,7 +71,7 @@ pnpm run test -- --spec=test/specs/entries/entriesContextMenu.spec.ts
 
 ### Unit Tests
 
-Run Jest tests:
+Run unit tests:
 
 ```shell
 pnpm run unit
