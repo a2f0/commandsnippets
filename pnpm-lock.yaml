@@ -2090,9 +2090,6 @@ packages:
   '@types/node@20.19.7':
     resolution: {integrity: sha512-1GM9z6BJOv86qkPvzh2i6VW5+VVrXxCLknfmTkWEqz+6DqosiY28XUWCTmBcJ0ACzKqx/iwdIREfo1fwExIlkA==}
 
-  '@types/node@24.0.13':
-    resolution: {integrity: sha512-Qm9OYVOFHFYg3wJoTSrz80hoec5Lia/dPp84do3X7dZvLikQvM1YpmvTBEdIr/e+U8HTkFjLHLnl78K/qjf+jQ==}
-
   '@types/node@24.1.0':
     resolution: {integrity: sha512-ut5FthK5moxFKH2T1CUOC6ctR67rQRvvHdFLCD2Ql6KXmMuCrjsSsRI9UsLCm9M18BMwClv4pn327UvB7eeO1w==}
 
@@ -6982,7 +6979,7 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.8
       estree-walker: 2.0.2
-      picomatch: 4.0.2
+      picomatch: 4.0.3
     optionalDependencies:
       rollup: 2.79.2
 
@@ -7277,10 +7274,6 @@ snapshots:
   '@types/node@20.19.7':
     dependencies:
       undici-types: 6.21.0
-
-  '@types/node@24.0.13':
-    dependencies:
-      undici-types: 7.8.0
 
   '@types/node@24.1.0':
     dependencies:
@@ -9197,7 +9190,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 24.0.13
+      '@types/node': 24.1.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
 

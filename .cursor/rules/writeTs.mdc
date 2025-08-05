@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Always write code in TypeScript, never JavaScript.

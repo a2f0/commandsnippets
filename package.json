@@ -10,6 +10,7 @@
   "scripts": {
     "server": "vite serve",
     "server-test": "vite serve --port 8081",
+    "dev": "vite serve --host",
     "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --no-warnings' npx wdio test/wdio.shared.conf.ts",
     "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --no-warnings' npx wdio test/wdio.headless.conf.ts",
     "ci": "start-server-and-test server-test http-get://localhost:8081 test",
