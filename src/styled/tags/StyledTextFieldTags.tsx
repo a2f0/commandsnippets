@@ -3,8 +3,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect} from 'react';
 
 import {useAppContext} from '../../AppContext';
-import {activeSearch} from '../../lib/shared';
-import {appMode} from '../../lib/shared';
+import {activeSearch, appMode} from '../../lib/shared';
 
 interface IStyledTextFieldProps {
   id: string;

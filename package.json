@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.33",
+  "version": "0.7.34",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -16,7 +16,8 @@
     "ci": "start-server-and-test server-test http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test server-test http-get://localhost:8081 test-headless",
     "unit": "npx vitest --no-watch",
-    "format": "biome format --write \"src/**/*.{js,ts,tsx,json}\"",
+    "fix": "biome check --write",
+    "format": "biome format",
     "lint": "biome lint",
     "build": "vite build",
     "postbuild": "scripts/postBuild.sh",

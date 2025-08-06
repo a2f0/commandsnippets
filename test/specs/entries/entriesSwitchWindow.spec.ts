@@ -1,8 +1,9 @@
+import invariant from 'invariant';
 import {entriesResponse} from '../../mocks/entries/entriesResponse';
 import {textEntryPostResponse} from '../../mocks/entries/entryPostResponse';
 import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
-import invariant from 'invariant';
+
 describe('Tab Switching Behavior', () => {
   it.skip('should allow tab switching while editing', async () => {
     await BasePage.open('');

@@ -1,8 +1,5 @@
-import {Box} from '@mui/material';
-import {Fade} from '@mui/material';
-import {Menu} from '@mui/material';
-import {styled} from '@mui/material/styles';
-import {useTheme} from '@mui/material/styles';
+import {Box, Fade, Menu} from '@mui/material';
+import {styled, useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React from 'react';
 

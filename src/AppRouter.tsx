@@ -1,7 +1,7 @@
 import {observer} from 'mobx-react';
 import {memo} from 'react';
-import {BrowserRouter as Router} from 'react-router-dom';
 import {CookiesProvider} from 'react-cookie';
+import {BrowserRouter as Router} from 'react-router-dom';
 
 import {App} from './App';
 import {AppContextProvider} from './AppContext';

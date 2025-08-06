@@ -1,9 +1,8 @@
 import type {MemoryHistory} from 'history';
+import {CookiesProvider} from 'react-cookie';
 import {Router} from 'react-router-dom';
-
 import {App} from '../../src/App';
 import {LoggedInAppContextProvider} from './LoggedInAppContextProvider';
-import {CookiesProvider} from 'react-cookie';
 
 export interface IProps {
   history: MemoryHistory;

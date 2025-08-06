@@ -1,5 +1,4 @@
-import {types} from 'mobx-state-tree';
-import {destroy, flow} from 'mobx-state-tree';
+import {destroy, flow, types} from 'mobx-state-tree';
 
 import {
   activeEntryEditField,
@@ -8,8 +7,8 @@ import {
   appMode,
   entrySearchMethod,
 } from '../../shared';
-import {TagHelpers, TagModel} from './../models/TagModel';
 import type {ITagJsonApi} from './../models/TagModel';
+import {TagHelpers, TagModel} from './../models/TagModel';
 import {
   type ITagTextEntryThroughModelJsonApi,
   TagTextEntryThroughModel,

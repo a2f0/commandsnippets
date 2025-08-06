@@ -5,8 +5,8 @@ import React from 'react';
 import {darkTheme, type Theme} from '../../../../src/theme/themes';
 
 import {useAppContext} from '../../../AppContext';
-import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
 interface IProps {
   onClose: () => void;

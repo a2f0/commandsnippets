@@ -1,8 +1,8 @@
 import {GitHub} from '@mui/icons-material';
 import {observer} from 'mobx-react';
 import React, {useEffect} from 'react';
-import {useNavigate} from 'react-router-dom';
 import {useCookies} from 'react-cookie';
+import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
 import {apiBase} from './lib/api/apiBase';

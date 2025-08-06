@@ -1,6 +1,7 @@
 import {List} from '@mui/material';
 import {styled} from '@mui/material/styles';
 import update from 'immutability-helper';
+import invariant from 'invariant';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import React, {
@@ -13,12 +14,11 @@ import React, {
 } from 'react';
 import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
-import invariant from 'invariant';
 import {useAppContext} from './AppContext';
 import {ItemTypes} from './ItemTypes';
 import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
-import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {type ITagJsonApi, TagHelpers} from './lib/store/models/TagModel';
+import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {Tag} from './Tag';
 import {TagListContextMenu} from './TagListContextMenu';
 import {TagNew} from './TagNew';

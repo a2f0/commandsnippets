@@ -5,6 +5,7 @@ import type {
 import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
+
 interface LogEntry {
   type: 'console' | 'javascript';
   level: 'debug' | 'info' | 'warn' | 'error';

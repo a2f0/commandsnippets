@@ -1,5 +1,4 @@
-import {Menu} from '@mui/material';
-import {MenuItem} from '@mui/material';
+import {Menu, MenuItem} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 
 import {type IMouse, initialMouse} from './lib/shared';

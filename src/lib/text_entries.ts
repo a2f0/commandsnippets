@@ -3,12 +3,12 @@ import type {CancelTokenSource} from 'axios';
 import type {RefObject} from 'react';
 
 import {db} from '../../src/lib/db/db';
-import type {Store} from './store/store';
+import {apiBase} from './api/apiBase';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
 import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
 import type {IUserJsonApi} from './store/models/UserModel';
-import {apiBase} from './api/apiBase';
+import type {Store} from './store/store';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 export interface ITextEntryJsonApiResponse {
   data: Array<ITextEntryJsonApi>;
