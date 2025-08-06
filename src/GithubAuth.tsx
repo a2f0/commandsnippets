@@ -6,12 +6,13 @@ import {useCookies} from 'react-cookie';
 
 import {useAppContext} from './AppContext';
 import {apiBase} from './lib/api/apiBase';
+import {environment} from './lib/environment';
 import {LoginButton} from './styled/LoginButton';
 
 let githubClientID: string;
-if (window.location.hostname === 'app.staging.tearleads.com') {
+if (environment === 'staging') {
   githubClientID = '3be8b14684de28d54a0d';
-} else if (window.location.hostname === 'tearleads.com') {
+} else if (environment === 'production') {
   githubClientID = 'a3cf7c1dfabc3df68b06';
 } else {
   githubClientID = 'a94dc4b2bb6ed4fc63a0';
