@@ -159,6 +159,37 @@ describe('MenuBar', () => {
       expect(
         screen.queryByRole('menu', {name: 'Debug'})
       ).not.toBeInTheDocument();
+
+      // Restore the original module
+      vi.doUnmock('../src/lib/environment');
+      vi.resetModules();
+    });
+
+    it('shows Debug menu in staging environment', async () => {
+      // Mock the environment module to return 'staging' for this test only
+      vi.doMock('../src/lib/environment', () => ({
+        environment: 'staging',
+      }));
+
+      // Clear module cache to ensure the mock is used
+      vi.resetModules();
+
+      // Dynamically import the TestAppRouter to use the mocked environment
+      const {TestAppRouter: MockedTestAppRouter} = await import(
+        './util/TestAppRouter'
+      );
+
+      const history = createMemoryHistory();
+      const route = '/test/test';
+      history.push(route);
+      render(<MockedTestAppRouter history={history} />);
+
+      // In staging, the Debug menu should be rendered (non-production)
+      expect(screen.getByRole('menu', {name: 'Debug'})).toBeInTheDocument();
+
+      // Restore the original module
+      vi.doUnmock('../src/lib/environment');
+      vi.resetModules();
     });
   });
 
