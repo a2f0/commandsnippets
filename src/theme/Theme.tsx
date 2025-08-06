@@ -1,9 +1,7 @@
-// biome-ignore lint: style/useImportType
-import React from 'react';
-import {darkTheme, lightTheme} from './themes';
 import {ThemeProvider as MuiThemeProvider} from '@mui/material/styles';
-
+import type React from 'react';
 import {useAppContext} from '../AppContext';
+import {darkTheme, lightTheme} from './themes';
 
 interface IThemeProps {
   children?: React.ReactNode;

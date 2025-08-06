@@ -1,5 +1,4 @@
-import {Box} from '@mui/material';
-import {Button} from '@mui/material';
+import {Box, Button} from '@mui/material';
 import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';

@@ -3,8 +3,8 @@ import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import type {CancelTokenSource} from 'axios';
 import axios from 'axios';
-import invariant from 'invariant';
 import update from 'immutability-helper';
+import invariant from 'invariant';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import React, {
@@ -24,12 +24,12 @@ import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
 import {appMode, type IMouse, initialMouse} from './lib/shared';
-import type {IEntryFetchPage} from './lib/text_entries';
-import {needsScrollingIntoView} from './lib/text_entries';
 import {
   type ITextEntryJsonApi,
   TextEntryHelpers,
 } from './lib/store/models/TextEntryModel';
+import type {IEntryFetchPage} from './lib/text_entries';
+import {needsScrollingIntoView} from './lib/text_entries';
 
 export interface IParamTypes {
   user: string;

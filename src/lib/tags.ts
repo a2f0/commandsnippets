@@ -1,7 +1,7 @@
-import type {Store} from './store/store';
+import {apiBase} from './api/apiBase';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {IUserJsonApi} from './store/models/UserModel';
-import {apiBase} from './api/apiBase';
+import type {Store} from './store/store';
 
 export interface ITagJsonApiResponse {
   data: ITagJsonApi[];

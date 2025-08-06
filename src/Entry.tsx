@@ -1,10 +1,8 @@
-import {Check} from '@mui/icons-material';
-import {FileCopySharp} from '@mui/icons-material';
+import {Check, FileCopySharp} from '@mui/icons-material';
 import {styled} from '@mui/material/styles';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
-import {useEffect, useMemo, useRef, useState} from 'react';
-import React from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
 
@@ -17,10 +15,9 @@ import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
 import {apiBase} from './lib/api/apiBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
-import {type IMouse, initialMouse} from './lib/shared';
-import {appMode, getSelection} from './lib/shared';
-import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import {appMode, getSelection, type IMouse, initialMouse} from './lib/shared';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
+import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {MemoizedEntryBody} from './styled/text_entries/EntryBody';
 import {MemoizedEntrySubject} from './styled/text_entries/EntrySubject';
 import type {DraggableItem, DropResult} from './Tag';

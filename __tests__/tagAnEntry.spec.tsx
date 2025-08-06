@@ -3,10 +3,10 @@ import '@testing-library/jest-dom';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
-import {http, HttpResponse} from 'msw';
+import invariant from 'invariant';
+import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
-import invariant from 'invariant';
 
 import type {ITagJsonApiResponse} from '../src/lib/tags';
 import type {ITextEntryJsonApiResponse} from '../src/lib/text_entries';

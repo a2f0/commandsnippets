@@ -1,9 +1,8 @@
 import {AppBar, Box} from '@mui/material';
 import {observer} from 'mobx-react';
 import React, {useEffect} from 'react';
-import {useLocation} from 'react-router-dom';
-import {useNavigate} from 'react-router-dom';
 import {useCookies} from 'react-cookie';
+import {useLocation, useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
 import {LeftDrawer} from './drawer/LeftDrawer';

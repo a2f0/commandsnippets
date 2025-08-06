@@ -1,7 +1,5 @@
 import {type Client, createClient} from '@libsql/client';
-
-import type {IEntry, IJunction, ITag, IUser} from '../types';
-import type {ITearleadsDB} from '../types';
+import type {IEntry, IJunction, ITag, ITearleadsDB, IUser} from '../types';
 
 class TearleadsTurso implements ITearleadsDB {
   private client: Client;

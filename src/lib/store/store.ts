@@ -1,9 +1,8 @@
 import type {IDisposer, Instance} from 'mobx-state-tree';
 import {applySnapshot, destroy, onSnapshot} from 'mobx-state-tree';
-
-import {RootModel} from './models/RootModel';
 import {environment} from '../environment';
 import {type appState, defaultState} from '../shared';
+import {RootModel} from './models/RootModel';
 
 export const defaultStateStringified: string = JSON.stringify(defaultState);
 

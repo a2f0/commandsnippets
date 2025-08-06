@@ -1,5 +1,5 @@
 import React from 'react';
-import {Route, Routes as ReactRouterRoutes} from 'react-router-dom';
+import {Routes as ReactRouterRoutes, Route} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
 import {GithubAuth} from './GithubAuth';
