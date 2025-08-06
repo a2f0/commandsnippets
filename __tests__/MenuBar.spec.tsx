@@ -136,24 +136,29 @@ describe('MenuBar', () => {
       expect(screen.getByRole('menu', {name: 'Debug'})).toBeInTheDocument();
     });
 
-    it('hides Debug menu in production environment', () => {
-      // Mock environment to production
-      const originalEnv = process.env['NODE_ENV'];
-      process.env['NODE_ENV'] = 'production';
+    it('hides Debug menu in production environment', async () => {
+      // Mock the environment module to return 'production' for this test only
+      vi.doMock('../src/lib/environment', () => ({
+        environment: 'production',
+      }));
+
+      // Clear module cache to ensure the mock is used
+      vi.resetModules();
+
+      // Dynamically import the TestAppRouter to use the mocked environment
+      const {TestAppRouter: MockedTestAppRouter} = await import(
+        './util/TestAppRouter'
+      );
 
       const history = createMemoryHistory();
       const route = '/test/test';
       history.push(route);
-      render(<TestAppRouter history={history} />);
+      render(<MockedTestAppRouter history={history} />);
 
       // In production, the Debug menu should not be rendered
-      // Since the environment check is done at build time, this test might not work as expected
-      // We'll just verify that the Debug menu exists (it might still be there due to build-time optimization)
-      // This test is more of a documentation of expected behavior rather than a strict assertion
-      // since the environment check happens at build time
-
-      // Restore original environment
-      process.env['NODE_ENV'] = originalEnv;
+      expect(
+        screen.queryByRole('menu', {name: 'Debug'})
+      ).not.toBeInTheDocument();
     });
   });
 
