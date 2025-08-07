@@ -64,4 +64,8 @@ export default defineConfig({
   },
   // Ensure public directory is served correctly for MSW
   publicDir: 'public',
+  // Add module resolution for MSW
+  optimizeDeps: {
+    include: ['msw', 'msw/browser'],
+  },
 });

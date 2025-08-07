@@ -7,15 +7,7 @@ async function enableMocking() {
     return;
   }
 
-  const {setupWorker} = await import('msw/browser');
-  const {handlers} = await import('./handlers');
-
-  // Create and start the worker
-  const worker = setupWorker(...handlers);
-
-  const startResult = await worker.start({
-    onUnhandledRequest: 'bypass', // Don't warn about unhandled requests
-  });
+  const {worker} = await import('./mswWorker');
 
   // Verify that MSW is intercepting the entries endpoint
   try {
@@ -38,7 +30,9 @@ async function enableMocking() {
     );
   }
 
-  return startResult;
+  return worker.start({
+    onUnhandledRequest: 'bypass', // Don't warn about unhandled requests
+  });
 }
 
 export {enableMocking};

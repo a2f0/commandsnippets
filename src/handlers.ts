@@ -159,9 +159,13 @@ const createHandlers = () => {
     handlers.push(
       // Health check endpoint
       http.get(`${baseUrl}/health`, () => {
-        return HttpResponse.json({ status: 'ok' }, {
-          status: 200,
-        });
+        console.log('✅ MSW intercepted health check request');
+        return HttpResponse.json(
+          {status: 'ok'},
+          {
+            status: 200,
+          }
+        );
       }),
 
       // Tags endpoint
