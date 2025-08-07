@@ -71,6 +71,7 @@ describe('MSW Verification Tests', () => {
 
     // The application should work whether or not service workers are registered
     expect(serviceWorkerStatus.serviceWorkerSupported).toBe(true);
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 
   it('should verify API calls are being intercepted by MSW', async () => {
@@ -114,6 +115,7 @@ describe('MSW Verification Tests', () => {
 
     console.log('Network errors found:', networkErrors.length);
     expect(networkErrors).toHaveLength(0);
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 
   it('should verify network errors are handled gracefully', async () => {
@@ -133,6 +135,7 @@ describe('MSW Verification Tests', () => {
     console.log('Network errors found:', networkErrors.length);
     // We expect no network errors since the application should handle them gracefully
     expect(networkErrors).toHaveLength(0);
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 
   it('should verify different HTTP status codes are handled', async () => {
@@ -149,6 +152,7 @@ describe('MSW Verification Tests', () => {
 
     console.log('HTTP errors found:', httpErrors.length);
     expect(httpErrors).toHaveLength(0);
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 
   it('should verify the application loads successfully with mock data', async () => {
@@ -186,5 +190,6 @@ describe('MSW Verification Tests', () => {
 
     // The service worker file should be accessible
     expect(serviceWorkerAccessible).toBe(true);
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
