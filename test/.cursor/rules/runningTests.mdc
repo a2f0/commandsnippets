@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+- You can run individual tests with `npx wdio test/wdio.shared.conf.ts --spec test/specs/tags/tagListContextMenu.spec.ts`, as an example.
