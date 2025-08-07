@@ -15,9 +15,12 @@ interface TagData {
   id: string;
   attributes: {
     name: string;
+    entry_count: number;
     order: number;
     date_updated: string;
     date_created: string;
+    date_last_used: string;
+    is_deleted: boolean;
   };
   relationships: {
     user: {
@@ -51,14 +54,20 @@ interface EntryData {
 interface TagsResponse {
   data: TagData[];
   included: unknown[];
+  links: {
+    next: string | null;
+  };
 }
 
 interface EntriesResponse {
   data: EntryData[];
   included: unknown[];
+  links: {
+    next: string | null;
+  };
 }
 
-// Mock data for tags
+// Mock data for tags (matches test/mocks/tags/tagsResponse.ts)
 const tagsResponse: TagsResponse = {
   data: [
     {
@@ -66,9 +75,12 @@ const tagsResponse: TagsResponse = {
       id: '1',
       attributes: {
         name: 'test-tag-1',
+        entry_count: 0,
         order: 1,
-        date_updated: '2022-05-14T02:33:53.995003',
-        date_created: '2022-05-14T02:33:53.994989',
+        date_updated: '2020-05-07T18:20:00',
+        date_created: '2020-05-07T18:20:00',
+        date_last_used: '2020-05-07T18:20:00',
+        is_deleted: false,
       },
       relationships: {
         user: {
@@ -84,9 +96,54 @@ const tagsResponse: TagsResponse = {
       id: '2',
       attributes: {
         name: 'test-tag-2',
+        entry_count: 0,
         order: 2,
-        date_updated: '2022-05-14T02:33:53.995003',
-        date_created: '2022-05-14T02:33:53.994989',
+        date_updated: '2021-05-07T18:20:00',
+        date_created: '2021-05-07T18:20:00',
+        date_last_used: '2021-05-07T18:20:00',
+        is_deleted: false,
+      },
+      relationships: {
+        user: {
+          data: {
+            type: 'User',
+            id: '1',
+          },
+        },
+      },
+    },
+    {
+      type: 'Tag',
+      id: '3',
+      attributes: {
+        name: 'test-tag-3',
+        entry_count: 0,
+        order: 2,
+        date_updated: '2022-05-07T18:20:00',
+        date_created: '2022-05-07T18:20:00',
+        date_last_used: '2022-05-07T18:20:00',
+        is_deleted: false,
+      },
+      relationships: {
+        user: {
+          data: {
+            type: 'User',
+            id: '1',
+          },
+        },
+      },
+    },
+    {
+      type: 'Tag',
+      id: '4',
+      attributes: {
+        name: 'test-tag-4',
+        entry_count: 0,
+        order: 2,
+        date_updated: '2022-05-08T18:20:00',
+        date_created: '2022-05-08T18:20:00',
+        date_last_used: '2022-05-08T18:20:00',
+        is_deleted: false,
       },
       relationships: {
         user: {
@@ -99,6 +156,9 @@ const tagsResponse: TagsResponse = {
     },
   ],
   included: [],
+  links: {
+    next: null,
+  },
 };
 
 // Mock data for entries
@@ -142,6 +202,9 @@ const entriesResponse: EntriesResponse = {
     },
   ],
   included: [],
+  links: {
+    next: null,
+  },
 };
 
 // Define all possible API base URLs
@@ -168,8 +231,9 @@ const createHandlers = () => {
         );
       }),
 
-      // Tags endpoint
-      http.get(`${baseUrl}/tags`, () => {
+      // Tags endpoint (with optional query parameters)
+      http.get(`${baseUrl}/tags`, (req) => {
+        console.log('✅ MSW intercepted tags request:', req.request.url);
         return HttpResponse.json(tagsResponse, {
           status: 200,
         });
