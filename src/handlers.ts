@@ -157,6 +157,13 @@ const createHandlers = () => {
 
   for (const baseUrl of apiBaseUrls) {
     handlers.push(
+      // Health check endpoint
+      http.get(`${baseUrl}/health`, () => {
+        return HttpResponse.json({ status: 'ok' }, {
+          status: 200,
+        });
+      }),
+
       // Tags endpoint
       http.get(`${baseUrl}/tags`, () => {
         return HttpResponse.json(tagsResponse, {

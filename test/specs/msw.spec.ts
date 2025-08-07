@@ -158,6 +158,43 @@ describe('MSW Verification Tests', () => {
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 
+  it('should verify health check endpoint is intercepted by MSW', async () => {
+    await BasePage.open('');
+    await expect(BasePage.tagLine).toBeDisplayed();
+
+    // Test direct fetch to the health check endpoint
+    const healthResponse = await browser.execute(() => {
+      return fetch('http://localhost:9001/api/v1/health')
+        .then(response => {
+          return {
+            ok: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+            contentType: response.headers.get('content-type'),
+          };
+        })
+        .catch(error => {
+          return {
+            error: error.message,
+            ok: false,
+            status: 0,
+            statusText: '',
+            contentType: null,
+          };
+        });
+    });
+
+    console.log('Health check endpoint response:', healthResponse);
+
+    // Verify that MSW intercepted the request
+    expect(healthResponse.ok).toBe(true);
+    expect(healthResponse.status).toBe(200);
+    if (healthResponse.contentType) {
+      expect(healthResponse.contentType).toContain('application/json');
+    }
+    expect(browser.currentTestErrors).toHaveLength(0);
+  });
+
   it('should verify network errors are handled gracefully', async () => {
     await BasePage.open('');
 
