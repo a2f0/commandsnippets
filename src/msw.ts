@@ -13,9 +13,32 @@ async function enableMocking() {
   // Create and start the worker
   const worker = setupWorker(...handlers);
 
-  return worker.start({
+  const startResult = await worker.start({
     onUnhandledRequest: 'bypass', // Don't warn about unhandled requests
   });
+
+  // Verify that MSW is intercepting the entries endpoint
+  try {
+    const testResponse = await fetch('http://localhost:9001/api/v1/entries', {
+      method: 'GET',
+    });
+
+    if (testResponse.ok) {
+      console.log('✅ MSW successfully intercepting entries endpoint');
+    } else {
+      console.warn(
+        '⚠️ MSW entries endpoint returned non-200 status:',
+        testResponse.status
+      );
+    }
+  } catch (error) {
+    console.error(
+      '❌ Failed to verify MSW entries endpoint interception:',
+      error
+    );
+  }
+
+  return startResult;
 }
 
 export {enableMocking};
