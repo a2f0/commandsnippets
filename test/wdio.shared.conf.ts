@@ -5,6 +5,7 @@ import type {
 import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
+import {MswBrowserController} from './util/mswBrowser';
 
 interface LogEntry {
   type: 'console' | 'javascript';
@@ -40,6 +41,7 @@ declare global {
       currentTestErrors: LogEntry[];
       logout: () => Promise<void>;
       login: () => Promise<void>;
+      msw: MswBrowserController;
     }
   }
 }
@@ -94,6 +96,9 @@ export const config: WebdriverIO.Config = {
   ) => {
     // Initialize currentTestErrors as a property of the browser object
     browser.currentTestErrors = [];
+
+    // Initialize MSW controller
+    browser.msw = new MswBrowserController(browser);
 
     await browser.sessionSubscribe({events: ['log.entryAdded']});
 
