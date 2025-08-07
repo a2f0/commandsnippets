@@ -53,13 +53,29 @@ export const chromeCapabilities: WebdriverIO.Capabilities = {
   },
 };
 
+export const firefoxCapabilities: WebdriverIO.Capabilities = {
+  browserName: 'firefox',
+  'moz:firefoxOptions': {
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    prefs: {
+      'security.fileuri.strict_origin_policy': false,
+      'dom.webdriver.enabled': false,
+      'marionette.log.level': 'Warn',
+      'security.mixed_content.block_active_content': false,
+      'security.mixed_content.block_display_content': false,
+      'network.http.referer.spoofSource': false,
+      'privacy.resistFingerprinting': false,
+    },
+  },
+};
+
 export const config: WebdriverIO.Config = {
   runner: 'local',
   path: '/',
   specs: ['specs/**/*.spec.ts'],
   exclude: [],
   maxInstances: 1,
-  capabilities: [chromeCapabilities],
+  capabilities: [chromeCapabilities], // Changed back to chromeCapabilities from firefoxCapabilities
   logLevel: 'error',
   // Stop running tests after initial failure.
   bail: 1,

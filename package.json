@@ -93,5 +93,10 @@
     "react-dom": "19.1.1",
     "react-highlight-words": "0.21.0",
     "react-router-dom": "7.7.1"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

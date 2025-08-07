@@ -3,5 +3,5 @@
   "compilerOptions": {
     "composite": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "../package.json"]
+  "include": ["**/*.ts", "**/*.tsx", "../package.json", "../public/**/*"]
 }
