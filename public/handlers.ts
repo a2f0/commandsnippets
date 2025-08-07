@@ -9,8 +9,57 @@
 
 import {HttpResponse, http} from 'msw';
 
+// Type definitions for mock data
+interface TagData {
+  type: 'Tag';
+  id: string;
+  attributes: {
+    name: string;
+    order: number;
+    date_updated: string;
+    date_created: string;
+  };
+  relationships: {
+    user: {
+      data: {
+        type: 'User';
+        id: string;
+      };
+    };
+  };
+}
+
+interface EntryData {
+  type: 'TextEntry';
+  id: string;
+  attributes: {
+    content: string;
+    order: number;
+    date_updated: string;
+    date_created: string;
+  };
+  relationships: {
+    user: {
+      data: {
+        type: 'User';
+        id: string;
+      };
+    };
+  };
+}
+
+interface TagsResponse {
+  data: TagData[];
+  included: unknown[];
+}
+
+interface EntriesResponse {
+  data: EntryData[];
+  included: unknown[];
+}
+
 // Mock data for tags
-const tagsResponse = {
+const tagsResponse: TagsResponse = {
   data: [
     {
       type: 'Tag',
@@ -53,7 +102,7 @@ const tagsResponse = {
 };
 
 // Mock data for entries
-const entriesResponse = {
+const entriesResponse: EntriesResponse = {
   data: [
     {
       type: 'TextEntry',
@@ -100,7 +149,7 @@ const apiBaseUrls = [
   'http://localhost:9001/api/v1',
   'https://api.staging.tearleads.com/api/v1',
   'https://api.tearleads.com/api/v1',
-];
+] as const;
 
 // Create handlers for all URLs
 const createHandlers = () => {

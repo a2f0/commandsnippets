@@ -22,7 +22,7 @@ export class MswBrowserController {
       const script = document.createElement('script');
       script.type = 'module';
       script.textContent = `
-        import('/mockServiceWorker.js').then(({ worker }) => {
+        import('/mockServiceWorker.ts').then(({ worker }) => {
           worker.start({ onUnhandledRequest: 'bypass' });
           window.__MSW_WORKER__ = worker;
         }).catch(error => {

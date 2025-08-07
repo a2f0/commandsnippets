@@ -1,4 +1,4 @@
-declare module '*/public/mockServiceWorker.js' {
+declare module '*/public/mockServiceWorker.ts' {
   export interface Worker {
     start(options?: {onUnhandledRequest?: string}): Promise<void>;
     stop(): void;
