@@ -8,7 +8,7 @@ async function enableMocking() {
   }
 
   const {setupWorker} = await import('msw/browser');
-  const {handlers} = await import('../public/handlers');
+  const {handlers} = await import('./handlers');
 
   // Create and start the worker
   const worker = setupWorker(...handlers);
