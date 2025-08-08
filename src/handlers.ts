@@ -36,10 +36,13 @@ interface EntryData {
   type: 'TextEntry';
   id: string;
   attributes: {
-    content: string;
-    order: number;
+    body: string;
+    subject: string;
     date_updated: string;
     date_created: string;
+    reused_count: number;
+    is_deleted: boolean;
+    tag_count: number;
   };
   relationships: {
     user: {
@@ -51,9 +54,19 @@ interface EntryData {
   };
 }
 
+interface UserData {
+  type: 'User';
+  id: string;
+  attributes: {
+    username: string;
+    date_updated: string;
+    date_created: string;
+  };
+}
+
 interface TagsResponse {
   data: TagData[];
-  included: unknown[];
+  included: UserData[];
   links: {
     next: string | null;
   };
@@ -75,7 +88,7 @@ const tagsResponse: TagsResponse = {
       id: '1',
       attributes: {
         name: 'test-tag-1',
-        entry_count: 0,
+        entry_count: 2,
         order: 1,
         date_updated: '2020-05-07T18:20:00',
         date_created: '2020-05-07T18:20:00',
@@ -155,7 +168,16 @@ const tagsResponse: TagsResponse = {
       },
     },
   ],
-  included: [],
+  included: [
+    {
+      type: 'User',
+      id: '1',
+      attributes: {
+        username: 'test',
+        date_updated: '2020-04-13T18:20:00',
+      },
+    },
+  ],
   links: {
     next: null,
   },
@@ -168,10 +190,13 @@ const entriesResponse: EntriesResponse = {
       type: 'TextEntry',
       id: '1',
       attributes: {
-        content: 'test entry 1',
-        order: 1,
+        body: 'test entry 1',
+        subject: 'test-entry-1-subject',
         date_updated: '2022-05-14T02:33:53.995003',
         date_created: '2022-05-14T02:33:53.994989',
+        reused_count: 0,
+        is_deleted: false,
+        tag_count: 1,
       },
       relationships: {
         user: {
@@ -186,10 +211,13 @@ const entriesResponse: EntriesResponse = {
       type: 'TextEntry',
       id: '2',
       attributes: {
-        content: 'test entry 2',
-        order: 2,
+        body: 'test entry 2',
+        subject: 'test-entry-2-subject',
         date_updated: '2022-05-14T02:33:53.995003',
         date_created: '2022-05-14T02:33:53.994989',
+        reused_count: 0,
+        is_deleted: false,
+        tag_count: 1,
       },
       relationships: {
         user: {

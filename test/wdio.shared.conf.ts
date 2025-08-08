@@ -40,6 +40,7 @@ declare global {
       currentTestErrors: LogEntry[];
       logout: () => Promise<void>;
       login: () => Promise<void>;
+      openDevTools: () => Promise<void>;
     }
   }
 }
@@ -49,7 +50,8 @@ export const chromeCapabilities: WebdriverIO.Capabilities = {
   'goog:chromeOptions': {
     args: [
       '--disable-web-security',
-      '--auto-open-devtools-for-tabs',
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
       '--disable-background-timer-throttling',
       '--disable-backgrounding-occluded-windows',
       '--disable-renderer-backgrounding'

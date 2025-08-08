@@ -7,30 +7,36 @@ describe('Tag Search Menu Behavior', () => {
     await browser.login();
     await BasePage.open('');
 
-    // Open DevTools to see network requests
-    await browser.openDevTools();
+    // (Removed DevTools to prevent browser window issues)
 
     // Wait for the authenticated app to load
     await browser.pause(2000);
 
-    // // Verify MSW is working by checking API directly
-    // const apiResult = await browser.execute(async () => {
-    //   try {
-    //     const response = await fetch('http://localhost:9001/api/v1/tags');
-    //     const data = await response.json();
-    //     return { ok: response.ok, dataLength: data.data?.length || 0 };
-    //   } catch (error) {
-    //     return { ok: false, error: error.message };
-    //   }
-    // });
+    // Debug: Check what's on the page
+    const pageTitle = await browser.getTitle();
+    console.log('Page title:', pageTitle);
+
+    const pageUrl = await browser.getUrl();
+    console.log('Page URL:', pageUrl);
+
+    // Verify MSW is working by checking API directly
+    const apiResult = await browser.execute(async () => {
+      try {
+        const response = await fetch('http://localhost:9001/api/v1/tags');
+        const data = await response.json();
+        return { ok: response.ok, dataLength: data.data?.length || 0 };
+      } catch (error) {
+        return { ok: false, error: (error as Error).message };
+      }
+    });
+
+    console.log('API result:', apiResult);
 
     // MSW should be providing 4 tags
-    // expect(apiResult.ok).toBe(true);
-    // expect(apiResult.dataLength).toBe(4);
+    expect(apiResult.ok).toBe(true);
+    expect(apiResult.dataLength).toBe(4);
 
     // Since MSW is providing 4 tags, the UI should show 4 tags
-    await browser.pause(120000);
-
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagSearch).toBeExisting();
     await expect(BasePage.tagSearch).toBeDisplayed();
@@ -52,7 +58,5 @@ describe('Tag Search Menu Behavior', () => {
     await expect(BasePage.tagSearch).toHaveValue('');
 
     expect(browser.currentTestErrors).toHaveLength(0);
-
-
   });
 });
