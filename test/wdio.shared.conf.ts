@@ -47,7 +47,17 @@ declare global {
 export const chromeCapabilities: WebdriverIO.Capabilities = {
   browserName: 'chrome',
   'goog:chromeOptions': {
-    args: ['--disable-web-security'],
+    args: [
+      '--disable-web-security',
+      '--auto-open-devtools-for-tabs',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding'
+    ],
+    prefs: {
+      'devtools.preferences.currentDockState': '"undocked"',
+      'devtools.preferences.panel-selectedTab': '"network"'
+    }
   },
 };
 
@@ -160,6 +170,23 @@ export const config: WebdriverIO.Config = {
       await browser.setCookies({
         name: 'LoggedIn',
         value: 'None',
+      });
+    });
+
+    browser.addCommand('openDevTools', async () => {
+      await browser.execute(() => {
+        // Try to open DevTools via keyboard shortcut
+        const event = new KeyboardEvent('keydown', {
+          key: 'F12',
+          code: 'F12',
+          keyCode: 123,
+          which: 123,
+          ctrlKey: false,
+          shiftKey: false,
+          metaKey: false,
+          bubbles: true
+        });
+        document.dispatchEvent(event);
       });
     });
   },
