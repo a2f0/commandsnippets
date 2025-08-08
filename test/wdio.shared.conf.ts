@@ -54,12 +54,12 @@ export const chromeCapabilities: WebdriverIO.Capabilities = {
       '--disable-dev-shm-usage',
       '--disable-background-timer-throttling',
       '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding'
+      '--disable-renderer-backgrounding',
     ],
     prefs: {
       'devtools.preferences.currentDockState': '"undocked"',
-      'devtools.preferences.panel-selectedTab': '"network"'
-    }
+      'devtools.preferences.panel-selectedTab': '"network"',
+    },
   },
 };
 
@@ -186,7 +186,7 @@ export const config: WebdriverIO.Config = {
           ctrlKey: false,
           shiftKey: false,
           metaKey: false,
-          bubbles: true
+          bubbles: true,
         });
         document.dispatchEvent(event);
       });

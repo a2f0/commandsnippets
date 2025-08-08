@@ -24,9 +24,9 @@ describe('Tag Search Menu Behavior', () => {
       try {
         const response = await fetch('http://localhost:9001/api/v1/tags');
         const data = await response.json();
-        return { ok: response.ok, dataLength: data.data?.length || 0 };
+        return {ok: response.ok, dataLength: data.data?.length || 0};
       } catch (error) {
-        return { ok: false, error: (error as Error).message };
+        return {ok: false, error: (error as Error).message};
       }
     });
 

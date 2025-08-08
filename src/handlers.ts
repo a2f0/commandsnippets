@@ -260,7 +260,7 @@ const createHandlers = () => {
       }),
 
       // Tags endpoint (with optional query parameters)
-      http.get(`${baseUrl}/tags`, (req) => {
+      http.get(`${baseUrl}/tags`, req => {
         console.log('✅ MSW intercepted tags request:', req.request.url);
         return HttpResponse.json(tagsResponse, {
           status: 200,
