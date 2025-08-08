@@ -171,7 +171,7 @@ describe('MSW Verification Tests', () => {
         return {
           pageLoaded: true,
           entriesResponse: {
-            error: error.message,
+            error: (error as Error).message,
             ok: false,
             status: 0,
           },
@@ -186,10 +186,10 @@ describe('MSW Verification Tests', () => {
 
     // If MSW is working, we should get a successful response
     // If MSW is not working, we might get a network error or CORS error
-    if (entriesResponse.ok) {
+    if (entriesResponse && entriesResponse.ok) {
       console.log('✅ Entries endpoint successfully intercepted by MSW');
       expect(entriesResponse.status).toBe(200);
-    } else if ('error' in entriesResponse) {
+    } else if (entriesResponse && 'error' in entriesResponse) {
       console.log('⚠️ Entries endpoint request failed:', entriesResponse.error);
       // This might be expected if MSW isn't running, so we won't fail the test
       // but we'll log it for information
@@ -230,7 +230,7 @@ describe('MSW Verification Tests', () => {
         return {
           pageLoaded: true,
           healthResponse: {
-            error: error.message,
+            error: (error as Error).message,
             ok: false,
             status: 0,
           },
@@ -244,10 +244,10 @@ describe('MSW Verification Tests', () => {
     console.log('Health check endpoint response:', healthResponse);
 
     // Verify that MSW intercepted the request and returned the expected mock response
-    expect(healthResponse.ok).toBe(true);
-    expect(healthResponse.status).toBe(200);
-    expect(healthResponse.data).toEqual({status: 'ok'});
-    if (healthResponse.contentType) {
+    expect(healthResponse?.ok).toBe(true);
+    expect(healthResponse?.status).toBe(200);
+    expect(healthResponse?.data).toEqual({status: 'ok'});
+    if (healthResponse?.contentType) {
       expect(healthResponse.contentType).toContain('application/json');
     }
     expect(browser.currentTestErrors).toHaveLength(0);
@@ -335,6 +335,62 @@ describe('MSW Verification Tests', () => {
 
     // The service worker file should be accessible
     expect(serviceWorkerAccessible).toBe(true);
+    expect(browser.currentTestErrors).toHaveLength(0);
+  });
+
+  it('should verify tags endpoint is intercepted by MSW', async () => {
+    await BasePage.open('');
+
+    // Check page load and test tags endpoint in one call
+    const result = await browser.execute(async () => {
+      // First check if page loaded
+      const pageLoaded =
+        document.body.textContent && document.body.textContent.length > 0;
+
+      if (!pageLoaded) {
+        return {pageLoaded: false};
+      }
+
+      // Then test the tags endpoint
+      try {
+        const response = await fetch('http://localhost:9001/api/v1/tags');
+        const data = await response.json();
+        return {
+          pageLoaded: true,
+          tagsResponse: {
+            ok: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+            contentType: response.headers.get('content-type'),
+            dataLength: data.data?.length || 0,
+            data: data,
+          },
+        };
+      } catch (error) {
+        return {
+          pageLoaded: true,
+          tagsResponse: {
+            error: (error as Error).message,
+            ok: false,
+            status: 0,
+            dataLength: 0,
+          },
+        };
+      }
+    });
+
+    expect(result.pageLoaded).toBe(true);
+    const tagsResponse = result.tagsResponse;
+
+    console.log('Tags endpoint response:', tagsResponse);
+
+    // Verify that MSW intercepted the request and returned the expected mock response
+    expect(tagsResponse?.ok).toBe(true);
+    expect(tagsResponse?.status).toBe(200);
+    expect(tagsResponse?.dataLength).toBe(4);
+    if (tagsResponse?.contentType) {
+      expect(tagsResponse.contentType).toContain('application/json');
+    }
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
