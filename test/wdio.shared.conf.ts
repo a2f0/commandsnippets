@@ -120,14 +120,15 @@ export const config: WebdriverIO.Config = {
             // Check if service worker is controlling the page
             const hasServiceWorker = !!navigator.serviceWorker?.controller;
             // Check if page content is loaded
-            const pageLoaded = document.body.textContent && document.body.textContent.length > 0;
+            const pageLoaded =
+              document.body.textContent && document.body.textContent.length > 0;
             return hasMSWWorker && hasServiceWorker && pageLoaded;
           });
           return mswReady;
         },
         {
           timeout: 10000,
-          timeoutMsg: 'MSW not ready within 10 seconds'
+          timeoutMsg: 'MSW not ready within 10 seconds',
         }
       );
     });
@@ -198,9 +199,6 @@ export const config: WebdriverIO.Config = {
         document.dispatchEvent(event);
       });
     });
-  },
-  beforeTest: async () => {
-    await browser.waitForMSW();
   },
   afterTest: async () => {
     await browser.mockRestoreAll();

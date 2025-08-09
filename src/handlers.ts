@@ -175,6 +175,7 @@ const tagsResponse: TagsResponse = {
       attributes: {
         username: 'test',
         date_updated: '2020-04-13T18:20:00',
+        date_created: '2020-04-13T18:20:00',
       },
     },
   ],

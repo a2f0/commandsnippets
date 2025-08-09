@@ -25,7 +25,7 @@ async function init() {
       (window as any).__MSW_WORKER__ = worker;
 
       // Wait for service worker to be controlling the page
-      await new Promise<void>((resolve) => {
+      await new Promise<void>(resolve => {
         const checkServiceWorker = () => {
           if (navigator.serviceWorker?.controller) {
             resolve();
