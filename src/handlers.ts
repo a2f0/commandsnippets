@@ -268,6 +268,53 @@ const createHandlers = () => {
         });
       }),
 
+      // Create new tag endpoint
+      http.post(`${baseUrl}/tags`, async req => {
+        console.log('✅ MSW intercepted tags POST request');
+        const body = await req.request.json();
+        console.log('Tag POST body:', body);
+
+        // Return a new tag response based on the request body
+        const newTag = {
+          data: {
+            type: 'Tag',
+            id: '5', // Use a new ID
+            attributes: {
+              name: body.data?.attributes?.name || 'new-tag',
+              date_updated: new Date().toISOString(),
+              date_created: new Date().toISOString(),
+              date_last_used: new Date().toISOString(),
+              is_deleted: false,
+              entry_count: 0,
+              order: 5,
+            },
+            relationships: {
+              user: {
+                data: {
+                  type: 'User',
+                  id: '1',
+                },
+              },
+            },
+          },
+          included: [
+            {
+              type: 'User',
+              id: '1',
+              attributes: {
+                username: 'test',
+                date_updated: '2020-04-13T18:20:00',
+                date_created: '2020-04-13T18:20:00',
+              },
+            },
+          ],
+        };
+
+        return HttpResponse.json(newTag, {
+          status: 201,
+        });
+      }),
+
       // Entries endpoint
       http.get(`${baseUrl}/entries`, () => {
         return HttpResponse.json(entriesResponse, {
