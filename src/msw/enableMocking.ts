@@ -34,7 +34,7 @@ export async function enableMocking() {
   // Verify MSW is working with a health check
   try {
     await healthCheck();
-  } catch (error) {
+  } catch (_error) {
     // Health check failure is logged but doesn't stop initialization
     // This allows the app to continue working even if health check fails
   }
