@@ -40,7 +40,6 @@ declare global {
       currentTestErrors: LogEntry[];
       logout: () => Promise<void>;
       login: () => Promise<void>;
-      openDevTools: () => Promise<void>;
       waitForMSW: () => Promise<void>;
       resetMSWHandlers: () => Promise<void>;
     }
@@ -193,23 +192,6 @@ export const config: WebdriverIO.Config = {
       await browser.setCookies({
         name: 'LoggedIn',
         value: 'None',
-      });
-    });
-
-    browser.addCommand('openDevTools', async () => {
-      await browser.execute(() => {
-        // Try to open DevTools via keyboard shortcut
-        const event = new KeyboardEvent('keydown', {
-          key: 'F12',
-          code: 'F12',
-          keyCode: 123,
-          which: 123,
-          ctrlKey: false,
-          shiftKey: false,
-          metaKey: false,
-          bubbles: true,
-        });
-        document.dispatchEvent(event);
       });
     });
   },
