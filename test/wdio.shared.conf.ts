@@ -215,6 +215,9 @@ export const config: WebdriverIO.Config = {
       });
     });
   },
+  beforeTest: async () => {
+    await browser.waitForMSW();
+  },
   afterTest: async () => {
     await browser.mockRestoreAll();
   },

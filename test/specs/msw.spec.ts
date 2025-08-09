@@ -2,11 +2,7 @@ import {BasePage} from '../pageobjects/base';
 
 describe('MSW Verification Tests', () => {
   beforeEach(async () => {
-    // Navigate to the page to ensure MSW is initialized
     await BasePage.open('');
-
-    // Wait for MSW to be fully initialized using the helper command
-    await browser.waitForMSW();
   });
 
   afterEach(async () => {
