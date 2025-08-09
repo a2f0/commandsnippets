@@ -1,7 +1,3 @@
-import invariant from 'invariant';
-import {entriesResponse} from '../../../mocks/entries/entriesResponse';
-import {entryPatchResponse} from '../../../mocks/entries/entryPatchResponse';
-import {tagsResponse} from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {

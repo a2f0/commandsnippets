@@ -11,7 +11,7 @@ describe('TagsEntries Behavior', () => {
     await BasePage.open('');
     await browser.login();
     await expect(BasePage.tagLine).toBeDisplayed();
-    
+
     // Navigate to the tag page
     await BasePage.open('test/test-tag-1');
 

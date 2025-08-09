@@ -1,6 +1,3 @@
-import {logOutPostResponse} from '../../mocks/authentication/logoutResponse';
-import {entriesResponse} from '../../mocks/entries/entriesResponse';
-import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Logged Out User Behavior', () => {

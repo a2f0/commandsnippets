@@ -1,7 +1,3 @@
-import {entriesResponseEmpty} from '../../mocks/entries/entriesResponseEmpty';
-import {textEntryPostResponse} from '../../mocks/entries/entryPostResponse';
-import {tagTextEntryThroughModelsResponse} from '../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
-import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entry Main Menu Behavior', () => {

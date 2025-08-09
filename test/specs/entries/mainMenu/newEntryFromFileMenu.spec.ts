@@ -1,7 +1,3 @@
-import {entriesResponse} from '../../../mocks/entries/entriesResponse';
-import {textEntryPostResponse} from '../../../mocks/entries/entryPostResponse';
-import {tagTextEntryThroughModelsResponse} from '../../../mocks/tag_text_entry_through_models/tagTextEntryThroughModelsResponse';
-import {tagsResponse} from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
@@ -37,12 +33,16 @@ describe('Entry Main Menu', () => {
     // Test basic form functionality
     await expect(BasePage.entryNewTopSubject).toBeFocused();
     await browser.keys('Test Subject from File Menu');
-    expect(BasePage.entryNewTopSubject).toHaveValue('Test Subject from File Menu');
+    expect(BasePage.entryNewTopSubject).toHaveValue(
+      'Test Subject from File Menu'
+    );
 
     await (await BasePage.entryNewTopBody).waitAndLeftClick();
     await expect(BasePage.entryNewTopBody).toBeFocused();
     await browser.keys('Test body content from file menu');
-    expect(BasePage.entryNewTopBody).toHaveValue('Test body content from file menu');
+    expect(BasePage.entryNewTopBody).toHaveValue(
+      'Test body content from file menu'
+    );
 
     console.log(
       '✅ File menu entry creation test completed: all basic MSW-integrated functionality verified'

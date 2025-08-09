@@ -247,7 +247,7 @@ const createHandlers = () => {
       // Entries endpoint (with optional query parameters)
       http.get(`${baseUrl}/entries`, req => {
         console.log('✅ MSW intercepted entries request:', req.request.url);
-        
+
         // Always return entries - simplify for testing
         return HttpResponse.json(entriesResponse, {
           status: 200,
