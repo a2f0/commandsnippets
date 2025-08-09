@@ -19,6 +19,5 @@ export const config: WebdriverIO.Config = {
   ...sharedConfig,
   ...{
     capabilities: [headlessChromeCapabilities],
-    logLevel: 'debug',
   },
 };
