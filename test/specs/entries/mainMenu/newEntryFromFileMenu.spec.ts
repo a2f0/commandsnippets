@@ -15,18 +15,18 @@ describe('Entry Main Menu', () => {
     // Test basic file menu functionality
     await expect(BasePage.fileMenu).toBeExisting();
     await expect(BasePage.fileMenu).not.toBeDisplayed();
-    await (await BasePage.fileMenuButton).waitAndLeftClick();
+    await BasePage.fileMenuButton.waitAndLeftClick();
     await expect(BasePage.fileMenu).toBeDisplayed();
 
     // Close menu with escape and reopen
     await browser.keys('Escape');
     await expect(BasePage.fileMenu).not.toBeDisplayed();
-    await (await BasePage.fileMenuButton).waitAndLeftClick();
+    await BasePage.fileMenuButton.waitAndLeftClick();
     await expect(BasePage.fileMenu).toBeDisplayed();
 
     // Test opening new entry form from file menu
     await expect(BasePage.entryNewTop).not.toBeExisting();
-    await (await BasePage.fileMenuNewEntry).waitAndLeftClick();
+    await BasePage.fileMenuNewEntry.waitAndLeftClick();
     await expect(BasePage.entryNewTop).toBeExisting();
     await expect(BasePage.entryNewTop).toBeDisplayed();
 
@@ -37,7 +37,7 @@ describe('Entry Main Menu', () => {
       'Test Subject from File Menu'
     );
 
-    await (await BasePage.entryNewTopBody).waitAndLeftClick();
+    await BasePage.entryNewTopBody.waitAndLeftClick();
     await expect(BasePage.entryNewTopBody).toBeFocused();
     await browser.keys('Test body content from file menu');
     expect(BasePage.entryNewTopBody).toHaveValue(
