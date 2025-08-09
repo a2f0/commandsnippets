@@ -4,10 +4,7 @@ import {AppRouter} from './AppRouter';
 
 async function init() {
   // Enable MSW in development and test environments using the unified setup
-  if (
-    process.env['NODE_ENV'] === 'development' ||
-    process.env['NODE_ENV'] === 'test'
-  ) {
+  if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     try {
       const {enableMocking} = await import('./msw');
       await enableMocking();

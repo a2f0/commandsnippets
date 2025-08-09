@@ -55,17 +55,4 @@ export default defineConfig({
       },
     }),
   ],
-  // Configure MSW to be served properly
-  define: {
-    // Ensure MSW can access the worker script
-    'process.env.NODE_ENV': JSON.stringify(
-      process.env['NODE_ENV'] || 'development'
-    ),
-  },
-  // Ensure public directory is served correctly for MSW
-  publicDir: 'public',
-  // Add module resolution for MSW
-  optimizeDeps: {
-    include: ['msw', 'msw/browser'],
-  },
 });

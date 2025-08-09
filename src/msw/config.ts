@@ -13,7 +13,5 @@ export const MSW_CONFIG = {
   healthCheckUrl: 'http://localhost:9001/api/v1/health',
 
   // Environment check
-  isEnabled: () =>
-    process.env['NODE_ENV'] === 'development' ||
-    process.env['NODE_ENV'] === 'test',
+  isEnabled: () => import.meta.env.DEV || import.meta.env.MODE === 'test',
 } as const;
