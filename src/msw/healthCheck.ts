@@ -10,11 +10,11 @@ import {MSW_CONFIG} from './config';
 export async function healthCheck(): Promise<void> {
   try {
     const response = await fetch(MSW_CONFIG.healthCheckUrl);
-    
+
     if (!response.ok) {
       throw new Error(`Health check failed with status: ${response.status}`);
     }
-    
+
     const data = await response.json();
     console.log('✅ MSW health check successful:', data);
   } catch (error) {
