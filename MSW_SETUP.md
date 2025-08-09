@@ -8,16 +8,25 @@ This project uses Mock Service Worker (MSW) to provide consistent API mocking ac
 
 ```
 src/
-├── handlers.ts        # All API mock handlers (single source of truth)
-├── mswWorker.ts      # MSW worker setup
-├── msw.ts            # Unified initialization function
-└── index.tsx         # App entry point that initializes MSW
+├── msw/                    # MSW module (organized by functionality)
+│   ├── index.ts           # Main exports - import MSW from here
+│   ├── enableMocking.ts   # Main initialization function
+│   ├── config.ts          # Configuration constants and utilities
+│   ├── worker.ts          # MSW service worker setup
+│   ├── handlers.ts        # All API mock handlers (single source of truth)
+│   ├── browser.ts         # Browser-specific utilities (window globals)
+│   ├── healthCheck.ts     # Health check utilities
+│   └── README.md          # MSW module documentation
+└── index.tsx              # App entry point that initializes MSW
 
 test/
-└── wdio.shared.conf.ts  # Test config that uses the same MSW instance
+└── wdio.shared.conf.ts     # Test config that uses the same MSW instance
 
 public/
-└── mockServiceWorker.js  # MSW service worker (auto-generated)
+└── mockServiceWorker.js    # MSW service worker (auto-generated)
+
+types/
+└── window.d.ts             # Global type declarations for MSW
 ```
 
 ## Key Components

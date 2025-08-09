@@ -1,6 +1,6 @@
 import {HttpResponse, http} from 'msw';
-import type {ITagJsonApiResponse, ITagJsonApiResponseSingle} from './lib/tags';
-import type {ITextEntryJsonApiResponse} from './lib/text_entries';
+import type {ITagJsonApiResponse, ITagJsonApiResponseSingle} from '../lib/tags';
+import type {ITextEntryJsonApiResponse} from '../lib/text_entries';
 
 // Mock data for tags (matches test/mocks/tags/tagsResponse.ts)
 // Keep original immutable for resets
