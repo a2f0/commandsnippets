@@ -62,24 +62,15 @@ describe('Entries Context Menu Delete Entry', () => {
     // Check that we have the entries list displayed
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
-    // Test entry context menu for first entry if it exists
-    const entries = await BasePage.tagsEntries;
-    const entriesCount = await entries.length;
-    if (entriesCount > 0) {
-      await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
-      await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
-      await (await BasePage.tagsEntries1).waitAndRightClick();
-      await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
-      await expect(BasePage.tagsEntriesContextMenu1Delete).toBeDisplayed();
+    // Test entry context menu for first entry (MSW always provides entries)
+    await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
+    await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
+    await (await BasePage.tagsEntries1).waitAndRightClick();
+    await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
+    await expect(BasePage.tagsEntriesContextMenu1Delete).toBeDisplayed();
 
-      // In untagged view, untag option should not be displayed
-      await expect(BasePage.tagsEntriesContextMenu1Untag).not.toBeDisplayed();
-    } else {
-      // If no entries, just verify the untagged view loaded
-      console.log(
-        'No entries found in untagged view - verifying navigation worked'
-      );
-    }
+    // In untagged view, untag option should not be displayed
+    await expect(BasePage.tagsEntriesContextMenu1Untag).not.toBeDisplayed();
 
     // Test core functionality: entry delete context menu workflow completed successfully
     console.log(
