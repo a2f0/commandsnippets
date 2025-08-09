@@ -24,6 +24,10 @@ async function init() {
       // Store worker reference globally for tests
       (window as any).__MSW_WORKER__ = worker;
 
+      // Expose reset function for tests
+      const {resetMSWState} = await import('./handlers');
+      (window as any).resetMSWState = resetMSWState;
+
       // Wait for service worker to be controlling the page
       await new Promise<void>(resolve => {
         const checkServiceWorker = () => {

@@ -139,6 +139,10 @@ export const config: WebdriverIO.Config = {
       await browser.execute(() => {
         if (window.__MSW_WORKER__) {
           window.__MSW_WORKER__.resetHandlers();
+          // Reset stateful MSW data
+          if (window.resetMSWState) {
+            window.resetMSWState();
+          }
         }
       });
     });

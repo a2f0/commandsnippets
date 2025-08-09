@@ -12,7 +12,8 @@ import type {ITagJsonApiResponse, ITagJsonApiResponseSingle} from './lib/tags';
 import type {ITextEntryJsonApiResponse} from './lib/text_entries';
 
 // Mock data for tags (matches test/mocks/tags/tagsResponse.ts)
-const tagsResponse: ITagJsonApiResponse = {
+// Keep original immutable for resets
+const originalTagsResponse: ITagJsonApiResponse = {
   data: [
     {
       type: 'Tag',
@@ -113,6 +114,9 @@ const tagsResponse: ITagJsonApiResponse = {
     next: null,
   },
 };
+
+// Mutable copy for stateful operations
+let tagsResponse: ITagJsonApiResponse = JSON.parse(JSON.stringify(originalTagsResponse));
 
 // Mock data for entries
 const entriesResponse: ITextEntryJsonApiResponse = {
@@ -256,6 +260,17 @@ const createHandlers = () => {
 
       http.post(`${baseUrl}/tags/reorder`, () => {
         return HttpResponse.json({data: null}, {status: 200});
+      }),
+
+      // Delete tag endpoint with stateful behavior
+      http.delete(`${baseUrl}/tags/:id`, ({params}) => {
+        const tagId = params.id as string;
+        console.log('✅ MSW intercepted tag DELETE request for id:', tagId);
+
+        // Remove the tag from our mock data
+        tagsResponse.data = tagsResponse.data.filter(tag => tag.id !== tagId);
+
+        return HttpResponse.json(null, {status: 204});
       })
     );
   }
@@ -277,5 +292,10 @@ const createHandlers = () => {
 };
 
 export const handlers = createHandlers();
+
+// Reset function to restore original state
+export const resetMSWState = () => {
+  tagsResponse = JSON.parse(JSON.stringify(originalTagsResponse));
+};
 
 /* prettier-ignore-end */
