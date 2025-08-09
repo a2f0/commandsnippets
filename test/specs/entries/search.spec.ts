@@ -49,7 +49,6 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.entrySearch).toBeDisplayed();
 
     // Wait for the page to fully load
-    await browser.pause(2000);
 
     // Test entry search functionality by directly interacting with search field
     // Skip complex Tab navigation testing in headless mode - focus on core functionality
@@ -57,11 +56,9 @@ describe('TagsEntries Behavior', () => {
     await (await BasePage.entrySearch).setValue('entry-1');
 
     // Verify search filtering worked - should show fewer entries
-    await browser.pause(1000); // Give search time to filter
 
     // Test Escape key clears search
     await browser.keys('Escape');
-    await browser.pause(500);
 
     // Verify entry search field is cleared
     await expect(BasePage.entrySearch).toHaveValue('');

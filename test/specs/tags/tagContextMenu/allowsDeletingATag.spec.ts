@@ -90,7 +90,6 @@ describe('Tag Context Menu', () => {
     // Verify the delete dialog has closed (main test objective)
     // The UI behavior after deletion depends on the frontend implementation
     // For now, we focus on testing that the delete interaction works properly
-    await browser.pause(1000);
 
     // Test that the context menu is hidden after deletion
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();

@@ -10,7 +10,6 @@ describe('Tag Search Menu Behavior', () => {
     // (Removed DevTools to prevent browser window issues)
 
     // Wait for the authenticated app to load
-    await browser.pause(2000);
 
     // Debug: Check what's on the page
     const pageTitle = await browser.getTitle();

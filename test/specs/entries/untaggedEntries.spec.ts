@@ -44,7 +44,6 @@ describe('Entry Main Menu Behavior', () => {
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
     // Wait for the page to load and display content
-    await browser.pause(2000);
 
     // Test entries menu functionality
     await expect(BasePage.entriesMenu).toBeExisting();

@@ -47,7 +47,6 @@ describe('Tag Main Menu', () => {
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
 
     let tags = await BasePage.tags;
-    await browser.pause(2000); // Wait for any animations or async updates
 
     // Verify the first tag is selected (has dark background color)
     await expect(

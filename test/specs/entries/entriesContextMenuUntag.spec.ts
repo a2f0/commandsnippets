@@ -44,7 +44,6 @@ describe('Entries Context Menu Untag', () => {
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
     // Wait for content to load
-    await browser.pause(2000);
 
     // Check that we have the entries list displayed
     await expect(BasePage.tagsEntriesList).toBeExisting();
@@ -71,7 +70,6 @@ describe('Entries Context Menu Untag', () => {
       await (await BasePage.tagsEntriesContextMenu1Untag).waitAndLeftClick();
 
       // Verify context menu closed after untag
-      await browser.pause(1000);
       await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
 
       // Test core functionality: untag workflow completed successfully

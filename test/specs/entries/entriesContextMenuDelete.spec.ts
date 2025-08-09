@@ -44,7 +44,6 @@ describe('Entries Context Menu Delete Entry', () => {
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
     // Wait for content to load
-    await browser.pause(2000);
 
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
 
@@ -59,7 +58,6 @@ describe('Entries Context Menu Delete Entry', () => {
     );
 
     // Wait for untagged entries view to load fully
-    await browser.pause(2000);
 
     // Check that we have the entries list displayed
     await expect(BasePage.tagsEntriesList).toBeDisplayed();

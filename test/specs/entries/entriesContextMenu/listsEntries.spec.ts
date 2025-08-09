@@ -42,7 +42,6 @@ describe('TagsEntries Behavior', () => {
     await browser.login();
     await BasePage.open('test/test-tag-1');
     // Wait for content to load
-    await browser.pause(2000);
 
     // Verify entries list is displayed
     await expect(BasePage.tagsEntriesList).toBeExisting();
@@ -61,7 +60,6 @@ describe('TagsEntries Behavior', () => {
 
       // Press Escape to close context menu
       await browser.keys('Escape');
-      await browser.pause(500);
       await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
 
       console.log(
