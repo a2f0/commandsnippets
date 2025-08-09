@@ -24,11 +24,11 @@ async function enableMocking() {
   });
 
   // Store worker reference globally for tests to access
-  (window as any).__MSW_WORKER__ = worker;
+  window.__MSW_WORKER__ = worker;
 
   // Expose reset function for tests
   const {resetMSWState} = await import('./handlers');
-  (window as any).resetMSWState = resetMSWState;
+  window.resetMSWState = resetMSWState;
 
   // Verify MSW is working by testing the health endpoint
   try {

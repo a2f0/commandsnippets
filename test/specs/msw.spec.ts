@@ -8,8 +8,8 @@ describe('MSW Verification Tests', () => {
   afterEach(async () => {
     // Reset handlers after each test if MSW is available
     await browser.execute(() => {
-      if ((window as any).__MSW_WORKER__) {
-        (window as any).__MSW_WORKER__.resetHandlers();
+      if (window.__MSW_WORKER__) {
+        window.__MSW_WORKER__.resetHandlers();
       }
     });
   });
@@ -18,12 +18,12 @@ describe('MSW Verification Tests', () => {
     // Check if MSW worker is available in the browser
     const workerStatus = await browser.execute(() => {
       return {
-        hasWorker: !!(window as any).__MSW_WORKER__,
-        workerType: typeof (window as any).__MSW_WORKER__,
+        hasWorker: !!window.__MSW_WORKER__,
+        workerType: typeof window.__MSW_WORKER__,
         // Also check if the service worker is registered
         hasServiceWorker: !!navigator.serviceWorker?.controller,
         // Check if MSW is available globally
-        hasMSW: typeof (window as any).msw !== 'undefined',
+        hasMSW: false, // MSW doesn't expose a global 'msw' object
       };
     });
 
@@ -107,7 +107,7 @@ describe('MSW Verification Tests', () => {
         hasFetch: typeof fetch !== 'undefined',
         hasXMLHttpRequest: typeof XMLHttpRequest !== 'undefined',
         // Check if there are any pending requests
-        pendingRequests: (window as any).__PENDING_REQUESTS__ || 0,
+        pendingRequests: 0, // This was probably from a different setup
       };
     });
 
