@@ -41,6 +41,7 @@ declare global {
       logout: () => Promise<void>;
       login: () => Promise<void>;
       openDevTools: () => Promise<void>;
+      waitForMSW: () => Promise<void>;
     }
   }
 }
@@ -124,6 +125,28 @@ export const config: WebdriverIO.Config = {
     browser.currentTestErrors = [];
 
     await browser.sessionSubscribe({events: ['log.entryAdded']});
+
+    // Add helper command to wait for MSW to be ready
+    browser.addCommand('waitForMSW', async () => {
+      await browser.waitUntil(
+        async () => {
+          const mswReady = await browser.execute(() => {
+            // Check if MSW worker is available
+            const hasMSWWorker = !!(window as any).__MSW_WORKER__;
+            // Check if service worker is controlling the page
+            const hasServiceWorker = !!navigator.serviceWorker?.controller;
+            // Check if page content is loaded
+            const pageLoaded = document.body.textContent && document.body.textContent.length > 0;
+            return hasMSWWorker && hasServiceWorker && pageLoaded;
+          });
+          return mswReady;
+        },
+        {
+          timeout: 10000,
+          timeoutMsg: 'MSW not ready within 10 seconds'
+        }
+      );
+    });
 
     browser.addCommand('logout', async () => {
       await browser.execute(

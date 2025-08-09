@@ -4,6 +4,9 @@ describe('MSW Verification Tests', () => {
   beforeEach(async () => {
     // Navigate to the page to ensure MSW is initialized
     await BasePage.open('');
+
+    // Wait for MSW to be fully initialized using the helper command
+    await browser.waitForMSW();
   });
 
   afterEach(async () => {
@@ -59,8 +62,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify service worker registration', async () => {
-    await BasePage.open('');
-
     // Check if the page loaded (could be either public or authenticated)
     const pageLoaded = await browser.execute(() => {
       return document.body.textContent && document.body.textContent.length > 0;
@@ -143,8 +144,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify entries endpoint is intercepted by MSW', async () => {
-    await BasePage.open('');
-
     // Check page load and test entries endpoint in one call to avoid context issues
     const result = await browser.execute(async () => {
       // First check if page loaded
@@ -199,8 +198,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify health check endpoint is intercepted by MSW', async () => {
-    await BasePage.open('');
-
     // Check page load and test health endpoint in one call
     const result = await browser.execute(async () => {
       // First check if page loaded

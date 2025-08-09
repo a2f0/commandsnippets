@@ -8,26 +8,44 @@ async function init() {
     process.env['NODE_ENV'] === 'development' ||
     process.env['NODE_ENV'] === 'test'
   ) {
-    const {worker} = await import('./mswWorker');
-    await worker.start({
-      serviceWorker: {
-        url: '/mockServiceWorker.js',
-      },
-      onUnhandledRequest: 'bypass',
-    });
-
-    console.log('MSW worker started successfully');
-
-    // Wait a moment for service worker to be fully ready
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Add a health check fetch call to verify MSW interception
     try {
-      const response = await fetch('http://localhost:9001/api/v1/health');
-      const data = await response.json();
-      console.log('Health check response:', data);
+      const {worker} = await import('./mswWorker');
+
+      // Start MSW worker
+      await worker.start({
+        serviceWorker: {
+          url: '/mockServiceWorker.js',
+        },
+        onUnhandledRequest: 'bypass',
+      });
+
+      console.log('MSW worker started successfully');
+
+      // Store worker reference globally for tests
+      (window as any).__MSW_WORKER__ = worker;
+
+      // Wait for service worker to be controlling the page
+      await new Promise<void>((resolve) => {
+        const checkServiceWorker = () => {
+          if (navigator.serviceWorker?.controller) {
+            resolve();
+          } else {
+            setTimeout(checkServiceWorker, 100);
+          }
+        };
+        checkServiceWorker();
+      });
+
+      // Add a health check fetch call to verify MSW interception
+      try {
+        const response = await fetch('http://localhost:9001/api/v1/health');
+        const data = await response.json();
+        console.log('✅ MSW health check successful:', data);
+      } catch (error) {
+        console.error('❌ MSW health check failed:', error);
+      }
     } catch (error) {
-      console.error('Health check failed:', error);
+      console.error('❌ Failed to start MSW:', error);
     }
   }
 
