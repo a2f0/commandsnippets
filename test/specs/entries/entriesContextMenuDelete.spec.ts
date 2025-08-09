@@ -66,7 +66,8 @@ describe('Entries Context Menu Delete Entry', () => {
 
     // Test entry context menu for first entry if it exists
     const entries = await BasePage.tagsEntries;
-    if (entries.length > 0) {
+    const entriesCount = await entries.length;
+    if (entriesCount > 0) {
       await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
       await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
       await (await BasePage.tagsEntries1).waitAndRightClick();

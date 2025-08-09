@@ -52,8 +52,9 @@ describe('Entries Context Menu Untag', () => {
 
     // Test entry context menu untag functionality if entries exist
     const entries = await BasePage.tagsEntries;
-    if (entries.length > 0) {
-      const initialCount = entries.length;
+    const entriesCount = await entries.length;
+    if (entriesCount > 0) {
+      const initialCount = entriesCount;
       console.log(`Found ${initialCount} entries`);
 
       await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();

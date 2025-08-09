@@ -50,7 +50,8 @@ describe('TagsEntries Behavior', () => {
 
     // Test context menu behavior if entries exist
     const entries = await BasePage.tagsEntries;
-    if (entries.length > 0) {
+    const entriesCount = await entries.length;
+    if (entriesCount > 0) {
       await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
       await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
 

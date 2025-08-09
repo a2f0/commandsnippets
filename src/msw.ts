@@ -1,4 +1,10 @@
-// MSW setup for development and test
+// MSW setup for development and test environments
+// This file provides a simple async function to enable MSW mocking
+// The actual MSW worker and handlers are defined in:
+// - src/mswWorker.ts (worker setup)
+// - src/handlers.ts (API mock handlers)
+// - src/index.tsx (initialization for both dev and test)
+
 async function enableMocking() {
   if (
     process.env['NODE_ENV'] !== 'development' &&
@@ -9,30 +15,31 @@ async function enableMocking() {
 
   const {worker} = await import('./mswWorker');
 
-  // Verify that MSW is intercepting the entries endpoint
-  try {
-    const testResponse = await fetch('http://localhost:9001/api/v1/entries', {
-      method: 'GET',
-    });
-
-    if (testResponse.ok) {
-      console.log('✅ MSW successfully intercepting entries endpoint');
-    } else {
-      console.warn(
-        '⚠️ MSW entries endpoint returned non-200 status:',
-        testResponse.status
-      );
-    }
-  } catch (error) {
-    console.error(
-      '❌ Failed to verify MSW entries endpoint interception:',
-      error
-    );
-  }
-
-  return worker.start({
+  // Start the MSW worker
+  const registration = await worker.start({
+    serviceWorker: {
+      url: '/mockServiceWorker.js',
+    },
     onUnhandledRequest: 'bypass', // Don't warn about unhandled requests
   });
+
+  // Store worker reference globally for tests to access
+  (window as any).__MSW_WORKER__ = worker;
+
+  // Expose reset function for tests
+  const {resetMSWState} = await import('./handlers');
+  (window as any).resetMSWState = resetMSWState;
+
+  // Verify MSW is working by testing the health endpoint
+  try {
+    const testResponse = await fetch('http://localhost:9001/api/v1/health');
+    const data = await testResponse.json();
+    console.log('✅ MSW health check successful:', data);
+  } catch (error) {
+    console.error('❌ MSW health check failed:', error);
+  }
+
+  return registration;
 }
 
 export {enableMocking};
