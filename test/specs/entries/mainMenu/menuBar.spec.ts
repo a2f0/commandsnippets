@@ -3,21 +3,14 @@ import {tagsResponse} from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
-  it.skip('should having a working menu bar', async () => {
+  afterEach(async () => {
+    // Reset MSW handlers after each test
+    await browser.resetMSWHandlers();
+  });
+
+  it('should having a working menu bar', async () => {
+    // Navigate to page first, then login (using MSW)
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
-
-    const mockEntriesResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1*',
-      {method: 'GET'}
-    );
-    mockEntriesResponse.respond(entriesResponse, {statusCode: 200});
-
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1*',
-      {method: 'GET'}
-    );
-    mockTags.respond(tagsResponse, {statusCode: 200});
     await browser.login();
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();
