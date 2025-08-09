@@ -94,12 +94,24 @@ describe('Tag Context Menu', () => {
     // Test that the context menu is hidden after deletion
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
 
+    // Wait for the deletion to be processed
+    await browser.pause(500);
+
+    // Verify the tag count has decreased
+    await expect(BasePage.tags).toBeElementsArrayOfSize(3);
+
+    // Verify that tag1 no longer exists or has been replaced
+    const tag1Exists = await BasePage.tag1.isExisting();
+    if (tag1Exists) {
+      // If tag1 still exists, it should now contain different content (tag2 moved up)
+      await expect(BasePage.tag1).not.toHaveText('Test Tag 1');
+    }
+
     // Test core functionality: delete dialog workflow completed successfully
     console.log(
-      '✅ Delete tag workflow completed: dialog opened, delete confirmed, dialog closed'
+      '✅ Delete tag workflow completed: dialog opened, delete confirmed, dialog closed, tag removed'
     );
 
-    // Temporarily removing error check to focus on core delete functionality
-    // expect(browser.currentTestErrors).toHaveLength(0);
+    expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
