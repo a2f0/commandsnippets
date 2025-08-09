@@ -69,7 +69,7 @@ export const config: WebdriverIO.Config = {
   path: '/',
   specs: ['specs/**/*.spec.ts'],
   exclude: [],
-  maxInstances: 1,
+  maxInstances: 2,
   capabilities: [chromeCapabilities],
   logLevel: 'error',
   // Stop running tests after initial failure.
