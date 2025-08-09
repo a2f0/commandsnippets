@@ -8,80 +8,11 @@
  */
 
 import {HttpResponse, http} from 'msw';
-
-// Type definitions for mock data
-interface TagData {
-  type: 'Tag';
-  id: string;
-  attributes: {
-    name: string;
-    entry_count: number;
-    order: number;
-    date_updated: string;
-    date_created: string;
-    date_last_used: string;
-    is_deleted: boolean;
-  };
-  relationships: {
-    user: {
-      data: {
-        type: 'User';
-        id: string;
-      };
-    };
-  };
-}
-
-interface EntryData {
-  type: 'TextEntry';
-  id: string;
-  attributes: {
-    body: string;
-    subject: string;
-    date_updated: string;
-    date_created: string;
-    reused_count: number;
-    is_deleted: boolean;
-    tag_count: number;
-  };
-  relationships: {
-    user: {
-      data: {
-        type: 'User';
-        id: string;
-      };
-    };
-  };
-}
-
-interface UserData {
-  type: 'User';
-  id: string;
-  attributes: {
-    username: string;
-    date_updated: string;
-    date_created: string;
-  };
-}
-
-interface TagsResponse {
-  data: TagData[];
-  included: UserData[];
-  links: {
-    next: string | null;
-  };
-}
-
-interface EntriesResponse {
-  data: EntryData[];
-  included: unknown[];
-  links: {
-    next: string | null;
-  };
-}
+import type {ITagJsonApiResponse, ITagJsonApiResponseSingle} from './lib/tags';
+import type {ITextEntryJsonApiResponse} from './lib/text_entries';
 
 // Mock data for tags (matches test/mocks/tags/tagsResponse.ts)
-const tagsResponse: TagsResponse = {
+const tagsResponse: ITagJsonApiResponse = {
   data: [
     {
       type: 'Tag',
@@ -175,7 +106,6 @@ const tagsResponse: TagsResponse = {
       attributes: {
         username: 'test',
         date_updated: '2020-04-13T18:20:00',
-        date_created: '2020-04-13T18:20:00',
       },
     },
   ],
@@ -185,7 +115,7 @@ const tagsResponse: TagsResponse = {
 };
 
 // Mock data for entries
-const entriesResponse: EntriesResponse = {
+const entriesResponse: ITextEntryJsonApiResponse = {
   data: [
     {
       type: 'TextEntry',
@@ -269,18 +199,16 @@ const createHandlers = () => {
       }),
 
       // Create new tag endpoint
-      http.post(`${baseUrl}/tags`, async req => {
+      http.post(`${baseUrl}/tags`, async () => {
         console.log('✅ MSW intercepted tags POST request');
-        const body = await req.request.json();
-        console.log('Tag POST body:', body);
 
-        // Return a new tag response based on the request body
-        const newTag = {
+        // Return a new tag response
+        const newTag: ITagJsonApiResponseSingle = {
           data: {
             type: 'Tag',
             id: '5', // Use a new ID
             attributes: {
-              name: body.data?.attributes?.name || 'new-tag',
+              name: 'new-tag',
               date_updated: new Date().toISOString(),
               date_created: new Date().toISOString(),
               date_last_used: new Date().toISOString(),
@@ -304,7 +232,6 @@ const createHandlers = () => {
               attributes: {
                 username: 'test',
                 date_updated: '2020-04-13T18:20:00',
-                date_created: '2020-04-13T18:20:00',
               },
             },
           ],

@@ -81,7 +81,7 @@ describe('Tag List Context Menu Behavior', () => {
       },
       {
         timeout: 5000,
-        timeoutMsg: `Expected ${initialTagCount + 1} tags after creation, but found different count`
+        timeoutMsg: `Expected ${initialTagCount + 1} tags after creation, but found different count`,
       }
     );
 
@@ -90,10 +90,9 @@ describe('Tag List Context Menu Behavior', () => {
 
     // Debug: Check what happened with the API calls
     const apiCallResults = await browser.execute(() => {
-      const logs = console;
       return {
         timestamp: new Date().toISOString(),
-        message: 'Tag creation test completed'
+        message: 'Tag creation test completed',
       };
     });
 
