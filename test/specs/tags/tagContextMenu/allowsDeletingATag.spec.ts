@@ -16,11 +16,11 @@ describe('Tag Context Menu', () => {
       try {
         const [tagsResponse, entriesResponse] = await Promise.all([
           fetch('http://localhost:9001/api/v1/tags'),
-          fetch('http://localhost:9001/api/v1/entries')
+          fetch('http://localhost:9001/api/v1/entries'),
         ]);
         const [tagsData, entriesData] = await Promise.all([
           tagsResponse.json(),
-          entriesResponse.json()
+          entriesResponse.json(),
         ]);
         return {
           tagsOk: tagsResponse.ok,
@@ -96,7 +96,9 @@ describe('Tag Context Menu', () => {
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
 
     // Test core functionality: delete dialog workflow completed successfully
-    console.log('✅ Delete tag workflow completed: dialog opened, delete confirmed, dialog closed');
+    console.log(
+      '✅ Delete tag workflow completed: dialog opened, delete confirmed, dialog closed'
+    );
 
     // Temporarily removing error check to focus on core delete functionality
     // expect(browser.currentTestErrors).toHaveLength(0);

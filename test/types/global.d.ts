@@ -5,5 +5,6 @@ import type {SetupWorker} from 'msw/browser';
 declare global {
   interface Window {
     __MSW_WORKER__?: SetupWorker;
+    resetMSWState?: typeof import('../../src/handlers').resetMSWState;
   }
 }

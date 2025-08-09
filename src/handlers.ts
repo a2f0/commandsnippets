@@ -116,7 +116,9 @@ const originalTagsResponse: ITagJsonApiResponse = {
 };
 
 // Mutable copy for stateful operations
-let tagsResponse: ITagJsonApiResponse = JSON.parse(JSON.stringify(originalTagsResponse));
+let tagsResponse: ITagJsonApiResponse = JSON.parse(
+  JSON.stringify(originalTagsResponse)
+);
 
 // Mock data for entries
 const entriesResponse: ITextEntryJsonApiResponse = {
@@ -264,7 +266,7 @@ const createHandlers = () => {
 
       // Delete tag endpoint with stateful behavior
       http.delete(`${baseUrl}/tags/:id`, ({params}) => {
-        const tagId = params.id as string;
+        const tagId = `${params['id']}`;
         console.log('✅ MSW intercepted tag DELETE request for id:', tagId);
 
         // Remove the tag from our mock data

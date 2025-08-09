@@ -16,11 +16,11 @@ describe('Tag Context Menu', () => {
       try {
         const [tagsResponse, entriesResponse] = await Promise.all([
           fetch('http://localhost:9001/api/v1/tags'),
-          fetch('http://localhost:9001/api/v1/entries')
+          fetch('http://localhost:9001/api/v1/entries'),
         ]);
         const [tagsData, entriesData] = await Promise.all([
           tagsResponse.json(),
-          entriesResponse.json()
+          entriesResponse.json(),
         ]);
         return {
           tagsOk: tagsResponse.ok,
