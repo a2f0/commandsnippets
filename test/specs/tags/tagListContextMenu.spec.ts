@@ -2,11 +2,7 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Tag List Context Menu Behavior', () => {
   afterEach(async () => {
-    await browser.execute(() => {
-      if (window.__MSW_WORKER__) {
-        window.__MSW_WORKER__.resetHandlers();
-      }
-    });
+    await browser.resetMSWHandlers();
   });
 
   it('tag should have a working context menu', async () => {
@@ -14,6 +10,8 @@ describe('Tag List Context Menu Behavior', () => {
     await BasePage.open('');
     await browser.login();
     await BasePage.open('');
+
+    // Ensure tag list UI is present
     await expect(BasePage.tagList).toBeDisplayed();
     await expect(BasePage.tagListContextMenu).toBeExisting();
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();

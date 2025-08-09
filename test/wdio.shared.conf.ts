@@ -42,6 +42,7 @@ declare global {
       login: () => Promise<void>;
       openDevTools: () => Promise<void>;
       waitForMSW: () => Promise<void>;
+      resetMSWHandlers: () => Promise<void>;
     }
   }
 }
@@ -116,7 +117,7 @@ export const config: WebdriverIO.Config = {
         async () => {
           const mswReady = await browser.execute(() => {
             // Check if MSW worker is available
-            const hasMSWWorker = !!(window as any).__MSW_WORKER__;
+            const hasMSWWorker = !!window.__MSW_WORKER__;
             // Check if service worker is controlling the page
             const hasServiceWorker = !!navigator.serviceWorker?.controller;
             // Check if page content is loaded
@@ -133,15 +134,23 @@ export const config: WebdriverIO.Config = {
       );
     });
 
+    // Add helper command to reset MSW handlers between tests
+    browser.addCommand('resetMSWHandlers', async () => {
+      await browser.execute(() => {
+        if (window.__MSW_WORKER__) {
+          window.__MSW_WORKER__.resetHandlers();
+        }
+      });
+    });
+
     browser.addCommand('logout', async () => {
       await browser.execute(
         function (this: typeof browser, key: string, value: string) {
           this.localStorage.setItem(key, value);
         },
-        'mst-tearleads-test',
-        JSON.stringify(defaultState)
+        'LoggedIn',
+        'None'
       );
-      await browser.deleteCookies();
     });
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
       if (logEntry.level === 'error') {
