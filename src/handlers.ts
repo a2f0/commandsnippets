@@ -120,8 +120,8 @@ let tagsResponse: ITagJsonApiResponse = JSON.parse(
   JSON.stringify(originalTagsResponse)
 );
 
-// Mock data for entries
-const entriesResponse: ITextEntryJsonApiResponse = {
+// Original immutable entries for resets
+const originalEntriesResponse: ITextEntryJsonApiResponse = {
   data: [
     {
       type: 'TextEntry',
@@ -171,6 +171,11 @@ const entriesResponse: ITextEntryJsonApiResponse = {
     next: null,
   },
 };
+
+// Mutable copy for stateful operations
+let entriesResponse: ITextEntryJsonApiResponse = JSON.parse(
+  JSON.stringify(originalEntriesResponse)
+);
 
 // Define all possible API base URLs
 const apiBaseUrls = [
@@ -248,10 +253,83 @@ const createHandlers = () => {
         });
       }),
 
-      // Entries endpoint
-      http.get(`${baseUrl}/entries`, () => {
+      // Entries endpoint (with optional query parameters)
+      http.get(`${baseUrl}/entries`, req => {
+        console.log('✅ MSW intercepted entries request:', req.request.url);
+        // Return entries response regardless of query params for now
         return HttpResponse.json(entriesResponse, {
           status: 200,
+        });
+      }),
+
+      // Entries by tag endpoint
+      http.get(`${baseUrl}/tags/:tagId/entries`, ({params}) => {
+        const tagId = `${params['tagId']}`;
+        console.log(
+          '✅ MSW intercepted entries by tag request for tag id:',
+          tagId
+        );
+
+        // For tag 1, return the entries, for others return empty
+        if (tagId === '1') {
+          return HttpResponse.json(entriesResponse, {
+            status: 200,
+          });
+        }
+
+        return HttpResponse.json(
+          {
+            data: [],
+            included: [],
+            links: {next: null},
+          },
+          {
+            status: 200,
+          }
+        );
+      }),
+
+      // Create new entry endpoint
+      http.post(`${baseUrl}/entries`, async () => {
+        console.log('✅ MSW intercepted entries POST request');
+
+        // Return a new entry response
+        const newEntry = {
+          data: {
+            type: 'TextEntry',
+            id: '3',
+            attributes: {
+              body: 'new entry body',
+              subject: 'new-entry-subject',
+              date_updated: new Date().toISOString(),
+              date_created: new Date().toISOString(),
+              reused_count: 0,
+              is_deleted: false,
+              tag_count: 1,
+            },
+            relationships: {
+              user: {
+                data: {
+                  type: 'User',
+                  id: '1',
+                },
+              },
+            },
+          },
+          included: [
+            {
+              type: 'User',
+              id: '1',
+              attributes: {
+                username: 'test',
+                date_updated: '2020-04-13T18:20:00',
+              },
+            },
+          ],
+        };
+
+        return HttpResponse.json(newEntry, {
+          status: 201,
         });
       }),
 
@@ -272,6 +350,31 @@ const createHandlers = () => {
         // Remove the tag from our mock data
         tagsResponse.data = tagsResponse.data.filter(tag => tag.id !== tagId);
 
+        return HttpResponse.json(null, {status: 204});
+      }),
+
+      // Delete entry endpoint
+      http.delete(`${baseUrl}/entries/:id`, ({params}) => {
+        const entryId = `${params['id']}`;
+        console.log('✅ MSW intercepted entry DELETE request for id:', entryId);
+
+        // Remove the entry from our mock data
+        entriesResponse.data = entriesResponse.data.filter(
+          entry => entry.id !== entryId
+        );
+
+        return HttpResponse.json(null, {status: 204});
+      }),
+
+      // Untag entry endpoint (tags_entries)
+      http.delete(`${baseUrl}/tags_entries/:id`, ({params}) => {
+        const tagEntryId = `${params['id']}`;
+        console.log(
+          '✅ MSW intercepted untag (tags_entries) DELETE request for id:',
+          tagEntryId
+        );
+
+        // Return 204 No Content for successful untag
         return HttpResponse.json(null, {status: 204});
       })
     );
@@ -298,6 +401,7 @@ export const handlers = createHandlers();
 // Reset function to restore original state
 export const resetMSWState = () => {
   tagsResponse = JSON.parse(JSON.stringify(originalTagsResponse));
+  entriesResponse = JSON.parse(JSON.stringify(originalEntriesResponse));
 };
 
 /* prettier-ignore-end */

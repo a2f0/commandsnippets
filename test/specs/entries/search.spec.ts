@@ -16,11 +16,11 @@ describe('TagsEntries Behavior', () => {
       try {
         const [tagsResponse, entriesResponse] = await Promise.all([
           fetch('http://localhost:9001/api/v1/tags'),
-          fetch('http://localhost:9001/api/v1/entries')
+          fetch('http://localhost:9001/api/v1/entries'),
         ]);
         const [tagsData, entriesData] = await Promise.all([
           tagsResponse.json(),
-          entriesResponse.json()
+          entriesResponse.json(),
         ]);
         return {
           tagsOk: tagsResponse.ok,
@@ -41,13 +41,13 @@ describe('TagsEntries Behavior', () => {
     await browser.login();
     await expect(BasePage.tagLine).toBeDisplayed();
     await BasePage.open('test/test-tag-1');
-    
+
     // Verify entries list and search elements exist
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.entrySearch).toBeExisting();
     await expect(BasePage.entrySearch).toBeDisplayed();
-    
+
     // Wait for the page to fully load
     await browser.pause(2000);
 
@@ -55,20 +55,22 @@ describe('TagsEntries Behavior', () => {
     // Skip complex Tab navigation testing in headless mode - focus on core functionality
     await (await BasePage.entrySearch).click();
     await (await BasePage.entrySearch).setValue('entry-1');
-    
+
     // Verify search filtering worked - should show fewer entries
     await browser.pause(1000); // Give search time to filter
-    
+
     // Test Escape key clears search
     await browser.keys('Escape');
     await browser.pause(500);
-    
+
     // Verify entry search field is cleared
     await expect(BasePage.entrySearch).toHaveValue('');
 
-    // Test core functionality: entry search workflow completed successfully  
-    console.log('✅ Entry search workflow completed: search field interaction, filtering, and Escape clear');
-    
+    // Test core functionality: entry search workflow completed successfully
+    console.log(
+      '✅ Entry search workflow completed: search field interaction, filtering, and Escape clear'
+    );
+
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });
