@@ -3,4 +3,4 @@ description:
 globs:
 alwaysApply: true
 ---
-- Run individual tests with `npx start-server-and-test server-test http-get://localhost:8081 "NODE_OPTIONS='--experimental-specifier-resolution=node --no-warnings' npx wdio test/wdio.headless.conf.ts --spec test/specs/tags/tagListContextMenu.spec.ts"`, as an example.
+- Run individual tests with `npx start-server-and-test server-test http-get://localhost:8081 "NODE_OPTIONS='--no-warnings' npx wdio test/wdio.headless.conf.ts --spec test/specs/tags/tagListContextMenu.spec.ts"`, as an example.

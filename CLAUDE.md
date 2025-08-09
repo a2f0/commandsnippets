@@ -27,7 +27,7 @@ Tearleads is a command snippet tool for computer programmers and system administ
 - `pnpm run server-test` - Start testing server on port 8081
 - `pnpm run test` - Run E2E tests (requires server-test running)
 - `pnpm run test-headless` - Run E2E tests headless
-- `pnpm start-server-and-test server-test http-get://localhost:8081 "NODE_OPTIONS='--experimental-specifier-resolution=node --no-warnings' npx wdio test/wdio.headless.conf.ts --spec test/specs/tags/tagListContextMenu.spec.ts"` - Run specific spec
+- `pnpm start-server-and-test server-test http-get://localhost:8081 "NODE_OPTIONS='--no-warnings' npx wdio test/wdio.headless.conf.ts --spec test/specs/tags/tagListContextMenu.spec.ts"` - Run specific spec
 
 #### Unit Tests (Vitest)
 - `pnpm run unit` - Run unit tests
