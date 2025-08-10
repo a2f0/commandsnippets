@@ -25,6 +25,9 @@ describe('Tag Main Menu', () => {
     expect(apiCheck.ok).toBe(true);
     expect(apiCheck.dataLength).toBe(4); // MSW provides 4 tags
 
+    // Reset before authenticated navigation to assert counts for that load
+    await browser.resetMSWRequestCounts();
+
     await browser.login();
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();

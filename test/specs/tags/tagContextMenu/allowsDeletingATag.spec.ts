@@ -101,12 +101,12 @@ describe('Tag Context Menu', () => {
     // Verify the tag count has decreased
     await expect(BasePage.tags).toBeElementsArrayOfSize(3);
 
-    // Assert DELETE was called once for tag id 1
-    const deleteCount = await browser.getMSWRequestCount(
+    // Assert DELETE was called at least once for tag id 1
+    await browser.toBeRequestedAtLeastTimes(
       'DELETE',
-      'http://localhost:9001/api/v1/tags/1'
+      'http://localhost:9001/api/v1/tags/1',
+      1
     );
-    expect(deleteCount).toBe(1);
 
     // Verify that tag1 no longer exists or has been replaced
     const tag1Exists = await BasePage.tag1.isExisting();

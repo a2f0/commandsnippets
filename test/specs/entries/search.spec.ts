@@ -37,6 +37,8 @@ describe('TagsEntries Behavior', () => {
     expect(apiCheck.entriesOk).toBe(true);
     expect(apiCheck.tagsCount).toBe(4); // MSW provides 4 tags
     expect(apiCheck.entriesCount).toBe(2); // MSW provides 2 entries
+    // Reset counters right before navigating to authenticated view to assert counts for that load
+    await browser.resetMSWRequestCounts();
     await browser.login();
     await expect(BasePage.tagLine).toBeDisplayed();
     await BasePage.open('test/test-tag-1');

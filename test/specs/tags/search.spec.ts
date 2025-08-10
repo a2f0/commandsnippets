@@ -5,6 +5,8 @@ describe('Tag Search Menu Behavior', () => {
     // Navigate to page first, then login (relying on application MSW)
     await BasePage.open('');
     await browser.login();
+    // Reset before asserting counts for authenticated load
+    await browser.resetMSWRequestCounts();
     await BasePage.open('');
 
     const pageTitle = await browser.getTitle();
@@ -29,6 +31,13 @@ describe('Tag Search Menu Behavior', () => {
     // MSW should be providing 4 tags
     expect(apiResult.ok).toBe(true);
     expect(apiResult.dataLength).toBe(4);
+
+    // Assert GET /tags was requested at least once for the authenticated load
+    await browser.toBeRequestedAtLeastTimes(
+      'GET',
+      'http://localhost:9001/api/v1/tags',
+      1
+    );
 
     // Since MSW is providing 4 tags, the UI should show 4 tags
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);

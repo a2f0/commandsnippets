@@ -6,7 +6,9 @@ describe('Tab Switching Behavior', () => {
   });
 
   it('should allow tab switching while editing', async () => {
+    // We will assert counts after navigation below; reset just before target navigation
     // Navigate and verify MSW is ready
+    await browser.resetMSWRequestCounts();
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 
@@ -65,6 +67,18 @@ describe('Tab Switching Behavior', () => {
     await browser.switchWindow('http://localhost:8081');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
+
+    // Assert initial GETs happened once for this load
+    await browser.toBeRequestedTimes(
+      'GET',
+      'http://localhost:9001/api/v1/tags',
+      1
+    );
+    await browser.toBeRequestedTimes(
+      'GET',
+      'http://localhost:9001/api/v1/entries',
+      1
+    );
 
     // Verify basic functionality persists after window switch
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);

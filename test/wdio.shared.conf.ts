@@ -54,6 +54,30 @@ declare global {
         url: string
       ) => Promise<number>;
       resetMSWRequestCounts: () => Promise<void>;
+      toBeRequestedTimes: (
+        method:
+          | 'GET'
+          | 'POST'
+          | 'PUT'
+          | 'PATCH'
+          | 'DELETE'
+          | 'OPTIONS'
+          | 'HEAD',
+        url: string,
+        expected: number
+      ) => Promise<void>;
+      toBeRequestedAtLeastTimes: (
+        method:
+          | 'GET'
+          | 'POST'
+          | 'PUT'
+          | 'PATCH'
+          | 'DELETE'
+          | 'OPTIONS'
+          | 'HEAD',
+        url: string,
+        minExpected: number
+      ) => Promise<void>;
     }
   }
 }
@@ -190,6 +214,40 @@ export const config: WebdriverIO.Config = {
       }
     );
 
+    // Assert helper for at-least semantics
+    browser.addCommand(
+      'toBeRequestedAtLeastTimes',
+      async (
+        method:
+          | 'GET'
+          | 'POST'
+          | 'PUT'
+          | 'PATCH'
+          | 'DELETE'
+          | 'OPTIONS'
+          | 'HEAD',
+        url: string,
+        minExpected: number
+      ) => {
+        const result = await browser.execute(
+          (m: typeof method, u: string) => {
+            const count = window.__MSW_REQUESTS__?.getCount?.(m, u) ?? -1;
+            const all = window.__MSW_REQUESTS__?.getAll?.() ?? [];
+            return {count, all};
+          },
+          method,
+          url
+        );
+        if (result.count < minExpected) {
+          throw new Error(
+            `Expected ${method} ${url} to be requested at least ${minExpected} times, but was ${result.count}. All counts: ${JSON.stringify(
+              result.all
+            )}`
+          );
+        }
+      }
+    );
+
     // Add helper to reset only request counters
     browser.addCommand('resetMSWRequestCounts', async () => {
       await browser.execute(() => {
@@ -198,6 +256,40 @@ export const config: WebdriverIO.Config = {
         }
       });
     });
+
+    // Assert helper similar to base branch usage
+    browser.addCommand(
+      'toBeRequestedTimes',
+      async (
+        method:
+          | 'GET'
+          | 'POST'
+          | 'PUT'
+          | 'PATCH'
+          | 'DELETE'
+          | 'OPTIONS'
+          | 'HEAD',
+        url: string,
+        expected: number
+      ) => {
+        const result = await browser.execute(
+          (m: typeof method, u: string) => {
+            const count = window.__MSW_REQUESTS__?.getCount?.(m, u) ?? -1;
+            const all = window.__MSW_REQUESTS__?.getAll?.() ?? [];
+            return {count, all};
+          },
+          method,
+          url
+        );
+        if (result.count !== expected) {
+          throw new Error(
+            `Expected ${method} ${url} to be requested ${expected} times, but was ${result.count}. All counts: ${JSON.stringify(
+              result.all
+            )}`
+          );
+        }
+      }
+    );
 
     browser.addCommand('logout', async () => {
       await browser.execute(

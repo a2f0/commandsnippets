@@ -16,9 +16,16 @@ function makeKey(method: HttpMethod, url: string): string {
 }
 
 export function recordRequest(method: HttpMethod, url: string): void {
-  const key = makeKey(method, url);
-  const current = requestCountMap.get(key) ?? 0;
-  requestCountMap.set(key, current + 1);
+  const urlString = `${url}`;
+  const exactKey = makeKey(method, urlString);
+  const normalizedUrl = urlString.split('?')[0] ?? urlString;
+  const normalizedKey = makeKey(method, normalizedUrl);
+
+  const exactCurrent = requestCountMap.get(exactKey) ?? 0;
+  requestCountMap.set(exactKey, exactCurrent + 1);
+
+  const normalizedCurrent = requestCountMap.get(normalizedKey) ?? 0;
+  requestCountMap.set(normalizedKey, normalizedCurrent + 1);
 }
 
 export function getRequestCount(method: HttpMethod, url: string): number {

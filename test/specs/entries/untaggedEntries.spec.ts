@@ -6,6 +6,7 @@ describe('Entry Main Menu Behavior', () => {
   });
 
   it('should having a working context menu to create new entries', async () => {
+    // Reset just before we perform the check below to avoid double-counting initial app loads
     // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
@@ -37,6 +38,9 @@ describe('Entry Main Menu Behavior', () => {
     expect(apiCheck.entriesOk).toBe(true);
     expect(apiCheck.tagsCount).toBe(4); // MSW provides 4 tags
     expect(apiCheck.entriesCount).toBe(2); // MSW provides 2 entries
+
+    // Reset and assert for the upcoming authenticated load
+    await browser.resetMSWRequestCounts();
 
     await browser.login();
     await BasePage.open('');

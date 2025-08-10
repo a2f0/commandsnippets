@@ -9,6 +9,8 @@ describe('Entry Main Menu Behavior', () => {
     // Navigate to page first, then login (using MSW)
     await BasePage.open('');
     await browser.login();
+    // Reset counters right before the navigational load we want to assert
+    await browser.resetMSWRequestCounts();
     await BasePage.open('');
 
     // Verify basic page elements exist and MSW is working
@@ -43,6 +45,18 @@ describe('Entry Main Menu Behavior', () => {
 
     console.log(
       '✅ Entry context menu test completed: all basic MSW-integrated functionality verified'
+    );
+
+    // Assert initial GETs occurred for this page load
+    await browser.toBeRequestedTimes(
+      'GET',
+      'http://localhost:9001/api/v1/tags',
+      1
+    );
+    await browser.toBeRequestedTimes(
+      'GET',
+      'http://localhost:9001/api/v1/entries',
+      1
     );
 
     expect(browser.currentTestErrors).toHaveLength(0);
