@@ -3,4 +3,5 @@ description:
 globs:
 alwaysApply: true
 ---
-- Run individual tests with `./scripts/runSpec.sh test/specs/tags/tagContextMenu/allowsDeletingATag.spec.ts`, as an example.
+- Run individual tests in headless mode with `scripts/runSpecHeadless.sh` , for example `scripts/runSpecHeadless.sh test/specs/entries/entriesContextMenu/hasAWorkingEditor.spec.ts`.
+- After making changes to integration tests, make sure `pnpm run unit` also passes.

@@ -158,7 +158,54 @@ const originalEntriesResponse: ITextEntryJsonApiResponse = {
       },
     },
   ],
-  included: [],
+  included: [
+    {
+      type: 'TagTextEntryThroughModel',
+      id: '1',
+      attributes: {
+        order: 1,
+        date_updated: '2020-04-13T18:20:00',
+        date_created: '2020-04-13T18:20:00',
+      },
+      relationships: {
+        tag: {
+          data: {
+            type: 'Tag',
+            id: '1',
+          },
+        },
+        text_entry: {
+          data: {
+            type: 'TextEntry',
+            id: '1',
+          },
+        },
+      },
+    },
+    {
+      type: 'TagTextEntryThroughModel',
+      id: '2',
+      attributes: {
+        order: 2,
+        date_updated: '2020-04-13T18:20:00',
+        date_created: '2020-04-13T18:20:00',
+      },
+      relationships: {
+        tag: {
+          data: {
+            type: 'Tag',
+            id: '1',
+          },
+        },
+        text_entry: {
+          data: {
+            type: 'TextEntry',
+            id: '2',
+          },
+        },
+      },
+    },
+  ],
   links: {
     next: null,
   },
