@@ -339,10 +339,25 @@ const createHandlers = () => {
         const tagId = `${params['id']}`;
         console.log('✅ MSW intercepted tag DELETE request for id:', tagId);
 
-        // Remove the tag from our mock data
-        tagsResponse.data = tagsResponse.data.filter(tag => tag.id !== tagId);
+        // Find the tag to delete
+        const tagToDelete = tagsResponse.data.find(tag => tag.id === tagId);
+        if (!tagToDelete) {
+          return HttpResponse.json({error: 'Tag not found'}, {status: 404});
+        }
 
-        return HttpResponse.json(null, {status: 204});
+        // Return the deleted tag with is_deleted: true
+        const deletedTagResponse: ITagJsonApiResponseSingle = {
+          data: {
+            ...tagToDelete,
+            attributes: {
+              ...tagToDelete.attributes,
+              is_deleted: true,
+            },
+          },
+          included: tagsResponse.included || [],
+        };
+
+        return HttpResponse.json(deletedTagResponse, {status: 200});
       }),
 
       // Delete entry endpoint
