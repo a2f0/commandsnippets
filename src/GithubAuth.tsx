@@ -5,7 +5,7 @@ import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import {apiBase} from './lib/api/fetchBase';
 import {environment} from './lib/environment';
 import {LoginButton} from './styled/LoginButton';
 
@@ -45,16 +45,20 @@ const GithubAuth = () => {
       apiBase
         .post('/github-login/', payload, {withCredentials: true})
         .then(() => {
-          apiBase.get('/user/', {withCredentials: true}).then(response => {
-            const username = response.data.data.attributes.username;
-            appConfig.setLoggedInUser(username);
-            setCookie('loggedInUser', username, {
-              path: '/',
-              secure: window.location.protocol === 'https:',
-              sameSite: 'strict',
+          apiBase
+            .get<{data: {attributes: {username: string}}}>('/user/', {
+              withCredentials: true,
+            })
+            .then(response => {
+              const username = response.data.data.attributes.username;
+              appConfig.setLoggedInUser(username);
+              setCookie('loggedInUser', username, {
+                path: '/',
+                secure: window.location.protocol === 'https:',
+                sameSite: 'strict',
+              });
+              navigate(`/${username}`);
             });
-            navigate(`/${username}`);
-          });
         })
         .catch(() => {
           appConfig.setLoggedInUser(null);

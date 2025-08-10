@@ -1,9 +1,8 @@
 import Grid from '@mui/material/Grid';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
-import {apiBase} from './lib/api/apiBase';
+import {type ApiResponse, apiBase} from './lib/api/fetchBase';
 import type {ITagJsonApi} from './lib/store/models/TagModel';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
@@ -50,10 +49,10 @@ const TagEdit = ({
       },
     };
     apiBase
-      .patch(`tags/${object.id}`, payload, {
+      .patch<ITagJsonApiResponseSingle>(`tags/${object.id}`, payload, {
         withCredentials: true,
       })
-      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
+      .then((response: ApiResponse<ITagJsonApiResponseSingle>) => {
         handleSaveParent(response.data.data);
       })
       .catch(error => {

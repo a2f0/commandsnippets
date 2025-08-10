@@ -1,4 +1,4 @@
-import {apiBase} from './api/apiBase';
+import {apiBase} from './api/fetchBase';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {IUserJsonApi} from './store/models/UserModel';
 import type {Store} from './store/store';
@@ -218,7 +218,10 @@ export function fetch(
 
   const f: Promise<Array<ITagJsonApi | IUserJsonApi>> = apiBase
     .get<ITagJsonApiResponse>('/tags', {
-      params: params,
+      params: params as unknown as Record<
+        string,
+        string | number | boolean | undefined
+      >,
     })
     .then(response => {
       const updatedEntries = entries.concat(response.data.data);

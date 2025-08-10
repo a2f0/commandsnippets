@@ -1,8 +1,6 @@
 import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import type {CancelTokenSource} from 'axios';
-import axios from 'axios';
 import update from 'immutability-helper';
 import invariant from 'invariant';
 import {autorun} from 'mobx';
@@ -17,12 +15,13 @@ import React, {
 } from 'react';
 import {useDrop} from 'react-dnd';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
-
 import {useAppContext} from './AppContext';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
+import type {CancelTokenSource} from './lib/api/fetchBase';
+import {FetchApiClient} from './lib/api/fetchBase';
 import {appMode, type IMouse, initialMouse} from './lib/shared';
 import {
   type ITextEntryJsonApi,
@@ -124,8 +123,7 @@ const EntryList = () => {
       }
     } else if (entriesFilter === 'all') {
       if (user !== undefined) {
-        const CancelToken = axios.CancelToken;
-        const source = CancelToken.source();
+        const source = FetchApiClient.CancelToken.source();
         const fetchParams: IEntryFetchPage = {
           page: 1,
           username: user,

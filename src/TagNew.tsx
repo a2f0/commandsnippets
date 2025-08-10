@@ -1,10 +1,9 @@
 import Grid from '@mui/material/Grid';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import type {ApiResponse} from './lib/api/fetchBase';
+import {apiBase} from './lib/api/fetchBase';
 import {activeTagEditField, appMode} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
@@ -77,8 +76,10 @@ const TagNew = ({handleNewParent, id}: IProps) => {
       },
     };
     apiBase
-      .post('/tags', payload, {withCredentials: true})
-      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
+      .post<ITagJsonApiResponseSingle>('/tags', payload, {
+        withCredentials: true,
+      })
+      .then((response: ApiResponse<ITagJsonApiResponseSingle>) => {
         appConfig.reconcileCollection(response.data.included);
         appConfig.updateOrCreateTag(response.data.data);
         handleNewParent();

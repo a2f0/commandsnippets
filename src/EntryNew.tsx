@@ -1,12 +1,11 @@
 import {Box, Button} from '@mui/material';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
-
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import type {ApiResponse} from './lib/api/fetchBase';
+import {apiBase} from './lib/api/fetchBase';
 import type {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
@@ -63,8 +62,10 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     );
 
     apiBase
-      .post('/entries', text_entry_payload, {withCredentials: true})
-      .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
+      .post<ITextEntryJsonApiResponseSingle>('/entries', text_entry_payload, {
+        withCredentials: true,
+      })
+      .then((response: ApiResponse<ITextEntryJsonApiResponseSingle>) => {
         appConfig.updateOrCreateTextEntry(response.data.data);
         const text_entry_through_model_payload = {
           data: {
@@ -87,12 +88,16 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
           },
         };
         apiBase
-          .post('/tags_entries', text_entry_through_model_payload, {
-            withCredentials: true,
-          })
+          .post<ITagTextEntryThroughModelJsonApiResponseSingle>(
+            '/tags_entries',
+            text_entry_through_model_payload,
+            {
+              withCredentials: true,
+            }
+          )
           .then(
             (
-              response: AxiosResponse<ITagTextEntryThroughModelJsonApiResponseSingle>
+              response: ApiResponse<ITagTextEntryThroughModelJsonApiResponseSingle>
             ) => {
               console.info(response.data.data);
               appConfig.updateOrCreateTagTextEntryThroughModel(

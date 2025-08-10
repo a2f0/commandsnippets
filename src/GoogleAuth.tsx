@@ -5,7 +5,7 @@ import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import {apiBase} from './lib/api/fetchBase';
 import {environment} from './lib/environment';
 import {LoginButton} from './styled/LoginButton';
 
@@ -56,16 +56,20 @@ const GoogleAuth = () => {
       apiBase
         .post('/google-login/', payload, {withCredentials: true})
         .then(() => {
-          apiBase.get('/user/', {withCredentials: true}).then(response => {
-            const username = response.data.data.attributes.username;
-            appConfig.setLoggedInUser(username);
-            navigate(`/${username}`);
-            setCookie('loggedInUser', username, {
-              path: '/',
-              secure: window.location.protocol === 'https:',
-              sameSite: 'strict',
+          apiBase
+            .get<{data: {attributes: {username: string}}}>('/user/', {
+              withCredentials: true,
+            })
+            .then(response => {
+              const username = response.data.data.attributes.username;
+              appConfig.setLoggedInUser(username);
+              navigate(`/${username}`);
+              setCookie('loggedInUser', username, {
+                path: '/',
+                secure: window.location.protocol === 'https:',
+                sameSite: 'strict',
+              });
             });
-          });
         })
         .catch(() => {
           appConfig.setLoggedInUser(null);

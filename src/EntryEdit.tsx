@@ -1,13 +1,12 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {useTheme} from '@mui/material/styles';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import type {ApiResponse} from './lib/api/fetchBase';
+import {apiBase} from './lib/api/fetchBase';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
@@ -71,8 +70,10 @@ const EntryEdit = ({
       },
     };
     apiBase
-      .patch(`entries/${object.id}`, payload, {withCredentials: true})
-      .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
+      .patch<ITextEntryJsonApiResponseSingle>(`entries/${object.id}`, payload, {
+        withCredentials: true,
+      })
+      .then((response: ApiResponse<ITextEntryJsonApiResponseSingle>) => {
         handleSaveParent(response.data);
       })
       .catch(error => {

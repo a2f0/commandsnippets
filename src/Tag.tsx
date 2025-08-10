@@ -2,17 +2,16 @@ import type {StyledComponent} from '@emotion/styled';
 import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {styled, useTheme} from '@mui/material/styles';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
-
 import {useAppContext} from './AppContext';
 import {DragHandle} from './DragHandle';
 import {DragHandleContainer} from './DragHandleContainer';
 import {ItemTypes} from './ItemTypes';
-import {apiBase} from './lib/api/apiBase';
+import type {ApiResponse} from './lib/api/fetchBase';
+import {apiBase} from './lib/api/fetchBase';
 import {type ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
 import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
 import type {ITagJsonApi} from './lib/store/models/TagModel';
@@ -292,8 +291,10 @@ const Tag = ({
 
   const deleteTag = () => {
     apiBase
-      .delete(`/tags/${tagObject.id}`, {withCredentials: true})
-      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
+      .delete<ITagJsonApiResponseSingle>(`/tags/${tagObject.id}`, {
+        withCredentials: true,
+      })
+      .then((response: ApiResponse<ITagJsonApiResponseSingle>) => {
         handleDeleteParent(response.data);
       })
       .catch(error => {

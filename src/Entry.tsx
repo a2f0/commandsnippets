@@ -13,7 +13,7 @@ import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
-import {apiBase} from './lib/api/apiBase';
+import {apiBase} from './lib/api/fetchBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {appMode, getSelection, type IMouse, initialMouse} from './lib/shared';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
@@ -149,12 +149,13 @@ const Entry = ({
                 },
               };
               apiBase
-                .post('tags_entries', payload, {
+                .post<{data: unknown}>('/tags_entries', payload, {
                   withCredentials: true,
                 })
                 .then(resp => {
                   appConfig.updateOrCreateTagTextEntryThroughModel(
-                    resp.data.data
+                    (resp.data as {data: unknown})
+                      .data as import('./lib/store/models/TagTextEntryThroughModel').ITagTextEntryThroughModelJsonApi
                   );
                 });
               if (entriesFilter === 'untagged') {

@@ -1,10 +1,12 @@
-import type {AxiosResponse} from 'axios';
-import axios from 'axios';
 import {applySnapshot} from 'mobx-state-tree';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import {baseHTTPURL} from '../../../lib/api/apiBase';
+import {
+  type ApiResponse,
+  baseHTTPURL,
+  FetchApiClient,
+} from '../../../lib/api/fetchBase';
 import type {ILogoutJsonApiResponse} from '../../../lib/authentication';
 import {defaultState} from '../../../lib/shared';
 import {StyledMenuItem} from '../../../StyledMenuItem';
@@ -17,18 +19,20 @@ const Logout = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   const handleLogout = () => {
-    const base_url = baseHTTPURL;
-    const logout_api = axios.create({
-      baseURL: base_url,
-      responseType: 'json',
+    const logout_api = new FetchApiClient({
+      baseURL: baseHTTPURL,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
     logout_api
-      .post('/api-token-deauth/', {}, {withCredentials: true})
-      .then((response: AxiosResponse<ILogoutJsonApiResponse>) => {
+      .post<ILogoutJsonApiResponse>(
+        '/api-token-deauth/',
+        {},
+        {withCredentials: true}
+      )
+      .then((response: ApiResponse<ILogoutJsonApiResponse>) => {
         applySnapshot(appConfig, defaultState);
         onClose();
         return response;

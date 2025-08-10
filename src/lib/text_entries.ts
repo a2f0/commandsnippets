@@ -1,9 +1,8 @@
 import type {Theme} from '@mui/material/styles';
-import type {CancelTokenSource} from 'axios';
 import type {RefObject} from 'react';
-
 import {db} from '../../src/lib/db/db';
-import {apiBase} from './api/apiBase';
+import type {CancelTokenSource} from './api/fetchBase';
+import {apiBase} from './api/fetchBase';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
 import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
@@ -387,7 +386,10 @@ export function fetch(
     >
   > = apiBase
     .get<ITextEntryJsonApiResponse>('/entries', {
-      params: params,
+      params: params as unknown as Record<
+        string,
+        string | number | boolean | undefined
+      >,
     })
     .then(response => {
       const updatedEntries = entries.concat(response.data.data);
@@ -439,8 +441,11 @@ export function fetchPage({
     | undefined
   > = apiBase
     .get<ITextEntryJsonApiResponse>('/entries', {
-      params: params,
-      cancelToken: source.token,
+      params: params as unknown as Record<
+        string,
+        string | number | boolean | undefined
+      >,
+      signal: source.token.signal,
     })
     .then(response => {
       entries = entries.concat(response.data.data);
