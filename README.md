@@ -40,7 +40,6 @@ npx tsc -b
 ## Other
 
 - Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information
-- Bundle sizes are in `./bundle-analysis.json`, and can be computed with `./scripts/analyzeBundle.ts`
 
 ## Testing
 
@@ -67,6 +66,12 @@ Run a specific spec:
 ```shell
 pnpm run server-test
 pnpm run test -- --spec=test/specs/entries/entriesContextMenu.spec.ts
+```
+
+or
+
+```shell
+./scripts/runSpec.sh test/specs/tags/tagContextMenu/allowsDeletingATag.spec.ts
 ```
 
 ### Unit Tests
