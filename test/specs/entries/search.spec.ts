@@ -55,9 +55,6 @@ describe('TagsEntries Behavior', () => {
     await (await BasePage.entrySearch).click();
     await (await BasePage.entrySearch).setValue('entry-1');
 
-    // Verify search filtering worked
-    await browser.pause(500); // Allow time for filtering
-
     // Check if entries exist after filtering
     const filteredEntries = await BasePage.tagsEntries;
     const filteredLength = await filteredEntries.length;

@@ -46,9 +46,6 @@ describe('Entries Context Menu Untag', () => {
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
-    // Wait for entries to load
-    await browser.pause(1000);
-
     // Get the first entry and verify it exists
     const firstEntry = await BasePage.tagsEntries1;
     await expect(firstEntry).toBeExisting();

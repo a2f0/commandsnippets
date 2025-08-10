@@ -21,9 +21,6 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
-    // Wait for entries to load
-    await browser.pause(1000);
-
     // Verify that entries are listed
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize({gte: 2});
 

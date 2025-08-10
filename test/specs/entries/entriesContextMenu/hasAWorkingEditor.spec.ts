@@ -18,9 +18,6 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntriesList).toBeExisting();
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
-    // Wait for entries to load from MSW
-    await browser.pause(1500);
-
     // Entries should exist now that MSW provides proper relationships
     await expect(BasePage.tagsEntries1).toBeExisting();
     await expect(BasePage.tagsEntries1).toBeDisplayed();

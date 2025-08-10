@@ -94,9 +94,6 @@ describe('Tag Context Menu', () => {
     // Test that the context menu is hidden after deletion
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
 
-    // Wait for the deletion to be processed
-    await browser.pause(500);
-
     // Verify the tag count has decreased
     await expect(BasePage.tags).toBeElementsArrayOfSize(3);
 
