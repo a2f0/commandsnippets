@@ -6,6 +6,8 @@ describe('Tag List Context Menu Behavior', () => {
   });
 
   it('tag should have a working context menu', async () => {
+    // Reset MSW request counters for deterministic assertions
+    await browser.resetMSWRequestCounts();
     // First, navigate to establish MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
@@ -94,6 +96,13 @@ describe('Tag List Context Menu Behavior', () => {
 
     // Verify the tag creation form is hidden
     await expect(BasePage.tagNewBottom).not.toBeDisplayed();
+
+    // Verify MSW recorded the POST /tags request exactly once
+    const createCount = await browser.getMSWRequestCount(
+      'POST',
+      'http://localhost:9001/api/v1/tags'
+    );
+    expect(createCount).toBe(1);
 
     // Debug: Check what happened with the API calls
     const apiCallResults = await browser.execute(() => {

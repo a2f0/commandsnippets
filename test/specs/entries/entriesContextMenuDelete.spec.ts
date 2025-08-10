@@ -6,6 +6,7 @@ describe('Entries Context Menu Delete Entry', () => {
   });
 
   it('Should allow delete entries from untagged entries', async () => {
+    await browser.resetMSWRequestCounts();
     // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
@@ -70,6 +71,13 @@ describe('Entries Context Menu Delete Entry', () => {
 
     // In untagged view, untag option should not be displayed
     await expect(BasePage.tagsEntriesContextMenu1Untag).not.toBeDisplayed();
+
+    // No deletion executed, so ensure DELETE count remains zero for entries
+    const deleteCount = await browser.getMSWRequestCount(
+      'DELETE',
+      'http://localhost:9001/api/v1/entries/1'
+    );
+    expect(deleteCount).toBe(0);
 
     // Test core functionality: entry delete context menu workflow completed successfully
     console.log(

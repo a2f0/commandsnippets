@@ -6,6 +6,8 @@ describe('Tag Context Menu', () => {
   });
 
   it('allows deleting a tag', async () => {
+    // Reset MSW counters
+    await browser.resetMSWRequestCounts();
     // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
@@ -98,6 +100,13 @@ describe('Tag Context Menu', () => {
 
     // Verify the tag count has decreased
     await expect(BasePage.tags).toBeElementsArrayOfSize(3);
+
+    // Assert DELETE was called once for tag id 1
+    const deleteCount = await browser.getMSWRequestCount(
+      'DELETE',
+      'http://localhost:9001/api/v1/tags/1'
+    );
+    expect(deleteCount).toBe(1);
 
     // Verify that tag1 no longer exists or has been replaced
     const tag1Exists = await BasePage.tag1.isExisting();

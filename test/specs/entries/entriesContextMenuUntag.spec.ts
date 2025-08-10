@@ -6,6 +6,7 @@ describe('Entries Context Menu Untag', () => {
   });
 
   it('should untag', async () => {
+    await browser.resetMSWRequestCounts();
     // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
@@ -66,6 +67,13 @@ describe('Entries Context Menu Untag', () => {
       await expect(BasePage.tagsEntriesContextMenu1Untag).toBeExisting();
 
       console.log('✅ Untag context menu option is available for tagged entry');
+
+      // No untag issued here; ensure tags_entries DELETE has not been called
+      const untagCount = await browser.getMSWRequestCount(
+        'DELETE',
+        'http://localhost:9001/api/v1/tags_entries/1'
+      );
+      expect(untagCount).toBe(0);
     } else {
       console.log(
         'No entries found for this tag - verifying basic UI is still functional'
