@@ -154,7 +154,7 @@ async function fetchWithConfig<T = unknown>(
     // If both timeout and external signal, we need to handle both
     config.signal.addEventListener('abort', () => {
       clearTimeout(timeoutId);
-      controller.abort(config.signal!.reason);
+      controller.abort(config.signal?.reason);
     });
   }
   requestOptions.signal = controller.signal;
@@ -167,7 +167,7 @@ async function fetchWithConfig<T = unknown>(
     let responseData: T;
     const contentType = response.headers.get('content-type');
 
-    if (contentType && contentType.includes('application/json')) {
+    if (contentType?.includes('application/json')) {
       responseData = await response.json();
     } else {
       responseData = (await response.text()) as unknown as T;
