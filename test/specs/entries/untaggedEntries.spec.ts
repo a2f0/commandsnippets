@@ -6,8 +6,6 @@ describe('Entry Main Menu Behavior', () => {
   });
 
   it('should having a working context menu to create new entries', async () => {
-    // Reset just before we perform the check below to avoid double-counting initial app loads
-    // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 
@@ -45,8 +43,6 @@ describe('Entry Main Menu Behavior', () => {
     await browser.login();
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-
-    // Wait for the page to load and display content
 
     // Test entries menu functionality
     await expect(BasePage.entriesMenu).toBeExisting();
