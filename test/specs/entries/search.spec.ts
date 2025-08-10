@@ -6,7 +6,6 @@ describe('TagsEntries Behavior', () => {
   });
 
   it('should list tags_entries', async () => {
-    // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

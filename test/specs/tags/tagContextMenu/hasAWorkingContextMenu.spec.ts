@@ -6,7 +6,6 @@ describe('Tag Context Menu', () => {
   });
 
   it('has a working context menu', async () => {
-    // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

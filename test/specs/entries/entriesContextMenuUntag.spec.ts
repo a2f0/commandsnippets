@@ -7,7 +7,6 @@ describe('Entries Context Menu Untag', () => {
 
   it('should untag', async () => {
     await browser.resetMSWRequestCounts();
-    // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

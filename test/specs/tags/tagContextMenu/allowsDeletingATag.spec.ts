@@ -8,7 +8,6 @@ describe('Tag Context Menu', () => {
   it('allows deleting a tag', async () => {
     // Reset MSW counters
     await browser.resetMSWRequestCounts();
-    // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 

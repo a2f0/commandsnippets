@@ -7,7 +7,6 @@ describe('Tab Switching Behavior', () => {
 
   it('should allow tab switching while editing', async () => {
     // We will assert counts after navigation below; reset just before target navigation
-    // Navigate and verify MSW is ready
     await browser.resetMSWRequestCounts();
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();

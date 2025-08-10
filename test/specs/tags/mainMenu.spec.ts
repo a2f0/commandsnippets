@@ -6,7 +6,6 @@ describe('Tag Main Menu', () => {
   });
 
   it('should have a working menu bar', async () => {
-    // Navigate and verify MSW is ready
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 
