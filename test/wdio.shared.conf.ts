@@ -299,6 +299,7 @@ export const config: WebdriverIO.Config = {
         'LoggedIn',
         'None'
       );
+      await browser.deleteCookies();
     });
     browser.on('log.entryAdded', (logEntry: LogEntry) => {
       if (logEntry.level === 'error') {
