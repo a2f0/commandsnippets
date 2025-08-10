@@ -42,6 +42,18 @@ declare global {
       login: () => Promise<void>;
       waitForMSW: () => Promise<void>;
       resetMSWHandlers: () => Promise<void>;
+      getMSWRequestCount: (
+        method:
+          | 'GET'
+          | 'POST'
+          | 'PUT'
+          | 'PATCH'
+          | 'DELETE'
+          | 'OPTIONS'
+          | 'HEAD',
+        url: string
+      ) => Promise<number>;
+      resetMSWRequestCounts: () => Promise<void>;
     }
   }
 }
@@ -142,6 +154,47 @@ export const config: WebdriverIO.Config = {
           if (window.resetMSWState) {
             window.resetMSWState();
           }
+          // Reset request counters
+          if (window.__MSW_REQUESTS__) {
+            window.__MSW_REQUESTS__.reset();
+          }
+        }
+      });
+    });
+
+    // Add helper to fetch request count for a method+url
+    browser.addCommand(
+      'getMSWRequestCount',
+      async (
+        method:
+          | 'GET'
+          | 'POST'
+          | 'PUT'
+          | 'PATCH'
+          | 'DELETE'
+          | 'OPTIONS'
+          | 'HEAD',
+        url: string
+      ) => {
+        const count = await browser.execute(
+          (m: typeof method, u: string) => {
+            if (window.__MSW_REQUESTS__) {
+              return window.__MSW_REQUESTS__.getCount(m, u);
+            }
+            return -1;
+          },
+          method,
+          url
+        );
+        return count as number;
+      }
+    );
+
+    // Add helper to reset only request counters
+    browser.addCommand('resetMSWRequestCounts', async () => {
+      await browser.execute(() => {
+        if (window.__MSW_REQUESTS__) {
+          window.__MSW_REQUESTS__.reset();
         }
       });
     });

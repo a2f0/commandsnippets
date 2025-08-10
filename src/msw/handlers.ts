@@ -1,6 +1,7 @@
 import {HttpResponse, http} from 'msw';
 import type {ITagJsonApiResponse, ITagJsonApiResponseSingle} from '../lib/tags';
 import type {ITextEntryJsonApiResponse} from '../lib/text_entries';
+import {recordRequest} from './requestCounter';
 
 // Mock data for tags (matches test/mocks/tags/tagsResponse.ts)
 // Keep original immutable for resets
@@ -182,7 +183,8 @@ const createHandlers = () => {
   for (const baseUrl of apiBaseUrls) {
     handlers.push(
       // Health check endpoint
-      http.get(`${baseUrl}/health`, () => {
+      http.get(`${baseUrl}/health`, ({request}) => {
+        recordRequest('GET', request.url);
         console.log('✅ MSW intercepted health check request');
         return HttpResponse.json(
           {status: 'ok'},
@@ -194,6 +196,7 @@ const createHandlers = () => {
 
       // Tags endpoint (with optional query parameters)
       http.get(`${baseUrl}/tags`, req => {
+        recordRequest('GET', req.request.url);
         console.log('✅ MSW intercepted tags request:', req.request.url);
         return HttpResponse.json(tagsResponse, {
           status: 200,
@@ -201,7 +204,8 @@ const createHandlers = () => {
       }),
 
       // Create new tag endpoint
-      http.post(`${baseUrl}/tags`, async () => {
+      http.post(`${baseUrl}/tags`, async ({request}) => {
+        recordRequest('POST', request.url);
         console.log('✅ MSW intercepted tags POST request');
 
         // Return a new tag response
@@ -246,6 +250,7 @@ const createHandlers = () => {
 
       // Entries endpoint (with optional query parameters)
       http.get(`${baseUrl}/entries`, req => {
+        recordRequest('GET', req.request.url);
         console.log('✅ MSW intercepted entries request:', req.request.url);
 
         // Always return entries - simplify for testing
@@ -255,7 +260,8 @@ const createHandlers = () => {
       }),
 
       // Entries by tag endpoint
-      http.get(`${baseUrl}/tags/:tagId/entries`, ({params}) => {
+      http.get(`${baseUrl}/tags/:tagId/entries`, ({params, request}) => {
+        recordRequest('GET', request.url);
         const tagId = `${params['tagId']}`;
         console.log(
           '✅ MSW intercepted entries by tag request for tag id:',
@@ -282,7 +288,8 @@ const createHandlers = () => {
       }),
 
       // Create new entry endpoint
-      http.post(`${baseUrl}/entries`, async () => {
+      http.post(`${baseUrl}/entries`, async ({request}) => {
+        recordRequest('POST', request.url);
         console.log('✅ MSW intercepted entries POST request');
 
         // Return a new entry response
@@ -326,16 +333,19 @@ const createHandlers = () => {
       }),
 
       // Reorder endpoints
-      http.post(`${baseUrl}/tags_entries/reorder`, () => {
+      http.post(`${baseUrl}/tags_entries/reorder`, ({request}) => {
+        recordRequest('POST', request.url);
         return HttpResponse.json({data: null}, {status: 200});
       }),
 
-      http.post(`${baseUrl}/tags/reorder`, () => {
+      http.post(`${baseUrl}/tags/reorder`, ({request}) => {
+        recordRequest('POST', request.url);
         return HttpResponse.json({data: null}, {status: 200});
       }),
 
       // Delete tag endpoint with stateful behavior
-      http.delete(`${baseUrl}/tags/:id`, ({params}) => {
+      http.delete(`${baseUrl}/tags/:id`, ({params, request}) => {
+        recordRequest('DELETE', request.url);
         const tagId = `${params['id']}`;
         console.log('✅ MSW intercepted tag DELETE request for id:', tagId);
 
@@ -361,7 +371,8 @@ const createHandlers = () => {
       }),
 
       // Delete entry endpoint
-      http.delete(`${baseUrl}/entries/:id`, ({params}) => {
+      http.delete(`${baseUrl}/entries/:id`, ({params, request}) => {
+        recordRequest('DELETE', request.url);
         const entryId = `${params['id']}`;
         console.log('✅ MSW intercepted entry DELETE request for id:', entryId);
 
@@ -374,7 +385,8 @@ const createHandlers = () => {
       }),
 
       // Untag entry endpoint (tags_entries)
-      http.delete(`${baseUrl}/tags_entries/:id`, ({params}) => {
+      http.delete(`${baseUrl}/tags_entries/:id`, ({params, request}) => {
+        recordRequest('DELETE', request.url);
         const tagEntryId = `${params['id']}`;
         console.log(
           '✅ MSW intercepted untag (tags_entries) DELETE request for id:',
@@ -389,13 +401,19 @@ const createHandlers = () => {
 
   // Auth endpoint (different pattern)
   handlers.push(
-    http.post('http://localhost:9001/api-token-deauth', () => {
+    http.post('http://localhost:9001/api-token-deauth', ({request}) => {
+      recordRequest('POST', request.url);
       return HttpResponse.json({data: {}}, {status: 200});
     }),
-    http.post('https://api.staging.tearleads.com/api-token-deauth', () => {
-      return HttpResponse.json({data: {}}, {status: 200});
-    }),
-    http.post('https://api.tearleads.com/api-token-deauth', () => {
+    http.post(
+      'https://api.staging.tearleads.com/api-token-deauth',
+      ({request}) => {
+        recordRequest('POST', request.url);
+        return HttpResponse.json({data: {}}, {status: 200});
+      }
+    ),
+    http.post('https://api.tearleads.com/api-token-deauth', ({request}) => {
+      recordRequest('POST', request.url);
       return HttpResponse.json({data: {}}, {status: 200});
     })
   );

@@ -139,6 +139,27 @@ describe('MSW Verification Tests', () => {
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 
+  it('should count requests using MSW request counters', async () => {
+    // Ensure counters start at zero
+    await browser.resetMSWRequestCounts();
+
+    // Explicitly make a request so the count increments deterministically
+    await browser.execute(async () => {
+      try {
+        await fetch('http://localhost:9001/api/v1/tags');
+      } catch (_e) {
+        // ignore
+      }
+    });
+
+    // Check that GET /tags on localhost base URL was requested at least once
+    const url = 'http://localhost:9001/api/v1/tags';
+    const count = await browser.getMSWRequestCount('GET', url);
+    console.log('MSW GET /tags request count =', count);
+    // We expect at least 1, but avoid flakiness by asserting >= 1
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
   it('should verify entries endpoint is intercepted by MSW', async () => {
     // Check page load and test entries endpoint in one call to avoid context issues
     const result = await browser.execute(async () => {
