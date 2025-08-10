@@ -42,7 +42,7 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
 
     // Right-click to open context menu
-    await (await BasePage.tagList).waitAndRightClick();
+    await BasePage.tagList.waitAndRightClick();
     await expect(BasePage.tagListContextMenu).toBeDisplayed();
 
     // Test Escape key closes menu
@@ -50,11 +50,11 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
 
     // Open context menu again
-    await (await BasePage.tagList).waitAndRightClick();
+    await BasePage.tagList.waitAndRightClick();
     await expect(BasePage.tagListContextMenu).toBeDisplayed();
 
     // Click "New Tag" menu item
-    await (await BasePage.tagListContextMenuNew).waitAndLeftClick();
+    await BasePage.tagListContextMenuNew.waitAndLeftClick();
     await expect(BasePage.tagNewBottom).toBeDisplayed();
 
     // Test the new tag form
@@ -71,13 +71,13 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tags).toBeElementsArrayOfSize(initialTagCount);
 
     // Save the tag
-    await (await BasePage.tagNewBottomSave).waitAndLeftClick();
+    await BasePage.tagNewBottomSave.waitAndLeftClick();
 
     // Verify tag was created - MSW will handle the POST and the UI should update
     // The UI should show the new tag added to the existing ones
     await browser.waitUntil(
       async () => {
-        const tagCount = await BasePage.tags.length;
+        const tagCount = (await BasePage.tags).length;
         return tagCount === initialTagCount + 1;
       },
       {

@@ -52,8 +52,8 @@ describe('TagsEntries Behavior', () => {
 
     // Test entry search functionality by directly interacting with search field
     // Skip complex Tab navigation testing in headless mode - focus on core functionality
-    await (await BasePage.entrySearch).click();
-    await (await BasePage.entrySearch).setValue('entry-1');
+    await BasePage.entrySearch.click();
+    await BasePage.entrySearch.setValue('entry-1');
 
     // Check if entries exist after filtering
     const filteredEntries = await BasePage.tagsEntries;
@@ -62,7 +62,7 @@ describe('TagsEntries Behavior', () => {
       console.log('Search filtered entries successfully');
 
       // If first entry exists, verify it's displayed
-      const firstEntry = await BasePage.tagsEntries1;
+      const firstEntry = BasePage.tagsEntries1;
       if (await firstEntry.isExisting()) {
         await expect(firstEntry).toBeDisplayed();
       }

@@ -13,7 +13,7 @@ describe('Entry Main Menu', () => {
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await (await BasePage.entriesMenuButton).waitAndLeftClick();
+    await BasePage.entriesMenuButton.waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
     // Assert initial GETs occurred
     await browser.toBeRequestedTimes(
@@ -28,7 +28,7 @@ describe('Entry Main Menu', () => {
     );
     await browser.keys('Escape');
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await (await BasePage.entriesMenuButton).waitAndLeftClick();
+    await BasePage.entriesMenuButton.waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
     expect(browser.currentTestErrors).toHaveLength(0);
   });

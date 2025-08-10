@@ -18,7 +18,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryListContextMenu).not.toBeDisplayed();
 
     // Test right-click context menu functionality
-    await (await BasePage.tagsEntriesList).waitAndRightClick();
+    await BasePage.tagsEntriesList.waitAndRightClick();
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryListContextMenuNewEntry).toBeDisplayed();
 
@@ -27,10 +27,10 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entryListContextMenu).not.toBeDisplayed();
 
     // Test opening new entry form
-    await (await BasePage.tagsEntriesList).waitAndRightClick();
+    await BasePage.tagsEntriesList.waitAndRightClick();
     await expect(BasePage.entryListContextMenu).toBeDisplayed();
     await expect(BasePage.entryNewBottom).not.toBeDisplayed();
-    await (await BasePage.entryListContextMenuNewEntry).waitAndLeftClick();
+    await BasePage.entryListContextMenuNewEntry.waitAndLeftClick();
     await expect(BasePage.entryNewBottom).toBeDisplayed();
 
     // Test basic form functionality - focus and input
@@ -38,7 +38,7 @@ describe('Entry Main Menu Behavior', () => {
     await browser.keys('Test Subject');
     expect(BasePage.entryNewBottomSubject).toHaveValue('Test Subject');
 
-    await (await BasePage.entryNewBottomBody).waitAndLeftClick();
+    await BasePage.entryNewBottomBody.waitAndLeftClick();
     await expect(BasePage.entryNewBottomBody).toBeFocused();
     await browser.keys('Test Body Content');
     expect(BasePage.entryNewBottomBody).toHaveValue('Test Body Content');

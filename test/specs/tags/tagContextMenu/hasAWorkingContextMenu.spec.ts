@@ -54,7 +54,7 @@ describe('Tag Context Menu', () => {
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
 
     // Test right-click interaction on tag-1
-    await (await BasePage.tag1).waitAndRightClick();
+    await BasePage.tag1.waitAndRightClick();
 
     // Verify context menu becomes visible after right-click
     await expect(BasePage.tagContextMenu1).toBeDisplayed();

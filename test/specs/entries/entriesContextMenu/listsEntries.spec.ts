@@ -25,7 +25,7 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize({gte: 2});
 
     // Check first entry exists and is displayed
-    const firstEntry = await BasePage.tagsEntries1;
+    const firstEntry = BasePage.tagsEntries1;
     await expect(firstEntry).toBeExisting();
     await expect(firstEntry).toBeDisplayed();
 

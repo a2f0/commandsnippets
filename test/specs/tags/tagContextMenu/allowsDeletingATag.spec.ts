@@ -50,11 +50,11 @@ describe('Tag Context Menu', () => {
     await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
 
     // Test cancel delete
-    await (await BasePage.tag1).waitAndRightClick();
+    await BasePage.tag1.waitAndRightClick();
     await expect(BasePage.tagContextMenu1).toBeDisplayed();
     await expect(BasePage.tagContextMenu1DeleteTagMenuItem).toBeDisplayed();
     await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeDisplayed();
-    await (await BasePage.tagContextMenu1DeleteTagMenuItem).waitAndLeftClick();
+    await BasePage.tagContextMenu1DeleteTagMenuItem.waitAndLeftClick();
     await expect(BasePage.tagContextMenu1DeleteTagDialog).toBeDisplayed();
     await expect(
       BasePage.tagContextMenu1DeleteTagDialogDeleteButton
@@ -62,18 +62,16 @@ describe('Tag Context Menu', () => {
     await expect(
       BasePage.tagContextMenu1DeleteTagDialogCancelButton
     ).toBeDisplayed();
-    await (
-      await BasePage.tagContextMenu1DeleteTagDialogCancelButton
-    ).waitAndLeftClick();
+    await BasePage.tagContextMenu1DeleteTagDialogCancelButton.waitAndLeftClick();
     await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeExisting();
 
     // Test confirm delete
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
-    await (await BasePage.tag1).waitAndRightClick();
+    await BasePage.tag1.waitAndRightClick();
     await expect(BasePage.tagContextMenu1).toBeDisplayed();
     await expect(BasePage.tagContextMenu1DeleteTagMenuItem).toBeDisplayed();
     await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeDisplayed();
-    await (await BasePage.tagContextMenu1DeleteTagMenuItem).waitAndLeftClick();
+    await BasePage.tagContextMenu1DeleteTagMenuItem.waitAndLeftClick();
     await expect(BasePage.tagContextMenu1DeleteTagDialog).toBeDisplayed();
     await expect(
       BasePage.tagContextMenu1DeleteTagDialogDeleteButton
@@ -82,9 +80,7 @@ describe('Tag Context Menu', () => {
       BasePage.tagContextMenu1DeleteTagDialogCancelButton
     ).toBeDisplayed();
     // Click delete button - MSW will intercept the DELETE request
-    await (
-      await BasePage.tagContextMenu1DeleteTagDialogDeleteButton
-    ).waitAndLeftClick();
+    await BasePage.tagContextMenu1DeleteTagDialogDeleteButton.waitAndLeftClick();
     await expect(BasePage.tagContextMenu1DeleteTagDialog).not.toBeDisplayed();
 
     // Verify the delete dialog has closed (main test objective)

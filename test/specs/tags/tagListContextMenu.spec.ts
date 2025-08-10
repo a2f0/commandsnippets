@@ -17,7 +17,7 @@ describe('Tag List Context Menu Behavior', () => {
     await expect(BasePage.tagListContextMenu).not.toBeDisplayed();
 
     // Open context menu via right-click
-    await (await BasePage.tagList).waitAndRightClick();
+    await BasePage.tagList.waitAndRightClick();
     await expect(BasePage.tagListContextMenu).toBeDisplayed();
 
     // Close with Escape

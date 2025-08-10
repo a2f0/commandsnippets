@@ -53,7 +53,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entriesMenu).toBeDisplayed();
 
     // Click untagged entries option
-    await (await BasePage.entriesMenuUntagged).waitAndLeftClick();
+    await BasePage.entriesMenuUntagged.waitAndLeftClick();
 
     // Verify navigation to untagged entries view
     await expect(browser).toHaveUrl(
@@ -64,7 +64,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize({gte: 1});
-    const firstEntry = await BasePage.tagsEntries1;
+    const firstEntry = BasePage.tagsEntries1;
     await expect(firstEntry).toBeExisting();
     await expect(firstEntry).toBeDisplayed();
 

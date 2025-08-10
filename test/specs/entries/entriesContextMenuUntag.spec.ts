@@ -47,7 +47,7 @@ describe('Entries Context Menu Untag', () => {
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
     // Get the first entry and verify it exists
-    const firstEntry = await BasePage.tagsEntries1;
+    const firstEntry = BasePage.tagsEntries1;
     await expect(firstEntry).toBeExisting();
     await expect(firstEntry).toBeDisplayed();
 

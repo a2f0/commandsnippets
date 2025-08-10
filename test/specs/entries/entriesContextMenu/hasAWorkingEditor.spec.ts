@@ -23,12 +23,12 @@ describe('TagsEntries Behavior', () => {
     await expect(BasePage.tagsEntries1).toBeDisplayed();
 
     // Right-click on the first entry to open context menu
-    await (await BasePage.tagsEntries1).waitAndRightClick();
+    await BasePage.tagsEntries1.waitAndRightClick();
     await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1Edit).toBeDisplayed();
 
     // Click the Edit option in the context menu
-    await (await BasePage.tagsEntriesContextMenu1Edit).waitAndLeftClick();
+    await BasePage.tagsEntriesContextMenu1Edit.waitAndLeftClick();
 
     // Verify the editor opens with all fields
     await expect(BasePage.textEntryEdit1).toBeDisplayed();

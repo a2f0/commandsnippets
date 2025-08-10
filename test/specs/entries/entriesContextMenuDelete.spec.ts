@@ -49,9 +49,9 @@ describe('Entries Context Menu Delete Entry', () => {
     // Navigate directly to untagged entries (skip checking entries in tag view)
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await (await BasePage.entriesMenuButton).waitAndLeftClick();
+    await BasePage.entriesMenuButton.waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
-    await (await BasePage.entriesMenuUntagged).waitAndLeftClick();
+    await BasePage.entriesMenuUntagged.waitAndLeftClick();
     await expect(browser).toHaveUrl(
       'http://localhost:8081/test?entries=untagged'
     );
@@ -64,7 +64,7 @@ describe('Entries Context Menu Delete Entry', () => {
     // Test entry context menu for first entry (MSW always provides entries)
     await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
     await expect(BasePage.tagsEntriesContextMenu1).not.toBeDisplayed();
-    await (await BasePage.tagsEntries1).waitAndRightClick();
+    await BasePage.tagsEntries1.waitAndRightClick();
     await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
     await expect(BasePage.tagsEntriesContextMenu1Delete).toBeDisplayed();
 
