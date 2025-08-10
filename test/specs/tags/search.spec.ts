@@ -7,16 +7,11 @@ describe('Tag Search Menu Behavior', () => {
     await browser.login();
     await BasePage.open('');
 
-    // (Removed DevTools to prevent browser window issues)
-
-    // Wait for the authenticated app to load
-
-    // Debug: Check what's on the page
     const pageTitle = await browser.getTitle();
-    console.log('Page title:', pageTitle);
+    expect(pageTitle).toBe('Tearleads');
 
     const pageUrl = await browser.getUrl();
-    console.log('Page URL:', pageUrl);
+    expect(pageUrl).toBe('http://localhost:8081/test/test-tag-1');
 
     // Verify MSW is working by checking API directly
     const apiResult = await browser.execute(async () => {
