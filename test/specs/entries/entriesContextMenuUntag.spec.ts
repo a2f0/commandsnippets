@@ -49,37 +49,29 @@ describe('Entries Context Menu Untag', () => {
     // Wait for entries to load
     await browser.pause(1000);
 
-    // Check if first entry exists before trying to interact
+    // Get the first entry and verify it exists
     const firstEntry = await BasePage.tagsEntries1;
-    const entryExists = await firstEntry.isExisting();
+    await expect(firstEntry).toBeExisting();
+    await expect(firstEntry).toBeDisplayed();
 
-    if (entryExists) {
-      // Right-click on the first entry to open context menu
-      await firstEntry.waitForDisplayed();
-      await firstEntry.click({button: 'right'});
+    // Right-click on the first entry to open context menu
+    await firstEntry.click({button: 'right'});
 
-      // Wait for context menu to appear
-      await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
-      await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
+    // Wait for context menu to appear
+    await expect(BasePage.tagsEntriesContextMenu1).toBeExisting();
+    await expect(BasePage.tagsEntriesContextMenu1).toBeDisplayed();
 
-      // Verify untag option exists
-      await expect(BasePage.tagsEntriesContextMenu1Untag).toBeExisting();
+    // Verify untag option exists
+    await expect(BasePage.tagsEntriesContextMenu1Untag).toBeExisting();
 
-      console.log('✅ Untag context menu option is available for tagged entry');
+    console.log('✅ Untag context menu option is available for tagged entry');
 
-      // No untag issued here; ensure tags_entries DELETE has not been called
-      const untagCount = await browser.getMSWRequestCount(
-        'DELETE',
-        'http://localhost:9001/api/v1/tags_entries/1'
-      );
-      expect(untagCount).toBe(0);
-    } else {
-      console.log(
-        'No entries found for this tag - verifying basic UI is still functional'
-      );
-      // Verify the entries list area is still displayed even if empty
-      await expect(BasePage.tagsEntriesList).toBeDisplayed();
-    }
+    // No untag issued here; ensure tags_entries DELETE has not been called
+    const untagCount = await browser.getMSWRequestCount(
+      'DELETE',
+      'http://localhost:9001/api/v1/tags_entries/1'
+    );
+    expect(untagCount).toBe(0);
 
     console.log('✅ Untag test completed: entry successfully removed from tag');
 
