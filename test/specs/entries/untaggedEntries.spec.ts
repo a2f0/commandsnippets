@@ -49,7 +49,7 @@ describe('Entry Main Menu Behavior', () => {
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
 
     // Click entries menu button to open menu
-    await (await BasePage.entriesMenuButton).waitAndLeftClick();
+    await BasePage.entriesMenuButton.waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
 
     // Click untagged entries option
@@ -63,23 +63,10 @@ describe('Entry Main Menu Behavior', () => {
     // Verify untagged entries are displayed
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
-    // Check if any untagged entries exist
-    const entries = await BasePage.tagsEntries;
-    const entriesLength = await entries.length;
-
-    // If untagged entries exist, verify they are displayed
-    if (entries && entriesLength > 0) {
-      await expect(entries).toBeElementsArrayOfSize({gte: 1});
-      const firstEntry = await BasePage.tagsEntries1;
-      if (await firstEntry.isExisting()) {
-        await expect(firstEntry).toBeDisplayed();
-      }
-    } else {
-      // Verify empty state or no untagged entries message
-      console.log(
-        'No untagged entries found - this is expected if all entries are tagged'
-      );
-    }
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize({gte: 1});
+    const firstEntry = await BasePage.tagsEntries1;
+    await expect(firstEntry).toBeExisting();
+    await expect(firstEntry).toBeDisplayed();
 
     // Test core functionality: entries menu workflow completed successfully
     console.log(
