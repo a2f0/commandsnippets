@@ -24,31 +24,18 @@ describe('TagsEntries Behavior', () => {
     // Wait for entries to load
     await browser.pause(1000);
 
-    // Verify that entries are listed if available
-    const entries = await BasePage.tagsEntries;
-    const entriesLength = await entries.length;
-    if (entries && entriesLength > 0) {
-      await expect(entries).toBeElementsArrayOfSize({gte: 1});
+    // Verify that entries are listed
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize({gte: 2});
 
-      // Check if first entry exists
-      const firstEntry = await BasePage.tagsEntries1;
-      if (await firstEntry.isExisting()) {
-        await expect(firstEntry).toBeDisplayed();
-        // Entry content verification can vary based on MSW data
-        console.log('First entry is displayed');
-      }
+    // Check first entry exists and is displayed
+    const firstEntry = await BasePage.tagsEntries1;
+    await expect(firstEntry).toBeExisting();
+    await expect(firstEntry).toBeDisplayed();
 
-      // Check for multiple entries if available
-      const secondEntry = await $('#tagsEntries-2');
-      if (await secondEntry.isExisting()) {
-        await expect(secondEntry).toBeDisplayed();
-        console.log('Multiple entries are displayed');
-      }
-    } else {
-      console.log(
-        'No entries found for this tag - this may be expected based on MSW data'
-      );
-    }
+    // Check second entry exists and is displayed
+    const secondEntry = await $('#tagsEntries-2');
+    await expect(secondEntry).toBeExisting();
+    await expect(secondEntry).toBeDisplayed();
 
     console.log(
       '✅ Entry list test completed: entries are properly displayed for the tag'
