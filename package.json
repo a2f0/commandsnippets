@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.34",
+  "version": "0.7.35",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -11,8 +11,8 @@
     "server": "vite serve",
     "server-test": "vite serve --port 8081",
     "dev": "vite serve --host",
-    "test": "NODE_OPTIONS='--experimental-specifier-resolution=node --no-warnings' npx wdio test/wdio.shared.conf.ts",
-    "test-headless": "NODE_OPTIONS='--experimental-specifier-resolution=node --no-warnings' npx wdio test/wdio.headless.conf.ts",
+    "test": "npx wdio test/wdio.shared.conf.ts",
+    "test-headless": "npx wdio test/wdio.headless.conf.ts",
     "ci": "start-server-and-test server-test http-get://localhost:8081 test",
     "ci-headless": "start-server-and-test server-test http-get://localhost:8081 test-headless",
     "unit": "npx vitest --no-watch",
@@ -28,7 +28,7 @@
   "keywords": [],
   "author": "Dan Sullivan",
   "devDependencies": {
-    "@a2f0/check-for-unpinned-dependencies": "https://github.com/a2f0/check-for-unpinned-dependencies#chore-package-maintenance",
+    "@a2f0/check-for-unpinned-dependencies": "github:a2f0/check-for-unpinned-dependencies#chore-package-maintenance",
     "@biomejs/biome": "2.1.3",
     "@ffmpeg-installer/ffmpeg": "1.1.0",
     "@swc/core": "1.13.3",
@@ -93,5 +93,10 @@
     "react-dom": "19.1.1",
     "react-highlight-words": "0.21.0",
     "react-router-dom": "7.7.1"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

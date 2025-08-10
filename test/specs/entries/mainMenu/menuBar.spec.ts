@@ -1,32 +1,34 @@
-import {entriesResponse} from '../../../mocks/entries/entriesResponse';
-import {tagsResponse} from '../../../mocks/tags/tagsResponse';
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
-  it.skip('should having a working menu bar', async () => {
+  afterEach(async () => {
+    await browser.resetMSWHandlers();
+  });
+
+  it('should having a working menu bar', async () => {
+    await browser.resetMSWRequestCounts();
+    // Navigate to page first, then login (using MSW)
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
-
-    const mockEntriesResponse = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1*',
-      {method: 'GET'}
-    );
-    mockEntriesResponse.respond(entriesResponse, {statusCode: 200});
-
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1*',
-      {method: 'GET'}
-    );
-    mockTags.respond(tagsResponse, {statusCode: 200});
     await browser.login();
     await BasePage.open('');
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await (await BasePage.entriesMenuButton).waitAndLeftClick();
+    await BasePage.entriesMenuButton.waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
+    // Assert initial GETs occurred
+    await browser.toBeRequestedTimes(
+      'GET',
+      'http://localhost:9001/api/v1/tags',
+      1
+    );
+    await browser.toBeRequestedTimes(
+      'GET',
+      'http://localhost:9001/api/v1/entries',
+      1
+    );
     await browser.keys('Escape');
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
-    await (await BasePage.entriesMenuButton).waitAndLeftClick();
+    await BasePage.entriesMenuButton.waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
     expect(browser.currentTestErrors).toHaveLength(0);
   });

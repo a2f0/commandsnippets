@@ -200,6 +200,9 @@ export class Base {
   }
   async open(path: string): Promise<ReturnType<WebdriverIO.Browser['url']>> {
     await browser.url(`http://localhost:8081/${path}`);
+
+    // Wait for MSW to be ready after page load
+    await browser.waitForMSW();
   }
 }
 
