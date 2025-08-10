@@ -2,7 +2,6 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Main Menu', () => {
   afterEach(async () => {
-    // Reset MSW handlers after each test
     await browser.resetMSWHandlers();
   });
 

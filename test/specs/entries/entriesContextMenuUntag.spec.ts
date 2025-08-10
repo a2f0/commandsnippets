@@ -2,7 +2,6 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Untag', () => {
   afterEach(async () => {
-    // Reset MSW handlers after each test
     await browser.resetMSWHandlers();
   });
 
