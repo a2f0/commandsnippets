@@ -1,7 +1,6 @@
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {db} from '../../src/lib/db/db';
-import type {CancelTokenSource} from './api/fetchBase';
 import {apiBase} from './api/fetchBase';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
@@ -33,7 +32,7 @@ export interface IEntryFetchPage {
   username: string;
   sort: string;
   search?: string;
-  source: CancelTokenSource;
+  signal: AbortSignal;
 }
 
 export function sort(
@@ -412,7 +411,7 @@ export function fetchPage({
   username,
   sort,
   search,
-  source,
+  signal,
 }: IEntryFetchPage) {
   let entries: Array<
     | ITextEntryJsonApi
@@ -445,7 +444,7 @@ export function fetchPage({
         string,
         string | number | boolean | undefined
       >,
-      signal: source.token.signal,
+      signal,
     })
     .then(response => {
       entries = entries.concat(response.data.data);

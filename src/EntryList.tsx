@@ -20,8 +20,6 @@ import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
-import type {CancelTokenSource} from './lib/api/fetchBase';
-import {FetchApiClient} from './lib/api/fetchBase';
 import {appMode, type IMouse, initialMouse} from './lib/shared';
 import {
   type ITextEntryJsonApi,
@@ -70,8 +68,8 @@ const EntryList = () => {
     setElRefs(refsArray);
   }, [entries.length]);
 
-  const [previousTokenSource, setPreviousTokenSource] = useState<
-    CancelTokenSource | undefined
+  const [previousController, setPreviousController] = useState<
+    AbortController | undefined
   >(undefined);
   useEffect(
     () =>
@@ -123,18 +121,18 @@ const EntryList = () => {
       }
     } else if (entriesFilter === 'all') {
       if (user !== undefined) {
-        const source = FetchApiClient.CancelToken.source();
+        const controller = new AbortController();
         const fetchParams: IEntryFetchPage = {
           page: 1,
           username: user,
           sort: appConfig.entrySortOrder,
           search: appConfig.entrySearchString,
-          source: source,
+          signal: controller.signal,
         };
-        if (previousTokenSource !== undefined) {
-          previousTokenSource.cancel();
+        if (previousController !== undefined) {
+          previousController.abort('New request initiated');
         }
-        setPreviousTokenSource(source);
+        setPreviousController(controller);
         const p = TextEntryHelpers.fetchPage(fetchParams);
         p.then(a => {
           if (a) {

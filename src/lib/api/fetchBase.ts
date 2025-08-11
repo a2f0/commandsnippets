@@ -49,40 +49,7 @@ export class ApiError extends Error {
   }
 }
 
-// AbortController wrapper for request cancellation
-export class CancelToken {
-  private controller: AbortController;
-  private _cancelled = false;
-
-  constructor() {
-    this.controller = new AbortController();
-  }
-
-  public get signal(): AbortSignal {
-    return this.controller.signal;
-  }
-
-  public get cancelled(): boolean {
-    return this._cancelled;
-  }
-
-  public cancel(reason?: string): void {
-    this._cancelled = true;
-    this.controller.abort(reason);
-  }
-}
-
-export class CancelTokenSource {
-  public token: CancelToken;
-
-  constructor() {
-    this.token = new CancelToken();
-  }
-
-  public cancel(reason?: string): void {
-    this.token.cancel(reason);
-  }
-}
+// Note: Using native AbortController/AbortSignal for request cancellation
 
 // Utility function to build URL with query parameters
 function buildURL(
@@ -143,22 +110,24 @@ async function fetchWithConfig<T = unknown>(
     requestOptions.body = JSON.stringify(data);
   }
 
-  // Setup timeout
-  const controller = new AbortController();
+  // Setup timeout and signal handling
+  const timeoutController = new AbortController();
   const timeoutId = setTimeout(
-    () => controller.abort('Request timeout'),
+    () => timeoutController.abort('Request timeout'),
     timeout
   );
 
   // Use existing signal if provided, otherwise use timeout controller
   if (config.signal) {
-    // If both timeout and external signal, we need to handle both
+    // If external signal is provided, use it and also handle timeout
     config.signal.addEventListener('abort', () => {
       clearTimeout(timeoutId);
-      controller.abort(config.signal?.reason);
     });
+    requestOptions.signal = config.signal;
+  } else {
+    // If no external signal, use timeout controller
+    requestOptions.signal = timeoutController.signal;
   }
-  requestOptions.signal = controller.signal;
 
   try {
     const response = await fetch(fullURL, requestOptions);
@@ -320,11 +289,6 @@ export class FetchApiClient {
   ): Promise<ApiResponse<T>> {
     return this.request<T>(url, {...config, method: 'DELETE'});
   }
-
-  // Static method to create cancel token source (similar to Axios)
-  public static CancelToken = {
-    source: () => new CancelTokenSource(),
-  };
 }
 
 // Create default instance
