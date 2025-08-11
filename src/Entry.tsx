@@ -13,7 +13,7 @@ import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
-import {apiBase} from './lib/api/fetchBase';
+import {ApiError, apiBase} from './lib/api/fetchBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {appMode, getSelection, type IMouse, initialMouse} from './lib/shared';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
@@ -364,11 +364,22 @@ const Entry = ({
           element.relationships.tag.data.id === tagObject?.id &&
           element.relationships.text_entry.data.id === textEntryObject.id
       );
-    apiBase.delete(`/tags_entries/${tagTextEntryThroughModelObject?.id}`, {
-      withCredentials: true,
-    });
-    tagTextEntryThroughModelObject?.remove();
-    handleRemoveFromListParent(textEntryObject.id);
+    apiBase
+      .delete(`/tags_entries/${tagTextEntryThroughModelObject?.id}`, {
+        withCredentials: true,
+      })
+      .then(() => {
+        tagTextEntryThroughModelObject?.remove();
+        handleRemoveFromListParent(textEntryObject.id);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof ApiError) {
+          console.error(`Failed to delete entry: ${error.message}`, error);
+          // Could show user-friendly error message here
+        } else {
+          console.error('Unexpected error deleting entry:', error);
+        }
+      });
   };
 
   const handleCopyClick = () => {

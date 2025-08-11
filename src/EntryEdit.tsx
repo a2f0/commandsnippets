@@ -6,7 +6,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
 import type {ApiResponse} from './lib/api/fetchBase';
-import {apiBase} from './lib/api/fetchBase';
+import {ApiError, apiBase} from './lib/api/fetchBase';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
@@ -76,10 +76,14 @@ const EntryEdit = ({
       .then((response: ApiResponse<ITextEntryJsonApiResponseSingle>) => {
         handleSaveParent(response.data);
       })
-      .catch(error => {
-        console.error(error);
-      })
-      .then(() => {});
+      .catch((error: unknown) => {
+        if (error instanceof ApiError) {
+          console.error(`Failed to update entry: ${error.message}`, error);
+          // Could show user-friendly error message here
+        } else {
+          console.error('Unexpected error updating entry:', error);
+        }
+      });
   };
 
   const handleCancel = () => {

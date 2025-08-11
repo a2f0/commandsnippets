@@ -33,6 +33,7 @@ export class ApiError extends Error {
   public status: number;
   public statusText: string;
   public response: Response | undefined;
+  public data?: unknown;
 
   constructor(
     message: string,
@@ -163,25 +164,57 @@ async function fetchWithConfig<T = unknown>(
     const response = await fetch(fullURL, requestOptions);
     clearTimeout(timeoutId);
 
-    // Parse response data
-    let responseData: T;
-    const contentType = response.headers.get('content-type');
-
-    if (contentType?.includes('application/json')) {
-      responseData = await response.json();
-    } else {
-      responseData = (await response.text()) as unknown as T;
-    }
-
-    // Check if response is successful
+    // Check if response is successful first
     if (!response.ok) {
-      const errorMessage = `Request failed with status ${response.status}: ${response.statusText}`;
-      throw new ApiError(
+      // Try to parse error response body for more details
+      let errorData: unknown = null;
+      const contentType = response.headers.get('content-type');
+
+      try {
+        if (
+          contentType?.includes('application/json') ||
+          contentType?.includes('application/vnd.api+json')
+        ) {
+          errorData = await response.json();
+        } else {
+          errorData = await response.text();
+        }
+      } catch {
+        // If parsing fails, continue with basic error
+      }
+
+      const errorObj = errorData as {
+        errors?: Array<{detail?: string}>;
+        message?: string;
+      } | null;
+      const errorMessage =
+        errorObj?.errors?.[0]?.detail ||
+        errorObj?.message ||
+        `Request failed with status ${response.status}: ${response.statusText}`;
+
+      const error = new ApiError(
         errorMessage,
         response.status,
         response.statusText,
         response
       );
+
+      // Attach the error data for more context
+      error.data = errorData;
+      throw error;
+    }
+
+    // Parse successful response data
+    let responseData: T;
+    const contentType = response.headers.get('content-type');
+
+    if (
+      contentType?.includes('application/json') ||
+      contentType?.includes('application/vnd.api+json')
+    ) {
+      responseData = await response.json();
+    } else {
+      responseData = (await response.text()) as unknown as T;
     }
 
     return {
@@ -200,12 +233,23 @@ async function fetchWithConfig<T = unknown>(
 
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
-        throw new Error('Request was cancelled');
+        const abortError = new ApiError('Request was cancelled', 0, 'Aborted');
+        throw abortError;
       }
-      throw new Error(`Network error: ${error.message}`);
+      const networkError = new ApiError(
+        `Network error: ${error.message}`,
+        0,
+        'Network Error'
+      );
+      throw networkError;
     }
 
-    throw new Error('An unknown error occurred');
+    const unknownError = new ApiError(
+      'An unknown error occurred',
+      0,
+      'Unknown Error'
+    );
+    throw unknownError;
   }
 }
 

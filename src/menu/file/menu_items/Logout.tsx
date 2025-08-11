@@ -3,6 +3,7 @@ import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
 import {
+  ApiError,
   type ApiResponse,
   baseHTTPURL,
   FetchApiClient,
@@ -36,6 +37,13 @@ const Logout = ({onClose}: IProps) => {
         applySnapshot(appConfig, defaultState);
         onClose();
         return response;
+      })
+      .catch((error: unknown) => {
+        if (error instanceof ApiError) {
+          console.error(`Logout failed: ${error.message}`, error);
+        } else {
+          console.error('Unexpected error during logout:', error);
+        }
       });
   };
 

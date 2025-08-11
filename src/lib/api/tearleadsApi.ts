@@ -1,4 +1,4 @@
-import {apiBase} from './fetchBase';
+import {ApiError, apiBase} from './fetchBase';
 
 export interface ReorderTag {
   data: {
@@ -29,10 +29,14 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        throw new Error(error.message);
+      if (error instanceof ApiError) {
+        // Preserve the original error with all its context
+        throw error;
       }
-      throw new Error('An unknown error occurred');
+      if (error instanceof Error) {
+        throw new Error(`Failed to reorder tag: ${error.message}`);
+      }
+      throw new Error('Failed to reorder tag: An unknown error occurred');
     }
   }
   public async reorderEntry(top: string, bottom: string): Promise<void> {
@@ -46,13 +50,17 @@ class TearleadsApi {
         relationships: {},
       },
     };
-    await apiBase
-      .post('/tags_entries/reorder', payload, {
+    try {
+      await apiBase.post('/tags_entries/reorder', payload, {
         withCredentials: true,
-      })
-      .catch(error => {
-        console.error(error);
       });
+    } catch (error) {
+      console.error('Failed to reorder entry:', error);
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new Error('Failed to reorder entry');
+    }
   }
 }
 

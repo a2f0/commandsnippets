@@ -2,7 +2,7 @@ import Grid from '@mui/material/Grid';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
-import {type ApiResponse, apiBase} from './lib/api/fetchBase';
+import {ApiError, type ApiResponse, apiBase} from './lib/api/fetchBase';
 import type {ITagJsonApi} from './lib/store/models/TagModel';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
@@ -55,8 +55,13 @@ const TagEdit = ({
       .then((response: ApiResponse<ITagJsonApiResponseSingle>) => {
         handleSaveParent(response.data.data);
       })
-      .catch(error => {
-        console.error(error);
+      .catch((error: unknown) => {
+        if (error instanceof ApiError) {
+          console.error(`Failed to update tag: ${error.message}`, error);
+          // Could show user-friendly error message here
+        } else {
+          console.error('Unexpected error updating tag:', error);
+        }
       });
   };
 

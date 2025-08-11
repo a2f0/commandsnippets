@@ -11,7 +11,7 @@ import {DragHandle} from './DragHandle';
 import {DragHandleContainer} from './DragHandleContainer';
 import {ItemTypes} from './ItemTypes';
 import type {ApiResponse} from './lib/api/fetchBase';
-import {apiBase} from './lib/api/fetchBase';
+import {ApiError, apiBase} from './lib/api/fetchBase';
 import {type ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
 import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
 import type {ITagJsonApi} from './lib/store/models/TagModel';
@@ -297,8 +297,13 @@ const Tag = ({
       .then((response: ApiResponse<ITagJsonApiResponseSingle>) => {
         handleDeleteParent(response.data);
       })
-      .catch(error => {
-        console.error(error);
+      .catch((error: unknown) => {
+        if (error instanceof ApiError) {
+          console.error(`Failed to delete tag: ${error.message}`, error);
+          // Could show user-friendly error message here
+        } else {
+          console.error('Unexpected error deleting tag:', error);
+        }
       });
   };
 

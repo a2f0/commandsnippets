@@ -3,7 +3,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useAppContext} from './AppContext';
 import type {ApiResponse} from './lib/api/fetchBase';
-import {apiBase} from './lib/api/fetchBase';
+import {ApiError, apiBase} from './lib/api/fetchBase';
 import {activeTagEditField, appMode} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
@@ -85,8 +85,13 @@ const TagNew = ({handleNewParent, id}: IProps) => {
         handleNewParent();
         appConfig.setTagNew(null);
       })
-      .catch(error => {
-        console.error(error);
+      .catch((error: unknown) => {
+        if (error instanceof ApiError) {
+          console.error(`Failed to create tag: ${error.message}`, error);
+          // Could show user-friendly error message here
+        } else {
+          console.error('Unexpected error creating tag:', error);
+        }
       });
   };
 
