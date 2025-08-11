@@ -2,8 +2,7 @@ import Grid from '@mui/material/Grid';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useAppContext} from './AppContext';
-import type {ApiResponse} from './lib/api/fetchBase';
-import {ApiError, apiBase} from './lib/api/fetchBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import {activeTagEditField, appMode} from './lib/shared';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
@@ -67,31 +66,19 @@ const TagNew = ({handleNewParent, id}: IProps) => {
   };
 
   const handleSave = () => {
-    const payload = {
-      data: {
-        type: 'Tag',
-        attributes: {
-          name: tagName,
-        },
-      },
-    };
-    apiBase
-      .post<ITagJsonApiResponseSingle>('/tags', payload, {
-        withCredentials: true,
-      })
-      .then((response: ApiResponse<ITagJsonApiResponseSingle>) => {
-        appConfig.reconcileCollection(response.data.included);
-        appConfig.updateOrCreateTag(response.data.data);
+    tearleadsApi
+      .createTag(tagName)
+      .then(response => {
+        const tagResponse = response as unknown as {
+          data: ITagJsonApiResponseSingle;
+        };
+        appConfig.reconcileCollection(tagResponse.data.included);
+        appConfig.updateOrCreateTag(tagResponse.data.data);
         handleNewParent();
         appConfig.setTagNew(null);
       })
       .catch((error: unknown) => {
-        if (error instanceof ApiError) {
-          console.error(`Failed to create tag: ${error.message}`, error);
-          // Could show user-friendly error message here
-        } else {
-          console.error('Unexpected error creating tag:', error);
-        }
+        console.error('Failed to create tag:', error);
       });
   };
 

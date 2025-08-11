@@ -5,8 +5,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import type {ApiResponse} from './lib/api/fetchBase';
-import {ApiError, apiBase} from './lib/api/fetchBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
@@ -59,30 +58,15 @@ const EntryEdit = ({
   }, [theme]);
 
   const handleSave = () => {
-    const payload = {
-      data: {
-        id: object.id,
-        type: 'TextEntry',
-        attributes: {
-          subject: subject,
-          body: body,
-        },
-      },
-    };
-    apiBase
-      .patch<ITextEntryJsonApiResponseSingle>(`entries/${object.id}`, payload, {
-        withCredentials: true,
-      })
-      .then((response: ApiResponse<ITextEntryJsonApiResponseSingle>) => {
-        handleSaveParent(response.data);
+    tearleadsApi
+      .updateEntry(object.id, subject, body)
+      .then(response => {
+        const entryResponse =
+          response as unknown as ITextEntryJsonApiResponseSingle;
+        handleSaveParent(entryResponse);
       })
       .catch((error: unknown) => {
-        if (error instanceof ApiError) {
-          console.error(`Failed to update entry: ${error.message}`, error);
-          // Could show user-friendly error message here
-        } else {
-          console.error('Unexpected error updating entry:', error);
-        }
+        console.error('Failed to update entry:', error);
       });
   };
 

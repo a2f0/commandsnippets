@@ -5,7 +5,7 @@ import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {ApiError, apiBase} from './lib/api/fetchBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import {environment} from './lib/environment';
 import {LoginButton} from './styled/LoginButton';
 
@@ -31,26 +31,13 @@ const GithubAuth = () => {
     const code = urlParams.get('code');
     console.info(`code (github auth): ${code}`);
     console.info(`is_github_oauth (github auth): ${is_github_oauth}`);
-    if (code !== '' && is_github_oauth === true) {
+    if (code !== null && code !== '' && is_github_oauth === true) {
       const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
-      const payload = {
-        data: {
-          type: 'GithubLogin',
-          attributes: {
-            code: code,
-          },
-        },
-      };
-      apiBase
-        .post('/github-login/', payload, {withCredentials: true})
+      tearleadsApi
+        .githubLogin(code)
         .then(() => {
-          return apiBase.get<{data: {attributes: {username: string}}}>(
-            '/user/',
-            {
-              withCredentials: true,
-            }
-          );
+          return tearleadsApi.getCurrentUser();
         })
         .then(response => {
           const username = response.data.data.attributes.username;
@@ -63,17 +50,7 @@ const GithubAuth = () => {
           navigate(`/${username}`);
         })
         .catch((error: unknown) => {
-          if (error instanceof ApiError) {
-            console.error(
-              `GitHub authentication failed: ${error.message}`,
-              error
-            );
-          } else {
-            console.error(
-              'Unexpected error during GitHub authentication:',
-              error
-            );
-          }
+          console.error('GitHub authentication error:', error);
           appConfig.setLoggedInUser(null);
         });
     }

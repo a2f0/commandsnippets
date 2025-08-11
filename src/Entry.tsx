@@ -13,7 +13,6 @@ import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
-import {ApiError, apiBase} from './lib/api/fetchBase';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {appMode, getSelection, type IMouse, initialMouse} from './lib/shared';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
@@ -128,35 +127,16 @@ const Entry = ({
           const dropResult = monitor.getDropResult();
           if (dropResult) {
             if (dropResult.type === 'Tag') {
-              const payload = {
-                data: {
-                  type: 'TagTextEntryThroughModel',
-                  attributes: {},
-                  relationships: {
-                    tag: {
-                      data: {
-                        type: 'Tag',
-                        id: dropResult.id,
-                      },
-                    },
-                    text_entry: {
-                      data: {
-                        type: 'TextEntry',
-                        id: findEntry(id).entry.id,
-                      },
-                    },
-                  },
-                },
-              };
-              apiBase
-                .post<{data: unknown}>('/tags_entries', payload, {
-                  withCredentials: true,
-                })
+              tearleadsApi
+                .tagEntry(dropResult.id, findEntry(id).entry.id)
                 .then(resp => {
                   appConfig.updateOrCreateTagTextEntryThroughModel(
                     (resp.data as {data: unknown})
                       .data as import('./lib/store/models/TagTextEntryThroughModel').ITagTextEntryThroughModelJsonApi
                   );
+                })
+                .catch((error: unknown) => {
+                  console.error('Failed to tag entry:', error);
                 });
               if (entriesFilter === 'untagged') {
                 //Then an untagged entry was tagged
@@ -364,21 +344,19 @@ const Entry = ({
           element.relationships.tag.data.id === tagObject?.id &&
           element.relationships.text_entry.data.id === textEntryObject.id
       );
-    apiBase
-      .delete(`/tags_entries/${tagTextEntryThroughModelObject?.id}`, {
-        withCredentials: true,
-      })
+    if (!tagTextEntryThroughModelObject?.id) {
+      console.error('Cannot untag entry: missing tagTextEntryThroughModel ID');
+      return;
+    }
+
+    tearleadsApi
+      .untagEntry(tagTextEntryThroughModelObject.id)
       .then(() => {
         tagTextEntryThroughModelObject?.remove();
         handleRemoveFromListParent(textEntryObject.id);
       })
       .catch((error: unknown) => {
-        if (error instanceof ApiError) {
-          console.error(`Failed to delete entry: ${error.message}`, error);
-          // Could show user-friendly error message here
-        } else {
-          console.error('Unexpected error deleting entry:', error);
-        }
+        console.error('Failed to untag entry:', error);
       });
   };
 

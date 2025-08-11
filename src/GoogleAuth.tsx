@@ -5,7 +5,7 @@ import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {ApiError, apiBase} from './lib/api/fetchBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import {environment} from './lib/environment';
 import {LoginButton} from './styled/LoginButton';
 
@@ -39,29 +39,17 @@ const GoogleAuth = () => {
     console.info(`code (google auth): ${code}`);
     console.info(`scope (google auth): ${scope}`);
     if (
+      code !== null &&
       code !== '' &&
       scope !== null &&
       scope.includes('https://www.googleapis.com/auth/userinfo.email')
     ) {
       const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
-      const payload = {
-        data: {
-          type: 'GoogleLogin',
-          attributes: {
-            code: code,
-          },
-        },
-      };
-      apiBase
-        .post('/google-login/', payload, {withCredentials: true})
+      tearleadsApi
+        .googleLogin(code)
         .then(() => {
-          return apiBase.get<{data: {attributes: {username: string}}}>(
-            '/user/',
-            {
-              withCredentials: true,
-            }
-          );
+          return tearleadsApi.getCurrentUser();
         })
         .then(response => {
           const username = response.data.data.attributes.username;
@@ -74,17 +62,7 @@ const GoogleAuth = () => {
           });
         })
         .catch((error: unknown) => {
-          if (error instanceof ApiError) {
-            console.error(
-              `Google authentication failed: ${error.message}`,
-              error
-            );
-          } else {
-            console.error(
-              'Unexpected error during Google authentication:',
-              error
-            );
-          }
+          console.error('Google authentication error:', error);
           appConfig.setLoggedInUser(null);
         });
     }

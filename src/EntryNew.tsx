@@ -4,8 +4,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import type {ApiResponse} from './lib/api/fetchBase';
-import {apiBase} from './lib/api/fetchBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import type {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
@@ -41,16 +40,6 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   }, [appConfig.setActiveEntryEditField, appConfig.setAppMode]);
 
   const handleSave = () => {
-    const text_entry_payload = {
-      data: {
-        type: 'TextEntry',
-        attributes: {
-          subject: subject,
-          body: body,
-        },
-      },
-    };
-
     const userObject = appConfig.usersArray.find(
       element => element.attributes.username === user
     );
@@ -61,52 +50,34 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         element.relationships.user.data.id === userObject?.id
     );
 
-    apiBase
-      .post<ITextEntryJsonApiResponseSingle>('/entries', text_entry_payload, {
-        withCredentials: true,
-      })
-      .then((response: ApiResponse<ITextEntryJsonApiResponseSingle>) => {
-        appConfig.updateOrCreateTextEntry(response.data.data);
-        const text_entry_through_model_payload = {
-          data: {
-            type: 'TagTextEntryThroughModel',
-            attributes: {},
-            relationships: {
-              tag: {
-                data: {
-                  type: 'Tag',
-                  id: tagObject?.id,
-                },
-              },
-              text_entry: {
-                data: {
-                  type: 'TextEntry',
-                  id: response.data.data.id,
-                },
-              },
-            },
-          },
+    if (!userObject?.id || !tagObject?.id) {
+      console.error('Missing user or tag for entry creation');
+      return;
+    }
+
+    tearleadsApi
+      .createEntry(subject, body, userObject.id)
+      .then(response => {
+        const entryResponse = response as unknown as {
+          data: ITextEntryJsonApiResponseSingle;
         };
-        apiBase
-          .post<ITagTextEntryThroughModelJsonApiResponseSingle>(
-            '/tags_entries',
-            text_entry_through_model_payload,
-            {
-              withCredentials: true,
-            }
-          )
-          .then(
-            (
-              response: ApiResponse<ITagTextEntryThroughModelJsonApiResponseSingle>
-            ) => {
-              console.info(response.data.data);
-              appConfig.updateOrCreateTagTextEntryThroughModel(
-                response.data.data
-              );
-              filterAndSortParent();
-              appConfig.setEntryNew(null);
-            }
-          );
+        appConfig.updateOrCreateTextEntry(entryResponse.data.data);
+
+        return tearleadsApi.tagEntry(tagObject.id, entryResponse.data.data.id);
+      })
+      .then(response => {
+        const tagEntryResponse = response as unknown as {
+          data: ITagTextEntryThroughModelJsonApiResponseSingle;
+        };
+        console.info(tagEntryResponse.data.data);
+        appConfig.updateOrCreateTagTextEntryThroughModel(
+          tagEntryResponse.data.data
+        );
+        filterAndSortParent();
+        appConfig.setEntryNew(null);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to create entry:', error);
       });
   };
 

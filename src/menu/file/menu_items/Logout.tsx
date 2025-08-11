@@ -2,13 +2,7 @@ import {applySnapshot} from 'mobx-state-tree';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import {
-  ApiError,
-  type ApiResponse,
-  baseHTTPURL,
-  FetchApiClient,
-} from '../../../lib/api/fetchBase';
-import type {ILogoutJsonApiResponse} from '../../../lib/authentication';
+import {tearleadsApi} from '../../../lib/api/tearleadsApi';
 import {defaultState} from '../../../lib/shared';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
@@ -20,30 +14,14 @@ const Logout = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   const handleLogout = () => {
-    const logout_api = new FetchApiClient({
-      baseURL: baseHTTPURL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    logout_api
-      .post<ILogoutJsonApiResponse>(
-        '/api-token-deauth/',
-        {},
-        {withCredentials: true}
-      )
-      .then((response: ApiResponse<ILogoutJsonApiResponse>) => {
+    tearleadsApi
+      .logout()
+      .then(() => {
         applySnapshot(appConfig, defaultState);
         onClose();
-        return response;
       })
       .catch((error: unknown) => {
-        if (error instanceof ApiError) {
-          console.error(`Logout failed: ${error.message}`, error);
-        } else {
-          console.error('Unexpected error during logout:', error);
-        }
+        console.error('Logout error:', error);
       });
   };
 
