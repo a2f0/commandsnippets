@@ -1,117 +1,29 @@
 import type {ApiResponse} from './fetchBase';
 import {ApiError, apiBase, baseHTTPURL, FetchApiClient} from './fetchBase';
+import type {
+  AuthPayload,
+  EntriesQueryParams,
+  EntryPayload,
+  EntryUpdatePayload,
+  ReorderEntry,
+  ReorderTag,
+  TagEntryPayload,
+  TagPayload,
+} from './requests/types';
+import type {UserResponse} from './responses/types';
 
-export interface ReorderTag {
-  data: {
-    type: 'Tag';
-    attributes: {
-      top: string;
-      bottom: string;
-    };
-    relationships: Record<string, never>;
-  };
-}
-
-interface ReorderEntry {
-  data: {
-    type: 'TagTextEntryThroughModel';
-    attributes: {
-      top: string;
-      bottom: string;
-    };
-    relationships: Record<string, never>;
-  };
-}
-
-// Additional interfaces for API operations
-export interface UserResponse {
-  data: {
-    attributes: {
-      username: string;
-    };
-  };
-}
-
-export interface TagPayload {
-  data: {
-    type: 'Tag';
-    attributes: {
-      name: string;
-    };
-  };
-}
-
-export interface EntryPayload {
-  data: {
-    type: 'TextEntry';
-    attributes: {
-      subject: string;
-      body: string;
-    };
-    relationships: {
-      user: {
-        data: {
-          id: string;
-          type: 'User';
-        };
-      };
-    };
-  };
-}
-
-export interface EntryUpdatePayload {
-  data: {
-    type: 'TextEntry';
-    attributes: {
-      subject: string;
-      body: string;
-    };
-  };
-}
-
-export interface TagEntryPayload {
-  data: {
-    type: 'TagTextEntryThroughModel';
-    attributes: Record<string, never>;
-    relationships: {
-      tag: {
-        data: {
-          id: string;
-          type: 'Tag';
-        };
-      };
-      text_entry: {
-        data: {
-          id: string;
-          type: 'TextEntry';
-        };
-      };
-    };
-  };
-}
-
-export interface AuthPayload {
-  data: {
-    type: 'GoogleLogin' | 'GithubLogin';
-    attributes: {
-      code: string;
-    };
-  };
-}
-
-export interface EntriesQueryParams {
-  'page[number]'?: number;
-  'filter[user.username]'?: string;
-  'filter[tag.id]'?: string;
-  'filter[date_updated.gt]'?: string;
-  'filter[untagged]'?: boolean;
-  'filter[term]'?: string;
-  sort?: string;
-  page?: {
-    limit?: number;
-    offset?: number;
-  };
-}
+// Re-export types for backward compatibility
+export type {
+  AuthPayload,
+  EntriesQueryParams,
+  EntryPayload,
+  EntryUpdatePayload,
+  ReorderEntry,
+  ReorderTag,
+  TagEntryPayload,
+  TagPayload,
+} from './requests/types';
+export type {UserResponse} from './responses/types';
 
 class TearleadsApi {
   // Authentication methods
@@ -424,12 +336,14 @@ class TearleadsApi {
       await apiBase.post('/tags_entries/reorder', payload, {
         withCredentials: true,
       });
-    } catch (error) {
-      console.error('Failed to reorder entry:', error);
+    } catch (error: unknown) {
       if (error instanceof ApiError) {
         throw error;
       }
-      throw new Error('Failed to reorder entry');
+      if (error instanceof Error) {
+        throw new Error(`Failed to reorder entry: ${error.message}`);
+      }
+      throw new Error('Failed to reorder entry: An unknown error occurred');
     }
   }
 }
