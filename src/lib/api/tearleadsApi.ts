@@ -26,6 +26,16 @@ export type {
 export type {UserResponse} from './responses/types';
 
 class TearleadsApi {
+  private handleError(error: unknown, operation: string): never {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    if (error instanceof Error) {
+      throw new Error(`${operation}: ${error.message}`);
+    }
+    throw new Error(`${operation}: An unknown error occurred`);
+  }
+
   // Authentication methods
   public async googleLogin(code: string): Promise<void> {
     const payload: AuthPayload = {
@@ -41,15 +51,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Google authentication failed: ${error.message}`);
-      }
-      throw new Error(
-        'Google authentication failed: An unknown error occurred'
-      );
+      this.handleError(error, 'Google authentication failed');
     }
   }
 
@@ -67,15 +69,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`GitHub authentication failed: ${error.message}`);
-      }
-      throw new Error(
-        'GitHub authentication failed: An unknown error occurred'
-      );
+      this.handleError(error, 'GitHub authentication failed');
     }
   }
 
@@ -85,13 +79,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to get current user: ${error.message}`);
-      }
-      throw new Error('Failed to get current user: An unknown error occurred');
+      this.handleError(error, 'Failed to get current user');
     }
   }
 
@@ -109,13 +97,7 @@ class TearleadsApi {
         {withCredentials: true}
       );
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Logout failed: ${error.message}`);
-      }
-      throw new Error('Logout failed: An unknown error occurred');
+      this.handleError(error, 'Logout failed');
     }
   }
 
@@ -134,13 +116,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to create tag: ${error.message}`);
-      }
-      throw new Error('Failed to create tag: An unknown error occurred');
+      this.handleError(error, 'Failed to create tag');
     }
   }
 
@@ -150,13 +126,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to delete tag: ${error.message}`);
-      }
-      throw new Error('Failed to delete tag: An unknown error occurred');
+      this.handleError(error, 'Failed to delete tag');
     }
   }
 
@@ -188,13 +158,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to create entry: ${error.message}`);
-      }
-      throw new Error('Failed to create entry: An unknown error occurred');
+      this.handleError(error, 'Failed to create entry');
     }
   }
 
@@ -217,13 +181,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to update entry: ${error.message}`);
-      }
-      throw new Error('Failed to update entry: An unknown error occurred');
+      this.handleError(error, 'Failed to update entry');
     }
   }
 
@@ -240,13 +198,7 @@ class TearleadsApi {
         ...(signal && {signal}),
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to get entries: ${error.message}`);
-      }
-      throw new Error('Failed to get entries: An unknown error occurred');
+      this.handleError(error, 'Failed to get entries');
     }
   }
 
@@ -280,13 +232,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to tag entry: ${error.message}`);
-      }
-      throw new Error('Failed to tag entry: An unknown error occurred');
+      this.handleError(error, 'Failed to tag entry');
     }
   }
 
@@ -296,13 +242,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to untag entry: ${error.message}`);
-      }
-      throw new Error('Failed to untag entry: An unknown error occurred');
+      this.handleError(error, 'Failed to untag entry');
     }
   }
 
@@ -313,16 +253,10 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        // Preserve the original error with all its context
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to reorder tag: ${error.message}`);
-      }
-      throw new Error('Failed to reorder tag: An unknown error occurred');
+      this.handleError(error, 'Failed to reorder tag');
     }
   }
+
   public async reorderEntry(top: string, bottom: string): Promise<void> {
     const payload: ReorderEntry = {
       data: {
@@ -339,13 +273,7 @@ class TearleadsApi {
         withCredentials: true,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      if (error instanceof Error) {
-        throw new Error(`Failed to reorder entry: ${error.message}`);
-      }
-      throw new Error('Failed to reorder entry: An unknown error occurred');
+      this.handleError(error, 'Failed to reorder entry');
     }
   }
 }
