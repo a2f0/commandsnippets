@@ -36,6 +36,17 @@ class TearleadsApi {
     throw new Error(`${operation}: An unknown error occurred`);
   }
 
+  private async apiCall<T>(
+    operation: string,
+    apiCall: () => Promise<T>
+  ): Promise<T> {
+    try {
+      return await apiCall();
+    } catch (error: unknown) {
+      this.handleError(error, operation);
+    }
+  }
+
   // Authentication methods
   public async googleLogin(code: string): Promise<void> {
     const payload: AuthPayload = {
@@ -46,13 +57,11 @@ class TearleadsApi {
         },
       },
     };
-    try {
-      await apiBase.post('/google-login/', payload, {
+    await this.apiCall('Google authentication failed', () =>
+      apiBase.post('/google-login/', payload, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Google authentication failed');
-    }
+      })
+    );
   }
 
   public async githubLogin(code: string): Promise<void> {
@@ -64,23 +73,19 @@ class TearleadsApi {
         },
       },
     };
-    try {
-      await apiBase.post('/github-login/', payload, {
+    await this.apiCall('GitHub authentication failed', () =>
+      apiBase.post('/github-login/', payload, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'GitHub authentication failed');
-    }
+      })
+    );
   }
 
   public async getCurrentUser(): Promise<ApiResponse<UserResponse>> {
-    try {
-      return await apiBase.get<UserResponse>('/user/', {
+    return this.apiCall('Failed to get current user', () =>
+      apiBase.get<UserResponse>('/user/', {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to get current user');
-    }
+      })
+    );
   }
 
   public async logout(): Promise<ApiResponse<unknown>> {
@@ -90,15 +95,9 @@ class TearleadsApi {
         'Content-Type': 'application/json',
       },
     });
-    try {
-      return await logoutApi.post(
-        '/api-token-deauth/',
-        {},
-        {withCredentials: true}
-      );
-    } catch (error: unknown) {
-      this.handleError(error, 'Logout failed');
-    }
+    return this.apiCall('Logout failed', () =>
+      logoutApi.post('/api-token-deauth/', {}, {withCredentials: true})
+    );
   }
 
   // Tag methods
@@ -111,23 +110,19 @@ class TearleadsApi {
         },
       },
     };
-    try {
-      return await apiBase.post('/tags', payload, {
+    return this.apiCall('Failed to create tag', () =>
+      apiBase.post('/tags', payload, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to create tag');
-    }
+      })
+    );
   }
 
   public async deleteTag(tagId: string): Promise<ApiResponse<unknown>> {
-    try {
-      return await apiBase.delete(`/tags/${tagId}`, {
+    return this.apiCall('Failed to delete tag', () =>
+      apiBase.delete(`/tags/${tagId}`, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to delete tag');
-    }
+      })
+    );
   }
 
   // Entry methods
@@ -153,13 +148,11 @@ class TearleadsApi {
         },
       },
     };
-    try {
-      return await apiBase.post('/entries', payload, {
+    return this.apiCall('Failed to create entry', () =>
+      apiBase.post('/entries', payload, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to create entry');
-    }
+      })
+    );
   }
 
   public async updateEntry(
@@ -176,30 +169,26 @@ class TearleadsApi {
         },
       },
     };
-    try {
-      return await apiBase.patch(`entries/${entryId}`, payload, {
+    return this.apiCall('Failed to update entry', () =>
+      apiBase.patch(`entries/${entryId}`, payload, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to update entry');
-    }
+      })
+    );
   }
 
   public async getEntries(
     params: EntriesQueryParams & {signal?: AbortSignal}
   ): Promise<ApiResponse<unknown>> {
-    try {
-      const {signal, ...queryParams} = params;
-      return await apiBase.get('/entries', {
+    const {signal, ...queryParams} = params;
+    return this.apiCall('Failed to get entries', () =>
+      apiBase.get('/entries', {
         params: queryParams as unknown as Record<
           string,
           string | number | boolean | undefined
         >,
         ...(signal && {signal}),
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to get entries');
-    }
+      })
+    );
   }
 
   // Tag-Entry relationship methods
@@ -227,34 +216,28 @@ class TearleadsApi {
         },
       },
     };
-    try {
-      return await apiBase.post<{data: unknown}>('/tags_entries', payload, {
+    return this.apiCall('Failed to tag entry', () =>
+      apiBase.post<{data: unknown}>('/tags_entries', payload, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to tag entry');
-    }
+      })
+    );
   }
 
   public async untagEntry(tagEntryId: string): Promise<void> {
-    try {
-      await apiBase.delete(`/tags_entries/${tagEntryId}`, {
+    await this.apiCall('Failed to untag entry', () =>
+      apiBase.delete(`/tags_entries/${tagEntryId}`, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to untag entry');
-    }
+      })
+    );
   }
 
   // Reorder methods (existing)
   public async reorderTag(payload: ReorderTag): Promise<void> {
-    try {
-      await apiBase.post('/tags/reorder', payload, {
+    await this.apiCall('Failed to reorder tag', () =>
+      apiBase.post('/tags/reorder', payload, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to reorder tag');
-    }
+      })
+    );
   }
 
   public async reorderEntry(top: string, bottom: string): Promise<void> {
@@ -268,13 +251,11 @@ class TearleadsApi {
         relationships: {},
       },
     };
-    try {
-      await apiBase.post('/tags_entries/reorder', payload, {
+    await this.apiCall('Failed to reorder entry', () =>
+      apiBase.post('/tags_entries/reorder', payload, {
         withCredentials: true,
-      });
-    } catch (error: unknown) {
-      this.handleError(error, 'Failed to reorder entry');
-    }
+      })
+    );
   }
 }
 
