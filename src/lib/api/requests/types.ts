@@ -90,11 +90,14 @@ export interface AuthPayload {
 export interface EntriesQueryParams {
   'page[number]'?: number;
   'filter[user.username]'?: string;
-  'filter[tag.id]'?: string;
+  'filter[tags.name]'?: string;
   'filter[date_updated.gt]'?: string;
   'filter[untagged]'?: boolean;
   'filter[term]'?: string;
+  'filter[tag_count]'?: number;
+  'filter[search]'?: string;
   sort?: string;
+  include?: string;
   page?: {
     limit?: number;
     offset?: number;

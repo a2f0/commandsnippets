@@ -228,14 +228,16 @@ class TearleadsApi {
   }
 
   public async getEntries(
-    params: EntriesQueryParams
+    params: EntriesQueryParams & {signal?: AbortSignal}
   ): Promise<ApiResponse<unknown>> {
     try {
+      const {signal, ...queryParams} = params;
       return await apiBase.get('/entries', {
-        params: params as unknown as Record<
+        params: queryParams as unknown as Record<
           string,
           string | number | boolean | undefined
         >,
+        ...(signal && {signal}),
       });
     } catch (error: unknown) {
       if (error instanceof ApiError) {

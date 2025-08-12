@@ -1,7 +1,7 @@
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {db} from '../../src/lib/db/db';
-import {apiBase} from './api/fetchBase';
+import {tearleadsApi} from './api/tearleadsApi';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
 import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
@@ -383,22 +383,20 @@ export function fetch(
       | IUserJsonApi
       | ITagJsonApi
     >
-  > = apiBase
-    .get<ITextEntryJsonApiResponse>('/entries', {
-      params: params as unknown as Record<
-        string,
-        string | number | boolean | undefined
-      >,
-    })
+  > = tearleadsApi
+    .getEntries(
+      params as unknown as Record<string, string | number | boolean | undefined>
+    )
     .then(response => {
-      const updatedEntries = entries.concat(response.data.data);
-      for (let i = 0; i < response.data.included?.length; i++) {
-        const item = response.data.included[i];
+      const responseData = response.data as ITextEntryJsonApiResponse;
+      const updatedEntries = entries.concat(responseData.data);
+      for (let i = 0; i < responseData.included?.length; i++) {
+        const item = responseData.included[i];
         if (item && !updatedEntries.includes(item)) {
           updatedEntries.push(item);
         }
       }
-      if (response.data.links.next === null) {
+      if (responseData.links.next === null) {
         return updatedEntries;
       }
       return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
@@ -438,18 +436,19 @@ export function fetchPage({
         | ITagJsonApi
       >
     | undefined
-  > = apiBase
-    .get<ITextEntryJsonApiResponse>('/entries', {
-      params: params as unknown as Record<
+  > = tearleadsApi
+    .getEntries({
+      ...(params as unknown as Record<
         string,
         string | number | boolean | undefined
-      >,
+      >),
       signal,
     })
     .then(response => {
-      entries = entries.concat(response.data.data);
-      for (let i = 0; i < response.data.included?.length; i++) {
-        const item = response.data.included[i];
+      const responseData = response.data as ITextEntryJsonApiResponse;
+      entries = entries.concat(responseData.data);
+      for (let i = 0; i < responseData.included?.length; i++) {
+        const item = responseData.included[i];
         if (item && !entries.includes(item)) {
           entries.push(item);
         }
