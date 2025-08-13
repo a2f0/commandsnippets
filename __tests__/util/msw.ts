@@ -49,13 +49,13 @@ const createHandlers = () => {
 
   // Auth endpoint (different pattern)
   handlers.push(
-    http.post('http://localhost:9001/api-token-deauth', () => {
+    http.post('http://localhost:9001/api-token-deauth/', () => {
       return HttpResponse.json({data: {}}, {status: 200});
     }),
-    http.post('https://api.staging.tearleads.com/api-token-deauth', () => {
+    http.post('https://api.staging.tearleads.com/api-token-deauth/', () => {
       return HttpResponse.json({data: {}}, {status: 200});
     }),
-    http.post('https://api.tearleads.com/api-token-deauth', () => {
+    http.post('https://api.tearleads.com/api-token-deauth/', () => {
       return HttpResponse.json({data: {}}, {status: 200});
     })
   );

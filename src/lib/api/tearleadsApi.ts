@@ -1,5 +1,6 @@
+import {baseHTTPURL} from './baseUrl';
 import type {ApiResponse} from './fetchBase';
-import {ApiError, apiBase, baseHTTPURL, FetchApiClient} from './fetchBase';
+import {ApiError, apiBase, FetchApiClient} from './fetchBase';
 import type {
   AuthPayload,
   EntriesQueryParams,
