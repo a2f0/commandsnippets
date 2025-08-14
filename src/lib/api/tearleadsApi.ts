@@ -1,3 +1,5 @@
+import type {ITagJsonApiResponse} from '../tags';
+import type {ITextEntryJsonApiResponse} from '../text_entries';
 import {baseHTTPURL} from './baseUrl';
 import type {ApiResponse} from './fetchBase';
 import {ApiError, apiBase, FetchApiClient} from './fetchBase';
@@ -102,7 +104,9 @@ class TearleadsApi {
   }
 
   // Tag methods
-  public async createTag(name: string): Promise<ApiResponse<unknown>> {
+  public async createTag(
+    name: string
+  ): Promise<ApiResponse<ITagJsonApiResponse>> {
     const payload: TagPayload = {
       data: {
         type: 'Tag',
@@ -131,7 +135,7 @@ class TearleadsApi {
     subject: string,
     body: string,
     userId: string
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<ApiResponse<ITextEntryJsonApiResponse>> {
     const payload: EntryPayload = {
       data: {
         type: 'TextEntry',
@@ -160,7 +164,7 @@ class TearleadsApi {
     entryId: string,
     subject: string,
     body: string
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<ApiResponse<ITextEntryJsonApiResponse>> {
     const payload: EntryUpdatePayload = {
       data: {
         type: 'TextEntry',
@@ -179,7 +183,7 @@ class TearleadsApi {
 
   public async getEntries(
     params: EntriesQueryParams & {signal?: AbortSignal}
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<ApiResponse<ITextEntryJsonApiResponse>> {
     const {signal, ...queryParams} = params;
     return this.apiCall('Failed to get entries', () =>
       apiBase.get('/entries', {
