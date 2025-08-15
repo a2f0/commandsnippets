@@ -2,7 +2,7 @@ import Grid from '@mui/material/Grid';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
-import {ApiError, type ApiResponse, apiBase} from './lib/api/fetchBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import type {ITagJsonApi} from './lib/store/models/TagModel';
 import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
@@ -39,29 +39,13 @@ const TagEdit = ({
   const inputCancelRef = useRef<HTMLButtonElement>(null);
 
   const handleSave = () => {
-    const payload = {
-      data: {
-        id: object.id,
-        type: 'Tag',
-        attributes: {
-          name: tagName,
-        },
-      },
-    };
-    apiBase
-      .patch<ITagJsonApiResponseSingle>(`tags/${object.id}`, payload, {
-        withCredentials: true,
+    tearleadsApi
+      .updateTag(object.id, tagName)
+      .then((response: ITagJsonApiResponseSingle) => {
+        handleSaveParent(response.data);
       })
-      .then((response: ApiResponse<ITagJsonApiResponseSingle>) => {
-        handleSaveParent(response.data.data);
-      })
-      .catch((error: unknown) => {
-        if (error instanceof ApiError) {
-          console.error(`Failed to update tag: ${error.message}`, error);
-          // Could show user-friendly error message here
-        } else {
-          console.error('Unexpected error updating tag:', error);
-        }
+      .catch(error => {
+        console.error('Unexpected error updating tag:', error);
       });
   };
 

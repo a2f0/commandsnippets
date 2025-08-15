@@ -388,7 +388,7 @@ export function fetch(
       params as unknown as Record<string, string | number | boolean | undefined>
     )
     .then(response => {
-      const responseData = response.data as ITextEntryJsonApiResponse;
+      const responseData = response;
       const updatedEntries = entries.concat(responseData.data);
       for (let i = 0; i < responseData.included?.length; i++) {
         const item = responseData.included[i];
@@ -445,7 +445,7 @@ export function fetchPage({
       signal,
     })
     .then(response => {
-      const responseData = response.data as ITextEntryJsonApiResponse;
+      const responseData = response;
       entries = entries.concat(responseData.data);
       for (let i = 0; i < responseData.included?.length; i++) {
         const item = responseData.included[i];

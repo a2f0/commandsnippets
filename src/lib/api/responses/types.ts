@@ -5,3 +5,10 @@ export interface UserResponse {
     };
   };
 }
+
+import type {ITagTextEntryThroughModelJsonApi} from '../../store/models/TagTextEntryThroughModel';
+
+export interface TagTextEntryThroughModelResponse {
+  data: ITagTextEntryThroughModelJsonApi;
+  included?: unknown[];
+}

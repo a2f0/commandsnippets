@@ -1,4 +1,5 @@
-import {apiBase} from './api/fetchBase';
+import type {TagsQueryParams} from './api/requests/types';
+import {tearleadsApi} from './api/tearleadsApi';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {IUserJsonApi} from './store/models/UserModel';
 import type {Store} from './store/store';
@@ -199,14 +200,7 @@ export function fetch(
   page: number,
   since: string | null
 ) {
-  interface IParams {
-    'page[number]': number;
-    'filter[user.username]': string;
-    sort: string;
-    'filter[date_updated.gt]'?: string;
-  }
-
-  const params: IParams = {
+  const params: TagsQueryParams = {
     'page[number]': page,
     'filter[user.username]': user,
     sort: 'date_updated',
@@ -216,24 +210,19 @@ export function fetch(
     params['filter[date_updated.gt]'] = since;
   }
 
-  const f: Promise<Array<ITagJsonApi | IUserJsonApi>> = apiBase
-    .get<ITagJsonApiResponse>('/tags', {
-      params: params as unknown as Record<
-        string,
-        string | number | boolean | undefined
-      >,
-    })
-    .then(response => {
-      const updatedEntries = entries.concat(response.data.data);
-      if (response.data.included) {
-        for (let i = 0; i < response.data.included.length; i++) {
-          const item = response.data.included[i];
+  const f: Promise<Array<ITagJsonApi | IUserJsonApi>> = tearleadsApi
+    .getTags(params)
+    .then((response: ITagJsonApiResponse) => {
+      const updatedEntries = entries.concat(response.data);
+      if (response.included) {
+        for (let i = 0; i < response.included.length; i++) {
+          const item = response.included[i];
           if (item && !updatedEntries.includes(item)) {
             updatedEntries.push(item);
           }
         }
       }
-      if (response.data.links.next === null) {
+      if (response.links.next === null) {
         return updatedEntries;
       }
       return fetch(updatedEntries, user, page + 1, since);

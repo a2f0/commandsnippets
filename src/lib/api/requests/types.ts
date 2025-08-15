@@ -103,3 +103,10 @@ export interface EntriesQueryParams {
     offset?: number;
   };
 }
+
+export interface TagsQueryParams {
+  'page[number]': number;
+  'filter[user.username]': string;
+  sort: string;
+  'filter[date_updated.gt]'?: string;
+}

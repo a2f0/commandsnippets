@@ -1,8 +1,6 @@
-import type {ITagJsonApiResponse} from '../tags';
+import type {ITagJsonApiResponse, ITagJsonApiResponseSingle} from '../tags';
 import type {ITextEntryJsonApiResponse} from '../text_entries';
-import {baseHTTPURL} from './baseUrl';
-import type {ApiResponse} from './fetchBase';
-import {ApiError, apiBase, FetchApiClient} from './fetchBase';
+import {baseHTTPURL, baseURL} from './baseUrl';
 import type {
   AuthPayload,
   EntriesQueryParams,
@@ -12,8 +10,12 @@ import type {
   ReorderTag,
   TagEntryPayload,
   TagPayload,
+  TagsQueryParams,
 } from './requests/types';
-import type {UserResponse} from './responses/types';
+import type {
+  TagTextEntryThroughModelResponse,
+  UserResponse,
+} from './responses/types';
 
 // Re-export types for backward compatibility
 export type {
@@ -29,27 +31,6 @@ export type {
 export type {UserResponse} from './responses/types';
 
 class TearleadsApi {
-  private handleError(error: unknown, operation: string): never {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    if (error instanceof Error) {
-      throw new Error(`${operation}: ${error.message}`);
-    }
-    throw new Error(`${operation}: An unknown error occurred`);
-  }
-
-  private async apiCall<T>(
-    operation: string,
-    apiCall: () => Promise<T>
-  ): Promise<T> {
-    try {
-      return await apiCall();
-    } catch (error: unknown) {
-      this.handleError(error, operation);
-    }
-  }
-
   // Authentication methods
   public async googleLogin(code: string): Promise<void> {
     const payload: AuthPayload = {
@@ -60,11 +41,12 @@ class TearleadsApi {
         },
       },
     };
-    await this.apiCall('Google authentication failed', () =>
-      apiBase.post('/google-login/', payload, {
-        withCredentials: true,
-      })
-    );
+    await fetch(`${baseURL}/google-login/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
   }
 
   public async githubLogin(code: string): Promise<void> {
@@ -76,37 +58,39 @@ class TearleadsApi {
         },
       },
     };
-    await this.apiCall('GitHub authentication failed', () =>
-      apiBase.post('/github-login/', payload, {
-        withCredentials: true,
-      })
-    );
-  }
-
-  public async getCurrentUser(): Promise<ApiResponse<UserResponse>> {
-    return this.apiCall('Failed to get current user', () =>
-      apiBase.get<UserResponse>('/user/', {
-        withCredentials: true,
-      })
-    );
-  }
-
-  public async logout(): Promise<ApiResponse<unknown>> {
-    const logoutApi = new FetchApiClient({
-      baseURL: baseHTTPURL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    await fetch(`${baseURL}/github-login/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
     });
-    return this.apiCall('Logout failed', () =>
-      logoutApi.post('/api-token-deauth/', {}, {withCredentials: true})
-    );
+  }
+
+  public async getCurrentUser(): Promise<UserResponse> {
+    const resp = await fetch(`${baseURL}/user/`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+    });
+    return resp.json() as Promise<UserResponse>;
+  }
+
+  public async logout(): Promise<unknown> {
+    const resp = await fetch(`${baseHTTPURL}/api-token-deauth/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({}),
+    });
+    try {
+      return await resp.json();
+    } catch {
+      return undefined;
+    }
   }
 
   // Tag methods
-  public async createTag(
-    name: string
-  ): Promise<ApiResponse<ITagJsonApiResponse>> {
+  public async createTag(name: string): Promise<ITagJsonApiResponseSingle> {
     const payload: TagPayload = {
       data: {
         type: 'Tag',
@@ -115,19 +99,42 @@ class TearleadsApi {
         },
       },
     };
-    return this.apiCall('Failed to create tag', () =>
-      apiBase.post('/tags', payload, {
-        withCredentials: true,
-      })
-    );
+    const resp = await fetch(`${baseURL}/tags`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
+    return resp.json() as Promise<ITagJsonApiResponseSingle>;
   }
 
-  public async deleteTag(tagId: string): Promise<ApiResponse<unknown>> {
-    return this.apiCall('Failed to delete tag', () =>
-      apiBase.delete(`/tags/${tagId}`, {
-        withCredentials: true,
-      })
-    );
+  public async deleteTag(tagId: string): Promise<ITagJsonApiResponseSingle> {
+    const resp = await fetch(`${baseURL}/tags/${tagId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+    });
+    return resp.json() as Promise<ITagJsonApiResponseSingle>;
+  }
+
+  public async updateTag(
+    tagId: string,
+    name: string
+  ): Promise<ITagJsonApiResponseSingle> {
+    const payload = {
+      data: {
+        id: tagId,
+        type: 'Tag',
+        attributes: {name},
+      },
+    };
+    const resp = await fetch(`${baseURL}/tags/${tagId}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
+    return resp.json() as Promise<ITagJsonApiResponseSingle>;
   }
 
   // Entry methods
@@ -135,7 +142,7 @@ class TearleadsApi {
     subject: string,
     body: string,
     userId: string
-  ): Promise<ApiResponse<ITextEntryJsonApiResponse>> {
+  ): Promise<ITextEntryJsonApiResponse> {
     const payload: EntryPayload = {
       data: {
         type: 'TextEntry',
@@ -153,18 +160,20 @@ class TearleadsApi {
         },
       },
     };
-    return this.apiCall('Failed to create entry', () =>
-      apiBase.post('/entries', payload, {
-        withCredentials: true,
-      })
-    );
+    const resp = await fetch(`${baseURL}/entries`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
+    return resp.json() as Promise<ITextEntryJsonApiResponse>;
   }
 
   public async updateEntry(
     entryId: string,
     subject: string,
     body: string
-  ): Promise<ApiResponse<ITextEntryJsonApiResponse>> {
+  ): Promise<ITextEntryJsonApiResponse> {
     const payload: EntryUpdatePayload = {
       data: {
         type: 'TextEntry',
@@ -174,33 +183,52 @@ class TearleadsApi {
         },
       },
     };
-    return this.apiCall('Failed to update entry', () =>
-      apiBase.patch(`entries/${entryId}`, payload, {
-        withCredentials: true,
-      })
-    );
+    const resp = await fetch(`${baseURL}/entries/${entryId}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
+    return resp.json() as Promise<ITextEntryJsonApiResponse>;
   }
 
   public async getEntries(
     params: EntriesQueryParams & {signal?: AbortSignal}
-  ): Promise<ApiResponse<ITextEntryJsonApiResponse>> {
+  ): Promise<ITextEntryJsonApiResponse> {
     const {signal, ...queryParams} = params;
-    return this.apiCall('Failed to get entries', () =>
-      apiBase.get('/entries', {
-        params: queryParams as unknown as Record<
-          string,
-          string | number | boolean | undefined
-        >,
-        ...(signal && {signal}),
-      })
-    );
+    const url = new URL(`${baseURL}/entries`);
+    Object.entries(
+      queryParams as Record<string, string | number | boolean | undefined>
+    ).forEach(([key, value]) => {
+      if (value !== undefined) url.searchParams.append(key, String(value));
+    });
+    const resp = await fetch(url.toString(), {
+      method: 'GET',
+      ...(signal ? {signal} : {}),
+      headers: {'Content-Type': 'application/vnd.api+json'},
+    });
+    return resp.json() as Promise<ITextEntryJsonApiResponse>;
+  }
+
+  public async getTags(params: TagsQueryParams): Promise<ITagJsonApiResponse> {
+    const url = new URL(`${baseURL}/tags`);
+    Object.entries(
+      params as unknown as Record<string, string | number | boolean | undefined>
+    ).forEach(([key, value]) => {
+      if (value !== undefined) url.searchParams.append(key, String(value));
+    });
+    const resp = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+    });
+    return resp.json() as Promise<ITagJsonApiResponse>;
   }
 
   // Tag-Entry relationship methods
   public async tagEntry(
     tagId: string,
     entryId: string
-  ): Promise<ApiResponse<{data: unknown}>> {
+  ): Promise<TagTextEntryThroughModelResponse> {
     const payload: TagEntryPayload = {
       data: {
         type: 'TagTextEntryThroughModel',
@@ -221,28 +249,31 @@ class TearleadsApi {
         },
       },
     };
-    return this.apiCall('Failed to tag entry', () =>
-      apiBase.post<{data: unknown}>('/tags_entries', payload, {
-        withCredentials: true,
-      })
-    );
+    const resp = await fetch(`${baseURL}/tags_entries`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
+    return resp.json() as Promise<TagTextEntryThroughModelResponse>;
   }
 
   public async untagEntry(tagEntryId: string): Promise<void> {
-    await this.apiCall('Failed to untag entry', () =>
-      apiBase.delete(`/tags_entries/${tagEntryId}`, {
-        withCredentials: true,
-      })
-    );
+    await fetch(`${baseURL}/tags_entries/${tagEntryId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+    });
   }
 
   // Reorder methods (existing)
   public async reorderTag(payload: ReorderTag): Promise<void> {
-    await this.apiCall('Failed to reorder tag', () =>
-      apiBase.post('/tags/reorder', payload, {
-        withCredentials: true,
-      })
-    );
+    await fetch(`${baseURL}/tags/reorder`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
   }
 
   public async reorderEntry(top: string, bottom: string): Promise<void> {
@@ -256,11 +287,12 @@ class TearleadsApi {
         relationships: {},
       },
     };
-    await this.apiCall('Failed to reorder entry', () =>
-      apiBase.post('/tags_entries/reorder', payload, {
-        withCredentials: true,
-      })
-    );
+    await fetch(`${baseURL}/tags_entries/reorder`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
   }
 }
 

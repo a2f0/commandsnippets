@@ -130,10 +130,7 @@ const Entry = ({
               tearleadsApi
                 .tagEntry(dropResult.id, findEntry(id).entry.id)
                 .then(resp => {
-                  appConfig.updateOrCreateTagTextEntryThroughModel(
-                    (resp.data as {data: unknown})
-                      .data as import('./lib/store/models/TagTextEntryThroughModel').ITagTextEntryThroughModelJsonApi
-                  );
+                  appConfig.updateOrCreateTagTextEntryThroughModel(resp.data);
                 })
                 .catch((error: unknown) => {
                   console.error('Failed to tag entry:', error);

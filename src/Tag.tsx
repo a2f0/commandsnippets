@@ -291,7 +291,7 @@ const Tag = ({
     tearleadsApi
       .deleteTag(tagObject.id)
       .then(response => {
-        handleDeleteParent(response.data as ITagJsonApiResponseSingle);
+        handleDeleteParent(response);
       })
       .catch((error: unknown) => {
         console.error('Failed to delete tag:', error);

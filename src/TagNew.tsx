@@ -4,7 +4,6 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useAppContext} from './AppContext';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {activeTagEditField, appMode} from './lib/shared';
-import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
 import {StyledTagFormContainer} from './styled/tags/StyledTagFormContainer';
 import {StyledTextFieldTags} from './styled/tags/StyledTextFieldTags';
@@ -69,11 +68,8 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     tearleadsApi
       .createTag(tagName)
       .then(response => {
-        const tagResponse = response as unknown as {
-          data: ITagJsonApiResponseSingle;
-        };
-        appConfig.reconcileCollection(tagResponse.data.included);
-        appConfig.updateOrCreateTag(tagResponse.data.data);
+        appConfig.reconcileCollection(response.included);
+        appConfig.updateOrCreateTag(response.data);
         handleNewParent();
         appConfig.setTagNew(null);
       })

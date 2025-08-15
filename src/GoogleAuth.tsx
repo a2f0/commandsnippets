@@ -52,7 +52,7 @@ const GoogleAuth = () => {
           return tearleadsApi.getCurrentUser();
         })
         .then(response => {
-          const username = response.data.data.attributes.username;
+          const username = response.data.attributes.username;
           appConfig.setLoggedInUser(username);
           navigate(`/${username}`);
           setCookie('loggedInUser', username, {
