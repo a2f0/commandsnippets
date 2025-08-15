@@ -1,4 +1,3 @@
-import type {ITagJsonApiResponse, ITagJsonApiResponseSingle} from '../tags';
 import type {ITextEntryJsonApiResponse} from '../text_entries';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import type {
@@ -13,6 +12,8 @@ import type {
   TagsQueryParams,
 } from './requests/types';
 import type {
+  ITagJsonApiResponse,
+  ITagJsonApiResponseSingle,
   TagTextEntryThroughModelResponse,
   UserResponse,
 } from './responses/types';

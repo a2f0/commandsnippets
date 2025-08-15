@@ -1,6 +1,7 @@
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {db} from '../../src/lib/db/db';
+import type {IEntryFetchPage, IFetchParams} from './api/requests/types';
 import {tearleadsApi} from './api/tearleadsApi';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
@@ -8,32 +9,12 @@ import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
 import type {IUserJsonApi} from './store/models/UserModel';
 import type {Store} from './store/store';
 import {convertISO8601ToUnixTime} from './util/dateTime';
-export interface ITextEntryJsonApiResponse {
-  data: Array<ITextEntryJsonApi>;
-  links: {
-    next: string | null;
-  };
-  included: Array<
-    | ITagTextEntryThroughModelJsonApi
-    | ITextEntryJsonApi
-    | ITagJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-  >;
-}
 
-export interface ITextEntryJsonApiResponseSingle {
-  data: ITextEntryJsonApi;
-  included: Array<ITagTextEntryThroughModelJsonApi>;
-}
-
-export interface IEntryFetchPage {
-  page: number;
-  username: string;
-  sort: string;
-  search?: string;
-  signal: AbortSignal;
-}
+export type {IEntryFetchPage} from './api/requests/types';
+export type {
+  ITextEntryJsonApiResponse,
+  ITextEntryJsonApiResponseSingle,
+} from './api/responses/types';
 
 export function sort(
   username: string,
@@ -331,17 +312,6 @@ export function sort(
 export function filter(array: Array<ITextEntryJsonApi>): ITextEntryJsonApi[] {
   const filteredArray: Array<ITextEntryJsonApi> = array;
   return filteredArray;
-}
-
-interface IFetchParams {
-  'page[number]': number;
-  'filter[user.username]': string;
-  'filter[tags.name]'?: string;
-  sort: string;
-  'filter[date_updated.gt]'?: string;
-  include: string;
-  'filter[tag_count]'?: number;
-  'filter[search]'?: string;
 }
 
 export function fetch(

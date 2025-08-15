@@ -1,10 +1,9 @@
 import Grid from '@mui/material/Grid';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-
+import type {ITagJsonApiResponseSingle} from './lib/api/responses/types';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import type {ITagJsonApi} from './lib/store/models/TagModel';
-import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {StyledTagButton} from './styled/tags/StyledTagButton';
 import {StyledTagFormContainer} from './styled/tags/StyledTagFormContainer';
 import {StyledTextFieldTags} from './styled/tags/StyledTextFieldTags';

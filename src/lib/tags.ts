@@ -1,21 +1,9 @@
 import type {TagsQueryParams} from './api/requests/types';
+import type {ITagJsonApiResponse} from './api/responses/types';
 import {tearleadsApi} from './api/tearleadsApi';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {IUserJsonApi} from './store/models/UserModel';
 import type {Store} from './store/store';
-
-export interface ITagJsonApiResponse {
-  data: ITagJsonApi[];
-  links: {
-    next: string | null;
-  };
-  included?: Array<IUserJsonApi>;
-}
-
-export interface ITagJsonApiResponseSingle {
-  data: ITagJsonApi;
-  included: Array<IUserJsonApi>;
-}
 
 export function filterAndSort(store: Store): Array<ITagJsonApi> {
   let sortedArray: Array<ITagJsonApi>;
