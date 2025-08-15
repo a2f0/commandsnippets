@@ -10,6 +10,7 @@ import type {
   TagPayload,
   TagsQueryParams,
 } from './requests/types';
+import {isUserResponse} from './responses/typeGuards';
 import type {
   ITagJsonApiResponse,
   ITagJsonApiResponseSingle,
@@ -60,7 +61,11 @@ class TearleadsApi {
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
-    return resp.json() as Promise<UserResponse>;
+    const json = await resp.json();
+    if (isUserResponse(json)) {
+      return json;
+    }
+    throw new Error('Invalid user response');
   }
 
   public async logout(): Promise<unknown> {
@@ -212,7 +217,6 @@ class TearleadsApi {
     return resp.json() as Promise<ITagJsonApiResponse>;
   }
 
-  // Tag-Entry relationship methods
   public async tagEntry(
     tagId: string,
     entryId: string
@@ -254,7 +258,6 @@ class TearleadsApi {
     });
   }
 
-  // Reorder methods (existing)
   public async reorderTag(payload: ReorderTag): Promise<void> {
     await fetch(`${baseURL}/tags/reorder`, {
       method: 'POST',
