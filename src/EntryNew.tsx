@@ -4,9 +4,9 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
+import type {ITextEntryJsonApiResponseSingle} from './lib/api/responses/types';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import type {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
-import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
 import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
 

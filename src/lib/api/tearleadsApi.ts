@@ -1,4 +1,3 @@
-import type {ITextEntryJsonApiResponse} from '../text_entries';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import type {
   AuthPayload,
@@ -14,22 +13,10 @@ import type {
 import type {
   ITagJsonApiResponse,
   ITagJsonApiResponseSingle,
+  ITextEntryJsonApiResponse,
   TagTextEntryThroughModelResponse,
   UserResponse,
 } from './responses/types';
-
-// Re-export types for backward compatibility
-export type {
-  AuthPayload,
-  EntriesQueryParams,
-  EntryPayload,
-  EntryUpdatePayload,
-  ReorderEntry,
-  ReorderTag,
-  TagEntryPayload,
-  TagPayload,
-} from './requests/types';
-export type {UserResponse} from './responses/types';
 
 class TearleadsApi {
   // Authentication methods

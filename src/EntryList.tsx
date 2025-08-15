@@ -20,12 +20,12 @@ import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
+import type {IEntryFetchPage} from './lib/api/requests/types';
 import {appMode, type IMouse, initialMouse} from './lib/shared';
 import {
   type ITextEntryJsonApi,
   TextEntryHelpers,
 } from './lib/store/models/TextEntryModel';
-import type {IEntryFetchPage} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
 
 export interface IParamTypes {

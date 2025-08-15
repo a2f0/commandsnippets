@@ -8,8 +8,10 @@ import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
 
-import type {ITagJsonApiResponse} from '../src/lib/api/responses/types';
-import type {ITextEntryJsonApiResponse} from '../src/lib/text_entries';
+import type {
+  ITagJsonApiResponse,
+  ITextEntryJsonApiResponse,
+} from '../src/lib/api/responses/types';
 import {entriesResponse} from '../test/mocks/entries/entriesResponse';
 import {tagsResponse} from '../test/mocks/tags/tagsResponse';
 import {assignLoggedInCookie} from './util//assignLoggedInCookie';

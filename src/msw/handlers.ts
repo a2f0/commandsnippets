@@ -2,8 +2,8 @@ import {HttpResponse, http} from 'msw';
 import type {
   ITagJsonApiResponse,
   ITagJsonApiResponseSingle,
+  ITextEntryJsonApiResponse,
 } from '../lib/api/responses/types';
-import type {ITextEntryJsonApiResponse} from '../lib/text_entries';
 import {recordRequest} from './requestCounter';
 
 // Mock data for tags (matches test/mocks/tags/tagsResponse.ts)

@@ -10,12 +10,6 @@ import type {IUserJsonApi} from './store/models/UserModel';
 import type {Store} from './store/store';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 
-export type {IEntryFetchPage} from './api/requests/types';
-export type {
-  ITextEntryJsonApiResponse,
-  ITextEntryJsonApiResponseSingle,
-} from './api/responses/types';
-
 export function sort(
   username: string,
   tag: string | null,

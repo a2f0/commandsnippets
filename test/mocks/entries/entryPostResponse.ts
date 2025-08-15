@@ -1,6 +1,6 @@
 import type {JsonObject} from '@wdio/types';
 
-import type {ITextEntryJsonApiResponseSingle} from '../../../src/lib/text_entries';
+import type {ITextEntryJsonApiResponseSingle} from '../../../src/lib/api/responses/types';
 
 export const textEntryPostResponse: ITextEntryJsonApiResponseSingle &
   JsonObject = {
