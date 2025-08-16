@@ -83,6 +83,7 @@ class TestTagsEntriesApi(BaseTestCase):
         )
 
     def test_reorder_works(self):
+        """Test that reordering tag entries works correctly."""
         entry1 = TextEntryFactory(user=self.user1)
         entry2 = TextEntryFactory(user=self.user1)
         tag1 = TagFactory(user=self.user1)
@@ -102,21 +103,29 @@ class TestTagsEntriesApi(BaseTestCase):
             }
         }
 
+        # Verify initial state
         self.assertLess(tag_entry1.order, tag_entry2.order)
+
+        # Perform reorder
         response = self.user1_api_client.post(
             "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify timestamps were updated
         self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
         self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
         tag_entry1.refresh_from_db()
         tag_entry2.refresh_from_db()
         self.assertNotEqual(tag_entry1_timestamp, tag_entry1.date_updated)
         self.assertNotEqual(tag_entry2_timestamp, tag_entry2.date_updated)
+
+        # Verify order was changed
         self.assertLess(tag_entry2.order, tag_entry1.order)
 
     def test_reorder_fails_if_not_top_owner(self):
+        """Test that reordering fails when user doesn't own the top entry."""
         entry1 = TextEntryFactory(user=self.user2)
         entry2 = TextEntryFactory(user=self.user1)
         tag1 = TagFactory(user=self.user1)
@@ -136,21 +145,29 @@ class TestTagsEntriesApi(BaseTestCase):
             }
         }
 
+        # Verify initial state
         self.assertLess(tag_entry1.order, tag_entry2.order)
+
+        # Attempt reorder (should fail)
         response = self.user1_api_client.post(
             "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Verify timestamps were NOT updated
         self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
         self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
         tag_entry1.refresh_from_db()
         tag_entry2.refresh_from_db()
         self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
         self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
+
+        # Verify order was NOT changed
         self.assertLess(tag_entry1.order, tag_entry2.order)
 
     def test_reorder_fails_if_not_bottom_owner(self):
+        """Test that reordering fails when user doesn't own the bottom entry."""
         entry1 = TextEntryFactory(user=self.user1)
         entry2 = TextEntryFactory(user=self.user2)
         tag1 = TagFactory(user=self.user1)
@@ -170,16 +187,23 @@ class TestTagsEntriesApi(BaseTestCase):
             }
         }
 
+        # Verify initial state
         self.assertLess(tag_entry1.order, tag_entry2.order)
+
+        # Attempt reorder (should fail)
         response = self.user1_api_client.post(
             "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Verify timestamps were NOT updated
         self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
         self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
         tag_entry1.refresh_from_db()
         tag_entry2.refresh_from_db()
         self.assertEqual(tag_entry1_timestamp, tag_entry1.date_updated)
         self.assertEqual(tag_entry2_timestamp, tag_entry2.date_updated)
+
+        # Verify order was NOT changed
         self.assertLess(tag_entry1.order, tag_entry2.order)
