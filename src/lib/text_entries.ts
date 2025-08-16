@@ -348,15 +348,14 @@ export function fetch(
       | ITagJsonApi
     >
   > = tearleadsApi.getEntries(params).then(response => {
-    const responseData = response;
-    const updatedEntries = entries.concat(responseData.data);
-    for (let i = 0; i < responseData.included?.length; i++) {
-      const item = responseData.included[i];
+    const updatedEntries = entries.concat(response.data);
+    for (let i = 0; i < response.included?.length; i++) {
+      const item = response.included[i];
       if (item && !updatedEntries.includes(item)) {
         updatedEntries.push(item);
       }
     }
-    if (responseData.links.next === null) {
+    if (response.links.next === null) {
       return updatedEntries;
     }
     return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
@@ -402,10 +401,9 @@ export function fetchPage({
       signal,
     })
     .then(response => {
-      const responseData = response;
-      entries = entries.concat(responseData.data);
-      for (let i = 0; i < responseData.included?.length; i++) {
-        const item = responseData.included[i];
+      entries = entries.concat(response.data);
+      for (let i = 0; i < response.included?.length; i++) {
+        const item = response.included[i];
         if (item && !entries.includes(item)) {
           entries.push(item);
         }
