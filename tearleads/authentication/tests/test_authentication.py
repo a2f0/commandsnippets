@@ -53,6 +53,10 @@ class TestAuthentication(BaseTestCase):
             Token.objects.filter(user=self.auth_user)[0].key,
         )
         response = self.auth_user_api_client.post("/api-token-deauth/", format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {})  # API returns empty response
+
         # Make sure the token still exists after de-authenticating.
         # The reason this persists is because the current authentication system is one token per-user only.
         # This will cause an issue if a user logs out of one browser because the existing token would be
@@ -101,6 +105,10 @@ class TestAuthentication(BaseTestCase):
         self.auth_user_api_client = APIClient()
         self.auth_user_api_client.cookies["Authorization"] = "invalid_token"
         response = self.auth_user_api_client.post("/api-token-deauth/", format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {})  # API returns empty response
+
         self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
         self.assertEqual("LoggedIn" in self.auth_user_api_client.cookies, True)
         self.assertEqual(self.auth_user_api_client.cookies["Authorization"].value, "")
