@@ -18,93 +18,83 @@ class TestTextEntriesApi(BaseTestCase):
         super(TestTextEntriesApi, cls).setUpTestData()
 
     def test_serialization_format(self):
+        """Test the complete serialization format including main entry and all included objects."""
         entry1 = self.user1.text_entries.all().first()
         tag1 = self.user1.tags.all().first()
         tags_entries1 = entry1.text_entry_to_tag.all()[0]
         self.assertEqual(entry1.text_entry_to_tag.all().count(), 1)
+
         response = self.user1_api_client.get(
             "/api/v1/entries/{}?include=text_entry_to_tag.tag,text_entry_to_tag.user,user".format(
                 entry1.id
             )
         )
         json_response = response.json()
-        self.assertEqual(len(json_response["data"]), 4)
-        self.assertEqual(json_response["data"]["id"], str(entry1.id))
-        self.assertEqual(len(json_response["data"]["attributes"]), 7)
-        self.assertEqual(json_response["data"]["attributes"]["subject"], entry1.subject)
-        self.assertEqual(json_response["data"]["attributes"]["body"], entry1.body)
-        self.assertEqual(
-            json_response["data"]["attributes"]["date_created"],
-            str(entry1.date_created.isoformat()),
-        )
-        self.assertEqual(
-            json_response["data"]["attributes"]["date_updated"],
-            str(entry1.date_updated.isoformat()),
-        )
-        self.assertEqual(
-            json_response["data"]["attributes"]["reused_count"], entry1.reused_count
-        )
-        self.assertEqual(
-            json_response["data"]["attributes"]["is_deleted"], entry1.is_deleted
-        )
-        self.assertEqual(
-            json_response["data"]["attributes"]["tag_count"], entry1.tag_count
-        )
-        self.assertEqual(len(json_response["included"]), 3)
 
-        # Tag
-        self.assertEqual(json_response["included"][0]["type"], "Tag")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 7)
-        self.assertEqual(json_response["included"][0]["attributes"]["name"], tag1.name)
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["date_created"],
-            tag1.date_created.isoformat(),
-        )
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["date_last_used"],
-            tag1.date_last_used.isoformat(),
-        )
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["date_updated"],
-            tag1.date_updated.isoformat(),
-        )
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["entry_count"], tag1.entry_count
-        )
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["order"], tag1.order
-        )
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["is_deleted"], tag1.is_deleted
-        )
+        # Test main entry data
+        data = json_response["data"]
+        self.assertEqual(len(data), 4)
+        self.assertEqual(data["id"], str(entry1.id))
 
-        # Junction
+        attributes = data["attributes"]
+        self.assertEqual(len(attributes), 7)
+        self.assertEqual(attributes["subject"], entry1.subject)
+        self.assertEqual(attributes["body"], entry1.body)
         self.assertEqual(
-            json_response["included"][1]["type"], "TagTextEntryThroughModel"
-        )
-        self.assertEqual(json_response["included"][1]["id"], str(tags_entries1.id))
-        self.assertEqual(len(json_response["included"][1]["attributes"]), 3)
-        self.assertEqual(
-            json_response["included"][1]["attributes"]["order"], tags_entries1.order
+            attributes["date_created"], str(entry1.date_created.isoformat())
         )
         self.assertEqual(
-            json_response["included"][1]["attributes"]["date_updated"],
+            attributes["date_updated"], str(entry1.date_updated.isoformat())
+        )
+        self.assertEqual(attributes["reused_count"], entry1.reused_count)
+        self.assertEqual(attributes["is_deleted"], entry1.is_deleted)
+        self.assertEqual(attributes["tag_count"], entry1.tag_count)
+
+        # Test included objects
+        included = json_response["included"]
+        self.assertEqual(len(included), 3)
+
+        # Test Tag (first included item)
+        tag_data = included[0]
+        self.assertEqual(tag_data["type"], "Tag")
+        self.assertEqual(len(tag_data["attributes"]), 7)
+        self.assertEqual(tag_data["attributes"]["name"], tag1.name)
+        self.assertEqual(
+            tag_data["attributes"]["date_created"], tag1.date_created.isoformat()
+        )
+        self.assertEqual(
+            tag_data["attributes"]["date_last_used"], tag1.date_last_used.isoformat()
+        )
+        self.assertEqual(
+            tag_data["attributes"]["date_updated"], tag1.date_updated.isoformat()
+        )
+        self.assertEqual(tag_data["attributes"]["entry_count"], tag1.entry_count)
+        self.assertEqual(tag_data["attributes"]["order"], tag1.order)
+        self.assertEqual(tag_data["attributes"]["is_deleted"], tag1.is_deleted)
+
+        # Test Junction (second included item)
+        junction_data = included[1]
+        self.assertEqual(junction_data["type"], "TagTextEntryThroughModel")
+        self.assertEqual(junction_data["id"], str(tags_entries1.id))
+        self.assertEqual(len(junction_data["attributes"]), 3)
+        self.assertEqual(junction_data["attributes"]["order"], tags_entries1.order)
+        self.assertEqual(
+            junction_data["attributes"]["date_updated"],
             tags_entries1.date_updated.isoformat(),
         )
         self.assertEqual(
-            json_response["included"][1]["attributes"]["date_created"],
+            junction_data["attributes"]["date_created"],
             tags_entries1.date_created.isoformat(),
         )
 
-        # User
-        self.assertEqual(json_response["included"][2]["type"], "User")
-        self.assertEqual(json_response["included"][2]["id"], str(entry1.user.id))
-        self.assertEqual(len(json_response["included"][2]["attributes"]), 2)
+        # Test User (third included item)
+        user_data = included[2]
+        self.assertEqual(user_data["type"], "User")
+        self.assertEqual(user_data["id"], str(entry1.user.id))
+        self.assertEqual(len(user_data["attributes"]), 2)
+        self.assertEqual(user_data["attributes"]["username"], entry1.user.username)
         self.assertEqual(
-            json_response["included"][2]["attributes"]["username"], entry1.user.username
-        )
-        self.assertEqual(
-            json_response["included"][2]["attributes"]["date_updated"],
+            user_data["attributes"]["date_updated"],
             str(entry1.user.date_updated.isoformat()),
         )
 
@@ -234,15 +224,21 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(len(json_response["data"]), 0)
 
     def test_filter_by_username(self):
+        """Test filtering text entries by username."""
         entry1 = self.user1.text_entries.all().first()
         entry2 = self.user1.text_entries.all().last()
+
+        # Test filtering by valid username
         response = self.user1_api_client.get(
             "/api/v1/entries?filter[user.username]={}".format(self.user1)
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
+        data = json_response["data"]
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["id"], str(entry1.id))
+
+        # Test filtering by invalid username
         response = self.user1_api_client.get(
             "/api/v1/entries?filter[user.username]=random"
         )
@@ -264,9 +260,11 @@ class TestTextEntriesApi(BaseTestCase):
         self.assertEqual(json_response["data"][0]["id"], str(entry2.id))
 
     def test_order_filter(self):
+        """Test various sorting options for text entries."""
         entry1 = self.user1.text_entries.all().first()
         entry2 = self.user1.text_entries.all().last()
-        # invalid sort key
+
+        # Test invalid sort key
         response = self.user1_api_client.get("/api/v1/entries?sort=invalid_sort_key")
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -276,95 +274,33 @@ class TestTextEntriesApi(BaseTestCase):
             "invalid sort parameter: invalid_sort_key",
         )
 
-        # sort by body
-        response = self.user1_api_client.get(
-            "/api/v1/entries?sort=body&filter[user.username]={}".format(self.user1)
-        )
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(entry1.id))
+        # Test sorting by different fields
+        sort_tests = [
+            # (sort_param, expected_first_id, expected_second_id)
+            ("body", entry2.id, entry1.id),
+            ("-body", entry1.id, entry2.id),
+            ("date_created", entry1.id, entry2.id),
+            ("-date_created", entry2.id, entry1.id),
+            ("date_updated", entry1.id, entry2.id),
+            ("-date_updated", entry2.id, entry1.id),
+            ("subject", entry1.id, entry2.id),
+            ("-subject", entry2.id, entry1.id),
+        ]
 
-        # reverse sort by body
-        response = self.user1_api_client.get(
-            "/api/v1/entries?sort=-body&filter[user.username]={}".format(self.user1)
-        )
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
-        self.assertEqual(json_response["data"][1]["id"], str(entry2.id))
-
-        # sort by date_created
-        response = self.user1_api_client.get(
-            "/api/v1/entries?sort=date_created&filter[user.username]={}".format(
-                self.user1
+        for sort_param, expected_first_id, expected_second_id in sort_tests:
+            response = self.user1_api_client.get(
+                "/api/v1/entries?sort={}&filter[user.username]={}".format(
+                    sort_param, self.user1.username
+                )
             )
-        )
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
-        self.assertEqual(json_response["data"][1]["id"], str(entry2.id))
-
-        # reverse sort by date_created
-        response = self.user1_api_client.get(
-            "/api/v1/entries?sort=-date_created&filter[user.username]={}".format(
-                self.user1
-            )
-        )
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(entry1.id))
-
-        # sort by date_updated
-        response = self.user1_api_client.get(
-            "/api/v1/entries?sort=date_updated&filter[user.username]={}".format(
-                self.user1
-            )
-        )
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
-        self.assertEqual(json_response["data"][1]["id"], str(entry2.id))
-
-        # reverse sort by date_updated
-        response = self.user1_api_client.get(
-            "/api/v1/entries?sort=-date_updated&filter[user.username]={}".format(
-                self.user1
-            )
-        )
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(entry1.id))
-
-        # sort by subject
-        response = self.user1_api_client.get(
-            "/api/v1/entries?sort=subject&filter[user.username]={}".format(self.user1)
-        )
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry1.id))
-        self.assertEqual(json_response["data"][1]["id"], str(entry2.id))
-
-        # reverse sort by subject
-        response = self.user1_api_client.get(
-            "/api/v1/entries?sort=-subject&filter[user.username]={}".format(self.user1)
-        )
-        json_response = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response["data"]), 2)
-        self.assertEqual(json_response["data"][0]["id"], str(entry2.id))
-        self.assertEqual(json_response["data"][1]["id"], str(entry1.id))
+            json_response = response.json()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(json_response["data"]), 2)
+            self.assertEqual(json_response["data"][0]["id"], str(expected_first_id))
+            self.assertEqual(json_response["data"][1]["id"], str(expected_second_id))
 
     def test_create_entry_works_for_authenticated_user(self):
+        """Test that creating a text entry works for authenticated users."""
         payload = {
             "data": {
                 "type": "TextEntry",
@@ -378,23 +314,28 @@ class TestTextEntriesApi(BaseTestCase):
             "/api/v1/entries", payload, format="vnd.api+json"
         )
         json_response = response.json()
+
+        # Test main response
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = json_response["data"]
         self.assertEqual(
-            json_response["data"]["attributes"]["subject"],
+            data["attributes"]["subject"],
             payload["data"]["attributes"]["subject"],
         )
         self.assertEqual(
-            json_response["data"]["attributes"]["body"],
+            data["attributes"]["body"],
             payload["data"]["attributes"]["body"],
         )
-        self.assertEqual(len(json_response["included"]), 1)
-        self.assertEqual(json_response["included"][0]["type"], "User")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 2)
+
+        # Test included user data
+        included = json_response["included"]
+        self.assertEqual(len(included), 1)
+        user_data = included[0]
+        self.assertEqual(user_data["type"], "User")
+        self.assertEqual(len(user_data["attributes"]), 2)
+        self.assertEqual(user_data["attributes"]["username"], self.user1.username)
         self.assertEqual(
-            json_response["included"][0]["attributes"]["username"], self.user1.username
-        )
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["date_updated"],
+            user_data["attributes"]["date_updated"],
             str(self.user1.date_updated.isoformat()),
         )
 
@@ -470,6 +411,7 @@ class TestTextEntriesApi(BaseTestCase):
         )
 
     def test_edit_works_when_modifying_self_owned_object(self):
+        """Test that editing works when modifying a self-owned text entry."""
         entry1 = TextEntryFactory(user=self.user1)
         payload = {
             "data": {
@@ -485,43 +427,55 @@ class TestTextEntriesApi(BaseTestCase):
             "/api/v1/entries/" + str(entry1.id), payload, format="vnd.api+json"
         )
         json_response = response.json()
+
+        # Test main response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = json_response["data"]
         self.assertEqual(
-            json_response["data"]["attributes"]["subject"],
+            data["attributes"]["subject"],
             payload["data"]["attributes"]["subject"],
         )
         self.assertEqual(
-            json_response["data"]["attributes"]["body"],
+            data["attributes"]["body"],
             payload["data"]["attributes"]["body"],
         )
-        self.assertEqual(len(json_response["included"]), 1)
-        self.assertEqual(json_response["included"][0]["type"], "User")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 2)
+
+        # Test included user data
+        included = json_response["included"]
+        self.assertEqual(len(included), 1)
+        user_data = included[0]
+        self.assertEqual(user_data["type"], "User")
+        self.assertEqual(len(user_data["attributes"]), 2)
+        self.assertEqual(user_data["attributes"]["username"], self.user1.username)
         self.assertEqual(
-            json_response["included"][0]["attributes"]["username"], self.user1.username
-        )
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["date_updated"],
+            user_data["attributes"]["date_updated"],
             str(self.user1.date_updated.isoformat()),
         )
 
     def test_delete_works_when_self_owns_object(self):
+        """Test that deletion works when the user owns the text entry."""
         entry = TextEntryFactory(user=self.user1, is_deleted=False)
         self.assertEqual(entry.is_deleted, False)
+
         response = self.user1_api_client.delete(
             "/api/v1/entries/" + str(entry.id), format="vnd.api+json"
         )
         json_response = response.json()
+
+        # Test main response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(json_response["data"]["attributes"]["is_deleted"], True)
-        self.assertEqual(len(json_response["included"]), 1)
-        self.assertEqual(json_response["included"][0]["type"], "User")
-        self.assertEqual(len(json_response["included"][0]["attributes"]), 2)
+        data = json_response["data"]
+        self.assertEqual(data["attributes"]["is_deleted"], True)
+
+        # Test included user data
+        included = json_response["included"]
+        self.assertEqual(len(included), 1)
+        user_data = included[0]
+        self.assertEqual(user_data["type"], "User")
+        self.assertEqual(len(user_data["attributes"]), 2)
+        self.assertEqual(user_data["attributes"]["username"], self.user1.username)
         self.assertEqual(
-            json_response["included"][0]["attributes"]["username"], self.user1.username
-        )
-        self.assertEqual(
-            json_response["included"][0]["attributes"]["date_updated"],
+            user_data["attributes"]["date_updated"],
             str(self.user1.date_updated.isoformat()),
         )
 

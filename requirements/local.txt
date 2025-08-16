@@ -1,7 +1,7 @@
 -r base.txt
 black==25.1.0                   # this should match .pre-commit-config.yamml
 bump2version==1.0.1
-coverage==7.8.2
+coverage==7.10.1
 django_extensions==4.1
 factory_boy==3.3.3
 responses==0.25.7
