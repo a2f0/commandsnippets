@@ -33,7 +33,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetchWithAuth(`${baseURL}/google-login/`, {
+    const resp = await fetch(`${baseURL}/google-login/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -53,7 +53,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetchWithAuth(`${baseURL}/github-login/`, {
+    const resp = await fetch(`${baseURL}/github-login/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
