@@ -2,6 +2,12 @@ import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {db} from '../../src/lib/db/db';
 import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
+import {
+  isAJunction,
+  isATag,
+  isATextEntry,
+  isAUser,
+} from './api/responses/typeGuards';
 import {tearleadsApi} from './api/tearleadsApi';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
@@ -443,46 +449,6 @@ export function needsScrollingIntoView(
     throw new Error('needsScrollingIntoView expects rectangle');
   }
   return false;
-}
-
-function isAUser(
-  obj:
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-): obj is IUserJsonApi {
-  return obj.type === 'User';
-}
-
-function isATag(
-  obj:
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-): obj is ITagJsonApi {
-  return obj.type === 'Tag';
-}
-
-function isATextEntry(
-  obj:
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-): obj is ITextEntryJsonApi {
-  return obj.type === 'TextEntry';
-}
-
-function isAJunction(
-  obj:
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-): obj is ITextEntryJsonApi {
-  return obj.type === 'TagTextEntryThroughModel';
 }
 
 export async function fetchAllEntriesForUser(username: string | undefined) {
