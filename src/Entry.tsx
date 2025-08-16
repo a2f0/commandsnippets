@@ -1,11 +1,11 @@
 import {Check, FileCopySharp} from '@mui/icons-material';
 import {styled} from '@mui/material/styles';
+import invariant from 'invariant';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
-
 import {useAppContext} from './AppContext';
 import {DragHandle} from './DragHandle';
 import {DragHandleContainer} from './DragHandleContainer';
@@ -341,11 +341,10 @@ const Entry = ({
           element.relationships.tag.data.id === tagObject?.id &&
           element.relationships.text_entry.data.id === textEntryObject.id
       );
-    if (!tagTextEntryThroughModelObject?.id) {
-      console.error('Cannot untag entry: missing tagTextEntryThroughModel ID');
-      return;
-    }
-
+    invariant(
+      tagTextEntryThroughModelObject,
+      'Cannot untag entry: missing tagTextEntryThroughModel ID'
+    );
     tearleadsApi
       .untagEntry(tagTextEntryThroughModelObject.id)
       .then(() => {
