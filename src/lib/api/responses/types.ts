@@ -1,3 +1,8 @@
+import type {ITagJsonApi} from '../../store/models/TagModel';
+import type {ITagTextEntryThroughModelJsonApi} from '../../store/models/TagTextEntryThroughModel';
+import type {ITextEntryJsonApi} from '../../store/models/TextEntryModel';
+import type {IUserJsonApi} from '../../store/models/UserModel';
+
 export interface UserResponse {
   data: {
     attributes: {
@@ -5,11 +10,6 @@ export interface UserResponse {
     };
   };
 }
-
-import type {ITagJsonApi} from '../../store/models/TagModel';
-import type {ITagTextEntryThroughModelJsonApi} from '../../store/models/TagTextEntryThroughModel';
-import type {ITextEntryJsonApi} from '../../store/models/TextEntryModel';
-import type {IUserJsonApi} from '../../store/models/UserModel';
 
 export interface TagTextEntryThroughModelResponse {
   data: ITagTextEntryThroughModelJsonApi;
