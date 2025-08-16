@@ -16,6 +16,10 @@ class TestAuthentication(BaseTestCase):
     def setUpTestData(cls):
         super(TestAuthentication, cls).setUpTestData()
 
+    def _assert_logout_response_is_ok(self, response):
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {})
+
     def test_successful_authentication_then_deauthentication(self):
         self.auth_user = UserFactory()
         existing_token = Token.objects.get(user=self.auth_user)
@@ -54,8 +58,7 @@ class TestAuthentication(BaseTestCase):
         )
         response = self.auth_user_api_client.post("/api-token-deauth/", format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {})  # API returns empty response
+        self._assert_logout_response_is_ok(response)
 
         # Make sure the token still exists after de-authenticating.
         # The reason this persists is because the current authentication system is one token per-user only.
@@ -106,8 +109,7 @@ class TestAuthentication(BaseTestCase):
         self.auth_user_api_client.cookies["Authorization"] = "invalid_token"
         response = self.auth_user_api_client.post("/api-token-deauth/", format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {})  # API returns empty response
+        self._assert_logout_response_is_ok(response)
 
         self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
         self.assertEqual("LoggedIn" in self.auth_user_api_client.cookies, True)
