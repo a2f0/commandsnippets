@@ -1,7 +1,7 @@
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {db} from '../../src/lib/db/db';
-import type {IEntryFetchPage, IFetchParams} from './api/requests/types';
+import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
 import {tearleadsApi} from './api/tearleadsApi';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
@@ -321,7 +321,7 @@ export function fetch(
   since: string | null,
   tag_count: number | null
 ) {
-  const params: IFetchParams = {
+  const params: EntriesQueryParams = {
     'page[number]': page,
     'filter[user.username]': user,
     sort: 'date_updated',
@@ -347,24 +347,20 @@ export function fetch(
       | IUserJsonApi
       | ITagJsonApi
     >
-  > = tearleadsApi
-    .getEntries(
-      params as unknown as Record<string, string | number | boolean | undefined>
-    )
-    .then(response => {
-      const responseData = response;
-      const updatedEntries = entries.concat(responseData.data);
-      for (let i = 0; i < responseData.included?.length; i++) {
-        const item = responseData.included[i];
-        if (item && !updatedEntries.includes(item)) {
-          updatedEntries.push(item);
-        }
+  > = tearleadsApi.getEntries(params).then(response => {
+    const responseData = response;
+    const updatedEntries = entries.concat(responseData.data);
+    for (let i = 0; i < responseData.included?.length; i++) {
+      const item = responseData.included[i];
+      if (item && !updatedEntries.includes(item)) {
+        updatedEntries.push(item);
       }
-      if (responseData.links.next === null) {
-        return updatedEntries;
-      }
-      return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
-    });
+    }
+    if (responseData.links.next === null) {
+      return updatedEntries;
+    }
+    return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
+  });
   return f;
 }
 
@@ -381,7 +377,7 @@ export function fetchPage({
     | IUserJsonApi
     | ITagJsonApi
   > = [];
-  const params: IFetchParams = {
+  const params: EntriesQueryParams = {
     'page[number]': page,
     'filter[user.username]': username,
     sort: sort,
@@ -402,10 +398,7 @@ export function fetchPage({
     | undefined
   > = tearleadsApi
     .getEntries({
-      ...(params as unknown as Record<
-        string,
-        string | number | boolean | undefined
-      >),
+      ...params,
       signal,
     })
     .then(response => {

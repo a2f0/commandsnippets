@@ -118,14 +118,3 @@ export interface IEntryFetchPage {
   search?: string;
   signal: AbortSignal;
 }
-
-export interface IFetchParams {
-  'page[number]': number;
-  'filter[user.username]': string;
-  'filter[tags.name]'?: string;
-  sort: string;
-  'filter[date_updated.gt]'?: string;
-  include: string;
-  'filter[tag_count]'?: number;
-  'filter[search]'?: string;
-}
