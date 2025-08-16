@@ -198,6 +198,7 @@ class TearleadsApi {
   ): Promise<ITextEntryJsonApiResponseSingle> {
     const payload: EntryUpdatePayload = {
       data: {
+        id: entryId,
         type: 'TextEntry',
         attributes: {
           subject,

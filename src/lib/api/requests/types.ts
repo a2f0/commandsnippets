@@ -49,6 +49,7 @@ export interface EntryPayload {
 
 export interface EntryUpdatePayload {
   data: {
+    id: string;
     type: 'TextEntry';
     attributes: {
       subject: string;
