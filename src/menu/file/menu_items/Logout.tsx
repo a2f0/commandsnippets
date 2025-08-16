@@ -1,11 +1,8 @@
-import type {AxiosResponse} from 'axios';
-import axios from 'axios';
 import {applySnapshot} from 'mobx-state-tree';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import {baseHTTPURL} from '../../../lib/api/apiBase';
-import type {ILogoutJsonApiResponse} from '../../../lib/authentication';
+import {tearleadsApi} from '../../../lib/api/tearleadsApi';
 import {defaultState} from '../../../lib/shared';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
@@ -17,21 +14,14 @@ const Logout = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   const handleLogout = () => {
-    const base_url = baseHTTPURL;
-    const logout_api = axios.create({
-      baseURL: base_url,
-      responseType: 'json',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    logout_api
-      .post('/api-token-deauth/', {}, {withCredentials: true})
-      .then((response: AxiosResponse<ILogoutJsonApiResponse>) => {
+    tearleadsApi
+      .logout()
+      .then(() => {
         applySnapshot(appConfig, defaultState);
         onClose();
-        return response;
+      })
+      .catch((error: unknown) => {
+        console.error('Logout error:', error);
       });
   };
 

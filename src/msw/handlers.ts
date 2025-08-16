@@ -1,6 +1,9 @@
 import {HttpResponse, http} from 'msw';
-import type {ITagJsonApiResponse, ITagJsonApiResponseSingle} from '../lib/tags';
-import type {ITextEntryJsonApiResponse} from '../lib/text_entries';
+import type {
+  ITagJsonApiResponse,
+  ITagJsonApiResponseSingle,
+  ITextEntryJsonApiResponse,
+} from '../lib/api/responses/types';
 import {recordRequest} from './requestCounter';
 
 // Mock data for tags (matches test/mocks/tags/tagsResponse.ts)
@@ -448,18 +451,18 @@ const createHandlers = () => {
 
   // Auth endpoint (different pattern)
   handlers.push(
-    http.post('http://localhost:9001/api-token-deauth', ({request}) => {
+    http.post('http://localhost:9001/api-token-deauth/', ({request}) => {
       recordRequest('POST', request.url);
       return HttpResponse.json({data: {}}, {status: 200});
     }),
     http.post(
-      'https://api.staging.tearleads.com/api-token-deauth',
+      'https://api.staging.tearleads.com/api-token-deauth/',
       ({request}) => {
         recordRequest('POST', request.url);
         return HttpResponse.json({data: {}}, {status: 200});
       }
     ),
-    http.post('https://api.tearleads.com/api-token-deauth', ({request}) => {
+    http.post('https://api.tearleads.com/api-token-deauth/', ({request}) => {
       recordRequest('POST', request.url);
       return HttpResponse.json({data: {}}, {status: 200});
     })

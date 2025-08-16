@@ -4,8 +4,10 @@
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 
-import type {ITagJsonApiResponse} from '../../src/lib/tags';
-import type {ITextEntryJsonApiResponse} from '../../src/lib/text_entries';
+import type {
+  ITagJsonApiResponse,
+  ITextEntryJsonApiResponse,
+} from '../../src/lib/api/responses/types';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {tagsResponse} from '../../test/mocks/tags/tagsResponse';
 
@@ -49,13 +51,13 @@ const createHandlers = () => {
 
   // Auth endpoint (different pattern)
   handlers.push(
-    http.post('http://localhost:9001/api-token-deauth', () => {
+    http.post('http://localhost:9001/api-token-deauth/', () => {
       return HttpResponse.json({data: {}}, {status: 200});
     }),
-    http.post('https://api.staging.tearleads.com/api-token-deauth', () => {
+    http.post('https://api.staging.tearleads.com/api-token-deauth/', () => {
       return HttpResponse.json({data: {}}, {status: 200});
     }),
-    http.post('https://api.tearleads.com/api-token-deauth', () => {
+    http.post('https://api.tearleads.com/api-token-deauth/', () => {
       return HttpResponse.json({data: {}}, {status: 200});
     })
   );

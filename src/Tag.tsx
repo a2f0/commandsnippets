@@ -2,21 +2,19 @@ import type {StyledComponent} from '@emotion/styled';
 import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {styled, useTheme} from '@mui/material/styles';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
-
 import {useAppContext} from './AppContext';
 import {DragHandle} from './DragHandle';
 import {DragHandleContainer} from './DragHandleContainer';
 import {ItemTypes} from './ItemTypes';
-import {apiBase} from './lib/api/apiBase';
-import {type ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
+import type {ReorderTag} from './lib/api/requests/types';
+import type {ITagJsonApiResponseSingle} from './lib/api/responses/types';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
 import type {ITagJsonApi} from './lib/store/models/TagModel';
-import type {ITagJsonApiResponseSingle} from './lib/tags';
 import {needsScrollingIntoView} from './lib/text_entries';
 import {TagContextMenu} from './TagContextMenu';
 import {TagEdit} from './TagEdit';
@@ -291,13 +289,13 @@ const Tag = ({
   };
 
   const deleteTag = () => {
-    apiBase
-      .delete(`/tags/${tagObject.id}`, {withCredentials: true})
-      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
-        handleDeleteParent(response.data);
+    tearleadsApi
+      .deleteTag(tagObject.id)
+      .then(response => {
+        handleDeleteParent(response);
       })
-      .catch(error => {
-        console.error(error);
+      .catch((error: unknown) => {
+        console.error('Failed to delete tag:', error);
       });
   };
 

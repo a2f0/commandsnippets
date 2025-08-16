@@ -5,7 +5,7 @@ import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import {environment} from './lib/environment';
 import {LoginButton} from './styled/LoginButton';
 
@@ -31,32 +31,26 @@ const GithubAuth = () => {
     const code = urlParams.get('code');
     console.info(`code (github auth): ${code}`);
     console.info(`is_github_oauth (github auth): ${is_github_oauth}`);
-    if (code !== '' && is_github_oauth === true) {
+    if (code !== null && code !== '' && is_github_oauth === true) {
       const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
-      const payload = {
-        data: {
-          type: 'GithubLogin',
-          attributes: {
-            code: code,
-          },
-        },
-      };
-      apiBase
-        .post('/github-login/', payload, {withCredentials: true})
+      tearleadsApi
+        .githubLogin(code)
         .then(() => {
-          apiBase.get('/user/', {withCredentials: true}).then(response => {
-            const username = response.data.data.attributes.username;
-            appConfig.setLoggedInUser(username);
-            setCookie('loggedInUser', username, {
-              path: '/',
-              secure: window.location.protocol === 'https:',
-              sameSite: 'strict',
-            });
-            navigate(`/${username}`);
-          });
+          return tearleadsApi.getCurrentUser();
         })
-        .catch(() => {
+        .then(response => {
+          const username = response.data.attributes.username;
+          appConfig.setLoggedInUser(username);
+          setCookie('loggedInUser', username, {
+            path: '/',
+            secure: window.location.protocol === 'https:',
+            sameSite: 'strict',
+          });
+          navigate(`/${username}`);
+        })
+        .catch((error: unknown) => {
+          console.error('GitHub authentication error:', error);
           appConfig.setLoggedInUser(null);
         });
     }

@@ -1,41 +1,14 @@
 import type {Theme} from '@mui/material/styles';
-import type {CancelTokenSource} from 'axios';
 import type {RefObject} from 'react';
-
 import {db} from '../../src/lib/db/db';
-import {apiBase} from './api/apiBase';
+import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
+import {tearleadsApi} from './api/tearleadsApi';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
 import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
 import type {IUserJsonApi} from './store/models/UserModel';
 import type {Store} from './store/store';
 import {convertISO8601ToUnixTime} from './util/dateTime';
-export interface ITextEntryJsonApiResponse {
-  data: Array<ITextEntryJsonApi>;
-  links: {
-    next: string | null;
-  };
-  included: Array<
-    | ITagTextEntryThroughModelJsonApi
-    | ITextEntryJsonApi
-    | ITagJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-  >;
-}
-
-export interface ITextEntryJsonApiResponseSingle {
-  data: ITextEntryJsonApi;
-  included: Array<ITagTextEntryThroughModelJsonApi>;
-}
-
-export interface IEntryFetchPage {
-  page: number;
-  username: string;
-  sort: string;
-  search?: string;
-  source: CancelTokenSource;
-}
 
 export function sort(
   username: string,
@@ -335,17 +308,6 @@ export function filter(array: Array<ITextEntryJsonApi>): ITextEntryJsonApi[] {
   return filteredArray;
 }
 
-interface IFetchParams {
-  'page[number]': number;
-  'filter[user.username]': string;
-  'filter[tags.name]'?: string;
-  sort: string;
-  'filter[date_updated.gt]'?: string;
-  include: string;
-  'filter[tag_count]'?: number;
-  'filter[search]'?: string;
-}
-
 export function fetch(
   entries: Array<
     | ITextEntryJsonApi
@@ -359,7 +321,7 @@ export function fetch(
   since: string | null,
   tag_count: number | null
 ) {
-  const params: IFetchParams = {
+  const params: EntriesQueryParams = {
     'page[number]': page,
     'filter[user.username]': user,
     sort: 'date_updated',
@@ -385,23 +347,19 @@ export function fetch(
       | IUserJsonApi
       | ITagJsonApi
     >
-  > = apiBase
-    .get<ITextEntryJsonApiResponse>('/entries', {
-      params: params,
-    })
-    .then(response => {
-      const updatedEntries = entries.concat(response.data.data);
-      for (let i = 0; i < response.data.included?.length; i++) {
-        const item = response.data.included[i];
-        if (item && !updatedEntries.includes(item)) {
-          updatedEntries.push(item);
-        }
+  > = tearleadsApi.getEntries(params).then(response => {
+    const updatedEntries = entries.concat(response.data);
+    for (let i = 0; i < response.included?.length; i++) {
+      const item = response.included[i];
+      if (item && !updatedEntries.includes(item)) {
+        updatedEntries.push(item);
       }
-      if (response.data.links.next === null) {
-        return updatedEntries;
-      }
-      return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
-    });
+    }
+    if (response.links.next === null) {
+      return updatedEntries;
+    }
+    return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
+  });
   return f;
 }
 
@@ -410,7 +368,7 @@ export function fetchPage({
   username,
   sort,
   search,
-  source,
+  signal,
 }: IEntryFetchPage) {
   let entries: Array<
     | ITextEntryJsonApi
@@ -418,7 +376,7 @@ export function fetchPage({
     | IUserJsonApi
     | ITagJsonApi
   > = [];
-  const params: IFetchParams = {
+  const params: EntriesQueryParams = {
     'page[number]': page,
     'filter[user.username]': username,
     sort: sort,
@@ -437,15 +395,15 @@ export function fetchPage({
         | ITagJsonApi
       >
     | undefined
-  > = apiBase
-    .get<ITextEntryJsonApiResponse>('/entries', {
-      params: params,
-      cancelToken: source.token,
+  > = tearleadsApi
+    .getEntries({
+      ...params,
+      signal,
     })
     .then(response => {
-      entries = entries.concat(response.data.data);
-      for (let i = 0; i < response.data.included?.length; i++) {
-        const item = response.data.included[i];
+      entries = entries.concat(response.data);
+      for (let i = 0; i < response.included?.length; i++) {
+        const item = response.included[i];
         if (item && !entries.includes(item)) {
           entries.push(item);
         }

@@ -1,15 +1,13 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {useTheme} from '@mui/material/styles';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import type {ITextEntryJsonApiResponseSingle} from './lib/api/responses/types';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
-import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
 import {needsScrollingIntoView} from './lib/text_entries';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
 import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
@@ -60,25 +58,14 @@ const EntryEdit = ({
   }, [theme]);
 
   const handleSave = () => {
-    const payload = {
-      data: {
-        id: object.id,
-        type: 'TextEntry',
-        attributes: {
-          subject: subject,
-          body: body,
-        },
-      },
-    };
-    apiBase
-      .patch(`entries/${object.id}`, payload, {withCredentials: true})
-      .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
-        handleSaveParent(response.data);
+    tearleadsApi
+      .updateEntry(object.id, subject, body)
+      .then(response => {
+        handleSaveParent(response);
       })
-      .catch(error => {
-        console.error(error);
-      })
-      .then(() => {});
+      .catch((error: unknown) => {
+        console.error('Failed to update entry:', error);
+      });
   };
 
   const handleCancel = () => {

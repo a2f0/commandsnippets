@@ -5,7 +5,7 @@ import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import {environment} from './lib/environment';
 import {LoginButton} from './styled/LoginButton';
 
@@ -39,35 +39,30 @@ const GoogleAuth = () => {
     console.info(`code (google auth): ${code}`);
     console.info(`scope (google auth): ${scope}`);
     if (
+      code !== null &&
       code !== '' &&
       scope !== null &&
       scope.includes('https://www.googleapis.com/auth/userinfo.email')
     ) {
       const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
-      const payload = {
-        data: {
-          type: 'GoogleLogin',
-          attributes: {
-            code: code,
-          },
-        },
-      };
-      apiBase
-        .post('/google-login/', payload, {withCredentials: true})
+      tearleadsApi
+        .googleLogin(code)
         .then(() => {
-          apiBase.get('/user/', {withCredentials: true}).then(response => {
-            const username = response.data.data.attributes.username;
-            appConfig.setLoggedInUser(username);
-            navigate(`/${username}`);
-            setCookie('loggedInUser', username, {
-              path: '/',
-              secure: window.location.protocol === 'https:',
-              sameSite: 'strict',
-            });
+          return tearleadsApi.getCurrentUser();
+        })
+        .then(response => {
+          const username = response.data.attributes.username;
+          appConfig.setLoggedInUser(username);
+          navigate(`/${username}`);
+          setCookie('loggedInUser', username, {
+            path: '/',
+            secure: window.location.protocol === 'https:',
+            sameSite: 'strict',
           });
         })
-        .catch(() => {
+        .catch((error: unknown) => {
+          console.error('Google authentication error:', error);
           appConfig.setLoggedInUser(null);
         });
     }
