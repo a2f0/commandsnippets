@@ -1,4 +1,5 @@
 import {baseHTTPURL, baseURL} from './baseUrl';
+import {fetchWithAuth} from './fetchWithAuth';
 import type {
   AuthPayload,
   EntriesQueryParams,
@@ -32,7 +33,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetch(`${baseURL}/google-login/`, {
+    const resp = await fetchWithAuth(`${baseURL}/google-login/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -52,7 +53,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetch(`${baseURL}/github-login/`, {
+    const resp = await fetchWithAuth(`${baseURL}/github-login/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -64,7 +65,7 @@ class TearleadsApi {
   }
 
   public async getCurrentUser(): Promise<UserResponse> {
-    const resp = await fetch(`${baseURL}/user/`, {
+    const resp = await fetchWithAuth(`${baseURL}/user/`, {
       method: 'GET',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -80,7 +81,7 @@ class TearleadsApi {
   }
 
   public async logout(): Promise<LogoutResponse> {
-    const resp = await fetch(`${baseHTTPURL}/api-token-deauth/`, {
+    const resp = await fetchWithAuth(`${baseHTTPURL}/api-token-deauth/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/json'},
@@ -109,7 +110,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetch(`${baseURL}/tags`, {
+    const resp = await fetchWithAuth(`${baseURL}/tags`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -122,7 +123,7 @@ class TearleadsApi {
   }
 
   public async deleteTag(tagId: string): Promise<ITagJsonApiResponseSingle> {
-    const resp = await fetch(`${baseURL}/tags/${tagId}`, {
+    const resp = await fetchWithAuth(`${baseURL}/tags/${tagId}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -144,7 +145,7 @@ class TearleadsApi {
         attributes: {name},
       },
     };
-    const resp = await fetch(`${baseURL}/tags/${tagId}`, {
+    const resp = await fetchWithAuth(`${baseURL}/tags/${tagId}`, {
       method: 'PATCH',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -179,7 +180,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetch(`${baseURL}/entries`, {
+    const resp = await fetchWithAuth(`${baseURL}/entries`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -206,7 +207,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetch(`${baseURL}/entries/${entryId}`, {
+    const resp = await fetchWithAuth(`${baseURL}/entries/${entryId}`, {
       method: 'PATCH',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -228,7 +229,7 @@ class TearleadsApi {
     ).forEach(([key, value]) => {
       if (value !== undefined) url.searchParams.append(key, String(value));
     });
-    const resp = await fetch(url.toString(), {
+    const resp = await fetchWithAuth(url.toString(), {
       method: 'GET',
       ...(signal ? {signal} : {}),
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -246,7 +247,7 @@ class TearleadsApi {
     ).forEach(([key, value]) => {
       if (value !== undefined) url.searchParams.append(key, String(value));
     });
-    const resp = await fetch(url.toString(), {
+    const resp = await fetchWithAuth(url.toString(), {
       method: 'GET',
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
@@ -280,7 +281,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetch(`${baseURL}/tags_entries`, {
+    const resp = await fetchWithAuth(`${baseURL}/tags_entries`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -293,7 +294,7 @@ class TearleadsApi {
   }
 
   public async untagEntry(tagEntryId: string): Promise<void> {
-    const resp = await fetch(`${baseURL}/tags_entries/${tagEntryId}`, {
+    const resp = await fetchWithAuth(`${baseURL}/tags_entries/${tagEntryId}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -304,7 +305,7 @@ class TearleadsApi {
   }
 
   public async reorderTag(payload: ReorderTag): Promise<void> {
-    const resp = await fetch(`${baseURL}/tags/reorder`, {
+    const resp = await fetchWithAuth(`${baseURL}/tags/reorder`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
@@ -326,7 +327,7 @@ class TearleadsApi {
         relationships: {},
       },
     };
-    const resp = await fetch(`${baseURL}/tags_entries/reorder`, {
+    const resp = await fetchWithAuth(`${baseURL}/tags_entries/reorder`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
