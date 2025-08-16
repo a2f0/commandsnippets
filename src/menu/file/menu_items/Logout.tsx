@@ -1,9 +1,7 @@
-import {applySnapshot} from 'mobx-state-tree';
 import React from 'react';
 
-import {useAppContext} from '../../../AppContext';
 import {tearleadsApi} from '../../../lib/api/tearleadsApi';
-import {defaultState} from '../../../lib/shared';
+import {resetApplicationState} from '../../../lib/auth/authUtils';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
@@ -11,13 +9,11 @@ interface IProps {
 }
 
 const Logout = ({onClose}: IProps) => {
-  const appConfig = useAppContext();
-
   const handleLogout = () => {
     tearleadsApi
       .logout()
       .then(() => {
-        applySnapshot(appConfig, defaultState);
+        resetApplicationState();
         onClose();
       })
       .catch((error: unknown) => {
