@@ -11,6 +11,8 @@ export interface UserResponse {
   };
 }
 
+export interface LogoutResponse extends Record<string, never> {}
+
 export interface TagTextEntryThroughModelResponse {
   data: ITagTextEntryThroughModelJsonApi;
   included?: unknown[];

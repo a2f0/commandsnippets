@@ -15,6 +15,7 @@ import type {
   ITagJsonApiResponse,
   ITagJsonApiResponseSingle,
   ITextEntryJsonApiResponse,
+  LogoutResponse,
   TagTextEntryThroughModelResponse,
   UserResponse,
 } from './responses/types';
@@ -68,7 +69,7 @@ class TearleadsApi {
     throw new Error('Invalid user response');
   }
 
-  public async logout(): Promise<unknown> {
+  public async logout(): Promise<LogoutResponse> {
     const resp = await fetch(`${baseHTTPURL}/api-token-deauth/`, {
       method: 'POST',
       credentials: 'include',
@@ -78,7 +79,7 @@ class TearleadsApi {
     try {
       return await resp.json();
     } catch {
-      return undefined;
+      return {};
     }
   }
 
