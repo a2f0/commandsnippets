@@ -290,7 +290,7 @@ class TestTextEntriesApi(BaseTestCase):
         for sort_param, expected_first_id, expected_second_id in sort_tests:
             response = self.user1_api_client.get(
                 "/api/v1/entries?sort={}&filter[user.username]={}".format(
-                    sort_param, self.user1
+                    sort_param, self.user1.username
                 )
             )
             json_response = response.json()
