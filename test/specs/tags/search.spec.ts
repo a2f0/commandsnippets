@@ -12,8 +12,7 @@ describe('Tag Search Menu Behavior', () => {
     const pageTitle = await browser.getTitle();
     expect(pageTitle).toBe('Tearleads');
 
-    const pageUrl = await browser.getUrl();
-    expect(pageUrl).toBe('http://localhost:8081/test/test-tag-1');
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
     // Verify MSW is working by checking API directly
     const apiResult = await browser.execute(async () => {
