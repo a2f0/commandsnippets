@@ -110,7 +110,6 @@ class TestTagsEntriesApi(BaseTestCase):
         response = self.user1_api_client.post(
             "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
         )
-        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Verify timestamps were updated
@@ -152,7 +151,6 @@ class TestTagsEntriesApi(BaseTestCase):
         response = self.user1_api_client.post(
             "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
         )
-        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Verify timestamps were NOT updated
@@ -194,7 +192,6 @@ class TestTagsEntriesApi(BaseTestCase):
         response = self.user1_api_client.post(
             "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
         )
-        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Verify timestamps were NOT updated
