@@ -4,9 +4,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import type {ITextEntryJsonApiResponseSingle} from './lib/api/responses/types';
 import {tearleadsApi} from './lib/api/tearleadsApi';
-import type {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
 import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
 
@@ -58,21 +56,13 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     tearleadsApi
       .createEntry(subject, body, userObject.id)
       .then(response => {
-        const entryResponse = response as unknown as {
-          data: ITextEntryJsonApiResponseSingle;
-        };
-        appConfig.updateOrCreateTextEntry(entryResponse.data.data);
+        appConfig.updateOrCreateTextEntry(response.data);
 
-        return tearleadsApi.tagEntry(tagObject.id, entryResponse.data.data.id);
+        return tearleadsApi.tagEntry(tagObject.id, response.data.id);
       })
       .then(response => {
-        const tagEntryResponse = response as unknown as {
-          data: ITagTextEntryThroughModelJsonApiResponseSingle;
-        };
-        console.info(tagEntryResponse.data.data);
-        appConfig.updateOrCreateTagTextEntryThroughModel(
-          tagEntryResponse.data.data
-        );
+        console.info(response.data);
+        appConfig.updateOrCreateTagTextEntryThroughModel(response.data);
         filterAndSortParent();
         appConfig.setEntryNew(null);
       })

@@ -61,9 +61,7 @@ const EntryEdit = ({
     tearleadsApi
       .updateEntry(object.id, subject, body)
       .then(response => {
-        const entryResponse =
-          response as unknown as ITextEntryJsonApiResponseSingle;
-        handleSaveParent(entryResponse);
+        handleSaveParent(response);
       })
       .catch((error: unknown) => {
         console.error('Failed to update entry:', error);

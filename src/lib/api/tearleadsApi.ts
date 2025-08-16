@@ -15,6 +15,7 @@ import type {
   ITagJsonApiResponse,
   ITagJsonApiResponseSingle,
   ITextEntryJsonApiResponse,
+  ITextEntryJsonApiResponseSingle,
   LogoutResponse,
   TagTextEntryThroughModelResponse,
   UserResponse,
@@ -31,12 +32,15 @@ class TearleadsApi {
         },
       },
     };
-    await fetch(`${baseURL}/google-login/`, {
+    const resp = await fetch(`${baseURL}/google-login/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
+    if (!resp.ok) {
+      throw new Error(`Google login failed: ${resp.statusText}`);
+    }
   }
 
   public async githubLogin(code: string): Promise<void> {
@@ -48,12 +52,15 @@ class TearleadsApi {
         },
       },
     };
-    await fetch(`${baseURL}/github-login/`, {
+    const resp = await fetch(`${baseURL}/github-login/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
+    if (!resp.ok) {
+      throw new Error(`GitHub login failed: ${resp.statusText}`);
+    }
   }
 
   public async getCurrentUser(): Promise<UserResponse> {
@@ -62,6 +69,9 @@ class TearleadsApi {
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch user: ${resp.statusText}`);
+    }
     const json = await resp.json();
     if (isUserResponse(json)) {
       return json;
@@ -76,9 +86,15 @@ class TearleadsApi {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({}),
     });
+
+    if (!resp.ok) {
+      throw new Error(`Logout failed: ${resp.statusText}`);
+    }
+
     try {
       return await resp.json();
     } catch {
+      // Handle cases where response is OK but body is empty or not valid JSON
       return {};
     }
   }
@@ -99,6 +115,9 @@ class TearleadsApi {
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to create tag: ${resp.statusText}`);
+    }
     return resp.json() as Promise<ITagJsonApiResponseSingle>;
   }
 
@@ -108,6 +127,9 @@ class TearleadsApi {
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to delete tag: ${resp.statusText}`);
+    }
     return resp.json() as Promise<ITagJsonApiResponseSingle>;
   }
 
@@ -128,6 +150,9 @@ class TearleadsApi {
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to update tag: ${resp.statusText}`);
+    }
     return resp.json() as Promise<ITagJsonApiResponseSingle>;
   }
 
@@ -136,7 +161,7 @@ class TearleadsApi {
     subject: string,
     body: string,
     userId: string
-  ): Promise<ITextEntryJsonApiResponse> {
+  ): Promise<ITextEntryJsonApiResponseSingle> {
     const payload: EntryPayload = {
       data: {
         type: 'TextEntry',
@@ -160,14 +185,17 @@ class TearleadsApi {
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
-    return resp.json() as Promise<ITextEntryJsonApiResponse>;
+    if (!resp.ok) {
+      throw new Error(`Failed to create entry: ${resp.statusText}`);
+    }
+    return resp.json() as Promise<ITextEntryJsonApiResponseSingle>;
   }
 
   public async updateEntry(
     entryId: string,
     subject: string,
     body: string
-  ): Promise<ITextEntryJsonApiResponse> {
+  ): Promise<ITextEntryJsonApiResponseSingle> {
     const payload: EntryUpdatePayload = {
       data: {
         type: 'TextEntry',
@@ -183,7 +211,10 @@ class TearleadsApi {
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
-    return resp.json() as Promise<ITextEntryJsonApiResponse>;
+    if (!resp.ok) {
+      throw new Error(`Failed to update entry: ${resp.statusText}`);
+    }
+    return resp.json() as Promise<ITextEntryJsonApiResponseSingle>;
   }
 
   public async getEntries(
@@ -201,6 +232,9 @@ class TearleadsApi {
       ...(signal ? {signal} : {}),
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch entries: ${resp.statusText}`);
+    }
     return resp.json() as Promise<ITextEntryJsonApiResponse>;
   }
 
@@ -215,6 +249,9 @@ class TearleadsApi {
       method: 'GET',
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch tags: ${resp.statusText}`);
+    }
     return resp.json() as Promise<ITagJsonApiResponse>;
   }
 
@@ -248,24 +285,33 @@ class TearleadsApi {
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to tag entry: ${resp.statusText}`);
+    }
     return resp.json() as Promise<TagTextEntryThroughModelResponse>;
   }
 
   public async untagEntry(tagEntryId: string): Promise<void> {
-    await fetch(`${baseURL}/tags_entries/${tagEntryId}`, {
+    const resp = await fetch(`${baseURL}/tags_entries/${tagEntryId}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to untag entry: ${resp.statusText}`);
+    }
   }
 
   public async reorderTag(payload: ReorderTag): Promise<void> {
-    await fetch(`${baseURL}/tags/reorder`, {
+    const resp = await fetch(`${baseURL}/tags/reorder`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to reorder tag: ${resp.statusText}`);
+    }
   }
 
   public async reorderEntry(top: string, bottom: string): Promise<void> {
@@ -279,12 +325,15 @@ class TearleadsApi {
         relationships: {},
       },
     };
-    await fetch(`${baseURL}/tags_entries/reorder`, {
+    const resp = await fetch(`${baseURL}/tags_entries/reorder`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
       body: JSON.stringify(payload),
     });
+    if (!resp.ok) {
+      throw new Error(`Failed to reorder entry: ${resp.statusText}`);
+    }
   }
 }
 
