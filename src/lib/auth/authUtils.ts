@@ -1,20 +1,9 @@
 import {applySnapshot} from 'mobx-state-tree';
 import {defaultState} from '../shared';
-import type {Store} from '../store/store';
-
-let storeInstance: Store | null = null;
-
-export function setAuthStore(store: Store) {
-  storeInstance = store;
-}
+import {store} from '../store/store';
 
 export function resetApplicationState() {
-  if (!storeInstance) {
-    console.error('Store instance not set for auth utilities');
-    return;
-  }
-
-  applySnapshot(storeInstance, defaultState);
+  applySnapshot(store, defaultState);
 }
 
 export function handleUnauthorized() {
