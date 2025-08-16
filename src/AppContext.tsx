@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {store, type Store} from './lib/store/store';
+import {type Store, store} from './lib/store/store';
 
 export const AppContext = React.createContext<Store | undefined>(undefined);
 

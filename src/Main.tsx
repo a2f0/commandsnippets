@@ -1,8 +1,8 @@
 import {AppBar, Box} from '@mui/material';
 import {observer} from 'mobx-react';
 import React, {useEffect} from 'react';
-import {useLocation} from 'react-router-dom';
-import {useNavigate} from 'react-router-dom';
+import {useCookies} from 'react-cookie';
+import {useLocation, useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
 import {LeftDrawer} from './drawer/LeftDrawer';
@@ -16,6 +16,7 @@ const Main = () => {
   const location = useLocation();
   const appConfig = useAppContext();
   const navigate = useNavigate();
+  const [cookies] = useCookies(['LoggedIn']);
 
   useEffect(() => {
     if (location.pathname === '/' && appConfig.loggedInUser !== null) {
@@ -26,16 +27,13 @@ const Main = () => {
   // If the user has cleared their cookies, log them out from the application state.
   // Note: this is not the Authorization cookie containing the authorization token.
   useEffect(() => {
-    const loggedIn = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('LoggedIn='));
-    if (loggedIn === undefined) {
+    if (!cookies.LoggedIn) {
       if (appConfig.loggedInUser !== null) {
         console.warn('Cookie logout occurred.');
         appConfig.setLoggedInUser(null);
       }
     }
-  }, [appConfig.loggedInUser, appConfig.setLoggedInUser]);
+  }, [appConfig.loggedInUser, appConfig.setLoggedInUser, cookies.LoggedIn]);
 
   return (
     <>

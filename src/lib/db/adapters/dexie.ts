@@ -1,7 +1,5 @@
 import {default as DexieDefault} from 'dexie';
-
-import type {IEntry, IJunction, ITag, IUser} from '../types';
-import type {ITearleadsDB} from '../types';
+import type {IEntry, IJunction, ITag, ITearleadsDB, IUser} from '../types';
 
 class TearleadsDexie extends DexieDefault implements ITearleadsDB {
   users!: DexieDefault.Table<IUser, number>; // number is the type of the primary key
@@ -18,6 +16,10 @@ class TearleadsDexie extends DexieDefault implements ITearleadsDB {
       entries: 'id&, userId, subject, body, updated, synced, deleted',
       junction: 'id&, [userId+tagId], updated, synced, deleted',
     });
+  }
+
+  override async close(): Promise<void> {
+    super.close();
   }
 
   async putUser(user: IUser): Promise<void> {

@@ -3,8 +3,8 @@ import React from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 
 import {entrySearchMethod} from '../../../lib/shared';
-import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
 interface IProps {
   onClose: () => void;

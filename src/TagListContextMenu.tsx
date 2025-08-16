@@ -1,8 +1,6 @@
 import {Menu} from '@mui/material';
 import React, {useEffect, useState} from 'react';
-
-import {type IMouse, initialMouse} from '../src/lib/shared';
-import {appMode} from '../src/lib/shared';
+import {appMode, type IMouse, initialMouse} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
 import {StyledMenuItem} from './StyledMenuItem';
 
@@ -68,25 +66,23 @@ const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
   };
 
   return (
-    <>
-      <StyledMenu
-        id="tagListContextMenu"
-        keepMounted
-        mousePosition={mousePosition}
-        open={mousePosition.mouseY !== null}
-        onClose={handleClose}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          mousePosition.mouseY !== null && mousePosition.mouseX !== null
-            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-            : undefined
-        }
-      >
-        <StyledMenuItem id="tagListContextMenuNew" onClick={handleNewTag}>
-          New Tag
-        </StyledMenuItem>
-      </StyledMenu>
-    </>
+    <StyledMenu
+      id="tagListContextMenu"
+      keepMounted
+      mousePosition={mousePosition}
+      open={mousePosition.mouseY !== null}
+      onClose={handleClose}
+      anchorReference="anchorPosition"
+      anchorPosition={
+        mousePosition.mouseY !== null && mousePosition.mouseX !== null
+          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
+          : undefined
+      }
+    >
+      <StyledMenuItem id="tagListContextMenuNew" onClick={handleNewTag}>
+        New Tag
+      </StyledMenuItem>
+    </StyledMenu>
   );
 };
 

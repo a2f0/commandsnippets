@@ -7,7 +7,6 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
-import React from 'react';
 import {describe, expect, it, vi} from 'vitest';
 
 import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';

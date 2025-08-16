@@ -1,21 +1,32 @@
-import {entriesResponse} from '../../mocks/entries/entriesResponse';
-import {tagsResponse} from '../../mocks/tags/tagsResponse';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Main Menu', () => {
-  it.skip('should having a working menu bar', async () => {
+  afterEach(async () => {
+    await browser.resetMSWHandlers();
+  });
+
+  it('should have a working menu bar', async () => {
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
-    const mockEntries = await browser.mock(
-      'http://localhost:9001/api/v1/entries?page[number]=1*',
-      {method: 'GET'}
-    );
-    mockEntries.respond(entriesResponse, {statusCode: 200});
 
-    const mockTags = await browser.mock(
-      'http://localhost:9001/api/v1/tags?page[number]=1*'
-    );
-    mockTags.respond(tagsResponse, {statusCode: 200});
+    // Verify MSW is providing the expected tag data
+    const apiCheck = await browser.execute(async () => {
+      try {
+        const response = await fetch('http://localhost:9001/api/v1/tags');
+        const data = await response.json();
+        return {ok: response.ok, dataLength: data.data?.length || 0};
+      } catch (error) {
+        return {ok: false, error: (error as Error).message};
+      }
+    });
+
+    console.log('API check result:', apiCheck);
+    expect(apiCheck.ok).toBe(true);
+    expect(apiCheck.dataLength).toBe(4); // MSW provides 4 tags
+
+    // Reset before authenticated navigation to assert counts for that load
+    await browser.resetMSWRequestCounts();
+
     await browser.login();
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
@@ -33,92 +44,102 @@ describe('Tag Main Menu', () => {
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
 
-    // // Make sure the first tag is selected
+    // Verify tag count and that first tag is selected
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
-    // https://webdriver.io/docs/autowait/#limitations
 
     let tags = await BasePage.tags;
-    await browser.pause(2000);
+
+    // Verify the first tag is selected (has dark background color)
     await expect(
       (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
         .value
     ).toBe('rgba(72,72,72,1)');
 
+    // Verify URL routing is working
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
-    // initial state of order by order
+    // Verify initial state - default order by 'order' field (tag-1 should be first)
     await browser.waitUntil(
       async () => {
         tags = await BasePage.tags;
-        const firstId = await tags[0].getAttribute('id');
+        const firstId = await tags[0]?.getAttribute('id');
         return firstId === 'tag-1';
       },
       {
         timeout: 5000,
-        timeoutMsg: 'expected tag-1 to be first',
+        timeoutMsg: 'expected tag-1 to be first in default order',
       }
     );
 
-    // click the tags menu button and make sure the menu becomes visible
+    // Test tags menu button functionality
     await expect(BasePage.tagsMenuButton).toBeExisting();
     await expect(BasePage.tagsMenuButton).toBeDisplayed();
     await expect(BasePage.tagsMenuButton).toBeClickable();
     await expect(BasePage.tagsMenu).not.toBeDisplayed();
+
+    // Click menu button to open menu
     await BasePage.tagsMenuButton.click({button: 'left'});
     await expect(BasePage.tagsMenu).toBeDisplayed();
 
-    // click the sort by date create ascending and make sure the menu disappears
+    // Click sort by date created ascending
     await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeExisting();
     await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeDisplayed();
     await expect(BasePage.tagsMenuSortDateCreatedAscending).toBeClickable();
     await BasePage.tagsMenuSortDateCreatedAscending.click({button: 'left'});
     await expect(BasePage.tagsMenu).not.toBeDisplayed();
 
-    // make sure the oldest date is on top
+    // Verify ascending date order: tag-1 (2020), tag-2 (2021), tag-3 (2022), tag-4 (2022)
     await browser.waitUntil(
       async () => {
         tags = await BasePage.tags;
-        const firstId = await tags[0].getAttribute('id');
-        const secondId = await tags[1].getAttribute('id');
+        const firstId = await tags[0]?.getAttribute('id');
+        const secondId = await tags[1]?.getAttribute('id');
         return firstId === 'tag-1' && secondId === 'tag-2';
       },
       {
         timeout: 5000,
-        timeoutMsg: 'expected tag-1 to be first and tag-2 to be second',
+        timeoutMsg:
+          'expected tag-1 (oldest) first and tag-2 second in ascending date order',
       }
     );
 
-    // click the tags menu button and make sure the menu becomes visible
+    // Test descending date sorting
     await expect(BasePage.tagsMenuButton).toBeClickable();
     await expect(BasePage.tagsMenu).not.toBeDisplayed();
+
+    // Open tags menu again
     await BasePage.tagsMenuButton.click({button: 'left'});
     await expect(BasePage.tagsMenu).toBeDisplayed();
 
-    // click the sort by date create descending and make sure the menu disappears
+    // Click sort by date created descending
     await expect(BasePage.tagsMenuSortDateCreatedDescending).toBeExisting();
     await expect(BasePage.tagsMenuSortDateCreatedDescending).toBeDisplayed();
     await expect(BasePage.tagsMenuSortDateCreatedDescending).toBeClickable();
-    BasePage.tagsMenuSortDateCreatedDescending.click({button: 'left'});
+    await BasePage.tagsMenuSortDateCreatedDescending.click({button: 'left'});
     await expect(BasePage.tagsMenu).not.toBeDisplayed();
 
-    // make sure the oldest date is on bottom now
+    // Verify descending date order: tag-4 (2022-05-08), tag-3 (2022-05-07), tag-2 (2021), tag-1 (2020)
     await browser.waitUntil(
       async () => {
         tags = await BasePage.tags;
-        const firstId = await tags[0].getAttribute('id');
-        const secondId = await tags[1].getAttribute('id');
+        const firstId = await tags[0]?.getAttribute('id');
+        const secondId = await tags[1]?.getAttribute('id');
         return firstId === 'tag-4' && secondId === 'tag-3';
       },
       {
         timeout: 5000,
-        timeoutMsg: 'expected tag-4 to be first and tag-3 to be second',
+        timeoutMsg:
+          'expected tag-4 (newest) first and tag-3 second in descending date order',
       }
     );
 
+    // Verify tag-1 is still selected (highlighted) even after sorting
     await expect(
       (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
         .value
     ).toBe('rgba(72,72,72,1)');
+
+    // Verify URL is still pointing to selected tag
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     expect(browser.currentTestErrors).toHaveLength(0);
   });

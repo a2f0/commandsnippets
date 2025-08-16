@@ -1,10 +1,7 @@
 import {type Client, createClient} from '@libsql/client';
-
-import type {IEntry, IJunction, ITag, IUser} from '../types';
-import type {ITearleadsDB} from '../types';
+import type {IEntry, IJunction, ITag, ITearleadsDB, IUser} from '../types';
 
 class TearleadsTurso implements ITearleadsDB {
-  // @ts-ignore undeclared variable
   private client: Client;
 
   constructor() {
@@ -13,25 +10,29 @@ class TearleadsTurso implements ITearleadsDB {
     });
   }
 
-  // @ts-ignore undeclared variable
-  async putUser(user: IUser): Promise<void> {}
+  async close(): Promise<void> {
+    this.client.close();
+  }
 
   // @ts-ignore undeclared variable
-  async getUser(username: string): Promise<IUser | undefined> {
+  async putUser(_user: IUser): Promise<void> {}
+
+  // @ts-ignore undeclared variable
+  async getUser(_username: string): Promise<IUser | undefined> {
     return undefined;
   }
 
   // @ts-ignore undeclared variable
-  async putTag(tag: ITag): Promise<void> {}
+  async putTag(_tag: ITag): Promise<void> {}
 
   // @ts-ignore undeclared variable
-  async putEntry(entry: IEntry): Promise<void> {}
+  async putEntry(_entry: IEntry): Promise<void> {}
 
   // @ts-ignore undeclared variable
-  async putJunction(junction: IJunction): Promise<void> {}
+  async putJunction(_junction: IJunction): Promise<void> {}
 
   // @ts-ignore undeclared variable
-  async getTagsForUserName(username: string): Promise<ITag[]> {
+  async getTagsForUserName(_username: string): Promise<ITag[]> {
     const tags: ITag[] = [];
     return tags;
   }

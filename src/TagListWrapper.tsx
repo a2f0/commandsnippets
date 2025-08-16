@@ -2,12 +2,11 @@ import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import type {Instance} from 'mobx-state-tree';
 import React, {useEffect, useRef, useState} from 'react';
-import {useLocation, useParams} from 'react-router-dom';
-import {useNavigate} from 'react-router-dom';
+import {useLocation, useNavigate, useParams} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {type ITagJsonApi, TagHelpers} from './lib/store/models/TagModel';
 import type {TagModel} from './lib/store/models/TagModel';
+import {type ITagJsonApi, TagHelpers} from './lib/store/models/TagModel';
 import {TagList} from './TagList';
 
 export interface IUser {
@@ -50,7 +49,7 @@ const TagListWrapper = () => {
       appConfig.fetchTags(userName).then(() => {
         const array = TagHelpers.filterAndSort(appConfig);
         if (array.length > 1) {
-          let selected: Instance<typeof TagModel> | undefined = undefined;
+          let selected: Instance<typeof TagModel> | undefined;
           if (tag) {
             // Then its a URL query param
             selected = appConfig.tagsArray.find(c => c.attributes.name === tag);

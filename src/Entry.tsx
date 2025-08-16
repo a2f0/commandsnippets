@@ -1,13 +1,11 @@
-import {Check} from '@mui/icons-material';
-import {FileCopySharp} from '@mui/icons-material';
+import {Check, FileCopySharp} from '@mui/icons-material';
 import {styled} from '@mui/material/styles';
+import invariant from 'invariant';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
-import {useEffect, useMemo, useRef, useState} from 'react';
-import React from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
-
 import {useAppContext} from './AppContext';
 import {DragHandle} from './DragHandle';
 import {DragHandleContainer} from './DragHandleContainer';
@@ -15,11 +13,9 @@ import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
-import {apiBase} from './lib/api/apiBase';
+import type {ITextEntryJsonApiResponseSingle} from './lib/api/responses/types';
 import {tearleadsApi} from './lib/api/tearleadsApi';
-import {type IMouse, initialMouse} from './lib/shared';
-import {appMode, getSelection} from './lib/shared';
-import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
+import {appMode, getSelection, type IMouse, initialMouse} from './lib/shared';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
 import {MemoizedEntryBody} from './styled/text_entries/EntryBody';
 import {MemoizedEntrySubject} from './styled/text_entries/EntrySubject';
@@ -30,7 +26,20 @@ const EntryText = styled('div')(() => ({
   verticalAlign: 'top',
 }));
 
-export const EntryContainer = styled('div')(() => ({
+type EntryContainerProps = React.HTMLAttributes<HTMLDivElement> &
+  React.RefAttributes<HTMLDivElement>;
+
+const EntryContainerBase = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => {
+  const refValue = ref;
+  return <div {...props} ref={refValue} />;
+});
+
+export const EntryContainer: React.ComponentType<EntryContainerProps> = styled(
+  EntryContainerBase
+)(() => ({
   marginBottom: '16px',
   whiteSpace: 'pre',
 }));
@@ -118,34 +127,13 @@ const Entry = ({
           const dropResult = monitor.getDropResult();
           if (dropResult) {
             if (dropResult.type === 'Tag') {
-              const payload = {
-                data: {
-                  type: 'TagTextEntryThroughModel',
-                  attributes: {},
-                  relationships: {
-                    tag: {
-                      data: {
-                        type: 'Tag',
-                        id: dropResult.id,
-                      },
-                    },
-                    text_entry: {
-                      data: {
-                        type: 'TextEntry',
-                        id: findEntry(id).entry.id,
-                      },
-                    },
-                  },
-                },
-              };
-              apiBase
-                .post('tags_entries', payload, {
-                  withCredentials: true,
-                })
+              tearleadsApi
+                .tagEntry(dropResult.id, findEntry(id).entry.id)
                 .then(resp => {
-                  appConfig.updateOrCreateTagTextEntryThroughModel(
-                    resp.data.data
-                  );
+                  appConfig.updateOrCreateTagTextEntryThroughModel(resp.data);
+                })
+                .catch((error: unknown) => {
+                  console.error('Failed to tag entry:', error);
                 });
               if (entriesFilter === 'untagged') {
                 //Then an untagged entry was tagged
@@ -353,11 +341,19 @@ const Entry = ({
           element.relationships.tag.data.id === tagObject?.id &&
           element.relationships.text_entry.data.id === textEntryObject.id
       );
-    apiBase.delete(`/tags_entries/${tagTextEntryThroughModelObject?.id}`, {
-      withCredentials: true,
-    });
-    tagTextEntryThroughModelObject?.remove();
-    handleRemoveFromListParent(textEntryObject.id);
+    invariant(
+      tagTextEntryThroughModelObject,
+      'Cannot untag entry: missing tagTextEntryThroughModel ID'
+    );
+    tearleadsApi
+      .untagEntry(tagTextEntryThroughModelObject.id)
+      .then(() => {
+        tagTextEntryThroughModelObject?.remove();
+        handleRemoveFromListParent(textEntryObject.id);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to untag entry:', error);
+      });
   };
 
   const handleCopyClick = () => {
@@ -421,6 +417,7 @@ const Entry = ({
         />
       )}
       {!isEditing && (
+        // biome-ignore lint/a11y/noStaticElementInteractions: Custom role 'entry' is required for tests and drag-and-drop, not a standard ARIA role.
         <div
           role="entry"
           ref={dropRef}

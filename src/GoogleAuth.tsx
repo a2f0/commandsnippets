@@ -1,35 +1,24 @@
 import {Google} from '@mui/icons-material';
 import {observer} from 'mobx-react';
 import React, {useEffect} from 'react';
+import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {apiBase} from './lib/api/apiBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
+import {environment} from './lib/environment';
 import {LoginButton} from './styled/LoginButton';
 
-let googleClientID =
+const googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
-if (window.location.hostname === 'app.staging.tearleads.com') {
-  googleClientID =
-    '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
-} else if (window.location.hostname === 'tearleads.com') {
-  googleClientID =
-    '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
-} else {
-  // Development
-  googleClientID =
-    '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
-}
 
 export const redirectUrl = () => {
-  console.info(
-    `window.location.hostname (redirectUrl): ${window.location.hostname}`
-  );
-  if (window.location.hostname === 'app.staging.tearleads.com') {
+  console.info(`environment (redirectUrl): ${environment}`);
+  if (environment === 'staging') {
     console.info('returning https%3A//app.staging.tearleads.com/oauth/google');
     return 'https%3A//app.staging.tearleads.com/oauth/google';
   }
-  if (window.location.hostname === 'tearleads.com') {
+  if (environment === 'production') {
     console.info('returning https%3A//tearleads.com/oauth/google');
     return 'https%3A//tearleads.com/oauth/google';
   }
@@ -40,6 +29,7 @@ export const redirectUrl = () => {
 const GoogleAuth = () => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
+  const [, setCookie] = useCookies(['loggedInUser']);
 
   useEffect(() => {
     const queryString = window.location.search;
@@ -49,39 +39,38 @@ const GoogleAuth = () => {
     console.info(`code (google auth): ${code}`);
     console.info(`scope (google auth): ${scope}`);
     if (
+      code !== null &&
       code !== '' &&
       scope !== null &&
       scope.includes('https://www.googleapis.com/auth/userinfo.email')
     ) {
       const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
-      const payload = {
-        data: {
-          type: 'GoogleLogin',
-          attributes: {
-            code: code,
-          },
-        },
-      };
-      apiBase
-        .post('/google-login/', payload, {withCredentials: true})
+      tearleadsApi
+        .googleLogin(code)
         .then(() => {
-          apiBase.get('/user/', {withCredentials: true}).then(response => {
-            const username = response.data.data.attributes.username;
-            appConfig.setLoggedInUser(username);
-            navigate(`/${username}`);
-            document.cookie = `loggedInUser=${username}`;
+          return tearleadsApi.getCurrentUser();
+        })
+        .then(response => {
+          const username = response.data.attributes.username;
+          appConfig.setLoggedInUser(username);
+          navigate(`/${username}`);
+          setCookie('loggedInUser', username, {
+            path: '/',
+            secure: window.location.protocol === 'https:',
+            sameSite: 'strict',
           });
         })
-        .catch(() => {
+        .catch((error: unknown) => {
+          console.error('Google authentication error:', error);
           appConfig.setLoggedInUser(null);
         });
     }
-  }, [appConfig.setLoggedInUser, navigate]);
+  }, [appConfig.setLoggedInUser, navigate, setCookie]);
 
   const handleGitHubClick = () => {
     const redirect = redirectUrl();
-    console.info(`window.location.hostname: ${window.location.hostname}`);
+    console.info(`environment: ${environment}`);
     console.info(`redirect: ${redirect}`);
     window.location.assign(
       `https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=${redirect}&client_id=${googleClientID}`

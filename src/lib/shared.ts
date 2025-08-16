@@ -1,6 +1,6 @@
+import invariant from 'invariant';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
-import invariant from 'invariant';
 
 export enum entrySearchMethod {
   allEntries = 1,

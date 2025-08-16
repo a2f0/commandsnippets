@@ -1,10 +1,8 @@
 import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import type {CancelTokenSource} from 'axios';
-import axios from 'axios';
-import invariant from 'invariant';
 import update from 'immutability-helper';
+import invariant from 'invariant';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import React, {
@@ -17,19 +15,18 @@ import React, {
 } from 'react';
 import {useDrop} from 'react-dnd';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
-
 import {useAppContext} from './AppContext';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
 import {ItemTypes} from './ItemTypes';
+import type {IEntryFetchPage} from './lib/api/requests/types';
 import {appMode, type IMouse, initialMouse} from './lib/shared';
-import type {IEntryFetchPage} from './lib/text_entries';
-import {needsScrollingIntoView} from './lib/text_entries';
 import {
   type ITextEntryJsonApi,
   TextEntryHelpers,
 } from './lib/store/models/TextEntryModel';
+import {needsScrollingIntoView} from './lib/text_entries';
 
 export interface IParamTypes {
   user: string;
@@ -71,8 +68,8 @@ const EntryList = () => {
     setElRefs(refsArray);
   }, [entries.length]);
 
-  const [previousTokenSource, setPreviousTokenSource] = useState<
-    CancelTokenSource | undefined
+  const [previousController, setPreviousController] = useState<
+    AbortController | undefined
   >(undefined);
   useEffect(
     () =>
@@ -124,19 +121,18 @@ const EntryList = () => {
       }
     } else if (entriesFilter === 'all') {
       if (user !== undefined) {
-        const CancelToken = axios.CancelToken;
-        const source = CancelToken.source();
+        const controller = new AbortController();
         const fetchParams: IEntryFetchPage = {
           page: 1,
           username: user,
           sort: appConfig.entrySortOrder,
           search: appConfig.entrySearchString,
-          source: source,
+          signal: controller.signal,
         };
-        if (previousTokenSource !== undefined) {
-          previousTokenSource.cancel();
+        if (previousController !== undefined) {
+          previousController.abort('New request initiated');
         }
-        setPreviousTokenSource(source);
+        setPreviousController(controller);
         const p = TextEntryHelpers.fetchPage(fetchParams);
         p.then(a => {
           if (a) {
@@ -326,12 +322,13 @@ const EntryList = () => {
         <EntryNew id="textEntryNewTop" filterAndSortParent={filterAndSort} />
       )}
       {entries.map((element, i) => {
+        const index = i;
         return (
-          <div key={element.id} ref={elRefs[i]}>
+          <div key={element.id} ref={elRefs[index]}>
             <Entry
               key={element.id}
               id={element.id}
-              index={i}
+              index={index}
               moveEntry={moveEntry}
               findEntry={findEntry}
               handleRemoveFromListParent={handleRemoveFromList}
