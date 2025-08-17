@@ -55,7 +55,7 @@ export default defineConfig({
         clientsClaim: true,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.(js|css|ico|png|svg)$/,
+            urlPattern: ({url}) => url.origin === self.location.origin && /\.(js|css|ico|png|svg)$/.test(url.pathname),
             handler: 'CacheFirst',
             options: {
               cacheName: 'tearleads-static-cache',
