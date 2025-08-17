@@ -5,3 +5,4 @@ alwaysApply: true
 ---
 - Use conventional commit syntax when committing files.
 - Do not commit changes unless you are explicitly asked to.
+- Never force push to GitHub. Always git pull and resolve merge conflicts.
