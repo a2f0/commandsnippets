@@ -76,7 +76,6 @@ describe('Entries Context Menu Delete Entry', () => {
       'DELETE',
       'http://localhost:9001/api/v1/entries/1'
     );
-    console.log('Initial DELETE count for entry 1:', initialDeleteCount);
 
     // Click the delete button to actually delete the entry
     await BasePage.tagsEntriesContextMenu1Delete.waitAndLeftClick();
@@ -100,7 +99,6 @@ describe('Entries Context Menu Delete Entry', () => {
       'DELETE',
       'http://localhost:9001/api/v1/entries/1'
     );
-    console.log('Final DELETE count for entry 1:', finalDeleteCount);
 
     // There should be exactly 1 new DELETE request
     // Note: React StrictMode or double rendering might cause multiple requests

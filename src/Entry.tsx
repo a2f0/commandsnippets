@@ -355,7 +355,18 @@ const Entry = ({
           'Cannot untag entry: missing tagTextEntryThroughModel ID'
         );
         await tearleadsApi.untagEntry(tagTextEntryThroughModelObject.id);
-        tagTextEntryThroughModelObject?.remove();
+        tagTextEntryThroughModelObject.remove();
+
+        // Check if the entry has any remaining tags.
+        const hasRemainingTags = appConfig.tagTextEntryThroughModel.some(
+          junction =>
+            junction.relationships.text_entry.data.id === textEntryObject.id
+        );
+
+        // If it has no more tags, add it to the untagged list.
+        if (!hasRemainingTags) {
+          appConfig.updateOrCreateUntaggedTextEntry(textEntryObject);
+        }
       }
       handleRemoveFromListParent(textEntryObject.id);
     } catch (error: unknown) {
