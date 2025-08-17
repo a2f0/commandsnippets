@@ -33,6 +33,8 @@ export default defineConfig({
       devOptions: {
         enabled: false,
       },
+      registerType: 'autoUpdate',
+      includeAssets: ['pwa-icon-144x144.svg'],
       manifest: {
         name: 'Tearleads',
         short_name: 'Tearleads',
@@ -47,16 +49,33 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,ico,png,svg}'],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.(js|css|html|ico|svg)$/,
-            handler: 'NetworkFirst',
+            urlPattern: ({url}) =>
+              url.origin === self.location.origin &&
+              /\.(js|css|ico|png|svg)$/.test(url.pathname),
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'tearleads-cache',
+              cacheName: 'tearleads-static-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days instead of 30
+              },
+            },
+          },
+          {
+            urlPattern: ({request}) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'tearleads-html-cache',
+              networkTimeoutSeconds: 3, // Wait max 3 seconds for network
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 0, // Expire immediately, but still available as fallback
               },
             },
           },
