@@ -82,7 +82,18 @@ describe('Entries Context Menu Delete Entry', () => {
     await BasePage.tagsEntriesContextMenu1Delete.waitAndLeftClick();
 
     // Wait for the delete request to complete
-    await browser.pause(500);
+    await browser.waitUntil(
+      async () =>
+        (await browser.getMSWRequestCount(
+          'DELETE',
+          'http://localhost:9001/api/v1/entries/1'
+        )) > initialDeleteCount,
+      {
+        timeout: 5000,
+        timeoutMsg:
+          'Expected DELETE request count to increase after clicking delete',
+      }
+    );
 
     // Verify the DELETE request was made exactly once after clicking
     const finalDeleteCount = await browser.getMSWRequestCount(

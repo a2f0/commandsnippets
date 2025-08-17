@@ -54,9 +54,7 @@ describe('Delete Untagged Entry', () => {
 
     // Click the first Delete button (for entry 1)
     const deleteButtons = screen.getAllByRole('menuitem', {name: 'Delete'});
-    if (deleteButtons[0]) {
-      fireEvent.click(deleteButtons[0]);
-    }
+    fireEvent.click(deleteButtons[0]!);
 
     // Wait for the deletion to be processed
     await waitFor(() => {
@@ -90,9 +88,7 @@ describe('Delete Untagged Entry', () => {
 
     // Click the first Untag button
     const untagButtons = screen.getAllByRole('menuitem', {name: 'Untag'});
-    if (untagButtons[0]) {
-      fireEvent.click(untagButtons[0]);
-    }
+    fireEvent.click(untagButtons[0]!);
 
     // Wait for the untagging to be processed
     await waitFor(() => {

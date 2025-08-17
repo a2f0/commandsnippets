@@ -324,54 +324,45 @@ const Entry = ({
     appConfig.setEntryNew(`textEntry-${object.id}-top`);
   };
 
-  const handleRemoveFromList = () => {
-    // Check if we're in the untagged entries view
-    if (entriesFilter === 'untagged') {
-      // Delete the entry entirely for untagged entries
-      tearleadsApi
-        .deleteEntry(textEntryObject.id)
-        .then(() => {
-          handleRemoveFromListParent(textEntryObject.id);
-          // Also remove from the store
-          const entryToRemove = appConfig.textEntriesArray.find(
-            entry => entry.id === textEntryObject.id
-          );
-          entryToRemove?.remove();
-        })
-        .catch((error: unknown) => {
-          console.error('Failed to delete entry:', error);
-        });
-    } else {
-      // Untag the entry for tagged entries
-      const userObject = appConfig.usersArray.find(
-        element => element.attributes.username === user
-      );
-
-      const tagObject = appConfig.tagsArray.find(
-        element =>
-          element.attributes.name === tag &&
-          element.relationships.user.data.id === userObject?.id
-      );
-
-      const tagTextEntryThroughModelObject =
-        appConfig.tagTextEntryThroughModel.find(
-          element =>
-            element.relationships.tag.data.id === tagObject?.id &&
-            element.relationships.text_entry.data.id === textEntryObject.id
+  const handleRemoveFromList = async () => {
+    try {
+      if (entriesFilter === 'untagged') {
+        // Delete the entry entirely for untagged entries
+        await tearleadsApi.deleteEntry(textEntryObject.id);
+        // Also remove from the store
+        const entryToRemove = appConfig.textEntriesArray.find(
+          entry => entry.id === textEntryObject.id
         );
-      invariant(
-        tagTextEntryThroughModelObject,
-        'Cannot untag entry: missing tagTextEntryThroughModel ID'
-      );
-      tearleadsApi
-        .untagEntry(tagTextEntryThroughModelObject.id)
-        .then(() => {
-          tagTextEntryThroughModelObject?.remove();
-          handleRemoveFromListParent(textEntryObject.id);
-        })
-        .catch((error: unknown) => {
-          console.error('Failed to untag entry:', error);
-        });
+        entryToRemove?.remove();
+      } else {
+        // Untag the entry for tagged entries
+        const userObject = appConfig.usersArray.find(
+          element => element.attributes.username === user
+        );
+
+        const tagObject = appConfig.tagsArray.find(
+          element =>
+            element.attributes.name === tag &&
+            element.relationships.user.data.id === userObject?.id
+        );
+
+        const tagTextEntryThroughModelObject =
+          appConfig.tagTextEntryThroughModel.find(
+            element =>
+              element.relationships.tag.data.id === tagObject?.id &&
+              element.relationships.text_entry.data.id === textEntryObject.id
+          );
+        invariant(
+          tagTextEntryThroughModelObject,
+          'Cannot untag entry: missing tagTextEntryThroughModel ID'
+        );
+        await tearleadsApi.untagEntry(tagTextEntryThroughModelObject.id);
+        tagTextEntryThroughModelObject?.remove();
+      }
+      handleRemoveFromListParent(textEntryObject.id);
+    } catch (error: unknown) {
+      const action = entriesFilter === 'untagged' ? 'delete' : 'untag';
+      console.error(`Failed to ${action} entry:`, error);
     }
   };
 
