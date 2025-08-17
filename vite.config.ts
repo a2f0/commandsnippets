@@ -1,6 +1,8 @@
 import react from '@vitejs/plugin-react';
+import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
+import packageJson from './package.json';
 
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
 export default defineConfig({
@@ -20,6 +22,13 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    createHtmlPlugin({
+      inject: {
+        data: {
+          VITE_APP_VERSION: packageJson.version,
+        },
+      },
+    }),
     VitePWA({
       devOptions: {
         enabled: false,
