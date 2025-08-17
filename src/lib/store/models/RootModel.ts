@@ -325,7 +325,12 @@ export const RootModel = types
       }
     },
     removeTextEntry(id: string) {
-      console.info`(id: ${id})`;
+      const existingEntry = self.textEntriesArray.find(
+        entry => entry.id === id
+      );
+      if (existingEntry) {
+        destroy(existingEntry);
+      }
     },
     setActiveSearch(activeSearch: activeSearch) {
       self.activeSearch = activeSearch;

@@ -5,3 +5,4 @@ alwaysApply: true
 ---
 - Use conventional commit syntax when committing files.
 - Do not commit changes unless you are explicitly asked to.
+- Never force push to shared branches. Always pull the latest changes (e.g., using `git pull --rebase`) and resolve conflicts locally before pushing.
