@@ -304,6 +304,17 @@ class TearleadsApi {
     }
   }
 
+  public async deleteEntry(entryId: string): Promise<void> {
+    const resp = await fetchWithAuth(`${baseURL}/entries/${entryId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+    });
+    if (!resp.ok) {
+      throw new Error(`Failed to delete entry: ${resp.statusText}`);
+    }
+  }
+
   public async reorderTag(payload: ReorderTag): Promise<void> {
     const resp = await fetchWithAuth(`${baseURL}/tags/reorder`, {
       method: 'POST',
