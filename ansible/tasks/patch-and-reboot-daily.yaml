@@ -12,6 +12,7 @@
 
       export DEBIAN_FRONTEND=noninteractive
       sudo apt-get -y update
+      sudo apt-get -y upgrade
       sudo apt-get -y autoremove
       sudo apt-get -y autoclean
       sudo /sbin/shutdown -r now
