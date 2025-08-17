@@ -101,12 +101,8 @@ describe('Entries Context Menu Delete Entry', () => {
     );
 
     // There should be exactly 1 new DELETE request
-    // Note: React StrictMode or double rendering might cause multiple requests
     const newRequests = finalDeleteCount - initialDeleteCount;
-
-    // Accept either 1 or 2 requests (due to React StrictMode double rendering)
-    expect(newRequests).toBeGreaterThanOrEqual(1);
-    expect(newRequests).toBeLessThanOrEqual(2);
+    expect(newRequests).toBe(1);
 
     // Verify the entry is removed from the DOM
     await expect(BasePage.tagsEntries1).not.toBeDisplayed();

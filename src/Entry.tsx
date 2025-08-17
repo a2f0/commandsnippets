@@ -337,17 +337,22 @@ const Entry = ({
         const userObject = appConfig.usersArray.find(
           element => element.attributes.username === user
         );
+        invariant(userObject, `User '${user}' not found in the store.`);
 
         const tagObject = appConfig.tagsArray.find(
           element =>
             element.attributes.name === tag &&
-            element.relationships.user.data.id === userObject?.id
+            element.relationships.user.data.id === userObject.id
+        );
+        invariant(
+          tagObject,
+          `Tag '${tag}' for user '${user}' not found in the store.`
         );
 
         const tagTextEntryThroughModelObject =
           appConfig.tagTextEntryThroughModel.find(
             element =>
-              element.relationships.tag.data.id === tagObject?.id &&
+              element.relationships.tag.data.id === tagObject.id &&
               element.relationships.text_entry.data.id === textEntryObject.id
           );
         invariant(

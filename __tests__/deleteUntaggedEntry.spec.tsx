@@ -52,9 +52,9 @@ describe('Delete Untagged Entry', () => {
       expect(deleteButton).toBeInTheDocument();
     });
 
-    // Click the first Delete button (for entry 1)
-    const deleteButtons = screen.getAllByRole('menuitem', {name: 'Delete'});
-    fireEvent.click(deleteButtons[0]!);
+    // Click the Delete button
+    const deleteButton = screen.getByRole('menuitem', {name: 'Delete'});
+    fireEvent.click(deleteButton);
 
     // Wait for the deletion to be processed
     await waitFor(() => {
@@ -86,9 +86,9 @@ describe('Delete Untagged Entry', () => {
       expect(untagButton).toBeInTheDocument();
     });
 
-    // Click the first Untag button
-    const untagButtons = screen.getAllByRole('menuitem', {name: 'Untag'});
-    fireEvent.click(untagButtons[0]!);
+    // Click the Untag button
+    const untagButton = screen.getByRole('menuitem', {name: 'Untag'});
+    fireEvent.click(untagButton);
 
     // Wait for the untagging to be processed
     await waitFor(() => {
