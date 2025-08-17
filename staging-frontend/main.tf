@@ -143,9 +143,6 @@ resource "aws_cloudfront_function" "url_rewrite" {
       // For all other requests (paths without extensions or ending with /), serve the root index.html
       request.uri = '/index.html';
 
-      // Mark this request as rewritten to index.html for the viewer-response function
-      request.headers['x-rewritten-to-index'] = {value: 'true'};
-
       return request;
     }
   EOT
@@ -158,15 +155,14 @@ resource "aws_cloudfront_function" "no_cache_response" {
   publish = true
   code    = <<-EOT
     function handler(event) {
-      const response = event.response;
-      const request = event.request;
+      var response = event.response;
 
-      // Check if this request was rewritten to index.html by the viewer-request function
-      const wasRewritten = request.headers['x-rewritten-to-index'] &&
-                          request.headers['x-rewritten-to-index'].value === 'true';
+      // Add no-cache headers to all HTML responses
+      // Since our viewer-request rewrites all non-file paths to index.html,
+      // we can check the content-type to determine if this is an HTML response
+      var contentType = response.headers['content-type'] ? response.headers['content-type'].value : '';
 
-      // Add no-cache headers for requests that were rewritten to index.html or are actually index.html
-      if (wasRewritten || request.uri === '/index.html') {
+      if (contentType.includes('text/html')) {
         response.headers['cache-control'] = {value: 'no-cache, no-store, must-revalidate'};
         response.headers['pragma'] = {value: 'no-cache'};
         response.headers['expires'] = {value: '0'};
@@ -299,4 +295,9 @@ resource "github_actions_secret" "staging_domain" {
   repository      = var.github_repository
   secret_name     = "STAGING_DOMAIN"
   plaintext_value = var.domain
+}
+
+output "cloudfront_distribution_id" {
+  value       = aws_cloudfront_distribution.website.id
+  description = "CloudFront distribution ID for cache invalidation"
 }

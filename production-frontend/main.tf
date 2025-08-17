@@ -159,9 +159,6 @@ resource "aws_cloudfront_function" "url_rewrite" {
       // For all other requests (paths without extensions or ending with /), serve the root index.html
       request.uri = '/index.html';
 
-      // Mark this request as rewritten to index.html for the viewer-response function
-      request.headers['x-rewritten-to-index'] = {value: 'true'};
-
       return request;
     }
   EOT
