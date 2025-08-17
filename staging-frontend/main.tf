@@ -148,6 +148,29 @@ resource "aws_cloudfront_function" "url_rewrite" {
   EOT
 }
 
+resource "aws_cloudfront_function" "no_cache_response" {
+  name    = "no-cache-response-staging"
+  runtime = "cloudfront-js-1.0"
+  comment = "Add no-cache headers to index.html responses"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      var response = event.response;
+      var request = event.request;
+
+      // If this was a request that got rewritten to index.html (no file extension in original URI)
+      // or if it's actually index.html
+      if (!request.uri.includes('.') || request.uri === '/index.html' || request.uri === '/') {
+        response.headers['cache-control'] = {value: 'no-cache, no-store, must-revalidate'};
+        response.headers['pragma'] = {value: 'no-cache'};
+        response.headers['expires'] = {value: '0'};
+      }
+
+      return response;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "website" {
   # Add explicit dependency on certificate validation
   depends_on = [aws_acm_certificate_validation.cert]
@@ -181,10 +204,15 @@ resource "aws_cloudfront_distribution" "website" {
     default_ttl            = 0
     max_ttl                = 0
 
-    # Add the function association
+    # Add the function associations
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.url_rewrite.arn
+    }
+
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.no_cache_response.arn
     }
   }
 
