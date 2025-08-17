@@ -329,11 +329,9 @@ const Entry = ({
       if (entriesFilter === 'untagged') {
         // Delete the entry entirely for untagged entries
         await tearleadsApi.deleteEntry(textEntryObject.id);
-        // Also remove from the store
-        const entryToRemove = appConfig.textEntriesArray.find(
-          entry => entry.id === textEntryObject.id
-        );
-        entryToRemove?.remove();
+        // Remove from both store arrays
+        appConfig.removeTextEntry(textEntryObject.id);
+        appConfig.removeUntaggedTextEntry(textEntryObject.id);
       } else {
         // Untag the entry for tagged entries
         const userObject = appConfig.usersArray.find(
