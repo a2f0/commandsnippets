@@ -10,7 +10,7 @@ if [ "$CURRENT_BRANCH" = "staging" ] || [ "$CURRENT_BRANCH" = "production" ]; th
 fi
 
 # Bump the version
-npm version patch --git-tag-version=false
+pnpm version patch --git-tag-version=false
 
 # Get the current version from package.json
 VERSION=$(node -p "require('./package.json').version")

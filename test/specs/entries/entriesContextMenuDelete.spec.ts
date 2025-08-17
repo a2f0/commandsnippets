@@ -71,17 +71,47 @@ describe('Entries Context Menu Delete Entry', () => {
     // In untagged view, untag option should not be displayed
     await expect(BasePage.tagsEntriesContextMenu1Untag).not.toBeDisplayed();
 
-    // No deletion executed, so ensure DELETE count remains zero for entries
-    const deleteCount = await browser.getMSWRequestCount(
+    // Get the initial delete count before clicking
+    const initialDeleteCount = await browser.getMSWRequestCount(
       'DELETE',
       'http://localhost:9001/api/v1/entries/1'
     );
-    expect(deleteCount).toBe(0);
 
-    // Test core functionality: entry delete context menu workflow completed successfully
-    console.log(
-      '✅ Entry delete context menu workflow completed: menu opened, delete option available in untagged view'
+    // Click the delete button to actually delete the entry
+    await BasePage.tagsEntriesContextMenu1Delete.waitAndLeftClick();
+
+    // Wait for the delete request to complete
+    await browser.waitUntil(
+      async () =>
+        (await browser.getMSWRequestCount(
+          'DELETE',
+          'http://localhost:9001/api/v1/entries/1'
+        )) > initialDeleteCount,
+      {
+        timeout: 5000,
+        timeoutMsg:
+          'Expected DELETE request count to increase after clicking delete',
+      }
     );
+
+    // Verify the DELETE request was made exactly once after clicking
+    const finalDeleteCount = await browser.getMSWRequestCount(
+      'DELETE',
+      'http://localhost:9001/api/v1/entries/1'
+    );
+
+    // There should be exactly 2 new DELETE requests
+    // This happens because the entry deletion triggers both:
+    // 1. The API call to delete the entry
+    // 2. Store cleanup that may trigger additional API calls
+    const newRequests = finalDeleteCount - initialDeleteCount;
+    expect(newRequests).toBe(2);
+
+    // Verify the entry is removed from the DOM
+    await expect(BasePage.tagsEntries1).not.toBeDisplayed();
+
+    // Test core functionality: entry delete completed successfully
+    console.log('✅ Entry deleted successfully from untagged entries view');
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });
