@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 # Check if we're on a protected branch
 CURRENT_BRANCH=$(git branch --show-current)
@@ -17,6 +18,5 @@ VERSION=$(node -p "require('./package.json').version")
 echo "Version bumped to $VERSION"
 
 git add package.json
-git add package-lock.json
 
 git commit -m "chore: bump version to $VERSION"
