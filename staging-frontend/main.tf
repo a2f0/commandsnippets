@@ -134,9 +134,6 @@ resource "aws_cloudfront_function" "url_rewrite" {
       var request = event.request;
       var uri = request.uri;
 
-      // Store original URI for viewer-response function
-      request.headers['x-original-uri'] = {value: uri};
-
       // Check if the request is for a file with an extension (has a dot and not ending with /)
       if (uri.includes('.') && !uri.endsWith('/')) {
         // If it's a file request, leave it as is
@@ -145,6 +142,9 @@ resource "aws_cloudfront_function" "url_rewrite" {
 
       // For all other requests (paths without extensions or ending with /), serve the root index.html
       request.uri = '/index.html';
+
+      // Mark this request as rewritten to index.html for the viewer-response function
+      request.headers['x-rewritten-to-index'] = {value: 'true'};
 
       return request;
     }
@@ -161,21 +161,16 @@ resource "aws_cloudfront_function" "no_cache_response" {
       const response = event.response;
       const request = event.request;
 
-      // Get the original URI from the header set by viewer-request
-      const originalUri = request.headers['x-original-uri'] ? request.headers['x-original-uri'].value : request.uri;
-
-      // Apply the same logic as viewer-request to determine if this was rewritten to index.html
-      const isFile = originalUri.includes('.') && !originalUri.endsWith('/');
+      // Check if this request was rewritten to index.html by the viewer-request function
+      const wasRewritten = request.headers['x-rewritten-to-index'] &&
+                          request.headers['x-rewritten-to-index'].value === 'true';
 
       // Add no-cache headers for requests that were rewritten to index.html or are actually index.html
-      if (!isFile || originalUri === '/index.html') {
+      if (wasRewritten || request.uri === '/index.html') {
         response.headers['cache-control'] = {value: 'no-cache, no-store, must-revalidate'};
         response.headers['pragma'] = {value: 'no-cache'};
         response.headers['expires'] = {value: '0'};
       }
-
-      // Remove the internal header before sending response
-      delete response.headers['x-original-uri'];
 
       return response;
     }

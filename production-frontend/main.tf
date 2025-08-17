@@ -159,7 +159,36 @@ resource "aws_cloudfront_function" "url_rewrite" {
       // For all other requests (paths without extensions or ending with /), serve the root index.html
       request.uri = '/index.html';
 
+      // Mark this request as rewritten to index.html for the viewer-response function
+      request.headers['x-rewritten-to-index'] = {value: 'true'};
+
       return request;
+    }
+  EOT
+}
+
+resource "aws_cloudfront_function" "no_cache_response" {
+  name    = "no-cache-response-production"
+  runtime = "cloudfront-js-1.0"
+  comment = "Add no-cache headers to index.html responses"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      const response = event.response;
+      const request = event.request;
+
+      // Check if this request was rewritten to index.html by the viewer-request function
+      const wasRewritten = request.headers['x-rewritten-to-index'] &&
+                          request.headers['x-rewritten-to-index'].value === 'true';
+
+      // Add no-cache headers for requests that were rewritten to index.html or are actually index.html
+      if (wasRewritten || request.uri === '/index.html') {
+        response.headers['cache-control'] = {value: 'no-cache, no-store, must-revalidate'};
+        response.headers['pragma'] = {value: 'no-cache'};
+        response.headers['expires'] = {value: '0'};
+      }
+
+      return response;
     }
   EOT
 }
@@ -197,10 +226,15 @@ resource "aws_cloudfront_distribution" "website" {
     default_ttl            = 0
     max_ttl                = 0
 
-    # Add the function association if it exists
+    # Add the function associations
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.url_rewrite.arn
+    }
+
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.no_cache_response.arn
     }
   }
 
