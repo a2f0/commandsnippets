@@ -320,3 +320,8 @@ resource "github_actions_secret" "production_domain" {
   secret_name     = "PRODUCTION_DOMAIN"
   plaintext_value = var.domain
 }
+
+output "cloudfront_distribution_id" {
+  value       = aws_cloudfront_distribution.website.id
+  description = "CloudFront distribution ID for cache invalidation"
+}
