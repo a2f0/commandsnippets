@@ -134,6 +134,9 @@ resource "aws_cloudfront_function" "url_rewrite" {
       var request = event.request;
       var uri = request.uri;
 
+      // Store original URI for viewer-response function
+      request.headers['x-original-uri'] = {value: uri};
+
       // Check if the request is for a file with an extension (has a dot and not ending with /)
       if (uri.includes('.') && !uri.endsWith('/')) {
         // If it's a file request, leave it as is
@@ -157,15 +160,22 @@ resource "aws_cloudfront_function" "no_cache_response" {
     function handler(event) {
       const response = event.response;
       const request = event.request;
-      const uri = request.uri;
 
-      // Since the viewer-request function rewrites application paths to /index.html,
-      // we only need to add cache headers if the URI is /index.html.
-      if (uri === '/index.html') {
+      // Get the original URI from the header set by viewer-request
+      const originalUri = request.headers['x-original-uri'] ? request.headers['x-original-uri'].value : request.uri;
+
+      // Apply the same logic as viewer-request to determine if this was rewritten to index.html
+      const isFile = originalUri.includes('.') && !originalUri.endsWith('/');
+
+      // Add no-cache headers for requests that were rewritten to index.html or are actually index.html
+      if (!isFile || originalUri === '/index.html') {
         response.headers['cache-control'] = {value: 'no-cache, no-store, must-revalidate'};
         response.headers['pragma'] = {value: 'no-cache'};
         response.headers['expires'] = {value: '0'};
       }
+
+      // Remove the internal header before sending response
+      delete response.headers['x-original-uri'];
 
       return response;
     }
