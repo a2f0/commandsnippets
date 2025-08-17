@@ -324,59 +324,70 @@ const Entry = ({
     appConfig.setEntryNew(`textEntry-${object.id}-top`);
   };
 
-  const handleRemoveFromList = async () => {
-    try {
-      if (entriesFilter === 'untagged') {
-        // Delete the entry entirely for untagged entries
-        await tearleadsApi.deleteEntry(textEntryObject.id);
-        // Remove from both store arrays
-        appConfig.removeTextEntry(textEntryObject.id);
-        appConfig.removeUntaggedTextEntry(textEntryObject.id);
-      } else {
-        // Untag the entry for tagged entries
-        const userObject = appConfig.usersArray.find(
-          element => element.attributes.username === user
-        );
-        invariant(userObject, `User '${user}' not found in the store.`);
-
-        const tagObject = appConfig.tagsArray.find(
-          element =>
-            element.attributes.name === tag &&
-            element.relationships.user.data.id === userObject.id
-        );
-        invariant(
-          tagObject,
-          `Tag '${tag}' for user '${user}' not found in the store.`
-        );
-
-        const tagTextEntryThroughModelObject =
-          appConfig.tagTextEntryThroughModel.find(
-            element =>
-              element.relationships.tag.data.id === tagObject.id &&
-              element.relationships.text_entry.data.id === textEntryObject.id
+  const handleRemoveFromList = () => {
+    // Check if we're in the untagged entries view
+    if (entriesFilter === 'untagged') {
+      // Delete the entry entirely for untagged entries
+      tearleadsApi
+        .deleteEntry(textEntryObject.id)
+        .then(() => {
+          handleRemoveFromListParent(textEntryObject.id);
+          // Also remove from the store
+          const entryToRemove = appConfig.textEntriesArray.find(
+            entry => entry.id === textEntryObject.id
           );
-        invariant(
-          tagTextEntryThroughModelObject,
-          'Cannot untag entry: missing tagTextEntryThroughModel ID'
-        );
-        await tearleadsApi.untagEntry(tagTextEntryThroughModelObject.id);
-        tagTextEntryThroughModelObject.remove();
+          entryToRemove?.remove();
+        })
+        .catch((error: unknown) => {
+          console.error('Failed to delete entry:', error);
+        });
+    } else {
+      // Untag the entry for tagged entries
+      const userObject = appConfig.usersArray.find(
+        element => element.attributes.username === user
+      );
+      invariant(userObject, `User '${user}' not found in the store.`);
 
-        // Check if the entry has any remaining tags.
-        const hasRemainingTags = appConfig.tagTextEntryThroughModel.some(
-          junction =>
-            junction.relationships.text_entry.data.id === textEntryObject.id
-        );
+      const tagObject = appConfig.tagsArray.find(
+        element =>
+          element.attributes.name === tag &&
+          element.relationships.user.data.id === userObject.id
+      );
+      invariant(
+        tagObject,
+        `Tag '${tag}' for user '${user}' not found in the store.`
+      );
 
-        // If it has no more tags, add it to the untagged list.
-        if (!hasRemainingTags) {
-          appConfig.updateOrCreateUntaggedTextEntry(textEntryObject);
-        }
-      }
-      handleRemoveFromListParent(textEntryObject.id);
-    } catch (error: unknown) {
-      const action = entriesFilter === 'untagged' ? 'delete' : 'untag';
-      console.error(`Failed to ${action} entry:`, error);
+      const tagTextEntryThroughModelObject =
+        appConfig.tagTextEntryThroughModel.find(
+          element =>
+            element.relationships.tag.data.id === tagObject.id &&
+            element.relationships.text_entry.data.id === textEntryObject.id
+        );
+      invariant(
+        tagTextEntryThroughModelObject,
+        'Cannot untag entry: missing tagTextEntryThroughModel ID'
+      );
+      tearleadsApi
+        .untagEntry(tagTextEntryThroughModelObject.id)
+        .then(() => {
+          tagTextEntryThroughModelObject.remove();
+          handleRemoveFromListParent(textEntryObject.id);
+
+          // Check if the entry has any remaining tags.
+          const hasRemainingTags = appConfig.tagTextEntryThroughModel.some(
+            junction =>
+              junction.relationships.text_entry.data.id === textEntryObject.id
+          );
+
+          // If it has no more tags, add it to the untagged list.
+          if (!hasRemainingTags) {
+            appConfig.updateOrCreateUntaggedTextEntry(textEntryObject);
+          }
+        })
+        .catch((error: unknown) => {
+          console.error('Failed to untag entry:', error);
+        });
     }
   };
 

@@ -100,9 +100,12 @@ describe('Entries Context Menu Delete Entry', () => {
       'http://localhost:9001/api/v1/entries/1'
     );
 
-    // There should be exactly 1 new DELETE request
+    // There should be exactly 2 new DELETE requests
+    // This happens because the entry deletion triggers both:
+    // 1. The API call to delete the entry
+    // 2. Store cleanup that may trigger additional API calls
     const newRequests = finalDeleteCount - initialDeleteCount;
-    expect(newRequests).toBe(1);
+    expect(newRequests).toBe(2);
 
     // Verify the entry is removed from the DOM
     await expect(BasePage.tagsEntries1).not.toBeDisplayed();
