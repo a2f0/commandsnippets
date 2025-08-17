@@ -66,7 +66,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/.*\.html$/,
+            urlPattern: ({url}) => url.origin === self.location.origin && url.pathname.endsWith('.html'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'tearleads-html-cache',
