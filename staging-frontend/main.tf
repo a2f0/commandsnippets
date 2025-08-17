@@ -159,10 +159,9 @@ resource "aws_cloudfront_function" "no_cache_response" {
       const request = event.request;
       const uri = request.uri;
 
-      // If this was a request that got rewritten to index.html
-      // or if it's actually index.html
-      const isFile = uri.includes('.') && !uri.endsWith('/');
-      if (!isFile || uri === '/index.html') {
+      // Since the viewer-request function rewrites application paths to /index.html,
+      // we only need to add cache headers if the URI is /index.html.
+      if (uri === '/index.html') {
         response.headers['cache-control'] = {value: 'no-cache, no-store, must-revalidate'};
         response.headers['pragma'] = {value: 'no-cache'};
         response.headers['expires'] = {value: '0'};
