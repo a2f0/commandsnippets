@@ -155,12 +155,14 @@ resource "aws_cloudfront_function" "no_cache_response" {
   publish = true
   code    = <<-EOT
     function handler(event) {
-      var response = event.response;
-      var request = event.request;
+      const response = event.response;
+      const request = event.request;
+      const uri = request.uri;
 
-      // If this was a request that got rewritten to index.html (no file extension in original URI)
+      // If this was a request that got rewritten to index.html
       // or if it's actually index.html
-      if (!request.uri.includes('.') || request.uri === '/index.html' || request.uri === '/') {
+      const isFile = uri.includes('.') && !uri.endsWith('/');
+      if (!isFile || uri === '/index.html') {
         response.headers['cache-control'] = {value: 'no-cache, no-store, must-revalidate'};
         response.headers['pragma'] = {value: 'no-cache'};
         response.headers['expires'] = {value: '0'};
