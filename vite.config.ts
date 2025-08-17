@@ -66,7 +66,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: ({url}) => url.origin === self.location.origin && url.pathname.endsWith('.html'),
+            urlPattern: ({request}) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {
               cacheName: 'tearleads-html-cache',
