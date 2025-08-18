@@ -13,25 +13,21 @@ describe('Tab Switching Behavior', () => {
 
     // Verify MSW is providing expected data
     const apiCheck = await browser.execute(async () => {
-      try {
-        const [tagsResponse, entriesResponse] = await Promise.all([
-          fetch('http://localhost:9001/api/v1/tags'),
-          fetch('http://localhost:9001/api/v1/entries'),
-        ]);
-        const [tagsData, entriesData] = await Promise.all([
-          tagsResponse.json(),
-          entriesResponse.json(),
-        ]);
-        return {
-          tagsOk: tagsResponse.ok,
-          tagsCount: tagsData.data?.length || 0,
-          entriesOk: entriesResponse.ok,
-          entriesCount: entriesData.data?.length || 0,
-          firstEntry: entriesData.data?.[0] || null,
-        };
-      } catch (error) {
-        return {ok: false, error: (error as Error).message};
-      }
+      const [tagsResponse, entriesResponse] = await Promise.all([
+        fetch('http://localhost:9001/api/v1/tags'),
+        fetch('http://localhost:9001/api/v1/entries'),
+      ]);
+      const [tagsData, entriesData] = await Promise.all([
+        tagsResponse.json(),
+        entriesResponse.json(),
+      ]);
+      return {
+        tagsOk: tagsResponse.ok,
+        tagsCount: tagsData.data?.length || 0,
+        entriesOk: entriesResponse.ok,
+        entriesCount: entriesData.data?.length || 0,
+        firstEntry: entriesData.data?.[0] || null,
+      };
     });
 
     console.log('MSW API check:', apiCheck);
