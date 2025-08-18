@@ -310,7 +310,7 @@ const Entry = ({
       setTextEntryObject(object.data);
       setIsEditing(false);
     },
-    [appConfig.textEntriesArray]
+    [appConfig]
   );
 
   const handleContextClick = useCallback(
