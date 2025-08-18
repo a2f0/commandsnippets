@@ -11,13 +11,9 @@ describe('Tag Main Menu', () => {
 
     // Verify MSW is providing the expected tag data
     const apiCheck = await browser.execute(async () => {
-      try {
-        const response = await fetch('http://localhost:9001/api/v1/tags');
-        const data = await response.json();
-        return {ok: response.ok, dataLength: data.data?.length || 0};
-      } catch (error) {
-        return {ok: false, error: (error as Error).message};
-      }
+      const response = await fetch('http://localhost:9001/api/v1/tags');
+      const data = await response.json();
+      return {ok: response.ok, dataLength: data.data?.length || 0};
     });
 
     console.log('API check result:', apiCheck);
