@@ -12,7 +12,7 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.tagLine).toBeDisplayed();
 
     // Verify MSW is providing expected data
-    const apiCheck = await BasePage.checkTagsAndEntriesWithFirstEntry();
+    const apiCheck = await BasePage.checkTagsAndEntries();
 
     console.log('MSW API check:', apiCheck);
     expect(apiCheck.tagsOk).toBe(true);
