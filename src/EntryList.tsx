@@ -35,7 +35,7 @@ const EntryList = () => {
 
   const [entries, setEntries] = useState<Array<ITextEntryJsonApi>>([]);
   const [elRefs, setElRefs] = useState<
-    Array<React.RefObject<HTMLDivElement | null>>
+    Array<React.RefObject<HTMLDivElement>>
   >([]);
 
   useEffect(() => {
