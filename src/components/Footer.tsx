@@ -1,8 +1,9 @@
 import {Box, Grid, Link, Typography} from '@mui/material';
 import React from 'react';
+import {environment} from '../lib/environment';
 
 const Footer = () => {
-  if (import.meta.env.PROD) {
+  if (environment === 'production') {
     return null;
   }
 
