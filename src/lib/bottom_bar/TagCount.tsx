@@ -29,4 +29,5 @@ const TagCount = () => {
     </Typography>
   );
 };
-export default React.memo(observer(TagCount));
+
+export const MemoizedTagCount = React.memo(observer(TagCount));

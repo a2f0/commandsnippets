@@ -6,7 +6,7 @@ import Highlighter from 'react-highlight-words';
 
 import {useAppContext} from '../../AppContext';
 import {appMode} from '../../lib/shared';
-import type {ITextEntryJsonApi} from '../../models/TextEntryModel';
+import type {ITextEntryJsonApi} from '../../lib/store/models/TextEntryModel';
 
 export interface IProps {
   handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -51,4 +51,5 @@ const EntryBody = ({object, handleClick}: IProps) => {
     </div>
   );
 };
-export default React.memo(observer(EntryBody));
+
+export const MemoizedEntryBody = React.memo(observer(EntryBody));

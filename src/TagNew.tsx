@@ -1,15 +1,12 @@
 import Grid from '@mui/material/Grid';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
+import {tearleadsApi} from './lib/api/tearleadsApi';
 import {activeTagEditField, appMode} from './lib/shared';
-import type {ITagJsonApiResponseSingle} from './lib/tags';
-import StyledTagButton from './styled/tags/StyledTagButton';
-import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
-import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
+import {StyledTagButton} from './styled/tags/StyledTagButton';
+import {StyledTagFormContainer} from './styled/tags/StyledTagFormContainer';
+import {StyledTextFieldTags} from './styled/tags/StyledTextFieldTags';
 
 interface IProps {
   handleNewParent: () => void;
@@ -68,24 +65,16 @@ const TagNew = ({handleNewParent, id}: IProps) => {
   };
 
   const handleSave = () => {
-    const payload = {
-      data: {
-        type: 'Tag',
-        attributes: {
-          name: tagName,
-        },
-      },
-    };
-    apiBase
-      .post('/tags', payload, {withCredentials: true})
-      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
-        appConfig.reconcileCollection(response.data.included);
-        appConfig.updateOrCreateTag(response.data.data);
+    tearleadsApi
+      .createTag(tagName)
+      .then(response => {
+        appConfig.reconcileCollection(response.included);
+        appConfig.updateOrCreateTag(response.data);
         handleNewParent();
         appConfig.setTagNew(null);
       })
-      .catch(error => {
-        console.error(error);
+      .catch((error: unknown) => {
+        console.error('Failed to create tag:', error);
       });
   };
 
@@ -159,4 +148,6 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     </StyledTagFormContainer>
   );
 };
-export default React.memo(observer(TagNew));
+
+const memoizedTagNew = React.memo(observer(TagNew));
+export {memoizedTagNew as TagNew};

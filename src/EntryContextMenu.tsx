@@ -3,8 +3,8 @@ import React, {useEffect, useState} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
 
 import type {IMouse} from './lib/shared';
-import type {ITextEntryJsonApi} from './models/TextEntryModel';
-import StyledMenuItem from './StyledMenuItem';
+import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
+import {StyledMenuItem} from './StyledMenuItem';
 
 interface IStyledMenuProps {
   id: string;
@@ -165,4 +165,6 @@ const EntryContextMenu = ({
     </StyledMenu>
   );
 };
-export default React.memo(EntryContextMenu);
+
+const memoizedEntryContextMenu = React.memo(EntryContextMenu);
+export {memoizedEntryContextMenu as EntryContextMenu};

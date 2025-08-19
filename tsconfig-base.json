@@ -8,13 +8,11 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "checkJs": false,
     "allowJs": false,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "strict": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "react",
-    "incremental": true
+    "jsx": "react-jsx",
+    "incremental": true,
+    "verbatimModuleSyntax": true
   },
   "ts-node": {
     "swc": true

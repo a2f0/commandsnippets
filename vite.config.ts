@@ -1,7 +1,10 @@
 import react from '@vitejs/plugin-react';
+import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
+import packageJson from './package.json';
 
+// biome-ignore lint/style/noDefaultExport: Vite requires default export for config
 export default defineConfig({
   build: {
     outDir: 'build',
@@ -19,10 +22,19 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    createHtmlPlugin({
+      inject: {
+        data: {
+          VITE_APP_VERSION: packageJson.version,
+        },
+      },
+    }),
     VitePWA({
       devOptions: {
         enabled: false,
       },
+      registerType: 'autoUpdate',
+      includeAssets: ['pwa-icon-144x144.svg'],
       manifest: {
         name: 'Tearleads',
         short_name: 'Tearleads',
@@ -37,16 +49,33 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,ico,png,svg}'],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.(js|css|html|ico|svg)$/,
-            handler: 'NetworkFirst',
+            urlPattern: ({url}) =>
+              url.origin === self.location.origin &&
+              /\.(js|css|ico|png|svg)$/.test(url.pathname),
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'tearleads-cache',
+              cacheName: 'tearleads-static-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days instead of 30
+              },
+            },
+          },
+          {
+            urlPattern: ({request}) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'tearleads-html-cache',
+              networkTimeoutSeconds: 3, // Wait max 3 seconds for network
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 0, // Expire immediately, but still available as fallback
               },
             },
           },

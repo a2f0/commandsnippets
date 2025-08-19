@@ -1,10 +1,10 @@
 import React from 'react';
 
 import {StyledMenu} from '../../MenuBar';
-import StyledDivider from '../../styled/StyledDivider';
-import DarkMode from './menu_items/DarkMode';
-import LightMode from './menu_items/LightMode';
-import ShowTagCounts from './menu_items/ShowTagCounts';
+import {StyledDivider} from '../../styled/StyledDivider';
+import {DarkMode} from './menu_items/DarkMode';
+import {LightMode} from './menu_items/LightMode';
+import {ShowTagCounts} from './menu_items/ShowTagCounts';
 
 interface IProps {
   onClose: () => void;
@@ -25,4 +25,5 @@ const ViewMenu = ({onClose, anchorEl}: IProps) => (
   </StyledMenu>
 );
 
-export default React.memo(ViewMenu);
+const memoizedViewMenu = React.memo(ViewMenu);
+export {memoizedViewMenu as ViewMenu};

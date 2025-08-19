@@ -1,17 +1,12 @@
-import {Box} from '@mui/material';
-import {Button} from '@mui/material';
-import type {AxiosResponse} from 'axios';
+import {Box, Button} from '@mui/material';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
-
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
-import type {ITagTextEntryThroughModelJsonApiResponseSingle} from './lib/tag_text_entry_through_models';
-import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import InputEntryBody from './styled/text_entries/InputEntryBody';
-import InputEntrySubject from './styled/text_entries/InputEntrySubject';
+import {tearleadsApi} from './lib/api/tearleadsApi';
+import {InputEntryBody} from './styled/text_entries/InputEntryBody';
+import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
 
 export interface IEntryNewProps {
   filterAndSortParent: () => void;
@@ -43,16 +38,6 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   }, [appConfig.setActiveEntryEditField, appConfig.setAppMode]);
 
   const handleSave = () => {
-    const text_entry_payload = {
-      data: {
-        type: 'TextEntry',
-        attributes: {
-          subject: subject,
-          body: body,
-        },
-      },
-    };
-
     const userObject = appConfig.usersArray.find(
       element => element.attributes.username === user
     );
@@ -63,46 +48,26 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         element.relationships.user.data.id === userObject?.id
     );
 
-    apiBase
-      .post('/entries', text_entry_payload, {withCredentials: true})
-      .then((response: AxiosResponse<ITextEntryJsonApiResponseSingle>) => {
-        appConfig.updateOrCreateTextEntry(response.data.data);
-        const text_entry_through_model_payload = {
-          data: {
-            type: 'TagTextEntryThroughModel',
-            attributes: {},
-            relationships: {
-              tag: {
-                data: {
-                  type: 'Tag',
-                  id: tagObject?.id,
-                },
-              },
-              text_entry: {
-                data: {
-                  type: 'TextEntry',
-                  id: response.data.data.id,
-                },
-              },
-            },
-          },
-        };
-        apiBase
-          .post('/tags_entries', text_entry_through_model_payload, {
-            withCredentials: true,
-          })
-          .then(
-            (
-              response: AxiosResponse<ITagTextEntryThroughModelJsonApiResponseSingle>
-            ) => {
-              console.info(response.data.data);
-              appConfig.updateOrCreateTagTextEntryThroughModel(
-                response.data.data
-              );
-              filterAndSortParent();
-              appConfig.setEntryNew(null);
-            }
-          );
+    if (!userObject?.id || !tagObject?.id) {
+      console.error('Missing user or tag for entry creation');
+      return;
+    }
+
+    tearleadsApi
+      .createEntry(subject, body, userObject.id)
+      .then(response => {
+        appConfig.updateOrCreateTextEntry(response.data);
+
+        return tearleadsApi.tagEntry(tagObject.id, response.data.id);
+      })
+      .then(response => {
+        console.info(response.data);
+        appConfig.updateOrCreateTagTextEntryThroughModel(response.data);
+        filterAndSortParent();
+        appConfig.setEntryNew(null);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to create entry:', error);
       });
   };
 
@@ -237,4 +202,6 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     </Box>
   );
 };
-export default React.memo(observer(EntryNew));
+
+const memoizedEntryNew = React.memo(observer(EntryNew));
+export {memoizedEntryNew as EntryNew};

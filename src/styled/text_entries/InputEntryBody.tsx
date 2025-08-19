@@ -1,11 +1,10 @@
 import styled from '@emotion/styled';
 import {TextareaAutosize} from '@mui/material';
-import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useEffect, useRef, useState} from 'react';
-
 import {activeEntryEditField} from '../../../src/lib/shared';
+import type {Theme} from '../../../src/theme/themes';
 import {useAppContext} from '../../AppContext';
 
 export interface StyledTextAreaIProps {
@@ -93,4 +92,6 @@ const InputEntryBody = ({
     />
   );
 };
-export default React.memo(observer(InputEntryBody));
+
+const memoizedInputEntryBody = React.memo(observer(InputEntryBody));
+export {memoizedInputEntryBody as InputEntryBody};

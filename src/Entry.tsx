@@ -1,28 +1,24 @@
-import {Check} from '@mui/icons-material';
-import {FileCopySharp} from '@mui/icons-material';
+import {Check, FileCopySharp} from '@mui/icons-material';
 import {styled} from '@mui/material/styles';
+import invariant from 'invariant';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
-import {useEffect, useMemo, useRef, useState} from 'react';
-import React from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
-
 import {useAppContext} from './AppContext';
-import DragHandle from './DragHandle';
-import DragHandleContainer from './DragHandleContainer';
-import EntryContextMenu from './EntryContextMenu';
-import EntryEdit from './EntryEdit';
-import EntryNew from './EntryNew';
-import ItemTypes from './ItemTypes';
-import apiBase from './lib/api/apiBase';
+import {DragHandle} from './DragHandle';
+import {DragHandleContainer} from './DragHandleContainer';
+import {EntryContextMenu} from './EntryContextMenu';
+import {EntryEdit} from './EntryEdit';
+import {EntryNew} from './EntryNew';
+import {ItemTypes} from './ItemTypes';
+import type {ITextEntryJsonApiResponseSingle} from './lib/api/responses/types';
 import {tearleadsApi} from './lib/api/tearleadsApi';
-import {type IMouse, initialMouse} from './lib/shared';
-import {appMode, getSelection} from './lib/shared';
-import type {ITextEntryJsonApiResponseSingle} from './lib/text_entries';
-import type {ITextEntryJsonApi} from './models/TextEntryModel';
-import EntryBody from './styled/text_entries/EntryBody';
-import EntrySubject from './styled/text_entries/EntrySubject';
+import {appMode, getSelection, initialMouse} from './lib/shared';
+import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
+import {MemoizedEntryBody} from './styled/text_entries/EntryBody';
+import {MemoizedEntrySubject} from './styled/text_entries/EntrySubject';
 import type {DraggableItem, DropResult} from './Tag';
 
 const EntryText = styled('div')(() => ({
@@ -30,7 +26,20 @@ const EntryText = styled('div')(() => ({
   verticalAlign: 'top',
 }));
 
-export const EntryContainer = styled('div')(() => ({
+type EntryContainerProps = React.HTMLAttributes<HTMLDivElement> &
+  React.RefAttributes<HTMLDivElement>;
+
+const EntryContainerBase = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => {
+  const refValue = ref;
+  return <div {...props} ref={refValue} />;
+});
+
+export const EntryContainer: React.ComponentType<EntryContainerProps> = styled(
+  EntryContainerBase
+)(() => ({
   marginBottom: '16px',
   whiteSpace: 'pre',
 }));
@@ -76,13 +85,17 @@ const Entry = ({
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
-  const [showDragHandle, setShowDragHandle] = useState(false);
-  const [showCopyIcon, setShowCopyIcon] = useState(false);
+  const [hoverState, setHoverState] = useState({
+    showDragHandle: false,
+    showCopyIcon: false,
+  });
   const [showCheckIcon, setShowCheckIcon] = useState(false);
   const {tag, user} = useParams();
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
   const previewRef = useRef<HTMLDivElement>(null);
+  const [mouse, setMouse] = useState(initialMouse);
+  const [isEditing, setIsEditing] = useState(false);
   const [{isDragging}, drag, preview] = useDrag<
     DraggableItem,
     DropResult,
@@ -118,34 +131,13 @@ const Entry = ({
           const dropResult = monitor.getDropResult();
           if (dropResult) {
             if (dropResult.type === 'Tag') {
-              const payload = {
-                data: {
-                  type: 'TagTextEntryThroughModel',
-                  attributes: {},
-                  relationships: {
-                    tag: {
-                      data: {
-                        type: 'Tag',
-                        id: dropResult.id,
-                      },
-                    },
-                    text_entry: {
-                      data: {
-                        type: 'TextEntry',
-                        id: findEntry(id).entry.id,
-                      },
-                    },
-                  },
-                },
-              };
-              apiBase
-                .post('tags_entries', payload, {
-                  withCredentials: true,
-                })
+              tearleadsApi
+                .tagEntry(dropResult.id, findEntry(id).entry.id)
                 .then(resp => {
-                  appConfig.updateOrCreateTagTextEntryThroughModel(
-                    resp.data.data
-                  );
+                  appConfig.updateOrCreateTagTextEntryThroughModel(resp.data);
+                })
+                .catch((error: unknown) => {
+                  console.error('Failed to tag entry:', error);
                 });
               if (entriesFilter === 'untagged') {
                 //Then an untagged entry was tagged
@@ -279,94 +271,149 @@ const Entry = ({
   drag(dragRef);
   drop(dropRef);
 
-  useEffect(
-    () =>
-      autorun(() => {
-        if (appConfig.mostRecentCopyID === object.id) {
-          setShowCheckIcon(true);
-        } else {
-          setShowCheckIcon(false);
-        }
-      }),
-    [appConfig.mostRecentCopyID, appConfig.mostRecentCopyType]
-  );
+  useEffect(() => {
+    const dispose = autorun(() => {
+      setShowCheckIcon(appConfig.mostRecentCopyID === object.id);
+    });
+    return dispose;
+  }, [appConfig.mostRecentCopyID, object.id]);
 
-  const mouseEnter = () => {
-    if (appConfig.loggedInUser !== null) {
-      setShowDragHandle(true);
-    }
-    setShowCopyIcon(true);
-  };
-  const mouseLeave = () => {
-    setShowDragHandle(false);
-    setShowCopyIcon(false);
-  };
+  const mouseEnter = useCallback(() => {
+    setHoverState({
+      showDragHandle: appConfig.loggedInUser !== null,
+      showCopyIcon: true,
+    });
+  }, [appConfig.loggedInUser]);
 
-  const [mouse, setMouse] = useState(initialMouse);
-  const [isEditing, setIsEditing] = useState(false);
+  const mouseLeave = useCallback(() => {
+    setHoverState({
+      showDragHandle: false,
+      showCopyIcon: false,
+    });
+  }, []);
 
-  const handleBeginEdit = () => {
+  const handleBeginEdit = useCallback(() => {
     appConfig.setAppMode(appMode.entryEditor);
     setIsEditing(true);
-  };
+  }, [appConfig]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setIsEditing(false);
-  };
+  }, []);
 
-  const handleSave = (object: ITextEntryJsonApiResponseSingle) => {
-    const existing = appConfig.textEntriesArray.find(
-      o => o.id === object.data.id
-    );
-    existing?.update(object.data);
-    setTextEntryObject(object.data);
-    setIsEditing(false);
-  };
-
-  const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const mouseData: IMouse = {...mouse};
-    mouseData.mouseX = event.clientX - 2;
-    mouseData.mouseY = event.clientY - 4;
-    setMouse(mouseData);
-  };
-
-  const handleNewEntry = () => {
-    appConfig.setEntryNew(`textEntry-${object.id}-top`);
-  };
-
-  const handleRemoveFromList = () => {
-    const userObject = appConfig.usersArray.find(
-      element => element.attributes.username === user
-    );
-
-    const tagObject = appConfig.tagsArray.find(
-      element =>
-        element.attributes.name === tag &&
-        element.relationships.user.data.id === userObject?.id
-    );
-
-    const tagTextEntryThroughModelObject =
-      appConfig.tagTextEntryThroughModel.find(
-        element =>
-          element.relationships.tag.data.id === tagObject?.id &&
-          element.relationships.text_entry.data.id === textEntryObject.id
+  const handleSave = useCallback(
+    (object: ITextEntryJsonApiResponseSingle) => {
+      const existing = appConfig.textEntriesArray.find(
+        o => o.id === object.data.id
       );
-    apiBase.delete(`/tags_entries/${tagTextEntryThroughModelObject?.id}`, {
-      withCredentials: true,
-    });
-    tagTextEntryThroughModelObject?.remove();
-    handleRemoveFromListParent(textEntryObject.id);
-  };
+      existing?.update(object.data);
+      setTextEntryObject(object.data);
+      setIsEditing(false);
+    },
+    [appConfig]
+  );
 
-  const handleCopyClick = () => {
-    setShowCopyIcon(false);
-    setShowCheckIcon(true);
-    navigator.clipboard.writeText(textEntryObject.attributes.body);
-    appConfig.setMostRecentCopyType(textEntryObject.type);
-    appConfig.setMostRecentCopyID(textEntryObject.id);
-  };
+  const handleContextClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setMouse({
+        mouseX: event.clientX - 2,
+        mouseY: event.clientY - 4,
+      });
+    },
+    []
+  );
+
+  const handleNewEntry = useCallback(() => {
+    appConfig.setEntryNew(`textEntry-${object.id}-top`);
+  }, [appConfig, object.id]);
+
+  const handleRemoveFromList = useCallback(async () => {
+    try {
+      if (entriesFilter === 'untagged') {
+        // Delete the entry entirely for untagged entries
+        await tearleadsApi.deleteEntry(textEntryObject.id);
+        handleRemoveFromListParent(textEntryObject.id);
+        // Also remove from the store
+        const entryToRemove = appConfig.textEntriesArray.find(
+          entry => entry.id === textEntryObject.id
+        );
+        entryToRemove?.remove();
+      } else {
+        // Untag the entry for tagged entries
+        const userObject = appConfig.usersArray.find(
+          element => element.attributes.username === user
+        );
+        invariant(userObject, `User '${user}' not found in the store.`);
+
+        const tagObject = appConfig.tagsArray.find(
+          element =>
+            element.attributes.name === tag &&
+            element.relationships.user.data.id === userObject.id
+        );
+        invariant(
+          tagObject,
+          `Tag '${tag}' for user '${user}' not found in the store.`
+        );
+
+        const tagTextEntryThroughModelObject =
+          appConfig.tagTextEntryThroughModel.find(
+            element =>
+              element.relationships.tag.data.id === tagObject.id &&
+              element.relationships.text_entry.data.id === textEntryObject.id
+          );
+        invariant(
+          tagTextEntryThroughModelObject,
+          'Cannot untag entry: missing tagTextEntryThroughModel ID'
+        );
+
+        await tearleadsApi.untagEntry(tagTextEntryThroughModelObject.id);
+        tagTextEntryThroughModelObject.remove();
+        handleRemoveFromListParent(textEntryObject.id);
+
+        // Check if the entry has any remaining tags.
+        const hasRemainingTags = appConfig.tagTextEntryThroughModel.some(
+          junction =>
+            junction.relationships.text_entry.data.id === textEntryObject.id
+        );
+
+        // If it has no more tags, add it to the untagged list.
+        if (!hasRemainingTags) {
+          appConfig.updateOrCreateUntaggedTextEntry(textEntryObject);
+        }
+      }
+    } catch (error) {
+      console.error(
+        entriesFilter === 'untagged'
+          ? 'Failed to delete entry:'
+          : 'Failed to untag entry:',
+        error
+      );
+    }
+  }, [
+    entriesFilter,
+    textEntryObject,
+    handleRemoveFromListParent,
+    appConfig,
+    user,
+    tag,
+  ]);
+
+  const copyToClipboard = useCallback(
+    (text: string) => {
+      setHoverState(prev => ({...prev, showCopyIcon: false}));
+      setShowCheckIcon(true);
+      navigator.clipboard.writeText(text);
+      appConfig.setMostRecentCopyType(textEntryObject.type);
+      appConfig.setMostRecentCopyID(textEntryObject.id);
+    },
+    [appConfig, textEntryObject.type, textEntryObject.id]
+  );
+
+  const handleCopyClick = useCallback(() => {
+    copyToClipboard(textEntryObject.attributes.body);
+  }, [copyToClipboard, textEntryObject.attributes.body]);
 
   const contextMenu = useMemo(
     () => (
@@ -380,37 +427,42 @@ const Entry = ({
         handleCopyParent={handleCopyClick}
       />
     ),
-    [mouse]
+    [
+      mouse,
+      id,
+      textEntryObject,
+      handleRemoveFromList,
+      handleNewEntry,
+      handleBeginEdit,
+      handleCopyClick,
+    ]
   );
 
-  const handleBodyClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const selection = getSelection();
-    const selectionString = selection?.toString();
-    appConfig.setAppMode(appMode.entriesList);
-    if (selectionString === undefined || selectionString.length === 0) {
-      setShowCopyIcon(false);
-      setShowCheckIcon(true);
-      navigator.clipboard.writeText(textEntryObject.attributes.body);
-      appConfig.setMostRecentCopyType(textEntryObject.type);
-      appConfig.setMostRecentCopyID(textEntryObject.id);
+  const handleBodyClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const selection = getSelection();
+      const selectionString = selection?.toString();
       appConfig.setAppMode(appMode.entriesList);
-      appConfig.setEntrySelectedID(textEntryObject.id);
-    } else {
-      setShowCopyIcon(false);
-      setShowCheckIcon(true);
-      navigator.clipboard.writeText(selectionString);
-      appConfig.setMostRecentCopyType(textEntryObject.type);
-      appConfig.setMostRecentCopyID(textEntryObject.id);
-      appConfig.setAppMode(appMode.entriesList);
-    }
-  };
 
-  const previewBoxRef = (el: HTMLDivElement | null) => {
-    previewRef.current = el;
-    preview(el);
-  };
+      if (!selectionString) {
+        copyToClipboard(textEntryObject.attributes.body);
+        appConfig.setEntrySelectedID(textEntryObject.id);
+      } else {
+        copyToClipboard(selectionString);
+      }
+    },
+    [appConfig, copyToClipboard, textEntryObject]
+  );
+
+  const previewBoxRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      previewRef.current = el;
+      preview(el);
+    },
+    [preview]
+  );
 
   return (
     <>
@@ -421,6 +473,7 @@ const Entry = ({
         />
       )}
       {!isEditing && (
+        // biome-ignore lint/a11y/noStaticElementInteractions: Custom role 'entry' is required for tests and drag-and-drop, not a standard ARIA role.
         <div
           role="entry"
           ref={dropRef}
@@ -440,7 +493,11 @@ const Entry = ({
                   ref={dragRef}
                   onMouseEnter={mouseEnter}
                   onMouseLeave={mouseLeave}
-                  style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
+                  style={{
+                    visibility: hoverState.showDragHandle
+                      ? 'visible'
+                      : 'hidden',
+                  }}
                 >
                   ::
                 </DragHandle>
@@ -449,7 +506,7 @@ const Entry = ({
                 {/* {text_entry.attributes.reused_count} */}
               </ReuseCount>
               <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
-                <EntrySubject object={textEntryObject} />
+                <MemoizedEntrySubject object={textEntryObject} />
               </EntryText>
             </div>
             <div>
@@ -460,8 +517,11 @@ const Entry = ({
               >
                 <CopyIndicator
                   style={{
-                    visibility: showCopyIcon ? 'visible' : 'hidden',
-                    display: showCopyIcon && !showCheckIcon ? 'block' : 'none',
+                    visibility: hoverState.showCopyIcon ? 'visible' : 'hidden',
+                    display:
+                      hoverState.showCopyIcon && !showCheckIcon
+                        ? 'block'
+                        : 'none',
                   }}
                 >
                   <FileCopySharp fontSize="inherit" />
@@ -477,7 +537,7 @@ const Entry = ({
               </DragHandleContainer>
               <ReuseCount />
               <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
-                <EntryBody
+                <MemoizedEntryBody
                   handleClick={handleBodyClick}
                   object={textEntryObject}
                 />
@@ -507,4 +567,6 @@ const Entry = ({
   );
 };
 
-export default React.memo(observer(Entry));
+const memoizedEntry = React.memo(observer(Entry));
+
+export {memoizedEntry as Entry};

@@ -3,8 +3,8 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
 interface IProps {
   onClose: () => void;
@@ -29,4 +29,5 @@ const SortByNameAscending = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(SortByNameAscending);
+const memoizedSortByNameAscending = React.memo(SortByNameAscending);
+export {memoizedSortByNameAscending as SortByNameAscending};

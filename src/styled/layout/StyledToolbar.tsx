@@ -14,4 +14,4 @@ const StyledToolbar = ({children}: IProps) => {
   );
 };
 
-export default StyledToolbar;
+export {StyledToolbar};

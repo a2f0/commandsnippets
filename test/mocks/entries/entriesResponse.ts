@@ -1,7 +1,7 @@
 import type {JsonObject} from '@wdio/types';
 
-import type {ITextEntryJsonApiResponse} from '../../../src/lib/text_entries';
-const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
+import type {ITextEntryJsonApiResponse} from '../../../src/lib/api/responses/types';
+export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
   links: {
     next: null,
   },
@@ -215,5 +215,3 @@ const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
     },
   ],
 };
-
-export default entriesResponse;

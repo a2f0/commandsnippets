@@ -2,7 +2,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import {useAppContext} from '../../AppContext';
-import StyledTextFieldTextEntries from './StyledTextFieldTextEntries';
+import {StyledTextFieldEntries} from './StyledTextFieldTextEntries';
 
 const TextEntrySearchField = () => {
   const appConfig = useAppContext();
@@ -38,7 +38,7 @@ const TextEntrySearchField = () => {
   };
 
   return (
-    <StyledTextFieldTextEntries
+    <StyledTextFieldEntries
       value={textEntrySearch}
       id="textEntrySearch"
       onChange={handleChange}
@@ -46,4 +46,5 @@ const TextEntrySearchField = () => {
   );
 };
 
-export default React.memo(observer(TextEntrySearchField));
+const memoizedTextEntrySearchField = React.memo(observer(TextEntrySearchField));
+export {memoizedTextEntrySearchField as TextEntrySearchField};

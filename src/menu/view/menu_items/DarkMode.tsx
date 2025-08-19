@@ -1,11 +1,12 @@
 import {ListItemIcon} from '@mui/material';
-import type {Theme} from '@mui/material/styles';
+
 import React from 'react';
 
+import {darkTheme, type Theme} from '../../../../src/theme/themes';
+
 import {useAppContext} from '../../../AppContext';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
-import {darkTheme} from '../../../theme/themes';
+import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
 interface IProps {
   onClose: () => void;
@@ -38,4 +39,5 @@ const DarkMode = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(DarkMode);
+const memoizedDarkMode = React.memo(DarkMode);
+export {memoizedDarkMode as DarkMode};

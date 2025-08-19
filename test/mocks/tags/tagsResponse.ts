@@ -1,7 +1,7 @@
 import type {JsonObject} from '@wdio/types';
 
-import type {ITagJsonApiResponse} from '../../../src/lib/tags';
-const tagsResponse: ITagJsonApiResponse & JsonObject = {
+import type {ITagJsonApiResponse} from '../../../src/lib/api/responses/types';
+export const tagsResponse: ITagJsonApiResponse & JsonObject = {
   links: {
     next: null,
   },
@@ -102,5 +102,3 @@ const tagsResponse: ITagJsonApiResponse & JsonObject = {
     },
   ],
 };
-
-export default tagsResponse;

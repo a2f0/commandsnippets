@@ -1,48 +1,27 @@
 import type {Theme} from '@mui/material/styles';
-import type {CancelTokenSource} from 'axios';
 import type {RefObject} from 'react';
-
 import {db} from '../../src/lib/db/db';
-import type {TStore} from '../AppStateStore';
-import type {ITagJsonApi} from '../models/TagModel';
-import type {ITagTextEntryThroughModelJsonApi} from '../models/TagTextEntryThroughModel';
-import type {ITextEntryJsonApi} from '../models/TextEntryModel';
-import type {IUserJsonApi} from '../models/UserModel';
-import API from './api/apiBase';
+import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
+import {
+  isAJunction,
+  isATag,
+  isATextEntry,
+  isAUser,
+} from './api/responses/typeGuards';
+import {tearleadsApi} from './api/tearleadsApi';
+import type {ITagJsonApi} from './store/models/TagModel';
+import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
+import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
+import type {IUserJsonApi} from './store/models/UserModel';
+import type {Store} from './store/store';
 import {convertISO8601ToUnixTime} from './util/dateTime';
-export interface ITextEntryJsonApiResponse {
-  data: Array<ITextEntryJsonApi>;
-  links: {
-    next: string | null;
-  };
-  included: Array<
-    | ITagTextEntryThroughModelJsonApi
-    | ITextEntryJsonApi
-    | ITagJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-  >;
-}
-
-export interface ITextEntryJsonApiResponseSingle {
-  data: ITextEntryJsonApi;
-  included: Array<ITagTextEntryThroughModelJsonApi>;
-}
-
-export interface IEntryFetchPage {
-  page: number;
-  username: string;
-  sort: string;
-  search?: string;
-  source: CancelTokenSource;
-}
 
 export function sort(
   username: string,
   tag: string | null,
   inputArray: Array<ITextEntryJsonApi>,
   sortOrder: string,
-  store: TStore
+  store: Store
 ): ITextEntryJsonApi[] {
   let sortedArray: Array<ITextEntryJsonApi> = [];
   const userObject = store.usersArray.find(
@@ -335,17 +314,6 @@ export function filter(array: Array<ITextEntryJsonApi>): ITextEntryJsonApi[] {
   return filteredArray;
 }
 
-interface IFetchParams {
-  'page[number]': number;
-  'filter[user.username]': string;
-  'filter[tags.name]'?: string;
-  sort: string;
-  'filter[date_updated.gt]'?: string;
-  include: string;
-  'filter[tag_count]'?: number;
-  'filter[search]'?: string;
-}
-
 export function fetch(
   entries: Array<
     | ITextEntryJsonApi
@@ -359,7 +327,7 @@ export function fetch(
   since: string | null,
   tag_count: number | null
 ) {
-  const params: IFetchParams = {
+  const params: EntriesQueryParams = {
     'page[number]': page,
     'filter[user.username]': user,
     sort: 'date_updated',
@@ -385,17 +353,15 @@ export function fetch(
       | IUserJsonApi
       | ITagJsonApi
     >
-  > = API.get<ITextEntryJsonApiResponse>('/entries', {
-    params: params,
-  }).then(response => {
-    const updatedEntries = entries.concat(response.data.data);
-    for (let i = 0; i < response.data.included?.length; i++) {
-      const item = response.data.included[i];
+  > = tearleadsApi.getEntries(params).then(response => {
+    const updatedEntries = entries.concat(response.data);
+    for (let i = 0; i < response.included?.length; i++) {
+      const item = response.included[i];
       if (item && !updatedEntries.includes(item)) {
         updatedEntries.push(item);
       }
     }
-    if (response.data.links.next === null) {
+    if (response.links.next === null) {
       return updatedEntries;
     }
     return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
@@ -408,7 +374,7 @@ export function fetchPage({
   username,
   sort,
   search,
-  source,
+  signal,
 }: IEntryFetchPage) {
   let entries: Array<
     | ITextEntryJsonApi
@@ -416,7 +382,7 @@ export function fetchPage({
     | IUserJsonApi
     | ITagJsonApi
   > = [];
-  const params: IFetchParams = {
+  const params: EntriesQueryParams = {
     'page[number]': page,
     'filter[user.username]': username,
     sort: sort,
@@ -435,19 +401,21 @@ export function fetchPage({
         | ITagJsonApi
       >
     | undefined
-  > = API.get<ITextEntryJsonApiResponse>('/entries', {
-    params: params,
-    cancelToken: source.token,
-  }).then(response => {
-    entries = entries.concat(response.data.data);
-    for (let i = 0; i < response.data.included?.length; i++) {
-      const item = response.data.included[i];
-      if (item && !entries.includes(item)) {
-        entries.push(item);
+  > = tearleadsApi
+    .getEntries({
+      ...params,
+      signal,
+    })
+    .then(response => {
+      entries = entries.concat(response.data);
+      for (let i = 0; i < response.included?.length; i++) {
+        const item = response.included[i];
+        if (item && !entries.includes(item)) {
+          entries.push(item);
+        }
       }
-    }
-    return entries;
-  });
+      return entries;
+    });
   return f;
 }
 
@@ -481,46 +449,6 @@ export function needsScrollingIntoView(
     throw new Error('needsScrollingIntoView expects rectangle');
   }
   return false;
-}
-
-function isAUser(
-  obj:
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-): obj is IUserJsonApi {
-  return obj.type === 'User';
-}
-
-function isATag(
-  obj:
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-): obj is ITagJsonApi {
-  return obj.type === 'Tag';
-}
-
-function isATextEntry(
-  obj:
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-): obj is ITextEntryJsonApi {
-  return obj.type === 'TextEntry';
-}
-
-function isAJunction(
-  obj:
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-): obj is ITextEntryJsonApi {
-  return obj.type === 'TagTextEntryThroughModel';
 }
 
 export async function fetchAllEntriesForUser(username: string | undefined) {

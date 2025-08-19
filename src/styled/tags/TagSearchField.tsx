@@ -2,9 +2,8 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import {useAppContext} from '../../AppContext';
-import {activeSearch} from '../../lib/shared';
-import {appMode} from '../../lib/shared';
-import StyledTextFieldTags from './StyledTextFieldTags';
+import {activeSearch, appMode} from '../../lib/shared';
+import {StyledTextFieldTags} from './StyledTextFieldTags';
 
 const TagSearchField = () => {
   const [tagSearch, setTagSearch] = useState<string>('');
@@ -80,4 +79,5 @@ const TagSearchField = () => {
   );
 };
 
-export default React.memo(observer(TagSearchField));
+const memoizedTagSearchField = React.memo(observer(TagSearchField));
+export {memoizedTagSearchField as TagSearchField};

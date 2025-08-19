@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig-base.json",
-  "files": [],
-  "include": [],
+  "files": ["vite.config.ts"],
+  "include": ["public/**/*", "types/**/*"],
   "references": [
     { "path": "./src" },
     { "path": "./test" },

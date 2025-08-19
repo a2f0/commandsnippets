@@ -1,8 +1,5 @@
-import type {Theme as MuiTheme} from '@mui/material/styles';
-import {ThemeProvider} from '@mui/material/styles';
-import {observer} from 'mobx-react';
-import React from 'react';
-
+import {ThemeProvider as MuiThemeProvider} from '@mui/material/styles';
+import type React from 'react';
 import {useAppContext} from '../AppContext';
 import {darkTheme, lightTheme} from './themes';
 
@@ -10,15 +7,10 @@ interface IThemeProps {
   children?: React.ReactNode;
 }
 
-const Theme = ({children}: IThemeProps) => {
+export const ThemeProvider = ({children}: IThemeProps): React.ReactNode => {
   const appConfig = useAppContext();
-  let theme: MuiTheme;
   if (appConfig.selectedTheme === 'lightTheme') {
-    theme = lightTheme;
-  } else {
-    theme = darkTheme;
+    return <MuiThemeProvider theme={lightTheme}>{children}</MuiThemeProvider>;
   }
-  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+  return <MuiThemeProvider theme={darkTheme}>{children}</MuiThemeProvider>;
 };
-
-export default React.memo(observer(Theme));

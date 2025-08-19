@@ -3,14 +3,14 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
-import StyledCheckIcon from '../../../styled/StyledCheckIcon';
-import StyledMenuItem from '../../../StyledMenuItem';
+import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
 interface IProps {
   onClose: () => void;
 }
 
-const SortByBodyAscending = ({onClose}: IProps) => {
+const SortByDateCreatedAscending = ({onClose}: IProps) => {
   const appConfig = useAppContext();
 
   return (
@@ -32,4 +32,7 @@ const SortByBodyAscending = ({onClose}: IProps) => {
   );
 };
 
-export default React.memo(SortByBodyAscending);
+const memoizedSortByDateCreatedAscending = React.memo(
+  SortByDateCreatedAscending
+);
+export {memoizedSortByDateCreatedAscending as SortByDateCreatedAscending};

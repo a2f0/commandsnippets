@@ -1,32 +1,26 @@
-import {type IDisposer, type Instance, types} from 'mobx-state-tree';
-import {applySnapshot, destroy, flow, onSnapshot} from 'mobx-state-tree';
+import {destroy, flow, types} from 'mobx-state-tree';
 
-import {environment} from './lib/environment';
 import {
   activeEntryEditField,
   activeSearch,
   activeTagEditField,
   appMode,
-  type appState,
-  defaultState,
   entrySearchMethod,
-} from './lib/shared';
-import {TagHelpers, TagModel} from './models/TagModel';
-import type {ITagJsonApi} from './models/TagModel';
+} from '../../shared';
+import type {ITagJsonApi} from './../models/TagModel';
+import {TagHelpers, TagModel} from './../models/TagModel';
 import {
   type ITagTextEntryThroughModelJsonApi,
   TagTextEntryThroughModel,
-} from './models/TagTextEntryThroughModel';
+} from './../models/TagTextEntryThroughModel';
 import {
   type ITextEntryJsonApi,
   TextEntryHelpers,
   TextEntryModel,
-} from './models/TextEntryModel';
-import {type IUserJsonApi, UserModel} from './models/UserModel';
+} from './../models/TextEntryModel';
+import {type IUserJsonApi, UserModel} from './../models/UserModel';
 
-export type RootModel = Instance<typeof AppStateStoreModel>;
-
-export const AppStateStoreModel = types
+export const RootModel = types
   .model({
     tagsArray: types.array(TagModel),
     textEntriesArray: types.array(TextEntryModel),
@@ -46,6 +40,7 @@ export const AppStateStoreModel = types
     currentTag: types.maybeNull(types.string),
     currentUser: types.maybeNull(types.string),
     showTagCounts: types.boolean,
+    allEntriesCacheTimestamp: types.string,
   })
   .volatile<{
     activeSearch: activeSearch;
@@ -208,25 +203,27 @@ export const AppStateStoreModel = types
         throw error;
       }
     }),
+    // Sync All Text Entries Based on a Cache Timestamp
+    syncTextEntries() {},
     fetchTextEntries: flow(function* fetchTextEntries(
       user: string,
       tag: string
     ) {
       try {
-        const userObject = store.usersArray.find(
+        const userObject = self.usersArray.find(
           element => element.attributes.username === user
         );
 
         const textEntriesFiltered: ITextEntryJsonApi[] = [];
 
-        const tagObject = store.tagsArray.find(
+        const tagObject = self.tagsArray.find(
           element =>
             element.attributes.name === tag &&
             element.relationships.user.data.id === userObject?.id
         );
 
         const tagTextEntryThroughModelFiltered =
-          store.tagTextEntryThroughModel.filter(
+          self.tagTextEntryThroughModel.filter(
             element => element.relationships.tag.data.id === tagObject?.id
           );
 
@@ -328,7 +325,12 @@ export const AppStateStoreModel = types
       }
     },
     removeTextEntry(id: string) {
-      console.info`(id: ${id})`;
+      const existingEntry = self.textEntriesArray.find(
+        entry => entry.id === id
+      );
+      if (existingEntry) {
+        destroy(existingEntry);
+      }
     },
     setActiveSearch(activeSearch: activeSearch) {
       self.activeSearch = activeSearch;
@@ -394,58 +396,3 @@ export const AppStateStoreModel = types
       self.showTagCounts = value;
     },
   }));
-
-export const defaultStateStringified: string = JSON.stringify(defaultState);
-
-const localStorageKey = `mst-tearleads-${environment}`;
-const localStorateState = localStorage.getItem(localStorageKey);
-let state: appState;
-if (localStorateState !== null) {
-  state = JSON.parse(localStorateState);
-} else {
-  state = defaultState;
-}
-
-let snapshotListener: IDisposer;
-
-// Merge in the default state to incorporate any new configuraiton options
-function mergeInDefaultState(state: appState) {
-  const newState: appState = {
-    ...defaultState,
-    ...state,
-  };
-  return newState;
-}
-
-export function createAppStateStore(
-  snapshot: appState
-): Instance<typeof AppStateStoreModel> {
-  // clean up snapshot listener
-  if (snapshotListener) snapshotListener();
-  // kill old store to prevent accidental use and run clean up hooks
-  if (store) destroy(store);
-
-  // create new one
-  store = AppStateStoreModel.create(defaultState);
-
-  // It is possible that the model structure changes which would break the ability
-  // to restore a snapshot.  If a snapshot restore fails, apply the default state.
-  try {
-    applySnapshot(store, snapshot);
-  } catch (e) {
-    applySnapshot(store, defaultState);
-  }
-
-  // connect local storage
-  snapshotListener = onSnapshot(store, snapshot => {
-    localStorage.setItem(localStorageKey, JSON.stringify(snapshot));
-  });
-  return store;
-}
-
-let store: ReturnType<typeof createAppStateStore>;
-state = mergeInDefaultState(state);
-store = createAppStateStore(state);
-
-export type TStore = ReturnType<typeof createAppStateStore>;
-export {store};

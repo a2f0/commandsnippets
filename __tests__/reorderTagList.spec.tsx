@@ -3,13 +3,12 @@ import '@testing-library/jest-dom';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
-import React from 'react';
-import {type MockInstance, vi} from 'vitest';
 import invariant from 'invariant';
+import {type MockInstance, vi} from 'vitest';
 import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-import server from './util/msw';
-import TestAppRouter from './util/TestAppRouter';
+import {server} from './util/msw';
+import {TestAppRouter} from './util/TestAppRouter';
 
 Element.prototype.scrollIntoView = vi.fn();
 

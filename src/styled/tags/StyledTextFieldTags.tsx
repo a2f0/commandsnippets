@@ -3,8 +3,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect} from 'react';
 
 import {useAppContext} from '../../AppContext';
-import {activeSearch} from '../../lib/shared';
-import {appMode} from '../../lib/shared';
+import {activeSearch, appMode} from '../../lib/shared';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -68,7 +67,7 @@ const StyledTextFieldTags = React.forwardRef<
       id={id}
       onChange={onChange}
       variant="outlined"
-      inputProps={{sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}
+      slotProps={{htmlInput: {sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}}
       sx={{
         p: 0,
         '& .MuiOutlinedInput-root': {
@@ -88,4 +87,6 @@ const StyledTextFieldTags = React.forwardRef<
 });
 
 StyledTextFieldTags.displayName = 'StyledTextFieldTags';
-export default React.memo(observer(StyledTextFieldTags));
+
+const memoizedStyledTextFieldTags = React.memo(observer(StyledTextFieldTags));
+export {memoizedStyledTextFieldTags as StyledTextFieldTags};

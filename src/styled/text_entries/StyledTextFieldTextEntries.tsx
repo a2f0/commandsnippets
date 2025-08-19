@@ -51,7 +51,7 @@ const StyledTextFieldTextEntries = ({
       color="secondary"
       onChange={onChange}
       variant="outlined"
-      inputProps={{sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}
+      slotProps={{htmlInput: {sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}}
       sx={{
         ml: 0.5,
         width: 250,
@@ -72,4 +72,7 @@ const StyledTextFieldTextEntries = ({
   );
 };
 
-export default React.memo(observer(StyledTextFieldTextEntries));
+const memoizedStyledTextFieldTextEntries = React.memo(
+  observer(StyledTextFieldTextEntries)
+);
+export {memoizedStyledTextFieldTextEntries as StyledTextFieldEntries};

@@ -1,14 +1,12 @@
 import Grid from '@mui/material/Grid';
-import type {AxiosResponse} from 'axios';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-
-import apiBase from './lib/api/apiBase';
-import type {ITagJsonApiResponseSingle} from './lib/tags';
-import type {ITagJsonApi} from './models/TagModel';
-import StyledTagButton from './styled/tags/StyledTagButton';
-import StyledTagFormContainer from './styled/tags/StyledTagFormContainer';
-import StyledTextFieldTags from './styled/tags/StyledTextFieldTags';
+import type {ITagJsonApiResponseSingle} from './lib/api/responses/types';
+import {tearleadsApi} from './lib/api/tearleadsApi';
+import type {ITagJsonApi} from './lib/store/models/TagModel';
+import {StyledTagButton} from './styled/tags/StyledTagButton';
+import {StyledTagFormContainer} from './styled/tags/StyledTagFormContainer';
+import {StyledTextFieldTags} from './styled/tags/StyledTextFieldTags';
 
 export interface ITagEdit {
   object: ITagJsonApi;
@@ -40,24 +38,13 @@ const TagEdit = ({
   const inputCancelRef = useRef<HTMLButtonElement>(null);
 
   const handleSave = () => {
-    const payload = {
-      data: {
-        id: object.id,
-        type: 'Tag',
-        attributes: {
-          name: tagName,
-        },
-      },
-    };
-    apiBase
-      .patch(`tags/${object.id}`, payload, {
-        withCredentials: true,
-      })
-      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
-        handleSaveParent(response.data.data);
+    tearleadsApi
+      .updateTag(object.id, tagName)
+      .then((response: ITagJsonApiResponseSingle) => {
+        handleSaveParent(response.data);
       })
       .catch(error => {
-        console.error(error);
+        console.error('Unexpected error updating tag:', error);
       });
   };
 
@@ -106,4 +93,5 @@ const TagEdit = ({
   );
 };
 
-export default React.memo(observer(TagEdit));
+const memoizedTagEdit = React.memo(observer(TagEdit));
+export {memoizedTagEdit as TagEdit};

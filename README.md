@@ -1,50 +1,85 @@
 # Tearleads Frontend
 
+A command snippet tool for computer programmers and system administrators. It's a tagging system that allows for user-defined ordering of both Tag and Entry objects, using MobX-State-Tree for local data persistence and synchronization.
+
 ## Development
 
-Development
+### Prerequisites
+
+### Setup
 
 ```shell
+npm i -g pnpm
+# Install dependencies
+pnpm install
+
+# Install pre-commit hooks
 pip install pre-commit
 pre-commit install
 pre-commit run --all-files
-npm install
-npm run server
+
+# Start development server
+pnpm run dev
 ```
 
-## Wiki
+## Code Quality
 
-Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information.
+Run linting and formatting:
+
+```shell
+pnpm run lint
+pnpm run format
+```
+
+Run TypeScript compilation check:
+
+```shell
+npx tsc -b
+```
+
+## Other
+
+- Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information
 
 ## Testing
 
-Start the server and run tests in a single command.
+### E2E Tests
+
+Start the server and run tests in a single command:
 
 ```shell
-npm run ci
-npm run ci-headless
+pnpm run ci
+pnpm run ci-headless
 ```
 
-Start the testing server (on different port than normal development server), and then run tests manually in a separate command.
+Start the testing server (on different port than normal development server), and then run tests manually in a separate command:
 
 ```shell
-npm run server-test
+pnpm run server-test
 # in a different console tab
-npm run test
-npm run test-headless
+pnpm run test
+pnpm run test-headless
 ```
 
-Run a specific spec
+Run a specific spec:
 
 ```shell
-npm run server-test
-npm run test -- --spec=test/specs/entries/entriesContextMenu.spec.ts
+pnpm run server-test
+pnpm run test -- --spec=test/specs/entries/entriesContextMenu.spec.ts
 ```
 
-Run jest tests
+or
 
 ```shell
-npm run unit
-npm run unit --  --watch
-npm run unit -- __tests__/reorderEntryList.spec.tsx
+./scripts/runSpec.sh test/specs/tags/tagContextMenu/allowsDeletingATag.spec.ts
+```
+
+### Unit Tests
+
+Run unit tests:
+
+```shell
+pnpm run unit
+pnpm run unit -- --watch
+pnpm run unit -- __tests__/reorderEntryList.spec.tsx
 ```

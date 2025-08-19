@@ -1,28 +1,24 @@
 import type {StyledComponent} from '@emotion/styled';
-import {ListItem, ListItemButton} from '@mui/material';
-import {Box} from '@mui/material';
+import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
-import {styled} from '@mui/material/styles';
-import {useTheme} from '@mui/material/styles';
-import type {AxiosResponse} from 'axios';
+import {styled, useTheme} from '@mui/material/styles';
+import {observer} from 'mobx-react';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
-
 import {useAppContext} from './AppContext';
-import DragHandle from './DragHandle';
-import DragHandleContainer from './DragHandleContainer';
-import ItemTypes from './ItemTypes';
-import apiBase from './lib/api/apiBase';
-import {type ReorderTag, tearleadsApi} from './lib/api/tearleadsApi';
-import {type IMouse, initialMouse} from './lib/shared';
-import {activeSearch, appMode} from './lib/shared';
-import type {ITagJsonApiResponseSingle} from './lib/tags';
+import {DragHandle} from './DragHandle';
+import {DragHandleContainer} from './DragHandleContainer';
+import {ItemTypes} from './ItemTypes';
+import type {ReorderTag} from './lib/api/requests/types';
+import type {ITagJsonApiResponseSingle} from './lib/api/responses/types';
+import {tearleadsApi} from './lib/api/tearleadsApi';
+import {activeSearch, appMode, type IMouse, initialMouse} from './lib/shared';
+import type {ITagJsonApi} from './lib/store/models/TagModel';
 import {needsScrollingIntoView} from './lib/text_entries';
-import type {ITagJsonApi} from './models/TagModel';
-import TagContextMenu from './TagContextMenu';
-import TagEdit from './TagEdit';
-import TagLabel from './TagLabel';
+import {TagContextMenu} from './TagContextMenu';
+import {TagEdit} from './TagEdit';
+import {TagLabel} from './TagLabel';
 
 const TagContainer = styled('div')(() => ({
   whiteSpace: 'pre',
@@ -293,13 +289,13 @@ const Tag = ({
   };
 
   const deleteTag = () => {
-    apiBase
-      .delete(`/tags/${tagObject.id}`, {withCredentials: true})
-      .then((response: AxiosResponse<ITagJsonApiResponseSingle>) => {
-        handleDeleteParent(response.data);
+    tearleadsApi
+      .deleteTag(tagObject.id)
+      .then(response => {
+        handleDeleteParent(response);
       })
-      .catch(error => {
-        console.error(error);
+      .catch((error: unknown) => {
+        console.error('Failed to delete tag:', error);
       });
   };
 
@@ -440,4 +436,5 @@ const Tag = ({
   );
 };
 
-export default React.memo(Tag);
+const memoizedTag = React.memo(observer(Tag));
+export {memoizedTag as Tag};

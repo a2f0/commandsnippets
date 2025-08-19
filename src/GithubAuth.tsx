@@ -1,16 +1,18 @@
 import {GitHub} from '@mui/icons-material';
 import {observer} from 'mobx-react';
 import React, {useEffect} from 'react';
+import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import apiBase from './lib/api/apiBase';
-import LoginButton from './styled/LoginButton';
+import {tearleadsApi} from './lib/api/tearleadsApi';
+import {environment} from './lib/environment';
+import {LoginButton} from './styled/LoginButton';
 
 let githubClientID: string;
-if (window.location.hostname === 'staging.tearleads.com') {
+if (environment === 'staging') {
   githubClientID = '3be8b14684de28d54a0d';
-} else if (window.location.hostname === 'tearleads.com') {
+} else if (environment === 'production') {
   githubClientID = 'a3cf7c1dfabc3df68b06';
 } else {
   githubClientID = 'a94dc4b2bb6ed4fc63a0';
@@ -19,6 +21,7 @@ if (window.location.hostname === 'staging.tearleads.com') {
 const GithubAuth = () => {
   const appConfig = useAppContext();
   const navigate = useNavigate();
+  const [, setCookie] = useCookies(['loggedInUser']);
 
   useEffect(() => {
     const queryString = window.location.search;
@@ -28,32 +31,30 @@ const GithubAuth = () => {
     const code = urlParams.get('code');
     console.info(`code (github auth): ${code}`);
     console.info(`is_github_oauth (github auth): ${is_github_oauth}`);
-    if (code !== '' && is_github_oauth === true) {
+    if (code !== null && code !== '' && is_github_oauth === true) {
       const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
-      const payload = {
-        data: {
-          type: 'GithubLogin',
-          attributes: {
-            code: code,
-          },
-        },
-      };
-      apiBase
-        .post('/github-login/', payload, {withCredentials: true})
+      tearleadsApi
+        .githubLogin(code)
         .then(() => {
-          apiBase.get('/user/', {withCredentials: true}).then(response => {
-            const username = response.data.data.attributes.username;
-            appConfig.setLoggedInUser(username);
-            document.cookie = `loggedInUser=' ${username}`;
-            navigate(`/${username}`);
-          });
+          return tearleadsApi.getCurrentUser();
         })
-        .catch(() => {
+        .then(response => {
+          const username = response.data.attributes.username;
+          appConfig.setLoggedInUser(username);
+          setCookie('loggedInUser', username, {
+            path: '/',
+            secure: window.location.protocol === 'https:',
+            sameSite: 'strict',
+          });
+          navigate(`/${username}`);
+        })
+        .catch((error: unknown) => {
+          console.error('GitHub authentication error:', error);
           appConfig.setLoggedInUser(null);
         });
     }
-  }, [appConfig.setLoggedInUser, navigate]);
+  }, [appConfig.setLoggedInUser, navigate, setCookie]);
 
   const handleGitHubClick = () => {
     window.location.assign(
@@ -76,4 +77,5 @@ const GithubAuth = () => {
   );
 };
 
-export default React.memo(observer(GithubAuth));
+const memoizedGithubAuth = React.memo(observer(GithubAuth));
+export {memoizedGithubAuth as GithubAuth};

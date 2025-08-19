@@ -1,8 +1,7 @@
 import {getParent, types} from 'mobx-state-tree';
-
-import type {RootModel} from '../AppStateStore';
-import {getMostRecentTimeStamp} from '../lib/shared';
-import {fetch, fetchPage, sort} from '../lib/text_entries';
+import {getMostRecentTimeStamp} from '../../shared';
+import {fetch, fetchPage, sort} from '../../text_entries';
+import type {RootModel} from './RootModel';
 
 export interface ITextEntryJsonApi {
   id: string;
@@ -61,7 +60,7 @@ export const TextEntryModel = types
       Object.assign(self, object);
     },
     remove() {
-      getParent<RootModel>(self, 2).removeTextEntry(self.id);
+      getParent<typeof RootModel>(self, 2).removeTextEntry(self.id);
     },
   }));
 

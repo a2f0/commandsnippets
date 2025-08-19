@@ -1,20 +1,23 @@
 import {observer} from 'mobx-react';
-import React from 'react';
+import {memo} from 'react';
+import {CookiesProvider} from 'react-cookie';
 import {BrowserRouter as Router} from 'react-router-dom';
 
-import App from './App';
+import {App} from './App';
 import {AppContextProvider} from './AppContext';
 
-const AppRouter = React.memo(
+const AppRouter = memo(
   observer(() => {
     return (
       <Router>
         <AppContextProvider>
-          <App />
+          <CookiesProvider defaultSetOptions={{path: '/'}}>
+            <App />
+          </CookiesProvider>
         </AppContextProvider>
       </Router>
     );
   })
 );
 
-export default AppRouter;
+export {AppRouter};

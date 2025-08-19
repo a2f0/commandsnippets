@@ -1,8 +1,6 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.1.3/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -12,6 +10,22 @@
       },
       "a11y": {
         "useValidAriaRole": "off"
+      },
+      "style": {
+        "noDefaultExport": "error",
+        "noParameterAssign": "error",
+        "useAsConstAssertion": "error",
+        "useDefaultParameterLast": "error",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "noUselessElse": "error"
+      },
+      "complexity": {
+        "useLiteralKeys": "off"
       }
     }
   },
@@ -30,14 +44,14 @@
     }
   },
   "files": {
-    "ignore": [
-      ".ts-out/**/*",
-      "build/",
-      "**/*.d.ts",
-      "src/ts-out/**/*",
-      "dev-dist/",
-      "dist/",
-      "node_modules/"
+    "includes": [
+      "**",
+      "!**/.ts-out/**/*",
+      "!**/build/**",
+      "!**/src/ts-out/**/*",
+      "!**/dev-dist/**/*",
+      "!**/dist/",
+      "!**/node_modules/"
     ]
   }
 }

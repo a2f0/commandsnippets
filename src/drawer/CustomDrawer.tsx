@@ -6,4 +6,6 @@ const CustomDrawer = ({anchor = 'left', children}: DrawerProps) => (
     {children}
   </Drawer>
 );
-export default React.memo(CustomDrawer);
+
+const memoizedCustomDrawer = React.memo(CustomDrawer);
+export {memoizedCustomDrawer as CustomDrawer};
