@@ -206,30 +206,49 @@ export class Base {
   }
 
   // Helper methods for API checks
-  async checkTagsAndEntries() {
-    return browser.execute(async () => {
-      const [tagsResponse, entriesResponse] = await Promise.all([
-        fetch('http://localhost:9001/api/v1/tags'),
-        fetch('http://localhost:9001/api/v1/entries'),
-      ]);
-      const [tagsData, entriesData] = await Promise.all([
-        tagsResponse.json(),
-        entriesResponse.json(),
-      ]);
-      return {
-        tagsOk: tagsResponse.ok,
-        tagsCount: tagsData.data?.length || 0,
-        entriesOk: entriesResponse.ok,
-        entriesCount: entriesData.data?.length || 0,
+  async checkTagsAndEntries(options: {withFirstEntry?: boolean} = {}) {
+    return browser.execute(async opts => {
+      const API_BASE_URL = 'http://localhost:9001/api/v1';
+
+      // Helper function to safely fetch and parse JSON
+      const process = async (url: string) => {
+        const response = await fetch(url);
+        const data = response.ok ? await response.json() : null;
+        return {ok: response.ok, data};
       };
-    });
+
+      const [tagsResult, entriesResult] = await Promise.all([
+        process(`${API_BASE_URL}/tags`),
+        process(`${API_BASE_URL}/entries`),
+      ]);
+
+      const result: {
+        tagsOk: boolean;
+        tagsCount: number;
+        entriesOk: boolean;
+        entriesCount: number;
+        firstEntry?: unknown;
+      } = {
+        tagsOk: tagsResult.ok,
+        tagsCount: tagsResult.data?.data?.length || 0,
+        entriesOk: entriesResult.ok,
+        entriesCount: entriesResult.data?.data?.length || 0,
+      };
+
+      if (opts.withFirstEntry) {
+        result.firstEntry = entriesResult.data?.data?.[0] || null;
+      }
+
+      return result;
+    }, options);
   }
 
   async checkTags() {
     return browser.execute(async () => {
-      const response = await fetch('http://localhost:9001/api/v1/tags');
-      const data = await response.json();
-      return {ok: response.ok, dataLength: data.data?.length || 0};
+      const API_BASE_URL = 'http://localhost:9001/api/v1';
+      const response = await fetch(`${API_BASE_URL}/tags`);
+      const data = response.ok ? await response.json() : null;
+      return {ok: response.ok, dataLength: data?.data?.length || 0};
     });
   }
 }
