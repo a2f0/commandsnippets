@@ -130,7 +130,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       mouseData.mouseY = event.clientY - 4;
       setMouse(mouseData);
     },
-    [mouse]
+    []
   );
 
   const contextMenu = useMemo(

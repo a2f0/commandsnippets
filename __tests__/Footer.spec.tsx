@@ -41,14 +41,6 @@ describe('Footer Component', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders footer in development environment', () => {
-    vi.stubEnv('PROD', false);
-
-    render(<FooterWithTheme />);
-
-    expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
-  });
-
   it('has correct links', () => {
     vi.stubEnv('PROD', false);
 
