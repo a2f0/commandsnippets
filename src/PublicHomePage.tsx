@@ -1,5 +1,4 @@
 import {AppBar, Box} from '@mui/material';
-import Grid from '@mui/material/Grid';
 import React from 'react';
 
 import {Footer} from './components/Footer';
@@ -9,9 +8,9 @@ import {StyledToolbar} from './styled/layout/StyledToolbar';
 
 const PublicHomePage = () => {
   return (
-    <>
+    <Box sx={{height: '100vh', display: 'flex', flexDirection: 'column'}}>
       <AppBar
-        position="fixed"
+        position="static"
         sx={{
           height: theme => `${theme.appBar.height}px`,
           boxShadow: 'none', // Remove the Material UI 'bottom border'.
@@ -33,40 +32,45 @@ const PublicHomePage = () => {
           </Box>
         </StyledToolbar>
       </AppBar>
-      <Grid
-        container
-        sx={theme => ({
-          paddingTop: `${theme.appBar.height}px`,
-          minHeight: `calc(100vh - ${theme.appBar.height}px)`,
+      <Box
+        sx={{
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
-        })}
+          justifyContent: 'space-between',
+        }}
       >
-        <Grid
+        <Box
           sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             marginTop: '250px',
-            fontSize: '64px',
-            textAlign: 'center',
-            color: theme => `${theme.palette.text.primary}`,
           }}
-          size={{xs: 12}}
         >
-          Solve, Curate, Retrieve.
-        </Grid>
-        <Grid
-          id="tagLine"
-          sx={{
-            fontSize: '30px',
-            textAlign: 'center',
-            color: theme => `${theme.palette.text.primary}`,
-          }}
-          size={{xs: 12}}
-        >
-          An opinionated note-taking system for technical professionals.
-        </Grid>
+          <Box
+            sx={{
+              fontSize: '64px',
+              textAlign: 'center',
+              color: theme => `${theme.palette.text.primary}`,
+            }}
+          >
+            Solve, Curate, Retrieve.
+          </Box>
+          <Box
+            id="tagLine"
+            sx={{
+              fontSize: '30px',
+              textAlign: 'center',
+              color: theme => `${theme.palette.text.primary}`,
+            }}
+          >
+            An opinionated note-taking system for technical professionals.
+          </Box>
+        </Box>
         <Footer />
-      </Grid>
-    </>
+      </Box>
+    </Box>
   );
 };
 
