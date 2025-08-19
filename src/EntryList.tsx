@@ -35,14 +35,14 @@ const EntryList = () => {
 
   const [entries, setEntries] = useState<Array<ITextEntryJsonApi>>([]);
   const [elRefs, setElRefs] = useState<
-    Array<React.RefObject<HTMLDivElement>>
+    Array<React.RefObject<HTMLDivElement | null>>
   >([]);
 
   useEffect(() => {
     setElRefs(
-      Array(entries.length)
-        .fill(null)
-        .map(() => React.createRef<HTMLDivElement>())
+      Array.from({length: entries.length}, () =>
+        React.createRef<HTMLDivElement | null>()
+      )
     );
   }, [entries.length]);
 
