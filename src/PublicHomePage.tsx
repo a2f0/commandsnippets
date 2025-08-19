@@ -34,12 +34,12 @@ const PublicHomePage = () => {
       </AppBar>
       <Grid
         container
-        sx={{
-          paddingTop: theme => `${theme.appBar.height}px`,
-          minHeight: 'calc(100vh - 64px)', // Ensure content fills page with space for footer
+        sx={theme => ({
+          paddingTop: `${theme.appBar.height}px`,
+          minHeight: `calc(100vh - ${theme.appBar.height}px)`,
           display: 'flex',
           flexDirection: 'column',
-        }}
+        })}
       >
         <Grid
           sx={{
