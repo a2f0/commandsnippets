@@ -204,6 +204,53 @@ export class Base {
     // Wait for MSW to be ready after page load
     await browser.waitForMSW();
   }
+
+  // Helper methods for API checks
+  async checkTagsAndEntries(options: {withFirstEntry?: boolean} = {}) {
+    return browser.execute(async opts => {
+      const API_BASE_URL = 'http://localhost:9001/api/v1';
+
+      // Helper function to safely fetch and parse JSON
+      const process = async (url: string) => {
+        const response = await fetch(url);
+        const data = response.ok ? await response.json() : null;
+        return {ok: response.ok, data};
+      };
+
+      const [tagsResult, entriesResult] = await Promise.all([
+        process(`${API_BASE_URL}/tags`),
+        process(`${API_BASE_URL}/entries`),
+      ]);
+
+      const result: {
+        tagsOk: boolean;
+        tagsCount: number;
+        entriesOk: boolean;
+        entriesCount: number;
+        firstEntry?: unknown;
+      } = {
+        tagsOk: tagsResult.ok,
+        tagsCount: tagsResult.data?.data?.length || 0,
+        entriesOk: entriesResult.ok,
+        entriesCount: entriesResult.data?.data?.length || 0,
+      };
+
+      if (opts.withFirstEntry) {
+        result.firstEntry = entriesResult.data?.data?.[0] || null;
+      }
+
+      return result;
+    }, options);
+  }
+
+  async checkTags() {
+    return browser.execute(async () => {
+      const API_BASE_URL = 'http://localhost:9001/api/v1';
+      const response = await fetch(`${API_BASE_URL}/tags`);
+      const data = response.ok ? await response.json() : null;
+      return {ok: response.ok, dataLength: data?.data?.length || 0};
+    });
+  }
 }
 
 const BasePage = new Base();
