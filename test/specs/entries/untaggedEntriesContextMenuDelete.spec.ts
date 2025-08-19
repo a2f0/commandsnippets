@@ -11,26 +11,7 @@ describe('Entries Context Menu Delete Entry', () => {
     await expect(BasePage.tagLine).toBeDisplayed();
 
     // Verify MSW is providing expected data
-    const apiCheck = await browser.execute(async () => {
-      try {
-        const [tagsResponse, entriesResponse] = await Promise.all([
-          fetch('http://localhost:9001/api/v1/tags'),
-          fetch('http://localhost:9001/api/v1/entries'),
-        ]);
-        const [tagsData, entriesData] = await Promise.all([
-          tagsResponse.json(),
-          entriesResponse.json(),
-        ]);
-        return {
-          tagsOk: tagsResponse.ok,
-          tagsCount: tagsData.data?.length || 0,
-          entriesOk: entriesResponse.ok,
-          entriesCount: entriesData.data?.length || 0,
-        };
-      } catch (error) {
-        return {ok: false, error: (error as Error).message};
-      }
-    });
+    const apiCheck = await BasePage.checkTagsAndEntries();
 
     console.log('MSW API check:', apiCheck);
     expect(apiCheck.tagsOk).toBe(true);
@@ -94,16 +75,15 @@ describe('Entries Context Menu Delete Entry', () => {
       }
     );
 
-    // Verify the DELETE request was made exactly once after clicking
+    // Verify the DELETE request was made after clicking
     const finalDeleteCount = await browser.getMSWRequestCount(
       'DELETE',
       'http://localhost:9001/api/v1/entries/1'
     );
 
-    // There should be exactly 2 new DELETE requests
-    // This happens because the entry deletion triggers both:
-    // 1. The API call to delete the entry
-    // 2. Store cleanup that may trigger additional API calls
+    // Note: Due to the component lifecycle and event handling in the browser,
+    // 2 DELETE requests are made. This is expected behavior and the entry
+    // is successfully deleted without issues.
     const newRequests = finalDeleteCount - initialDeleteCount;
     expect(newRequests).toBe(2);
 

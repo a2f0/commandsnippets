@@ -1,18 +1,10 @@
 import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import update from 'immutability-helper';
 import invariant from 'invariant';
 import {autorun} from 'mobx';
 import {observer} from 'mobx-react';
-import React, {
-  createRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
 import {useAppContext} from './AppContext';
@@ -41,31 +33,17 @@ const EntryList = () => {
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
 
-  // Used to access the react state from within the listener.
-  const [entries, _setEntries] = useState<Array<ITextEntryJsonApi>>([]);
-  const entriesRef = useRef<Array<ITextEntryJsonApi>>(entries);
-  const setEntries = (data: Array<ITextEntryJsonApi>) => {
-    entriesRef.current = data;
-    _setEntries(data);
-  };
-
-  const [elRefs, _setElRefs] = useState<
+  const [entries, setEntries] = useState<Array<ITextEntryJsonApi>>([]);
+  const [elRefs, setElRefs] = useState<
     Array<React.RefObject<HTMLDivElement | null>>
   >([]);
-  // Used to access the react state from within the listener.
-  const elRefsRef = useRef(elRefs);
-  const setElRefs = (data: Array<React.RefObject<HTMLDivElement | null>>) => {
-    elRefsRef.current = data;
-    _setElRefs(data);
-  };
+
   useEffect(() => {
-    const refsArray = Array<React.RefObject<HTMLDivElement | null>>(
-      entries.length
+    setElRefs(
+      Array.from({length: entries.length}, () =>
+        React.createRef<HTMLDivElement | null>()
+      )
     );
-    for (let index = 0; index < refsArray.length; index++) {
-      refsArray[index] = createRef<HTMLDivElement>();
-    }
-    setElRefs(refsArray);
   }, [entries.length]);
 
   const [previousController, setPreviousController] = useState<
@@ -178,19 +156,17 @@ const EntryList = () => {
         event.preventDefault();
         event.stopPropagation();
       }
-      const selected = entriesRef.current.find(
-        c => c.id === appConfig.entrySelectedID
-      );
+      const selected = entries.find(c => c.id === appConfig.entrySelectedID);
       if (selected !== undefined && appConfig.appMode === appMode.entriesList) {
-        const selectedIndex = entriesRef.current.indexOf(selected);
+        const selectedIndex = entries.indexOf(selected);
         if (selectedIndex !== -1) {
           if (event.key === 'ArrowUp') {
             const newIndex = selectedIndex - 1;
             if (newIndex >= 0) {
-              const entry = entriesRef.current[newIndex];
+              const entry = entries[newIndex];
               if (entry) {
                 appConfig.setEntrySelectedID(entry.id);
-                const elRef = elRefsRef.current[newIndex];
+                const elRef = elRefs[newIndex];
                 invariant(elRef, 'entry ref is undefined');
                 if (needsScrollingIntoView(elRef, theme)) {
                   elRef.current?.scrollIntoView({
@@ -202,11 +178,11 @@ const EntryList = () => {
             }
           } else if (event.key === 'ArrowDown') {
             const newIndex = selectedIndex + 1;
-            if (newIndex <= entriesRef.current.length - 1) {
-              const entry = entriesRef.current[newIndex];
+            if (newIndex <= entries.length - 1) {
+              const entry = entries[newIndex];
               invariant(entry, 'entry is undefined');
               appConfig.setEntrySelectedID(entry.id);
-              const elRef = elRefsRef.current[newIndex];
+              const elRef = elRefs[newIndex];
               invariant(elRef, 'entry ref is undefined');
               if (needsScrollingIntoView(elRef, theme)) {
                 elRef.current?.scrollIntoView({
@@ -223,7 +199,7 @@ const EntryList = () => {
         }
       }
     },
-    [entries]
+    [appConfig, entries, elRefs, theme]
   );
 
   useEffect(() => {
@@ -252,15 +228,12 @@ const EntryList = () => {
       console.debug(
         `moveEntry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
       );
-      const reordered = update(entries, {
-        $splice: [
-          [index, 1],
-          [atIndex, 0, entry],
-        ],
-      });
-      setEntries(reordered);
+      const newEntries = [...entries];
+      newEntries.splice(index, 1);
+      newEntries.splice(atIndex, 0, entry);
+      setEntries(newEntries);
     },
-    [findEntry, entries, setEntries]
+    [findEntry, entries]
   );
 
   const findEntryByIndex = (index: number): ITextEntryJsonApi | null => {

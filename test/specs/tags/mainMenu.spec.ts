@@ -10,15 +10,7 @@ describe('Tag Main Menu', () => {
     await expect(BasePage.tagLine).toBeDisplayed();
 
     // Verify MSW is providing the expected tag data
-    const apiCheck = await browser.execute(async () => {
-      try {
-        const response = await fetch('http://localhost:9001/api/v1/tags');
-        const data = await response.json();
-        return {ok: response.ok, dataLength: data.data?.length || 0};
-      } catch (error) {
-        return {ok: false, error: (error as Error).message};
-      }
-    });
+    const apiCheck = await BasePage.checkTags();
 
     console.log('API check result:', apiCheck);
     expect(apiCheck.ok).toBe(true);
