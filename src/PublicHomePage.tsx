@@ -2,6 +2,7 @@ import {AppBar, Box} from '@mui/material';
 import Grid from '@mui/material/Grid';
 import React from 'react';
 
+import {Footer} from './components/Footer';
 import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
 import {StyledToolbar} from './styled/layout/StyledToolbar';
@@ -34,9 +35,12 @@ const PublicHomePage = () => {
       </AppBar>
       <Grid
         container
-        sx={{
-          paddingTop: theme => `${theme.appBar.height}px`,
-        }}
+        sx={theme => ({
+          paddingTop: `${theme.appBar.height}px`,
+          minHeight: `calc(100vh - ${theme.appBar.height}px)`,
+          display: 'flex',
+          flexDirection: 'column',
+        })}
       >
         <Grid
           sx={{
@@ -60,6 +64,7 @@ const PublicHomePage = () => {
         >
           An opinionated note-taking system for technical professionals.
         </Grid>
+        <Footer />
       </Grid>
     </>
   );
