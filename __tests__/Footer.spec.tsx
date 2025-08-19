@@ -47,10 +47,21 @@ describe('Footer Component', () => {
 
     render(<FooterWithTheme />);
 
-    expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
-    expect(screen.getByText('Terms of Service')).toBeInTheDocument();
-    expect(screen.getByText('Contact Us')).toBeInTheDocument();
-    expect(screen.getByText('About')).toBeInTheDocument();
+    expect(screen.getByRole('link', {name: 'Privacy Policy'})).toHaveAttribute(
+      'href',
+      '/privacy'
+    );
+    expect(
+      screen.getByRole('link', {name: 'Terms of Service'})
+    ).toHaveAttribute('href', '/terms');
+    expect(screen.getByRole('link', {name: 'Contact Us'})).toHaveAttribute(
+      'href',
+      '/contact'
+    );
+    expect(screen.getByRole('link', {name: 'About'})).toHaveAttribute(
+      'href',
+      '/about'
+    );
     expect(
       screen.getByText(/© \d{4} Tearleads\. All rights reserved\./)
     ).toBeInTheDocument();
