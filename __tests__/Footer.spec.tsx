@@ -5,6 +5,7 @@ import {render, screen} from '@testing-library/react';
 import {vi} from 'vitest';
 
 import {Footer} from '../src/components/Footer';
+import * as envModule from '../src/lib/environment';
 
 const theme = createTheme();
 
@@ -16,11 +17,11 @@ const FooterWithTheme = () => (
 
 describe('Footer Component', () => {
   afterEach(() => {
-    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   it('renders footer in non-production environment', () => {
-    vi.stubEnv('PROD', false);
+    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
 
     render(<FooterWithTheme />);
 
@@ -34,7 +35,7 @@ describe('Footer Component', () => {
   });
 
   it('does not render footer in production environment', () => {
-    vi.stubEnv('PROD', true);
+    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
 
     const {container} = render(<FooterWithTheme />);
 
@@ -42,7 +43,7 @@ describe('Footer Component', () => {
   });
 
   it('has correct links', () => {
-    vi.stubEnv('PROD', false);
+    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('test');
 
     render(<FooterWithTheme />);
 
@@ -61,5 +62,8 @@ describe('Footer Component', () => {
       'href',
       '/about'
     );
+    expect(
+      screen.getByText(/© \d{4} Tearleads\. All rights reserved\./)
+    ).toBeInTheDocument();
   });
 });
