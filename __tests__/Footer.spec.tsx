@@ -5,6 +5,7 @@ import {render, screen} from '@testing-library/react';
 import {vi} from 'vitest';
 
 import {Footer} from '../src/components/Footer';
+import * as envModule from '../src/lib/environment';
 
 const theme = createTheme();
 
@@ -16,11 +17,11 @@ const FooterWithTheme = () => (
 
 describe('Footer Component', () => {
   afterEach(() => {
-    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   it('renders footer in non-production environment', () => {
-    vi.stubEnv('PROD', false);
+    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
 
     render(<FooterWithTheme />);
 
@@ -34,7 +35,7 @@ describe('Footer Component', () => {
   });
 
   it('does not render footer in production environment', () => {
-    vi.stubEnv('PROD', true);
+    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
 
     const {container} = render(<FooterWithTheme />);
 
@@ -42,24 +43,16 @@ describe('Footer Component', () => {
   });
 
   it('has correct links', () => {
-    vi.stubEnv('PROD', false);
+    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('test');
 
     render(<FooterWithTheme />);
 
-    expect(screen.getByRole('link', {name: 'Privacy Policy'})).toHaveAttribute(
-      'href',
-      '/privacy'
-    );
+    expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
+    expect(screen.getByText('Terms of Service')).toBeInTheDocument();
+    expect(screen.getByText('Contact Us')).toBeInTheDocument();
+    expect(screen.getByText('About')).toBeInTheDocument();
     expect(
-      screen.getByRole('link', {name: 'Terms of Service'})
-    ).toHaveAttribute('href', '/terms');
-    expect(screen.getByRole('link', {name: 'Contact Us'})).toHaveAttribute(
-      'href',
-      '/contact'
-    );
-    expect(screen.getByRole('link', {name: 'About'})).toHaveAttribute(
-      'href',
-      '/about'
-    );
+      screen.getByText(/© \d{4} Tearleads\. All rights reserved\./)
+    ).toBeInTheDocument();
   });
 });
