@@ -25,8 +25,6 @@ describe('Tab Switching Behavior', () => {
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
-    // Wait for content to load
-
     // Verify basic elements are present
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
