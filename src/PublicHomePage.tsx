@@ -1,7 +1,8 @@
-import {AppBar, Box, Link, Typography} from '@mui/material';
+import {AppBar, Box} from '@mui/material';
 import Grid from '@mui/material/Grid';
 import React from 'react';
 
+import {Footer} from './components/Footer';
 import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
 import {StyledToolbar} from './styled/layout/StyledToolbar';
@@ -63,51 +64,7 @@ const PublicHomePage = () => {
         >
           An opinionated note-taking system for technical professionals.
         </Grid>
-        <Box
-          component="footer"
-          sx={{
-            py: 3,
-            px: 2,
-            mt: 'auto',
-            backgroundColor: theme =>
-              theme.palette.mode === 'light'
-                ? theme.palette.grey[200]
-                : theme.palette.grey[800],
-            borderTop: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Grid container justifyContent="center" spacing={2}>
-            <Grid sx={{}} size={{xs: 'auto'}}>
-              <Link href="/privacy" color="inherit" underline="hover">
-                <Typography variant="body2">Privacy Policy</Typography>
-              </Link>
-            </Grid>
-            <Grid sx={{}} size={{xs: 'auto'}}>
-              <Link href="/terms" color="inherit" underline="hover">
-                <Typography variant="body2">Terms of Service</Typography>
-              </Link>
-            </Grid>
-            <Grid sx={{}} size={{xs: 'auto'}}>
-              <Link href="/contact" color="inherit" underline="hover">
-                <Typography variant="body2">Contact Us</Typography>
-              </Link>
-            </Grid>
-            <Grid sx={{}} size={{xs: 'auto'}}>
-              <Link href="/about" color="inherit" underline="hover">
-                <Typography variant="body2">About</Typography>
-              </Link>
-            </Grid>
-          </Grid>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            align="center"
-            sx={{mt: 1}}
-          >
-            © {new Date().getFullYear()} Tearleads. All rights reserved.
-          </Typography>
-        </Box>
+        <Footer />
       </Grid>
     </>
   );
