@@ -1,4 +1,4 @@
-import {AppBar, Box} from '@mui/material';
+import {AppBar, Box, Typography} from '@mui/material';
 import React from 'react';
 
 import {Footer} from './components/Footer';
@@ -48,25 +48,29 @@ const PublicHomePage = () => {
             marginTop: '250px',
           }}
         >
-          <Box
+          <Typography
+            variant="h1"
+            component="h1"
             sx={{
               fontSize: '64px',
               textAlign: 'center',
-              color: theme => `${theme.palette.text.primary}`,
+              color: theme => theme.palette.text.primary,
             }}
           >
             Solve, Curate, Retrieve.
-          </Box>
-          <Box
+          </Typography>
+          <Typography
+            variant="h4"
+            component="p"
             id="tagLine"
             sx={{
               fontSize: '30px',
               textAlign: 'center',
-              color: theme => `${theme.palette.text.primary}`,
+              color: theme => theme.palette.text.primary,
             }}
           >
             An opinionated note-taking system for technical professionals.
-          </Box>
+          </Typography>
         </Box>
         <Footer />
       </Box>

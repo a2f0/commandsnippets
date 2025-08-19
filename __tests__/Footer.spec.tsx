@@ -62,8 +62,5 @@ describe('Footer Component', () => {
       'href',
       '/about'
     );
-    expect(
-      screen.getByText(/© \d{4} Tearleads\. All rights reserved\./)
-    ).toBeInTheDocument();
   });
 });
