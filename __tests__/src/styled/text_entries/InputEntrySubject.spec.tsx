@@ -15,7 +15,7 @@ describe('InputEntrySubject', () => {
     id: 'test-input',
   };
 
-  it('should render with autoComplete disabled', () => {
+  beforeEach(() => {
     render(
       <ThemeProvider theme={darkTheme}>
         <LoggedInAppContextProvider>
@@ -23,22 +23,15 @@ describe('InputEntrySubject', () => {
         </LoggedInAppContextProvider>
       </ThemeProvider>
     );
+  });
 
+  it('should render with autoComplete disabled', () => {
     const input = screen.getByPlaceholderText('Enter subject');
     expect(input).toHaveAttribute('autocomplete', 'off');
   });
 
   it('should render with correct placeholder and value', () => {
-    render(
-      <ThemeProvider theme={darkTheme}>
-        <LoggedInAppContextProvider>
-          <InputEntrySubject {...defaultProps} />
-        </LoggedInAppContextProvider>
-      </ThemeProvider>
-    );
-
     const input = screen.getByPlaceholderText('Enter subject');
-    expect(input).toBeInTheDocument();
     expect(input).toHaveValue('Test value');
   });
 });
