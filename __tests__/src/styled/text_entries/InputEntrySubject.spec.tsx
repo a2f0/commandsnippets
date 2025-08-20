@@ -3,16 +3,9 @@ import '@testing-library/jest-dom';
 import {ThemeProvider} from '@mui/material/styles';
 import {render, screen} from '@testing-library/react';
 import {vi} from 'vitest';
-import {AppContext} from '../../../../src/AppContext';
-import {defaultState} from '../../../../src/lib/shared';
-import {createAppStateStore} from '../../../../src/lib/store/store';
 import {InputEntrySubject} from '../../../../src/styled/text_entries/InputEntrySubject';
 import {darkTheme} from '../../../../src/theme/themes';
-
-const mockStore = createAppStateStore({
-  ...defaultState,
-  loggedInUser: 'test',
-});
+import {LoggedInAppContextProvider} from '../../../util/LoggedInAppContextProvider';
 
 describe('InputEntrySubject', () => {
   const defaultProps = {
@@ -25,9 +18,9 @@ describe('InputEntrySubject', () => {
   it('should render with autoComplete disabled', () => {
     render(
       <ThemeProvider theme={darkTheme}>
-        <AppContext.Provider value={mockStore}>
+        <LoggedInAppContextProvider>
           <InputEntrySubject {...defaultProps} />
-        </AppContext.Provider>
+        </LoggedInAppContextProvider>
       </ThemeProvider>
     );
 
@@ -38,9 +31,9 @@ describe('InputEntrySubject', () => {
   it('should render with correct placeholder and value', () => {
     render(
       <ThemeProvider theme={darkTheme}>
-        <AppContext.Provider value={mockStore}>
+        <LoggedInAppContextProvider>
           <InputEntrySubject {...defaultProps} />
-        </AppContext.Provider>
+        </LoggedInAppContextProvider>
       </ThemeProvider>
     );
 
