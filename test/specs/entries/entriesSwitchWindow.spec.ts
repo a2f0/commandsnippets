@@ -6,8 +6,6 @@ describe('Tab Switching Behavior', () => {
   });
 
   it('should allow tab switching while editing', async () => {
-    // We will assert counts after navigation below; reset just before target navigation
-    await browser.resetMSWRequestCounts();
     await BasePage.open('');
     await expect(BasePage.tagLine).toBeDisplayed();
 
@@ -22,6 +20,8 @@ describe('Tab Switching Behavior', () => {
 
     await browser.login();
 
+    // Reset counters right before the navigational load we want to assert
+    await browser.resetMSWRequestCounts();
     await BasePage.open('');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
@@ -36,9 +36,10 @@ describe('Tab Switching Behavior', () => {
     // Test window switching behavior - simplified to focus on core functionality
     await browser.newWindow('https://www.google.com/');
 
-    // Switch to Google window
+    // Switch to Google window (URL may contain query params)
     await browser.switchWindow('www.google.com');
-    await expect(browser).toHaveUrl('https://www.google.com/');
+    const googleUrl = await browser.getUrl();
+    expect(googleUrl).toMatch(/^https:\/\/www\.google\.com/);
 
     // Switch back to our app
     await browser.switchWindow('http://localhost:8081');
@@ -63,7 +64,8 @@ describe('Tab Switching Behavior', () => {
 
     // Test one more window switch to verify state persistence
     await browser.switchWindow('google.com');
-    await expect(browser).toHaveUrl('https://www.google.com/');
+    const googleUrl2 = await browser.getUrl();
+    expect(googleUrl2).toMatch(/^https:\/\/www\.google\.com/);
     await browser.switchWindow('http://localhost:8081');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
