@@ -63,8 +63,7 @@ describe('Tab Switching Behavior', () => {
 
     // Test one more window switch to verify state persistence
     await browser.switchWindow('google.com');
-    const googleUrl2 = await browser.getUrl();
-    expect(googleUrl2).toMatch(/^https:\/\/www\.google\.com/);
+    await expect(browser).toHaveUrl(/^https:\/\/www\.google\.com/);
     await browser.switchWindow('http://localhost:8081');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
