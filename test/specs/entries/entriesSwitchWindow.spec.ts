@@ -38,8 +38,7 @@ describe('Tab Switching Behavior', () => {
 
     // Switch to Google window (URL may contain query params)
     await browser.switchWindow('www.google.com');
-    const googleUrl = await browser.getUrl();
-    expect(googleUrl).toMatch(/^https:\/\/www\.google\.com/);
+    await expect(browser).toHaveUrl(/^https:\/\/www\.google\.com/);
 
     // Switch back to our app
     await browser.switchWindow('http://localhost:8081');
