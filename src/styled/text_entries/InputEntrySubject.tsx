@@ -49,6 +49,7 @@ const InputEntrySubject = ({
   return (
     <TextField
       id={id}
+      autoComplete="off"
       sx={{
         width: `calc(100% - (${theme.drawer.width}px))`,
         minWidth: `calc(100% - (${theme.drawer.width}px))`,
