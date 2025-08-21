@@ -12,7 +12,6 @@ import {LoginButton} from './styled/LoginButton';
 const googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 
-
 export const redirectUrl = () => {
   switch (environment) {
     case 'staging':
@@ -70,7 +69,7 @@ const GoogleAuth = () => {
     const redirect = redirectUrl();
     console.info(`environment: ${environment}`);
     console.info(`redirect: ${redirect}`);
-    
+
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     const params = new URLSearchParams({
       scope: 'https://www.googleapis.com/auth/userinfo.email',
@@ -81,7 +80,7 @@ const GoogleAuth = () => {
       redirect_uri: redirect,
       client_id: googleClientID,
     });
-    
+
     authUrl.search = params.toString();
     window.location.assign(authUrl.toString());
   };
