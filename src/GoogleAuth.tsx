@@ -13,18 +13,14 @@ const googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 
 
-// Google's documentation shows the redirect_uri as encoded string
-// https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#oauth-2.0-endpoints
 export const redirectUrl = () => {
   if (environment === 'staging') {
-    console.info('returning https%3A//app.staging.tearleads.com/oauth/google');
-    return 'https%3A//app.staging.tearleads.com/oauth/google';
+    return 'https://app.staging.tearleads.com/oauth/google';
   }
   if (environment === 'production') {
-    console.info('returning https%3A//tearleads.com/oauth/google');
-    return 'https%3A//tearleads.com/oauth/google';
+    return 'https://tearleads.com/oauth/google';
   }
-  return 'http%3A//localhost:8080/oauth/google';
+  return 'http://localhost:8080/oauth/google';
 };
 
 const GoogleAuth = () => {
@@ -73,8 +69,11 @@ const GoogleAuth = () => {
     const redirect = redirectUrl();
     console.info(`environment: ${environment}`);
     console.info(`redirect: ${redirect}`);
+    // Google's documentation shows the redirect_uri as encoded string
+    // https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#oauth-2.0-endpoints
+    const encodedRedirect = encodeURIComponent(redirect);
     window.location.assign(
-      `https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=${redirect}&client_id=${googleClientID}`
+      `https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=${encodedRedirect}&client_id=${googleClientID}`
     );
   };
 
