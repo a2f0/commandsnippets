@@ -13,17 +13,16 @@ const googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 
 export const redirectUrl = () => {
-  console.info(`environment (redirectUrl): ${environment}`);
+  let baseUrl: string;
   if (environment === 'staging') {
-    console.info('returning https%3A//app.staging.tearleads.com/oauth/google');
-    return 'https%3A//app.staging.tearleads.com/oauth/google';
+    baseUrl = 'https://app.staging.tearleads.com/oauth/google';
+  } else if (environment === 'production') {
+    baseUrl = 'https://tearleads.com/oauth/google';
+  } else {
+    baseUrl = 'http://localhost:8080/oauth/google';
   }
-  if (environment === 'production') {
-    console.info('returning https%3A//tearleads.com/oauth/google');
-    return 'https%3A//tearleads.com/oauth/google';
-  }
-  console.info('returning http%3A//localhost:8080/oauth/google');
-  return 'http%3A//localhost:8080/oauth/google';
+
+  return baseUrl;
 };
 
 const GoogleAuth = () => {
