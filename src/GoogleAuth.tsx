@@ -13,17 +13,14 @@ const googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 
 export const redirectUrl = () => {
-  console.info(`environment (redirectUrl): ${environment}`);
-  if (environment === 'staging') {
-    console.info('returning https%3A//app.staging.tearleads.com/oauth/google');
-    return 'https%3A//app.staging.tearleads.com/oauth/google';
+  switch (environment) {
+    case 'staging':
+      return 'https://app.staging.tearleads.com/oauth/google';
+    case 'production':
+      return 'https://tearleads.com/oauth/google';
+    default:
+      return 'http://localhost:8080/oauth/google';
   }
-  if (environment === 'production') {
-    console.info('returning https%3A//tearleads.com/oauth/google');
-    return 'https%3A//tearleads.com/oauth/google';
-  }
-  console.info('returning http%3A//localhost:8080/oauth/google');
-  return 'http%3A//localhost:8080/oauth/google';
 };
 
 const GoogleAuth = () => {
@@ -72,9 +69,20 @@ const GoogleAuth = () => {
     const redirect = redirectUrl();
     console.info(`environment: ${environment}`);
     console.info(`redirect: ${redirect}`);
-    window.location.assign(
-      `https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/userinfo.email&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri=${redirect}&client_id=${googleClientID}`
-    );
+
+    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    const params = new URLSearchParams({
+      scope: 'https://www.googleapis.com/auth/userinfo.email',
+      access_type: 'offline',
+      include_granted_scopes: 'true',
+      response_type: 'code',
+      state: 'state_parameter_passthrough_value',
+      redirect_uri: redirect,
+      client_id: googleClientID,
+    });
+
+    authUrl.search = params.toString();
+    window.location.assign(authUrl.toString());
   };
 
   return (
