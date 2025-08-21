@@ -12,8 +12,10 @@ import {LoginButton} from './styled/LoginButton';
 const googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 
+
+// Google's documentation shows the redirect_uri as encoded string
+// https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#oauth-2.0-endpoints
 export const redirectUrl = () => {
-  console.info(`environment (redirectUrl): ${environment}`);
   if (environment === 'staging') {
     console.info('returning https%3A//app.staging.tearleads.com/oauth/google');
     return 'https%3A//app.staging.tearleads.com/oauth/google';
@@ -22,7 +24,6 @@ export const redirectUrl = () => {
     console.info('returning https%3A//tearleads.com/oauth/google');
     return 'https%3A//tearleads.com/oauth/google';
   }
-  console.info('returning http%3A//localhost:8080/oauth/google');
   return 'http%3A//localhost:8080/oauth/google';
 };
 
