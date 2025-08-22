@@ -33,14 +33,25 @@ const GoogleAuth = () => {
     const urlParams = new URLSearchParams(queryString);
     const code = urlParams.get('code');
     const scope = urlParams.get('scope');
+    const returnedState = urlParams.get('state');
+    const storedState = window.sessionStorage.getItem('oauth_state');
+
     console.info(`code (google auth): ${code}`);
     console.info(`scope (google auth): ${scope}`);
+
     if (
       code !== null &&
       code !== '' &&
       scope !== null &&
       scope.includes('https://www.googleapis.com/auth/userinfo.email')
     ) {
+      if (returnedState !== storedState) {
+        console.error('Invalid OAuth state - potential CSRF attack');
+        appConfig.setLoggedInUser(null);
+        return;
+      }
+
+      window.sessionStorage.removeItem('oauth_state');
       const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
       tearleadsApi
@@ -70,13 +81,16 @@ const GoogleAuth = () => {
     console.info(`environment: ${environment}`);
     console.info(`redirect: ${redirect}`);
 
+    const state = window.crypto.randomUUID();
+    window.sessionStorage.setItem('oauth_state', state);
+
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     const params = new URLSearchParams({
       scope: 'https://www.googleapis.com/auth/userinfo.email',
       access_type: 'offline',
       include_granted_scopes: 'true',
       response_type: 'code',
-      state: 'state_parameter_passthrough_value',
+      state: state,
       redirect_uri: redirect,
       client_id: googleClientID,
     });
