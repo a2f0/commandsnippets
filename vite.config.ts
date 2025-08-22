@@ -1,5 +1,4 @@
 import react from '@vitejs/plugin-react';
-import invariant from 'invariant';
 import type {PluginOption} from 'vite';
 import {analyzer} from 'vite-bundle-analyzer';
 import {createHtmlPlugin} from 'vite-plugin-html';
@@ -94,7 +93,7 @@ export default defineConfig(({mode}) => {
           manualChunks: (id: string) => {
             if (id.includes('node_modules')) {
               const match = id.match(/node_modules\/((?:@[^/]+\/[^/]+)|(?:[^/]+))/);
-              if (match) {
+              if (match && match[1]) {
                 const packageName = match[1];
                 if (['react', 'react-dom', 'react-router-dom'].includes(packageName)) {
                   return 'react-vendor';
