@@ -36,7 +36,7 @@ const GithubAuth = () => {
     console.info(`is_github_oauth (github auth): ${is_github_oauth}`);
 
     if (code !== null && code !== '' && is_github_oauth === true) {
-      if (returnedState !== storedState) {
+      if (!storedState || storedState !== returnedState) {
         console.error('Invalid OAuth state - potential CSRF attack');
         appConfig.setLoggedInUser(null);
         return;
@@ -68,12 +68,20 @@ const GithubAuth = () => {
   }, [appConfig.setLoggedInUser, navigate, setCookie]);
 
   const handleGitHubClick = () => {
-    const state = window.crypto.randomUUID();
-    window.sessionStorage.setItem('oauth_state', state);
+    try {
+      const state = window.crypto.randomUUID();
+      window.sessionStorage.setItem('oauth_state', state);
 
-    window.location.assign(
-      `https://github.com/login/oauth/authorize?scope=user:email&client_id=${githubClientID}&state=${state}`
-    );
+      window.location.assign(
+        `https://github.com/login/oauth/authorize?scope=user:email&client_id=${githubClientID}&state=${state}`
+      );
+    } catch (error) {
+      console.error(
+        'Failed to use sessionStorage. OAuth flow cannot proceed.',
+        error
+      );
+      // Show error to user that OAuth cannot proceed
+    }
   };
 
   return (

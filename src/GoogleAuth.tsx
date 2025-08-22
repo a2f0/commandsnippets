@@ -45,7 +45,7 @@ const GoogleAuth = () => {
       scope !== null &&
       scope.includes('https://www.googleapis.com/auth/userinfo.email')
     ) {
-      if (returnedState !== storedState) {
+      if (!storedState || storedState !== returnedState) {
         console.error('Invalid OAuth state - potential CSRF attack');
         appConfig.setLoggedInUser(null);
         return;
@@ -81,22 +81,30 @@ const GoogleAuth = () => {
     console.info(`environment: ${environment}`);
     console.info(`redirect: ${redirect}`);
 
-    const state = window.crypto.randomUUID();
-    window.sessionStorage.setItem('oauth_state', state);
+    try {
+      const state = window.crypto.randomUUID();
+      window.sessionStorage.setItem('oauth_state', state);
 
-    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    const params = new URLSearchParams({
-      scope: 'https://www.googleapis.com/auth/userinfo.email',
-      access_type: 'offline',
-      include_granted_scopes: 'true',
-      response_type: 'code',
-      state: state,
-      redirect_uri: redirect,
-      client_id: googleClientID,
-    });
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      const params = new URLSearchParams({
+        scope: 'https://www.googleapis.com/auth/userinfo.email',
+        access_type: 'offline',
+        include_granted_scopes: 'true',
+        response_type: 'code',
+        state: state,
+        redirect_uri: redirect,
+        client_id: googleClientID,
+      });
 
-    authUrl.search = params.toString();
-    window.location.assign(authUrl.toString());
+      authUrl.search = params.toString();
+      window.location.assign(authUrl.toString());
+    } catch (error) {
+      console.error(
+        'Failed to use sessionStorage. OAuth flow cannot proceed.',
+        error
+      );
+      // Show error to user that OAuth cannot proceed
+    }
   };
 
   return (
