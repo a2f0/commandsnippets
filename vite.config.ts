@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import invariant from 'invariant';
+import type {PluginOption} from 'vite';
 import {analyzer} from 'vite-bundle-analyzer';
 import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
@@ -72,16 +73,16 @@ export default defineConfig(({mode}) => {
     }),
   ];
 
-  const plugins =
-    mode === 'analyze'
-      ? [
-          ...basePlugins,
-          analyzer({
-            analyzerMode: 'static',
-            fileName: './stats.html',
-          }),
-        ]
-      : basePlugins;
+  const plugins: PluginOption[] = [...basePlugins];
+
+  if (mode === 'analyze') {
+    plugins.push(
+      analyzer({
+        analyzerMode: 'static',
+        fileName: './stats.html',
+      })
+    );
+  }
 
   return {
     build: {
