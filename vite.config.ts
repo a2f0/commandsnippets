@@ -1,43 +1,13 @@
 import react from '@vitejs/plugin-react';
-import {visualizer} from 'rollup-plugin-visualizer';
-import type {PluginOption} from 'vite';
+import {analyzer} from 'vite-bundle-analyzer';
 import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
 import packageJson from './package.json';
 
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
-export default defineConfig(({mode}) => ({
-  build: {
-    outDir: 'build',
-    target: 'esnext',
-    sourcemap: mode === 'analyze',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'mui-vendor': [
-            '@mui/material',
-            '@mui/icons-material',
-            '@emotion/react',
-            '@emotion/styled',
-          ],
-          'mobx-vendor': ['mobx', 'mobx-react', 'mobx-state-tree'],
-        },
-      },
-    },
-  },
-  server: {
-    port: 8080,
-    hmr: true,
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['fake-indexeddb/auto', '__tests__/setup.ts'],
-    include: ['__tests__/**/*.{test,spec}.{ts,tsx}'],
-  },
-  plugins: [
+export default defineConfig(({mode}) => {
+  const basePlugins = [
     react(),
     createHtmlPlugin({
       inject: {
@@ -99,13 +69,49 @@ export default defineConfig(({mode}) => ({
         ],
       },
     }),
-    mode === 'analyze' &&
-      (visualizer({
-        filename: './build/stats.html',
-        open: true,
-        gzipSize: true,
-        brotliSize: true,
-        template: 'treemap', // or 'sunburst', 'network', 'raw-data', 'list'
-      }) as unknown as PluginOption),
-  ].filter(Boolean) as PluginOption[],
-}));
+  ];
+
+  const plugins =
+    mode === 'analyze'
+      ? [
+          ...basePlugins,
+          analyzer({
+            analyzerMode: 'static',
+            fileName: './stats',
+          }),
+        ]
+      : basePlugins;
+
+  return {
+    build: {
+      outDir: 'build',
+      target: 'esnext',
+      sourcemap: mode === 'analyze',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'mui-vendor': [
+              '@mui/material',
+              '@mui/icons-material',
+              '@emotion/react',
+              '@emotion/styled',
+            ],
+            'mobx-vendor': ['mobx', 'mobx-react', 'mobx-state-tree'],
+          },
+        },
+      },
+    },
+    server: {
+      port: 8080,
+      hmr: true,
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['fake-indexeddb/auto', '__tests__/setup.ts'],
+      include: ['__tests__/**/*.{test,spec}.{ts,tsx}'],
+    },
+    plugins,
+  };
+});
