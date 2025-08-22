@@ -47,7 +47,7 @@ describe('MSW Verification Tests', () => {
 
     // Check if there are any console errors related to MSW
     const mswErrors = browser.currentTestErrors.filter(
-      error => error.text.includes('MSW') || error.text.includes('msw')
+      error => error.text?.includes('MSW') || error.text?.includes('msw')
     );
 
     console.log('MSW-related errors:', mswErrors.length);
@@ -128,10 +128,10 @@ describe('MSW Verification Tests', () => {
     // Verify no CORS errors or network errors
     const networkErrors = browser.currentTestErrors.filter(
       error =>
-        error.text.includes('network') ||
-        error.text.includes('fetch') ||
-        error.text.includes('CORS') ||
-        error.text.includes('Failed to fetch')
+        error.text?.includes('network') ||
+        error.text?.includes('fetch') ||
+        error.text?.includes('CORS') ||
+        error.text?.includes('Failed to fetch')
     );
 
     console.log('Network errors found:', networkErrors.length);
@@ -276,9 +276,9 @@ describe('MSW Verification Tests', () => {
     // Check if there are any network-related errors
     const networkErrors = browser.currentTestErrors.filter(
       error =>
-        error.text.includes('network') ||
-        error.text.includes('fetch') ||
-        error.text.includes('CORS')
+        error.text?.includes('network') ||
+        error.text?.includes('fetch') ||
+        error.text?.includes('CORS')
     );
 
     console.log('Network errors found:', networkErrors.length);
@@ -294,9 +294,9 @@ describe('MSW Verification Tests', () => {
     // Check for any HTTP-related errors
     const httpErrors = browser.currentTestErrors.filter(
       error =>
-        error.text.includes('404') ||
-        error.text.includes('500') ||
-        error.text.includes('HTTP')
+        error.text?.includes('404') ||
+        error.text?.includes('500') ||
+        error.text?.includes('HTTP')
     );
 
     console.log('HTTP errors found:', httpErrors.length);
