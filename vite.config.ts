@@ -1,14 +1,31 @@
 import react from '@vitejs/plugin-react';
+import {visualizer} from 'rollup-plugin-visualizer';
+import type {PluginOption} from 'vite';
 import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
 import packageJson from './package.json';
 
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
-export default defineConfig({
+export default defineConfig(({mode}) => ({
   build: {
     outDir: 'build',
     target: 'esnext',
+    sourcemap: mode === 'analyze',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'mui-vendor': [
+            '@mui/material',
+            '@mui/icons-material',
+            '@emotion/react',
+            '@emotion/styled',
+          ],
+          'mobx-vendor': ['mobx', 'mobx-react', 'mobx-state-tree'],
+        },
+      },
+    },
   },
   server: {
     port: 8080,
@@ -82,5 +99,13 @@ export default defineConfig({
         ],
       },
     }),
-  ],
-});
+    mode === 'analyze' &&
+      (visualizer({
+        filename: './build/stats.html',
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+        template: 'treemap', // or 'sunburst', 'network', 'raw-data', 'list'
+      }) as unknown as PluginOption),
+  ].filter(Boolean) as PluginOption[],
+}));
