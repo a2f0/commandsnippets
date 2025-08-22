@@ -23,7 +23,7 @@
     "build:analyze": "vite build --mode analyze",
     "analyze": "pnpm run build:analyze",
     "postbuild": "scripts/postBuild.sh",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf build",
     "compile": "tsc -b",
     "prepare": "npm run compile"
   },

@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react';
+import invariant from 'invariant';
 import {analyzer} from 'vite-bundle-analyzer';
 import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
@@ -77,7 +78,7 @@ export default defineConfig(({mode}) => {
           ...basePlugins,
           analyzer({
             analyzerMode: 'static',
-            fileName: './stats',
+            fileName: './stats.html',
           }),
         ]
       : basePlugins;
@@ -89,15 +90,24 @@ export default defineConfig(({mode}) => {
       sourcemap: mode === 'analyze',
       rollupOptions: {
         output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            'mui-vendor': [
-              '@mui/material',
-              '@mui/icons-material',
-              '@emotion/react',
-              '@emotion/styled',
-            ],
-            'mobx-vendor': ['mobx', 'mobx-react', 'mobx-state-tree'],
+          manualChunks: (id: string) => {
+            if (id.includes('node_modules')) {
+              const parts = id.split('node_modules/')[1];
+              invariant(parts, `Failed to parse node_modules path: ${id}`);
+              const name = parts.split('/')[0];
+              invariant(
+                name,
+                `Failed to extract package name from path: ${id}`
+              );
+              if (['react', 'react-dom', 'react-router-dom'].includes(name))
+                return 'react-vendor';
+              if (name.startsWith('@mui') || name.startsWith('@emotion'))
+                return 'mui-vendor';
+              if (['mobx', 'mobx-react', 'mobx-state-tree'].includes(name))
+                return 'mobx-vendor';
+              return 'vendor';
+            }
+            return undefined;
           },
         },
       },
