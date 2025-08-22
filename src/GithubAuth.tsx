@@ -72,9 +72,15 @@ const GithubAuth = () => {
       const state = window.crypto.randomUUID();
       window.sessionStorage.setItem('oauth_state', state);
 
-      window.location.assign(
-        `https://github.com/login/oauth/authorize?scope=user:email&client_id=${githubClientID}&state=${state}`
-      );
+      const authUrl = new URL('https://github.com/login/oauth/authorize');
+      const params = new URLSearchParams({
+        scope: 'user:email',
+        client_id: githubClientID,
+        state: state,
+      });
+
+      authUrl.search = params.toString();
+      window.location.assign(authUrl.toString());
     } catch (error) {
       console.error(
         'Failed to use sessionStorage. OAuth flow cannot proceed.',
