@@ -93,19 +93,19 @@ export default defineConfig(({mode}) => {
         output: {
           manualChunks: (id: string) => {
             if (id.includes('node_modules')) {
-              const parts = id.split('node_modules/')[1];
-              invariant(parts, `Failed to parse node_modules path: ${id}`);
-              const name = parts.split('/')[0];
-              invariant(
-                name,
-                `Failed to extract package name from path: ${id}`
-              );
-              if (['react', 'react-dom', 'react-router-dom'].includes(name))
-                return 'react-vendor';
-              if (name.startsWith('@mui') || name.startsWith('@emotion'))
-                return 'mui-vendor';
-              if (['mobx', 'mobx-react', 'mobx-state-tree'].includes(name))
-                return 'mobx-vendor';
+              const match = id.match(/node_modules\/((?:@[^/]+\/[^/]+)|(?:[^/]+))/);
+              if (match) {
+                const packageName = match[1];
+                if (['react', 'react-dom', 'react-router-dom'].includes(packageName)) {
+                  return 'react-vendor';
+                }
+                if (packageName.startsWith('@mui/') || packageName.startsWith('@emotion/')) {
+                  return 'mui-vendor';
+                }
+                if (['mobx', 'mobx-react', 'mobx-state-tree'].includes(packageName)) {
+                  return 'mobx-vendor';
+                }
+              }
               return 'vendor';
             }
             return undefined;
