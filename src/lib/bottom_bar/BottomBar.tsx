@@ -2,7 +2,7 @@ import {Box, Button, Menu, MenuItem} from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {styled} from '@mui/material/styles';
 import {observer} from 'mobx-react';
-import React, {useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
 import {TagSearch} from '../../TagSearch';
 import {environment} from '../environment';

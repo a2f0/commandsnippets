@@ -22,11 +22,11 @@ repos:
         entry: npx biome check --write
         pass_filenames: false
         language: node
-      - id: tsc
-        name: tsc
-        entry: npx tsc -b
+      - id: tsc -b
+        name: tsc -b
+        entry: pnpm tsc -b
         pass_filenames: false
-        language: node
+        language: system
       - id: yamllint
         name: yamllint
         entry: yamllint .
