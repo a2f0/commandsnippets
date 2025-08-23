@@ -159,6 +159,9 @@ importers:
       msw:
         specifier: 2.10.4
         version: 2.10.4(@types/node@24.1.0)(typescript@5.9.2)
+      rimraf:
+        specifier: 6.0.1
+        version: 6.0.1
       start-server-and-test:
         specifier: 2.0.13
         version: 2.0.13
@@ -4243,6 +4246,11 @@ packages:
 
   rgb2hex@0.2.5:
     resolution: {integrity: sha512-22MOP1Rh7sAo1BZpDG6R5RFYzR2lYEgwq7HEmyW2qcsOqR2lQKmn+O//xV3YG/0rrhMC6KVX2hU+ZXuaw9a5bw==}
+
+  rimraf@6.0.1:
+    resolution: {integrity: sha512-9dkvaxAsk/xNXSJzMgFqqMCuFgt2+KsOFek3TMLfo8NCPfWpBmqwyNn5Y+NX56QUYfCtsyhF3ayiboEoUmJk/A==}
+    engines: {node: 20 || >=22}
+    hasBin: true
 
   rollup@2.79.2:
     resolution: {integrity: sha512-fS6iqSPZDs3dr/y7Od6y5nha8dW1YnbgtsyotCVvoFGKbERG++CVRFv1meyGDE1SNItQA8BrnCw7ScdAhRJ3XQ==}
@@ -9603,6 +9611,11 @@ snapshots:
   reusify@1.1.0: {}
 
   rgb2hex@0.2.5: {}
+
+  rimraf@6.0.1:
+    dependencies:
+      glob: 11.0.3
+      package-json-from-dist: 1.0.1
 
   rollup@2.79.2:
     optionalDependencies:

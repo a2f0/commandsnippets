@@ -1,51 +1,63 @@
 import {AppBar, Box} from '@mui/material';
 import {observer} from 'mobx-react';
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {useCookies} from 'react-cookie';
 import {useLocation, useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
+import {BottomToolbar} from './components/BottomToolbar';
 import {LeftDrawer} from './drawer/LeftDrawer';
 import {RightDrawer} from './drawer/RightDrawer';
 import {EntryList} from './EntryList';
-import {BottomBar} from './lib/bottom_bar/BottomBar';
 import {MenuBar} from './MenuBar';
 import {StyledToolbar} from './styled/layout/StyledToolbar';
+
+const COOKIE_KEY = 'LoggedIn';
+const BORDER_COLOR = '#808080';
 
 const Main = () => {
   const location = useLocation();
   const appConfig = useAppContext();
   const navigate = useNavigate();
-  const [cookies] = useCookies(['LoggedIn']);
+  const [cookies] = useCookies([COOKIE_KEY]);
 
+  // Redirect to user's page when on root path.
   useEffect(() => {
     if (location.pathname === '/' && appConfig.loggedInUser !== null) {
       navigate(`/${appConfig.loggedInUser}`);
     }
-  });
+  }, [location.pathname, appConfig.loggedInUser, navigate]);
 
   // If the user has cleared their cookies, log them out from the application state.
   // Note: this is not the Authorization cookie containing the authorization token.
-  useEffect(() => {
-    if (!cookies.LoggedIn) {
-      if (appConfig.loggedInUser !== null) {
-        console.warn('Cookie logout occurred.');
-        appConfig.setLoggedInUser(null);
-      }
+  const handleCookieLogout = useCallback(() => {
+    if (!cookies[COOKIE_KEY] && appConfig.loggedInUser !== null) {
+      console.warn('Cookie logout occurred.');
+      appConfig.setLoggedInUser(null);
     }
-  }, [appConfig.loggedInUser, appConfig.setLoggedInUser, cookies.LoggedIn]);
+  }, [cookies[COOKIE_KEY], appConfig.loggedInUser, appConfig.setLoggedInUser]);
+
+  useEffect(() => {
+    handleCookieLogout();
+  }, [handleCookieLogout]);
 
   return (
-    <>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+      }}
+    >
       <AppBar
         position="sticky"
         sx={{
-          boxShadow: 'none', // Remove the Material UI 'bottom border'.
-          backgroundImage: 'none', // Remove the Material UI gradient.
-          borderBottom: '1px solid #808080',
-          backgroundColor: theme => `${theme.header.background}`,
+          boxShadow: 'none',
+          backgroundImage: 'none',
+          borderBottom: `1px solid ${BORDER_COLOR}`,
+          backgroundColor: theme => theme.header.background,
           top: 0,
-          height: theme => `${theme.appBar.height}`,
+          height: theme => theme.appBar.height,
         }}
       >
         <StyledToolbar>
@@ -53,29 +65,24 @@ const Main = () => {
         </StyledToolbar>
       </AppBar>
       <Box
-        display="flex"
-        flex-direction="column"
         sx={{
-          minHeight: '100vh',
+          display: 'flex',
+          flex: 1,
         }}
       >
         <LeftDrawer />
         <EntryList />
         <RightDrawer />
       </Box>
-      <AppBar
-        position="sticky"
+      <Box
         sx={{
-          backgroundColor: theme => theme.palette.background.default,
-          bottom: 0,
-          backgroundImage: 'none', // Remove the Material UI gradient.
+          position: 'relative',
+          zIndex: theme => theme.zIndex.drawer + 1,
         }}
       >
-        <StyledToolbar>
-          <BottomBar />
-        </StyledToolbar>
-      </AppBar>
-    </>
+        <BottomToolbar />
+      </Box>
+    </Box>
   );
 };
 

@@ -21,14 +21,15 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 ### Testing
 
+
 #### E2E Tests (WebdriverIO)
-- `pnpm run ci` - Start server and run E2E tests (with browser UI)
+
+When running integration tests, it is recommended to use the headless option. The headless configuration is defined in `test/wdio.headless.conf.ts`
+
 - `pnpm run ci-headless` - Start server and run E2E tests headless (recommended)
-- `pnpm run server-test` - Start testing server on port 8081 with MSW enabled (mode: test)
-- `pnpm run test` - Run E2E tests with browser UI (requires server-test running separately)
 - `pnpm run test-headless` - Run E2E tests headless (requires server-test running separately)
-- `scripts/runSpecHeadless.sh test/specs/tags/tagListContextMenu.spec.ts` - Run specific spec file headless
-- `scripts/runSpec.sh test/specs/tags/tagListContextMenu.spec.ts` - Run specific spec file with browser UI
+- `scripts/runSpecHeadless.sh <spec-file>` - Run specific spec file headless
+- `scripts/runSpec.sh <spec-file>` - Run specific spec file with browser UI
 
 #### Unit Tests (Vitest)
 - `pnpm run unit` - Run unit tests
@@ -100,10 +101,18 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 ### Linting & Formatting
 - Always run `pnpm run lint` and `pnpm run format` to test changes
+- Always ensure `biome check --write` passes without errors when making changes
+- Use `pnpm run fix` (which runs `biome check --write`) to automatically fix issues
 - Never add linting or formatting exceptions in code
 
 ### Dependencies
-- Always pin dependencies with `--save-exact` when modifying package.json
+- Always pin dependencies to exact versions (no ^ or ~ prefix) when adding or updating packages
+- Use `pnpm add --save-exact <package>` for new dependencies
+- Use `pnpm add -D --save-exact <package>` for new dev dependencies
+- When manually editing package.json, ensure version numbers have no range specifiers
+- Always run `pnpm install` after modifying package.json to update pnpm-lock.yaml
+- Never commit package.json changes without the corresponding pnpm-lock.yaml updates
+- When removing dependencies, use `pnpm remove <package>` to update both package.json and pnpm-lock.yaml
 
 ### TypeScript
 - Always use `pnpm run compile` (or `npx tsc -b`) after making changes to ensure TypeScript compiles
