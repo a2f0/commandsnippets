@@ -92,16 +92,13 @@ export default defineConfig(({mode}) => {
         output: {
           manualChunks: (id: string) => {
             if (id.includes('node_modules')) {
-              const match = id.match(
-                /node_modules\/((?:@[^/]+\/[^/]+)|(?:[^/]+))/
-              );
-              if (match && match[1]) {
+              const reactPackages = ['react', 'react-dom', 'react-router-dom'];
+              const mobxPackages = ['mobx', 'mobx-react', 'mobx-state-tree'];
+              const match = id.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+
+              if (match?.[1]) {
                 const packageName = match[1];
-                if (
-                  ['react', 'react-dom', 'react-router-dom'].includes(
-                    packageName
-                  )
-                ) {
+                if (reactPackages.includes(packageName)) {
                   return 'react-vendor';
                 }
                 if (
@@ -110,11 +107,7 @@ export default defineConfig(({mode}) => {
                 ) {
                   return 'mui-vendor';
                 }
-                if (
-                  ['mobx', 'mobx-react', 'mobx-state-tree'].includes(
-                    packageName
-                  )
-                ) {
+                if (mobxPackages.includes(packageName)) {
                   return 'mobx-vendor';
                 }
               }
