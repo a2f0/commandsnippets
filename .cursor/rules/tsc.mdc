@@ -1,6 +1,0 @@
----
-description:
-globs:
-alwaysApply: true
----
-Always use `pnpm tsc -b` after making changes to make sure TypeScript compiles. Also, never use `any` as a type, or `as` for type assertion.
