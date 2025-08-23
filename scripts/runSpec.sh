@@ -1,8 +1,8 @@
 #!/bin/sh
 # This script runs a single test using wdio.
 if [ -z "$1" ]; then
-    echo "Usage: $0 <spec-file>"
-    echo "Example: $0 test/specs/basic.spec.ts"
+    echo "Usage: $0 <spec-file>" >&2
+    echo "Example: $0 test/specs/basic.spec.ts" >&2
     exit 1
 fi
 
