@@ -55,7 +55,6 @@ const BottomBar = () => {
                 aria-controls={open ? 'bottom-bar-menu' : undefined}
                 aria-expanded={open}
                 sx={{
-                  mr: theme => theme.spacing(0.5),
                   color: theme => theme.palette.text.primary,
                   fontFamily: 'monospace',
                   fontSize: theme => theme.typography.caption.fontSize,
@@ -86,18 +85,10 @@ const BottomBar = () => {
                   horizontal: 'left',
                 }}
               >
-                <MenuItem disabled>
-                  Profile
-                </MenuItem>
-                <MenuItem disabled>
-                  Settings
-                </MenuItem>
-                <MenuItem disabled>
-                  Help
-                </MenuItem>
-                <MenuItem disabled>
-                  Logout
-                </MenuItem>
+                <MenuItem disabled>Profile</MenuItem>
+                <MenuItem disabled>Settings</MenuItem>
+                <MenuItem disabled>Help</MenuItem>
+                <MenuItem disabled>Logout</MenuItem>
               </Menu>
             </>
           )}
