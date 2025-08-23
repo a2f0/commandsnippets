@@ -6,6 +6,9 @@ import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
 import packageJson from './package.json';
 
+const reactPackages = ['react', 'react-dom', 'react-router-dom'];
+const mobxPackages = ['mobx', 'mobx-react', 'mobx-state-tree'];
+
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
 export default defineConfig(({mode}) => {
   const basePlugins = [
@@ -92,8 +95,6 @@ export default defineConfig(({mode}) => {
         output: {
           manualChunks: (id: string) => {
             if (id.includes('node_modules')) {
-              const reactPackages = ['react', 'react-dom', 'react-router-dom'];
-              const mobxPackages = ['mobx', 'mobx-react', 'mobx-state-tree'];
               const match = id.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
 
               if (match?.[1]) {
