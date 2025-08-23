@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding assistants (Claude Code, Gemini Code Assist, etc.) when working with code in this repository.
 
 ## Project Overview
 
@@ -16,18 +16,19 @@ Tearleads is a command snippet tool for computer programmers and system administ
 ### Code Quality
 - `pnpm run lint` - Run Biome linting
 - `pnpm run format` - Run Biome formatting
-- `pnpm run fix` - Auto-fix linting issues
-- `npx tsc -b` or `pnpm run compile` - TypeScript compilation check
+- `pnpm run fix` - Auto-fix linting and formatting issues (runs `biome check --write`)
+- `pnpm run compile` or `npx tsc -b` - TypeScript compilation check
 
 ### Testing
 
 #### E2E Tests (WebdriverIO)
-- `pnpm run ci` - Start server and run E2E tests
-- `pnpm run ci-headless` - Start server and run E2E tests headless
-- `pnpm run server-test` - Start testing server on port 8081
-- `pnpm run test` - Run E2E tests (requires server-test running)
-- `pnpm run test-headless` - Run E2E tests headless
-- `pnpm start-server-and-test server-test http-get://localhost:8081 "npx wdio test/wdio.headless.conf.ts --spec test/specs/tags/tagListContextMenu.spec.ts"` - Run specific spec
+- `pnpm run ci` - Start server and run E2E tests (with browser UI)
+- `pnpm run ci-headless` - Start server and run E2E tests headless (recommended)
+- `pnpm run server-test` - Start testing server on port 8081 with MSW enabled (mode: test)
+- `pnpm run test` - Run E2E tests with browser UI (requires server-test running separately)
+- `pnpm run test-headless` - Run E2E tests headless (requires server-test running separately)
+- `scripts/runSpecHeadless.sh test/specs/tags/tagListContextMenu.spec.ts` - Run specific spec file headless
+- `scripts/runSpec.sh test/specs/tags/tagListContextMenu.spec.ts` - Run specific spec file with browser UI
 
 #### Unit Tests (Vitest)
 - `pnpm run unit` - Run unit tests
@@ -36,7 +37,8 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 ### Build
 - `pnpm run build` - Build production bundle
-- `pnpm run postbuild` - Post-build script
+- `pnpm run build:analyze` or `pnpm run analyze` - Build with bundle analysis
+- `pnpm run postbuild` - Post-build script (runs automatically after build)
 - `pnpm run clean` - Remove build directory
 
 ## Architecture
@@ -81,6 +83,39 @@ Tearleads is a command snippet tool for computer programmers and system administ
 ### Important Patterns
 - Use `useAppContext()` hook to access the MobX-State-Tree store
 - Components are organized by feature (tags, entries, menus, etc.)
-- MSW is automatically enabled in development mode
+- MSW is automatically enabled in test mode only (not in development)
 - Both IndexedDB (offline) and SQLite (sync) database adapters available
 - User-defined ordering is a key feature for both Tags and Entries
+
+## Development Guidelines
+
+### Committing
+- Use conventional commit syntax when committing files
+- Do not commit changes unless explicitly asked to
+- Never force push to shared branches
+- Always pull the latest changes (e.g., using `git pull --rebase`) and resolve conflicts locally before pushing
+
+### File Naming
+- Name new files with camel case
+
+### Linting & Formatting
+- Always run `pnpm run lint` and `pnpm run format` to test changes
+- Never add linting or formatting exceptions in code
+
+### Dependencies
+- Always pin dependencies with `--save-exact` when modifying package.json
+
+### TypeScript
+- Always use `pnpm run compile` (or `npx tsc -b`) after making changes to ensure TypeScript compiles
+- Never use `any` as a type, or `as` for type assertion
+
+### Package Manager
+- Always use `pnpm` for the JavaScript package manager
+
+### Language
+- Always write code in TypeScript, never JavaScript
+
+### Testing
+- Run unit tests with `pnpm run unit` or specific tests with path (e.g., `pnpm run unit -- __tests__/reorderEntryList.spec.tsx`)
+- Run E2E tests with `pnpm run ci-headless` for full suite
+- Run specific E2E test with `scripts/runSpecHeadless.sh <spec-file>` (e.g., `scripts/runSpecHeadless.sh test/specs/tags/search.spec.ts`)

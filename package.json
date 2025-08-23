@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.48",
+  "version": "0.7.57",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "server": "vite serve",
-    "server-test": "vite serve --port 8081",
+    "server-test": "vite serve --mode test --port 8081",
     "dev": "vite serve --host",
     "test": "npx wdio test/wdio.shared.conf.ts",
     "test-headless": "npx wdio test/wdio.headless.conf.ts",
@@ -20,8 +20,10 @@
     "format": "biome format",
     "lint": "biome lint",
     "build": "vite build",
+    "build:analyze": "vite build --mode analyze",
+    "analyze": "pnpm run build:analyze",
     "postbuild": "scripts/postBuild.sh",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf build",
     "compile": "tsc -b",
     "prepare": "npm run compile"
   },
@@ -66,6 +68,7 @@
     "typescript": "5.9.2",
     "url-loader": "4.1.1",
     "vite": "7.0.6",
+    "vite-bundle-analyzer": "1.2.1",
     "vite-plugin-html": "3.2.2",
     "vite-plugin-pwa": "1.0.2",
     "vitest": "3.2.4",

@@ -1,29 +1,17 @@
-import type {
-  RequestedMultiremoteCapabilities,
-  RequestedStandaloneCapabilities,
-} from '@wdio/types/build/Capabilities';
+import type {Capabilities} from '@wdio/types';
 import video from 'wdio-video-reporter';
 
 import {defaultState} from '../src/lib/shared';
 
-interface LogEntry {
-  type: 'console' | 'javascript';
-  level: 'debug' | 'info' | 'warn' | 'error';
-  text: string;
+// Define LogEntry type to match webdriver's actual type
+type LogEntry = {
+  level: string;
+  text: string | null;
+  type: string;
   timestamp: number;
-  stackTrace?: {
-    url: string;
-    realm: string;
-    function?: string;
-    line: number;
-    column: number;
-  };
-  args?: Array<{
-    type: string;
-    value: string;
-  }>;
-  method?: string;
-}
+  source?: unknown;
+  stackTrace?: unknown;
+};
 
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {
@@ -135,11 +123,10 @@ export const config: WebdriverIO.Config = {
 
   before: async (
     _capabilities:
-      | RequestedStandaloneCapabilities
-      | RequestedMultiremoteCapabilities,
+      | Capabilities.RequestedStandaloneCapabilities
+      | Capabilities.RequestedMultiremoteCapabilities,
     _specs: string[],
-    // biome-ignore lint: suspicious/noExplicitAny
-    browser: any
+    browser
   ) => {
     // Initialize currentTestErrors as a property of the browser object
     browser.currentTestErrors = [];
@@ -293,15 +280,23 @@ export const config: WebdriverIO.Config = {
 
     browser.addCommand('logout', async () => {
       await browser.execute(
-        function (this: typeof browser, key: string, value: string) {
-          this.localStorage.setItem(key, value);
+        (key: string, value: string) => {
+          window.localStorage.setItem(key, value);
         },
         'LoggedIn',
         'None'
       );
       await browser.deleteCookies();
     });
-    browser.on('log.entryAdded', (logEntry: LogEntry) => {
+    // Create a properly typed wrapper for the log event handler
+    function addLogEntryHandler(
+      browser: WebdriverIO.Browser,
+      handler: (logEntry: LogEntry) => void
+    ) {
+      browser.on('log.entryAdded', handler);
+    }
+
+    addLogEntryHandler(browser, logEntry => {
       if (logEntry.level === 'error') {
         console.info(JSON.stringify(logEntry, null, '  '));
         browser.currentTestErrors.push(logEntry);
@@ -329,8 +324,8 @@ export const config: WebdriverIO.Config = {
         loggedInUser: 'test',
       };
       await browser.execute(
-        function (this: typeof browser, key: string, value: string) {
-          this.localStorage.setItem(key, value);
+        (key: string, value: string) => {
+          window.localStorage.setItem(key, value);
         },
         'mst-tearleads-test',
         JSON.stringify(appState)

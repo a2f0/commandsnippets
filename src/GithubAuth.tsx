@@ -29,9 +29,20 @@ const GithubAuth = () => {
     const is_github_oauth = window.location.href.includes('oauth/github');
     const urlParams = new URLSearchParams(queryString);
     const code = urlParams.get('code');
+    const returnedState = urlParams.get('state');
+    const storedState = window.sessionStorage.getItem('oauth_state');
+
     console.info(`code (github auth): ${code}`);
     console.info(`is_github_oauth (github auth): ${is_github_oauth}`);
+
     if (code !== null && code !== '' && is_github_oauth === true) {
+      if (!storedState || storedState !== returnedState) {
+        console.error('Invalid OAuth state - potential CSRF attack');
+        appConfig.setLoggedInUser(null);
+        return;
+      }
+
+      window.sessionStorage.removeItem('oauth_state');
       const newURL = `${window.location.protocol}//${window.location.host}/`;
       window.history.pushState({}, '', newURL);
       tearleadsApi
@@ -57,9 +68,26 @@ const GithubAuth = () => {
   }, [appConfig.setLoggedInUser, navigate, setCookie]);
 
   const handleGitHubClick = () => {
-    window.location.assign(
-      `https://github.com/login/oauth/authorize?scope=user:email&client_id=${githubClientID}`
-    );
+    try {
+      const state = window.crypto.randomUUID();
+      window.sessionStorage.setItem('oauth_state', state);
+
+      const authUrl = new URL('https://github.com/login/oauth/authorize');
+      const params = new URLSearchParams({
+        scope: 'user:email',
+        client_id: githubClientID,
+        state: state,
+      });
+
+      authUrl.search = params.toString();
+      window.location.assign(authUrl.toString());
+    } catch (error) {
+      console.error(
+        'Failed to use sessionStorage. OAuth flow cannot proceed.',
+        error
+      );
+      // Show error to user that OAuth cannot proceed
+    }
   };
 
   return (

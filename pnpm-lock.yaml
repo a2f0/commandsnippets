@@ -183,6 +183,9 @@ importers:
       vite:
         specifier: 7.0.6
         version: 7.0.6(@types/node@24.1.0)(terser@5.43.1)(tsx@4.20.3)
+      vite-bundle-analyzer:
+        specifier: 1.2.1
+        version: 1.2.1
       vite-plugin-html:
         specifier: 3.2.2
         version: 3.2.2(vite@7.0.6(@types/node@24.1.0)(terser@5.43.1)(tsx@4.20.3))
@@ -4845,6 +4848,10 @@ packages:
 
   validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
+
+  vite-bundle-analyzer@1.2.1:
+    resolution: {integrity: sha512-dpJMQBnVjieMirpHILmgGsZAWU8fGyqK3ckj6O48wdy3fARlH7Mnz7BfYFUsd3ZdbuXjsYe7t5I/q2zsMOd5ig==}
+    hasBin: true
 
   vite-node@3.2.4:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
@@ -10245,6 +10252,8 @@ snapshots:
     dependencies:
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
+
+  vite-bundle-analyzer@1.2.1: {}
 
   vite-node@3.2.4(@types/node@24.1.0)(terser@5.43.1)(tsx@4.20.3):
     dependencies:
