@@ -24,7 +24,7 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 #### E2E Tests (WebdriverIO)
 
-When running integration tests, always use the headless option. The headless configuration is defined in `test/wdio.headless.conf.ts`
+When running integration tests, it is recommended to use the headless option. The headless configuration is defined in `test/wdio.headless.conf.ts`
 
 - `pnpm run ci-headless` - Start server and run E2E tests headless (recommended)
 - `pnpm run test-headless` - Run E2E tests headless (requires server-test running separately)
