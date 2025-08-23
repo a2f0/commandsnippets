@@ -76,8 +76,7 @@ const Main = () => {
       </Box>
       <Box
         sx={{
-          position: 'sticky',
-          bottom: 0,
+          position: 'relative',
           zIndex: theme => theme.zIndex.drawer + 1,
         }}
       >
