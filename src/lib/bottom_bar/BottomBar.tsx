@@ -3,9 +3,9 @@ import Grid from '@mui/material/Grid';
 import {styled} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useState} from 'react';
-
 import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
 import {TagSearch} from '../../TagSearch';
+import {environment} from '../environment';
 import {Mode} from './Mode';
 import {Version} from './Version';
 
@@ -47,41 +47,45 @@ const BottomBar = () => {
           }}
         >
           <Mode />
-          <Typography
-            variant="caption"
-            fontFamily="monospace"
-            onClick={handleClick}
-            sx={{
-              mr: theme => theme.spacing(0.5),
-              color: theme => theme.palette.text.primary,
-              cursor: 'pointer',
-              userSelect: 'none',
-              alignSelf: 'flex-end',
-              '&:hover': {
-                textDecoration: 'underline',
-              },
-            }}
-          >
-            [menu]
-          </Typography>
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleClose}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
-            }}
-            transformOrigin={{
-              vertical: 'bottom',
-              horizontal: 'left',
-            }}
-          >
-            <MenuItem onClick={handleClose}>Profile</MenuItem>
-            <MenuItem onClick={handleClose}>Settings</MenuItem>
-            <MenuItem onClick={handleClose}>Help</MenuItem>
-            <MenuItem onClick={handleClose}>Logout</MenuItem>
-          </Menu>
+          {environment !== 'production' && (
+            <>
+              <Typography
+                variant="caption"
+                fontFamily="monospace"
+                onClick={handleClick}
+                sx={{
+                  mr: theme => theme.spacing(0.5),
+                  color: theme => theme.palette.text.primary,
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  alignSelf: 'flex-end',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                [menu]
+              </Typography>
+              <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'left',
+                }}
+                transformOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                }}
+              >
+                <MenuItem onClick={handleClose}>Profile</MenuItem>
+                <MenuItem onClick={handleClose}>Settings</MenuItem>
+                <MenuItem onClick={handleClose}>Help</MenuItem>
+                <MenuItem onClick={handleClose}>Logout</MenuItem>
+              </Menu>
+            </>
+          )}
           <Version />
         </Box>
       </Grid>
