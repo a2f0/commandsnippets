@@ -18,8 +18,8 @@ repos:
         pass_filenames: false
         language: node
       - id: biome-check-fix
-        name: biome check --fix
-        entry: npx biome check --fix
+        name: biome check --write
+        entry: npx biome check --write
         pass_filenames: false
         language: node
       - id: tsc

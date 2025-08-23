@@ -100,7 +100,7 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 ### Linting & Formatting
 - Always run `pnpm run lint` and `pnpm run format` to test changes
-- Always ensure `biome check --fix` passes without errors when making changes
+- Always ensure `biome check --write` passes without errors when making changes
 - Use `pnpm run fix` (which runs `biome check --write`) to automatically fix issues
 - Never add linting or formatting exceptions in code
 
