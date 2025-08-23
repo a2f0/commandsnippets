@@ -4,20 +4,18 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Layout', () => {
   it('should not have the tag list obstruct the entry list', async () => {
+    // Navigate to page first, then login (using MSW)
     await BasePage.open('');
-    await browser.execute(() => {
-      window.localStorage.setItem('LoggedIn', 'true');
-    });
+    await browser.login();
     await BasePage.open('');
 
-    const tagList = await browser.$('#tagList');
-    const entryList = await browser.$('#tagsEntriesList');
-    await tagList.waitForDisplayed();
-    await entryList.waitForDisplayed();
+    // Wait for elements to be displayed
+    await BasePage.tagList.waitForDisplayed({timeout: 5000});
+    await BasePage.tagsEntriesList.waitForDisplayed({timeout: 5000});
 
-    const tagListLocation = await tagList.getLocation();
-    const tagListSize = await tagList.getSize();
-    const entryListLocation = await entryList.getLocation();
+    const tagListLocation = await BasePage.tagList.getLocation();
+    const tagListSize = await BasePage.tagList.getSize();
+    const entryListLocation = await BasePage.tagsEntriesList.getLocation();
 
     expect(tagListLocation.x + tagListSize.width).toBeLessThanOrEqual(
       entryListLocation.x

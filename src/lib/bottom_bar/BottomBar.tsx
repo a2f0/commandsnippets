@@ -13,13 +13,6 @@ const Aligner = styled('div')`
   display: flex;
 `;
 
-const BottomBarContainer = styled('div')`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-`;
-
 const BottomBar = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -33,7 +26,14 @@ const BottomBar = () => {
   }, []);
 
   return (
-    <BottomBarContainer>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+      }}
+    >
       <Aligner>
         <TagSearch /> <TextEntrySearchField />
       </Aligner>
@@ -92,7 +92,7 @@ const BottomBar = () => {
         )}
         <Version />
       </Box>
-    </BottomBarContainer>
+    </Box>
   );
 };
 
