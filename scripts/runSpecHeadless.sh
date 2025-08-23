@@ -2,7 +2,7 @@
 # This script runs a single test using wdio headless.
 if [ -z "$1" ]; then
     echo "Usage: $0 <spec-file>"
-    echo "Example: $0 test/specs/basic.spec.ts"
+    echo "Example: $0 test/specs/tags/search.spec.ts"
     exit 1
 fi
 
