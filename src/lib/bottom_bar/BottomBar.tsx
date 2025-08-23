@@ -1,8 +1,8 @@
-import {Box} from '@mui/material';
+import {Box, Menu, MenuItem, Typography} from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {styled} from '@mui/material/styles';
 import {observer} from 'mobx-react';
-import React from 'react';
+import React, {useState} from 'react';
 
 import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
 import {TagSearch} from '../../TagSearch';
@@ -14,6 +14,17 @@ const Aligner = styled('div')`
 `;
 
 const BottomBar = () => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <>
       <Aligner>
@@ -32,10 +43,45 @@ const BottomBar = () => {
             height: theme => theme.footer.height,
             display: 'flex',
             alignItems: 'flex-end',
+            gap: 1,
           }}
         >
           <Mode />
-          {/* <TagCount /> */}
+          <Typography
+            variant="caption"
+            fontFamily="monospace"
+            onClick={handleClick}
+            sx={{
+              mr: theme => theme.spacing(0.5),
+              color: theme => theme.palette.text.primary,
+              cursor: 'pointer',
+              userSelect: 'none',
+              alignSelf: 'flex-end',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            [menu]
+          </Typography>
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'bottom',
+              horizontal: 'left',
+            }}
+          >
+            <MenuItem onClick={handleClose}>Profile</MenuItem>
+            <MenuItem onClick={handleClose}>Settings</MenuItem>
+            <MenuItem onClick={handleClose}>Help</MenuItem>
+            <MenuItem onClick={handleClose}>Logout</MenuItem>
+          </Menu>
           <Version />
         </Box>
       </Grid>
