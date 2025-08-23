@@ -35,7 +35,7 @@ const Main = () => {
       console.warn('Cookie logout occurred.');
       appConfig.setLoggedInUser(null);
     }
-  }, [cookies, appConfig]);
+  }, [cookies[COOKIE_KEY], appConfig.loggedInUser, appConfig.setLoggedInUser]);
 
   useEffect(() => {
     handleCookieLogout();
