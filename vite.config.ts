@@ -8,6 +8,7 @@ import packageJson from './package.json';
 
 const reactPackages = ['react', 'react-dom', 'react-router-dom'];
 const mobxPackages = ['mobx', 'mobx-react', 'mobx-state-tree'];
+const NODE_MODULES_REGEX = /node_modules\/(@[^/]+\/[^/]+|[^/]+)/;
 
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
 export default defineConfig(({mode}) => {
@@ -95,7 +96,7 @@ export default defineConfig(({mode}) => {
         output: {
           manualChunks: (id: string) => {
             if (id.includes('node_modules')) {
-              const match = id.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
+              const match = id.match(NODE_MODULES_REGEX);
 
               if (match?.[1]) {
                 const packageName = match[1];
