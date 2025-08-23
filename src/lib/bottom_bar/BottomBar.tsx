@@ -62,7 +62,6 @@ const BottomBar = () => {
                   textTransform: 'none',
                   minWidth: 'unset',
                   padding: 0,
-                  alignSelf: 'flex-end',
                   '&:hover': {
                     backgroundColor: 'transparent',
                     textDecoration: 'underline',
