@@ -10,10 +10,10 @@ describe('Layout', () => {
     });
     await BasePage.open('');
 
-    await browser.pause(1000);
-
     const tagList = await browser.$('#tagList');
     const entryList = await browser.$('#tagsEntriesList');
+    await tagList.waitForDisplayed();
+    await entryList.waitForDisplayed();
 
     const tagListLocation = await tagList.getLocation();
     const tagListSize = await tagList.getSize();
