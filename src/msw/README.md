@@ -10,9 +10,10 @@ src/msw/
 ├── enableMocking.ts  # Main initialization function
 ├── config.ts         # Configuration constants and utilities
 ├── worker.ts         # MSW service worker setup
-├── handlers.ts       # All API mock handlers (moved from src/handlers.ts)
+├── handlers.ts       # All API mock handlers
 ├── browser.ts        # Browser-specific utilities (window globals)
 ├── healthCheck.ts    # Health check utilities
+├── requestCounter.ts # Request counting utilities for testing
 └── README.md         # This file
 ```
 
@@ -22,8 +23,11 @@ src/msw/
 
 ```typescript
 // src/index.tsx
-const {enableMocking} = await import('./msw');
-await enableMocking();
+// MSW only initializes in test mode (not in development)
+if (import.meta.env.MODE === 'test') {
+  const {enableMocking} = await import('./msw');
+  await enableMocking();
+}
 ```
 
 ### In Tests
@@ -42,7 +46,7 @@ afterEach(async () => {
 
 ### `enableMocking.ts`
 Main initialization function that:
-1. Checks environment (dev/test only)
+1. Checks environment (only runs in dev)
 2. Starts MSW service worker
 3. Exposes utilities globally
 4. Performs health check
@@ -72,6 +76,11 @@ Health check utilities to verify MSW is working
 
 ### `worker.ts`
 Creates the MSW service worker with all handlers
+
+### `requestCounter.ts`
+Provides request counting utilities for test assertions:
+- Tracks API calls by method and URL
+- Used in E2E tests to verify API interactions
 
 ## Benefits of This Structure
 
