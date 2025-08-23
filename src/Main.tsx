@@ -5,10 +5,10 @@ import {useCookies} from 'react-cookie';
 import {useLocation, useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
+import {BottomToolbar} from './components/BottomToolbar';
 import {LeftDrawer} from './drawer/LeftDrawer';
 import {RightDrawer} from './drawer/RightDrawer';
 import {EntryList} from './EntryList';
-import {BottomBar} from './lib/bottom_bar/BottomBar';
 import {MenuBar} from './MenuBar';
 import {StyledToolbar} from './styled/layout/StyledToolbar';
 
@@ -63,18 +63,7 @@ const Main = () => {
         <EntryList />
         <RightDrawer />
       </Box>
-      <AppBar
-        position="sticky"
-        sx={{
-          backgroundColor: theme => theme.palette.background.default,
-          bottom: 0,
-          backgroundImage: 'none', // Remove the Material UI gradient.
-        }}
-      >
-        <StyledToolbar>
-          <BottomBar />
-        </StyledToolbar>
-      </AppBar>
+      <BottomToolbar />
     </>
   );
 };
