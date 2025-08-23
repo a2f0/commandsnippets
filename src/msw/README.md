@@ -46,7 +46,7 @@ afterEach(async () => {
 
 ### `enableMocking.ts`
 Main initialization function that:
-1. Checks environment (only runs in dev)
+1. Checks environment (only runs in test mode)
 2. Starts MSW service worker
 3. Exposes utilities globally
 4. Performs health check
