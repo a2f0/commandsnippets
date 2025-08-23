@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.54",
+  "version": "0.7.55",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "server": "vite serve",
-    "server-test": "vite serve --port 8081",
+    "server-test": "vite serve --mode test --port 8081",
     "dev": "vite serve --host",
     "test": "npx wdio test/wdio.shared.conf.ts",
     "test-headless": "npx wdio test/wdio.headless.conf.ts",
