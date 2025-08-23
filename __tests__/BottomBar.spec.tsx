@@ -22,8 +22,8 @@ describe('BottomBar Component', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders menu in non-production environment', () => {
-    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+  it.each(['development', 'test'])('renders menu in %s environment', env => {
+    vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
 
     render(<BottomBarWithProviders />);
 
