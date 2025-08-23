@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding assistants (Claude Code, Gemini Code Assist, etc.) when working with code in this repository.
 
 ## Project Overview
 
@@ -81,6 +81,38 @@ Tearleads is a command snippet tool for computer programmers and system administ
 ### Important Patterns
 - Use `useAppContext()` hook to access the MobX-State-Tree store
 - Components are organized by feature (tags, entries, menus, etc.)
-- MSW is automatically enabled in development mode
+- MSW is automatically enabled in test mode only (not in development)
 - Both IndexedDB (offline) and SQLite (sync) database adapters available
 - User-defined ordering is a key feature for both Tags and Entries
+
+## Development Guidelines
+
+### Committing
+- Use conventional commit syntax when committing files
+- Do not commit changes unless explicitly asked to
+- Never force push to shared branches
+- Always pull the latest changes (e.g., using `git pull --rebase`) and resolve conflicts locally before pushing
+
+### File Naming
+- Name new files with camel case
+
+### Linting & Formatting
+- Always run `pnpm run lint` and `pnpm run format` to test changes
+- Never add linting or formatting exceptions in code
+
+### Dependencies
+- Always pin dependencies with `--save-exact` when modifying package.json
+
+### TypeScript
+- Always use `pnpm tsc -b` after making changes to ensure TypeScript compiles
+- Never use `any` as a type, or `as` for type assertion
+
+### Package Manager
+- Always use `pnpm` for the JavaScript package manager
+
+### Language
+- Always write code in TypeScript, never JavaScript
+
+### Testing
+- Run unit tests with `pnpm run unit` or specific tests with path
+- Run E2E tests with `pnpm run ci-headless` for full suite
