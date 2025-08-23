@@ -23,7 +23,7 @@
     "build:analyze": "vite build --mode analyze",
     "analyze": "pnpm run build:analyze",
     "postbuild": "scripts/postBuild.sh",
-    "clean": "rm -rf build",
+    "clean": "rimraf build",
     "compile": "tsc -b",
     "prepare": "npm run compile"
   },
@@ -60,6 +60,7 @@
     "invariant": "2.2.4",
     "jsdom": "26.1.0",
     "msw": "2.10.4",
+    "rimraf": "6.0.1",
     "start-server-and-test": "2.0.13",
     "stream-browserify": "3.0.0",
     "swc-loader": "0.2.6",
