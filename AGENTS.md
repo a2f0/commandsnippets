@@ -103,7 +103,13 @@ Tearleads is a command snippet tool for computer programmers and system administ
 - Never add linting or formatting exceptions in code
 
 ### Dependencies
-- Always pin dependencies with `--save-exact` when modifying package.json
+- Always pin dependencies to exact versions (no ^ or ~ prefix) when adding or updating packages
+- Use `pnpm add --save-exact <package>` for new dependencies
+- Use `pnpm add -D --save-exact <package>` for new dev dependencies
+- When manually editing package.json, ensure version numbers have no range specifiers
+- Always run `pnpm install` after modifying package.json to update pnpm-lock.yaml
+- Never commit package.json changes without the corresponding pnpm-lock.yaml updates
+- When removing dependencies, use `pnpm remove <package>` to update both package.json and pnpm-lock.yaml
 
 ### TypeScript
 - Always use `pnpm run compile` (or `npx tsc -b`) after making changes to ensure TypeScript compiles
