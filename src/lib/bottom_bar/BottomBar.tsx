@@ -1,4 +1,4 @@
-import {Box, Button, Menu, MenuItem} from '@mui/material';
+import {Box, Button, Menu, Tab, Tabs} from '@mui/material';
 import {styled} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
@@ -15,6 +15,7 @@ const Aligner = styled('div')`
 
 const BottomBar = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedTab, setSelectedTab] = useState(0);
   const open = Boolean(anchorEl);
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
@@ -24,6 +25,13 @@ const BottomBar = () => {
   const handleClose = useCallback(() => {
     setAnchorEl(null);
   }, []);
+
+  const handleTabChange = useCallback(
+    (_event: React.SyntheticEvent, newValue: number) => {
+      setSelectedTab(newValue);
+    },
+    []
+  );
 
   return (
     <Box
@@ -46,6 +54,7 @@ const BottomBar = () => {
         }}
       >
         <Mode />
+        <Version />
         {environment !== 'production' && (
           <>
             <Button
@@ -83,14 +92,40 @@ const BottomBar = () => {
                 horizontal: 'left',
               }}
             >
-              <MenuItem disabled>Profile</MenuItem>
-              <MenuItem disabled>Settings</MenuItem>
-              <MenuItem disabled>Help</MenuItem>
-              <MenuItem disabled>Logout</MenuItem>
+              <Box
+                sx={{
+                  p: 1,
+                  minWidth: 600,
+                  minHeight: 300,
+                  backgroundColor: theme => theme.palette.background.paper,
+                  border: '1px solid',
+                  borderColor: theme => theme.palette.divider,
+                }}
+              >
+                <Tabs
+                  value={selectedTab}
+                  onChange={handleTabChange}
+                  sx={{
+                    minHeight: 'unset',
+                    '& .MuiTab-root': {
+                      minHeight: 'unset',
+                      padding: '4px 8px',
+                      fontSize: theme => theme.typography.caption.fontSize,
+                      fontFamily: 'monospace',
+                      color: theme => theme.palette.text.primary,
+                      textTransform: 'none',
+                      minWidth: 'unset',
+                    },
+                  }}
+                >
+                  <Tab label="Performance" />
+                  <Tab label="Logs" />
+                  <Tab label="Analytics" />
+                </Tabs>
+              </Box>
             </Menu>
           </>
         )}
-        <Version />
       </Box>
     </Box>
   );
