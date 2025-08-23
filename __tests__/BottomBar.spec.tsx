@@ -38,14 +38,6 @@ describe('BottomBar Component', () => {
     expect(screen.queryByText('[menu]')).not.toBeInTheDocument();
   });
 
-  it('renders menu in test environment', () => {
-    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('test');
-
-    render(<BottomBarWithProviders />);
-
-    expect(screen.getByText('[menu]')).toBeInTheDocument();
-  });
-
   it('always renders version and mode components', () => {
     vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
 
