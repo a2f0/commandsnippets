@@ -1,4 +1,4 @@
-import {Box, Menu, MenuItem, Typography} from '@mui/material';
+import {Box, Button, Menu, MenuItem} from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {styled} from '@mui/material/styles';
 import {observer} from 'mobx-react';
@@ -49,24 +49,31 @@ const BottomBar = () => {
           <Mode />
           {environment !== 'production' && (
             <>
-              <Typography
-                variant="caption"
-                fontFamily="monospace"
+              <Button
                 onClick={handleClick}
+                aria-haspopup="true"
+                aria-controls={open ? 'bottom-bar-menu' : undefined}
+                aria-expanded={open}
                 sx={{
                   mr: theme => theme.spacing(0.5),
                   color: theme => theme.palette.text.primary,
-                  cursor: 'pointer',
-                  userSelect: 'none',
+                  fontFamily: 'monospace',
+                  fontSize: theme => theme.typography.caption.fontSize,
+                  lineHeight: theme => theme.typography.caption.lineHeight,
+                  textTransform: 'none',
+                  minWidth: 'unset',
+                  padding: 0,
                   alignSelf: 'flex-end',
                   '&:hover': {
+                    backgroundColor: 'transparent',
                     textDecoration: 'underline',
                   },
                 }}
               >
                 [menu]
-              </Typography>
+              </Button>
               <Menu
+                id="bottom-bar-menu"
                 anchorEl={anchorEl}
                 open={open}
                 onClose={handleClose}
@@ -79,10 +86,18 @@ const BottomBar = () => {
                   horizontal: 'left',
                 }}
               >
-                <MenuItem onClick={handleClose} disabled>Profile</MenuItem>
-                <MenuItem onClick={handleClose} disabled>Settings</MenuItem>
-                <MenuItem onClick={handleClose} disabled>Help</MenuItem>
-                <MenuItem onClick={handleClose} disabled>Logout</MenuItem>
+                <MenuItem onClick={handleClose} disabled>
+                  Profile
+                </MenuItem>
+                <MenuItem onClick={handleClose} disabled>
+                  Settings
+                </MenuItem>
+                <MenuItem onClick={handleClose} disabled>
+                  Help
+                </MenuItem>
+                <MenuItem onClick={handleClose} disabled>
+                  Logout
+                </MenuItem>
               </Menu>
             </>
           )}
