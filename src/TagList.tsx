@@ -203,8 +203,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           paddingRight: 0,
           overflowY: 'auto',
           direction: 'rtl',
-          height: theme =>
-            `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
+          height: theme => `calc(100vh - ${theme.appBar.height}px)`,
         }}
         onContextMenu={handleContextClick}
       >

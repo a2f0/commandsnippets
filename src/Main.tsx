@@ -42,7 +42,13 @@ const Main = () => {
   }, [handleCookieLogout]);
 
   return (
-    <>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+      }}
+    >
       <AppBar
         position="sticky"
         sx={{
@@ -59,10 +65,10 @@ const Main = () => {
         </StyledToolbar>
       </AppBar>
       <Box
-        display="flex"
-        flexDirection="column"
         sx={{
-          minHeight: '100vh',
+          display: 'flex',
+          flex: 1,
+          pb: theme => `${theme.footer.height}px`, // Bottom padding for footer
         }}
       >
         <LeftDrawer />
@@ -70,7 +76,7 @@ const Main = () => {
         <RightDrawer />
       </Box>
       <BottomToolbar />
-    </>
+    </Box>
   );
 };
 
