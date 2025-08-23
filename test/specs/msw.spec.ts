@@ -6,12 +6,7 @@ describe('MSW Verification Tests', () => {
   });
 
   afterEach(async () => {
-    // Reset handlers after each test if MSW is available
-    await browser.execute(() => {
-      if (window.__MSW_WORKER__) {
-        window.__MSW_WORKER__.resetHandlers();
-      }
-    });
+    await browser.resetMSWHandlers();
   });
 
   it('should verify MSW worker is actually started', async () => {
