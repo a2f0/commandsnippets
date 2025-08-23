@@ -45,7 +45,6 @@ const BottomBar = () => {
         }}
       >
         <Mode />
-        {/* <TagCount /> */}
         {environment !== 'production' && (
           <>
             <Button
