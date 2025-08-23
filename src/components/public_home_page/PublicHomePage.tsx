@@ -1,10 +1,9 @@
 import {AppBar, Box, Typography} from '@mui/material';
 import React from 'react';
-
-import {Footer} from './components/Footer';
-import {GithubAuth} from './GithubAuth';
-import {GoogleAuth} from './GoogleAuth';
-import {StyledToolbar} from './styled/layout/StyledToolbar';
+import {GithubAuth} from '../../GithubAuth';
+import {GoogleAuth} from '../../GoogleAuth';
+import {StyledToolbar} from '../../styled/layout/StyledToolbar';
+import {Footer} from './Footer';
 
 const PublicHomePage = () => {
   return (

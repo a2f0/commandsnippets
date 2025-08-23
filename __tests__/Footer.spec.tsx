@@ -4,7 +4,7 @@ import {createTheme, ThemeProvider} from '@mui/material/styles';
 import {render, screen} from '@testing-library/react';
 import {vi} from 'vitest';
 
-import {Footer} from '../src/components/Footer';
+import {Footer} from '../src/components/public_home_page/Footer';
 import * as envModule from '../src/lib/environment';
 
 const theme = createTheme();
