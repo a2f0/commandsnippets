@@ -86,16 +86,16 @@ const BottomBar = () => {
                   horizontal: 'left',
                 }}
               >
-                <MenuItem onClick={handleClose} disabled>
+                <MenuItem disabled>
                   Profile
                 </MenuItem>
-                <MenuItem onClick={handleClose} disabled>
+                <MenuItem disabled>
                   Settings
                 </MenuItem>
-                <MenuItem onClick={handleClose} disabled>
+                <MenuItem disabled>
                   Help
                 </MenuItem>
-                <MenuItem onClick={handleClose} disabled>
+                <MenuItem disabled>
                   Logout
                 </MenuItem>
               </Menu>
