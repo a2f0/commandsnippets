@@ -13,6 +13,35 @@ const Aligner = styled('div')`
   display: flex;
 `;
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+const CustomTabPanel = (props: TabPanelProps) => {
+  const {children, value, index, ...other} = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`hud-tabpanel-${index}`}
+      aria-labelledby={`hud-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{p: 2}}>{children}</Box>}
+    </div>
+  );
+};
+
+const a11yProps = (index: number) => {
+  return {
+    id: `hud-tab-${index}`,
+    'aria-controls': `hud-tabpanel-${index}`,
+  };
+};
+
 const BottomBar = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -59,14 +88,15 @@ const BottomBar = () => {
           <>
             <Button
               onClick={handleClick}
+              aria-label="Open HUD menu"
               aria-haspopup="true"
-              aria-controls={open ? 'bottom-bar-menu' : undefined}
+              aria-controls={open ? 'hud-menu' : undefined}
               aria-expanded={open}
               sx={{
-                color: theme => theme.palette.text.primary,
+                color: 'text.primary',
                 fontFamily: 'monospace',
-                fontSize: theme => theme.typography.caption.fontSize,
-                lineHeight: theme => theme.typography.caption.lineHeight,
+                fontSize: 'caption.fontSize',
+                lineHeight: 'caption.lineHeight',
                 textTransform: 'none',
                 minWidth: 'unset',
                 padding: 0,
@@ -76,10 +106,10 @@ const BottomBar = () => {
                 },
               }}
             >
-              [menu]
+              [HUD]
             </Button>
             <Menu
-              id="bottom-bar-menu"
+              id="hud-menu"
               anchorEl={anchorEl}
               open={open}
               onClose={handleClose}
@@ -91,37 +121,65 @@ const BottomBar = () => {
                 vertical: 'bottom',
                 horizontal: 'left',
               }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    minWidth: 600,
+                    maxWidth: '80vw',
+                    maxHeight: '60vh',
+                  },
+                },
+              }}
             >
               <Box
                 sx={{
                   p: 1,
-                  minWidth: 600,
-                  minHeight: 300,
-                  backgroundColor: theme => theme.palette.background.paper,
-                  border: '1px solid',
-                  borderColor: theme => theme.palette.divider,
+                  backgroundColor: 'background.paper',
+                  border: 1,
+                  borderColor: 'divider',
                 }}
               >
                 <Tabs
                   value={selectedTab}
                   onChange={handleTabChange}
+                  aria-label="HUD navigation tabs"
                   sx={{
                     minHeight: 'unset',
+                    borderBottom: 1,
+                    borderColor: 'divider',
                     '& .MuiTab-root': {
                       minHeight: 'unset',
-                      padding: '4px 8px',
-                      fontSize: theme => theme.typography.caption.fontSize,
+                      padding: '8px 16px',
+                      fontSize: 'caption.fontSize',
                       fontFamily: 'monospace',
-                      color: theme => theme.palette.text.primary,
+                      color: 'text.secondary',
                       textTransform: 'none',
                       minWidth: 'unset',
+                      '&.Mui-selected': {
+                        color: 'text.primary',
+                      },
                     },
                   }}
                 >
-                  <Tab label="Performance" />
-                  <Tab label="Logs" />
-                  <Tab label="Analytics" />
+                  <Tab label="Performance" {...a11yProps(0)} />
+                  <Tab label="Logs" {...a11yProps(1)} />
+                  <Tab label="Analytics" {...a11yProps(2)} />
                 </Tabs>
+                <CustomTabPanel value={selectedTab} index={0}>
+                  <Box sx={{minHeight: 200, color: 'text.secondary'}}>
+                    Performance metrics will be displayed here
+                  </Box>
+                </CustomTabPanel>
+                <CustomTabPanel value={selectedTab} index={1}>
+                  <Box sx={{minHeight: 200, color: 'text.secondary'}}>
+                    Application logs will be displayed here
+                  </Box>
+                </CustomTabPanel>
+                <CustomTabPanel value={selectedTab} index={2}>
+                  <Box sx={{minHeight: 200, color: 'text.secondary'}}>
+                    Analytics data will be displayed here
+                  </Box>
+                </CustomTabPanel>
               </Box>
             </Menu>
           </>
