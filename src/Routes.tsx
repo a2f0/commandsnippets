@@ -2,10 +2,10 @@ import React from 'react';
 import {Routes as ReactRouterRoutes, Route} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
+import {PublicHomePage} from './components/public_home_page/PublicHomePage';
 import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
 import {Main} from './Main';
-import {PublicHomePage} from './PublicHomePage';
 
 const Routes = () => {
   const appConfig = useAppContext();
