@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom/client';
 import {AppRouter} from './AppRouter';
 
 async function init() {
-  // Enable MSW in development and test environments
-  if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
+  if (import.meta.env.MODE === 'test') {
     try {
       const {enableMocking} = await import('./msw');
       await enableMocking();
