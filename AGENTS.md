@@ -16,18 +16,19 @@ Tearleads is a command snippet tool for computer programmers and system administ
 ### Code Quality
 - `pnpm run lint` - Run Biome linting
 - `pnpm run format` - Run Biome formatting
-- `pnpm run fix` - Auto-fix linting issues
-- `npx tsc -b` or `pnpm run compile` - TypeScript compilation check
+- `pnpm run fix` - Auto-fix linting and formatting issues (runs `biome check --write`)
+- `pnpm run compile` or `npx tsc -b` - TypeScript compilation check
 
 ### Testing
 
 #### E2E Tests (WebdriverIO)
-- `pnpm run ci` - Start server and run E2E tests
-- `pnpm run ci-headless` - Start server and run E2E tests headless
-- `pnpm run server-test` - Start testing server on port 8081
-- `pnpm run test` - Run E2E tests (requires server-test running)
-- `pnpm run test-headless` - Run E2E tests headless
-- `pnpm start-server-and-test server-test http-get://localhost:8081 "npx wdio test/wdio.headless.conf.ts --spec test/specs/tags/tagListContextMenu.spec.ts"` - Run specific spec
+- `pnpm run ci` - Start server and run E2E tests (with browser UI)
+- `pnpm run ci-headless` - Start server and run E2E tests headless (recommended)
+- `pnpm run server-test` - Start testing server on port 8081 with MSW enabled (mode: test)
+- `pnpm run test` - Run E2E tests with browser UI (requires server-test running separately)
+- `pnpm run test-headless` - Run E2E tests headless (requires server-test running separately)
+- `scripts/runSpecHeadless.sh test/specs/tags/tagListContextMenu.spec.ts` - Run specific spec file headless
+- `scripts/runSpec.sh test/specs/tags/tagListContextMenu.spec.ts` - Run specific spec file with browser UI
 
 #### Unit Tests (Vitest)
 - `pnpm run unit` - Run unit tests
@@ -36,7 +37,8 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 ### Build
 - `pnpm run build` - Build production bundle
-- `pnpm run postbuild` - Post-build script
+- `pnpm run build:analyze` or `pnpm run analyze` - Build with bundle analysis
+- `pnpm run postbuild` - Post-build script (runs automatically after build)
 - `pnpm run clean` - Remove build directory
 
 ## Architecture
@@ -104,7 +106,7 @@ Tearleads is a command snippet tool for computer programmers and system administ
 - Always pin dependencies with `--save-exact` when modifying package.json
 
 ### TypeScript
-- Always use `pnpm tsc -b` after making changes to ensure TypeScript compiles
+- Always use `pnpm run compile` (or `npx tsc -b`) after making changes to ensure TypeScript compiles
 - Never use `any` as a type, or `as` for type assertion
 
 ### Package Manager
@@ -114,5 +116,6 @@ Tearleads is a command snippet tool for computer programmers and system administ
 - Always write code in TypeScript, never JavaScript
 
 ### Testing
-- Run unit tests with `pnpm run unit` or specific tests with path
+- Run unit tests with `pnpm run unit` or specific tests with path (e.g., `pnpm run unit -- __tests__/reorderEntryList.spec.tsx`)
 - Run E2E tests with `pnpm run ci-headless` for full suite
+- Run specific E2E test with `scripts/runSpecHeadless.sh <spec-file>` (e.g., `scripts/runSpecHeadless.sh test/specs/tags/search.spec.ts`)

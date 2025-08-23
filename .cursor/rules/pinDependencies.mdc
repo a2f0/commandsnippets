@@ -1,6 +1,0 @@
----
-description:
-globs:
-alwaysApply: true
----
-Always pin dependencies with `--save-exact` when modifying package.json.
