@@ -68,14 +68,21 @@ const Main = () => {
         sx={{
           display: 'flex',
           flex: 1,
-          pb: theme => `${theme.footer.height}px`, // Bottom padding for footer
         }}
       >
         <LeftDrawer />
         <EntryList />
         <RightDrawer />
       </Box>
-      <BottomToolbar />
+      <Box
+        sx={{
+          position: 'sticky',
+          bottom: 0,
+          zIndex: theme => theme.zIndex.drawer + 1,
+        }}
+      >
+        <BottomToolbar />
+      </Box>
     </Box>
   );
 };
