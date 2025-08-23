@@ -19,7 +19,7 @@ interface TabPanelProps {
   value: number;
 }
 
-const CustomTabPanel = (props: TabPanelProps) => {
+const CustomTabPanel = React.memo((props: TabPanelProps) => {
   const {children, value, index, ...other} = props;
 
   return (
@@ -33,14 +33,14 @@ const CustomTabPanel = (props: TabPanelProps) => {
       {value === index && <Box sx={{p: 2}}>{children}</Box>}
     </div>
   );
-};
+});
 
-const a11yProps = (index: number) => {
-  return {
-    id: `hud-tab-${index}`,
-    'aria-controls': `hud-tabpanel-${index}`,
-  };
-};
+CustomTabPanel.displayName = 'CustomTabPanel';
+
+const a11yProps = (index: number) => ({
+  id: `hud-tab-${index}`,
+  'aria-controls': `hud-tabpanel-${index}`,
+});
 
 const BottomBar = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
