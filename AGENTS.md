@@ -21,14 +21,15 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 ### Testing
 
+
 #### E2E Tests (WebdriverIO)
-- `pnpm run ci` - Start server and run E2E tests (with browser UI)
+
+When running integration tests, always use the headless option. The headless configuration is defined in `test/wdio.headless.conf.ts`
+
 - `pnpm run ci-headless` - Start server and run E2E tests headless (recommended)
-- `pnpm run server-test` - Start testing server on port 8081 with MSW enabled (mode: test)
-- `pnpm run test` - Run E2E tests with browser UI (requires server-test running separately)
 - `pnpm run test-headless` - Run E2E tests headless (requires server-test running separately)
-- `scripts/runSpecHeadless.sh test/specs/tags/tagListContextMenu.spec.ts` - Run specific spec file headless
-- `scripts/runSpec.sh test/specs/tags/tagListContextMenu.spec.ts` - Run specific spec file with browser UI
+- `scripts/runSpecHeadless.sh <spec-file>` - Run specific spec file headless
+- `scripts/runSpec.sh <spec-file>` - Run specific spec file with browser UI
 
 #### Unit Tests (Vitest)
 - `pnpm run unit` - Run unit tests
