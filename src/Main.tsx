@@ -42,7 +42,13 @@ const Main = () => {
   }, [handleCookieLogout]);
 
   return (
-    <>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+      }}
+    >
       <AppBar
         position="sticky"
         sx={{
@@ -59,18 +65,24 @@ const Main = () => {
         </StyledToolbar>
       </AppBar>
       <Box
-        display="flex"
-        flexDirection="column"
         sx={{
-          minHeight: '100vh',
+          display: 'flex',
+          flex: 1,
         }}
       >
         <LeftDrawer />
         <EntryList />
         <RightDrawer />
       </Box>
-      <BottomToolbar />
-    </>
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: theme => theme.zIndex.drawer + 1,
+        }}
+      >
+        <BottomToolbar />
+      </Box>
+    </Box>
   );
 };
 
