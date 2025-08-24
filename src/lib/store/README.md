@@ -33,10 +33,10 @@ This implementation separates UI state from domain data using the Repository Pat
          │
     ┌────┴────┐
     │         │
-┌───▼───┐ ┌──▼──────┐
-│ Dexie │ │ LocalSt │
-│Adapter│ │ Adapter │
-└───────┘ └─────────┘
+┌───▼───┐ ┌──▼──────────┐
+│ Dexie │ │LocalStorage │
+│Adapter│ │   Adapter   │
+└───────┘ └─────────────┘
 ```
 
 ## Key Components

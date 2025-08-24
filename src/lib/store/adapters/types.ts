@@ -12,6 +12,14 @@ export interface QueryFilter {
   offset?: number;
 }
 
+// Types for conflict versions
+export type ConflictVersion =
+  | ITagJsonApi
+  | ITextEntryJsonApi
+  | ITagTextEntryThroughModelJsonApi
+  | IUserJsonApi
+  | Record<string, unknown>;
+
 // Sync metadata for tracking changes
 export interface SyncMetadata {
   lastSyncTimestamp: string;
@@ -19,9 +27,14 @@ export interface SyncMetadata {
   conflicts: Array<{
     entityId: string;
     entityType: string;
-    localVersion: any;
-    remoteVersion: any;
+    localVersion: ConflictVersion;
+    remoteVersion: ConflictVersion;
   }>;
+}
+
+// Sync metadata with ID for storage purposes
+export interface SyncMetadataWithId extends SyncMetadata {
+  id: string;
 }
 
 // Persistence adapter interface

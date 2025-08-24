@@ -17,7 +17,7 @@ export interface RepositoryConfig {
 export class DataRepository {
   private adapter: IPersistenceAdapter;
   private config: RepositoryConfig;
-  private syncTimer?: ReturnType<typeof setInterval>;
+  private syncTimer?: ReturnType<typeof setInterval> | undefined;
   private isSyncing = false;
 
   constructor(config: RepositoryConfig) {
@@ -354,7 +354,7 @@ export class DataRepository {
   stopAutoSync(): void {
     if (this.syncTimer) {
       clearInterval(this.syncTimer);
-      delete (this as any).syncTimer;
+      this.syncTimer = undefined;
     }
   }
 

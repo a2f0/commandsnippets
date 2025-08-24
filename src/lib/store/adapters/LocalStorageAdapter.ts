@@ -29,9 +29,12 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     localStorage.setItem(this.getKey(collection), JSON.stringify(data));
   }
 
-  private loadOne<T>(collection: string, id: string): T | null {
-    const items = this.load<any>(collection);
-    return items.find((item: any) => item.id === id) || null;
+  private loadOne<T extends {id: string}>(
+    collection: string,
+    id: string
+  ): T | null {
+    const items = this.load<T>(collection);
+    return items.find(item => item.id === id) || null;
   }
 
   private saveOne<T extends {id: string}>(collection: string, item: T): void {
@@ -45,9 +48,12 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     this.save(collection, items);
   }
 
-  private deleteOne(collection: string, id: string): void {
-    const items = this.load<any>(collection);
-    const filtered = items.filter((item: any) => item.id !== id);
+  private deleteOne<T extends {id: string}>(
+    collection: string,
+    id: string
+  ): void {
+    const items = this.load<T>(collection);
+    const filtered = items.filter(item => item.id !== id);
     this.save(collection, filtered);
   }
 
@@ -67,8 +73,9 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     }
 
     if (filter?.since) {
+      const sinceDate = new Date(filter.since);
       tags = tags.filter(
-        tag => new Date(tag.attributes.date_updated) > new Date(filter.since!)
+        tag => new Date(tag.attributes.date_updated) > sinceDate
       );
     }
 
@@ -125,9 +132,9 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     }
 
     if (filter?.since) {
+      const sinceDate = new Date(filter.since);
       entries = entries.filter(
-        entry =>
-          new Date(entry.attributes.date_updated) > new Date(filter.since!)
+        entry => new Date(entry.attributes.date_updated) > sinceDate
       );
     }
 
@@ -173,9 +180,9 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     }
 
     if (filter?.since) {
+      const sinceDate = new Date(filter.since);
       entries = entries.filter(
-        entry =>
-          new Date(entry.attributes.date_updated) > new Date(filter.since!)
+        entry => new Date(entry.attributes.date_updated) > sinceDate
       );
     }
 
@@ -215,9 +222,9 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     }
 
     if (filter?.since) {
+      const sinceDate = new Date(filter.since);
       relations = relations.filter(
-        relation =>
-          new Date(relation.attributes.date_updated) > new Date(filter.since!)
+        relation => new Date(relation.attributes.date_updated) > sinceDate
       );
     }
 
@@ -251,8 +258,9 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     let users = this.load<IUserJsonApi>('users');
 
     if (filter?.since) {
+      const sinceDate = new Date(filter.since);
       users = users.filter(
-        user => new Date(user.attributes.date_updated) > new Date(filter.since!)
+        user => new Date(user.attributes.date_updated) > sinceDate
       );
     }
 

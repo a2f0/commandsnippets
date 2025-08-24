@@ -5,6 +5,10 @@ import {DexieAdapter} from './adapters/DexieAdapter';
 import {LocalStorageAdapter} from './adapters/LocalStorageAdapter';
 import type {IPersistenceAdapter} from './adapters/types';
 import {RootStore} from './models/RootStore';
+import type {ITagJsonApi} from './models/TagModel';
+import type {ITagTextEntryThroughModelJsonApi} from './models/TagTextEntryThroughModel';
+import type {ITextEntryJsonApi} from './models/TextEntryModel';
+import type {IUserJsonApi} from './models/UserModel';
 import {DataRepository} from './repository/DataRepository';
 
 // Configuration for which adapter to use
@@ -42,16 +46,17 @@ function createAdapter(type: 'dexie' | 'localStorage'): IPersistenceAdapter {
 
 // Create and initialize the store
 export async function createStoreV2(
-  config: StoreConfig = defaultConfig
+  config: StoreConfig = {}
 ): Promise<Instance<typeof RootStore>> {
+  const finalConfig = {...defaultConfig, ...config};
   // Create the adapter
-  const adapter = createAdapter(config.adapterType || 'dexie');
+  const adapter = createAdapter(finalConfig.adapterType || 'dexie');
 
   // Create the repository
   const repository = new DataRepository({
     adapter,
-    enableAutoSync: config.enableAutoSync ?? false,
-    syncInterval: config.syncInterval ?? 30000,
+    enableAutoSync: finalConfig.enableAutoSync ?? false,
+    syncInterval: finalConfig.syncInterval ?? 30000,
     onSyncStart: () => {
       console.log('Sync started...');
     },
@@ -87,7 +92,7 @@ export async function createStoreV2(
 
   // Try to restore UI state from localStorage if enabled
   let restoredUIState = uiStateDefaults;
-  if (config.persistUIState) {
+  if (finalConfig.persistUIState) {
     const savedUIState = localStorage.getItem(
       `tearleads-ui-state-${environment}`
     );
@@ -112,7 +117,7 @@ export async function createStoreV2(
   await store.loadFromRepository();
 
   // Set up UI state persistence if enabled
-  if (config.persistUIState) {
+  if (finalConfig.persistUIState) {
     onSnapshot(store.uiState, snapshot => {
       localStorage.setItem(
         `tearleads-ui-state-${environment}`,
@@ -124,9 +129,31 @@ export async function createStoreV2(
   return store;
 }
 
+// Interface for old store data structure
+interface OldStoreData {
+  usersArray?: IUserJsonApi[];
+  tagsArray?: ITagJsonApi[];
+  textEntriesArray?: ITextEntryJsonApi[];
+  untaggedTextEntriesArray?: ITextEntryJsonApi[];
+  tagTextEntryThroughModel?: ITagTextEntryThroughModelJsonApi[];
+  // UI state properties
+  loggedInUser?: string;
+  currentUser?: string | null;
+  selectedTheme?: string;
+  showTagCounts?: boolean;
+  tagSortOrder?: string;
+  entrySortOrder?: string;
+  currentTag?: string | null;
+  tagSearch?: boolean;
+  mostRecentCopyType?: string;
+  mostRecentCopyID?: string;
+  entryNew?: string;
+  tagNew?: string;
+}
+
 // Migration helper to migrate from old store to new store
 export async function migrateFromOldStore(
-  oldStoreData: any,
+  oldStoreData: OldStoreData | null | undefined,
   config?: StoreConfig
 ): Promise<Instance<typeof RootStore>> {
   const store = await createStoreV2(config);
@@ -138,29 +165,38 @@ export async function migrateFromOldStore(
   // Migrate data from old store format
   if (oldStoreData) {
     // Save users
-    if (oldStoreData.usersArray?.length > 0) {
+    if (oldStoreData.usersArray && oldStoreData.usersArray.length > 0) {
       await store.repository.saveUsers(oldStoreData.usersArray);
     }
 
     // Save tags
-    if (oldStoreData.tagsArray?.length > 0) {
+    if (oldStoreData.tagsArray && oldStoreData.tagsArray.length > 0) {
       await store.repository.saveTags(oldStoreData.tagsArray);
     }
 
     // Save text entries
-    if (oldStoreData.textEntriesArray?.length > 0) {
+    if (
+      oldStoreData.textEntriesArray &&
+      oldStoreData.textEntriesArray.length > 0
+    ) {
       await store.repository.saveTextEntries(oldStoreData.textEntriesArray);
     }
 
     // Save untagged text entries
-    if (oldStoreData.untaggedTextEntriesArray?.length > 0) {
+    if (
+      oldStoreData.untaggedTextEntriesArray &&
+      oldStoreData.untaggedTextEntriesArray.length > 0
+    ) {
       await store.repository.saveUntaggedTextEntries(
         oldStoreData.untaggedTextEntriesArray
       );
     }
 
     // Save tag-text entry relations
-    if (oldStoreData.tagTextEntryThroughModel?.length > 0) {
+    if (
+      oldStoreData.tagTextEntryThroughModel &&
+      oldStoreData.tagTextEntryThroughModel.length > 0
+    ) {
       await store.repository.saveTagTextEntryRelations(
         oldStoreData.tagTextEntryThroughModel
       );

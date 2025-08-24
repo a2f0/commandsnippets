@@ -8,6 +8,7 @@ import type {
   IPersistenceAdapter,
   QueryFilter,
   SyncMetadata,
+  SyncMetadataWithId,
 } from './types';
 
 class TearleadsDB extends Dexie {
@@ -16,7 +17,7 @@ class TearleadsDB extends Dexie {
   untaggedTextEntries!: Table<ITextEntryJsonApi>;
   tagTextEntryRelations!: Table<ITagTextEntryThroughModelJsonApi>;
   users!: Table<IUserJsonApi>;
-  syncMetadata!: Table<SyncMetadata>;
+  syncMetadata!: Table<SyncMetadataWithId>;
 
   constructor(name: string) {
     super(name);
@@ -55,20 +56,18 @@ export class DexieAdapter implements IPersistenceAdapter {
     }
 
     if (filter?.since) {
-      const results = await query.toArray();
-      return results.filter(
-        tag => new Date(tag.attributes.date_updated) > new Date(filter.since!)
+      const sinceDate = new Date(filter.since);
+      query = query.filter(
+        tag => new Date(tag.attributes.date_updated) > sinceDate
       );
     }
 
-    let results = await query.toArray();
-
     if (filter?.limit) {
       const offset = filter.offset || 0;
-      results = results.slice(offset, offset + filter.limit);
+      query = query.offset(offset).limit(filter.limit);
     }
 
-    return results;
+    return query.toArray();
   }
 
   async getTag(id: string): Promise<ITagJsonApi | null> {
@@ -98,14 +97,11 @@ export class DexieAdapter implements IPersistenceAdapter {
     }
 
     if (filter?.since) {
-      const results = await query.toArray();
-      return results.filter(
-        entry =>
-          new Date(entry.attributes.date_updated) > new Date(filter.since!)
+      const sinceDate = new Date(filter.since);
+      query = query.filter(
+        entry => new Date(entry.attributes.date_updated) > sinceDate
       );
     }
-
-    let results = await query.toArray();
 
     // If we need to filter by tag, we need to join with relations
     if (filter?.tagId) {
@@ -117,15 +113,15 @@ export class DexieAdapter implements IPersistenceAdapter {
       const entryIds = new Set(
         relations.map(r => r.relationships.text_entry.data.id)
       );
-      results = results.filter(entry => entryIds.has(entry.id));
+      query = query.filter(entry => entryIds.has(entry.id));
     }
 
     if (filter?.limit) {
       const offset = filter.offset || 0;
-      results = results.slice(offset, offset + filter.limit);
+      query = query.offset(offset).limit(filter.limit);
     }
 
-    return results;
+    return query.toArray();
   }
 
   async getTextEntry(id: string): Promise<ITextEntryJsonApi | null> {
@@ -157,21 +153,18 @@ export class DexieAdapter implements IPersistenceAdapter {
     }
 
     if (filter?.since) {
-      const results = await query.toArray();
-      return results.filter(
-        entry =>
-          new Date(entry.attributes.date_updated) > new Date(filter.since!)
+      const sinceDate = new Date(filter.since);
+      query = query.filter(
+        entry => new Date(entry.attributes.date_updated) > sinceDate
       );
     }
 
-    let results = await query.toArray();
-
     if (filter?.limit) {
       const offset = filter.offset || 0;
-      results = results.slice(offset, offset + filter.limit);
+      query = query.offset(offset).limit(filter.limit);
     }
 
-    return results;
+    return query.toArray();
   }
 
   async saveUntaggedTextEntries(entries: ITextEntryJsonApi[]): Promise<void> {
@@ -186,30 +179,27 @@ export class DexieAdapter implements IPersistenceAdapter {
   async getTagTextEntryRelations(
     filter?: QueryFilter
   ): Promise<ITagTextEntryThroughModelJsonApi[]> {
-    let results: ITagTextEntryThroughModelJsonApi[];
+    let query = this.db.tagTextEntryRelations.toCollection();
 
     if (filter?.tagId) {
-      results = await this.db.tagTextEntryRelations
+      query = this.db.tagTextEntryRelations
         .where('relationships.tag.data.id')
-        .equals(filter.tagId)
-        .toArray();
-    } else {
-      results = await this.db.tagTextEntryRelations.toArray();
+        .equals(filter.tagId);
     }
 
     if (filter?.since) {
-      results = results.filter(
-        relation =>
-          new Date(relation.attributes.date_updated) > new Date(filter.since!)
+      const sinceDate = new Date(filter.since);
+      query = query.filter(
+        relation => new Date(relation.attributes.date_updated) > sinceDate
       );
     }
 
     if (filter?.limit) {
       const offset = filter.offset || 0;
-      results = results.slice(offset, offset + filter.limit);
+      query = query.offset(offset).limit(filter.limit);
     }
 
-    return results;
+    return query.toArray();
   }
 
   async saveTagTextEntryRelations(
@@ -224,20 +214,21 @@ export class DexieAdapter implements IPersistenceAdapter {
 
   // Users
   async getUsers(filter?: QueryFilter): Promise<IUserJsonApi[]> {
-    let results = await this.db.users.toArray();
+    let query = this.db.users.toCollection();
 
     if (filter?.since) {
-      results = results.filter(
-        user => new Date(user.attributes.date_updated) > new Date(filter.since!)
+      const sinceDate = new Date(filter.since);
+      query = query.filter(
+        user => new Date(user.attributes.date_updated) > sinceDate
       );
     }
 
     if (filter?.limit) {
       const offset = filter.offset || 0;
-      results = results.slice(offset, offset + filter.limit);
+      query = query.offset(offset).limit(filter.limit);
     }
 
-    return results;
+    return query.toArray();
   }
 
   async getUser(id: string): Promise<IUserJsonApi | null> {
@@ -259,7 +250,8 @@ export class DexieAdapter implements IPersistenceAdapter {
   }
 
   async saveSyncMetadata(metadata: SyncMetadata): Promise<void> {
-    await this.db.syncMetadata.put({...metadata, id: 'main'} as any);
+    const metadataWithId: SyncMetadataWithId = {...metadata, id: 'main'};
+    await this.db.syncMetadata.put(metadataWithId);
   }
 
   // Bulk operations
