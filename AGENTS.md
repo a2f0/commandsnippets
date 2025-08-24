@@ -128,3 +128,112 @@ When running integration tests, it is recommended to use the headless option. Th
 - Run unit tests with `pnpm run unit` or specific tests with path (e.g., `pnpm run unit -- __tests__/reorderEntryList.spec.tsx`)
 - Run E2E tests with `pnpm run ci-headless` for full suite
 - Run specific E2E test with `scripts/runSpecHeadless.sh <spec-file>` (e.g., `scripts/runSpecHeadless.sh test/specs/tags/search.spec.ts`)
+
+## GitHub Pull Request Management
+
+### Handling PR Feedback from Code Review Agents
+
+When receiving feedback from AI code review agents like `@gemini-code-assist[bot]`, follow this systematic approach:
+
+#### 1. Scrape and Analyze Feedback
+```bash
+# Get all review comments from gemini-code-assist
+gh api repos/a2f0/tearleads-frontend/pulls/comments/<PR_NUMBER> --jq '.[] | select(.user.login == "gemini-code-assist[bot]") | {id: .id, body: .body, path: .path, line: .line}'
+
+# Get review thread IDs and status
+gh api graphql --field query='
+{
+  repository(owner: "a2f0", name: "tearleads-frontend") {
+    pullRequest(number: <PR_NUMBER>) {
+      reviewThreads(first: 20) {
+        nodes {
+          id
+          isResolved
+          comments(first: 1) {
+            nodes {
+              body
+            }
+          }
+        }
+      }
+    }
+  }
+}'
+```
+
+#### 2. Address Issues and Commit Fixes
+- Create conventional commits that address the specific feedback
+- Include commit hash references when responding to review comments
+- Ensure all fixes pass tests: `pnpm run unit`, `pnpm tsc -b`, `pnpm biome check --fix`
+
+#### 3. Tag and Confirm Resolution
+For each addressed issue, tag the review agent and ask for confirmation:
+```bash
+gh pr comment <PR_NUMBER> --body "@gemini-code-assist
+
+**Re: [Issue Description] (discussion_r<COMMENT_ID>)**
+
+I've addressed this issue in commit <COMMIT_HASH>:
+
+✅ **What was fixed**: [Describe the fix]
+✅ **How it was fixed**: [Describe the approach]
+
+Has this issue been resolved to your satisfaction?"
+```
+
+#### 4. Resolve Confirmed Conversations
+Once the review agent confirms an issue is resolved, use GraphQL to mark the conversation as resolved:
+
+```bash
+# Single conversation resolution
+gh api graphql --field query='
+mutation {
+  resolveReviewThread(input: {threadId: "THREAD_ID"}) {
+    thread {
+      id
+      isResolved
+    }
+  }
+}'
+
+# Multiple conversations in one call
+gh api graphql --field query='
+mutation {
+  r1: resolveReviewThread(input: {threadId: "THREAD_ID_1"}) {
+    thread { id isResolved }
+  }
+  r2: resolveReviewThread(input: {threadId: "THREAD_ID_2"}) {
+    thread { id isResolved }
+  }
+}'
+```
+
+#### 5. Verify Resolution Status
+```bash
+# Check which conversations remain unresolved
+gh api graphql --field query='
+{
+  repository(owner: "a2f0", name: "tearleads-frontend") {
+    pullRequest(number: <PR_NUMBER>) {
+      reviewThreads(first: 20) {
+        nodes {
+          id
+          isResolved
+          comments(first: 1) {
+            nodes {
+              body
+            }
+          }
+        }
+      }
+    }
+  }
+}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false) | {id: .id, firstComment: .comments.nodes[0].body[0:100]}'
+```
+
+#### Best Practices
+- **Always wait for confirmation** before resolving conversations
+- **Batch similar fixes** into logical commits with clear messages
+- **Document the resolution process** in PR comments for transparency
+- **Keep unaddressed items open** until they're actually implemented
+- **Use thread IDs from GraphQL**, not REST API comment IDs for resolution
