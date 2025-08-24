@@ -27,7 +27,7 @@ class TearleadsDB extends Dexie {
       untaggedTextEntries:
         'id, attributes.date_updated, relationships.user.data.id',
       tagTextEntryRelations:
-        'id, relationships.tag.data.id, relationships.text_entry.data.id',
+        'id, relationships.tag.data.id, relationships.text_entry.data.id, attributes.date_updated',
       users: 'id, attributes.username',
       syncMetadata: 'id',
     });
@@ -212,6 +212,10 @@ export class DexieAdapter implements IPersistenceAdapter {
     await this.db.tagTextEntryRelations.delete(id);
   }
 
+  async bulkDeleteTagTextEntryRelations(ids: string[]): Promise<void> {
+    await this.db.tagTextEntryRelations.bulkDelete(ids);
+  }
+
   // Users
   async getUsers(filter?: QueryFilter): Promise<IUserJsonApi[]> {
     let query = this.db.users.toCollection();
@@ -288,6 +292,7 @@ export class DexieAdapter implements IPersistenceAdapter {
         this.db.untaggedTextEntries,
         this.db.tagTextEntryRelations,
         this.db.users,
+        this.db.syncMetadata,
       ],
       operation
     );

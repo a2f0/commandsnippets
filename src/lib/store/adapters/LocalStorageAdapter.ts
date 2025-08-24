@@ -253,6 +253,14 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     this.deleteOne('tagTextEntryRelations', id);
   }
 
+  async bulkDeleteTagTextEntryRelations(ids: string[]): Promise<void> {
+    const relations = this.load<ITagTextEntryThroughModelJsonApi>(
+      'tagTextEntryRelations'
+    );
+    const filtered = relations.filter(relation => !ids.includes(relation.id));
+    this.save('tagTextEntryRelations', filtered);
+  }
+
   // Users
   async getUsers(filter?: QueryFilter): Promise<IUserJsonApi[]> {
     let users = this.load<IUserJsonApi>('users');

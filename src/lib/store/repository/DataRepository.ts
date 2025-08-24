@@ -51,11 +51,13 @@ export class DataRepository {
 
   async deleteTag(id: string): Promise<void> {
     await this.adapter.deleteTag(id);
-    // Also delete related junction records
+    // Also delete related junction records using bulk operation
     const relations = await this.adapter.getTagTextEntryRelations();
-    const toDelete = relations.filter(r => r.relationships.tag.data.id === id);
-    for (const relation of toDelete) {
-      await this.adapter.deleteTagTextEntryRelation(relation.id);
+    const toDelete = relations
+      .filter(r => r.relationships.tag.data.id === id)
+      .map(r => r.id);
+    if (toDelete.length > 0) {
+      await this.adapter.bulkDeleteTagTextEntryRelations(toDelete);
     }
   }
 
@@ -107,13 +109,13 @@ export class DataRepository {
 
   async deleteTextEntry(id: string): Promise<void> {
     await this.adapter.deleteTextEntry(id);
-    // Also delete related junction records
+    // Also delete related junction records using bulk operation
     const relations = await this.adapter.getTagTextEntryRelations();
-    const toDelete = relations.filter(
-      r => r.relationships.text_entry.data.id === id
-    );
-    for (const relation of toDelete) {
-      await this.adapter.deleteTagTextEntryRelation(relation.id);
+    const toDelete = relations
+      .filter(r => r.relationships.text_entry.data.id === id)
+      .map(r => r.id);
+    if (toDelete.length > 0) {
+      await this.adapter.bulkDeleteTagTextEntryRelations(toDelete);
     }
   }
 

@@ -69,6 +69,7 @@ export interface IPersistenceAdapter {
     relations: ITagTextEntryThroughModelJsonApi[]
   ): Promise<void>;
   deleteTagTextEntryRelation(id: string): Promise<void>;
+  bulkDeleteTagTextEntryRelations(ids: string[]): Promise<void>;
 
   // Users
   getUsers(filter?: QueryFilter): Promise<IUserJsonApi[]>;
