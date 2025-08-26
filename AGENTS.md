@@ -551,9 +551,9 @@ When responding to PR comments or providing feedback:
 #### Response Templates
 When acknowledging fixes or providing feedback:
 ```
-✅ **Issue Resolved**: [Description]
-📍 **Reference**: [original comment](https://github.com/a2f0/tearleads-frontend/pull/<PR_NUMBER>#discussion_r<COMMENT_ID>)
-🔧 **Solution**: [What was implemented]
+**Issue Resolved**: [Description]
+**Reference**: [original comment](https://github.com/a2f0/tearleads-frontend/pull/<PR_NUMBER>#discussion_r<COMMENT_ID>)
+**Solution**: [What was implemented]
 ```
 
 #### Creating Comment URLs
