@@ -171,7 +171,6 @@ git commit -m "fix: your commit message"
 
 #### GPG Signing Best Practices
 - **Always verify signatures**: Use `git log --show-signature` to check commit signatures
-- **Set correct signing key**: Run `git config user.signingkey 6FFAEA28B304FA98E7521822827B8379F39A31F0`
 - **Avoid history rewrite operations on shared branches**: Operations like `git filter-branch`, `git rebase -i` remove signatures and should not be used on shared or protected branches
 - **Verify before pushing**: Check signatures with `git verify-commit HEAD` before pushing
 
