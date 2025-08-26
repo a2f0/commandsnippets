@@ -247,8 +247,8 @@ gh run download <RUN_ID>
 #### 4. Typical Workflow for CI/CD Failures
 ```bash
 # 1. Check what failed
-gh run list --limit 1
-gh run view <RUN_ID> --log-failed
+RUN_ID=$(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
+gh run view "$RUN_ID" --log-failed
 
 # 2. Reproduce locally
 pnpm run ci-headless  # for E2E test failures
