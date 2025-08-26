@@ -172,7 +172,7 @@ git commit -m "fix: your commit message"
 #### GPG Signing Best Practices
 - **Always verify signatures**: Use `git log --show-signature` to check commit signatures
 - **Set correct signing key**: Run `git config user.signingkey 6FFAEA28B304FA98E7521822827B8379F39A31F0`
-- **NEVER use history rewrite operations**: Operations like `git filter-branch`, `git rebase -i` remove signatures
+- **Avoid history rewrite operations on shared branches**: Operations like `git filter-branch`, `git rebase -i` remove signatures and should not be used on shared or protected branches
 - **Verify before pushing**: Check signatures with `git verify-commit HEAD` before pushing
 
 ### Dependencies
@@ -382,7 +382,7 @@ gh api graphql --field query='
       }
     }
   }
-}' | jq -r '.data.repository.pullRequest.reviewThreads.nodes[] | select(.id == "THREAD_ID") | .comments.nodes[] | select(.author.login == "gemini-code-assist") | .databaseId' | head -1
+}' | jq -r '.data.repository.pullRequest.reviewThreads.nodes[] | select(.id == "THREAD_ID") | .comments.nodes[] | select(.author.login == "gemini-code-assist[bot]") | .databaseId' | head -1
 
 # Reply directly to the specific comment in the thread
 gh api repos/a2f0/tearleads-frontend/pulls/<PR_NUMBER>/comments/<COMMENT_DATABASE_ID>/replies \
@@ -413,7 +413,7 @@ gh pr view <PR_NUMBER> --comments | grep -A5 "gemini-code-assist" | tail -20
 
 # Check for recent Gemini comments with timestamps
 gh api repos/a2f0/tearleads-frontend/issues/<PR_NUMBER>/comments \
-  --jq '.[] | select(.user.login == "gemini-code-assist") | {created: .created_at, body: .body[0:200]}'
+  --jq '.[] | select(.user.login == "gemini-code-assist[bot]") | {created: .created_at, body: .body[0:200]}'
 ```
 
 #### 5. Resolve Confirmed Conversations
@@ -515,7 +515,7 @@ Based on typical feedback patterns, Gemini often focuses on:
 **Quick Resolution Workflow**:
 ```bash
 # 1. Get unresolved threads with comment IDs
-gh api graphql --field query='{repository(owner:"a2f0",name:"tearleads-frontend"){pullRequest(number:<PR_NUMBER>){reviewThreads(first:20){nodes{id isResolved comments(first:3){nodes{databaseId body author{login}}}}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false and any(.comments.nodes[]; .author.login == "gemini-code-assist"))'
+gh api graphql --field query='{repository(owner:"a2f0",name:"tearleads-frontend"){pullRequest(number:<PR_NUMBER>){reviewThreads(first:20){nodes{id isResolved comments(first:3){nodes{databaseId body author{login}}}}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false and any(.comments.nodes[]; .author.login == "gemini-code-assist[bot]"))'
 
 # 2. Address issues and commit
 git add -A && git commit -m "fix: address review feedback"
@@ -549,9 +549,9 @@ When responding to PR comments or providing feedback:
 #### Response Templates
 When acknowledging fixes or providing feedback:
 ```
-✅ **Issue Resolved**: [Description]
-📍 **Reference**: [original comment](https://github.com/a2f0/tearleads-frontend/pull/<PR_NUMBER>#discussion_r<COMMENT_ID>)
-🔧 **Solution**: [What was implemented]
+**Issue Resolved**: [Description]
+**Reference**: [original comment](https://github.com/a2f0/tearleads-frontend/pull/<PR_NUMBER>#discussion_r<COMMENT_ID>)
+**Solution**: [What was implemented]
 ```
 
 #### Creating Comment URLs
