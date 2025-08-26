@@ -517,7 +517,7 @@ Based on typical feedback patterns, Gemini often focuses on:
 **Quick Resolution Workflow**:
 ```bash
 # 1. Get unresolved threads with comment IDs
-gh api graphql --field query='{repository(owner:"a2f0",name:"tearleads-frontend"){pullRequest(number:<PR_NUMBER>){reviewThreads(first:20){nodes{id isResolved comments(first:3){nodes{databaseId body author{login}}}}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false and (.comments.nodes[] | select(.author.login == "gemini-code-assist")))'
+gh api graphql --field query='{repository(owner:"a2f0",name:"tearleads-frontend"){pullRequest(number:<PR_NUMBER>){reviewThreads(first:20){nodes{id isResolved comments(first:3){nodes{databaseId body author{login}}}}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false and any(.comments.nodes[]; .author.login == "gemini-code-assist"))'
 
 # 2. Address issues and commit
 git add -A && git commit -m "fix: address review feedback"
