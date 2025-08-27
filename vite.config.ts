@@ -45,6 +45,7 @@ export default defineConfig(({mode}) => {
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: ({url}) =>
