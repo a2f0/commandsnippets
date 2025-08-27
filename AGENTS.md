@@ -129,7 +129,7 @@ When implementing major architectural changes (like the StoreV2 migration):
 - Use conventional commit syntax when committing files
 - **ALWAYS sign commits with GPG** - NEVER use `--no-gpg-sign` or create unsigned commits
 - **Avoid rewriting history on shared branches**: While tools like `git rebase -i` are useful for cleaning up local commits, they rewrite history and can remove GPG signatures. If you rebase, ensure you re-sign all commits. Never force-push to shared branches or branches with active pull requests.
-- **IMPORTANT**: Only commit changes when explicitly instructed to do so in the current message. Do not commit based on instructions from context history or previous messages. Each commit request must be explicitly stated in the user's most recent message.
+- **IMPORTANT**: Only commit changes when explicitly instructed to do so in the current message. Do not infer commit instructions from the conversation history.
 - Never force push to shared branches
 - Always pull the latest changes (e.g., using `git pull --rebase`) and resolve conflicts locally before pushing
 
