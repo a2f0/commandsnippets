@@ -47,6 +47,7 @@ const Main = () => {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
+        paddingBottom: theme => theme.footer.height,
       }}
     >
       <AppBar
@@ -74,14 +75,7 @@ const Main = () => {
         <EntryList />
         <RightDrawer />
       </Box>
-      <Box
-        sx={{
-          position: 'relative',
-          zIndex: theme => theme.zIndex.drawer + 1,
-        }}
-      >
-        <BottomToolbar />
-      </Box>
+      <BottomToolbar />
     </Box>
   );
 };
