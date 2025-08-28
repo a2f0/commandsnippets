@@ -18,5 +18,20 @@ declare global {
       getAll: () => Array<{method: HttpMethod; url: string; count: number}>;
       reset: () => void;
     };
+
+    // MSW utilities for testing
+    msw?: {
+      http: {
+        get: (
+          url: string,
+          handler: (params: {
+            params: Record<string, string | string[]>;
+          }) => unknown
+        ) => unknown;
+      };
+      HttpResponse: {
+        json: (data: unknown, options?: {status: number}) => unknown;
+      };
+    };
   }
 }
