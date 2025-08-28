@@ -28,23 +28,13 @@ const MainWithProviders = () => (
 );
 
 describe('Main Component Holy Grail Layout', () => {
-  it('should have flex column layout structure', () => {
+  it('should have a flex column layout filling the viewport', () => {
     const {container} = render(<MainWithProviders />);
 
     const mainContainer = container.firstElementChild;
     expect(mainContainer).toBeInTheDocument();
 
     const computedStyles = window.getComputedStyle(mainContainer as Element);
-    expect(computedStyles.display).toBe('flex');
-    expect(computedStyles.flexDirection).toBe('column');
-  });
-
-  it('should use flex layout with minHeight viewport', () => {
-    const {container} = render(<MainWithProviders />);
-
-    const mainContainer = container.firstElementChild;
-    const computedStyles = window.getComputedStyle(mainContainer as Element);
-
     expect(computedStyles.display).toBe('flex');
     expect(computedStyles.flexDirection).toBe('column');
     expect(computedStyles.minHeight).toBe('100vh');
@@ -92,15 +82,14 @@ describe('Main Component Holy Grail Layout', () => {
     const {container} = render(<MainWithProviders />);
 
     const mainContainer = container.firstElementChild;
-    // Main now has 3 children: header, content, and BottomToolbar
-    expect(mainContainer?.children.length).toBe(3);
+    expect(mainContainer).toBeInTheDocument();
+    invariant(mainContainer, 'mainContainer should exist');
+    expect(mainContainer.children.length).toBe(3);
 
-    const children = Array.from(mainContainer?.children || []);
-    expect(children.length).toBeGreaterThanOrEqual(2);
-
-    const [header, content] = children;
-    invariant(header, 'header is null');
-    invariant(content, 'content is null');
+    const [header, content, footer] = Array.from(mainContainer.children);
+    invariant(header, 'header should exist');
+    invariant(content, 'content should exist');
+    invariant(footer, 'footer should exist');
 
     // Check header
     expect(header.classList.contains('MuiAppBar-root')).toBe(true);
@@ -110,12 +99,8 @@ describe('Main Component Holy Grail Layout', () => {
     expect(window.getComputedStyle(content).display).toBe('flex');
     expect(window.getComputedStyle(content).flex).toBe('1 1 0%');
 
-    // Check for footer with marginTop auto (Holy Grail layout)
-    const appBars = container.querySelectorAll('.MuiAppBar-root');
-    const footerAppBar = appBars[appBars.length - 1];
-    expect(footerAppBar).toBeInTheDocument();
-    expect(window.getComputedStyle(footerAppBar as Element).marginTop).toBe(
-      'auto'
-    );
+    // Check footer
+    expect(footer.classList.contains('MuiAppBar-root')).toBe(true);
+    expect(window.getComputedStyle(footer).marginTop).toBe('auto');
   });
 });

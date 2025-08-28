@@ -16,22 +16,15 @@ const BottomToolbarWithProviders = () => (
 );
 
 describe('BottomToolbar Holy Grail Layout', () => {
-  it('should use sticky positioning with marginTop auto', () => {
-    const {container} = render(<BottomToolbarWithProviders />);
-
-    const appBar = container.querySelector('.MuiAppBar-root');
-    expect(appBar).toBeInTheDocument();
-
-    const computedStyles = window.getComputedStyle(appBar as Element);
-    expect(computedStyles.marginTop).toBe('auto');
-  });
-
-  it('should render with proper MUI AppBar classes', () => {
+  it('should have sticky positioning and auto margin', () => {
     const {container} = render(<BottomToolbarWithProviders />);
 
     const appBar = container.querySelector('.MuiAppBar-root');
     expect(appBar).toBeInTheDocument();
     expect(appBar?.classList.contains('MuiAppBar-positionSticky')).toBe(true);
+
+    const computedStyles = window.getComputedStyle(appBar as Element);
+    expect(computedStyles.marginTop).toBe('auto');
   });
 
   it('should contain the BottomBar component', () => {
