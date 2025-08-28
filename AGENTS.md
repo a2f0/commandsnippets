@@ -186,6 +186,20 @@ git commit -m "fix: your commit message"
 ### TypeScript
 - Always use `pnpm run compile` (or `npx tsc -b`) after making changes to ensure TypeScript compiles
 - Never use `any` as a type, or `as` for type assertion
+- **Use invariant for strict null checks**: When working with potentially null DOM elements or values that should exist but may be null according to TypeScript, use the `invariant` library for runtime assertions:
+  ```typescript
+  import invariant from 'invariant';
+
+  // Instead of:
+  const element = container.firstElementChild;
+  const styles = window.getComputedStyle(element as Element);
+
+  // Use:
+  const element = container.firstElementChild;
+  invariant(element, 'element should exist');
+  const styles = window.getComputedStyle(element);
+  ```
+- This approach provides better error messages and satisfies TypeScript's strict null checks without unsafe type assertions
 
 ### Package Manager
 - Always use `pnpm` for the JavaScript package manager

@@ -9,8 +9,9 @@ const BottomToolbar = () => {
       position="sticky"
       sx={{
         backgroundColor: theme => theme.palette.background.default,
-        bottom: 0,
         backgroundImage: 'none', // Remove the Material UI gradient.
+        bottom: 0,
+        marginTop: 'auto', // This pushes the footer to the bottom
       }}
     >
       <StyledToolbar>
