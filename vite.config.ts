@@ -41,10 +41,11 @@ export default defineConfig(({mode}) => {
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,ico,png,svg,webmanifest}'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: ({url}) =>

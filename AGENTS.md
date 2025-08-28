@@ -128,10 +128,8 @@ When implementing major architectural changes (like the StoreV2 migration):
 ### Committing
 - Use conventional commit syntax when committing files
 - **ALWAYS sign commits with GPG** - NEVER use `--no-gpg-sign` or create unsigned commits
-- **Required GPG key**: All commits must be signed with key `6FFAEA28B304FA98E7521822827B8379F39A31F0`
-- **Verify git config**: Ensure `git config user.signingkey` is set to the full key ID
 - **Avoid rewriting history on shared branches**: While tools like `git rebase -i` are useful for cleaning up local commits, they rewrite history and can remove GPG signatures. If you rebase, ensure you re-sign all commits. Never force-push to shared branches or branches with active pull requests.
-- Do not commit changes unless explicitly asked to
+- **IMPORTANT**: Only commit changes when explicitly instructed to do so in the current message. Do not infer commit instructions from the conversation history.
 - Never force push to shared branches
 - Always pull the latest changes (e.g., using `git pull --rebase`) and resolve conflicts locally before pushing
 
@@ -173,7 +171,6 @@ git commit -m "fix: your commit message"
 
 #### GPG Signing Best Practices
 - **Always verify signatures**: Use `git log --show-signature` to check commit signatures
-- **Set correct signing key**: Run `git config user.signingkey 6FFAEA28B304FA98E7521822827B8379F39A31F0`
 - **Avoid history rewrite operations on shared branches**: Operations like `git filter-branch`, `git rebase -i` remove signatures and should not be used on shared or protected branches
 - **Verify before pushing**: Check signatures with `git verify-commit HEAD` before pushing
 
