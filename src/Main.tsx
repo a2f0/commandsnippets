@@ -47,7 +47,6 @@ const Main = () => {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        paddingBottom: theme => theme.footer.height,
       }}
     >
       <AppBar
@@ -69,6 +68,7 @@ const Main = () => {
         sx={{
           display: 'flex',
           flex: 1,
+          paddingBottom: theme => `${theme.footer.height}px`,
         }}
       >
         <LeftDrawer />
