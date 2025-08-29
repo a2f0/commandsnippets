@@ -60,7 +60,7 @@ invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     );
 
     const appBar = container.querySelector('.MuiAppBar-root');
-    invariant(appBar, 'appBar should exist');
+invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     const computedStyles = window.getComputedStyle(appBar);
     expect(computedStyles.marginTop).toBe('auto');
   });
