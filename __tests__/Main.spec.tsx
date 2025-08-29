@@ -63,7 +63,7 @@ describe('Main Component Holy Grail Layout', () => {
 
     expect(contentArea).toBeInTheDocument();
 
-    invariant(contentArea, 'contentArea should exist');
+invariant(contentArea, 'The contentArea element (mainContainer.children[1]) should exist');
     const computedStyles = window.getComputedStyle(contentArea);
     expect(computedStyles.display).toBe('flex');
     expect(computedStyles.flex).toBe('1 1 0%');
