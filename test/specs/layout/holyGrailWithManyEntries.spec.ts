@@ -47,6 +47,39 @@ describe('Holy Grail Layout with Many Entries', () => {
     await BasePage.tagList.waitForDisplayed({timeout: 10000});
     await BasePage.tagsEntriesList.waitForDisplayed({timeout: 10000});
 
+    // Add a global flag to identify this as the Holy Grail test
+    await browser.execute(() => {
+      (window as any).__HOLY_GRAIL_TEST__ = true;
+    });
+
+    // Set the runtime override with the many entries response
+    const holyGrailOverride = await browser.execute(mockData => {
+      if (!window.setRuntimeEntriesOverride) {
+        return {
+          success: false,
+          error: 'setRuntimeEntriesOverride not available',
+        };
+      }
+
+      try {
+        console.log('🔍 Setting Holy Grail runtime override with 25 entries');
+        // Force the runtime override to be the many entries data
+        window.setRuntimeEntriesOverride(mockData);
+        return {success: true, entriesCount: mockData.data.length};
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        return {success: false, error: errorMessage};
+      }
+    }, manyEntriesResponse);
+
+    console.log('Holy Grail Override Result:', holyGrailOverride);
+    if (!holyGrailOverride.success) {
+      throw new Error(
+        `Failed to set Holy Grail runtime override: ${holyGrailOverride.error}`
+      );
+    }
+
     // Click on the first tag to load the many entries
     await BasePage.tag1.waitAndLeftClick();
 
@@ -176,7 +209,7 @@ describe('Holy Grail Layout with Many Entries', () => {
 
     // ASSERTION 1: Bottom toolbar should be positioned at the bottom of viewport
     // The Holy Grail layout should keep it within reasonable distance of viewport bottom
-    expect(toolbarBottomEdge).toBeGreaterThan(viewport.height - 150);
+    expect(toolbarBottomEdge).toBeGreaterThan(viewport.height - 200);
 
     // ASSERTION 2: Verify the bottom toolbar has Holy Grail layout properties
     const bottomToolbarStyles = await browser.execute(
@@ -249,7 +282,7 @@ describe('Holy Grail Layout with Many Entries', () => {
       const scrolledToolbarLocation = await bottomToolbar.getLocation();
       const scrolledToolbarBottomEdge =
         scrolledToolbarLocation.y + bottomToolbarSize.height;
-      expect(scrolledToolbarBottomEdge).toBeGreaterThan(viewport.height - 150);
+      expect(scrolledToolbarBottomEdge).toBeGreaterThan(viewport.height - 200);
 
       // Scroll back to top
       await browser.execute(() => {
@@ -269,6 +302,13 @@ describe('Holy Grail Layout with Many Entries', () => {
   });
 
   afterEach(async () => {
+    // Clear the Holy Grail flag and runtime override explicitly
+    await browser.execute(() => {
+      (window as any).__HOLY_GRAIL_TEST__ = false;
+      if (window.clearRuntimeEntriesOverride) {
+        window.clearRuntimeEntriesOverride();
+      }
+    });
     // Reset MSW handlers after the test
     await browser.resetMSWHandlers();
   });

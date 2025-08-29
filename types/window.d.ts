@@ -18,6 +18,7 @@ declare global {
         | import('../src/lib/api/responses/types').ITextEntryJsonApiResponse
         | null
     ) => void;
+    clearRuntimeEntriesOverride?: () => void;
 
     // Request counting utilities
     __MSW_REQUESTS__?: {

@@ -312,89 +312,13 @@ const createHandlers = () => {
           runtimeEntriesOverride?.data.length || 0
         );
 
-        // TEMP: Force use many entries for Holy Grail test
+        // Use runtime override if available, otherwise use default entries
         let responseData = runtimeEntriesOverride || entriesResponse;
 
-        // Check if this looks like a Holy Grail test by checking for the date filter
+        // Handle date filtering if specified
         const url = new URL(req.request.url);
         const dateFilter = url.searchParams.get('filter[date_updated.gt]');
-        const tagsFilter = url.searchParams.get('filter[tags.name]');
 
-        if (
-          dateFilter === '2022-05-14T02:33:53.995003' &&
-          tagsFilter === 'test-tag-1'
-        ) {
-          console.log('🔍 DETECTED HOLY GRAIL TEST - FORCING MANY ENTRIES');
-          // Import the many entries response directly
-          try {
-            const manyEntriesResponse = {
-              data: Array.from({length: 25}, (_, i) => ({
-                type: 'TextEntry',
-                id: `${i + 1}`,
-                attributes: {
-                  body: `Test entry ${i + 1} - Holy Grail layout test entry`,
-                  subject: `Holy Grail Test Entry ${i + 1}`,
-                  date_updated: `2024-12-${(i + 1).toString().padStart(2, '0')}T10:30:${(i + 1).toString().padStart(2, '0')}.995003`,
-                  date_created: `2024-12-${(i + 1).toString().padStart(2, '0')}T10:30:${(i + 1).toString().padStart(2, '0')}.994989`,
-                  reused_count: 0,
-                  is_deleted: false,
-                  tag_count: 1,
-                },
-                relationships: {
-                  user: {
-                    data: {
-                      type: 'User',
-                      id: '1',
-                    },
-                  },
-                },
-              })),
-              included: [
-                ...Array.from({length: 25}, (_, i) => ({
-                  type: 'TagTextEntryThroughModel',
-                  id: `${i + 1}`,
-                  attributes: {
-                    order: i + 1,
-                    date_updated: `2024-12-${(i + 1).toString().padStart(2, '0')}T10:30:${(i + 1).toString().padStart(2, '0')}.995003`,
-                    date_created: `2024-12-${(i + 1).toString().padStart(2, '0')}T10:30:${(i + 1).toString().padStart(2, '0')}.994989`,
-                  },
-                  relationships: {
-                    tag: {
-                      data: {
-                        type: 'Tag',
-                        id: '1',
-                      },
-                    },
-                    text_entry: {
-                      data: {
-                        type: 'TextEntry',
-                        id: `${i + 1}`,
-                      },
-                    },
-                  },
-                })),
-                {
-                  type: 'User',
-                  id: '1',
-                  attributes: {
-                    username: 'test',
-                    date_updated: '2020-04-13T18:20:00',
-                  },
-                },
-              ],
-              links: {
-                next: null,
-              },
-            };
-
-            responseData = manyEntriesResponse;
-            console.log('🔍 HOLY GRAIL TEST: Returning 25 hardcoded entries');
-          } catch (e) {
-            console.error('🔍 Failed to create many entries:', e);
-          }
-        }
-
-        // Handle date filtering if specified (dateFilter already declared above)
         if (dateFilter && runtimeEntriesOverride) {
           console.log(
             `🔍 APPLYING DATE FILTER: entries newer than ${dateFilter}`
@@ -454,8 +378,15 @@ const createHandlers = () => {
 
         // For tag 1, return the entries, for others return empty
         if (tagId === '1') {
-          // Use runtime override if available, otherwise use default entries
           const responseData = runtimeEntriesOverride || entriesResponse;
+
+          console.log('🔍 TAGS ENDPOINT DEBUG:', {
+            tagId,
+            hasRuntimeOverride: !!runtimeEntriesOverride,
+            runtimeOverrideLength: runtimeEntriesOverride?.data.length || 0,
+            defaultEntriesLength: entriesResponse.data.length,
+            responseDataLength: responseData.data.length,
+          });
           console.log(
             `✅ Returning ${responseData.data.length} entries for tag ${tagId} from ${runtimeEntriesOverride ? 'runtime override' : 'default data'}`
           );
@@ -616,7 +547,8 @@ export const handlers = createHandlers();
 export const resetMSWState = () => {
   tagsResponse = JSON.parse(JSON.stringify(originalTagsResponse));
   entriesResponse = JSON.parse(JSON.stringify(originalEntriesResponse));
-  runtimeEntriesOverride = null;
+  // Don't reset runtime override - let tests manage it explicitly
+  // runtimeEntriesOverride = null;
 };
 
 // Function to set runtime entries override for tests
@@ -627,4 +559,15 @@ export const setRuntimeEntriesOverride = (
   console.log(
     `✅ MSW runtime entries override ${override ? `set to ${override.data.length} entries` : 'cleared'}`
   );
+  console.log('🔍 RUNTIME OVERRIDE SET:', {
+    hasOverride: !!override,
+    entriesCount: override?.data.length || 0,
+    firstEntry: override?.data[0]?.attributes?.subject || 'none',
+  });
+};
+
+// Function to clear runtime entries override explicitly
+export const clearRuntimeEntriesOverride = () => {
+  runtimeEntriesOverride = null;
+  console.log('🔍 RUNTIME OVERRIDE CLEARED');
 };
