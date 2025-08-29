@@ -34,7 +34,7 @@ describe('Main Component Holy Grail Layout', () => {
     const mainContainer = container.firstElementChild;
     expect(mainContainer).toBeInTheDocument();
 
-    invariant(mainContainer, 'mainContainer should exist');
+invariant(mainContainer, 'The main container element (container.firstElementChild) should exist');
     const computedStyles = window.getComputedStyle(mainContainer);
     expect(computedStyles.display).toBe('flex');
     expect(computedStyles.flexDirection).toBe('column');
