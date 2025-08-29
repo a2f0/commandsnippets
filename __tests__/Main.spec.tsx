@@ -34,7 +34,10 @@ describe('Main Component Holy Grail Layout', () => {
     const mainContainer = container.firstElementChild;
     expect(mainContainer).toBeInTheDocument();
 
-invariant(mainContainer, 'The main container element (container.firstElementChild) should exist');
+    invariant(
+      mainContainer,
+      'The main container element (container.firstElementChild) should exist'
+    );
     const computedStyles = window.getComputedStyle(mainContainer);
     expect(computedStyles.display).toBe('flex');
     expect(computedStyles.flexDirection).toBe('column');
@@ -49,7 +52,10 @@ invariant(mainContainer, 'The main container element (container.firstElementChil
 
     expect(headerAppBar).toBeInTheDocument();
 
-invariant(headerAppBar, 'The headerAppBar element (appBars[0]) should exist');
+    invariant(
+      headerAppBar,
+      'The headerAppBar element (appBars[0]) should exist'
+    );
     const computedStyles = window.getComputedStyle(headerAppBar);
     expect(computedStyles.position).toBe('sticky');
     expect(computedStyles.top).toBe('0px');
@@ -63,7 +69,10 @@ invariant(headerAppBar, 'The headerAppBar element (appBars[0]) should exist');
 
     expect(contentArea).toBeInTheDocument();
 
-invariant(contentArea, 'The contentArea element (mainContainer.children[1]) should exist');
+    invariant(
+      contentArea,
+      'The contentArea element (mainContainer.children[1]) should exist'
+    );
     const computedStyles = window.getComputedStyle(contentArea);
     expect(computedStyles.display).toBe('flex');
     expect(computedStyles.flex).toBe('1 1 0%');
@@ -77,7 +86,10 @@ invariant(contentArea, 'The contentArea element (mainContainer.children[1]) shou
     expect(lastChild).toBeInTheDocument();
     expect(lastChild?.classList.contains('MuiAppBar-root')).toBe(true);
 
-invariant(lastChild, 'The lastChild element (mainContainer.lastElementChild) should exist');
+    invariant(
+      lastChild,
+      'The lastChild element (mainContainer.lastElementChild) should exist'
+    );
     const computedStyles = window.getComputedStyle(lastChild);
     expect(computedStyles.marginTop).toBe('auto');
   });

@@ -24,7 +24,7 @@ describe('BottomToolbar Holy Grail Layout', () => {
     expect(appBar).toBeInTheDocument();
     expect(appBar?.classList.contains('MuiAppBar-positionSticky')).toBe(true);
 
-invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
+    invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     const computedStyles = window.getComputedStyle(appBar);
     expect(computedStyles.marginTop).toBe('auto');
   });
@@ -43,7 +43,7 @@ invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     const appBar = container.querySelector('.MuiAppBar-root');
     expect(appBar).toBeInTheDocument();
 
-invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
+    invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     const computedStyles = window.getComputedStyle(appBar);
     expect(computedStyles.backgroundImage).toBe('none');
   });
@@ -60,7 +60,7 @@ invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     );
 
     const appBar = container.querySelector('.MuiAppBar-root');
-invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
+    invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     const computedStyles = window.getComputedStyle(appBar);
     expect(computedStyles.marginTop).toBe('auto');
   });
