@@ -11,57 +11,23 @@ describe('Holy Grail Layout with Many Entries', () => {
 
     // Override MSW handlers to use manyEntriesResponse mock
     const mswResult = await browser.execute(mockData => {
-      if (!window.__MSW_WORKER__) {
-        return {success: false, error: 'MSW worker not available'};
-      }
-      if (!window.msw) {
-        return {success: false, error: 'MSW utilities not available'};
+      if (!window.setRuntimeEntriesOverride) {
+        return {
+          success: false,
+          error: 'setRuntimeEntriesOverride not available',
+        };
       }
 
       try {
-        const {http, HttpResponse} = window.msw;
-
         console.log(
-          `✅ Overriding MSW with ${mockData.data.length} entries for Holy Grail test`
+          `✅ Setting MSW runtime override with ${mockData.data.length} entries for Holy Grail test`
         );
 
-        // Only override localhost:9001 since that's what the app uses in test mode
-        const baseUrl = 'http://localhost:9001/api/v1';
+        // Use the new runtime override function
+        window.setRuntimeEntriesOverride(mockData);
 
-        // Override entries by tag endpoint with many entries - this is the key endpoint
-        const tagEntriesHandler = http.get(
-          `${baseUrl}/tags/:tagId/entries`,
-          ({params}) => {
-            const tagId = `${params['tagId']}`;
-            console.log(
-              `✅ MSW intercepted /tags/${tagId}/entries - returning ${mockData.data.length} entries`
-            );
-            if (tagId === '1') {
-              return HttpResponse.json(mockData, {status: 200});
-            }
-            return HttpResponse.json(
-              {
-                data: [],
-                included: [],
-                links: {next: null},
-              },
-              {status: 200}
-            );
-          }
-        );
-
-        // Also override general entries endpoint
-        const entriesHandler = http.get(`${baseUrl}/entries`, () => {
-          console.log(
-            `✅ MSW intercepted /entries - returning ${mockData.data.length} entries`
-          );
-          return HttpResponse.json(mockData, {status: 200});
-        });
-
-        // Use the handlers to override existing ones
-        window.__MSW_WORKER__.use(tagEntriesHandler, entriesHandler);
-        console.log('✅ MSW handlers updated with many entries mock');
-        return {success: true, handlersAdded: 2};
+        console.log('✅ MSW runtime override set successfully');
+        return {success: true, entriesCount: mockData.data.length};
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
@@ -85,7 +51,20 @@ describe('Holy Grail Layout with Many Entries', () => {
     await BasePage.tag1.waitAndLeftClick();
 
     // Wait a bit for the request to be made
-    await browser.pause(1000);
+    await browser.pause(2000);
+
+    // Check if the MSW handlers are being called with the override
+    const mswDebugInfo = await browser.execute(() => {
+      // Check if the runtime override is still set
+      const hasOverride = window.setRuntimeEntriesOverride !== undefined;
+      return {
+        hasOverride,
+        // Try to make a direct API call to test the override
+        testCall: 'ready to test',
+      };
+    });
+
+    console.log('MSW Debug Info:', mswDebugInfo);
 
     // Wait for many entries to load and verify we have a scrollable list
     await browser.waitUntil(

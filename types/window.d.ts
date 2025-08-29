@@ -12,6 +12,13 @@ declare global {
     // Reset function to restore original mock state
     resetMSWState?: () => void;
 
+    // Runtime entries override function for tests
+    setRuntimeEntriesOverride?: (
+      override:
+        | import('../src/lib/api/responses/types').ITextEntryJsonApiResponse
+        | null
+    ) => void;
+
     // Request counting utilities
     __MSW_REQUESTS__?: {
       getCount: (method: HttpMethod, url: string) => number;

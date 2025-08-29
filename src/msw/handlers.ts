@@ -219,6 +219,8 @@ let entriesResponse: ITextEntryJsonApiResponse = JSON.parse(
   JSON.stringify(originalEntriesResponse)
 );
 
+// Runtime override for test data - allows tests to inject custom responses
+let runtimeEntriesOverride: ITextEntryJsonApiResponse | null = null;
 // Define all possible API base URLs
 const apiBaseUrls = [
   'http://localhost:9001/api/v1',
@@ -303,8 +305,12 @@ const createHandlers = () => {
         recordRequest('GET', req.request.url);
         console.log('✅ MSW intercepted entries request:', req.request.url);
 
-        // Always return entries - simplify for testing
-        return HttpResponse.json(entriesResponse, {
+        // Use runtime override if available, otherwise use default entries
+        const responseData = runtimeEntriesOverride || entriesResponse;
+        console.log(
+          `✅ Returning ${responseData.data.length} entries from ${runtimeEntriesOverride ? 'runtime override' : 'default data'}`
+        );
+        return HttpResponse.json(responseData, {
           status: 200,
         });
       }),
@@ -320,7 +326,12 @@ const createHandlers = () => {
 
         // For tag 1, return the entries, for others return empty
         if (tagId === '1') {
-          return HttpResponse.json(entriesResponse, {
+          // Use runtime override if available, otherwise use default entries
+          const responseData = runtimeEntriesOverride || entriesResponse;
+          console.log(
+            `✅ Returning ${responseData.data.length} entries for tag ${tagId} from ${runtimeEntriesOverride ? 'runtime override' : 'default data'}`
+          );
+          return HttpResponse.json(responseData, {
             status: 200,
           });
         }
@@ -477,4 +488,15 @@ export const handlers = createHandlers();
 export const resetMSWState = () => {
   tagsResponse = JSON.parse(JSON.stringify(originalTagsResponse));
   entriesResponse = JSON.parse(JSON.stringify(originalEntriesResponse));
+  runtimeEntriesOverride = null;
+};
+
+// Function to set runtime entries override for tests
+export const setRuntimeEntriesOverride = (
+  override: ITextEntryJsonApiResponse | null
+) => {
+  runtimeEntriesOverride = override;
+  console.log(
+    `✅ MSW runtime entries override ${override ? `set to ${override.data.length} entries` : 'cleared'}`
+  );
 };
