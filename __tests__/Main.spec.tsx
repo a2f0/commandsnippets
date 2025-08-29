@@ -49,7 +49,7 @@ describe('Main Component Holy Grail Layout', () => {
 
     expect(headerAppBar).toBeInTheDocument();
 
-    invariant(headerAppBar, 'headerAppBar should exist');
+invariant(headerAppBar, 'The headerAppBar element (appBars[0]) should exist');
     const computedStyles = window.getComputedStyle(headerAppBar);
     expect(computedStyles.position).toBe('sticky');
     expect(computedStyles.top).toBe('0px');
