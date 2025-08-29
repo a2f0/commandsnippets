@@ -21,17 +21,8 @@ declare global {
 
     // MSW utilities for testing
     msw?: {
-      http: {
-        get: (
-          url: string,
-          handler: (params: {
-            params: Record<string, string | string[]>;
-          }) => unknown
-        ) => unknown;
-      };
-      HttpResponse: {
-        json: (data: unknown, options?: {status: number}) => unknown;
-      };
+      http: typeof import('msw').http;
+      HttpResponse: typeof import('msw').HttpResponse;
     };
   }
 }

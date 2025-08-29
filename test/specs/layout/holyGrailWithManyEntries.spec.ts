@@ -1,5 +1,4 @@
 import {$$, browser, expect} from '@wdio/globals';
-import type {SetupWorker} from 'msw/browser';
 
 import {manyEntriesResponse} from '../../mocks/entries/manyEntriesResponse';
 import {BasePage} from '../../pageobjects/base';
@@ -11,62 +10,69 @@ describe('Holy Grail Layout with Many Entries', () => {
     await browser.login();
 
     // Override MSW handlers to use manyEntriesResponse mock
-    await browser.execute(mockData => {
-      if (window.__MSW_WORKER__ && window.msw) {
+    const mswResult = await browser.execute(mockData => {
+      if (!window.__MSW_WORKER__) {
+        return {success: false, error: 'MSW worker not available'};
+      }
+      if (!window.msw) {
+        return {success: false, error: 'MSW utilities not available'};
+      }
+
+      try {
         const {http, HttpResponse} = window.msw;
 
         console.log(
           `✅ Overriding MSW with ${mockData.data.length} entries for Holy Grail test`
         );
 
-        const apiBaseUrls = [
-          'http://localhost:9001/api/v1',
-          'https://api.staging.tearleads.com/api/v1',
-          'https://api.tearleads.com/api/v1',
-        ];
+        // Only override localhost:9001 since that's what the app uses in test mode
+        const baseUrl = 'http://localhost:9001/api/v1';
 
-        const newHandlers = [];
-        for (const baseUrl of apiBaseUrls) {
-          // Override entries by tag endpoint with many entries
-          newHandlers.push(
-            http.get(
-              `${baseUrl}/tags/:tagId/entries`,
-              ({params}: {params: Record<string, string | string[]>}) => {
-                const tagId = `${params['tagId']}`;
-                console.log(
-                  `✅ MSW returning ${mockData.data.length} entries for tag ${tagId}`
-                );
-                if (tagId === '1') {
-                  return HttpResponse.json(mockData, {status: 200});
-                }
-                return HttpResponse.json(
-                  {
-                    data: [],
-                    included: [],
-                    links: {next: null},
-                  },
-                  {status: 200}
-                );
-              }
-            ),
-            // Also override general entries endpoint
-            http.get(`${baseUrl}/entries`, () => {
-              console.log(
-                `✅ MSW returning ${mockData.data.length} entries for general entries`
-              );
+        // Override entries by tag endpoint with many entries - this is the key endpoint
+        const tagEntriesHandler = http.get(
+          `${baseUrl}/tags/:tagId/entries`,
+          ({params}) => {
+            const tagId = `${params['tagId']}`;
+            console.log(
+              `✅ MSW intercepted /tags/${tagId}/entries - returning ${mockData.data.length} entries`
+            );
+            if (tagId === '1') {
               return HttpResponse.json(mockData, {status: 200});
-            })
-          );
-        }
-
-        window.__MSW_WORKER__.use(
-          ...(newHandlers as Parameters<SetupWorker['use']>)
+            }
+            return HttpResponse.json(
+              {
+                data: [],
+                included: [],
+                links: {next: null},
+              },
+              {status: 200}
+            );
+          }
         );
+
+        // Also override general entries endpoint
+        const entriesHandler = http.get(`${baseUrl}/entries`, () => {
+          console.log(
+            `✅ MSW intercepted /entries - returning ${mockData.data.length} entries`
+          );
+          return HttpResponse.json(mockData, {status: 200});
+        });
+
+        // Use the handlers to override existing ones
+        window.__MSW_WORKER__.use(tagEntriesHandler, entriesHandler);
         console.log('✅ MSW handlers updated with many entries mock');
-      } else {
-        console.warn('❌ MSW not available for handler override');
+        return {success: true, handlersAdded: 2};
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        return {success: false, error: errorMessage};
       }
     }, manyEntriesResponse);
+
+    console.log('MSW Override Result:', mswResult);
+    if (!mswResult.success) {
+      throw new Error(`Failed to override MSW handlers: ${mswResult.error}`);
+    }
 
     // Navigate to the test page to trigger the MSW handlers
     await BasePage.open('test');
@@ -78,17 +84,34 @@ describe('Holy Grail Layout with Many Entries', () => {
     // Click on the first tag to load the many entries
     await BasePage.tag1.waitAndLeftClick();
 
+    // Wait a bit for the request to be made
+    await browser.pause(1000);
+
     // Wait for many entries to load and verify we have a scrollable list
     await browser.waitUntil(
       async () => {
-        const entriesCount = await browser.execute(() => {
+        const result = await browser.execute(() => {
           const entryElements = document.querySelectorAll(
             '[id^="tagsEntries-"]'
           );
+          const tagElements = document.querySelectorAll('[id^="tag-"]');
+          const tag1Element = document.querySelector('#tag-1');
+          const allActiveElements = document.querySelectorAll(
+            '.active, .selected, [aria-selected="true"]'
+          );
           console.log(`Found ${entryElements.length} entry elements`);
-          return entryElements.length;
+          console.log(`Found ${tagElements.length} tag elements`);
+          console.log(`Tag 1 element: ${tag1Element?.textContent}`);
+          console.log(`Active elements: ${allActiveElements.length}`);
+          return {
+            entriesCount: entryElements.length,
+            tagsCount: tagElements.length,
+            tag1Text: tag1Element?.textContent || 'not found',
+            activeElementsCount: allActiveElements.length,
+          };
         });
-        return entriesCount >= 20; // Wait for most of the entries to be rendered
+        console.log('Waiting for entries:', result);
+        return result.entriesCount >= 20; // Wait for most of the entries to be rendered
       },
       {
         timeout: 15000,
@@ -116,39 +139,40 @@ describe('Holy Grail Layout with Many Entries', () => {
     const appBarsLength = await appBars.length;
     expect(appBarsLength).toBeGreaterThanOrEqual(2);
 
-    // biome-ignore lint/suspicious/noImplicitAnyLet: WebDriverIO element types are complex and dynamic
-    let bottomToolbar;
+    let bottomToolbarIndex = -1;
 
     // Find the bottom toolbar by checking for marginTop: auto (Holy Grail pattern)
-    for (const appBar of appBars) {
-      const marginTop = await browser.execute((el: HTMLElement) => {
+    for (let i = 0; i < appBarsLength; i++) {
+      const appBar = appBars[i];
+      const marginTop = await browser.execute((el: HTMLElement | undefined) => {
+        if (!el) return '';
         return window.getComputedStyle(el).marginTop;
       }, appBar);
 
       if (marginTop === 'auto') {
-        bottomToolbar = appBar;
+        bottomToolbarIndex = i;
         break;
       }
     }
 
     // Fallback: use the last AppBar if none found with marginTop: auto
-    if (!bottomToolbar && appBarsLength > 0) {
-      bottomToolbar = appBars[appBarsLength - 1];
+    if (bottomToolbarIndex === -1 && appBarsLength > 0) {
+      bottomToolbarIndex = appBarsLength - 1;
     }
 
-    expect(bottomToolbar).toBeDefined();
-    if (!bottomToolbar) {
+    expect(bottomToolbarIndex).toBeGreaterThanOrEqual(0);
+    if (bottomToolbarIndex === -1) {
       throw new Error('Bottom toolbar not found');
     }
 
+    const bottomToolbar = appBars[bottomToolbarIndex];
+    if (!bottomToolbar) {
+      throw new Error('Bottom toolbar element not found');
+    }
+
     // Test Holy Grail layout with many entries
-    const resolvedBottomToolbar = await bottomToolbar;
-    const bottomToolbarLocation = await (
-      resolvedBottomToolbar as unknown as WebdriverIO.Element
-    ).getLocation();
-    const bottomToolbarSize = await (
-      resolvedBottomToolbar as unknown as WebdriverIO.Element
-    ).getSize();
+    const bottomToolbarLocation = await bottomToolbar.getLocation();
+    const bottomToolbarSize = await bottomToolbar.getSize();
     const toolbarBottomEdge =
       bottomToolbarLocation.y + bottomToolbarSize.height;
 
@@ -165,14 +189,15 @@ describe('Holy Grail Layout with Many Entries', () => {
 
     // ASSERTION 2: Verify the bottom toolbar has Holy Grail layout properties
     const bottomToolbarStyles = await browser.execute(
-      (el: HTMLElement) => {
+      (el: HTMLElement | undefined) => {
+        if (!el) return {position: '', marginTop: ''};
         const computedStyle = window.getComputedStyle(el);
         return {
           position: computedStyle.position,
           marginTop: computedStyle.marginTop,
         };
       },
-      resolvedBottomToolbar as unknown as WebdriverIO.Element
+      bottomToolbar
     );
 
     expect(bottomToolbarStyles.position).toBe('sticky');
@@ -203,9 +228,7 @@ describe('Holy Grail Layout with Many Entries', () => {
     });
 
     // Verify toolbar is still at bottom after scroll
-    const scrolledToolbarLocation = await (
-      resolvedBottomToolbar as unknown as WebdriverIO.Element
-    ).getLocation();
+    const scrolledToolbarLocation = await bottomToolbar.getLocation();
     const scrolledToolbarBottomEdge =
       scrolledToolbarLocation.y + bottomToolbarSize.height;
     expect(scrolledToolbarBottomEdge).toBeGreaterThan(viewport.height - 150);
