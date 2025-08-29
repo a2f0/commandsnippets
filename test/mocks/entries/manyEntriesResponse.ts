@@ -16,8 +16,8 @@ const generateManyEntries = (
       attributes: {
         body: `Test entry ${i} - This is a longer entry body to test the Holy Grail layout with scrollable content. The bottom toolbar should remain sticky at the bottom of the viewport regardless of how much content is in the entries list. This entry contains enough text to ensure the list will scroll.`,
         subject: `Holy Grail Test Entry ${i}`,
-        date_updated: '2022-05-14T02:33:53.995003',
-        date_created: '2022-05-14T02:33:53.994989',
+        date_updated: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.995003`,
+        date_created: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.994989`,
         reused_count: 0,
         is_deleted: false,
         tag_count: 1,
@@ -37,8 +37,8 @@ const generateManyEntries = (
       id: `${i}`,
       attributes: {
         order: i,
-        date_updated: '2020-04-13T18:20:00',
-        date_created: '2020-04-13T18:20:00',
+        date_updated: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.995003`,
+        date_created: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.994989`,
       },
       relationships: {
         tag: {

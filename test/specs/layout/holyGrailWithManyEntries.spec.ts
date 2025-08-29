@@ -50,21 +50,12 @@ describe('Holy Grail Layout with Many Entries', () => {
     // Click on the first tag to load the many entries
     await BasePage.tag1.waitAndLeftClick();
 
-    // Wait a bit for the request to be made
+    // Wait a bit and then force refresh the tag to trigger new API call
     await browser.pause(2000);
 
-    // Check if the MSW handlers are being called with the override
-    const mswDebugInfo = await browser.execute(() => {
-      // Check if the runtime override is still set
-      const hasOverride = window.setRuntimeEntriesOverride !== undefined;
-      return {
-        hasOverride,
-        // Try to make a direct API call to test the override
-        testCall: 'ready to test',
-      };
-    });
-
-    console.log('MSW Debug Info:', mswDebugInfo);
+    // Try clicking on the tag again to force a refresh
+    await BasePage.tag1.waitAndLeftClick();
+    await browser.pause(3000);
 
     // Wait for many entries to load and verify we have a scrollable list
     await browser.waitUntil(
@@ -73,20 +64,41 @@ describe('Holy Grail Layout with Many Entries', () => {
           const entryElements = document.querySelectorAll(
             '[id^="tagsEntries-"]'
           );
+          const allEntryElements = document.querySelectorAll('[id*="entry"]');
           const tagElements = document.querySelectorAll('[id^="tag-"]');
           const tag1Element = document.querySelector('#tag-1');
           const allActiveElements = document.querySelectorAll(
             '.active, .selected, [aria-selected="true"]'
           );
-          console.log(`Found ${entryElements.length} entry elements`);
+
+          // Debug: get all IDs that contain "entry"
+          const allEntryIds = Array.from(
+            document.querySelectorAll('[id*="entry"]')
+          ).map(el => el.id);
+          const allTagsEntriesIds = Array.from(
+            document.querySelectorAll('[id*="tagsEntries"]')
+          ).map(el => el.id);
+
+          console.log(
+            `Found ${entryElements.length} entry elements with id^="tagsEntries-"`
+          );
+          console.log(
+            `Found ${allEntryElements.length} entry elements with id*="entry"`
+          );
           console.log(`Found ${tagElements.length} tag elements`);
           console.log(`Tag 1 element: ${tag1Element?.textContent}`);
           console.log(`Active elements: ${allActiveElements.length}`);
+          console.log('All entry IDs:', allEntryIds);
+          console.log('All tagsEntries IDs:', allTagsEntriesIds);
+
           return {
             entriesCount: entryElements.length,
+            allEntriesCount: allEntryElements.length,
             tagsCount: tagElements.length,
             tag1Text: tag1Element?.textContent || 'not found',
             activeElementsCount: allActiveElements.length,
+            allEntryIds: allEntryIds,
+            allTagsEntriesIds: allTagsEntriesIds,
           };
         });
         console.log('Waiting for entries:', result);

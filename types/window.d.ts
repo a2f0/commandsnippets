@@ -31,5 +31,8 @@ declare global {
       http: typeof import('msw').http;
       HttpResponse: typeof import('msw').HttpResponse;
     };
+
+    // Test debugging
+    lastApiResponse?: unknown;
   }
 }
