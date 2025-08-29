@@ -51,7 +51,9 @@
       "!**/src/ts-out/**/*",
       "!**/dev-dist/**/*",
       "!**/dist/",
-      "!**/node_modules/"
+      "!**/node_modules/",
+      "!ios/App/App/public/**/*",
+      "!android/app/src/main/assets/public/**/*"
     ]
   }
 }
