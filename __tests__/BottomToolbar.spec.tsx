@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 
 import {ThemeProvider} from '@mui/material/styles';
 import {render, screen} from '@testing-library/react';
+import invariant from 'invariant';
 import {describe, expect, it} from 'vitest';
 import {AppContextProvider} from '../src/AppContext';
 import {BottomToolbar} from '../src/components/BottomToolbar';
@@ -23,7 +24,8 @@ describe('BottomToolbar Holy Grail Layout', () => {
     expect(appBar).toBeInTheDocument();
     expect(appBar?.classList.contains('MuiAppBar-positionSticky')).toBe(true);
 
-    const computedStyles = window.getComputedStyle(appBar as Element);
+    invariant(appBar, 'appBar should exist');
+    const computedStyles = window.getComputedStyle(appBar);
     expect(computedStyles.marginTop).toBe('auto');
   });
 
@@ -41,7 +43,8 @@ describe('BottomToolbar Holy Grail Layout', () => {
     const appBar = container.querySelector('.MuiAppBar-root');
     expect(appBar).toBeInTheDocument();
 
-    const computedStyles = window.getComputedStyle(appBar as Element);
+    invariant(appBar, 'appBar should exist');
+    const computedStyles = window.getComputedStyle(appBar);
     expect(computedStyles.backgroundImage).toBe('none');
   });
 
@@ -57,7 +60,8 @@ describe('BottomToolbar Holy Grail Layout', () => {
     );
 
     const appBar = container.querySelector('.MuiAppBar-root');
-    const computedStyles = window.getComputedStyle(appBar as Element);
+    invariant(appBar, 'appBar should exist');
+    const computedStyles = window.getComputedStyle(appBar);
     expect(computedStyles.marginTop).toBe('auto');
   });
 });
