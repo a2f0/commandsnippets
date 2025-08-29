@@ -77,7 +77,7 @@ describe('Main Component Holy Grail Layout', () => {
     expect(lastChild).toBeInTheDocument();
     expect(lastChild?.classList.contains('MuiAppBar-root')).toBe(true);
 
-    invariant(lastChild, 'lastChild should exist');
+invariant(lastChild, 'The lastChild element (mainContainer.lastElementChild) should exist');
     const computedStyles = window.getComputedStyle(lastChild);
     expect(computedStyles.marginTop).toBe('auto');
   });
