@@ -75,26 +75,19 @@ describe('Holy Grail Layout with Many Entries', () => {
     const appBarsLength = await appBars.length;
     expect(appBarsLength).toBeGreaterThanOrEqual(2);
 
-    let bottomToolbarIndex = -1;
-
     // Find the bottom toolbar by checking for marginTop: auto (Holy Grail pattern)
-    for (let i = 0; i < appBarsLength; i++) {
-      const appBar = appBars[i];
-      const marginTop = await browser.execute((el: HTMLElement | undefined) => {
-        if (!el) return '';
-        return window.getComputedStyle(el).marginTop;
-      }, appBar);
-
-      if (marginTop === 'auto') {
-        bottomToolbarIndex = i;
-        break;
+    // Optimized to use a single browser.execute call instead of multiple round-trips
+    const bottomToolbarIndex = await browser.execute(selector => {
+      const appBars = document.querySelectorAll(selector);
+      for (let i = 0; i < appBars.length; i++) {
+        const appBar = appBars[i] as HTMLElement;
+        if (window.getComputedStyle(appBar).marginTop === 'auto') {
+          return i;
+        }
       }
-    }
-
-    // Fallback: use the last AppBar if none found with marginTop: auto
-    if (bottomToolbarIndex === -1 && appBarsLength > 0) {
-      bottomToolbarIndex = appBarsLength - 1;
-    }
+      // Fallback: use the last AppBar if none found with marginTop: auto
+      return appBars.length > 0 ? appBars.length - 1 : -1;
+    }, '.MuiAppBar-root');
 
     expect(bottomToolbarIndex).toBeGreaterThanOrEqual(0);
     if (bottomToolbarIndex === -1) {
