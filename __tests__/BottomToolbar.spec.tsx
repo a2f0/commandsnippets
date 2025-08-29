@@ -43,7 +43,7 @@ invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     const appBar = container.querySelector('.MuiAppBar-root');
     expect(appBar).toBeInTheDocument();
 
-    invariant(appBar, 'appBar should exist');
+invariant(appBar, 'The appBar element (.MuiAppBar-root) should exist');
     const computedStyles = window.getComputedStyle(appBar);
     expect(computedStyles.backgroundImage).toBe('none');
   });
