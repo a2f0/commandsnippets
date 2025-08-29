@@ -42,6 +42,13 @@ const StyledMenu = ({
           ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
           : {top: 0, left: 0}
       }
+      slotProps={{
+        paper: {
+          sx: {
+            zIndex: 1400, // Higher than fixed footer
+          },
+        },
+      }}
     >
       {children}
     </Menu>

@@ -219,6 +219,8 @@ let entriesResponse: ITextEntryJsonApiResponse = JSON.parse(
   JSON.stringify(originalEntriesResponse)
 );
 
+// Runtime override for test data - allows tests to inject custom responses
+let runtimeEntriesOverride: ITextEntryJsonApiResponse | null = null;
 // Define all possible API base URLs
 const apiBaseUrls = [
   'http://localhost:9001/api/v1',
@@ -301,10 +303,44 @@ const createHandlers = () => {
       // Entries endpoint (with optional query parameters)
       http.get(`${baseUrl}/entries`, req => {
         recordRequest('GET', req.request.url);
-        console.log('✅ MSW intercepted entries request:', req.request.url);
 
-        // Always return entries - simplify for testing
-        return HttpResponse.json(entriesResponse, {
+        // Use runtime override if available, otherwise use default entries
+        let responseData = runtimeEntriesOverride || entriesResponse;
+
+        // Handle date filtering if specified
+        const url = new URL(req.request.url);
+        const dateFilter = url.searchParams.get('filter[date_updated.gt]');
+
+        if (dateFilter && runtimeEntriesOverride) {
+          const filterDate = new Date(dateFilter);
+          const filteredEntries = runtimeEntriesOverride.data.filter(entry => {
+            const entryDate = new Date(entry.attributes.date_updated);
+            return entryDate > filterDate;
+          });
+
+          // Create filtered response with only newer entries and related through models
+          const entryIds = filteredEntries.map(entry => entry.id);
+          const filteredThroughModels = runtimeEntriesOverride.included.filter(
+            item => {
+              if (item.type !== 'TagTextEntryThroughModel') return false;
+              if (!('relationships' in item)) return false;
+              const relationships = item.relationships;
+              if (!('text_entry' in relationships)) return false;
+              return entryIds.includes(relationships.text_entry.data.id);
+            }
+          );
+          const otherIncluded = runtimeEntriesOverride.included.filter(
+            item => item.type !== 'TagTextEntryThroughModel'
+          );
+
+          responseData = {
+            ...runtimeEntriesOverride,
+            data: filteredEntries,
+            included: [...filteredThroughModels, ...otherIncluded],
+          };
+        }
+
+        return HttpResponse.json(responseData, {
           status: 200,
         });
       }),
@@ -313,14 +349,11 @@ const createHandlers = () => {
       http.get(`${baseUrl}/tags/:tagId/entries`, ({params, request}) => {
         recordRequest('GET', request.url);
         const tagId = `${params['tagId']}`;
-        console.log(
-          '✅ MSW intercepted entries by tag request for tag id:',
-          tagId
-        );
 
         // For tag 1, return the entries, for others return empty
         if (tagId === '1') {
-          return HttpResponse.json(entriesResponse, {
+          const responseData = runtimeEntriesOverride || entriesResponse;
+          return HttpResponse.json(responseData, {
             status: 200,
           });
         }
@@ -477,4 +510,12 @@ export const handlers = createHandlers();
 export const resetMSWState = () => {
   tagsResponse = JSON.parse(JSON.stringify(originalTagsResponse));
   entriesResponse = JSON.parse(JSON.stringify(originalEntriesResponse));
+  runtimeEntriesOverride = null;
+};
+
+// Function to set runtime entries override for tests
+export const setRuntimeEntriesOverride = (
+  override: ITextEntryJsonApiResponse | null
+) => {
+  runtimeEntriesOverride = override;
 };

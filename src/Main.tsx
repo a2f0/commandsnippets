@@ -68,20 +68,14 @@ const Main = () => {
         sx={{
           display: 'flex',
           flex: 1,
+          paddingBottom: theme => `${theme.footer.height}px`,
         }}
       >
         <LeftDrawer />
         <EntryList />
         <RightDrawer />
       </Box>
-      <Box
-        sx={{
-          position: 'relative',
-          zIndex: theme => theme.zIndex.drawer + 1,
-        }}
-      >
-        <BottomToolbar />
-      </Box>
+      <BottomToolbar />
     </Box>
   );
 };

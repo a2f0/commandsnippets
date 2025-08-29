@@ -12,11 +12,27 @@ declare global {
     // Reset function to restore original mock state
     resetMSWState?: () => void;
 
+    // Runtime entries override function for tests
+    setRuntimeEntriesOverride?: (
+      override:
+        | import('../src/lib/api/responses/types').ITextEntryJsonApiResponse
+        | null
+    ) => void;
+
     // Request counting utilities
     __MSW_REQUESTS__?: {
       getCount: (method: HttpMethod, url: string) => number;
       getAll: () => Array<{method: HttpMethod; url: string; count: number}>;
       reset: () => void;
     };
+
+    // MSW utilities for testing
+    msw?: {
+      http: typeof import('msw').http;
+      HttpResponse: typeof import('msw').HttpResponse;
+    };
+
+    // Test debugging
+    lastApiResponse?: unknown;
   }
 }
