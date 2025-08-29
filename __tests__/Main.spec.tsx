@@ -34,7 +34,11 @@ describe('Main Component Holy Grail Layout', () => {
     const mainContainer = container.firstElementChild;
     expect(mainContainer).toBeInTheDocument();
 
-    const computedStyles = window.getComputedStyle(mainContainer as Element);
+    invariant(
+      mainContainer,
+      'The main container element (container.firstElementChild) should exist'
+    );
+    const computedStyles = window.getComputedStyle(mainContainer);
     expect(computedStyles.display).toBe('flex');
     expect(computedStyles.flexDirection).toBe('column');
     expect(computedStyles.minHeight).toBe('100vh');
@@ -48,7 +52,11 @@ describe('Main Component Holy Grail Layout', () => {
 
     expect(headerAppBar).toBeInTheDocument();
 
-    const computedStyles = window.getComputedStyle(headerAppBar as Element);
+    invariant(
+      headerAppBar,
+      'The headerAppBar element (appBars[0]) should exist'
+    );
+    const computedStyles = window.getComputedStyle(headerAppBar);
     expect(computedStyles.position).toBe('sticky');
     expect(computedStyles.top).toBe('0px');
   });
@@ -61,7 +69,11 @@ describe('Main Component Holy Grail Layout', () => {
 
     expect(contentArea).toBeInTheDocument();
 
-    const computedStyles = window.getComputedStyle(contentArea as Element);
+    invariant(
+      contentArea,
+      'The contentArea element (mainContainer.children[1]) should exist'
+    );
+    const computedStyles = window.getComputedStyle(contentArea);
     expect(computedStyles.display).toBe('flex');
     expect(computedStyles.flex).toBe('1 1 0%');
   });
@@ -74,7 +86,11 @@ describe('Main Component Holy Grail Layout', () => {
     expect(lastChild).toBeInTheDocument();
     expect(lastChild?.classList.contains('MuiAppBar-root')).toBe(true);
 
-    const computedStyles = window.getComputedStyle(lastChild as Element);
+    invariant(
+      lastChild,
+      'The lastChild element (mainContainer.lastElementChild) should exist'
+    );
+    const computedStyles = window.getComputedStyle(lastChild);
     expect(computedStyles.marginTop).toBe('auto');
   });
 
