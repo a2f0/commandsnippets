@@ -9,6 +9,9 @@ describe('Holy Grail Layout with Many Entries', () => {
     await BasePage.open('');
     await browser.login();
 
+    // Navigate to the test page first
+    await BasePage.open('test');
+
     // Override MSW handlers to use manyEntriesResponse mock
     const mswResult = await browser.execute(mockData => {
       if (!window.setRuntimeEntriesOverride) {
@@ -19,14 +22,7 @@ describe('Holy Grail Layout with Many Entries', () => {
       }
 
       try {
-        console.log(
-          `✅ Setting MSW runtime override with ${mockData.data.length} entries for Holy Grail test`
-        );
-
-        // Use the new runtime override function
         window.setRuntimeEntriesOverride(mockData);
-
-        console.log('✅ MSW runtime override set successfully');
         return {success: true, entriesCount: mockData.data.length};
       } catch (error) {
         const errorMessage =
@@ -35,107 +31,27 @@ describe('Holy Grail Layout with Many Entries', () => {
       }
     }, manyEntriesResponse);
 
-    console.log('MSW Override Result:', mswResult);
     if (!mswResult.success) {
       throw new Error(`Failed to override MSW handlers: ${mswResult.error}`);
     }
-
-    // Navigate to the test page to trigger the MSW handlers
-    await BasePage.open('test');
 
     // Wait for elements to load
     await BasePage.tagList.waitForDisplayed({timeout: 10000});
     await BasePage.tagsEntriesList.waitForDisplayed({timeout: 10000});
 
-    // Add a global flag to identify this as the Holy Grail test
-    await browser.execute(() => {
-      (window as any).__HOLY_GRAIL_TEST__ = true;
-    });
-
-    // Set the runtime override with the many entries response
-    const holyGrailOverride = await browser.execute(mockData => {
-      if (!window.setRuntimeEntriesOverride) {
-        return {
-          success: false,
-          error: 'setRuntimeEntriesOverride not available',
-        };
-      }
-
-      try {
-        console.log('🔍 Setting Holy Grail runtime override with 25 entries');
-        // Force the runtime override to be the many entries data
-        window.setRuntimeEntriesOverride(mockData);
-        return {success: true, entriesCount: mockData.data.length};
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        return {success: false, error: errorMessage};
-      }
-    }, manyEntriesResponse);
-
-    console.log('Holy Grail Override Result:', holyGrailOverride);
-    if (!holyGrailOverride.success) {
-      throw new Error(
-        `Failed to set Holy Grail runtime override: ${holyGrailOverride.error}`
-      );
-    }
-
     // Click on the first tag to load the many entries
     await BasePage.tag1.waitAndLeftClick();
 
-    // Wait a bit and then force refresh the tag to trigger new API call
-    await browser.pause(2000);
-
-    // Try clicking on the tag again to force a refresh
-    await BasePage.tag1.waitAndLeftClick();
-    await browser.pause(3000);
-
-    // Wait for many entries to load and verify we have a scrollable list
+    // Wait for many entries to load
     await browser.waitUntil(
       async () => {
-        const result = await browser.execute(() => {
+        const entriesCount = await browser.execute(() => {
           const entryElements = document.querySelectorAll(
             '[id^="tagsEntries-"]'
           );
-          const allEntryElements = document.querySelectorAll('[id*="entry"]');
-          const tagElements = document.querySelectorAll('[id^="tag-"]');
-          const tag1Element = document.querySelector('#tag-1');
-          const allActiveElements = document.querySelectorAll(
-            '.active, .selected, [aria-selected="true"]'
-          );
-
-          // Debug: get all IDs that contain "entry"
-          const allEntryIds = Array.from(
-            document.querySelectorAll('[id*="entry"]')
-          ).map(el => el.id);
-          const allTagsEntriesIds = Array.from(
-            document.querySelectorAll('[id*="tagsEntries"]')
-          ).map(el => el.id);
-
-          console.log(
-            `Found ${entryElements.length} entry elements with id^="tagsEntries-"`
-          );
-          console.log(
-            `Found ${allEntryElements.length} entry elements with id*="entry"`
-          );
-          console.log(`Found ${tagElements.length} tag elements`);
-          console.log(`Tag 1 element: ${tag1Element?.textContent}`);
-          console.log(`Active elements: ${allActiveElements.length}`);
-          console.log('All entry IDs:', allEntryIds);
-          console.log('All tagsEntries IDs:', allTagsEntriesIds);
-
-          return {
-            entriesCount: entryElements.length,
-            allEntriesCount: allEntryElements.length,
-            tagsCount: tagElements.length,
-            tag1Text: tag1Element?.textContent || 'not found',
-            activeElementsCount: allActiveElements.length,
-            allEntryIds: allEntryIds,
-            allTagsEntriesIds: allTagsEntriesIds,
-          };
+          return entryElements.length;
         });
-        console.log('Waiting for entries:', result);
-        return result.entriesCount >= 20; // Wait for most of the entries to be rendered
+        return entriesCount >= 20;
       },
       {
         timeout: 15000,
@@ -150,13 +66,9 @@ describe('Holy Grail Layout with Many Entries', () => {
       return entryElements.length;
     });
     expect(finalEntriesCount).toBe(manyEntriesResponse.data.length);
-    console.log(
-      `✅ Entry count matches mock data: ${finalEntriesCount}/${manyEntriesResponse.data.length}`
-    );
 
     // Get viewport dimensions for Holy Grail assertions
     const viewport = await browser.getWindowSize();
-    console.log(`Viewport: ${viewport.width}x${viewport.height}`);
 
     // Find the bottom toolbar (AppBar with marginTop: auto)
     const appBars = await $$('.MuiAppBar-root');
@@ -199,13 +111,6 @@ describe('Holy Grail Layout with Many Entries', () => {
     const bottomToolbarSize = await bottomToolbar.getSize();
     const toolbarBottomEdge =
       bottomToolbarLocation.y + bottomToolbarSize.height;
-
-    console.log(
-      `Bottom toolbar: y=${bottomToolbarLocation.y}, height=${bottomToolbarSize.height}`
-    );
-    console.log(
-      `Bottom edge: ${toolbarBottomEdge} (${viewport.height - toolbarBottomEdge}px from viewport bottom)`
-    );
 
     // ASSERTION 1: Bottom toolbar should be positioned at the bottom of viewport
     // The Holy Grail layout should keep it within reasonable distance of viewport bottom
@@ -261,13 +166,7 @@ describe('Holy Grail Layout with Many Entries', () => {
 
     expect(hasSubstantialContent).toBe(true);
 
-    if (contentMetrics.isScrollable) {
-      console.log('✅ Content is scrollable - many entries are present');
-    } else {
-      console.log(
-        `✅ Content has substantial height (${contentMetrics.documentHeight}px) with ${contentMetrics.entryCount} entries in large viewport`
-      );
-    }
+    // Content validation passed - either scrollable or has substantial height
 
     // ASSERTION 4: Test scroll behavior - toolbar should remain at bottom during scroll
     // Only test scrolling if content is actually scrollable
@@ -289,26 +188,13 @@ describe('Holy Grail Layout with Many Entries', () => {
         window.scrollTo(0, 0);
       });
 
-      console.log('✅ Holy Grail layout verified with many entries:');
-      console.log('   - Bottom toolbar stays at viewport bottom');
-      console.log('   - Content is scrollable with 25+ entries');
-      console.log('   - Layout maintains integrity during scroll');
+      // Test completed successfully
     } else {
-      console.log('✅ Holy Grail layout verified with many entries:');
-      console.log('   - Bottom toolbar stays at viewport bottom');
-      console.log('   - Content has substantial height with 25+ entries');
-      console.log('   - Layout maintains integrity in large viewport');
+      // Test completed successfully for large viewport
     }
   });
 
   afterEach(async () => {
-    // Clear the Holy Grail flag and runtime override explicitly
-    await browser.execute(() => {
-      (window as any).__HOLY_GRAIL_TEST__ = false;
-      if (window.clearRuntimeEntriesOverride) {
-        window.clearRuntimeEntriesOverride();
-      }
-    });
     // Reset MSW handlers after the test
     await browser.resetMSWHandlers();
   });

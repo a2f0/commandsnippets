@@ -302,15 +302,7 @@ const createHandlers = () => {
 
       // Entries endpoint (with optional query parameters)
       http.get(`${baseUrl}/entries`, req => {
-        console.log('🔍 MSW ENTRIES HANDLER CALLED!');
         recordRequest('GET', req.request.url);
-        console.log('✅ MSW intercepted entries request:', req.request.url);
-        console.log('🔍 DEBUGGING MSW HANDLER - ENTRIES REQUEST');
-        console.log('🔍 Runtime override exists:', !!runtimeEntriesOverride);
-        console.log(
-          '🔍 Runtime override data length:',
-          runtimeEntriesOverride?.data.length || 0
-        );
 
         // Use runtime override if available, otherwise use default entries
         let responseData = runtimeEntriesOverride || entriesResponse;
@@ -320,17 +312,10 @@ const createHandlers = () => {
         const dateFilter = url.searchParams.get('filter[date_updated.gt]');
 
         if (dateFilter && runtimeEntriesOverride) {
-          console.log(
-            `🔍 APPLYING DATE FILTER: entries newer than ${dateFilter}`
-          );
           const filterDate = new Date(dateFilter);
           const filteredEntries = runtimeEntriesOverride.data.filter(entry => {
             const entryDate = new Date(entry.attributes.date_updated);
-            const isNewer = entryDate > filterDate;
-            console.log(
-              `🔍 Entry ${entry.id}: ${entry.attributes.date_updated} > ${dateFilter} = ${isNewer}`
-            );
-            return isNewer;
+            return entryDate > filterDate;
           });
 
           // Create filtered response with only newer entries and related through models
@@ -353,15 +338,8 @@ const createHandlers = () => {
             data: filteredEntries,
             included: [...filteredThroughModels, ...otherIncluded],
           };
-
-          console.log(
-            `🔍 FILTERED TO ${filteredEntries.length} entries newer than ${dateFilter}`
-          );
         }
 
-        console.log(
-          `✅ Returning ${responseData.data.length} entries from ${runtimeEntriesOverride ? 'runtime override' : 'default data'}`
-        );
         return HttpResponse.json(responseData, {
           status: 200,
         });
@@ -371,25 +349,10 @@ const createHandlers = () => {
       http.get(`${baseUrl}/tags/:tagId/entries`, ({params, request}) => {
         recordRequest('GET', request.url);
         const tagId = `${params['tagId']}`;
-        console.log(
-          '✅ MSW intercepted entries by tag request for tag id:',
-          tagId
-        );
 
         // For tag 1, return the entries, for others return empty
         if (tagId === '1') {
           const responseData = runtimeEntriesOverride || entriesResponse;
-
-          console.log('🔍 TAGS ENDPOINT DEBUG:', {
-            tagId,
-            hasRuntimeOverride: !!runtimeEntriesOverride,
-            runtimeOverrideLength: runtimeEntriesOverride?.data.length || 0,
-            defaultEntriesLength: entriesResponse.data.length,
-            responseDataLength: responseData.data.length,
-          });
-          console.log(
-            `✅ Returning ${responseData.data.length} entries for tag ${tagId} from ${runtimeEntriesOverride ? 'runtime override' : 'default data'}`
-          );
           return HttpResponse.json(responseData, {
             status: 200,
           });
@@ -547,8 +510,7 @@ export const handlers = createHandlers();
 export const resetMSWState = () => {
   tagsResponse = JSON.parse(JSON.stringify(originalTagsResponse));
   entriesResponse = JSON.parse(JSON.stringify(originalEntriesResponse));
-  // Don't reset runtime override - let tests manage it explicitly
-  // runtimeEntriesOverride = null;
+  runtimeEntriesOverride = null;
 };
 
 // Function to set runtime entries override for tests
@@ -556,18 +518,4 @@ export const setRuntimeEntriesOverride = (
   override: ITextEntryJsonApiResponse | null
 ) => {
   runtimeEntriesOverride = override;
-  console.log(
-    `✅ MSW runtime entries override ${override ? `set to ${override.data.length} entries` : 'cleared'}`
-  );
-  console.log('🔍 RUNTIME OVERRIDE SET:', {
-    hasOverride: !!override,
-    entriesCount: override?.data.length || 0,
-    firstEntry: override?.data[0]?.attributes?.subject || 'none',
-  });
-};
-
-// Function to clear runtime entries override explicitly
-export const clearRuntimeEntriesOverride = () => {
-  runtimeEntriesOverride = null;
-  console.log('🔍 RUNTIME OVERRIDE CLEARED');
 };
