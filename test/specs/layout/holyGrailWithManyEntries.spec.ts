@@ -78,13 +78,15 @@ describe('Holy Grail Layout with Many Entries', () => {
     // Find the bottom toolbar by checking for marginTop: auto (Holy Grail pattern)
     // Optimized to use a single browser.execute call instead of multiple round-trips
     const bottomToolbarIndex = await browser.execute(selector => {
-      const appBars = document.querySelectorAll(selector);
-      for (let i = 0; i < appBars.length; i++) {
-        const appBar = appBars[i] as HTMLElement;
-        if (window.getComputedStyle(appBar).marginTop === 'auto') {
-          return i;
-        }
+      const appBars = Array.from(document.querySelectorAll(selector));
+      const index = appBars.findIndex(
+        appBar => window.getComputedStyle(appBar).marginTop === 'auto'
+      );
+
+      if (index !== -1) {
+        return index;
       }
+
       // Fallback: use the last AppBar if none found with marginTop: auto
       return appBars.length > 0 ? appBars.length - 1 : -1;
     }, '.MuiAppBar-root');
