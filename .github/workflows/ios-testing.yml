@@ -58,6 +58,11 @@ jobs:
       - name: Build staging app with Capacitor
         run: pnpm run cap:build:staging
 
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios/App
+          pod install
+
       - name: Build iOS app for simulator
         run: |
           cd ios/App
