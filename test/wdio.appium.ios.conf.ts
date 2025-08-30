@@ -34,8 +34,10 @@ export const config: WebdriverIO.Config = {
       'appium:platformVersion': '17.5',
       'appium:deviceName': 'iPhone 15',
       'appium:automationName': 'XCUITest',
-      'appium:app':
-        './ios/App/build/Build/Products/Release-iphonesimulator/App.app',
+      'appium:app': path.join(
+        process.cwd(),
+        'ios/App/build/Build/Products/Release-iphonesimulator/App.app'
+      ),
       'appium:bundleId': 'com.tearleads.app',
       'appium:newCommandTimeout': 300,
       'appium:noReset': false,
