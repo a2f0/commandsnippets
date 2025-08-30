@@ -19,4 +19,13 @@ dev-dist
 # Turso Databases
 *.db
 
+# Android Studio / IntelliJ IDEA
+android/.idea/
+android/*.iml
+android/.gradle
+android/local.properties
+
+# iOS / Xcode (already handled by Capacitor but adding for clarity)
+ios/.idea/
+
 _results_
