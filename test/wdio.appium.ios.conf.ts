@@ -1,6 +1,4 @@
-import type {Capabilities, Options} from '@wdio/types';
-
-export const config: Options.Testrunner = {
+export const config: WebdriverIO.Config = {
   // Appium server configuration
   services: [
     [
@@ -74,6 +72,14 @@ export const config: Options.Testrunner = {
     console.log('Appium iOS session completed.');
   },
 
+  afterTest: async (test, _context, {error}) => {
+    if (error) {
+      await browser.saveScreenshot(
+        `./logs/screenshots/error-${test.title}.png`
+      );
+    }
+  },
+
   // Timeouts
   connectionRetryTimeout: 90000,
   connectionRetryCount: 3,
@@ -83,7 +89,4 @@ export const config: Options.Testrunner = {
   bail: 0,
   baseUrl: 'http://localhost:4723',
   waitforTimeout: 10000,
-
-  // Screenshots
-  screenshotPath: './logs/screenshots',
 };
