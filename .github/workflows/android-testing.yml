@@ -32,7 +32,8 @@ jobs:
       - name: Configure npm auth
         # yamllint disable-line rule:line-length
         run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" \
+            >> .npmrc
 
       - name: Install dependencies
         run: pnpm install
@@ -66,7 +67,8 @@ jobs:
 
       - name: Enable KVM group perms
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | \
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666",' \
+            'OPTIONS+="static_node=kvm"' | \
             sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
@@ -131,8 +133,9 @@ jobs:
             pnpm exec appium driver install uiautomator2
             
             # Wait for emulator to fully boot
-            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | \
-              tr -d "\r") ]]; do sleep 1; done'
+            adb wait-for-device shell \
+              'while [[ -z $(getprop sys.boot_completed | tr -d "\r") ]]; \
+              do sleep 1; done'
             adb devices -l
             
             # Run the tests
