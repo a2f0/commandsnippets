@@ -31,8 +31,8 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       platformName: 'iOS',
-      'appium:platformVersion': '17.2',
-      'appium:deviceName': 'iPhone 15',
+      'appium:platformVersion': '18.1',
+      'appium:deviceName': 'iPhone 16',
       'appium:automationName': 'XCUITest',
       'appium:app': path.join(
         process.cwd(),

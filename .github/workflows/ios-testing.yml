@@ -10,7 +10,7 @@ on:
 
 jobs:
   ios-appium-tests:
-    runs-on: macos-13
+    runs-on: macos-15
     continue-on-error: false
 
     steps:
