@@ -123,7 +123,7 @@ For development with live reload on mobile:
 
 1. Start the development server:
 ```shell
-pnpm run dev --host
+pnpm run dev -- --host --port 8080
 ```
 
 2. The default `capacitor.config.ts` is already configured for development. Update the IP address if needed:
