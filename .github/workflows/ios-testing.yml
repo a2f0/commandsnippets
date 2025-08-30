@@ -61,11 +61,16 @@ jobs:
       - name: Install CocoaPods dependencies
         run: |
           cd ios/App
-          pod install
+          # Install pods and ensure they're properly integrated
+          pod install --verbose
+          echo "Checking Pods directory..."
+          ls -la Pods/ || true
 
       - name: Build iOS app for simulator
         run: |
           cd ios/App
+          # Clean build folder to ensure fresh build
+          rm -rf build
           # Build for simulator with proper architecture
           xcodebuild \
             -workspace App.xcworkspace \
@@ -73,9 +78,23 @@ jobs:
             -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath build \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.2' \
-            ONLY_ACTIVE_ARCH=NO \
-            BUILD_DIR=build/Build/Products
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0.1' \
+            ONLY_ACTIVE_ARCH=NO
+
+      - name: Verify iOS build output
+        run: |
+          echo "Checking for built app..."
+          APP_PATH="ios/App/build/Build/Products/Release-iphonesimulator/App.app"
+          if [ -d "$APP_PATH" ]; then
+            echo "✅ App.app found at expected location"
+            ls -la \
+              ios/App/build/Build/Products/Release-iphonesimulator/
+          else
+            echo "❌ App.app not found!"
+            echo "Contents of build directory:"
+            find ios/App/build -name "*.app" -type d 2>/dev/null || true
+            exit 1
+          fi
 
       - name: Start iOS simulator
         run: |
