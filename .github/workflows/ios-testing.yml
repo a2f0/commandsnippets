@@ -66,16 +66,15 @@ jobs:
       - name: Build iOS app for simulator
         run: |
           cd ios/App
-          xcodebuild clean \
-            -workspace App.xcworkspace \
-            -scheme App \
-            -configuration Release
+          # Build for simulator with proper architecture
           xcodebuild \
             -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath build \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.2' \
+            ONLY_ACTIVE_ARCH=NO \
             BUILD_DIR=build/Build/Products
 
       - name: Start iOS simulator
