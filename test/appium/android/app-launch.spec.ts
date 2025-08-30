@@ -6,7 +6,7 @@ describe('Android App Launch', () => {
     console.log('Testing app launch...');
 
     // Wait for app to be in running state using explicit wait
-    const appPackage = driver.options.capabilities['appium:appPackage'] as string;
+    const appPackage = 'com.tearleads.app';
     await browser.waitUntil(
       async () => {
         const appState = await driver.queryAppState(appPackage);
@@ -135,8 +135,7 @@ describe('Android App Launch', () => {
       // Wait for app to return to foreground using explicit wait
       await browser.waitUntil(
         async () => {
-          const appPackage = driver.options.capabilities['appium:appPackage'] as string;
-          const appState = await driver.queryAppState(appPackage);
+          const appState = await driver.queryAppState('com.tearleads.app');
           return appState === 4; // Running in foreground
         },
         {
@@ -146,8 +145,7 @@ describe('Android App Launch', () => {
       );
 
       // Verify app is back in foreground
-      const appPackage = driver.options.capabilities['appium:appPackage'] as string;
-      const appState = await driver.queryAppState(appPackage);
+      const appState = await driver.queryAppState('com.tearleads.app');
       const APP_STATE_FOREGROUND = 4;
       expect(appState).toBe(APP_STATE_FOREGROUND); // Running in foreground
 
