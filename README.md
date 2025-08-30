@@ -44,20 +44,53 @@ This project includes Capacitor for building native iOS and Android apps from th
 ### Capacitor Setup
 
 Capacitor is already configured with:
-- **App Name**: Tearleads Frontend
-- **Package ID**: com.tearleads.app
+- **App Name**: Tearleads Frontend (Tearleads for production, Tearleads Staging for staging)
+- **Package ID**: com.tearleads.app (production) / com.tearleads.app.staging (staging)
 - **Web Directory**: build
+
+### Environment Configuration
+
+The app supports different environments for Capacitor builds:
+- **Development**: For local development with live reload (default when using `capacitor.config.ts`)
+- **Staging**: Points to https://app.staging.tearleads.com (uses `capacitor.config.staging.ts`)
+- **Production**: Uses bundled assets for app stores (uses `capacitor.config.production.ts`)
+
+Environment detection is handled automatically in `src/lib/environment.ts`:
+- Capacitor apps use Vite's MODE environment variable to determine the environment
+- Web apps use hostname-based detection
+- Default is 'development' for Capacitor during development
 
 ### Building for Mobile Platforms
 
+#### Production Build
+```shell
+# Build and sync for production
+pnpm run cap:build:production
+```
+
+#### Staging Build
+```shell
+# Build and sync for staging
+pnpm run cap:build:staging
+```
+
+#### Manual Build Steps
 1. First, build the web application:
 ```shell
-pnpm run build
+# For production
+pnpm run build:production
+
+# For staging
+pnpm run build:staging
 ```
 
 2. Sync the web build with native platforms:
 ```shell
-npx cap sync
+# For production
+pnpm run cap:sync:production
+
+# For staging
+pnpm run cap:sync:staging
 ```
 
 ### iOS Development
@@ -93,20 +126,25 @@ For development with live reload on mobile:
 pnpm run dev --host
 ```
 
-2. Update `capacitor.config.ts` temporarily to point to your local server:
+2. The default `capacitor.config.ts` is already configured for development. Update the IP address if needed:
 ```javascript
 const config: CapacitorConfig = {
   // ... other config
   server: {
-    url: 'http://YOUR_LOCAL_IP:5173',
+    url: 'http://YOUR_LOCAL_IP:8080',  // Update with your machine's IP
     cleartext: true
   }
 };
 ```
 
-3. Run the app on your device/simulator through Xcode or Android Studio
+3. Sync and run the app:
+```shell
+npx cap sync
+```
 
-Remember to remove the server configuration before building for production.
+4. Run the app on your device/simulator through Xcode or Android Studio
+
+Note: The development config is separate from staging/production configs which are in `capacitor.config.staging.ts` and `capacitor.config.production.ts`.
 
 ### Updating Native Projects
 
@@ -119,6 +157,23 @@ To update native project dependencies:
 ```shell
 npx cap update
 ```
+
+### Troubleshooting
+
+**App shows "Could not connect to server" error:**
+- Ensure the dev server is running with `pnpm run dev --host`
+- Verify the IP address in `capacitor.config.ts` matches your machine's local IP
+- Check that your device/simulator is on the same network as your development machine
+- The dev server runs on port 8080, not 5173
+
+**Changes not appearing in the app:**
+- Run `npx cap sync` after configuration changes
+- In Xcode: Clean build folder (Shift+Cmd+K) and rebuild
+- Ensure live reload is working by checking the server URL in `capacitor.config.ts`
+
+**Environment detection issues:**
+- Capacitor apps automatically detect as 'development' when using the default config
+- For staging/production builds, use the specific build commands that set the correct environment variables
 
 ## Other
 
