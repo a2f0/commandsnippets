@@ -27,5 +27,10 @@ android/local.properties
 
 # iOS / Xcode (already handled by Capacitor but adding for clarity)
 ios/.idea/
+ios/App/build/
 
 _results_
+
+# Appium test logs and screenshots
+logs/
+appium.log

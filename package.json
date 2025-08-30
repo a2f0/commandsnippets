@@ -32,7 +32,9 @@
     "cap:sync:staging": "cp capacitor.config.staging.ts capacitor.config.ts && cap sync",
     "cap:sync:production": "cp capacitor.config.production.ts capacitor.config.ts && cap sync",
     "cap:build:staging": "pnpm run build:staging && pnpm run cap:sync:staging",
-    "cap:build:production": "pnpm run build:production && pnpm run cap:sync:production"
+    "cap:build:production": "pnpm run build:production && pnpm run cap:sync:production",
+    "appium:ios": "npx wdio test/wdio.appium.ios.conf.ts",
+    "appium:build-and-test": "pnpm run cap:build:staging && cd ios/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphonesimulator -derivedDataPath build && cd ../.. && pnpm run appium:ios"
   },
   "keywords": [],
   "author": "Dan Sullivan",
@@ -56,6 +58,7 @@
     "@types/react-highlight-words": "0.20.0",
     "@types/react-router-dom": "5.3.3",
     "@vitejs/plugin-react": "4.7.0",
+    "@wdio/appium-service": "9.19.2",
     "@wdio/cli": "9.18.4",
     "@wdio/dot-reporter": "9.18.0",
     "@wdio/globals": "9.17.0",
@@ -64,6 +67,8 @@
     "@wdio/reporter": "9.18.0",
     "@wdio/spec-reporter": "9.18.0",
     "@wdio/types": "9.16.2",
+    "appium": "2.19.0",
+    "appium-xcuitest-driver": "9.10.5",
     "fake-indexeddb": "6.0.1",
     "history": "5.3.0",
     "invariant": "2.2.4",
@@ -82,7 +87,8 @@
     "vite-plugin-html": "3.2.2",
     "vite-plugin-pwa": "1.0.2",
     "vitest": "3.2.4",
-    "wdio-video-reporter": "6.1.1"
+    "wdio-video-reporter": "6.1.1",
+    "webdriverio": "9.19.2"
   },
   "dependencies": {
     "@capacitor/android": "7.4.3",
