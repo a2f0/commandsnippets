@@ -6,7 +6,7 @@ describe('Android App Launch', () => {
     console.log('Testing app launch...');
 
     // Wait for app to be in running state using explicit wait
-    const appPackage = 'com.tearleads.app';
+    const appPackage = driver.options.capabilities['appium:appPackage'] as string;
     await browser.waitUntil(
       async () => {
         const appState = await driver.queryAppState(appPackage);
@@ -26,7 +26,9 @@ describe('Android App Launch', () => {
     console.log('App state:', appState);
 
     // App state should be 4 (running in foreground) for Android
-    expect(appState).toBe(4);
+    // See: https://appium.io/docs/en/commands/device/app/query-app-state/
+    const APP_STATE_FOREGROUND = 4;
+    expect(appState).toBe(APP_STATE_FOREGROUND);
   });
 
   it('should display the main interface', async () => {
@@ -112,8 +114,8 @@ describe('Android App Launch', () => {
       // Take a screenshot after the interaction
       await browser.saveScreenshot('./logs/screenshots/after-tap.png');
 
-      // If we get here without errors, the app is responsive
-      expect(true).toBe(true);
+      // If we get here without errors, the app is considered responsive to touch
+      // The test validates that no errors are thrown during touch interaction
     } catch (error) {
       console.log('Touch interaction failed:', error);
       await browser.saveScreenshot('./logs/screenshots/touch-error.png');
@@ -133,7 +135,8 @@ describe('Android App Launch', () => {
       // Wait for app to return to foreground using explicit wait
       await browser.waitUntil(
         async () => {
-          const appState = await driver.queryAppState('com.tearleads.app');
+          const appPackage = driver.options.capabilities['appium:appPackage'] as string;
+          const appState = await driver.queryAppState(appPackage);
           return appState === 4; // Running in foreground
         },
         {
@@ -143,8 +146,10 @@ describe('Android App Launch', () => {
       );
 
       // Verify app is back in foreground
-      const appState = await driver.queryAppState('com.tearleads.app');
-      expect(appState).toBe(4); // Running in foreground
+      const appPackage = driver.options.capabilities['appium:appPackage'] as string;
+      const appState = await driver.queryAppState(appPackage);
+      const APP_STATE_FOREGROUND = 4;
+      expect(appState).toBe(APP_STATE_FOREGROUND); // Running in foreground
 
       await browser.saveScreenshot('./logs/screenshots/after-background.png');
     } catch (error) {
