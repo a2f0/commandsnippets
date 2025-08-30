@@ -21,6 +21,36 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 ### Testing
 
+#### Appium Mobile Testing (iOS)
+
+For testing the Capacitor iOS app in simulator:
+
+- `pnpm run appium:build-and-test` - Build staging app and run Appium tests (recommended)
+- `pnpm run appium:ios` - Run Appium tests only (requires pre-built app)
+
+**Prerequisites:**
+- Xcode installed with iOS Simulator
+- iOS Simulator available (iPhone 15, iOS 17.0 recommended)
+- Capacitor staging app built and synced
+
+**Manual Setup Steps:**
+1. Build the staging app: `pnpm run cap:build:staging`
+2. Open Xcode: `open ios/App/App.xcworkspace`
+3. Build for simulator: Product → Build For → Running (or use command line)
+4. Run tests: `pnpm run appium:ios`
+
+**Test Configuration:**
+- Config: `test/wdio.appium.ios.conf.ts`
+- Tests: `test/appium/ios/`
+- Bundle ID: `com.tearleads.app.staging`
+- Screenshots: `logs/screenshots/`
+- Logs: `logs/appium/`
+
+**Recommended Approach: Use Staging Builds**
+- Staging builds are more representative of production
+- Proper bundle IDs and signing
+- No dependency on dev server connectivity
+- Better for automated testing pipelines
 
 #### E2E Tests (WebdriverIO)
 
