@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.69",
+  "version": "0.7.70",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -21,17 +21,26 @@
     "lint": "biome lint",
     "build": "vite build",
     "build:analyze": "vite build --mode analyze",
+    "build:staging": "vite build --mode staging",
+    "build:production": "vite build --mode production",
     "analyze": "pnpm run build:analyze",
     "postbuild": "scripts/postBuild.sh",
     "clean": "rimraf build",
     "compile": "tsc -b",
-    "prepare": "npm run compile"
+    "prepare": "npm run compile",
+    "cap:sync": "cap sync",
+    "cap:sync:staging": "cp capacitor.config.staging.ts capacitor.config.ts && cap sync",
+    "cap:sync:production": "cp capacitor.config.production.ts capacitor.config.ts && cap sync",
+    "cap:build:staging": "pnpm run build:staging && pnpm run cap:sync:staging",
+    "cap:build:production": "pnpm run build:production && pnpm run cap:sync:production"
   },
   "keywords": [],
   "author": "Dan Sullivan",
   "devDependencies": {
     "@a2f0/check-for-unpinned-dependencies": "github:a2f0/check-for-unpinned-dependencies#chore-package-maintenance",
     "@biomejs/biome": "2.1.3",
+    "@capacitor/cli": "7.4.3",
+    "@capacitor/core": "7.4.3",
     "@ffmpeg-installer/ffmpeg": "1.1.0",
     "@swc/core": "1.13.3",
     "@swc/helpers": "0.5.17",
@@ -76,6 +85,8 @@
     "wdio-video-reporter": "6.1.1"
   },
   "dependencies": {
+    "@capacitor/android": "7.4.3",
+    "@capacitor/ios": "7.4.3",
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
