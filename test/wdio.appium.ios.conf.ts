@@ -1,3 +1,9 @@
+import path from 'path';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export const config: WebdriverIO.Config = {
   // Appium server configuration
   services: [
@@ -25,7 +31,7 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       platformName: 'iOS',
-      'appium:platformVersion': '17.0.1',
+      'appium:platformVersion': '17.5',
       'appium:deviceName': 'iPhone 15',
       'appium:automationName': 'XCUITest',
       'appium:app':
@@ -38,7 +44,7 @@ export const config: WebdriverIO.Config = {
   ],
 
   // Test files
-  specs: ['./test/appium/ios/app-launch.spec.ts'],
+  specs: [path.join(__dirname, 'appium/ios/**/*.spec.ts')],
 
   // Exclude patterns
   exclude: [],

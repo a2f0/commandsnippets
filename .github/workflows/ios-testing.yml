@@ -78,7 +78,7 @@ jobs:
             -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath build \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0.1' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             ONLY_ACTIVE_ARCH=NO
 
       - name: Verify iOS build output
