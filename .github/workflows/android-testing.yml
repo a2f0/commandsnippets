@@ -31,7 +31,8 @@ jobs:
 
       - name: Configure npm auth
         # yamllint disable-line rule:line-length
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
       - name: Install dependencies
         run: pnpm install
@@ -65,7 +66,8 @@ jobs:
 
       - name: Enable KVM group perms
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | \
+            sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
@@ -78,7 +80,9 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: >
+            -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+            -camera-back none
           disable-animations: false
           script: echo "Generated AVD snapshot for caching."
 
@@ -127,12 +131,15 @@ jobs:
             pnpm exec appium driver install uiautomator2
             
             # Wait for emulator to fully boot
-            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done'
+            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | \
+              tr -d "\r") ]]; do sleep 1; done'
             adb devices -l
             
             # Run the tests
             pnpm run appium:android
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: >
+            -no-snapshot-save -no-window -gpu swiftshader_indirect
+            -noaudio -no-boot-anim -camera-back none
           disable-animations: true
         timeout-minutes: 20
 
