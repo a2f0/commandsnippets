@@ -34,7 +34,9 @@
     "cap:build:staging": "pnpm run build:staging && pnpm run cap:sync:staging",
     "cap:build:production": "pnpm run build:production && pnpm run cap:sync:production",
     "appium:ios": "npx wdio test/wdio.appium.ios.conf.ts",
-    "appium:build-and-test": "./scripts/setup-appium-ios.sh"
+    "appium:android": "npx wdio test/wdio.appium.android.conf.ts",
+    "appium:build-and-test": "./scripts/setup-appium-ios.sh",
+    "appium:android:build-and-test": "./scripts/setup-appium-android.sh && pnpm run cap:build:staging && cd android && ./gradlew assembleDebug && cd .. && pnpm run appium:android"
   },
   "keywords": [],
   "author": "Dan Sullivan",
