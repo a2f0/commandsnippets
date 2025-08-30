@@ -129,8 +129,10 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           script: |
-            # Install UiAutomator2 driver (using local Appium)
-            pnpm exec appium driver install uiautomator2
+            # Install UiAutomator2 driver if not already installed
+            if ! pnpm exec appium driver list --installed | grep -q "uiautomator2"; then
+              pnpm exec appium driver install uiautomator2
+            fi
 
             # Wait for emulator to fully boot
             adb wait-for-device shell \
