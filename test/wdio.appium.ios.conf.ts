@@ -39,7 +39,7 @@ export const config: WebdriverIO.Config = {
         'ios/App/build/Build/Products/Release-iphonesimulator/App.app'
       ),
       'appium:bundleId': 'com.tearleads.app',
-      'appium:newCommandTimeout': 300,
+      'appium:newCommandTimeout': 600,
       'appium:noReset': false,
       'appium:fullReset': false,
     },
@@ -87,7 +87,7 @@ export const config: WebdriverIO.Config = {
   },
 
   // Timeouts
-  connectionRetryTimeout: 90000,
+  connectionRetryTimeout: 180000,
   connectionRetryCount: 3,
 
   // Logging
