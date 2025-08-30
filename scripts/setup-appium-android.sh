@@ -18,26 +18,22 @@ if ! command -v pnpm &> /dev/null; then
 fi
 echo -e "${GREEN}✓ pnpm is available${NC}"
 
-# Install Appium if not already installed
-if ! command -v appium &> /dev/null; then
-    echo "Installing Appium globally..."
-    if npm install -g appium@latest; then
-        echo -e "${GREEN}✓ Appium installed successfully${NC}"
-    else
-        echo -e "${RED}✗ Failed to install Appium${NC}"
-        exit 1
-    fi
+# Verify Appium is available from devDependencies
+echo "Verifying local Appium installation..."
+if pnpm exec appium --version &> /dev/null; then
+    echo -e "${GREEN}✓ Local Appium is available ($(pnpm exec appium --version))${NC}"
 else
-    echo -e "${GREEN}✓ Appium is already installed${NC}"
+    echo -e "${RED}✗ Local Appium not found. Please run 'pnpm install' first${NC}"
+    exit 1
 fi
 
 # Install UiAutomator2 driver for Android
 echo "Installing UiAutomator2 driver..."
-if appium driver install uiautomator2 2>/dev/null || appium driver list | grep -q "uiautomator2"; then
+if pnpm exec appium driver install uiautomator2 2>/dev/null || pnpm exec appium driver list | grep -q "uiautomator2"; then
     echo -e "${GREEN}✓ UiAutomator2 driver is available${NC}"
 else
     echo -e "${RED}✗ Failed to install UiAutomator2 driver${NC}"
-    appium driver list
+    pnpm exec appium driver list
     exit 1
 fi
 
@@ -67,7 +63,7 @@ fi
 
 # Verify Appium setup
 echo "Verifying Appium setup..."
-appium driver list
+pnpm exec appium driver list
 
 # Check for Android emulator
 if command -v emulator &> /dev/null; then
