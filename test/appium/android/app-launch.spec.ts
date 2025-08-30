@@ -1,4 +1,4 @@
-import {expect, browser, driver, $$} from '@wdio/globals';
+import {$$, browser, driver, expect} from '@wdio/globals';
 
 describe('Android App Launch', () => {
   it('should launch the app successfully', async () => {
@@ -7,13 +7,16 @@ describe('Android App Launch', () => {
 
     // Wait for app to be in running state using explicit wait
     const appPackage = 'com.tearleads.app';
-    await browser.waitUntil(async () => {
-      const appState = await driver.queryAppState(appPackage);
-      return appState === 4; // Running in foreground
-    }, {
-      timeout: 15000,
-      timeoutMsg: 'App did not start within 15 seconds'
-    });
+    await browser.waitUntil(
+      async () => {
+        const appState = await driver.queryAppState(appPackage);
+        return appState === 4; // Running in foreground
+      },
+      {
+        timeout: 15000,
+        timeoutMsg: 'App did not start within 15 seconds',
+      }
+    );
 
     // Take a screenshot to verify the app loaded
     await browser.saveScreenshot('./logs/screenshots/app-launch.png');
@@ -28,17 +31,20 @@ describe('Android App Launch', () => {
 
   it('should display the main interface', async () => {
     // Wait for UI elements to load using explicit wait
-    await browser.waitUntil(async () => {
-      try {
-        const elements = await $$('*');
-        return elements.length > 0;
-      } catch {
-        return false;
+    await browser.waitUntil(
+      async () => {
+        try {
+          const elements = await $$('*');
+          return Array.isArray(elements) && elements.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      {
+        timeout: 10000,
+        timeoutMsg: 'UI elements did not load within 10 seconds',
       }
-    }, {
-      timeout: 10000,
-      timeoutMsg: 'UI elements did not load within 10 seconds'
-    });
+    );
 
     // Try to find any text element to verify the app UI loaded
     // This will depend on your app's structure
@@ -65,17 +71,21 @@ describe('Android App Launch', () => {
 
   it('should be responsive to touch', async () => {
     // Wait for app to be ready using explicit wait for elements
-    await browser.waitUntil(async () => {
-      try {
-        const elements = await $$('*');
-        return elements.length > 0;
-      } catch {
-        return false;
+    await browser.waitUntil(
+      async () => {
+        try {
+          const elements = await $$('*');
+          return Array.isArray(elements) && elements.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      {
+        timeout: 8000,
+        timeoutMsg:
+          'App did not become ready for touch interaction within 8 seconds',
       }
-    }, {
-      timeout: 8000,
-      timeoutMsg: 'App did not become ready for touch interaction within 8 seconds'
-    });
+    );
 
     try {
       // Try to tap somewhere on the screen (center)
@@ -84,9 +94,10 @@ describe('Android App Launch', () => {
       const centerY = screenSize.height / 2;
 
       // Android uses a different touch action format
-      await driver.action('pointer', {
-        parameters: {pointerType: 'touch'},
-      })
+      await driver
+        .action('pointer', {
+          parameters: {pointerType: 'touch'},
+        })
         .move({x: centerX, y: centerY})
         .down()
         .up()
@@ -95,7 +106,7 @@ describe('Android App Launch', () => {
       // Wait for any potential UI changes after touch
       await browser.waitUntil(async () => true, {
         timeout: 2000,
-        timeoutMsg: 'Touch action completed'
+        timeoutMsg: 'Touch action completed',
       });
 
       // Take a screenshot after the interaction
@@ -115,23 +126,26 @@ describe('Android App Launch', () => {
   it('should handle app background and foreground', async () => {
     try {
       console.log('Testing app background/foreground...');
-      
+
       // Background the app for 2 seconds
       await driver.background(2);
-      
+
       // Wait for app to return to foreground using explicit wait
-      await browser.waitUntil(async () => {
-        const appState = await driver.queryAppState('com.tearleads.app');
-        return appState === 4; // Running in foreground
-      }, {
-        timeout: 5000,
-        timeoutMsg: 'App did not return to foreground within 5 seconds'
-      });
-      
+      await browser.waitUntil(
+        async () => {
+          const appState = await driver.queryAppState('com.tearleads.app');
+          return appState === 4; // Running in foreground
+        },
+        {
+          timeout: 5000,
+          timeoutMsg: 'App did not return to foreground within 5 seconds',
+        }
+      );
+
       // Verify app is back in foreground
       const appState = await driver.queryAppState('com.tearleads.app');
       expect(appState).toBe(4); // Running in foreground
-      
+
       await browser.saveScreenshot('./logs/screenshots/after-background.png');
     } catch (error) {
       console.log('Background/foreground test failed:', error);
