@@ -1,3 +1,4 @@
+import path from 'node:path';
 import {browser} from '@wdio/globals';
 
 export const config: WebdriverIO.Config = {
@@ -30,9 +31,7 @@ export const config: WebdriverIO.Config = {
       'appium:platformVersion': '14.0', // Android 14 (API 34)
       'appium:deviceName': 'emulator-5554',
       'appium:automationName': 'UiAutomator2',
-      'appium:app': process.env['CI']
-        ? '/home/runner/work/tearleads-frontend-2/tearleads-frontend-2/android/app/build/outputs/apk/debug/app-debug.apk'
-        : '/Users/a2f0/github/tearleads-frontend-2/android/app/build/outputs/apk/debug/app-debug.apk',
+      'appium:app': path.resolve(process.cwd(), 'android/app/build/outputs/apk/debug/app-debug.apk'),
       'appium:appPackage': 'com.tearleads.app',
       'appium:appActivity': 'com.tearleads.app.MainActivity',
       'appium:newCommandTimeout': 300,
@@ -44,9 +43,7 @@ export const config: WebdriverIO.Config = {
 
   // Test files
   specs: [
-    process.env['CI']
-      ? '/home/runner/work/tearleads-frontend-2/tearleads-frontend-2/test/appium/android/app-launch.spec.ts'
-      : '/Users/a2f0/github/tearleads-frontend-2/test/appium/android/app-launch.spec.ts',
+    path.resolve(process.cwd(), 'test/appium/android/app-launch.spec.ts'),
   ],
 
   // Exclude patterns

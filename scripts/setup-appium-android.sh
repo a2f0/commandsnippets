@@ -1,50 +1,68 @@
 #!/bin/bash
 
 # Setup script for Appium Android testing
-set -e
+set -euo pipefail
 
 echo "Setting up Appium for Android testing..."
 
+# Color codes for better output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
 # Check if npm/pnpm is available
 if ! command -v pnpm &> /dev/null; then
-    echo "Error: pnpm is not installed. Please install pnpm first."
+    echo -e "${RED}Error: pnpm is not installed. Please install pnpm first.${NC}"
     exit 1
 fi
+echo -e "${GREEN}✓ pnpm is available${NC}"
 
 # Install Appium if not already installed
 if ! command -v appium &> /dev/null; then
     echo "Installing Appium globally..."
-    npm install -g appium@latest
+    if npm install -g appium@latest; then
+        echo -e "${GREEN}✓ Appium installed successfully${NC}"
+    else
+        echo -e "${RED}✗ Failed to install Appium${NC}"
+        exit 1
+    fi
 else
-    echo "Appium is already installed"
+    echo -e "${GREEN}✓ Appium is already installed${NC}"
 fi
 
 # Install UiAutomator2 driver for Android
 echo "Installing UiAutomator2 driver..."
-appium driver install uiautomator2 || {
-    echo "UiAutomator2 driver might already be installed"
+if appium driver install uiautomator2 2>/dev/null || appium driver list | grep -q "uiautomator2"; then
+    echo -e "${GREEN}✓ UiAutomator2 driver is available${NC}"
+else
+    echo -e "${RED}✗ Failed to install UiAutomator2 driver${NC}"
     appium driver list
-}
+    exit 1
+fi
 
 # Check if Android SDK is available
-if [ -z "$ANDROID_HOME" ] && [ -z "$ANDROID_SDK_ROOT" ]; then
-    echo "Warning: ANDROID_HOME or ANDROID_SDK_ROOT is not set"
+if [ -z "${ANDROID_HOME:-}" ] && [ -z "${ANDROID_SDK_ROOT:-}" ]; then
+    echo -e "${YELLOW}⚠ Warning: ANDROID_HOME or ANDROID_SDK_ROOT is not set${NC}"
     echo "Please ensure Android SDK is installed and environment variables are set"
     echo "You can install Android SDK via Android Studio or command line tools"
+else
+    echo -e "${GREEN}✓ Android SDK environment variables are set${NC}"
 fi
 
 # Create necessary directories
 echo "Creating required directories..."
-mkdir -p logs/screenshots
-mkdir -p logs/appium
+mkdir -p logs/screenshots logs/appium
+echo -e "${GREEN}✓ Created logs directories${NC}"
 
 # Check Java installation (required for Android)
 if ! command -v java &> /dev/null; then
-    echo "Warning: Java is not installed or not in PATH"
+    echo -e "${YELLOW}⚠ Warning: Java is not installed or not in PATH${NC}"
     echo "Java is required for Android testing"
 else
+    echo -e "${GREEN}✓ Java is available${NC}"
     echo "Java version:"
-    java -version
+    java -version 2>&1 | head -1
 fi
 
 # Verify Appium setup
