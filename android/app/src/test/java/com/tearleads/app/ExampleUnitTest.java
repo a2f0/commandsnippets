@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package com.tearleads.app;
 
 import static org.junit.Assert.*;
 
