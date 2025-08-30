@@ -46,7 +46,10 @@ xcodebuild build \
   -allowProvisioningUpdates \
   CODE_SIGN_IDENTITY="" \
   CODE_SIGNING_REQUIRED=NO \
-  CODE_SIGNING_ALLOWED=NO
+  CODE_SIGNING_ALLOWED=NO \
+  ARCHS="x86_64 arm64" \
+  VALID_ARCHS="x86_64 arm64" \
+  ONLY_ACTIVE_ARCH=NO
 
 cd ../..
 
