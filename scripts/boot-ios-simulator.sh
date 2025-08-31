@@ -10,7 +10,7 @@ echo "Shutting down any existing simulators..."
 xcrun simctl shutdown all || true
 sleep 5
 
-# Get UUID of iPhone 16 simulator
+# Get UUID of iPhone 15 simulator
 echo "Finding iPhone 15 simulator..."
 DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 15 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
 

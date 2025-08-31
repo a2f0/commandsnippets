@@ -42,7 +42,7 @@ For testing the Capacitor iOS app in simulator:
 **Test Configuration:**
 - Config: `test/wdio.appium.ios.conf.ts`
 - Tests: `test/appium/ios/`
-- Bundle ID: `com.tearleads.app.staging`
+- Bundle ID: `com.tearleads.app`
 - Screenshots: `logs/screenshots/`
 - Logs: `logs/appium/`
 
