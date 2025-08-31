@@ -1,27 +1,54 @@
-import {expect} from '@wdio/globals';
+import {$$, browser, driver, expect} from '@wdio/globals';
 
 describe('iOS App Launch', () => {
+  // App state constants for readability
+  const APP_STATE_FOREGROUND = 4;
+  const BUNDLE_ID = 'com.tearleads.app';
+
   it('should launch the app successfully', async () => {
     // The app should be automatically launched when the session starts
     console.log('Testing app launch...');
 
-    // Wait for the app to fully load
-    await browser.pause(5000);
+    // Wait for the app to fully load using explicit wait
+    await browser.waitUntil(
+      async () => {
+        // App state 4 means running in foreground for iOS
+        const appState = await driver.queryAppState(BUNDLE_ID);
+        return appState === APP_STATE_FOREGROUND;
+      },
+      {
+        timeout: 15000,
+        timeoutMsg: 'App did not enter foreground state within 15 seconds',
+      }
+    );
 
     // Take a screenshot to verify the app loaded
     await browser.saveScreenshot('./logs/screenshots/app-launch.png');
 
     // Verify the app is running by checking if we can get the app state
-    const appState = await driver.queryAppState('com.tearleads.app');
+    const appState = await driver.queryAppState(BUNDLE_ID);
     console.log('App state:', appState);
 
     // App state should be 4 (running in foreground)
-    expect(appState).toBe(4);
+    expect(appState).toBe(APP_STATE_FOREGROUND);
   });
 
   it('should display the main interface', async () => {
-    // Wait for UI elements to load
-    await browser.pause(3000);
+    // Wait for UI elements to load using explicit wait
+    await browser.waitUntil(
+      async () => {
+        try {
+          const elements = await $$('*');
+          return Array.isArray(elements) && elements.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      {
+        timeout: 10000,
+        timeoutMsg: 'UI elements did not load within 10 seconds',
+      }
+    );
 
     // Try to find any text element to verify the app UI loaded
     // This will depend on your app's structure
@@ -47,8 +74,22 @@ describe('iOS App Launch', () => {
   });
 
   it('should be responsive to touch', async () => {
-    // Wait for app to be ready
-    await browser.pause(2000);
+    // Wait for app to be ready using explicit wait for elements
+    await browser.waitUntil(
+      async () => {
+        try {
+          const elements = await $$('*');
+          return Array.isArray(elements) && elements.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      {
+        timeout: 8000,
+        timeoutMsg:
+          'App did not become ready for touch interaction within 8 seconds',
+      }
+    );
 
     try {
       // Try to tap somewhere on the screen (center)
@@ -62,8 +103,18 @@ describe('iOS App Launch', () => {
         y: centerY,
       });
 
-      // Wait a bit after the tap
-      await browser.pause(1000);
+      // Wait for any potential UI changes after touch using explicit wait
+      await browser.waitUntil(
+        async () => {
+          // Simple check that the app is still responsive after touch
+          const appState = await driver.queryAppState(BUNDLE_ID);
+          return appState === APP_STATE_FOREGROUND;
+        },
+        {
+          timeout: 3000,
+          timeoutMsg: 'App did not remain responsive after touch interaction',
+        }
+      );
 
       // Take a screenshot after the interaction
       await browser.saveScreenshot('./logs/screenshots/after-tap.png');
