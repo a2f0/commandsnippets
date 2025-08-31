@@ -10,17 +10,22 @@ echo "Shutting down any existing simulators..."
 xcrun simctl shutdown all || true
 sleep 5
 
-# Get UUID of iPhone 16 simulator
-echo "Finding iPhone 15 simulator..."
-DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 15 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+# Get UUID of iPhone 16 simulator (fallback to iPhone 15 if not available)
+echo "Finding iPhone 16 simulator..."
+DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 16 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
 
 if [ -z "$DEVICE_UUID" ]; then
-    echo "Error: iPhone 15 simulator not found"
+    echo "iPhone 16 not found, trying iPhone 15..."
+    DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 15 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+fi
+
+if [ -z "$DEVICE_UUID" ]; then
+    echo "Error: Neither iPhone 16 nor iPhone 15 simulator found"
     xcrun simctl list devices available
     exit 1
 fi
 
-echo "Found iPhone 15 simulator with UUID: $DEVICE_UUID"
+echo "Found iPhone simulator with UUID: $DEVICE_UUID"
 
 # Reset simulator to clean state to avoid data migration issues
 echo "Resetting simulator to clean state..."

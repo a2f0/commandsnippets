@@ -17,6 +17,8 @@ export const config: WebdriverIO.Config = {
           port: 4723,
           relaxedSecurity: true,
           log: './appium.log',
+          'log-level': 'debug',
+          'local-timezone': true,
         },
         logPath: './logs',
       },
@@ -31,20 +33,20 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       platformName: 'iOS',
-      'appium:platformVersion': '17.0',
-      'appium:deviceName': 'iPhone 15',
+      'appium:platformVersion': '18.5',
+      'appium:deviceName': 'iPhone 16',
       'appium:automationName': 'XCUITest',
       'appium:app': path.join(
         process.cwd(),
         'ios/App/build/Build/Products/Release-iphonesimulator/App.app'
       ),
       'appium:bundleId': 'com.tearleads.app',
-      'appium:newCommandTimeout': 900,
+      'appium:newCommandTimeout': 1200,
       'appium:noReset': false,
       'appium:fullReset': false,
       'appium:commandTimeouts': {
-        sessionCreation: 300000,
-        appLaunch: 300000,
+        sessionCreation: 600000,
+        appLaunch: 600000,
       },
       'appium:wdaStartupRetries': 3,
       'appium:wdaStartupRetryInterval': 20000,
@@ -93,11 +95,11 @@ export const config: WebdriverIO.Config = {
   },
 
   // Timeouts
-  connectionRetryTimeout: 300000,
+  connectionRetryTimeout: 600000,
   connectionRetryCount: 3,
 
   // Logging
-  logLevel: 'info',
+  logLevel: 'debug',
   bail: 0,
   baseUrl: 'http://localhost:4723',
   waitforTimeout: 10000,
