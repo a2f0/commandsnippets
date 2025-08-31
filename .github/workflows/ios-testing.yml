@@ -45,13 +45,14 @@ jobs:
           echo "Available simulators:"
           xcrun simctl list devices available
 
-      - name: Check for iPhone 15 simulator
+      - name: Check for compatible iPhone simulator
         run: |
           if xcrun simctl list devices available |
-             grep -q "iPhone 15"; then
-            echo "iPhone 15 simulator is available"
+             grep -q "iPhone 15\|iPhone 16"; then
+            echo "Compatible iPhone simulator is available"
+            xcrun simctl list devices available | grep iPhone
           else
-            echo "iPhone 15 simulator not found, listing devices:"
+            echo "No compatible iPhone simulator found, listing devices:"
             xcrun simctl list devices available
             exit 1
           fi
