@@ -103,37 +103,48 @@ jobs:
 
       - name: Start iOS simulator
         run: |
-          # Boot iPhone 16 simulator and wait for it to be ready
+          # Ensure clean simulator environment
+          echo "Shutting down any existing simulators..."
+          xcrun simctl shutdown all || true
+          sleep 5
+          
           # Get UUID of iPhone 16 simulator
           DEVICE_UUID=$(xcrun simctl list devices available | \
             grep "iPhone 16 (" | head -1 | \
             sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
-          echo "Starting simulator with UUID: $DEVICE_UUID"
+          echo "Found iPhone 16 simulator with UUID: $DEVICE_UUID"
+          
+          # Reset simulator to clean state to avoid data migration issues
+          echo "Resetting simulator to clean state..."
+          xcrun simctl erase "$DEVICE_UUID" || true
+          sleep 5
           
           # Boot the simulator
-          xcrun simctl boot "$DEVICE_UUID" || true
+          echo "Booting simulator..."
+          xcrun simctl boot "$DEVICE_UUID"
           
-          # Wait for simulator to fully boot (check every 5 seconds, up to 2 minutes)
+          # Wait for simulator to boot and be ready (check every 10 seconds, up to 1 minute)
           echo "Waiting for simulator to boot completely..."
-          for i in {1..24}; do
+          for i in {1..6}; do
             if xcrun simctl list devices | grep "$DEVICE_UUID" | grep -q "Booted"; then
-              echo "Simulator is booted after $((i*5)) seconds"
+              echo "Simulator is booted after $((i*10)) seconds"
+              # Wait additional time for services to be ready
+              echo "Allowing additional 20 seconds for services to fully initialize..."
+              sleep 20
               break
             fi
-            if [ $i -eq 24 ]; then
-              echo "Simulator failed to boot within 2 minutes"
+            if [ $i -eq 6 ]; then
+              echo "Simulator failed to boot within 1 minute"
               xcrun simctl list devices | grep "$DEVICE_UUID"
+              exit 1
             fi
-            sleep 5
+            echo "Still waiting for boot (attempt $i/6)..."
+            sleep 10
           done
-          
-          # Give additional time for full initialization
-          echo "Allowing additional 30 seconds for complete initialization..."
-          sleep 30
 
       - name: Run Appium iOS tests
         run: pnpm run appium:ios
-        timeout-minutes: 15
+        timeout-minutes: 10
 
       - name: Upload test screenshots
         uses: actions/upload-artifact@v4
