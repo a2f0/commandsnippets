@@ -3,23 +3,16 @@ import {$$, browser, driver, expect} from '@wdio/globals';
 describe('Android App Launch', () => {
   // App state constants for readability
   const APP_STATE_FOREGROUND = 4;
-
-  // Extract app package from driver capabilities
-  const getAppPackage = (): string => {
-    const capabilities = (driver as WebdriverIO.Browser).options
-      .capabilities as Record<string, unknown>;
-    return capabilities['appium:appPackage'] as string;
-  };
+  const APP_PACKAGE = 'com.tearleads.app';
 
   it('should launch the app successfully', async () => {
     // The app should be automatically launched when the session starts
     console.log('Testing app launch...');
 
-    // Get app package from capabilities to avoid duplication
-    const appPackage = getAppPackage();
+    // Use app package constant
     await browser.waitUntil(
       async () => {
-        const appState = await driver.queryAppState(appPackage);
+        const appState = await driver.queryAppState(APP_PACKAGE);
         return appState === APP_STATE_FOREGROUND;
       },
       {
@@ -32,7 +25,7 @@ describe('Android App Launch', () => {
     await browser.saveScreenshot('./logs/screenshots/app-launch.png');
 
     // Verify the app is running by checking if we can get the app state
-    const appState = await driver.queryAppState(appPackage);
+    const appState = await driver.queryAppState(APP_PACKAGE);
     console.log('App state:', appState);
 
     // App state should be 4 (running in foreground) for Android
@@ -129,13 +122,10 @@ describe('Android App Launch', () => {
     // Background the app for 2 seconds
     await driver.background(2);
 
-    // Get app package from capabilities to avoid duplication
-    const appPackage = getAppPackage();
-
     // Wait for app to return to foreground using explicit wait
     await browser.waitUntil(
       async () => {
-        const appState = await driver.queryAppState(appPackage);
+        const appState = await driver.queryAppState(APP_PACKAGE);
         return appState === APP_STATE_FOREGROUND;
       },
       {
@@ -145,7 +135,7 @@ describe('Android App Launch', () => {
     );
 
     // Verify app is back in foreground
-    const appState = await driver.queryAppState(appPackage);
+    const appState = await driver.queryAppState(APP_PACKAGE);
     expect(appState).toBe(APP_STATE_FOREGROUND);
 
     await browser.saveScreenshot('./logs/screenshots/after-background.png');
