@@ -133,13 +133,11 @@ jobs:
             if ! pnpm exec appium driver list --installed | grep -q "uiautomator2"; then
               pnpm exec appium driver install uiautomator2
             fi
-
+            
             # Wait for emulator to fully boot
-            adb wait-for-device shell \
-              'while [[ -z $(getprop sys.boot_completed | tr -d "\r") ]]; \
-              do sleep 1; done'
+            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d "\r") ]]; do sleep 1; done'
             adb devices -l
-
+            
             # Run the tests
             pnpm run appium:android
           emulator-options: >
