@@ -115,7 +115,7 @@ describe('Android App Launch', () => {
 
       // If we get here without errors, the app is considered responsive to touch
       // The test validates that no errors are thrown during touch interaction
-    } catch (error: any) {
+    } catch (error) {
       console.error('Touch interaction failed:', error);
       await browser.saveScreenshot('./logs/screenshots/touch-error.png');
 
@@ -123,11 +123,20 @@ describe('Android App Launch', () => {
       // based on the types of errors Appium/WebDriverIO can throw.
       // For instance, if 'error' is an instance of a specific WebDriverIO error
       // that indicates a non-critical UI issue vs. a critical driver issue.
-      if (error.message && (error.message.includes('no such element') || error.message.includes('element not interactable'))) {
-        console.warn('Touch interaction test failed due to non-critical issue (e.g., no interactive element at center). This might be expected for some app states.');
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (
+        errorMessage.includes('no such element') ||
+        errorMessage.includes('element not interactable')
+      ) {
+        console.warn(
+          'Touch interaction test failed due to non-critical issue (e.g., no interactive element at center). This might be expected for some app states.'
+        );
       } else {
         // Re-throw for critical errors like driver issues, network problems, etc.
-        console.error('Critical touch interaction error. Re-throwing to fail the test.');
+        console.error(
+          'Critical touch interaction error. Re-throwing to fail the test.'
+        );
         throw error;
       }
     }
