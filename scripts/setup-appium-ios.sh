@@ -31,16 +31,25 @@ pnpm run cap:build:staging
 echo "📱 Building iOS app for simulator..."
 cd ios/App
 
+# Clean build directory first
+rm -rf build
+
 # Clean and build for simulator
 xcodebuild clean -workspace App.xcworkspace -scheme App -configuration Release
 
-xcodebuild \
+xcodebuild build \
   -workspace App.xcworkspace \
   -scheme App \
   -configuration Release \
   -sdk iphonesimulator \
   -derivedDataPath build \
-  BUILD_DIR=build/Build/Products
+  -allowProvisioningUpdates \
+  CODE_SIGN_IDENTITY="" \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGNING_ALLOWED=NO \
+  ARCHS="x86_64 arm64" \
+  VALID_ARCHS="x86_64 arm64" \
+  ONLY_ACTIVE_ARCH=NO
 
 cd ../..
 

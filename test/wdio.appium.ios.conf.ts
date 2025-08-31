@@ -1,3 +1,9 @@
+import path from 'path';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export const config: WebdriverIO.Config = {
   // Appium server configuration
   services: [
@@ -28,19 +34,25 @@ export const config: WebdriverIO.Config = {
       'appium:platformVersion': '17.0',
       'appium:deviceName': 'iPhone 15',
       'appium:automationName': 'XCUITest',
-      'appium:app':
-        '/Users/a2f0/github/tearleads-frontend/ios/App/build/Build/Products/Release-iphonesimulator/App.app',
+      'appium:app': path.join(
+        process.cwd(),
+        'ios/App/build/Build/Products/Release-iphonesimulator/App.app'
+      ),
       'appium:bundleId': 'com.tearleads.app',
-      'appium:newCommandTimeout': 300,
+      'appium:newCommandTimeout': 900,
       'appium:noReset': false,
       'appium:fullReset': false,
+      'appium:commandTimeouts': {
+        sessionCreation: 300000,
+        appLaunch: 300000,
+      },
+      'appium:wdaStartupRetries': 3,
+      'appium:wdaStartupRetryInterval': 20000,
     },
   ],
 
   // Test files
-  specs: [
-    '/Users/a2f0/github/tearleads-frontend/test/appium/ios/app-launch.spec.ts',
-  ],
+  specs: [path.join(__dirname, 'appium/ios/**/*.spec.ts')],
 
   // Exclude patterns
   exclude: [],
@@ -81,7 +93,7 @@ export const config: WebdriverIO.Config = {
   },
 
   // Timeouts
-  connectionRetryTimeout: 90000,
+  connectionRetryTimeout: 300000,
   connectionRetryCount: 3,
 
   // Logging
