@@ -107,8 +107,18 @@ describe('Android App Launch', () => {
         .up()
         .perform();
 
-      // Wait for any potential UI changes after touch (replacing the fancy pause)
-      await browser.pause(2000);
+      // Wait for any potential UI changes after touch using explicit wait
+      await browser.waitUntil(
+        async () => {
+          // Simple check that the app is still responsive after touch
+          const appState = await driver.queryAppState(APP_PACKAGE);
+          return appState === APP_STATE_FOREGROUND;
+        },
+        {
+          timeout: 3000,
+          timeoutMsg: 'App did not remain responsive after touch interaction',
+        }
+      );
 
       // Take a screenshot after the interaction
       await browser.saveScreenshot('./logs/screenshots/after-tap.png');
