@@ -45,16 +45,13 @@ jobs:
           echo "Available simulators:"
           xcrun simctl list devices available
 
-      - name: Check for iPhone 16 or iPhone 15 simulator
+      - name: Check for iPhone 15 simulator
         run: |
           if xcrun simctl list devices available |
-             grep -q "iPhone 16"; then
-            echo "iPhone 16 simulator is available"
-          elif xcrun simctl list devices available |
              grep -q "iPhone 15"; then
-            echo "iPhone 15 simulator is available (will use as fallback)"
+            echo "iPhone 15 simulator is available"
           else
-            echo "Neither iPhone 16 nor iPhone 15 simulator found:"
+            echo "iPhone 15 simulator not found, listing devices:"
             xcrun simctl list devices available
             exit 1
           fi
@@ -115,8 +112,8 @@ jobs:
 
       - name: Wait for simulator to be fully ready
         run: |
-          echo "Waiting 60 seconds for simulator to be ready..."
-          sleep 60
+          echo "Waiting 30 seconds for simulator to be ready..."
+          sleep 30
 
       - name: Run Appium iOS tests
         run: pnpm run appium:ios
