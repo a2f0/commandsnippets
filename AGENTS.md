@@ -52,6 +52,39 @@ For testing the Capacitor iOS app in simulator:
 - No dependency on dev server connectivity
 - Better for automated testing pipelines
 
+#### Appium Mobile Testing (Android)
+
+For testing the Capacitor Android app in emulator:
+
+- `pnpm run appium:android:build-and-test` - Full setup, build, and test pipeline (recommended)
+- `pnpm run appium:android` - Run Appium tests only (requires pre-built APK)
+
+**Prerequisites:**
+- Android SDK installed with Android Studio or command line tools
+- Android Emulator available (API 34 recommended)
+- Java 17 installed
+- ANDROID_HOME or ANDROID_SDK_ROOT environment variable set
+
+**Manual Setup Steps:**
+1. Setup Android environment: `./scripts/setup-appium-android.sh`
+2. Start Android emulator: `emulator -avd <your-avd-name>`
+3. Build the staging app: `pnpm run cap:build:staging`
+4. Build APK: `cd android && ./gradlew assembleDebug`
+5. Run tests: `pnpm run appium:android`
+
+**Test Configuration:**
+- Config: `test/wdio.appium.android.conf.ts`
+- Tests: `test/appium/android/`
+- App Package: `com.tearleads.app`
+- Screenshots: `logs/screenshots/`
+- Logs: `logs/appium/`
+
+**Android Emulator Requirements:**
+- API Level 34 (Android 14) recommended
+- x86_64 architecture for better CI performance
+- Hardware acceleration enabled (KVM on Linux)
+- Auto-grant permissions for smoother testing
+
 #### E2E Tests (WebdriverIO)
 
 When running integration tests, it is recommended to use the headless option. The headless configuration is defined in `test/wdio.headless.conf.ts`
