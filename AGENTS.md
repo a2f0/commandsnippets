@@ -21,6 +21,69 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 ### Testing
 
+#### Appium Mobile Testing (iOS)
+
+For testing the Capacitor iOS app in simulator:
+
+- `pnpm run appium:build-and-test` - Build staging app and run Appium tests (recommended)
+- `pnpm run appium:ios` - Run Appium tests only (requires pre-built app)
+
+**Prerequisites:**
+- Xcode installed with iOS Simulator
+- iOS Simulator available (iPhone 15, iOS 17.0 recommended)
+- Capacitor staging app built and synced
+
+**Manual Setup Steps:**
+1. Build the staging app: `pnpm run cap:build:staging`
+2. Open Xcode: `open ios/App/App.xcworkspace`
+3. Build for simulator: Product → Build For → Running (or use command line)
+4. Run tests: `pnpm run appium:ios`
+
+**Test Configuration:**
+- Config: `test/wdio.appium.ios.conf.ts`
+- Tests: `test/appium/ios/`
+- Bundle ID: `com.tearleads.app`
+- Screenshots: `logs/screenshots/`
+- Logs: `logs/appium/`
+
+**Recommended Approach: Use Staging Builds**
+- Staging builds are more representative of production
+- Proper bundle IDs and signing
+- No dependency on dev server connectivity
+- Better for automated testing pipelines
+
+#### Appium Mobile Testing (Android)
+
+For testing the Capacitor Android app in emulator:
+
+- `pnpm run appium:android:build-and-test` - Full setup, build, and test pipeline (recommended)
+- `pnpm run appium:android` - Run Appium tests only (requires pre-built APK)
+
+**Prerequisites:**
+- Android SDK installed with Android Studio or command line tools
+- Android Emulator available (API 34 recommended)
+- Java 17 installed
+- ANDROID_HOME or ANDROID_SDK_ROOT environment variable set
+
+**Manual Setup Steps:**
+1. Setup Android environment: `./scripts/setup-appium-android.sh`
+2. Start Android emulator: `emulator -avd <your-avd-name>`
+3. Build the staging app: `pnpm run cap:build:staging`
+4. Build APK: `cd android && ./gradlew assembleDebug`
+5. Run tests: `pnpm run appium:android`
+
+**Test Configuration:**
+- Config: `test/wdio.appium.android.conf.ts`
+- Tests: `test/appium/android/`
+- App Package: `com.tearleads.app`
+- Screenshots: `logs/screenshots/`
+- Logs: `logs/appium/`
+
+**Android Emulator Requirements:**
+- API Level 34 (Android 14) recommended
+- x86_64 architecture for better CI performance
+- Hardware acceleration enabled (KVM on Linux)
+- Auto-grant permissions for smoother testing
 
 #### E2E Tests (WebdriverIO)
 

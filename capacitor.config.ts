@@ -2,12 +2,9 @@ import type {CapacitorConfig} from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.tearleads.app',
-  appName: 'Tearleads Frontend',
+  appName: 'Tearleads',
   webDir: 'build',
-  server: {
-    url: 'http://10.0.1.10:8080',
-    cleartext: true,
-  },
+  // No server property for production - will use bundled assets
 };
 
 // biome-ignore lint/style/noDefaultExport: Allow default export for Capacitor config
