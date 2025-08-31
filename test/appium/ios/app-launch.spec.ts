@@ -5,6 +5,29 @@ describe('iOS App Launch', () => {
   const APP_STATE_FOREGROUND = 4;
   const BUNDLE_ID = 'com.tearleads.app';
 
+  // Helper function to wait for UI elements to be ready
+  const waitForUIReady = async (timeoutMs = 10000) => {
+    await browser.waitUntil(
+      async () => {
+        try {
+          // Wait for meaningful UI elements to be present
+          // This is more reliable than browser.pause() and better than generic '*'
+          const elements = await $$('*');
+
+          // Ensure we have a reasonable number of elements (not just a splash screen)
+          // and wait a bit for the UI to stabilize
+          return Array.isArray(elements) && elements.length >= 15;
+        } catch {
+          return false;
+        }
+      },
+      {
+        timeout: timeoutMs,
+        timeoutMsg: `UI elements did not become ready within ${timeoutMs}ms`,
+      }
+    );
+  };
+
   it('should launch the app successfully', async () => {
     // The app should be automatically launched when the session starts
     console.log('Testing app launch...');
@@ -34,21 +57,8 @@ describe('iOS App Launch', () => {
   });
 
   it('should display the main interface', async () => {
-    // Wait for UI elements to load using explicit wait
-    await browser.waitUntil(
-      async () => {
-        try {
-          const elements = await $$('*');
-          return Array.isArray(elements) && elements.length > 0;
-        } catch {
-          return false;
-        }
-      },
-      {
-        timeout: 10000,
-        timeoutMsg: 'UI elements did not load within 10 seconds',
-      }
-    );
+    // Wait for UI elements to load using our helper function
+    await waitForUIReady(10000);
 
     // Try to find any text element to verify the app UI loaded
     // This will depend on your app's structure
@@ -74,22 +84,8 @@ describe('iOS App Launch', () => {
   });
 
   it('should be responsive to touch', async () => {
-    // Wait for app to be ready using explicit wait for elements
-    await browser.waitUntil(
-      async () => {
-        try {
-          const elements = await $$('*');
-          return Array.isArray(elements) && elements.length > 0;
-        } catch {
-          return false;
-        }
-      },
-      {
-        timeout: 8000,
-        timeoutMsg:
-          'App did not become ready for touch interaction within 8 seconds',
-      }
-    );
+    // Wait for app to be ready using our helper function
+    await waitForUIReady(8000);
 
     try {
       // Try to tap somewhere on the screen (center)
