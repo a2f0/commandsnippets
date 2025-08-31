@@ -1,16 +1,19 @@
 import {$$, browser, driver, expect} from '@wdio/globals';
 
 describe('Android App Launch', () => {
+  // App state constants for readability
+  const APP_STATE_FOREGROUND = 4;
+  const APP_PACKAGE = 'com.tearleads.app';
+
   it('should launch the app successfully', async () => {
     // The app should be automatically launched when the session starts
     console.log('Testing app launch...');
 
-    // Wait for app to be in running state using explicit wait
-    const appPackage = 'com.tearleads.app';
+    // Use app package constant
     await browser.waitUntil(
       async () => {
-        const appState = await driver.queryAppState(appPackage);
-        return appState === 4; // Running in foreground
+        const appState = await driver.queryAppState(APP_PACKAGE);
+        return appState === APP_STATE_FOREGROUND;
       },
       {
         timeout: 15000,
@@ -22,12 +25,11 @@ describe('Android App Launch', () => {
     await browser.saveScreenshot('./logs/screenshots/app-launch.png');
 
     // Verify the app is running by checking if we can get the app state
-    const appState = await driver.queryAppState(appPackage);
+    const appState = await driver.queryAppState(APP_PACKAGE);
     console.log('App state:', appState);
 
     // App state should be 4 (running in foreground) for Android
     // See: https://appium.io/docs/en/commands/device/app/query-app-state/
-    const APP_STATE_FOREGROUND = 4;
     expect(appState).toBe(APP_STATE_FOREGROUND);
   });
 
@@ -105,11 +107,8 @@ describe('Android App Launch', () => {
         .up()
         .perform();
 
-      // Wait for any potential UI changes after touch
-      await browser.waitUntil(async () => true, {
-        timeout: 2000,
-        timeoutMsg: 'Touch action completed',
-      });
+      // Wait for any potential UI changes after touch (replacing the fancy pause)
+      await browser.pause(2000);
 
       // Take a screenshot after the interaction
       await browser.saveScreenshot('./logs/screenshots/after-tap.png');
@@ -117,43 +116,54 @@ describe('Android App Launch', () => {
       // If we get here without errors, the app is considered responsive to touch
       // The test validates that no errors are thrown during touch interaction
     } catch (error) {
-      console.log('Touch interaction failed:', error);
+      console.error('Touch interaction failed:', error);
       await browser.saveScreenshot('./logs/screenshots/touch-error.png');
 
-      // This might not be critical - some apps might not respond to center taps
-      console.warn('Touch interaction test failed, but this might be expected');
+      // This is a basic example. You might need more specific error checking
+      // based on the types of errors Appium/WebDriverIO can throw.
+      // For instance, if 'error' is an instance of a specific WebDriverIO error
+      // that indicates a non-critical UI issue vs. a critical driver issue.
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (
+        errorMessage.includes('no such element') ||
+        errorMessage.includes('element not interactable')
+      ) {
+        console.warn(
+          'Touch interaction test failed due to non-critical issue (e.g., no interactive element at center). This might be expected for some app states.'
+        );
+      } else {
+        // Re-throw for critical errors like driver issues, network problems, etc.
+        console.error(
+          'Critical touch interaction error. Re-throwing to fail the test.'
+        );
+        throw error;
+      }
     }
   });
 
   it('should handle app background and foreground', async () => {
-    try {
-      console.log('Testing app background/foreground...');
+    console.log('Testing app background/foreground...');
 
-      // Background the app for 2 seconds
-      await driver.background(2);
+    // Background the app for 2 seconds
+    await driver.background(2);
 
-      // Wait for app to return to foreground using explicit wait
-      await browser.waitUntil(
-        async () => {
-          const appState = await driver.queryAppState('com.tearleads.app');
-          return appState === 4; // Running in foreground
-        },
-        {
-          timeout: 5000,
-          timeoutMsg: 'App did not return to foreground within 5 seconds',
-        }
-      );
+    // Wait for app to return to foreground using explicit wait
+    await browser.waitUntil(
+      async () => {
+        const appState = await driver.queryAppState(APP_PACKAGE);
+        return appState === APP_STATE_FOREGROUND;
+      },
+      {
+        timeout: 5000,
+        timeoutMsg: 'App did not return to foreground within 5 seconds',
+      }
+    );
 
-      // Verify app is back in foreground
-      const appState = await driver.queryAppState('com.tearleads.app');
-      const APP_STATE_FOREGROUND = 4;
-      expect(appState).toBe(APP_STATE_FOREGROUND); // Running in foreground
+    // Verify app is back in foreground
+    const appState = await driver.queryAppState(APP_PACKAGE);
+    expect(appState).toBe(APP_STATE_FOREGROUND);
 
-      await browser.saveScreenshot('./logs/screenshots/after-background.png');
-    } catch (error) {
-      console.log('Background/foreground test failed:', error);
-      // Non-critical test
-      console.warn('Background test failed, but app may still be functional');
-    }
+    await browser.saveScreenshot('./logs/screenshots/after-background.png');
   });
 });

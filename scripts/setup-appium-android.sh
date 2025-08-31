@@ -29,8 +29,10 @@ fi
 
 # Install UiAutomator2 driver for Android
 echo "Installing UiAutomator2 driver..."
-if pnpm exec appium driver install uiautomator2 2>/dev/null || pnpm exec appium driver list | grep -q "uiautomator2"; then
-    echo -e "${GREEN}✓ UiAutomator2 driver is available${NC}"
+if pnpm exec appium driver list 2>&1 | grep -w "uiautomator2" | grep -q "installed"; then
+    echo -e "${GREEN}✓ UiAutomator2 driver is already installed${NC}"
+elif pnpm exec appium driver install uiautomator2 2>/dev/null; then
+    echo -e "${GREEN}✓ UiAutomator2 driver installed successfully${NC}"
 else
     echo -e "${RED}✗ Failed to install UiAutomator2 driver${NC}"
     pnpm exec appium driver list
