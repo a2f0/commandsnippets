@@ -39,9 +39,15 @@ export const config: WebdriverIO.Config = {
         'ios/App/build/Build/Products/Release-iphonesimulator/App.app'
       ),
       'appium:bundleId': 'com.tearleads.app',
-      'appium:newCommandTimeout': 600,
+      'appium:newCommandTimeout': 900,
       'appium:noReset': false,
       'appium:fullReset': false,
+      'appium:commandTimeouts': {
+        sessionCreation: 300000,
+        appLaunch: 300000,
+      },
+      'appium:wdaStartupRetries': 3,
+      'appium:wdaStartupRetryInterval': 20000,
     },
   ],
 
@@ -87,7 +93,7 @@ export const config: WebdriverIO.Config = {
   },
 
   // Timeouts
-  connectionRetryTimeout: 180000,
+  connectionRetryTimeout: 300000,
   connectionRetryCount: 3,
 
   // Logging
