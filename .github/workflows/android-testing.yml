@@ -126,15 +126,7 @@ jobs:
           target: default
           arch: x86_64
           profile: Nexus 6
-          script: |
-            # Wait for emulator to fully boot
-            adb wait-for-device shell \
-              'while [[ -z $(getprop sys.boot_completed | tr -d "\r") ]]; \
-              do sleep 1; done'
-            adb devices -l
-
-            # Run the tests
-            pnpm run appium:android
+          script: ./scripts/run-android-tests.sh
           emulator-options: >
             -no-snapshot-save -no-window -gpu swiftshader_indirect
             -noaudio -no-boot-anim -camera-back none
