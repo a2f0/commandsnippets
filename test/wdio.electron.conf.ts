@@ -47,6 +47,7 @@ export const config: WebdriverIO.Config = {
   ],
 
   logLevel: 'error',
+  bail: 1,
   framework: 'mocha',
   reporters: [
     'dot',
@@ -60,6 +61,11 @@ export const config: WebdriverIO.Config = {
       },
     ],
   ],
+  mochaOpts: {
+    bail: true,
+    ui: 'bdd',
+    timeout: 60000,
+  },
 
   // Override specs to use electron specific tests
   specs: ['specs/electron/**/*.spec.ts'],
