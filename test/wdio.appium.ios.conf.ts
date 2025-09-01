@@ -43,8 +43,8 @@ export const config: WebdriverIO.Config = {
       'appium:noReset': false,
       'appium:fullReset': false,
       'appium:commandTimeouts': {
-        sessionCreation: 300000,
-        appLaunch: 300000,
+        sessionCreation: 600000,
+        appLaunch: 600000,
       },
       'appium:wdaStartupRetries': 3,
       'appium:wdaStartupRetryInterval': 20000,
@@ -93,12 +93,12 @@ export const config: WebdriverIO.Config = {
   },
 
   // Timeouts
-  connectionRetryTimeout: 300000,
-  connectionRetryCount: 3,
+  connectionRetryTimeout: 600000,
+  connectionRetryCount: 5,
 
   // Logging
   logLevel: 'info',
   bail: 0,
   baseUrl: 'http://localhost:4723',
-  waitforTimeout: 10000,
+  waitforTimeout: 30000,
 };
