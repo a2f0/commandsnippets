@@ -92,7 +92,7 @@ export function sort(
           return 0;
         });
     }
-    tagTextEntryThroughModelFilteredAndOrdered?.map(element => {
+    tagTextEntryThroughModelFilteredAndOrdered?.forEach(element => {
       if (store.entrySearchString !== '') {
         const entry = inputArray.find(textEntry => {
           return (
@@ -124,7 +124,7 @@ export function sort(
     let textEntriesFiltered: ITextEntryJsonApi[] = [];
 
     if (tag !== null) {
-      tagTextEntryThroughModelFiltered.map(element => {
+      tagTextEntryThroughModelFiltered.forEach(element => {
         if (store.entrySearchString !== '') {
           const entry = inputArray.find(textEntry => {
             return (
