@@ -16,7 +16,6 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? {} : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/preload.js'),
-      sandbox: false,
     },
   });
 
