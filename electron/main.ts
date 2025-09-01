@@ -1,9 +1,6 @@
-import {dirname, join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {join} from 'node:path';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, shell} from 'electron';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function createWindow(): void {
   // Create the browser window.
