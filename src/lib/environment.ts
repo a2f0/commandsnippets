@@ -6,19 +6,18 @@ const {hostname, port} = window.location;
 
 if (Capacitor.isNativePlatform()) {
   // For Capacitor apps, determine environment based on build mode
-  const viteMode = import.meta.env?.MODE;
-  const viteAppEnv = import.meta.env?.['VITE_APP_ENV'];
+  const viteEnv = import.meta.env?.['VITE_APP_ENV'] || import.meta.env?.MODE;
 
-  // Check Vite environment variables first
-  if (viteMode === 'staging' || viteAppEnv === 'staging') {
-    environment = 'staging';
-  } else if (viteMode === 'production' || viteAppEnv === 'production') {
-    environment = 'production';
-  } else if (viteMode === 'development' || viteMode === 'test') {
-    environment = viteMode;
-  } else {
-    // Default to development for Capacitor apps (since we're usually developing)
-    environment = 'development';
+  switch (viteEnv) {
+    case 'staging':
+    case 'production':
+    case 'development':
+    case 'test':
+      environment = viteEnv;
+      break;
+    default:
+      // Default to development for Capacitor apps (since we're usually developing)
+      environment = 'development';
   }
 } else if (hostname === 'app.staging.tearleads.com') {
   environment = 'staging';
