@@ -44,11 +44,9 @@ describe('Electron App Home Screen', () => {
     expect(hasReactRoot).toBe(true);
 
     expect(hasReactRoot).toBe(true);
-
   });
 
-  it('should have proper window dimensions', async () => {
-  });
+  it('should have proper window dimensions', async () => {});
 
   it('should have proper window dimensions', async () => {
     // Use execute to get window dimensions via JavaScript
