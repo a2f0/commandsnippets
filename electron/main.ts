@@ -3,6 +3,8 @@ import {fileURLToPath} from 'node:url';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, shell} from 'electron';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -12,10 +14,7 @@ function createWindow(): void {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? {} : {}),
     webPreferences: {
-      preload: join(
-        dirname(fileURLToPath(import.meta.url)),
-        '../preload/preload.js'
-      ),
+      preload: join(__dirname, '../preload/preload.js'),
     },
   });
 
@@ -33,9 +32,7 @@ function createWindow(): void {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(
-      join(dirname(fileURLToPath(import.meta.url)), '../renderer/index.html')
-    );
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 }
 
