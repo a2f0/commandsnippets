@@ -12,7 +12,9 @@ if (typeof __filename === 'undefined') {
 // @ts-ignore
 if (typeof __dirname === 'undefined') {
   // @ts-ignore
-  globalThis.__dirname = dirname(globalThis.__filename || fileURLToPath(import.meta.url));
+  globalThis.__dirname = dirname(
+    globalThis.__filename || fileURLToPath(import.meta.url)
+  );
 }
 
 function createWindow(): void {
