@@ -1,4 +1,4 @@
-import {$$, browser, driver, expect} from '@wdio/globals';
+import {$$, expect} from '@wdio/globals';
 
 describe('iOS App Launch', () => {
   // App state constants for readability
