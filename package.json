@@ -143,6 +143,7 @@
     "directories": {
       "output": "dist-electron"
     },
+    "icon": "public/tearleads-favicon.svg",
     "files": [
       "out/**/*",
       "package.json"
@@ -171,6 +172,7 @@
       ]
     },
     "linux": {
+      "category": "Office",
       "target": [
         {
           "target": "AppImage",
