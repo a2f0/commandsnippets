@@ -115,7 +115,7 @@ Electron tests are separate from the main CI pipeline to avoid platform-specific
 **Platform Support:**
 - **macOS**: `./dist-electron/mac-arm64/Tearleads.app`
 - **Windows**: `./dist-electron/win-unpacked/Tearleads.exe`
-- **Linux**: `./dist-electron/linux-unpacked/tearleads`
+- **Linux**: `./dist-electron/linux-unpacked/tearleads-frontend`
 
 **CI Behavior:**
 - Automatically skips on Linux CI environments without display
