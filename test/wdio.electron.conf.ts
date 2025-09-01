@@ -1,27 +1,5 @@
-import {platform} from 'node:os';
 import video from 'wdio-video-reporter';
-
-// Determine the correct Electron app path based on platform
-function getElectronAppPath(): string {
-  const currentPlatform = platform();
-  switch (currentPlatform) {
-    case 'darwin': {
-      // macOS - using arm64 build (most common for development)
-      // Point to the actual executable inside the .app bundle
-      return './dist-electron/mac-arm64/Tearleads.app/Contents/MacOS/Tearleads';
-    }
-    case 'win32': {
-      return './dist-electron/win-unpacked/Tearleads.exe';
-    }
-    case 'linux': {
-      // Linux executable is named after the package name, not productName
-      return './dist-electron/linux-unpacked/tearleads-frontend';
-    }
-    default: {
-      throw new Error(`Unsupported platform: ${currentPlatform}`);
-    }
-  }
-}
+import {getElectronAppExecutablePath} from './util/electronTestUtils';
 
 // Electron capabilities must not inherit Chrome options
 const electronCapabilities: WebdriverIO.Capabilities[] = [
@@ -40,7 +18,7 @@ export const config: WebdriverIO.Config = {
     [
       'electron',
       {
-        appBinaryPath: getElectronAppPath(),
+        appBinaryPath: getElectronAppExecutablePath(),
         appArgs: ['--no-sandbox', '--disable-gpu'],
       },
     ],
