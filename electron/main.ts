@@ -3,8 +3,17 @@ import {fileURLToPath} from 'node:url';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, shell} from 'electron';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Check if __filename and __dirname are already defined (electron-vite might inject them)
+// @ts-ignore
+if (typeof __filename === 'undefined') {
+  // @ts-ignore
+  globalThis.__filename = fileURLToPath(import.meta.url);
+}
+// @ts-ignore
+if (typeof __dirname === 'undefined') {
+  // @ts-ignore
+  globalThis.__dirname = dirname(globalThis.__filename || fileURLToPath(import.meta.url));
+}
 
 function createWindow(): void {
   // Create the browser window.

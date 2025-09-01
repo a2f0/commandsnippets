@@ -20,9 +20,11 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
   },
   renderer: {
+    root: '.',
     build: {
+      outDir: 'out/renderer',
       rollupOptions: {
-        input: 'index.html',
+        input: './index.html',
       },
     },
     plugins: [react()],
