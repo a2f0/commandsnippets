@@ -43,7 +43,11 @@ describe('Electron App Home Screen', () => {
     });
     expect(hasReactRoot).toBe(true);
 
-    console.log('Electron app successfully loaded with DOM content');
+    expect(hasReactRoot).toBe(true);
+
+  });
+
+  it('should have proper window dimensions', async () => {
   });
 
   it('should have proper window dimensions', async () => {
