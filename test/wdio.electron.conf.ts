@@ -1,5 +1,5 @@
 import {platform} from 'node:os';
-import {config as sharedConfig} from './wdio.shared.conf';
+import video from 'wdio-video-reporter';
 
 // Determine the correct Electron app path based on platform
 function getElectronAppPath(): string {
@@ -7,7 +7,8 @@ function getElectronAppPath(): string {
   switch (currentPlatform) {
     case 'darwin': {
       // macOS - using arm64 build (most common for development)
-      return './dist-electron/mac-arm64/Tearleads.app';
+      // Point to the actual executable inside the .app bundle
+      return './dist-electron/mac-arm64/Tearleads.app/Contents/MacOS/Tearleads';
     }
     case 'win32': {
       return './dist-electron/win-unpacked/Tearleads.exe';
@@ -21,14 +22,16 @@ function getElectronAppPath(): string {
   }
 }
 
-const electronCapabilities = [
+// Electron capabilities must not inherit Chrome options
+const electronCapabilities: WebdriverIO.Capabilities[] = [
   {
     browserName: 'electron',
   },
 ];
 
 export const config: WebdriverIO.Config = {
-  ...sharedConfig,
+  // Minimal config for Electron without inheriting problematic Chrome settings
+  runner: 'local',
   capabilities: electronCapabilities,
 
   // Services for Electron
@@ -38,6 +41,21 @@ export const config: WebdriverIO.Config = {
       {
         appBinaryPath: getElectronAppPath(),
         appArgs: ['--no-sandbox', '--disable-gpu'],
+      },
+    ],
+  ],
+
+  logLevel: 'error',
+  framework: 'mocha',
+  reporters: [
+    'dot',
+    'spec',
+    [
+      video,
+      {
+        saveAllVideos: false,
+        videoSlowdownMultiplier: 3,
+        videoRenderTimeout: 30000,
       },
     ],
   ],
