@@ -1,30 +1,12 @@
 import {existsSync} from 'node:fs';
 import {platform} from 'node:os';
 import {join} from 'node:path';
-
-// Platform-specific helpers
-function getElectronAppPath(): string {
-  const currentPlatform = platform();
-  switch (currentPlatform) {
-    case 'darwin': {
-      return './dist-electron/mac-arm64/Tearleads.app';
-    }
-    case 'win32': {
-      return './dist-electron/win-unpacked/Tearleads.exe';
-    }
-    case 'linux': {
-      return './dist-electron/linux-unpacked/tearleads';
-    }
-    default: {
-      throw new Error(`Unsupported platform: ${currentPlatform}`);
-    }
-  }
-}
+import {getElectronAppBundlePath} from '../../util/electronTestUtils';
 
 describe('Electron App Bundle Test', () => {
   it('should have proper app structure', async () => {
     // Verify the app bundle exists and has the right structure
-    const appPath = getElectronAppPath();
+    const appPath = getElectronAppBundlePath();
     const currentPlatform = platform();
 
     if (currentPlatform === 'darwin') {

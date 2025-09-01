@@ -1,34 +1,16 @@
-import {platform} from 'node:os';
-import {config as sharedConfig} from './wdio.shared.conf';
+import video from 'wdio-video-reporter';
+import {getElectronAppExecutablePath} from './util/electronTestUtils';
 
-// Determine the correct Electron app path based on platform
-function getElectronAppPath(): string {
-  const currentPlatform = platform();
-  switch (currentPlatform) {
-    case 'darwin': {
-      // macOS - using arm64 build (most common for development)
-      return './dist-electron/mac-arm64/Tearleads.app';
-    }
-    case 'win32': {
-      return './dist-electron/win-unpacked/Tearleads.exe';
-    }
-    case 'linux': {
-      return './dist-electron/linux-unpacked/tearleads';
-    }
-    default: {
-      throw new Error(`Unsupported platform: ${currentPlatform}`);
-    }
-  }
-}
-
-const electronCapabilities = [
+// Electron capabilities must not inherit Chrome options
+const electronCapabilities: WebdriverIO.Capabilities[] = [
   {
     browserName: 'electron',
   },
 ];
 
 export const config: WebdriverIO.Config = {
-  ...sharedConfig,
+  // Minimal config for Electron without inheriting problematic Chrome settings
+  runner: 'local',
   capabilities: electronCapabilities,
 
   // Services for Electron
@@ -36,11 +18,32 @@ export const config: WebdriverIO.Config = {
     [
       'electron',
       {
-        appBinaryPath: getElectronAppPath(),
+        appBinaryPath: getElectronAppExecutablePath(),
         appArgs: ['--no-sandbox', '--disable-gpu'],
       },
     ],
   ],
+
+  logLevel: 'error',
+  bail: 1,
+  framework: 'mocha',
+  reporters: [
+    'dot',
+    'spec',
+    [
+      video,
+      {
+        saveAllVideos: false,
+        videoSlowdownMultiplier: 3,
+        videoRenderTimeout: 30000,
+      },
+    ],
+  ],
+  mochaOpts: {
+    bail: true,
+    ui: 'bdd',
+    timeout: 60000,
+  },
 
   // Override specs to use electron specific tests
   specs: ['specs/electron/**/*.spec.ts'],
