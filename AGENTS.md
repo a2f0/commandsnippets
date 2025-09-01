@@ -94,6 +94,33 @@ When running integration tests, it is recommended to use the headless option. Th
 - `scripts/runSpecHeadless.sh <spec-file>` - Run specific spec file headless
 - `scripts/runSpec.sh <spec-file>` - Run specific spec file with browser UI
 
+#### Electron E2E Tests
+
+Electron tests are separate from the main CI pipeline to avoid platform-specific issues in headless Linux environments.
+
+- `pnpm run electron:test` - Run Electron E2E tests only (requires pre-built app)
+- `pnpm run electron:build-and-test` - Build and test Electron app (recommended)
+
+**Prerequisites:**
+- Electron app built and packaged via `pnpm run electron:pack`
+- Platform-specific executables available in `dist-electron/`
+- Display environment (tests are skipped in CI on Linux)
+
+**Test Configuration:**
+- Config: `test/wdio.electron.conf.ts`
+- Tests: `test/specs/electron/`
+- Platform-aware: Automatically detects macOS, Windows, and Linux
+- Excluded from `ci-headless` to prevent CI failures
+
+**Platform Support:**
+- **macOS**: `./dist-electron/mac-arm64/Tearleads.app`
+- **Windows**: `./dist-electron/win-unpacked/Tearleads.exe`
+- **Linux**: `./dist-electron/linux-unpacked/tearleads-frontend`
+
+**CI Behavior:**
+- Automatically skips on Linux CI environments without display
+- Separated from web E2E tests to prevent build pipeline failures
+
 #### Unit Tests (Vitest)
 - `pnpm run unit` - Run unit tests
 - `pnpm run unit -- --watch` - Run unit tests in watch mode

@@ -1,10 +1,6 @@
-import {dirname, join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {join} from 'node:path';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, shell} from 'electron';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 function createWindow(): void {
   // Create the browser window.
@@ -13,7 +9,6 @@ function createWindow(): void {
     height: 800,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? {} : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/preload.js'),
     },
@@ -30,10 +25,10 @@ function createWindow(): void {
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env.ELECTRON_RENDERER_URL) {
-    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(join(__dirname, '../../build/index.html'));
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 }
 
@@ -42,7 +37,7 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.tearleads');
+  electronApp.setAppUserModelId('com.tearleads.app');
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
