@@ -1,4 +1,9 @@
-import {platform} from 'node:os';
+import {arch, platform} from 'node:os';
+
+function getMacArchFolder(): string {
+  // electron-builder uses 'mac' for x64 and 'mac-arm64' for arm64 by default.
+  return arch() === 'arm64' ? 'mac-arm64' : 'mac';
+}
 
 /**
  * Determine the correct Electron app path based on platform.
@@ -7,20 +12,15 @@ import {platform} from 'node:os';
 export function getElectronAppExecutablePath(): string {
   const currentPlatform = platform();
   switch (currentPlatform) {
-    case 'darwin': {
-      // macOS - Point to the actual executable inside the .app bundle
-      return './dist-electron/mac-arm64/Tearleads.app/Contents/MacOS/Tearleads';
-    }
-    case 'win32': {
+    case 'darwin':
+      return `./dist-electron/${getMacArchFolder()}/Tearleads.app/Contents/MacOS/Tearleads`;
+    case 'win32':
       return './dist-electron/win-unpacked/Tearleads.exe';
-    }
-    case 'linux': {
+    case 'linux':
       // Linux executable is named after the package name, not productName
       return './dist-electron/linux-unpacked/tearleads-frontend';
-    }
-    default: {
+    default:
       throw new Error(`Unsupported platform: ${currentPlatform}`);
-    }
   }
 }
 
@@ -31,17 +31,14 @@ export function getElectronAppExecutablePath(): string {
 export function getElectronAppBundlePath(): string {
   const currentPlatform = platform();
   switch (currentPlatform) {
-    case 'darwin': {
-      return './dist-electron/mac-arm64/Tearleads.app';
-    }
-    case 'win32': {
-      return './dist-electron/win-unpacked/Tearleads.exe';
-    }
-    case 'linux': {
+    case 'darwin':
+      return `./dist-electron/${getMacArchFolder()}/Tearleads.app`;
+    case 'win32':
+      return './dist-electron/win-unpacked';
+    case 'linux':
+      // For AppImage, the "bundle" is the executable file itself.
       return './dist-electron/linux-unpacked/tearleads-frontend';
-    }
-    default: {
+    default:
       throw new Error(`Unsupported platform: ${currentPlatform}`);
-    }
   }
 }

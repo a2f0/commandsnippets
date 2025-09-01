@@ -24,7 +24,5 @@ describe('Electron App Bundle Test', () => {
       // Check main executable exists
       expect(existsSync(appPath)).toBe(true);
     }
-
-    console.log('App bundle structure verified successfully');
   });
 });
