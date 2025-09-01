@@ -1,14 +1,6 @@
 import {platform} from 'node:os';
 import {config as sharedConfig} from './wdio.shared.conf';
 
-type ElectronCapabilities = {
-  browserName: string;
-  'wdio:electronServiceOptions': {
-    appBinaryPath: string;
-    appArgs: string[];
-  };
-};
-
 // Determine the correct Electron app path based on platform
 function getElectronAppPath(): string {
   const currentPlatform = platform();
@@ -29,13 +21,9 @@ function getElectronAppPath(): string {
   }
 }
 
-const electronCapabilities: ElectronCapabilities[] = [
+const electronCapabilities = [
   {
     browserName: 'electron',
-    'wdio:electronServiceOptions': {
-      appBinaryPath: getElectronAppPath(),
-      appArgs: ['--no-sandbox', '--disable-gpu'],
-    },
   },
 ];
 
@@ -48,7 +36,7 @@ export const config: WebdriverIO.Config = {
     [
       'electron',
       {
-        appBinaryPath: './dist-electron/mac-arm64/Tearleads.app',
+        appBinaryPath: getElectronAppPath(),
         appArgs: ['--no-sandbox', '--disable-gpu'],
       },
     ],

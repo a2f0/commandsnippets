@@ -1,7 +1,10 @@
 describe('Electron App Home Screen', () => {
   it('should launch and display the home screen', async () => {
-    // Wait for the app to be ready
-    await browser.pause(2000);
+    // Wait for the app to be ready and a window to be available
+    await browser.waitUntil(
+      async () => (await browser.getWindowHandles()).length > 0,
+      {timeout: 5000, timeoutMsg: 'Electron app window did not open'}
+    );
 
     // Check if the main window is available
     const windowHandles = await browser.getWindowHandles();

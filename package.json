@@ -94,6 +94,7 @@
     "start-server-and-test": "2.0.13",
     "stream-browserify": "3.0.0",
     "swc-loader": "0.2.6",
+    "tree-kill": "1.2.2",
     "ts-node": "10.9.2",
     "tsx": "4.20.3",
     "typescript": "5.9.2",
