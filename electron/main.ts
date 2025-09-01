@@ -1,21 +1,6 @@
-import {dirname, join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {join} from 'node:path';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, shell} from 'electron';
-
-// Check if __filename and __dirname are already defined (electron-vite might inject them)
-// @ts-ignore
-if (typeof __filename === 'undefined') {
-  // @ts-ignore
-  globalThis.__filename = fileURLToPath(import.meta.url);
-}
-// @ts-ignore
-if (typeof __dirname === 'undefined') {
-  // @ts-ignore
-  globalThis.__dirname = dirname(
-    globalThis.__filename || fileURLToPath(import.meta.url)
-  );
-}
 
 function createWindow(): void {
   // Create the browser window.
@@ -41,8 +26,8 @@ function createWindow(): void {
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env.ELECTRON_RENDERER_URL) {
-    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
