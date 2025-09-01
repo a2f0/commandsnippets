@@ -88,10 +88,10 @@ importers:
         specifier: 7.4.3
         version: 7.4.3
       '@electron-toolkit/preload':
-        specifier: ^3.0.2
+        specifier: 3.0.2
         version: 3.0.2(electron@37.4.0)
       '@electron-toolkit/utils':
-        specifier: ^4.0.0
+        specifier: 4.0.0
         version: 4.0.0(electron@37.4.0)
       '@ffmpeg-installer/ffmpeg':
         specifier: 1.1.0
@@ -175,16 +175,16 @@ importers:
         specifier: 9.10.5
         version: 9.10.5(appium@2.19.0)
       concurrently:
-        specifier: ^9.2.1
+        specifier: 9.2.1
         version: 9.2.1
       electron:
-        specifier: ^37.4.0
+        specifier: 37.4.0
         version: 37.4.0
       electron-builder:
-        specifier: ^26.0.12
+        specifier: 26.0.12
         version: 26.0.12(electron-builder-squirrel-windows@26.0.12)
       electron-vite:
-        specifier: ^4.0.0
+        specifier: 4.0.0
         version: 4.0.0(@swc/core@1.13.3(@swc/helpers@0.5.17))(vite@7.0.6(@types/node@24.1.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.8.1))
       fake-indexeddb:
         specifier: 6.0.1
@@ -8247,7 +8247,7 @@ snapshots:
 
   '@electron/universal@2.0.1':
     dependencies:
-      '@electron/asar': 3.2.18
+      '@electron/asar': 3.4.1
       '@malept/cross-spawn-promise': 2.0.0
       debug: 4.4.1(supports-color@8.1.1)
       dir-compare: 4.2.0
