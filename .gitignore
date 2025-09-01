@@ -19,6 +19,10 @@ chromedriver
 # Vite PWA
 dev-dist
 
+# Electron
+dist-electron/
+out/
+
 # Turso Databases
 *.db
 

@@ -50,8 +50,10 @@
       "!**/build/**",
       "!**/src/ts-out/**/*",
       "!**/dev-dist/**/*",
-      "!**/dist/",
-      "!**/node_modules/",
+      "!**/dist/**",
+      "!**/out/**",
+      "!**/dist-electron/**",
+      "!**/node_modules/**",
       "!ios/App/App/public/**/*",
       "!android/app/src/main/assets/public/**/*"
     ]
