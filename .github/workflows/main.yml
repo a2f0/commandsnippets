@@ -71,8 +71,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb
-      - name: Run Electron E2E tests
-        run: xvfb-run -a pnpm run electron:build-and-test
+      - name: Build and run Electron E2E tests
+        run: |
+          echo "=== Building Electron app ==="
+          pnpm run electron:pack
+          echo "=== Checking build output ==="
+          find dist-electron -type f -name "*" | head -10
+          ls -la dist-electron/linux-unpacked/ || \
+            echo "linux-unpacked directory not found"
+          echo "=== Running Electron tests ==="
+          xvfb-run -a pnpm run electron:test
         env:
           DISPLAY: :99
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

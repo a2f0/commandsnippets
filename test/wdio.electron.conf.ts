@@ -14,7 +14,8 @@ function getElectronAppPath(): string {
       return './dist-electron/win-unpacked/Tearleads.exe';
     }
     case 'linux': {
-      return './dist-electron/linux-unpacked/tearleads';
+      // Linux executable is typically named after the app (case-sensitive)
+      return './dist-electron/linux-unpacked/Tearleads';
     }
     default: {
       throw new Error(`Unsupported platform: ${currentPlatform}`);
