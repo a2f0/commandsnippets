@@ -3,20 +3,6 @@ import {fileURLToPath} from 'node:url';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, shell} from 'electron';
 
-// Check if __filename and __dirname are already defined (electron-vite might inject them)
-// @ts-ignore
-if (typeof __filename === 'undefined') {
-  // @ts-ignore
-  globalThis.__filename = fileURLToPath(import.meta.url);
-}
-// @ts-ignore
-if (typeof __dirname === 'undefined') {
-  // @ts-ignore
-  globalThis.__dirname = dirname(
-    globalThis.__filename || fileURLToPath(import.meta.url)
-  );
-}
-
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -26,7 +12,10 @@ function createWindow(): void {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? {} : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/preload.js'),
+      preload: join(
+        dirname(fileURLToPath(import.meta.url)),
+        '../preload/preload.js'
+      ),
     },
   });
 
@@ -44,7 +33,9 @@ function createWindow(): void {
   if (is.dev && process.env.ELECTRON_RENDERER_URL) {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(
+      join(dirname(fileURLToPath(import.meta.url)), '../renderer/index.html')
+    );
   }
 }
 
