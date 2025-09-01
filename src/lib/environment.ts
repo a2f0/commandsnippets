@@ -36,7 +36,7 @@ if (Capacitor.isNativePlatform()) {
 } else if (
   // Electron dev server (electron-vite)
   hostname === 'localhost' &&
-  (port === '5173' || port === '5174')
+  port === '5173'
 ) {
   environment = 'development';
 } else {
