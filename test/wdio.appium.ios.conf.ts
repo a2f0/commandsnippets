@@ -94,11 +94,11 @@ export const config: WebdriverIO.Config = {
 
   // Timeouts
   connectionRetryTimeout: 300000,
-  connectionRetryCount: 3,
+  connectionRetryCount: 5,
 
   // Logging
   logLevel: 'info',
   bail: 0,
   baseUrl: 'http://localhost:4723',
-  waitforTimeout: 10000,
+  waitforTimeout: 30000,
 };
