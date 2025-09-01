@@ -13,7 +13,7 @@ function getElectronAppPath(): string {
       return './dist-electron/win-unpacked/Tearleads.exe';
     }
     case 'linux': {
-      return './dist-electron/linux-unpacked/tearleads';
+      return './dist-electron/linux-unpacked/tearleads-frontend';
     }
     default: {
       throw new Error(`Unsupported platform: ${currentPlatform}`);
