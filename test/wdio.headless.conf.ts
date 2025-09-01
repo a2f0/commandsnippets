@@ -19,5 +19,7 @@ export const config: WebdriverIO.Config = {
   ...sharedConfig,
   ...{
     capabilities: [headlessChromeCapabilities],
+    // Exclude Electron tests from headless CI runs
+    exclude: [...(sharedConfig.exclude || []), 'specs/electron/**/*.spec.ts'],
   },
 };
