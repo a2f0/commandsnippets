@@ -19,6 +19,10 @@ export const config: WebdriverIO.Config = {
           log: './appium.log',
         },
         logPath: './logs',
+        // Increase startup timeout for slow CI/CD machines
+        startupTimeout: 120000, // 2 minutes instead of default 30 seconds
+        // Add additional startup parameters
+        installTimeout: 180000, // 3 minutes for iOS app installation
       },
     ],
   ],
@@ -43,11 +47,15 @@ export const config: WebdriverIO.Config = {
       'appium:noReset': false,
       'appium:fullReset': false,
       'appium:commandTimeouts': {
-        sessionCreation: 300000,
-        appLaunch: 300000,
+        sessionCreation: 600000, // 10 minutes for slow CI/CD
+        appLaunch: 600000, // 10 minutes for slow CI/CD
+        implicit: 120000, // 2 minutes
       },
-      'appium:wdaStartupRetries': 3,
-      'appium:wdaStartupRetryInterval': 20000,
+      'appium:wdaStartupRetries': 5, // More retries
+      'appium:wdaStartupRetryInterval': 30000, // 30 second intervals
+      // Additional iOS-specific capabilities for CI/CD stability
+      'appium:usePrebuiltWDA': false,
+      'appium:derivedDataPath': './ios/DerivedData',
     },
   ],
 
@@ -76,12 +84,23 @@ export const config: WebdriverIO.Config = {
   ],
 
   // Hooks
+  onPrepare: async () => {
+    console.log('🚀 Preparing Appium iOS environment...');
+    // Give CI/CD machines extra time to start services
+    if (process.env['CI']) {
+      console.log(
+        '🔄 CI environment detected, waiting extra time for services...'
+      );
+      await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second delay in CI
+    }
+  },
+
   beforeSession: () => {
-    console.log('Starting Appium iOS session...');
+    console.log('📱 Starting Appium iOS session...');
   },
 
   afterSession: () => {
-    console.log('Appium iOS session completed.');
+    console.log('✅ Appium iOS session completed.');
   },
 
   afterTest: async (test, _context, {error}) => {
@@ -92,9 +111,9 @@ export const config: WebdriverIO.Config = {
     }
   },
 
-  // Timeouts
-  connectionRetryTimeout: 300000,
-  connectionRetryCount: 5,
+  // Timeouts - Increased for slow CI/CD machines
+  connectionRetryTimeout: 600000, // 10 minutes
+  connectionRetryCount: 10, // More retries
 
   // Logging
   logLevel: 'info',
