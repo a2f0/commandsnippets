@@ -16,9 +16,9 @@ export const config: WebdriverIO.Config = {
           address: '127.0.0.1',
           port: 4723,
           relaxedSecurity: true,
-          log: './appium.log',
+          log: './logs/appium/appium-ios.log',
         },
-        logPath: './logs',
+        logPath: './logs/appium',
         // Increase startup timeout for slow CI/CD machines
         startupTimeout: 120000, // 2 minutes instead of default 30 seconds
         // Add additional startup parameters
@@ -86,10 +86,30 @@ export const config: WebdriverIO.Config = {
   // Hooks
   onPrepare: async () => {
     console.log('🚀 Preparing Appium iOS environment...');
+
+    // Ensure log directories exist
+    const fs = require('fs');
+    const path = require('path');
+    const logsDir = path.resolve('./logs/appium');
+    const screenshotsDir = path.resolve('./logs/screenshots');
+
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, {recursive: true});
+      console.log('📁 Created logs directory:', logsDir);
+    }
+
+    if (!fs.existsSync(screenshotsDir)) {
+      fs.mkdirSync(screenshotsDir, {recursive: true});
+      console.log('📁 Created screenshots directory:', screenshotsDir);
+    }
+
     // Give CI/CD machines extra time to start services
     if (process.env['CI']) {
       console.log(
         '🔄 CI environment detected, waiting extra time for services...'
+      );
+      console.log(
+        '📊 Appium logs will be saved to: ./logs/appium/appium-ios.log'
       );
       await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second delay in CI
     }
