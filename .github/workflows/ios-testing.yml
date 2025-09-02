@@ -48,7 +48,7 @@ jobs:
       - name: Check for compatible iPhone simulator
         run: |
           if xcrun simctl list devices available |
-             grep -q "iPhone 15\|iPhone 16"; then
+             grep -q "iPhone 16"; then
             echo "Compatible iPhone simulator is available"
             xcrun simctl list devices available | grep iPhone
           else

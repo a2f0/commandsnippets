@@ -38,8 +38,8 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       platformName: 'iOS',
-      'appium:platformVersion': '17.0',
-      'appium:deviceName': 'iPhone 15',
+      'appium:platformVersion': '18.5',
+      'appium:deviceName': 'iPhone 16',
       'appium:automationName': 'XCUITest',
       'appium:app': path.join(
         process.cwd(),
@@ -90,8 +90,8 @@ export const config: WebdriverIO.Config = {
     console.log('🚀 Preparing Appium iOS environment...');
 
     // Ensure log directories exist
-    const fs = require('node:fs');
-    const path = require('node:path');
+    const fs = await import('node:fs');
+    const path = await import('node:path');
     const logsDir = path.resolve('./logs/appium');
     const screenshotsDir = path.resolve('./logs/screenshots');
 
