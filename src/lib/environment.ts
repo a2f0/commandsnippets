@@ -33,6 +33,12 @@ if (Capacitor.isNativePlatform()) {
   port === '3000'
 ) {
   environment = 'test';
+} else if (
+  // Electron dev server (electron-vite)
+  hostname === 'localhost' &&
+  port === '5173'
+) {
+  environment = 'development';
 } else {
   throw `Unknown Tearleads environment for hostname ${hostname} and port ${port}`;
 }
