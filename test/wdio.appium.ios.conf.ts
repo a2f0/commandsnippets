@@ -38,7 +38,7 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       platformName: 'iOS',
-      'appium:platformVersion': '18.5',
+      'appium:platformVersion': '18.2',
       'appium:deviceName': 'iPhone 16',
       'appium:automationName': 'XCUITest',
       'appium:app': path.join(
@@ -56,11 +56,14 @@ export const config: WebdriverIO.Config = {
       'appium:wdaStartupRetries': 10, // More retries for CI/CD
       'appium:wdaStartupRetryInterval': 60000, // 60 second intervals
       // Additional iOS-specific capabilities for CI/CD stability
-      'appium:usePrebuiltWDA': false,
-      'appium:derivedDataPath': './ios/DerivedData',
+      'appium:usePrebuiltWDA': true,
+      'appium:derivedDataPath': process.env['CI']
+        ? '/tmp/ios-wda-build'
+        : './ios/DerivedData',
       'appium:maxTypingFrequency': 60,
       'appium:clearSystemFiles': true,
       'appium:simpleIsVisibleCheck': true,
+      'appium:showXcodeLog': true,
     },
   ],
 
