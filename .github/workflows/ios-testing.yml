@@ -39,6 +39,9 @@ jobs:
           echo "Initializing Xcode command line tools..."
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
+          echo "Selected Xcode version:"
+          xcodebuild -version
+
           echo "Available iOS SDK version:"
           xcrun --sdk iphonesimulator --show-sdk-version
 
