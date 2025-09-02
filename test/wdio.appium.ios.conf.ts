@@ -50,14 +50,17 @@ export const config: WebdriverIO.Config = {
       'appium:noReset': false,
       'appium:fullReset': false,
       'appium:commandTimeouts': {
-        sessionCreation: 600000, // 10 minutes for slow CI/CD
-        appLaunch: 600000, // 10 minutes for slow CI/CD
+        sessionCreation: 900000, // 15 minutes for slow CI/CD
+        appLaunch: 900000, // 15 minutes for slow CI/CD
       },
-      'appium:wdaStartupRetries': 5, // More retries
-      'appium:wdaStartupRetryInterval': 30000, // 30 second intervals
+      'appium:wdaStartupRetries': 10, // More retries for CI/CD
+      'appium:wdaStartupRetryInterval': 60000, // 60 second intervals
       // Additional iOS-specific capabilities for CI/CD stability
       'appium:usePrebuiltWDA': false,
       'appium:derivedDataPath': './ios/DerivedData',
+      'appium:maxTypingFrequency': 60,
+      'appium:clearSystemFiles': true,
+      'appium:simpleIsVisibleCheck': true,
     },
   ],
 
@@ -134,8 +137,8 @@ export const config: WebdriverIO.Config = {
   },
 
   // Timeouts - Increased for slow CI/CD machines
-  connectionRetryTimeout: 600000, // 10 minutes
-  connectionRetryCount: 10, // More retries
+  connectionRetryTimeout: 900000, // 15 minutes
+  connectionRetryCount: 15, // More retries
 
   // Logging
   logLevel: 'info',
