@@ -1,6 +1,9 @@
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
+// Constants for timeout configuration
+const CI_PREPARE_DELAY_MS = 30000; // 30 seconds
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -49,7 +52,6 @@ export const config: WebdriverIO.Config = {
       'appium:commandTimeouts': {
         sessionCreation: 600000, // 10 minutes for slow CI/CD
         appLaunch: 600000, // 10 minutes for slow CI/CD
-        implicit: 120000, // 2 minutes
       },
       'appium:wdaStartupRetries': 5, // More retries
       'appium:wdaStartupRetryInterval': 30000, // 30 second intervals
@@ -88,8 +90,8 @@ export const config: WebdriverIO.Config = {
     console.log('🚀 Preparing Appium iOS environment...');
 
     // Ensure log directories exist
-    const fs = require('fs');
-    const path = require('path');
+    const fs = require('node:fs');
+    const path = require('node:path');
     const logsDir = path.resolve('./logs/appium');
     const screenshotsDir = path.resolve('./logs/screenshots');
 
@@ -111,7 +113,7 @@ export const config: WebdriverIO.Config = {
       console.log(
         '📊 Appium logs will be saved to: ./logs/appium/appium-ios.log'
       );
-      await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second delay in CI
+      await new Promise(resolve => setTimeout(resolve, CI_PREPARE_DELAY_MS)); // CI preparation delay
     }
   },
 
