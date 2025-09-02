@@ -36,10 +36,10 @@ sleep 5
 echo "Booting simulator..."
 xcrun simctl boot "$DEVICE_UUID"
 
-# Wait for simulator to boot completely (check every 10 seconds, up to 1 minute)
+# Wait for simulator to boot completely (check every 10 seconds, up to 3 minutes)
 echo "Waiting for simulator to boot completely..."
 BOOT_CHECK_COUNT=0
-MAX_BOOT_CHECKS=6
+MAX_BOOT_CHECKS=18
 
 while [ $BOOT_CHECK_COUNT -lt $MAX_BOOT_CHECKS ]; do
     BOOT_CHECK_COUNT=$((BOOT_CHECK_COUNT + 1))
@@ -54,7 +54,7 @@ while [ $BOOT_CHECK_COUNT -lt $MAX_BOOT_CHECKS ]; do
     fi
 
     if [ $BOOT_CHECK_COUNT -eq $MAX_BOOT_CHECKS ]; then
-        echo "Error: Simulator failed to boot within 1 minute"
+        echo "Error: Simulator failed to boot within 3 minutes"
         xcrun simctl list devices | grep "$DEVICE_UUID"
         exit 1
     fi
