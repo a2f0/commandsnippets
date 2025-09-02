@@ -56,10 +56,7 @@ export const config: WebdriverIO.Config = {
       'appium:wdaStartupRetries': 10, // More retries for CI/CD
       'appium:wdaStartupRetryInterval': 60000, // 60 second intervals
       // Additional iOS-specific capabilities for CI/CD stability
-      'appium:usePrebuiltWDA': true,
-      'appium:derivedDataPath': process.env['CI']
-        ? '/tmp/ios-wda-build'
-        : './ios/DerivedData',
+      'appium:usePrebuiltWDA': false,
       'appium:maxTypingFrequency': 60,
       'appium:clearSystemFiles': true,
       'appium:simpleIsVisibleCheck': true,
