@@ -53,8 +53,8 @@ export const config: WebdriverIO.Config = {
         sessionCreation: 900000, // 15 minutes for slow CI/CD
         appLaunch: 900000, // 15 minutes for slow CI/CD
       },
-      'appium:wdaStartupRetries': 10, // More retries for CI/CD
-      'appium:wdaStartupRetryInterval': 60000, // 60 second intervals
+      'appium:wdaStartupRetries': 3, // Reasonable retries
+      'appium:wdaStartupRetryInterval': 10000, // 10 second intervals
       // Additional iOS-specific capabilities for CI/CD stability
       'appium:usePrebuiltWDA': false,
       'appium:maxTypingFrequency': 60,
