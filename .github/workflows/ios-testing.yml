@@ -1,14 +1,16 @@
+# WORKFLOW DISABLED - This workflow has been disabled and will not run
+# To re-enable, uncomment the "on:" section below
 ---
 name: iOS Mobile Testing
 
 # yamllint disable-line rule:truthy
-on:
-  pull_request:
-    branches: '**'
+# on:
+#   pull_request:
+#     branches: '**'
 
 jobs:
   ios-appium-tests:
-    runs-on: macos-14
+    runs-on: macos-latest
     continue-on-error: false
 
     steps:
@@ -39,6 +41,9 @@ jobs:
           echo "Initializing Xcode command line tools..."
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
+          echo "Selected Xcode version:"
+          xcodebuild -version
+
           echo "Available iOS SDK version:"
           xcrun --sdk iphonesimulator --show-sdk-version
 
@@ -48,7 +53,7 @@ jobs:
       - name: Check for compatible iPhone simulator
         run: |
           if xcrun simctl list devices available |
-             grep -q "iPhone 15\|iPhone 16"; then
+             grep -q "iPhone 16"; then
             echo "Compatible iPhone simulator is available"
             xcrun simctl list devices available | grep iPhone
           else

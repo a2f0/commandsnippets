@@ -10,17 +10,22 @@ echo "Shutting down any existing simulators..."
 xcrun simctl shutdown all || true
 sleep 5
 
-# Get UUID of iPhone 15 simulator
-echo "Finding iPhone 15 simulator..."
-DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 15 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+# Get UUID of iPhone simulator (prefer iPhone 16, fallback to iPhone 15)
+echo "Finding iPhone simulator..."
+DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 16 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
 
 if [ -z "$DEVICE_UUID" ]; then
-    echo "Error: iPhone 15 simulator not found"
+    echo "iPhone 16 not found, trying iPhone 15..."
+    DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 15 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+fi
+
+if [ -z "$DEVICE_UUID" ]; then
+    echo "Error: No compatible iPhone simulator found (tried iPhone 16 and iPhone 15)"
     xcrun simctl list devices available
     exit 1
 fi
 
-echo "Found iPhone 15 simulator with UUID: $DEVICE_UUID"
+echo "Found iPhone simulator with UUID: $DEVICE_UUID"
 
 # Reset simulator to clean state to avoid data migration issues
 echo "Resetting simulator to clean state..."
@@ -31,10 +36,10 @@ sleep 5
 echo "Booting simulator..."
 xcrun simctl boot "$DEVICE_UUID"
 
-# Wait for simulator to boot completely (check every 10 seconds, up to 1 minute)
+# Wait for simulator to boot completely (check every 10 seconds, up to 3 minutes)
 echo "Waiting for simulator to boot completely..."
 BOOT_CHECK_COUNT=0
-MAX_BOOT_CHECKS=6
+MAX_BOOT_CHECKS=18
 
 while [ $BOOT_CHECK_COUNT -lt $MAX_BOOT_CHECKS ]; do
     BOOT_CHECK_COUNT=$((BOOT_CHECK_COUNT + 1))
@@ -49,7 +54,7 @@ while [ $BOOT_CHECK_COUNT -lt $MAX_BOOT_CHECKS ]; do
     fi
 
     if [ $BOOT_CHECK_COUNT -eq $MAX_BOOT_CHECKS ]; then
-        echo "Error: Simulator failed to boot within 1 minute"
+        echo "Error: Simulator failed to boot within 3 minutes"
         xcrun simctl list devices | grep "$DEVICE_UUID"
         exit 1
     fi
