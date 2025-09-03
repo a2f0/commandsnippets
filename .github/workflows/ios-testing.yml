@@ -1,10 +1,12 @@
+# WORKFLOW DISABLED - This workflow has been disabled and will not run
+# To re-enable, uncomment the "on:" section below
 ---
 name: iOS Mobile Testing
 
 # yamllint disable-line rule:truthy
-on:
-  pull_request:
-    branches: '**'
+# on:
+#   pull_request:
+#     branches: '**'
 
 jobs:
   ios-appium-tests:
