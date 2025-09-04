@@ -1,6 +1,13 @@
 import '@testing-library/jest-dom';
 
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {vi} from 'vitest';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
@@ -156,9 +163,7 @@ describe('Dark Mode Toggle', () => {
 
     // Initially, Dark Mode should be checked (default state)
     const darkModeMenuItem = screen.getByRole('menuitem', {name: 'Dark Mode'});
-    const initialDarkCheck = within(darkModeMenuItem).getByTestId(
-      'CheckIcon'
-    );
+    const initialDarkCheck = within(darkModeMenuItem).getByTestId('CheckIcon');
     expect(initialDarkCheck).toBeInTheDocument();
 
     // Click Light Mode
