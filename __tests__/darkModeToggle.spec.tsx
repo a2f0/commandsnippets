@@ -78,16 +78,12 @@ describe('Dark Mode Toggle', () => {
     });
 
     // Wait for theme change to light mode
+    // Wait for theme change to light mode and assert the new color
     await waitFor(() => {
-      const newColor = window.getComputedStyle(document.body).backgroundColor;
-      // Assert that the color is the expected light mode color
-      return newColor === LIGHT_MODE_BG_COLOR;
+      const finalColor = window.getComputedStyle(document.body).backgroundColor;
+      expect(finalColor).toBe(LIGHT_MODE_BG_COLOR);
+      expect(finalColor).not.toBe(initialColor);
     });
-
-    const finalColor = window.getComputedStyle(document.body).backgroundColor;
-    // Should now be light mode
-    expect(finalColor).toBe(LIGHT_MODE_BG_COLOR);
-    expect(finalColor).not.toBe(initialColor);
   });
 
   it('successfully toggles from light back to dark mode', async () => {
