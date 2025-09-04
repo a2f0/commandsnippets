@@ -159,9 +159,9 @@ describe('Dark Mode Toggle', () => {
     });
 
     // Initially, Dark Mode should be checked (default state)
-    const darkModeMenuItem = screen.getByText('Dark Mode').closest('li');
-    const initialDarkCheck = darkModeMenuItem?.querySelector(
-      '[data-testid="CheckIcon"]'
+    const darkModeMenuItem = screen.getByRole('menuitem', {name: 'Dark Mode'});
+    const initialDarkCheck = within(darkModeMenuItem).getByTestId(
+      'CheckIcon'
     );
     expect(initialDarkCheck).toBeInTheDocument();
 
