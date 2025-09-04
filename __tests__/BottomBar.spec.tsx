@@ -55,57 +55,54 @@ describe('BottomBar Component', () => {
     it('vertically centers search boxes on the left side', () => {
       const {container} = render(<BottomBarWithProviders />);
 
-      // Get the search input fields by their IDs
+      // Get the search input fields by their IDs to verify they exist
       const tagSearch = container.querySelector('#tagSearch');
       const textSearch = container.querySelector('#textEntrySearch');
 
       expect(tagSearch).toBeInTheDocument();
       expect(textSearch).toBeInTheDocument();
 
-      // Get their parent container (the left Box that contains both search fields)
-      // Going up from tagSearch: input -> div -> div -> div (container) -> div (Box with center alignment)
-      const searchContainer = tagSearch?.closest(
-        '#tagSearchContainer'
-      )?.parentElement;
+      // Get the left container using data-testid
+      const searchContainer = screen.getByTestId('bottom-bar-left-container');
       expect(searchContainer).toBeInTheDocument();
 
       // Check that the search container has center alignment
-      const styles = window.getComputedStyle(searchContainer as HTMLElement);
+      const styles = window.getComputedStyle(searchContainer);
       expect(styles.alignItems).toBe('center');
       expect(styles.display).toBe('flex');
+      expect(styles.gap).toBe('8px'); // MUI gap: 1 = 8px
     });
 
     it('aligns version and HUD options at the bottom on the right side', () => {
       vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
       render(<BottomBarWithProviders />);
 
-      // Get the version and HUD button elements
+      // Get the version and HUD button elements to verify they exist
       const versionElement = screen.getByText(/\[version:/);
       const hudButton = screen.getByText('[HUD]');
 
-      // Get their direct parent container (the Box containing Mode, Version, and HUD)
-      const rightContainer = versionElement.parentElement;
+      // Get the right container using data-testid
+      const rightContainer = screen.getByTestId('bottom-bar-right-container');
       expect(rightContainer).toBeInTheDocument();
+      expect(rightContainer).toContainElement(versionElement);
       expect(rightContainer).toContainElement(hudButton);
 
       // Check that the right container has bottom alignment
-      const styles = window.getComputedStyle(rightContainer as HTMLElement);
+      const styles = window.getComputedStyle(rightContainer);
       expect(styles.alignItems).toBe('flex-end');
       expect(styles.display).toBe('flex');
+      expect(styles.gap).toBe('8px'); // MUI gap: 1 = 8px
     });
 
     it('uses stretch alignment for the main container to allow different vertical alignments', () => {
-      const {container} = render(<BottomBarWithProviders />);
+      render(<BottomBarWithProviders />);
 
-      // Get the main container that holds both left and right sections
-      const tagSearch = container.querySelector('#tagSearch');
-      // Navigate up to the main container
-      const mainContainer = tagSearch?.closest('#tagSearchContainer')
-        ?.parentElement?.parentElement;
+      // Get the main container using data-testid
+      const mainContainer = screen.getByTestId('bottom-bar-main-container');
       expect(mainContainer).toBeInTheDocument();
 
       // Check that the main container uses stretch alignment
-      const styles = window.getComputedStyle(mainContainer as HTMLElement);
+      const styles = window.getComputedStyle(mainContainer);
       expect(styles.alignItems).toBe('stretch');
       expect(styles.justifyContent).toBe('space-between');
       expect(styles.display).toBe('flex');

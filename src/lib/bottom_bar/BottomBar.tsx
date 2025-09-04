@@ -59,6 +59,7 @@ const BottomBar = () => {
 
   return (
     <Box
+      data-testid="bottom-bar-main-container"
       sx={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -68,14 +69,18 @@ const BottomBar = () => {
       }}
     >
       <Box
+        data-testid="bottom-bar-left-container"
         sx={{
           display: 'flex',
           alignItems: 'center',
+          gap: 1,
         }}
       >
-        <TagSearch /> <TextEntrySearchField />
+        <TagSearch />
+        <TextEntrySearchField />
       </Box>
       <Box
+        data-testid="bottom-bar-right-container"
         sx={{
           display: 'flex',
           alignItems: 'flex-end',
