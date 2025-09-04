@@ -2,7 +2,6 @@ import '@testing-library/jest-dom';
 
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
-import React from 'react';
 import {type MockInstance, vi} from 'vitest';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {server} from './util/msw';
@@ -26,30 +25,11 @@ describe('Dark Mode Toggle', () => {
     consoleMock.mockRestore();
   });
 
-  it('proves ThemeProvider does NOT re-render when dark mode is toggled', async () => {
+  it('successfully toggles from dark to light mode', async () => {
+    // Note: The app starts in dark mode by default (defaultState.selectedTheme = 'darkTheme')
     const history = createMemoryHistory();
     const route = '/test/test';
     history.push(route);
-
-    // Create a ref to track ThemeProvider renders
-    let themeProviderRenderCount = 0;
-
-    // Spy on React.createElement to track ThemeProvider renders
-    const originalCreateElement = React.createElement;
-    const createElementSpy = vi
-      .spyOn(React, 'createElement')
-      .mockImplementation((...args: Parameters<typeof React.createElement>) => {
-        // Check if we're creating a ThemeProvider component
-        const component = args[0];
-        if (
-          typeof component === 'function' &&
-          (component.name === 'ThemeProvider' ||
-            (component as any).displayName === 'ThemeProvider')
-        ) {
-          themeProviderRenderCount++;
-        }
-        return originalCreateElement.apply(React, args);
-      });
 
     await act(async () => {
       render(<TestAppRouter history={history} />);
@@ -60,9 +40,11 @@ describe('Dark Mode Toggle', () => {
       expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
     });
 
-    // Store initial render count
-    const initialRenderCount = themeProviderRenderCount;
-    console.log('Initial ThemeProvider render count:', initialRenderCount);
+    // Get initial theme color (should be dark)
+    const initialColor = window.getComputedStyle(document.body).backgroundColor;
+    console.log('Initial color (dark theme):', initialColor);
+    // Verify we start in dark mode
+    expect(initialColor).toBe('rgb(18, 18, 18)');
 
     // Open View menu
     const viewButton = screen.getByRole('menu', {name: 'View'});
@@ -72,31 +54,33 @@ describe('Dark Mode Toggle', () => {
 
     // Wait for menu to open
     await waitFor(() => {
-      expect(screen.getByText('Dark Mode')).toBeInTheDocument();
+      expect(screen.getByText('Light Mode')).toBeInTheDocument();
     });
 
-    // Click Dark Mode option
-    const darkModeOption = screen.getByText('Dark Mode');
+    // Click Light Mode to switch from dark to light
+    const lightModeOption = screen.getByText('Light Mode');
     await act(async () => {
-      fireEvent.click(darkModeOption);
+      fireEvent.click(lightModeOption);
     });
 
-    // Wait a bit to ensure any potential re-renders would have happened
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    });
+    // Wait for theme change
+    await waitFor(
+      () => {
+        const newColor = window.getComputedStyle(document.body).backgroundColor;
+        // The color should change when switching to light mode
+        return newColor !== initialColor;
+      },
+      {timeout: 2000}
+    );
 
-    console.log('Final ThemeProvider render count:', themeProviderRenderCount);
-
-    // This assertion proves the bug: ThemeProvider should re-render when theme changes,
-    // but it doesn't because it's not wrapped with observer
-    expect(themeProviderRenderCount).toBe(initialRenderCount);
-
-    // Restore original createElement
-    createElementSpy.mockRestore();
+    const finalColor = window.getComputedStyle(document.body).backgroundColor;
+    console.log('Final color (light theme):', finalColor);
+    // Should no longer be dark
+    expect(finalColor).not.toBe('rgb(18, 18, 18)');
+    expect(finalColor).not.toBe(initialColor);
   });
 
-  it('shows the store updates but UI does not reflect the change', async () => {
+  it('successfully toggles from light back to dark mode', async () => {
     const history = createMemoryHistory();
     const route = '/test/test';
     history.push(route);
@@ -110,52 +94,58 @@ describe('Dark Mode Toggle', () => {
       expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
     });
 
-    // Get the initial background color
-    const initialBackgroundColor = window.getComputedStyle(
-      document.body
-    ).backgroundColor;
-    console.log('Initial background color:', initialBackgroundColor);
-
-    // Open View menu
     const viewButton = screen.getByRole('menu', {name: 'View'});
+
+    // First switch to light mode
     await act(async () => {
       fireEvent.click(viewButton);
     });
 
-    // Wait for menu to open and check initial state
     await waitFor(() => {
-      expect(screen.getByText('Dark Mode')).toBeInTheDocument();
       expect(screen.getByText('Light Mode')).toBeInTheDocument();
     });
 
-    // The test will continue to work even if we can't verify the checkmarks
-    // The important part is proving the background color doesn't change
-
-    // Click Dark Mode option
-    const darkModeOption = screen.getByText('Dark Mode');
     await act(async () => {
-      fireEvent.click(darkModeOption);
+      fireEvent.click(screen.getByText('Light Mode'));
     });
 
-    // Wait a moment for the store to update
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for switch to light mode
+    await waitFor(() => {
+      const color = window.getComputedStyle(document.body).backgroundColor;
+      return color !== 'rgb(18, 18, 18)';
     });
 
-    // But the actual background color hasn't changed (proving the UI bug)
-    const finalBackgroundColor = window.getComputedStyle(
-      document.body
-    ).backgroundColor;
-    console.log('Final background color:', finalBackgroundColor);
+    const lightColor = window.getComputedStyle(document.body).backgroundColor;
+    console.log('Light mode color:', lightColor);
 
-    // This proves the bug: background color should change but doesn't
-    expect(finalBackgroundColor).toBe(initialBackgroundColor);
+    // Now switch back to dark mode
+    await act(async () => {
+      fireEvent.click(viewButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Dark Mode')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Dark Mode'));
+    });
+
+    // Wait for switch back to dark mode
+    await waitFor(() => {
+      const color = window.getComputedStyle(document.body).backgroundColor;
+      return color === 'rgb(18, 18, 18)';
+    });
+
+    const darkColor = window.getComputedStyle(document.body).backgroundColor;
+    console.log('Dark mode color:', darkColor);
+
+    // Should be back to dark
+    expect(darkColor).toBe('rgb(18, 18, 18)');
+    expect(darkColor).not.toBe(lightColor);
   });
 
-  it('demonstrates that adding observer to ThemeProvider would fix the issue', async () => {
-    // This test documents what the fix would look like
-    // The ThemeProvider in src/theme/Theme.tsx needs to be wrapped with observer
-
+  it('persists the selected theme in the menu', async () => {
     const history = createMemoryHistory();
     const route = '/test/test';
     history.push(route);
@@ -164,16 +154,120 @@ describe('Dark Mode Toggle', () => {
       render(<TestAppRouter history={history} />);
     });
 
+    // Wait for initial render
     await waitFor(() => {
       expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
     });
 
-    // This test serves as documentation for the fix:
-    // In src/theme/Theme.tsx, the component should be:
-    // export const ThemeProvider = observer(({children}: IThemeProps) => { ... })
-    //
-    // Currently it's just a plain React component, so it doesn't react to MobX store changes
+    // Open View menu
+    const viewButton = screen.getByRole('menu', {name: 'View'});
+    await act(async () => {
+      fireEvent.click(viewButton);
+    });
 
-    expect(true).toBe(true); // Placeholder assertion for documentation purposes
+    // Wait for menu to open
+    await waitFor(() => {
+      expect(screen.getByText('Light Mode')).toBeInTheDocument();
+      expect(screen.getByText('Dark Mode')).toBeInTheDocument();
+    });
+
+    // Initially, Dark Mode should be checked (default state)
+    const darkModeMenuItem = screen.getByText('Dark Mode').closest('li');
+    const initialDarkCheck = darkModeMenuItem?.querySelector(
+      '[data-testid="CheckIcon"]'
+    );
+    expect(initialDarkCheck).toBeInTheDocument();
+
+    // Click Light Mode
+    const lightModeOption = screen.getByText('Light Mode');
+    await act(async () => {
+      fireEvent.click(lightModeOption);
+    });
+
+    // Wait for menu to close and theme to update
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
+
+    // Open menu again to check if selection persisted
+    await act(async () => {
+      fireEvent.click(viewButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Light Mode')).toBeInTheDocument();
+    });
+
+    // Check that Light Mode now has the checkmark
+    const lightModeMenuItem = screen.getByText('Light Mode').closest('li');
+    const lightCheck = lightModeMenuItem?.querySelector(
+      '[data-testid="CheckIcon"]'
+    );
+
+    // Light mode should now be checked
+    expect(lightCheck).toBeInTheDocument();
+
+    // Dark mode should not be checked anymore
+    const darkMenuItem = screen.getByText('Dark Mode').closest('li');
+    const darkCheck = darkMenuItem?.querySelector('[data-testid="CheckIcon"]');
+    expect(darkCheck).not.toBeInTheDocument();
+  });
+
+  it('renders components with correct theme after toggle', async () => {
+    const history = createMemoryHistory();
+    const route = '/test/test';
+    history.push(route);
+
+    await act(async () => {
+      render(<TestAppRouter history={history} />);
+    });
+
+    // Wait for initial render
+    await waitFor(() => {
+      expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
+    });
+
+    // Get initial body color (may vary based on test order)
+    const initialBodyColor = window.getComputedStyle(
+      document.body
+    ).backgroundColor;
+    console.log('Initial body color:', initialBodyColor);
+
+    // Toggle theme (will toggle to opposite of current)
+    const viewButton = screen.getByRole('menu', {name: 'View'});
+    await act(async () => {
+      fireEvent.click(viewButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Light Mode')).toBeInTheDocument();
+      expect(screen.getByText('Dark Mode')).toBeInTheDocument();
+    });
+
+    // Toggle to opposite theme
+    const isDarkMode = initialBodyColor === 'rgb(18, 18, 18)';
+    const toggleOption = isDarkMode ? 'Light Mode' : 'Dark Mode';
+
+    await act(async () => {
+      fireEvent.click(screen.getByText(toggleOption));
+    });
+
+    // Wait for theme change
+    await waitFor(
+      () => {
+        const color = window.getComputedStyle(document.body).backgroundColor;
+        return color !== initialBodyColor;
+      },
+      {timeout: 2000}
+    );
+
+    // Verify the body color changed
+    const finalBodyColor = window.getComputedStyle(
+      document.body
+    ).backgroundColor;
+    expect(finalBodyColor).not.toBe(initialBodyColor);
+
+    // The theme change is working correctly as the body background changed
+    console.log('Theme successfully changed from dark to light');
   });
 });
