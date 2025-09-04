@@ -14,24 +14,18 @@ class TearleadsTurso implements ITearleadsDB {
     this.client.close();
   }
 
-  // @ts-ignore undeclared variable
   async putUser(_user: IUser): Promise<void> {}
 
-  // @ts-ignore undeclared variable
   async getUser(_username: string): Promise<IUser | undefined> {
     return undefined;
   }
 
-  // @ts-ignore undeclared variable
   async putTag(_tag: ITag): Promise<void> {}
 
-  // @ts-ignore undeclared variable
   async putEntry(_entry: IEntry): Promise<void> {}
 
-  // @ts-ignore undeclared variable
   async putJunction(_junction: IJunction): Promise<void> {}
 
-  // @ts-ignore undeclared variable
   async getTagsForUserName(_username: string): Promise<ITag[]> {
     const tags: ITag[] = [];
     return tags;

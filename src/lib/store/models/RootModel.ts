@@ -148,7 +148,7 @@ export const RootModel = types
           return i.type === 'TextEntry';
         }
       );
-      text_entries.map(element => {
+      text_entries.forEach(element => {
         self.updateOrCreateTextEntry(element);
       });
 
@@ -156,7 +156,7 @@ export const RootModel = types
         collection.filter((i): i is ITagTextEntryThroughModelJsonApi => {
           return i.type === 'TagTextEntryThroughModel';
         });
-      tag_text_entry_through_models.map(element => {
+      tag_text_entry_through_models.forEach(element => {
         self.updateOrCreateTagTextEntryThroughModel(element);
       });
 
@@ -165,14 +165,14 @@ export const RootModel = types
           return i.type === 'User';
         }
       );
-      users.map(element => {
+      users.forEach(element => {
         self.updateOrCreateUser(element);
       });
 
       const tags: ITagJsonApi[] = collection.filter((i): i is ITagJsonApi => {
         return i.type === 'Tag';
       });
-      tags.map(element => {
+      tags.forEach(element => {
         self.updateOrCreateTag(element);
       });
     },
@@ -227,7 +227,7 @@ export const RootModel = types
             element => element.relationships.tag.data.id === tagObject?.id
           );
 
-        tagTextEntryThroughModelFiltered.map(element => {
+        tagTextEntryThroughModelFiltered.forEach(element => {
           const entry = self.textEntriesArray.find(textEntry => {
             return textEntry.id === element.relationships.text_entry.data.id;
           });
@@ -288,7 +288,7 @@ export const RootModel = types
             return i.type === 'TextEntry';
           }
         );
-        text_entries.map(element => {
+        text_entries.forEach(element => {
           self.updateOrCreateUntaggedTextEntry(element);
         });
       } catch (error) {
