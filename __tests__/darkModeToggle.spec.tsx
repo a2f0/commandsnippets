@@ -10,23 +10,17 @@ import {TestAppRouter} from './util/TestAppRouter';
 Element.prototype.scrollIntoView = vi.fn();
 
 beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
+
+// Define color constants for better maintainability
+const DARK_MODE_BG_COLOR = 'rgb(18, 18, 18)';
+const LIGHT_MODE_BG_COLOR = 'rgb(255, 255, 255)';
 
 describe('Dark Mode Toggle', () => {
   let consoleMock: MockInstance;
 
-  beforeEach(() => {
-    consoleMock = vi.spyOn(global.console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleMock.mockRestore();
-  });
-
-  it('successfully toggles from dark to light mode', async () => {
-    // Note: The app starts in dark mode by default (defaultState.selectedTheme = 'darkTheme')
+  // Setup helper function to reduce duplication
+  async function setupTest() {
     const history = createMemoryHistory();
     const route = '/test/test';
     history.push(route);
@@ -35,16 +29,39 @@ describe('Dark Mode Toggle', () => {
       render(<TestAppRouter history={history} />);
     });
 
-    // Wait for initial render
     await waitFor(() => {
       expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
     });
 
+    return {history};
+  }
+
+  beforeEach(() => {
+    // Reset MSW handlers
+    server.resetHandlers();
+
+    // Assign logged in cookie
+    assignLoggedInCookie();
+
+    // Mock console to prevent test output clutter
+    consoleMock = vi.spyOn(global.console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleMock.mockRestore();
+
+    // Clean up any rendered components
+    vi.clearAllMocks();
+  });
+
+  it('successfully toggles from dark to light mode', async () => {
+    // Note: The app starts in dark mode by default (defaultState.selectedTheme = 'darkTheme')
+    await setupTest();
+
     // Get initial theme color (should be dark)
     const initialColor = window.getComputedStyle(document.body).backgroundColor;
-    console.log('Initial color (dark theme):', initialColor);
     // Verify we start in dark mode
-    expect(initialColor).toBe('rgb(18, 18, 18)');
+    expect(initialColor).toBe(DARK_MODE_BG_COLOR);
 
     // Open View menu
     const viewButton = screen.getByRole('menu', {name: 'View'});
@@ -63,36 +80,21 @@ describe('Dark Mode Toggle', () => {
       fireEvent.click(lightModeOption);
     });
 
-    // Wait for theme change
-    await waitFor(
-      () => {
-        const newColor = window.getComputedStyle(document.body).backgroundColor;
-        // The color should change when switching to light mode
-        return newColor !== initialColor;
-      },
-      {timeout: 2000}
-    );
+    // Wait for theme change to light mode
+    await waitFor(() => {
+      const newColor = window.getComputedStyle(document.body).backgroundColor;
+      // Assert that the color is the expected light mode color
+      return newColor === LIGHT_MODE_BG_COLOR;
+    });
 
     const finalColor = window.getComputedStyle(document.body).backgroundColor;
-    console.log('Final color (light theme):', finalColor);
-    // Should no longer be dark
-    expect(finalColor).not.toBe('rgb(18, 18, 18)');
+    // Should now be light mode
+    expect(finalColor).toBe(LIGHT_MODE_BG_COLOR);
     expect(finalColor).not.toBe(initialColor);
   });
 
   it('successfully toggles from light back to dark mode', async () => {
-    const history = createMemoryHistory();
-    const route = '/test/test';
-    history.push(route);
-
-    await act(async () => {
-      render(<TestAppRouter history={history} />);
-    });
-
-    // Wait for initial render
-    await waitFor(() => {
-      expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
-    });
+    await setupTest();
 
     const viewButton = screen.getByRole('menu', {name: 'View'});
 
@@ -112,11 +114,11 @@ describe('Dark Mode Toggle', () => {
     // Wait for switch to light mode
     await waitFor(() => {
       const color = window.getComputedStyle(document.body).backgroundColor;
-      return color !== 'rgb(18, 18, 18)';
+      return color === LIGHT_MODE_BG_COLOR;
     });
 
     const lightColor = window.getComputedStyle(document.body).backgroundColor;
-    console.log('Light mode color:', lightColor);
+    expect(lightColor).toBe(LIGHT_MODE_BG_COLOR);
 
     // Now switch back to dark mode
     await act(async () => {
@@ -134,30 +136,18 @@ describe('Dark Mode Toggle', () => {
     // Wait for switch back to dark mode
     await waitFor(() => {
       const color = window.getComputedStyle(document.body).backgroundColor;
-      return color === 'rgb(18, 18, 18)';
+      return color === DARK_MODE_BG_COLOR;
     });
 
     const darkColor = window.getComputedStyle(document.body).backgroundColor;
-    console.log('Dark mode color:', darkColor);
 
     // Should be back to dark
-    expect(darkColor).toBe('rgb(18, 18, 18)');
+    expect(darkColor).toBe(DARK_MODE_BG_COLOR);
     expect(darkColor).not.toBe(lightColor);
   });
 
   it('persists the selected theme in the menu', async () => {
-    const history = createMemoryHistory();
-    const route = '/test/test';
-    history.push(route);
-
-    await act(async () => {
-      render(<TestAppRouter history={history} />);
-    });
-
-    // Wait for initial render
-    await waitFor(() => {
-      expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
-    });
+    await setupTest();
 
     // Open View menu
     const viewButton = screen.getByRole('menu', {name: 'View'});
@@ -184,9 +174,10 @@ describe('Dark Mode Toggle', () => {
       fireEvent.click(lightModeOption);
     });
 
-    // Wait for menu to close and theme to update
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for theme to change
+    await waitFor(() => {
+      const color = window.getComputedStyle(document.body).backgroundColor;
+      return color === LIGHT_MODE_BG_COLOR;
     });
 
     // Open menu again to check if selection persisted
@@ -213,61 +204,46 @@ describe('Dark Mode Toggle', () => {
     expect(darkCheck).not.toBeInTheDocument();
   });
 
-  it('renders components with correct theme after toggle', async () => {
-    const history = createMemoryHistory();
-    const route = '/test/test';
-    history.push(route);
+  it('verifies theme changes are reflected in UI components', async () => {
+    await setupTest();
 
-    await act(async () => {
-      render(<TestAppRouter history={history} />);
-    });
-
-    // Wait for initial render
-    await waitFor(() => {
-      expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
-    });
-
-    // Get initial body color (may vary based on test order)
+    // Get the initial body color (could be either light or dark depending on test order)
     const initialBodyColor = window.getComputedStyle(
       document.body
     ).backgroundColor;
-    console.log('Initial body color:', initialBodyColor);
 
-    // Toggle theme (will toggle to opposite of current)
+    // Determine current mode and choose opposite
+    const isCurrentlyDark = initialBodyColor === DARK_MODE_BG_COLOR;
+    const targetMode = isCurrentlyDark ? 'Light Mode' : 'Dark Mode';
+    const expectedColor = isCurrentlyDark
+      ? LIGHT_MODE_BG_COLOR
+      : DARK_MODE_BG_COLOR;
+
+    // Toggle to opposite mode
     const viewButton = screen.getByRole('menu', {name: 'View'});
     await act(async () => {
       fireEvent.click(viewButton);
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Light Mode')).toBeInTheDocument();
-      expect(screen.getByText('Dark Mode')).toBeInTheDocument();
+      expect(screen.getByText(targetMode)).toBeInTheDocument();
     });
 
-    // Toggle to opposite theme
-    const isDarkMode = initialBodyColor === 'rgb(18, 18, 18)';
-    const toggleOption = isDarkMode ? 'Light Mode' : 'Dark Mode';
-
     await act(async () => {
-      fireEvent.click(screen.getByText(toggleOption));
+      fireEvent.click(screen.getByText(targetMode));
     });
 
     // Wait for theme change
-    await waitFor(
-      () => {
-        const color = window.getComputedStyle(document.body).backgroundColor;
-        return color !== initialBodyColor;
-      },
-      {timeout: 2000}
-    );
+    await waitFor(() => {
+      const color = window.getComputedStyle(document.body).backgroundColor;
+      return color === expectedColor;
+    });
 
-    // Verify the body color changed
+    // Verify the body color changed to the expected theme
     const finalBodyColor = window.getComputedStyle(
       document.body
     ).backgroundColor;
+    expect(finalBodyColor).toBe(expectedColor);
     expect(finalBodyColor).not.toBe(initialBodyColor);
-
-    // The theme change is working correctly as the body background changed
-    console.log('Theme successfully changed from dark to light');
   });
 });
