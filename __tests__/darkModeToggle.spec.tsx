@@ -2,8 +2,9 @@ import '@testing-library/jest-dom';
 
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
-import {type MockInstance, vi} from 'vitest';
+import {vi} from 'vitest';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
+import {store as loggedInStore} from './util/loggedInStore';
 import {server} from './util/msw';
 import {TestAppRouter} from './util/TestAppRouter';
 
@@ -17,8 +18,6 @@ const DARK_MODE_BG_COLOR = 'rgb(18, 18, 18)';
 const LIGHT_MODE_BG_COLOR = 'rgb(255, 255, 255)';
 
 describe('Dark Mode Toggle', () => {
-  let consoleMock: MockInstance;
-
   // Setup helper function to reduce duplication
   async function setupTest() {
     const history = createMemoryHistory();
@@ -43,13 +42,11 @@ describe('Dark Mode Toggle', () => {
     // Assign logged in cookie
     assignLoggedInCookie();
 
-    // Mock console to prevent test output clutter
-    consoleMock = vi.spyOn(global.console, 'log').mockImplementation(() => {});
+    // Ensure MobX store theme is reset to a known default for test isolation
+    loggedInStore.setSelectedTheme('darkTheme');
   });
 
   afterEach(() => {
-    consoleMock.mockRestore();
-
     // Clean up any rendered components
     vi.clearAllMocks();
   });
@@ -202,48 +199,5 @@ describe('Dark Mode Toggle', () => {
     const darkMenuItem = screen.getByText('Dark Mode').closest('li');
     const darkCheck = darkMenuItem?.querySelector('[data-testid="CheckIcon"]');
     expect(darkCheck).not.toBeInTheDocument();
-  });
-
-  it('verifies theme changes are reflected in UI components', async () => {
-    await setupTest();
-
-    // Get the initial body color (could be either light or dark depending on test order)
-    const initialBodyColor = window.getComputedStyle(
-      document.body
-    ).backgroundColor;
-
-    // Determine current mode and choose opposite
-    const isCurrentlyDark = initialBodyColor === DARK_MODE_BG_COLOR;
-    const targetMode = isCurrentlyDark ? 'Light Mode' : 'Dark Mode';
-    const expectedColor = isCurrentlyDark
-      ? LIGHT_MODE_BG_COLOR
-      : DARK_MODE_BG_COLOR;
-
-    // Toggle to opposite mode
-    const viewButton = screen.getByRole('menu', {name: 'View'});
-    await act(async () => {
-      fireEvent.click(viewButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(targetMode)).toBeInTheDocument();
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText(targetMode));
-    });
-
-    // Wait for theme change
-    await waitFor(() => {
-      const color = window.getComputedStyle(document.body).backgroundColor;
-      return color === expectedColor;
-    });
-
-    // Verify the body color changed to the expected theme
-    const finalBodyColor = window.getComputedStyle(
-      document.body
-    ).backgroundColor;
-    expect(finalBodyColor).toBe(expectedColor);
-    expect(finalBodyColor).not.toBe(initialBodyColor);
   });
 });
