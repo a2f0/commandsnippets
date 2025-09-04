@@ -1,5 +1,4 @@
 import {Box, Button, Menu, Tab, Tabs} from '@mui/material';
-import {styled} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
 
@@ -8,10 +7,6 @@ import {TagSearch} from '../../TagSearch';
 import {environment} from '../environment';
 import {Mode} from './Mode';
 import {Version} from './Version';
-
-const Aligner = styled('div')`
-  display: flex;
-`;
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -67,18 +62,23 @@ const BottomBar = () => {
       sx={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-end',
+        alignItems: 'stretch',
         width: '100%',
         height: theme => theme.footer.height,
       }}
     >
-      <Aligner>
-        <TagSearch /> <TextEntrySearchField />
-      </Aligner>
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
+        }}
+      >
+        <TagSearch /> <TextEntrySearchField />
+      </Box>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-end',
           gap: 1,
         }}
       >

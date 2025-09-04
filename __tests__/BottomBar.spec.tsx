@@ -51,6 +51,67 @@ describe('BottomBar Component', () => {
     expect(screen.getByText(/\[mode:/)).toBeInTheDocument();
   });
 
+  describe('Layout and alignment', () => {
+    it('vertically centers search boxes on the left side', () => {
+      const {container} = render(<BottomBarWithProviders />);
+
+      // Get the search input fields by their IDs
+      const tagSearch = container.querySelector('#tagSearch');
+      const textSearch = container.querySelector('#textEntrySearch');
+
+      expect(tagSearch).toBeInTheDocument();
+      expect(textSearch).toBeInTheDocument();
+
+      // Get their parent container (the left Box that contains both search fields)
+      // Going up from tagSearch: input -> div -> div -> div (container) -> div (Box with center alignment)
+      const searchContainer = tagSearch?.closest(
+        '#tagSearchContainer'
+      )?.parentElement;
+      expect(searchContainer).toBeInTheDocument();
+
+      // Check that the search container has center alignment
+      const styles = window.getComputedStyle(searchContainer as HTMLElement);
+      expect(styles.alignItems).toBe('center');
+      expect(styles.display).toBe('flex');
+    });
+
+    it('aligns version and HUD options at the bottom on the right side', () => {
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+      render(<BottomBarWithProviders />);
+
+      // Get the version and HUD button elements
+      const versionElement = screen.getByText(/\[version:/);
+      const hudButton = screen.getByText('[HUD]');
+
+      // Get their direct parent container (the Box containing Mode, Version, and HUD)
+      const rightContainer = versionElement.parentElement;
+      expect(rightContainer).toBeInTheDocument();
+      expect(rightContainer).toContainElement(hudButton);
+
+      // Check that the right container has bottom alignment
+      const styles = window.getComputedStyle(rightContainer as HTMLElement);
+      expect(styles.alignItems).toBe('flex-end');
+      expect(styles.display).toBe('flex');
+    });
+
+    it('uses stretch alignment for the main container to allow different vertical alignments', () => {
+      const {container} = render(<BottomBarWithProviders />);
+
+      // Get the main container that holds both left and right sections
+      const tagSearch = container.querySelector('#tagSearch');
+      // Navigate up to the main container
+      const mainContainer = tagSearch?.closest('#tagSearchContainer')
+        ?.parentElement?.parentElement;
+      expect(mainContainer).toBeInTheDocument();
+
+      // Check that the main container uses stretch alignment
+      const styles = window.getComputedStyle(mainContainer as HTMLElement);
+      expect(styles.alignItems).toBe('stretch');
+      expect(styles.justifyContent).toBe('space-between');
+      expect(styles.display).toBe('flex');
+    });
+  });
+
   describe('HUD Menu functionality', () => {
     beforeEach(() => {
       vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
