@@ -129,6 +129,9 @@ const BottomBar = () => {
                     maxHeight: '60vh',
                   },
                 },
+                transition: {
+                  timeout: 0,
+                },
               }}
             >
               <Box
@@ -155,9 +158,13 @@ const BottomBar = () => {
                       color: 'text.secondary',
                       textTransform: 'none',
                       minWidth: 'unset',
+                      transition: 'none',
                       '&.Mui-selected': {
                         color: 'text.primary',
                       },
+                    },
+                    '& .MuiTabs-indicator': {
+                      transition: 'none',
                     },
                   }}
                 >
