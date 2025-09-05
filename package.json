@@ -39,9 +39,15 @@
     "appium:android:build-and-test": "scripts/setup-appium-android.sh && pnpm run cap:build:staging && (cd android && ./gradlew assembleDebug) && pnpm run appium:android",
     "electron:dev": "electron-vite dev",
     "electron:build": "electron-vite build",
+    "electron:build:staging": "electron-vite build --mode staging",
+    "electron:build:production": "electron-vite build --mode production",
     "electron:start": "electron-vite preview",
     "electron:pack": "pnpm run electron:build && electron-builder",
+    "electron:pack:staging": "pnpm run electron:build:staging && electron-builder",
+    "electron:pack:production": "pnpm run electron:build:production && electron-builder",
     "electron:dist": "pnpm run electron:build && electron-builder --publish=never",
+    "electron:dist:staging": "pnpm run electron:build:staging && electron-builder --publish=never",
+    "electron:dist:production": "pnpm run electron:build:production && electron-builder --publish=never",
     "electron:test": "npx wdio test/wdio.electron.conf.ts",
     "electron:build-and-test": "pnpm run electron:pack && pnpm run electron:test"
   },
@@ -143,7 +149,7 @@
     "directories": {
       "output": "dist-electron"
     },
-    "icon": "public/favicon.svg",
+    "icon": "build/icon.png",
     "files": [
       "out/**/*",
       "package.json"
