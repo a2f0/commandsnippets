@@ -6,6 +6,17 @@ import type {HttpMethod} from '../src/msw/requestCounter';
 
 declare global {
   interface Window {
+    // Electron API exposed via preload script
+    electron?: {
+      process?: {
+        platform?: string;
+        versions?: {
+          electron?: string;
+          [key: string]: string | undefined;
+        };
+      };
+    };
+
     // MSW worker instance - available in dev/test environments
     __MSW_WORKER__?: SetupWorker;
 
