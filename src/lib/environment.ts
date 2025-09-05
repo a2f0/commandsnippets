@@ -4,7 +4,28 @@ let environment: string;
 
 const {hostname, port} = window.location;
 
-if (Capacitor.isNativePlatform()) {
+// Check if running in Electron
+const isElectron = (): boolean => {
+  return (
+    typeof window !== 'undefined' &&
+    window.electron?.process?.versions?.electron !== undefined
+  );
+};
+
+if (isElectron()) {
+  // For Electron apps, determine environment based on Vite mode
+  const viteMode = import.meta.env.MODE;
+
+  switch (viteMode) {
+    case 'staging':
+    case 'production':
+      environment = viteMode;
+      break;
+    default:
+      environment = 'development';
+      break;
+  }
+} else if (Capacitor.isNativePlatform()) {
   // For Capacitor apps, determine environment based on build mode
   const viteEnv = import.meta.env?.['VITE_APP_ENV'] || import.meta.env?.MODE;
 
