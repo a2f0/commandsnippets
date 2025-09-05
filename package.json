@@ -41,8 +41,8 @@
     "electron:build": "electron-vite build",
     "electron:start": "electron-vite preview",
     "electron:generate-icon": "scripts/generate-icon.sh",
-    "electron:pack": "pnpm run electron:generate-icon && pnpm run electron:build && electron-builder",
-    "electron:dist": "pnpm run electron:generate-icon && pnpm run electron:build && electron-builder --publish=never",
+    "electron:pack": "pnpm run electron:pre-build && electron-builder",
+    "electron:dist": "pnpm run electron:pre-build && electron-builder --publish=never",
     "electron:test": "npx wdio test/wdio.electron.conf.ts",
     "electron:build-and-test": "pnpm run electron:pack && pnpm run electron:test"
   },
