@@ -8,8 +8,7 @@ const {hostname, port} = window.location;
 const isElectron = (): boolean => {
   return (
     typeof window !== 'undefined' &&
-    window.electron !== undefined &&
-    window.electron.process?.versions?.electron !== undefined
+    window.electron?.process?.versions?.electron !== undefined
   );
 };
 
@@ -19,12 +18,9 @@ if (isElectron()) {
 
   switch (viteMode) {
     case 'staging':
-      environment = 'staging';
-      break;
     case 'production':
-      environment = 'production';
+      environment = viteMode;
       break;
-    case 'development':
     default:
       environment = 'development';
       break;
