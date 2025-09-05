@@ -1,3 +1,5 @@
+import invariant from 'invariant';
+
 describe('Electron App Home Screen', () => {
   it('should launch and display the home screen', async () => {
     // Wait for the app to be ready and a window to be available
@@ -10,13 +12,10 @@ describe('Electron App Home Screen', () => {
     const windowHandles = await browser.getWindowHandles();
     expect(windowHandles.length).toBeGreaterThan(0);
 
-    // Switch to the main window if needed
-    if (windowHandles.length > 0) {
-      const firstWindow = windowHandles[0];
-      if (firstWindow) {
-        await browser.switchToWindow(firstWindow);
-      }
-    }
+    // Switch to the main window
+    const firstWindow = windowHandles[0];
+    invariant(firstWindow, 'First window handle should exist');
+    await browser.switchToWindow(firstWindow);
 
     // Wait for the DOM to be ready
     await browser.waitUntil(
