@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 # Generate icon.png from favicon.svg for electron-builder
 echo "Generating icon.png from favicon.svg..."
