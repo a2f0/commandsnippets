@@ -10,10 +10,10 @@ mkdir -p build
 # Check if ImageMagick is installed
 if command -v magick >/dev/null 2>&1; then
     # ImageMagick 7
-    magick public/favicon.svg -background none -resize 512x512 build/icon.png
+    magick "public/favicon.svg" -background none -resize 512x512 "build/icon.png"
 elif command -v convert >/dev/null 2>&1; then
     # ImageMagick 6
-    convert -background none -resize 512x512 public/favicon.svg build/icon.png
+    convert -background none -resize 512x512 "public/favicon.svg" "build/icon.png"
 else
     echo "Error: ImageMagick is not installed, but it is required to generate the application icon." >&2
     echo "Please install ImageMagick to continue." >&2
