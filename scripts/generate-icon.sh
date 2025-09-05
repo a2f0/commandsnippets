@@ -15,10 +15,9 @@ elif command -v convert >/dev/null 2>&1; then
     # ImageMagick 6
     convert -background none -resize 512x512 public/favicon.svg build/icon.png
 else
-    echo "Warning: ImageMagick not found. Using fallback icon generation."
-    # Fallback: just copy the SVG (electron-builder will fail but at least we tried)
-    cp public/favicon.svg build/icon.svg
-    echo "Please install ImageMagick to properly generate icons: brew install imagemagick"
+    echo "Error: ImageMagick is not installed, but it is required to generate the application icon." >&2
+    echo "Please install ImageMagick to continue." >&2
+    echo "For installation instructions, visit: https://imagemagick.org/script/download.php" >&2
     exit 1
 fi
 
