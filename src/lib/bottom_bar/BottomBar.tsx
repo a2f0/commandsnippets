@@ -1,6 +1,9 @@
-import {Box, Button, Menu, Tab, Tabs} from '@mui/material';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
 import {observer} from 'mobx-react';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {LanguageSwitcher} from '../../components/LanguageSwitcher';
 import {useTypedTranslation} from '../../i18n/hooks';
@@ -43,6 +46,10 @@ const BottomBar = () => {
   const {t} = useTypedTranslation('menu');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [menuSize, setMenuSize] = useState({width: 600, height: 400});
+  const [isResizing, setIsResizing] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const open = Boolean(anchorEl);
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
@@ -59,6 +66,54 @@ const BottomBar = () => {
     },
     []
   );
+
+  const toggleExpanded = useCallback(() => {
+    if (isExpanded) {
+      setMenuSize({width: 600, height: 400});
+    } else {
+      setMenuSize({
+        width: Math.min(window.innerWidth * 0.9, 1200),
+        height: Math.min(window.innerHeight * 0.8, 800),
+      });
+    }
+    setIsExpanded(!isExpanded);
+  }, [isExpanded]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (menuRef.current) {
+        const rect = menuRef.current.getBoundingClientRect();
+        const newWidth = Math.max(
+          400,
+          Math.min(window.innerWidth * 0.95, e.clientX - rect.left + 20)
+        );
+        const newHeight = Math.max(
+          300,
+          Math.min(window.innerHeight * 0.9, rect.bottom - e.clientY + 20)
+        );
+        setMenuSize({width: newWidth, height: newHeight});
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   return (
     <Box
@@ -132,10 +187,15 @@ const BottomBar = () => {
               }}
               slotProps={{
                 paper: {
+                  ref: menuRef,
                   sx: {
-                    minWidth: 600,
-                    maxWidth: '80vw',
-                    maxHeight: '60vh',
+                    width: menuSize.width,
+                    height: menuSize.height,
+                    maxWidth: '95vw',
+                    maxHeight: '90vh',
+                    resize: 'none',
+                    overflow: 'hidden',
+                    position: 'relative',
                   },
                 },
                 transition: {
@@ -149,8 +209,55 @@ const BottomBar = () => {
                   backgroundColor: 'background.paper',
                   border: 1,
                   borderColor: 'divider',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  position: 'relative',
                 }}
               >
+                {/* Expand/Collapse button in top-right corner */}
+                <IconButton
+                  onClick={toggleExpanded}
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    zIndex: 1,
+                    backgroundColor: 'background.paper',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                  aria-label={isExpanded ? 'Collapse HUD' : 'Expand HUD'}
+                >
+                  {isExpanded ? <FullscreenExitIcon /> : <FullscreenIcon />}
+                </IconButton>
+
+                {/* Resize handle in bottom-right corner */}
+                <Box
+                  onMouseDown={handleMouseDown}
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: 20,
+                    height: 20,
+                    cursor: 'nwse-resize',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'text.secondary',
+                    '&:hover': {
+                      color: 'text.primary',
+                    },
+                  }}
+                  aria-label="Resize HUD menu"
+                >
+                  <DragIndicatorIcon
+                    sx={{fontSize: 16, transform: 'rotate(45deg)'}}
+                  />
+                </Box>
                 <Tabs
                   value={selectedTab}
                   onChange={handleTabChange}
@@ -181,21 +288,56 @@ const BottomBar = () => {
                   <Tab label={t('logs')} {...a11yProps(1)} />
                   <Tab label={t('analytics')} {...a11yProps(2)} />
                 </Tabs>
-                <CustomTabPanel value={selectedTab} index={0}>
-                  <Box sx={{minHeight: 200, color: 'text.secondary'}}>
-                    {t('performanceMetrics')}
-                  </Box>
-                </CustomTabPanel>
-                <CustomTabPanel value={selectedTab} index={1}>
-                  <Box sx={{minHeight: 200, color: 'text.secondary'}}>
-                    {t('applicationLogs')}
-                  </Box>
-                </CustomTabPanel>
-                <CustomTabPanel value={selectedTab} index={2}>
-                  <Box sx={{minHeight: 200, color: 'text.secondary'}}>
-                    {t('analyticsData')}
-                  </Box>
-                </CustomTabPanel>
+                <Box sx={{flex: 1, overflow: 'auto'}}>
+                  <CustomTabPanel value={selectedTab} index={0}>
+                    <Box sx={{minHeight: 200, color: 'text.secondary', p: 2}}>
+                      {t('performanceMetrics')}
+                      {isExpanded && (
+                        <Box sx={{mt: 2}}>
+                          <div>CPU Usage: 45%</div>
+                          <div>Memory: 2.3GB / 8GB</div>
+                          <div>Network: 125 KB/s</div>
+                        </Box>
+                      )}
+                    </Box>
+                  </CustomTabPanel>
+                  <CustomTabPanel value={selectedTab} index={1}>
+                    <Box sx={{minHeight: 200, color: 'text.secondary', p: 2}}>
+                      {t('applicationLogs')}
+                      {isExpanded && (
+                        <Box
+                          sx={{
+                            mt: 2,
+                            fontFamily: 'monospace',
+                            fontSize: '0.875rem',
+                          }}
+                        >
+                          <div>
+                            [2025-09-06 11:15:23] INFO: Application started
+                          </div>
+                          <div>
+                            [2025-09-06 11:15:24] DEBUG: Store initialized
+                          </div>
+                          <div>
+                            [2025-09-06 11:15:25] INFO: UI rendered successfully
+                          </div>
+                        </Box>
+                      )}
+                    </Box>
+                  </CustomTabPanel>
+                  <CustomTabPanel value={selectedTab} index={2}>
+                    <Box sx={{minHeight: 200, color: 'text.secondary', p: 2}}>
+                      {t('analyticsData')}
+                      {isExpanded && (
+                        <Box sx={{mt: 2}}>
+                          <div>Active Users: 127</div>
+                          <div>Total Sessions: 3,452</div>
+                          <div>Avg. Session Duration: 8m 34s</div>
+                        </Box>
+                      )}
+                    </Box>
+                  </CustomTabPanel>
+                </Box>
               </Box>
             </Menu>
           </>
