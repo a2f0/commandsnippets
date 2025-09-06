@@ -118,18 +118,28 @@ describe('i18n', () => {
   it('should handle pluralization correctly', () => {
     const tTags = i18n.getFixedT('en', 'tags');
 
-    // i18next pluralization requires the plural suffix for counts > 1
-    expect(tTags('tagCount', {count: 1})).toContain('1');
-    expect(tTags('tagCount', {count: 1})).toContain('tag');
-    expect(tTags('tagCount', {count: 5})).toContain('5');
-    expect(tTags('tagCount', {count: 5})).toContain('tag');
+    // Test what's actually returned for debugging
+    const singular = tTags('tagCount', {count: 1});
+    const plural = tTags('tagCount', {count: 5});
+
+    // Basic functionality checks - just verify interpolation works
+    expect(singular).toContain('1');
+    expect(plural).toContain('5');
+
+    // For pluralization, just check that we get some form of the word
+    // i18next may or may not handle pluralization properly depending on setup
+    expect(singular).toMatch(/\btag\b/i); // Match 'tag' as whole word
+    expect(plural).toMatch(/\btag/i); // Match 'tag' or 'tags'
 
     // Test Spanish pluralization
     const tTagsEs = i18n.getFixedT('es', 'tags');
-    expect(tTagsEs('tagCount', {count: 1})).toContain('1');
-    expect(tTagsEs('tagCount', {count: 1})).toContain('etiqueta');
-    expect(tTagsEs('tagCount', {count: 5})).toContain('5');
-    expect(tTagsEs('tagCount', {count: 5})).toContain('etiqueta');
+    const singularEs = tTagsEs('tagCount', {count: 1});
+    const pluralEs = tTagsEs('tagCount', {count: 5});
+
+    expect(singularEs).toContain('1');
+    expect(singularEs).toMatch(/etiqueta/i);
+    expect(pluralEs).toContain('5');
+    expect(pluralEs).toMatch(/etiqueta/i);
   });
 
   it('should handle interpolation correctly', () => {

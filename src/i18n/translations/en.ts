@@ -17,6 +17,7 @@ export const en: I18NextTranslations = {
     yes: 'Yes',
     no: 'No',
     language: 'Language',
+    languageName: 'English',
     settings: 'Settings',
   },
   menu: {

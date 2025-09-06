@@ -15,6 +15,7 @@ export interface CommonTranslations {
   yes: string;
   no: string;
   language: string;
+  languageName: string;
   settings: string;
 }
 

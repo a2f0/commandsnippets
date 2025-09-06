@@ -17,6 +17,7 @@ export const es: I18NextTranslations = {
     yes: 'Sí',
     no: 'No',
     language: 'Idioma',
+    languageName: 'Español',
     settings: 'Configuración',
   },
   menu: {
