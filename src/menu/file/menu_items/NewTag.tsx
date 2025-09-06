@@ -1,7 +1,6 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-
 import {useAppContext} from '../../../AppContext';
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {appMode} from '../../../lib/shared';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
@@ -11,7 +10,7 @@ interface IProps {
 
 const NewTag = ({onClose}: IProps) => {
   const appConfig = useAppContext();
-  const {t} = useTranslation('menu');
+  const {t} = useTypedTranslation('menu');
 
   const handleCreateTag = () => {
     appConfig.setAppMode(appMode.tagEditor);

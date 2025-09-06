@@ -1,5 +1,5 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import {useTypedTranslation} from '../../i18n/hooks';
 
 import {MenuBarButton} from '../../MenuBarButton';
 
@@ -8,7 +8,7 @@ interface IProps {
 }
 
 const HelpMenuButton = ({onClick}: IProps) => {
-  const {t} = useTranslation('menu');
+  const {t} = useTypedTranslation('menu');
 
   return (
     <MenuBarButton
