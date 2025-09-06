@@ -86,7 +86,7 @@ export function useErrorStore(): ErrorStore {
 
   const getRecentLogs = useCallback(
     (count = 10) => {
-      return logs
+      return [...logs]
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .slice(0, count);
     },

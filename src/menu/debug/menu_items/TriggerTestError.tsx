@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
@@ -9,14 +9,14 @@ interface IProps {
 const TriggerTestError = ({onClose}: IProps) => {
   const [shouldError, setShouldError] = useState(false);
 
-  if (shouldError) {
-    // Reset the state so it doesn't keep throwing
-    setShouldError(false);
-    // Throw an error to test the error boundary
-    throw new Error(
-      'Test error triggered from Debug menu to demonstrate error boundary functionality'
-    );
-  }
+  useEffect(() => {
+    if (shouldError) {
+      // Throw the error in useEffect to avoid render phase side effects
+      throw new Error(
+        'Test error triggered from Debug menu to demonstrate error boundary functionality'
+      );
+    }
+  }, [shouldError]);
 
   const handleClick = () => {
     // Close the menu first

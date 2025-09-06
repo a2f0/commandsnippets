@@ -272,18 +272,20 @@ const BottomBar = () => {
                                 {log.level}: {log.message}
                               </span>
                               {log.details && (
-                                <details style={{marginLeft: '20px'}}>
-                                  <summary
-                                    style={{
+                                <Box component="details" sx={{marginLeft: 2.5}}>
+                                  <Box
+                                    component="summary"
+                                    sx={{
                                       cursor: 'pointer',
                                       fontSize: '0.75rem',
                                       opacity: 0.8,
                                     }}
                                   >
                                     Details
-                                  </summary>
-                                  <pre
-                                    style={{
+                                  </Box>
+                                  <Box
+                                    component="pre"
+                                    sx={{
                                       fontSize: '0.75rem',
                                       margin: '5px 0',
                                       whiteSpace: 'pre-wrap',
@@ -291,8 +293,8 @@ const BottomBar = () => {
                                     }}
                                   >
                                     {log.details}
-                                  </pre>
-                                </details>
+                                  </Box>
+                                </Box>
                               )}
                             </Box>
                           ))}

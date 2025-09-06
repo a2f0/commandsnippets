@@ -47,9 +47,9 @@ export class ErrorBoundary extends React.Component<
       errorInfo,
     });
 
-    // Create error info object
+    // Create error info object with crypto.randomUUID for better uniqueness
     const capturedError: ErrorInfo = {
-      id: `error_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      id: `error_${crypto.randomUUID()}`,
       timestamp: new Date(),
       error,
       errorInfo,
@@ -63,6 +63,15 @@ export class ErrorBoundary extends React.Component<
 
     // Log to console for debugging
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+    // Reset error state after a delay to allow recovery
+    setTimeout(() => {
+      this.setState({
+        hasError: false,
+        error: null,
+        errorInfo: null,
+      });
+    }, 100);
   }
 
   override render() {
@@ -78,14 +87,9 @@ export class ErrorBoundary extends React.Component<
         );
       }
 
-      // Don't show error UI - just continue rendering the children
+      // Return null to prevent rendering children that may throw again
       // The error has been logged to the store and will appear in HUD logs
-      // Reset the error state so the app continues to function
-      this.setState({
-        hasError: false,
-        error: null,
-        errorInfo: null,
-      });
+      return null;
     }
 
     return this.props.children;
