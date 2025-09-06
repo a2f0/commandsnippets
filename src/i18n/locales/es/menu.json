@@ -1,0 +1,12 @@
+{
+  "file": "Archivo",
+  "view": "Ver",
+  "help": "Ayuda",
+  "tags": "Etiquetas",
+  "entries": "Entradas",
+  "allEntries": "Todas las Entradas",
+  "untaggedEntries": "Entradas sin Etiqueta",
+  "about": "Acerca de",
+  "newTag": "Nueva Etiqueta",
+  "newEntry": "Nueva Entrada"
+}
