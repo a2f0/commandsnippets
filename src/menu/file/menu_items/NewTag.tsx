@@ -1,6 +1,6 @@
 import React from 'react';
-
 import {useAppContext} from '../../../AppContext';
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {appMode} from '../../../lib/shared';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
@@ -10,6 +10,7 @@ interface IProps {
 
 const NewTag = ({onClose}: IProps) => {
   const appConfig = useAppContext();
+  const {t} = useTypedTranslation('menu');
 
   const handleCreateTag = () => {
     appConfig.setAppMode(appMode.tagEditor);
@@ -19,7 +20,7 @@ const NewTag = ({onClose}: IProps) => {
 
   return (
     <StyledMenuItem id="file-menu-new-tag" onClick={handleCreateTag}>
-      New Tag
+      {t('newTag')}
     </StyledMenuItem>
   );
 };
