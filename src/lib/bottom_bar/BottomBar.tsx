@@ -5,6 +5,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
 
 import {LanguageSwitcher} from '../../components/LanguageSwitcher';
+import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
 import {TagSearch} from '../../TagSearch';
@@ -29,7 +30,6 @@ const CustomTabPanel = React.memo((props: TabPanelProps) => {
       aria-labelledby={`hud-tab-${index}`}
       style={{
         height: '100%',
-        display: value === index ? 'block' : 'none',
         backgroundColor: 'transparent',
       }}
       {...other}
@@ -48,6 +48,7 @@ const a11yProps = (index: number) => ({
 
 const BottomBar = () => {
   const {t} = useTypedTranslation('menu');
+  const {width: windowWidth, height: windowHeight} = useWindowSize();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -69,8 +70,8 @@ const BottomBar = () => {
   );
 
   const toggleExpanded = useCallback(() => {
-    setIsExpanded(!isExpanded);
-  }, [isExpanded]);
+    setIsExpanded(prev => !prev);
+  }, []);
 
   return (
     <Box
@@ -145,11 +146,9 @@ const BottomBar = () => {
               slotProps={{
                 paper: {
                   sx: {
-                    width: isExpanded
-                      ? Math.min(window.innerWidth * 0.9, 1200)
-                      : 600,
+                    width: isExpanded ? Math.min(windowWidth * 0.9, 1200) : 600,
                     height: isExpanded
-                      ? Math.min(window.innerHeight * 0.8, 800)
+                      ? Math.min(windowHeight * 0.8, 800)
                       : 400,
                     maxWidth: '95vw',
                     maxHeight: '90vh',
@@ -227,6 +226,7 @@ const BottomBar = () => {
                       {t('performanceMetrics')}
                       {isExpanded && (
                         <Box sx={{mt: 2}}>
+                          {/* TODO: Replace with real performance metrics from application services */}
                           <div>CPU Usage: 45%</div>
                           <div>Memory: 2.3GB / 8GB</div>
                           <div>Network: 125 KB/s</div>
@@ -245,6 +245,7 @@ const BottomBar = () => {
                             fontSize: '0.875rem',
                           }}
                         >
+                          {/* TODO: Replace with real application logs from logging service */}
                           <div>
                             [2025-09-06 11:15:23] INFO: Application started
                           </div>
@@ -263,6 +264,7 @@ const BottomBar = () => {
                       {t('analyticsData')}
                       {isExpanded && (
                         <Box sx={{mt: 2}}>
+                          {/* TODO: Replace with real analytics data from analytics service */}
                           <div>Active Users: 127</div>
                           <div>Total Sessions: 3,452</div>
                           <div>Avg. Session Duration: 8m 34s</div>
