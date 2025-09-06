@@ -3,8 +3,8 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
 import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
-
 import {LanguageSwitcher} from '../../components/LanguageSwitcher';
+import {useErrorStore} from '../../hooks/useErrorStore';
 import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
@@ -49,6 +49,7 @@ const a11yProps = (index: number) => ({
 const BottomBar = () => {
   const {t} = useTypedTranslation('menu');
   const {width: windowWidth, height: windowHeight} = useWindowSize();
+  const {logs, errors, getRecentLogs} = useErrorStore();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -236,26 +237,88 @@ const BottomBar = () => {
                   </CustomTabPanel>
                   <CustomTabPanel value={selectedTab} index={1}>
                     <Box sx={{color: 'text.secondary'}}>
-                      {t('applicationLogs')}
-                      {isExpanded && (
+                      {isExpanded ? (
                         <Box
                           sx={{
                             mt: 2,
                             fontFamily: 'monospace',
                             fontSize: '0.875rem',
+                            maxHeight: '300px',
+                            overflow: 'auto',
+                            backgroundColor: 'background.default',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            p: 1,
                           }}
                         >
-                          {/* TODO: Replace with real application logs from logging service */}
-                          <div>
-                            [2025-09-06 11:15:23] INFO: Application started
-                          </div>
-                          <div>
-                            [2025-09-06 11:15:24] DEBUG: Store initialized
-                          </div>
-                          <div>
-                            [2025-09-06 11:15:25] INFO: UI rendered successfully
-                          </div>
+                          {getRecentLogs(20).map(log => (
+                            <Box
+                              key={log.id}
+                              sx={{
+                                mb: 0.5,
+                                color:
+                                  log.level === 'ERROR'
+                                    ? 'error.main'
+                                    : log.level === 'WARN'
+                                      ? 'warning.main'
+                                      : log.level === 'DEBUG'
+                                        ? 'text.disabled'
+                                        : 'text.primary',
+                              }}
+                            >
+                              <span>
+                                [{log.timestamp.toLocaleTimeString()}]{' '}
+                                {log.level}: {log.message}
+                              </span>
+                              {log.details && (
+                                <Box component="details" sx={{marginLeft: 2.5}}>
+                                  <Box
+                                    component="summary"
+                                    sx={{
+                                      cursor: 'pointer',
+                                      fontSize: '0.75rem',
+                                      opacity: 0.8,
+                                    }}
+                                  >
+                                    Details
+                                  </Box>
+                                  <Box
+                                    component="pre"
+                                    sx={{
+                                      fontSize: '0.75rem',
+                                      margin: '5px 0',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                    }}
+                                  >
+                                    {log.details}
+                                  </Box>
+                                </Box>
+                              )}
+                            </Box>
+                          ))}
+                          {logs.length === 0 && (
+                            <Box
+                              sx={{color: 'text.disabled', fontStyle: 'italic'}}
+                            >
+                              No logs available
+                            </Box>
+                          )}
                         </Box>
+                      ) : (
+                        logs.length > 0 && (
+                          <Box
+                            sx={{
+                              mt: 1,
+                              fontSize: '0.875rem',
+                              color: 'text.disabled',
+                            }}
+                          >
+                            {logs.length} log entries • {errors.length} errors
+                            captured
+                          </Box>
+                        )
                       )}
                     </Box>
                   </CustomTabPanel>
