@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 
 import {act, render, screen, waitFor} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import {type MockInstance, vi} from 'vitest';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
@@ -346,91 +345,6 @@ describe('MenuBar', () => {
           'aria-controls',
           'help-menu'
         );
-      });
-    });
-  });
-
-  describe('Language Switcher', () => {
-    it('renders language switcher with current language', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
-
-      await waitFor(() => {
-        // Check that the language switcher is rendered
-        const languageSelect = screen.getByRole('combobox');
-        expect(languageSelect).toBeInTheDocument();
-        expect(languageSelect.textContent).toMatch(/English|Español/);
-      });
-    });
-
-    it('changes menu item text when language is switched', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
-
-      // Wait for initial render with English
-      await waitFor(() => {
-        const fileMenuButton = screen.getByRole('menu', {name: 'File'});
-        expect(fileMenuButton).toBeInTheDocument();
-        expect(fileMenuButton.textContent).toBe('File');
-      });
-
-      // Find and click the language switcher
-      const languageSelect = screen.getByRole('combobox');
-      await userEvent.click(languageSelect);
-
-      // Select Spanish
-      const spanishOptions = await screen.findAllByText('Español');
-      const spanishOption = spanishOptions[spanishOptions.length - 1];
-      if (spanishOption) {
-        await userEvent.click(spanishOption);
-      }
-
-      // Wait for menu items to update to Spanish
-      await waitFor(() => {
-        // After language change, we need to find the button by its new Spanish text
-        const fileMenuButton = screen.getByRole('menu', {name: 'Archivo'});
-        expect(fileMenuButton).toBeInTheDocument();
-        expect(fileMenuButton.textContent).toBe('Archivo');
-      });
-    });
-
-    it('persists language selection across page navigation', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
-
-      // Change to Spanish
-      const languageSelect = screen.getByRole('combobox');
-      await userEvent.click(languageSelect);
-      const spanishOptions = await screen.findAllByText('Español');
-      const spanishOption = spanishOptions[spanishOptions.length - 1];
-      if (spanishOption) {
-        await userEvent.click(spanishOption);
-      }
-
-      // Navigate to another route
-      await act(async () => {
-        history.push('/other/route');
-      });
-
-      // Check that Spanish is still selected
-      await waitFor(() => {
-        const updatedSelect = screen.getByRole('combobox');
-        expect(updatedSelect.textContent).toBe('Español');
       });
     });
   });

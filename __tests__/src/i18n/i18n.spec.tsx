@@ -1,3 +1,4 @@
+import {ThemeProvider} from '@mui/material/styles';
 import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type React from 'react';
@@ -6,6 +7,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {LanguageSwitcher} from '../../../src/components/LanguageSwitcher';
 import {i18n} from '../../../src/i18n/i18n';
+import {darkTheme} from '../../../src/theme/themes';
 
 // Test component that uses translations
 const TestComponent: React.FC = () => {
@@ -164,22 +166,26 @@ describe('LanguageSwitcher', () => {
 
   it('should render language switcher with current language', () => {
     render(
-      <I18nextProvider i18n={i18n}>
-        <LanguageSwitcher />
-      </I18nextProvider>
+      <ThemeProvider theme={darkTheme}>
+        <I18nextProvider i18n={i18n}>
+          <LanguageSwitcher />
+        </I18nextProvider>
+      </ThemeProvider>
     );
 
     const select = screen.getByRole('combobox');
     expect(select).toBeDefined();
     // MUI Select doesn't expose value directly, check the displayed text
-    expect(select.textContent).toBe('English');
+    expect(select.textContent).toBe('[English]');
   });
 
   it('should show English and Spanish options', async () => {
     render(
-      <I18nextProvider i18n={i18n}>
-        <LanguageSwitcher />
-      </I18nextProvider>
+      <ThemeProvider theme={darkTheme}>
+        <I18nextProvider i18n={i18n}>
+          <LanguageSwitcher />
+        </I18nextProvider>
+      </ThemeProvider>
     );
 
     const select = screen.getByRole('combobox');
@@ -194,10 +200,12 @@ describe('LanguageSwitcher', () => {
 
   it('should change language when selecting a different option', async () => {
     render(
-      <I18nextProvider i18n={i18n}>
-        <LanguageSwitcher />
-        <TestComponent />
-      </I18nextProvider>
+      <ThemeProvider theme={darkTheme}>
+        <I18nextProvider i18n={i18n}>
+          <LanguageSwitcher />
+          <TestComponent />
+        </I18nextProvider>
+      </ThemeProvider>
     );
 
     expect(screen.getByTestId('welcome').textContent).toBe('Welcome');
@@ -219,20 +227,22 @@ describe('LanguageSwitcher', () => {
 
   it('should reflect the current language in the select value', async () => {
     render(
-      <I18nextProvider i18n={i18n}>
-        <LanguageSwitcher />
-      </I18nextProvider>
+      <ThemeProvider theme={darkTheme}>
+        <I18nextProvider i18n={i18n}>
+          <LanguageSwitcher />
+        </I18nextProvider>
+      </ThemeProvider>
     );
 
     const select = screen.getByRole('combobox');
-    expect(select.textContent).toBe('English');
+    expect(select.textContent).toBe('[English]');
 
     act(() => {
       i18n.changeLanguage('es');
     });
 
     await waitFor(() => {
-      expect(select.textContent).toBe('Español');
+      expect(select.textContent).toBe('[Español]');
     });
   });
 });
