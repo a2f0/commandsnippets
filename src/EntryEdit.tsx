@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
@@ -130,6 +131,16 @@ const EntryEdit = ({
     }
   }, [appConfig.activeEntryEditField]);
 
+  const buttonSx = {
+    scrollMarginBottom: '10px',
+    marginBottom: '10px',
+    color: (theme: Theme) => theme.palette.text.primary,
+    borderColor: (theme: Theme) => theme.palette.text.secondary,
+    '&:hover': {
+      borderColor: (theme: Theme) => theme.palette.text.primary,
+    },
+  };
+
   return (
     <Box
       id={id}
@@ -157,14 +168,8 @@ const EntryEdit = ({
         ref={setInputSaveRef}
         id={`${id}Save`}
         sx={{
+          ...buttonSx,
           marginRight: '2px',
-          scrollMarginBottom: '10px',
-          marginBottom: '10px',
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
         }}
         size="small"
         variant="outlined"
@@ -182,15 +187,7 @@ const EntryEdit = ({
         onClick={() => {
           handleCancel();
         }}
-        sx={{
-          scrollMarginBottom: '10px',
-          marginBottom: '10px',
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-        }}
+        sx={buttonSx}
       >
         Cancel
       </Button>

@@ -6,6 +6,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material';
+import type {Theme} from '@mui/material/styles';
 import React from 'react';
 
 interface ITagDeleteDialog {
@@ -23,6 +24,14 @@ const TagDeleteDialog = ({
   handleCancelDialog,
   handleAcceptDialog,
 }: ITagDeleteDialog) => {
+  const buttonSx = {
+    color: (theme: Theme) => theme.palette.text.primary,
+    borderColor: (theme: Theme) => theme.palette.text.secondary,
+    '&:hover': {
+      borderColor: (theme: Theme) => theme.palette.text.primary,
+    },
+  };
+
   return (
     <Dialog
       id={`tagContextMenu${id}DeleteTagDialog`}
@@ -42,13 +51,7 @@ const TagDeleteDialog = ({
           id={`tagContextMenu${id}DeleteTagDialogCancelButton`}
           variant="outlined"
           onClick={handleCancelDialog}
-          sx={{
-            color: theme => theme.palette.text.primary,
-            borderColor: theme => theme.palette.text.secondary,
-            '&:hover': {
-              borderColor: theme => theme.palette.text.primary,
-            },
-          }}
+          sx={buttonSx}
         >
           Cancel
         </Button>
@@ -57,13 +60,7 @@ const TagDeleteDialog = ({
           variant="outlined"
           onClick={handleAcceptDialog}
           autoFocus
-          sx={{
-            color: theme => theme.palette.text.primary,
-            borderColor: theme => theme.palette.text.secondary,
-            '&:hover': {
-              borderColor: theme => theme.palette.text.primary,
-            },
-          }}
+          sx={buttonSx}
         >
           Delete
         </Button>

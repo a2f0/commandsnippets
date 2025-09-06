@@ -1,4 +1,5 @@
 import {Box, Button} from '@mui/material';
+import type {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
@@ -137,6 +138,14 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     }
   }, [appConfig.activeEntryEditField]);
 
+  const buttonSx = {
+    color: (theme: Theme) => theme.palette.text.primary,
+    borderColor: (theme: Theme) => theme.palette.text.secondary,
+    '&:hover': {
+      borderColor: (theme: Theme) => theme.palette.text.primary,
+    },
+  };
+
   return (
     <Box
       id={id}
@@ -165,12 +174,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         id={`${id}Save`}
         color="secondary"
         sx={{
+          ...buttonSx,
           marginRight: '2px',
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
         }}
         size="small"
         variant="outlined"
@@ -189,13 +194,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         onClick={() => {
           handleCancel();
         }}
-        sx={{
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-        }}
+        sx={buttonSx}
       >
         Cancel
       </Button>
