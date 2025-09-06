@@ -8,10 +8,11 @@ This application supports multiple languages using react-i18next with **type-saf
 
 ## Type Safety
 
-This i18n implementation is **fully type-safe**. Translation keys are automatically generated from the JSON files, providing:
+This i18n implementation is **fully type-safe**. Translation keys and interfaces are defined in TypeScript objects, providing:
 - Autocomplete for translation keys in your IDE
 - Compile-time checking for invalid keys
 - Type-safe parameters for interpolation
+- No build-time generation step required
 
 ## Usage
 
@@ -95,53 +96,52 @@ const LanguageSwitcher = () => {
 src/i18n/
 ├── i18n.ts           # Main configuration
 ├── hooks.ts          # Type-safe hooks
-├── types.ts          # Auto-generated types
-├── locales/
-│   ├── en/
-│   │   ├── common.json    # Common UI elements
-│   │   ├── menu.json      # Menu items
-│   │   ├── tags.json      # Tag-related text
-│   │   └── entries.json   # Entry-related text
-│   └── es/
-│       ├── common.json
-│       ├── menu.json
-│       ├── tags.json
-│       └── entries.json
+├── translations/
+│   ├── index.ts      # Translation exports
+│   ├── types.ts      # TypeScript interfaces
+│   ├── en.ts         # English translations (TypeScript objects)
+│   └── es.ts         # Spanish translations (TypeScript objects)
 └── README.md         # This file
-
-public/locales/       # Public translations (for runtime loading if needed)
-└── [same structure as src/i18n/locales]
 ```
 
 ## Development Workflow
 
 ### 1. Adding New Translations
 
-1. Add the new key-value pair to the appropriate JSON file in both language folders:
-   ```json
-   // src/i18n/locales/en/common.json
-   {
-     "newFeature": "New Feature"
+1. Add the new key-value pair to both language TypeScript objects:
+   ```typescript
+   // src/i18n/translations/en.ts
+   export const en: I18NextTranslations = {
+     common: {
+       welcome: 'Welcome',
+       newFeature: 'New Feature', // Add here
+       // ... other keys
+     },
+     // ... other namespaces
+   } as const satisfies I18NextTranslations;
+
+   // src/i18n/translations/es.ts
+   export const es: I18NextTranslations = {
+     common: {
+       welcome: 'Bienvenido',
+       newFeature: 'Nueva Característica', // Add here
+       // ... other keys
+     },
+     // ... other namespaces
+   } as const satisfies I18NextTranslations;
+   ```
+
+2. Update TypeScript interfaces if adding a new namespace:
+   ```typescript
+   // src/i18n/translations/types.ts
+   export interface CommonTranslations {
+     welcome: string;
+     newFeature: string; // Add here
+     // ... other keys
    }
-
-   // src/i18n/locales/es/common.json
-   {
-     "newFeature": "Nueva Característica"
-   }
    ```
 
-2. Copy to public folder if using runtime loading:
-   ```bash
-   cp src/i18n/locales/en/*.json public/locales/en/
-   cp src/i18n/locales/es/*.json public/locales/es/
-   ```
-
-3. Regenerate types:
-   ```bash
-   pnpm generate:i18n-types
-   ```
-
-4. Use the new translation with full type safety:
+3. Use the new translation with full type safety:
    ```tsx
    const { t } = useTypedTranslation('common');
    return <div>{t('newFeature')}</div>; // TypeScript knows this key exists!
@@ -149,51 +149,56 @@ public/locales/       # Public translations (for runtime loading if needed)
 
 ### 2. Adding a New Language
 
-1. Create new folders:
-   ```bash
-   mkdir -p src/i18n/locales/fr public/locales/fr
+1. Create a new language TypeScript object:
+   ```typescript
+   // src/i18n/translations/fr.ts
+   import type {I18NextTranslations} from './types';
+
+   export const fr: I18NextTranslations = {
+     common: {
+       welcome: 'Bienvenue',
+       // ... translate all common keys
+     },
+     menu: {
+       file: 'Fichier',
+       // ... translate all menu keys
+     },
+     // ... other namespaces
+   } as const satisfies I18NextTranslations;
    ```
 
-2. Copy English files as templates:
-   ```bash
-   cp src/i18n/locales/en/*.json src/i18n/locales/fr/
-   cp public/locales/en/*.json public/locales/fr/
+2. Export the new language in index file:
+   ```typescript
+   // src/i18n/translations/index.ts
+   import {en} from './en';
+   import {es} from './es';
+   import {fr} from './fr'; // Add this
+
+   export const translations = {
+     en,
+     es,
+     fr, // Add this
+   } as const;
    ```
 
-3. Translate all values in the new language files
-
-4. Update `src/i18n/i18n.ts`:
+3. Update `src/i18n/i18n.ts`:
    ```ts
-   import frCommon from './locales/fr/common.json';
-   // ... import other fr files
-
-   const resources = {
-     en: { /* ... */ },
-     es: { /* ... */ },
-     fr: {
-       common: frCommon,
-       // ... other namespaces
-     }
-   };
+   // Resources are automatically included from translations object
 
    // Update supportedLngs
-   supportedLngs: ['en', 'es', 'fr'],
+   supportedLngs: ['en', 'es', 'fr'] as const,
    ```
 
-5. Add to language switcher component
+4. Add to language switcher component
 
-### 3. Type Generation
+### 3. TypeScript Integration
 
-Types are automatically generated from the English locale files. Run this command after adding new translations:
+Types are automatically inferred from the TypeScript translation objects. No generation step is required:
 
-```bash
-pnpm generate:i18n-types
-```
-
-This creates/updates `src/i18n/types.ts` with:
-- `I18nNamespaces` - Interface with all namespaces and their keys
-- `TranslationKey` - Union type of all possible translation keys
-- `CommonKeys`, `MenuKeys`, etc. - Namespace-specific key types
+- **Compile-time validation**: TypeScript checks all translation keys at build time
+- **IntelliSense support**: Full autocomplete in VS Code and other IDEs
+- **Interface constraints**: The `I18NextTranslations` type ensures consistency across languages
+- **Type exports**: All translation types are available from `src/i18n/translations/types.ts`
 
 ## Best Practices
 
@@ -207,7 +212,7 @@ This creates/updates `src/i18n/types.ts` with:
 
 4. **Consistent naming**: Use camelCase for keys
 
-5. **Regenerate types**: Run `pnpm generate:i18n-types` after any translation changes
+5. **Update interfaces**: Add new keys to TypeScript interfaces for proper typing
 
 6. **Test translations**: Verify all languages when adding new keys
 
@@ -246,13 +251,14 @@ describe('MyComponent', () => {
 ## Troubleshooting
 
 ### Types not updating
-- Run `pnpm generate:i18n-types` to regenerate
+- Check that interfaces in `types.ts` match the translation objects
 - Restart TypeScript server in VS Code: `Cmd+Shift+P` → "TypeScript: Restart TS Server"
+- Ensure `satisfies I18NextTranslations` is used in translation objects
 
 ### Missing translations
 - Check browser console for missing key warnings
 - Ensure key exists in all language files
-- Verify namespace is loaded in `i18n.ts`
+- Verify namespace is defined in TypeScript interfaces and translation objects
 
 ### Language not persisting
 - Check localStorage for `i18nextLng` key
