@@ -134,11 +134,10 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tablist', {name: /HUD navigation tabs/i})
-        ).toBeInTheDocument();
+      const tablist = await screen.findByRole('tablist', {
+        name: /HUD navigation tabs/i,
       });
+      expect(tablist).toBeInTheDocument();
       expect(hudButton).toHaveAttribute('aria-expanded', 'true');
     });
 
@@ -149,15 +148,12 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tab', {name: /Performance/i})
-        ).toBeInTheDocument();
-        expect(screen.getByRole('tab', {name: /Logs/i})).toBeInTheDocument();
-        expect(
-          screen.getByRole('tab', {name: /Analytics/i})
-        ).toBeInTheDocument();
+      const performanceTab = await screen.findByRole('tab', {
+        name: /Performance/i,
       });
+      expect(performanceTab).toBeInTheDocument();
+      expect(screen.getByRole('tab', {name: /Logs/i})).toBeInTheDocument();
+      expect(screen.getByRole('tab', {name: /Analytics/i})).toBeInTheDocument();
     });
 
     it('displays Performance tab content by default', async () => {
@@ -167,11 +163,10 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText('Performance metrics will be displayed here')
-        ).toBeInTheDocument();
-      });
+      const performanceContent = await screen.findByText(
+        'Performance metrics will be displayed here'
+      );
+      expect(performanceContent).toBeInTheDocument();
       expect(
         screen.queryByText('Application logs will be displayed here')
       ).not.toBeInTheDocument();
@@ -190,11 +185,10 @@ describe('BottomBar Component', () => {
       const logsTab = await screen.findByRole('tab', {name: /Logs/i});
       await user.click(logsTab);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText('Application logs will be displayed here')
-        ).toBeInTheDocument();
-      });
+      const logsContent = await screen.findByText(
+        'Application logs will be displayed here'
+      );
+      expect(logsContent).toBeInTheDocument();
       expect(
         screen.queryByText('Performance metrics will be displayed here')
       ).not.toBeInTheDocument();
@@ -228,11 +222,10 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tablist', {name: /HUD navigation tabs/i})
-        ).toBeInTheDocument();
+      const tablist = await screen.findByRole('tablist', {
+        name: /HUD navigation tabs/i,
       });
+      expect(tablist).toBeInTheDocument();
 
       // Press Escape to close the menu (more reliable than clicking outside in tests)
       await user.keyboard('{Escape}');
@@ -254,67 +247,96 @@ describe('BottomBar Component', () => {
       });
     });
 
-    it('renders language switcher with current language', () => {
+    it.each(['development', 'test'])(
+      'renders language switcher in %s environment',
+      env => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+
+        render(<BottomBarWithProviders />);
+
+        const languageSelect = screen.getByRole('combobox');
+        expect(languageSelect).toBeInTheDocument();
+        expect(languageSelect.textContent).toBe('[English]');
+      }
+    );
+
+    it('does not render language switcher in production environment', () => {
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+
       render(<BottomBarWithProviders />);
 
-      const languageSelect = screen.getByRole('combobox');
-      expect(languageSelect).toBeInTheDocument();
-      expect(languageSelect.textContent).toBe('[English]');
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
-    it('changes language when selecting a different option', async () => {
-      const user = userEvent.setup();
-      render(<BottomBarWithProviders />);
-
-      expect(i18n.language).toBe('en');
-
-      const languageSelect = screen.getByRole('combobox');
-      await user.click(languageSelect);
-
-      const spanishOption = await screen.findByRole('menuitem', {
-        name: 'Español',
-      });
-      await user.click(spanishOption);
-
-      await waitFor(() => {
-        expect(i18n.language).toBe('es');
-        expect(languageSelect.textContent).toBe('[Español]');
-      });
-    });
-
-    it('persists language selection across component re-renders', async () => {
-      const user = userEvent.setup();
-      const {rerender} = render(<BottomBarWithProviders />);
-
-      // Change to Spanish
-      const languageSelect = screen.getByRole('combobox');
-      await user.click(languageSelect);
-      const spanishOption = await screen.findByRole('menuitem', {
-        name: 'Español',
-      });
-      await user.click(spanishOption);
-
-      await waitFor(() => {
-        expect(i18n.language).toBe('es');
+    describe('in development environment', () => {
+      beforeEach(() => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(
+          'development'
+        );
       });
 
-      // Re-render the component
-      rerender(<BottomBarWithProviders />);
+      it('renders language switcher with current language', () => {
+        render(<BottomBarWithProviders />);
 
-      // Check that Spanish is still selected
-      await waitFor(() => {
-        const updatedSelect = screen.getByRole('combobox');
-        expect(updatedSelect.textContent).toBe('[Español]');
+        const languageSelect = screen.getByRole('combobox');
+        expect(languageSelect).toBeInTheDocument();
+        expect(languageSelect.textContent).toBe('[English]');
       });
-    });
 
-    it('is positioned in the bottom bar right container', () => {
-      render(<BottomBarWithProviders />);
+      it('changes language when selecting a different option', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
 
-      const languageSelect = screen.getByRole('combobox');
-      const rightContainer = screen.getByTestId('bottom-bar-right-container');
+        expect(i18n.language).toBe('en');
 
-      expect(rightContainer).toContainElement(languageSelect);
+        const languageSelect = screen.getByRole('combobox');
+        await user.click(languageSelect);
+
+        const spanishOption = await screen.findByRole('menuitem', {
+          name: 'Español',
+        });
+        await user.click(spanishOption);
+
+        await waitFor(() => {
+          expect(i18n.language).toBe('es');
+          expect(languageSelect.textContent).toBe('[Español]');
+        });
+      });
+
+      it('persists language selection across component re-renders', async () => {
+        const user = userEvent.setup();
+        const {rerender} = render(<BottomBarWithProviders />);
+
+        // Change to Spanish
+        const languageSelect = screen.getByRole('combobox');
+        await user.click(languageSelect);
+        const spanishOption = await screen.findByRole('menuitem', {
+          name: 'Español',
+        });
+        await user.click(spanishOption);
+
+        await waitFor(() => {
+          expect(i18n.language).toBe('es');
+        });
+
+        // Re-render the component
+        rerender(<BottomBarWithProviders />);
+
+        // Check that Spanish is still selected
+        await waitFor(() => {
+          const updatedSelect = screen.getByRole('combobox');
+          expect(updatedSelect.textContent).toBe('[Español]');
+        });
+      });
+
+      it('is positioned in the bottom bar right container', () => {
+        render(<BottomBarWithProviders />);
+
+        const languageSelect = screen.getByRole('combobox');
+        const rightContainer = screen.getByTestId('bottom-bar-right-container');
+
+        expect(rightContainer).toContainElement(languageSelect);
+      });
     });
   });
 });
