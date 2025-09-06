@@ -119,7 +119,7 @@ export const LanguageSwitcher: React.FC = () => {
                 '&:hover': {
                   backgroundColor:
                     theme.selected.background ||
-                    theme.palette.action?.hover ||
+                    theme.palette.action.hover ||
                     'rgba(255, 255, 255, 0.08)',
                 },
               })}
