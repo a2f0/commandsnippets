@@ -3,6 +3,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
 
 import {LanguageSwitcher} from '../../components/LanguageSwitcher';
+import {useTypedTranslation} from '../../i18n/hooks';
 import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
 import {TagSearch} from '../../TagSearch';
 import {environment} from '../environment';
@@ -39,6 +40,7 @@ const a11yProps = (index: number) => ({
 });
 
 const BottomBar = () => {
+  const {t} = useTypedTranslation('menu');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const open = Boolean(anchorEl);
@@ -95,7 +97,7 @@ const BottomBar = () => {
           <>
             <Button
               onClick={handleClick}
-              aria-label="Open HUD menu"
+              aria-label={t('openHudMenu')}
               aria-haspopup="true"
               aria-controls={open ? 'hud-menu' : undefined}
               aria-expanded={open}
@@ -113,7 +115,7 @@ const BottomBar = () => {
                 },
               }}
             >
-              [HUD]
+              [{t('hud')}]
             </Button>
             <Menu
               id="hud-menu"
@@ -175,23 +177,23 @@ const BottomBar = () => {
                     },
                   }}
                 >
-                  <Tab label="Performance" {...a11yProps(0)} />
-                  <Tab label="Logs" {...a11yProps(1)} />
-                  <Tab label="Analytics" {...a11yProps(2)} />
+                  <Tab label={t('performance')} {...a11yProps(0)} />
+                  <Tab label={t('logs')} {...a11yProps(1)} />
+                  <Tab label={t('analytics')} {...a11yProps(2)} />
                 </Tabs>
                 <CustomTabPanel value={selectedTab} index={0}>
                   <Box sx={{minHeight: 200, color: 'text.secondary'}}>
-                    Performance metrics will be displayed here
+                    {t('performanceMetrics')}
                   </Box>
                 </CustomTabPanel>
                 <CustomTabPanel value={selectedTab} index={1}>
                   <Box sx={{minHeight: 200, color: 'text.secondary'}}>
-                    Application logs will be displayed here
+                    {t('applicationLogs')}
                   </Box>
                 </CustomTabPanel>
                 <CustomTabPanel value={selectedTab} index={2}>
                   <Box sx={{minHeight: 200, color: 'text.secondary'}}>
-                    Analytics data will be displayed here
+                    {t('analyticsData')}
                   </Box>
                 </CustomTabPanel>
               </Box>
