@@ -134,11 +134,10 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tablist', {name: /HUD navigation tabs/i})
-        ).toBeInTheDocument();
+      const tablist = await screen.findByRole('tablist', {
+        name: /HUD navigation tabs/i,
       });
+      expect(tablist).toBeInTheDocument();
       expect(hudButton).toHaveAttribute('aria-expanded', 'true');
     });
 
@@ -149,15 +148,12 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tab', {name: /Performance/i})
-        ).toBeInTheDocument();
-        expect(screen.getByRole('tab', {name: /Logs/i})).toBeInTheDocument();
-        expect(
-          screen.getByRole('tab', {name: /Analytics/i})
-        ).toBeInTheDocument();
+      const performanceTab = await screen.findByRole('tab', {
+        name: /Performance/i,
       });
+      expect(performanceTab).toBeInTheDocument();
+      expect(screen.getByRole('tab', {name: /Logs/i})).toBeInTheDocument();
+      expect(screen.getByRole('tab', {name: /Analytics/i})).toBeInTheDocument();
     });
 
     it('displays Performance tab content by default', async () => {
@@ -167,11 +163,10 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText('Performance metrics will be displayed here')
-        ).toBeInTheDocument();
-      });
+      const performanceContent = await screen.findByText(
+        'Performance metrics will be displayed here'
+      );
+      expect(performanceContent).toBeInTheDocument();
       expect(
         screen.queryByText('Application logs will be displayed here')
       ).not.toBeInTheDocument();
@@ -190,11 +185,10 @@ describe('BottomBar Component', () => {
       const logsTab = await screen.findByRole('tab', {name: /Logs/i});
       await user.click(logsTab);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText('Application logs will be displayed here')
-        ).toBeInTheDocument();
-      });
+      const logsContent = await screen.findByText(
+        'Application logs will be displayed here'
+      );
+      expect(logsContent).toBeInTheDocument();
       expect(
         screen.queryByText('Performance metrics will be displayed here')
       ).not.toBeInTheDocument();
@@ -228,11 +222,10 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tablist', {name: /HUD navigation tabs/i})
-        ).toBeInTheDocument();
+      const tablist = await screen.findByRole('tablist', {
+        name: /HUD navigation tabs/i,
       });
+      expect(tablist).toBeInTheDocument();
 
       // Press Escape to close the menu (more reliable than clicking outside in tests)
       await user.keyboard('{Escape}');
