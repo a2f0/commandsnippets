@@ -1,5 +1,6 @@
 import React from 'react';
 
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 import {AboutDialog} from './AboutDialog';
 
@@ -8,6 +9,7 @@ interface IProps {
 }
 
 const About = ({onClose}: IProps) => {
+  const {t} = useTypedTranslation('menu');
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
   const handleClick = () => {
@@ -22,7 +24,7 @@ const About = ({onClose}: IProps) => {
   return (
     <>
       <StyledMenuItem id="about" onClick={handleClick}>
-        About
+        {t('about')}
       </StyledMenuItem>
       <AboutDialog dialogOpen={dialogOpen} closeDialog={closeDialog} />
     </>

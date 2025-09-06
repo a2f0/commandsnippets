@@ -1,5 +1,6 @@
 import React from 'react';
 
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {tearleadsApi} from '../../../lib/api/tearleadsApi';
 import {resetApplicationState} from '../../../lib/auth/authUtils';
 import {StyledMenuItem} from '../../../StyledMenuItem';
@@ -9,6 +10,8 @@ interface IProps {
 }
 
 const Logout = ({onClose}: IProps) => {
+  const {t} = useTypedTranslation('common');
+
   const handleLogout = () => {
     tearleadsApi
       .logout()
@@ -23,7 +26,7 @@ const Logout = ({onClose}: IProps) => {
 
   return (
     <StyledMenuItem id="file-menu-logout" onClick={handleLogout}>
-      Logout
+      {t('logout')}
     </StyledMenuItem>
   );
 };
