@@ -35,8 +35,11 @@ const EntryBody = ({object, handleClick}: IProps) => {
     object.id === appConfig.entrySelectedID &&
     appConfig.appMode === appMode.entriesList
   ) {
-    styleOuterDiv.backgroundColor = theme.selected.background;
-    style.color = theme.selected.foreground;
+    styleOuterDiv.backgroundColor =
+      theme.selected.background ||
+      theme.palette.action.selected ||
+      'rgba(255, 255, 255, 0.08)';
+    style.color = theme.selected.foreground || theme.palette.text.primary;
   }
 
   return (

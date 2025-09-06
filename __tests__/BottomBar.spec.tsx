@@ -271,11 +271,10 @@ describe('BottomBar Component', () => {
       const languageSelect = screen.getByRole('combobox');
       await user.click(languageSelect);
 
-      const spanishOptions = await screen.findAllByText('Español');
-      const spanishOption = spanishOptions[spanishOptions.length - 1];
-      if (spanishOption) {
-        await user.click(spanishOption);
-      }
+      const spanishOption = await screen.findByRole('menuitem', {
+        name: 'Español',
+      });
+      await user.click(spanishOption);
 
       await waitFor(() => {
         expect(i18n.language).toBe('es');
@@ -290,11 +289,10 @@ describe('BottomBar Component', () => {
       // Change to Spanish
       const languageSelect = screen.getByRole('combobox');
       await user.click(languageSelect);
-      const spanishOptions = await screen.findAllByText('Español');
-      const spanishOption = spanishOptions[spanishOptions.length - 1];
-      if (spanishOption) {
-        await user.click(spanishOption);
-      }
+      const spanishOption = await screen.findByRole('menuitem', {
+        name: 'Español',
+      });
+      await user.click(spanishOption);
 
       await waitFor(() => {
         expect(i18n.language).toBe('es');

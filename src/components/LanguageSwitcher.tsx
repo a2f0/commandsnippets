@@ -30,12 +30,11 @@ export const LanguageSwitcher: React.FC = () => {
     (lang: string) => lang !== 'cimode'
   ) || ['en', 'es'];
 
-  // Get current language name
-  const getCurrentLanguageName = () => {
-    const currentLang = i18n.language || 'en'; // Fallback to 'en' if undefined
+  // Helper function to get language name with fallback logic
+  const getLanguageName = (langCode: string) => {
     try {
       if (typeof i18n.getFixedT === 'function') {
-        return i18n.getFixedT(currentLang, 'common')('languageName');
+        return i18n.getFixedT(langCode, 'common')('languageName');
       }
     } catch {
       // Use hardcoded fallbacks for common languages
@@ -43,9 +42,15 @@ export const LanguageSwitcher: React.FC = () => {
         en: 'English',
         es: 'Español',
       };
-      return languageNames[currentLang] || currentLang.toUpperCase();
+      return languageNames[langCode] || langCode.toUpperCase();
     }
-    return currentLang.toUpperCase();
+    return langCode.toUpperCase();
+  };
+
+  // Get current language name
+  const getCurrentLanguageName = () => {
+    const currentLang = i18n.language || 'en'; // Fallback to 'en' if undefined
+    return getLanguageName(currentLang);
   };
 
   return (
@@ -69,7 +74,7 @@ export const LanguageSwitcher: React.FC = () => {
           fontSize: 'caption.fontSize',
           lineHeight: 'caption.lineHeight',
           '&:active': {
-            backgroundColor: '#585858',
+            backgroundColor: theme => theme.palette.action.active,
           },
           '&.MuiButton-root': {
             color: theme => theme.palette.text.primary,
@@ -102,27 +107,14 @@ export const LanguageSwitcher: React.FC = () => {
         }}
       >
         {supportedLanguages.map((langCode: string) => {
-          // Get the language name in its own language, with fallback for test environment
-          let languageName = langCode.toUpperCase(); // Fallback
-          try {
-            if (typeof i18n.getFixedT === 'function') {
-              languageName = i18n.getFixedT(langCode, 'common')('languageName');
-            }
-          } catch {
-            // Use hardcoded fallbacks for common languages
-            const languageNames: Record<string, string> = {
-              en: 'English',
-              es: 'Español',
-            };
-            languageName = languageNames[langCode] || langCode.toUpperCase();
-          }
+          const languageName = getLanguageName(langCode);
 
           return (
             <MenuItem
               key={langCode}
               onClick={() => handleLanguageChange(langCode)}
               sx={theme => ({
-                fontSize: 13,
+                fontSize: 'caption.fontSize',
                 background: theme.palette.background.default,
                 '&:hover': {
                   backgroundColor:

@@ -356,7 +356,10 @@ const Tag = ({
   if (isActiveHover) {
     backgroundColor = theme.palette.action.hover;
   } else if (isSelected) {
-    backgroundColor = theme.selected.background;
+    backgroundColor =
+      theme.selected.background ||
+      theme.palette.action.selected ||
+      'rgba(255, 255, 255, 0.08)';
   }
 
   const dropLabelRef = (el: HTMLDivElement | null) => {

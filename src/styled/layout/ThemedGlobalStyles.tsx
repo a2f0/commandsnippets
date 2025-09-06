@@ -8,8 +8,18 @@ const ThemedGlobalStyle = () => {
   return (
     <GlobalStyles
       styles={{
-        '::selection': {background: theme.selected.background},
-        '::-webkit-selection': {background: theme.selected.background},
+        '::selection': {
+          background:
+            theme.selected.background ||
+            theme.palette.action?.selected ||
+            'rgba(255, 255, 255, 0.08)',
+        },
+        '::-webkit-selection': {
+          background:
+            theme.selected.background ||
+            theme.palette.action?.selected ||
+            'rgba(255, 255, 255, 0.08)',
+        },
         '#©': {
           height: '100%',
         },
