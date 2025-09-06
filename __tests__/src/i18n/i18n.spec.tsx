@@ -172,7 +172,7 @@ describe('LanguageSwitcher', () => {
     const select = screen.getByRole('combobox');
     expect(select).toBeDefined();
     // MUI Select doesn't expose value directly, check the displayed text
-    expect(select.textContent).toBe('English');
+    expect(select.textContent).toBe('[English]');
   });
 
   it('should show English and Spanish options', async () => {
@@ -225,14 +225,14 @@ describe('LanguageSwitcher', () => {
     );
 
     const select = screen.getByRole('combobox');
-    expect(select.textContent).toBe('English');
+    expect(select.textContent).toBe('[English]');
 
     act(() => {
       i18n.changeLanguage('es');
     });
 
     await waitFor(() => {
-      expect(select.textContent).toBe('Español');
+      expect(select.textContent).toBe('[Español]');
     });
   });
 });
