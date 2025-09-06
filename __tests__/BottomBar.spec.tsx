@@ -254,7 +254,30 @@ describe('BottomBar Component', () => {
       });
     });
 
+    it.each(['development', 'test'])(
+      'renders language switcher in %s environment',
+      env => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+
+        render(<BottomBarWithProviders />);
+
+        const languageSelect = screen.getByRole('combobox');
+        expect(languageSelect).toBeInTheDocument();
+        expect(languageSelect.textContent).toBe('[English]');
+      }
+    );
+
+    it('does not render language switcher in production environment', () => {
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+
+      render(<BottomBarWithProviders />);
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    });
+
     it('renders language switcher with current language', () => {
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+
       render(<BottomBarWithProviders />);
 
       const languageSelect = screen.getByRole('combobox');
@@ -264,6 +287,8 @@ describe('BottomBar Component', () => {
 
     it('changes language when selecting a different option', async () => {
       const user = userEvent.setup();
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+
       render(<BottomBarWithProviders />);
 
       expect(i18n.language).toBe('en');
@@ -284,6 +309,8 @@ describe('BottomBar Component', () => {
 
     it('persists language selection across component re-renders', async () => {
       const user = userEvent.setup();
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+
       const {rerender} = render(<BottomBarWithProviders />);
 
       // Change to Spanish
@@ -309,6 +336,8 @@ describe('BottomBar Component', () => {
     });
 
     it('is positioned in the bottom bar right container', () => {
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+
       render(<BottomBarWithProviders />);
 
       const languageSelect = screen.getByRole('combobox');
