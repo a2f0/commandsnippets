@@ -165,7 +165,6 @@ const BottomBar = () => {
               <Box
                 sx={{
                   p: 1,
-                  backgroundColor: 'background.paper',
                   border: 1,
                   borderColor: 'divider',
                   height: '100%',
