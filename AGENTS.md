@@ -463,6 +463,12 @@ For each addressed issue, tag the review agent and ask for confirmation:
 
 **CRITICAL**: NEVER respond to individual issues in the main PR body. ALWAYS reply directly to the specific conversation thread. This keeps discussions organized and contextual.
 
+**⚠️ IMPORTANT FOR AI ASSISTANTS**: When engaging with code review agents like @gemini-code-assist, you MUST:
+- Use `gh api repos/.../pulls/<PR_NUMBER>/comments/<COMMENT_ID>/replies` to reply to specific threads
+- NEVER use `gh pr comment <PR_NUMBER>` for addressing individual review feedback
+- Only use `gh pr comment` for general PR-level discussions or initial review requests
+- Always find the specific comment database ID and reply directly to that thread
+
 ```bash
 # Find the comment ID from the thread you want to reply to
 gh api graphql --field query='
@@ -606,6 +612,16 @@ Has this issue been resolved to your satisfaction?"
 - **Tag the AI agent** in thread replies to ensure they see your response
 - **Use database IDs (numeric) for comment replies**, not node IDs (alphanumeric)
 
+**⚠️ FOR AI ASSISTANTS - CRITICAL DISTINCTION**:
+- `gh pr comment <PR_NUMBER>` = Posts to main PR body (only for general discussions)
+- `gh api repos/.../pulls/<PR_NUMBER>/comments/<COMMENT_ID>/replies` = Replies to specific thread (required for review feedback)
+
+**When to use each**:
+- **Initial review request**: Use `gh pr comment` to ask for general review
+- **Addressing specific feedback**: Use comment replies API to respond to individual threads
+- **General updates**: Use `gh pr comment` for broad status updates
+- **Thread-specific responses**: Use comment replies API for targeted responses
+
 #### Common Gemini Review Patterns
 
 Based on typical feedback patterns, Gemini often focuses on:
@@ -633,6 +649,11 @@ gh api repos/a2f0/tearleads-frontend/pulls/<PR_NUMBER>/comments/${COMMENT_ID}/re
 # 4. Wait for response, then resolve threads when confirmed
 gh api graphql --field query='mutation{resolveReviewThread(input:{threadId:"THREAD_ID"}){thread{id isResolved}}}'
 ```
+
+**⚠️ REMEMBER FOR AI ASSISTANTS**:
+- Step 3 uses the comment replies API endpoint - this is mandatory for thread responses
+- Do NOT replace step 3 with `gh pr comment` - that would post to main PR body instead of the thread
+- The `/replies` endpoint ensures the response appears in the correct conversation thread
 
 ### Guidelines for AI Code Review Agents
 

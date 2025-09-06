@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@mui/material';
 import React from 'react';
+import {commonButtonSx} from './styles/buttons';
 
 interface ITagDeleteDialog {
   id: string;
@@ -23,6 +24,8 @@ const TagDeleteDialog = ({
   handleCancelDialog,
   handleAcceptDialog,
 }: ITagDeleteDialog) => {
+  const buttonSx = commonButtonSx;
+
   return (
     <Dialog
       id={`tagContextMenu${id}DeleteTagDialog`}
@@ -40,18 +43,18 @@ const TagDeleteDialog = ({
       <DialogActions>
         <Button
           id={`tagContextMenu${id}DeleteTagDialogCancelButton`}
-          color="secondary"
           variant="outlined"
           onClick={handleCancelDialog}
+          sx={buttonSx}
         >
           Cancel
         </Button>
         <Button
           id={`tagContextMenu${id}DeleteTagDialogDeleteButton`}
-          color="secondary"
           variant="outlined"
           onClick={handleAcceptDialog}
           autoFocus
+          sx={buttonSx}
         >
           Delete
         </Button>

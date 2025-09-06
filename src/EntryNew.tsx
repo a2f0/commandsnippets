@@ -7,6 +7,7 @@ import {useAppContext} from './AppContext';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
 import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
+import {commonButtonSx} from './styles/buttons';
 
 export interface IEntryNewProps {
   filterAndSortParent: () => void;
@@ -137,6 +138,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     }
   }, [appConfig.activeEntryEditField]);
 
+  const buttonSx = commonButtonSx;
+
   return (
     <Box
       id={id}
@@ -165,12 +168,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         id={`${id}Save`}
         color="secondary"
         sx={{
+          ...buttonSx,
           marginRight: '2px',
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
         }}
         size="small"
         variant="outlined"
@@ -189,13 +188,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         onClick={() => {
           handleCancel();
         }}
-        sx={{
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-        }}
+        sx={buttonSx}
       >
         Cancel
       </Button>
