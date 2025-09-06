@@ -40,18 +40,30 @@ const TagDeleteDialog = ({
       <DialogActions>
         <Button
           id={`tagContextMenu${id}DeleteTagDialogCancelButton`}
-          color="secondary"
           variant="outlined"
           onClick={handleCancelDialog}
+          sx={{
+            color: theme => theme.palette.text.primary,
+            borderColor: theme => theme.palette.text.secondary,
+            '&:hover': {
+              borderColor: theme => theme.palette.text.primary,
+            },
+          }}
         >
           Cancel
         </Button>
         <Button
           id={`tagContextMenu${id}DeleteTagDialogDeleteButton`}
-          color="secondary"
           variant="outlined"
           onClick={handleAcceptDialog}
           autoFocus
+          sx={{
+            color: theme => theme.palette.text.primary,
+            borderColor: theme => theme.palette.text.secondary,
+            '&:hover': {
+              borderColor: theme => theme.palette.text.primary,
+            },
+          }}
         >
           Delete
         </Button>
