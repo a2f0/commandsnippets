@@ -1,5 +1,4 @@
 import {Box, Button} from '@mui/material';
-import type {Theme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
@@ -8,6 +7,7 @@ import {useAppContext} from './AppContext';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
 import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
+import {commonButtonSx} from './styles/buttons';
 
 export interface IEntryNewProps {
   filterAndSortParent: () => void;
@@ -138,13 +138,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     }
   }, [appConfig.activeEntryEditField]);
 
-  const buttonSx = {
-    color: (theme: Theme) => theme.palette.text.primary,
-    borderColor: (theme: Theme) => theme.palette.text.secondary,
-    '&:hover': {
-      borderColor: (theme: Theme) => theme.palette.text.primary,
-    },
-  };
+  const buttonSx = commonButtonSx;
 
   return (
     <Box

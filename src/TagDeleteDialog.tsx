@@ -6,8 +6,8 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material';
-import type {Theme} from '@mui/material/styles';
 import React from 'react';
+import {commonButtonSx} from './styles/buttons';
 
 interface ITagDeleteDialog {
   id: string;
@@ -24,13 +24,7 @@ const TagDeleteDialog = ({
   handleCancelDialog,
   handleAcceptDialog,
 }: ITagDeleteDialog) => {
-  const buttonSx = {
-    color: (theme: Theme) => theme.palette.text.primary,
-    borderColor: (theme: Theme) => theme.palette.text.secondary,
-    '&:hover': {
-      borderColor: (theme: Theme) => theme.palette.text.primary,
-    },
-  };
+  const buttonSx = commonButtonSx;
 
   return (
     <Dialog

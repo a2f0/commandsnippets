@@ -1,6 +1,5 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
@@ -12,6 +11,7 @@ import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
 import {needsScrollingIntoView} from './lib/text_entries';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
 import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
+import {commonButtonSx} from './styles/buttons';
 
 export interface IEntryEdit {
   object: ITextEntryJsonApi;
@@ -134,11 +134,7 @@ const EntryEdit = ({
   const buttonSx = {
     scrollMarginBottom: '10px',
     marginBottom: '10px',
-    color: (theme: Theme) => theme.palette.text.primary,
-    borderColor: (theme: Theme) => theme.palette.text.secondary,
-    '&:hover': {
-      borderColor: (theme: Theme) => theme.palette.text.primary,
-    },
+    ...commonButtonSx,
   };
 
   return (
