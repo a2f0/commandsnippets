@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {appMode} from '../../../lib/shared';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
@@ -10,6 +11,7 @@ interface IProps {
 
 const NewEntry = ({onClose}: IProps) => {
   const appConfig = useAppContext();
+  const {t} = useTypedTranslation('menu');
 
   const handleCreateEntry = () => {
     onClose();
@@ -19,7 +21,7 @@ const NewEntry = ({onClose}: IProps) => {
 
   return (
     <StyledMenuItem id="file-menu-new-entry" onClick={handleCreateEntry}>
-      New Entry
+      {t('newEntry')}
     </StyledMenuItem>
   );
 };

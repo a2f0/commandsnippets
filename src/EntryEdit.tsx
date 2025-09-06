@@ -5,6 +5,7 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
+import {useTypedTranslation} from './i18n/hooks';
 import type {ITextEntryJsonApiResponseSingle} from './lib/api/responses/types';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
@@ -26,6 +27,7 @@ const EntryEdit = ({
   handleCancelEditParent,
   id,
 }: IEntryEdit) => {
+  const {t} = useTypedTranslation('common');
   const saveRef = useRef<HTMLButtonElement>(null);
   const [subject, setSubject] = useState<string>(object.attributes.subject);
   const [body, setBody] = useState<string>(object.attributes.body);
@@ -173,7 +175,7 @@ const EntryEdit = ({
           handleSave();
         }}
       >
-        Save
+        {t('save')}
       </Button>
       <Button
         ref={setInputCancelRef}
@@ -185,7 +187,7 @@ const EntryEdit = ({
         }}
         sx={buttonSx}
       >
-        Cancel
+        {t('cancel')}
       </Button>
     </Box>
   );

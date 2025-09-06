@@ -31,6 +31,14 @@ export interface MenuTranslations {
   debug: string;
   newTag: string;
   newEntry: string;
+  hud: string;
+  performance: string;
+  logs: string;
+  analytics: string;
+  performanceMetrics: string;
+  applicationLogs: string;
+  analyticsData: string;
+  openHudMenu: string;
 }
 
 export interface TagsTranslations {
