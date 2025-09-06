@@ -30,21 +30,14 @@ export const LanguageSwitcher: React.FC = () => {
     (lang: string) => lang !== 'cimode'
   ) || ['en', 'es'];
 
-  // Helper function to get language name with fallback logic
+  // Helper function to get language name with dedicated map
   const getLanguageName = (langCode: string) => {
-    try {
-      if (typeof i18n.getFixedT === 'function') {
-        return i18n.getFixedT(langCode, 'common')('languageName');
-      }
-    } catch {
-      // Use hardcoded fallbacks for common languages
-      const languageNames: Record<string, string> = {
-        en: 'English',
-        es: 'Español',
-      };
-      return languageNames[langCode] || langCode.toUpperCase();
-    }
-    return langCode.toUpperCase();
+    // Using a map is more robust for getting native language names.
+    const languageNames: Record<string, string> = {
+      en: 'English',
+      es: 'Español',
+    };
+    return languageNames[langCode] || langCode.toUpperCase();
   };
 
   // Get current language name

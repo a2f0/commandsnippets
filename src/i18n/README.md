@@ -21,7 +21,7 @@ This i18n implementation is **fully type-safe**. Translation keys and interfaces
 Use the `useTypedTranslation` hook for type-safe translations:
 
 ```tsx
-import { useTypedTranslation } from '@/i18n/hooks';
+import { useTypedTranslation } from '../i18n/hooks';
 
 const MyComponent = () => {
   const { t } = useTypedTranslation('menu');
@@ -34,7 +34,7 @@ const MyComponent = () => {
 ### Using Multiple Namespaces
 
 ```tsx
-import { useTypedTranslation } from '@/i18n/hooks';
+import { useTypedTranslation } from '../i18n/hooks';
 
 const MyComponent = () => {
   const { t: tCommon } = useTypedTranslation('common');
@@ -72,7 +72,7 @@ return <div>{t('tagCount', { count: itemCount })}</div>;
 ### Language Switching
 
 ```tsx
-import { useTypedTranslation } from '@/i18n/hooks';
+import { useTypedTranslation } from '../i18n/hooks';
 
 const LanguageSwitcher = () => {
   const { i18n } = useTypedTranslation();
@@ -221,7 +221,7 @@ Types are automatically inferred from the TypeScript translation objects. No gen
 ```tsx
 import { render } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import { i18n } from '@/i18n/i18n';
+import { i18n } from '../i18n/i18n';
 
 describe('MyComponent', () => {
   it('renders with translations', () => {
