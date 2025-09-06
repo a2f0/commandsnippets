@@ -3,8 +3,9 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
 import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
-
+import {ErrorTestComponent} from '../../components/ErrorBoundary/ErrorTestComponent';
 import {LanguageSwitcher} from '../../components/LanguageSwitcher';
+import {useErrorStore} from '../../hooks/useErrorStore';
 import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
@@ -49,6 +50,7 @@ const a11yProps = (index: number) => ({
 const BottomBar = () => {
   const {t} = useTypedTranslation('menu');
   const {width: windowWidth, height: windowHeight} = useWindowSize();
+  const {logs, errors, getRecentLogs} = useErrorStore();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -219,6 +221,9 @@ const BottomBar = () => {
                   <Tab label={t('performance')} {...a11yProps(0)} />
                   <Tab label={t('logs')} {...a11yProps(1)} />
                   <Tab label={t('analytics')} {...a11yProps(2)} />
+                  {environment !== 'production' && (
+                    <Tab label="Test" {...a11yProps(3)} />
+                  )}
                 </Tabs>
                 <Box sx={{flex: 1, overflow: 'auto', height: '100%'}}>
                   <CustomTabPanel value={selectedTab} index={0}>
@@ -243,18 +248,78 @@ const BottomBar = () => {
                             mt: 2,
                             fontFamily: 'monospace',
                             fontSize: '0.875rem',
+                            maxHeight: '300px',
+                            overflow: 'auto',
+                            backgroundColor: 'background.default',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            p: 1,
                           }}
                         >
-                          {/* TODO: Replace with real application logs from logging service */}
-                          <div>
-                            [2025-09-06 11:15:23] INFO: Application started
-                          </div>
-                          <div>
-                            [2025-09-06 11:15:24] DEBUG: Store initialized
-                          </div>
-                          <div>
-                            [2025-09-06 11:15:25] INFO: UI rendered successfully
-                          </div>
+                          {getRecentLogs(20).map(log => (
+                            <Box
+                              key={log.id}
+                              sx={{
+                                mb: 0.5,
+                                color:
+                                  log.level === 'ERROR'
+                                    ? 'error.main'
+                                    : log.level === 'WARN'
+                                      ? 'warning.main'
+                                      : log.level === 'DEBUG'
+                                        ? 'text.disabled'
+                                        : 'text.primary',
+                              }}
+                            >
+                              <span>
+                                [{log.timestamp.toLocaleTimeString()}]{' '}
+                                {log.level}: {log.message}
+                              </span>
+                              {log.details && (
+                                <details style={{marginLeft: '20px'}}>
+                                  <summary
+                                    style={{
+                                      cursor: 'pointer',
+                                      fontSize: '0.75rem',
+                                      opacity: 0.8,
+                                    }}
+                                  >
+                                    Details
+                                  </summary>
+                                  <pre
+                                    style={{
+                                      fontSize: '0.75rem',
+                                      margin: '5px 0',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                    }}
+                                  >
+                                    {log.details}
+                                  </pre>
+                                </details>
+                              )}
+                            </Box>
+                          ))}
+                          {logs.length === 0 && (
+                            <Box
+                              sx={{color: 'text.disabled', fontStyle: 'italic'}}
+                            >
+                              No logs available
+                            </Box>
+                          )}
+                        </Box>
+                      )}
+                      {!isExpanded && logs.length > 0 && (
+                        <Box
+                          sx={{
+                            mt: 1,
+                            fontSize: '0.875rem',
+                            color: 'text.disabled',
+                          }}
+                        >
+                          {logs.length} log entries • {errors.length} errors
+                          captured
                         </Box>
                       )}
                     </Box>
@@ -272,6 +337,13 @@ const BottomBar = () => {
                       )}
                     </Box>
                   </CustomTabPanel>
+                  {environment !== 'production' && (
+                    <CustomTabPanel value={selectedTab} index={3}>
+                      <Box sx={{color: 'text.secondary'}}>
+                        <ErrorTestComponent />
+                      </Box>
+                    </CustomTabPanel>
+                  )}
                 </Box>
               </Box>
             </Menu>
