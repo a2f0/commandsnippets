@@ -102,7 +102,7 @@ const BottomBar = () => {
           gap: 1,
         }}
       >
-        <LanguageSwitcher />
+        {environment !== 'production' && <LanguageSwitcher />}
         <Mode />
         <Version />
         {environment !== 'production' && (
