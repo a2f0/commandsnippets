@@ -237,8 +237,7 @@ const BottomBar = () => {
                   </CustomTabPanel>
                   <CustomTabPanel value={selectedTab} index={1}>
                     <Box sx={{color: 'text.secondary'}}>
-                      {t('applicationLogs')}
-                      {isExpanded && (
+                      {isExpanded ? (
                         <Box
                           sx={{
                             mt: 2,
@@ -305,18 +304,19 @@ const BottomBar = () => {
                             </Box>
                           )}
                         </Box>
-                      )}
-                      {!isExpanded && logs.length > 0 && (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            fontSize: '0.875rem',
-                            color: 'text.disabled',
-                          }}
-                        >
-                          {logs.length} log entries • {errors.length} errors
-                          captured
-                        </Box>
+                      ) : (
+                        logs.length > 0 && (
+                          <Box
+                            sx={{
+                              mt: 1,
+                              fontSize: '0.875rem',
+                              color: 'text.disabled',
+                            }}
+                          >
+                            {logs.length} log entries • {errors.length} errors
+                            captured
+                          </Box>
+                        )
                       )}
                     </Box>
                   </CustomTabPanel>

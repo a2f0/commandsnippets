@@ -167,12 +167,13 @@ describe('BottomBar Component', () => {
         'Performance metrics will be displayed here'
       );
       expect(performanceContent).toBeInTheDocument();
-      expect(
-        screen.queryByText('Application logs will be displayed here')
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByText('Analytics data will be displayed here')
-      ).not.toBeInTheDocument();
+
+      // Logs tab should not show any content when not expanded and no logs
+      const logsTab = await screen.findByRole('tab', {name: /Logs/i});
+      await user.click(logsTab);
+
+      // Should show log count when there are logs (from default initialization)
+      expect(screen.getByText(/log entries/)).toBeInTheDocument();
     });
 
     it('switches tab content when different tab is clicked', async () => {
@@ -185,10 +186,10 @@ describe('BottomBar Component', () => {
       const logsTab = await screen.findByRole('tab', {name: /Logs/i});
       await user.click(logsTab);
 
-      const logsContent = await screen.findByText(
-        'Application logs will be displayed here'
-      );
-      expect(logsContent).toBeInTheDocument();
+      // When logs tab is active and not expanded, should show log summary
+      expect(screen.getByText(/log entries/)).toBeInTheDocument();
+
+      // Performance content should not be visible
       expect(
         screen.queryByText('Performance metrics will be displayed here')
       ).not.toBeInTheDocument();
@@ -344,9 +345,9 @@ describe('BottomBar Component', () => {
         const logsTab = await screen.findByRole('tab', {name: /Logs/i});
         await user.click(logsTab);
 
-        // Check logs enhanced content
+        // Check logs enhanced content - should show actual log entries
         expect(
-          screen.getByText('[2025-09-06 11:15:23] INFO: Application started')
+          screen.getByText(/INFO: Application started/)
         ).toBeInTheDocument();
         expect(screen.queryByText('CPU Usage: 45%')).not.toBeInTheDocument();
 
@@ -359,7 +360,7 @@ describe('BottomBar Component', () => {
         // Check analytics enhanced content
         expect(screen.getByText('Active Users: 127')).toBeInTheDocument();
         expect(
-          screen.queryByText('[2025-09-06 11:15:23] INFO: Application started')
+          screen.queryByText(/INFO: Application started/)
         ).not.toBeInTheDocument();
       });
     });
