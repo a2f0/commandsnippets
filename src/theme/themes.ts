@@ -119,6 +119,9 @@ export const darkTheme: Theme = createTheme({
           padding: 0,
           background: '#0F0F0F',
         },
+        paper: {
+          backgroundImage: 'none',
+        },
       },
     },
     MuiDialog: {
