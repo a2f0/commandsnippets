@@ -63,15 +63,6 @@ export class ErrorBoundary extends React.Component<
 
     // Log to console for debugging
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-
-    // Reset error state after a delay to allow recovery
-    setTimeout(() => {
-      this.setState({
-        hasError: false,
-        error: null,
-        errorInfo: null,
-      });
-    }, 100);
   }
 
   override render() {

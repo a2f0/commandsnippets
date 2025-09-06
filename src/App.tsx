@@ -8,6 +8,7 @@ import {HTML5Backend} from 'react-dnd-html5-backend';
 import {ErrorBoundary, type ErrorInfo} from './components/ErrorBoundary';
 import {getGlobalErrorStore} from './hooks/useErrorStore';
 import './i18n/i18n';
+import {ErrorStoreProvider} from './providers/ErrorStoreProvider';
 import {Routes} from './Routes';
 import {MemoizedThemedGlobalStyle} from './styled/layout/ThemedGlobalStyles';
 import {ThemeProvider} from './theme/Theme';
@@ -22,17 +23,19 @@ const App = React.memo(
     };
 
     return (
-      <ErrorBoundary onError={handleError}>
-        <StyledEngineProvider injectFirst>
-          <ThemeProvider>
-            <CssBaseline />
-            <MemoizedThemedGlobalStyle />
-            <DndProvider backend={HTML5Backend}>
-              <Routes />
-            </DndProvider>
-          </ThemeProvider>
-        </StyledEngineProvider>
-      </ErrorBoundary>
+      <ErrorStoreProvider>
+        <ErrorBoundary onError={handleError}>
+          <StyledEngineProvider injectFirst>
+            <ThemeProvider>
+              <CssBaseline />
+              <MemoizedThemedGlobalStyle />
+              <DndProvider backend={HTML5Backend}>
+                <Routes />
+              </DndProvider>
+            </ThemeProvider>
+          </StyledEngineProvider>
+        </ErrorBoundary>
+      </ErrorStoreProvider>
     );
   })
 );

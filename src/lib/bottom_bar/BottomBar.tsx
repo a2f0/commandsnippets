@@ -243,7 +243,6 @@ const BottomBar = () => {
                             mt: 2,
                             fontFamily: 'monospace',
                             fontSize: '0.875rem',
-                            maxHeight: '300px',
                             overflow: 'auto',
                             backgroundColor: 'background.default',
                             border: '1px solid',
