@@ -268,75 +268,75 @@ describe('BottomBar Component', () => {
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
-    it('renders language switcher with current language', () => {
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
-
-      render(<BottomBarWithProviders />);
-
-      const languageSelect = screen.getByRole('combobox');
-      expect(languageSelect).toBeInTheDocument();
-      expect(languageSelect.textContent).toBe('[English]');
-    });
-
-    it('changes language when selecting a different option', async () => {
-      const user = userEvent.setup();
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
-
-      render(<BottomBarWithProviders />);
-
-      expect(i18n.language).toBe('en');
-
-      const languageSelect = screen.getByRole('combobox');
-      await user.click(languageSelect);
-
-      const spanishOption = await screen.findByRole('menuitem', {
-        name: 'Español',
-      });
-      await user.click(spanishOption);
-
-      await waitFor(() => {
-        expect(i18n.language).toBe('es');
-        expect(languageSelect.textContent).toBe('[Español]');
-      });
-    });
-
-    it('persists language selection across component re-renders', async () => {
-      const user = userEvent.setup();
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
-
-      const {rerender} = render(<BottomBarWithProviders />);
-
-      // Change to Spanish
-      const languageSelect = screen.getByRole('combobox');
-      await user.click(languageSelect);
-      const spanishOption = await screen.findByRole('menuitem', {
-        name: 'Español',
-      });
-      await user.click(spanishOption);
-
-      await waitFor(() => {
-        expect(i18n.language).toBe('es');
+    describe('in development environment', () => {
+      beforeEach(() => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(
+          'development'
+        );
       });
 
-      // Re-render the component
-      rerender(<BottomBarWithProviders />);
+      it('renders language switcher with current language', () => {
+        render(<BottomBarWithProviders />);
 
-      // Check that Spanish is still selected
-      await waitFor(() => {
-        const updatedSelect = screen.getByRole('combobox');
-        expect(updatedSelect.textContent).toBe('[Español]');
+        const languageSelect = screen.getByRole('combobox');
+        expect(languageSelect).toBeInTheDocument();
+        expect(languageSelect.textContent).toBe('[English]');
       });
-    });
 
-    it('is positioned in the bottom bar right container', () => {
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+      it('changes language when selecting a different option', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
 
-      render(<BottomBarWithProviders />);
+        expect(i18n.language).toBe('en');
 
-      const languageSelect = screen.getByRole('combobox');
-      const rightContainer = screen.getByTestId('bottom-bar-right-container');
+        const languageSelect = screen.getByRole('combobox');
+        await user.click(languageSelect);
 
-      expect(rightContainer).toContainElement(languageSelect);
+        const spanishOption = await screen.findByRole('menuitem', {
+          name: 'Español',
+        });
+        await user.click(spanishOption);
+
+        await waitFor(() => {
+          expect(i18n.language).toBe('es');
+          expect(languageSelect.textContent).toBe('[Español]');
+        });
+      });
+
+      it('persists language selection across component re-renders', async () => {
+        const user = userEvent.setup();
+        const {rerender} = render(<BottomBarWithProviders />);
+
+        // Change to Spanish
+        const languageSelect = screen.getByRole('combobox');
+        await user.click(languageSelect);
+        const spanishOption = await screen.findByRole('menuitem', {
+          name: 'Español',
+        });
+        await user.click(spanishOption);
+
+        await waitFor(() => {
+          expect(i18n.language).toBe('es');
+        });
+
+        // Re-render the component
+        rerender(<BottomBarWithProviders />);
+
+        // Check that Spanish is still selected
+        await waitFor(() => {
+          const updatedSelect = screen.getByRole('combobox');
+          expect(updatedSelect.textContent).toBe('[Español]');
+        });
+      });
+
+      it('is positioned in the bottom bar right container', () => {
+        render(<BottomBarWithProviders />);
+
+        const languageSelect = screen.getByRole('combobox');
+        const rightContainer = screen.getByTestId('bottom-bar-right-container');
+
+        expect(rightContainer).toContainElement(languageSelect);
+      });
     });
   });
 });
