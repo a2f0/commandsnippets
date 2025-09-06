@@ -4,7 +4,6 @@ import {observer} from 'mobx-react';
 import React from 'react';
 
 import {useAppContext} from './AppContext';
-import {LanguageSwitcher} from './components/LanguageSwitcher';
 import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
 import {environment} from './lib/environment';
@@ -163,7 +162,6 @@ const MenuBar = () => {
         flexGrow={1}
         mr={1}
       >
-        <LanguageSwitcher />
         <GithubAuth />
         <GoogleAuth />
       </Box>
