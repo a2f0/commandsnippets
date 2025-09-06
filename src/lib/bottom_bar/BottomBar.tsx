@@ -1,9 +1,8 @@
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
 import {observer} from 'mobx-react';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 
 import {LanguageSwitcher} from '../../components/LanguageSwitcher';
 import {useTypedTranslation} from '../../i18n/hooks';
@@ -47,9 +46,6 @@ const BottomBar = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [menuSize, setMenuSize] = useState({width: 600, height: 400});
-  const [isResizing, setIsResizing] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const open = Boolean(anchorEl);
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
@@ -68,52 +64,8 @@ const BottomBar = () => {
   );
 
   const toggleExpanded = useCallback(() => {
-    if (isExpanded) {
-      setMenuSize({width: 600, height: 400});
-    } else {
-      setMenuSize({
-        width: Math.min(window.innerWidth * 0.9, 1200),
-        height: Math.min(window.innerHeight * 0.8, 800),
-      });
-    }
     setIsExpanded(!isExpanded);
   }, [isExpanded]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isResizing) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (menuRef.current) {
-        const rect = menuRef.current.getBoundingClientRect();
-        const newWidth = Math.max(
-          400,
-          Math.min(window.innerWidth * 0.95, e.clientX - rect.left + 20)
-        );
-        const newHeight = Math.max(
-          300,
-          Math.min(window.innerHeight * 0.9, rect.bottom - e.clientY + 20)
-        );
-        setMenuSize({width: newWidth, height: newHeight});
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing]);
 
   return (
     <Box
@@ -187,13 +139,15 @@ const BottomBar = () => {
               }}
               slotProps={{
                 paper: {
-                  ref: menuRef,
                   sx: {
-                    width: menuSize.width,
-                    height: menuSize.height,
+                    width: isExpanded
+                      ? Math.min(window.innerWidth * 0.9, 1200)
+                      : 600,
+                    height: isExpanded
+                      ? Math.min(window.innerHeight * 0.8, 800)
+                      : 400,
                     maxWidth: '95vw',
                     maxHeight: '90vh',
-                    resize: 'none',
                     overflow: 'hidden',
                     position: 'relative',
                   },
@@ -233,31 +187,6 @@ const BottomBar = () => {
                 >
                   {isExpanded ? <FullscreenExitIcon /> : <FullscreenIcon />}
                 </IconButton>
-
-                {/* Resize handle in bottom-right corner */}
-                <Box
-                  onMouseDown={handleMouseDown}
-                  sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    width: 20,
-                    height: 20,
-                    cursor: 'nwse-resize',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'text.secondary',
-                    '&:hover': {
-                      color: 'text.primary',
-                    },
-                  }}
-                  aria-label="Resize HUD menu"
-                >
-                  <DragIndicatorIcon
-                    sx={{fontSize: 16, transform: 'rotate(45deg)'}}
-                  />
-                </Box>
                 <Tabs
                   value={selectedTab}
                   onChange={handleTabChange}
