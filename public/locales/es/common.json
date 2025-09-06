@@ -1,0 +1,18 @@
+{
+  "welcome": "Bienvenido",
+  "logout": "Cerrar sesión",
+  "login": "Iniciar sesión",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "delete": "Eliminar",
+  "edit": "Editar",
+  "search": "Buscar",
+  "loading": "Cargando...",
+  "error": "Error",
+  "success": "Éxito",
+  "confirm": "Confirmar",
+  "yes": "Sí",
+  "no": "No",
+  "language": "Idioma",
+  "settings": "Configuración"
+}

@@ -1,0 +1,13 @@
+{
+  "tagName": "Nombre de Etiqueta",
+  "createTag": "Crear Etiqueta",
+  "editTag": "Editar Etiqueta",
+  "deleteTag": "Eliminar Etiqueta",
+  "confirmDeleteTag": "¿Está seguro de que desea eliminar esta etiqueta?",
+  "tagCreated": "Etiqueta creada exitosamente",
+  "tagUpdated": "Etiqueta actualizada exitosamente",
+  "tagDeleted": "Etiqueta eliminada exitosamente",
+  "noTags": "No hay etiquetas disponibles",
+  "tagCount": "{{count}} etiqueta",
+  "tagCount_plural": "{{count}} etiquetas"
+}

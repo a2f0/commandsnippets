@@ -5,6 +5,7 @@ import React from 'react';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
+import './i18n/i18n';
 import {Routes} from './Routes';
 import {MemoizedThemedGlobalStyle} from './styled/layout/ThemedGlobalStyles';
 import {ThemeProvider} from './theme/Theme';

@@ -1,0 +1,12 @@
+{
+  "file": "File",
+  "view": "View",
+  "help": "Help",
+  "tags": "Tags",
+  "entries": "Entries",
+  "allEntries": "All Entries",
+  "untaggedEntries": "Untagged Entries",
+  "about": "About",
+  "newTag": "New Tag",
+  "newEntry": "New Entry"
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 
 import {useAppContext} from '../../../AppContext';
 import {appMode} from '../../../lib/shared';
@@ -10,6 +11,7 @@ interface IProps {
 
 const NewTag = ({onClose}: IProps) => {
   const appConfig = useAppContext();
+  const {t} = useTranslation('menu');
 
   const handleCreateTag = () => {
     appConfig.setAppMode(appMode.tagEditor);
@@ -19,7 +21,7 @@ const NewTag = ({onClose}: IProps) => {
 
   return (
     <StyledMenuItem id="file-menu-new-tag" onClick={handleCreateTag}>
-      New Tag
+      {t('newTag')}
     </StyledMenuItem>
   );
 };

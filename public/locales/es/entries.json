@@ -1,0 +1,14 @@
+{
+  "entryTitle": "Título de Entrada",
+  "entryContent": "Contenido de Entrada",
+  "createEntry": "Crear Entrada",
+  "editEntry": "Editar Entrada",
+  "deleteEntry": "Eliminar Entrada",
+  "confirmDeleteEntry": "¿Está seguro de que desea eliminar esta entrada?",
+  "entryCreated": "Entrada creada exitosamente",
+  "entryUpdated": "Entrada actualizada exitosamente",
+  "entryDeleted": "Entrada eliminada exitosamente",
+  "noEntries": "No hay entradas disponibles",
+  "entryCount": "{{count}} entrada",
+  "entryCount_plural": "{{count}} entradas"
+}

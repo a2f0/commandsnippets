@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.82",
+  "version": "0.7.83",
   "description": "",
   "main": "out/main/main.js",
   "type": "module",
@@ -129,6 +129,9 @@
     "@mui/material": "7.3.1",
     "@puppeteer/browsers": "2.10.8",
     "dexie": "4.2.0",
+    "i18next": "25.5.2",
+    "i18next-browser-languagedetector": "8.2.0",
+    "i18next-http-backend": "3.0.2",
     "immutability-helper": "3.1.1",
     "mobx": "6.13.7",
     "mobx-react": "9.2.0",
@@ -140,6 +143,7 @@
     "react-dnd-html5-backend": "16.0.1",
     "react-dom": "19.1.1",
     "react-highlight-words": "0.21.0",
+    "react-i18next": "15.7.3",
     "react-router-dom": "7.8.2"
   },
   "msw": {
