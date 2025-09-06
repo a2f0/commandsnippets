@@ -244,6 +244,132 @@ describe('BottomBar Component', () => {
       });
       expect(hudButton).toHaveAttribute('aria-expanded', 'false');
     });
+
+    describe('HUD Layout and Expand Functionality', () => {
+      beforeEach(() => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(
+          'development'
+        );
+      });
+
+      it('renders expand button with correct initial state', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        const expandButton = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+        expect(expandButton).toBeInTheDocument();
+      });
+
+      it('toggles expand state when expand button is clicked', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        const expandButton = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+
+        // Click to expand
+        await user.click(expandButton);
+
+        const collapseButton = await screen.findByRole('button', {
+          name: /Collapse HUD/i,
+        });
+        expect(collapseButton).toBeInTheDocument();
+
+        // Click to collapse
+        await user.click(collapseButton);
+
+        const expandButtonAgain = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+        expect(expandButtonAgain).toBeInTheDocument();
+      });
+
+      it('shows enhanced content only when expanded', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        // Wait for menu to open and check that enhanced content is NOT visible initially
+        await screen.findByRole('tablist', {name: /HUD navigation tabs/i});
+        expect(screen.queryByText('CPU Usage: 45%')).not.toBeInTheDocument();
+
+        // Expand the menu
+        const expandButton = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+        await user.click(expandButton);
+
+        // Now enhanced content should be visible
+        expect(screen.getByText('CPU Usage: 45%')).toBeInTheDocument();
+        expect(screen.getByText('Memory: 2.3GB / 8GB')).toBeInTheDocument();
+        expect(screen.getByText('Network: 125 KB/s')).toBeInTheDocument();
+      });
+
+      it('properly styles tab panels without gray areas', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        const performanceTab = await screen.findByRole('tabpanel');
+        expect(performanceTab).toBeInTheDocument();
+
+        // Check that the tabpanel has transparent background
+        expect(performanceTab).toHaveStyle(
+          'background-color: rgba(0, 0, 0, 0)'
+        );
+        expect(performanceTab).toHaveStyle('display: block');
+        expect(performanceTab).toHaveStyle('height: 100%');
+      });
+
+      it('switches enhanced content between tabs when expanded', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        // Expand first
+        const expandButton = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+        await user.click(expandButton);
+
+        // Switch to logs tab
+        const logsTab = await screen.findByRole('tab', {name: /Logs/i});
+        await user.click(logsTab);
+
+        // Check logs enhanced content
+        expect(
+          screen.getByText('[2025-09-06 11:15:23] INFO: Application started')
+        ).toBeInTheDocument();
+        expect(screen.queryByText('CPU Usage: 45%')).not.toBeInTheDocument();
+
+        // Switch to analytics tab
+        const analyticsTab = await screen.findByRole('tab', {
+          name: /Analytics/i,
+        });
+        await user.click(analyticsTab);
+
+        // Check analytics enhanced content
+        expect(screen.getByText('Active Users: 127')).toBeInTheDocument();
+        expect(
+          screen.queryByText('[2025-09-06 11:15:23] INFO: Application started')
+        ).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('Language Switcher', () => {

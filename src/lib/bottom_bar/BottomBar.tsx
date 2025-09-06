@@ -27,6 +27,11 @@ const CustomTabPanel = React.memo((props: TabPanelProps) => {
       hidden={value !== index}
       id={`hud-tabpanel-${index}`}
       aria-labelledby={`hud-tab-${index}`}
+      style={{
+        height: '100%',
+        display: value === index ? 'block' : 'none',
+        backgroundColor: 'transparent',
+      }}
       {...other}
     >
       {value === index && <Box sx={{p: 2}}>{children}</Box>}
@@ -217,9 +222,9 @@ const BottomBar = () => {
                   <Tab label={t('logs')} {...a11yProps(1)} />
                   <Tab label={t('analytics')} {...a11yProps(2)} />
                 </Tabs>
-                <Box sx={{flex: 1, overflow: 'auto'}}>
+                <Box sx={{flex: 1, overflow: 'auto', height: '100%'}}>
                   <CustomTabPanel value={selectedTab} index={0}>
-                    <Box sx={{minHeight: 200, color: 'text.secondary', p: 2}}>
+                    <Box sx={{color: 'text.secondary'}}>
                       {t('performanceMetrics')}
                       {isExpanded && (
                         <Box sx={{mt: 2}}>
@@ -231,7 +236,7 @@ const BottomBar = () => {
                     </Box>
                   </CustomTabPanel>
                   <CustomTabPanel value={selectedTab} index={1}>
-                    <Box sx={{minHeight: 200, color: 'text.secondary', p: 2}}>
+                    <Box sx={{color: 'text.secondary'}}>
                       {t('applicationLogs')}
                       {isExpanded && (
                         <Box
@@ -255,7 +260,7 @@ const BottomBar = () => {
                     </Box>
                   </CustomTabPanel>
                   <CustomTabPanel value={selectedTab} index={2}>
-                    <Box sx={{minHeight: 200, color: 'text.secondary', p: 2}}>
+                    <Box sx={{color: 'text.secondary'}}>
                       {t('analyticsData')}
                       {isExpanded && (
                         <Box sx={{mt: 2}}>
