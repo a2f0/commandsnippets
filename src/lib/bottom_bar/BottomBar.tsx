@@ -2,6 +2,7 @@ import {Box, Button, Menu, Tab, Tabs} from '@mui/material';
 import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
 
+import {LanguageSwitcher} from '../../components/LanguageSwitcher';
 import {TextEntrySearchField} from '../../styled/text_entries/TextEntrySearchField';
 import {TagSearch} from '../../TagSearch';
 import {environment} from '../environment';
@@ -87,6 +88,7 @@ const BottomBar = () => {
           gap: 1,
         }}
       >
+        <LanguageSwitcher />
         <Mode />
         <Version />
         {environment !== 'production' && (

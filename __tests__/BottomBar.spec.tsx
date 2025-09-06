@@ -1,21 +1,25 @@
 import '@testing-library/jest-dom';
 
 import {ThemeProvider} from '@mui/material/styles';
-import {render, screen, waitFor} from '@testing-library/react';
+import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 
 import {AppContextProvider} from '../src/AppContext';
+import {i18n} from '../src/i18n/i18n';
 import {BottomBar} from '../src/lib/bottom_bar/BottomBar';
 import * as envModule from '../src/lib/environment';
 import {darkTheme} from '../src/theme/themes';
 
 const BottomBarWithProviders = () => (
-  <ThemeProvider theme={darkTheme}>
-    <AppContextProvider>
-      <BottomBar />
-    </AppContextProvider>
-  </ThemeProvider>
+  <I18nextProvider i18n={i18n}>
+    <ThemeProvider theme={darkTheme}>
+      <AppContextProvider>
+        <BottomBar />
+      </AppContextProvider>
+    </ThemeProvider>
+  </I18nextProvider>
 );
 
 describe('BottomBar Component', () => {
@@ -239,6 +243,78 @@ describe('BottomBar Component', () => {
         ).not.toBeInTheDocument();
       });
       expect(hudButton).toHaveAttribute('aria-expanded', 'false');
+    });
+  });
+
+  describe('Language Switcher', () => {
+    beforeEach(() => {
+      // Reset language to English before each test
+      act(() => {
+        i18n.changeLanguage('en');
+      });
+    });
+
+    it('renders language switcher with current language', () => {
+      render(<BottomBarWithProviders />);
+
+      const languageSelect = screen.getByRole('combobox');
+      expect(languageSelect).toBeInTheDocument();
+      expect(languageSelect.textContent).toBe('[English]');
+    });
+
+    it('changes language when selecting a different option', async () => {
+      const user = userEvent.setup();
+      render(<BottomBarWithProviders />);
+
+      expect(i18n.language).toBe('en');
+
+      const languageSelect = screen.getByRole('combobox');
+      await user.click(languageSelect);
+
+      const spanishOption = await screen.findByRole('menuitem', {
+        name: 'Español',
+      });
+      await user.click(spanishOption);
+
+      await waitFor(() => {
+        expect(i18n.language).toBe('es');
+        expect(languageSelect.textContent).toBe('[Español]');
+      });
+    });
+
+    it('persists language selection across component re-renders', async () => {
+      const user = userEvent.setup();
+      const {rerender} = render(<BottomBarWithProviders />);
+
+      // Change to Spanish
+      const languageSelect = screen.getByRole('combobox');
+      await user.click(languageSelect);
+      const spanishOption = await screen.findByRole('menuitem', {
+        name: 'Español',
+      });
+      await user.click(spanishOption);
+
+      await waitFor(() => {
+        expect(i18n.language).toBe('es');
+      });
+
+      // Re-render the component
+      rerender(<BottomBarWithProviders />);
+
+      // Check that Spanish is still selected
+      await waitFor(() => {
+        const updatedSelect = screen.getByRole('combobox');
+        expect(updatedSelect.textContent).toBe('[Español]');
+      });
+    });
+
+    it('is positioned in the bottom bar right container', () => {
+      render(<BottomBarWithProviders />);
+
+      const languageSelect = screen.getByRole('combobox');
+      const rightContainer = screen.getByTestId('bottom-bar-right-container');
+
+      expect(rightContainer).toContainElement(languageSelect);
     });
   });
 });
