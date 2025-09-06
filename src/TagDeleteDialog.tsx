@@ -59,7 +59,7 @@ const TagDeleteDialog = ({
           autoFocus
           sx={buttonSx}
         >
-          {tTags('deleteTag')}
+          {tCommon('delete')}
         </Button>
       </DialogActions>
     </Dialog>
