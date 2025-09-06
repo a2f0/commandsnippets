@@ -3,7 +3,6 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
 import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
-import {ErrorTestComponent} from '../../components/ErrorBoundary/ErrorTestComponent';
 import {LanguageSwitcher} from '../../components/LanguageSwitcher';
 import {useErrorStore} from '../../hooks/useErrorStore';
 import {useWindowSize} from '../../hooks/useWindowSize';
@@ -221,9 +220,6 @@ const BottomBar = () => {
                   <Tab label={t('performance')} {...a11yProps(0)} />
                   <Tab label={t('logs')} {...a11yProps(1)} />
                   <Tab label={t('analytics')} {...a11yProps(2)} />
-                  {environment !== 'production' && (
-                    <Tab label="Test" {...a11yProps(3)} />
-                  )}
                 </Tabs>
                 <Box sx={{flex: 1, overflow: 'auto', height: '100%'}}>
                   <CustomTabPanel value={selectedTab} index={0}>
@@ -337,13 +333,6 @@ const BottomBar = () => {
                       )}
                     </Box>
                   </CustomTabPanel>
-                  {environment !== 'production' && (
-                    <CustomTabPanel value={selectedTab} index={3}>
-                      <Box sx={{color: 'text.secondary'}}>
-                        <ErrorTestComponent />
-                      </Box>
-                    </CustomTabPanel>
-                  )}
                 </Box>
               </Box>
             </Menu>

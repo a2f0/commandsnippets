@@ -2,6 +2,7 @@ import React from 'react';
 
 import {StyledMenu} from '../../MenuBar';
 import {PopulateIndexedDB} from './menu_items/PopulateIndexedDB';
+import {TriggerTestError} from './menu_items/TriggerTestError';
 
 interface IProps {
   onClose: () => void;
@@ -16,6 +17,7 @@ const DebugMenu = ({onClose, anchorEl}: IProps) => (
     onClose={onClose}
   >
     <PopulateIndexedDB onClose={onClose} />
+    <TriggerTestError onClose={onClose} />
   </StyledMenu>
 );
 
