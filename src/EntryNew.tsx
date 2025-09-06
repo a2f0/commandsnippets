@@ -4,9 +4,11 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
+import {useTypedTranslation} from './i18n/hooks';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
 import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
+import {commonButtonSx} from './styles/buttons';
 
 export interface IEntryNewProps {
   filterAndSortParent: () => void;
@@ -14,6 +16,7 @@ export interface IEntryNewProps {
 }
 
 const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
+  const {t} = useTypedTranslation('common');
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
   const appConfig = useAppContext();
@@ -137,6 +140,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     }
   }, [appConfig.activeEntryEditField]);
 
+  const buttonSx = commonButtonSx;
+
   return (
     <Box
       id={id}
@@ -165,12 +170,8 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         id={`${id}Save`}
         color="secondary"
         sx={{
+          ...buttonSx,
           marginRight: '2px',
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
         }}
         size="small"
         variant="outlined"
@@ -178,7 +179,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
           handleSave();
         }}
       >
-        Save
+        {t('save')}
       </Button>
       <Button
         ref={setInputCancelRef}
@@ -189,15 +190,9 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
         onClick={() => {
           handleCancel();
         }}
-        sx={{
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-        }}
+        sx={buttonSx}
       >
-        Cancel
+        {t('cancel')}
       </Button>
     </Box>
   );

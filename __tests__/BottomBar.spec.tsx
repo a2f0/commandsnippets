@@ -134,11 +134,10 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tablist', {name: /HUD navigation tabs/i})
-        ).toBeInTheDocument();
+      const tablist = await screen.findByRole('tablist', {
+        name: /HUD navigation tabs/i,
       });
+      expect(tablist).toBeInTheDocument();
       expect(hudButton).toHaveAttribute('aria-expanded', 'true');
     });
 
@@ -149,15 +148,12 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tab', {name: /Performance/i})
-        ).toBeInTheDocument();
-        expect(screen.getByRole('tab', {name: /Logs/i})).toBeInTheDocument();
-        expect(
-          screen.getByRole('tab', {name: /Analytics/i})
-        ).toBeInTheDocument();
+      const performanceTab = await screen.findByRole('tab', {
+        name: /Performance/i,
       });
+      expect(performanceTab).toBeInTheDocument();
+      expect(screen.getByRole('tab', {name: /Logs/i})).toBeInTheDocument();
+      expect(screen.getByRole('tab', {name: /Analytics/i})).toBeInTheDocument();
     });
 
     it('displays Performance tab content by default', async () => {
@@ -167,17 +163,17 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText('Performance metrics will be displayed here')
-        ).toBeInTheDocument();
-      });
-      expect(
-        screen.queryByText('Application logs will be displayed here')
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByText('Analytics data will be displayed here')
-      ).not.toBeInTheDocument();
+      const performanceContent = await screen.findByText(
+        'Performance metrics will be displayed here'
+      );
+      expect(performanceContent).toBeInTheDocument();
+
+      // Logs tab should not show any content when not expanded and no logs
+      const logsTab = await screen.findByRole('tab', {name: /Logs/i});
+      await user.click(logsTab);
+
+      // Should show log count when there are logs (from default initialization)
+      expect(screen.getByText(/log entries/)).toBeInTheDocument();
     });
 
     it('switches tab content when different tab is clicked', async () => {
@@ -190,11 +186,10 @@ describe('BottomBar Component', () => {
       const logsTab = await screen.findByRole('tab', {name: /Logs/i});
       await user.click(logsTab);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText('Application logs will be displayed here')
-        ).toBeInTheDocument();
-      });
+      // When logs tab is active and not expanded, should show log summary
+      expect(screen.getByText(/log entries/)).toBeInTheDocument();
+
+      // Performance content should not be visible
       expect(
         screen.queryByText('Performance metrics will be displayed here')
       ).not.toBeInTheDocument();
@@ -228,11 +223,10 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('tablist', {name: /HUD navigation tabs/i})
-        ).toBeInTheDocument();
+      const tablist = await screen.findByRole('tablist', {
+        name: /HUD navigation tabs/i,
       });
+      expect(tablist).toBeInTheDocument();
 
       // Press Escape to close the menu (more reliable than clicking outside in tests)
       await user.keyboard('{Escape}');
@@ -244,6 +238,132 @@ describe('BottomBar Component', () => {
       });
       expect(hudButton).toHaveAttribute('aria-expanded', 'false');
     });
+
+    describe('HUD Layout and Expand Functionality', () => {
+      beforeEach(() => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(
+          'development'
+        );
+      });
+
+      it('renders expand button with correct initial state', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        const expandButton = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+        expect(expandButton).toBeInTheDocument();
+      });
+
+      it('toggles expand state when expand button is clicked', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        const expandButton = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+
+        // Click to expand
+        await user.click(expandButton);
+
+        const collapseButton = await screen.findByRole('button', {
+          name: /Collapse HUD/i,
+        });
+        expect(collapseButton).toBeInTheDocument();
+
+        // Click to collapse
+        await user.click(collapseButton);
+
+        const expandButtonAgain = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+        expect(expandButtonAgain).toBeInTheDocument();
+      });
+
+      it('shows enhanced content only when expanded', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        // Wait for menu to open and check that enhanced content is NOT visible initially
+        await screen.findByRole('tablist', {name: /HUD navigation tabs/i});
+        expect(screen.queryByText('CPU Usage: 45%')).not.toBeInTheDocument();
+
+        // Expand the menu
+        const expandButton = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+        await user.click(expandButton);
+
+        // Now enhanced content should be visible
+        expect(screen.getByText('CPU Usage: 45%')).toBeInTheDocument();
+        expect(screen.getByText('Memory: 2.3GB / 8GB')).toBeInTheDocument();
+        expect(screen.getByText('Network: 125 KB/s')).toBeInTheDocument();
+      });
+
+      it('properly styles tab panels without gray areas', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        const performanceTab = await screen.findByRole('tabpanel');
+        expect(performanceTab).toBeInTheDocument();
+
+        // Check that the tabpanel has transparent background
+        expect(performanceTab).toHaveStyle(
+          'background-color: rgba(0, 0, 0, 0)'
+        );
+        expect(performanceTab).toHaveStyle('display: block');
+        expect(performanceTab).toHaveStyle('height: 100%');
+      });
+
+      it('switches enhanced content between tabs when expanded', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
+        await user.click(hudButton);
+
+        // Expand first
+        const expandButton = await screen.findByRole('button', {
+          name: /Expand HUD/i,
+        });
+        await user.click(expandButton);
+
+        // Switch to logs tab
+        const logsTab = await screen.findByRole('tab', {name: /Logs/i});
+        await user.click(logsTab);
+
+        // Check logs enhanced content - should show actual log entries
+        expect(
+          screen.getByText(/INFO: Application started/)
+        ).toBeInTheDocument();
+        expect(screen.queryByText('CPU Usage: 45%')).not.toBeInTheDocument();
+
+        // Switch to analytics tab
+        const analyticsTab = await screen.findByRole('tab', {
+          name: /Analytics/i,
+        });
+        await user.click(analyticsTab);
+
+        // Check analytics enhanced content
+        expect(screen.getByText('Active Users: 127')).toBeInTheDocument();
+        expect(
+          screen.queryByText(/INFO: Application started/)
+        ).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('Language Switcher', () => {
@@ -254,67 +374,96 @@ describe('BottomBar Component', () => {
       });
     });
 
-    it('renders language switcher with current language', () => {
+    it.each(['development', 'test'])(
+      'renders language switcher in %s environment',
+      env => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+
+        render(<BottomBarWithProviders />);
+
+        const languageSelect = screen.getByRole('combobox');
+        expect(languageSelect).toBeInTheDocument();
+        expect(languageSelect.textContent).toBe('[English]');
+      }
+    );
+
+    it('does not render language switcher in production environment', () => {
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+
       render(<BottomBarWithProviders />);
 
-      const languageSelect = screen.getByRole('combobox');
-      expect(languageSelect).toBeInTheDocument();
-      expect(languageSelect.textContent).toBe('[English]');
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
-    it('changes language when selecting a different option', async () => {
-      const user = userEvent.setup();
-      render(<BottomBarWithProviders />);
-
-      expect(i18n.language).toBe('en');
-
-      const languageSelect = screen.getByRole('combobox');
-      await user.click(languageSelect);
-
-      const spanishOption = await screen.findByRole('menuitem', {
-        name: 'Español',
-      });
-      await user.click(spanishOption);
-
-      await waitFor(() => {
-        expect(i18n.language).toBe('es');
-        expect(languageSelect.textContent).toBe('[Español]');
-      });
-    });
-
-    it('persists language selection across component re-renders', async () => {
-      const user = userEvent.setup();
-      const {rerender} = render(<BottomBarWithProviders />);
-
-      // Change to Spanish
-      const languageSelect = screen.getByRole('combobox');
-      await user.click(languageSelect);
-      const spanishOption = await screen.findByRole('menuitem', {
-        name: 'Español',
-      });
-      await user.click(spanishOption);
-
-      await waitFor(() => {
-        expect(i18n.language).toBe('es');
+    describe('in development environment', () => {
+      beforeEach(() => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(
+          'development'
+        );
       });
 
-      // Re-render the component
-      rerender(<BottomBarWithProviders />);
+      it('renders language switcher with current language', () => {
+        render(<BottomBarWithProviders />);
 
-      // Check that Spanish is still selected
-      await waitFor(() => {
-        const updatedSelect = screen.getByRole('combobox');
-        expect(updatedSelect.textContent).toBe('[Español]');
+        const languageSelect = screen.getByRole('combobox');
+        expect(languageSelect).toBeInTheDocument();
+        expect(languageSelect.textContent).toBe('[English]');
       });
-    });
 
-    it('is positioned in the bottom bar right container', () => {
-      render(<BottomBarWithProviders />);
+      it('changes language when selecting a different option', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
 
-      const languageSelect = screen.getByRole('combobox');
-      const rightContainer = screen.getByTestId('bottom-bar-right-container');
+        expect(i18n.language).toBe('en');
 
-      expect(rightContainer).toContainElement(languageSelect);
+        const languageSelect = screen.getByRole('combobox');
+        await user.click(languageSelect);
+
+        const spanishOption = await screen.findByRole('menuitem', {
+          name: 'Español',
+        });
+        await user.click(spanishOption);
+
+        await waitFor(() => {
+          expect(i18n.language).toBe('es');
+          expect(languageSelect.textContent).toBe('[Español]');
+        });
+      });
+
+      it('persists language selection across component re-renders', async () => {
+        const user = userEvent.setup();
+        const {rerender} = render(<BottomBarWithProviders />);
+
+        // Change to Spanish
+        const languageSelect = screen.getByRole('combobox');
+        await user.click(languageSelect);
+        const spanishOption = await screen.findByRole('menuitem', {
+          name: 'Español',
+        });
+        await user.click(spanishOption);
+
+        await waitFor(() => {
+          expect(i18n.language).toBe('es');
+        });
+
+        // Re-render the component
+        rerender(<BottomBarWithProviders />);
+
+        // Check that Spanish is still selected
+        await waitFor(() => {
+          const updatedSelect = screen.getByRole('combobox');
+          expect(updatedSelect.textContent).toBe('[Español]');
+        });
+      });
+
+      it('is positioned in the bottom bar right container', () => {
+        render(<BottomBarWithProviders />);
+
+        const languageSelect = screen.getByRole('combobox');
+        const rightContainer = screen.getByTestId('bottom-bar-right-container');
+
+        expect(rightContainer).toContainElement(languageSelect);
+      });
     });
   });
 });

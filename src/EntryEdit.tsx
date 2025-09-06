@@ -5,12 +5,14 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {activeEntryEditField, appMode} from '../src/lib/shared';
 import {useAppContext} from './AppContext';
+import {useTypedTranslation} from './i18n/hooks';
 import type {ITextEntryJsonApiResponseSingle} from './lib/api/responses/types';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import type {ITextEntryJsonApi} from './lib/store/models/TextEntryModel';
 import {needsScrollingIntoView} from './lib/text_entries';
 import {InputEntryBody} from './styled/text_entries/InputEntryBody';
 import {InputEntrySubject} from './styled/text_entries/InputEntrySubject';
+import {commonButtonSx} from './styles/buttons';
 
 export interface IEntryEdit {
   object: ITextEntryJsonApi;
@@ -25,6 +27,7 @@ const EntryEdit = ({
   handleCancelEditParent,
   id,
 }: IEntryEdit) => {
+  const {t} = useTypedTranslation('common');
   const saveRef = useRef<HTMLButtonElement>(null);
   const [subject, setSubject] = useState<string>(object.attributes.subject);
   const [body, setBody] = useState<string>(object.attributes.body);
@@ -130,6 +133,12 @@ const EntryEdit = ({
     }
   }, [appConfig.activeEntryEditField]);
 
+  const buttonSx = {
+    scrollMarginBottom: '10px',
+    marginBottom: '10px',
+    ...commonButtonSx,
+  };
+
   return (
     <Box
       id={id}
@@ -157,14 +166,8 @@ const EntryEdit = ({
         ref={setInputSaveRef}
         id={`${id}Save`}
         sx={{
+          ...buttonSx,
           marginRight: '2px',
-          scrollMarginBottom: '10px',
-          marginBottom: '10px',
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
         }}
         size="small"
         variant="outlined"
@@ -172,7 +175,7 @@ const EntryEdit = ({
           handleSave();
         }}
       >
-        Save
+        {t('save')}
       </Button>
       <Button
         ref={setInputCancelRef}
@@ -182,17 +185,9 @@ const EntryEdit = ({
         onClick={() => {
           handleCancel();
         }}
-        sx={{
-          scrollMarginBottom: '10px',
-          marginBottom: '10px',
-          color: theme => theme.palette.text.primary,
-          borderColor: theme => theme.palette.text.secondary,
-          '&:hover': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-        }}
+        sx={buttonSx}
       >
-        Cancel
+        {t('cancel')}
       </Button>
     </Box>
   );

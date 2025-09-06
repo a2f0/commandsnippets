@@ -7,6 +7,8 @@ import {
   DialogTitle,
 } from '@mui/material';
 import React from 'react';
+import {useTypedTranslation} from './i18n/hooks';
+import {commonButtonSx} from './styles/buttons';
 
 interface ITagDeleteDialog {
   id: string;
@@ -23,6 +25,10 @@ const TagDeleteDialog = ({
   handleCancelDialog,
   handleAcceptDialog,
 }: ITagDeleteDialog) => {
+  const {t: tTags} = useTypedTranslation('tags');
+  const {t: tCommon} = useTypedTranslation('common');
+  const buttonSx = commonButtonSx;
+
   return (
     <Dialog
       id={`tagContextMenu${id}DeleteTagDialog`}
@@ -32,7 +38,7 @@ const TagDeleteDialog = ({
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        {'Are you sure you want to delete this tag?'}
+        {tTags('confirmDeleteTag')}
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description" />
@@ -40,20 +46,20 @@ const TagDeleteDialog = ({
       <DialogActions>
         <Button
           id={`tagContextMenu${id}DeleteTagDialogCancelButton`}
-          color="secondary"
           variant="outlined"
           onClick={handleCancelDialog}
+          sx={buttonSx}
         >
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button
           id={`tagContextMenu${id}DeleteTagDialogDeleteButton`}
-          color="secondary"
           variant="outlined"
           onClick={handleAcceptDialog}
           autoFocus
+          sx={buttonSx}
         >
-          Delete
+          {tCommon('delete')}
         </Button>
       </DialogActions>
     </Dialog>

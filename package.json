@@ -1,11 +1,11 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.85",
+  "version": "0.7.87",
   "description": "",
   "main": "out/main/main.js",
   "type": "module",
   "engines": {
-    "node": "=20.17.0"
+    "node": "=22.19.0"
   },
   "scripts": {
     "server": "vite serve",

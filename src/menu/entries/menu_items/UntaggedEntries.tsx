@@ -2,6 +2,7 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {entrySearchMethod} from '../../../lib/shared';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
@@ -11,6 +12,7 @@ interface IProps {
 }
 
 const UntaggedEntries = ({onClose}: IProps) => {
+  const {t} = useTypedTranslation('menu');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const {user} = useParams();
@@ -29,7 +31,7 @@ const UntaggedEntries = ({onClose}: IProps) => {
       <ListItemIcon>
         {entriesFilter === 'untagged' && <StyledCheckIcon />}
       </ListItemIcon>
-      Untagged Entries
+      {t('untaggedEntries')}
     </StyledMenuItem>
   );
 };
