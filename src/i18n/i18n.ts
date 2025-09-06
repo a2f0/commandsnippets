@@ -2,28 +2,12 @@ import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import {initReactI18next} from 'react-i18next';
 
-import enCommon from './locales/en/common.json';
-import enEntries from './locales/en/entries.json';
-import enMenu from './locales/en/menu.json';
-import enTags from './locales/en/tags.json';
-import esCommon from './locales/es/common.json';
-import esEntries from './locales/es/entries.json';
-import esMenu from './locales/es/menu.json';
-import esTags from './locales/es/tags.json';
+import {translations} from './translations';
 
+// Convert our typed translations to i18next resources format
 const resources = {
-  en: {
-    common: enCommon,
-    menu: enMenu,
-    tags: enTags,
-    entries: enEntries,
-  },
-  es: {
-    common: esCommon,
-    menu: esMenu,
-    tags: esTags,
-    entries: esEntries,
-  },
+  en: translations.en,
+  es: translations.es,
 };
 
 i18n
@@ -40,7 +24,7 @@ i18n
 
     lng: 'en',
 
-    supportedLngs: ['en', 'es'],
+    supportedLngs: ['en', 'es'] as const,
 
     ns: ['common', 'menu', 'tags', 'entries'],
     defaultNS: 'common',
