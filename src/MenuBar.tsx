@@ -4,6 +4,7 @@ import {observer} from 'mobx-react';
 import React from 'react';
 
 import {useAppContext} from './AppContext';
+import {UserProfileCircle} from './components/UserProfileCircle';
 import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
 import {environment} from './lib/environment';
@@ -162,8 +163,13 @@ const MenuBar = () => {
         flexGrow={1}
         mr={1}
       >
-        <GithubAuth />
-        <GoogleAuth />
+        {!appConfig.loggedInUser && (
+          <>
+            <GithubAuth />
+            <GoogleAuth />
+          </>
+        )}
+        {appConfig.loggedInUser && <UserProfileCircle />}
       </Box>
       <FileMenu onClose={handleFileMenuClose} anchorEl={fileMenuAnchorEl} />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
