@@ -26,7 +26,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -68,7 +68,7 @@ jobs:
     continue-on-error: false
     needs: code-quality
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Configure AWS credentials
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         uses: aws-actions/configure-aws-credentials@v4
