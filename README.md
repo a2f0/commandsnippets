@@ -164,7 +164,7 @@ npx cap update
 - Ensure the dev server is running with `pnpm run dev --host`
 - Verify the IP address in `capacitor.config.ts` matches your machine's local IP
 - Check that your device/simulator is on the same network as your development machine
-- The dev server runs on port 8085.
+- The dev server runs on port 8085, not 5173.
 
 **Changes not appearing in the app:**
 - Run `npx cap sync` after configuration changes
