@@ -1,10 +1,12 @@
 import '@testing-library/jest-dom';
 
+import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {type MockInstance, vi} from 'vitest';
 import {AppContext} from '../src/AppContext';
 import {UserProfileCircle} from '../src/components/UserProfileCircle';
 import type {Store} from '../src/lib/store/store';
+import {darkTheme} from '../src/theme/themes';
 
 // Mock the environment module to ensure it's not production
 vi.mock('../src/lib/environment', () => ({
@@ -22,9 +24,11 @@ const createMockStore = (
 const renderWithContext = (loggedInUser: string | null = 'testuser') => {
   const mockStore = createMockStore(loggedInUser);
   return render(
-    <AppContext.Provider value={mockStore as Store}>
-      <UserProfileCircle />
-    </AppContext.Provider>
+    <ThemeProvider theme={darkTheme}>
+      <AppContext.Provider value={mockStore as Store}>
+        <UserProfileCircle />
+      </AppContext.Provider>
+    </ThemeProvider>
   );
 };
 

@@ -131,10 +131,7 @@ const UserProfileCircle: React.FC = () => {
             fontSize: 'caption.fontSize',
             background: theme.palette.background.default,
             '&:hover': {
-              backgroundColor:
-                theme.selected?.background ||
-                theme.palette.action.hover ||
-                'rgba(255, 255, 255, 0.08)',
+              backgroundColor: theme.selected.background,
             },
           })}
         >
@@ -146,10 +143,7 @@ const UserProfileCircle: React.FC = () => {
             fontSize: 'caption.fontSize',
             background: theme.palette.background.default,
             '&:hover': {
-              backgroundColor:
-                theme.selected?.background ||
-                theme.palette.action.hover ||
-                'rgba(255, 255, 255, 0.08)',
+              backgroundColor: theme.selected.background,
             },
           })}
         >
@@ -162,10 +156,7 @@ const UserProfileCircle: React.FC = () => {
             fontSize: 'caption.fontSize',
             background: theme.palette.background.default,
             '&:hover': {
-              backgroundColor:
-                theme.selected?.background ||
-                theme.palette.action.hover ||
-                'rgba(255, 255, 255, 0.08)',
+              backgroundColor: theme.selected?.background,
             },
           })}
         >
