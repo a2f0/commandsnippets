@@ -11,7 +11,7 @@ Tearleads is a command snippet tool for computer programmers and system administ
 ### Setup
 - `npm i -g pnpm` - Install pnpm globally
 - `pnpm install` - Install dependencies
-- `pnpm run dev` - Start development server on http://localhost:8080
+- `pnpm run dev` - Start development server on http://localhost:8085
 
 ### Code Quality
 - `pnpm run lint` - Run Biome linting
