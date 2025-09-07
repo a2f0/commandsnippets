@@ -107,3 +107,7 @@ Accessing the local Postgresql Database
 3. Update the version used by Github actions in `main.yml`
 4. Run `docker-compose build --no-cache` to do a clean container build.
 5. Run unit and integration tests to make sure they pass.
+
+### OAuth
+
+- The Google OAuth configuration for tearleads is [here](https://console.cloud.google.com/auth/clients/424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com?project=tearleads) and can be accessed via the dan@devopsrockstars.com.
