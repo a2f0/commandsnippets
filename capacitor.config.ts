@@ -1,12 +1,12 @@
 import type {CapacitorConfig} from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.tearleads.app.staging',
-  appName: 'Tearleads Staging',
+  appId: 'com.tearleads.app.dev',
+  appName: 'Tearleads Dev',
   webDir: 'build',
   server: {
-    url: 'https://app.staging.tearleads.com',
-    cleartext: false,
+    url: 'http://10.0.1.10:8085',
+    cleartext: true,
   },
 };
 
