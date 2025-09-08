@@ -316,8 +316,9 @@ const BottomBar = () => {
                               color: 'text.disabled',
                             }}
                           >
-                            {t('logEntry', {count: logs.length})} •{' '}
-                            {t('errorCaptured', {count: errors.length})}
+                            {t('logEntry', {count: logs.length})}
+                            {errors.length > 0 &&
+                              ` • ${t('errorCaptured', {count: errors.length})}`}
                           </Box>
                         )
                       )}

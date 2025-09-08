@@ -173,7 +173,7 @@ describe('BottomBar Component', () => {
       await user.click(logsTab);
 
       // Should show log count when there are logs (from default initialization)
-      expect(screen.getByText(/log entry|log entries/)).toBeInTheDocument();
+      expect(screen.getByText(/\d+ log entr/)).toBeInTheDocument();
     });
 
     it('switches tab content when different tab is clicked', async () => {
@@ -187,7 +187,7 @@ describe('BottomBar Component', () => {
       await user.click(logsTab);
 
       // When logs tab is active and not expanded, should show log summary
-      expect(screen.getByText(/log entry|log entries/)).toBeInTheDocument();
+      expect(screen.getByText(/\d+ log entr/)).toBeInTheDocument();
 
       // Performance content should not be visible
       expect(
