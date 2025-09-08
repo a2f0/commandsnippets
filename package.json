@@ -1,6 +1,6 @@
 {
   "name": "tearleads-frontend",
-  "version": "0.7.90",
+  "version": "0.7.91",
   "description": "",
   "main": "out/main/main.js",
   "type": "module",
