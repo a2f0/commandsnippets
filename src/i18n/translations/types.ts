@@ -44,8 +44,10 @@ export interface MenuTranslations {
   collapseHud: string;
   details: string;
   noLogsAvailable: string;
-  logEntries: string;
-  errorsCaptured: string;
+  logEntry: string;
+  logEntry_plural: string;
+  errorCaptured: string;
+  errorCaptured_plural: string;
   cpuUsage: string;
   memory: string;
   network: string;
