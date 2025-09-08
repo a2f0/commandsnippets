@@ -17,6 +17,7 @@ export interface CommonTranslations {
   language: string;
   languageName: string;
   settings: string;
+  logoAlt: string;
 }
 
 export interface MenuTranslations {
@@ -39,6 +40,18 @@ export interface MenuTranslations {
   applicationLogs: string;
   analyticsData: string;
   openHudMenu: string;
+  expandHud: string;
+  collapseHud: string;
+  details: string;
+  noLogsAvailable: string;
+  logEntries: string;
+  errorsCaptured: string;
+  cpuUsage: string;
+  memory: string;
+  network: string;
+  activeUsers: string;
+  totalSessions: string;
+  avgSessionDuration: string;
 }
 
 export interface TagsTranslations {

@@ -7,6 +7,7 @@ import {useAppContext} from './AppContext';
 import {UserProfileCircle} from './components/UserProfileCircle';
 import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
+import {useTypedTranslation} from './i18n/hooks';
 import {environment} from './lib/environment';
 import {DebugMenu} from './menu/debug/DebugMenu';
 import {DebugMenuButton} from './menu/debug/DebugMenuButton';
@@ -60,6 +61,7 @@ const Aligner = styled('div')`
 
 const MenuBar = () => {
   const appConfig = useAppContext();
+  const {t} = useTypedTranslation('common');
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -142,7 +144,7 @@ const MenuBar = () => {
           pb: 0.5,
         }}
       >
-        <img src="/tearleads-logo-small.svg" alt="Tearleads Logo" />
+        <img src="/tearleads-logo-small.svg" alt={t('logoAlt')} />
       </Box>
       <Aligner>
         {appConfig.loggedInUser && (
