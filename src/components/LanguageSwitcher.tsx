@@ -25,10 +25,8 @@ export const LanguageSwitcher: React.FC = () => {
     [i18n, handleClose]
   );
 
-  // Generate MenuItem components dynamically from supported languages
-  const supportedLanguages = (i18n.options?.supportedLngs as string[])?.filter(
-    (lang: string) => lang !== 'cimode'
-  ) || ['en', 'es'];
+  // Supported languages - should match i18n configuration
+  const supportedLanguages = ['en', 'es'];
 
   // Helper function to get language name with dedicated map
   const getLanguageName = (langCode: string) => {
