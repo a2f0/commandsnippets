@@ -4,13 +4,13 @@
 name: iOS Mobile Testing
 
 # yamllint disable-line rule:truthy
-# on:
-#   pull_request:
-#     branches: '**'
+on:
+  pull_request:
+    branches: '**'
 
 jobs:
   ios-appium-tests:
-    runs-on: macos-latest
+    runs-on: self-hosted
     continue-on-error: false
 
     steps:
