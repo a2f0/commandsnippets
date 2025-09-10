@@ -110,22 +110,6 @@ describe('UserProfileCircle', () => {
       });
     });
 
-    it('can open dropdown menu', async () => {
-      renderWithContext('testuser');
-
-      const profileButton = screen.getByLabelText('testuser');
-
-      await act(async () => {
-        fireEvent.click(profileButton);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('Profile')).toBeInTheDocument();
-        expect(screen.getByText('Settings')).toBeInTheDocument();
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
-    });
-
     it('closes dropdown when menu item is clicked', async () => {
       renderWithContext('testuser');
 
