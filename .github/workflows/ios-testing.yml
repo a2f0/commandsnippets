@@ -15,7 +15,7 @@ jobs:
 
     env:
       # Use isolated directories to avoid conflicts
-      DERIVED_DATA_PATH: ${{ runner.temp }}/ios-build
+      DERIVED_DATA_PATH: /tmp/ci-ios-build
       SIMULATOR_DEVICE: "iPhone 16 CI"
 
     steps:
