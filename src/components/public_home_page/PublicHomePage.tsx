@@ -92,4 +92,4 @@ const PublicHomePage = () => {
 };
 
 const memoizedPublicHomePage = React.memo(PublicHomePage);
-export {memoizedPublicHomePage as PublicHomePage};
+export {PublicHomePage};
