@@ -95,4 +95,4 @@ const Main = () => {
 };
 
 const memoizedMain = React.memo(Main);
-export {memoizedMain as Main};
+export {Main};
