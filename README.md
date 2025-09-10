@@ -123,15 +123,15 @@ For development with live reload on mobile:
 
 1. Start the development server:
 ```shell
-pnpm run dev -- --host --port 8080
+pnpm run dev -- --host --port 8085
 ```
 
-2. The default `capacitor.config.ts` is already configured for development. Update the IP address if needed:
+2. The default `capacitor.config.ts` automatically detects your local IP address for development:
 ```javascript
 const config: CapacitorConfig = {
   // ... other config
   server: {
-    url: 'http://YOUR_LOCAL_IP:8080',  // Update with your machine's IP
+    url: `http://${localIp}:8085`,  // Automatically uses your machine's IP
     cleartext: true
   }
 };
@@ -162,9 +162,9 @@ npx cap update
 
 **App shows "Could not connect to server" error:**
 - Ensure the dev server is running with `pnpm run dev --host`
-- Verify the IP address in `capacitor.config.ts` matches your machine's local IP
+- The IP address in `capacitor.config.ts` is automatically detected using the `ip` package
 - Check that your device/simulator is on the same network as your development machine
-- The dev server runs on port 8080, not 5173
+- The dev server runs on port 8085, not 5173.
 
 **Changes not appearing in the app:**
 - Run `npx cap sync` after configuration changes

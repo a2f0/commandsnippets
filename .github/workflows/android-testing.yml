@@ -91,11 +91,18 @@ jobs:
           mkdir -p logs/screenshots
           mkdir -p logs/appium
 
-      - name: Build staging web app
-        run: pnpm run build:staging
+      - name: Start dev server
+        run: |
+          pnpm run dev --host --port 8085 &
+          sleep 10
+          curl -f http://localhost:8085 || exit 1
+          echo "Dev server started successfully"
 
-      - name: Sync Capacitor for staging
-        run: pnpm run cap:sync:staging
+      - name: Build dev web app
+        run: pnpm run build
+
+      - name: Sync Capacitor for dev
+        run: npx cap sync
 
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew

@@ -187,7 +187,7 @@ const BottomBar = () => {
                       backgroundColor: 'action.hover',
                     },
                   }}
-                  aria-label={isExpanded ? 'Collapse HUD' : 'Expand HUD'}
+                  aria-label={isExpanded ? t('collapseHud') : t('expandHud')}
                 >
                   {isExpanded ? <FullscreenExitIcon /> : <FullscreenIcon />}
                 </IconButton>
@@ -228,9 +228,11 @@ const BottomBar = () => {
                       {isExpanded && (
                         <Box sx={{mt: 2}}>
                           {/* TODO: Replace with real performance metrics from application services */}
-                          <div>CPU Usage: 45%</div>
-                          <div>Memory: 2.3GB / 8GB</div>
-                          <div>Network: 125 KB/s</div>
+                          <div>{t('cpuUsage', {value: '45%'})}</div>
+                          <div>
+                            {t('memory', {used: '2.3GB', total: '8GB'})}
+                          </div>
+                          <div>{t('network', {speed: '125 KB/s'})}</div>
                         </Box>
                       )}
                     </Box>
@@ -280,7 +282,7 @@ const BottomBar = () => {
                                       opacity: 0.8,
                                     }}
                                   >
-                                    Details
+                                    {t('details')}
                                   </Box>
                                   <Box
                                     component="pre"
@@ -301,7 +303,7 @@ const BottomBar = () => {
                             <Box
                               sx={{color: 'text.disabled', fontStyle: 'italic'}}
                             >
-                              No logs available
+                              {t('noLogsAvailable')}
                             </Box>
                           )}
                         </Box>
@@ -314,8 +316,9 @@ const BottomBar = () => {
                               color: 'text.disabled',
                             }}
                           >
-                            {logs.length} log entries • {errors.length} errors
-                            captured
+                            {t('logEntry', {count: logs.length})}
+                            {errors.length > 0 &&
+                              ` • ${t('errorCaptured', {count: errors.length})}`}
                           </Box>
                         )
                       )}
@@ -327,9 +330,11 @@ const BottomBar = () => {
                       {isExpanded && (
                         <Box sx={{mt: 2}}>
                           {/* TODO: Replace with real analytics data from analytics service */}
-                          <div>Active Users: 127</div>
-                          <div>Total Sessions: 3,452</div>
-                          <div>Avg. Session Duration: 8m 34s</div>
+                          <div>{t('activeUsers', {count: 127})}</div>
+                          <div>{t('totalSessions', {count: 3452})}</div>
+                          <div>
+                            {t('avgSessionDuration', {duration: '8m 34s'})}
+                          </div>
                         </Box>
                       )}
                     </Box>

@@ -1,12 +1,15 @@
 import type {CapacitorConfig} from '@capacitor/cli';
+import ip from 'ip';
+
+const localIp = ip.address();
 
 const config: CapacitorConfig = {
-  appId: 'com.tearleads.app.staging',
-  appName: 'Tearleads Staging',
+  appId: 'com.tearleads.app.dev',
+  appName: 'Tearleads Dev',
   webDir: 'build',
   server: {
-    url: 'https://app.staging.tearleads.com',
-    cleartext: false,
+    url: `http://${localIp}:8085`,
+    cleartext: true,
   },
 };
 

@@ -19,7 +19,7 @@ export const redirectUrl = () => {
     case 'production':
       return 'https://tearleads.com/oauth/google';
     default:
-      return 'http://localhost:8080/oauth/google';
+      return 'http://localhost:8085/oauth/google';
   }
 };
 

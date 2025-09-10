@@ -4,8 +4,10 @@ import {observer} from 'mobx-react';
 import React from 'react';
 
 import {useAppContext} from './AppContext';
+import {UserProfileCircle} from './components/UserProfileCircle';
 import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
+import {useTypedTranslation} from './i18n/hooks';
 import {environment} from './lib/environment';
 import {DebugMenu} from './menu/debug/DebugMenu';
 import {DebugMenuButton} from './menu/debug/DebugMenuButton';
@@ -59,6 +61,7 @@ const Aligner = styled('div')`
 
 const MenuBar = () => {
   const appConfig = useAppContext();
+  const {t} = useTypedTranslation('common');
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -141,7 +144,7 @@ const MenuBar = () => {
           pb: 0.5,
         }}
       >
-        <img src="/tearleads-logo-small.svg" alt="Tearleads Logo" />
+        <img src="/tearleads-logo-small.svg" alt={t('logoAlt')} />
       </Box>
       <Aligner>
         {appConfig.loggedInUser && (
@@ -162,8 +165,13 @@ const MenuBar = () => {
         flexGrow={1}
         mr={1}
       >
-        <GithubAuth />
-        <GoogleAuth />
+        {!appConfig.loggedInUser && (
+          <>
+            <GithubAuth />
+            <GoogleAuth />
+          </>
+        )}
+        {appConfig.loggedInUser && <UserProfileCircle />}
       </Box>
       <FileMenu onClose={handleFileMenuClose} anchorEl={fileMenuAnchorEl} />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />

@@ -4,10 +4,7 @@ const config: CapacitorConfig = {
   appId: 'com.tearleads.app.staging',
   appName: 'Tearleads Staging',
   webDir: 'build',
-  server: {
-    url: 'https://app.staging.tearleads.com',
-    cleartext: false,
-  },
+  // No server property for staging - will use bundled assets
 };
 
 // biome-ignore lint/style/noDefaultExport: Allow default export for Capacitor config
