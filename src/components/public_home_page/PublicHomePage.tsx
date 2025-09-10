@@ -18,7 +18,7 @@ const PublicHomePageContent = () => {
           boxShadow: 'none', // Remove the Material UI 'bottom border'.
           backgroundImage: 'none', // Remove the Material UI gradient.
           borderBottom: '1px solid #808080',
-          backgroundColor: theme => `${theme.header.background}`,
+          backgroundColor: theme => theme.header.background,
           paddingTop: isNativePlatform ? `${insets.top}px` : 0,
         }}
       >
