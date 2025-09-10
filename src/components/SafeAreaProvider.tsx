@@ -14,6 +14,10 @@ interface SafeAreaInsets {
   right: number;
 }
 
+const getFallbackInset = (platform: string): number => {
+  return platform === 'ios' ? IOS_FALLBACK_INSET : ANDROID_FALLBACK_INSET;
+};
+
 interface SafeAreaContextType {
   insets: SafeAreaInsets;
   isNativePlatform: boolean;
@@ -51,13 +55,7 @@ export const SafeAreaProvider: React.FC<SafeAreaProviderProps> = ({
 
       try {
         const platform = Capacitor.getPlatform();
-
-        let topInset = 0;
-        if (platform === 'android') {
-          topInset = ANDROID_FALLBACK_INSET;
-        } else if (platform === 'ios') {
-          topInset = IOS_FALLBACK_INSET;
-        }
+        let topInset = getFallbackInset(platform);
 
         // Try to get the actual status bar height from CSS environment variables
         const envSafeAreaTop = getComputedStyle(
@@ -91,17 +89,13 @@ export const SafeAreaProvider: React.FC<SafeAreaProviderProps> = ({
       } catch (error) {
         console.warn('Failed to initialize status bar:', error);
         // Fallback to default safe area for mobile platforms
-        if (isNativePlatform) {
-          const platform = Capacitor.getPlatform();
-          const fallbackInset =
-            platform === 'ios' ? IOS_FALLBACK_INSET : ANDROID_FALLBACK_INSET;
-          setInsets({
-            top: fallbackInset,
-            bottom: 0,
-            left: 0,
-            right: 0,
-          });
-        }
+        const platform = Capacitor.getPlatform();
+        setInsets({
+          top: getFallbackInset(platform),
+          bottom: 0,
+          left: 0,
+          right: 0,
+        });
       }
     };
 
