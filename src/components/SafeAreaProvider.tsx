@@ -92,7 +92,7 @@ export const SafeAreaProvider: React.FC<SafeAreaProviderProps> = ({
           await StatusBar.setOverlaysWebView({overlay: true});
           // Set background color to match the app bar
           await StatusBar.setBackgroundColor({
-            color: theme.header.background as string,
+            color: theme.header.background,
           });
         }
       } catch (error) {
