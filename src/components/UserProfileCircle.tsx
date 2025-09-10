@@ -156,7 +156,7 @@ const UserProfileCircle: React.FC = () => {
             fontSize: 'caption.fontSize',
             background: theme.palette.background.default,
             '&:hover': {
-              backgroundColor: theme.selected?.background,
+              backgroundColor: theme.selected.background,
             },
           })}
         >
