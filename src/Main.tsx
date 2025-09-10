@@ -60,7 +60,7 @@ const MainContent = () => {
           backgroundColor: theme => theme.header.background,
           top: 0,
           height: theme =>
-            theme.appBar.height + (isNativePlatform ? insets.top : 0),
+            `${theme.appBar.height + (isNativePlatform ? insets.top : 0)}px`,
           paddingTop: isNativePlatform ? `${insets.top}px` : 0,
         }}
       >
