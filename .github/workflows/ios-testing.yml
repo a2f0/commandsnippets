@@ -4,13 +4,13 @@
 name: iOS Mobile Testing
 
 # yamllint disable-line rule:truthy
-# on:
-#   pull_request:
-#     branches: '**'
+on:
+  pull_request:
+    branches: '**'
 
 jobs:
   ios-appium-tests:
-    runs-on: macos-latest
+    runs-on: self-hosted
     continue-on-error: false
 
     steps:
@@ -26,8 +26,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: latest
 
       - name: Configure npm auth
         # yamllint disable-line rule:line-length
