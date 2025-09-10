@@ -3,33 +3,47 @@
 # Script to manage GitHub Actions self-hosted runner safely
 # This helps prevent CI from interfering with local development
 
+# Configurable paths - modify these variables to match your setup
+RUNNER_DIR="${RUNNER_DIR:-$HOME/github/actions-runner}"
+DERIVED_DATA_PATH="${DERIVED_DATA_PATH:-/tmp/ci-ios-build}"
+WORKSPACE_DIR="${WORKSPACE_DIR:-$RUNNER_DIR/_work/tearleads-frontend/tearleads-frontend}"
+PID_FILE="${PID_FILE:-/tmp/gh-runner.pid}"
+
 ACTION="${1:-status}"
 
 case "$ACTION" in
   start)
     echo "Starting GitHub Actions runner in isolated mode..."
     # Set environment variables to isolate CI builds
-    DERIVED_DATA_PATH="/tmp/ci-ios-build"
     CI_MODE=true
     export DERIVED_DATA_PATH CI_MODE
 
     # Start the runner
-    cd "$HOME/github/actions-runner" || exit 1
+    cd "$RUNNER_DIR" || exit 1
     ./run.sh &
-    echo "Runner started with PID $!"
+    echo $! > "$PID_FILE"
+    echo "Runner started with PID $(cat "$PID_FILE")"
     ;;
 
   stop)
     echo "Stopping GitHub Actions runner..."
-    # Find and kill runner process
-    pkill -f "Runner.Listener"
+    # Find and kill runner process using PID file
+    if [ -f "$PID_FILE" ]; then
+      kill "$(cat "$PID_FILE")"
+      rm "$PID_FILE"
+      echo "Runner stopped using PID file"
+    else
+      # Fallback if pid file is missing
+      pkill -f "Runner.Listener"
+      echo "Runner stopped using pkill (PID file not found)"
+    fi
 
     # Clean up CI build artifacts
-    rm -rf /tmp/ci-ios-build
-    rm -rf "$HOME/github/actions-runner/_work/tearleads-frontend/tearleads-frontend/ios/App/build"
+    rm -rf "$DERIVED_DATA_PATH"
+    rm -rf "$WORKSPACE_DIR/ios/App/build"
 
     # Shutdown any CI simulators
-    xcrun simctl list | grep "CI" | grep -o "[0-9A-F-]*" | head -1 | while read -r device_id; do
+    xcrun simctl list | grep "CI" | grep -o "[0-9A-F-]*" | while read -r device_id; do
       if [ -n "$device_id" ]; then
         xcrun simctl shutdown "$device_id" 2>/dev/null || true
       fi
@@ -54,19 +68,19 @@ case "$ACTION" in
     fi
 
     # Check for CI build artifacts
-    if [ -d "/tmp/ci-ios-build" ] || [ -d "$HOME/github/actions-runner/_work" ]; then
+    if [ -d "$DERIVED_DATA_PATH" ] || [ -d "$RUNNER_DIR/_work" ]; then
       echo "⚠️  CI build artifacts present"
     fi
     ;;
 
   clean)
     echo "Cleaning all CI artifacts..."
-    rm -rf /tmp/ci-ios-build
-    rm -rf "$HOME/github/actions-runner/_work/tearleads-frontend/tearleads-frontend/ios/App/build"
-    rm -rf "$HOME/github/actions-runner/_work/tearleads-frontend/tearleads-frontend/logs"
+    rm -rf "$DERIVED_DATA_PATH"
+    rm -rf "$WORKSPACE_DIR"
+    rm -rf "$PID_FILE"
 
     # Delete CI simulators
-    xcrun simctl list | grep "CI" | grep -o "[0-9A-F-]*" | head -1 | while read -r device_id; do
+    xcrun simctl list | grep "CI" | grep -o "[0-9A-F-]*" | while read -r device_id; do
       if [ -n "$device_id" ]; then
         xcrun simctl delete "$device_id" 2>/dev/null || true
       fi
