@@ -6,6 +6,7 @@ import {useLocation, useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
 import {BottomToolbar} from './components/BottomToolbar';
+import {SafeAreaProvider, useSafeArea} from './components/SafeAreaProvider';
 import {LeftDrawer} from './drawer/LeftDrawer';
 import {RightDrawer} from './drawer/RightDrawer';
 import {EntryList} from './EntryList';
@@ -15,11 +16,12 @@ import {StyledToolbar} from './styled/layout/StyledToolbar';
 const COOKIE_KEY = 'LoggedIn';
 const BORDER_COLOR = '#808080';
 
-const Main = () => {
+const MainContent = () => {
   const location = useLocation();
   const appConfig = useAppContext();
   const navigate = useNavigate();
   const [cookies] = useCookies([COOKIE_KEY]);
+  const {insets, isNativePlatform} = useSafeArea();
 
   // Redirect to user's page when on root path.
   useEffect(() => {
@@ -57,7 +59,9 @@ const Main = () => {
           borderBottom: `1px solid ${BORDER_COLOR}`,
           backgroundColor: theme => theme.header.background,
           top: 0,
-          height: theme => theme.appBar.height,
+          height: theme =>
+            `${theme.appBar.height + (isNativePlatform ? insets.top : 0)}px`,
+          paddingTop: isNativePlatform ? `${insets.top}px` : 0,
         }}
       >
         <StyledToolbar>
@@ -80,5 +84,14 @@ const Main = () => {
   );
 };
 
-const memoizedMain = React.memo(observer(Main));
-export {memoizedMain as Main};
+const MemoizedMainContent = React.memo(observer(MainContent));
+
+const Main = () => {
+  return (
+    <SafeAreaProvider>
+      <MemoizedMainContent />
+    </SafeAreaProvider>
+  );
+};
+
+export {Main};
