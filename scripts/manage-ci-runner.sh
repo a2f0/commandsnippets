@@ -29,13 +29,20 @@ case "$ACTION" in
     echo "Stopping GitHub Actions runner..."
     # Find and kill runner process using PID file
     if [ -f "$PID_FILE" ]; then
-      kill "$(cat "$PID_FILE")"
+      pid=$(cat "$PID_FILE")
+      # Verify the process is the runner before killing to avoid affecting a reused PID.
+      if ps -p "$pid" -o command= | grep -q "Runner.Listener"; then
+        kill "$pid"
+        echo "Runner with PID $pid stopped."
+      else
+        echo "Warning: Stale PID file. PID $pid is not the runner. Falling back to pkill."
+        pkill -f "Runner.Listener"
+      fi
       rm "$PID_FILE"
-      echo "Runner stopped using PID file"
     else
       # Fallback if pid file is missing
       pkill -f "Runner.Listener"
-      echo "Runner stopped using pkill (PID file not found)"
+      echo "Runner stopped using pkill (PID file not found)."
     fi
 
     # Clean up CI build artifacts
