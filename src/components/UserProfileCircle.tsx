@@ -57,17 +57,15 @@ const UserProfileCircle: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    tearleadsApi
-      .logout()
-      .then(() => {
-        resetApplicationState();
-        handleClose();
-      })
-      .catch((error: unknown) => {
-        console.error('Logout error:', error);
-        handleClose();
-      });
+  const handleLogout = async () => {
+    try {
+      await tearleadsApi.logout();
+    } catch (error: unknown) {
+      console.error('Logout error:', error);
+    } finally {
+      resetApplicationState();
+      handleClose();
+    }
   };
 
   const handleProfile = () => {

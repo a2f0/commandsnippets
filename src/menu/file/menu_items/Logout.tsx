@@ -12,16 +12,15 @@ interface IProps {
 const Logout = ({onClose}: IProps) => {
   const {t} = useTypedTranslation('common');
 
-  const handleLogout = () => {
-    tearleadsApi
-      .logout()
-      .then(() => {
-        resetApplicationState();
-        onClose();
-      })
-      .catch((error: unknown) => {
-        console.error('Logout error:', error);
-      });
+  const handleLogout = async () => {
+    try {
+      await tearleadsApi.logout();
+    } catch (error: unknown) {
+      console.error('Logout error:', error);
+    } finally {
+      resetApplicationState();
+      onClose();
+    }
   };
 
   return (

@@ -206,7 +206,7 @@ describe('UserProfileCircle', () => {
       });
     });
 
-    it('handles logout errors gracefully', async () => {
+    it('handles logout errors gracefully and still closes menu', async () => {
       const consoleErrorSpy = vi
         .spyOn(console, 'error')
         .mockImplementation(() => {});
@@ -245,11 +245,58 @@ describe('UserProfileCircle', () => {
         );
       });
 
-      // Verify menu is still closed after error
       await waitFor(() => {
         expect(screen.queryByText('Logout')).not.toBeInTheDocument();
       });
 
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('ensures menu closes via finally block even if logout throws', async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      // Mock tearleadsApi.logout to throw immediately
+      const tearleadsApi = await import('../src/lib/api/tearleadsApi');
+      const originalLogout = tearleadsApi.tearleadsApi.logout;
+      tearleadsApi.tearleadsApi.logout = vi
+        .fn()
+        .mockRejectedValue(new Error('Network failure'));
+
+      renderWithContext('testuser');
+
+      // Open the menu
+      const profileButton = screen.getByLabelText('testuser');
+      await act(async () => {
+        fireEvent.click(profileButton);
+      });
+
+      // Verify menu is open
+      await waitFor(() => {
+        expect(screen.getByText('Logout')).toBeInTheDocument();
+      });
+
+      // Click logout
+      const logoutButton = screen.getByText('Logout');
+      await act(async () => {
+        fireEvent.click(logoutButton);
+      });
+
+      // Verify error was logged
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Logout error:',
+          expect.objectContaining({message: 'Network failure'})
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Logout')).not.toBeInTheDocument();
+      });
+
+      // Restore the original function
+      tearleadsApi.tearleadsApi.logout = originalLogout;
       consoleErrorSpy.mockRestore();
     });
   });
