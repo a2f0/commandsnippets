@@ -245,7 +245,6 @@ describe('UserProfileCircle', () => {
         );
       });
 
-      // Critical: Verify menu is STILL closed even after error (finally block behavior)
       await waitFor(() => {
         expect(screen.queryByText('Logout')).not.toBeInTheDocument();
       });
@@ -292,8 +291,6 @@ describe('UserProfileCircle', () => {
         );
       });
 
-      // Critical test: Menu should be closed even though logout threw an error
-      // This confirms the finally block executes
       await waitFor(() => {
         expect(screen.queryByText('Logout')).not.toBeInTheDocument();
       });
