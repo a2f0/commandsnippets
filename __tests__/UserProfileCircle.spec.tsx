@@ -2,11 +2,13 @@ import '@testing-library/jest-dom';
 
 import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {HttpResponse, http} from 'msw';
 import {type MockInstance, vi} from 'vitest';
 import {AppContext} from '../src/AppContext';
 import {UserProfileCircle} from '../src/components/UserProfileCircle';
 import type {Store} from '../src/lib/store/store';
 import {darkTheme} from '../src/theme/themes';
+import {server} from './util/msw';
 
 // Mock the environment module to ensure it's not production
 vi.mock('../src/lib/environment', () => ({
@@ -31,6 +33,11 @@ const renderWithContext = (loggedInUser: string | null = 'testuser') => {
     </ThemeProvider>
   );
 };
+
+// Setup MSW server
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 describe('UserProfileCircle', () => {
   let consoleMock: MockInstance;
@@ -168,6 +175,129 @@ describe('UserProfileCircle', () => {
         expect(profileButton).toHaveAttribute('aria-expanded', 'true');
         expect(profileButton).toHaveAttribute('aria-controls', 'user-menu');
       });
+    });
+  });
+
+  describe('Logout Functionality', () => {
+    it('successfully logs out and closes menu', async () => {
+      // The default MSW handler returns success for logout
+      renderWithContext('testuser');
+
+      // Open the menu
+      const profileButton = screen.getByLabelText('testuser');
+      await act(async () => {
+        fireEvent.click(profileButton);
+      });
+
+      // Wait for menu to be open
+      await waitFor(() => {
+        expect(screen.getByText('Logout')).toBeInTheDocument();
+      });
+
+      // Click logout
+      const logoutButton = screen.getByText('Logout');
+      await act(async () => {
+        fireEvent.click(logoutButton);
+      });
+
+      // Verify menu is closed after logout
+      await waitFor(() => {
+        expect(screen.queryByText('Logout')).not.toBeInTheDocument();
+      });
+    });
+
+    it('handles logout errors gracefully and still closes menu', async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      // Override the logout handler to return an error
+      server.use(
+        http.post('http://localhost:9001/api-token-deauth/', () => {
+          return HttpResponse.json({error: 'Network error'}, {status: 500});
+        })
+      );
+
+      renderWithContext('testuser');
+
+      // Open the menu
+      const profileButton = screen.getByLabelText('testuser');
+      await act(async () => {
+        fireEvent.click(profileButton);
+      });
+
+      // Wait for menu to be open
+      await waitFor(() => {
+        expect(screen.getByText('Logout')).toBeInTheDocument();
+      });
+
+      // Click logout
+      const logoutButton = screen.getByText('Logout');
+      await act(async () => {
+        fireEvent.click(logoutButton);
+      });
+
+      // Verify error was logged
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Logout error:',
+          expect.any(Error)
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Logout')).not.toBeInTheDocument();
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('ensures menu closes via finally block even if logout throws', async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      // Mock tearleadsApi.logout to throw immediately
+      const tearleadsApi = await import('../src/lib/api/tearleadsApi');
+      const originalLogout = tearleadsApi.tearleadsApi.logout;
+      tearleadsApi.tearleadsApi.logout = vi
+        .fn()
+        .mockRejectedValue(new Error('Network failure'));
+
+      renderWithContext('testuser');
+
+      // Open the menu
+      const profileButton = screen.getByLabelText('testuser');
+      await act(async () => {
+        fireEvent.click(profileButton);
+      });
+
+      // Verify menu is open
+      await waitFor(() => {
+        expect(screen.getByText('Logout')).toBeInTheDocument();
+      });
+
+      // Click logout
+      const logoutButton = screen.getByText('Logout');
+      await act(async () => {
+        fireEvent.click(logoutButton);
+      });
+
+      // Verify error was logged
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Logout error:',
+          expect.objectContaining({message: 'Network failure'})
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Logout')).not.toBeInTheDocument();
+      });
+
+      // Restore the original function
+      tearleadsApi.tearleadsApi.logout = originalLogout;
+      consoleErrorSpy.mockRestore();
     });
   });
 

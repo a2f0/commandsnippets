@@ -4,14 +4,19 @@
 name: iOS Mobile Testing
 
 # yamllint disable-line rule:truthy
-# on:
-#   pull_request:
-#     branches: '**'
+on:
+  pull_request:
+    branches: '**'
 
 jobs:
   ios-appium-tests:
-    runs-on: macos-latest
+    runs-on: self-hosted
     continue-on-error: false
+
+    env:
+      # Use isolated directories to avoid conflicts
+      DERIVED_DATA_PATH: /tmp/ci-ios-build
+      SIMULATOR_DEVICE: "iPhone 16 CI"
 
     steps:
       - name: Checkout code
@@ -26,8 +31,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: latest
 
       - name: Configure npm auth
         # yamllint disable-line rule:line-length
@@ -39,7 +42,8 @@ jobs:
       - name: Initialize Xcode and check iOS SDK
         run: |
           echo "Initializing Xcode command line tools..."
-          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          # Skip xcode-select on self-hosted to avoid affecting local dev
+          # sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
           echo "Selected Xcode version:"
           xcodebuild -version
@@ -81,15 +85,15 @@ jobs:
       - name: Build iOS app for simulator
         run: |
           cd ios/App
-          # Clean build folder to ensure fresh build
-          rm -rf build
+          # Use isolated build directory from env
+          rm -rf "$DERIVED_DATA_PATH"
           # Build for simulator with explicit simulator targeting
           xcodebuild build \
             -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -sdk iphonesimulator \
-            -derivedDataPath build \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
             -allowProvisioningUpdates \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
@@ -101,15 +105,15 @@ jobs:
       - name: Verify iOS build output
         run: |
           echo "Checking for built app..."
-          APP_PATH="ios/App/build/Build/Products/Release-iphonesimulator/App.app"
+          APP_PATH="$DERIVED_DATA_PATH/Build/Products/Release-iphonesimulator/App.app"
           if [ -d "$APP_PATH" ]; then
             echo "✅ App.app found at expected location"
             ls -la \
-              ios/App/build/Build/Products/Release-iphonesimulator/
+              "$DERIVED_DATA_PATH/Build/Products/Release-iphonesimulator/"
           else
             echo "❌ App.app not found!"
             echo "Contents of build directory:"
-            find ios/App/build -name "*.app" -type d 2>/dev/null || true
+            find "$DERIVED_DATA_PATH" -name "*.app" -type d 2>/dev/null || true
             exit 1
           fi
 
