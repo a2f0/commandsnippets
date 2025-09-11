@@ -5,6 +5,8 @@ import {observer} from 'mobx-react';
 import type React from 'react';
 import {useState} from 'react';
 import {useAppContext} from '../AppContext';
+import {tearleadsApi} from '../lib/api/tearleadsApi';
+import {resetApplicationState} from '../lib/auth/authUtils';
 import {environment} from '../lib/environment';
 
 const StyledButton = styled(Button)(({theme}) => ({
@@ -56,8 +58,16 @@ const UserProfileCircle: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // TODO: Implement logout functionality
-    handleClose();
+    tearleadsApi
+      .logout()
+      .then(() => {
+        resetApplicationState();
+        handleClose();
+      })
+      .catch((error: unknown) => {
+        console.error('Logout error:', error);
+        handleClose();
+      });
   };
 
   const handleProfile = () => {
