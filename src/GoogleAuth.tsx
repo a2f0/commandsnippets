@@ -3,6 +3,7 @@ import {observer} from 'mobx-react';
 import React, {useEffect} from 'react';
 import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
+import {v4 as uuidv4} from 'uuid';
 
 import {useAppContext} from './AppContext';
 import {tearleadsApi} from './lib/api/tearleadsApi';
@@ -82,7 +83,7 @@ const GoogleAuth = () => {
     console.info(`redirect: ${redirect}`);
 
     try {
-      const state = window.crypto.randomUUID();
+      const state = uuidv4();
       window.sessionStorage.setItem('oauth_state', state);
 
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
