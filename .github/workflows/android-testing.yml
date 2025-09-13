@@ -51,8 +51,8 @@ jobs:
       - name: Accept Android licenses and download system images
         run: |
           yes | sdkmanager --licenses || true
-          sdkmanager "system-images;android-34;google_apis;x86_64"
-          sdkmanager "platform-tools" "platforms;android-34"
+          sdkmanager "system-images;android-35;google_apis;x86_64"
+          sdkmanager "platform-tools" "platforms;android-35"
           echo "Android SDK packages installed:"
           sdkmanager --list_installed
 
@@ -64,7 +64,7 @@ jobs:
             ~/.android/avd/*
             ~/.android/adb*
           # yamllint disable-line rule:line-length
-          key: avd-api-34-pixel-6a-${{ runner.os }}-${{ hashFiles('android/**') }}
+          key: avd-api-35-pixel-6a-${{ runner.os }}-${{ hashFiles('android/**') }}
 
       - name: Enable KVM group perms
         run: |
@@ -78,7 +78,7 @@ jobs:
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 35
           target: google_apis
           arch: x86_64
           profile: pixel_6a
@@ -132,7 +132,7 @@ jobs:
       - name: Run Android Appium tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 35
           target: google_apis
           arch: x86_64
           profile: pixel_6a
