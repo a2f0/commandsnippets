@@ -32,6 +32,29 @@ function createWindow(): void {
   }
 }
 
+// Register custom protocol handler for OAuth redirects
+if (process.defaultApp) {
+  if (process.argv.length >= 2 && process.argv[1]) {
+    app.setAsDefaultProtocolClient('tearleads', process.execPath, [
+      process.argv[1],
+    ]);
+  }
+} else {
+  app.setAsDefaultProtocolClient('tearleads');
+}
+
+// Handle custom protocol URLs (OAuth redirects)
+app.on('open-url', (event, url) => {
+  console.log('Protocol URL received:', url);
+  event.preventDefault();
+
+  // Forward the URL to the renderer process
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  if (mainWindow) {
+    mainWindow.webContents.send('protocol-url', url);
+  }
+});
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.

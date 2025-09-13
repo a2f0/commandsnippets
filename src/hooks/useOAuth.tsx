@@ -1,3 +1,4 @@
+import {Capacitor} from '@capacitor/core';
 import {useEffect} from 'react';
 import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
@@ -26,7 +27,24 @@ export const useOAuth = (config: OAuthConfig) => {
   const navigate = useNavigate();
   const [, setCookie] = useCookies(['loggedInUser']);
 
+  const isElectron = (): boolean => {
+    return (
+      typeof window !== 'undefined' &&
+      window.electron?.process?.versions?.electron !== undefined
+    );
+  };
+
   const isOAuthCallback = () => {
+    // For Capacitor and Electron, OAuth callbacks come through deep links
+    if (Capacitor.isNativePlatform() || isElectron()) {
+      const href = window.location.href;
+      return (
+        href.includes(`oauth/${config.provider}`) ||
+        href.includes(`/oauth/${config.provider}`)
+      );
+    }
+
+    // For web, check the pathname as before
     const path = window.location.pathname;
     return path.includes(`/oauth/${config.provider}`);
   };
@@ -72,11 +90,29 @@ export const useOAuth = (config: OAuthConfig) => {
   };
 
   useEffect(() => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const code = urlParams.get('code');
-    const scope = urlParams.get('scope');
-    const state = urlParams.get('state');
+    let queryString: string;
+    let code: string | null = null;
+    let scope: string | null = null;
+    let state: string | null = null;
+
+    // Handle deep link URLs for Capacitor and Electron
+    if (Capacitor.isNativePlatform() || isElectron()) {
+      const href = window.location.href;
+      console.info(`Full URL (${config.provider} auth):`, href);
+
+      // Extract query parameters from deep link URL
+      const url = new URL(href);
+      code = url.searchParams.get('code');
+      scope = url.searchParams.get('scope');
+      state = url.searchParams.get('state');
+    } else {
+      // Web app - use standard query string parsing
+      queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      code = urlParams.get('code');
+      scope = urlParams.get('scope');
+      state = urlParams.get('state');
+    }
 
     console.info(`code (${config.provider} auth): ${code}`);
     if (scope) {
@@ -110,6 +146,10 @@ export const useOAuth = (config: OAuthConfig) => {
         params.append('access_type', 'offline');
         params.append('include_granted_scopes', 'true');
         params.append('response_type', 'code');
+        if (config.redirectUrl) {
+          params.append('redirect_uri', config.redirectUrl);
+        }
+      } else if (config.provider === 'github') {
         if (config.redirectUrl) {
           params.append('redirect_uri', config.redirectUrl);
         }

@@ -1,3 +1,4 @@
+import {Capacitor} from '@capacitor/core';
 import {Google} from '@mui/icons-material';
 import {observer} from 'mobx-react';
 import React from 'react';
@@ -9,7 +10,32 @@ import {LoginButton} from './styled/LoginButton';
 const googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 
+const isElectron = (): boolean => {
+  return (
+    typeof window !== 'undefined' &&
+    window.electron?.process?.versions?.electron !== undefined
+  );
+};
+
 export const redirectUrl = () => {
+  // For Capacitor apps, use deep link scheme based on environment
+  if (Capacitor.isNativePlatform()) {
+    switch (environment) {
+      case 'staging':
+        return 'com.tearleads.app.staging://oauth/google';
+      case 'production':
+        return 'com.tearleads.app://oauth/google';
+      default:
+        return 'com.tearleads.app.dev://oauth/google';
+    }
+  }
+
+  // For Electron apps, use custom protocol
+  if (isElectron()) {
+    return 'tearleads://oauth/google';
+  }
+
+  // For web apps, use standard URLs
   switch (environment) {
     case 'staging':
       return 'https://app.staging.tearleads.com/oauth/google';

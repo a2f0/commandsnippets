@@ -1,8 +1,15 @@
 import {electronAPI} from '@electron-toolkit/preload';
-import {contextBridge} from 'electron';
+import {contextBridge, ipcRenderer} from 'electron';
 
 // Custom APIs for renderer
-const api = {};
+const api = {
+  onProtocolUrl: (callback: (url: string) => void) => {
+    ipcRenderer.on('protocol-url', (_, url) => callback(url));
+  },
+  removeProtocolUrlListener: () => {
+    ipcRenderer.removeAllListeners('protocol-url');
+  },
+};
 
 // Use `contextBridge` APIs to expose Electron APIs to renderer
 if (process.contextIsolated) {
