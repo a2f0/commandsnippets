@@ -36,7 +36,7 @@
     "appium:ios": "npx wdio test/wdio.appium.ios.conf.ts",
     "appium:android": "npx wdio test/wdio.appium.android.conf.ts",
     "appium:build-and-test": "./scripts/setup-appium-ios.sh",
-    "appium:android:build-and-test": "scripts/setup-appium-android.sh && pnpm run cap:build:staging && (cd android && ./gradlew assembleDebug) && pnpm run appium:android",
+    "appium:android:build-and-test": "scripts/setup-appium-android.sh && cap sync && (cd android && ./gradlew assembleDebug) && pnpm run appium:android",
     "electron:dev": "electron-vite dev",
     "electron:build": "electron-vite build",
     "electron:build:staging": "electron-vite build --mode staging",

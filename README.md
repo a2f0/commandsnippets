@@ -190,8 +190,11 @@ The project includes Appium-based mobile testing for both iOS and Android Capaci
 Test the Capacitor iOS app in the iOS Simulator:
 
 ```shell
-# Recommended: Full build and test pipeline
+# Recommended: Build dev app (setup only - doesn't run tests)
 pnpm run appium:build-and-test
+
+# Then run the tests
+pnpm run appium:ios
 
 # Alternative: Run tests only (requires pre-built app)
 pnpm run appium:ios
@@ -202,7 +205,7 @@ pnpm run appium:ios
 - iOS Simulator available (iPhone 15, iOS 17.0 recommended)
 
 **Manual Setup (if needed):**
-1. Build the staging app: `pnpm run cap:build:staging`
+1. Build the dev app: `cap sync` (uses default dev config)
 2. Open Xcode: `open ios/App/App.xcworkspace`
 3. Build for simulator: Product → Build For → Running
 4. Run tests: `pnpm run appium:ios`
@@ -210,7 +213,7 @@ pnpm run appium:ios
 **Test Configuration:**
 - Config: `test/wdio.appium.ios.conf.ts`
 - Tests: `test/appium/ios/`
-- Bundle ID: `com.tearleads.app`
+- Bundle ID: `com.tearleads.app.dev`
 - Screenshots: `logs/screenshots/`
 - Logs: `logs/appium/`
 
@@ -235,14 +238,14 @@ pnpm run appium:android
 **Manual Setup (if needed):**
 1. Setup Android environment: `./scripts/setup-appium-android.sh`
 2. Start Android emulator: `emulator -avd <your-avd-name>`
-3. Build the staging app: `pnpm run cap:build:staging`
-4. Build APK: `cd android && ./gradlew assembleStagingDebug`
+3. Build the dev app: `cap sync` (uses default dev config)
+4. Build APK: `cd android && ./gradlew assembleDebug`
 5. Run tests: `pnpm run appium:android`
 
 **Test Configuration:**
 - Config: `test/wdio.appium.android.conf.ts`
 - Tests: `test/appium/android/`
-- App Package: `com.tearleads.app`
+- App Package: `com.tearleads.app.dev`
 - Screenshots: `logs/screenshots/`
 - Logs: `logs/appium/`
 

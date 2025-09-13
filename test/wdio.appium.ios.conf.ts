@@ -50,7 +50,7 @@ export const config: WebdriverIO.Config = {
             process.cwd(),
             'ios/App/build/Build/Products/Release-iphonesimulator/App.app'
           ),
-      'appium:bundleId': 'com.tearleads.app',
+      'appium:bundleId': 'com.tearleads.app.dev',
       'appium:newCommandTimeout': 900,
       'appium:noReset': false,
       'appium:fullReset': false,

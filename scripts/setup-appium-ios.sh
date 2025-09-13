@@ -23,9 +23,9 @@ fi
 echo "📁 Creating directories..."
 mkdir -p logs/screenshots logs/appium
 
-# Build the staging app
-echo "🔨 Building staging app..."
-pnpm run cap:build:staging
+# Build the dev app
+echo "🔨 Building dev app..."
+cap sync
 
 # Build iOS app for simulator
 echo "📱 Building iOS app for simulator..."
