@@ -19,8 +19,8 @@ declare global {
 
     // Custom API exposed via preload script
     api?: {
-      onProtocolUrl?: (callback: (url: string) => void) => void;
-      removeProtocolUrlListener?: () => void;
+      onProtocolUrl?: (callback: (url: string) => void) => () => void;
+      removeProtocolUrlListener?: (callback: (url: string) => void) => void;
     };
 
     // MSW worker instance - available in dev/test environments

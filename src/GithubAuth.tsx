@@ -1,10 +1,10 @@
-import {Capacitor} from '@capacitor/core';
 import {GitHub} from '@mui/icons-material';
 import {observer} from 'mobx-react';
 import React from 'react';
 
 import {useOAuth} from './hooks/useOAuth';
 import {environment} from './lib/environment';
+import {isCapacitor, isElectron} from './lib/platform';
 import {LoginButton} from './styled/LoginButton';
 
 let githubClientID: string;
@@ -16,16 +16,9 @@ if (environment === 'staging') {
   githubClientID = 'a94dc4b2bb6ed4fc63a0';
 }
 
-const isElectron = (): boolean => {
-  return (
-    typeof window !== 'undefined' &&
-    window.electron?.process?.versions?.electron !== undefined
-  );
-};
-
 const getGithubRedirectUrl = () => {
   // For Capacitor apps, use deep link scheme based on environment
-  if (Capacitor.isNativePlatform()) {
+  if (isCapacitor()) {
     switch (environment) {
       case 'staging':
         return 'com.tearleads.app.staging://oauth/github';

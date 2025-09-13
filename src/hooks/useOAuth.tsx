@@ -1,4 +1,3 @@
-import {Capacitor} from '@capacitor/core';
 import {useEffect} from 'react';
 import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
@@ -6,6 +5,7 @@ import {v4 as uuidv4} from 'uuid';
 
 import {useAppContext} from '../AppContext';
 import {tearleadsApi} from '../lib/api/tearleadsApi';
+import {isCapacitor, isElectron} from '../lib/platform';
 
 interface OAuthConfig {
   provider: 'github' | 'google';
@@ -27,16 +27,9 @@ export const useOAuth = (config: OAuthConfig) => {
   const navigate = useNavigate();
   const [, setCookie] = useCookies(['loggedInUser']);
 
-  const isElectron = (): boolean => {
-    return (
-      typeof window !== 'undefined' &&
-      window.electron?.process?.versions?.electron !== undefined
-    );
-  };
-
   const isOAuthCallback = () => {
     // For Capacitor and Electron, OAuth callbacks come through deep links
-    if (Capacitor.isNativePlatform() || isElectron()) {
+    if (isCapacitor() || isElectron()) {
       const href = window.location.href;
       return (
         href.includes(`oauth/${config.provider}`) ||
@@ -96,7 +89,7 @@ export const useOAuth = (config: OAuthConfig) => {
     let state: string | null = null;
 
     // Handle deep link URLs for Capacitor and Electron
-    if (Capacitor.isNativePlatform() || isElectron()) {
+    if (isCapacitor() || isElectron()) {
       const href = window.location.href;
       console.info(`Full URL (${config.provider} auth):`, href);
 

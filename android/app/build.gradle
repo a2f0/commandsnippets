@@ -17,9 +17,33 @@ android {
         }
     }
     buildTypes {
+        debug {
+            manifestPlaceholders = [
+                deepLinkScheme: "com.tearleads.app.dev"
+            ]
+        }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            manifestPlaceholders = [
+                deepLinkScheme: "com.tearleads.app"
+            ]
+        }
+    }
+    flavorDimensions "version"
+    productFlavors {
+        staging {
+            dimension "version"
+            applicationIdSuffix ".staging"
+            manifestPlaceholders = [
+                deepLinkScheme: "com.tearleads.app.staging"
+            ]
+        }
+        production {
+            dimension "version"
+            manifestPlaceholders = [
+                deepLinkScheme: "com.tearleads.app"
+            ]
         }
     }
     compileOptions {

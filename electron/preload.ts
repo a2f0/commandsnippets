@@ -1,12 +1,26 @@
 import {electronAPI} from '@electron-toolkit/preload';
 import {contextBridge, ipcRenderer} from 'electron';
 
+// Store listener functions for proper cleanup
+const protocolUrlListeners = new Set<(url: string) => void>();
+
 // Custom APIs for renderer
 const api = {
   onProtocolUrl: (callback: (url: string) => void) => {
-    ipcRenderer.on('protocol-url', (_, url) => callback(url));
+    const wrappedCallback = (_: unknown, url: string) => callback(url);
+    protocolUrlListeners.add(callback);
+    ipcRenderer.on('protocol-url', wrappedCallback);
+
+    // Return cleanup function
+    return () => {
+      protocolUrlListeners.delete(callback);
+      ipcRenderer.removeListener('protocol-url', wrappedCallback);
+    };
   },
-  removeProtocolUrlListener: () => {
+  removeProtocolUrlListener: (callback: (url: string) => void) => {
+    protocolUrlListeners.delete(callback);
+    // Note: This removes all listeners for this event since we can't match the wrapper
+    // In practice, this should only be called when shutting down
     ipcRenderer.removeAllListeners('protocol-url');
   },
 };

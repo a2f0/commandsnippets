@@ -1,25 +1,18 @@
-import {Capacitor} from '@capacitor/core';
 import {Google} from '@mui/icons-material';
 import {observer} from 'mobx-react';
 import React from 'react';
 
 import {useOAuth} from './hooks/useOAuth';
 import {environment} from './lib/environment';
+import {isCapacitor, isElectron} from './lib/platform';
 import {LoginButton} from './styled/LoginButton';
 
 const googleClientID =
   '424258972420-jcqddba6bu3942ertk3nr7p6lc9e6b6h.apps.googleusercontent.com';
 
-const isElectron = (): boolean => {
-  return (
-    typeof window !== 'undefined' &&
-    window.electron?.process?.versions?.electron !== undefined
-  );
-};
-
 export const redirectUrl = () => {
   // For Capacitor apps, use deep link scheme based on environment
-  if (Capacitor.isNativePlatform()) {
+  if (isCapacitor()) {
     switch (environment) {
       case 'staging':
         return 'com.tearleads.app.staging://oauth/google';
