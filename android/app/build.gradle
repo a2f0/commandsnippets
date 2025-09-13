@@ -29,6 +29,13 @@ android {
     }
     flavorDimensions "version"
     productFlavors {
+        development {
+            dimension "version"
+            applicationIdSuffix ".dev"
+            manifestPlaceholders = [
+                deepLinkScheme: "com.tearleads.app.dev"
+            ]
+        }
         staging {
             dimension "version"
             applicationIdSuffix ".staging"
