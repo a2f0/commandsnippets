@@ -17,6 +17,11 @@ declare global {
       };
     };
 
+    // Custom API exposed via preload script
+    api?: {
+      onProtocolUrl?: (callback: (url: string) => void) => () => void;
+    };
+
     // MSW worker instance - available in dev/test environments
     __MSW_WORKER__?: SetupWorker;
 

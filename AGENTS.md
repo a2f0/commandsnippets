@@ -61,7 +61,7 @@ For testing the Capacitor Android app in emulator:
 
 **Prerequisites:**
 - Android SDK installed with Android Studio or command line tools
-- Android Emulator available (API 34 recommended)
+- Android Emulator available (API 35 recommended - Android 15)
 - Java 17 installed
 - ANDROID_HOME or ANDROID_SDK_ROOT environment variable set
 
@@ -69,7 +69,7 @@ For testing the Capacitor Android app in emulator:
 1. Setup Android environment: `./scripts/setup-appium-android.sh`
 2. Start Android emulator: `emulator -avd <your-avd-name>`
 3. Build the staging app: `pnpm run cap:build:staging`
-4. Build APK: `cd android && ./gradlew assembleDebug`
+4. Build APK: `cd android && ./gradlew assembleStagingDebug`
 5. Run tests: `pnpm run appium:android`
 
 **Test Configuration:**
@@ -80,7 +80,7 @@ For testing the Capacitor Android app in emulator:
 - Logs: `logs/appium/`
 
 **Android Emulator Requirements:**
-- API Level 34 (Android 14) recommended
+- API Level 35 (Android 15) recommended
 - x86_64 architecture for better CI performance
 - Hardware acceleration enabled (KVM on Linux)
 - Auto-grant permissions for smoother testing

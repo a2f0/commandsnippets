@@ -4,6 +4,7 @@ import React from 'react';
 
 import {useOAuth} from './hooks/useOAuth';
 import {environment} from './lib/environment';
+import {getOAuthRedirectUrl} from './lib/oauth';
 import {LoginButton} from './styled/LoginButton';
 
 let githubClientID: string;
@@ -21,6 +22,7 @@ const GithubAuth = () => {
     clientId: githubClientID,
     authUrl: 'https://github.com/login/oauth/authorize',
     scope: 'user:email',
+    redirectUrl: getOAuthRedirectUrl('github'),
   });
 
   return (

@@ -2,9 +2,17 @@ import {join} from 'node:path';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, shell} from 'electron';
 
+// Extend global interface to include pendingProtocolUrl
+declare global {
+  var pendingProtocolUrl: string | undefined;
+}
+
+// Keep a direct reference to the main window
+let mainWindow: BrowserWindow | null = null;
+
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     show: false,
@@ -15,7 +23,19 @@ function createWindow(): void {
   });
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show();
+    if (mainWindow) {
+      mainWindow.show();
+
+      // Handle any pending protocol URL from before window was ready
+      if (global.pendingProtocolUrl) {
+        mainWindow.webContents.send('protocol-url', global.pendingProtocolUrl);
+        global.pendingProtocolUrl = undefined;
+      }
+    }
+  });
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
   });
 
   mainWindow.webContents.setWindowOpenHandler(details => {
@@ -31,6 +51,31 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 }
+
+// Register custom protocol handler for OAuth redirects
+if (process.defaultApp) {
+  if (process.argv.length >= 2 && process.argv[1]) {
+    app.setAsDefaultProtocolClient('tearleads', process.execPath, [
+      process.argv[1],
+    ]);
+  }
+} else {
+  app.setAsDefaultProtocolClient('tearleads');
+}
+
+// Handle custom protocol URLs (OAuth redirects)
+app.on('open-url', (event, url) => {
+  console.log('Protocol URL received:', url);
+  event.preventDefault();
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('protocol-url', url);
+  } else {
+    console.warn('Main window not available to send protocol URL');
+    // Store the URL to handle it when a window becomes available
+    global.pendingProtocolUrl = url;
+  }
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

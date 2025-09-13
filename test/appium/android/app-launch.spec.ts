@@ -3,7 +3,7 @@ import {$$, browser, driver, expect} from '@wdio/globals';
 describe('Android App Launch', () => {
   // App state constants for readability
   const APP_STATE_FOREGROUND = 4;
-  const APP_PACKAGE = 'com.tearleads.app';
+  const APP_PACKAGE = 'com.tearleads.app.dev';
 
   it('should launch the app successfully', async () => {
     // The app should be automatically launched when the session starts

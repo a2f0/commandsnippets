@@ -6,6 +6,8 @@ import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
 import {ErrorBoundary, type ErrorInfo} from './components/ErrorBoundary';
+import {useDeepLinkHandler} from './hooks/useDeepLinkHandler';
+import {useElectronProtocolHandler} from './hooks/useElectronProtocolHandler';
 import {getGlobalErrorStore} from './hooks/useErrorStore';
 import './i18n/i18n';
 import {ErrorStoreProvider} from './providers/ErrorStoreProvider';
@@ -21,6 +23,12 @@ const App = React.memo(
         store.addError(errorInfo);
       }
     };
+
+    // Initialize deep link handler for Capacitor
+    useDeepLinkHandler();
+
+    // Initialize protocol handler for Electron
+    useElectronProtocolHandler();
 
     return (
       <ErrorStoreProvider>

@@ -28,14 +28,14 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       platformName: 'Android',
-      'appium:platformVersion': '14', // Android 14 (API 34)
+      'appium:platformVersion': '15', // Match available device OS (API 35)
       'appium:deviceName': 'emulator-5554',
       'appium:automationName': 'UiAutomator2',
       'appium:app': path.resolve(
         process.cwd(),
-        'android/app/build/outputs/apk/debug/app-debug.apk'
+        'android/app/build/outputs/apk/development/debug/app-development-debug.apk'
       ),
-      'appium:appPackage': 'com.tearleads.app',
+      'appium:appPackage': 'com.tearleads.app.dev',
       'appium:appActivity': 'com.tearleads.app.MainActivity',
       'appium:newCommandTimeout': 300,
       'appium:noReset': false,
