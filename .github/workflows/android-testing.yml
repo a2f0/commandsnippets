@@ -47,11 +47,6 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          api-level: 34
-          target: default
-          arch: x86_64
-          profile: Nexus 6
 
       - name: Cache Android SDK
         uses: actions/cache@v4
@@ -108,13 +103,13 @@ jobs:
       - name: Build Android APK
         run: |
           cd android
-          ./gradlew assembleStagingDebug --no-daemon
+          ./gradlew assembleDevelopmentDebug --no-daemon
           echo "APK build completed"
-          ls -la app/build/outputs/apk/stagingDebug/
+          ls -la app/build/outputs/apk/development/debug/
 
       - name: Verify Android APK
         run: |
-          APK_PATH="android/app/build/outputs/apk/stagingDebug/app-staging-debug.apk"
+          APK_PATH="android/app/build/outputs/apk/development/debug/app-development-debug.apk"
           if [ -f "$APK_PATH" ]; then
             echo "✅ APK found at expected location"
             ls -lh "$APK_PATH"
