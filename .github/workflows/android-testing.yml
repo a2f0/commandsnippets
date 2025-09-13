@@ -48,13 +48,23 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Cache Android SDK
+      - name: Accept Android licenses and download system images
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "system-images;android-34;google_apis;x86_64"
+          sdkmanager "platform-tools" "platforms;android-34"
+          echo "Android SDK packages installed:"
+          sdkmanager --list_installed
+
+      - name: AVD cache
         uses: actions/cache@v4
+        id: avd-cache
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: android-${{ runner.os }}-${{ hashFiles('android/**') }}
+          # yamllint disable-line rule:line-length
+          key: avd-api-34-pixel-6a-${{ runner.os }}-${{ hashFiles('android/**') }}
 
       - name: Enable KVM group perms
         run: |
@@ -68,10 +78,10 @@ jobs:
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
-          target: default
+          api-level: 34
+          target: google_apis
           arch: x86_64
-          profile: Nexus 6
+          profile: pixel_6a
           force-avd-creation: false
           emulator-options: >
             -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
@@ -122,10 +132,10 @@ jobs:
       - name: Run Android Appium tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
-          target: default
+          api-level: 34
+          target: google_apis
           arch: x86_64
-          profile: Nexus 6
+          profile: pixel_6a
           script: ./scripts/run-android-tests.sh
           emulator-options: >
             -no-snapshot-save -no-window -gpu swiftshader_indirect

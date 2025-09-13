@@ -28,7 +28,7 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       platformName: 'Android',
-      'appium:platformVersion': '15', // Match available device OS (API 35)
+      'appium:platformVersion': '14', // Match available device OS (API 34)
       'appium:deviceName': 'emulator-5554',
       'appium:automationName': 'UiAutomator2',
       'appium:app': path.resolve(

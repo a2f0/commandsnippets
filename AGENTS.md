@@ -61,7 +61,7 @@ For testing the Capacitor Android app in emulator:
 
 **Prerequisites:**
 - Android SDK installed with Android Studio or command line tools
-- Android Emulator available (API 35 recommended - Android 15)
+- Android Emulator available (API 34 recommended - Android 14)
 - Java 17 installed
 - ANDROID_HOME or ANDROID_SDK_ROOT environment variable set
 
@@ -80,7 +80,7 @@ For testing the Capacitor Android app in emulator:
 - Logs: `logs/appium/`
 
 **Android Emulator Requirements:**
-- API Level 35 (Android 15) recommended
+- API Level 34 (Android 14) recommended
 - x86_64 architecture for better CI performance
 - Hardware acceleration enabled (KVM on Linux)
 - Auto-grant permissions for smoother testing
