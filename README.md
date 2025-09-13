@@ -181,6 +181,77 @@ npx cap update
 
 ## Testing
 
+### Mobile Testing with Appium
+
+The project includes Appium-based mobile testing for both iOS and Android Capacitor apps.
+
+#### iOS Mobile Testing
+
+Test the Capacitor iOS app in the iOS Simulator:
+
+```shell
+# Recommended: Full build and test pipeline
+pnpm run appium:build-and-test
+
+# Alternative: Run tests only (requires pre-built app)
+pnpm run appium:ios
+```
+
+**Prerequisites:**
+- Xcode installed with iOS Simulator
+- iOS Simulator available (iPhone 15, iOS 17.0 recommended)
+
+**Manual Setup (if needed):**
+1. Build the staging app: `pnpm run cap:build:staging`
+2. Open Xcode: `open ios/App/App.xcworkspace`
+3. Build for simulator: Product → Build For → Running
+4. Run tests: `pnpm run appium:ios`
+
+**Test Configuration:**
+- Config: `test/wdio.appium.ios.conf.ts`
+- Tests: `test/appium/ios/`
+- Bundle ID: `com.tearleads.app`
+- Screenshots: `logs/screenshots/`
+- Logs: `logs/appium/`
+
+#### Android Mobile Testing
+
+Test the Capacitor Android app in the Android Emulator:
+
+```shell
+# Recommended: Full build and test pipeline
+pnpm run appium:android:build-and-test
+
+# Alternative: Run tests only (requires pre-built APK)
+pnpm run appium:android
+```
+
+**Prerequisites:**
+- Android SDK with Android Studio or command line tools
+- Android Emulator available (API 35 recommended - Android 15)
+- Java 17 installed
+- ANDROID_HOME or ANDROID_SDK_ROOT environment variable set
+
+**Manual Setup (if needed):**
+1. Setup Android environment: `./scripts/setup-appium-android.sh`
+2. Start Android emulator: `emulator -avd <your-avd-name>`
+3. Build the staging app: `pnpm run cap:build:staging`
+4. Build APK: `cd android && ./gradlew assembleStagingDebug`
+5. Run tests: `pnpm run appium:android`
+
+**Test Configuration:**
+- Config: `test/wdio.appium.android.conf.ts`
+- Tests: `test/appium/android/`
+- App Package: `com.tearleads.app`
+- Screenshots: `logs/screenshots/`
+- Logs: `logs/appium/`
+
+**Emulator Requirements:**
+- API Level 35 (Android 15) recommended
+- x86_64 architecture for better CI performance
+- Hardware acceleration enabled (KVM on Linux)
+- Auto-grant permissions for smoother testing
+
 ### E2E Tests
 
 Start the server and run tests in a single command:
