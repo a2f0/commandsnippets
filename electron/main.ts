@@ -2,6 +2,11 @@ import {join} from 'node:path';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, shell} from 'electron';
 
+// Extend global interface to include pendingProtocolUrl
+declare global {
+  var pendingProtocolUrl: string | undefined;
+}
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -16,6 +21,12 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show();
+
+    // Handle any pending protocol URL from before window was ready
+    if (global.pendingProtocolUrl) {
+      mainWindow.webContents.send('protocol-url', global.pendingProtocolUrl);
+      global.pendingProtocolUrl = undefined;
+    }
   });
 
   mainWindow.webContents.setWindowOpenHandler(details => {
@@ -48,10 +59,20 @@ app.on('open-url', (event, url) => {
   console.log('Protocol URL received:', url);
   event.preventDefault();
 
-  // Forward the URL to the renderer process
-  const mainWindow = BrowserWindow.getAllWindows()[0];
+  // Find the main window more reliably
+  const mainWindow = BrowserWindow.getAllWindows().find(
+    window =>
+      !window.isDestroyed() &&
+      window.webContents &&
+      !window.webContents.isDestroyed()
+  );
+
   if (mainWindow) {
     mainWindow.webContents.send('protocol-url', url);
+  } else {
+    console.warn('No valid main window found to send protocol URL');
+    // Store the URL to handle it when a window becomes available
+    global.pendingProtocolUrl = url;
   }
 });
 

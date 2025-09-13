@@ -1,16 +1,9 @@
 import {Capacitor} from '@capacitor/core';
+import {isElectron} from './platform';
 
 let environment: string;
 
 const {hostname, port} = window.location;
-
-// Check if running in Electron
-const isElectron = (): boolean => {
-  return (
-    typeof window !== 'undefined' &&
-    window.electron?.process?.versions?.electron !== undefined
-  );
-};
 
 if (isElectron()) {
   // For Electron apps, determine environment based on Vite mode
