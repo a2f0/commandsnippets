@@ -18,9 +18,7 @@ android {
     }
     buildTypes {
         debug {
-            manifestPlaceholders = [
-                deepLinkScheme: "com.tearleads.app.dev"
-            ]
+            // manifestPlaceholders handled by product flavors
         }
         release {
             minifyEnabled true

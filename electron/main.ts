@@ -7,9 +7,12 @@ declare global {
   var pendingProtocolUrl: string | undefined;
 }
 
+// Keep a direct reference to the main window
+let mainWindow: BrowserWindow | null = null;
+
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     show: false,
@@ -20,13 +23,19 @@ function createWindow(): void {
   });
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show();
+    if (mainWindow) {
+      mainWindow.show();
 
-    // Handle any pending protocol URL from before window was ready
-    if (global.pendingProtocolUrl) {
-      mainWindow.webContents.send('protocol-url', global.pendingProtocolUrl);
-      global.pendingProtocolUrl = undefined;
+      // Handle any pending protocol URL from before window was ready
+      if (global.pendingProtocolUrl) {
+        mainWindow.webContents.send('protocol-url', global.pendingProtocolUrl);
+        global.pendingProtocolUrl = undefined;
+      }
     }
+  });
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
   });
 
   mainWindow.webContents.setWindowOpenHandler(details => {
@@ -59,18 +68,10 @@ app.on('open-url', (event, url) => {
   console.log('Protocol URL received:', url);
   event.preventDefault();
 
-  // Find the main window more reliably
-  const mainWindow = BrowserWindow.getAllWindows().find(
-    window =>
-      !window.isDestroyed() &&
-      window.webContents &&
-      !window.webContents.isDestroyed()
-  );
-
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('protocol-url', url);
   } else {
-    console.warn('No valid main window found to send protocol URL');
+    console.warn('Main window not available to send protocol URL');
     // Store the URL to handle it when a window becomes available
     global.pendingProtocolUrl = url;
   }
