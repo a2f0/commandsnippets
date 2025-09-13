@@ -1,0 +1,133 @@
+import {useEffect} from 'react';
+import {useCookies} from 'react-cookie';
+import {useNavigate} from 'react-router-dom';
+import {v4 as uuidv4} from 'uuid';
+
+import {useAppContext} from '../AppContext';
+import {tearleadsApi} from '../lib/api/tearleadsApi';
+
+interface OAuthConfig {
+  provider: 'github' | 'google';
+  clientId: string;
+  authUrl: string;
+  scope: string;
+  redirectUrl?: string;
+  scopeCheck?: (scope: string | null) => boolean;
+}
+
+interface OAuthCallbackParams {
+  code: string | null;
+  scope: string | null;
+  state: string | null;
+}
+
+export const useOAuth = (config: OAuthConfig) => {
+  const appConfig = useAppContext();
+  const navigate = useNavigate();
+  const [, setCookie] = useCookies(['loggedInUser']);
+
+  const isOAuthCallback = () => {
+    const path = window.location.pathname;
+    return path.includes(`/oauth/${config.provider}`);
+  };
+
+  const handleCallback = async ({code, state}: OAuthCallbackParams) => {
+    const storedState = window.sessionStorage.getItem('oauth_state');
+
+    if (!storedState || storedState !== state) {
+      console.error('Invalid OAuth state - potential CSRF attack');
+      appConfig.setLoggedInUser(null);
+      return;
+    }
+
+    window.sessionStorage.removeItem('oauth_state');
+    const newURL = `${window.location.protocol}//${window.location.host}/`;
+    window.history.pushState({}, '', newURL);
+
+    try {
+      if (!code) {
+        throw new Error('No authorization code received');
+      }
+
+      const loginMethod =
+        config.provider === 'github'
+          ? tearleadsApi.githubLogin
+          : tearleadsApi.googleLogin;
+
+      await loginMethod(code);
+      const response = await tearleadsApi.getCurrentUser();
+      const username = response.data.attributes.username;
+
+      appConfig.setLoggedInUser(username);
+      setCookie('loggedInUser', username, {
+        path: '/',
+        secure: window.location.protocol === 'https:',
+        sameSite: 'strict',
+      });
+      navigate(`/${username}`);
+    } catch (error: unknown) {
+      console.error(`${config.provider} authentication error:`, error);
+      appConfig.setLoggedInUser(null);
+    }
+  };
+
+  useEffect(() => {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const code = urlParams.get('code');
+    const scope = urlParams.get('scope');
+    const state = urlParams.get('state');
+
+    console.info(`code (${config.provider} auth): ${code}`);
+    if (scope) {
+      console.info(`scope (${config.provider} auth): ${scope}`);
+    }
+
+    const isValidCallback =
+      code !== null &&
+      code !== '' &&
+      (config.provider === 'github' ||
+        (config.scopeCheck ? config.scopeCheck(scope) : true));
+
+    if (isValidCallback && isOAuthCallback()) {
+      handleCallback({code, scope, state});
+    }
+  }, []);
+
+  const initiateLogin = () => {
+    try {
+      const state = uuidv4();
+      window.sessionStorage.setItem('oauth_state', state);
+
+      const authUrl = new URL(config.authUrl);
+      const params = new URLSearchParams({
+        client_id: config.clientId,
+        state: state,
+        scope: config.scope,
+      });
+
+      if (config.provider === 'google') {
+        params.append('access_type', 'offline');
+        params.append('include_granted_scopes', 'true');
+        params.append('response_type', 'code');
+        if (config.redirectUrl) {
+          params.append('redirect_uri', config.redirectUrl);
+        }
+      }
+
+      authUrl.search = params.toString();
+      window.location.assign(authUrl.toString());
+    } catch (error) {
+      console.error(
+        'Failed to use sessionStorage. OAuth flow cannot proceed.',
+        error
+      );
+    }
+  };
+
+  return {
+    initiateLogin,
+    isLoggedIn: !!appConfig.loggedInUser,
+    isOAuthInProgress: window.location.href.includes('oauth/'),
+  };
+};
