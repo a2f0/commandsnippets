@@ -33,9 +33,9 @@ export const config: WebdriverIO.Config = {
       'appium:automationName': 'UiAutomator2',
       'appium:app': path.resolve(
         process.cwd(),
-        'android/app/build/outputs/apk/debug/app-debug.apk'
+        'android/app/build/outputs/apk/stagingDebug/app-staging-debug.apk'
       ),
-      'appium:appPackage': 'com.tearleads.app',
+      'appium:appPackage': 'com.tearleads.app.staging',
       'appium:appActivity': 'com.tearleads.app.MainActivity',
       'appium:newCommandTimeout': 300,
       'appium:noReset': false,

@@ -108,13 +108,13 @@ jobs:
       - name: Build Android APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleStagingDebug --no-daemon
           echo "APK build completed"
-          ls -la app/build/outputs/apk/debug/
+          ls -la app/build/outputs/apk/stagingDebug/
 
       - name: Verify Android APK
         run: |
-          APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK_PATH="android/app/build/outputs/apk/stagingDebug/app-staging-debug.apk"
           if [ -f "$APK_PATH" ]; then
             echo "✅ APK found at expected location"
             ls -lh "$APK_PATH"

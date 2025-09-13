@@ -69,7 +69,7 @@ For testing the Capacitor Android app in emulator:
 1. Setup Android environment: `./scripts/setup-appium-android.sh`
 2. Start Android emulator: `emulator -avd <your-avd-name>`
 3. Build the staging app: `pnpm run cap:build:staging`
-4. Build APK: `cd android && ./gradlew assembleDebug`
+4. Build APK: `cd android && ./gradlew assembleStagingDebug`
 5. Run tests: `pnpm run appium:android`
 
 **Test Configuration:**
