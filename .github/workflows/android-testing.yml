@@ -96,7 +96,7 @@ jobs:
 
       - name: Start dev server
         run: |
-          pnpm run dev --host --port 8085 &
+          pnpm run dev &
           sleep 10
           curl -f http://localhost:8085 || exit 1
           echo "Dev server started successfully"

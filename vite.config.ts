@@ -123,6 +123,7 @@ export default defineConfig(({mode}) => {
     },
     server: {
       port: 8085,
+      host: true, // Listen on all network interfaces
       hmr: true,
     },
     test: {
