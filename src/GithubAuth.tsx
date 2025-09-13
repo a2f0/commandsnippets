@@ -4,7 +4,7 @@ import React from 'react';
 
 import {useOAuth} from './hooks/useOAuth';
 import {environment} from './lib/environment';
-import {isCapacitor, isElectron} from './lib/platform';
+import {getOAuthRedirectUrl} from './lib/oauth';
 import {LoginButton} from './styled/LoginButton';
 
 let githubClientID: string;
@@ -16,42 +16,13 @@ if (environment === 'staging') {
   githubClientID = 'a94dc4b2bb6ed4fc63a0';
 }
 
-const getGithubRedirectUrl = () => {
-  // For Capacitor apps, use deep link scheme based on environment
-  if (isCapacitor()) {
-    switch (environment) {
-      case 'staging':
-        return 'com.tearleads.app.staging://oauth/github';
-      case 'production':
-        return 'com.tearleads.app://oauth/github';
-      default:
-        return 'com.tearleads.app.dev://oauth/github';
-    }
-  }
-
-  // For Electron apps, use custom protocol
-  if (isElectron()) {
-    return 'tearleads://oauth/github';
-  }
-
-  // For web apps, use standard URLs
-  switch (environment) {
-    case 'staging':
-      return 'https://app.staging.tearleads.com/oauth/github';
-    case 'production':
-      return 'https://tearleads.com/oauth/github';
-    default:
-      return 'http://localhost:8085/oauth/github';
-  }
-};
-
 const GithubAuth = () => {
   const {initiateLogin, isLoggedIn, isOAuthInProgress} = useOAuth({
     provider: 'github',
     clientId: githubClientID,
     authUrl: 'https://github.com/login/oauth/authorize',
     scope: 'user:email',
-    redirectUrl: getGithubRedirectUrl(),
+    redirectUrl: getOAuthRedirectUrl('github'),
   });
 
   return (
