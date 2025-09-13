@@ -31,10 +31,7 @@ export const useOAuth = (config: OAuthConfig) => {
     // For Capacitor and Electron, OAuth callbacks come through deep links
     if (isCapacitor() || isElectron()) {
       const href = window.location.href;
-      return (
-        href.includes(`oauth/${config.provider}`) ||
-        href.includes(`/oauth/${config.provider}`)
-      );
+      return href.includes(`oauth/${config.provider}`);
     }
 
     // For web, check the pathname as before
