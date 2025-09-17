@@ -3,3 +3,6 @@
 
 // Deep link scheme for OAuth redirects - Production
 DEEP_LINK_SCHEME = com.tearleads.app
+
+// Google OAuth URL scheme - Production (TODO: Replace with actual production OAuth client ID)
+GOOGLE_OAUTH_URL_SCHEME = REPLACE_WITH_PRODUCTION_GOOGLE_OAUTH_URL_SCHEME

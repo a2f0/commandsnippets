@@ -133,10 +133,10 @@ export const useOAuth = (config: OAuthConfig) => {
       });
 
       if (config.provider === 'google') {
-        params.append('access_type', 'offline');
-        params.append('include_granted_scopes', 'true');
         params.append('response_type', 'code');
         if (config.redirectUrl) {
+          params.append('access_type', 'offline');
+          params.append('include_granted_scopes', 'true');
           params.append('redirect_uri', config.redirectUrl);
         }
       } else if (config.provider === 'github') {

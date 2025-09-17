@@ -125,6 +125,7 @@
     "@capacitor/app": "7.1.0",
     "@capacitor/ios": "7.4.3",
     "@capacitor/status-bar": "7.0.3",
+    "@capgo/capacitor-social-login": "7.11.3",
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",

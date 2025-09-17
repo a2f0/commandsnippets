@@ -3,3 +3,6 @@
 
 // Deep link scheme for OAuth redirects - Staging
 DEEP_LINK_SCHEME = com.tearleads.app.staging
+
+// Google OAuth URL scheme - Staging (TODO: Replace with actual staging OAuth client ID)
+GOOGLE_OAUTH_URL_SCHEME = REPLACE_WITH_STAGING_GOOGLE_OAUTH_URL_SCHEME
