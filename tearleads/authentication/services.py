@@ -4,10 +4,21 @@ import requests
 
 
 class GoogleOAuthService(object):
-    def __init__(self):
+    def __init__(self, request=None):
         self.client_secret = os.environ["GOOGLE_CLIENT_SECRET"]
         self.client_id = os.environ["GOOGLE_CLIENT_ID"]
-        self.redirect_uri = os.environ["GOOGLE_REDIRECT_URI"]
+
+        # Build redirect URI dynamically based on request if available
+        if request:
+            host = request.get_host()
+            # Check if we're using HTTPS (production) or HTTP (local dev)
+            protocol = "https" if request.is_secure() else "http"
+            self.redirect_uri = f"{protocol}://{host}/auth/google/callback"
+        else:
+            # Fall back to environment variable if no request provided
+            self.redirect_uri = os.environ.get(
+                "GOOGLE_REDIRECT_URI", "http://localhost:9001/auth/google/callback"
+            )
 
     def access_token(self, code):
         data = {
