@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import os
 from urllib.parse import parse_qs
@@ -29,11 +30,15 @@ class AuthenticationMixin:
     def _is_local_dev(self, request):
         """Determine if we're in a local/Docker development environment."""
         host = request.get_host().split(":")[0]  # Remove port if present
-        return (
-            host in ["localhost", "127.0.0.1"]
-            or host.startswith("10.")
-            or host.startswith("192.168.")
-        )
+        if host in ("localhost", "127.0.0.1"):
+            return True
+        try:
+            # Use ipaddress to check for any private IP
+            ip = ipaddress.ip_address(host)
+            return ip.is_private
+        except ValueError:
+            # Not a valid IP address, so it's a hostname.
+            return False
 
     def _create_auth_response(self, user, request):
         """Create authenticated response with proper cookies."""
@@ -67,6 +72,15 @@ class AuthenticationMixin:
         user.last_login = timezone.now()
         user.login_count += 1
         user.save(update_fields=["last_login", "login_count"])
+
+    def _process_oauth_user(self, email, username=None):
+        """Process OAuth user data and handle user creation/update."""
+        if username is None:
+            username = email.split("@", 1)[0]
+        user, created = create_collisionless_user(username, email)
+        if not created:
+            self._process_user_login(user)
+        return user
 
 
 class CustomObtainAuthToken(ObtainAuthToken, AuthenticationMixin):
@@ -127,14 +141,6 @@ class GithubLogin(APIView, AuthenticationMixin):
 class GoogleLogin(APIView, AuthenticationMixin):
     resource_name = "GoogleLogin"
 
-    def _process_google_user(self, email):
-        """Process Google user data and handle user creation/update."""
-        username = email.split("@", 1)[0]
-        user, created = create_collisionless_user(username, email)
-        if not created:
-            self._process_user_login(user)
-        return user
-
     def post(self, request, *args, **kwargs):
         serializer = GoogleAuthenticationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -176,7 +182,7 @@ class GoogleLogin(APIView, AuthenticationMixin):
             )
 
         # Process user and create authenticated response
-        user = self._process_google_user(email)
+        user = self._process_oauth_user(email)
         return self._create_auth_response(user, request)
 
 
@@ -184,21 +190,6 @@ class IntegratedOAuthLogin(APIView, AuthenticationMixin):
     """Integrated OAuth endpoint supporting multiple providers."""
 
     resource_name = "IntegratedOAuthLogin"
-
-    def _process_google_user(self, email):
-        """Process Google user data and handle user creation/update."""
-        username = email.split("@", 1)[0]
-        user, created = create_collisionless_user(username, email)
-        if not created:
-            self._process_user_login(user)
-        return user
-
-    def _process_github_user(self, username, email):
-        """Process GitHub user data and handle user creation/update."""
-        user, created = create_collisionless_user(username, email)
-        if not created:
-            self._process_user_login(user)
-        return user
 
     def _handle_google_oauth(self, code_or_token, request):
         """Handle Google OAuth flow."""
@@ -228,7 +219,7 @@ class IntegratedOAuthLogin(APIView, AuthenticationMixin):
         if not email:
             return None, "No email found in Google user data"
 
-        user = self._process_google_user(email)
+        user = self._process_oauth_user(email)
         return user, None
 
     def _handle_github_oauth(self, code):
@@ -271,7 +262,7 @@ class IntegratedOAuthLogin(APIView, AuthenticationMixin):
         if not primary_email:
             return None, "No primary email found in GitHub user data"
 
-        user = self._process_github_user(username, primary_email)
+        user = self._process_oauth_user(primary_email, username=username)
         return user, None
 
     def post(self, request, *args, **kwargs):

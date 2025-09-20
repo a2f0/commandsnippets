@@ -1,8 +1,12 @@
 import configparser
 import os
+import re
+import socket
 
 import environ
 import rest_framework_json_api
+
+from tearleads.core.private_networks import PrivateNetworkHelper
 
 env = environ.Env()
 
@@ -92,28 +96,12 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # Django will use patterns like 10.* for ALLOWED_HOSTS
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".tearleads.com", "tearleads.com"]
 
-import re
-
 # Add private network patterns to ALLOWED_HOSTS
-import socket
 
 
 def get_private_network_hosts():
     """Add private network patterns for Docker/local development."""
-    hosts = []
-    # Common private network ranges
-    private_ranges = [
-        "10.*",
-        "172.16.*",
-        "172.17.*",
-        "172.18.*",
-        "172.19.*",
-        "172.2*",
-        "172.3*",
-        "192.168.*",
-    ]
-    hosts.extend(private_ranges)
-    return hosts
+    return PrivateNetworkHelper.get_allowed_hosts_patterns()
 
 
 ALLOWED_HOSTS.extend(get_private_network_hosts())
