@@ -24,7 +24,7 @@ class TestIntegratedOAuthSerializer(TestCase):
 
     def test_invalid_provider(self):
         """Test serializer with invalid provider"""
-        data = {"provider": "facebook", "code": "test_code"}
+        data = {"provider": "twitter", "code": "test_code"}
         serializer = IntegratedOAuthSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())
@@ -57,7 +57,7 @@ class TestIntegratedOAuthSerializer(TestCase):
 
     def test_choice_field_case_sensitivity(self):
         """Test that provider field is case sensitive"""
-        data = {"provider": "Google", "code": "test_code"}  # Capital G
+        data = {"provider": "Github", "code": "test_code"}  # Capital G
         serializer = IntegratedOAuthSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())

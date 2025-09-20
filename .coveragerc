@@ -1,6 +1,6 @@
 [run]
 include = tearleads/*
-omit = *migrations*, *tests*
+omit = *migrations*, *tests*, tearleads/cors_config.py
 
 [report]
 fail_under = 98

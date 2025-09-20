@@ -13,6 +13,6 @@ class GoogleAuthenticationSerializer(serializers.Serializer):
 
 class IntegratedOAuthSerializer(serializers.Serializer):
     provider = serializers.ChoiceField(
-        choices=["google", "github"], help_text="OAuth provider"
+        choices=["google", "github", "facebook"], help_text="OAuth provider"
     )
     code = serializers.CharField(help_text="Authorization code or access token")
