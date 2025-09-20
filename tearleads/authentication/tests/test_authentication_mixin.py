@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 
 from tearleads.authentication.api import AuthenticationMixin
 
@@ -16,52 +16,32 @@ class TestAuthenticationMixin(TestCase):
         request.get_host.return_value = host
         return request
 
-    def test_is_local_dev_with_localhost(self):
-        """Test _is_local_dev returns True for localhost."""
-        request = self._create_mock_request("localhost")
+    @override_settings(DEBUG=True)
+    def test_is_local_dev_with_debug_true(self):
+        """Test _is_local_dev returns True when DEBUG=True."""
+        request = self._create_mock_request("example.com")
         self.assertTrue(self.mixin._is_local_dev(request))
 
-    def test_is_local_dev_with_localhost_and_port(self):
-        """Test _is_local_dev returns True for localhost with port."""
-        request = self._create_mock_request("localhost:3000")
-        self.assertTrue(self.mixin._is_local_dev(request))
-
-    def test_is_local_dev_with_127_0_0_1(self):
-        """Test _is_local_dev returns True for 127.0.0.1."""
-        request = self._create_mock_request("127.0.0.1")
-        self.assertTrue(self.mixin._is_local_dev(request))
-
-    def test_is_local_dev_with_127_0_0_1_and_port(self):
-        """Test _is_local_dev returns True for 127.0.0.1 with port."""
-        request = self._create_mock_request("127.0.0.1:8000")
-        self.assertTrue(self.mixin._is_local_dev(request))
-
-    def test_is_local_dev_with_private_ip_10_range(self):
-        """Test _is_local_dev returns True for private IP in 10.x range."""
-        request = self._create_mock_request("10.0.0.1")
-        self.assertTrue(self.mixin._is_local_dev(request))
-
-    def test_is_local_dev_with_private_ip_192_range(self):
-        """Test _is_local_dev returns True for private IP in 192.168.x range."""
-        request = self._create_mock_request("192.168.1.1")
-        self.assertTrue(self.mixin._is_local_dev(request))
-
-    def test_is_local_dev_with_private_ip_172_range(self):
-        """Test _is_local_dev returns True for private IP in 172.16.x range."""
-        request = self._create_mock_request("172.16.0.1")
-        self.assertTrue(self.mixin._is_local_dev(request))
-
-    def test_is_local_dev_with_public_ip(self):
-        """Test _is_local_dev returns False for public IP."""
-        request = self._create_mock_request("8.8.8.8")
-        self.assertFalse(self.mixin._is_local_dev(request))
-
-    def test_is_local_dev_with_domain_name(self):
-        """Test _is_local_dev returns False for domain names."""
+    @override_settings(DEBUG=False)
+    def test_is_local_dev_with_debug_false(self):
+        """Test _is_local_dev returns False when DEBUG=False and no IS_LOCAL_DEV."""
         request = self._create_mock_request("example.com")
         self.assertFalse(self.mixin._is_local_dev(request))
 
-    def test_is_local_dev_with_domain_name_and_port(self):
-        """Test _is_local_dev returns False for domain names with port."""
-        request = self._create_mock_request("example.com:443")
+    @override_settings(DEBUG=False, IS_LOCAL_DEV=True)
+    def test_is_local_dev_with_explicit_setting_true(self):
+        """Test _is_local_dev returns True when IS_LOCAL_DEV=True."""
+        request = self._create_mock_request("example.com")
+        self.assertTrue(self.mixin._is_local_dev(request))
+
+    @override_settings(DEBUG=False, IS_LOCAL_DEV=False)
+    def test_is_local_dev_with_explicit_setting_false(self):
+        """Test _is_local_dev returns False when IS_LOCAL_DEV=False."""
+        request = self._create_mock_request("example.com")
         self.assertFalse(self.mixin._is_local_dev(request))
+
+    @override_settings(DEBUG=True, IS_LOCAL_DEV=False)
+    def test_is_local_dev_debug_overrides_explicit_setting(self):
+        """Test _is_local_dev returns True when DEBUG=True even if IS_LOCAL_DEV=False."""
+        request = self._create_mock_request("example.com")
+        self.assertTrue(self.mixin._is_local_dev(request))

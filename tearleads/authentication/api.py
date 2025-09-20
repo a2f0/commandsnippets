@@ -1,4 +1,3 @@
-import ipaddress
 import json
 import os
 from urllib.parse import parse_qs
@@ -29,16 +28,13 @@ class AuthenticationMixin:
 
     def _is_local_dev(self, request):
         """Determine if we're in a local/Docker development environment."""
-        host = request.get_host().split(":")[0]  # Remove port if present
-        if host in ("localhost", "127.0.0.1"):
-            return True
-        try:
-            # Use ipaddress to check for any private IP
-            ip = ipaddress.ip_address(host)
-            return ip.is_private
-        except ValueError:
-            # Not a valid IP address, so it's a hostname.
-            return False
+        return settings.DEBUG or getattr(settings, "IS_LOCAL_DEV", False)
+
+    def _create_error_response(
+        self, error_message, status_code=status.HTTP_401_UNAUTHORIZED
+    ):
+        """Create standardized error response."""
+        return Response({"error": error_message}, status=status_code)
 
     def _create_auth_response(self, user, request):
         """Create authenticated response with proper cookies."""
@@ -135,7 +131,7 @@ class GithubLogin(APIView, AuthenticationMixin):
                                 self._process_user_login(user)
                             return self._create_auth_response(user, request)
 
-        return Response({}, status=status.HTTP_401_UNAUTHORIZED)
+        return self._create_error_response("Authentication failed")
 
 
 class GoogleLogin(APIView, AuthenticationMixin):
@@ -158,9 +154,8 @@ class GoogleLogin(APIView, AuthenticationMixin):
             # Not a valid token, try exchanging it as an authorization code
             token_response = service.access_token(code_or_token)
             if token_response.status_code != 200:
-                return Response(
-                    {"error": "Invalid authorization code or access token provided"},
-                    status=status.HTTP_401_UNAUTHORIZED,
+                return self._create_error_response(
+                    "Invalid authorization code or access token provided"
                 )
             response_dict = json.loads(token_response.text)
             access_token = response_dict["access_token"]
@@ -168,17 +163,15 @@ class GoogleLogin(APIView, AuthenticationMixin):
             # Fetch user info with the newly obtained access token
             user_response = service.user(access_token)
             if user_response.status_code != 200:
-                return Response(
-                    {"error": "Failed to fetch user information from Google"},
-                    status=status.HTTP_401_UNAUTHORIZED,
+                return self._create_error_response(
+                    "Failed to fetch user information from Google"
                 )
 
         user_data = json.loads(user_response.text)
         email = user_data.get("email")
         if not email:
-            return Response(
-                {"error": "No email found in Google user data"},
-                status=status.HTTP_400_BAD_REQUEST,
+            return self._create_error_response(
+                "No email found in Google user data", status.HTTP_400_BAD_REQUEST
             )
 
         # Process user and create authenticated response
@@ -277,12 +270,11 @@ class IntegratedOAuthLogin(APIView, AuthenticationMixin):
         elif provider == "github":
             user, error = self._handle_github_oauth(code)
         else:
-            return Response(
-                {"error": f"Unsupported provider: {provider}"},
-                status=status.HTTP_400_BAD_REQUEST,
+            return self._create_error_response(
+                f"Unsupported provider: {provider}", status.HTTP_400_BAD_REQUEST
             )
 
         if error:
-            return Response({"error": error}, status=status.HTTP_401_UNAUTHORIZED)
+            return self._create_error_response(error)
 
         return self._create_auth_response(user, request)
