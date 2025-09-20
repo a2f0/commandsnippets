@@ -1,6 +1,6 @@
 [run]
 include = tearleads/*
-omit = *migrations*, *tests*, tearleads/cors_config.py, manage.py, tearleads/wsgi.py, tearleads/settings/production.py, tearleads/settings/staging.py, tearleads/*/management/commands/*, tearleads/healthcheck/views.py, tearleads/authentication/utility.py, tearleads/*/tests/*
+omit = *migrations*, *tests*, tearleads/cors_config.py, manage.py, tearleads/wsgi.py, tearleads/settings/production.py, tearleads/settings/staging.py, tearleads/*/management/commands/*, tearleads/authentication/utility.py, tearleads/*/tests/*
 
 [report]
 fail_under = 98
