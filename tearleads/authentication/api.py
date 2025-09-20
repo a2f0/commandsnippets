@@ -8,6 +8,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -58,7 +59,7 @@ class AuthenticationMixin:
             None,
             httponly=False,
             max_age=2419200,
-            samesite="strict",
+            samesite="lax" if is_local_dev else "strict",
             domain=cookie_domain,
         )
         return response
