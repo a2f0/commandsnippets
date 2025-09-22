@@ -104,23 +104,14 @@ class GithubLogin(APIView):
                                 user.login_count += 1
                                 user.save(update_fields=["last_login", "login_count"])
                             token, created = Token.objects.get_or_create(user=user)
-
-                            is_local_dev = (
-                                settings.COOKIE_DOMAIN == "localhost"
-                                or settings.COOKIE_DOMAIN == "127.0.0.1"
-                            )
-                            cookie_domain = (
-                                None if is_local_dev else settings.COOKIE_DOMAIN
-                            )
-
                             response = Response({})
                             response.set_cookie(
                                 "Authorization",
                                 token.key,
                                 httponly=True,
-                                secure=not is_local_dev,
-                                samesite="lax" if is_local_dev else "strict",
-                                domain=cookie_domain,
+                                secure=True,
+                                samesite="strict",
+                                domain=settings.COOKIE_DOMAIN,
                                 max_age=2419200,
                             )
                             response.set_cookie(
@@ -128,9 +119,9 @@ class GithubLogin(APIView):
                                 None,
                                 httponly=False,
                                 max_age=2419200,
-                                samesite="lax" if is_local_dev else "strict",
-                                domain=cookie_domain,
-                            )
+                                samesite="strict",
+                                domain=settings.COOKIE_DOMAIN,
+                            ),
                             return response
 
         return Response({}, status=status.HTTP_401_UNAUTHORIZED)
@@ -167,21 +158,14 @@ class GoogleLogin(APIView):
                     user.login_count += 1
                     user.save(update_fields=["last_login", "login_count"])
                 token, created = Token.objects.get_or_create(user=user)
-
-                is_local_dev = (
-                    settings.COOKIE_DOMAIN == "localhost"
-                    or settings.COOKIE_DOMAIN == "127.0.0.1"
-                )
-                cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
-
                 response = Response({})
                 response.set_cookie(
                     "Authorization",
                     token.key,
                     httponly=True,
-                    secure=not is_local_dev,
-                    samesite="lax" if is_local_dev else "strict",
-                    domain=cookie_domain,
+                    secure=True,
+                    samesite="strict",
+                    domain=settings.COOKIE_DOMAIN,
                     max_age=2419200,
                 )
                 response.set_cookie(
@@ -189,20 +173,12 @@ class GoogleLogin(APIView):
                     None,
                     httponly=False,
                     max_age=2419200,
-                    samesite="lax" if is_local_dev else "strict",
-                    domain=cookie_domain,
-                )
+                    samesite="strict",
+                    domain=settings.COOKIE_DOMAIN,
+                ),
                 return response
-            else:
-                return Response(
-                    {"error": "A communication error has occurred."},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-        else:
-            return Response(
-                {"error": "Invalid authorization code."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+
+        return Response({}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class IntegratedOAuthLogin(APIView):
