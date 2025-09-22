@@ -25,23 +25,26 @@ from .services import GithubOAuthService, GoogleOAuthService
 
 
 class CustomObtainAuthToken(ObtainAuthToken):
-    def _is_local_dev(self, request):
-        """Determine if we're in a local/Docker development environment."""
-        return settings.DEBUG or getattr(settings, "IS_LOCAL_DEV", False)
-
-    def _create_auth_response(self, user, request):
-        """Create authenticated response with proper cookies."""
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
-        response = Response({})
 
-        is_local_dev = self._is_local_dev(request)
+        is_local_dev = (
+            settings.COOKIE_DOMAIN == "localhost"
+            or settings.COOKIE_DOMAIN == "127.0.0.1"
+        )
         cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
 
+        response = Response({})
         response.set_cookie(
             "Authorization",
             token.key,
             httponly=True,
-            secure=not is_local_dev,  # Use HTTPS in production only
+            secure=not is_local_dev,
             samesite="lax" if is_local_dev else "strict",
             domain=cookie_domain,
             max_age=2419200,
@@ -55,14 +58,6 @@ class CustomObtainAuthToken(ObtainAuthToken):
             domain=cookie_domain,
         )
         return response
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        return self._create_auth_response(user, request)
 
 
 class CustomInvalidateAuthToken(APIView):
