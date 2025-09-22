@@ -24,18 +24,10 @@ from .serializers import (
 from .services import GithubOAuthService, GoogleOAuthService
 
 
-class AuthenticationMixin:
-    """Shared authentication helper methods."""
-
+class CustomObtainAuthToken(ObtainAuthToken):
     def _is_local_dev(self, request):
         """Determine if we're in a local/Docker development environment."""
         return settings.DEBUG or getattr(settings, "IS_LOCAL_DEV", False)
-
-    def _create_error_response(
-        self, error_message, status_code=status.HTTP_401_UNAUTHORIZED
-    ):
-        """Create standardized error response."""
-        return Response({"error": error_message}, status=status_code)
 
     def _create_auth_response(self, user, request):
         """Create authenticated response with proper cookies."""
@@ -64,23 +56,6 @@ class AuthenticationMixin:
         )
         return response
 
-    def _process_user_login(self, user):
-        """Update user login information."""
-        user.last_login = timezone.now()
-        user.login_count += 1
-        user.save(update_fields=["last_login", "login_count"])
-
-    def _process_oauth_user(self, email, username=None):
-        """Process OAuth user data and handle user creation/update."""
-        if username is None:
-            username = email.split("@", 1)[0]
-        user, created = create_collisionless_user(username, email)
-        if not created:
-            self._process_user_login(user)
-        return user
-
-
-class CustomObtainAuthToken(ObtainAuthToken, AuthenticationMixin):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
@@ -235,10 +210,63 @@ class GoogleLogin(APIView):
             )
 
 
-class IntegratedOAuthLogin(APIView, AuthenticationMixin):
+class IntegratedOAuthLogin(APIView):
     """Integrated OAuth endpoint supporting multiple providers."""
 
     resource_name = "IntegratedOAuthLogin"
+
+    def _is_local_dev(self, request):
+        """Determine if we're in a local/Docker development environment."""
+        return settings.DEBUG or getattr(settings, "IS_LOCAL_DEV", False)
+
+    def _create_error_response(
+        self, error_message, status_code=status.HTTP_401_UNAUTHORIZED
+    ):
+        """Create standardized error response."""
+        return Response({"error": error_message}, status=status_code)
+
+    def _create_auth_response(self, user, request):
+        """Create authenticated response with proper cookies."""
+        token, created = Token.objects.get_or_create(user=user)
+        response = Response({})
+
+        is_local_dev = self._is_local_dev(request)
+        cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
+
+        response.set_cookie(
+            "Authorization",
+            token.key,
+            httponly=True,
+            secure=not is_local_dev,  # Use HTTPS in production only
+            samesite="lax" if is_local_dev else "strict",
+            domain=cookie_domain,
+            max_age=2419200,
+        )
+        response.set_cookie(
+            "LoggedIn",
+            None,
+            httponly=False,
+            max_age=2419200,
+            samesite="lax" if is_local_dev else "strict",
+            domain=cookie_domain,
+        )
+        return response
+
+    def _process_user_login(self, user):
+        """Update user login information."""
+        user.last_login = timezone.now()
+        user.login_count += 1
+        user.save(update_fields=["last_login", "login_count"])
+
+    def _process_oauth_user(self, email, username=None):
+        """Process OAuth user data and handle user creation/update."""
+        if username is None:
+            username = email.split("@", 1)[0]
+
+        user, created = create_collisionless_user(username, email)
+        if not created:
+            self._process_user_login(user)
+        return user
 
     def _handle_google_oauth(self, code_or_token, request):
         """Handle Google OAuth flow."""
