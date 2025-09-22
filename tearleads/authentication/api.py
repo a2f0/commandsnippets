@@ -271,11 +271,11 @@ class IntegratedOAuthLogin(APIView, AuthenticationMixin):
         elif provider == "github":
             user, error = self._handle_github_oauth(code)
         else:
-            return self._create_error_response(
-                f"Unsupported provider: {provider}", status.HTTP_400_BAD_REQUEST
+            raise ValidationError(
+                detail=f"Unsupported provider: {provider}", code="unsupported_provider"
             )
 
         if error:
-            return self._create_error_response(error)
+            raise AuthenticationFailed(detail=error)
 
         return self._create_auth_response(user, request)

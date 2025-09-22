@@ -286,7 +286,7 @@ class TestIntegratedOAuth(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         response_data = response.json()
         self.assertEqual(
-            response_data["errors"]["error"], "Unsupported provider: facebook"
+            response_data["errors"][0]["detail"], "Unsupported provider: facebook"
         )
 
     def test_integrated_oauth_invalid_serializer_data(self):
@@ -324,8 +324,11 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
 
     @responses.activate
     def test_integrated_oauth_google_invalid_token_response(self):
@@ -360,8 +363,11 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
 
     @responses.activate
     def test_google_direct_access_token_flow(self):
@@ -423,8 +429,11 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
 
     @responses.activate
     def test_integrated_oauth_github_missing_username(self):
@@ -456,8 +465,11 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
 
     @responses.activate
     def test_integrated_oauth_github_emails_fetch_failure(self):
@@ -498,8 +510,11 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
 
     @responses.activate
     def test_integrated_oauth_github_missing_primary_email(self):
@@ -542,8 +557,11 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
 
     @responses.activate
     def test_integrated_oauth_github_missing_access_token(self):
@@ -566,8 +584,11 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
 
     @responses.activate
     def test_integrated_oauth_google_missing_email(self):
@@ -603,8 +624,11 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
 
     @responses.activate
     def test_integrated_oauth_google_user_info_fetch_failure_after_token_exchange(self):
@@ -649,5 +673,8 @@ class TestIntegratedOAuth(BaseTestCase):
 
         response = self.auth_user_api_client.post("/api/v1/oauth/", payload)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Check for JSON:API error format
+        self.assertTrue(isinstance(response.data, list))
+        self.assertTrue(len(response.data) > 0)
+        self.assertIn("detail", response.data[0])
