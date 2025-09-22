@@ -100,7 +100,7 @@ class CustomInvalidateAuthToken(APIView):
         return response
 
 
-class GithubLogin(APIView, AuthenticationMixin):
+class GithubLogin(APIView):
     resource_name = "GithubLogin"
 
     def post(self, request, *args, **kwargs):
@@ -128,56 +128,111 @@ class GithubLogin(APIView, AuthenticationMixin):
                             user, created = create_collisionless_user(
                                 username, email["email"]
                             )
-                            if not created:
-                                self._process_user_login(user)
-                            return self._create_auth_response(user, request)
+                            if created == False:
+                                # Then it is a login for an existing user
+                                user.last_login = timezone.now()
+                                user.login_count += 1
+                                user.save(update_fields=["last_login", "login_count"])
+                            token, created = Token.objects.get_or_create(user=user)
 
-        return self._create_error_response("Authentication failed")
+                            is_local_dev = (
+                                settings.COOKIE_DOMAIN == "localhost"
+                                or settings.COOKIE_DOMAIN == "127.0.0.1"
+                            )
+                            cookie_domain = (
+                                None if is_local_dev else settings.COOKIE_DOMAIN
+                            )
+
+                            response = Response({})
+                            response.set_cookie(
+                                "Authorization",
+                                token.key,
+                                httponly=True,
+                                secure=not is_local_dev,
+                                samesite="lax" if is_local_dev else "strict",
+                                domain=cookie_domain,
+                                max_age=2419200,
+                            )
+                            response.set_cookie(
+                                "LoggedIn",
+                                None,
+                                httponly=False,
+                                max_age=2419200,
+                                samesite="lax" if is_local_dev else "strict",
+                                domain=cookie_domain,
+                            )
+                            return response
+
+        return Response({}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-class GoogleLogin(APIView, AuthenticationMixin):
+class GoogleLogin(APIView):
     resource_name = "GoogleLogin"
 
     def post(self, request, *args, **kwargs):
         serializer = GoogleAuthenticationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        service = GoogleOAuthService(request=request)
+        service = GoogleOAuthService()
+        response = service.access_token(serializer.data["code"])
+        if response.status_code == 200:
+            response_dict = json.loads(response.text)
+            authorization_header = "Bearer " + response_dict["access_token"]
+            headers = {"Authorization": authorization_header}
 
-        code_or_token = serializer.data["code"]
+            # Get the email address associated with the account
+            response = service.user(response_dict["access_token"])
+            if response.status_code == 200:
+                response_dict = json.loads(response.text)
+                email = response_dict.get("email")
+                if not email:
+                    return Response(
+                        {"error": "No email found in Google user data"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                username = email.split("@", 1)[0]
+                user, created = create_collisionless_user(username, email)
+                if created == False:
+                    # Then it is a login for an existing user
+                    user.last_login = timezone.now()
+                    user.login_count += 1
+                    user.save(update_fields=["last_login", "login_count"])
+                token, created = Token.objects.get_or_create(user=user)
 
-        # First, try using it as an access token (iOS native auth case)
-        user_response = service.user(code_or_token)
+                is_local_dev = (
+                    settings.COOKIE_DOMAIN == "localhost"
+                    or settings.COOKIE_DOMAIN == "127.0.0.1"
+                )
+                cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
 
-        if user_response.status_code == 200:
-            # It's a valid access token
-            access_token = code_or_token
+                response = Response({})
+                response.set_cookie(
+                    "Authorization",
+                    token.key,
+                    httponly=True,
+                    secure=not is_local_dev,
+                    samesite="lax" if is_local_dev else "strict",
+                    domain=cookie_domain,
+                    max_age=2419200,
+                )
+                response.set_cookie(
+                    "LoggedIn",
+                    None,
+                    httponly=False,
+                    max_age=2419200,
+                    samesite="lax" if is_local_dev else "strict",
+                    domain=cookie_domain,
+                )
+                return response
+            else:
+                return Response(
+                    {"error": "A communication error has occurred."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
         else:
-            # Not a valid token, try exchanging it as an authorization code
-            token_response = service.access_token(code_or_token)
-            if token_response.status_code != 200:
-                return self._create_error_response(
-                    "Invalid authorization code or access token provided"
-                )
-            response_dict = json.loads(token_response.text)
-            access_token = response_dict["access_token"]
-
-            # Fetch user info with the newly obtained access token
-            user_response = service.user(access_token)
-            if user_response.status_code != 200:
-                return self._create_error_response(
-                    "Failed to fetch user information from Google"
-                )
-
-        user_data = json.loads(user_response.text)
-        email = user_data.get("email")
-        if not email:
-            return self._create_error_response(
-                "No email found in Google user data", status.HTTP_400_BAD_REQUEST
+            return Response(
+                {"error": "Invalid authorization code."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
-
-        # Process user and create authenticated response
-        user = self._process_oauth_user(email)
-        return self._create_auth_response(user, request)
 
 
 class IntegratedOAuthLogin(APIView, AuthenticationMixin):
