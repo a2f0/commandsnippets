@@ -233,27 +233,14 @@ class IntegratedOAuthLogin(APIView):
         return user
 
     def _handle_google_oauth(self, code_or_token, request):
-        """Handle Google OAuth flow."""
+        """Handle Google OAuth flow with direct access token only."""
         service = GoogleOAuthService(request=request)
 
-        # First, try using it as an access token (iOS native auth case)
+        # Use the provided access token directly (iOS native auth case)
         user_response = service.user(code_or_token)
 
-        if user_response.status_code == 200:
-            # It's a valid access token
-            access_token = code_or_token
-        else:
-            # Not a valid token, try exchanging it as an authorization code
-            token_response = service.access_token(code_or_token)
-            if token_response.status_code != 200:
-                return None, "Invalid authorization code or access token provided"
-            response_dict = json.loads(token_response.text)
-            access_token = response_dict["access_token"]
-
-            # Fetch user info with the newly obtained access token
-            user_response = service.user(access_token)
-            if user_response.status_code != 200:
-                return None, "Failed to fetch user information from Google"
+        if user_response.status_code != 200:
+            return None, "Invalid access token provided"
 
         user_data = json.loads(user_response.text)
         email = user_data.get("email")
