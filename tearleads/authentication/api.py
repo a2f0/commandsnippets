@@ -232,12 +232,12 @@ class IntegratedOAuthLogin(APIView):
             self._process_user_login(user)
         return user
 
-    def _handle_google_oauth(self, code_or_token, request):
+    def _handle_google_oauth(self, token, request):
         """Handle Google OAuth flow with direct access token only."""
         service = GoogleOAuthService(request=request)
 
         # Use the provided access token directly (iOS native auth case)
-        user_response = service.user(code_or_token)
+        user_response = service.user(token)
 
         if user_response.status_code != 200:
             return None, "Invalid access token provided"
