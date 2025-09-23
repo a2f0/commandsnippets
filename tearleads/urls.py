@@ -23,6 +23,6 @@ urlpatterns = [
     re_path(r"^api/v1/user/", User.as_view()),
     re_path(r"^api/v1/github-login/", GithubLogin.as_view()),
     re_path(r"^api/v1/google-login/", GoogleLogin.as_view()),
-    re_path(r"^api/v1/oauth/", IntegratedOAuthLogin.as_view()),
+    re_path(r"^api/v1/integrated-oauth/", IntegratedOAuthLogin.as_view()),
     re_path(r"^api/v1/", include(router.urls)),
 ]

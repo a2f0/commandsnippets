@@ -250,60 +250,15 @@ class IntegratedOAuthLogin(APIView):
         user = self._process_oauth_user(email)
         return user, None
 
-    def _handle_github_oauth(self, code):
-        """Handle GitHub OAuth flow."""
-        service = GithubOAuthService()
-        response = service.access_token(code)
-
-        if response.status_code != 200:
-            return None, "Invalid GitHub authorization code"
-
-        qs = parse_qs(response.text)
-        access_token = qs.get("access_token")
-        if not access_token:
-            return None, "No access token received from GitHub"
-
-        access_token = access_token[0]
-
-        # Get the GitHub login
-        response = service.user(access_token)
-        if response.status_code != 200:
-            return None, "Failed to fetch user information from GitHub"
-
-        data = json.loads(response.text)
-        username = data.get("login")
-        if not username:
-            return None, "No username found in GitHub user data"
-
-        # Get the primary email
-        response = service.emails(access_token)
-        if response.status_code != 200:
-            return None, "Failed to fetch email information from GitHub"
-
-        data = json.loads(response.text)
-        primary_email = None
-        for email in data:
-            if email.get("primary"):
-                primary_email = email["email"]
-                break
-
-        if not primary_email:
-            return None, "No primary email found in GitHub user data"
-
-        user = self._process_oauth_user(primary_email, username=username)
-        return user, None
-
     def post(self, request, *args, **kwargs):
         serializer = IntegratedOAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         provider = serializer.validated_data["provider"]
-        code = serializer.validated_data["code"]
+        token = serializer.validated_data["token"]
 
         if provider == "google":
-            user, error = self._handle_google_oauth(code, request)
-        elif provider == "github":
-            user, error = self._handle_github_oauth(code)
+            user, error = self._handle_google_oauth(token, request)
         else:
             raise ValidationError(
                 detail=f"Unsupported provider: {provider}", code="unsupported_provider"
