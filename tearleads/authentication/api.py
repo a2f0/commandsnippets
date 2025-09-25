@@ -234,7 +234,7 @@ class IntegratedOAuthLogin(APIView):
 
     def _handle_google_oauth(self, token, request):
         """Handle Google OAuth flow with direct access token only."""
-        service = GoogleOAuthService(request=request)
+        service = GoogleOAuthService()
 
         # Use the provided access token directly (iOS native auth case)
         user_response = service.user(token)
