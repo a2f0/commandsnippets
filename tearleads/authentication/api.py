@@ -184,12 +184,6 @@ class IntegratedOAuthLogin(APIView):
         """Determine if we're in a local/Docker development environment."""
         return settings.DEBUG or getattr(settings, "IS_LOCAL_DEV", False)
 
-    def _create_error_response(
-        self, error_message, status_code=status.HTTP_401_UNAUTHORIZED
-    ):
-        """Create standardized error response."""
-        return Response({"error": error_message}, status=status_code)
-
     def _create_auth_response(self, user, request):
         """Create authenticated response with proper cookies."""
         token, created = Token.objects.get_or_create(user=user)
