@@ -116,7 +116,7 @@ const GoogleAuthIntegrated = () => {
           onClick={handleCapacitorGoogleLogin}
           startIcon={<Google />}
         >
-          Login with Zoogle1
+          Login with Google
         </LoginButton>
       )}
     </>
