@@ -227,7 +227,7 @@ class IntegratedOAuthLogin(APIView):
             self._process_user_login(user)
         return user
 
-    def _handle_google_oauth(self, token, request):
+    def _handle_google_oauth(self, token):
         """Handle Google OAuth flow with direct access token only."""
         service = GoogleOAuthService()
 
@@ -253,7 +253,7 @@ class IntegratedOAuthLogin(APIView):
         token = serializer.validated_data["token"]
 
         if provider == "google":
-            user, error = self._handle_google_oauth(token, request)
+            user, error = self._handle_google_oauth(token)
         else:
             raise ValidationError(
                 detail=f"Unsupported provider: {provider}", code="unsupported_provider"
