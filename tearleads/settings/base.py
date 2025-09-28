@@ -1,12 +1,8 @@
 import configparser
 import os
-import re
-import socket
 
 import environ
 import rest_framework_json_api
-
-from tearleads.core.private_networks import PrivateNetworkHelper
 
 env = environ.Env()
 
@@ -29,7 +25,6 @@ DEBUG = True
 THIRD_PARTY_APPS = ["corsheaders", "rest_framework", "rest_framework.authtoken"]
 
 LOCAL_APPS = [
-    "tearleads.apps.TearleadsConfig",  # Main app config for CORS signals
     "tearleads.core",
     "tearleads.authentication",
     "tearleads.healthcheck",
@@ -83,28 +78,25 @@ WSGI_APPLICATION = "tearleads.wsgi.application"
 
 # Also see ALLOWED_HOSTS
 
-# CORS configuration with regex patterns for known domains
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost(:\d+)?$",
-    r"^http://127\.0\.0\.1(:\d+)?$",
+CORS_ORIGIN_REGEX_WHITELIST = [
+    r"^http://localhost:*",
+    r"^http://127\.0\.0\.1:*",
+    # RFC 1918 private address space
+    r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:*",  # 10.0.0.0/8
+    r"^http://172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}:*",  # 172.16.0.0/12
+    r"^http://192\.168\.\d{1,3}\.\d{1,3}:*",  # 192.168.0.0/16
+    # Production domains
     r"^https://tearleads\.com$",
-    r"^https://[\w-]+\.tearleads\.com$",
-    r"^https://[\w-]+\.staging\.tearleads\.com$",
+    r"^https://\w+\.tearleads\.com$",
+    r"^https://\w+\.staging\.tearleads\.com$",
 ]
 
-# Allow any private network IP (Docker containers, local dev)
-# Django will use patterns like 10.* for ALLOWED_HOSTS
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".tearleads.com", "tearleads.com"]
-
-# Add private network patterns to ALLOWED_HOSTS
-
-
-def get_private_network_hosts():
-    """Add private network patterns for Docker/local development."""
-    return PrivateNetworkHelper.get_allowed_hosts_patterns()
-
-
-ALLOWED_HOSTS.extend(get_private_network_hosts())
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    ".tearleads.com",
+    "tearleads.com",
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
