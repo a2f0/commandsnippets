@@ -1,7 +1,7 @@
 import {AppBar, Box, Typography} from '@mui/material';
 import React from 'react';
 import {GithubAuth} from '../../GithubAuth';
-import {GoogleAuth} from '../../GoogleAuth';
+import {GoogleAuthWrapper} from '../../GoogleAuthWrapper';
 import {StyledToolbar} from '../../styled/layout/StyledToolbar';
 import {SafeAreaProvider, useSafeArea} from '../SafeAreaProvider';
 import {Footer} from './Footer';
@@ -31,7 +31,7 @@ const PublicHomePageContent = () => {
             mr={1}
           >
             <GithubAuth />
-            <GoogleAuth />
+            <GoogleAuthWrapper />
           </Box>
         </StyledToolbar>
       </AppBar>
