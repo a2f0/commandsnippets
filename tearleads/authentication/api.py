@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import os
 from urllib.parse import parse_qs
@@ -179,7 +180,7 @@ class IntegratedOAuthLogin(APIView):
 
     resource_name = "IntegratedOAuthLogin"
 
-    def _is_local_dev(self, request):
+    def _is_local_dev(self):
         """Determine if we're in a local/Docker development environment."""
         return settings.DEBUG or getattr(settings, "IS_LOCAL_DEV", False)
 
@@ -194,7 +195,7 @@ class IntegratedOAuthLogin(APIView):
         token, created = Token.objects.get_or_create(user=user)
         response = Response({})
 
-        is_local_dev = self._is_local_dev(request)
+        is_local_dev = self._is_local_dev()
         cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
 
         response.set_cookie(
