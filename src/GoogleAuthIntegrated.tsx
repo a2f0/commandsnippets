@@ -5,7 +5,6 @@ import React from 'react';
 import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 import {useAppContext} from './AppContext';
-import {baseURL} from './lib/api/baseUrl';
 import {tearleadsApi} from './lib/api/tearleadsApi';
 import {LoginButton} from './styled/LoginButton';
 
@@ -23,7 +22,6 @@ const GoogleAuthIntegrated = () => {
       secure: window.location.protocol === 'https:',
       sameSite: 'strict',
     });
-    console.log('Navigating to:', `/${username}`);
     navigate(`/${username}`);
   };
 
@@ -40,66 +38,31 @@ const GoogleAuthIntegrated = () => {
         },
       });
 
-      console.log('Full SocialLogin result:', JSON.stringify(result, null, 2));
-
       // Check the response type to handle the result correctly
       if (result.result.responseType === 'online') {
         const accessToken = result.result.accessToken?.token;
-        const idToken = result.result.idToken;
-
-        console.log('Access token:', accessToken ? 'present' : 'missing');
-        console.log('ID token:', idToken ? 'present' : 'missing');
 
         if (accessToken) {
-          console.log(
-            'Integrated OAuth - calling tearleadsApi.integratedOAuthLogin...'
-          );
-          console.log(
-            'integratedOAuthLogin - URL:',
-            `${baseURL}/integrated-oauth/`
-          );
-
           // Use the new integrated OAuth endpoint for Capacitor
           await tearleadsApi.integratedOAuthLogin('google', accessToken);
-          console.log('tearleadsApi.integratedOAuthLogin succeeded');
-
-          // Check cookies after login
-          console.log('Document cookies after login:', document.cookie);
-
-          // Small delay to ensure cookies are set
-          await new Promise(resolve => setTimeout(resolve, 100));
-          console.log('About to call getCurrentUser...');
 
           const response = await tearleadsApi.getCurrentUser();
-          console.log('getCurrentUser response:', response);
 
           const username = response.data.attributes.username;
-          console.log('Extracted username:', username);
 
           await setupUserSession(username);
-        } else {
-          console.log('No access token found!');
         }
       } else {
         // Offline mode - we have a serverAuthCode instead
-        console.log(
-          'Offline mode response - serverAuthCode:',
-          result.result.serverAuthCode
-        );
         // TODO: Implement offline mode handling if needed
-        console.log('Offline mode not yet implemented');
       }
     } catch (error) {
-      console.error('Google Sign-In error - full error object:', error);
+      // Log error for debugging but avoid verbose console output
       if (error instanceof Error) {
-        console.error('Google Sign-In error - error message:', error.message);
-        console.error('Google Sign-In error - error stack:', error.stack);
+        console.error('Google Sign-In error:', error.message);
+      } else {
+        console.error('Google Sign-In error:', error);
       }
-      console.error('Google Sign-In error - typeof error:', typeof error);
-      console.error(
-        'Google Sign-In error - JSON stringify:',
-        JSON.stringify(error, null, 2)
-      );
       appConfig.setLoggedInUser(null);
     } finally {
       setIsOAuthInProgress(false);

@@ -190,13 +190,11 @@ The project includes Appium-based mobile testing for both iOS and Android Capaci
 Test the Capacitor iOS app in the iOS Simulator:
 
 ```shell
-# Recommended: Build dev app (setup only - doesn't run tests)
+# First, build the dev app (if not already built)
 pnpm run appium:build-and-test
 
-# Then run the tests
-pnpm run appium:ios
-
-# Alternative: Run tests only (requires pre-built app)
+# Then, run the tests. This command can also be used
+# if you have a pre-built app.
 pnpm run appium:ios
 ```
 

@@ -58,40 +58,18 @@ class TearleadsApi {
       },
     };
 
-    console.log('integratedOAuthLogin - URL:', `${baseURL}/integrated-oauth/`);
-    console.log(
-      'integratedOAuthLogin - payload:',
-      JSON.stringify(payload, null, 2)
-    );
+    const resp = await fetchWithAuth(`${baseURL}/integrated-oauth/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/vnd.api+json'},
+      body: JSON.stringify(payload),
+    });
 
-    try {
-      const resp = await fetchWithAuth(`${baseURL}/integrated-oauth/`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {'Content-Type': 'application/vnd.api+json'},
-        body: JSON.stringify(payload),
-      });
-
-      console.log('integratedOAuthLogin - response status:', resp.status);
-      console.log('integratedOAuthLogin - response ok:', resp.ok);
-      console.log('integratedOAuthLogin - response headers:', resp.headers);
-
-      if (!resp.ok) {
-        const errorText = await resp.text();
-        console.log('integratedOAuthLogin - error response body:', errorText);
-        throw new Error(
-          `Integrated OAuth login failed: ${resp.statusText} - ${errorText}`
-        );
-      }
-
-      const responseText = await resp.text();
-      console.log(
-        'integratedOAuthLogin - success response body:',
-        responseText
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(
+        `Integrated OAuth login failed: ${resp.statusText} - ${errorText}`
       );
-    } catch (error) {
-      console.error('integratedOAuthLogin - fetch error:', error);
-      throw error;
     }
   }
 
