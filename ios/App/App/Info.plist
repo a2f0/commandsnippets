@@ -45,6 +45,8 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>GIDClientID</key>
+	<string>$(CLIENT_ID)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -53,6 +55,14 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>$(DEEP_LINK_SCHEME)</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.tearleads.app.dev.google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(REVERSED_CLIENT_ID)</string>
 			</array>
 		</dict>
 	</array>
