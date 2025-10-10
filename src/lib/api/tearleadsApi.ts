@@ -82,7 +82,7 @@ class TearleadsApi {
         },
       },
     };
-    const resp = await fetchWithAuth(`${baseURL}/github-login/`, {
+    const resp = await fetch(`${baseURL}/github-login/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
