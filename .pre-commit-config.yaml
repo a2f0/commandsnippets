@@ -5,6 +5,7 @@ repos:
     -   id: check-yaml
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
+    -   id: requirements-txt-fixer
 -   repo: https://github.com/PyCQA/isort
     # should match what is inside of requirements/local.txt
     rev: 6.1.0
