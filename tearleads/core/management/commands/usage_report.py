@@ -10,7 +10,10 @@ from tearleads.text_entries.models import TextEntry
 
 
 class Command(BaseCommand):
-    help = "Generates a usage report showing the per-user breakdown of tags, text entries, and tag-text relationships"
+    help = (
+        "Generates a usage report showing the per-user breakdown of tags, "
+        "text entries, and tag-text relationships"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -61,19 +64,22 @@ class Command(BaseCommand):
         if output_format == "stdout":
             self.stdout.write(self.style.SUCCESS("=== User Usage Report ==="))
             self.stdout.write(
-                f"{'Username':<30} {'Email':<30} {'Tags':<10} {'Entries':<10} {'Relationships':<15}"
+                f"{'Username':<30} {'Email':<30} {'Tags':<10} "
+                f"{'Entries':<10} {'Relationships':<15}"
             )
             self.stdout.write("-" * 95)
 
             for data in report_data:
                 self.stdout.write(
-                    f"{data['username']:<30} {data['email']:<30} {data['tag_count']:<10} "
-                    f"{data['text_entry_count']:<10} {data['tag_text_relationship_count']:<15}"
+                    f"{data['username']:<30} {data['email']:<30} "
+                    f"{data['tag_count']:<10} {data['text_entry_count']:<10} "
+                    f"{data['tag_text_relationship_count']:<15}"
                 )
 
             self.stdout.write("-" * 95)
             self.stdout.write(
-                f"{'TOTAL':<30} {'':<30} {total_tags:<10} {total_text_entries:<10} {total_relationships:<15}"
+                f"{'TOTAL':<30} {'':<30} {total_tags:<10} "
+                f"{total_text_entries:<10} {total_relationships:<15}"
             )
 
         elif output_format == "csv":

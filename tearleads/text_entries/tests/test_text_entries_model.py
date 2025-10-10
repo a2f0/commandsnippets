@@ -14,25 +14,20 @@ class TestTextEntriesModel(BaseTestCase):
     def TestTextEntriesModel(cls):
         super(TestTextEntriesModel, cls).setUpTestData()
 
-    def test_invalid_body_length(
-        self,
-    ):
-
+    def test_invalid_body_length(self):
         max_length = TextEntry._meta.get_field("body").max_length
         too_large = max_length + 1
         oversized_body = "x" * too_large
         with self.assertRaisesMessage(
             DataError, f"value too long for type character varying({1024})\n"
         ):
-            entry1 = TextEntryFactory(user=self.user1, body=oversized_body)
+            TextEntryFactory(user=self.user1, body=oversized_body)
 
-    def test_invalid_subject_length(
-        self,
-    ):
+    def test_invalid_subject_length(self):
         max_length = TextEntry._meta.get_field("subject").max_length
         too_large = max_length + 1
         oversized_subject = "x" * too_large
         with self.assertRaisesMessage(
             DataError, f"value too long for type character varying({255})\n"
         ):
-            entry1 = TextEntryFactory(user=self.user1, subject=oversized_subject)
+            TextEntryFactory(user=self.user1, subject=oversized_subject)

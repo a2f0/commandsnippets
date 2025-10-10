@@ -1,9 +1,6 @@
-import ipaddress
 import json
-import os
 from urllib.parse import parse_qs
 
-import requests
 from django.conf import settings
 from django.utils import timezone
 from rest_framework import status
@@ -14,7 +11,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from tearleads.authentication import utility
-from tearleads.users.models import User
 from tearleads.users.utils import create_collisionless_user
 
 from .serializers import (
@@ -88,11 +84,11 @@ class GithubLogin(APIView):
                     data = json.loads(response.text)
 
                     for email in data:
-                        if email["primary"] == True:
+                        if email["primary"] is True:
                             user, created = create_collisionless_user(
                                 username, email["email"]
                             )
-                            if created == False:
+                            if not created:
                                 # Then it is a login for an existing user
                                 user.last_login = timezone.now()
                                 user.login_count += 1
@@ -131,8 +127,6 @@ class GoogleLogin(APIView):
         response = service.access_token(serializer.data["code"])
         if response.status_code == 200:
             response_dict = json.loads(response.text)
-            authorization_header = "Bearer " + response_dict["access_token"]
-            headers = {"Authorization": authorization_header}
 
             # Get the email address associated with the account
             response = service.user(response_dict["access_token"])
@@ -146,7 +140,7 @@ class GoogleLogin(APIView):
                     )
                 username = email.split("@", 1)[0]
                 user, created = create_collisionless_user(username, email)
-                if created == False:
+                if not created:
                     # Then it is a login for an existing user
                     user.last_login = timezone.now()
                     user.login_count += 1

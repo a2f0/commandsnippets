@@ -22,32 +22,32 @@ class TestUserModel(TestCase):
 
     def test_usernames_cannot_be_none(self):
         try:
-            user1 = UserFactory(username=None)
+            UserFactory(username=None)
         except IntegrityError:
             pass
 
     def test_usernames_cannot_be_empty_strings(self):
         try:
-            user1 = UserFactory(username="")
+            UserFactory(username="")
         except IntegrityError:
             pass
 
     def test_emails_cannot_be_duplicates(self):
         try:
-            user1 = UserFactory(email="collide@tearleads.com")
-            user2 = UserFactory(email="collide@tearleads.com")
+            UserFactory(email="collide@tearleads.com")
+            UserFactory(email="collide@tearleads.com")
         except IntegrityError:
             pass
 
     def test_emails_cannot_be_none(self):
         try:
-            user1 = UserFactory(email=None)
+            UserFactory(email=None)
         except IntegrityError:
             pass
 
     def test_emails_cannot_be_empty_strings(self):
         try:
-            user1 = UserFactory(email="")
+            UserFactory(email="")
         except IntegrityError:
             pass
 

@@ -1,7 +1,7 @@
 from django.conf import settings
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.test import APIClient, APIRequestFactory
+from rest_framework.test import APIClient
 
 from tearleads.core.tests.core import BaseTestCase
 from tearleads.users.models import User
@@ -61,9 +61,11 @@ class TestAuthentication(BaseTestCase):
         self._assert_logout_response_is_ok(response)
 
         # Make sure the token still exists after de-authenticating.
-        # The reason this persists is because the current authentication system is one token per-user only.
-        # This will cause an issue if a user logs out of one browser because the existing token would be
-        # destroyed and a new one provisioned upon next login.
+        # The reason this persists is because the current authentication
+        # system is one token per-user only.
+        # This will cause an issue if a user logs out of one browser
+        # because the existing token would be destroyed and a new one
+        # provisioned upon next login.
         existing_token.refresh_from_db()
         self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
         self.assertEqual("LoggedIn" in self.auth_user_api_client.cookies, True)

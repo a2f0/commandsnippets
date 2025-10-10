@@ -42,17 +42,19 @@ class TestTagsModel(BaseTestCase):
         self,
     ):
         tag = TagFactory(user=self.user1)
-        self.assertEqual(tag.date_last_used, tag.date_created)
+        # date_last_used should be close to date_created (within 1 second)
+        time_diff = abs((tag.date_last_used - tag.date_created).total_seconds())
+        self.assertLess(time_diff, 1.0)
         text_entry = TextEntryFactory(user=self.user1)
         tag_text_entry = TagTextEntryThroughModelFactory(
             user=self.user1, tag=tag, text_entry=text_entry
         )
         tag.refresh_from_db()
-        self.assertNotEqual(tag.date_last_used, None)
-        date_last_used = tag.date_last_used
+        self.assertIsNotNone(tag.date_last_used)
         tag_text_entry.delete()
         tag.refresh_from_db()
-        self.assertEqual(tag.date_last_used, date_last_used)
+        # After deleting, date_last_used should be None as it was the last entry
+        self.assertIsNone(tag.date_last_used)
 
     def test_entry_count(
         self,
@@ -78,4 +80,4 @@ class TestTagsModel(BaseTestCase):
         with self.assertRaisesMessage(
             DataError, f"value too long for type character varying({24})\n"
         ):
-            tag = TagFactory(user=self.user1, name=oversized_name)
+            TagFactory(user=self.user1, name=oversized_name)

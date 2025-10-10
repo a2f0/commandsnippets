@@ -1,7 +1,7 @@
 import configparser
 
 from rest_framework import status
-from rest_framework.test import APIClient, APIRequestFactory
+from rest_framework.test import APIClient
 
 from tearleads.core.tests.core import BaseTestCase
 

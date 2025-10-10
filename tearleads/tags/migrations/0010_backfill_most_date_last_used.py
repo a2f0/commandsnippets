@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             most_recent_tag_to_text_entry = (
                 tag.tag_to_text_entry.all().order_by("-date_created").first()
             )
-            if most_recent_tag_to_text_entry == None:
+            if most_recent_tag_to_text_entry is None:
                 tag.date_last_used = None
             else:
                 tag.date_last_used = most_recent_tag_to_text_entry.date_created
