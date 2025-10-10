@@ -58,7 +58,7 @@ class TearleadsApi {
       },
     };
 
-    const resp = await fetchWithAuth(`${baseURL}/integrated-oauth/`, {
+    const resp = await fetch(`${baseURL}/integrated-oauth/`, {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
