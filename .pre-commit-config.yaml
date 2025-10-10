@@ -5,16 +5,16 @@ repos:
     -   id: check-yaml
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
--   repo: https://github.com/PyCQA/flake8
-    # should match what is inside of requirements/local.txt
-    rev: 7.1.1
-    hooks:
-    -   id: flake8
 -   repo: https://github.com/PyCQA/isort
     # should match what is inside of requirements/local.txt
     rev: 6.1.0
     hooks:
     -   id: isort
+-   repo: https://github.com/PyCQA/flake8
+    # should match what is inside of requirements/local.txt
+    rev: 7.1.1
+    hooks:
+    -   id: flake8
 -   repo: https://github.com/psf/black
     # should match what is inside of requirements/local.txt
     rev: 25.9.0
