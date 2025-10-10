@@ -3,7 +3,6 @@ import string
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -24,16 +23,16 @@ class User(AbstractUser):
             username_to_test = self.username
             collides = True
             random_length = 1
-            while collides == True:
+            while collides is True:
                 collides = User.objects.filter(username=username_to_test).exists()
-                if collides == True:
+                if collides is True:
                     username_characters = string.digits
                     add_to_username = "".join(
                         random.choice(username_characters) for i in range(random_length)
                     )
                     username_to_test = original_username + "-" + add_to_username
                     random_length += 1
-                if collides == False:
+                if not collides:
                     self.username = username_to_test
 
             # Set last_login to the same as date_joined for new users
@@ -72,19 +71,19 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
             body=entry2_body,
         )
 
-        tag_text_entry_1 = TagTextEntryThroughModel.objects.create(
+        TagTextEntryThroughModel.objects.create(
             user=instance,
             tag=tag1,
             text_entry=entry1,
             order=1,
         )
-        tag_text_entry_2 = TagTextEntryThroughModel.objects.create(
+        TagTextEntryThroughModel.objects.create(
             user=instance,
             tag=tag1,
             text_entry=entry2,
             order=2,
         )
-        tag_text_entry_3 = TagTextEntryThroughModel.objects.create(
+        TagTextEntryThroughModel.objects.create(
             user=instance,
             tag=tag2,
             text_entry=entry2,

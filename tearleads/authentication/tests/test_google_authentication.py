@@ -1,10 +1,7 @@
 import os
-import time
-from unittest import skip
 
 import responses
 from django.conf import settings
-from django.contrib.staticfiles.testing import LiveServerTestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient

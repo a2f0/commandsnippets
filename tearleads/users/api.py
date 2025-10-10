@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from tearleads.authentication import utility
-from tearleads.users.models import User
 
 from .serializers_edge import UserSerializer
 

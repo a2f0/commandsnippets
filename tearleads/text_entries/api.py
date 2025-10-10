@@ -1,23 +1,16 @@
 from django.conf import settings
 from django.db.models import Q
-from rest_framework import filters, response, status, viewsets
-from rest_framework.decorators import action
+from rest_framework import response, status, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework_json_api import serializers
-from rest_framework_json_api.django_filters import DjangoFilterBackend
-from rest_framework_json_api.filters import OrderingFilter
 
 from tearleads.core.permissions import IsOwner
 from tearleads.text_entries.models import TextEntry, TextEntryReused
-from tearleads.text_entries.serializers import (
-    TextEntryCreateSerializer,
-    TextEntrySerializer,
-)
 
 from .serializers import (
     TextEntryCreateSerializer,
     TextEntryReusedCreateSerializer,
     TextEntryReusedSerializer,
+    TextEntrySerializer,
 )
 
 

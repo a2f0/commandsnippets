@@ -1,10 +1,6 @@
-import time
-from unittest import skip
 from urllib.parse import parse_qs
 
 import responses
-from django.contrib.staticfiles.testing import LiveServerTestCase
-from rest_framework.test import APIClient
 
 from tearleads.authentication.services import GithubOAuthService
 from tearleads.core.tests.core import BaseTestCase

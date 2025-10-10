@@ -1,7 +1,4 @@
-import pprint
-
 from rest_framework import status
-from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
 from tearleads.text_entries.tests.factories import TextEntryFactory
@@ -30,7 +27,6 @@ class TestTagsEntriesApi(BaseTestCase):
 
     def test_list_fails(self):
         response = self.user1_api_client.get("/api/v1/tags_entries")
-        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_can_tag_self_owned(self):
@@ -49,12 +45,9 @@ class TestTagsEntriesApi(BaseTestCase):
         response = self.user1_api_client.post(
             "/api/v1/tags_entries", payload, format="vnd.api+json"
         )
-        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_requires_authentication(self):
-        tag = TagFactory(user=self.user1)
-        text_entry = TextEntryFactory(user=self.user1)
         payload = {}
         response = self.unauthenticated_user_api_client.post(
             "/api/v1/tags_entries", payload, format="vnd.api+json"
@@ -68,8 +61,6 @@ class TestTagsEntriesApi(BaseTestCase):
         )
 
     def test_reorder_requires_authentication(self):
-        tag = TagFactory(user=self.user1)
-        text_entry = TextEntryFactory(user=self.user1)
         payload = {}
         response = self.unauthenticated_user_api_client.post(
             "/api/v1/tags_entries/reorder", payload, format="vnd.api+json"
