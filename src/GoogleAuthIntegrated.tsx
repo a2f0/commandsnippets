@@ -43,7 +43,6 @@ const GoogleAuthIntegrated = () => {
         const accessToken = result.result.accessToken?.token;
 
         if (accessToken) {
-          // Use the new integrated OAuth endpoint for Capacitor
           await tearleadsApi.integratedOAuthLogin('google', accessToken);
 
           const response = await tearleadsApi.getCurrentUser();
