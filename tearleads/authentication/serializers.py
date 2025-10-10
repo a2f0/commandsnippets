@@ -8,4 +8,9 @@ class GithubAuthenticationSerializer(serializers.Serializer):
 
 
 class GoogleAuthenticationSerializer(serializers.Serializer):
-    code = serializers.CharField()
+    code = serializers.CharField(help_text="Google authorization code or access token")
+
+
+class IntegratedOAuthSerializer(serializers.Serializer):
+    provider = serializers.ChoiceField(choices=["google"], help_text="OAuth provider")
+    token = serializers.CharField(help_text="Access token")

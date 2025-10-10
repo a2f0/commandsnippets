@@ -80,12 +80,23 @@ WSGI_APPLICATION = "tearleads.wsgi.application"
 
 CORS_ORIGIN_REGEX_WHITELIST = [
     r"^http://localhost:*",
+    r"^http://127\.0\.0\.1:*",
+    # RFC 1918 private address space
+    r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:*",  # 10.0.0.0/8
+    r"^http://172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}:*",  # 172.16.0.0/12
+    r"^http://192\.168\.\d{1,3}\.\d{1,3}:*",  # 192.168.0.0/16
+    # Production domains
     r"^https://tearleads\.com$",
     r"^https://\w+\.tearleads\.com$",
     r"^https://\w+\.staging\.tearleads\.com$",
 ]
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".tearleads.com", "tearleads.com"]
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    ".tearleads.com",
+    "tearleads.com",
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -129,6 +140,9 @@ USE_TZ = False
 STATIC_URL = "/static/"
 
 AUTH_USER_MODEL = "users.User"
+
+# Authentication cookie settings
+AUTH_COOKIE_MAX_AGE = 2419200  # 28 days in seconds
 
 REST_FRAMEWORK = {
     "PAGE_SIZE": 50,

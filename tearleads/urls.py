@@ -8,6 +8,7 @@ from tearleads.authentication.api import (
     CustomObtainAuthToken,
     GithubLogin,
     GoogleLogin,
+    IntegratedOAuthLogin,
 )
 from tearleads.healthcheck.api import HealthCheckAPIView
 from tearleads.users.api import User
@@ -22,5 +23,6 @@ urlpatterns = [
     re_path(r"^api/v1/user/", User.as_view()),
     re_path(r"^api/v1/github-login/", GithubLogin.as_view()),
     re_path(r"^api/v1/google-login/", GoogleLogin.as_view()),
+    re_path(r"^api/v1/integrated-oauth/", IntegratedOAuthLogin.as_view()),
     re_path(r"^api/v1/", include(router.urls)),
 ]
