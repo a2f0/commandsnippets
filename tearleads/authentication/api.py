@@ -41,13 +41,13 @@ class CustomObtainAuthToken(ObtainAuthToken):
             secure=True,
             samesite="strict",
             domain=settings.COOKIE_DOMAIN,
-            max_age=2419200,
+            max_age=settings.AUTH_COOKIE_MAX_AGE,
         )
         response.set_cookie(
             "LoggedIn",
             None,
             httponly=False,
-            max_age=2419200,
+            max_age=settings.AUTH_COOKIE_MAX_AGE,
             samesite="strict",
             domain=settings.COOKIE_DOMAIN,
         ),
@@ -106,13 +106,13 @@ class GithubLogin(APIView):
                                 secure=True,
                                 samesite="strict",
                                 domain=settings.COOKIE_DOMAIN,
-                                max_age=2419200,
+                                max_age=settings.AUTH_COOKIE_MAX_AGE,
                             )
                             response.set_cookie(
                                 "LoggedIn",
                                 None,
                                 httponly=False,
-                                max_age=2419200,
+                                max_age=settings.AUTH_COOKIE_MAX_AGE,
                                 samesite="strict",
                                 domain=settings.COOKIE_DOMAIN,
                             ),
@@ -160,13 +160,13 @@ class GoogleLogin(APIView):
                     secure=True,
                     samesite="strict",
                     domain=settings.COOKIE_DOMAIN,
-                    max_age=2419200,
+                    max_age=settings.AUTH_COOKIE_MAX_AGE,
                 )
                 response.set_cookie(
                     "LoggedIn",
                     None,
                     httponly=False,
-                    max_age=2419200,
+                    max_age=settings.AUTH_COOKIE_MAX_AGE,
                     samesite="strict",
                     domain=settings.COOKIE_DOMAIN,
                 ),
@@ -180,7 +180,8 @@ class IntegratedOAuthLogin(APIView):
 
     resource_name = "IntegratedOAuthLogin"
 
-    def _is_local_dev(self):
+    @staticmethod
+    def _is_local_dev():
         """Determine if we're in a local/Docker development environment."""
         return settings.DEBUG or getattr(settings, "IS_LOCAL_DEV", False)
 
@@ -199,13 +200,13 @@ class IntegratedOAuthLogin(APIView):
             secure=not is_local_dev,  # Use HTTPS in production only
             samesite="lax" if is_local_dev else "strict",
             domain=cookie_domain,
-            max_age=2419200,
+            max_age=settings.AUTH_COOKIE_MAX_AGE,
         )
         response.set_cookie(
             "LoggedIn",
             None,
             httponly=False,
-            max_age=2419200,
+            max_age=settings.AUTH_COOKIE_MAX_AGE,
             samesite="lax" if is_local_dev else "strict",
             domain=cookie_domain,
         )

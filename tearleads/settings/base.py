@@ -141,6 +141,9 @@ STATIC_URL = "/static/"
 
 AUTH_USER_MODEL = "users.User"
 
+# Authentication cookie settings
+AUTH_COOKIE_MAX_AGE = 2419200  # 28 days in seconds
+
 REST_FRAMEWORK = {
     "PAGE_SIZE": 50,
     "EXCEPTION_HANDLER": "rest_framework_json_api.exceptions.exception_handler",

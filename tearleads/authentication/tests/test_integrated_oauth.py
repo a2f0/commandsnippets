@@ -1,10 +1,7 @@
 import os
-import time
-from unittest import skip
+from datetime import datetime, timedelta
 
 import responses
-from django.conf import settings
-from django.contrib.staticfiles.testing import LiveServerTestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
@@ -64,8 +61,6 @@ class TestIntegratedOAuth(BaseTestCase):
             username="google_user", email="google_user@example.com"
         )
         # Set an old login time to ensure it gets updated
-        from datetime import datetime, timedelta
-
         old_login_time = datetime.now() - timedelta(days=1)
         existing_user.last_login = old_login_time
         existing_user.save()
