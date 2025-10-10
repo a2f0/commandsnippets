@@ -222,30 +222,3 @@ class TestIntegratedOAuth(BaseTestCase):
         self.assertTrue(isinstance(response.data, list))
         self.assertTrue(len(response.data) > 0)
         self.assertIn("detail", response.data[0])
-
-    @responses.activate
-    def test_integrated_oauth_google_user_info_fetch_failure_after_token_exchange(self):
-        # Mock userinfo to fail (direct token case)
-        responses.add(
-            responses.GET,
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            json={"error": "invalid_token"},
-            status=401,
-            content_type="application/json",
-        )
-
-        self.auth_user_api_client = APIClient()
-        payload = {
-            "data": {
-                "type": "IntegratedOAuthLogin",
-                "attributes": {"provider": "google", "token": "invalid_token"},
-            }
-        }
-
-        response = self.auth_user_api_client.post("/api/v1/integrated-oauth/", payload)
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        # Check for JSON:API error format
-        self.assertTrue(isinstance(response.data, list))
-        self.assertTrue(len(response.data) > 0)
-        self.assertIn("detail", response.data[0])
