@@ -25,7 +25,7 @@ mkdir -p logs/screenshots logs/appium
 
 # Build the dev app
 echo "🔨 Building dev app..."
-cap sync
+pnpm cap sync
 
 # Build iOS app for simulator
 echo "📱 Building iOS app for simulator..."
