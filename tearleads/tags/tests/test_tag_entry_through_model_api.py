@@ -1,6 +1,7 @@
 from rest_framework import status
 
 from tearleads.core.tests.core import BaseTestCase
+from tearleads.tags.models import TagTextEntryThroughModel
 from tearleads.text_entries.tests.factories import TextEntryFactory
 
 from .factories import TagFactory, TagTextEntryThroughModelFactory
@@ -195,3 +196,70 @@ class TestTagsEntriesApi(BaseTestCase):
 
         # Verify order was NOT changed
         self.assertLess(tag_entry1.order, tag_entry2.order)
+
+    def test_delete_requires_authentication(self):
+        """Test that deleting a tag-text entry relationship requires authentication."""
+        tag = TagFactory(user=self.user1)
+        text_entry = TextEntryFactory(user=self.user1)
+        tag_text_entry = TagTextEntryThroughModelFactory(
+            tag=tag, text_entry=text_entry, user=self.user1
+        )
+        response = self.unauthenticated_user_api_client.delete(
+            f"/api/v1/tags_entries/{tag_text_entry.id}"
+        )
+        json_response = response.json()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(len(json_response["errors"]), 1)
+        self.assertEqual(
+            json_response["errors"][0]["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+    def test_delete_succeeds_when_user_owns_relationship(self):
+        """Test that a user can delete a tag-text entry relationship they own."""
+        tag = TagFactory(user=self.user1)
+        text_entry = TextEntryFactory(user=self.user1)
+        tag_text_entry = TagTextEntryThroughModelFactory(
+            tag=tag, text_entry=text_entry, user=self.user1
+        )
+
+        # Verify the relationship exists
+        self.assertTrue(
+            TagTextEntryThroughModel.objects.filter(id=tag_text_entry.id).exists()
+        )
+
+        response = self.user1_api_client.delete(
+            f"/api/v1/tags_entries/{tag_text_entry.id}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify the relationship was deleted
+        self.assertFalse(
+            TagTextEntryThroughModel.objects.filter(id=tag_text_entry.id).exists()
+        )
+
+    def test_delete_fails_when_user_doesnt_own_relationship(self):
+        """Test that a user cannot delete a tag-text entry relationship
+        they don't own."""
+        # Create a relationship owned by user2
+        tag = TagFactory(user=self.user2)
+        text_entry = TextEntryFactory(user=self.user2)
+        tag_text_entry = TagTextEntryThroughModelFactory(
+            tag=tag, text_entry=text_entry, user=self.user2
+        )
+
+        # Verify the relationship exists
+        self.assertTrue(
+            TagTextEntryThroughModel.objects.filter(id=tag_text_entry.id).exists()
+        )
+
+        # Try to delete as user1 (should fail)
+        response = self.user1_api_client.delete(
+            f"/api/v1/tags_entries/{tag_text_entry.id}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Verify the relationship still exists
+        self.assertTrue(
+            TagTextEntryThroughModel.objects.filter(id=tag_text_entry.id).exists()
+        )
