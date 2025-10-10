@@ -2,8 +2,6 @@
 
 from django.db import migrations
 
-from tearleads.tags.models import Tag
-
 
 class Migration(migrations.Migration):
 
