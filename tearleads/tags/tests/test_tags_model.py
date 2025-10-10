@@ -53,9 +53,8 @@ class TestTagsModel(BaseTestCase):
         self.assertIsNotNone(tag.date_last_used)
         tag_text_entry.delete()
         tag.refresh_from_db()
-        # After deleting, date_last_used should again be close to date_created
-        time_diff = abs((tag.date_last_used - tag.date_created).total_seconds())
-        self.assertLess(time_diff, 1.0)
+        # After deleting, date_last_used should be None as it was the last entry
+        self.assertIsNone(tag.date_last_used)
 
     def test_entry_count(
         self,
