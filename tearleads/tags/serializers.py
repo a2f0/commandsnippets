@@ -1,6 +1,4 @@
-from django.utils import timezone
 from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import ResourceRelatedField
 
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
 from tearleads.text_entries.serializers import TextEntrySerializer

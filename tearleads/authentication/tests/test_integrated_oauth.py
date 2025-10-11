@@ -168,7 +168,7 @@ class TestIntegratedOAuth(BaseTestCase):
 
     @responses.activate
     def test_google_direct_access_token_flow(self):
-        """Test that Google login works with direct access token (iOS native auth case)"""
+        """Test Google login with direct access token (iOS native auth)"""
         # Mock Google userinfo endpoint (no token exchange needed)
         responses.add(
             responses.GET,

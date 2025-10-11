@@ -1,6 +1,5 @@
 from rest_framework import routers
 
-from tearleads.authentication import api as authentication_api
 from tearleads.tags import api as tags_api
 from tearleads.text_entries import api as text_entries_api
 

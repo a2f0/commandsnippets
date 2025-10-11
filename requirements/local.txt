@@ -1,10 +1,11 @@
 -r base.txt
-black==25.9.0                   # this should match .pre-commit-config.yamml
+black==25.9.0                   # this should match .pre-commit-config.yaml
 bump2version==1.0.1
 coverage==7.10.7
 django_extensions==4.1
 factory_boy==3.3.3
-responses==0.25.7
-isort[requirements]==6.1.0     # this should match .pre-commit-config.yamml
+flake8==7.1.1                   # this should match .pre-commit-config.yaml
+isort[requirements]==6.1.0     # this should match .pre-commit-config.yaml
 pre-commit==4.3.0
 pur==7.3.2                      # for checking out of date dependencies
+responses==0.25.7

@@ -1,12 +1,9 @@
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
-from rest_framework import filters, mixins, response, status, viewsets
+from rest_framework import mixins, response, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import GenericViewSet
-from rest_framework_json_api import serializers
-from rest_framework_json_api.django_filters import DjangoFilterBackend
-from rest_framework_json_api.filters import OrderingFilter
 
 from tearleads.core.permissions import IsOwner
 from tearleads.tags.models import Tag, TagTextEntryThroughModel
@@ -48,8 +45,8 @@ class TagViewSet(viewsets.ModelViewSet):
                 .first()
             )
 
-        if instance != None:
-            if instance.is_deleted == True:
+        if instance is not None:
+            if instance.is_deleted:
                 instance.is_deleted = False
                 instance.save()
         else:
@@ -71,7 +68,6 @@ class TagViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def reorder(self, request, *args, **kwargs):
-        resource_name = False
         serializer = TagReorderSerializer(
             data=request.data, context={"request": request}
         )

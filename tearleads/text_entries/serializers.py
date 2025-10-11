@@ -1,10 +1,8 @@
 from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import ResourceRelatedField
 
-from tearleads.tags.models import Tag, TagTextEntryThroughModel
+from tearleads.tags.models import TagTextEntryThroughModel
 from tearleads.tags.serializers_edge import TagSerializer
 from tearleads.text_entries.models import TextEntry, TextEntryReused
-from tearleads.users.models import User
 from tearleads.users.serializers_edge import UserSerializer
 
 

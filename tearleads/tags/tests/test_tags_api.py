@@ -1,11 +1,9 @@
 from rest_framework import status
-from rest_framework.test import APIClient, APIRequestFactory
 
 from tearleads.core.tests.core import BaseTestCase
 from tearleads.tags.models import Tag
-from tearleads.text_entries.tests.factories import TextEntryFactory
 
-from .factories import TagFactory, TagTextEntryThroughModelFactory
+from .factories import TagFactory
 
 
 class TestTagsApi(BaseTestCase):
@@ -17,7 +15,10 @@ class TestTagsApi(BaseTestCase):
         super(TestTagsApi, cls).setUpTestData()
 
     def test_serialization_format(self):
-        """Test the complete serialization format including main tag data and included user."""
+        """
+        Test the complete serialization format including main tag data
+        and included user.
+        """
         tag = self.user1.tags.all().first()
 
         response = self.user1_api_client.get(
@@ -225,7 +226,6 @@ class TestTagsApi(BaseTestCase):
         response = self.user1_api_client.post(
             "/api/v1/tags/reorder", payload, format="vnd.api+json"
         )
-        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(tag1_timestamp, tag1.date_updated)
         self.assertEqual(tag2_timestamp, tag2.date_updated)
@@ -252,7 +252,6 @@ class TestTagsApi(BaseTestCase):
         response = self.user1_api_client.post(
             "/api/v1/tags/reorder", payload, format="vnd.api+json"
         )
-        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(tag1_timestamp, tag1.date_updated)
         self.assertEqual(tag2_timestamp, tag2.date_updated)
@@ -279,7 +278,6 @@ class TestTagsApi(BaseTestCase):
         response = self.user1_api_client.post(
             "/api/v1/tags/reorder", payload, format="vnd.api+json"
         )
-        json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(tag1_timestamp, tag1.date_updated)
         self.assertEqual(tag2_timestamp, tag2.date_updated)
@@ -383,9 +381,8 @@ class TestTagsApi(BaseTestCase):
         tag2 = self.user1.tags.all().last()
 
         response = self.user1_api_client.get(
-            "/api/v1/tags?sort=-date_updated&filter[user.username]={}&filter[date_updated.gt]={}".format(
-                self.user1.username, tag1.date_updated
-            )
+            "/api/v1/tags?sort=-date_updated&filter[user.username]={}"
+            "&filter[date_updated.gt]={}".format(self.user1.username, tag1.date_updated)
         )
         json_response = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)

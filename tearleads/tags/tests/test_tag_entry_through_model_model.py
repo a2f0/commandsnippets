@@ -1,5 +1,4 @@
 from tearleads.core.tests.core import BaseTestCase
-from tearleads.tags.models import Tag, TagTextEntryThroughModel
 from tearleads.text_entries.tests.factories import TextEntryFactory
 
 from .factories import TagFactory, TagTextEntryThroughModelFactory

@@ -1,6 +1,5 @@
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import authentication, exceptions
+from rest_framework import authentication
 from rest_framework.authtoken.models import Token
 
 
