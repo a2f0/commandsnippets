@@ -24,7 +24,6 @@
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
     "analyze": "pnpm run build:analyze",
-    "postbuild": "scripts/postBuild.sh",
     "clean": "rimraf build",
     "compile": "tsc -b",
     "prepare": "npm run compile",
