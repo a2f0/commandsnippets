@@ -17,7 +17,7 @@ PODS:
   - CapacitorCordova (7.4.3)
   - CapacitorStatusBar (7.0.3):
     - Capacitor
-  - CapgoCapacitorSocialLogin (7.11.3):
+  - CapgoCapacitorSocialLogin (7.11.17):
     - Alamofire (~> 5.10.2)
     - Capacitor
     - FBSDKCoreKit (= 18.0.0)
@@ -56,7 +56,7 @@ DEPENDENCIES:
   - "CapacitorApp (from `../../node_modules/.pnpm/@capacitor+app@7.1.0_@capacitor+core@7.4.3/node_modules/@capacitor/app`)"
   - "CapacitorCordova (from `../../node_modules/.pnpm/@capacitor+ios@7.4.3_@capacitor+core@7.4.3/node_modules/@capacitor/ios`)"
   - "CapacitorStatusBar (from `../../node_modules/.pnpm/@capacitor+status-bar@7.0.3_@capacitor+core@7.4.3/node_modules/@capacitor/status-bar`)"
-  - "CapgoCapacitorSocialLogin (from `../../node_modules/.pnpm/@capgo+capacitor-social-login@7.11.3_@capacitor+core@7.4.3/node_modules/@capgo/capacitor-social-login`)"
+  - "CapgoCapacitorSocialLogin (from `../../node_modules/.pnpm/@capgo+capacitor-social-login@7.11.17_@capacitor+core@7.4.3/node_modules/@capgo/capacitor-social-login`)"
 
 SPEC REPOS:
   trunk:
@@ -83,7 +83,7 @@ EXTERNAL SOURCES:
   CapacitorStatusBar:
     :path: "../../node_modules/.pnpm/@capacitor+status-bar@7.0.3_@capacitor+core@7.4.3/node_modules/@capacitor/status-bar"
   CapgoCapacitorSocialLogin:
-    :path: "../../node_modules/.pnpm/@capgo+capacitor-social-login@7.11.3_@capacitor+core@7.4.3/node_modules/@capgo/capacitor-social-login"
+    :path: "../../node_modules/.pnpm/@capgo+capacitor-social-login@7.11.17_@capacitor+core@7.4.3/node_modules/@capgo/capacitor-social-login"
 
 SPEC CHECKSUMS:
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
@@ -93,7 +93,7 @@ SPEC CHECKSUMS:
   CapacitorApp: 846d4b4a1dbb19dd1e9029c08ba6f028aa7be862
   CapacitorCordova: 435121e81a2df4d0034f0fb11fcefab5104cfdb5
   CapacitorStatusBar: 7d8fcbd6768db014bd721d75e246590b014928e8
-  CapgoCapacitorSocialLogin: f91824a5ef20751d8a3a46d62b2d0249477fb48b
+  CapgoCapacitorSocialLogin: 2c1973538de3be8093af972f0c13696f60c27fef
   FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
   FBSDKCoreKit: d3f479a69127acebb1c6aad91c1a33907bcf6c2f
   FBSDKCoreKit_Basics: 017b6dc2a1862024815a8229e75661e627ac1e29
@@ -104,6 +104,6 @@ SPEC CHECKSUMS:
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
 
-PODFILE CHECKSUM: 0786d5f044ab7ee075a294d1149024e09349941b
+PODFILE CHECKSUM: 50051b6449f5749583ba2a86a21412e24ca75da0
 
 COCOAPODS: 1.15.2
