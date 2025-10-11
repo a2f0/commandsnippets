@@ -25,24 +25,28 @@ export const LanguageSwitcher: React.FC = () => {
     [i18n, handleClose]
   );
 
-  // Supported languages - should match i18n configuration
-  const supportedLanguages = ['en', 'es'];
+  // Derive supported languages from i18n configuration
+  const supportedLanguages = (
+    i18n.options.supportedLngs || ['en', 'es']
+  ).filter((lng): lng is string => lng !== 'cimode');
 
-  // Helper function to get language name with dedicated map
-  const getLanguageName = (langCode: string) => {
-    // Using a map is more robust for getting native language names.
-    const languageNames: Record<string, string> = {
-      en: 'English',
-      es: 'Español',
-    };
-    return languageNames[langCode] || langCode.toUpperCase();
-  };
+  // Get language name from translation files using i18n
+  const getLanguageName = useCallback(
+    (langCode: string) => {
+      // 'getFixedT' returns a 't' function for a specific language
+      return (
+        i18n.getFixedT(langCode, 'common')('languageName') ||
+        langCode.toUpperCase()
+      );
+    },
+    [i18n]
+  );
 
   // Get current language name
-  const getCurrentLanguageName = () => {
+  const getCurrentLanguageName = useCallback(() => {
     const currentLang = i18n.language || 'en'; // Fallback to 'en' if undefined
     return getLanguageName(currentLang);
-  };
+  }, [i18n.language, getLanguageName]);
 
   return (
     <>
