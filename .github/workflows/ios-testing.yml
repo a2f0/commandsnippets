@@ -71,8 +71,8 @@ jobs:
           mkdir -p logs/screenshots
           mkdir -p logs/appium
 
-      - name: Build production app with Capacitor (for testing)
-        run: pnpm run cap:build:production
+      - name: Build dev app with Capacitor (for testing)
+        run: pnpm run build && pnpm exec cap sync
 
       - name: Install CocoaPods dependencies
         run: |

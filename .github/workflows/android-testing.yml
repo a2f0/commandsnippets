@@ -47,19 +47,24 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          api-level: 34
-          target: default
-          arch: x86_64
-          profile: Nexus 6
 
-      - name: Cache Android SDK
+      - name: Accept Android licenses and download system images
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "system-images;android-35;google_apis;x86_64"
+          sdkmanager "platform-tools" "platforms;android-35"
+          echo "Android SDK packages installed:"
+          sdkmanager --list_installed
+
+      - name: AVD cache
         uses: actions/cache@v4
+        id: avd-cache
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: android-${{ runner.os }}-${{ hashFiles('android/**') }}
+          # yamllint disable-line rule:line-length
+          key: avd-api-35-pixel-6a-${{ runner.os }}-${{ hashFiles('android/**') }}
 
       - name: Enable KVM group perms
         run: |
@@ -73,10 +78,10 @@ jobs:
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
-          target: default
+          api-level: 35
+          target: google_apis
           arch: x86_64
-          profile: Nexus 6
+          profile: pixel_6a
           force-avd-creation: false
           emulator-options: >
             -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
@@ -91,7 +96,7 @@ jobs:
 
       - name: Start dev server
         run: |
-          pnpm run dev --host --port 8085 &
+          pnpm run dev &
           sleep 10
           curl -f http://localhost:8085 || exit 1
           echo "Dev server started successfully"
@@ -108,13 +113,13 @@ jobs:
       - name: Build Android APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDevelopmentDebug --no-daemon
           echo "APK build completed"
-          ls -la app/build/outputs/apk/debug/
+          ls -la app/build/outputs/apk/development/debug/
 
       - name: Verify Android APK
         run: |
-          APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK_PATH="android/app/build/outputs/apk/development/debug/app-development-debug.apk"
           if [ -f "$APK_PATH" ]; then
             echo "✅ APK found at expected location"
             ls -lh "$APK_PATH"
@@ -127,10 +132,10 @@ jobs:
       - name: Run Android Appium tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
-          target: default
+          api-level: 35
+          target: google_apis
           arch: x86_64
-          profile: Nexus 6
+          profile: pixel_6a
           script: ./scripts/run-android-tests.sh
           emulator-options: >
             -no-snapshot-save -no-window -gpu swiftshader_indirect

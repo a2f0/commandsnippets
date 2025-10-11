@@ -3,7 +3,7 @@ import {expect} from '@wdio/globals';
 describe('iOS App Launch', () => {
   // App state constants for readability
   const APP_STATE_FOREGROUND = 4;
-  const BUNDLE_ID = 'com.tearleads.app';
+  const BUNDLE_ID = 'com.tearleads.app.dev';
 
   // Helper function to wait for UI elements to be ready
   const waitForUIReady = async (timeoutMs = 10000) => {

@@ -4,7 +4,7 @@ import {Routes as ReactRouterRoutes, Route} from 'react-router-dom';
 import {useAppContext} from './AppContext';
 import {PublicHomePage} from './components/public_home_page/PublicHomePage';
 import {GithubAuth} from './GithubAuth';
-import {GoogleAuth} from './GoogleAuth';
+import {GoogleAuthWrapper} from './GoogleAuthWrapper';
 import {Main} from './Main';
 
 const Routes = () => {
@@ -13,7 +13,7 @@ const Routes = () => {
   return (
     <ReactRouterRoutes>
       <Route path="/oauth/github" element={<GithubAuth />} />
-      <Route path="/oauth/google" element={<GoogleAuth />} />
+      <Route path="/oauth/google" element={<GoogleAuthWrapper />} />
       <Route path="/:user/:tag" element={<Main />} />
       <Route path="/:user" element={<Main />} />
       {appConfig.loggedInUser ? (
