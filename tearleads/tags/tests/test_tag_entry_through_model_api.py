@@ -214,6 +214,7 @@ class TestTagsEntriesApi(BaseTestCase):
             json_response["errors"][0]["detail"],
             "Authentication credentials were not provided.",
         )
+        self.assertTrue(TagTextEntryThroughModel.objects.filter(id=tag_text_entry.id).exists())
 
     def test_delete_succeeds_when_user_owns_relationship(self):
         """Test that a user can delete a tag-text entry relationship they own."""
