@@ -76,7 +76,6 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.1",
     "@types/react-highlight-words": "0.20.0",
-    "@types/react-router-dom": "5.3.3",
     "@vitejs/plugin-react": "5.0.4",
     "@wdio/appium-service": "9.20.0",
     "@wdio/cli": "9.20.0",
