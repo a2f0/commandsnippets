@@ -18,6 +18,7 @@ export const es: I18NextTranslations = {
     no: 'No',
     language: 'Idioma',
     languageName: 'Español',
+    selectLanguage: 'Seleccionar idioma',
     settings: 'Configuración',
     logoAlt: 'Logo de Tearleads',
   },

@@ -5,7 +5,7 @@ import {useTypedTranslation} from '../i18n/hooks';
 import {StyledCheckIcon} from '../styled/StyledCheckIcon';
 
 export const LanguageSwitcher: React.FC = () => {
-  const {i18n} = useTypedTranslation('common');
+  const {t, i18n} = useTypedTranslation('common');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -54,7 +54,7 @@ export const LanguageSwitcher: React.FC = () => {
         aria-haspopup="true"
         aria-expanded={open}
         onClick={handleClick}
-        aria-label="Select language"
+        aria-label={t('selectLanguage')}
         sx={{
           alignSelf: 'flex-end',
           textTransform: 'none',
