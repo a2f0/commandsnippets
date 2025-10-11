@@ -90,7 +90,7 @@ describe('Tag Context Menu', () => {
 
     // Test core functionality: delete dialog workflow completed successfully
     console.log(
-      '✅ Delete tag workflow completed: dialog opened, delete confirmed, dialog closed, tag removed'
+      'OK: Delete tag workflow completed: dialog opened, delete confirmed, dialog closed, tag removed'
     );
 
     expect(browser.currentTestErrors).toHaveLength(0);

@@ -35,7 +35,7 @@ describe('TagsEntries Behavior', () => {
     await expect(secondEntry).toBeDisplayed();
 
     console.log(
-      '✅ Entry list test completed: entries are properly displayed for the tag'
+      'OK: Entry list test completed: entries are properly displayed for the tag'
     );
 
     expect(browser.currentTestErrors).toHaveLength(0);
