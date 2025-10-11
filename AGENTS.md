@@ -297,6 +297,23 @@ git commit -m "fix: your commit message"
 ### Language
 - Always write code in TypeScript, never JavaScript
 
+### Console Output & Logging
+- **Never use colored emojis** (🚀🔨📱✅❌⚠️🔍📁🧪📊🔄) in console output, error messages, or logging
+- Use clear ASCII text prefixes instead: `OK:`, `ERROR:`, `WARNING:`, `SUCCESS:`, `PASS:`, `FAIL:`
+- Unicode characters for expression are acceptable (e.g., →, ×, ✓ as text), but avoid colorful emoji characters
+- Keep output professional and terminal-friendly
+
+**Example:**
+```typescript
+// DO NOT:
+console.log('✅ Build completed successfully');
+console.error('❌ Build failed');
+
+// DO:
+console.log('OK: Build completed successfully');
+console.error('ERROR: Build failed');
+```
+
 ### Testing
 - Run unit tests with `pnpm run unit` or specific tests with path (e.g., `pnpm run unit -- __tests__/reorderEntryList.spec.tsx`)
 - Run E2E tests with `pnpm run ci-headless` for full suite

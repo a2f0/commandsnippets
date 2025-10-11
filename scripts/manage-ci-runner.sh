@@ -61,22 +61,22 @@ case "$ACTION" in
 
   status)
     if pgrep -f "Runner.Listener" > /dev/null 2>&1; then
-      echo "✅ GitHub Actions runner is running"
+      echo "OK: GitHub Actions runner is running"
       printf "PID: "
       pgrep -f 'Runner.Listener'
     else
-      echo "❌ GitHub Actions runner is not running"
+      echo "NOT RUNNING: GitHub Actions runner is not running"
     fi
 
     # Check for CI simulators
     if xcrun simctl list | grep -q "CI"; then
-      echo "⚠️  CI simulators found:"
+      echo "WARNING: CI simulators found:"
       xcrun simctl list | grep "CI"
     fi
 
     # Check for CI build artifacts
     if [ -d "$DERIVED_DATA_PATH" ] || [ -d "$RUNNER_DIR/_work" ]; then
-      echo "⚠️  CI build artifacts present"
+      echo "WARNING: CI build artifacts present"
     fi
     ;;
 

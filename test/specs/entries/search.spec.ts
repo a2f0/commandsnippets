@@ -61,7 +61,7 @@ describe('TagsEntries Behavior', () => {
 
     // Test core functionality: entry search workflow completed successfully
     console.log(
-      '✅ Entry search workflow completed: search field interaction, filtering, and Escape clear'
+      'OK: Entry search workflow completed: search field interaction, filtering, and Escape clear'
     );
 
     expect(browser.currentTestErrors).toHaveLength(0);
