@@ -11,13 +11,13 @@ jobs:
     continue-on-error: false
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@tearleads'
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
           architecture: 'x64'
@@ -52,8 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
@@ -103,13 +103,13 @@ jobs:
     needs: [code-quality, electron-tests]
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@tearleads'
       - name: Configure AWS credentials (Production)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
         with:
@@ -117,7 +117,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION }}
           aws-region: us-east-1
       - name: Configure AWS credentials (Staging)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         # yamllint disable-line rule:line-length
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         with:
