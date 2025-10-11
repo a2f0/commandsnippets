@@ -93,11 +93,15 @@ describe('iOS App Launch', () => {
       const centerX = screenSize.width / 2;
       const centerY = screenSize.height / 2;
 
-      await driver.touchAction({
-        action: 'tap',
-        x: centerX,
-        y: centerY,
-      });
+      // Use modern W3C Actions API (consistent with Android)
+      await driver
+        .action('pointer', {
+          parameters: {pointerType: 'touch'},
+        })
+        .move({x: centerX, y: centerY})
+        .down()
+        .up()
+        .perform();
 
       // Wait for any potential UI changes after touch using explicit wait
       await browser.waitUntil(
@@ -115,8 +119,8 @@ describe('iOS App Launch', () => {
       // Take a screenshot after the interaction
       await browser.saveScreenshot('./logs/screenshots/after-tap.png');
 
-      // If we get here without errors, the app is responsive
-      expect(true).toBe(true);
+      // If we get here without errors, the app is responsive to touch
+      // No explicit assertion needed - the lack of thrown errors validates responsiveness
     } catch (error) {
       console.log('Touch interaction failed:', error);
       await browser.saveScreenshot('./logs/screenshots/touch-error.png');

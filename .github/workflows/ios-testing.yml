@@ -108,11 +108,11 @@ jobs:
           echo "Checking for built app..."
           APP_PATH="$DERIVED_DATA_PATH/Build/Products/Release-iphonesimulator/App.app"
           if [ -d "$APP_PATH" ]; then
-            echo "✅ App.app found at expected location"
+            echo "SUCCESS: App.app found at expected location"
             ls -la \
               "$DERIVED_DATA_PATH/Build/Products/Release-iphonesimulator/"
           else
-            echo "❌ App.app not found!"
+            echo "ERROR: App.app not found!"
             echo "Contents of build directory:"
             find "$DERIVED_DATA_PATH" -name "*.app" -type d 2>/dev/null || true
             exit 1

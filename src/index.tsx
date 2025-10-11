@@ -13,7 +13,7 @@ async function init() {
         await navigator.serviceWorker.ready;
       }
     } catch (error) {
-      console.error('❌ Failed to start MSW:', error);
+      console.error('ERROR: Failed to start MSW:', error);
     }
   }
 

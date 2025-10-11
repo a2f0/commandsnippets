@@ -16,9 +16,9 @@ export async function healthCheck(): Promise<void> {
     }
 
     const data = await response.json();
-    console.log('✅ MSW health check successful:', data);
+    console.log('OK: MSW health check successful:', data);
   } catch (error) {
-    console.error('❌ MSW health check failed:', error);
+    console.error('ERROR: MSW health check failed:', error);
     throw error;
   }
 }

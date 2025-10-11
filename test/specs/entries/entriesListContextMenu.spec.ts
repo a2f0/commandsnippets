@@ -44,7 +44,7 @@ describe('Entry Main Menu Behavior', () => {
     expect(BasePage.entryNewBottomBody).toHaveValue('Test Body Content');
 
     console.log(
-      '✅ Entry context menu test completed: all basic MSW-integrated functionality verified'
+      'OK: Entry context menu test completed: all basic MSW-integrated functionality verified'
     );
 
     // Assert initial GETs occurred for this page load
