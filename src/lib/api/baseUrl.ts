@@ -6,10 +6,7 @@ if (environment === 'staging') {
 } else if (environment === 'production') {
   baseHTTPURL = 'https://api.tearleads.com';
 } else {
-  // For development, use the current hostname in browser, otherwise localhost
-  const isVitest = import.meta.env?.['VITEST'];
-  const hostname = !isVitest ? window.location.hostname : 'localhost';
-  baseHTTPURL = `http://${hostname}:9001`;
+  baseHTTPURL = 'http://localhost:9001';
 }
 
 export const baseURL = `${baseHTTPURL}/api/v1`;
