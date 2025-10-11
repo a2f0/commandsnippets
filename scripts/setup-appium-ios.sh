@@ -66,7 +66,7 @@ else
     exit 1
 fi
 
-echo "Setup complete!"
+echo "SUCCESS: Setup complete!"
 echo ""
 echo "You can now run Appium tests with:"
 echo "   pnpm run appium:ios"

@@ -105,12 +105,12 @@ export const config: WebdriverIO.Config = {
 
     if (!fs.existsSync(logsDir)) {
       fs.mkdirSync(logsDir, {recursive: true});
-      console.log('Created logs directory:', logsDir);
+      console.log('OK: Created logs directory:', logsDir);
     }
 
     if (!fs.existsSync(screenshotsDir)) {
       fs.mkdirSync(screenshotsDir, {recursive: true});
-      console.log('Created screenshots directory:', screenshotsDir);
+      console.log('OK: Created screenshots directory:', screenshotsDir);
     }
 
     // Give CI/CD machines extra time to start services
@@ -128,7 +128,7 @@ export const config: WebdriverIO.Config = {
   },
 
   afterSession: () => {
-    console.log('Appium iOS session completed.');
+    console.log('SUCCESS: Appium iOS session completed.');
   },
 
   afterTest: async (test, _context, {error}) => {
