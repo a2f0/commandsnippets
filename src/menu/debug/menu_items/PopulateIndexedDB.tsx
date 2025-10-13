@@ -1,6 +1,7 @@
 import React from 'react';
 import {useParams} from 'react-router-dom';
 
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {fetchAllEntriesForUser} from '../../../lib/text_entries';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
@@ -9,6 +10,7 @@ interface IProps {
 }
 
 const PopulateIndexedDB = ({onClose}: IProps) => {
+  const {t} = useTypedTranslation('menu');
   const {user} = useParams();
 
   return (
@@ -20,7 +22,7 @@ const PopulateIndexedDB = ({onClose}: IProps) => {
         onClose();
       }}
     >
-      Populate IndexedDB
+      {t('populateIndexedDB')}
     </StyledMenuItem>
   );
 };
