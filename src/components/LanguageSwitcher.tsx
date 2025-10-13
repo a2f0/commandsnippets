@@ -2,6 +2,7 @@ import {Button, ListItemIcon, Menu, MenuItem} from '@mui/material';
 import type React from 'react';
 import {useCallback, useState} from 'react';
 import {useTypedTranslation} from '../i18n/hooks';
+import {supportedLanguages} from '../i18n/i18n';
 import {StyledCheckIcon} from '../styled/StyledCheckIcon';
 
 export const LanguageSwitcher: React.FC = () => {
@@ -24,8 +25,6 @@ export const LanguageSwitcher: React.FC = () => {
     },
     [i18n, handleClose]
   );
-
-  const supportedLanguages = ['en', 'es'];
 
   // Get language name from translation files using i18n
   const getLanguageName = useCallback(
