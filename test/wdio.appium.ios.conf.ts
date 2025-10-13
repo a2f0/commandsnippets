@@ -95,7 +95,7 @@ export const config: WebdriverIO.Config = {
 
   // Hooks
   onPrepare: async () => {
-    console.log('🚀 Preparing Appium iOS environment...');
+    console.log('Preparing Appium iOS environment...');
 
     // Ensure log directories exist
     const fs = await import('node:fs');
@@ -105,32 +105,30 @@ export const config: WebdriverIO.Config = {
 
     if (!fs.existsSync(logsDir)) {
       fs.mkdirSync(logsDir, {recursive: true});
-      console.log('📁 Created logs directory:', logsDir);
+      console.log('OK: Created logs directory:', logsDir);
     }
 
     if (!fs.existsSync(screenshotsDir)) {
       fs.mkdirSync(screenshotsDir, {recursive: true});
-      console.log('📁 Created screenshots directory:', screenshotsDir);
+      console.log('OK: Created screenshots directory:', screenshotsDir);
     }
 
     // Give CI/CD machines extra time to start services
     if (process.env['CI']) {
       console.log(
-        '🔄 CI environment detected, waiting extra time for services...'
+        'CI environment detected, waiting extra time for services...'
       );
-      console.log(
-        '📊 Appium logs will be saved to: ./logs/appium/appium-ios.log'
-      );
+      console.log('Appium logs will be saved to: ./logs/appium/appium-ios.log');
       await new Promise(resolve => setTimeout(resolve, CI_PREPARE_DELAY_MS)); // CI preparation delay
     }
   },
 
   beforeSession: () => {
-    console.log('📱 Starting Appium iOS session...');
+    console.log('Starting Appium iOS session...');
   },
 
   afterSession: () => {
-    console.log('✅ Appium iOS session completed.');
+    console.log('SUCCESS: Appium iOS session completed.');
   },
 
   afterTest: async (test, _context, {error}) => {

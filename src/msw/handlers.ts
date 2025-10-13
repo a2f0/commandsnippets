@@ -237,7 +237,7 @@ const createHandlers = () => {
       // Health check endpoint
       http.get(`${baseUrl}/health`, ({request}) => {
         recordRequest('GET', request.url);
-        console.log('✅ MSW intercepted health check request');
+        console.log('OK: MSW intercepted health check request');
         return HttpResponse.json(
           {status: 'ok'},
           {
@@ -249,7 +249,7 @@ const createHandlers = () => {
       // Tags endpoint (with optional query parameters)
       http.get(`${baseUrl}/tags`, req => {
         recordRequest('GET', req.request.url);
-        console.log('✅ MSW intercepted tags request:', req.request.url);
+        console.log('OK: MSW intercepted tags request:', req.request.url);
         return HttpResponse.json(tagsResponse, {
           status: 200,
         });
@@ -258,7 +258,7 @@ const createHandlers = () => {
       // Create new tag endpoint
       http.post(`${baseUrl}/tags`, async ({request}) => {
         recordRequest('POST', request.url);
-        console.log('✅ MSW intercepted tags POST request');
+        console.log('OK: MSW intercepted tags POST request');
 
         // Return a new tag response
         const newTag: ITagJsonApiResponseSingle = {
@@ -373,7 +373,7 @@ const createHandlers = () => {
       // Create new entry endpoint
       http.post(`${baseUrl}/entries`, async ({request}) => {
         recordRequest('POST', request.url);
-        console.log('✅ MSW intercepted entries POST request');
+        console.log('OK: MSW intercepted entries POST request');
 
         // Return a new entry response
         const newEntry = {
@@ -430,7 +430,7 @@ const createHandlers = () => {
       http.delete(`${baseUrl}/tags/:id`, ({params, request}) => {
         recordRequest('DELETE', request.url);
         const tagId = `${params['id']}`;
-        console.log('✅ MSW intercepted tag DELETE request for id:', tagId);
+        console.log('OK: MSW intercepted tag DELETE request for id:', tagId);
 
         // Find the tag to delete
         const tagToDelete = tagsResponse.data.find(tag => tag.id === tagId);
@@ -457,7 +457,10 @@ const createHandlers = () => {
       http.delete(`${baseUrl}/entries/:id`, ({params, request}) => {
         recordRequest('DELETE', request.url);
         const entryId = `${params['id']}`;
-        console.log('✅ MSW intercepted entry DELETE request for id:', entryId);
+        console.log(
+          'OK: MSW intercepted entry DELETE request for id:',
+          entryId
+        );
 
         // Remove the entry from our mock data
         entriesResponse.data = entriesResponse.data.filter(
@@ -472,7 +475,7 @@ const createHandlers = () => {
         recordRequest('DELETE', request.url);
         const tagEntryId = `${params['id']}`;
         console.log(
-          '✅ MSW intercepted untag (tags_entries) DELETE request for id:',
+          'OK: MSW intercepted untag (tags_entries) DELETE request for id:',
           tagEntryId
         );
 

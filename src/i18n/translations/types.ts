@@ -16,6 +16,7 @@ export interface CommonTranslations {
   no: string;
   language: string;
   languageName: string;
+  selectLanguage: string;
   settings: string;
   logoAlt: string;
 }
@@ -54,6 +55,20 @@ export interface MenuTranslations {
   activeUsers: string;
   totalSessions: string;
   avgSessionDuration: string;
+  darkMode: string;
+  lightMode: string;
+  showTagCounts: string;
+  sortByBody: string;
+  sortByDateCreated: string;
+  sortByDateTagged: string;
+  sortBySubject: string;
+  sortByTagCount: string;
+  sortByUserDefinedOrder: string;
+  sortByTagName: string;
+  sortByDateLastUsed: string;
+  sortByEntryCount: string;
+  triggerTestError: string;
+  populateIndexedDB: string;
 }
 
 export interface TagsTranslations {

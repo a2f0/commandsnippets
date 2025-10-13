@@ -91,7 +91,7 @@ describe('Entries Context Menu Delete Entry', () => {
     await expect(BasePage.tagsEntries1).not.toBeDisplayed();
 
     // Test core functionality: entry delete completed successfully
-    console.log('✅ Entry deleted successfully from untagged entries view');
+    console.log('OK: Entry deleted successfully from untagged entries view');
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });

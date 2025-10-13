@@ -5,9 +5,11 @@ import {render} from '@testing-library/react';
 import invariant from 'invariant';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
+import {I18nextProvider} from 'react-i18next';
 import {MemoryRouter} from 'react-router-dom';
 import {describe, expect, it, vi} from 'vitest';
 import {AppContextProvider} from '../src/AppContext';
+import {i18n} from '../src/i18n/i18n';
 import {Main} from '../src/Main';
 import {darkTheme} from '../src/theme/themes';
 
@@ -16,15 +18,17 @@ vi.mock('react-cookie', () => ({
 }));
 
 const MainWithProviders = () => (
-  <ThemeProvider theme={darkTheme}>
-    <MemoryRouter>
-      <DndProvider backend={HTML5Backend}>
-        <AppContextProvider>
-          <Main />
-        </AppContextProvider>
-      </DndProvider>
-    </MemoryRouter>
-  </ThemeProvider>
+  <I18nextProvider i18n={i18n}>
+    <ThemeProvider theme={darkTheme}>
+      <MemoryRouter>
+        <DndProvider backend={HTML5Backend}>
+          <AppContextProvider>
+            <Main />
+          </AppContextProvider>
+        </DndProvider>
+      </MemoryRouter>
+    </ThemeProvider>
+  </I18nextProvider>
 );
 
 describe('Main Component Holy Grail Layout', () => {

@@ -44,7 +44,7 @@ describe('Entry Main Menu', () => {
     );
 
     console.log(
-      '✅ File menu entry creation test completed: all basic MSW-integrated functionality verified'
+      'OK: File menu entry creation test completed: all basic MSW-integrated functionality verified'
     );
 
     expect(browser.currentTestErrors).toHaveLength(0);

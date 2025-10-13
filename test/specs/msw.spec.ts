@@ -198,10 +198,13 @@ describe('MSW Verification Tests', () => {
     // If MSW is working, we should get a successful response
     // If MSW is not working, we might get a network error or CORS error
     if (entriesResponse?.ok) {
-      console.log('✅ Entries endpoint successfully intercepted by MSW');
+      console.log('OK: Entries endpoint successfully intercepted by MSW');
       expect(entriesResponse.status).toBe(200);
     } else if (entriesResponse && 'error' in entriesResponse) {
-      console.log('⚠️ Entries endpoint request failed:', entriesResponse.error);
+      console.log(
+        'WARNING: Entries endpoint request failed:',
+        entriesResponse.error
+      );
       // This might be expected if MSW isn't running, so we won't fail the test
       // but we'll log it for information
     }

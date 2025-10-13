@@ -2,6 +2,7 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import {lightTheme, type Theme} from '../../../../src/theme/themes';
 import {useAppContext} from '../../../AppContext';
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
@@ -11,6 +12,7 @@ interface IProps {
 
 const LightMode = ({onClose}: IProps) => {
   const appConfig = useAppContext();
+  const {t} = useTypedTranslation('menu');
 
   const handleThemeSwitcher = (chosenTheme: Theme) => {
     if (chosenTheme === lightTheme) {
@@ -31,7 +33,7 @@ const LightMode = ({onClose}: IProps) => {
       <ListItemIcon>
         {appConfig.selectedTheme === 'lightTheme' && <StyledCheckIcon />}
       </ListItemIcon>
-      Light Mode
+      {t('lightMode')}
     </StyledMenuItem>
   );
 };

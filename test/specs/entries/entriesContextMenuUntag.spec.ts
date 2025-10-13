@@ -42,7 +42,7 @@ describe('Entries Context Menu Untag', () => {
     // Verify untag option exists
     await expect(BasePage.tagsEntriesContextMenu1Untag).toBeExisting();
 
-    console.log('✅ Untag context menu option is available for tagged entry');
+    console.log('OK: Untag context menu option is available for tagged entry');
 
     // No untag issued here; ensure tags_entries DELETE has not been called
     const untagCount = await browser.getMSWRequestCount(
@@ -51,7 +51,9 @@ describe('Entries Context Menu Untag', () => {
     );
     expect(untagCount).toBe(0);
 
-    console.log('✅ Untag test completed: entry successfully removed from tag');
+    console.log(
+      'OK: Untag test completed: entry successfully removed from tag'
+    );
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });

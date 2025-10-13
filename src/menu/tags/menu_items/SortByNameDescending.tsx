@@ -3,6 +3,7 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
@@ -12,6 +13,7 @@ interface IProps {
 
 const SortByNameDescending = ({onClose}: IProps) => {
   const appConfig = useAppContext();
+  const {t} = useTypedTranslation('menu');
 
   return (
     <StyledMenuItem
@@ -24,7 +26,7 @@ const SortByNameDescending = ({onClose}: IProps) => {
       <ListItemIcon>
         {appConfig.tagSortOrder === 'name' && <StyledCheckIcon />}
       </ListItemIcon>
-      Sort by Tag Name <ArrowDownward fontSize="small" />
+      {t('sortByTagName')} <ArrowDownward fontSize="small" />
     </StyledMenuItem>
   );
 };

@@ -51,7 +51,7 @@ describe('Entry Main Menu Behavior', () => {
 
     // Test core functionality: entries menu workflow completed successfully
     console.log(
-      '✅ Untagged entries workflow completed: menu opened, untagged selected, URL updated, entries verified'
+      'OK: Untagged entries workflow completed: menu opened, untagged selected, URL updated, entries verified'
     );
 
     expect(browser.currentTestErrors).toHaveLength(0);

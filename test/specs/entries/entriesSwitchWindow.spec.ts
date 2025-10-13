@@ -74,7 +74,7 @@ describe('Tab Switching Behavior', () => {
 
     // Test core functionality: window switching workflow completed successfully
     console.log(
-      '✅ Window switching workflow completed: entry editing preserved across window switches'
+      'OK: Window switching workflow completed: entry editing preserved across window switches'
     );
 
     expect(browser.currentTestErrors).toHaveLength(0);
