@@ -16,6 +16,7 @@ export interface CommonTranslations {
   no: string;
   language: string;
   languageName: string;
+  selectLanguage: string;
   settings: string;
   logoAlt: string;
 }

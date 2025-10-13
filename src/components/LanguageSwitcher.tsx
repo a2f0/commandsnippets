@@ -2,10 +2,11 @@ import {Button, ListItemIcon, Menu, MenuItem} from '@mui/material';
 import type React from 'react';
 import {useCallback, useState} from 'react';
 import {useTypedTranslation} from '../i18n/hooks';
+import {supportedLanguages} from '../i18n/i18n';
 import {StyledCheckIcon} from '../styled/StyledCheckIcon';
 
 export const LanguageSwitcher: React.FC = () => {
-  const {i18n} = useTypedTranslation('common');
+  const {t, i18n} = useTypedTranslation('common');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -25,24 +26,23 @@ export const LanguageSwitcher: React.FC = () => {
     [i18n, handleClose]
   );
 
-  // Supported languages - should match i18n configuration
-  const supportedLanguages = ['en', 'es'];
-
-  // Helper function to get language name with dedicated map
-  const getLanguageName = (langCode: string) => {
-    // Using a map is more robust for getting native language names.
-    const languageNames: Record<string, string> = {
-      en: 'English',
-      es: 'Español',
-    };
-    return languageNames[langCode] || langCode.toUpperCase();
-  };
+  // Get language name from translation files using i18n
+  const getLanguageName = useCallback(
+    (langCode: string) => {
+      // 'getFixedT' returns a 't' function for a specific language
+      return (
+        i18n.getFixedT(langCode, 'common')('languageName') ||
+        langCode.toUpperCase()
+      );
+    },
+    [i18n]
+  );
 
   // Get current language name
-  const getCurrentLanguageName = () => {
+  const getCurrentLanguageName = useCallback(() => {
     const currentLang = i18n.language || 'en'; // Fallback to 'en' if undefined
     return getLanguageName(currentLang);
-  };
+  }, [i18n.language, getLanguageName]);
 
   return (
     <>
@@ -54,7 +54,7 @@ export const LanguageSwitcher: React.FC = () => {
         aria-haspopup="true"
         aria-expanded={open}
         onClick={handleClick}
-        aria-label="Select language"
+        aria-label={t('selectLanguage')}
         sx={{
           alignSelf: 'flex-end',
           textTransform: 'none',
