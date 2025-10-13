@@ -3,6 +3,7 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
@@ -10,8 +11,9 @@ interface IProps {
   onClose: () => void;
 }
 
-const SortByUserDefinedOrder = ({onClose}: IProps) => {
+const SortByBodyDescending = ({onClose}: IProps) => {
   const appConfig = useAppContext();
+  const {t} = useTypedTranslation('menu');
 
   return (
     <StyledMenuItem
@@ -27,10 +29,10 @@ const SortByUserDefinedOrder = ({onClose}: IProps) => {
           <StyledCheckIcon />
         )}
       </ListItemIcon>
-      Sort by Body <ArrowDownward fontSize="small" />
+      {t('sortByBody')} <ArrowDownward fontSize="small" />
     </StyledMenuItem>
   );
 };
 
-const memoizedSortByBodyDescending = React.memo(SortByUserDefinedOrder);
+const memoizedSortByBodyDescending = React.memo(SortByBodyDescending);
 export {memoizedSortByBodyDescending as SortByBodyDescending};

@@ -3,6 +3,7 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 
@@ -10,8 +11,9 @@ interface IProps {
   onClose: () => void;
 }
 
-const SortByNameDescending = ({onClose}: IProps) => {
+const SortByDateLastUsedDescending = ({onClose}: IProps) => {
   const appConfig = useAppContext();
+  const {t} = useTypedTranslation('menu');
 
   return (
     <StyledMenuItem
@@ -24,11 +26,13 @@ const SortByNameDescending = ({onClose}: IProps) => {
       <ListItemIcon>
         {appConfig.tagSortOrder === '-date_last_used' && <StyledCheckIcon />}
       </ListItemIcon>
-      Sort by Tag recently used
+      {t('sortByDateLastUsed')}
       <ArrowDownward fontSize="small" />
     </StyledMenuItem>
   );
 };
 
-const memoizedSortByDateLastUsedDescending = React.memo(SortByNameDescending);
+const memoizedSortByDateLastUsedDescending = React.memo(
+  SortByDateLastUsedDescending
+);
 export {memoizedSortByDateLastUsedDescending as SortByDateLastUsedDescending};

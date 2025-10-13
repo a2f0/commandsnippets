@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 
+import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {
@@ -7,6 +8,7 @@ interface IProps {
 }
 
 const TriggerTestError = ({onClose}: IProps) => {
+  const {t} = useTypedTranslation('menu');
   const [shouldError, setShouldError] = useState(false);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ const TriggerTestError = ({onClose}: IProps) => {
       key="Trigger Test Error"
       onClick={handleClick}
     >
-      Trigger Test Error
+      {t('triggerTestError')}
     </StyledMenuItem>
   );
 };
