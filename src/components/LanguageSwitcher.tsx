@@ -26,10 +26,7 @@ export const LanguageSwitcher: React.FC = () => {
   );
 
   // Derive supported languages from i18n configuration
-  const supportedLanguages = (i18n.options?.supportedLngs || [
-    'en',
-    'es',
-  ]) as string[];
+  const supportedLanguages = i18n.options.supportedLngs as string[];
 
   // Get language name from translation files using i18n
   const getLanguageName = useCallback(
