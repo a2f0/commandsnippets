@@ -4,9 +4,6 @@ import {initReactI18next} from 'react-i18next';
 
 import {translations} from './translations';
 
-// Supported languages
-export const supportedLanguages = ['en', 'es'] as const;
-
 // Convert our typed translations to i18next resources format
 const resources = {
   en: translations.en,
@@ -27,7 +24,7 @@ i18n
 
     lng: 'en',
 
-    supportedLngs: supportedLanguages,
+    supportedLngs: ['en', 'es'],
 
     ns: ['common', 'menu', 'tags', 'entries'],
     defaultNS: 'common',
