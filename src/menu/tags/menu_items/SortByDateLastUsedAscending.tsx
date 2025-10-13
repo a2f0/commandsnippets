@@ -11,7 +11,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const SortByDateCreatedAscending = ({onClose}: IProps) => {
+const SortByDateLastUsedAscending = ({onClose}: IProps) => {
   const appConfig = useAppContext();
   const {t} = useTypedTranslation('menu');
 
@@ -33,6 +33,6 @@ const SortByDateCreatedAscending = ({onClose}: IProps) => {
 };
 
 const memoizedSortByDateLastUsedAscending = React.memo(
-  SortByDateCreatedAscending
+  SortByDateLastUsedAscending
 );
 export {memoizedSortByDateLastUsedAscending as SortByDateLastUsedAscending};

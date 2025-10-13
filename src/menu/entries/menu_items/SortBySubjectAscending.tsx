@@ -11,7 +11,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const SortByUserDefinedOrder = ({onClose}: IProps) => {
+const SortBySubjectAscending = ({onClose}: IProps) => {
   const appConfig = useAppContext();
   const {t} = useTypedTranslation('menu');
 
@@ -34,5 +34,5 @@ const SortByUserDefinedOrder = ({onClose}: IProps) => {
   );
 };
 
-const memoizedSortBySubjectAscending = React.memo(SortByUserDefinedOrder);
+const memoizedSortBySubjectAscending = React.memo(SortBySubjectAscending);
 export {memoizedSortBySubjectAscending as SortBySubjectAscending};
