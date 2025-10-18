@@ -22,6 +22,10 @@ from .services import GithubOAuthService, GoogleOAuthService
 
 
 class CustomObtainAuthToken(ObtainAuthToken):
+    @staticmethod
+    def _is_local_dev():
+        return settings.DEBUG
+
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
@@ -29,14 +33,18 @@ class CustomObtainAuthToken(ObtainAuthToken):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
+
+        is_local_dev = self._is_local_dev()
+        cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
+
         response = Response({})
         response.set_cookie(
             "Authorization",
             token.key,
             httponly=True,
-            secure=True,
-            samesite="strict",
-            domain=settings.COOKIE_DOMAIN,
+            secure=not is_local_dev,
+            samesite="lax" if is_local_dev else "strict",
+            domain=cookie_domain,
             max_age=settings.AUTH_COOKIE_MAX_AGE,
         )
         response.set_cookie(
@@ -44,8 +52,8 @@ class CustomObtainAuthToken(ObtainAuthToken):
             None,
             httponly=False,
             max_age=settings.AUTH_COOKIE_MAX_AGE,
-            samesite="strict",
-            domain=settings.COOKIE_DOMAIN,
+            samesite="lax" if is_local_dev else "strict",
+            domain=cookie_domain,
         ),
         return response
 
@@ -62,6 +70,10 @@ class CustomInvalidateAuthToken(APIView):
 
 class GithubLogin(APIView):
     resource_name = "GithubLogin"
+
+    @staticmethod
+    def _is_local_dev():
+        return settings.DEBUG
 
     def post(self, request, *args, **kwargs):
         serializer = GithubAuthenticationSerializer(data=request.data)
@@ -94,14 +106,20 @@ class GithubLogin(APIView):
                                 user.login_count += 1
                                 user.save(update_fields=["last_login", "login_count"])
                             token, created = Token.objects.get_or_create(user=user)
+
+                            is_local_dev = self._is_local_dev()
+                            cookie_domain = (
+                                None if is_local_dev else settings.COOKIE_DOMAIN
+                            )
+
                             response = Response({})
                             response.set_cookie(
                                 "Authorization",
                                 token.key,
                                 httponly=True,
-                                secure=True,
-                                samesite="strict",
-                                domain=settings.COOKIE_DOMAIN,
+                                secure=not is_local_dev,
+                                samesite="lax" if is_local_dev else "strict",
+                                domain=cookie_domain,
                                 max_age=settings.AUTH_COOKIE_MAX_AGE,
                             )
                             response.set_cookie(
@@ -109,8 +127,8 @@ class GithubLogin(APIView):
                                 None,
                                 httponly=False,
                                 max_age=settings.AUTH_COOKIE_MAX_AGE,
-                                samesite="strict",
-                                domain=settings.COOKIE_DOMAIN,
+                                samesite="lax" if is_local_dev else "strict",
+                                domain=cookie_domain,
                             ),
                             return response
 
@@ -119,6 +137,10 @@ class GithubLogin(APIView):
 
 class GoogleLogin(APIView):
     resource_name = "GoogleLogin"
+
+    @staticmethod
+    def _is_local_dev():
+        return settings.DEBUG
 
     def post(self, request, *args, **kwargs):
         serializer = GoogleAuthenticationSerializer(data=request.data)
@@ -146,14 +168,18 @@ class GoogleLogin(APIView):
                     user.login_count += 1
                     user.save(update_fields=["last_login", "login_count"])
                 token, created = Token.objects.get_or_create(user=user)
+
+                is_local_dev = self._is_local_dev()
+                cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
+
                 response = Response({})
                 response.set_cookie(
                     "Authorization",
                     token.key,
                     httponly=True,
-                    secure=True,
-                    samesite="strict",
-                    domain=settings.COOKIE_DOMAIN,
+                    secure=not is_local_dev,
+                    samesite="lax" if is_local_dev else "strict",
+                    domain=cookie_domain,
                     max_age=settings.AUTH_COOKIE_MAX_AGE,
                 )
                 response.set_cookie(
@@ -161,8 +187,8 @@ class GoogleLogin(APIView):
                     None,
                     httponly=False,
                     max_age=settings.AUTH_COOKIE_MAX_AGE,
-                    samesite="strict",
-                    domain=settings.COOKIE_DOMAIN,
+                    samesite="lax" if is_local_dev else "strict",
+                    domain=cookie_domain,
                 ),
                 return response
 
@@ -174,25 +200,19 @@ class IntegratedOAuthLogin(APIView):
 
     resource_name = "IntegratedOAuthLogin"
 
-    @staticmethod
-    def _is_local_dev():
-        """Determine if we're in a local/Docker development environment."""
-        return settings.DEBUG or getattr(settings, "IS_LOCAL_DEV", False)
-
     def _create_auth_response(self, user, request):
         """Create authenticated response with proper cookies."""
         token, created = Token.objects.get_or_create(user=user)
         response = Response({})
 
-        is_local_dev = self._is_local_dev()
-        cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
+        cookie_domain = None if settings.DEBUG else settings.COOKIE_DOMAIN
 
         response.set_cookie(
             "Authorization",
             token.key,
             httponly=True,
-            secure=not is_local_dev,  # Use HTTPS in production only
-            samesite="lax" if is_local_dev else "strict",
+            secure=not settings.DEBUG,
+            samesite="lax" if settings.DEBUG else "strict",
             domain=cookie_domain,
             max_age=settings.AUTH_COOKIE_MAX_AGE,
         )
@@ -201,7 +221,7 @@ class IntegratedOAuthLogin(APIView):
             None,
             httponly=False,
             max_age=settings.AUTH_COOKIE_MAX_AGE,
-            samesite="lax" if is_local_dev else "strict",
+            samesite="lax" if settings.DEBUG else "strict",
             domain=cookie_domain,
         )
         return response
