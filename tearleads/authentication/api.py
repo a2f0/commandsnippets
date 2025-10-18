@@ -39,7 +39,7 @@ def _create_auth_response(user):
     )
     response.set_cookie(
         "LoggedIn",
-        None,
+        "true",
         httponly=False,
         max_age=settings.AUTH_COOKIE_MAX_AGE,
         samesite="lax" if is_local_dev else "strict",
