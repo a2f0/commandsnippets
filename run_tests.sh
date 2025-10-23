@@ -1,3 +1,3 @@
 #!/bin/sh
 set -e
-docker compose run backend python manage.py test -v 2
+docker compose run --rm backend python manage.py test -v 2
