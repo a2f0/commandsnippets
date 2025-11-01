@@ -33,7 +33,7 @@ jobs:
           pre-commit run --all-files
       - run: npx vitest --no-watch
       - run: npm run ci-headless
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: wdio-video-reporter
@@ -82,7 +82,7 @@ jobs:
         env:
           DISPLAY: :99
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: electron-test-results
