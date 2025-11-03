@@ -7,5 +7,5 @@ djangorestframework==3.16.1
 djangorestframework-jsonapi[django-filter]==8.0.0
 newrelic==11.0.1
 psycopg2==2.9.10
-pyyaml==6.0.2
+pyyaml==6.0.3
 requests==2.32.5
