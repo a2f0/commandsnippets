@@ -1,6 +1,6 @@
 import {join} from 'node:path';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
-import {app, BrowserWindow, shell} from 'electron';
+import {app, BrowserWindow, ipcMain, shell} from 'electron';
 
 // Extend global interface to include pendingProtocolUrl
 declare global {
@@ -75,6 +75,12 @@ app.on('open-url', (event, url) => {
     // Store the URL to handle it when a window becomes available
     global.pendingProtocolUrl = url;
   }
+});
+
+// Handle IPC request to open external URLs
+ipcMain.handle('open-external', async (_event, url: string) => {
+  console.log('Opening external URL:', url);
+  await shell.openExternal(url);
 });
 
 // This method will be called when Electron has finished

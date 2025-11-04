@@ -12,6 +12,9 @@ const api = {
       ipcRenderer.removeListener('protocol-url', wrappedCallback);
     };
   },
+  openExternal: async (url: string): Promise<void> => {
+    return ipcRenderer.invoke('open-external', url);
+  },
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to renderer
@@ -22,4 +25,10 @@ if (process.contextIsolated) {
   } catch (error) {
     console.error(error);
   }
+} else {
+  // Fallback for non-isolated contexts
+  // @ts-expect-error - Assigning to window in non-isolated context
+  window.electron = electronAPI;
+  // @ts-expect-error - Assigning to window in non-isolated context
+  window.api = api;
 }
