@@ -81,9 +81,19 @@ app.on('open-url', (event, url) => {
 });
 
 // Handle IPC request to open external URLs
+// Security: Only allow HTTPS URLs to prevent file:// or other malicious schemes
 ipcMain.handle('open-external', async (_event, url: string) => {
-  console.log('Opening external URL:', url);
-  await shell.openExternal(url);
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol === 'https:') {
+      console.log('Opening external URL:', url);
+      await shell.openExternal(url);
+    } else {
+      console.error(`Blocked attempt to open non-https URL: ${url}`);
+    }
+  } catch {
+    console.error(`Blocked attempt to open invalid URL: ${url}`);
+  }
 });
 
 // This method will be called when Electron has finished
