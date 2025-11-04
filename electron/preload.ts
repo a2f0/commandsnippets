@@ -18,6 +18,7 @@ const api = {
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to renderer
+// Context isolation is required for security
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI);
@@ -26,9 +27,7 @@ if (process.contextIsolated) {
     console.error(error);
   }
 } else {
-  // Fallback for non-isolated contexts
-  // @ts-expect-error - Assigning to window in non-isolated context
-  window.electron = electronAPI;
-  // @ts-expect-error - Assigning to window in non-isolated context
-  window.api = api;
+  console.error(
+    'Context isolation is not enabled. This is a security risk. Please enable contextIsolation in BrowserWindow configuration.'
+  );
 }

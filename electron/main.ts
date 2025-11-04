@@ -19,6 +19,9 @@ function createWindow(): void {
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/preload.js'),
+      // Security: Enable context isolation and disable node integration
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   });
 
