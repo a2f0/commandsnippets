@@ -1,11 +1,11 @@
 django==5.2.8
-django-cors-headers==4.7.0
+django-cors-headers==4.9.0
 django-environ==0.12.0
 django-filter==25.2
 django-ordered-model==3.7.4
 djangorestframework==3.16.1
 djangorestframework-jsonapi[django-filter]==8.1.0
-newrelic==11.0.1
-psycopg2==2.9.10
+newrelic==11.1.0
+psycopg2==2.9.11
 pyyaml==6.0.3
 requests==2.32.5
