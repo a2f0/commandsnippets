@@ -77,7 +77,7 @@ WSGI_APPLICATION = "tearleads.wsgi.application"
 
 # Also see ALLOWED_HOSTS
 
-CORS_ORIGIN_REGEX_WHITELIST = [
+CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:*",
     r"^http://127\.0\.0\.1:*",
     # RFC 1918 private address space
