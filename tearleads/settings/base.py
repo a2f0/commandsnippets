@@ -77,7 +77,7 @@ WSGI_APPLICATION = "tearleads.wsgi.application"
 
 # Also see ALLOWED_HOSTS
 
-CORS_ORIGIN_REGEX_WHITELIST = [
+CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:*",
     r"^http://127\.0\.0\.1:*",
     # RFC 1918 private address space
@@ -87,6 +87,7 @@ CORS_ORIGIN_REGEX_WHITELIST = [
     # Production domains
     r"^https://tearleads\.com$",
     r"^https://\w+\.tearleads\.com$",
+    # Staging domains
     r"^https://\w+\.staging\.tearleads\.com$",
 ]
 
