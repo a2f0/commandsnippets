@@ -87,6 +87,7 @@ CORS_ORIGIN_REGEX_WHITELIST = [
     # Production domains
     r"^https://tearleads\.com$",
     r"^https://\w+\.tearleads\.com$",
+    # Staging domains
     r"^https://\w+\.staging\.tearleads\.com$",
 ]
 
