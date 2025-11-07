@@ -37,10 +37,10 @@ deploy_environment() {
     echo -e "${GREEN}=== ${env_name} deployment completed ===${NC}\n"
 }
 
-# Deploy to production
-deploy_environment ".env-production" "PRODUCTION"
-
 # Deploy to staging
 deploy_environment ".env-staging" "STAGING"
+
+# Deploy to production
+deploy_environment ".env-production" "PRODUCTION"
 
 echo -e "${GREEN}=== All deployments completed successfully ===${NC}"
