@@ -10,7 +10,7 @@
     pre-commit install
     pre-commit run --all-files
     docker compose build --no-cache
-    docker compose run backend python manage.py migrate
+    docker compose run --rm backend python manage.py migrate
     docker compose up
 
     # Optional
@@ -25,12 +25,12 @@
 
 Bump version
 
-    docker compose run backend bump2version patch setup.cfg --allow-dirty
+    docker compose run --rm backend bump2version patch setup.cfg --allow-dirty
 
 Show outdated dependencies
 
     docker compose build --no-cache
-    docker compose run backend pur -r requirements/local.txt -r requirements/production.txt
+    docker compose run --rm backend pur -r requirements/local.txt -r requirements/production.txt
 
     # venv
     pur -r requirements/local.txt -r requirements/production.txt
@@ -39,21 +39,21 @@ Show outdated dependencies
 
 Run tests
 
-    docker compose run backend python manage.py test -v 2
-    docker compose run backend python -Wa manage.py test -v 2 # show warnings
-    docker compose run backend coverage run manage.py test -v 2
+    docker compose run --rm backend python manage.py test -v 2
+    docker compose run --rm backend python -Wa manage.py test -v 2 # show warnings
+    docker compose run --rm backend coverage run manage.py test -v 2
 
 Run a coverage report (note: the configuration of the coverage tool is in `.coveragerc` )
 
-    docker compose run backend coverage report
+    docker compose run --rm backend coverage report
 
 Run a specific class of tests
 
-    docker compose run backend python manage.py test tearleads.text_entries.tests.test_text_entries_api.TestTextEntriesApi
+    docker compose run --rm backend python manage.py test tearleads.text_entries.tests.test_text_entries_api.TestTextEntriesApi
 
 Run a specific test
 
-    docker compose run backend python manage.py test tearleads.users.tests.test_users_api.TestUsersApi.test_unauthenticated_user
+    docker compose run --rm backend python manage.py test tearleads.users.tests.test_users_api.TestUsersApi.test_unauthenticated_user
 
 ## Administrative
 
@@ -61,17 +61,17 @@ Run a specific test
 
 Take a backup
 
-    docker compose -f container-registry.yaml run postgres backup
+    docker compose -f container-registry.yaml run --rm postgres backup
 
 Delete a user
 
-    docker compose run backend python manage.py delete_user <username>
+    docker compose run --rm backend python manage.py delete_user <username>
 
 List users
 
-    docker compose run backend python manage.py list_users
-    docker compose run backend python manage.py list_recent_logins
-    docker compose run backend python manage.py usage_report
+    docker compose run --rm backend python manage.py list_users
+    docker compose run --rm backend python manage.py list_recent_logins
+    docker compose run --rm backend python manage.py usage_report
 
 Accessing the local Postgresql Database
 
@@ -95,8 +95,8 @@ Accessing the local Postgresql Database
 3. Update the `postgresXX_data_dev` volume in `docker compose.yaml` to the new version.
 4. Start the compose with `docker compose up`.  This should show a new database being created in the `postgres` container.
 5. Kill the backend container with `docker compose kill backend` to free up the database connections.
-6. List backups with `docker compose run postgres list-backups`
-7. Do a restore with `docker compose run postgres restore backup-pg_dump-Fc`
+6. List backups with `docker compose run --rm postgres list-backups`
+7. Do a restore with `docker compose run --rm postgres restore backup-pg_dump-Fc`
 8. Update the data volume in `staging.yaml` and `container-registry.yaml`.
 9. Update the container in `.github/workflows/main.yml`.
 
