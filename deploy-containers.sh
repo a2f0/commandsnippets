@@ -15,13 +15,13 @@ $DIR/ecr-login-aws-v2.sh
 echo "=== Running git pull..."
 git pull
 echo "=== Pulling down containers..."
-docker-compose -f container-registry.yaml pull --quiet
+docker compose -f container-registry.yaml pull --quiet
 echo "=== Stopping compose..."
-docker-compose -f container-registry.yaml down
+docker compose -f container-registry.yaml down --remove-orphans
 echo "=== Running database migrations..."
-docker-compose -f container-registry.yaml run backend python manage.py migrate
+docker compose -f container-registry.yaml run --rm backend python manage.py migrate
 echo "=== Starting compose..."
-docker-compose -f container-registry.yaml up -d
+docker compose -f container-registry.yaml up -d
 echo "=== Running docker system prune..."
 docker system prune --force
 echo "=== Done."
