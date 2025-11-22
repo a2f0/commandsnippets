@@ -33,6 +33,7 @@ class GithubOAuthService(object):
     def __init__(self):
         self.client_secret = os.environ["GITHUB_CLIENT_SECRET"]
         self.client_id = os.environ["GITHUB_CLIENT_ID"]
+        self.redirect_uri = os.environ["GITHUB_REDIRECT_URI"]
 
     def headers(self, access_token):
         authorization_header = "token " + access_token
@@ -41,9 +42,10 @@ class GithubOAuthService(object):
 
     def access_token(self, code):
         data = {
-            "client_id": os.environ["GITHUB_CLIENT_ID"],
+            "client_id": self.client_id,
             "code": code,
-            "client_secret": os.environ["GITHUB_CLIENT_SECRET"],
+            "client_secret": self.client_secret,
+            "redirect_uri": self.redirect_uri,
         }
         response = requests.post(
             url="https://github.com/login/oauth/access_token", data=data

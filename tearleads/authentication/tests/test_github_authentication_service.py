@@ -1,3 +1,4 @@
+import os
 from urllib.parse import parse_qs
 
 import responses
@@ -9,6 +10,9 @@ from tearleads.core.tests.core import BaseTestCase
 class TestGithubAuthentication(BaseTestCase):
     def setUp(self):
         super(TestGithubAuthentication, self).setUp()
+        os.environ["GITHUB_CLIENT_ID"] = "test_client_id"
+        os.environ["GITHUB_CLIENT_SECRET"] = "test_client_secret"
+        os.environ["GITHUB_REDIRECT_URI"] = "https://example.com/callback"
 
     @classmethod
     def setUpTestData(cls):
@@ -27,6 +31,14 @@ class TestGithubAuthentication(BaseTestCase):
         response = service.access_token(code="code")
         qs = parse_qs(response.text)
         self.assertEqual(qs["access_token"][0], "access_token")
+
+        request_body = responses.calls[0].request.body
+        sent_data = parse_qs(request_body)
+        self.assertIn("redirect_uri", sent_data)
+        self.assertEqual(sent_data["redirect_uri"][0], "https://example.com/callback")
+        self.assertEqual(sent_data["client_id"][0], "test_client_id")
+        self.assertEqual(sent_data["client_secret"][0], "test_client_secret")
+        self.assertEqual(sent_data["code"][0], "code")
 
     @responses.activate
     def test_user(self):

@@ -16,6 +16,7 @@ class TestGithubAuthentication(BaseTestCase):
         # Set up environment variables needed by the service
         os.environ["GITHUB_CLIENT_ID"] = "test_client_id"
         os.environ["GITHUB_CLIENT_SECRET"] = "test_client_secret"
+        os.environ["GITHUB_REDIRECT_URI"] = "https://example.com/callback"
 
     @responses.activate
     def test_successful_github_login_for_new_user(self):
