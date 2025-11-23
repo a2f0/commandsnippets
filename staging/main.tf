@@ -137,7 +137,7 @@ resource "cloudflare_record" "host" {
   name    = "${var.hostname}.${data.aws_route53_zone.tearleads-zone.name}"
   content = aws_instance.ec2.public_ip
   type    = "A"
-  ttl     = 120
+  ttl     = 1
   proxied = false
 }
 
@@ -160,8 +160,6 @@ resource "null_resource" "capture_ssh_host_keys" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      set -e
-
       # Wait for SSH to become available (retry up to 30 times with 10 second delay)
       for i in $(seq 1 30); do
         if ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt 2>/dev/null && [ -s ./ssh_host_keys.txt ]; then
@@ -178,6 +176,9 @@ resource "null_resource" "capture_ssh_host_keys" {
         exit 1
       fi
 
+      # Enable strict error handling for remaining commands
+      set -e
+
       # Use GitHub CLI to set the secret directly with proper base64 encoding
       gh secret set STAGING_KNOWN_HOSTS_BASE64 -R "${var.github_owner}/${var.github_repository}" --body "$(cat ./ssh_host_keys.txt | base64)"
 
@@ -187,7 +188,7 @@ resource "null_resource" "capture_ssh_host_keys" {
       # Remove any existing entries for this hostname
       ssh-keygen -R ${var.hostname}.tearleads.com 2>/dev/null || true
       # Add the new host keys (unhashed version for local use)
-      ssh-keyscan ${var.hostname}.tearleads.com >> ~/.ssh/known_hosts 2>/dev/null || true
+      ssh-keyscan ${var.hostname}.tearleads.com >> ~/.ssh/known_hosts 2>/dev/null
       echo "Updated local ~/.ssh/known_hosts with new host keys for ${var.hostname}.tearleads.com"
 
       # Clean up

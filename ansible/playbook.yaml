@@ -11,6 +11,9 @@
   tasks:
     - include_tasks: tasks/copy-deploy-keys.yaml
     - include_tasks: tasks/clone-repos.yaml
+    - include_tasks: tasks/copy-env-file.yaml
+      vars:
+        env_name: staging
     - include_tasks: tasks/schedule-api-backup.yaml
     - include_tasks: tasks/start-api-on-boot.yaml
     - include_tasks: tasks/patch-and-reboot-daily.yaml
@@ -29,6 +32,9 @@
   tasks:
     - include_tasks: tasks/copy-deploy-keys.yaml
     - include_tasks: tasks/clone-repos.yaml
+    - include_tasks: tasks/copy-env-file.yaml
+      vars:
+        env_name: production
     - include_tasks: tasks/schedule-api-backup.yaml
     - include_tasks: tasks/start-api-on-boot.yaml
     - include_tasks: tasks/patch-and-reboot-daily.yaml
