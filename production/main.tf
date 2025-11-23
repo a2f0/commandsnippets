@@ -105,6 +105,9 @@ resource "aws_instance" "ec2" {
   tags = {
     Name = var.environment
   }
+  root_block_device {
+    volume_size = 10
+  }
   user_data = <<-EOF
               #!/bin/bash
               echo ${var.hostname} > /etc/hostname
