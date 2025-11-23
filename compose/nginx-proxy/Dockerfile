@@ -1,1 +1,1 @@
-FROM jwilder/nginx-proxy
+FROM nginxproxy/nginx-proxy:1.9
