@@ -18,6 +18,8 @@ services:
     build:
       context: .
       dockerfile: ./compose/nginx-proxy/Dockerfile
+    labels:
+      - "com.github.nginx-proxy.nginx"
     ports:
       # Port 80 is required for nginx-proxy-letsencrypt
       # Full (Strict) end-to-end encryption is enabled on the SSL/TLS tab of Cloudflare.
