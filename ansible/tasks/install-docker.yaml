@@ -1,15 +1,48 @@
-- name: install docker
-  package:
-    name: docker.io
+- name: Install required packages for Docker repository
+  apt:
+    name:
+      - ca-certificates
+      - curl
     state: present
-    force_apt_get: True
     update_cache: yes
 
-- name: install docker-compose
-  package:
-    name: docker-compose
+- name: Create keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download Docker GPG key
+  get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+
+- name: Get system architecture
+  command: dpkg --print-architecture
+  register: dpkg_arch
+  changed_when: false
+
+- name: Get Ubuntu codename
+  shell: . /etc/os-release && echo "$VERSION_CODENAME"
+  register: ubuntu_codename
+  changed_when: false
+
+- name: Add Docker repository
+  apt_repository:
+    repo: "deb [arch={{ dpkg_arch.stdout }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ubuntu_codename.stdout }} stable"
     state: present
-    force_apt_get: True
+    filename: docker
+
+- name: Install Docker packages
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
     update_cache: yes
 
 - name: Add the application service account to the docker group
