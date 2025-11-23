@@ -12,11 +12,22 @@
     state: directory
     mode: '0755'
 
-- name: Download Docker GPG key
+- name: Remove old Docker GPG keys (if they exist)
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/keyrings/docker.gpg
+    - /etc/apt/keyrings/docker.asc
+
+- name: Download Docker GPG key (ASCII armored)
   get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
-    dest: /etc/apt/keyrings/docker.gpg
+    dest: /etc/apt/keyrings/docker.asc
     mode: '0644'
+
+- name: Dearmor Docker GPG key
+  shell: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /etc/apt/keyrings/docker.asc
 
 - name: Get system architecture
   command: dpkg --print-architecture
@@ -50,12 +61,12 @@
     name: "{{ ansible_user }}"
     groups: docker
 
-- name: Create the network
-  community.docker.docker_network:
-    name: tearleads
-
 - name: Enable and start Docker service
   systemd:
     name: docker
     state: started
     enabled: yes
+
+- name: Create the network
+  community.docker.docker_network:
+    name: tearleads
