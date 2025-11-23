@@ -10,8 +10,8 @@ volumes:
 
 networks:
   default:
-    external:
-      name: tearleads
+    name: tearleads
+    external: true
 
 services:
   nginx-proxy:
