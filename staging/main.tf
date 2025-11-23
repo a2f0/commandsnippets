@@ -183,6 +183,13 @@ resource "null_resource" "capture_ssh_host_keys" {
 
       gh secret set DEPLOY_STAGING_FQDN -R "${var.github_owner}/${var.github_repository}" --body "${aws_instance.ec2.public_ip}"
 
+      # Update local ~/.ssh/known_hosts
+      # Remove any existing entries for this hostname
+      ssh-keygen -R ${var.hostname}.tearleads.com 2>/dev/null || true
+      # Add the new host keys (unhashed version for local use)
+      ssh-keyscan ${var.hostname}.tearleads.com >> ~/.ssh/known_hosts 2>/dev/null || true
+      echo "Updated local ~/.ssh/known_hosts with new host keys for ${var.hostname}.tearleads.com"
+
       # Clean up
       rm -f ./ssh_host_keys.txt
     EOT
