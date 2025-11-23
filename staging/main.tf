@@ -161,8 +161,22 @@ resource "null_resource" "capture_ssh_host_keys" {
   provisioner "local-exec" {
     command = <<-EOT
       set -e
-      # Capture SSH host keys
-      ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt
+
+      # Wait for SSH to become available (retry up to 30 times with 10 second delay)
+      for i in $(seq 1 30); do
+        if ssh-keyscan -H ${aws_instance.ec2.public_ip} > ./ssh_host_keys.txt 2>/dev/null && [ -s ./ssh_host_keys.txt ]; then
+          echo "SSH host keys captured successfully"
+          break
+        fi
+        echo "Waiting for SSH to become available... (attempt $i/30)"
+        sleep 10
+      done
+
+      # Check if we got the keys
+      if [ ! -s ./ssh_host_keys.txt ]; then
+        echo "Failed to capture SSH host keys after 30 attempts"
+        exit 1
+      fi
 
       # Use GitHub CLI to set the secret directly with proper base64 encoding
       gh secret set STAGING_KNOWN_HOSTS_BASE64 -R "${var.github_owner}/${var.github_repository}" --body "$(cat ./ssh_host_keys.txt | base64)"
