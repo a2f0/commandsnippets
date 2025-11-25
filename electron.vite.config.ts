@@ -2,12 +2,15 @@ import react from '@vitejs/plugin-react';
 import {defineConfig, externalizeDepsPlugin} from 'electron-vite';
 
 // biome-ignore lint/style/noDefaultExport: electron-vite requires default export
-export default defineConfig({
+export default defineConfig(({mode}) => ({
   main: {
     build: {
       lib: {
         entry: 'electron/main.ts',
       },
+    },
+    define: {
+      'process.env.VITE_MODE': JSON.stringify(mode),
     },
     plugins: [externalizeDepsPlugin()],
   },
@@ -35,4 +38,4 @@ export default defineConfig({
     },
     plugins: [react()],
   },
-});
+}));

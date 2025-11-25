@@ -1,6 +1,7 @@
 import {join} from 'node:path';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
-import {app, BrowserWindow, shell} from 'electron';
+import {app, BrowserWindow, ipcMain, shell} from 'electron';
+import {getElectronProtocolScheme} from './protocol';
 
 // Extend global interface to include pendingProtocolUrl
 declare global {
@@ -19,6 +20,9 @@ function createWindow(): void {
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/preload.js'),
+      // Security: Enable context isolation and disable node integration
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   });
 
@@ -53,27 +57,42 @@ function createWindow(): void {
 }
 
 // Register custom protocol handler for OAuth redirects
+const protocolScheme = getElectronProtocolScheme(is.dev);
+
 if (process.defaultApp) {
   if (process.argv.length >= 2 && process.argv[1]) {
-    app.setAsDefaultProtocolClient('tearleads', process.execPath, [
+    app.setAsDefaultProtocolClient(protocolScheme, process.execPath, [
       process.argv[1],
     ]);
   }
 } else {
-  app.setAsDefaultProtocolClient('tearleads');
+  app.setAsDefaultProtocolClient(protocolScheme);
 }
 
 // Handle custom protocol URLs (OAuth redirects)
 app.on('open-url', (event, url) => {
-  console.log('Protocol URL received:', url);
   event.preventDefault();
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('protocol-url', url);
   } else {
-    console.warn('Main window not available to send protocol URL');
     // Store the URL to handle it when a window becomes available
     global.pendingProtocolUrl = url;
+  }
+});
+
+// Handle IPC request to open external URLs
+// Security: Only allow HTTPS URLs to prevent file:// or other malicious schemes
+ipcMain.handle('open-external', async (_event, url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol === 'https:') {
+      await shell.openExternal(url);
+    } else {
+      console.error(`Blocked attempt to open non-https URL: ${url}`);
+    }
+  } catch {
+    console.error(`Blocked attempt to open invalid URL: ${url}`);
   }
 });
 

@@ -14,6 +14,7 @@ interface OAuthConfig {
   scope: string;
   redirectUrl?: string;
   scopeCheck?: (scope: string | null) => boolean;
+  clientType: 'electron' | 'web';
 }
 
 interface OAuthCallbackParams {
@@ -57,12 +58,11 @@ export const useOAuth = (config: OAuthConfig) => {
         throw new Error('No authorization code received');
       }
 
-      const loginMethod =
-        config.provider === 'github'
-          ? tearleadsApi.githubLogin
-          : tearleadsApi.googleLogin;
-
-      await loginMethod(code);
+      if (config.provider === 'github') {
+        await tearleadsApi.githubLogin(code, config.clientType);
+      } else {
+        await tearleadsApi.googleLogin(code);
+      }
       const response = await tearleadsApi.getCurrentUser();
       const username = response.data.attributes.username;
 
@@ -146,7 +146,15 @@ export const useOAuth = (config: OAuthConfig) => {
       }
 
       authUrl.search = params.toString();
-      window.location.assign(authUrl.toString());
+      const authUrlString = authUrl.toString();
+
+      // For Electron, open OAuth URL in system browser
+      if (isElectron() && window.api?.openExternal) {
+        window.api.openExternal(authUrlString);
+      } else {
+        // For web and Capacitor, navigate in the current window
+        window.location.assign(authUrlString);
+      }
     } catch (error) {
       console.error(
         'Failed to use sessionStorage. OAuth flow cannot proceed.',

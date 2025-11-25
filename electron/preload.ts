@@ -12,9 +12,13 @@ const api = {
       ipcRenderer.removeListener('protocol-url', wrappedCallback);
     };
   },
+  openExternal: async (url: string): Promise<void> => {
+    return ipcRenderer.invoke('open-external', url);
+  },
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to renderer
+// Context isolation is required for security
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI);
@@ -22,4 +26,8 @@ if (process.contextIsolated) {
   } catch (error) {
     console.error(error);
   }
+} else {
+  console.error(
+    'Context isolation is not enabled. This is a security risk. Please enable contextIsolation in BrowserWindow configuration.'
+  );
 }
