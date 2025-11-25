@@ -11,7 +11,7 @@ jobs:
     continue-on-error: false
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
@@ -54,7 +54,7 @@ jobs:
     continue-on-error: false
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
@@ -108,7 +108,7 @@ jobs:
       github.ref == 'refs/heads/production'
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
