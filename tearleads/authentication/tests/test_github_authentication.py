@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 import responses
 from django.conf import settings
@@ -14,12 +15,19 @@ class TestGithubAuthentication(BaseTestCase):
     def setUp(self):
         super(TestGithubAuthentication, self).setUp()
         # Set up environment variables needed by the service
-        os.environ["GITHUB_CLIENT_ID"] = "test_client_id"
-        os.environ["GITHUB_CLIENT_SECRET"] = "test_client_secret"
-        os.environ["GITHUB_REDIRECT_URI"] = "https://example.com/callback"
-        os.environ["ELECTRON_GITHUB_CLIENT_ID"] = "test_electron_client_id"
-        os.environ["ELECTRON_GITHUB_CLIENT_SECRET"] = "test_electron_client_secret"
-        os.environ["ELECTRON_GITHUB_REDIRECT_URI"] = "tearleads-dev://oauth/github"
+        self.env_patcher = patch.dict(
+            os.environ,
+            {
+                "GITHUB_CLIENT_ID": "test_client_id",
+                "GITHUB_CLIENT_SECRET": "test_client_secret",
+                "GITHUB_REDIRECT_URI": "https://example.com/callback",
+                "ELECTRON_GITHUB_CLIENT_ID": "test_electron_client_id",
+                "ELECTRON_GITHUB_CLIENT_SECRET": "test_electron_client_secret",
+                "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-dev://oauth/github",
+            },
+        )
+        self.env_patcher.start()
+        self.addCleanup(self.env_patcher.stop)
 
     @responses.activate
     def test_successful_github_login_for_new_user(self):
