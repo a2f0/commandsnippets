@@ -3,6 +3,9 @@ from rest_framework_json_api import serializers
 
 class GithubAuthenticationSerializer(serializers.Serializer):
     code = serializers.CharField()
+    clientType = serializers.ChoiceField(
+        choices=["web", "electron"], help_text="OAuth client type"
+    )
 
 
 class GoogleAuthenticationSerializer(serializers.Serializer):
