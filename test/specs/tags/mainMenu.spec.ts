@@ -45,7 +45,7 @@ describe('Tag Main Menu', () => {
     await expect(
       (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
         .value
-    ).toBe('rgba(72,72,72,1)');
+    ).toBe('rgb(72,72,72)');
 
     // Verify URL routing is working
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
@@ -129,7 +129,7 @@ describe('Tag Main Menu', () => {
     await expect(
       (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
         .value
-    ).toBe('rgba(72,72,72,1)');
+    ).toBe('rgb(72,72,72)');
 
     // Verify URL is still pointing to selected tag
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
