@@ -73,12 +73,16 @@ class TearleadsApi {
     }
   }
 
-  public async githubLogin(code: string): Promise<void> {
+  public async githubLogin(
+    code: string,
+    clientType: 'web' | 'electron' = 'web'
+  ): Promise<void> {
     const payload: AuthPayload = {
       data: {
         type: 'GithubLogin',
         attributes: {
           code,
+          clientType,
         },
       },
     };

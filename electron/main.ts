@@ -1,6 +1,7 @@
 import {join} from 'node:path';
 import {electronApp, is, optimizer} from '@electron-toolkit/utils';
 import {app, BrowserWindow, ipcMain, shell} from 'electron';
+import {getElectronProtocolScheme} from './protocol';
 
 // Extend global interface to include pendingProtocolUrl
 declare global {
@@ -56,14 +57,16 @@ function createWindow(): void {
 }
 
 // Register custom protocol handler for OAuth redirects
+const protocolScheme = getElectronProtocolScheme(is.dev);
+
 if (process.defaultApp) {
   if (process.argv.length >= 2 && process.argv[1]) {
-    app.setAsDefaultProtocolClient('tearleads', process.execPath, [
+    app.setAsDefaultProtocolClient(protocolScheme, process.execPath, [
       process.argv[1],
     ]);
   }
 } else {
-  app.setAsDefaultProtocolClient('tearleads');
+  app.setAsDefaultProtocolClient(protocolScheme);
 }
 
 // Handle custom protocol URLs (OAuth redirects)

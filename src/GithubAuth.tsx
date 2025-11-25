@@ -32,6 +32,7 @@ const GithubAuth = () => {
     authUrl: 'https://github.com/login/oauth/authorize',
     scope: 'user:email',
     redirectUrl: getOAuthRedirectUrl('github'),
+    clientType: isElectron() ? 'electron' : 'web',
   });
 
   return (
