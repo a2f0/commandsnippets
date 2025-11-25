@@ -10,10 +10,16 @@ import {LoginButton} from './styled/LoginButton';
 
 const getGithubClientId = (): string => {
   if (isElectron()) {
+    if (environment === 'staging') {
+      return 'Ov23liPyvk7aJTCoQc2Z';
+    }
+    if (environment === 'production') {
+      return 'Ov23li7M0TeeigLkM8Zy';
+    }
     return 'Ov23limqOPN5fbNYJa6j';
   }
 
-  // Web apps
+  // Web
   if (environment === 'staging') {
     return '3be8b14684de28d54a0d';
   }

@@ -150,7 +150,6 @@ export const useOAuth = (config: OAuthConfig) => {
 
       // For Electron, open OAuth URL in system browser
       if (isElectron() && window.api?.openExternal) {
-        console.log('Opening OAuth URL in system browser:', authUrlString);
         window.api.openExternal(authUrlString);
       } else {
         // For web and Capacitor, navigate in the current window

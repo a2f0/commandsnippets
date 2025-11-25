@@ -71,13 +71,11 @@ if (process.defaultApp) {
 
 // Handle custom protocol URLs (OAuth redirects)
 app.on('open-url', (event, url) => {
-  console.log('Protocol URL received:', url);
   event.preventDefault();
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('protocol-url', url);
   } else {
-    console.warn('Main window not available to send protocol URL');
     // Store the URL to handle it when a window becomes available
     global.pendingProtocolUrl = url;
   }
@@ -89,7 +87,6 @@ ipcMain.handle('open-external', async (_event, url: string) => {
   try {
     const parsedUrl = new URL(url);
     if (parsedUrl.protocol === 'https:') {
-      console.log('Opening external URL:', url);
       await shell.openExternal(url);
     } else {
       console.error(`Blocked attempt to open non-https URL: ${url}`);
