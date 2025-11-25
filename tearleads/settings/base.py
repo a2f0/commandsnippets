@@ -84,8 +84,10 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:*",  # 10.0.0.0/8
     r"^http://172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}:*",  # 172.16.0.0/12
     r"^http://192\.168\.\d{1,3}\.\d{1,3}:*",  # 192.168.0.0/16
-    # Electron app protocol
-    r"^app://\.$",
+    # Electron app protocols
+    r"^tearleads://$",
+    r"^tearleads-staging://$",
+    r"^tearleads-dev://$",
     # Production domains
     r"^https://tearleads\.com$",
     r"^https://\w+\.tearleads\.com$",
