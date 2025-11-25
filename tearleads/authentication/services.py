@@ -1,6 +1,7 @@
 import os
 
 import requests
+from django.core.exceptions import ImproperlyConfigured
 
 
 class GoogleOAuthService(object):
@@ -30,9 +31,28 @@ class GoogleOAuthService(object):
 
 
 class GithubOAuthService(object):
-    def __init__(self):
-        self.client_secret = os.environ["GITHUB_CLIENT_SECRET"]
-        self.client_id = os.environ["GITHUB_CLIENT_ID"]
+    def __init__(self, clientType="web"):
+        if clientType == "electron":
+            self.client_secret = os.environ.get("ELECTRON_GITHUB_CLIENT_SECRET")
+            self.client_id = os.environ.get("ELECTRON_GITHUB_CLIENT_ID")
+            self.redirect_uri = os.environ.get("ELECTRON_GITHUB_REDIRECT_URI")
+
+            if not all((self.client_secret, self.client_id, self.redirect_uri)):
+                raise ImproperlyConfigured(
+                    "ELECTRON_GITHUB_CLIENT_SECRET, ELECTRON_GITHUB_CLIENT_ID, "
+                    "and ELECTRON_GITHUB_REDIRECT_URI must be set in "
+                    "environment variables."
+                )
+        else:
+            self.client_secret = os.environ.get("GITHUB_CLIENT_SECRET")
+            self.client_id = os.environ.get("GITHUB_CLIENT_ID")
+            self.redirect_uri = os.environ.get("GITHUB_REDIRECT_URI")
+
+            if not all((self.client_secret, self.client_id, self.redirect_uri)):
+                raise ImproperlyConfigured(
+                    "GITHUB_CLIENT_SECRET, GITHUB_CLIENT_ID, "
+                    "and GITHUB_REDIRECT_URI must be set in environment variables."
+                )
 
     def headers(self, access_token):
         authorization_header = "token " + access_token
@@ -41,9 +61,10 @@ class GithubOAuthService(object):
 
     def access_token(self, code):
         data = {
-            "client_id": os.environ["GITHUB_CLIENT_ID"],
+            "client_id": self.client_id,
             "code": code,
-            "client_secret": os.environ["GITHUB_CLIENT_SECRET"],
+            "client_secret": self.client_secret,
+            "redirect_uri": self.redirect_uri,
         }
         response = requests.post(
             url="https://github.com/login/oauth/access_token", data=data

@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 import responses
 from django.conf import settings
@@ -14,8 +15,19 @@ class TestGithubAuthentication(BaseTestCase):
     def setUp(self):
         super(TestGithubAuthentication, self).setUp()
         # Set up environment variables needed by the service
-        os.environ["GITHUB_CLIENT_ID"] = "test_client_id"
-        os.environ["GITHUB_CLIENT_SECRET"] = "test_client_secret"
+        self.env_patcher = patch.dict(
+            os.environ,
+            {
+                "GITHUB_CLIENT_ID": "test_client_id",
+                "GITHUB_CLIENT_SECRET": "test_client_secret",
+                "GITHUB_REDIRECT_URI": "https://example.com/callback",
+                "ELECTRON_GITHUB_CLIENT_ID": "test_electron_client_id",
+                "ELECTRON_GITHUB_CLIENT_SECRET": "test_electron_client_secret",
+                "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-dev://oauth/github",
+            },
+        )
+        self.env_patcher.start()
+        self.addCleanup(self.env_patcher.stop)
 
     @responses.activate
     def test_successful_github_login_for_new_user(self):
@@ -48,7 +60,10 @@ class TestGithubAuthentication(BaseTestCase):
 
         self.auth_user_api_client = APIClient()
         payload = {
-            "data": {"type": "GithubLogin", "attributes": {"code": "valid_code"}}
+            "data": {
+                "type": "GithubLogin",
+                "attributes": {"code": "valid_code", "clientType": "web"},
+            }
         }
 
         # test to make sure the user doesnt exist before the login.
@@ -126,7 +141,10 @@ class TestGithubAuthentication(BaseTestCase):
 
         self.auth_user_api_client = APIClient()
         payload = {
-            "data": {"type": "GithubLogin", "attributes": {"code": "valid_code"}}
+            "data": {
+                "type": "GithubLogin",
+                "attributes": {"code": "valid_code", "clientType": "web"},
+            }
         }
 
         # Verify user exists before login attempt
@@ -167,4 +185,61 @@ class TestGithubAuthentication(BaseTestCase):
         )
         self.assertNotEqual(
             self.auth_user_api_client.cookies["Authorization"].value, ""
+        )
+
+    @responses.activate
+    def test_successful_github_login_with_electron_client(self):
+        # Mock GitHub OAuth token endpoint
+        responses.add(
+            responses.POST,
+            "https://github.com/login/oauth/access_token",
+            body=(
+                "access_token=test_electron_access_token"
+                "&scope=user%3Aemail&token_type=bearer"
+            ),
+            status=200,
+            content_type="application/x-www-form-urlencoded",
+        )
+
+        # Mock GitHub user endpoint
+        responses.add(
+            responses.GET,
+            "https://api.github.com/user",
+            json={"login": "electron_user"},
+            status=200,
+            content_type="application/json",
+        )
+
+        # Mock GitHub emails endpoint
+        responses.add(
+            responses.GET,
+            "https://api.github.com/user/emails",
+            json=[{"email": "electron@example.com", "primary": True, "verified": True}],
+            status=200,
+            content_type="application/json",
+        )
+
+        self.auth_user_api_client = APIClient()
+        payload = {
+            "data": {
+                "type": "GithubLogin",
+                "attributes": {"code": "valid_code", "clientType": "electron"},
+            }
+        }
+
+        # test to make sure the user doesnt exist before the login.
+        with self.assertRaises(User.DoesNotExist):
+            user = User.objects.get(username="electron_user")
+
+        response = self.auth_user_api_client.post("/api/v1/github-login/", payload)
+
+        user = User.objects.get(username="electron_user")
+        self.assertNotEqual(user.last_login, None)
+        self.assertEqual(user.last_login, user.date_joined)
+        self.assertEqual(user.login_count, 1)
+        existing_token = Token.objects.get(user=user)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual("Authorization" in self.auth_user_api_client.cookies, True)
+        self.assertEqual(
+            self.auth_user_api_client.cookies["Authorization"].value, existing_token.key
         )

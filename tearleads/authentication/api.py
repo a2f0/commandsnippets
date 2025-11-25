@@ -74,8 +74,8 @@ class GithubLogin(APIView):
     def post(self, request, *args, **kwargs):
         serializer = GithubAuthenticationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        service = GithubOAuthService()
-        response = service.access_token(serializer.data["code"])
+        service = GithubOAuthService(clientType=serializer.validated_data["clientType"])
+        response = service.access_token(serializer.validated_data["code"])
         if response.status_code == 200:
             qs = parse_qs(response.text)
             access_token = qs["access_token"][0]
