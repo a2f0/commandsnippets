@@ -21,8 +21,8 @@ importers:
         specifier: 7.0.3
         version: 7.0.3(@capacitor/core@7.4.4)
       '@capgo/capacitor-social-login':
-        specifier: 7.19.0
-        version: 7.19.0(@capacitor/core@7.4.4)
+        specifier: 7.20.0
+        version: 7.20.0(@capacitor/core@7.4.4)
       '@emotion/css':
         specifier: 11.13.5
         version: 11.13.5
@@ -930,8 +930,8 @@ packages:
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
 
-  '@capgo/capacitor-social-login@7.19.0':
-    resolution: {integrity: sha512-awLwfvfbl8YibSLk5OecGaEmOyUtg0eI3MMCMuGI+Z8llv9avon0FbWfchKWTd4t+HEuxeKFp2x1fdMgDUFaVg==}
+  '@capgo/capacitor-social-login@7.20.0':
+    resolution: {integrity: sha512-rHlEALFUonLe4sDG+qybDowh2/XDiHJ4DK9pShe1aPTGSrmA5j7kz8VbHYGqgof5xdyeC7pAY3+8PASTW+qGKg==}
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
 
@@ -8188,7 +8188,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 7.4.4
 
-  '@capgo/capacitor-social-login@7.19.0(@capacitor/core@7.4.4)':
+  '@capgo/capacitor-social-login@7.20.0(@capacitor/core@7.4.4)':
     dependencies:
       '@capacitor/core': 7.4.4
 
