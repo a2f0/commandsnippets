@@ -73,7 +73,7 @@ class TestGithubAuthentication(BaseTestCase):
 
     @responses.activate
     def test_electron_client_type_uses_correct_credentials(self):
-        service = GithubOAuthService(client_type="electron")
+        service = GithubOAuthService(clientType="electron")
         responses.add(
             responses.POST,
             "https://github.com/login/oauth/access_token",
@@ -98,7 +98,7 @@ class TestGithubAuthentication(BaseTestCase):
 
     @responses.activate
     def test_web_client_type_uses_correct_credentials(self):
-        service = GithubOAuthService(client_type="web")
+        service = GithubOAuthService(clientType="web")
         responses.add(
             responses.POST,
             "https://github.com/login/oauth/access_token",
