@@ -42,7 +42,7 @@ def _create_auth_response(user, client_type="web"):
         "Authorization",
         token.key,
         httponly=True,
-        secure=True,  # Always True for SameSite=None
+        secure=is_electron or not is_local_dev,
         samesite=samesite_value,
         domain=cookie_domain,
         max_age=settings.AUTH_COOKIE_MAX_AGE,
@@ -53,7 +53,7 @@ def _create_auth_response(user, client_type="web"):
         httponly=False,
         max_age=settings.AUTH_COOKIE_MAX_AGE,
         samesite=samesite_value,
-        secure=True if is_electron else not is_local_dev,
+        secure=is_electron or not is_local_dev,
         domain=cookie_domain,
     )
     return response
