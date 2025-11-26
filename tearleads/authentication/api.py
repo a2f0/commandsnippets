@@ -21,19 +21,29 @@ from .serializers import (
 from .services import GithubOAuthService, GoogleOAuthService
 
 
-def _create_auth_response(user):
+def _create_auth_response(user, client_type="web"):
     token, _ = Token.objects.get_or_create(user=user)
     response = Response({})
 
     is_local_dev = settings.DEBUG
+    is_electron = client_type == "electron"
     cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
+
+    # For Electron, use SameSite=None to allow cross-origin requests
+    # from tearleads-staging://app to https://api.staging.tearleads.com
+    if is_electron:
+        samesite_value = "none"
+    elif is_local_dev:
+        samesite_value = "lax"
+    else:
+        samesite_value = "strict"
 
     response.set_cookie(
         "Authorization",
         token.key,
         httponly=True,
-        secure=not is_local_dev,
-        samesite="lax" if is_local_dev else "strict",
+        secure=True,  # Always True for SameSite=None
+        samesite=samesite_value,
         domain=cookie_domain,
         max_age=settings.AUTH_COOKIE_MAX_AGE,
     )
@@ -42,7 +52,8 @@ def _create_auth_response(user):
         "true",
         httponly=False,
         max_age=settings.AUTH_COOKIE_MAX_AGE,
-        samesite="lax" if is_local_dev else "strict",
+        samesite=samesite_value,
+        secure=True if is_electron else not is_local_dev,
         domain=cookie_domain,
     )
     return response
@@ -74,7 +85,8 @@ class GithubLogin(APIView):
     def post(self, request, *args, **kwargs):
         serializer = GithubAuthenticationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        service = GithubOAuthService(clientType=serializer.validated_data["clientType"])
+        client_type = serializer.validated_data["clientType"]
+        service = GithubOAuthService(clientType=client_type)
         response = service.access_token(serializer.validated_data["code"])
         if response.status_code == 200:
             qs = parse_qs(response.text)
@@ -101,7 +113,7 @@ class GithubLogin(APIView):
                                 user.last_login = timezone.now()
                                 user.login_count += 1
                                 user.save(update_fields=["last_login", "login_count"])
-                            return _create_auth_response(user)
+                            return _create_auth_response(user, client_type=client_type)
 
         return Response({}, status=status.HTTP_401_UNAUTHORIZED)
 
