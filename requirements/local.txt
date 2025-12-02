@@ -8,4 +8,4 @@ flake8==7.3.0                   # this should match .pre-commit-config.yaml
 isort[requirements]==7.0.0     # this should match .pre-commit-config.yaml
 pre-commit==4.5.0
 pur==7.3.2                      # for checking out of date dependencies
-responses==0.25.7
+responses==0.25.8
