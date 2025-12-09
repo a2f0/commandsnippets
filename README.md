@@ -12,8 +12,8 @@ Boostrap
     pre-commit install
 
 Configure environment variables
-    export AWS_ACCESS_KEY_ID=<key>
-    export AWS_SECRET_ACCESS_KEY=<secret access key>
+    export AWS_ACCESS_KEY_ID=`<key>`
+    export AWS_SECRET_ACCESS_KEY=`<secret access key>`
 
 Linting
     terraform fmt --recursive
