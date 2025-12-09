@@ -64,7 +64,7 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   push-containers:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     continue-on-error: false
     needs: code-quality
     steps:
