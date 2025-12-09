@@ -9,6 +9,7 @@
 
 - hosts: staging
   tasks:
+    - include_tasks: tasks/configure-aws-credentials.yaml
     - include_tasks: tasks/copy-deploy-keys.yaml
     - include_tasks: tasks/clone-repos.yaml
     - include_tasks: tasks/copy-env-file.yaml
@@ -30,6 +31,7 @@
 
 - hosts: production
   tasks:
+    - include_tasks: tasks/configure-aws-credentials.yaml
     - include_tasks: tasks/copy-deploy-keys.yaml
     - include_tasks: tasks/clone-repos.yaml
     - include_tasks: tasks/copy-env-file.yaml

@@ -19,3 +19,13 @@ output "ci-cd-secret-access-key" {
   sensitive = true
   value     = aws_iam_access_key.ci_cd.secret
 }
+
+output "ecr-pull-access-key" {
+  sensitive = true
+  value     = aws_iam_access_key.ecr_pull.id
+}
+
+output "ecr-pull-secret-access-key" {
+  sensitive = true
+  value     = aws_iam_access_key.ecr_pull.secret
+}

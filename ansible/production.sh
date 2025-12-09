@@ -1,2 +1,3 @@
 #!/bin/sh
-ansible-playbook -i inventory.yaml playbook.yaml -l production
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+"$SCRIPT_DIR/run-playbook.sh" production
