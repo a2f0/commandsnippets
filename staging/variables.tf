@@ -2,19 +2,11 @@ variable "hostname" {
   type = string
 }
 
-variable "vpc_cidr" {
-  type = string
-}
-
 variable "environment" {
   type = string
 }
 
-variable "remote_state_bucket" {
-  type = string
-}
-
-variable "staging_api" {
+variable "api_subdomain" {
   type = string
 }
 
@@ -24,6 +16,11 @@ variable "deployment_user" {
 
 variable "deployment_public_key" {
   type = string
+}
+
+variable "hcloud_token" {
+  type      = string
+  sensitive = true
 }
 
 variable "cloudflare_email" {

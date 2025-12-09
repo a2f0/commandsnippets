@@ -142,3 +142,18 @@ resource "aws_iam_user_policy" "ci_cd" {
 resource "aws_iam_access_key" "ci_cd" {
   user = aws_iam_user.ci_cd.name
 }
+
+// IAM user for external hosts (Hetzner) to pull from ECR
+resource "aws_iam_user" "ecr_pull" {
+  name = "tf-tearleads-ecr-pull"
+}
+
+resource "aws_iam_user_policy" "ecr_pull" {
+  name   = "tf-tearleads-ecr-pull-user-policy"
+  user   = aws_iam_user.ecr_pull.name
+  policy = data.aws_iam_policy_document.pull.json
+}
+
+resource "aws_iam_access_key" "ecr_pull" {
+  user = aws_iam_user.ecr_pull.name
+}
