@@ -26,9 +26,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: '3.13'
         architecture: 'x64'
@@ -68,16 +68,16 @@ jobs:
     continue-on-error: false
     needs: code-quality
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up QEMU
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Configure AWS credentials
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
