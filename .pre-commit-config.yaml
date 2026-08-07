@@ -4,7 +4,7 @@ default_install_hook_types:
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v6.0.0
     hooks:
     -   id: check-yaml
     -   id: trailing-whitespace
@@ -12,17 +12,17 @@ repos:
     -   id: requirements-txt-fixer
 -   repo: https://github.com/PyCQA/isort
     # should match what is inside of requirements/local.txt
-    rev: 6.1.0
+    rev: 8.0.1
     hooks:
     -   id: isort
 -   repo: https://github.com/psf/black
     # should match what is inside of requirements/local.txt
-    rev: 25.9.0
+    rev: 26.5.1
     hooks:
     -   id: black
 -   repo: https://github.com/PyCQA/flake8
     # should match what is inside of requirements/local.txt
-    rev: 7.1.1
+    rev: 7.3.0
     hooks:
     -   id: flake8
 -   repo: https://github.com/DavidAnson/markdownlint-cli2
