@@ -1,16 +1,17 @@
-- name: ssh configuration
-  copy:
+---
+- name: Install the SSH configuration
+  ansible.builtin.copy:
     src: ./configs/ssh
     dest: "/home/{{ ansible_user }}/.ssh/config"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: '0400'
+    mode: "0400"
 
 - name: Clone backend repository
-  git:
+  ansible.builtin.git:
     repo: github-backend.com:tearleads/tearleads-backend.git
     dest: "/home/{{ ansible_user }}/tearleads-backend"
-    accept_hostkey: yes
-    force: no
-    recursive: no
+    accept_hostkey: true
+    force: false
+    recursive: false
     version: "{{ git_branch }}"

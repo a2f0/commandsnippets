@@ -13,25 +13,39 @@ cleaned temporary file. A persistent plaintext copy is not required.
 
 ## Development
 
-Bootstrap
-    ansible-galaxy install -r ansible/requirements.yaml
-    brew install gnupg sops
-    npm install
-    pip install pre-commit
+Bootstrap:
+
+    brew install gnupg pre-commit shellcheck sops tflint
+    brew tap hashicorp/tap
+    brew trust --formula hashicorp/tap/terraform
+    brew install hashicorp/tap/terraform
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r ansible/requirements.txt
+    ansible-galaxy collection install \
+      -r ansible/requirements.yaml \
+      -p .ansible/collections
+    npm ci
+    tflint --init
     pre-commit install
     pre-commit install --hook-type commit-msg
 
-Configure environment variables
+Configure environment variables:
+
     export AWS_ACCESS_KEY_ID=`<key>`
     export AWS_SECRET_ACCESS_KEY=`<secret access key>`
 
-Linting
+Linting:
+
+    pre-commit run --all-files
+    ansible-lint ansible/playbook.yaml
     npm run commitlint -- --from origin/production --to HEAD
     terraform fmt --recursive
     tflint --recursive
     tflint --recursive --fix
 
-Upgrading
+Upgrading Terraform providers:
+
     upgrade version in `versions.tf` file
     terraform init -upgrade
     ./apply.sh

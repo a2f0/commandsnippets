@@ -1,7 +1,11 @@
+---
 - name: Schedule containers startup on boot
-  cron:
+  ansible.builtin.cron:
     name: "start containers on boot"
     special_time: reboot
-    job: "cd /home/{{ ansible_user }}/tearleads-backend/ && docker compose -f container-registry.yaml up -d >/home/{{ ansible_user }}/docker-startup-log 2>&1"
+    job: >-
+      cd /home/{{ ansible_user }}/tearleads-backend/ &&
+      docker compose -f container-registry.yaml up -d
+      >/home/{{ ansible_user }}/docker-startup-log 2>&1
     user: "{{ ansible_user }}"
   register: cron_result

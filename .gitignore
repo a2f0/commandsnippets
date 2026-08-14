@@ -14,6 +14,10 @@ override.tf.json
 # Node.js
 node_modules/
 
+# Python and Ansible
+.ansible/
+.venv/
+
 # SOPS plaintext
 /ansible/inventory.yaml
 /ssh_keys/tearleads-backend-deploy-key
