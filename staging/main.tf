@@ -16,14 +16,11 @@ provider "cloudflare" {
 }
 
 data "cloudflare_zones" "zone" {
-  filter {
-    name = "tearleads.com"
-  }
+  name = "commandsnippets.com"
 }
 
-resource "hcloud_ssh_key" "deploy" {
-  name       = "dps-blackbox"
-  public_key = var.deployment_public_key
+data "hcloud_ssh_key" "deploy" {
+  name = "dps-blackbox"
 }
 
 module "web" {
@@ -33,10 +30,10 @@ module "web" {
   hostname              = var.hostname
   deployment_user       = var.deployment_user
   deployment_public_key = var.deployment_public_key
-  ssh_key_id            = hcloud_ssh_key.deploy.id
+  ssh_key_id            = data.hcloud_ssh_key.deploy.id
   api_subdomain         = var.api_subdomain
   github_secret_prefix  = "STAGING"
   github_owner          = var.github_owner
   github_repository     = var.github_repository
-  cloudflare_zone_id    = data.cloudflare_zones.zone.zones[0]["id"]
+  cloudflare_zone_id    = data.cloudflare_zones.zone.result[0].id
 }

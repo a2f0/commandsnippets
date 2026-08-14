@@ -16,9 +16,7 @@ provider "cloudflare" {
 }
 
 data "cloudflare_zones" "zone" {
-  filter {
-    name = "tearleads.com"
-  }
+  name = "commandsnippets.com"
 }
 
 data "hcloud_ssh_key" "deploy" {
@@ -37,5 +35,5 @@ module "web" {
   github_secret_prefix  = "PRODUCTION"
   github_owner          = var.github_owner
   github_repository     = var.github_repository
-  cloudflare_zone_id    = data.cloudflare_zones.zone.zones[0]["id"]
+  cloudflare_zone_id    = data.cloudflare_zones.zone.result[0].id
 }

@@ -17,9 +17,7 @@ provider "github" {
 }
 
 data "cloudflare_zones" "zone" {
-  filter {
-    name = "tearleads.com"
-  }
+  name = "commandsnippets.com"
 }
 
 resource "aws_s3_bucket" "main" {
@@ -80,12 +78,12 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
-resource "cloudflare_record" "caa_aws" {
-  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+resource "cloudflare_dns_record" "caa_aws" {
+  zone_id = data.cloudflare_zones.zone.result[0].id
   name    = "@" # @ represents the apex/root domain
   type    = "CAA"
-  data {
-    flags = "0"
+  data = {
+    flags = 0
     tag   = "issue"
     value = "awstrust.com"
   }
@@ -93,7 +91,7 @@ resource "cloudflare_record" "caa_aws" {
   proxied = false
 }
 
-resource "cloudflare_record" "cert_validation" {
+resource "cloudflare_dns_record" "cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
@@ -102,13 +100,12 @@ resource "cloudflare_record" "cert_validation" {
     }
   }
 
-  zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
-  name            = each.value.name
-  content         = each.value.record
-  type            = each.value.type
-  ttl             = 60
-  proxied         = false
-  allow_overwrite = false
+  zone_id = data.cloudflare_zones.zone.result[0].id
+  name    = each.value.name
+  content = each.value.record
+  type    = each.value.type
+  ttl     = 60
+  proxied = false
 }
 
 resource "aws_acm_certificate_validation" "cert" {
@@ -116,7 +113,7 @@ resource "aws_acm_certificate_validation" "cert" {
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for record in aws_acm_certificate.cert.domain_validation_options : record.resource_record_name]
 
-  depends_on = [cloudflare_record.cert_validation]
+  depends_on = [cloudflare_dns_record.cert_validation]
 
   timeouts {
     create = "45m"
@@ -233,12 +230,12 @@ resource "aws_cloudfront_distribution" "website" {
   }
 }
 
-resource "cloudflare_record" "staging" {
-  zone_id         = data.cloudflare_zones.zone.zones[0]["id"]
-  name            = var.domain
-  content         = aws_cloudfront_distribution.website.domain_name
-  type            = "CNAME"
-  allow_overwrite = true
+resource "cloudflare_dns_record" "staging" {
+  zone_id = data.cloudflare_zones.zone.result[0].id
+  name    = var.domain
+  content = aws_cloudfront_distribution.website.domain_name
+  type    = "CNAME"
+  ttl     = 1
 }
 
 resource "aws_iam_policy" "s3_sync_policy" {
