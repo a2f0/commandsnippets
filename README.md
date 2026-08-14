@@ -52,7 +52,7 @@ Capacitor is already configured with:
 
 The app supports different environments for Capacitor builds:
 - **Development**: For local development with live reload (default when using `capacitor.config.ts`)
-- **Staging**: Points to https://app.staging.tearleads.com (uses `capacitor.config.staging.ts`)
+- **Staging**: Points to https://app.staging.commandsnippets.com (uses `capacitor.config.staging.ts`)
 - **Production**: Uses bundled assets for app stores (uses `capacitor.config.production.ts`)
 
 Environment detection is handled automatically in `src/lib/environment.ts`:

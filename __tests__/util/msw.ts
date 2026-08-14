@@ -14,8 +14,8 @@ import {tagsResponse} from '../../test/mocks/tags/tagsResponse';
 // Define all possible API base URLs
 const apiBaseUrls = [
   'http://localhost:9001/api/v1',
-  'https://api.staging.tearleads.com/api/v1',
-  'https://api.tearleads.com/api/v1',
+  'https://api.staging.commandsnippets.com/api/v1',
+  'https://api.commandsnippets.com/api/v1',
 ];
 
 // Create handlers for all URLs
@@ -54,10 +54,13 @@ const createHandlers = () => {
     http.post('http://localhost:9001/api-token-deauth/', () => {
       return HttpResponse.json({data: {}}, {status: 200});
     }),
-    http.post('https://api.staging.tearleads.com/api-token-deauth/', () => {
-      return HttpResponse.json({data: {}}, {status: 200});
-    }),
-    http.post('https://api.tearleads.com/api-token-deauth/', () => {
+    http.post(
+      'https://api.staging.commandsnippets.com/api-token-deauth/',
+      () => {
+        return HttpResponse.json({data: {}}, {status: 200});
+      }
+    ),
+    http.post('https://api.commandsnippets.com/api-token-deauth/', () => {
       return HttpResponse.json({data: {}}, {status: 200});
     })
   );

@@ -36,9 +36,9 @@ export const getOAuthRedirectUrl = (provider: 'github' | 'google'): string => {
   // For web apps, use standard URLs
   switch (environment) {
     case 'staging':
-      return `https://app.staging.tearleads.com/oauth/${provider}`;
+      return `https://app.staging.commandsnippets.com/oauth/${provider}`;
     case 'production':
-      return `https://tearleads.com/oauth/${provider}`;
+      return `https://commandsnippets.com/oauth/${provider}`;
     default:
       return `http://localhost:8085/oauth/${provider}`;
   }
