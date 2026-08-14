@@ -1,7 +1,7 @@
 ---
 - name: Install the tearleads-backend deploy key
   ansible.builtin.copy:
-    src: ../ssh_keys/tearleads-backend-deploy-key
+    src: "{{ lookup('ansible.builtin.env', 'ANSIBLE_BACKEND_DEPLOY_KEY_FILE') }}"
     dest: "/home/{{ ansible_user }}/.ssh/tearleads-backend-deploy-key"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
@@ -9,7 +9,7 @@
 
 - name: Install the tearleads-frontend deploy key
   ansible.builtin.copy:
-    src: ../ssh_keys/tearleads-frontend-deploy-key
+    src: "{{ lookup('ansible.builtin.env', 'ANSIBLE_FRONTEND_DEPLOY_KEY_FILE') }}"
     dest: "/home/{{ ansible_user }}/.ssh/tearleads-frontend-deploy-key"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
