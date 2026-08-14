@@ -1,2 +1,8 @@
-#!/bin/sh
-terraform init -reconfigure -backend-config=terraform.backend
+#!/bin/bash
+set -e
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+"$SCRIPT_DIR/../scripts/sops-exec-file.sh" \
+  "$SCRIPT_DIR/terraform.backend.sops" \
+  terraform.backend \
+  terraform init -reconfigure -backend-config=__SOPS_FILE__

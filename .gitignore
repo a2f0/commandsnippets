@@ -11,26 +11,10 @@ override.tf.json
 *.backend
 *.tfvars
 
-# BlackBox
-/.blackbox/pubring.gpg~
-/.blackbox/pubring.kbx~
-/.blackbox/secring.gpg
-/dns/main.tfvars
-/container-registry/main.tfvars
-/container-registry/terraform.backend
-/staging/main.tfvars
-/staging/terraform.backend
-/dns/terraform.backend
+# Node.js
+node_modules/
+
+# SOPS plaintext
 /ansible/inventory.yaml
 /ssh_keys/tearleads-backend-deploy-key
 /ssh_keys/tearleads-frontend-deploy-key
-/production/main.tfvars
-/production/terraform.backend
-/production-s3/main.tfvars
-/production-s3/terraform.backend
-/vercel/terraform.backend
-/vercel/main.tfvars
-/staging-frontend/main.tfvars
-/production-frontend/main.tfvars
-/staging-frontend/terraform.backend
-/production-frontend/terraform.backend
