@@ -7,6 +7,10 @@ provider "aws" {
   region = "us-east-1"
 }
 
+provider "aws" {
+  region = "us-east-1"
+}
+
 provider "cloudflare" {
   email   = var.cloudflare_email
   api_key = var.cloudflare_api_key
@@ -117,8 +121,8 @@ resource "cloudflare_dns_record" "cert_validation" {
   }
 
   zone_id = data.cloudflare_zones.zone.result[0].id
-  name    = each.value.name
-  content = each.value.record
+  name    = trimsuffix(each.value.name, ".")
+  content = trimsuffix(each.value.record, ".")
   type    = each.value.type
   ttl     = 60
   proxied = false
@@ -301,21 +305,21 @@ resource "aws_iam_access_key" "s3_sync_key" {
 }
 
 resource "github_actions_secret" "aws_access_key" {
-  repository      = var.github_repository
-  secret_name     = "AWS_ACCESS_KEY_PRODUCTION"
-  plaintext_value = aws_iam_access_key.s3_sync_key.id
+  repository  = var.github_repository
+  secret_name = "AWS_ACCESS_KEY_PRODUCTION"
+  value       = aws_iam_access_key.s3_sync_key.id
 }
 
 resource "github_actions_secret" "aws_secret_key" {
-  repository      = var.github_repository
-  secret_name     = "AWS_SECRET_ACCESS_KEY_PRODUCTION"
-  plaintext_value = aws_iam_access_key.s3_sync_key.secret
+  repository  = var.github_repository
+  secret_name = "AWS_SECRET_ACCESS_KEY_PRODUCTION"
+  value       = aws_iam_access_key.s3_sync_key.secret
 }
 
 resource "github_actions_secret" "production_domain" {
-  repository      = var.github_repository
-  secret_name     = "PRODUCTION_DOMAIN"
-  plaintext_value = var.domain
+  repository  = var.github_repository
+  secret_name = "PRODUCTION_DOMAIN"
+  value       = var.domain
 }
 
 output "cloudfront_distribution_id" {
