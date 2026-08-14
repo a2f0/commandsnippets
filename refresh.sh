@@ -52,12 +52,12 @@ restore_latest() {
   echo "=== listing backups on remote"
   ssh $1 "sudo ls -l /tmp/dbback/"
   ssh $1 "sudo mv /tmp/dbback/db-to-restore.sql /var/lib/docker/volumes/tearleads_postgres_backup/_data"
-  ssh $1 "cd ~/tearleads-backend && docker compose -f container-registry.yaml up -d"
-  ssh $1 "cd ~/tearleads-backend && docker compose -f container-registry.yaml stop backend"
-  ssh $1 "cd ~/tearleads-backend && docker compose -f container-registry.yaml run --rm postgres list-backups"
-  ssh $1 "cd ~/tearleads-backend && docker compose -f container-registry.yaml run --rm postgres restore db-to-restore.sql"
-  ssh $1 "cd ~/tearleads-backend && docker compose -f container-registry.yaml down"
-  ssh $1 "cd ~/tearleads-backend && docker compose -f container-registry.yaml up -d"
+  ssh $1 "cd ~/tearleads-backend && docker compose -f compose-container-registry.yaml up -d"
+  ssh $1 "cd ~/tearleads-backend && docker compose -f compose-container-registry.yaml stop backend"
+  ssh $1 "cd ~/tearleads-backend && docker compose -f compose-container-registry.yaml run --rm postgres list-backups"
+  ssh $1 "cd ~/tearleads-backend && docker compose -f compose-container-registry.yaml run --rm postgres restore db-to-restore.sql"
+  ssh $1 "cd ~/tearleads-backend && docker compose -f compose-container-registry.yaml down"
+  ssh $1 "cd ~/tearleads-backend && docker compose -f compose-container-registry.yaml up -d"
   ssh $1 "cd ~/tearleads-backend && docker system prune --force"
 
 }

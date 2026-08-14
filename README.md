@@ -107,7 +107,7 @@ docker compose run --rm backend python manage.py test tearleads.users.tests.test
 Take a backup
 
 ```shell
-docker compose -f container-registry.yaml run --rm postgres backup
+docker compose -f compose-container-registry.yaml run --rm postgres backup
 ```
 
 Delete a user
@@ -154,7 +154,8 @@ group by users_user.username;
    database connections.
 6. List backups with `docker compose run --rm postgres list-backups`
 7. Do a restore with `docker compose run --rm postgres restore backup-pg_dump-Fc`
-8. Update the data volume in `staging.yaml` and `container-registry.yaml`.
+8. Update the data volume in `compose-staging.yaml` and
+   `compose-container-registry.yaml`.
 9. Update the container in `.github/workflows/main.yml`.
 
 ### Upgrading the Python Version
