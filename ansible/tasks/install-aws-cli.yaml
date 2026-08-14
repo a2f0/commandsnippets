@@ -1,11 +1,12 @@
-- name: install unzip
-  apt:
+---
+- name: Install unzip
+  ansible.builtin.apt:
     name: unzip
     state: present
-    update_cache: yes
+    update_cache: true
 
-- name: install the aws v2.0 cli
-  shell: |
+- name: Install the AWS CLI v2
+  ansible.builtin.shell: |
     cd /tmp
     rm -rf aws awscliv2.zip
     ARCH=$(uname -m)

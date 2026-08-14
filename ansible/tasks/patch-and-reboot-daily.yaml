@@ -1,9 +1,9 @@
 ---
 - name: Create patch and reboot script
   become: true
-  copy:
+  ansible.builtin.copy:
     dest: "/home/{{ ansible_user }}/patch-and-reboot.sh"
-    mode: '0755'
+    mode: "0755"
     content: |
       #!/bin/bash
 
@@ -19,7 +19,7 @@
 
 - name: Set up daily patching cron job
   become: true
-  cron:
+  ansible.builtin.cron:
     name: "Daily system patch and reboot"
     user: "{{ ansible_user }}"
     hour: "3"

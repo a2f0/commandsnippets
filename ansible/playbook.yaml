@@ -1,43 +1,68 @@
-- hosts: staging
-  become: yes
+---
+- name: Configure the staging host as root
+  hosts: staging
+  become: true
   become_user: root
   tasks:
-    - include_tasks: tasks/install-aws-cli.yaml
-    - include_tasks: tasks/install-docker.yaml
-   #- include_tasks: tasks/install-microk8s.yaml
-    - include_tasks: tasks/authorized_keys.yaml
+    - name: Install the AWS CLI
+      ansible.builtin.include_tasks: tasks/install-aws-cli.yaml
+    - name: Install Docker
+      ansible.builtin.include_tasks: tasks/install-docker.yaml
+    - name: Configure authorized keys
+      ansible.builtin.include_tasks: tasks/authorized_keys.yaml
 
-- hosts: staging
+- name: Configure the staging host as the deploy user
+  hosts: staging
   tasks:
-    - include_tasks: tasks/configure-aws-credentials.yaml
-    - include_tasks: tasks/copy-deploy-keys.yaml
-    - include_tasks: tasks/clone-repos.yaml
-    - include_tasks: tasks/copy-env-file.yaml
+    - name: Configure AWS credentials
+      ansible.builtin.include_tasks: tasks/configure-aws-credentials.yaml
+    - name: Copy deploy keys
+      ansible.builtin.include_tasks: tasks/copy-deploy-keys.yaml
+    - name: Clone repositories
+      ansible.builtin.include_tasks: tasks/clone-repos.yaml
+    - name: Copy the staging environment file
+      ansible.builtin.include_tasks: tasks/copy-env-file.yaml
       vars:
         env_name: staging
-    - include_tasks: tasks/schedule-api-backup.yaml
-    - include_tasks: tasks/start-api-on-boot.yaml
-    - include_tasks: tasks/patch-and-reboot-daily.yaml
-    - include_tasks: tasks/configure-github-ssh-known-hosts.yaml
+    - name: Schedule API backups
+      ansible.builtin.include_tasks: tasks/schedule-api-backup.yaml
+    - name: Start the API on boot
+      ansible.builtin.include_tasks: tasks/start-api-on-boot.yaml
+    - name: Schedule daily patching and reboots
+      ansible.builtin.include_tasks: tasks/patch-and-reboot-daily.yaml
+    - name: Report the server SSH host key
+      ansible.builtin.include_tasks: tasks/configure-github-ssh-known-hosts.yaml
 
-- hosts: production
-  become: yes
+- name: Configure the production host as root
+  hosts: production
+  become: true
   become_user: root
   tasks:
-    - include_tasks: tasks/install-aws-cli.yaml
-    - include_tasks: tasks/install-docker.yaml
-    - include_tasks: tasks/authorized_keys.yaml
+    - name: Install the AWS CLI
+      ansible.builtin.include_tasks: tasks/install-aws-cli.yaml
+    - name: Install Docker
+      ansible.builtin.include_tasks: tasks/install-docker.yaml
+    - name: Configure authorized keys
+      ansible.builtin.include_tasks: tasks/authorized_keys.yaml
 
-
-- hosts: production
+- name: Configure the production host as the deploy user
+  hosts: production
   tasks:
-    - include_tasks: tasks/configure-aws-credentials.yaml
-    - include_tasks: tasks/copy-deploy-keys.yaml
-    - include_tasks: tasks/clone-repos.yaml
-    - include_tasks: tasks/copy-env-file.yaml
+    - name: Configure AWS credentials
+      ansible.builtin.include_tasks: tasks/configure-aws-credentials.yaml
+    - name: Copy deploy keys
+      ansible.builtin.include_tasks: tasks/copy-deploy-keys.yaml
+    - name: Clone repositories
+      ansible.builtin.include_tasks: tasks/clone-repos.yaml
+    - name: Copy the production environment file
+      ansible.builtin.include_tasks: tasks/copy-env-file.yaml
       vars:
         env_name: production
-    - include_tasks: tasks/schedule-api-backup.yaml
-    - include_tasks: tasks/start-api-on-boot.yaml
-    - include_tasks: tasks/patch-and-reboot-daily.yaml
-    - include_tasks: tasks/configure-github-ssh-known-hosts.yaml
+    - name: Schedule API backups
+      ansible.builtin.include_tasks: tasks/schedule-api-backup.yaml
+    - name: Start the API on boot
+      ansible.builtin.include_tasks: tasks/start-api-on-boot.yaml
+    - name: Schedule daily patching and reboots
+      ansible.builtin.include_tasks: tasks/patch-and-reboot-daily.yaml
+    - name: Report the server SSH host key
+      ansible.builtin.include_tasks: tasks/configure-github-ssh-known-hosts.yaml

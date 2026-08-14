@@ -4,6 +4,7 @@ set -e
 LIMIT="${1:-staging}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TF_DIR="$SCRIPT_DIR/../container-registry"
+export ANSIBLE_CONFIG="$SCRIPT_DIR/../ansible.cfg"
 
 ECR_ACCESS_KEY_ID=$(terraform -chdir="$TF_DIR" output -raw ecr-pull-access-key)
 ECR_SECRET_ACCESS_KEY=$(terraform -chdir="$TF_DIR" output -raw ecr-pull-secret-access-key)

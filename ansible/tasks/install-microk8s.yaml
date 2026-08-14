@@ -1,12 +1,13 @@
+---
 - name: Install microk8s with --classic
   community.general.snap:
     name: microk8s
-    classic: yes
+    classic: true
 
 - name: Install kubectl with --classic
   community.general.snap:
     name: kubectl
-    classic: yes
+    classic: true
 
 - name: Create ~/.kube for the deploy user
   ansible.builtin.file:
@@ -14,9 +15,10 @@
     state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: '0700'
+    mode: "0700"
 
 - name: Add the application service account to the microk8s group
-  user:
+  ansible.builtin.user:
     name: "{{ ansible_user }}"
     groups: microk8s
+    append: true
