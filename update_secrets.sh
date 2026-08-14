@@ -1,5 +1,13 @@
-#!/bin/bash
-set -eo pipefail
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$script_dir"
+
+if ! command -v sops >/dev/null 2>&1; then
+    echo "Error: sops is required to deploy secrets." >&2
+    exit 1
+fi
 
 # Color output
 RED='\033[0;31m'
@@ -11,36 +19,38 @@ echo -e "${GREEN}=== Starting deployment to production and staging ===${NC}"
 
 # Function to deploy to a specific environment
 deploy_environment() {
-    local env_file=$1
+    local encrypted_env_file=$1
     local env_name=$2
+    local ssh_host
 
     echo -e "${YELLOW}=== Processing ${env_name} environment ===${NC}"
 
-    # Extract SSH_HOST from the env file
-    SSH_HOST=$(grep '^SSH_HOST=' "${env_file}" | cut -d '=' -f2)
+    ssh_host=$(sops exec-env "$encrypted_env_file" 'printf %s "$SSH_HOST"')
 
-    if [ -z "$SSH_HOST" ]; then
-        echo -e "${RED}Error: SSH_HOST not found in ${env_file}${NC}"
+    if [ -z "$ssh_host" ]; then
+        echo -e "${RED}Error: SSH_HOST not found in ${encrypted_env_file}${NC}"
         exit 1
     fi
 
-    echo -e "${GREEN}Found SSH_HOST: ${SSH_HOST}${NC}"
+    echo -e "${GREEN}Found SSH_HOST: ${ssh_host}${NC}"
 
-    # Copy the .env file to the remote host
-    echo -e "${YELLOW}Copying ${env_file} to ${SSH_HOST}:/home/deploy/tearleads-backend/.env${NC}"
-    scp "${env_file}" "deploy@${SSH_HOST}:/home/deploy/tearleads-backend/.env"
+    # SOPS removes the temporary plaintext file after scp exits.
+    echo -e "${YELLOW}Copying decrypted secrets to ${ssh_host}:/home/deploy/tearleads-backend/.env${NC}"
+    SOPS_DEPLOY_DESTINATION="deploy@${ssh_host}:/home/deploy/tearleads-backend/.env" \
+        sops exec-file --no-fifo --filename .env "$encrypted_env_file" \
+        'scp {} "$SOPS_DEPLOY_DESTINATION"'
 
     # SSH into the host and run deploy-containers.sh
-    echo -e "${YELLOW}Running deploy-containers.sh on ${SSH_HOST}${NC}"
-    ssh "deploy@${SSH_HOST}" "cd /home/deploy/tearleads-backend && ./deploy-containers.sh"
+    echo -e "${YELLOW}Running deploy-containers.sh on ${ssh_host}${NC}"
+    ssh "deploy@${ssh_host}" "cd /home/deploy/tearleads-backend && ./deploy-containers.sh"
 
     echo -e "${GREEN}=== ${env_name} deployment completed ===${NC}\n"
 }
 
 # Deploy to staging
-deploy_environment ".env-staging" "STAGING"
+deploy_environment ".env-staging.sops.env" "STAGING"
 
 # Deploy to production
-deploy_environment ".env-production" "PRODUCTION"
+deploy_environment ".env-production.sops.env" "PRODUCTION"
 
 echo -e "${GREEN}=== All deployments completed successfully ===${NC}"

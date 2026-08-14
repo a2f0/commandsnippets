@@ -1,0 +1,3 @@
+creation_rules:
+- path_regex: '^\.env-(local-development|staging|production)\.sops\.env$'
+  pgp: '6FFAEA28B304FA98E7521822827B8379F39A31F0'
