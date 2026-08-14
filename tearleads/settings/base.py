@@ -89,17 +89,17 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^tearleads-staging://app$",
     r"^tearleads-dev://app$",
     # Production domains
-    r"^https://tearleads\.com$",
-    r"^https://\w+\.tearleads\.com$",
+    r"^https://commandsnippets\.com$",
+    r"^https://\w+\.commandsnippets\.com$",
     # Staging domains
-    r"^https://\w+\.staging\.tearleads\.com$",
+    r"^https://\w+\.staging\.commandsnippets\.com$",
 ]
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
-    ".tearleads.com",
-    "tearleads.com",
+    ".commandsnippets.com",
+    "commandsnippets.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

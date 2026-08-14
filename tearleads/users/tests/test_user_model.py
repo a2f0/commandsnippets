@@ -34,8 +34,8 @@ class TestUserModel(TestCase):
 
     def test_emails_cannot_be_duplicates(self):
         try:
-            UserFactory(email="collide@tearleads.com")
-            UserFactory(email="collide@tearleads.com")
+            UserFactory(email="collide@commandsnippets.com")
+            UserFactory(email="collide@commandsnippets.com")
         except IntegrityError:
             pass
 
