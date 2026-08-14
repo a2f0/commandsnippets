@@ -30,7 +30,7 @@ def _create_auth_response(user, client_type="web"):
     cookie_domain = None if is_local_dev else settings.COOKIE_DOMAIN
 
     # For Electron, use SameSite=None to allow cross-origin requests
-    # from tearleads-staging://app to https://api.staging.tearleads.com
+    # from tearleads-staging://app to https://api.staging.commandsnippets.com
     if is_electron:
         samesite_value = "none"
     elif is_local_dev:

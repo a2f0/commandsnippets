@@ -62,6 +62,6 @@ restore_latest() {
 
 }
 
-time download_latest pine.tearleads.com
+time download_latest pine.commandsnippets.com
 time restore_latest_backup_local
-# time restore_latest cedar.tearleads.com
+# time restore_latest cedar.commandsnippets.com

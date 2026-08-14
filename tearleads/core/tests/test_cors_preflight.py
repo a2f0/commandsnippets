@@ -17,14 +17,14 @@ class TestCORSPreflightProduction(TestCase):
         """Test that production domain is allowed."""
         response = self.client.options(
             "/api/v1/entries",
-            HTTP_ORIGIN="https://tearleads.com",
+            HTTP_ORIGIN="https://commandsnippets.com",
             HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
             HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
         )
 
         self.assertEqual(
             response["Access-Control-Allow-Origin"],
-            "https://tearleads.com",
+            "https://commandsnippets.com",
         )
         self.assertEqual(
             response["Access-Control-Allow-Credentials"],
@@ -35,28 +35,28 @@ class TestCORSPreflightProduction(TestCase):
         """Test that production subdomains are allowed."""
         response = self.client.options(
             "/api/v1/entries",
-            HTTP_ORIGIN="https://app.tearleads.com",
+            HTTP_ORIGIN="https://app.commandsnippets.com",
             HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
             HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
         )
 
         self.assertEqual(
             response["Access-Control-Allow-Origin"],
-            "https://app.tearleads.com",
+            "https://app.commandsnippets.com",
         )
 
     def test_preflight_allows_staging_subdomain(self):
         """Test that staging subdomains are allowed."""
         response = self.client.options(
             "/api/v1/entries",
-            HTTP_ORIGIN="https://app.staging.tearleads.com",
+            HTTP_ORIGIN="https://app.staging.commandsnippets.com",
             HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
             HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
         )
 
         self.assertEqual(
             response["Access-Control-Allow-Origin"],
-            "https://app.staging.tearleads.com",
+            "https://app.staging.commandsnippets.com",
         )
 
     def test_preflight_denies_unauthorized_origin(self):
@@ -64,6 +64,17 @@ class TestCORSPreflightProduction(TestCase):
         response = self.client.options(
             "/api/v1/entries",
             HTTP_ORIGIN="https://evil.com",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
+        )
+
+        self.assertNotIn("Access-Control-Allow-Origin", response)
+
+    def test_preflight_denies_legacy_domain(self):
+        """Test that the previous production domain is no longer allowed."""
+        response = self.client.options(
+            "/api/v1/entries",
+            HTTP_ORIGIN="https://tearleads.com",
             HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
             HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
         )
@@ -86,14 +97,14 @@ class TestCORSPreflightStaging(TestCase):
         """Test that production domain is allowed."""
         response = self.client.options(
             "/api/v1/entries",
-            HTTP_ORIGIN="https://tearleads.com",
+            HTTP_ORIGIN="https://commandsnippets.com",
             HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
             HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
         )
 
         self.assertEqual(
             response["Access-Control-Allow-Origin"],
-            "https://tearleads.com",
+            "https://commandsnippets.com",
         )
         self.assertEqual(
             response["Access-Control-Allow-Credentials"],
@@ -104,28 +115,28 @@ class TestCORSPreflightStaging(TestCase):
         """Test that production subdomains are allowed."""
         response = self.client.options(
             "/api/v1/entries",
-            HTTP_ORIGIN="https://app.tearleads.com",
+            HTTP_ORIGIN="https://app.commandsnippets.com",
             HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
             HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
         )
 
         self.assertEqual(
             response["Access-Control-Allow-Origin"],
-            "https://app.tearleads.com",
+            "https://app.commandsnippets.com",
         )
 
     def test_preflight_allows_staging_subdomain(self):
         """Test that staging subdomains are allowed."""
         response = self.client.options(
             "/api/v1/entries",
-            HTTP_ORIGIN="https://app.staging.tearleads.com",
+            HTTP_ORIGIN="https://app.staging.commandsnippets.com",
             HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
             HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
         )
 
         self.assertEqual(
             response["Access-Control-Allow-Origin"],
-            "https://app.staging.tearleads.com",
+            "https://app.staging.commandsnippets.com",
         )
 
     def test_preflight_denies_unauthorized_origin(self):
