@@ -12,7 +12,7 @@ jobs:
     continue-on-error: false
     services:
       postgres:
-        image: postgres:17
+        image: postgres:18.4
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -26,11 +26,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
     - name: Set up Python
-      uses: actions/setup-python@v7
+      uses: actions/setup-python@v7.0.0
       with:
-        python-version: '3.13'
+        python-version: '3.14'
         architecture: 'x64'
     - uses: pre-commit/action@v3.0.1
     - name: install and configure python dependencies
@@ -55,7 +55,7 @@ jobs:
         POSTGRES_PORT: 5432
         POSTGRES_USER: postgres
     - name: Post to slack
-      uses: 8398a7/action-slack@v3
+      uses: 8398a7/action-slack@v3.19.0
       if: ${{ failure() }}
       with:
         status: ${{ job.status }}
@@ -68,16 +68,16 @@ jobs:
     continue-on-error: false
     needs: code-quality
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Set up QEMU
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@v4.2.0
       - name: Set up Docker Buildx
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v4.2.0
       - name: Configure AWS credentials
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -85,7 +85,7 @@ jobs:
       - name: Login to Amazon ECR
         if: ${{ ( github.event.ref == 'refs/heads/staging' || github.event.ref == 'refs/heads/production' ) && github.event_name == 'push' }}
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@v2.1.6
       - name: Build and push staging images to Amazon ECR
         if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         env:
@@ -115,7 +115,7 @@ jobs:
             --push \
             .
       - name: Post to slack
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@v3.19.0
         if: ${{ failure() }}
         with:
           status: ${{ job.status }}
@@ -153,7 +153,7 @@ jobs:
           ssh $DEPLOY_USER@$DEPLOY_FQDN "cd /home/$DEPLOY_USER/tearleads-backend && git pull"
           ssh $DEPLOY_USER@$DEPLOY_FQDN /home/$DEPLOY_USER/tearleads-backend/deploy-containers.sh
       - name: Post to slack
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@v3.19.0
         if: ${{ failure() }}
         with:
           status: ${{ job.status }}

@@ -1,4 +1,4 @@
-FROM python:3.13-bullseye
+FROM python:3.14.6-trixie
 
 ENV PYTHONUNBUFFERED=1
 
@@ -12,4 +12,4 @@ COPY . /app
 WORKDIR /app
 
 EXPOSE 9001
-CMD gunicorn tearleads.wsgi:application --bind 0.0.0.0:9001 --env DJANGO_SETTINGS_MODULE=tearleads.settings.production
+CMD ["gunicorn", "tearleads.wsgi:application", "--bind", "0.0.0.0:9001", "--env", "DJANGO_SETTINGS_MODULE=tearleads.settings.production"]

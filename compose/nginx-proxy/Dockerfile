@@ -1,1 +1,1 @@
-FROM nginxproxy/nginx-proxy:1.9
+FROM nginxproxy/nginx-proxy:1.11.6

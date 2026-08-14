@@ -13,3 +13,38 @@ updates:
       interval: 'monthly'
     reviewers:
       - 'a2f0'
+
+  - package-ecosystem: 'pre-commit'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    reviewers:
+      - 'a2f0'
+
+  - package-ecosystem: 'docker-compose'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    reviewers:
+      - 'a2f0'
+
+  - package-ecosystem: 'docker'
+    directory: '/compose/django'
+    schedule:
+      interval: 'monthly'
+    reviewers:
+      - 'a2f0'
+
+  - package-ecosystem: 'docker'
+    directory: '/compose/nginx-proxy'
+    schedule:
+      interval: 'monthly'
+    reviewers:
+      - 'a2f0'
+
+  - package-ecosystem: 'docker'
+    directory: '/compose/postgres'
+    schedule:
+      interval: 'monthly'
+    reviewers:
+      - 'a2f0'

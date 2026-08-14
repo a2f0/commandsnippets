@@ -1,15 +1,16 @@
 volumes:
-  postgres15_data_dev: {}
+  postgres18_data_staging: {}
   postgres_backup_dev: {}
   conf:
   vhost:
   html:
   dhparam:
   certs:
+  acme:
 
 services:
   nginx-proxy:
-    image: jwilder/nginx-proxy
+    image: nginxproxy/nginx-proxy:1.11.6
     ports:
       - "80:80"
       - "443:443"
@@ -22,7 +23,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
 
   nginx-proxy-letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion
+    image: nginxproxy/acme-companion:2.8.2
     volumes:
       - certs:/etc/nginx/certs:rw
       - conf:/etc/nginx/conf.d
@@ -30,6 +31,7 @@ services:
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme:/etc/acme.sh
     environment:
       - DEFAULT_EMAIL=${LETSENCRYPT_EMAIL}
 
@@ -54,6 +56,6 @@ services:
   postgres:
     build: ./compose/postgres
     volumes:
-      - postgres15_data_dev:/var/lib/postgresql/data
+      - postgres18_data_staging:/var/lib/postgresql
       - postgres_backup_dev:/backups
     env_file: .env
