@@ -8,14 +8,12 @@ provider "cloudflare" {
 }
 
 data "cloudflare_zones" "zone" {
-  filter {
-    name = "commandsnippets.com"
-  }
+  name = "commandsnippets.com"
 }
 
 // Do not delete this, Google periodically checks for it.
-resource "cloudflare_record" "tearleads-google-domain-verification" {
-  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+resource "cloudflare_dns_record" "tearleads-google-domain-verification" {
+  zone_id = data.cloudflare_zones.zone.result[0].id
   name    = "@"
   type    = "TXT"
   content = "google-site-verification=-U0LmlFws7EMjM8T1_HE3JFm1yrPFBscL-MT2n7y9RY"
@@ -23,7 +21,7 @@ resource "cloudflare_record" "tearleads-google-domain-verification" {
   proxied = false
 }
 
-resource "cloudflare_record" "tearleads-mx" {
+resource "cloudflare_dns_record" "tearleads-mx" {
   for_each = {
     aspmx  = { priority = 1, content = "ASPMX.L.GOOGLE.COM" }
     alt1   = { priority = 5, content = "ALT1.ASPMX.L.GOOGLE.COM" }
@@ -32,7 +30,7 @@ resource "cloudflare_record" "tearleads-mx" {
     aspmx3 = { priority = 10, content = "ASPMX3.GOOGLEMAIL.COM" }
   }
 
-  zone_id  = data.cloudflare_zones.zone.zones[0]["id"]
+  zone_id  = data.cloudflare_zones.zone.result[0].id
   name     = "@"
   type     = "MX"
   content  = each.value.content
@@ -41,7 +39,7 @@ resource "cloudflare_record" "tearleads-mx" {
   proxied  = false
 }
 
-# resource "cloudflare_record" "tearleads-github" {
+# resource "cloudflare_dns_record" "tearleads-github" {
 #   for_each = toset([
 #     "185.199.108.153",
 #     "185.199.109.153",
@@ -49,7 +47,7 @@ resource "cloudflare_record" "tearleads-mx" {
 #     "185.199.111.153",
 #   ])
 #
-#   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+#   zone_id = data.cloudflare_zones.zone.result[0].id
 #   name    = "@"
 #   type    = "A"
 #   content = each.value
@@ -57,8 +55,8 @@ resource "cloudflare_record" "tearleads-mx" {
 #   proxied = false
 # }
 
-resource "cloudflare_record" "tearleads-caa" {
-  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+resource "cloudflare_dns_record" "tearleads-caa" {
+  zone_id = data.cloudflare_zones.zone.result[0].id
   name    = "@"
   type    = "CAA"
   content = "0 issue \"letsencrypt.org\""

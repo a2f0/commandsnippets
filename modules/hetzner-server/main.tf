@@ -32,10 +32,15 @@ resource "hcloud_firewall" "firewall" {
   }
 }
 
+data "hcloud_image" "ubuntu" {
+  name              = "ubuntu-24.04"
+  with_architecture = "x86"
+}
+
 resource "hcloud_server" "server" {
   name         = var.environment
-  image        = "ubuntu-24.04"
-  server_type  = "cax11"
+  image        = data.hcloud_image.ubuntu.id
+  server_type  = "cx23"
   location     = "nbg1"
   ssh_keys     = [var.ssh_key_id]
   firewall_ids = [hcloud_firewall.firewall.id]
@@ -59,7 +64,7 @@ resource "hcloud_server" "server" {
               EOF
 }
 
-resource "cloudflare_record" "host" {
+resource "cloudflare_dns_record" "host" {
   zone_id = var.cloudflare_zone_id
   name    = "${var.hostname}.commandsnippets.com"
   content = hcloud_server.server.ipv4_address
@@ -68,7 +73,7 @@ resource "cloudflare_record" "host" {
   proxied = false
 }
 
-resource "cloudflare_record" "api" {
+resource "cloudflare_dns_record" "api" {
   zone_id = var.cloudflare_zone_id
   name    = var.api_subdomain
   content = hcloud_server.server.ipv4_address
@@ -78,7 +83,7 @@ resource "cloudflare_record" "api" {
 }
 
 resource "null_resource" "capture_ssh_host_keys" {
-  depends_on = [hcloud_server.server, cloudflare_record.host]
+  depends_on = [hcloud_server.server, cloudflare_dns_record.host]
 
   triggers = {
     server_id = hcloud_server.server.id
