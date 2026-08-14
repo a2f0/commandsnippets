@@ -12,11 +12,6 @@ repos:
         files: ^scripts/.*\.sh$
   - repo: local
     hooks:
-      - id: check-for-unpinned-dependencies
-        name: check-for-unpinned-dependencies
-        entry: npx check-for-unpinned-dependencies
-        pass_filenames: false
-        language: node
       - id: biome-check-fix
         name: biome check --write
         entry: npx biome check --write

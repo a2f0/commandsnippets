@@ -57,7 +57,6 @@
   "keywords": [],
   "author": "Dan Sullivan",
   "devDependencies": {
-    "@a2f0/check-for-unpinned-dependencies": "github:a2f0/check-for-unpinned-dependencies#chore-package-maintenance",
     "@biomejs/biome": "2.3.7",
     "@capacitor/cli": "7.4.4",
     "@capacitor/core": "7.4.4",

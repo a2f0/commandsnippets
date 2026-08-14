@@ -96,9 +96,6 @@ importers:
         specifier: 13.0.0
         version: 13.0.0
     devDependencies:
-      '@a2f0/check-for-unpinned-dependencies':
-        specifier: github:a2f0/check-for-unpinned-dependencies#chore-package-maintenance
-        version: https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/53e9a7262c70e1fb60d0f10bd3af388de849a8d3
       '@biomejs/biome':
         specifier: 2.3.7
         version: 2.3.7
@@ -278,11 +275,6 @@ packages:
 
   7zip-bin@5.2.0:
     resolution: {integrity: sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==}
-
-  '@a2f0/check-for-unpinned-dependencies@https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/53e9a7262c70e1fb60d0f10bd3af388de849a8d3':
-    resolution: {tarball: https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/53e9a7262c70e1fb60d0f10bd3af388de849a8d3}
-    version: 1.0.6
-    hasBin: true
 
   '@acemir/cssom@0.9.24':
     resolution: {integrity: sha512-5YjgMmAiT2rjJZU7XK1SNI7iqTy92DpaYVgG6x63FxkJ11UpYfLndHJATtinWJClAXiOlW9XWaUyAQf8pMrQPg==}
@@ -7283,8 +7275,6 @@ packages:
 snapshots:
 
   7zip-bin@5.2.0: {}
-
-  '@a2f0/check-for-unpinned-dependencies@https://codeload.github.com/a2f0/check-for-unpinned-dependencies/tar.gz/53e9a7262c70e1fb60d0f10bd3af388de849a8d3': {}
 
   '@acemir/cssom@0.9.24': {}
 
