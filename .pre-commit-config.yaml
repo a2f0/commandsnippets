@@ -14,9 +14,9 @@ repos:
     hooks:
       - id: biome-check-fix
         name: biome check --write
-        entry: npx biome check --write
+        entry: pnpm exec biome check --write
         pass_filenames: false
-        language: node
+        language: system
       - id: tsc -b
         name: tsc -b
         entry: pnpm tsc -b
