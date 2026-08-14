@@ -8,6 +8,17 @@ export ANSIBLE_CONFIG="$SCRIPT_DIR/../ansible.cfg"
 
 ECR_ACCESS_KEY_ID=$(terraform -chdir="$TF_DIR" output -raw ecr-pull-access-key)
 ECR_SECRET_ACCESS_KEY=$(terraform -chdir="$TF_DIR" output -raw ecr-pull-secret-access-key)
+
+if [[ ! "$ECR_ACCESS_KEY_ID" =~ ^(AKIA|ASIA)[A-Z0-9]{16}$ ]]; then
+  echo "Terraform did not return a valid ecr-pull-access-key output" >&2
+  exit 1
+fi
+
+if [[ ! "$ECR_SECRET_ACCESS_KEY" =~ ^[A-Za-z0-9/+=]{40}$ ]]; then
+  echo "Terraform did not return a valid ecr-pull-secret-access-key output" >&2
+  exit 1
+fi
+
 export ECR_ACCESS_KEY_ID
 export ECR_SECRET_ACCESS_KEY
 
