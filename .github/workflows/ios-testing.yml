@@ -1,5 +1,5 @@
-# WORKFLOW DISABLED - This workflow has been disabled and will not run
-# To re-enable, uncomment the "on:" section below
+# Appium execution is temporarily disabled.
+# Set the ENABLE_MOBILE_APPIUM_TESTS repository variable to true to re-enable.
 ---
 name: iOS Mobile Testing
 
@@ -10,6 +10,7 @@ on:
 
 jobs:
   ios-appium-tests:
+    if: vars.ENABLE_MOBILE_APPIUM_TESTS == 'true'
     runs-on: self-hosted
     continue-on-error: false
 

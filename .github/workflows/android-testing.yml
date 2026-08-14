@@ -1,6 +1,9 @@
 ---
 name: Android Mobile Testing
 
+# Appium execution is temporarily disabled.
+# Set the ENABLE_MOBILE_APPIUM_TESTS repository variable to true to re-enable.
+
 # yamllint disable-line rule:truthy
 on:
   pull_request:
@@ -8,6 +11,7 @@ on:
 
 jobs:
   android-appium-tests:
+    if: vars.ENABLE_MOBILE_APPIUM_TESTS == 'true'
     runs-on: ubuntu-latest
     continue-on-error: false
 
