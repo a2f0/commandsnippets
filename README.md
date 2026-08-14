@@ -4,6 +4,16 @@
 
 ### Bootstrap
 
+Install SOPS and GnuPG, import the private GPG key for fingerprint
+`6FFAEA28B304FA98E7521822827B8379F39A31F0`, and decrypt the local environment:
+
+```shell
+# macOS
+brew install gnupg sops
+
+./decrypt-secrets.sh
+```
+
 ```shell
 pyenv install `cat .python-version`
 pip install pre-commit
@@ -37,6 +47,30 @@ docker compose run --rm backend pur -r requirements/local.txt -r requirements/pr
 # venv
 pur -r requirements/local.txt -r requirements/production.txt
 ```
+
+### Secrets
+
+Secrets are stored as SOPS-encrypted dotenv files using the GPG recipients in
+`.sops.yaml`. Plaintext environment files are ignored by Git.
+
+Edit a secret file in place:
+
+```shell
+sops edit .env-local-development.sops.env
+sops edit .env-staging.sops.env
+sops edit .env-production.sops.env
+```
+
+After changing the GPG recipients in `.sops.yaml`, update each encrypted file:
+
+```shell
+sops updatekeys .env-local-development.sops.env
+sops updatekeys .env-staging.sops.env
+sops updatekeys .env-production.sops.env
+```
+
+`./update_secrets.sh` decrypts staging and production secrets into temporary
+files, copies them to their deployment hosts, and removes the temporary files.
 
 ## Testing
 

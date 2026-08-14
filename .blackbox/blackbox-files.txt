@@ -1,3 +1,0 @@
-.env-local-development
-.env-production
-.env-staging
