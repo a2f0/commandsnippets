@@ -33,9 +33,12 @@ if (isElectron()) {
       // Default to development for Capacitor apps (since we're usually developing)
       environment = 'development';
   }
-} else if (hostname === 'app.staging.tearleads.com') {
+} else if (hostname === 'app.staging.commandsnippets.com') {
   environment = 'staging';
-} else if (hostname === 'tearleads.com' || hostname === 'app.tearleads.com') {
+} else if (
+  hostname === 'commandsnippets.com' ||
+  hostname === 'app.commandsnippets.com'
+) {
   environment = 'production';
 } else if (hostname === 'localhost' && port === '8085') {
   environment = 'development';
