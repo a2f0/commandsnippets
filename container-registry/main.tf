@@ -4,6 +4,11 @@ provider "aws" {
   region     = "us-east-1"
 }
 
+provider "github" {
+  owner = "a2f0"
+  token = var.github_token
+}
+
 terraform {
   backend "s3" {}
 }
@@ -121,6 +126,18 @@ resource "aws_iam_user_policy" "ci_cd" {
 
 resource "aws_iam_access_key" "ci_cd" {
   user = aws_iam_user.ci_cd.name
+}
+
+resource "github_actions_secret" "ci_cd_access_key" {
+  repository  = var.github_repository
+  secret_name = "AWS_ACCESS_KEY_ID"
+  value       = aws_iam_access_key.ci_cd.id
+}
+
+resource "github_actions_secret" "ci_cd_secret_access_key" {
+  repository  = var.github_repository
+  secret_name = "AWS_SECRET_ACCESS_KEY"
+  value       = aws_iam_access_key.ci_cd.secret
 }
 
 // IAM user for external hosts (Hetzner) to pull from ECR
