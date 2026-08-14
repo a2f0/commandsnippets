@@ -1,3 +1,8 @@
 #!/bin/bash
 set -e
-terraform init -backend-config=./terraform.backend -upgrade
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+"$SCRIPT_DIR/../scripts/sops-exec-file.sh" \
+  "$SCRIPT_DIR/terraform.backend.sops" \
+  terraform.backend \
+  terraform init -backend-config=__SOPS_FILE__ -upgrade

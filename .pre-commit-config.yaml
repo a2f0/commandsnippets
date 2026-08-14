@@ -17,3 +17,11 @@ repos:
       - id: shellcheck
       - id: gofmt
       - id: golint
+-   repo: local
+    hooks:
+      - id: commitlint
+        name: Commitlint
+        entry: npx --no-install commitlint --edit
+        language: system
+        stages:
+          - commit-msg
