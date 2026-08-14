@@ -18,7 +18,7 @@ provider "github" {
 
 data "cloudflare_zones" "zone" {
   filter {
-    name = "tearleads.com"
+    name = "commandsnippets.com"
   }
 }
 

@@ -2,54 +2,66 @@ terraform {
   backend "s3" {}
 }
 
-provider "aws" {
-  access_key = ""
-  secret_key = ""
-  region     = "us-east-1"
+provider "cloudflare" {
+  email   = var.cloudflare_email
+  api_key = var.cloudflare_api_key
 }
 
-data "aws_route53_zone" "tearleads-zone" {
-  name         = "tearleads.com."
-  private_zone = false
+data "cloudflare_zones" "zone" {
+  filter {
+    name = "commandsnippets.com"
+  }
 }
 
 // Do not delete this, Google periodically checks for it.
-resource "aws_route53_record" "tearleads-google-domain-verification" {
-  name    = "tearleads.com"
-  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
+resource "cloudflare_record" "tearleads-google-domain-verification" {
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+  name    = "@"
   type    = "TXT"
-  ttl     = "30"
-  records = ["google-site-verification=-U0LmlFws7EMjM8T1_HE3JFm1yrPFBscL-MT2n7y9RY"]
+  content = "google-site-verification=-U0LmlFws7EMjM8T1_HE3JFm1yrPFBscL-MT2n7y9RY"
+  ttl     = 60
+  proxied = false
 }
 
-resource "aws_route53_record" "tearleads-mx" {
-  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
-  name    = "tearleads.com"
-  type    = "MX"
-  ttl     = "600"
-  records = ["1 ASPMX.L.GOOGLE.COM",
-    "5 ALT1.ASPMX.L.GOOGLE.COM.",
-    "5 ALT2.ASPMX.L.GOOGLE.COM.",
-    "10 ASPMX2.GOOGLEMAIL.COM.",
-  "10 ASPMX3.GOOGLEMAIL.COM."]
+resource "cloudflare_record" "tearleads-mx" {
+  for_each = {
+    aspmx  = { priority = 1, content = "ASPMX.L.GOOGLE.COM" }
+    alt1   = { priority = 5, content = "ALT1.ASPMX.L.GOOGLE.COM" }
+    alt2   = { priority = 5, content = "ALT2.ASPMX.L.GOOGLE.COM" }
+    aspmx2 = { priority = 10, content = "ASPMX2.GOOGLEMAIL.COM" }
+    aspmx3 = { priority = 10, content = "ASPMX3.GOOGLEMAIL.COM" }
+  }
+
+  zone_id  = data.cloudflare_zones.zone.zones[0]["id"]
+  name     = "@"
+  type     = "MX"
+  content  = each.value.content
+  priority = each.value.priority
+  ttl      = 600
+  proxied  = false
 }
 
-# resource "aws_route53_record" "tearleads-github" {
-#   zone_id = data.aws_route53_zone.tearleads-zone.zone_id
-#   name    = "tearleads.com"
+# resource "cloudflare_record" "tearleads-github" {
+#   for_each = toset([
+#     "185.199.108.153",
+#     "185.199.109.153",
+#     "185.199.110.153",
+#     "185.199.111.153",
+#   ])
+#
+#   zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+#   name    = "@"
 #   type    = "A"
-#   ttl     = "30"
-#   records = [ "185.199.108.153",
-#               "185.199.109.153",
-#               "185.199.110.153",
-#               "185.199.111.153"
-#             ]
+#   content = each.value
+#   ttl     = 60
+#   proxied = false
 # }
 
-resource "aws_route53_record" "tearleads-caa" {
-  zone_id = data.aws_route53_zone.tearleads-zone.zone_id
-  name    = "tearleads.com"
+resource "cloudflare_record" "tearleads-caa" {
+  zone_id = data.cloudflare_zones.zone.zones[0]["id"]
+  name    = "@"
   type    = "CAA"
-  ttl     = "30"
-  records = ["0 issue \"letsencrypt.org\""]
+  content = "0 issue \"letsencrypt.org\""
+  ttl     = 60
+  proxied = false
 }

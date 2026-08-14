@@ -61,7 +61,7 @@ resource "hcloud_server" "server" {
 
 resource "cloudflare_record" "host" {
   zone_id = var.cloudflare_zone_id
-  name    = "${var.hostname}.tearleads.com"
+  name    = "${var.hostname}.commandsnippets.com"
   content = hcloud_server.server.ipv4_address
   type    = "A"
   ttl     = 1
@@ -112,10 +112,10 @@ resource "null_resource" "capture_ssh_host_keys" {
 
       # Update local ~/.ssh/known_hosts
       # Remove any existing entries for this hostname
-      ssh-keygen -R ${var.hostname}.tearleads.com 2>/dev/null || true
+      ssh-keygen -R ${var.hostname}.commandsnippets.com 2>/dev/null || true
       # Add the new host keys (unhashed version for local use)
-      ssh-keyscan ${var.hostname}.tearleads.com >> ~/.ssh/known_hosts 2>/dev/null
-      echo "Updated local ~/.ssh/known_hosts with new host keys for ${var.hostname}.tearleads.com"
+      ssh-keyscan ${var.hostname}.commandsnippets.com >> ~/.ssh/known_hosts 2>/dev/null
+      echo "Updated local ~/.ssh/known_hosts with new host keys for ${var.hostname}.commandsnippets.com"
 
       # Clean up
       rm -f ./ssh_host_keys.txt
