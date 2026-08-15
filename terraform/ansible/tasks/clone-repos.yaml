@@ -6,3 +6,17 @@
     force: false
     recursive: false
     version: "{{ 'main' if 'production' in group_names else 'staging' }}"
+
+- name: Remove the legacy standalone backend checkout
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/tearleads-backend"
+    state: absent
+
+- name: Remove legacy repository deploy credentials
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/.ssh/{{ item }}"
+    state: absent
+  loop:
+    - config
+    - tearleads-backend-deploy-key
+    - tearleads-frontend-deploy-key

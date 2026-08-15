@@ -144,7 +144,7 @@ add_secret \
   sops decrypt \
   --input-type binary \
   --output-type binary \
-  "$terraform_dir/ssh_keys/tearleads-backend-deploy-key.sops"
+  "$terraform_dir/ssh_keys/commandsnippets-github-actions.sops"
 
 if [ -n "${SLACK_WEBHOOK_URL:-}" ]; then
   add_secret SLACK_WEBHOOK_URL emit_value "$SLACK_WEBHOOK_URL"

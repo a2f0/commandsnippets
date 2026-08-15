@@ -6,3 +6,9 @@
     key: >-
       {{ lookup('ansible.builtin.file',
       playbook_dir + '/public_ssh_keys/github_actions.pub') }}
+
+- name: Remove the legacy GitHub Actions deploy key
+  ansible.builtin.lineinfile:
+    path: "/home/{{ ansible_user }}/.ssh/authorized_keys"
+    regexp: " deploy@pine$"
+    state: absent
