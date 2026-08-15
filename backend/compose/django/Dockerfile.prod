@@ -1,0 +1,15 @@
+FROM python:3.14.7-trixie
+
+ENV PYTHONUNBUFFERED=1
+
+# Requirements have to be pulled and installed here, otherwise caching won't work
+COPY ./requirements /requirements
+RUN pip install --upgrade pip
+RUN pip install -U setuptools
+RUN pip install -r /requirements/production.txt
+
+COPY . /app
+WORKDIR /app
+
+EXPOSE 9001
+CMD ["gunicorn", "tearleads.wsgi:application", "--bind", "0.0.0.0:9001", "--env", "DJANGO_SETTINGS_MODULE=tearleads.settings.production"]

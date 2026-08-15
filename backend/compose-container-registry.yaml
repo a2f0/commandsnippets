@@ -1,0 +1,68 @@
+volumes:
+  postgres18_data: {}
+  postgres_backup: {}
+  conf:
+  vhost:
+  html:
+  dhparam:
+  certs:
+  acme:
+
+networks:
+  default:
+    name: tearleads
+    external: true
+
+services:
+  nginx-proxy:
+    build:
+      context: .
+      dockerfile: ./compose/nginx-proxy/Dockerfile
+    labels:
+      - "com.github.nginx-proxy.nginx"
+    ports:
+      # Port 80 is required for nginx-proxy-letsencrypt
+      # Full (Strict) end-to-end encryption is enabled on the SSL/TLS tab of Cloudflare.
+      - "80:80"
+      - "443:443"
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - certs:/etc/nginx/certs:ro
+      - dhparam:/etc/nginx/dhparam
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  nginx-proxy-letsencrypt:
+    image: nginxproxy/acme-companion:2.8.2
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - conf:/etc/nginx/conf.d
+      - dhparam:/etc/nginx/dhparam
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme:/etc/acme.sh
+    environment:
+      - DEFAULT_EMAIL=${LETSENCRYPT_EMAIL}
+
+  backend:
+    image: ${ECR_FQDN}/${ECR_REPOSITORY}:backend-${FLOW_BRANCH}-latest
+    depends_on:
+      - postgres
+    env_file: .env
+    ports:
+      - "9001:9001"
+    links:
+      - postgres
+    environment:
+      - VIRTUAL_HOST=${API_FQDN}
+      - LETSENCRYPT_HOST=${API_FQDN}
+      - LETSENCRYPT_TEST=false
+
+  postgres:
+    build: ./compose/postgres
+    volumes:
+      - postgres18_data:/var/lib/postgresql
+      - postgres_backup:/backups
+    env_file: .env
