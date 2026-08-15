@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig-base.json",
+  "files": ["vite.config.ts"],
+  "include": ["public/**/*", "types/**/*"],
+  "references": [
+    { "path": "./src" },
+    { "path": "./test" },
+    { "path": "./__tests__" },
+    { "path": "./electron" }
+  ]
+}

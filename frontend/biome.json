@@ -1,0 +1,63 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.7/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "useExhaustiveDependencies": "off",
+        "useUniqueElementIds": "off"
+      },
+      "a11y": {
+        "useValidAriaRole": "off"
+      },
+      "style": {
+        "noDefaultExport": "error",
+        "noParameterAssign": "error",
+        "useAsConstAssertion": "error",
+        "useDefaultParameterLast": "error",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "noUselessElse": "error"
+      },
+      "complexity": {
+        "useLiteralKeys": "off"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "es5",
+      "bracketSpacing": false,
+      "arrowParentheses": "asNeeded"
+    }
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/.ts-out/**/*",
+      "!**/build",
+      "!**/src/ts-out/**/*",
+      "!**/dev-dist/**/*",
+      "!**/dist",
+      "!**/out",
+      "!**/dist-electron",
+      "!**/node_modules",
+      "!ios/App/Pods/**/*",
+      "!ios/App/App/public/**/*",
+      "!android/app/src/main/assets/public/**/*"
+    ]
+  }
+}

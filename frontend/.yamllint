@@ -1,0 +1,18 @@
+---
+
+extends: default
+
+ignore: |
+  node_modules
+  ios/App/build/
+  ios/App/Pods/
+  dist-electron
+  pnpm-lock.yaml
+
+rules:
+  line-length:
+    ignore:
+      /pnpm-lock.yaml
+  document-start:
+    ignore:
+      /pnpm-lock.yaml

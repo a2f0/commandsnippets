@@ -1,0 +1,20 @@
+{
+  "extends": "@tsconfig/strictest",
+  "compilerOptions": {
+    "outDir": "./.ts-out",
+    "rootDir": ".",
+    "target": "esnext",
+    "module": "esnext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "checkJs": false,
+    "allowJs": false,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "verbatimModuleSyntax": true
+  },
+  "ts-node": {
+    "swc": true
+  }
+}

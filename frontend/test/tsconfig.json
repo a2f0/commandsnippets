@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig-base.json",
+  "compilerOptions": {
+    "composite": true,
+    "types": ["@wdio/globals/types", "@wdio/mocha-framework"]
+  },
+  "include": ["**/*.ts", "**/*.tsx", "../types/**/*", "./types.d.ts"],
+  "references": [{ "path": "../src" }]
+}

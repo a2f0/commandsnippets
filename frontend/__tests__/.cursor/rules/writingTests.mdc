@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+- Tests in this folder are written in `vitest`. There are some helpful utilities in the `util` folder, for example [assignLoggedInCookie.ts](mdc:__tests__/util/assignLoggedInCookie.ts), [LoggedInAppContextProvider.tsx](mdc:__tests__/util/LoggedInAppContextProvider.tsx), and [loggedInStore.ts](mdc:__tests__/util/loggedInStore.ts).
