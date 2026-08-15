@@ -2,6 +2,11 @@
   "name": "tearleads-frontend",
   "version": "0.7.101",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/a2f0/commandsnippets.git",
+    "directory": "frontend"
+  },
   "main": "out/main/main.js",
   "type": "module",
   "engines": {
