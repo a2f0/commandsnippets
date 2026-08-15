@@ -86,6 +86,13 @@ deployment key, then stores only GitHub-sealed ciphertext in Terraform:
 See `github-actions-secrets/README.md` for the optional Slack webhook input and
 key-rotation notes.
 
+### Backend server checkout
+
+Ansible uses a filtered sparse checkout of the monorepo on each API server.
+The Git worktree at `~/commandsnippets` contains only `backend/`; repository
+metadata remains at `~/commandsnippets/.git` so GitHub Actions can update the
+configured `main` or `staging` branch before deploying.
+
 ## Staging
 
 ### Reconfigure / Deploy
