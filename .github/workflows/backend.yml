@@ -15,9 +15,6 @@ on:
       - '.github/workflows/backend.yml'
   schedule:
     - cron: '0 0 * * *'
-env:
-  ACTION_RUN_URL: >-
-    ${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}
 jobs:
   code-quality:
     runs-on: ubuntu-latest
@@ -75,25 +72,6 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
-      - name: Post failure to Slack
-        uses: slackapi/slack-github-action@v4.0.0
-        if: ${{ failure() }}
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            text: >-
-              :x: ${{ github.repository }}:
-              ${{ github.workflow }} / ${{ github.job }} failed
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: >-
-                    :x: *${{ github.workflow }} / ${{ github.job }} failed*
-                    <${{ env.ACTION_RUN_URL }}|View run> ·
-                    `${{ github.ref_name }}` · `${{ github.sha }}` ·
-                    ${{ github.actor }}
   push-containers:
     runs-on: ubuntu-latest
     continue-on-error: false
@@ -145,25 +123,6 @@ jobs:
             -t "$ECR_REGISTRY/$ECR_REPOSITORY:backend-production-latest" \
             --push \
             .
-      - name: Post failure to Slack
-        uses: slackapi/slack-github-action@v4.0.0
-        if: ${{ failure() }}
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            text: >-
-              :x: ${{ github.repository }}:
-              ${{ github.workflow }} / ${{ github.job }} failed
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: >-
-                    :x: *${{ github.workflow }} / ${{ github.job }} failed*
-                    <${{ env.ACTION_RUN_URL }}|View run> ·
-                    `${{ github.ref_name }}` · `${{ github.sha }}` ·
-                    ${{ github.actor }}
   deploy-code:
     runs-on: ubuntu-latest
     continue-on-error: false
@@ -202,22 +161,3 @@ jobs:
             'cd "$HOME/commandsnippets" && git pull --ff-only origin staging'
           ssh "$DEPLOY_USER@$DEPLOY_FQDN" \
             'exec "$HOME/commandsnippets/backend/deploy-containers.sh"'
-      - name: Post failure to Slack
-        uses: slackapi/slack-github-action@v4.0.0
-        if: ${{ failure() }}
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            text: >-
-              :x: ${{ github.repository }}:
-              ${{ github.workflow }} / ${{ github.job }} failed
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: >-
-                    :x: *${{ github.workflow }} / ${{ github.job }} failed*
-                    <${{ env.ACTION_RUN_URL }}|View run> ·
-                    `${{ github.ref_name }}` · `${{ github.sha }}` ·
-                    ${{ github.actor }}

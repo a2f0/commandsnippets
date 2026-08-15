@@ -49,10 +49,6 @@ if [ -f "$target_file" ]; then
   )"
   if [ "$previous_public_key_id" = "$github_public_key_id" ]; then
     encrypted_secrets="$(jq -c '.encrypted_secrets // {}' "$target_file")"
-  elif jq -e '.encrypted_secrets.SLACK_WEBHOOK_URL' "$target_file" \
-    >/dev/null && [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
-    echo "GitHub rotated its public key; provide SLACK_WEBHOOK_URL to reseal it." >&2
-    exit 1
   fi
 fi
 
@@ -145,12 +141,6 @@ add_secret \
   --input-type binary \
   --output-type binary \
   "$terraform_dir/ssh_keys/commandsnippets-github-actions.sops"
-
-if [ -n "${SLACK_WEBHOOK_URL:-}" ]; then
-  add_secret SLACK_WEBHOOK_URL emit_value "$SLACK_WEBHOOK_URL"
-else
-  echo "Skipping SLACK_WEBHOOK_URL; provide it through the environment to manage it."
-fi
 
 umask 077
 temporary_file="$(mktemp "$script_dir/.encrypted-secrets.XXXXXX")"

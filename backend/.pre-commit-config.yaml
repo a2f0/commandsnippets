@@ -25,6 +25,7 @@ repos:
     rev: 7.3.0
     hooks:
     -   id: flake8
+        args: [--config=backend/setup.cfg]
 -   repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.23.2
     hooks:
