@@ -23,4 +23,5 @@ const TagsMenuButton = ({onClick}: IProps) => {
 };
 
 const memoizedTagsMenuButton = React.memo(TagsMenuButton);
+
 export {memoizedTagsMenuButton as TagsMenuButton};

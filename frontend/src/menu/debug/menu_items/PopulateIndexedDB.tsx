@@ -28,4 +28,5 @@ const PopulateIndexedDB = ({onClose}: IProps) => {
 };
 
 const memoizedPopulateIndexedDB = React.memo(PopulateIndexedDB);
+
 export {memoizedPopulateIndexedDB as PopulateIndexedDB};

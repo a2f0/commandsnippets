@@ -132,11 +132,11 @@ const MenuBar = () => {
     <>
       <Box
         id="menuBarDrawerSpacer"
-        display="flex"
-        flexDirection="row"
-        alignItems="flex-end"
-        justifyContent="flex-start"
         sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          justifyContent: 'flex-start',
           width: `calc(${theme.drawer.width}px + ${theme.main.dragIndicatorWidth}px)`,
           height: theme.appBar.height,
           flexShrink: 0,
@@ -159,11 +159,13 @@ const MenuBar = () => {
         <HelpMenuButton onClick={handleHelpMenuClick} />
       </Aligner>
       <Box
-        display="flex"
-        justifyContent="flex-end"
-        alignItems="center" // vertically center the items
-        flexGrow={1}
-        mr={1}
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          flexGrow: 1,
+          mr: 1,
+        }}
       >
         {!appConfig.loggedInUser && (
           <>
@@ -187,4 +189,5 @@ const MenuBar = () => {
 };
 
 const memoizedMenuBar = React.memo(observer(MenuBar));
+
 export {memoizedMenuBar as MenuBar};

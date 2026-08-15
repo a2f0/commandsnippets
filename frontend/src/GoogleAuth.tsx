@@ -47,4 +47,5 @@ const GoogleAuth = () => {
 };
 
 const memoizedGoogleAuth = React.memo(observer(GoogleAuth));
+
 export {memoizedGoogleAuth as GoogleAuth};

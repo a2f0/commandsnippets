@@ -23,4 +23,5 @@ const FileMenuButton = ({onClick}: IProps) => {
 };
 
 const memoizedFileMenuButton = React.memo(FileMenuButton);
+
 export {memoizedFileMenuButton as FileMenuButton};

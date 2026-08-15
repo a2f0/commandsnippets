@@ -86,4 +86,5 @@ const GoogleAuthIntegrated = () => {
 };
 
 const memoizedGoogleAuthIntegrated = React.memo(observer(GoogleAuthIntegrated));
+
 export {memoizedGoogleAuthIntegrated as GoogleAuthIntegrated};

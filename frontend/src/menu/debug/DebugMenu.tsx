@@ -22,4 +22,5 @@ const DebugMenu = ({onClose, anchorEl}: IProps) => (
 );
 
 const memoizedDebugMenu = React.memo(DebugMenu);
+
 export {memoizedDebugMenu as DebugMenu};

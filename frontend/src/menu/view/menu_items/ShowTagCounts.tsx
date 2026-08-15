@@ -31,4 +31,5 @@ const ShowTagCounts = ({onClose}: IProps) => {
 };
 
 const memoizedShowTagCounts = React.memo(ShowTagCounts);
+
 export {memoizedShowTagCounts as ShowTagCounts};

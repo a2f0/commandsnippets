@@ -32,4 +32,5 @@ const SortByNameAscending = ({onClose}: IProps) => {
 };
 
 const memoizedSortByNameAscending = React.memo(SortByNameAscending);
+
 export {memoizedSortByNameAscending as SortByNameAscending};

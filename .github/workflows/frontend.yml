@@ -17,22 +17,21 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7.0.1
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v2.0.2
         with:
-          node-version-file: 'frontend/.nvmrc'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@tearleads'
-          package-manager-cache: false
+          version: '11.21.0'
+          runtime: 'node@24.19.0'
+          cache: true
+          cache-dependency-path: frontend/pnpm-lock.yaml
+          package-json-file: frontend/package.json
+          install: false
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
           architecture: 'x64'
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          package_json_file: frontend/package.json
       # yamllint disable-line rule:line-length
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: pnpm install
@@ -50,7 +49,7 @@ jobs:
         run: yamllint -c .yamllint .
       - run: npx vitest --no-watch
       - run: npm run ci-headless
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7.0.1
         if: always()
         with:
           name: wdio-video-reporter
@@ -63,17 +62,16 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7.0.1
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v2.0.2
         with:
-          node-version-file: 'frontend/.nvmrc'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@tearleads'
-          package-manager-cache: false
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          package_json_file: frontend/package.json
+          version: '11.21.0'
+          runtime: 'node@24.19.0'
+          cache: true
+          cache-dependency-path: frontend/pnpm-lock.yaml
+          package-json-file: frontend/package.json
+          install: false
       # yamllint disable-line rule:line-length
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: pnpm install
@@ -94,7 +92,7 @@ jobs:
         env:
           DISPLAY: :99
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7.0.1
         if: always()
         with:
           name: electron-test-results
@@ -112,15 +110,18 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7.0.1
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v2.0.2
         with:
-          node-version-file: 'frontend/.nvmrc'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@tearleads'
-          package-manager-cache: false
+          version: '11.21.0'
+          runtime: 'node@24.19.0'
+          cache: true
+          cache-dependency-path: frontend/pnpm-lock.yaml
+          package-json-file: frontend/package.json
+          install: false
       - name: Configure AWS credentials (Production)
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         # yamllint disable-line rule:line-length
         if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         with:
@@ -128,17 +129,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION }}
           aws-region: us-east-1
       - name: Configure AWS credentials (Staging)
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         # yamllint disable-line rule:line-length
         if: ${{ github.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_STAGING }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
           aws-region: us-east-1
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          package_json_file: frontend/package.json
       # yamllint disable-line rule:line-length
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: pnpm install

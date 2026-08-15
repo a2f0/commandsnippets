@@ -35,4 +35,5 @@ const SortByBodyAscending = ({onClose}: IProps) => {
 };
 
 const memoizedSortByBodyAscending = React.memo(SortByBodyAscending);
+
 export {memoizedSortByBodyAscending as SortByBodyAscending};

@@ -27,4 +27,5 @@ const NewEntry = ({onClose}: IProps) => {
 };
 
 const memoizedNewEntry = React.memo(NewEntry);
+
 export {memoizedNewEntry as NewEntry};

@@ -94,4 +94,5 @@ const InputEntryBody = ({
 };
 
 const memoizedInputEntryBody = React.memo(observer(InputEntryBody));
+
 export {memoizedInputEntryBody as InputEntryBody};

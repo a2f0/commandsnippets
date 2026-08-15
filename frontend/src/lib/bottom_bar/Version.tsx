@@ -8,8 +8,8 @@ const Version = () => {
   return (
     <Typography
       variant="caption"
-      fontFamily="monospace"
       sx={{
+        fontFamily: 'monospace',
         mr: theme => theme.spacing(0.5),
         color: theme => theme.palette.text.primary,
       }}
@@ -20,4 +20,5 @@ const Version = () => {
 };
 
 const memoizedVersion = React.memo(observer(Version));
+
 export {memoizedVersion as Version};

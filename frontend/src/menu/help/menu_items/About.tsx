@@ -32,4 +32,5 @@ const About = ({onClose}: IProps) => {
 };
 
 const memoizedAbout = React.memo(About);
+
 export {memoizedAbout as About};

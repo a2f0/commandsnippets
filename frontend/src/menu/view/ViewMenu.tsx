@@ -26,4 +26,5 @@ const ViewMenu = ({onClose, anchorEl}: IProps) => (
 );
 
 const memoizedViewMenu = React.memo(ViewMenu);
+
 export {memoizedViewMenu as ViewMenu};

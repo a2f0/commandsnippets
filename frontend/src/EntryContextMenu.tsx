@@ -167,4 +167,5 @@ const EntryContextMenu = ({
 };
 
 const memoizedEntryContextMenu = React.memo(EntryContextMenu);
+
 export {memoizedEntryContextMenu as EntryContextMenu};

@@ -150,4 +150,5 @@ const TagNew = ({handleNewParent, id}: IProps) => {
 };
 
 const memoizedTagNew = React.memo(observer(TagNew));
+
 export {memoizedTagNew as TagNew};

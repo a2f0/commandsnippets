@@ -1,4 +1,4 @@
-FROM postgres:18.4
+FROM postgres:18.6
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8

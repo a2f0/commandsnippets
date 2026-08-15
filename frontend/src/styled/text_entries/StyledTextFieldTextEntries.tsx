@@ -75,4 +75,5 @@ const StyledTextFieldTextEntries = ({
 const memoizedStyledTextFieldTextEntries = React.memo(
   observer(StyledTextFieldTextEntries)
 );
+
 export {memoizedStyledTextFieldTextEntries as StyledTextFieldEntries};

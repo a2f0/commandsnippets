@@ -437,4 +437,5 @@ const Tag = ({
 };
 
 const memoizedTag = React.memo(observer(Tag));
+
 export {memoizedTag as Tag};

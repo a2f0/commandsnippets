@@ -45,7 +45,7 @@ describe('Main Component Holy Grail Layout', () => {
     const computedStyles = window.getComputedStyle(mainContainer);
     expect(computedStyles.display).toBe('flex');
     expect(computedStyles.flexDirection).toBe('column');
-    expect(computedStyles.minHeight).toBe('100vh');
+    expect(computedStyles.minHeight).toBe(`${window.innerHeight}px`);
   });
 
   it('should render header AppBar with sticky positioning', () => {

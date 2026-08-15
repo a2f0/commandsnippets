@@ -39,4 +39,5 @@ const LightMode = ({onClose}: IProps) => {
 };
 
 const memoizedLightMode = React.memo(LightMode);
+
 export {memoizedLightMode as LightMode};

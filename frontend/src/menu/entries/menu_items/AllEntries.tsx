@@ -37,4 +37,5 @@ const AllEntries = ({onClose}: IProps) => {
 };
 
 const memoizedAllEntries = React.memo(AllEntries);
+
 export {memoizedAllEntries as AllEntries};

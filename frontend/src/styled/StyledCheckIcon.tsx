@@ -8,4 +8,5 @@ const StyledCheckIcon = () => {
 };
 
 const memoizedStyledCheckIcon = React.memo(StyledCheckIcon);
+
 export {memoizedStyledCheckIcon as StyledCheckIcon};

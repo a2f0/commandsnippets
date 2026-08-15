@@ -23,4 +23,5 @@ const EntriesMenuButton = ({onClick}: IProps) => {
 };
 
 const memoizedEntriesMenuButton = React.memo(EntriesMenuButton);
+
 export {memoizedEntriesMenuButton as EntriesMenuButton};

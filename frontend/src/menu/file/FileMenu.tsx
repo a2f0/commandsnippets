@@ -23,4 +23,5 @@ const FileMenu = ({onClose, anchorEl}: IProps) => (
 );
 
 const memoizedFileMenu = React.memo(FileMenu);
+
 export {memoizedFileMenu as FileMenu};

@@ -327,4 +327,5 @@ const EntryList = () => {
 };
 
 const memoizedEntryList = React.memo(observer(EntryList));
+
 export {memoizedEntryList as EntryList};

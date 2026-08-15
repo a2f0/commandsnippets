@@ -12,4 +12,5 @@ function mergeInLoggedInUser(state: appState) {
 let state: appState = defaultState;
 state = mergeInLoggedInUser(state);
 const store = createAppStateStore(state);
+
 export {store};

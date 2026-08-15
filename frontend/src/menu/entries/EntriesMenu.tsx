@@ -53,4 +53,5 @@ const EntriesMenu = ({onClose, anchorEl}: IProps) => {
 };
 
 const memoizedEntriesMenu = React.memo(EntriesMenu);
+
 export {memoizedEntriesMenu as EntriesMenu};

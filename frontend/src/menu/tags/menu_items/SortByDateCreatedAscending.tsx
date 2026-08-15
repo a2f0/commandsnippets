@@ -34,4 +34,5 @@ const SortByDateCreatedAscending = ({onClose}: IProps) => {
 const memoizedSortByDateCreatedAscending = React.memo(
   SortByDateCreatedAscending
 );
+
 export {memoizedSortByDateCreatedAscending as SortByDateCreatedAscending};

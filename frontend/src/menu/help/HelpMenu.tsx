@@ -20,4 +20,5 @@ const HelpMenu = ({onClose, anchorEl}: IProps) => (
 );
 
 const memoizedHelpMenu = React.memo(HelpMenu);
+
 export {memoizedHelpMenu as HelpMenu};

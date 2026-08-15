@@ -6,4 +6,5 @@ const StyledDivider = () => {
 };
 
 const memoizedStyledDivider = React.memo(StyledDivider);
+
 export {memoizedStyledDivider as StyledDivider};

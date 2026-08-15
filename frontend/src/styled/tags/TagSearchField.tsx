@@ -80,4 +80,5 @@ const TagSearchField = () => {
 };
 
 const memoizedTagSearchField = React.memo(observer(TagSearchField));
+
 export {memoizedTagSearchField as TagSearchField};

@@ -87,4 +87,5 @@ const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
 };
 
 const memoizedTagListContextMenu = React.memo(TagListContextMenu);
+
 export {memoizedTagListContextMenu as TagListContextMenu};
