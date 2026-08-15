@@ -140,14 +140,14 @@ jobs:
         timeout-minutes: 10
 
       - name: Upload test screenshots
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios-test-screenshots
           path: frontend/logs/screenshots/
 
       - name: Upload test logs
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios-test-logs

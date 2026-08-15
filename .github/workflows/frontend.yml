@@ -49,7 +49,7 @@ jobs:
         run: yamllint -c .yamllint .
       - run: npx vitest --no-watch
       - run: npm run ci-headless
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: wdio-video-reporter
@@ -103,7 +103,7 @@ jobs:
         env:
           DISPLAY: :99
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: electron-test-results
