@@ -79,7 +79,7 @@ resource "cloudflare_dns_record" "api" {
   content = hcloud_server.server.ipv4_address
   type    = "A"
   ttl     = 1
-  proxied = true
+  proxied = var.api_proxied
 }
 
 resource "null_resource" "capture_ssh_host_keys" {
