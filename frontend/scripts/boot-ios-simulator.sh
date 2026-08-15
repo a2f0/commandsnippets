@@ -46,6 +46,8 @@ while [ $BOOT_CHECK_COUNT -lt $MAX_BOOT_CHECKS ]; do
 
     if xcrun simctl list devices | grep "$DEVICE_UUID" | grep -q "Booted"; then
         echo "Simulator is booted after $((BOOT_CHECK_COUNT * 10)) seconds"
+        echo "Waiting for CoreSimulator services to finish booting..."
+        xcrun simctl bootstatus "$DEVICE_UUID" -b
         # Wait additional time for services to be ready
         echo "Allowing additional 20 seconds for services to fully initialize..."
         sleep 20

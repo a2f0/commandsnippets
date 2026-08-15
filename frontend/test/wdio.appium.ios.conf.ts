@@ -41,6 +41,9 @@ export const config: WebdriverIO.Config = {
       'appium:platformVersion': '18.5',
       'appium:deviceName': 'iPhone 16',
       'appium:automationName': 'XCUITest',
+      // Hosted CI has no visible Simulator window. Without this, Appium
+      // restarts an already-booted simulator to try to display its UI.
+      'appium:isHeadless': Boolean(process.env['CI']),
       'appium:app': process.env['DERIVED_DATA_PATH']
         ? path.join(
             process.env['DERIVED_DATA_PATH'],
@@ -60,6 +63,9 @@ export const config: WebdriverIO.Config = {
       },
       'appium:wdaStartupRetries': 3, // Reasonable retries
       'appium:wdaStartupRetryInterval': 10000, // 10 second intervals
+      // The first WebDriverAgent build on a fresh macOS runner can take
+      // several minutes with Xcode 26.
+      'appium:wdaLaunchTimeout': 300000,
       // Additional iOS-specific capabilities for CI/CD stability
       'appium:usePrebuiltWDA': false,
       'appium:maxTypingFrequency': 60,
