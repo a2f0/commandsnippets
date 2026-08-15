@@ -1,0 +1,8 @@
+---
+- name: Install the GitHub Actions deploy key
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: >-
+      {{ lookup('ansible.builtin.file',
+      playbook_dir + '/public_ssh_keys/github_actions.pub') }}

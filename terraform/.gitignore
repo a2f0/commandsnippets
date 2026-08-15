@@ -1,0 +1,24 @@
+# Terraform
+# https://github.com/github/gitignore/blob/master/Terraform.gitignore
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*.backend
+*.tfvars
+
+# Node.js
+node_modules/
+
+# Python and Ansible
+.ansible/
+.venv/
+
+# SOPS plaintext
+/ansible/inventory.yaml
+/ssh_keys/tearleads-backend-deploy-key
+/ssh_keys/tearleads-frontend-deploy-key

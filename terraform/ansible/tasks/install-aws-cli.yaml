@@ -1,0 +1,21 @@
+---
+- name: Install unzip
+  ansible.builtin.apt:
+    name: unzip
+    state: present
+    update_cache: true
+
+- name: Install the AWS CLI v2
+  ansible.builtin.shell: |
+    cd /tmp
+    rm -rf aws awscliv2.zip
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "aarch64" ]; then
+      curl -s "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+    else
+      curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    fi
+    unzip -q awscliv2.zip
+    ./aws/install -b /usr/local/bin
+  args:
+    creates: /usr/local/bin/aws

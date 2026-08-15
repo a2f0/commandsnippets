@@ -1,0 +1,9 @@
+---
+- name: Get server's SSH RSA public key
+  ansible.builtin.command: cat /etc/ssh/ssh_host_rsa_key.pub
+  register: server_ssh_key
+  changed_when: false
+
+- name: Display server's SSH RSA public key
+  ansible.builtin.debug:
+    var: server_ssh_key.stdout
