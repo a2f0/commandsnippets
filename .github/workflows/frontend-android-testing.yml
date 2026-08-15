@@ -59,7 +59,7 @@ jobs:
           echo "JAVA_HOME: $JAVA_HOME"
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Accept Android licenses and download system images
         run: |
