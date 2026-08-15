@@ -60,6 +60,9 @@ describe('Tag List Context Menu Behavior', () => {
     // Test the new tag form
     await expect(BasePage.tagNewBottomTextField).toBeDisplayed();
     await expect(BasePage.tagNewBottomTextField).toBeFocused();
+    expect(
+      (await BasePage.tagNewBottomTextField.getCSSProperty('direction')).value
+    ).toBe('ltr');
     await expect(BasePage.tagNewBottomSave).toBeDisplayed();
     await expect(BasePage.tagNewBottomCancel).toBeDisplayed();
 

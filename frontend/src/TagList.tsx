@@ -230,7 +230,9 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           })}
         </LeftToRight>
         {appConfig.tagNew === 'bottom' && (
-          <TagNew id="tagNewBottom" handleNewParent={handleNew} />
+          <LeftToRight>
+            <TagNew id="tagNewBottom" handleNewParent={handleNew} />
+          </LeftToRight>
         )}
         {appConfig.loggedInUser && <>{contextMenu}</>}
       </List>
