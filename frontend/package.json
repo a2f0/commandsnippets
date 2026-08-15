@@ -86,7 +86,7 @@
     "@wdio/spec-reporter": "9.20.0",
     "@wdio/types": "9.20.0",
     "appium": "3.1.1",
-    "appium-uiautomator2-driver": "6.3.0",
+    "appium-uiautomator2-driver": "8.2.2",
     "appium-xcuitest-driver": "10.8.0",
     "concurrently": "9.2.1",
     "electron": "39.2.3",
