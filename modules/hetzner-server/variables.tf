@@ -24,6 +24,12 @@ variable "api_subdomain" {
   description = "Subdomain for the API record (e.g., 'api' or 'staging-api')"
 }
 
+variable "api_proxied" {
+  type        = bool
+  description = "Whether Cloudflare proxies the API DNS record"
+  default     = true
+}
+
 variable "github_secret_prefix" {
   type        = string
   description = "Prefix for GitHub secrets (e.g., 'PRODUCTION' or 'STAGING')"
