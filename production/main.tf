@@ -32,7 +32,6 @@ module "web" {
   deployment_public_key = var.deployment_public_key
   ssh_key_id            = data.hcloud_ssh_key.deploy.id
   api_subdomain         = "api"
-  api_proxied           = false
   github_secret_prefix  = "PRODUCTION"
   github_owner          = var.github_owner
   github_repository     = var.github_repository
