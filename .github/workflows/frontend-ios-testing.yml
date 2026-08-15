@@ -11,14 +11,16 @@ on:
 
 jobs:
   ios-appium-tests:
-    runs-on: self-hosted
+    runs-on: macos-15
     continue-on-error: false
     defaults:
       run:
         working-directory: frontend
 
     env:
-      # Use isolated directories to avoid conflicts
+      # Capacitor 8 requires Xcode 26 or newer. Pin the installed toolchain so
+      # changes to the runner image default do not silently downgrade CI.
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
       DERIVED_DATA_PATH: /tmp/ci-ios-build
       SIMULATOR_DEVICE: "iPhone 16 CI"
 
@@ -46,9 +48,6 @@ jobs:
       - name: Initialize Xcode and check iOS SDK
         run: |
           echo "Initializing Xcode command line tools..."
-          # Skip xcode-select on self-hosted to avoid affecting local dev
-          # sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
           echo "Selected Xcode version:"
           xcodebuild -version
 
