@@ -12,4 +12,5 @@ const TagSearch = () => {
 };
 
 const memoizedTagSearch = React.memo(TagSearch);
+
 export {memoizedTagSearch as TagSearch};

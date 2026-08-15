@@ -162,7 +162,7 @@ npx cap update
 
 **App shows "Could not connect to server" error:**
 - Ensure the dev server is running with `pnpm run dev --host`
-- The IP address in `capacitor.config.ts` is automatically detected using the `ip` package
+- The IP address in `capacitor.config.ts` is automatically detected using Node's network interface APIs
 - Check that your device/simulator is on the same network as your development machine
 - The dev server runs on port 8085, not 5173.
 

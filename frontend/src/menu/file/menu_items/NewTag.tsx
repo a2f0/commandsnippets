@@ -26,4 +26,5 @@ const NewTag = ({onClose}: IProps) => {
 };
 
 const memoizedNewTag = React.memo(NewTag);
+
 export {memoizedNewTag as NewTag};

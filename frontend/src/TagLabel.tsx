@@ -24,4 +24,5 @@ const TagLabel = ({label}: IProps) => {
 };
 
 const memoizedTagLabel = React.memo(observer(TagLabel));
+
 export {memoizedTagLabel as TagLabel};

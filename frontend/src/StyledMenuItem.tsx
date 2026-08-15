@@ -26,4 +26,5 @@ const StyledMenuItem = ({children, onClick, id}: IProps) => {
 };
 
 const memoizedStyledMenuItem = React.memo(StyledMenuItem);
+
 export {memoizedStyledMenuItem as StyledMenuItem};

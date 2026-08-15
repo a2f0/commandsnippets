@@ -27,16 +27,16 @@ describe('BottomBar Component', () => {
     vi.restoreAllMocks();
   });
 
-  it.each([
-    'development',
-    'test',
-  ])('renders HUD button in %s environment', env => {
-    vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+  it.each(['development', 'test'])(
+    'renders HUD button in %s environment',
+    env => {
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
 
-    render(<BottomBarWithProviders />);
+      render(<BottomBarWithProviders />);
 
-    expect(screen.getByText('[HUD]')).toBeInTheDocument();
-  });
+      expect(screen.getByText('[HUD]')).toBeInTheDocument();
+    }
+  );
 
   it('does not render HUD button in production environment', () => {
     vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
@@ -374,18 +374,18 @@ describe('BottomBar Component', () => {
       });
     });
 
-    it.each([
-      'development',
-      'test',
-    ])('renders language switcher in %s environment', env => {
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+    it.each(['development', 'test'])(
+      'renders language switcher in %s environment',
+      env => {
+        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
 
-      render(<BottomBarWithProviders />);
+        render(<BottomBarWithProviders />);
 
-      const languageSelect = screen.getByRole('combobox');
-      expect(languageSelect).toBeInTheDocument();
-      expect(languageSelect.textContent).toBe('[English]');
-    });
+        const languageSelect = screen.getByRole('combobox');
+        expect(languageSelect).toBeInTheDocument();
+        expect(languageSelect.textContent).toBe('[English]');
+      }
+    );
 
     it('does not render language switcher in production environment', () => {
       vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');

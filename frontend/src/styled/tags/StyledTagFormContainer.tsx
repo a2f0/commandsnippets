@@ -21,4 +21,5 @@ const StyledTagFormContainer = ({children, id}: IProps) => {
 };
 
 const MemoizedStyledTagFormContainer = React.memo(StyledTagFormContainer);
+
 export {MemoizedStyledTagFormContainer as StyledTagFormContainer};

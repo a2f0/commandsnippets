@@ -48,4 +48,5 @@ const MainContextMenu = (props: IMainContextMenu) => {
 };
 
 const memoizedMainContextMenu = React.memo(MainContextMenu);
+
 export {memoizedMainContextMenu as MainContextMenu};

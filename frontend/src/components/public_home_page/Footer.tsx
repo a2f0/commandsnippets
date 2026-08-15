@@ -22,7 +22,13 @@ const Footer = () => {
         borderColor: 'divider',
       }}
     >
-      <Grid container justifyContent="center" spacing={2}>
+      <Grid
+        container
+        spacing={2}
+        sx={{
+          justifyContent: 'center',
+        }}
+      >
         {[
           {href: '/privacy', text: 'Privacy Policy'},
           {href: '/terms', text: 'Terms of Service'},
@@ -38,9 +44,11 @@ const Footer = () => {
       </Grid>
       <Typography
         variant="body2"
-        color="text.secondary"
         align="center"
-        sx={{mt: 1}}
+        sx={{
+          color: 'text.secondary',
+          mt: 1,
+        }}
       >
         © {new Date().getFullYear()} Tearleads. All rights reserved.
       </Typography>
@@ -49,4 +57,5 @@ const Footer = () => {
 };
 
 const memoizedFooter = React.memo(Footer);
+
 export {memoizedFooter as Footer};

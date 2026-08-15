@@ -35,4 +35,5 @@ const SortByDateTaggedAscending = ({onClose}: IProps) => {
 };
 
 const memoizedSortByDateTaggedAscending = React.memo(SortByDateTaggedAscending);
+
 export {memoizedSortByDateTaggedAscending as SortByDateTaggedAscending};

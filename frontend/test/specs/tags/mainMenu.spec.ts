@@ -44,8 +44,8 @@ describe('Tag Main Menu', () => {
     // Verify the first tag is selected (has dark background color)
     await expect(
       (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
-        .value
-    ).toBe('rgb(72,72,72)');
+        .parsed.hex
+    ).toBe('#484848');
 
     // Verify URL routing is working
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
@@ -128,8 +128,8 @@ describe('Tag Main Menu', () => {
     // Verify tag-1 is still selected (highlighted) even after sorting
     await expect(
       (await $('div[data-testid="tag-1"]').getCSSProperty('background-color'))
-        .value
-    ).toBe('rgb(72,72,72)');
+        .parsed.hex
+    ).toBe('#484848');
 
     // Verify URL is still pointing to selected tag
     expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

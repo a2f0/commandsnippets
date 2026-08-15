@@ -23,4 +23,5 @@ const ViewMenuButton = ({onClick}: IProps) => {
 };
 
 const memoizedViewMenuButton = React.memo(ViewMenuButton);
+
 export {memoizedViewMenuButton as ViewMenuButton};

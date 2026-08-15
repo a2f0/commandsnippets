@@ -35,4 +35,5 @@ const SortByDateLastUsedDescending = ({onClose}: IProps) => {
 const memoizedSortByDateLastUsedDescending = React.memo(
   SortByDateLastUsedDescending
 );
+
 export {memoizedSortByDateLastUsedDescending as SortByDateLastUsedDescending};

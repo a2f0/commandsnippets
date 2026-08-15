@@ -47,4 +47,5 @@ const TextEntrySearchField = () => {
 };
 
 const memoizedTextEntrySearchField = React.memo(observer(TextEntrySearchField));
+
 export {memoizedTextEntrySearchField as TextEntrySearchField};

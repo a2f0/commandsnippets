@@ -10,4 +10,5 @@ const LeftDrawer = () => (
 );
 
 const memoizedLeftDrawer = React.memo(LeftDrawer);
+
 export {memoizedLeftDrawer as LeftDrawer};

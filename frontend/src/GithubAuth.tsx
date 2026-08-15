@@ -57,4 +57,5 @@ const GithubAuth = () => {
 };
 
 const memoizedGithubAuth = React.memo(observer(GithubAuth));
+
 export {memoizedGithubAuth as GithubAuth};

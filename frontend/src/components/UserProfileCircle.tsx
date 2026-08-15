@@ -176,4 +176,5 @@ const UserProfileCircle: React.FC = () => {
 };
 
 const ObservedUserProfileCircle = observer(UserProfileCircle);
+
 export {ObservedUserProfileCircle as UserProfileCircle};

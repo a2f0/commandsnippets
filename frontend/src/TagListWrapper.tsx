@@ -94,4 +94,5 @@ const TagListWrapper = () => {
 };
 
 const memoizedTagListWrapper = React.memo(observer(TagListWrapper));
+
 export {memoizedTagListWrapper as TagListWrapper};

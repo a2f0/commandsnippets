@@ -37,4 +37,5 @@ const SortByDateTaggedDescending = ({onClose}: IProps) => {
 const memoizedSortByDateTaggedDescending = React.memo(
   SortByDateTaggedDescending
 );
+
 export {memoizedSortByDateTaggedDescending as SortByDateTaggedDescending};

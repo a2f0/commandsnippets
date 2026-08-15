@@ -24,11 +24,13 @@ const PublicHomePageContent = () => {
       >
         <StyledToolbar>
           <Box
-            display="flex"
-            justifyContent="flex-end"
-            alignItems="center" // vertically center the items
-            flexGrow={1}
-            mr={1}
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              flexGrow: 1,
+              mr: 1,
+            }}
           >
             <GithubAuth />
             <GoogleAuthWrapper />

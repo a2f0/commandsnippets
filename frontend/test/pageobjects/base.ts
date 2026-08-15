@@ -254,4 +254,5 @@ export class Base {
 }
 
 const BasePage = new Base();
+
 export {BasePage};

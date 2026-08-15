@@ -26,4 +26,5 @@ const Routes = () => {
 };
 
 const memoizedRoutes = React.memo(Routes);
+
 export {memoizedRoutes as Routes};

@@ -23,4 +23,5 @@ const DebugMenuButton = ({onClick}: IProps) => {
 };
 
 const memoizedDebugMenuButton = React.memo(DebugMenuButton);
+
 export {memoizedDebugMenuButton as DebugMenuButton};

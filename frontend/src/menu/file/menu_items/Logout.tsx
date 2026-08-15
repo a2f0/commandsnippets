@@ -31,4 +31,5 @@ const Logout = ({onClose}: IProps) => {
 };
 
 const memoizedLogout = React.memo(Logout);
+
 export {memoizedLogout as Logout};

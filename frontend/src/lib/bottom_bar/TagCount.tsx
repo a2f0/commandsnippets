@@ -19,8 +19,8 @@ const TagCount = () => {
   return (
     <Typography
       variant="caption"
-      fontFamily="monospace"
       sx={{
+        fontFamily: 'monospace',
         mr: theme => theme.spacing(0.5),
         color: theme => theme.palette.text.primary,
       }}

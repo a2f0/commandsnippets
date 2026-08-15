@@ -36,4 +36,5 @@ const TagsMenu = ({onClose, anchorEl}: IProps) => (
 );
 
 const memoizedTagsMenu = React.memo(TagsMenu);
+
 export {memoizedTagsMenu as TagsMenu};

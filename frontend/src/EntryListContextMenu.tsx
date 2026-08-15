@@ -105,4 +105,5 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
 };
 
 const memoizedEntryListContextMenu = React.memo(EntryListContextMenu);
+
 export {memoizedEntryListContextMenu as EntryListContextMenu};

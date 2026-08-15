@@ -8,5 +8,5 @@ export const translations = {
 
 export type SupportedLanguage = keyof typeof translations;
 
-export {en, es};
 export * from './types';
+export {en, es};

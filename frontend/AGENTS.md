@@ -30,7 +30,7 @@ For testing the Capacitor iOS app in simulator:
 
 **Prerequisites:**
 - Xcode installed with iOS Simulator
-- iOS Simulator available (iPhone 15, iOS 17.0 recommended)
+- Xcode 26 or newer with an iOS Simulator available (iPhone 16 recommended)
 - Capacitor staging app built and synced
 
 **Manual Setup Steps:**
@@ -61,8 +61,8 @@ For testing the Capacitor Android app in emulator:
 
 **Prerequisites:**
 - Android SDK installed with Android Studio or command line tools
-- Android Emulator available (API 35 recommended - Android 15)
-- Java 17 installed
+- Android Emulator available (API 36 recommended - Android 16)
+- Java 21 installed
 - ANDROID_HOME or ANDROID_SDK_ROOT environment variable set
 
 **Manual Setup Steps:**
@@ -80,7 +80,7 @@ For testing the Capacitor Android app in emulator:
 - Logs: `logs/appium/`
 
 **Android Emulator Requirements:**
-- API Level 35 (Android 15) recommended
+- API Level 36 (Android 16) recommended
 - x86_64 architecture for better CI performance
 - Hardware acceleration enabled (KVM on Linux)
 - Auto-grant permissions for smoother testing

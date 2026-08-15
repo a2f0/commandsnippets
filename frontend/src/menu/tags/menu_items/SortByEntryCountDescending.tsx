@@ -35,4 +35,5 @@ const SortByEntryCountDescending = ({onClose}: IProps) => {
 const memoizedSortByEntryCountDescending = React.memo(
   SortByEntryCountDescending
 );
+
 export {memoizedSortByEntryCountDescending as SortByEntryCountDescending};

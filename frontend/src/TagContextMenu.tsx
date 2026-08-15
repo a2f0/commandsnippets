@@ -136,4 +136,5 @@ const TagContextMenu = ({
 };
 
 const memoizedTagContextMenu = React.memo(TagContextMenu);
+
 export {memoizedTagContextMenu as TagContextMenu};

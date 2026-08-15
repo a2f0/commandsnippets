@@ -350,4 +350,5 @@ const BottomBar = () => {
 };
 
 const memoizedBottomBar = React.memo(observer(BottomBar));
+
 export {memoizedBottomBar as BottomBar};

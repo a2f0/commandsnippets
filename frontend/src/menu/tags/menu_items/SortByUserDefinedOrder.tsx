@@ -31,4 +31,5 @@ const SortByUserDefinedOrder = ({onClose}: IProps) => {
 };
 
 const memoizedSortByUserDefinedOrder = React.memo(SortByUserDefinedOrder);
+
 export {memoizedSortByUserDefinedOrder as SortByUserDefinedOrder};

@@ -23,4 +23,5 @@ const HelpMenuButton = ({onClick}: IProps) => {
 };
 
 const memoizedHelpMenuButton = React.memo(HelpMenuButton);
+
 export {memoizedHelpMenuButton as HelpMenuButton};

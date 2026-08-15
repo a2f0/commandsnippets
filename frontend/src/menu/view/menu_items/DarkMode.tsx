@@ -42,4 +42,5 @@ const DarkMode = ({onClose}: IProps) => {
 };
 
 const memoizedDarkMode = React.memo(DarkMode);
+
 export {memoizedDarkMode as DarkMode};

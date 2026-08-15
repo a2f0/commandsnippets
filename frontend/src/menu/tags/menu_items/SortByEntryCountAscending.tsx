@@ -32,4 +32,5 @@ const SortByEntryCountAscending = ({onClose}: IProps) => {
 };
 
 const memoizedSortEntryCountAscending = React.memo(SortByEntryCountAscending);
+
 export {memoizedSortEntryCountAscending as SortByEntryCountAscending};

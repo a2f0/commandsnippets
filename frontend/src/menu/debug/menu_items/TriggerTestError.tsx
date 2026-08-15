@@ -41,4 +41,5 @@ const TriggerTestError = ({onClose}: IProps) => {
 };
 
 const memoizedTriggerTestError = React.memo(TriggerTestError);
+
 export {memoizedTriggerTestError as TriggerTestError};

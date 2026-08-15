@@ -89,4 +89,5 @@ const InputEntrySubject = ({
 };
 
 const memoizedInputEntrySubject = React.memo(observer(InputEntrySubject));
+
 export {memoizedInputEntrySubject as InputEntrySubject};

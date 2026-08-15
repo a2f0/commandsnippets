@@ -35,4 +35,5 @@ const SortBySubjectDescending = ({onClose}: IProps) => {
 };
 
 const memoizedSortBySubjectDescending = React.memo(SortBySubjectDescending);
+
 export {memoizedSortBySubjectDescending as SortBySubjectDescending};

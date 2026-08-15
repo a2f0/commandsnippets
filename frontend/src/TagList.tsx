@@ -239,4 +239,5 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 };
 
 const memoizedTagList = React.memo(observer(TagList));
+
 export {memoizedTagList as TagList};

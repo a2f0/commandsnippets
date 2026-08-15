@@ -199,4 +199,5 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
 };
 
 const memoizedEntryNew = React.memo(observer(EntryNew));
+
 export {memoizedEntryNew as EntryNew};

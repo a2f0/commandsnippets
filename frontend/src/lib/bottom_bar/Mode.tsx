@@ -9,8 +9,8 @@ const Mode = () => {
   return (
     <Typography
       variant="caption"
-      fontFamily="monospace"
       sx={{
+        fontFamily: 'monospace',
         mr: theme => theme.spacing(0.5),
         color: theme => theme.palette.text.primary,
       }}
@@ -21,4 +21,5 @@ const Mode = () => {
 };
 
 const memoizedMode = React.memo(observer(Mode));
+
 export {memoizedMode as Mode};
