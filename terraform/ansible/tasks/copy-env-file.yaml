@@ -1,20 +1,10 @@
 ---
-- name: Check if .env file exists locally
-  delegate_to: localhost
-  ansible.builtin.stat:
-    path: "{{ playbook_dir }}/../../tearleads-backend/.env-{{ env_name }}"
-  register: env_file
-
-- name: Fail if .env file does not exist
-  ansible.builtin.fail:
-    msg: >-
-      Error: .env-{{ env_name }} does not exist at
-      {{ playbook_dir }}/../../tearleads-backend/.env-{{ env_name }}
-  when: not env_file.stat.exists
-
 - name: Copy .env file to remote host
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../../tearleads-backend/.env-{{ env_name }}"
-    dest: "~/tearleads-backend/.env"
+    src: >-
+      {{ lookup('ansible.builtin.env',
+      'ANSIBLE_' ~ (env_name | upper) ~ '_ENV_FILE') }}
+    dest: "/home/{{ ansible_user }}/commandsnippets/backend/.env"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: "0600"
-  when: env_file.stat.exists

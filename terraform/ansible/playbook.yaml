@@ -16,9 +16,7 @@
   tasks:
     - name: Configure AWS credentials
       ansible.builtin.include_tasks: tasks/configure-aws-credentials.yaml
-    - name: Copy deploy keys
-      ansible.builtin.include_tasks: tasks/copy-deploy-keys.yaml
-    - name: Clone repositories
+    - name: Clone the monorepo
       ansible.builtin.include_tasks: tasks/clone-repos.yaml
     - name: Copy the staging environment file
       ansible.builtin.include_tasks: tasks/copy-env-file.yaml
@@ -50,9 +48,7 @@
   tasks:
     - name: Configure AWS credentials
       ansible.builtin.include_tasks: tasks/configure-aws-credentials.yaml
-    - name: Copy deploy keys
-      ansible.builtin.include_tasks: tasks/copy-deploy-keys.yaml
-    - name: Clone repositories
+    - name: Clone the monorepo
       ansible.builtin.include_tasks: tasks/clone-repos.yaml
     - name: Copy the production environment file
       ansible.builtin.include_tasks: tasks/copy-env-file.yaml

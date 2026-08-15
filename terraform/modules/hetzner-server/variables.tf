@@ -30,19 +30,6 @@ variable "api_proxied" {
   default     = true
 }
 
-variable "github_secret_prefix" {
-  type        = string
-  description = "Prefix for GitHub secrets (e.g., 'PRODUCTION' or 'STAGING')"
-}
-
-variable "github_owner" {
-  type = string
-}
-
-variable "github_repository" {
-  type = string
-}
-
 variable "cloudflare_zone_id" {
   type = string
 }

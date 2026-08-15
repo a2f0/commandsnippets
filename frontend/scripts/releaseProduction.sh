@@ -32,9 +32,9 @@ fi
 
 echo "No uncommitted changes detected. Continuing with release..."
 
-# Pull production changes back into staging
-echo "Pulling production changes back into staging branch..."
-git pull origin production
+# Pull main changes back into staging
+echo "Pulling main changes back into staging branch..."
+git pull origin main
 
 git push -u origin staging
 
@@ -42,13 +42,13 @@ git push -u origin staging
 VERSION=$(node -p "require('./package.json').version")
 echo "Current version from package.json: $VERSION"
 
-# Create PR from staging to production using GitHub CLI
-echo "Creating PR from staging to production..."
+# Create PR from staging to main using GitHub CLI
+echo "Creating PR from staging to main..."
 gh pr create \
-  --base production \
+  --base main \
   --head staging \
   --title "Release v$VERSION to production" \
-  --body "Automated release of version $VERSION to production." \
+  --body "Automated release of version $VERSION to production."
 
 # Enable auto-merge on the PR
 PR_URL=$(gh pr view --json url -q .url)
@@ -58,4 +58,4 @@ gh pr merge --auto --merge
 echo "Production release PR created successfully with auto-merge enabled"
 
 
-echo "Staging branch is now up-to-date with production"
+echo "Staging branch is now up-to-date with main"

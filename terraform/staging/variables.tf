@@ -31,10 +31,14 @@ variable "cloudflare_api_key" {
   type = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "github_owner" {
-  type = string
+  description = "Legacy input retained for compatibility with encrypted tfvars."
+  type        = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "github_repository" {
-  type = string
+  description = "Legacy input retained for compatibility with encrypted tfvars."
+  type        = string
 }

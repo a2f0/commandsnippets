@@ -1,17 +1,8 @@
 ---
-- name: Install the SSH configuration
-  ansible.builtin.copy:
-    src: ./configs/ssh
-    dest: "/home/{{ ansible_user }}/.ssh/config"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: "0400"
-
-- name: Clone backend repository
+- name: Clone the commandsnippets monorepo
   ansible.builtin.git:
-    repo: github-backend.com:tearleads/tearleads-backend.git
-    dest: "/home/{{ ansible_user }}/tearleads-backend"
-    accept_hostkey: true
+    repo: https://github.com/a2f0/commandsnippets.git
+    dest: "/home/{{ ansible_user }}/commandsnippets"
     force: false
     recursive: false
-    version: "{{ git_branch }}"
+    version: "{{ 'main' if 'production' in group_names else 'staging' }}"

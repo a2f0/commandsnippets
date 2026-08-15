@@ -1,19 +1,25 @@
 ---
 
-name: Github Actions
+name: Frontend CI
 # yamllint disable-line rule:truthy
 on:
   push:
     branches: '**'
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
 jobs:
   code-quality:
     runs-on: ubuntu-latest
     continue-on-error: false
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: 'frontend/.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@tearleads'
           package-manager-cache: false
@@ -24,13 +30,23 @@ jobs:
           architecture: 'x64'
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
       # yamllint disable-line rule:line-length
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: pnpm install
-      - name: pre-commit
-        run: |
-          pip install pre-commit
-          pre-commit run --all-files
+      - name: Install Python code-quality tools
+        run: pip install yamllint
+      - name: Lint source
+        run: pnpm run lint
+      - name: Check formatting
+        run: pnpm run format
+      - name: Compile TypeScript
+        run: pnpm run compile
+      - name: Lint shell scripts
+        run: find scripts -type f -name '*.sh' -print0 | xargs -0 shellcheck
+      - name: Lint YAML
+        run: yamllint -c .yamllint .
       - run: npx vitest --no-watch
       - run: npm run ci-headless
       - uses: actions/upload-artifact@v5
@@ -38,7 +54,7 @@ jobs:
         with:
           name: wdio-video-reporter
           path: |
-            _results_
+            frontend/_results_
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
@@ -52,16 +68,21 @@ jobs:
   electron-tests:
     runs-on: ubuntu-latest
     continue-on-error: false
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: 'frontend/.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@tearleads'
           package-manager-cache: false
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
       # yamllint disable-line rule:line-length
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: pnpm install
@@ -87,8 +108,8 @@ jobs:
         with:
           name: electron-test-results
           path: |
-            _results_
-            logs/
+            frontend/_results_
+            frontend/logs/
       - name: Post to slack
         uses: 8398a7/action-slack@v3
         if: ${{ failure() }}
@@ -105,19 +126,22 @@ jobs:
     needs: [code-quality, electron-tests]
     if: >-
       github.ref == 'refs/heads/staging' ||
-      github.ref == 'refs/heads/production'
+      github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: 'frontend/.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@tearleads'
           package-manager-cache: false
       - name: Configure AWS credentials (Production)
         uses: aws-actions/configure-aws-credentials@v5
         # yamllint disable-line rule:line-length
-        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_PRODUCTION }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION }}
@@ -125,20 +149,22 @@ jobs:
       - name: Configure AWS credentials (Staging)
         uses: aws-actions/configure-aws-credentials@v5
         # yamllint disable-line rule:line-length
-        if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
+        if: ${{ github.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_STAGING }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
           aws-region: us-east-1
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
       # yamllint disable-line rule:line-length
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: pnpm install
       - run: npm run build
       - name: Deploy to S3 (Production)
         # yamllint disable-line rule:line-length
-        if: ${{ github.event.ref == 'refs/heads/production' && github.event_name == 'push' }}
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         run: |
           # First sync all assets (excluding index.html)
           aws s3 sync --acl=public-read ./build \
@@ -151,7 +177,7 @@ jobs:
             s3://${{ secrets.PRODUCTION_DOMAIN }}
       - name: Deploy to S3 (Staging)
         # yamllint disable-line rule:line-length
-        if: ${{ github.event.ref == 'refs/heads/staging' && github.event_name == 'push' }}
+        if: ${{ github.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         run: |
           # First sync all assets (excluding index.html)
           aws s3 sync --acl=public-read ./build \

@@ -39,7 +39,7 @@ Linting:
 
     pre-commit run --all-files
     ansible-lint ansible/playbook.yaml
-    npm run commitlint -- --from origin/production --to HEAD
+    npm run commitlint -- --from origin/main --to HEAD
     terraform fmt --recursive
     tflint --recursive
     tflint --recursive --fix
@@ -71,6 +71,21 @@ each encrypted file with:
 
     sops updatekeys path/to/file.sops
 
+### GitHub Actions secrets
+
+Repository-level Actions secrets for the monorepo are managed by the
+`github-actions-secrets` Terraform stack. Its refresh script derives values
+from the other Terraform states, live SSH host keys, and the SOPS-encrypted
+deployment key, then stores only GitHub-sealed ciphertext in Terraform:
+
+    cd github-actions-secrets
+    AWS_PROFILE=dansullivan ./init.sh
+    AWS_PROFILE=dansullivan ./refresh-secrets.sh
+    AWS_PROFILE=dansullivan ./apply.sh
+
+See `github-actions-secrets/README.md` for the optional Slack webhook input and
+key-rotation notes.
+
 ## Staging
 
 ### Reconfigure / Deploy
@@ -86,5 +101,5 @@ each encrypted file with:
     ./staging.sh
     <login via ssh>
     <copy environment variables to .env>
-    cd ~/tearleads-backend
+    cd ~/commandsnippets/backend
     ./deploy-containers.sh

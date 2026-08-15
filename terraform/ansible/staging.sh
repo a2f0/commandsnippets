@@ -1,3 +1,3 @@
 #!/bin/sh
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-"$SCRIPT_DIR/run-playbook.sh" staging
+"$SCRIPT_DIR/run-playbook.sh" staging "$@"

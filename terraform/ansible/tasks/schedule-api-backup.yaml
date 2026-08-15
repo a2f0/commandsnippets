@@ -5,7 +5,7 @@
     minute: "0"
     hour: "5"
     job: >-
-      cd /home/{{ ansible_user }}/tearleads-backend/ &&
-      docker compose -f container-registry.yaml run postgres backup
+      cd /home/{{ ansible_user }}/commandsnippets/backend/ &&
+      docker compose -f compose-container-registry.yaml run --rm postgres backup
       >>/home/{{ ansible_user }}/db-backup-log 2>&1
     user: "{{ ansible_user }}"

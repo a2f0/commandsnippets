@@ -326,3 +326,20 @@ output "cloudfront_distribution_id" {
   value       = aws_cloudfront_distribution.website.id
   description = "CloudFront distribution ID for cache invalidation"
 }
+
+output "aws_access_key" {
+  description = "Access key ID used to deploy the production frontend."
+  sensitive   = true
+  value       = aws_iam_access_key.s3_sync_key.id
+}
+
+output "aws_secret_access_key" {
+  description = "Secret access key used to deploy the production frontend."
+  sensitive   = true
+  value       = aws_iam_access_key.s3_sync_key.secret
+}
+
+output "domain" {
+  description = "Production frontend domain."
+  value       = var.domain
+}

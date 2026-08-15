@@ -3,7 +3,7 @@ set -e
 
 # Check if we're on a protected branch
 CURRENT_BRANCH=$(git branch --show-current)
-if [ "$CURRENT_BRANCH" = "staging" ] || [ "$CURRENT_BRANCH" = "production" ]; then
+if [ "$CURRENT_BRANCH" = "staging" ] || [ "$CURRENT_BRANCH" = "main" ]; then
     echo "Error: Cannot bump version on $CURRENT_BRANCH branch"
     echo "Please switch to a development branch first"
     exit 1

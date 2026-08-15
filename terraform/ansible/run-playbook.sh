@@ -2,6 +2,9 @@
 set -euo pipefail
 
 LIMIT="${1:-staging}"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TF_DIR="$SCRIPT_DIR/../container-registry"
 export ANSIBLE_CONFIG="$SCRIPT_DIR/../ansible.cfg"
@@ -28,29 +31,29 @@ if ! command -v sops >/dev/null 2>&1; then
 fi
 
 umask 077
-deploy_key_temp_dir=$(mktemp -d)
-backend_deploy_key_file="$deploy_key_temp_dir/tearleads-backend-deploy-key"
-frontend_deploy_key_file="$deploy_key_temp_dir/tearleads-frontend-deploy-key"
+secret_temp_dir=$(mktemp -d)
+production_env_file="$secret_temp_dir/production.env"
+staging_env_file="$secret_temp_dir/staging.env"
 
-cleanup_deploy_keys() {
-  rm -f -- "$backend_deploy_key_file" "$frontend_deploy_key_file" || true
-  rmdir "$deploy_key_temp_dir" || true
+cleanup_secrets() {
+  rm -f -- "$production_env_file" "$staging_env_file" || true
+  rmdir "$secret_temp_dir" || true
 }
-trap cleanup_deploy_keys EXIT
+trap cleanup_secrets EXIT
 
 sops decrypt \
   --input-type binary \
   --output-type binary \
-  --output "$backend_deploy_key_file" \
-  "$SCRIPT_DIR/../ssh_keys/tearleads-backend-deploy-key.sops"
+  --output "$production_env_file" \
+  "$SCRIPT_DIR/environment/production.env.sops"
 sops decrypt \
   --input-type binary \
   --output-type binary \
-  --output "$frontend_deploy_key_file" \
-  "$SCRIPT_DIR/../ssh_keys/tearleads-frontend-deploy-key.sops"
+  --output "$staging_env_file" \
+  "$SCRIPT_DIR/environment/staging.env.sops"
 
-export ANSIBLE_BACKEND_DEPLOY_KEY_FILE="$backend_deploy_key_file"
-export ANSIBLE_FRONTEND_DEPLOY_KEY_FILE="$frontend_deploy_key_file"
+export ANSIBLE_PRODUCTION_ENV_FILE="$production_env_file"
+export ANSIBLE_STAGING_ENV_FILE="$staging_env_file"
 
 LIMIT_ARGS=()
 if [ "$LIMIT" != "all" ]; then
@@ -63,4 +66,5 @@ fi
   ansible-playbook \
   --inventory=__SOPS_FILE__ \
   "$SCRIPT_DIR/playbook.yaml" \
-  "${LIMIT_ARGS[@]}"
+  "${LIMIT_ARGS[@]}" \
+  "$@"

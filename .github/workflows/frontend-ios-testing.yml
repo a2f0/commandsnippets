@@ -7,12 +7,18 @@ name: iOS Mobile Testing
 on:
   pull_request:
     branches: '**'
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ios-testing.yml'
 
 jobs:
   ios-appium-tests:
     if: vars.ENABLE_MOBILE_APPIUM_TESTS == 'true'
     runs-on: self-hosted
     continue-on-error: false
+    defaults:
+      run:
+        working-directory: frontend
 
     env:
       # Use isolated directories to avoid conflicts
@@ -26,13 +32,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: 'frontend/.nvmrc'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@tearleads'
           package-manager-cache: false
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
 
       - name: Configure npm auth
         # yamllint disable-line rule:line-length
@@ -136,7 +144,7 @@ jobs:
         if: always()
         with:
           name: ios-test-screenshots
-          path: logs/screenshots/
+          path: frontend/logs/screenshots/
 
       - name: Upload test logs
         uses: actions/upload-artifact@v5
@@ -144,8 +152,8 @@ jobs:
         with:
           name: ios-test-logs
           path: |
-            logs/appium/
-            appium.log
+            frontend/logs/appium/
+            frontend/appium.log
 
       - name: Shutdown simulator
         if: always()
