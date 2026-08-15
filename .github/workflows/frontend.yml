@@ -139,7 +139,7 @@ jobs:
           scope: '@tearleads'
           package-manager-cache: false
       - name: Configure AWS credentials (Production)
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         # yamllint disable-line rule:line-length
         if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         with:
@@ -147,7 +147,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION }}
           aws-region: us-east-1
       - name: Configure AWS credentials (Staging)
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         # yamllint disable-line rule:line-length
         if: ${{ github.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         with:
