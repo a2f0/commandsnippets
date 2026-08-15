@@ -19,3 +19,8 @@ AWS_PROFILE=dansullivan ./apply.sh
 
 Do not enable Terraform debug logging while refreshing or applying secrets.
 Regenerate all ciphertext if GitHub rotates the repository public key.
+
+If a deployment stack has been torn down, the refresh script preserves its
+existing sealed host secrets while updating secrets for stacks with available
+outputs. The preserved values remain unreadable to Terraform and can be
+replaced normally after that stack is recreated.

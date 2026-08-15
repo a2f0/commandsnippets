@@ -56,7 +56,8 @@ terraform_output() {
   local stack=$1
   local output_name=$2
   AWS_PROFILE="$AWS_PROFILE" \
-    terraform -chdir="$terraform_dir/$stack" output -raw "$output_name"
+    terraform -chdir="$terraform_dir/$stack" output -json "$output_name" |
+    jq -er 'if type == "string" then . else tostring end'
 }
 
 emit_value() {
@@ -121,19 +122,34 @@ add_secret \
   terraform_output staging-frontend domain
 
 production_ip="$(terraform_output production server_ipv4_address)"
-staging_ip="$(terraform_output staging server_ipv4_address)"
 production_user="$(terraform_output production deployment_user)"
-staging_user="$(terraform_output staging deployment_user)"
-
-if [ "$production_user" != "$staging_user" ]; then
-  echo "Production and staging deployment users differ" >&2
-  exit 1
-fi
 
 add_secret DEPLOY_PRODUCTION_FQDN emit_value "$production_ip"
 add_secret PRODUCTION_KNOWN_HOSTS_BASE64 known_hosts_for_ip "$production_ip"
-add_secret DEPLOY_STAGING_FQDN emit_value "$staging_ip"
-add_secret STAGING_KNOWN_HOSTS_BASE64 known_hosts_for_ip "$staging_ip"
+
+if staging_ip="$(terraform_output staging server_ipv4_address 2>/dev/null)" &&
+  staging_user="$(terraform_output staging deployment_user 2>/dev/null)"; then
+  if [ "$production_user" != "$staging_user" ]; then
+    echo "Production and staging deployment users differ" >&2
+    exit 1
+  fi
+  add_secret DEPLOY_STAGING_FQDN emit_value "$staging_ip"
+  add_secret STAGING_KNOWN_HOSTS_BASE64 known_hosts_for_ip "$staging_ip"
+else
+  for preserved_secret in \
+    DEPLOY_STAGING_FQDN \
+    STAGING_KNOWN_HOSTS_BASE64; do
+    if ! jq -e \
+      --arg name "$preserved_secret" \
+      'has($name)' \
+      <<<"$encrypted_secrets" >/dev/null; then
+      echo "Cannot preserve missing $preserved_secret" >&2
+      exit 1
+    fi
+  done
+  echo "Staging outputs unavailable; preserved sealed staging host secrets"
+fi
+
 add_secret DEPLOY_USER emit_value "$production_user"
 add_secret \
   SSH_KEY \
