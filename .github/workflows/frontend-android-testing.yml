@@ -70,7 +70,7 @@ jobs:
           sdkmanager --list_installed
 
       - name: AVD cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: avd-cache
         with:
           path: |
