@@ -10,22 +10,41 @@ echo "Shutting down any existing simulators..."
 xcrun simctl shutdown all || true
 sleep 5
 
-# Get UUID of iPhone simulator (prefer iPhone 16, fallback to iPhone 15)
-echo "Finding iPhone simulator..."
-DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 16 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+# Get the UUID of the simulator used by the Appium configuration.
+PLATFORM_VERSION=${SIMULATOR_PLATFORM_VERSION:-18.5}
+DEVICE_NAME=${SIMULATOR_DEVICE_NAME:-iPhone 16}
+
+find_device_uuid() {
+    xcrun simctl list devices available | awk \
+        -v runtime="-- iOS $PLATFORM_VERSION --" \
+        -v device="$1" '
+            $0 == runtime { in_runtime = 1; next }
+            /^-- / { in_runtime = 0 }
+            in_runtime && index($0, "    " device " (") == 1 {
+                uuid = $(NF - 1)
+                gsub(/[()]/, "", uuid)
+                print uuid
+                exit
+            }
+        '
+}
+
+echo "Finding $DEVICE_NAME simulator with iOS $PLATFORM_VERSION..."
+DEVICE_UUID=$(find_device_uuid "$DEVICE_NAME")
 
 if [ -z "$DEVICE_UUID" ]; then
-    echo "iPhone 16 not found, trying iPhone 15..."
-    DEVICE_UUID=$(xcrun simctl list devices available | grep "iPhone 15 (" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+    echo "$DEVICE_NAME not found, trying iPhone 15..."
+    DEVICE_NAME="iPhone 15"
+    DEVICE_UUID=$(find_device_uuid "$DEVICE_NAME")
 fi
 
 if [ -z "$DEVICE_UUID" ]; then
-    echo "Error: No compatible iPhone simulator found (tried iPhone 16 and iPhone 15)"
+    echo "Error: No compatible iPhone simulator found for iOS $PLATFORM_VERSION"
     xcrun simctl list devices available
     exit 1
 fi
 
-echo "Found iPhone simulator with UUID: $DEVICE_UUID"
+echo "Found $DEVICE_NAME simulator with UUID: $DEVICE_UUID"
 
 # Reset simulator to clean state to avoid data migration issues
 echo "Resetting simulator to clean state..."
