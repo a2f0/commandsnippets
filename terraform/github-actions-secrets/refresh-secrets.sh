@@ -57,7 +57,7 @@ terraform_output() {
   local output_name=$2
   AWS_PROFILE="$AWS_PROFILE" \
     terraform -chdir="$terraform_dir/$stack" output -json "$output_name" |
-    jq -er 'if type == "string" then . else tostring end'
+    jq -jer 'if type == "string" then . else tostring end'
 }
 
 emit_value() {
