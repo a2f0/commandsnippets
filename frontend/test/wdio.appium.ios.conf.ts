@@ -38,8 +38,9 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       platformName: 'iOS',
-      'appium:platformVersion': '18.5',
-      'appium:deviceName': 'iPhone 16',
+      'appium:platformVersion':
+        process.env['SIMULATOR_PLATFORM_VERSION'] ?? '18.5',
+      'appium:deviceName': process.env['SIMULATOR_DEVICE_NAME'] ?? 'iPhone 16',
       'appium:automationName': 'XCUITest',
       // Hosted CI has no visible Simulator window. Without this, Appium
       // restarts an already-booted simulator to try to display its UI.

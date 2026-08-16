@@ -6,7 +6,7 @@ if [ "$#" -gt 0 ]; then
   shift
 fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TF_DIR="$SCRIPT_DIR/../container-registry"
+TF_DIR="$SCRIPT_DIR/../terraform/container-registry"
 export ANSIBLE_CONFIG="$SCRIPT_DIR/../ansible.cfg"
 
 ECR_ACCESS_KEY_ID=$(terraform -chdir="$TF_DIR" output -raw ecr-pull-access-key)
@@ -60,7 +60,7 @@ if [ "$LIMIT" != "all" ]; then
   LIMIT_ARGS=(-l "$LIMIT")
 fi
 
-"$SCRIPT_DIR/../scripts/sops-exec-file.sh" \
+"$SCRIPT_DIR/../terraform/scripts/sops-exec-file.sh" \
   "$SCRIPT_DIR/inventory.yaml.sops" \
   inventory.yaml \
   ansible-playbook \

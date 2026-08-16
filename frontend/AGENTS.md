@@ -25,7 +25,7 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 For testing the Capacitor iOS app in simulator:
 
-- `pnpm run appium:build-and-test` - Build staging app and run Appium tests (recommended)
+- `../scripts/runCapacitorTests.sh ios` - Run the same iOS build and test flow as CI (recommended)
 - `pnpm run appium:ios` - Run Appium tests only (requires pre-built app)
 
 **Prerequisites:**
@@ -56,7 +56,7 @@ For testing the Capacitor iOS app in simulator:
 
 For testing the Capacitor Android app in emulator:
 
-- `pnpm run appium:android:build-and-test` - Full setup, build, and test pipeline (recommended)
+- `../scripts/runCapacitorTests.sh android` - Run the same Android build and test flow as CI (recommended)
 - `pnpm run appium:android` - Run Appium tests only (requires pre-built APK)
 
 **Prerequisites:**
@@ -89,7 +89,7 @@ For testing the Capacitor Android app in emulator:
 
 When running integration tests, it is recommended to use the headless option. The headless configuration is defined in `test/wdio.headless.conf.ts`
 
-- `pnpm run ci-headless` - Start server and run E2E tests headless (recommended)
+- `../scripts/runWebdriverTests.sh` - Start the server and run the same headless E2E tests as CI (recommended)
 - `pnpm run test-headless` - Run E2E tests headless (requires server-test running separately)
 - `scripts/runSpecHeadless.sh <spec-file>` - Run specific spec file headless
 - `scripts/runSpec.sh <spec-file>` - Run specific spec file with browser UI

@@ -7,11 +7,19 @@ on:
     branches: '**'
     paths:
       - 'backend/**'
+      - 'scripts/deployApi.sh'
+      - 'scripts/deployProductionApi.sh'
+      - 'scripts/deployStagingApi.sh'
+      - 'scripts/runBackendTests.sh'
       - '.github/workflows/backend.yml'
   pull_request:
     branches: '**'
     paths:
       - 'backend/**'
+      - 'scripts/deployApi.sh'
+      - 'scripts/deployProductionApi.sh'
+      - 'scripts/deployStagingApi.sh'
+      - 'scripts/runBackendTests.sh'
       - '.github/workflows/backend.yml'
   schedule:
     - cron: '0 0 * * *'
@@ -54,24 +62,7 @@ jobs:
       - name: install and configure python dependencies
         run: pip install --no-cache-dir -r ./requirements/local.txt
       - name: run tests / coverage analysis
-        run: |
-          coverage run manage.py test -v 2
-          # Configuration is in .coveragerc.
-          coverage report
-        env:
-          COOKIE_DOMAIN: localhost
-          DJANGO_SECRET_KEY: test
-          DJANGO_SETTINGS_MODULE: tearleads.settings.test
-          GITHUB_CLIENT_ID: github_client_id
-          GITHUB_CLIENT_SECRET: github_client_secret
-          GOOGLE_CLIENT_ID: google_client_id
-          GOOGLE_CLIENT_SECRET: google_client_secret
-          GOOGLE_REDIRECT_URI: google_redirect_uri
-          POSTGRES_DB: postgres
-          POSTGRES_HOST: localhost
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_PORT: 5432
-          POSTGRES_USER: postgres
+        run: ../scripts/runBackendTests.sh
   push-containers:
     runs-on: ubuntu-latest
     continue-on-error: false
@@ -101,28 +92,14 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: tftearleads
           IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker buildx build \
-            --platform linux/amd64 \
-            -f compose/django/Dockerfile.prod \
-            -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
-            -t "$ECR_REGISTRY/$ECR_REPOSITORY:backend-staging-latest" \
-            --push \
-            .
+        run: ../scripts/deployStagingApi.sh image
       - name: Build and push production images to Amazon ECR
         if: github.ref == 'refs/heads/main'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: tftearleads
           IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker buildx build \
-            --platform linux/amd64 \
-            -f compose/django/Dockerfile.prod \
-            -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
-            -t "$ECR_REGISTRY/$ECR_REPOSITORY:backend-production-latest" \
-            --push \
-            .
+        run: ../scripts/deployProductionApi.sh image
   deploy-code:
     runs-on: ubuntu-latest
     continue-on-error: false
@@ -131,33 +108,22 @@ jobs:
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
     steps:
-      - name: Setup SSH Private Key
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+      - uses: actions/checkout@v7.0.1
       - name: Deploy production via SSH
         if: github.ref == 'refs/heads/main'
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_FQDN: ${{ secrets.DEPLOY_PRODUCTION_FQDN }}
-        run: |
-          echo "${{ secrets.PRODUCTION_KNOWN_HOSTS_BASE64 }}" |
-            base64 -d > ~/.ssh/known_hosts
-          ssh "$DEPLOY_USER@$DEPLOY_FQDN" \
-            'cd "$HOME/commandsnippets" && git pull --ff-only origin main'
-          ssh "$DEPLOY_USER@$DEPLOY_FQDN" \
-            'exec "$HOME/commandsnippets/backend/deploy-containers.sh"'
+          DEPLOY_KNOWN_HOSTS_BASE64: >-
+            ${{ secrets.PRODUCTION_KNOWN_HOSTS_BASE64 }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: ./scripts/deployProductionApi.sh remote
       - name: Deploy staging via SSH
         if: github.ref == 'refs/heads/staging'
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_FQDN: ${{ secrets.DEPLOY_STAGING_FQDN }}
-        run: |
-          echo "${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}" |
-            base64 -d > ~/.ssh/known_hosts
-          ssh "$DEPLOY_USER@$DEPLOY_FQDN" \
-            'cd "$HOME/commandsnippets" && git pull --ff-only origin staging'
-          ssh "$DEPLOY_USER@$DEPLOY_FQDN" \
-            'exec "$HOME/commandsnippets/backend/deploy-containers.sh"'
+          DEPLOY_KNOWN_HOSTS_BASE64: >-
+            ${{ secrets.STAGING_KNOWN_HOSTS_BASE64 }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: ./scripts/deployStagingApi.sh remote

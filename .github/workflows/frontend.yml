@@ -8,6 +8,12 @@ on:
     branches: '**'
     paths:
       - 'frontend/**'
+      - 'scripts/deployApp.sh'
+      - 'scripts/deployProductionApp.sh'
+      - 'scripts/deployStagingApp.sh'
+      - 'scripts/runElectronTests.sh'
+      - 'scripts/runUnitTests.sh'
+      - 'scripts/runWebdriverTests.sh'
       - '.github/workflows/frontend.yml'
 jobs:
   code-quality:
@@ -44,11 +50,13 @@ jobs:
       - name: Compile TypeScript
         run: pnpm run compile
       - name: Lint shell scripts
-        run: find scripts -type f -name '*.sh' -print0 | xargs -0 shellcheck
+        run: >-
+          find scripts ../scripts -type f -name '*.sh' -print0 |
+          xargs -0 shellcheck
       - name: Lint YAML
         run: yamllint -c .yamllint .
-      - run: npx vitest --no-watch
-      - run: npm run ci-headless
+      - run: ../scripts/runUnitTests.sh
+      - run: ../scripts/runWebdriverTests.sh
       - uses: actions/upload-artifact@v7.0.1
         if: always()
         with:
@@ -80,15 +88,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb imagemagick
       - name: Build and run Electron E2E tests
-        run: |
-          echo "=== Building Electron app ==="
-          pnpm run electron:dist
-          echo "=== Checking build output ==="
-          find dist-electron -type f -name "*" | head -10
-          ls -la dist-electron/linux-unpacked/ || \
-            echo "linux-unpacked directory not found"
-          echo "=== Running Electron tests ==="
-          xvfb-run -a pnpm run electron:test
+        run: ../scripts/runElectronTests.sh
         env:
           DISPLAY: :99
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -139,30 +139,15 @@ jobs:
       # yamllint disable-line rule:line-length
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: pnpm install
-      - run: npm run build
       - name: Deploy to S3 (Production)
         # yamllint disable-line rule:line-length
         if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        run: |
-          # First sync all assets (excluding index.html)
-          aws s3 sync --acl=public-read ./build \
-            s3://${{ secrets.PRODUCTION_DOMAIN }} --exclude "index.html"
-          # Then copy index.html separately
-          aws s3 cp --acl=public-read ./build/index.html \
-            s3://${{ secrets.PRODUCTION_DOMAIN }}/index.html
-          # Finally cleanup old files
-          aws s3 sync --acl=public-read --delete ./build \
-            s3://${{ secrets.PRODUCTION_DOMAIN }}
+        env:
+          DEPLOY_DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
+        run: ../scripts/deployProductionApp.sh
       - name: Deploy to S3 (Staging)
         # yamllint disable-line rule:line-length
         if: ${{ github.ref == 'refs/heads/staging' && github.event_name == 'push' }}
-        run: |
-          # First sync all assets (excluding index.html)
-          aws s3 sync --acl=public-read ./build \
-            s3://${{ secrets.STAGING_DOMAIN }} --exclude "index.html"
-          # Then copy index.html separately
-          aws s3 cp --acl=public-read ./build/index.html \
-            s3://${{ secrets.STAGING_DOMAIN }}/index.html
-          # Finally cleanup old files
-          aws s3 sync --acl=public-read --delete ./build \
-            s3://${{ secrets.STAGING_DOMAIN }}
+        env:
+          DEPLOY_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
+        run: ../scripts/deployStagingApp.sh
