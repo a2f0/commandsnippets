@@ -2,4 +2,4 @@
 set -eu
 
 script_directory=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-exec "$script_directory/../../scripts/runCapacitorTests.sh" android test
+exec "$script_directory/deployApi.sh" staging "$@"

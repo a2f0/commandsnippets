@@ -1,0 +1,6 @@
+# Python and Ansible
+.ansible/
+.venv/
+
+# SOPS plaintext
+/ansible/inventory.yaml

@@ -1,15 +1,15 @@
 # Overview
 
-Tearleads automation.
+Tearleads infrastructure automation.
 
 Secrets in this repo are managed by [SOPS](https://github.com/getsops/sops)
-using the GPG recipient configured in `.sops.yaml`. Encrypted files use the
+using the GPG recipient configured in `../.sops.yaml`. Encrypted files use the
 `.sops` suffix and are stored in SOPS binary mode so their decrypted contents
 are byte-for-byte compatible with the original Terraform, YAML, and SSH key
 files.
 
-Terraform and Ansible scripts decrypt the file they need into an automatically
-cleaned temporary file. A persistent plaintext copy is not required.
+Terraform scripts decrypt the file they need into an automatically cleaned
+temporary file. A persistent plaintext copy is not required.
 
 ## Development
 
@@ -19,12 +19,6 @@ Bootstrap:
     brew tap hashicorp/tap
     brew trust --formula hashicorp/tap/terraform
     brew install hashicorp/tap/terraform
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r ansible/requirements.txt
-    ansible-galaxy collection install \
-      -r ansible/requirements.yaml \
-      -p .ansible/collections
     npm ci
     tflint --init
     pre-commit install
@@ -38,7 +32,6 @@ Configure environment variables:
 Linting:
 
     pre-commit run --all-files
-    ansible-lint ansible/playbook.yaml
     npm run commitlint -- --from origin/main --to HEAD
     terraform fmt --recursive
     tflint --recursive
@@ -66,7 +59,7 @@ Decrypt a file that must persist locally, such as an SSH key:
 Remove the plaintext file when it is no longer needed. Plaintext secret paths
 are ignored by Git, but encrypted `.sops` files must be committed.
 
-When adding or removing GPG recipients, update `.sops.yaml`, then synchronize
+When adding or removing GPG recipients, update `../.sops.yaml`, then synchronize
 each encrypted file with:
 
     sops updatekeys path/to/file.sops
@@ -86,13 +79,6 @@ deployment key, then stores only GitHub-sealed ciphertext in Terraform:
 See `github-actions-secrets/README.md` for the optional Slack webhook input and
 key-rotation notes.
 
-### Backend server checkout
-
-Ansible uses a filtered sparse checkout of the monorepo on each API server.
-The Git worktree at `~/commandsnippets` contains only `backend/`; repository
-metadata remains at `~/commandsnippets/.git` so GitHub Actions can update the
-configured `main` or `staging` branch before deploying.
-
 ## Staging
 
 ### Reconfigure / Deploy
@@ -104,7 +90,7 @@ configured `main` or `staging` branch before deploying.
 
     ./apply.sh
     <login via ssh to add key to ~/.ssh/known_hosts>
-    cd ../ansible
+    cd ../../ansible
     ./staging.sh
     <login via ssh>
     <copy environment variables to .env>

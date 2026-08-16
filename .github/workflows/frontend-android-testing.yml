@@ -7,6 +7,7 @@ on:
     branches: '**'
     paths:
       - 'frontend/**'
+      - 'scripts/runCapacitorTests.sh'
       - '.github/workflows/frontend-android-testing.yml'
 
 jobs:
@@ -95,11 +96,6 @@ jobs:
           disable-animations: false
           script: echo "Generated AVD snapshot for caching."
 
-      - name: Create required directories
-        run: |
-          mkdir -p logs/screenshots
-          mkdir -p logs/appium
-
       - name: Start dev server
         run: |
           pnpm run dev &
@@ -107,33 +103,8 @@ jobs:
           curl -f http://localhost:8085 || exit 1
           echo "Dev server started successfully"
 
-      - name: Build dev web app
-        run: pnpm run build
-
-      - name: Sync Capacitor for dev
-        run: npx cap sync
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x android/gradlew
-
-      - name: Build Android APK
-        run: |
-          cd android
-          ./gradlew assembleDevelopmentDebug --no-daemon
-          echo "APK build completed"
-          ls -la app/build/outputs/apk/development/debug/
-
-      - name: Verify Android APK
-        run: |
-          APK_PATH="android/app/build/outputs/apk/development/debug/app-development-debug.apk"
-          if [ -f "$APK_PATH" ]; then
-            echo "SUCCESS: APK found at expected location"
-            ls -lh "$APK_PATH"
-          else
-            echo "ERROR: APK not found!"
-            find android -name "*.apk" -type f 2>/dev/null || true
-            exit 1
-          fi
+      - name: Build Android app with Capacitor
+        run: ../scripts/runCapacitorTests.sh android build
 
       - name: Run Android Appium tests
         uses: reactivecircus/android-emulator-runner@v2.38.0
@@ -142,7 +113,7 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6a
-          script: cd frontend && ./scripts/run-android-tests.sh
+          script: ./scripts/runCapacitorTests.sh android test
           emulator-options: >
             -no-snapshot-save -no-window -gpu swiftshader_indirect
             -noaudio -no-boot-anim -camera-back none
