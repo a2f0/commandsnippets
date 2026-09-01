@@ -12,7 +12,7 @@ repos:
     -   id: requirements-txt-fixer
 -   repo: https://github.com/PyCQA/isort
     # should match what is inside of requirements/local.txt
-    rev: 8.0.1
+    rev: 9.0.1
     hooks:
     -   id: isort
 -   repo: https://github.com/psf/black
