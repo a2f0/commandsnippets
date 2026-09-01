@@ -194,8 +194,8 @@ importers:
         specifier: 3.6.0
         version: 3.6.0(@types/node@24.13.3)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       appium-uiautomator2-driver:
-        specifier: 8.4.0
-        version: 8.4.0(@appium/logger@2.0.10)(@types/node@24.13.3)(appium@3.6.0(@types/node@24.13.3)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
+        specifier: 8.5.0
+        version: 8.5.0(@appium/logger@2.0.10)(@types/node@24.13.3)(appium@3.6.0(@types/node@24.13.3)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       appium-xcuitest-driver:
         specifier: 12.3.3
         version: 12.3.3(@appium/logger@2.0.10)(@types/node@24.13.3)(appium@3.6.0(@types/node@24.13.3)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
@@ -3056,6 +3056,7 @@ packages:
   '@xmldom/xmldom@0.9.11':
     resolution: {integrity: sha512-tW8bcK3hsG0/uqSnNz6TK4BkcuZSezoU7DlnYssILmZDktPnSHHuDJJFM0AJv+13gz2r0iGdrj6qqKeUnxXEDg==}
     engines: {node: '>=14.6'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -3214,8 +3215,8 @@ packages:
     resolution: {integrity: sha512-dygz0WbRulcOAQMrtvJewimwEhkLIVW8/itLV0Dxt7T+OEfSpMCKgxoKaFXidTH0DZPklemnc1BEkyaPUVz17A==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0, npm: '>=10'}
 
-  appium-uiautomator2-driver@8.4.0:
-    resolution: {integrity: sha512-I6BKyFif9+EYk1M7dabPTA4kYcUHBDznh9YKnRt8BssvSWsGNizVTne0XKCrUkdK5YGEhf5WYWTCCJzZNrmK5w==}
+  appium-uiautomator2-driver@8.5.0:
+    resolution: {integrity: sha512-c+rOp/JMmtyJ84vjtAB0Vz9b9EKKZ63E1N6bUHw9OAQp4erNOZ2UDHO9/JHCwqUViPDxMRp8rTJpfLBGTePB9Q==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0, npm: '>=10'}
     peerDependencies:
       appium: ^3.0.0-rc.2
@@ -10892,7 +10893,7 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  appium-uiautomator2-driver@8.4.0(@appium/logger@2.0.10)(@types/node@24.13.3)(appium@3.6.0(@types/node@24.13.3)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
+  appium-uiautomator2-driver@8.5.0(@appium/logger@2.0.10)(@types/node@24.13.3)(appium@3.6.0(@types/node@24.13.3)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
       '@appium/css-locator-to-native': 1.0.6
       appium: 3.6.0(@types/node@24.13.3)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
