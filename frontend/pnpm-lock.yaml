@@ -31,8 +31,8 @@ importers:
         specifier: 8.0.3
         version: 8.0.3(@capacitor/core@8.5.0)
       '@capgo/capacitor-social-login':
-        specifier: 8.4.2
-        version: 8.4.2(@capacitor/core@8.5.0)
+        specifier: 8.5.0
+        version: 8.5.0(@capacitor/core@8.5.0)
       '@emotion/css':
         specifier: 11.13.5
         version: 11.13.5(supports-color@8.1.1)
@@ -946,8 +946,8 @@ packages:
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
-  '@capgo/capacitor-social-login@8.4.2':
-    resolution: {integrity: sha512-FZ/S1JNyZnTZPI2y+zZkFlN9iKDeOIibQ0FynCFTP/irvV4OSpLHecqwSBTj7VjICPg4dnWUWMqwPkW6AgJQ4Q==}
+  '@capgo/capacitor-social-login@8.5.0':
+    resolution: {integrity: sha512-1WMI2GICGjnKk/uqtVbUfde3xgyWJGnQgY+lFYjtxVUeMHCvK2zBy0R6C8f6z1YfnduJZsbDvdWQtOboQpZ1Qw==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -3056,6 +3056,7 @@ packages:
   '@xmldom/xmldom@0.9.11':
     resolution: {integrity: sha512-tW8bcK3hsG0/uqSnNz6TK4BkcuZSezoU7DlnYssILmZDktPnSHHuDJJFM0AJv+13gz2r0iGdrj6qqKeUnxXEDg==}
     engines: {node: '>=14.6'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -8504,7 +8505,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.5.0
 
-  '@capgo/capacitor-social-login@8.4.2(@capacitor/core@8.5.0)':
+  '@capgo/capacitor-social-login@8.5.0(@capacitor/core@8.5.0)':
     dependencies:
       '@capacitor/core': 8.5.0
       tslib: 2.8.1
