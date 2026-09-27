@@ -1,6 +1,7 @@
 import {Database} from 'bun:sqlite';
 import {describe, expect, test} from 'bun:test';
 import {
+  allColumns,
   buildStatements,
   convert,
   convertDump,
@@ -363,6 +364,29 @@ describe('buildStatements', () => {
     ).toEqual({tag_count: 2});
   });
 
+  test('computes Unicode search folds for imported entries', () => {
+    const dump = parseDump(DUMP);
+    const entry = dump.tables.get('text_entries_textentry')?.[0] ?? {};
+    const db = load(
+      buildStatements(
+        convertDump({
+          ...dump,
+          tables: new Map(dump.tables).set('text_entries_textentry', [
+            {...entry, subject: 'Über Straßen', body: 'ÇA VA'},
+          ]),
+        }).converted,
+        dump.sequences
+      )
+    );
+    expect(
+      db
+        .query(
+          'SELECT subject_folded, body_folded FROM text_entries_textentry WHERE id = 10'
+        )
+        .get()
+    ).toEqual({subject_folded: 'über straßen', body_folded: 'ça va'});
+  });
+
   test('keeps text byte-for-byte, including quotes and escapes', () => {
     const db = load(imported().statements);
     expect(
@@ -404,22 +428,30 @@ describe('statement size', () => {
     if (entries === undefined) {
       throw new Error('entries missing');
     }
-    const columns = entries.spec.columns;
+    const columns = allColumns(entries.spec);
     const template = entries.rows[0] ?? [];
     // 60 entries with the longest body and subject Django allowed, in
-    // four-byte characters: ~5 KB each, so 25 rows would be ~130 KB.
+    // four-byte characters, plus their folded copies: ~10 KB each, so 25 rows
+    // would be ~250 KB.
+    const body = '😀'.repeat(1024);
+    const subject = '😀'.repeat(255);
     const big = Array.from({length: 60}, (_, i) =>
-      template.map((value, c) =>
-        columns[c] === 'id'
-          ? 1000 + i
-          : columns[c] === 'body'
-            ? '😀'.repeat(1024)
-            : columns[c] === 'subject'
-              ? '😀'.repeat(255)
-              : columns[c] === 'tag_count'
-                ? 0
-                : value
-      )
+      template.map((value, c) => {
+        switch (columns[c]) {
+          case 'id':
+            return 1000 + i;
+          case 'body':
+          case 'body_folded':
+            return body;
+          case 'subject':
+          case 'subject_folded':
+            return subject;
+          case 'tag_count':
+            return 0;
+          default:
+            return value;
+        }
+      })
     );
     const withBig = converted.map(c =>
       c === entries ? {...c, rows: [...c.rows, ...big]} : c

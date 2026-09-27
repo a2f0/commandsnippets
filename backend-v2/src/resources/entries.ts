@@ -5,6 +5,7 @@ import {type TextEntry, textEntries} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {parseResource} from '../lib/jsonapi';
+import {fold, searchColumns} from '../lib/search';
 import {booleanField, charField, validateOrThrow} from '../lib/validation';
 import {boolean, dateTime, icontains, integer, usernameIs} from './filters';
 import {TEXT_ENTRY} from './serializers';
@@ -59,10 +60,12 @@ entryRoutes.get('/', c => {
       subject: sql`${textEntries.subject} COLLATE NOCASE`,
     },
     defaultOrdering: [textEntries.date_updated, textEntries.id],
+    // Django's icontains on body OR subject, over the folded copies so
+    // non-ASCII text matches case-insensitively too.
     search: term =>
       or(
-        icontains(textEntries.body, term),
-        icontains(textEntries.subject, term)
+        icontains(textEntries.body_folded, fold(term)),
+        icontains(textEntries.subject_folded, fold(term))
       ) as ReturnType<typeof sql>,
   });
 });
@@ -94,6 +97,7 @@ entryRoutes.post('/', async c => {
     .insert(textEntries)
     .values({
       ...fields,
+      ...searchColumns(fields),
       user_id: user.id,
       date_created: timestamp,
       date_updated: timestamp,
@@ -130,7 +134,14 @@ const update = async (c: Context<AppEnv>) => {
   const [updated] = await c
     .get('db')
     .update(textEntries)
-    .set({...changes, date_updated: now()})
+    .set({
+      ...changes,
+      ...searchColumns({
+        subject: changes.subject ?? entry.subject,
+        body: changes.body ?? entry.body,
+      }),
+      date_updated: now(),
+    })
     .where(eq(textEntries.id, entry.id))
     .returning();
   return resourceResponse(c, TEXT_ENTRY, updated as TextEntry);

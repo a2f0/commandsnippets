@@ -15,6 +15,13 @@
       "when": 1790505171945,
       "tag": "0001_counter_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790515636085,
+      "tag": "0002_entry_search_columns",
+      "breakpoints": true
     }
   ]
 }

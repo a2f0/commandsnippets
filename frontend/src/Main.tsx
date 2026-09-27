@@ -10,10 +10,12 @@ import {SafeAreaProvider, useSafeArea} from './components/SafeAreaProvider';
 import {LeftDrawer} from './drawer/LeftDrawer';
 import {RightDrawer} from './drawer/RightDrawer';
 import {EntryList} from './EntryList';
+import {loggedInCookieName} from './lib/auth/authUtils';
+import {environment} from './lib/environment';
 import {MenuBar} from './MenuBar';
 import {StyledToolbar} from './styled/layout/StyledToolbar';
 
-const COOKIE_KEY = 'LoggedIn';
+const COOKIE_KEY = loggedInCookieName(environment);
 const BORDER_COLOR = '#808080';
 
 const MainContent = () => {

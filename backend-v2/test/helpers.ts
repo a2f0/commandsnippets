@@ -21,6 +21,7 @@ import {
 } from '../src/db/schema';
 import {now} from '../src/lib/clock';
 import {OrderedModel} from '../src/lib/ordered';
+import {searchColumns} from '../src/lib/search';
 import {tagOrdering} from '../src/resources/tags';
 import {createUser} from '../src/services/users';
 
@@ -77,11 +78,14 @@ export async function textEntryFactory(fields: {
 }): Promise<TextEntry> {
   const n = next();
   const timestamp = now();
+  const subject = fields.subject ?? `subject-${n}`;
+  const body = fields.body ?? `body-${n}`;
   const [entry] = await db()
     .insert(textEntries)
     .values({
-      subject: fields.subject ?? `subject-${n}`,
-      body: fields.body ?? `body-${n}`,
+      subject,
+      body,
+      ...searchColumns({subject, body}),
       user_id: fields.user.id,
       is_deleted: fields.is_deleted ?? false,
       date_created: timestamp,

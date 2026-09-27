@@ -11,7 +11,7 @@
     "lint:branch-name": "bun scripts/checks/lintBranchName.ts",
     "lint:shell": "shellcheck --shell=sh scripts/git/install-hooks.sh scripts/git/showPushGateTimings.sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/lib/stepTimings.sh scripts/checks/checkCommitTrust.sh scripts/checks/stripClaudeCoauthors.sh",
     "test:agent-tool": "bun run --cwd packages/agent-tool test",
-    "test:scripts": "bun test scripts",
+    "test:scripts": "bun test ./scripts/",
     "typecheck": "tsc -p packages/agent-tool && tsc -p tsconfig.scripts.json"
   },
   "devDependencies": {

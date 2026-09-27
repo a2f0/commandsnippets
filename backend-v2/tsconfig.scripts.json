@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["scripts", "src/lib/clock.ts"]
+  "include": ["scripts", "src/lib/clock.ts", "src/lib/search.ts"]
 }

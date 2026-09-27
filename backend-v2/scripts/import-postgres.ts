@@ -19,6 +19,7 @@ import {Database} from 'bun:sqlite';
 import {mkdirSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import {now, parseDateTime} from '../src/lib/clock';
+import {fold} from '../src/lib/search';
 
 export type Value = string | number | null;
 export type Row = Record<string, string | null>;
@@ -29,6 +30,13 @@ export interface TableSpec {
   booleans?: string[];
   integers?: string[];
   timestamps?: string[];
+  /** Columns that exist only in D1, derived from the decoded dump row. */
+  computed?: Record<string, (row: Row) => Value>;
+}
+
+/** Every column a converted row holds: copied ones, then computed ones. */
+export function allColumns(spec: TableSpec): string[] {
+  return [...spec.columns, ...Object.keys(spec.computed ?? {})];
 }
 
 /** Tables to import, in foreign-key order. Everything else is Django-internal. */
@@ -74,6 +82,11 @@ export const TABLES: Record<string, TableSpec> = {
     booleans: ['is_deleted'],
     integers: ['id', 'user_id', 'tag_count', 'reused_count'],
     timestamps: ['date_created', 'date_updated', 'reused_date'],
+    // Unicode folds for search, which SQL cannot compute (src/lib/search.ts).
+    computed: {
+      subject_folded: row => fold(row['subject'] ?? ''),
+      body_folded: row => fold(row['body'] ?? ''),
+    },
   },
   tags_tag: {
     columns: [
@@ -246,7 +259,7 @@ export function parseDump(sql: string): Dump {
 // ---------------------------------------------------------------------------
 
 export function convert(table: string, spec: TableSpec, row: Row): Value[] {
-  return spec.columns.map(column => {
+  const copied = spec.columns.map(column => {
     if (!(column in row)) {
       throw new Error(`${table}: column ${column} missing from dump`);
     }
@@ -272,6 +285,10 @@ export function convert(table: string, spec: TableSpec, row: Row): Value[] {
     }
     return value;
   });
+  const computed = Object.values(spec.computed ?? {}).map(derive =>
+    derive(row)
+  );
+  return [...copied, ...computed];
 }
 
 function literal(value: Value): string {
@@ -349,7 +366,7 @@ export function buildStatements(
 ): string[] {
   const out: string[] = [];
   for (const {table, spec, rows} of converted) {
-    const head = `INSERT INTO ${quote(table)} (${spec.columns.map(quote).join(', ')}) VALUES\n  `;
+    const head = `INSERT INTO ${quote(table)} (${allColumns(spec).map(quote).join(', ')}) VALUES\n  `;
     let batch: string[] = [];
     let bytes = utf8Bytes(head);
     const flush = () => {

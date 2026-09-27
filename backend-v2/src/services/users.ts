@@ -10,6 +10,7 @@ import {
   users,
 } from '../db/schema';
 import {now} from '../lib/clock';
+import {searchColumns} from '../lib/search';
 import {isUniqueViolation} from '../resources/viewset';
 
 const EXAMPLE_ENTRIES = [
@@ -86,6 +87,7 @@ async function insertUserWithDefaults(
       const timestamp = now();
       return db.insert(textEntries).values({
         ...entry,
+        ...searchColumns(entry),
         user_id: userId,
         date_created: timestamp,
         date_updated: timestamp,

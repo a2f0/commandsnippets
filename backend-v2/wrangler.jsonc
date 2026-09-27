@@ -8,6 +8,7 @@
   // Local development. Mirrors Django's DEBUG=True cookie behavior.
   "vars": {
     "DEBUG": "true",
+    "COOKIE_NAME_PREFIX": "",
     "COOKIE_DOMAIN": "localhost",
     "GITHUB_REDIRECT_URI": "http://localhost:8085/oauth/github",
     "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-dev://oauth/github",
@@ -29,6 +30,8 @@
       "vars": {
         "DEBUG": "false",
         "COOKIE_DOMAIN": ".staging.commandsnippets.com",
+        // Distinct names: production's cookies also reach staging hosts.
+        "COOKIE_NAME_PREFIX": "Staging",
         "GITHUB_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/github",
         "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-staging://oauth/github",
         "GOOGLE_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/google"
@@ -46,6 +49,7 @@
       "vars": {
         "DEBUG": "false",
         "COOKIE_DOMAIN": ".commandsnippets.com",
+        "COOKIE_NAME_PREFIX": "",
         "GITHUB_REDIRECT_URI": "https://commandsnippets.com/oauth/github",
         "ELECTRON_GITHUB_REDIRECT_URI": "tearleads://oauth/github",
         "GOOGLE_REDIRECT_URI": "https://commandsnippets.com/oauth/google"

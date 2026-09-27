@@ -74,33 +74,70 @@ Deliberate changes:
 - `PATCH`/`PUT` on `/entry_reuses` is 405 (it would desync counters), and
   renaming a tag to an existing name is a 400 rather than a 500.
 
+- **Search folds Unicode in the app.** D1's SQLite has no ICU, so
+  `filter[search]` compares against `subject_folded`/`body_folded`, written by
+  every entry write path and the import (`src/lib/search.ts`). Anything that
+  writes entries outside the API must set them too.
+- **Cookie names differ on staging** (`StagingAuthorization`,
+  `StagingLoggedIn`), because production's cookies also reach staging hosts.
+
 Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing
 sessions keep working), and ids continue from the Postgres sequences.
 
 ## Importing the Postgres data
 
-1. Get a fresh backup (`../backend/refresh.sh` downloads the latest to
-   `~/tearleads-backups/`).
-2. Convert and verify it. This needs `pg_restore` but no Postgres server:
+At cutover the dump must be taken **after writes stop**, or anything written
+between the dump and the DNS switch is lost. An older backup (such as the ones
+`../backend/refresh.sh` downloads) is fine for rehearsals only.
+
+1. **Freeze writes.** Stop the Django API on the production host so nothing
+   else can change (clients see errors briefly):
+
+   ```shell
+   ssh <production-host> 'cd ~/tearleads-backend && docker compose -f compose-container-registry.yaml stop backend'
+   ```
+
+2. **Take a fresh dump** on the host, then copy it down:
+
+   ```shell
+   ssh <production-host> 'cd ~/tearleads-backend && docker compose -f compose-container-registry.yaml run --rm postgres backup'
+   # The newest backup in the volume (as refresh.sh's download_latest finds it):
+   ssh <production-host> "sudo sh -c 'ls -t /var/lib/docker/volumes/tearleads_postgres_backup/_data/*-Fc | head -1'"
+   ssh <production-host> "sudo cat <that path>" > ~/tearleads-backups/cutover-pg_dump-Fc
+   ```
+
+   Check that the backup's timestamp (in its name) is from *after* step 1.
+   (`refresh.sh` itself also restores into your local Docker Postgres, which
+   the cutover does not need.)
+
+3. **Convert and verify.** This needs `pg_restore` but no Postgres server:
 
    ```shell
    bun scripts/import-postgres.ts ~/tearleads-backups/<backup>-pg_dump-Fc
    ```
 
    It writes `data/import.sql` (git-ignored; it contains user data and tokens)
-   and verifies it in an in-memory SQLite built from `migrations/`: row counts,
-   foreign keys, counters, rank ties, cross-user junctions, duplicate emails. If
-   the backup is from a newer Postgres than your `pg_restore`, use
+   and verifies it in an in-memory SQLite built from `migrations/`, statement by
+   statement: row counts, foreign keys, counters, rank ties, sequence
+   positions, cross-user rows, duplicate emails. If the backup is from a newer
+   Postgres than your `pg_restore`, use
    `PG_RESTORE="docker run --rm -i postgres:18 pg_restore"`.
-3. Load it into an empty, migrated database:
+
+4. **Load it** into an empty, migrated database:
 
    ```shell
    bunx wrangler d1 migrations apply DB --remote --env production
    bunx wrangler d1 execute DB --remote --env production --file data/import.sql
    ```
 
-4. Delete `data/import.sql`.
+5. **Switch traffic** to the Worker (attach `api.commandsnippets.com`), and
+   leave the Django API stopped.
+
+6. Delete `data/import.sql`.
+
+If anything fails before step 5, restart the Django API
+(`docker compose ... start backend`) and nothing was lost.
 
 ## Operations
 

@@ -75,6 +75,9 @@ export const textEntries = sqliteTable(
     tag_count: integer('tag_count').notNull().default(0),
     reused_count: integer('reused_count').notNull().default(0),
     reused_date: text('reused_date'),
+    // Folded copies of subject/body for Unicode-aware search (lib/search.ts).
+    subject_folded: text('subject_folded').notNull().default(''),
+    body_folded: text('body_folded').notNull().default(''),
   },
   table => [
     check(
