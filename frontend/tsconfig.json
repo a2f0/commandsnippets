@@ -5,7 +5,6 @@
   "references": [
     { "path": "./src" },
     { "path": "./test" },
-    { "path": "./__tests__" },
-    { "path": "./electron" }
+    { "path": "./__tests__" }
   ]
 }

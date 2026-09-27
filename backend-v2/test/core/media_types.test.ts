@@ -31,13 +31,8 @@ describe('request media types', () => {
     const response = await requestWithEnv(
       {},
       'POST',
-      '/api/v1/integrated-oauth/',
-      {
-        data: {
-          type: 'IntegratedOAuthLogin',
-          attributes: {provider: 'google', token: 'attacker-token'},
-        },
-      },
+      '/api/v1/google-login/',
+      {data: {type: 'GoogleLogin', attributes: {code: 'attacker-code'}}},
       {'Content-Type': 'text/plain;charset=UTF-8'}
     );
     expect(response.status).toBe(415);

@@ -26,7 +26,6 @@ jobs:
       tooling: ${{ steps.scopes.outputs.tooling }}
       backend: ${{ steps.scopes.outputs.backend }}
       frontend: ${{ steps.scopes.outputs.frontend }}
-      mobile: ${{ steps.scopes.outputs.mobile }}
       backendV2: ${{ steps.scopes.outputs.backendV2 }}
     steps:
       - name: Checkout
@@ -96,20 +95,10 @@ jobs:
     uses: ./.github/workflows/backend-v2.yml
     secrets: inherit
 
-  ios:
-    needs: changes
-    if: needs.changes.outputs.mobile == 'true'
-    uses: ./.github/workflows/frontend-ios-testing.yml
-    secrets: inherit
-
-  # The Android lane is out of the gate until its workflow is fixed (SDK
-  # setup and AVD creation fail on current runners); run it by hand with
-  # workflow_dispatch. See docs/ci-merge-gate.md.
-
   gate:
     name: CI gate
     if: always()
-    needs: [changes, tooling, backend, backend-v2, frontend, ios]
+    needs: [changes, tooling, backend, backend-v2, frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

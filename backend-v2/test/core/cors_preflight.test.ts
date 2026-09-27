@@ -70,9 +70,6 @@ describe('CORSAllowlist', () => {
     'http://10.0.0.12:8085',
     'http://172.16.4.2:8085',
     'http://192.168.1.10:8085',
-    'tearleads://app',
-    'tearleads-staging://app',
-    'tearleads-dev://app',
   ]) {
     it(`allows ${origin}`, async () => {
       const response = await preflight(origin);
@@ -92,7 +89,10 @@ describe('CORSAllowlist', () => {
     'https://commandsnippets.com.evil.com',
     'https://evil.commandsnippets.com.evil.com',
     'https://a.b.commandsnippets.com',
-    'tearleads://app.evil',
+    // The retired Electron and Capacitor apps' origins.
+    'tearleads://app',
+    'tearleads-dev://app',
+    'capacitor://localhost',
   ]) {
     it(`denies ${origin}`, async () => {
       const response = await preflight(origin);

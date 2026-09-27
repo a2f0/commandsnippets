@@ -17,10 +17,6 @@ describe('tearleadsApi credentials', () => {
 
   const calls: Array<[string, () => Promise<unknown>]> = [
     ['googleLogin', () => tearleadsApi.googleLogin('code')],
-    [
-      'integratedOAuthLogin',
-      () => tearleadsApi.integratedOAuthLogin('google', 't'),
-    ],
     ['githubLogin', () => tearleadsApi.githubLogin('code')],
     ['getCurrentUser', () => tearleadsApi.getCurrentUser()],
     ['logout', () => tearleadsApi.logout()],

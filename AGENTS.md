@@ -4,7 +4,7 @@ Monorepo for the Commandsnippets (Tearleads) app.
 
 | Path | What |
 |---|---|
-| `frontend/` | React client (web, Electron, Capacitor iOS/Android); pnpm |
+| `frontend/` | React web client; pnpm |
 | `backend/` | Django API (being replaced by `backend-v2/`) |
 | `packages/agent-tool/` | CLI behind the ship/review skills |
 | `scripts/` | git hooks, CI policy, test entrypoints |

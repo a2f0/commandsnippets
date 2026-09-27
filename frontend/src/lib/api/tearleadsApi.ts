@@ -44,45 +44,12 @@ class TearleadsApi {
     }
   }
 
-  public async integratedOAuthLogin(
-    provider: string,
-    token: string
-  ): Promise<void> {
-    const payload = {
-      data: {
-        type: 'IntegratedOAuthLogin',
-        attributes: {
-          provider,
-          token,
-        },
-      },
-    };
-
-    const resp = await fetch(`${baseURL}/integrated-oauth/`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {'Content-Type': 'application/vnd.api+json'},
-      body: JSON.stringify(payload),
-    });
-
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      throw new Error(
-        `Integrated OAuth login failed: ${resp.statusText} - ${errorText}`
-      );
-    }
-  }
-
-  public async githubLogin(
-    code: string,
-    clientType: 'web' | 'electron' = 'web'
-  ): Promise<void> {
+  public async githubLogin(code: string): Promise<void> {
     const payload: AuthPayload = {
       data: {
         type: 'GithubLogin',
         attributes: {
           code,
-          clientType,
         },
       },
     };

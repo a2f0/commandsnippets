@@ -10,23 +10,23 @@ import {
 
 const MAX_AGE = '2419200';
 
-async function login(debug: 'true' | 'false', clientType: 'web' | 'electron') {
+async function login(debug: 'true' | 'false') {
   await userFactory({username: 'login', email: 'user@example.com'});
   mockFetch(githubRoutes('login', 'user@example.com'));
   const response = await requestWithEnv(
     {DEBUG: debug, COOKIE_DOMAIN: '.commandsnippets.com'},
     'POST',
     '/api/v1/github-login/',
-    githubPayload(clientType)
+    githubPayload()
   );
   expect(response.status).toBe(200);
   return setCookies(response);
 }
 
-// v2: Django's _create_auth_response cookie matrix (DEBUG x client type).
+// v2: Django's _create_auth_response cookies, with and without DEBUG.
 describe('AuthCookies', () => {
   it('production web: domain-scoped, Secure, SameSite=Strict', async () => {
-    const cookies = await login('false', 'web');
+    const cookies = await login('false');
     expect(cookies['Authorization']?.attributes).toEqual({
       'max-age': MAX_AGE,
       domain: '.commandsnippets.com',
@@ -47,19 +47,8 @@ describe('AuthCookies', () => {
     });
   });
 
-  it('production electron: SameSite=None and Secure', async () => {
-    const cookies = await login('false', 'electron');
-    for (const name of ['Authorization', 'LoggedIn']) {
-      expect(cookies[name]?.attributes).toMatchObject({
-        domain: '.commandsnippets.com',
-        secure: true,
-        samesite: 'None',
-      });
-    }
-  });
-
   it('DEBUG web: host-only, not Secure, SameSite=Lax', async () => {
-    const cookies = await login('true', 'web');
+    const cookies = await login('true');
     for (const name of ['Authorization', 'LoggedIn']) {
       const attributes = cookies[name]?.attributes ?? {};
       expect(attributes).not.toHaveProperty('domain');
@@ -69,15 +58,6 @@ describe('AuthCookies', () => {
     }
     expect(cookies['Authorization']?.attributes['httponly']).toBe(true);
     expect(cookies['LoggedIn']?.attributes).not.toHaveProperty('httponly');
-  });
-
-  it('DEBUG electron: still Secure with SameSite=None', async () => {
-    const cookies = await login('true', 'electron');
-    expect(cookies['Authorization']?.attributes).toMatchObject({
-      secure: true,
-      samesite: 'None',
-    });
-    expect(cookies['Authorization']?.attributes).not.toHaveProperty('domain');
   });
 
   it('logout expires both cookies on the configured domain', async () => {

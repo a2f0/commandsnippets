@@ -5,21 +5,9 @@ import React from 'react';
 import {useOAuth} from './hooks/useOAuth';
 import {environment} from './lib/environment';
 import {getOAuthRedirectUrl} from './lib/oauth';
-import {isElectron} from './lib/platform';
 import {LoginButton} from './styled/LoginButton';
 
 const getGithubClientId = (): string => {
-  if (isElectron()) {
-    if (environment === 'staging') {
-      return 'Ov23liPyvk7aJTCoQc2Z';
-    }
-    if (environment === 'production') {
-      return 'Ov23li7M0TeeigLkM8Zy';
-    }
-    return 'Ov23limqOPN5fbNYJa6j';
-  }
-
-  // Web
   if (environment === 'staging') {
     return '3be8b14684de28d54a0d';
   }
@@ -38,7 +26,6 @@ const GithubAuth = () => {
     authUrl: 'https://github.com/login/oauth/authorize',
     scope: 'user:email',
     redirectUrl: getOAuthRedirectUrl('github'),
-    clientType: isElectron() ? 'electron' : 'web',
   });
 
   return (

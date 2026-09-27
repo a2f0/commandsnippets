@@ -96,37 +96,6 @@ describe('TestGithubAuthentication', () => {
     expect(response.status).toBe(200);
     expectAuthCookies(client, existingToken);
   });
-
-  it('test_successful_github_login_with_electron_client', async () => {
-    const calls = mockFetch(
-      githubRoutes(
-        'electron_user',
-        'electron@example.com',
-        'test_electron_access_token'
-      )
-    );
-    const client = new ApiClient();
-
-    expect(await userByUsername('electron_user')).toBeUndefined();
-
-    const response = await client.post(
-      '/api/v1/github-login/',
-      githubPayload('electron')
-    );
-
-    const user = await userByUsername('electron_user');
-    expect(user?.last_login).not.toBeNull();
-    expect(user?.last_login).toBe(user?.date_joined);
-    expect(user?.login_count).toBe(1);
-    const existingToken = await tokenFor(user?.id as number);
-    expect(response.status).toBe(200);
-    expect(client.cookies.has('Authorization')).toBe(true);
-    expect(client.cookies.get('Authorization')?.value).toBe(existingToken);
-    // The electron OAuth app's credentials were used for the code exchange.
-    expect(new URLSearchParams(calls[0]?.body).get('client_id')).toBe(
-      'electron_github_client_id'
-    );
-  });
 });
 
 // v2: GitHub failure paths. Django returned 401 for most of these and a 500
@@ -176,19 +145,10 @@ describe('GithubLoginFailures', () => {
     });
   }
 
-  it('validates the code and clientType attributes', async () => {
+  it('validates the code attribute', async () => {
     const client = new ApiClient();
-    const invalid = await client.post(
-      '/api/v1/github-login/',
-      githubPayload('ios')
-    );
-    expect(invalid.status).toBe(400);
-    expect((await json(invalid)).errors[0].detail).toBe(
-      '"ios" is not a valid choice.'
-    );
-
     const missing = await client.post('/api/v1/github-login/', {
-      data: {type: 'GithubLogin', attributes: {clientType: 'web'}},
+      data: {type: 'GithubLogin', attributes: {}},
     });
     expect(missing.status).toBe(400);
     const errors = (await json(missing)).errors;
@@ -214,6 +174,22 @@ describe('GithubLoginFailures', () => {
       .from(users)
       .where(eq(users.email, 'user@example.com'));
     expect(created?.username).toMatch(/^login-\d$/);
+  });
+
+  // Web-only now: a clientType from an older client is ignored, and the web
+  // OAuth app's credentials are always used.
+  it('ignores the retired clientType attribute', async () => {
+    const calls = mockFetch(githubRoutes('login', 'user@example.com'));
+    const response = await new ApiClient().post('/api/v1/github-login/', {
+      data: {
+        type: 'GithubLogin',
+        attributes: {code: 'valid_code', clientType: 'electron'},
+      },
+    });
+    expect(response.status).toBe(200);
+    expect(new URLSearchParams(calls[0]?.body).get('client_id')).toBe(
+      'github_client_id'
+    );
   });
 
   it('returns a JSON 500 when the OAuth app is not configured', async () => {

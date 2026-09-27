@@ -6,7 +6,6 @@ import {useLocation, useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
 import {BottomToolbar} from './components/BottomToolbar';
-import {SafeAreaProvider, useSafeArea} from './components/SafeAreaProvider';
 import {LeftDrawer} from './drawer/LeftDrawer';
 import {RightDrawer} from './drawer/RightDrawer';
 import {EntryList} from './EntryList';
@@ -24,7 +23,6 @@ const MainContent = () => {
   const navigate = useNavigate();
   const [cookies] = useCookies(COOKIE_KEYS);
   const loggedInCookie = hasLoginCookie(cookies, environment);
-  const {insets, isNativePlatform} = useSafeArea();
 
   // Redirect to user's page when on root path.
   useEffect(() => {
@@ -62,9 +60,7 @@ const MainContent = () => {
           borderBottom: `1px solid ${BORDER_COLOR}`,
           backgroundColor: theme => theme.header.background,
           top: 0,
-          height: theme =>
-            `${theme.appBar.height + (isNativePlatform ? insets.top : 0)}px`,
-          paddingTop: isNativePlatform ? `${insets.top}px` : 0,
+          height: theme => `${theme.appBar.height}px`,
         }}
       >
         <StyledToolbar>
@@ -90,11 +86,7 @@ const MainContent = () => {
 const MemoizedMainContent = React.memo(observer(MainContent));
 
 const Main = () => {
-  return (
-    <SafeAreaProvider>
-      <MemoizedMainContent />
-    </SafeAreaProvider>
-  );
+  return <MemoizedMainContent />;
 };
 
 export {Main};

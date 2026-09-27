@@ -84,7 +84,6 @@ export interface AuthPayload {
     type: 'GoogleLogin' | 'GithubLogin';
     attributes: {
       code: string;
-      clientType?: 'web' | 'electron';
     };
   };
 }

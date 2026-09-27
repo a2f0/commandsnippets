@@ -10,8 +10,7 @@ export const CI_SCOPES = {
   backend:
     /^(backend\/|scripts\/runBackendTests\.sh$)/,
   frontend:
-    /^(frontend\/|scripts\/(runElectronTests|runUnitTests|runWebdriverTests)\.sh$)/,
-  mobile: /^(frontend\/|scripts\/runCapacitorTests\.sh$)/,
+    /^(frontend\/|scripts\/(runUnitTests|runWebdriverTests)\.sh$)/,
   backendV2: /^backend-v2\//,
 } as const satisfies Record<string, RegExp>;
 
@@ -23,7 +22,6 @@ export const CI_JOBS = {
   backend: "backend",
   "backend-v2": "backendV2",
   frontend: "frontend",
-  ios: "mobile",
 } as const satisfies Record<string, CiScope>;
 
 /** Changes that can affect every lane run them all. */

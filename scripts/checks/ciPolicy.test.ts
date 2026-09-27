@@ -36,25 +36,21 @@ describe("ciScopes", () => {
       tooling: false,
       backend: true,
       frontend: false,
-      mobile: false,
       backendV2: false,
     });
     expect(ciScopes(["backend-v2/src/app.ts"])).toEqual({
       tooling: false,
       backend: false,
       frontend: false,
-      mobile: false,
       backendV2: true,
     });
     expect(ciScopes(["frontend/src/App.tsx"])).toEqual({
       tooling: false,
       backend: false,
       frontend: true,
-      mobile: true,
       backendV2: false,
     });
-    expect(ciScopes(["scripts/runCapacitorTests.sh"]).mobile).toBe(true);
-    expect(ciScopes(["scripts/runCapacitorTests.sh"]).frontend).toBe(false);
+    expect(ciScopes(["scripts/runWebdriverTests.sh"]).frontend).toBe(true);
     expect(ciScopes(["scripts/runBackendTests.sh"]).backend).toBe(true);
   });
 
@@ -63,7 +59,6 @@ describe("ciScopes", () => {
       tooling: false,
       backend: false,
       frontend: false,
-      mobile: false,
       backendV2: false,
     });
   });
@@ -87,7 +82,6 @@ describe("assertCiSuccess", () => {
       tooling: value,
       backend: value,
       frontend: value,
-      mobile: value,
       backendV2: value,
     },
   });
@@ -96,7 +90,6 @@ describe("assertCiSuccess", () => {
     backend: { result },
     "backend-v2": { result },
     frontend: { result },
-    ios: { result },
   });
 
   test("passes when required lanes succeeded or irrelevant ones skipped", () => {
@@ -108,14 +101,13 @@ describe("assertCiSuccess", () => {
     ).not.toThrow();
   });
 
-  test("the mobile scope governs the iOS job", () => {
+  test("each lane follows its own scope", () => {
     const changes = {
       result: "success",
       outputs: {
         tooling: "false",
         backend: "false",
         frontend: "true",
-        mobile: "true",
         backendV2: "false",
       },
     };
@@ -123,11 +115,12 @@ describe("assertCiSuccess", () => {
       changes,
       tooling: { result: "skipped" },
       backend: { result: "skipped" },
-      "backend-v2": { result: "skipped" },
+      "backend-v2": { result: "success" },
       frontend: { result: "success" },
-      ios: { result: "skipped" },
     };
-    expect(() => assertCiSuccess(needs)).toThrow("ios must be success");
+    expect(() => assertCiSuccess(needs)).toThrow(
+      "backend-v2 must be skipped",
+    );
   });
 
   test("fails when change detection did not succeed", () => {
@@ -156,10 +149,10 @@ describe("assertCiSuccess", () => {
         frontend: { result: "success" },
       }),
     ).toThrow("frontend must be skipped");
-    const { ios: _ios, ...withoutIos } = jobs("skipped");
+    const { frontend: _frontend, ...withoutFrontend } = jobs("skipped");
     expect(() =>
-      assertCiSuccess({ changes: scopes("false"), ...withoutIos }),
-    ).toThrow("ios must be skipped: missing");
+      assertCiSuccess({ changes: scopes("false"), ...withoutFrontend }),
+    ).toThrow("frontend must be skipped: missing");
   });
 
   test("fails on a missing or malformed scope output", () => {

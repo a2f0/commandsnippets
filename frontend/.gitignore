@@ -1,8 +1,6 @@
 build/
 dist/
-ios/App/build/
 **/build/
-**/*.dSYM/
 node_modules/
 .DS_Store
 .env
@@ -19,27 +17,11 @@ chromedriver
 # Vite PWA
 dev-dist
 
-# Electron
-dist-electron/
-out/
-
 # Turso Databases
 *.db
 
-# Android Studio / IntelliJ IDEA
-android/.idea/
-android/*.iml
-android/.gradle
-android/local.properties
-
-# iOS / Xcode (already handled by Capacitor but adding for clarity)
-ios/.idea/
-ios/App/build/
-
 _results_
 
-# Appium test logs and screenshots
+# Logs (WebdriverIO writes logs/)
 logs/
-appium.log
-ios/App/build/
-ios/App/Pods/build/
+*.log

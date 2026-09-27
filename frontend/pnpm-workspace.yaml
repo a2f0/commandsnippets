@@ -9,11 +9,7 @@ allowBuilds:
   '@ffmpeg-installer/win32-ia32': true
   '@ffmpeg-installer/win32-x64': true
   '@swc/core': false
-  appium: true
-  appium-ios-tuntap: true
   edgedriver: true
-  electron: false
-  electron-winstaller: true
   esbuild: true
   geckodriver: true
   msw: false

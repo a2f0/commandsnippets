@@ -1,25 +1,21 @@
 import {AppBar, Box, Typography} from '@mui/material';
 import React from 'react';
 import {GithubAuth} from '../../GithubAuth';
-import {GoogleAuthWrapper} from '../../GoogleAuthWrapper';
+import {GoogleAuth} from '../../GoogleAuth';
 import {StyledToolbar} from '../../styled/layout/StyledToolbar';
-import {SafeAreaProvider, useSafeArea} from '../SafeAreaProvider';
 import {Footer} from './Footer';
 
 const PublicHomePageContent = () => {
-  const {insets, isNativePlatform} = useSafeArea();
   return (
     <Box sx={{height: '100vh', display: 'flex', flexDirection: 'column'}}>
       <AppBar
         position="static"
         sx={{
-          height: theme =>
-            `${theme.appBar.height + (isNativePlatform ? insets.top : 0)}px`,
+          height: theme => `${theme.appBar.height}px`,
           boxShadow: 'none', // Remove the Material UI 'bottom border'.
           backgroundImage: 'none', // Remove the Material UI gradient.
           borderBottom: '1px solid #808080',
           backgroundColor: theme => theme.header.background,
-          paddingTop: isNativePlatform ? `${insets.top}px` : 0,
         }}
       >
         <StyledToolbar>
@@ -33,7 +29,7 @@ const PublicHomePageContent = () => {
             }}
           >
             <GithubAuth />
-            <GoogleAuthWrapper />
+            <GoogleAuth />
           </Box>
         </StyledToolbar>
       </AppBar>
@@ -86,11 +82,7 @@ const PublicHomePageContent = () => {
 const MemoizedPublicHomePageContent = React.memo(PublicHomePageContent);
 
 const PublicHomePage = () => {
-  return (
-    <SafeAreaProvider>
-      <MemoizedPublicHomePageContent />
-    </SafeAreaProvider>
-  );
+  return <MemoizedPublicHomePageContent />;
 };
 
 export {PublicHomePage};

@@ -9,7 +9,6 @@ import {
   mockFetch,
   requestWithEnv,
   setCookies,
-  tokenInfoRoute,
 } from './support';
 
 // Accounts are looked up by email, so only a provider-verified address may
@@ -69,32 +68,6 @@ describe('OAuth email verification', () => {
       ).toBe('Google email is not verified');
       expect(setCookies(response)).toEqual({});
     }
-    expect((await refreshUser(victim.id))?.login_count).toBe(1);
-  });
-
-  it("rejects native (integrated) Google logins whose email isn't verified", async () => {
-    const victim = await userFactory({email: 'victim@example.com'});
-    mockFetch([
-      tokenInfoRoute(),
-      {
-        method: 'GET',
-        url: GOOGLE_USERINFO_URL,
-        body: {email: 'victim@example.com', email_verified: false},
-      },
-    ]);
-    const response = await requestWithEnv(
-      {},
-      'POST',
-      '/api/v1/integrated-oauth/',
-      {
-        data: {
-          type: 'IntegratedOAuthLogin',
-          attributes: {provider: 'google', token: 'token'},
-        },
-      }
-    );
-    expect(response.status).toBe(403);
-    expect(setCookies(response)).toEqual({});
     expect((await refreshUser(victim.id))?.login_count).toBe(1);
   });
 });

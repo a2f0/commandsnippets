@@ -10,9 +10,6 @@ const TEST_ENV = {
   GITHUB_CLIENT_ID: 'test_client_id',
   GITHUB_CLIENT_SECRET: 'test_client_secret',
   GITHUB_REDIRECT_URI: 'https://example.com/callback',
-  ELECTRON_GITHUB_CLIENT_ID: 'test_electron_client_id',
-  ELECTRON_GITHUB_CLIENT_SECRET: 'test_electron_client_secret',
-  ELECTRON_GITHUB_REDIRECT_URI: 'tearleads-dev://oauth/github',
 } as unknown as Bindings;
 
 interface Call {
@@ -53,7 +50,7 @@ describe('TestGithubAuthentication', () => {
       'access_token=access_token&scope=user%3Aemail&token_type=bearer',
       'application/x-www-form-urlencoded'
     );
-    const service = new GithubOAuthService(TEST_ENV, 'web', fetcher);
+    const service = new GithubOAuthService(TEST_ENV, fetcher);
     const response = await service.accessToken('code');
     const qs = new URLSearchParams(await response.text());
     expect(qs.get('access_token')).toBe('access_token');
@@ -72,7 +69,7 @@ describe('TestGithubAuthentication', () => {
 
   it('test_user', async () => {
     const {fetcher, calls} = fakeFetch({login: 'login'});
-    const service = new GithubOAuthService(TEST_ENV, 'web', fetcher);
+    const service = new GithubOAuthService(TEST_ENV, fetcher);
     const response = await service.user('access_token');
     expect(await response.json()).toEqual({login: 'login'});
     expect(calls[0]?.url).toBe('https://api.github.com/user');
@@ -84,7 +81,7 @@ describe('TestGithubAuthentication', () => {
     const {fetcher, calls} = fakeFetch([
       {email: 'user@example.com', primary: true},
     ]);
-    const service = new GithubOAuthService(TEST_ENV, 'web', fetcher);
+    const service = new GithubOAuthService(TEST_ENV, fetcher);
     const response = await service.emails('access_token');
     expect(await response.json()).toEqual([
       {email: 'user@example.com', primary: true},
@@ -93,30 +90,12 @@ describe('TestGithubAuthentication', () => {
     expect(header(calls[0], 'Authorization')).toBe('token access_token');
   });
 
-  it('test_electron_client_type_uses_correct_credentials', async () => {
-    const {fetcher, calls} = fakeFetch(
-      'access_token=electron_access_token&scope=user%3Aemail&token_type=bearer',
-      'application/x-www-form-urlencoded'
-    );
-    const service = new GithubOAuthService(TEST_ENV, 'electron', fetcher);
-    const response = await service.accessToken('electron_code');
-    const qs = new URLSearchParams(await response.text());
-    expect(qs.get('access_token')).toBe('electron_access_token');
-
-    const sent = sentForm(calls[0]);
-    expect(sent.has('redirect_uri')).toBe(true);
-    expect(sent.get('redirect_uri')).toBe('tearleads-dev://oauth/github');
-    expect(sent.get('client_id')).toBe('test_electron_client_id');
-    expect(sent.get('client_secret')).toBe('test_electron_client_secret');
-    expect(sent.get('code')).toBe('electron_code');
-  });
-
   it('test_web_client_type_uses_correct_credentials', async () => {
     const {fetcher, calls} = fakeFetch(
       'access_token=web_access_token&scope=user%3Aemail&token_type=bearer',
       'application/x-www-form-urlencoded'
     );
-    const service = new GithubOAuthService(TEST_ENV, 'web', fetcher);
+    const service = new GithubOAuthService(TEST_ENV, fetcher);
     const response = await service.accessToken('web_code');
     const qs = new URLSearchParams(await response.text());
     expect(qs.get('access_token')).toBe('web_access_token');
@@ -130,14 +109,7 @@ describe('TestGithubAuthentication', () => {
   });
 
   // v2: Django raised ImproperlyConfigured for missing settings.
-  it('requires credentials for the selected client type', () => {
-    expect(
-      () =>
-        new GithubOAuthService(
-          {...TEST_ENV, ELECTRON_GITHUB_CLIENT_ID: ''},
-          'electron'
-        )
-    ).toThrow(/ImproperlyConfigured: ELECTRON_GITHUB_CLIENT_ID/);
+  it('requires the GitHub credentials', () => {
     expect(
       () => new GithubOAuthService({...TEST_ENV, GITHUB_CLIENT_SECRET: ''})
     ).toThrow(/ImproperlyConfigured: GITHUB_CLIENT_SECRET/);
