@@ -274,7 +274,11 @@ describe("pre-push", () => {
     return repo;
   }
 
-  function prePush(repo: string, sha = git(repo, "rev-parse", "HEAD")) {
+  function prePush(
+    repo: string,
+    sha = git(repo, "rev-parse", "HEAD"),
+    env: Record<string, string> = {},
+  ) {
     const result = Bun.spawnSync([".git/hooks/pre-push", "origin", "url"], {
       cwd: repo,
       stdin: Buffer.from(`refs/heads/feat/x ${sha} refs/heads/feat/x ${ZERO}\n`),
@@ -283,6 +287,7 @@ describe("pre-push", () => {
         GIT_CONFIG_GLOBAL: "/dev/null",
         GIT_CONFIG_NOSYSTEM: "1",
         PUSH_GATE_TIMINGS_LOG: path.join(tempDir(), "timings.tsv"),
+        ...env,
       },
     });
     return {
@@ -351,6 +356,60 @@ describe("pre-push", () => {
     const result = prePush(repo);
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("Co-authored-by trailer");
+  });
+
+  /**
+   * A `terraform` stub on PATH that reports its arguments and exits with
+   * `exitCode`, plus a terraform/ tree whose `bun test` passes or fails.
+   */
+  function terraformArea(repo: string, fmtExit: number, testPasses: boolean) {
+    const bin = tempDir();
+    writeFileSync(
+      path.join(bin, "terraform"),
+      `#!/bin/sh\necho "LANE:terraform $*"\nexit ${fmtExit}\n`,
+    );
+    chmodSync(path.join(bin, "terraform"), 0o755);
+    mkdirSync(path.join(repo, "terraform/scripts"), { recursive: true });
+    writeFileSync(path.join(repo, "terraform/main.tf"), "locals {}\n");
+    writeFileSync(
+      path.join(repo, "terraform/scripts/tf.test.ts"),
+      `import {expect, test} from "bun:test";\n` +
+        `test("wrapper", () => {\n` +
+        `  console.log("LANE:terraform-wrapper");\n` +
+        `  expect(${testPasses}).toBe(true);\n` +
+        `});\n`,
+    );
+    commitAll(repo, "chore: add terraform");
+    return { PATH: `${bin}:${process.env["PATH"]}` };
+  }
+
+  test("terraform-only changes run the terraform checks, not tooling", () => {
+    const repo = hookRepo();
+    const env = terraformArea(repo, 0, true);
+    const result = prePush(repo, undefined, env);
+    const output = result.stdout + result.stderr;
+    expect(result.exitCode).toBe(0);
+    expect(output).toContain("LANE:terraform fmt -check -recursive terraform");
+    expect(output).toContain("LANE:terraform-wrapper");
+    expect(output).not.toContain("LANE:tooling");
+  });
+
+  test("a terraform formatting failure blocks the push", () => {
+    const repo = hookRepo();
+    const env = terraformArea(repo, 3, true);
+    const result = prePush(repo, undefined, env);
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stdout + result.stderr).not.toContain("All checks passed.");
+  });
+
+  test("a failing wrapper test blocks the push", () => {
+    const repo = hookRepo();
+    const env = terraformArea(repo, 0, false);
+    const result = prePush(repo, undefined, env);
+    const output = result.stdout + result.stderr;
+    expect(result.exitCode).not.toBe(0);
+    expect(output).toContain("LANE:terraform-wrapper");
+    expect(output).not.toContain("All checks passed.");
   });
 
   test("refuses to run a stale installed copy", () => {
