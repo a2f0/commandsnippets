@@ -70,14 +70,14 @@ After changing the GPG recipients in `../.sops.yaml`, re-encrypt with
 The `terraform` lane of `CI gate` runs `terraform fmt -check`, `terraform
 validate` for every stack, the modules' `terraform test` suites (against a
 mocked provider: the www redirect, CAA set, TXT quoting, TLS settings and D1
-read replication), `tflint --recursive`, and shellcheck plus `bun test` for
+read replication), `tflint --recursive` with the shared `.tflint.hcl`, and shellcheck plus `bun test` for
 `scripts/tf` (with fake `sops`/`terraform`: decryption failures and missing
 credentials stop it, inherited credentials never reach Terraform). The pre-push
 hook runs the format check and the wrapper tests. Locally:
 
 ```shell
 terraform fmt -recursive
-tflint --init && tflint --recursive
+tflint --init && tflint --recursive --config="$PWD/.tflint.hcl"
 (cd modules/zone && terraform init -backend=false && terraform test)
 bun test ./scripts/
 ```

@@ -47,4 +47,8 @@ jobs:
       - name: Lint
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: tflint --init && tflint --recursive
+        # One shared config: without --config, recursive mode would look for
+        # a .tflint.hcl in each stack and module and apply none of our rules.
+        run: |
+          tflint --init --config="$PWD/.tflint.hcl"
+          tflint --recursive --config="$PWD/.tflint.hcl"
