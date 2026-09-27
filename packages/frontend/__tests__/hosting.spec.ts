@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {type ChildProcess, spawn, spawnSync} from 'node:child_process';
 import {mkdtempSync, readdirSync, rmSync} from 'node:fs';
-import {request} from 'node:http';
+import {type IncomingHttpHeaders, request} from 'node:http';
 import {createServer} from 'node:net';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -16,7 +16,7 @@ let outDir = '';
 let port = 0;
 let server: ChildProcess | undefined;
 
-type Result = {status: number; headers: Record<string, string>};
+type Result = {status: number; headers: IncomingHttpHeaders};
 const get = (path: string, navigate = false) =>
   new Promise<Result>((resolve, reject) => {
     const headers: Record<string, string> = navigate
@@ -26,7 +26,7 @@ const get = (path: string, navigate = false) =>
       response.resume();
       resolve({
         status: response.statusCode ?? 0,
-        headers: response.headers as Record<string, string>,
+        headers: response.headers,
       });
     })
       .on('error', reject)
