@@ -5,22 +5,34 @@ Actions app, with strict base freshness, squash-only merges, signed commits, and
 no bypass actors. The ruleset is repository configuration; editing a workflow
 alone does not make a check required.
 
-`CI gate` (`.github/workflows/ci.yml`) runs on every pull request and every push
-to `main`. A `changes` job decides which scoped jobs apply
-(`scripts/checks/ciPolicy.ts`); the gate then requires each scoped job to have
-succeeded, or to have been skipped *because* change detection marked it
-irrelevant. A failed, cancelled, missing, or unexpectedly skipped job fails the
-gate. Workflow, `package.json`, and `bun.lock` changes exercise every lane.
+`CI gate` (`.github/workflows/ci.yml`) runs on every pull request. A `changes`
+job decides which lanes apply (`scripts/checks/ciPolicy.ts`), and the gate then
+requires each lane to have succeeded, or to have been skipped *because* change
+detection marked it irrelevant. A failed, cancelled, missing, or unexpectedly
+skipped lane fails the gate. Workflow, `package.json`, and `bun.lock` changes
+exercise every lane.
+
+| Lane | Workflow | Scope |
+|---|---|---|
+| `tooling` | inline in `ci.yml` | `packages/`, `scripts/`, tooling config |
+| `backend` | `backend.yml` (Backend CI) | `backend/`, API deploy/test scripts |
+| `frontend` | `frontend.yml` (Frontend CI) | `frontend/`, app deploy/test scripts |
+| `ios`, `android` | `frontend-*-testing.yml` | `frontend/`, `runCapacitorTests.sh` |
+
+The application workflows are reusable (`workflow_call`) and keep their manual
+dispatch entry points. They no longer run on pull requests or feature-branch
+pushes themselves; `Backend CI` and `Frontend CI` still run on pushes to `main`
+and `staging`, where they deploy. Their deploy jobs check
+`github.workflow`, because a reusable workflow sees its caller's context, so a
+`CI` run can never deploy.
 
 Require the aggregate gate rather than individual path-filtered workflows:
 GitHub leaves checks from skipped workflows pending, while skipped jobs count as
-passing. The older per-area workflows (`Backend CI`, `Frontend CI`, the mobile
-test workflows) still run on their own paths.
+passing.
 
 The `agent-tool` squash-merge helper independently requires a successful
 `CI gate` on the exact head it will merge and rejects any other reported failed
-or pending check, so a red `Frontend CI` run also blocks a merge. Missing checks
-and API errors stop the merge.
+or pending check. Missing checks and API errors stop the merge.
 
 ## Adding a lane
 
@@ -40,8 +52,10 @@ merged hook change takes effect.
   Claude Code" footer, then lints the message with commitlint.
 - `pre-push` lints the branch name, rejects unsigned commits and any remaining
   `Co-authored-by` trailer (`scripts/checks/checkCommitTrust.sh`), and runs the
-  checks for the areas the push touches. It refuses to run when the installed
-  copy is stale. Per-check timings are logged under
+  checks for the areas the push touches. Those checks run against the
+  worktree, so the hook first requires the pushed commit to be the checked-out
+  `HEAD`, with no uncommitted tracked changes and no untracked files under the
+  checked paths. It refuses to run when the installed copy is stale. Per-check timings are logged under
   `.git/commandsnippets/pushGateTimings.tsv`
   (`scripts/git/showPushGateTimings.sh`).
 

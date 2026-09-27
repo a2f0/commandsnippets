@@ -78,6 +78,33 @@ touches() {
   grep -q "^$1" "$changed_file"
 }
 
+# The area checks run against the worktree, so they only vouch for the push
+# when the worktree *is* the pushed commit: every pushed ref must be HEAD, no
+# tracked file may differ from it, and no untracked file may sit under the
+# checked paths (it would be tested without being pushed).
+require_worktree_is_push() {
+  head_sha=$(git rev-parse HEAD)
+  while read -r _ local_sha _ _; do
+    [ "$local_sha" != "$zero_sha" ] || continue
+    if [ "$local_sha" != "$head_sha" ]; then
+      echo "Error: pre-push validates the checked-out commit, but this push sends $local_sha." >&2
+      echo "Check out the branch being pushed and push again." >&2
+      exit 1
+    fi
+  done <"$refs_file"
+  if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+    echo "Error: uncommitted changes would be validated instead of the pushed commit:" >&2
+    git status --short --untracked-files=no >&2
+    exit 1
+  fi
+  untracked=$(git status --porcelain --untracked-files=all -- "$@")
+  if [ -n "$untracked" ]; then
+    echo "Error: untracked files would be validated with the pushed commit:" >&2
+    printf '%s\n' "$untracked" >&2
+    exit 1
+  fi
+}
+
 step_timings_reset
 
 step_timings_run branch-name bun run lint:branch-name
@@ -91,12 +118,14 @@ step_timings_end
 
 if touches 'packages/' || touches 'scripts/' || touches 'commitlint.config.mts' ||
   touches 'package.json' || touches 'bun.lock' || touches 'tsconfig'; then
+  require_worktree_is_push packages scripts
   step_timings_run tooling-shell bun run lint:shell
   step_timings_run tooling-typecheck bun run typecheck
   step_timings_run tooling-tests sh -c 'bun run test:agent-tool && bun run test:scripts'
 fi
 
 if touches 'backend-v2/' && [ -d "$REPO_ROOT/backend-v2" ]; then
+  require_worktree_is_push backend-v2
   step_timings_run backend-v2-lint sh -c 'cd backend-v2 && bun run lint'
   step_timings_run backend-v2-typecheck sh -c 'cd backend-v2 && bun run typecheck'
   step_timings_run backend-v2-tests sh -c 'cd backend-v2 && bun run test:coverage'

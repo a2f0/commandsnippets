@@ -31,58 +31,118 @@ describe("ciScopes", () => {
     }
   });
 
-  test("skips tooling for unrelated paths", () => {
-    expect(ciScopes(["frontend/src/App.tsx", "README.md"]).tooling).toBe(false);
+  test("selects application lanes by their paths", () => {
+    expect(ciScopes(["backend/tearleads/urls.py"])).toEqual({
+      tooling: false,
+      backend: true,
+      frontend: false,
+      mobile: false,
+    });
+    expect(ciScopes(["frontend/src/App.tsx"])).toEqual({
+      tooling: false,
+      backend: false,
+      frontend: true,
+      mobile: true,
+    });
+    expect(ciScopes(["scripts/runCapacitorTests.sh"]).mobile).toBe(true);
+    expect(ciScopes(["scripts/runCapacitorTests.sh"]).frontend).toBe(false);
+    expect(ciScopes(["scripts/runBackendTests.sh"]).backend).toBe(true);
+  });
+
+  test("skips every lane for unrelated paths", () => {
+    expect(ciScopes(["README.md", "terraform/dns/main.tf"])).toEqual({
+      tooling: false,
+      backend: false,
+      frontend: false,
+      mobile: false,
+    });
   });
 
   test("workflow and lockfile changes run every lane", () => {
-    for (const path of [".github/workflows/frontend.yml", "bun.lock", "package.json"]) {
-      expect(ciScopes([path]).tooling).toBe(true);
+    for (const path of [
+      ".github/workflows/frontend.yml",
+      "bun.lock",
+      "package.json",
+      "scripts/checks/ciPolicy.ts",
+    ]) {
+      expect(Object.values(ciScopes([path]))).toEqual([true, true, true, true]);
     }
   });
 });
 
 describe("assertCiSuccess", () => {
-  const changes = (tooling: string) => ({
+  const scopes = (value: string) => ({
     result: "success",
-    outputs: { tooling },
+    outputs: { tooling: value, backend: value, frontend: value, mobile: value },
+  });
+  const jobs = (result: string) => ({
+    tooling: { result },
+    backend: { result },
+    frontend: { result },
+    ios: { result },
+    android: { result },
   });
 
-  test("passes when a required lane succeeded or an irrelevant one skipped", () => {
+  test("passes when required lanes succeeded or irrelevant ones skipped", () => {
     expect(() =>
-      assertCiSuccess({ changes: changes("true"), tooling: { result: "success" } }),
+      assertCiSuccess({ changes: scopes("true"), ...jobs("success") }),
     ).not.toThrow();
     expect(() =>
-      assertCiSuccess({ changes: changes("false"), tooling: { result: "skipped" } }),
+      assertCiSuccess({ changes: scopes("false"), ...jobs("skipped") }),
     ).not.toThrow();
+  });
+
+  test("mobile scope governs both the iOS and Android jobs", () => {
+    const changes = {
+      result: "success",
+      outputs: { tooling: "false", backend: "false", frontend: "true", mobile: "true" },
+    };
+    const needs = {
+      changes,
+      tooling: { result: "skipped" },
+      backend: { result: "skipped" },
+      frontend: { result: "success" },
+      ios: { result: "success" },
+      android: { result: "skipped" },
+    };
+    expect(() => assertCiSuccess(needs)).toThrow("android must be success");
   });
 
   test("fails when change detection did not succeed", () => {
     expect(() =>
-      assertCiSuccess({ changes: { result: "failure" }, tooling: { result: "skipped" } }),
+      assertCiSuccess({ changes: { result: "failure" }, ...jobs("skipped") }),
     ).toThrow("changes did not succeed");
   });
 
   test("fails a required lane that failed, was cancelled, or skipped", () => {
     for (const result of ["failure", "cancelled", "skipped"]) {
       expect(() =>
-        assertCiSuccess({ changes: changes("true"), tooling: { result } }),
-      ).toThrow("tooling must be success");
+        assertCiSuccess({
+          changes: scopes("true"),
+          ...jobs("success"),
+          backend: { result },
+        }),
+      ).toThrow("backend must be success");
     }
   });
 
   test("fails an irrelevant lane that ran anyway or went missing", () => {
     expect(() =>
-      assertCiSuccess({ changes: changes("false"), tooling: { result: "success" } }),
-    ).toThrow("tooling must be skipped");
-    expect(() => assertCiSuccess({ changes: changes("false") })).toThrow(
-      "tooling must be skipped: missing",
-    );
+      assertCiSuccess({
+        changes: scopes("false"),
+        ...jobs("skipped"),
+        frontend: { result: "success" },
+      }),
+    ).toThrow("frontend must be skipped");
+    const { ios: _ios, ...withoutIos } = jobs("skipped");
+    expect(() =>
+      assertCiSuccess({ changes: scopes("false"), ...withoutIos }),
+    ).toThrow("ios must be skipped: missing");
   });
 
   test("fails on a missing or malformed scope output", () => {
     expect(() =>
-      assertCiSuccess({ changes: changes("maybe"), tooling: { result: "success" } }),
+      assertCiSuccess({ changes: scopes("maybe"), ...jobs("success") }),
     ).toThrow("Missing or invalid change scope");
   });
 });

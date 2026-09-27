@@ -248,7 +248,7 @@ loop, subject-only squash, and `MERGED`-state verification.
 
      **The push is `open-pr`'s step, not the tool's.** `agent-tool openPr` only
      creates the PR and refuses when the branch is not on the repository at the
-     local head. Run `open-pr`'s push (`git push -u origin "$BRANCH"`, in the
+     local head. Run `open-pr`'s push (`git push -u "$PUSH_REMOTE" "$BRANCH"`, in the
      background: the hook runs the affected packages' checks) and wait for it before calling
      `openPr`; calling the tool first fails with nothing pushed.
    - **A PR is already open** (the resume path from step 1): it is already pushed

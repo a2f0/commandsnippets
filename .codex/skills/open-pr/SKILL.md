@@ -135,10 +135,14 @@ AGENT_TOOL="$ROOT_DIR/packages/agent-tool/src/index.ts"
    valid conventional subject — and never with a `Co-authored-by` trailer,
    which the pre-push hook rejects. Use separate commits for distinct changes
    when useful. Confirm the branch has commits ahead of
-   `origin/$DEFAULT_BRANCH`, then push without force:
+   `origin/$DEFAULT_BRANCH`, then push without force to the branch's push
+   remote — resolved with the same precedence `openPr` uses to find the pushed
+   head (`branch.<name>.pushRemote`, `remote.pushDefault`, the branch's
+   upstream remote, then `origin`), so a fork setup pushes where the tool looks:
 
    ```bash
-   git push -u origin "$BRANCH"
+   PUSH_REMOTE=$(git config "branch.$BRANCH.pushRemote" || git config remote.pushDefault || git config "branch.$BRANCH.remote" || echo origin)
+   git push -u "$PUSH_REMOTE" "$BRANCH"
    ```
 
    If the push is rejected and `checkCommitTrust`'s co-author check is the

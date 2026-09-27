@@ -2,13 +2,10 @@
 name: iOS Mobile Testing
 
 # yamllint disable-line rule:truthy
+# Pull requests run this through `CI` (ci.yml, the required `CI gate`).
 on:
-  pull_request:
-    branches: '**'
-    paths:
-      - 'frontend/**'
-      - 'scripts/runCapacitorTests.sh'
-      - '.github/workflows/frontend-ios-testing.yml'
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   ios-appium-tests:

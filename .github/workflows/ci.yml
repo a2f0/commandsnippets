@@ -6,13 +6,13 @@ name: CI
 
 # yamllint disable-line rule:truthy
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 
+# The frontend lanes install packages from GitHub Packages.
 permissions:
   contents: read
+  packages: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.run_id }}
@@ -24,6 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tooling: ${{ steps.scopes.outputs.tooling }}
+      backend: ${{ steps.scopes.outputs.backend }}
+      frontend: ${{ steps.scopes.outputs.frontend }}
+      mobile: ${{ steps.scopes.outputs.mobile }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -36,7 +39,7 @@ jobs:
       - name: Determine required checks
         id: scopes
         env:
-          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           CI_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: bun scripts/checks/ciChanges.ts
 
@@ -68,10 +71,36 @@ jobs:
       - name: Test hooks and CI policy
         run: bun run test:scripts
 
+  # The application workflows are reusable; their deploy jobs are guarded so
+  # they never run from here.
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    uses: ./.github/workflows/backend.yml
+    secrets: inherit
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    uses: ./.github/workflows/frontend.yml
+    secrets: inherit
+
+  ios:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    uses: ./.github/workflows/frontend-ios-testing.yml
+    secrets: inherit
+
+  android:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    uses: ./.github/workflows/frontend-android-testing.yml
+    secrets: inherit
+
   gate:
     name: CI gate
     if: always()
-    needs: [changes, tooling]
+    needs: [changes, tooling, backend, frontend, ios, android]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

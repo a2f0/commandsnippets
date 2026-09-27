@@ -1,19 +1,13 @@
 ---
 name: Backend CI
 # yamllint disable-line rule:truthy
+# Pull requests run this through `CI` (ci.yml, the required `CI gate`); the push
+# trigger remains for the deploy branches.
 on:
   workflow_dispatch:
+  workflow_call:
   push:
-    branches: '**'
-    paths:
-      - 'backend/**'
-      - 'scripts/deployApi.sh'
-      - 'scripts/deployProductionApi.sh'
-      - 'scripts/deployStagingApi.sh'
-      - 'scripts/runBackendTests.sh'
-      - '.github/workflows/backend.yml'
-  pull_request:
-    branches: '**'
+    branches: [main, staging]
     paths:
       - 'backend/**'
       - 'scripts/deployApi.sh'
@@ -67,7 +61,9 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     needs: code-quality
+    # Never when called from `CI`: a reusable workflow sees the caller's context.
     if: >-
+      github.workflow == 'Backend CI' &&
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
     defaults:
@@ -104,7 +100,9 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     needs: push-containers
+    # Never when called from `CI`: a reusable workflow sees the caller's context.
     if: >-
+      github.workflow == 'Backend CI' &&
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
     steps:

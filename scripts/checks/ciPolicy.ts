@@ -3,13 +3,27 @@
  * See docs/ci-merge-gate.md.
  */
 
-/** Each scoped job in .github/workflows/ci.yml, keyed by job id. */
+/** Path patterns that make each scope of checks applicable. */
 export const CI_SCOPES = {
   tooling:
     /^(packages\/|scripts\/|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
+  backend:
+    /^(backend\/|scripts\/(deployApi|deployProductionApi|deployStagingApi|runBackendTests)\.sh$)/,
+  frontend:
+    /^(frontend\/|scripts\/(deployApp|deployProductionApp|deployStagingApp|runElectronTests|runUnitTests|runWebdriverTests)\.sh$)/,
+  mobile: /^(frontend\/|scripts\/runCapacitorTests\.sh$)/,
 } as const satisfies Record<string, RegExp>;
 
 export type CiScope = keyof typeof CI_SCOPES;
+
+/** Each scoped job in .github/workflows/ci.yml, by job id, and its scope. */
+export const CI_JOBS = {
+  tooling: "tooling",
+  backend: "backend",
+  frontend: "frontend",
+  ios: "mobile",
+  android: "mobile",
+} as const satisfies Record<string, CiScope>;
 
 /** Changes that can affect every lane run them all. */
 const COMMON =
@@ -57,10 +71,10 @@ export function assertCiSuccess(
   if (changes?.result !== "success") {
     throw new Error(`changes did not succeed: ${changes?.result ?? "missing"}`);
   }
-  for (const job of Object.keys(CI_SCOPES)) {
-    const scope = changes.outputs?.[job];
+  for (const [job, scopeName] of Object.entries(CI_JOBS)) {
+    const scope = changes.outputs?.[scopeName];
     if (scope !== "true" && scope !== "false") {
-      throw new Error(`Missing or invalid change scope: ${job}`);
+      throw new Error(`Missing or invalid change scope: ${scopeName}`);
     }
     const expected = scope === "true" ? "success" : "skipped";
     if (needs[job]?.result !== expected) {
