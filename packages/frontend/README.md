@@ -50,8 +50,8 @@ pnpm run deploy:production
 ```
 
 Each environment's hostname is a custom domain in `wrangler.jsonc`, attached
-by the deploy: `app-staging.commandsnippets.com` for staging, and
-`app.commandsnippets.com` for production at cutover. The app picks its
+by the deploy: `app-staging.commandsnippets.com` for staging and
+`app.commandsnippets.com` for production. The app picks its
 environment (API and OAuth callbacks) from that hostname, so it does not run
 on workers.dev.
 

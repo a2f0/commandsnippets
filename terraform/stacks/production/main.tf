@@ -1,6 +1,5 @@
 # Production. Its hostnames (api, app and the apex website) are custom domains
-# in each package's wrangler.jsonc, added at cutover after the data import so
-# the live domains never serve an empty database.
+# in each package's wrangler.jsonc.
 
 locals {
   account_id = "0be508e6c4caa573595c5f94e11900e4"

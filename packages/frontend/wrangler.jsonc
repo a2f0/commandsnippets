@@ -19,9 +19,10 @@
       ]
     },
     "production": {
-      // app.commandsnippets.com is added at cutover, after the data import.
       "workers_dev": false,
-      "routes": []
+      "routes": [
+        {"pattern": "app.commandsnippets.com", "custom_domain": true}
+      ]
     }
   }
 }

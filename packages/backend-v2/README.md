@@ -176,9 +176,8 @@ done
 Secrets persist across deploys; rerun the last step only to rotate them.
 
 The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
-`wrangler deploy`: `api-staging.commandsnippets.com` for staging (live), and
-`api.commandsnippets.com` for production, added to its `routes` at cutover.
-Until then production is reachable only on its workers.dev URL.
+`wrangler deploy`: `api-staging.commandsnippets.com` for staging and
+`api.commandsnippets.com` for production. workers.dev is off for both.
 
 CI: pull requests run lint, typecheck, and the coverage-gated tests as the
 `backend-v2` lane of the required `CI gate` (see `../../docs/ci-merge-gate.md`).
