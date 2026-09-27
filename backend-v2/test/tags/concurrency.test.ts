@@ -11,6 +11,7 @@ import {
   raceBeforeStatement,
   setUpBase,
   tagFactory,
+  tagTextEntryFactory,
   textEntryFactory,
   tokenFor,
 } from '../helpers';
@@ -215,5 +216,46 @@ describe('concurrent reorders', () => {
       .sort((x, y) => x.order - y.order)
       .map(tag => tag.name);
     expect(ranked).toEqual(['b', 'd', 'a', 'c']);
+  });
+});
+
+describe('reordering around other users’ legacy junctions', () => {
+  it("never shifts or touches another user's junction in the same tag", async () => {
+    const {user1, user2, user1Client} = await setUpBase();
+    const tag = await tagFactory({user: user1});
+    const junction = async (user: typeof user1, order: number) =>
+      tagTextEntryFactory({
+        tag,
+        text_entry: await textEntryFactory({user}),
+        user,
+        order,
+      });
+    const j1 = await junction(user1, 0);
+    const j2 = await junction(user1, 1);
+    const foreign = await junction(user2, 2);
+    const j3 = await junction(user1, 3);
+
+    const response = await user1Client.post('/api/v1/tags_entries/reorder', {
+      data: {
+        type: 'TagTextEntryThroughModel',
+        attributes: {top: j3.id, bottom: j1.id},
+        relationships: {},
+      },
+    });
+    expect(response.status).toBe(200);
+
+    const rows = await db()
+      .select()
+      .from(tagsEntries)
+      .where(eq(tagsEntries.tag_id, tag.id));
+    const byId = new Map(rows.map(row => [row.id, row]));
+    // The foreign row is exactly as it was.
+    expect(byId.get(foreign.id)).toEqual(foreign);
+    // The requester's own rows are reordered: j3 now directly above j1.
+    const own = rows
+      .filter(row => row.user_id === user1.id)
+      .sort((a, b) => a.order - b.order)
+      .map(row => row.id);
+    expect(own).toEqual([j3.id, j1.id, j2.id]);
   });
 });

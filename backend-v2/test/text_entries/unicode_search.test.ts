@@ -43,6 +43,19 @@ describe('Unicode-aware search', () => {
     expect(await search(user1Client, 'uber')).toEqual([]);
   });
 
+  it('matches Greek sigma in any position, as Postgres UPPER() did', async () => {
+    const {user1, user1Client} = await setUpBase();
+    const entry = await textEntryFactory({
+      user: user1,
+      subject: 'ΛΟΓΟΣ',
+      body: 'ος',
+    });
+    // Lower-casing would turn a final Σ into ς, which σ does not match.
+    for (const term of ['σ', 'Σ', 'λογος', 'ς']) {
+      expect(await search(user1Client, term)).toEqual([String(entry.id)]);
+    }
+  });
+
   it('keeps the folded text current when an entry is edited', async () => {
     const {user1, user1Client} = await setUpBase();
     const entry = await textEntryFactory({
@@ -98,7 +111,7 @@ describe('search folds under concurrent edits', () => {
       raceBeforeStatement(/^\s*update "text_entries_textentry"/i, async () => {
         await db()
           .update(textEntries)
-          .set({subject: 'Neu Über', subject_folded: 'neu über'})
+          .set({subject: 'Neu Über', subject_folded: 'NEU ÜBER'})
           .where(eq(textEntries.id, entry.id));
       })
     );
@@ -116,9 +129,9 @@ describe('search folds under concurrent edits', () => {
       .where(eq(textEntries.id, entry.id));
     expect(row).toMatchObject({
       subject: 'Neu Über',
-      subject_folded: 'neu über',
+      subject_folded: 'NEU ÜBER',
       body: 'Zweiter',
-      body_folded: 'zweiter',
+      body_folded: 'ZWEITER',
     });
   });
 });

@@ -3,10 +3,12 @@
  * only ASCII in LIKE/lower() and loads no ICU, so entries also store folded
  * copies of their searchable text (`*_folded`), computed here on every write,
  * and searches compare folded text to a folded term. Django got the same
- * effect from Postgres's Unicode-aware UPPER() in `icontains`.
+ * effect from Postgres's Unicode-aware UPPER() in `icontains`, so this folds
+ * to upper case too: lower-casing would apply Greek final-sigma rules
+ * (`ΟΣ` → `ος`), and a search for `σ` would then miss it.
  */
 export function fold(text: string): string {
-  return text.toLowerCase();
+  return text.toUpperCase();
 }
 
 /** The folded columns for an entry's searchable fields. */

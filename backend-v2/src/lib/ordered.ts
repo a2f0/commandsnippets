@@ -29,12 +29,20 @@ export interface OrderedSpec {
   dateUpdated: SQLiteColumn;
   /** The `order_with_respect_to` column. */
   scope: SQLiteColumn;
+  /**
+   * The owning user's column, when a scope can hold other users' rows (legacy
+   * junctions in someone's tag). Moves then only ever shift, and position
+   * relative to, the mover's own rows; other users' rows are never touched.
+   */
+  owner?: SQLiteColumn;
 }
 
 export interface OrderedRow {
   id: number;
   order: number;
   scope: number;
+  /** The row's owner, for specs with an `owner` column. */
+  owner?: number;
 }
 
 const MAX_ATTEMPTS = 3;
@@ -149,6 +157,7 @@ export class OrderedModel {
           END,
           ${sql.identifier(dateUpdated.name)} = ${now}
       WHERE ${scope} = ${self.scope}
+        ${this.ownedBy(self)}
         AND (${id} = ${self.id} OR ${order} BETWEEN ${low} AND ${high})
         AND (SELECT ${order} FROM ${table} WHERE ${id} = ${self.id}) = ${self.order}
         ${refGuard}
@@ -156,23 +165,37 @@ export class OrderedModel {
     return result.meta.changes > 0;
   }
 
+  /** `AND owner = <row's owner>` for specs with an owner column. */
+  private ownedBy(row: OrderedRow): SQL {
+    const {owner} = this.spec;
+    if (owner === undefined) {
+      return sql``;
+    }
+    if (row.owner === undefined) {
+      throw new Error('An owned ordering needs the row owner');
+    }
+    return sql`AND ${owner} = ${row.owner}`;
+  }
+
   private async neighbor(
     ref: OrderedRow,
     side: 'before' | 'after'
   ): Promise<number | null> {
     const {table, order, scope} = this.spec;
+    const owned = this.ownedBy(ref);
     const row = await this.db.get<{value: number | null}>(
       side === 'before'
-        ? sql`SELECT MAX(${order}) AS value FROM ${table} WHERE ${scope} = ${ref.scope} AND ${order} < ${ref.order}`
-        : sql`SELECT MIN(${order}) AS value FROM ${table} WHERE ${scope} = ${ref.scope} AND ${order} > ${ref.order}`
+        ? sql`SELECT MAX(${order}) AS value FROM ${table} WHERE ${scope} = ${ref.scope} ${owned} AND ${order} < ${ref.order}`
+        : sql`SELECT MIN(${order}) AS value FROM ${table} WHERE ${scope} = ${ref.scope} ${owned} AND ${order} > ${ref.order}`
     );
     return row?.value ?? null;
   }
 
   private async reload(row: OrderedRow): Promise<OrderedRow> {
-    const {table, id, order, scope} = this.spec;
+    const {table, id, order, scope, owner} = this.spec;
+    const ownerColumn = owner === undefined ? sql`` : sql`, ${owner} AS owner`;
     const fresh = await this.db.get<OrderedRow>(
-      sql`SELECT ${id} AS id, ${order} AS "order", ${scope} AS scope FROM ${table} WHERE ${id} = ${row.id}`
+      sql`SELECT ${id} AS id, ${order} AS "order", ${scope} AS scope ${ownerColumn} FROM ${table} WHERE ${id} = ${row.id}`
     );
     if (fresh === undefined) {
       throw ApiError.of(404, 'Not found.', 'not_found');

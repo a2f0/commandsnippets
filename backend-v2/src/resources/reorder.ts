@@ -22,6 +22,7 @@ interface Row {
   id: number;
   order: number;
   user_id: number;
+  owner: number;
   scope: number;
 }
 
@@ -65,6 +66,7 @@ export async function reorder(
           id: options.id,
           order: options.order,
           user_id: options.userId,
+          owner: options.userId,
           scope: options.scope,
         })
         .from(options.table)

@@ -384,7 +384,7 @@ describe('buildStatements', () => {
           'SELECT subject_folded, body_folded FROM text_entries_textentry WHERE id = 10'
         )
         .get()
-    ).toEqual({subject_folded: 'über straßen', body_folded: 'ça va'});
+    ).toEqual({subject_folded: 'ÜBER STRASSEN', body_folded: 'ÇA VA'});
   });
 
   test('keeps text byte-for-byte, including quotes and escapes', () => {

@@ -18,6 +18,8 @@ export const tagEntryOrdering: OrderedSpec = {
   order: tagsEntries.order,
   dateUpdated: tagsEntries.date_updated,
   scope: tagsEntries.tag_id,
+  // Imported Django data can put another user's junction in a user's tag.
+  owner: tagsEntries.user_id,
 };
 
 const owned = {
