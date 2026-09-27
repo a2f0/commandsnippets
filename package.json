@@ -2,7 +2,7 @@
   "name": "commandsnippets",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/agent-tool"],
   "catalog": {
     "@types/bun": "1.4.1"
   },

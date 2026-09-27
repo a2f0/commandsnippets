@@ -38,13 +38,13 @@ describe("ciScopes", () => {
       frontend: false,
       backendV2: false,
     });
-    expect(ciScopes(["backend-v2/src/app.ts"])).toEqual({
+    expect(ciScopes(["packages/backend-v2/src/app.ts"])).toEqual({
       tooling: false,
       backend: false,
       frontend: false,
       backendV2: true,
     });
-    expect(ciScopes(["frontend/src/App.tsx"])).toEqual({
+    expect(ciScopes(["packages/frontend/src/App.tsx"])).toEqual({
       tooling: false,
       backend: false,
       frontend: true,

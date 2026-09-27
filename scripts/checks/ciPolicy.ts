@@ -6,12 +6,12 @@
 /** Path patterns that make each scope of checks applicable. */
 export const CI_SCOPES = {
   tooling:
-    /^(packages\/|scripts\/|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
+    /^(packages\/agent-tool\/|scripts\/|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   backend:
     /^(backend\/|scripts\/runBackendTests\.sh$)/,
   frontend:
-    /^(frontend\/|scripts\/(runUnitTests|runWebdriverTests)\.sh$)/,
-  backendV2: /^backend-v2\//,
+    /^(packages\/frontend\/|scripts\/(runUnitTests|runWebdriverTests)\.sh$)/,
+  backendV2: /^packages\/backend-v2\//,
 } as const satisfies Record<string, RegExp>;
 
 export type CiScope = keyof typeof CI_SCOPES;

@@ -25,7 +25,7 @@ Tearleads is a command snippet tool for computer programmers and system administ
 
 When running integration tests, it is recommended to use the headless option. The headless configuration is defined in `test/wdio.headless.conf.ts`
 
-- `../scripts/runWebdriverTests.sh` - Start the server and run the same headless E2E tests as CI (recommended)
+- `../../scripts/runWebdriverTests.sh` - Start the server and run the same headless E2E tests as CI (recommended)
 - `pnpm run test-headless` - Run E2E tests headless (requires server-test running separately)
 - `scripts/runSpecHeadless.sh <spec-file>` - Run specific spec file headless
 - `scripts/runSpec.sh <spec-file>` - Run specific spec file with browser UI

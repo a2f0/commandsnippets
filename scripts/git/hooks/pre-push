@@ -118,20 +118,20 @@ while read -r _ local_sha _ remote_sha; do
 done <"$refs_file"
 step_timings_end
 
-if touches 'packages/' || touches 'scripts/' || touches 'commitlint.config.mts' ||
+if touches 'packages/agent-tool/' || touches 'scripts/' || touches 'commitlint.config.mts' ||
   touches 'package.json' || touches 'bun.lock' || touches 'tsconfig'; then
-  require_worktree_is_push packages scripts
+  require_worktree_is_push packages/agent-tool scripts
   step_timings_run tooling-shell bun run lint:shell
   step_timings_run tooling-typecheck bun run typecheck
   step_timings_run tooling-tests sh -c 'bun run test:agent-tool && bun run test:scripts'
 fi
 
-if touches 'backend-v2/' && [ -d "$REPO_ROOT/backend-v2" ]; then
-  require_worktree_is_push backend-v2
-  step_timings_run backend-v2-lint sh -c 'cd backend-v2 && bun run lint'
-  step_timings_run backend-v2-typecheck sh -c 'cd backend-v2 && bun run typecheck'
-  step_timings_run backend-v2-tests sh -c 'cd backend-v2 && bun run test:coverage'
-  step_timings_run backend-v2-scripts sh -c 'cd backend-v2 && bun run test:scripts'
+if touches 'packages/backend-v2/' && [ -d "$REPO_ROOT/packages/backend-v2" ]; then
+  require_worktree_is_push packages/backend-v2
+  step_timings_run backend-v2-lint sh -c 'cd packages/backend-v2 && bun run lint'
+  step_timings_run backend-v2-typecheck sh -c 'cd packages/backend-v2 && bun run typecheck'
+  step_timings_run backend-v2-tests sh -c 'cd packages/backend-v2 && bun run test:coverage'
+  step_timings_run backend-v2-scripts sh -c 'cd packages/backend-v2 && bun run test:scripts'
 fi
 
 step_timings_summary

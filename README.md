@@ -5,8 +5,10 @@ a monorepo.
 
 | Directory | Contents |
 | --- | --- |
-| `backend/` | Backend application and API |
-| `frontend/` | Web client |
+| `backend/` | Django API (being replaced by `packages/backend-v2/`) |
+| `packages/agent-tool/` | CLI behind the ship/review skills |
+| `packages/backend-v2/` | Cloudflare Workers API |
+| `packages/frontend/` | Web client |
 | `scripts/` | Local entrypoints shared with CI/CD |
 | `terraform/` | Cloudflare DNS records for the domain |
 

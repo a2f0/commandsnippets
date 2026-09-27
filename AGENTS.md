@@ -1,12 +1,13 @@
 # Commandsnippets
 
-Monorepo for the Commandsnippets (Tearleads) app.
+Monorepo for the Commandsnippets app.
 
 | Path | What |
 |---|---|
-| `frontend/` | React web client; pnpm |
-| `backend/` | Django API (being replaced by `backend-v2/`) |
-| `packages/agent-tool/` | CLI behind the ship/review skills |
+| `packages/frontend/` | React web client; pnpm, own lockfile |
+| `packages/backend-v2/` | Cloudflare Workers API; bun, own lockfile |
+| `packages/agent-tool/` | CLI behind the ship/review skills (root bun workspace) |
+| `backend/` | Django API (being replaced by `packages/backend-v2/`) |
 | `scripts/` | git hooks, CI policy, test entrypoints |
 | `terraform/` | Cloudflare DNS records for the domain |
 
