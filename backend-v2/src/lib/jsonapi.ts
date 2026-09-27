@@ -170,6 +170,13 @@ interface Identified {
 }
 
 /** Expand `a.b,c` into validated paths plus their prefixes (`a`, `a.b`, `c`). */
+/**
+ * The longest include path accepted. Clients use at most two segments
+ * (`text_entry_to_tag.tag`); relationships are cyclic, so an unbounded path
+ * could keep re-walking the same rows.
+ */
+export const MAX_INCLUDE_DEPTH = 3;
+
 function resolveIncludes(
   registry: Registry,
   type: string,
@@ -189,6 +196,11 @@ function resolveIncludes(
   const paths = new Map<string, string[]>();
   for (const path of requested) {
     const segments = path.split('.');
+    if (segments.length > MAX_INCLUDE_DEPTH) {
+      throw queryError(
+        `Include path ${path} is deeper than ${MAX_INCLUDE_DEPTH} relationships.`
+      );
+    }
     let def: ResourceDef<never> | undefined = root;
     segments.forEach((segment, index) => {
       const relationship = def?.relationships[segment];
@@ -298,12 +310,13 @@ export async function serialize(
           current.map(row => row.id)
         );
         const ids = current.flatMap(row => links.get(row.id) ?? []);
-        next = await loadType(relationship.type, ids);
+        next = await loadType(relationship.type, [...new Set(ids)]);
       } else {
         const ids = current
           .map(row => relationship.key(row as never))
           .filter((id): id is number => id !== null);
-        next = await loadType(relationship.type, ids);
+        // Each step walks distinct rows only, so cyclic paths stay linear.
+        next = await loadType(relationship.type, [...new Set(ids)]);
       }
       for (const row of next) {
         includedKeys.add(`${relationship.type}:${row.id}`);

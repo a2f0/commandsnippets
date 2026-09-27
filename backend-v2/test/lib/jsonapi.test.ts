@@ -70,3 +70,74 @@ describe('serialize', () => {
     ).rejects.toThrow('Unknown resource type Missing');
   });
 });
+
+describe('include traversal', () => {
+  // A registry whose Parent <-> Child relationships form a cycle, counting
+  // how many rows each load is asked for.
+  const loaded: number[] = [];
+  const registry = {
+    Parent: {
+      type: 'Parent',
+      load: async (ids: number[]) => {
+        loaded.push(ids.length);
+        return ids.map(id => ({id}));
+      },
+      attributes: () => ({}),
+      relationships: {
+        children: {
+          type: 'Child',
+          many: true,
+          load: async (parentIds: number[]) =>
+            parentIds.flatMap(parent =>
+              [1, 2, 3].map(n => ({id: parent * 10 + n, parent}))
+            ),
+          parentKey: (row: {parent: number}) => row.parent,
+        },
+      },
+      defaultIncludes: [],
+    },
+    Child: {
+      type: 'Child',
+      load: async (ids: number[]) => {
+        loaded.push(ids.length);
+        return ids.map(id => ({id, parent: Math.floor(id / 10)}));
+      },
+      attributes: () => ({}),
+      relationships: {
+        parent: {type: 'Parent', key: (row: {parent: number}) => row.parent},
+      },
+      defaultIncludes: [],
+    },
+  } as unknown as Registry;
+
+  it('loads each row once per step on cyclic paths', async () => {
+    loaded.length = 0;
+    const {included} = await serialize(
+      registry,
+      'Parent',
+      [{id: 1}, {id: 2}],
+      'children.parent.children'
+    );
+    // Six children and no duplicates, however the path doubles back.
+    expect(included.map(r => `${r.type}:${r.id}`).sort()).toEqual([
+      'Child:11',
+      'Child:12',
+      'Child:13',
+      'Child:21',
+      'Child:22',
+      'Child:23',
+    ]);
+    expect(Math.max(0, ...loaded)).toBeLessThanOrEqual(6);
+  });
+
+  it('rejects include paths deeper than the limit', async () => {
+    await expect(
+      serialize(
+        registry,
+        'Parent',
+        [{id: 1}],
+        'children.parent.children.parent'
+      )
+    ).rejects.toThrow('deeper than 3 relationships');
+  });
+});

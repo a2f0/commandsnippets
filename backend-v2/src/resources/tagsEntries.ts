@@ -92,6 +92,16 @@ tagEntryRoutes.post('/', async c => {
       junction = await find();
     }
   }
+  if (junction !== undefined && junction.user_id !== user.id) {
+    // Imported Django data can hold a junction owned by another user between
+    // this user's own tag and entry. It links only their data, so it is
+    // theirs: take it over rather than return someone else's row.
+    [junction] = await db
+      .update(tagsEntries)
+      .set({user_id: user.id, date_updated: now()})
+      .where(eq(tagsEntries.id, junction.id))
+      .returning();
+  }
   return resourceResponse(c, TAG_TEXT_ENTRY, junction as TagTextEntry, 201);
 });
 

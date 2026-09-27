@@ -131,3 +131,54 @@ describe('authorizationCookies', () => {
     ]);
   });
 });
+
+// Django staging (DEBUG on) left host-only cookies on the API host. Browsers
+// keep them apart from the domain-scoped ones, so both must be handled.
+describe('legacy host-only cookies', () => {
+  const headers = (response: Response) =>
+    response.headers.getSetCookie().map(header => {
+      const [pair = '', ...attributes] = header.split(';').map(p => p.trim());
+      const lower = attributes.map(a => a.toLowerCase());
+      return {
+        name: pair.slice(0, pair.indexOf('=')),
+        value: pair.slice(pair.indexOf('=') + 1),
+        domain: lower.find(a => a.startsWith('domain='))?.slice(7),
+        expired: lower.includes('max-age=0'),
+      };
+    });
+
+  it('staging logout expires both the scoped and the host-only cookies', async () => {
+    const set = headers(
+      await requestWithEnv(STAGING, 'POST', '/api-token-deauth/')
+    );
+    for (const name of ['Authorization', 'LoggedIn']) {
+      const forName = set.filter(c => c.name === name);
+      expect(forName).toContainEqual(
+        expect.objectContaining({
+          domain: '.staging.commandsnippets.com',
+          expired: true,
+        })
+      );
+      expect(forName).toContainEqual(
+        expect.objectContaining({domain: undefined, expired: true})
+      );
+    }
+  });
+
+  it('staging login expires host-only leftovers while setting scoped cookies', async () => {
+    const set = headers(await integratedLogin(STAGING));
+    const auth = set.filter(c => c.name === 'Authorization');
+    expect(auth).toContainEqual(
+      expect.objectContaining({domain: undefined, expired: true})
+    );
+    const scoped = auth.find(c => c.domain === '.staging.commandsnippets.com');
+    expect(scoped?.expired).toBe(false);
+    expect(scoped?.value).toMatch(/^[0-9a-f]{40}$/);
+  });
+
+  it('local development (host-only cookies) sends no extra expiries', async () => {
+    const set = headers(await integratedLogin({DEBUG: 'true'}));
+    expect(set.map(c => c.name)).toEqual(['Authorization', 'LoggedIn']);
+    expect(set.every(c => !c.expired && c.domain === undefined)).toBe(true);
+  });
+});

@@ -132,6 +132,32 @@ function cookieOptions(c: Context<AppEnv>, clientType: ClientType) {
 }
 
 /** Django's `_create_auth_response`: set the auth + LoggedIn cookies. */
+const AUTH_COOKIES = ['Authorization', 'LoggedIn'] as const;
+
+function expire(c: Context<AppEnv>, name: string, domain: {domain?: string}) {
+  setCookie(c, name, '', {
+    path: '/',
+    maxAge: 0,
+    expires: new Date(0),
+    ...domain,
+  });
+}
+
+/**
+ * Expire host-only copies of the auth cookies when cookies are domain-scoped.
+ * Django's staging ran with DEBUG on and set host-only cookies on the API
+ * host; browsers keep those separately from the domain-scoped ones and send
+ * the older one first, so left alone a pre-migration cookie would keep
+ * authenticating (possibly as a different user) after logout or re-login.
+ */
+function expireLegacyHostOnly(c: Context<AppEnv>): void {
+  if (cookieDomain(c).domain !== undefined) {
+    for (const name of AUTH_COOKIES) {
+      expire(c, name, {});
+    }
+  }
+}
+
 export async function setAuthCookies(
   c: Context<AppEnv>,
   userId: number,
@@ -139,6 +165,7 @@ export async function setAuthCookies(
 ): Promise<void> {
   const key = await getOrCreateToken(c.get('db'), userId);
   const options = cookieOptions(c, clientType);
+  expireLegacyHostOnly(c);
   setCookie(c, 'Authorization', key, {...options, httpOnly: true});
   setCookie(c, 'LoggedIn', 'true', {...options, httpOnly: false});
 }
@@ -146,16 +173,12 @@ export async function setAuthCookies(
 /**
  * Expire both cookies. Unlike Django's `delete_cookie`, this repeats the
  * domain the cookies were set with; without it browsers keep the
- * domain-scoped production cookies and logout doesn't stick.
+ * domain-scoped production cookies and logout doesn't stick. Legacy host-only
+ * copies are expired too.
  */
 export function clearAuthCookies(c: Context<AppEnv>): void {
-  const domain = cookieDomain(c);
-  for (const name of ['Authorization', 'LoggedIn']) {
-    setCookie(c, name, '', {
-      path: '/',
-      maxAge: 0,
-      expires: new Date(0),
-      ...domain,
-    });
+  expireLegacyHostOnly(c);
+  for (const name of AUTH_COOKIES) {
+    expire(c, name, cookieDomain(c));
   }
 }

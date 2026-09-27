@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {
   json,
+  refreshJunction,
   setUpBase,
   tagFactory,
   tagTextEntryFactory,
@@ -119,5 +120,36 @@ describe('filters over cross-user relationships from legacy data', () => {
     expect((await json(response)).data.map((r: {id: string}) => r.id)).toEqual([
       String(entry.id),
     ]);
+  });
+});
+
+describe('tagging over a legacy junction owned by someone else', () => {
+  it("takes over the junction between the requester's own tag and entry", async () => {
+    const {user1, user2, user1Client} = await setUpBase();
+    const tag = await tagFactory({user: user1});
+    const entry = await textEntryFactory({user: user1});
+    const legacy = await tagTextEntryFactory({
+      tag,
+      text_entry: entry,
+      user: user2,
+    });
+
+    const response = await user1Client.post('/api/v1/tags_entries', {
+      data: {
+        type: 'TagTextEntryThroughModel',
+        attributes: {},
+        relationships: {
+          tag: {data: {type: 'Tag', id: tag.id}},
+          text_entry: {data: {type: 'TextEntry', id: entry.id}},
+        },
+      },
+    });
+    expect(response.status).toBe(201);
+    const body = await json(response);
+    expect(body.data.id).toBe(String(legacy.id));
+    expect(body.data.relationships.user.data.id).toBe(String(user1.id));
+    expect(ids(body.included, 'User')).toEqual([String(user1.id)]);
+    expect(JSON.stringify(body)).not.toContain(user2.username);
+    expect((await refreshJunction(legacy.id))?.user_id).toBe(user1.id);
   });
 });
