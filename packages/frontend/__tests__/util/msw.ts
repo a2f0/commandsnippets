@@ -14,7 +14,7 @@ import {tagsResponse} from '../../test/mocks/tags/tagsResponse';
 // Define all possible API base URLs
 const apiBaseUrls = [
   'http://localhost:9001/api/v1',
-  'https://api.staging.commandsnippets.com/api/v1',
+  'https://api-staging.commandsnippets.com/api/v1',
   'https://api.commandsnippets.com/api/v1',
 ];
 
@@ -55,7 +55,7 @@ const createHandlers = () => {
       return HttpResponse.json({data: {}}, {status: 200});
     }),
     http.post(
-      'https://api.staging.commandsnippets.com/api-token-deauth/',
+      'https://api-staging.commandsnippets.com/api-token-deauth/',
       () => {
         return HttpResponse.json({data: {}}, {status: 200});
       }

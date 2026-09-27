@@ -2,7 +2,7 @@ import {environment} from '../environment';
 
 export let baseHTTPURL: string;
 if (environment === 'staging') {
-  baseHTTPURL = 'https://api.staging.commandsnippets.com';
+  baseHTTPURL = 'https://api-staging.commandsnippets.com';
 } else if (environment === 'production') {
   baseHTTPURL = 'https://api.commandsnippets.com';
 } else {

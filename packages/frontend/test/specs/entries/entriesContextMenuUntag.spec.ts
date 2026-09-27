@@ -8,7 +8,7 @@ describe('Entries Context Menu Untag', () => {
   it('should untag', async () => {
     await browser.resetMSWRequestCounts();
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Verify MSW is providing expected data
     const apiCheck = await BasePage.checkTagsAndEntries();

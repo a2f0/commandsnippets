@@ -1,0 +1,14 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+}
+
+const {title} = Astro.props;
+---
+
+<Base title={`${title} · Commandsnippets`}>
+  <h1>{title}</h1>
+  <p class="muted" data-placeholder>This page is coming soon.</p>
+</Base>

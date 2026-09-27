@@ -38,12 +38,15 @@ for (const suite of suites) {
     });
 
     it('test_preflight_allows_staging_subdomain', async () => {
-      const response = await preflight(
-        'https://app.staging.commandsnippets.com'
-      );
-      expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
-        'https://app.staging.commandsnippets.com'
-      );
+      for (const origin of [
+        'https://app-staging.commandsnippets.com',
+        'https://website-staging.commandsnippets.com',
+      ]) {
+        const response = await preflight(origin);
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
+          origin
+        );
+      }
     });
 
     it('test_preflight_denies_unauthorized_origin', async () => {
@@ -89,6 +92,11 @@ describe('CORSAllowlist', () => {
     'https://commandsnippets.com.evil.com',
     'https://evil.commandsnippets.com.evil.com',
     'https://a.b.commandsnippets.com',
+    // Staging moved to hyphenated first-level names.
+    'https://app.staging.commandsnippets.com',
+    'https://app-staging.commandsnippets.com.evil.com',
+    'https://-app.commandsnippets.com',
+    'https://app_staging.commandsnippets.com',
     // The retired Electron and Capacitor apps' origins.
     'tearleads://app',
     'tearleads-dev://app',

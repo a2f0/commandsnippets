@@ -27,7 +27,7 @@ describe('MSW Verification Tests', () => {
     // Check if the page loaded successfully (either public or authenticated route)
     const pageLoaded = await browser.execute(() => {
       return {
-        hasTagLine: !!document.querySelector('#tagLine'),
+        hasSignInPage: !!document.querySelector('#signInPage'),
         hasTagList: !!document.querySelector('#tagList'),
         bodyHasContent:
           document.body.textContent && document.body.textContent.length > 0,
@@ -269,7 +269,7 @@ describe('MSW Verification Tests', () => {
     await BasePage.open('');
 
     // The page should still load even with potential network issues
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Check if there are any network-related errors
     const networkErrors = browser.currentTestErrors.filter(
@@ -287,7 +287,7 @@ describe('MSW Verification Tests', () => {
 
   it('should verify different HTTP status codes are handled', async () => {
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Check for any HTTP-related errors
     const httpErrors = browser.currentTestErrors.filter(

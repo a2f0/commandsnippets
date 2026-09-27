@@ -12,17 +12,13 @@ export function handleUnauthorized() {
 }
 
 /**
- * The client-readable login cookie names for an environment, preferred
- * first. backend-v2 gives staging its own names (StagingLoggedIn) because
- * production's `.commandsnippets.com` cookies are also sent to staging hosts
- * (see its COOKIE_NAME_PREFIX). Staging still accepts Django's `LoggedIn`
- * so the frontend and API can switch over in either order.
- * TODO: drop the `LoggedIn` fallback on staging once backend-v2 serves it.
+ * The client-readable login cookie names for an environment. Staging and
+ * production share `.commandsnippets.com`, so staging has its own name
+ * (backend-v2's COOKIE_NAME_PREFIX) and must never read production's
+ * `LoggedIn`, which would show a signed-in UI with no staging session.
  */
 export function loggedInCookieNames(environment: string): string[] {
-  return environment === 'staging'
-    ? ['StagingLoggedIn', 'LoggedIn']
-    : ['LoggedIn'];
+  return environment === 'staging' ? ['StagingLoggedIn'] : ['LoggedIn'];
 }
 
 /**

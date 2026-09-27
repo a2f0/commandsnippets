@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "commandsnippets-website",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-22",
+  // Old app links are browser navigations; they must reach the Worker below,
+  // not be answered by asset serving.
+  "compatibility_flags": ["assets_navigation_has_no_effect"],
+  // The pages are static assets (build with `astro build --mode <env>` first);
+  // the Worker runs only for paths no page matches.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "none"
+  },
+  // Where old app links go; must match src/lib/appUrl.ts for the same mode.
+  "vars": {
+    "APP_ORIGIN": "http://localhost:8085"
+  },
+  "env": {
+    "staging": {
+      "vars": {
+        "APP_ORIGIN": "https://app-staging.commandsnippets.com"
+      }
+    },
+    "production": {
+      "vars": {
+        "APP_ORIGIN": "https://app.commandsnippets.com"
+      }
+    }
+  }
+}

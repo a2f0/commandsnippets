@@ -37,21 +37,31 @@ describe("ciScopes", () => {
       backend: true,
       frontend: false,
       backendV2: false,
+      website: false,
     });
     expect(ciScopes(["packages/backend-v2/src/app.ts"])).toEqual({
       tooling: false,
       backend: false,
       frontend: false,
       backendV2: true,
+      website: false,
     });
     expect(ciScopes(["packages/frontend/src/App.tsx"])).toEqual({
       tooling: false,
       backend: false,
       frontend: true,
       backendV2: false,
+      website: false,
     });
     expect(ciScopes(["scripts/runWebdriverTests.sh"]).frontend).toBe(true);
     expect(ciScopes(["scripts/runBackendTests.sh"]).backend).toBe(true);
+    expect(ciScopes(["packages/website/src/pages/index.astro"])).toEqual({
+      tooling: false,
+      backend: false,
+      frontend: false,
+      backendV2: false,
+      website: true,
+    });
   });
 
   test("skips every lane for unrelated paths", () => {
@@ -60,6 +70,7 @@ describe("ciScopes", () => {
       backend: false,
       frontend: false,
       backendV2: false,
+      website: false,
     });
   });
 
@@ -83,6 +94,7 @@ describe("assertCiSuccess", () => {
       backend: value,
       frontend: value,
       backendV2: value,
+      website: value,
     },
   });
   const jobs = (result: string) => ({
@@ -90,6 +102,7 @@ describe("assertCiSuccess", () => {
     backend: { result },
     "backend-v2": { result },
     frontend: { result },
+    website: { result },
   });
 
   test("passes when required lanes succeeded or irrelevant ones skipped", () => {
@@ -109,6 +122,7 @@ describe("assertCiSuccess", () => {
         backend: "false",
         frontend: "true",
         backendV2: "false",
+        website: "false",
       },
     };
     const needs = {
@@ -117,6 +131,7 @@ describe("assertCiSuccess", () => {
       backend: { result: "skipped" },
       "backend-v2": { result: "success" },
       frontend: { result: "success" },
+      website: { result: "skipped" },
     };
     expect(() => assertCiSuccess(needs)).toThrow(
       "backend-v2 must be skipped",

@@ -1,0 +1,42 @@
+---
+import '../styles/global.css';
+import {appUrl, FOOTER_LINKS} from '../lib/appUrl';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'An opinionated note-taking system for technical professionals.',
+} = Astro.props;
+const app = appUrl(import.meta.env.MODE);
+const year = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">Commandsnippets</a>
+      <a class="login" id="loginLink" href={app}>Log in</a>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer>
+      <nav aria-label="Site">
+        {FOOTER_LINKS.map(link => <a href={link.href}>{link.text}</a>)}
+      </nav>
+      <div class="muted">© {year} Commandsnippets. All rights reserved.</div>
+    </footer>
+  </body>
+</html>

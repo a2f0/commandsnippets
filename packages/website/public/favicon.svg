@@ -1,0 +1,14 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <title>Commandsnippets icon</title>
+  <style>
+    circle {
+      fill: #808080;
+    }
+    /* @media (prefers-color-scheme: dark) {
+      circle {
+        fill: #fff;
+      }
+    } */
+  </style>
+  <circle cx="12" cy="12" r="8"/>
+</svg>

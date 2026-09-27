@@ -24,11 +24,11 @@ export const ALLOWED_ORIGINS = [
   /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/,
   /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/,
   /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/,
-  // Production domains
+  // The apex (website) and first-level subdomains: app, app-staging,
+  // website-staging. Staging names are hyphenated because Universal SSL covers
+  // only one level below the apex.
   /^https:\/\/commandsnippets\.com$/,
-  /^https:\/\/\w+\.commandsnippets\.com$/,
-  // Staging domains
-  /^https:\/\/\w+\.staging\.commandsnippets\.com$/,
+  /^https:\/\/[a-z0-9]+(?:-[a-z0-9]+)*\.commandsnippets\.com$/,
 ];
 
 export const app = new Hono<AppEnv>({strict: false});

@@ -224,7 +224,7 @@ let runtimeEntriesOverride: ITextEntryJsonApiResponse | null = null;
 // Define all possible API base URLs
 const apiBaseUrls = [
   'http://localhost:9001/api/v1',
-  'https://api.staging.commandsnippets.com/api/v1',
+  'https://api-staging.commandsnippets.com/api/v1',
   'https://api.commandsnippets.com/api/v1',
 ] as const;
 
@@ -492,7 +492,7 @@ const createHandlers = () => {
       return HttpResponse.json({data: {}}, {status: 200});
     }),
     http.post(
-      'https://api.staging.commandsnippets.com/api-token-deauth/',
+      'https://api-staging.commandsnippets.com/api-token-deauth/',
       ({request}) => {
         recordRequest('POST', request.url);
         return HttpResponse.json({data: {}}, {status: 200});

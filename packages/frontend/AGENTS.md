@@ -289,7 +289,7 @@ pnpm run compile      # for TypeScript failures
 ```
 
 #### 5. E2E Test Stability Best Practices
-- Always check `tagLine` **before** login, not after (avoids re-render race conditions)
+- Always check `signInPage` **before** login, not after (avoids re-render race conditions)
 - Add explicit waits for MSW data loading before assertions
 - Ensure all test files have `afterEach` MSW reset handlers
 - Use `browser.waitUntil()` for async conditions instead of immediate expectations

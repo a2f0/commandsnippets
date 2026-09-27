@@ -1,0 +1,27 @@
+{
+  "name": "commandsnippets-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "build:staging": "astro build --mode staging",
+    "build:production": "astro build --mode production",
+    "preview": "astro preview",
+    "check": "astro check",
+    "lint": "biome check .",
+    "test": "bun test",
+    "deploy:staging": "bun run build:staging && wrangler deploy --env staging",
+    "deploy:production": "bun run build:production && wrangler deploy --env production"
+  },
+  "dependencies": {
+    "astro": "^7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@biomejs/biome": "^2.5.14",
+    "@types/bun": "1.4.2",
+    "typescript": "6.0.3",
+    "wrangler": "^4.141.0"
+  }
+}

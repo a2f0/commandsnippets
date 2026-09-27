@@ -6,11 +6,8 @@ import {
 } from '../../../../src/lib/auth/authUtils';
 
 describe('loggedInCookieNames', () => {
-  it('prefers the staging name on staging, accepting the legacy one', () => {
-    expect(loggedInCookieNames('staging')).toEqual([
-      'StagingLoggedIn',
-      'LoggedIn',
-    ]);
+  it('uses only the staging name on staging', () => {
+    expect(loggedInCookieNames('staging')).toEqual(['StagingLoggedIn']);
   });
 
   it.each(['production', 'development', 'test'])(
@@ -21,22 +18,23 @@ describe('loggedInCookieNames', () => {
   );
 });
 
-// Staging's frontend and API may switch cookie names in either order.
-describe('hasLoginCookie across the staging switchover', () => {
-  it('sees a login from the Django API (LoggedIn) before cutover', () => {
-    expect(hasLoginCookie({LoggedIn: 'true'}, 'staging')).toBe(true);
+// Staging and production share `.commandsnippets.com`, so each sees the
+// other's cookies and must read only its own.
+describe('hasLoginCookie on the shared domain', () => {
+  it("sees staging's own login", () => {
+    expect(hasLoginCookie({StagingLoggedIn: 'true'}, 'staging')).toBe(true);
   });
 
-  it('sees a login from backend-v2 (StagingLoggedIn) after cutover', () => {
-    expect(hasLoginCookie({StagingLoggedIn: 'true'}, 'staging')).toBe(true);
+  it("ignores production's login on staging", () => {
+    expect(hasLoginCookie({LoggedIn: 'true'}, 'staging')).toBe(false);
   });
 
   it('treats no login cookie as logged out', () => {
     expect(hasLoginCookie({}, 'staging')).toBe(false);
-    expect(hasLoginCookie({LoggedIn: ''}, 'staging')).toBe(false);
+    expect(hasLoginCookie({StagingLoggedIn: ''}, 'staging')).toBe(false);
   });
 
-  it('ignores the staging name outside staging', () => {
+  it("ignores staging's login in production", () => {
     expect(hasLoginCookie({StagingLoggedIn: 'true'}, 'production')).toBe(false);
     expect(hasLoginCookie({LoggedIn: 'true'}, 'production')).toBe(true);
   });

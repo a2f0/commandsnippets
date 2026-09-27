@@ -2,12 +2,9 @@ let environment: string;
 
 const {hostname, port} = window.location;
 
-if (hostname === 'app.staging.commandsnippets.com') {
+if (hostname === 'app-staging.commandsnippets.com') {
   environment = 'staging';
-} else if (
-  hostname === 'commandsnippets.com' ||
-  hostname === 'app.commandsnippets.com'
-) {
+} else if (hostname === 'app.commandsnippets.com') {
   environment = 'production';
 } else if (hostname === 'localhost' && port === '8085') {
   environment = 'development';
