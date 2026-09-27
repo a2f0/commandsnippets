@@ -8,7 +8,8 @@ Monorepo for the Commandsnippets (Tearleads) app.
 | `backend/` | Django API (being replaced by `backend-v2/`) |
 | `packages/agent-tool/` | CLI behind the ship/review skills |
 | `scripts/` | git hooks, CI policy, deploy helpers |
-| `terraform/`, `ansible/` | infrastructure |
+| `terraform/` | Cloudflare DNS records for the domain |
+| `ansible/` | provisioning for the retired Django API hosts |
 
 ## Conventions
 

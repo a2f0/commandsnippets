@@ -1,12 +1,14 @@
 # Overview
 
-Tearleads infrastructure automation.
+Terraform for the `commandsnippets.com` Cloudflare zone's domain-level records
+(`dns/`): Google Workspace MX, Google site verification, and CAA. The API runs
+on Cloudflare Workers (`../backend-v2`), whose custom domains create their own
+records.
 
 Secrets in this repo are managed by [SOPS](https://github.com/getsops/sops)
 using the GPG recipient configured in `../.sops.yaml`. Encrypted files use the
 `.sops` suffix and are stored in SOPS binary mode so their decrypted contents
-are byte-for-byte compatible with the original Terraform, YAML, and SSH key
-files.
+are byte-for-byte compatible with the original Terraform and YAML files.
 
 Terraform scripts decrypt the file they need into an automatically cleaned
 temporary file. A persistent plaintext copy is not required.
@@ -24,7 +26,7 @@ Bootstrap:
     pre-commit install
     pre-commit install --hook-type commit-msg
 
-Configure environment variables:
+Configure AWS credentials for the S3 state backend:
 
     export AWS_ACCESS_KEY_ID=`<key>`
     export AWS_SECRET_ACCESS_KEY=`<secret access key>`
@@ -47,52 +49,17 @@ Upgrading Terraform providers:
 
 Edit an encrypted file directly:
 
-    sops edit --input-type binary --output-type binary production/main.tfvars.sops
+    sops edit --input-type binary --output-type binary dns/main.tfvars.sops
 
-Decrypt a file that must persist locally, such as an SSH key:
-
-    umask 077
-    sops decrypt --input-type binary --output-type binary \
-      --output ssh_keys/tearleads-backend-deploy-key \
-      ssh_keys/tearleads-backend-deploy-key.sops
-
-Remove the plaintext file when it is no longer needed. Plaintext secret paths
-are ignored by Git, but encrypted `.sops` files must be committed.
+Encrypted `.sops` files must be committed; their plaintext never is.
 
 When adding or removing GPG recipients, update `../.sops.yaml`, then synchronize
 each encrypted file with:
 
     sops updatekeys path/to/file.sops
 
-### GitHub Actions secrets
+## DNS
 
-Repository-level Actions secrets for the monorepo are managed by the
-`github-actions-secrets` Terraform stack. Its refresh script derives values
-from the other Terraform states, live SSH host keys, and the SOPS-encrypted
-deployment key, then stores only GitHub-sealed ciphertext in Terraform:
-
-    cd github-actions-secrets
-    AWS_PROFILE=dansullivan ./init.sh
-    AWS_PROFILE=dansullivan ./refresh-secrets.sh
-    AWS_PROFILE=dansullivan ./apply.sh
-
-See `github-actions-secrets/README.md` for the optional Slack webhook input and
-key-rotation notes.
-
-## Staging
-
-### Reconfigure / Deploy
-
-    cd staging
+    cd dns
     ./init.sh
     ./apply.sh
-    ./destroy.sh
-
-    ./apply.sh
-    <login via ssh to add key to ~/.ssh/known_hosts>
-    cd ../../ansible
-    ./staging.sh
-    <login via ssh>
-    <copy environment variables to .env>
-    cd ~/commandsnippets/backend
-    ./deploy-containers.sh

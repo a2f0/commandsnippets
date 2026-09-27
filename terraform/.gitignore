@@ -13,7 +13,3 @@ override.tf.json
 
 # Node.js
 node_modules/
-
-# SOPS plaintext
-/ssh_keys/tearleads-backend-deploy-key
-/ssh_keys/tearleads-frontend-deploy-key

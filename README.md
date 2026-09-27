@@ -9,7 +9,7 @@ a monorepo.
 | `backend/` | Backend application and API |
 | `frontend/` | Web, desktop, and mobile clients |
 | `scripts/` | Local entrypoints shared with CI/CD |
-| `terraform/` | Infrastructure and deployment configuration |
+| `terraform/` | Cloudflare DNS records for the domain |
 
 Each directory retains the commit history of its original repository.
 
