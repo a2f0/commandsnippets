@@ -50,12 +50,12 @@ jobs:
         run: pnpm run compile
       - name: Lint shell scripts
         run: >-
-          find scripts ../scripts -type f -name '*.sh' -print0 |
+          find scripts ../../scripts -type f -name '*.sh' -print0 |
           xargs -0 shellcheck
       - name: Lint YAML
         run: yamllint -c .yamllint .
-      - run: ../scripts/runUnitTests.sh
-      - run: ../scripts/runWebdriverTests.sh
+      - run: ../../scripts/runUnitTests.sh
+      - run: ../../scripts/runWebdriverTests.sh
       - uses: actions/upload-artifact@v7.0.1
         if: always()
         with:
