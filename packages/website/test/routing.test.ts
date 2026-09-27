@@ -16,22 +16,25 @@ let port = 0;
 let server: ChildProcess | undefined;
 
 const get = (path: string, navigate: boolean) =>
-  new Promise<{status: number; location: string | undefined}>(
-    (resolve, reject) => {
-      const headers: Record<string, string> = navigate
-        ? {'Sec-Fetch-Mode': 'navigate', Accept: 'text/html'}
-        : {};
-      request({host: '127.0.0.1', port, path, headers}, response => {
-        response.resume();
-        resolve({
-          status: response.statusCode ?? 0,
-          location: response.headers.location,
-        });
-      })
-        .on('error', reject)
-        .end();
-    }
-  );
+  new Promise<{
+    status: number;
+    location: string | undefined;
+    contentType: string | undefined;
+  }>((resolve, reject) => {
+    const headers: Record<string, string> = navigate
+      ? {'Sec-Fetch-Mode': 'navigate', Accept: 'text/html'}
+      : {};
+    request({host: '127.0.0.1', port, path, headers}, response => {
+      response.resume();
+      resolve({
+        status: response.statusCode ?? 0,
+        location: response.headers.location,
+        contentType: response.headers['content-type'],
+      });
+    })
+      .on('error', reject)
+      .end();
+  });
 
 beforeAll(async () => {
   outDir = mkdtempSync(join(tmpdir(), 'website-routing-'));
@@ -105,9 +108,18 @@ describe.each([false, true])('with navigate=%s', navigate => {
     '/dan/kubernetes?search=pods',
     '/oauth/github?code=abc&state=xyz',
   ])('sends %s to the app', async path => {
-    expect(await get(path, navigate)).toEqual({
+    expect(await get(path, navigate)).toMatchObject({
       status: 302,
       location: `https://app.commandsnippets.com${path}`,
     });
   });
+});
+
+// Browsers that ran the old app still have its service worker and check
+// /sw.js for updates. A redirect would fail that check and keep the old worker,
+// so the replacement must be served here, as a script.
+test('serves the service worker replacement', async () => {
+  const {status, location, contentType} = await get('/sw.js', false);
+  expect({status, location}).toEqual({status: 200, location: undefined});
+  expect(contentType).toMatch(/^(application|text)\/javascript/);
 });

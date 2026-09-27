@@ -32,6 +32,12 @@ the website serves itself (`/privacy/`, `/terms/`, …) win. The
 on that path too; `test/routing.test.ts` checks the whole routing through
 `wrangler dev`, with and without `Sec-Fetch-Mode: navigate`.
 
+The app also installed a service worker here (`/sw.js`), which browsers keep
+and which can serve the old app, with its old OAuth redirect URIs, from its
+caches. `public/sw.js` replaces it: browsers pick it up on their next update
+check, and it empties the caches, unregisters itself and reloads open pages.
+Keep serving it; a redirect or 404 for `/sw.js` leaves the old worker in place.
+
 ## Deploying
 
 ```shell
