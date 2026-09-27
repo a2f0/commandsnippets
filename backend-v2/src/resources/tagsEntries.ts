@@ -7,6 +7,7 @@ import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
+import {revision} from '../lib/revision';
 import {resolveRelated} from './related';
 import {reorder} from './reorder';
 import {TAG_TEXT_ENTRY} from './serializers';
@@ -84,7 +85,12 @@ tagEntryRoutes.post('/', async c => {
           user_id: user.id,
           order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
           date_created: timestamp,
-          date_updated: timestamp,
+          date_updated: revision(
+            tagsEntries,
+            tagsEntries.date_updated,
+            tagsEntries.user_id,
+            user.id
+          ),
         })
         .returning();
     } catch (error) {
@@ -100,7 +106,15 @@ tagEntryRoutes.post('/', async c => {
     // theirs: take it over rather than return someone else's row.
     [junction] = await db
       .update(tagsEntries)
-      .set({user_id: user.id, date_updated: now()})
+      .set({
+        user_id: user.id,
+        date_updated: revision(
+          tagsEntries,
+          tagsEntries.date_updated,
+          tagsEntries.user_id,
+          user.id
+        ),
+      })
       .where(eq(tagsEntries.id, junction.id))
       .returning();
   }

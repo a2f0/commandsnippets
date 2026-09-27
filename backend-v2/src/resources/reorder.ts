@@ -3,10 +3,10 @@ import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/tokens';
 import type {AppEnv} from '../env';
-import {now} from '../lib/clock';
 import {ApiError, type ErrorObject, permissionDenied} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel} from '../lib/ordered';
+import {revision} from '../lib/revision';
 
 interface ReorderOptions {
   type: string;
@@ -97,6 +97,11 @@ export async function reorder(
     );
   }
 
-  await new OrderedModel(db, options).above(top, bottom, now());
+  // Every row the move touches gets the requester's next revision (lib/revision).
+  await new OrderedModel(db, options).above(
+    top,
+    bottom,
+    revision(options.table, options.dateUpdated, options.userId, user.id)
+  );
   return c.body(null, 200);
 }

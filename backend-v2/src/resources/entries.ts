@@ -5,6 +5,7 @@ import {type TextEntry, textEntries} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {parseResource} from '../lib/jsonapi';
+import {revision} from '../lib/revision';
 import {fold, searchColumns} from '../lib/search';
 import {booleanField, charField, validateOrThrow} from '../lib/validation';
 import {boolean, dateTime, icontains, integer, usernameIs} from './filters';
@@ -100,7 +101,12 @@ entryRoutes.post('/', async c => {
       ...searchColumns(fields),
       user_id: user.id,
       date_created: timestamp,
-      date_updated: timestamp,
+      date_updated: revision(
+        textEntries,
+        textEntries.date_updated,
+        textEntries.user_id,
+        user.id
+      ),
     })
     .returning();
   return resourceResponse(c, TEXT_ENTRY, created as TextEntry, 201);
@@ -142,7 +148,12 @@ const update = async (c: Context<AppEnv>) => {
         ? {}
         : {subject_folded: fold(changes.subject)}),
       ...(changes.body === undefined ? {} : {body_folded: fold(changes.body)}),
-      date_updated: now(),
+      date_updated: revision(
+        textEntries,
+        textEntries.date_updated,
+        textEntries.user_id,
+        entry.user_id
+      ),
     })
     .where(eq(textEntries.id, entry.id))
     .returning();
@@ -164,7 +175,15 @@ entryRoutes.delete('/:id', async c => {
   const [deleted] = await c
     .get('db')
     .update(textEntries)
-    .set({is_deleted: true, date_updated: now()})
+    .set({
+      is_deleted: true,
+      date_updated: revision(
+        textEntries,
+        textEntries.date_updated,
+        textEntries.user_id,
+        entry.user_id
+      ),
+    })
     .where(eq(textEntries.id, entry.id))
     .returning();
   return resourceResponse(c, TEXT_ENTRY, deleted as TextEntry);

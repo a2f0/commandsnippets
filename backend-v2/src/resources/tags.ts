@@ -7,6 +7,7 @@ import {now, parseDateTime} from '../lib/clock';
 import {ApiError, queryError} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
+import {revision} from '../lib/revision';
 import {booleanField, charField, validateOrThrow} from '../lib/validation';
 import {reorder} from './reorder';
 import {TAG} from './serializers';
@@ -108,7 +109,15 @@ tagRoutes.post('/', async c => {
       }
       const [resurrected] = await db
         .update(tags)
-        .set({is_deleted: false, date_updated: now()})
+        .set({
+          is_deleted: false,
+          date_updated: revision(
+            tags,
+            tags.date_updated,
+            tags.user_id,
+            user.id
+          ),
+        })
         .where(eq(tags.id, existing.id))
         .returning();
       return resourceResponse(c, TAG, resurrected as Tag, 201);
@@ -128,7 +137,7 @@ tagRoutes.post('/', async c => {
         user_id: user.id,
         order: new OrderedModel(db, tagOrdering).nextOrderSql(user.id),
         date_created: timestamp,
-        date_updated: timestamp,
+        date_updated: revision(tags, tags.date_updated, tags.user_id, user.id),
         date_last_used: timestamp,
       })
       .returning();
@@ -164,7 +173,10 @@ const update = async (c: Context<AppEnv>) => {
   try {
     const [updated] = await db
       .update(tags)
-      .set({...changes, date_updated: now()})
+      .set({
+        ...changes,
+        date_updated: revision(tags, tags.date_updated, tags.user_id, user.id),
+      })
       .where(eq(tags.id, tag.id))
       .returning();
     return resourceResponse(c, TAG, updated as Tag);
@@ -191,7 +203,15 @@ tagRoutes.delete('/:id', async c => {
   const [deleted] = await c
     .get('db')
     .update(tags)
-    .set({is_deleted: true, date_updated: now()})
+    .set({
+      is_deleted: true,
+      date_updated: revision(
+        tags,
+        tags.date_updated,
+        tags.user_id,
+        tag.user_id
+      ),
+    })
     .where(eq(tags.id, tag.id))
     .returning();
   return resourceResponse(c, TAG, deleted as Tag);

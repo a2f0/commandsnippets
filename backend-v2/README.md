@@ -84,6 +84,11 @@ Deliberate changes:
   `LoggedIn` (a UI hint only; drop the fallback in `authUtils.ts` after
   cutover).
 
+- **`date_updated` comes from D1, not the Worker's clock** (`src/lib/revision.ts`):
+  the later of D1's clock and one microsecond past the user's latest row, so
+  sync (`filter[date_updated.gt]`) never misses a write because two Workers'
+  clocks disagreed.
+
 Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing
 sessions keep working), and ids continue from the Postgres sequences.
@@ -93,6 +98,14 @@ sessions keep working), and ids continue from the Postgres sequences.
 At cutover the dump must be taken **after writes stop**, or anything written
 between the dump and the DNS switch is lost. An older backup (such as the ones
 `../backend/refresh.sh` downloads) is fine for rehearsals only.
+
+0. **Ship the clients first.** v2's reads are owner-only, so they need the
+   auth cookie, and client builds from before this change sent no credentials
+   on entry/tag reads (`getEntries`/`getTags`); against v2 they would get 403s
+   and reset their sessions. The web app picks the fix up when this merges
+   (Frontend CI deploys on `main`); Electron and mobile builds need new
+   releases, and enough adoption, *before* the API switches. The Django API
+   works with the new clients, so they can ship any time.
 
 1. **Freeze writes.** Stop the Django API on the production host so nothing
    else can change (clients see errors briefly):

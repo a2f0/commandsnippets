@@ -74,19 +74,19 @@ export class OrderedModel {
   }
 
   /** Move `self` directly above (before) `ref`. */
-  above(self: OrderedRow, ref: OrderedRow, now: string): Promise<void> {
+  above(self: OrderedRow, ref: OrderedRow, now: string | SQL): Promise<void> {
     return this.move(self, ref, now, 'above');
   }
 
   /** Move `self` directly below (after) `ref`. */
-  below(self: OrderedRow, ref: OrderedRow, now: string): Promise<void> {
+  below(self: OrderedRow, ref: OrderedRow, now: string | SQL): Promise<void> {
     return this.move(self, ref, now, 'below');
   }
 
   private async move(
     initialSelf: OrderedRow,
     initialRef: OrderedRow,
-    now: string,
+    now: string | SQL,
     direction: 'above' | 'below'
   ): Promise<void> {
     if (initialSelf.scope !== initialRef.scope) {
@@ -132,7 +132,7 @@ export class OrderedModel {
   async to(
     self: OrderedRow,
     target: number,
-    now: string,
+    now: string | SQL,
     ref?: OrderedRow
   ): Promise<boolean> {
     if (self.order === target) {
