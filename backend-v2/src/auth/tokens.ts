@@ -203,5 +203,16 @@ export function clearAuthCookies(c: Context<AppEnv>): void {
   const names = cookieNames(c);
   for (const name of [names.auth, names.loggedIn]) {
     expire(c, name, cookieDomain(c));
+    // Electron's cookies were set cross-site (SameSite=None; Secure), and a
+    // cross-site response is only allowed to change them with the same
+    // attributes; the plain expiry above covers every other client.
+    setCookie(c, name, '', {
+      path: '/',
+      maxAge: 0,
+      expires: new Date(0),
+      sameSite: 'None',
+      secure: true,
+      ...cookieDomain(c),
+    });
   }
 }

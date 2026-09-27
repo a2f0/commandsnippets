@@ -522,12 +522,28 @@ const CHECKS: Check[] = [
           WHERE r.user_id != e.user_id`,
     level: 'warn',
   },
-  {
-    name: 'emails shared by more than one user (login looks users up by email)',
-    sql: 'SELECT email, COUNT(*) AS n FROM users_user GROUP BY email HAVING n > 1',
-    level: 'warn',
-  },
 ];
+
+/**
+ * Non-empty emails used by more than one user. The schema makes emails unique
+ * (logins find accounts by email), so these would fail the load; report them
+ * clearly first instead.
+ */
+function duplicateEmails(converted: Converted[]): string[] {
+  const found = converted.find(entry => entry.table === 'users_user');
+  if (found === undefined) {
+    return [];
+  }
+  const index = found.spec.columns.indexOf('email');
+  const seen = new Map<string, number>();
+  for (const row of found.rows) {
+    const email = row[index];
+    if (typeof email === 'string' && email !== '') {
+      seen.set(email, (seen.get(email) ?? 0) + 1);
+    }
+  }
+  return [...seen].filter(([, n]) => n > 1).map(([email]) => email);
+}
 
 export function verify(
   statements: string[],
@@ -535,6 +551,17 @@ export function verify(
   sequences: ReadonlyMap<string, number>,
   log: (line: string) => void = console.log
 ): boolean {
+  const duplicates = duplicateEmails(converted);
+  if (duplicates.length > 0) {
+    log(
+      `FAIL emails shared by more than one user (must be merged first): ${duplicates.length}`
+    );
+    for (const email of duplicates.slice(0, 5)) {
+      log(`         ${email}`);
+    }
+    return false;
+  }
+
   const db = new Database(':memory:');
   db.run('PRAGMA foreign_keys = ON');
   loadMigrations(db);

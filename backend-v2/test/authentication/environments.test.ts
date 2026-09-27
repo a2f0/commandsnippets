@@ -224,3 +224,31 @@ describe('authorizationCookies', () => {
     ]);
   });
 });
+
+// Electron's cookies are set cross-site with SameSite=None; Secure. A
+// cross-site logout response can only change them with those attributes.
+describe('Electron logout', () => {
+  it('expires the cookies with SameSite=None and Secure as well', async () => {
+    const set = setCookieHeaders(
+      await requestWithEnv(PRODUCTION, 'POST', '/api-token-deauth/')
+    );
+    for (const name of ['Authorization', 'LoggedIn']) {
+      const expiries = set.filter(c => c.name === name && c.expired);
+      // One for cross-site (Electron) clients...
+      expect(expiries).toContainEqual(
+        expect.objectContaining({
+          domain: '.commandsnippets.com',
+          sameSite: 'none',
+          secure: true,
+        })
+      );
+      // ...and a plain one for everyone else.
+      expect(expiries).toContainEqual(
+        expect.objectContaining({
+          domain: '.commandsnippets.com',
+          sameSite: undefined,
+        })
+      );
+    }
+  });
+});

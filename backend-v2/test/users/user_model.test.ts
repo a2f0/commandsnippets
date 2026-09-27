@@ -38,10 +38,17 @@ describe('TestUserModel', () => {
   });
 
   it('test_emails_cannot_be_duplicates', async () => {
-    // Email is not unique in Django's AbstractUser either; OAuth logins
-    // resolve users by email (first match).
-    const first = await userFactory({email: 'collide@commandsnippets.com'});
-    const second = await userFactory({email: 'collide@commandsnippets.com'});
+    // Django's version wrapped this in try/except and asserted nothing; v2
+    // enforces what the name says (logins find accounts by email).
+    await userFactory({email: 'collide@commandsnippets.com'});
+    await expect(
+      userFactory({email: 'collide@commandsnippets.com'})
+    ).rejects.toThrow('UNIQUE constraint failed: users_user.email');
+  });
+
+  it('allows any number of users without an email', async () => {
+    const first = await userFactory({email: ''});
+    const second = await userFactory({email: ''});
     expect(second.id).not.toBe(first.id);
   });
 

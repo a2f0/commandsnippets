@@ -37,7 +37,7 @@ describe('schema', () => {
         'users_user_login_count_check',
         'users_user_username_length',
       ],
-      indexes: ['users_user_email_idx'],
+      indexes: ['users_user_email_unique'],
       unique: [],
       references: [],
     });

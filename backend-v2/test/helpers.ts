@@ -326,11 +326,16 @@ export function raceBeforeStatement(
   competitor: () => Promise<unknown>
 ): Cloudflare.Env {
   let fired = false;
+  // D1's batch() needs the native statements back, and their query text.
+  const natives = new WeakMap<
+    object,
+    {statement: D1PreparedStatement; query: string}
+  >();
   const wrap = (
     statement: D1PreparedStatement,
     query: string
-  ): D1PreparedStatement =>
-    new Proxy(statement, {
+  ): D1PreparedStatement => {
+    const proxy = new Proxy(statement, {
       get(target, property) {
         const value = Reflect.get(target, property);
         if (property === 'bind') {
@@ -350,10 +355,25 @@ export function raceBeforeStatement(
         return typeof value === 'function' ? value.bind(target) : value;
       },
     });
+    natives.set(proxy, {statement, query});
+    return proxy;
+  };
   const database = new Proxy(env.DB, {
     get(target, property) {
       if (property === 'prepare') {
         return (query: string) => wrap(target.prepare(query), query);
+      }
+      if (property === 'batch') {
+        return async (statements: D1PreparedStatement[]) => {
+          const unwrapped = statements.map(
+            statement => natives.get(statement) ?? {statement, query: ''}
+          );
+          if (!fired && unwrapped.some(({query}) => pattern.test(query))) {
+            fired = true;
+            await competitor();
+          }
+          return target.batch(unwrapped.map(({statement}) => statement));
+        };
       }
       const value = Reflect.get(target, property);
       return typeof value === 'function' ? value.bind(target) : value;

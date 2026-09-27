@@ -532,6 +532,25 @@ describe('verify', () => {
     expect(message).not.toContain(TOKEN);
   });
 
+  test('fails clearly, before loading, on emails shared by two users', () => {
+    const dump = parseDump(DUMP);
+    const people = dump.tables.get('users_user') ?? [];
+    people[1] = {...people[1], email: people[0]?.['email'] ?? null};
+    const {converted} = convertDump(dump);
+    const lines: string[] = [];
+    expect(
+      verify(
+        buildStatements(converted, dump.sequences),
+        converted,
+        dump.sequences,
+        line => lines.push(line)
+      )
+    ).toBe(false);
+    expect(lines.join('\n')).toContain(
+      'FAIL emails shared by more than one user (must be merged first): 1'
+    );
+  });
+
   test('fails when a sequence position does not carry over', () => {
     const {converted, dump, statements} = imported();
     const lines: string[] = [];

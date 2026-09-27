@@ -17,6 +17,7 @@ import {
   sqliteTable,
   text,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable(
@@ -41,7 +42,12 @@ export const users = sqliteTable(
     check('users_user_username_length', sql`length(${table.username}) <= 150`),
     check('users_user_email_length', sql`length(${table.email}) <= 254`),
     check('users_user_login_count_check', sql`${table.login_count} >= 0`),
-    index('users_user_email_idx').on(table.email),
+    // Logins find accounts by email, so one non-empty email must map to one
+    // account; this is also what makes concurrent first logins safe. Django
+    // never enforced it (empty emails stay allowed, as they were).
+    uniqueIndex('users_user_email_unique')
+      .on(table.email)
+      .where(sql`${table.email} != ''`),
   ]
 );
 

@@ -132,7 +132,9 @@ export async function createUser(
       try {
         return await insertUserWithDefaults(db, candidate, email);
       } catch (error) {
-        if (!isUniqueViolation(error)) {
+        // Only a username clash is retried with a new name; an email clash
+        // means the account exists, which the caller must handle.
+        if (!isUniqueViolation(error) || isEmailViolation(error)) {
           throw error;
         }
       }
@@ -142,22 +144,46 @@ export async function createUser(
   throw new Error(`Could not find a free username for ${username}`);
 }
 
-/** users.utils.create_collisionless_user: get_or_create keyed on email. */
+function isEmailViolation(error: unknown): boolean {
+  const message = `${(error as Error)?.message ?? ''} ${
+    (error as {cause?: Error})?.cause?.message ?? ''
+  }`;
+  return /UNIQUE constraint failed: users_user\.email/.test(message);
+}
+
+/**
+ * users.utils.create_collisionless_user: get_or_create keyed on email. The
+ * unique email index makes this atomic: when a concurrent first login creates
+ * the account between our lookup and insert, the insert fails on the email
+ * and we return the account it created instead of making a second one.
+ */
 export async function getOrCreateUser(
   db: Db,
   username: string,
   email: string
 ): Promise<{user: User; created: boolean}> {
-  const [existing] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .orderBy(asc(users.id))
-    .limit(1);
+  const find = async () =>
+    (
+      await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .orderBy(asc(users.id))
+        .limit(1)
+    )[0];
+  const existing = await find();
   if (existing !== undefined) {
     return {user: existing, created: false};
   }
-  return {user: await createUser(db, username, email), created: true};
+  try {
+    return {user: await createUser(db, username, email), created: true};
+  } catch (error) {
+    const concurrent = isEmailViolation(error) ? await find() : undefined;
+    if (concurrent === undefined) {
+      throw error;
+    }
+    return {user: concurrent, created: false};
+  }
 }
 
 /** A returning user's login: bump last_login and login_count. */
