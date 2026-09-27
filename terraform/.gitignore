@@ -1,5 +1,7 @@
 # Terraform
 **/.terraform/*
+# Only the stacks pin providers; `terraform test` inits the modules.
+/modules/*/.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 *.tfplan

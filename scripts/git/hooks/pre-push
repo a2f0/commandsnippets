@@ -137,6 +137,7 @@ fi
 if touches 'terraform/' && [ -d "$REPO_ROOT/terraform" ]; then
   require_worktree_is_push terraform
   step_timings_run terraform-fmt terraform fmt -check -recursive terraform
+  step_timings_run terraform-wrapper bun test ./terraform/
 fi
 
 if touches 'packages/website/' && [ -d "$REPO_ROOT/packages/website" ]; then
