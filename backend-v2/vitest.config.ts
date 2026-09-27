@@ -3,7 +3,7 @@ import {
   cloudflareTest,
   readD1Migrations,
 } from '@cloudflare/vitest-pool-workers';
-import {defineConfig} from 'vitest/config';
+import {configDefaults, defineConfig} from 'vitest/config';
 
 export default defineConfig(async () => {
   const migrations = await readD1Migrations(
@@ -33,6 +33,8 @@ export default defineConfig(async () => {
       }),
     ],
     test: {
+      // scripts/ holds Bun-side tools, tested with `bun test` (bun:sqlite).
+      exclude: [...configDefaults.exclude, 'scripts/**'],
       setupFiles: ['./test/setup.ts'],
       coverage: {
         provider: 'istanbul',

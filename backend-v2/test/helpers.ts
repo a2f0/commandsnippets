@@ -239,7 +239,10 @@ function parseSetCookie(header: string): [string, Cookie] {
 export class ApiClient {
   readonly cookies = new Map<string, Cookie>();
 
-  constructor(token?: string) {
+  constructor(
+    token?: string,
+    private readonly bindings: Cloudflare.Env = env
+  ) {
     if (token !== undefined) {
       this.cookies.set('Authorization', {value: token, attributes: {}});
     }
@@ -266,7 +269,7 @@ export class ApiClient {
         },
         ...(body === undefined ? {} : {body: JSON.stringify(body)}),
       },
-      env
+      this.bindings
     );
     for (const header of response.headers.getSetCookie()) {
       const [name, parsed] = parseSetCookie(header);
@@ -293,6 +296,56 @@ export class ApiClient {
   options(path: string, headers: Record<string, string>) {
     return this.request('OPTIONS', path, undefined, headers);
   }
+}
+
+/**
+ * Bindings whose D1 runs `competitor` immediately before the first statement
+ * inserting into `table` executes: the narrowest race window left once a
+ * create computes its rank inside the INSERT itself.
+ */
+export function raceBeforeInsert(
+  table: string,
+  competitor: () => Promise<unknown>
+): Cloudflare.Env {
+  let fired = false;
+  const pattern = new RegExp(`^insert into "${table}"`, 'i');
+  const wrap = (
+    statement: D1PreparedStatement,
+    query: string
+  ): D1PreparedStatement =>
+    new Proxy(statement, {
+      get(target, property) {
+        const value = Reflect.get(target, property);
+        if (property === 'bind') {
+          return (...args: unknown[]) => wrap(target.bind(...args), query);
+        }
+        if (
+          ['run', 'all', 'raw', 'first'].includes(String(property)) &&
+          !fired &&
+          pattern.test(query)
+        ) {
+          return async (...args: unknown[]) => {
+            fired = true;
+            await competitor();
+            return (value as (...a: unknown[]) => unknown).apply(target, args);
+          };
+        }
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+  const database = new Proxy(env.DB, {
+    get(target, property) {
+      if (property === 'prepare') {
+        return (query: string) => wrap(target.prepare(query), query);
+      }
+      const value = Reflect.get(target, property);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  return new Proxy(env, {
+    get: (target, property) =>
+      property === 'DB' ? database : Reflect.get(target, property),
+  });
 }
 
 // ---------------------------------------------------------------------------

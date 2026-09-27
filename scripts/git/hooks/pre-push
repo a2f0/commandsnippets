@@ -131,6 +131,7 @@ if touches 'backend-v2/' && [ -d "$REPO_ROOT/backend-v2" ]; then
   step_timings_run backend-v2-lint sh -c 'cd backend-v2 && bun run lint'
   step_timings_run backend-v2-typecheck sh -c 'cd backend-v2 && bun run typecheck'
   step_timings_run backend-v2-tests sh -c 'cd backend-v2 && bun run test:coverage'
+  step_timings_run backend-v2-scripts sh -c 'cd backend-v2 && bun run test:scripts'
 fi
 
 step_timings_summary

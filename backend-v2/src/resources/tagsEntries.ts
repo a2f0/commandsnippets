@@ -80,7 +80,7 @@ tagEntryRoutes.post('/', async c => {
           tag_id: tagId,
           text_entry_id: textEntryId,
           user_id: user.id,
-          order: await new OrderedModel(db, tagEntryOrdering).nextOrder(tagId),
+          order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
           date_created: timestamp,
           date_updated: timestamp,
         })

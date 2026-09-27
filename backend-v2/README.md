@@ -36,6 +36,7 @@ bun run dev                      # http://localhost:9001, as the frontend expect
 ```shell
 bun run test             # vitest inside workerd, against a real (local) D1
 bun run test:coverage    # fails under 98% line coverage, like .coveragerc
+bun run test:scripts     # import + management scripts (bun test), same bar
 bun run typecheck
 bun run lint
 ```
@@ -64,8 +65,12 @@ Deliberate changes:
   same `Domain` they were set with.
 - **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
   matches `^http://localhost:*`).
-- **Staging cookies behave like production** (`DEBUG` was accidentally on in
-  Django staging, which made them host-only and non-Secure).
+- **Staging cookies are host-only but otherwise production-grade**: no
+  `Domain`, so they can never overwrite or clear production's
+  `.commandsnippets.com` cookies of the same name, but `Secure` and
+  `SameSite=Strict` (Django staging got host-only cookies by running with
+  `DEBUG` on, which also dropped those). When both environments' cookies reach
+  the staging API, the first valid token wins.
 - `PATCH`/`PUT` on `/entry_reuses` is 405 (it would desync counters), and
   renaming a tag to an existing name is a 400 rather than a 500.
 

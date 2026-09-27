@@ -126,7 +126,7 @@ tagRoutes.post('/', async c => {
       .values({
         name,
         user_id: user.id,
-        order: await new OrderedModel(db, tagOrdering).nextOrder(user.id),
+        order: new OrderedModel(db, tagOrdering).nextOrderSql(user.id),
         date_created: timestamp,
         date_updated: timestamp,
         date_last_used: timestamp,

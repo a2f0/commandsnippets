@@ -17,7 +17,7 @@
  * D1 has no interactive transactions, so each move is a single UPDATE that
  * only applies if the moved row still has the rank it was read with.
  */
-import {sql} from 'drizzle-orm';
+import {type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Db} from '../db/client';
 import {ApiError} from './errors';
@@ -52,6 +52,17 @@ export class OrderedModel {
       sql`SELECT MAX(${order}) AS max FROM ${table} WHERE ${this.spec.scope} = ${scope}`
     );
     return row?.max === null || row?.max === undefined ? 0 : row.max + 1;
+  }
+
+  /**
+   * The bottom rank of `scope` as a SQL subquery, for use inside the INSERT
+   * itself. Reading `MAX` and inserting in one statement keeps concurrent
+   * creates from both reading the same maximum and inserting tied ranks (on
+   * which `above()` is a no-op); D1 runs each statement atomically.
+   */
+  nextOrderSql(scope: number): SQL {
+    const {order, table} = this.spec;
+    return sql`(SELECT COALESCE(MAX(${order}), -1) + 1 FROM ${table} WHERE ${this.spec.scope} = ${scope})`;
   }
 
   /** Move `self` directly above (before) `ref`. */

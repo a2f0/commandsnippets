@@ -6,6 +6,7 @@ import {and, asc, count, eq, type SQL} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
+import {requireUser} from '../auth/tokens';
 import type {User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {notFound, permissionDenied} from '../lib/errors';
@@ -79,7 +80,7 @@ export async function listResponse(
     .offset(pagination.offset)) as Array<{id: number}>;
 
   const {data, included} = await serialize(
-    createRegistry(db),
+    createRegistry(db, options.user.id),
     options.type,
     rows,
     query.include
@@ -124,7 +125,10 @@ export async function getOwned<Row extends {user_id: number}>(
   return row;
 }
 
-/** Render a single resource (with its default or requested includes). */
+/**
+ * Render a single resource (with its default or requested includes), loading
+ * related rows only from the requesting user's data.
+ */
 export async function resourceResponse(
   c: Context<AppEnv>,
   type: string,
@@ -133,7 +137,7 @@ export async function resourceResponse(
 ): Promise<Response> {
   const include = new URL(c.req.url).searchParams.get('include');
   const {data, included} = await serialize(
-    createRegistry(c.get('db')),
+    createRegistry(c.get('db'), requireUser(c).id),
     type,
     [row],
     include

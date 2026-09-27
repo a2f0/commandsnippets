@@ -1,18 +1,39 @@
-import {eq} from 'drizzle-orm';
+import {eq, sql} from 'drizzle-orm';
 import {describe, expect, it, vi} from 'vitest';
 import {tags, tagsEntries} from '../../src/db/schema';
 import {now} from '../../src/lib/clock';
 import {OrderedModel} from '../../src/lib/ordered';
-import {db, json, setUpBase, tagFactory, textEntryFactory} from '../helpers';
+import {
+  ApiClient,
+  db,
+  json,
+  raceBeforeInsert,
+  setUpBase,
+  tagFactory,
+  textEntryFactory,
+  tokenFor,
+} from '../helpers';
+
+const tagEntryPayload = (tagId: number, entryId: number) => ({
+  data: {
+    type: 'TagTextEntryThroughModel',
+    attributes: {},
+    relationships: {
+      tag: {data: {type: 'Tag', id: tagId}},
+      text_entry: {data: {type: 'TextEntry', id: entryId}},
+    },
+  },
+});
 
 // Races between the existence check and the INSERT, simulated by having
-// another writer land while the request computes the new row's rank.
+// another writer land immediately before the request's INSERT executes.
 describe('concurrent creates', () => {
   it('tag create returns the tag a concurrent request just created', async () => {
-    const {user1, user1Client} = await setUpBase();
+    const {user1} = await setUpBase();
     let concurrentId = 0;
-    vi.spyOn(OrderedModel.prototype, 'nextOrder').mockImplementationOnce(
-      async () => {
+    const client = new ApiClient(
+      await tokenFor(user1.id),
+      raceBeforeInsert('tags_tag', async () => {
         const timestamp = now();
         const [row] = await db()
           .insert(tags)
@@ -25,10 +46,9 @@ describe('concurrent creates', () => {
           })
           .returning();
         concurrentId = row?.id ?? 0;
-        return 51;
-      }
+      })
     );
-    const response = await user1Client.post('/api/v1/tags', {
+    const response = await client.post('/api/v1/tags', {
       data: {type: 'Tag', attributes: {name: 'racy'}},
     });
     expect(response.status).toBe(201);
@@ -37,7 +57,9 @@ describe('concurrent creates', () => {
 
   it('tag create surfaces database errors that are not races', async () => {
     const {user1Client} = await setUpBase();
-    vi.spyOn(OrderedModel.prototype, 'nextOrder').mockResolvedValueOnce(-1);
+    vi.spyOn(OrderedModel.prototype, 'nextOrderSql').mockReturnValueOnce(
+      sql`-1`
+    );
     const response = await user1Client.post('/api/v1/tags', {
       data: {type: 'Tag', attributes: {name: 'negative-rank'}},
     });
@@ -48,11 +70,12 @@ describe('concurrent creates', () => {
   });
 
   it('tagging returns the junction a concurrent request just created', async () => {
-    const {user1, user1Client} = await setUpBase();
+    const {user1} = await setUpBase();
     const tag = await tagFactory({user: user1});
     const entry = await textEntryFactory({user: user1});
-    vi.spyOn(OrderedModel.prototype, 'nextOrder').mockImplementationOnce(
-      async () => {
+    const client = new ApiClient(
+      await tokenFor(user1.id),
+      raceBeforeInsert('tags_tagtextentrythroughmodel', async () => {
         const timestamp = now();
         await db().insert(tagsEntries).values({
           tag_id: tag.id,
@@ -62,19 +85,12 @@ describe('concurrent creates', () => {
           date_created: timestamp,
           date_updated: timestamp,
         });
-        return 8;
-      }
+      })
     );
-    const response = await user1Client.post('/api/v1/tags_entries', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        attributes: {},
-        relationships: {
-          tag: {data: {type: 'Tag', id: tag.id}},
-          text_entry: {data: {type: 'TextEntry', id: entry.id}},
-        },
-      },
-    });
+    const response = await client.post(
+      '/api/v1/tags_entries',
+      tagEntryPayload(tag.id, entry.id)
+    );
     expect(response.status).toBe(201);
     expect((await json(response)).data.attributes.order).toBe(7);
     const rows = await db()
@@ -88,18 +104,55 @@ describe('concurrent creates', () => {
     const {user1, user1Client} = await setUpBase();
     const tag = await tagFactory({user: user1});
     const entry = await textEntryFactory({user: user1});
-    vi.spyOn(OrderedModel.prototype, 'nextOrder').mockResolvedValueOnce(-1);
-    const response = await user1Client.post('/api/v1/tags_entries', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        attributes: {},
-        relationships: {
-          tag: {data: {type: 'Tag', id: tag.id}},
-          text_entry: {data: {type: 'TextEntry', id: entry.id}},
-        },
-      },
-    });
+    vi.spyOn(OrderedModel.prototype, 'nextOrderSql').mockReturnValueOnce(
+      sql`-1`
+    );
+    const response = await user1Client.post(
+      '/api/v1/tags_entries',
+      tagEntryPayload(tag.id, entry.id)
+    );
     expect(response.status).toBe(500);
+  });
+
+  it('parallel tag creates get distinct ranks', async () => {
+    const {user1, user1Client} = await setUpBase();
+    const responses = await Promise.all(
+      Array.from({length: 6}, (_, i) =>
+        user1Client.post('/api/v1/tags', {
+          data: {type: 'Tag', attributes: {name: `parallel-${i}`}},
+        })
+      )
+    );
+    expect(responses.map(r => r.status)).toEqual(Array(6).fill(201));
+    const ranks = (
+      await db().select().from(tags).where(eq(tags.user_id, user1.id))
+    ).map(tag => tag.order);
+    expect(new Set(ranks).size).toBe(ranks.length);
+  });
+
+  it('parallel tagging within one tag gets distinct ranks', async () => {
+    const {user1, user1Client} = await setUpBase();
+    const tag = await tagFactory({user: user1});
+    const entries = await Promise.all(
+      Array.from({length: 6}, () => textEntryFactory({user: user1}))
+    );
+    const responses = await Promise.all(
+      entries.map(entry =>
+        user1Client.post(
+          '/api/v1/tags_entries',
+          tagEntryPayload(tag.id, entry.id)
+        )
+      )
+    );
+    expect(responses.map(r => r.status)).toEqual(Array(6).fill(201));
+    const ranks = (
+      await db()
+        .select()
+        .from(tagsEntries)
+        .where(eq(tagsEntries.tag_id, tag.id))
+    ).map(row => row.order);
+    expect(ranks).toHaveLength(6);
+    expect(new Set(ranks).size).toBe(6);
   });
 });
 

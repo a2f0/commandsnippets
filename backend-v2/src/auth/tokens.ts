@@ -1,6 +1,6 @@
 import {eq} from 'drizzle-orm';
 import type {Context} from 'hono';
-import {getCookie, setCookie} from 'hono/cookie';
+import {setCookie} from 'hono/cookie';
 import type {Db} from '../db/client';
 import {tokens, type User, users} from '../db/schema';
 import type {AppEnv} from '../env';
@@ -26,6 +26,22 @@ async function userForKey(db: Db, key: string): Promise<User | null> {
   return row?.user ?? null;
 }
 
+/** Every `Authorization` cookie value in a Cookie header, in order. */
+export function authorizationCookies(header: string | undefined): string[] {
+  return (header ?? '')
+    .split(';')
+    .map(pair => pair.trim())
+    .filter(pair => pair.startsWith('Authorization='))
+    .map(pair => {
+      const value = pair.slice('Authorization='.length);
+      try {
+        return decodeURIComponent(value);
+      } catch {
+        return value;
+      }
+    });
+}
+
 /**
  * The Django `CustomAuthentication` class: the `Authorization` cookie wins if
  * present (even when invalid); otherwise an `Authorization: <scheme> <key>`
@@ -33,9 +49,17 @@ async function userForKey(db: Db, key: string): Promise<User | null> {
  */
 export async function authenticate(c: Context<AppEnv>): Promise<User | null> {
   const db = c.get('db');
-  const cookie = getCookie(c, 'Authorization');
-  if (cookie !== undefined) {
-    return userForKey(db, cookie);
+  const cookies = authorizationCookies(c.req.header('Cookie'));
+  if (cookies.length > 0) {
+    // Staging's host-only cookie arrives alongside production's domain-wide
+    // one (same name), in browser-defined order: accept the first valid key.
+    for (const key of cookies) {
+      const user = await userForKey(db, key);
+      if (user !== null) {
+        return user;
+      }
+    }
+    return null;
   }
   const header = c.req.header('Authorization');
   if (header !== undefined) {
@@ -80,6 +104,17 @@ export async function getOrCreateToken(
 
 export type ClientType = 'web' | 'electron';
 
+/**
+ * The Domain attribute, if any. Local development (DEBUG) and an empty
+ * COOKIE_DOMAIN mean host-only cookies; staging uses the latter so its cookies
+ * never overwrite or clear production's `.commandsnippets.com` ones, which
+ * share their names.
+ */
+function cookieDomain(c: Context<AppEnv>): {domain?: string} {
+  const domain: string = c.env.COOKIE_DOMAIN;
+  return c.env.DEBUG === 'true' || domain === '' ? {} : {domain};
+}
+
 function cookieOptions(c: Context<AppEnv>, clientType: ClientType) {
   const isLocalDev = c.env.DEBUG === 'true';
   const isElectron = clientType === 'electron';
@@ -91,7 +126,7 @@ function cookieOptions(c: Context<AppEnv>, clientType: ClientType) {
     maxAge: AUTH_COOKIE_MAX_AGE,
     sameSite,
     secure: isElectron || !isLocalDev,
-    ...(isLocalDev ? {} : {domain: c.env.COOKIE_DOMAIN}),
+    ...cookieDomain(c),
   } as const;
 }
 
@@ -113,7 +148,7 @@ export async function setAuthCookies(
  * domain-scoped production cookies and logout doesn't stick.
  */
 export function clearAuthCookies(c: Context<AppEnv>): void {
-  const domain = c.env.DEBUG === 'true' ? {} : {domain: c.env.COOKIE_DOMAIN};
+  const domain = cookieDomain(c);
   for (const name of ['Authorization', 'LoggedIn']) {
     setCookie(c, name, '', {
       path: '/',

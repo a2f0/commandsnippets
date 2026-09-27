@@ -23,9 +23,11 @@
   ],
   "env": {
     "staging": {
+      // Host-only cookies (no Domain): staging's must not overwrite or clear
+      // production's .commandsnippets.com cookies, which share their names.
       "vars": {
         "DEBUG": "false",
-        "COOKIE_DOMAIN": ".commandsnippets.com",
+        "COOKIE_DOMAIN": "",
         "GITHUB_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/github",
         "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-staging://oauth/github",
         "GOOGLE_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/google"

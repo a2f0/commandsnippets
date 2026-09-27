@@ -21,7 +21,7 @@ describe('resource registry loaders', () => {
       text_entry: entry as never,
       user: user1,
     });
-    const registry = createRegistry(db());
+    const registry = createRegistry(db(), user1.id);
     const loadedJunctions = (await registry[TAG_TEXT_ENTRY]?.load(
       junctions.map(row => row.id)
     )) as Array<{id: number}>;

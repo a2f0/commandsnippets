@@ -14,55 +14,12 @@
  */
 import {writeFileSync} from 'node:fs';
 
-type Row = Record<string, string | number | null>;
+export type Row = Record<string, string | number | null>;
 
-const args = process.argv.slice(2);
-const flag = (name: string) => {
-  const index = args.indexOf(name);
-  if (index === -1) {
-    return undefined;
-  }
-  const [, value] = args.splice(index, 2);
-  return value;
-};
-const environment = flag('--env');
-const persistTo = flag('--persist-to');
-const format = flag('--format') ?? 'stdout';
-const output = flag('--output');
-const [command, ...positional] = args;
-
-async function query(sql: string): Promise<Row[]> {
-  const target =
-    environment === undefined
-      ? [
-          '--local',
-          ...(persistTo === undefined ? [] : ['--persist-to', persistTo]),
-        ]
-      : ['--remote', '--env', environment];
-  const proc = Bun.spawn(
-    [
-      'bunx',
-      'wrangler',
-      'd1',
-      'execute',
-      'DB',
-      ...target,
-      '--json',
-      '--command',
-      sql,
-    ],
-    {cwd: `${import.meta.dirname}/..`, stdout: 'pipe', stderr: 'pipe'}
-  );
-  const [stdout, stderr, code] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-    proc.exited,
-  ]);
-  if (code !== 0) {
-    throw new Error(`wrangler d1 execute failed:\n${stderr || stdout}`);
-  }
-  const [result] = JSON.parse(stdout) as Array<{results: Row[]}>;
-  return result?.results ?? [];
+/** Where commands read from and write to; tests substitute both. */
+export interface CommandContext {
+  query: (sql: string) => Promise<Row[]>;
+  out: (text: string) => void;
 }
 
 const literal = (value: string) => `'${value.replaceAll("'", "''")}'`;
@@ -74,15 +31,18 @@ const pad = (value: unknown, width: number) => {
   );
 };
 
-async function listUsers() {
+export async function listUsers({query, out}: CommandContext): Promise<void> {
   for (const {email} of await query(
     'SELECT email FROM users_user ORDER BY id'
   )) {
-    console.log(email);
+    out(String(email));
   }
 }
 
-async function listRecentLogins() {
+export async function listRecentLogins({
+  query,
+  out,
+}: CommandContext): Promise<void> {
   const users = await query(
     `SELECT username, email, last_login, date_joined, login_count FROM users_user
      ORDER BY last_login DESC NULLS LAST`
@@ -94,18 +54,16 @@ async function listRecentLogins() {
     date_joined: 25,
     login_count: 10,
   };
-  console.log(`Running user query at ${new Date().toISOString()}`);
-  console.log(`Total users: ${users.length}`);
-  console.log(
+  out(`Running user query at ${new Date().toISOString()}`);
+  out(`Total users: ${users.length}`);
+  out(
     Object.entries(widths)
       .map(([field, width]) => pad(field, width))
       .join(' | ')
   );
-  console.log(
-    '-'.repeat(Object.values(widths).reduce((a, b) => a + b, 0) + 3 * 4)
-  );
+  out('-'.repeat(Object.values(widths).reduce((a, b) => a + b, 0) + 3 * 4));
   for (const user of users) {
-    console.log(
+    out(
       Object.entries(widths)
         .map(([field, width]) => pad(user[field], width))
         .join(' | ')
@@ -113,7 +71,31 @@ async function listRecentLogins() {
   }
 }
 
-async function usageReport() {
+const REPORT_COLUMNS = [
+  'username',
+  'email',
+  'tag_count',
+  'text_entry_count',
+  'tag_text_relationship_count',
+] as const;
+
+function csvField(value: unknown): string {
+  const text = String(value ?? '');
+  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+export async function usageReport(
+  {query, out}: CommandContext,
+  {
+    format = 'stdout',
+    output,
+    writeFile = writeFileSync,
+  }: {
+    format?: string;
+    output?: string | undefined;
+    writeFile?: (path: string, data: string) => void;
+  } = {}
+): Promise<void> {
   const rows = await query(
     `SELECT u.username, u.email,
        (SELECT COUNT(*) FROM tags_tag WHERE user_id = u.id) AS tag_count,
@@ -122,60 +104,43 @@ async function usageReport() {
          AS tag_text_relationship_count
      FROM users_user u ORDER BY u.id`
   );
-  const total = {
+  const sum = (key: string) =>
+    rows.reduce((total, row) => total + Number(row[key]), 0);
+  const total: Row = {
     username: 'TOTAL',
     email: '',
-    tag_count: rows.reduce((sum, row) => sum + Number(row['tag_count']), 0),
-    text_entry_count: rows.reduce(
-      (sum, row) => sum + Number(row['text_entry_count']),
-      0
-    ),
-    tag_text_relationship_count: rows.reduce(
-      (sum, row) => sum + Number(row['tag_text_relationship_count']),
-      0
-    ),
+    tag_count: sum('tag_count'),
+    text_entry_count: sum('text_entry_count'),
+    tag_text_relationship_count: sum('tag_text_relationship_count'),
   };
-  const columns = [
-    'username',
-    'email',
-    'tag_count',
-    'text_entry_count',
-    'tag_text_relationship_count',
-  ] as const;
 
   if (format === 'csv') {
-    const csvField = (value: unknown) => {
-      const text = String(value ?? '');
-      return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-    };
-    const csv = [
-      columns.join(','),
+    const csv = `${[
+      REPORT_COLUMNS.join(','),
       ...[...rows, total].map(row =>
-        columns.map(c => csvField(row[c])).join(',')
+        REPORT_COLUMNS.map(column => csvField(row[column])).join(',')
       ),
-    ]
-      .join('\n')
-      .concat('\n');
+    ].join('\n')}\n`;
     if (output === undefined) {
-      process.stdout.write(csv);
+      out(csv.trimEnd());
     } else {
-      writeFileSync(output, csv);
-      console.log(`Report saved to ${output}`);
+      writeFile(output, csv);
+      out(`Report saved to ${output}`);
     }
   } else {
-    const line = (row: Row | typeof total) =>
-      `${pad(row.username, 30)} ${pad(row.email, 30)} ${pad(row.tag_count, 10)} ` +
-      `${pad(row.text_entry_count, 10)} ${pad(row.tag_text_relationship_count, 15)}`;
-    console.log('=== User Usage Report ===');
-    console.log(
+    const line = (row: Row) =>
+      `${pad(row['username'], 30)} ${pad(row['email'], 30)} ${pad(row['tag_count'], 10)} ` +
+      `${pad(row['text_entry_count'], 10)} ${pad(row['tag_text_relationship_count'], 15)}`;
+    out('=== User Usage Report ===');
+    out(
       `${pad('Username', 30)} ${pad('Email', 30)} ${pad('Tags', 10)} ${pad('Entries', 10)} ${pad('Relationships', 15)}`
     );
-    console.log('-'.repeat(95));
+    out('-'.repeat(95));
     for (const row of rows) {
-      console.log(line(row));
+      out(line(row));
     }
-    console.log('-'.repeat(95));
-    console.log(line(total));
+    out('-'.repeat(95));
+    out(line(total));
   }
 
   const top = (key: 'tag_count' | 'text_entry_count', noun: string) =>
@@ -183,10 +148,10 @@ async function usageReport() {
       .sort((a, b) => Number(b[key]) - Number(a[key]))
       .slice(0, 5)
       .map(row => `${row['username']}: ${row[key]} ${noun}`);
-  console.log(
+  out(
     ['', 'Top 5 Users by Tag Count:', ...top('tag_count', 'tags')].join('\n')
   );
-  console.log(
+  out(
     [
       '',
       'Top 5 Users by Text Entry Count:',
@@ -195,7 +160,10 @@ async function usageReport() {
   );
 }
 
-async function deleteUser(username: string | undefined) {
+export async function deleteUser(
+  {query, out}: CommandContext,
+  username: string | undefined
+): Promise<void> {
   if (username === undefined) {
     throw new Error('usage: delete-user <username>');
   }
@@ -207,26 +175,107 @@ async function deleteUser(username: string | undefined) {
   }
   // Tokens, tags, entries, junctions and reuses go with it (ON DELETE CASCADE).
   await query(`DELETE FROM users_user WHERE id = ${Number(user['id'])}`);
-  console.log(`Deleted ${username}`);
+  out(`Deleted ${username}`);
 }
 
-const commands: Record<string, () => Promise<void>> = {
-  'list-users': listUsers,
-  'list-recent-logins': listRecentLogins,
-  'usage-report': usageReport,
-  'delete-user': () => deleteUser(positional[0]),
-};
-
-const run = command === undefined ? undefined : commands[command];
-if (run === undefined) {
-  console.error(
-    `usage: bun scripts/manage.ts <${Object.keys(commands).join('|')}> [--env staging|production]`
-  );
-  process.exit(2);
+/** Run one command from CLI arguments; returns the process exit code. */
+export async function runCommand(
+  argv: string[],
+  context: CommandContext
+): Promise<number> {
+  const args = [...argv];
+  const flag = (name: string) => {
+    const index = args.indexOf(name);
+    if (index === -1) {
+      return undefined;
+    }
+    const [, value] = args.splice(index, 2);
+    return value;
+  };
+  const format = flag('--format') ?? 'stdout';
+  const output = flag('--output');
+  const [command, username] = args;
+  const commands: Record<string, () => Promise<void>> = {
+    'list-users': () => listUsers(context),
+    'list-recent-logins': () => listRecentLogins(context),
+    'usage-report': () => usageReport(context, {format, output}),
+    'delete-user': () => deleteUser(context, username),
+  };
+  const run = command === undefined ? undefined : commands[command];
+  if (run === undefined) {
+    context.out(
+      `usage: bun scripts/manage.ts <${Object.keys(commands).join('|')}> [--env staging|production]`
+    );
+    return 2;
+  }
+  try {
+    await run();
+    return 0;
+  } catch (error) {
+    context.out((error as Error).message);
+    return 1;
+  }
 }
-try {
-  await run();
-} catch (error) {
-  console.error((error as Error).message);
-  process.exit(1);
+
+/** Run SQL against D1 through `wrangler d1 execute`. */
+export function wranglerQuery(
+  environment: string | undefined,
+  persistTo: string | undefined,
+  wrangler: string[] = ['bunx', 'wrangler']
+) {
+  return async (sql: string): Promise<Row[]> => {
+    const target =
+      environment === undefined
+        ? [
+            '--local',
+            ...(persistTo === undefined ? [] : ['--persist-to', persistTo]),
+          ]
+        : ['--remote', '--env', environment];
+    const proc = Bun.spawn(
+      [
+        ...wrangler,
+        'd1',
+        'execute',
+        'DB',
+        ...target,
+        '--json',
+        '--command',
+        sql,
+      ],
+      {cwd: `${import.meta.dirname}/..`, stdout: 'pipe', stderr: 'pipe'}
+    );
+    const [stdout, stderr, code] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ]);
+    if (code !== 0) {
+      throw new Error(`wrangler d1 execute failed:\n${stderr || stdout}`);
+    }
+    const [result] = JSON.parse(stdout) as Array<{results: Row[]}>;
+    return result?.results ?? [];
+  };
+}
+
+/** The CLI entry point; returns the process exit code. */
+export function main(
+  argv: string[],
+  out: (text: string) => void = console.log,
+  wrangler?: string[]
+): Promise<number> {
+  const args = [...argv];
+  const take = (name: string) => {
+    const index = args.indexOf(name);
+    return index === -1 ? undefined : args.splice(index, 2)[1];
+  };
+  const environment = take('--env');
+  const persistTo = take('--persist-to');
+  return runCommand(args, {
+    query: wranglerQuery(environment, persistTo, wrangler),
+    out,
+  });
+}
+
+if (import.meta.main) {
+  process.exit(await main(process.argv.slice(2)));
 }

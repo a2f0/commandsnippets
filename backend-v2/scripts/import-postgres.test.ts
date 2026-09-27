@@ -1,0 +1,412 @@
+import {Database} from 'bun:sqlite';
+import {describe, expect, test} from 'bun:test';
+import {
+  buildStatements,
+  convert,
+  convertDump,
+  decodeCopyField,
+  loadMigrations,
+  parseDump,
+  renderSql,
+  TABLES,
+  verify,
+} from './import-postgres';
+
+const T = '\t';
+const row = (...fields: string[]) => fields.join(T);
+const TOKEN = 'a'.repeat(40);
+
+/** What `pg_restore --data-only -f -` prints for a small Django database. */
+const DUMP = [
+  '--',
+  '-- Data for Name: users_user; Type: TABLE DATA; Schema: public',
+  '--',
+  '',
+  'COPY public.users_user (id, password, last_login, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined, date_updated, login_count) FROM stdin;',
+  row(
+    '1',
+    'pbkdf2_sha256$secret',
+    '2021-11-15 17:57:23.366384+00',
+    'f',
+    'alice',
+    '',
+    '',
+    'alice@example.com',
+    'f',
+    't',
+    '2021-11-15 17:57:23.366384+00',
+    '2021-11-15 17:57:23.367596+00',
+    '3'
+  ),
+  row(
+    '2',
+    '',
+    '\\N',
+    'f',
+    "o'brien",
+    '',
+    '',
+    'ob@example.com',
+    'f',
+    't',
+    '2022-01-01 00:00:00+00',
+    '2022-01-01 00:00:00.5+00',
+    '1'
+  ),
+  '\\.',
+  '',
+  'COPY public.authtoken_token (key, created, user_id) FROM stdin;',
+  row(TOKEN, '2022-01-19 08:49:39.564629+00', '1'),
+  '\\.',
+  '',
+  'COPY public.text_entries_textentry (id, body, date_created, date_updated, subject, user_id, is_deleted, tag_count, reused_count, reused_date) FROM stdin;',
+  row(
+    '10',
+    'SELECT *\\nFROM t\\twhere \\\\l',
+    '2020-08-03 02:37:27.850184+00',
+    '2020-08-03 02:37:27.850203+00',
+    "it's \\101 subject",
+    '1',
+    'f',
+    '2',
+    '0',
+    '\\N'
+  ),
+  row(
+    '11',
+    'body',
+    '2020-08-04 00:00:00+00',
+    '2020-08-04 00:00:00+00',
+    'other',
+    '2',
+    't',
+    '0',
+    '0',
+    '\\N'
+  ),
+  '\\.',
+  '',
+  'COPY public.tags_tag (id, name, date_created, date_updated, user_id, entry_count, date_last_used, "order", is_deleted) FROM stdin;',
+  row(
+    '20',
+    'a',
+    '2021-01-01 00:00:00+00',
+    '2021-01-01 00:00:00+00',
+    '1',
+    '1',
+    '2021-02-01 00:00:00+00',
+    '5',
+    'f'
+  ),
+  row(
+    '21',
+    'b',
+    '2021-01-01 00:00:00+00',
+    '2021-01-01 00:00:00+00',
+    '1',
+    '1',
+    '2021-02-02 00:00:00+00',
+    '5',
+    'f'
+  ),
+  row(
+    '22',
+    'c',
+    '2021-01-01 00:00:00+00',
+    '2021-01-01 00:00:00+00',
+    '2',
+    '0',
+    '\\N',
+    '1',
+    'f'
+  ),
+  '\\.',
+  '',
+  'COPY public.tags_tagtextentrythroughmodel (id, "order", tag_id, text_entry_id, date_created, date_updated, user_id) FROM stdin;',
+  row(
+    '30',
+    '3',
+    '20',
+    '10',
+    '2021-03-01 00:00:00+00',
+    '2021-03-01 00:00:00+00',
+    '1'
+  ),
+  row(
+    '31',
+    '3',
+    '21',
+    '10',
+    '2021-03-02 00:00:00+00',
+    '2021-03-02 00:00:00+00',
+    '1'
+  ),
+  '\\.',
+  '',
+  'COPY public.text_entries_textentryreused (id, date_created, text_entry_id, user_id) FROM stdin;',
+  '\\.',
+  '',
+  'COPY public.django_session (session_key, session_data, expire_date) FROM stdin;',
+  row('k', 'd', '2021-01-01 00:00:00+00'),
+  '\\.',
+  '',
+  "SELECT pg_catalog.setval('public.users_user_id_seq', 24, true);",
+  "SELECT pg_catalog.setval('public.tags_tag_id_seq', 200, true);",
+  "SELECT pg_catalog.setval('public.tags_tagtextentrythroughmodel_id_seq', 999, true);",
+  "SELECT pg_catalog.setval('public.text_entries_textentry_id_seq', 855, true);",
+  "SELECT pg_catalog.setval('public.text_entries_textentryreused_id_seq', 61, true);",
+  "SELECT pg_catalog.setval('public.auth_group_id_seq', 1, false);",
+  '',
+].join('\n');
+
+function imported() {
+  const dump = parseDump(DUMP);
+  const result = convertDump(dump);
+  const statements = buildStatements(result.converted, dump.sequences);
+  return {dump, ...result, statements};
+}
+
+function load(statements: string[]): Database {
+  const db = new Database(':memory:');
+  db.run('PRAGMA foreign_keys = ON');
+  loadMigrations(db);
+  for (const statement of statements) {
+    db.run(statement);
+  }
+  return db;
+}
+
+describe('decodeCopyField', () => {
+  test('decodes NULL and every COPY escape', () => {
+    expect(decodeCopyField('\\N')).toBeNull();
+    expect(decodeCopyField('a\\tb\\nc\\rd\\\\e')).toBe('a\tb\nc\rd\\e');
+    expect(decodeCopyField('\\b\\f\\v')).toBe('\b\f\v');
+    expect(decodeCopyField('\\101\\x42')).toBe('AB');
+    expect(decodeCopyField('\\q')).toBe('q');
+    expect(decodeCopyField('')).toBe('');
+  });
+});
+
+describe('parseDump', () => {
+  test('reads every COPY block and sequence position', () => {
+    const {tables, sequences} = parseDump(DUMP);
+    expect([...tables.keys()]).toEqual([
+      'users_user',
+      'authtoken_token',
+      'text_entries_textentry',
+      'tags_tag',
+      'tags_tagtextentrythroughmodel',
+      'text_entries_textentryreused',
+      'django_session',
+    ]);
+    expect(tables.get('text_entries_textentryreused')).toEqual([]);
+    expect(tables.get('text_entries_textentry')?.[0]?.['body']).toBe(
+      'SELECT *\nFROM t\twhere \\l'
+    );
+    expect(sequences.get('text_entries_textentryreused')).toBe(61);
+    // is_called=false means the next value is the given one itself.
+    expect(sequences.get('auth_group')).toBe(0);
+  });
+
+  test('rejects rows with the wrong field count', () => {
+    expect(() =>
+      parseDump('COPY public.t (a, b) FROM stdin;\nonly-one\n\\.\n')
+    ).toThrow('expected 2 fields, got 1');
+  });
+
+  test('rejects an unterminated COPY block', () => {
+    expect(() => parseDump('COPY public.t (a) FROM stdin;\nx')).toThrow(
+      'Unterminated COPY block for t'
+    );
+  });
+});
+
+describe('convert', () => {
+  const spec = TABLES['users_user'];
+  if (spec === undefined) {
+    throw new Error('users_user spec missing');
+  }
+  const user = parseDump(DUMP).tables.get('users_user')?.[0] ?? {};
+
+  test('drops the password and converts booleans and timestamps', () => {
+    const values = convert('users_user', spec, user);
+    expect(spec.columns).not.toContain('password');
+    expect(values).toEqual([
+      1,
+      'alice',
+      'alice@example.com',
+      '',
+      '',
+      0,
+      0,
+      1,
+      '2021-11-15T17:57:23.366384',
+      '2021-11-15T17:57:23.366384',
+      '2021-11-15T17:57:23.367596',
+      3,
+    ]);
+  });
+
+  test('rejects malformed values and missing columns', () => {
+    expect(() =>
+      convert('users_user', spec, {...user, is_staff: 'yes'})
+    ).toThrow('bad boolean');
+    expect(() =>
+      convert('users_user', spec, {...user, date_joined: 'soon'})
+    ).toThrow('bad timestamp');
+    const {email: _email, ...withoutEmail} = user;
+    expect(() => convert('users_user', spec, withoutEmail)).toThrow(
+      'column email missing'
+    );
+  });
+});
+
+describe('convertDump', () => {
+  test('re-ranks only tied scopes and bumps their date_updated', () => {
+    const {converted, skipped, reranked} = imported();
+    expect(skipped).toEqual(['django_session']);
+    expect(reranked).toEqual({
+      tags_tag: 2,
+      tags_tagtextentrythroughmodel: 0,
+    });
+    const tags = converted.find(c => c.table === 'tags_tag');
+    const columns = tags?.spec.columns ?? [];
+    const byId = new Map(
+      (tags?.rows ?? []).map(r => [r[columns.indexOf('id')], r])
+    );
+    const order = columns.indexOf('order');
+    const updated = columns.indexOf('date_updated');
+    expect(byId.get(20)?.[order]).toBe(0);
+    expect(byId.get(21)?.[order]).toBe(1);
+    expect(byId.get(22)?.[order]).toBe(1);
+    expect(byId.get(20)?.[updated]).not.toBe('2021-01-01T00:00:00.000000');
+    expect(byId.get(22)?.[updated]).toBe('2021-01-01T00:00:00.000000');
+  });
+
+  test('requires every imported table', () => {
+    expect(() =>
+      convertDump(parseDump('COPY public.users_user (id) FROM stdin;\n\\.\n'))
+    ).toThrow();
+  });
+});
+
+describe('buildStatements', () => {
+  test('passes its own verification', () => {
+    const {statements, converted, dump} = imported();
+    const lines: string[] = [];
+    expect(
+      verify(statements, converted, dump.sequences, line => lines.push(line))
+    ).toBe(true);
+    expect(lines.join('\n')).not.toContain('BAD');
+    expect(lines.join('\n')).not.toContain('FAIL');
+  });
+
+  test('restores counters exactly, despite the triggers firing on insert', () => {
+    const db = load(imported().statements);
+    expect(
+      db
+        .query(
+          'SELECT id, entry_count, date_last_used FROM tags_tag ORDER BY id'
+        )
+        .all()
+    ).toEqual([
+      {id: 20, entry_count: 1, date_last_used: '2021-02-01T00:00:00.000000'},
+      {id: 21, entry_count: 1, date_last_used: '2021-02-02T00:00:00.000000'},
+      {id: 22, entry_count: 0, date_last_used: null},
+    ]);
+    expect(
+      db
+        .query('SELECT tag_count FROM text_entries_textentry WHERE id = 10')
+        .get()
+    ).toEqual({tag_count: 2});
+  });
+
+  test('keeps text byte-for-byte, including quotes and escapes', () => {
+    const db = load(imported().statements);
+    expect(
+      db
+        .query('SELECT body, subject FROM text_entries_textentry WHERE id = 10')
+        .get()
+    ).toEqual({body: 'SELECT *\nFROM t\twhere \\l', subject: "it's A subject"});
+    expect(
+      db.query('SELECT username FROM users_user WHERE id = 2').get()
+    ).toEqual({username: "o'brien"});
+  });
+
+  test('carries sequence positions over, including for empty tables', () => {
+    const db = load(imported().statements);
+    const next = (insert: string) => {
+      db.run(insert);
+      return (
+        db.query('SELECT last_insert_rowid() AS id').get() as {id: number}
+      ).id;
+    };
+    // text_entries_textentryreused had no rows: its position must survive.
+    expect(
+      next(
+        "INSERT INTO text_entries_textentryreused (date_created, text_entry_id, user_id) VALUES ('x', 10, 1)"
+      )
+    ).toBe(62);
+    expect(
+      next(
+        "INSERT INTO tags_tag (name, date_created, date_updated, user_id, \"order\") VALUES ('new', 'x', 'x', 1, 9)"
+      )
+    ).toBe(201);
+  });
+});
+
+describe('verify', () => {
+  test('refuses data that breaks a foreign key (D1 enforces them too)', () => {
+    const {converted, dump} = imported();
+    const broken = converted.map(c =>
+      c.table === 'tags_tagtextentrythroughmodel'
+        ? {
+            ...c,
+            // Point one junction at a tag that does not exist.
+            rows: c.rows.map((r, rowIndex) =>
+              rowIndex === 0 ? r.map((v, i) => (i === 2 ? 9999 : v)) : r
+            ),
+          }
+        : c
+    );
+    expect(() =>
+      verify(
+        buildStatements(broken, dump.sequences),
+        broken,
+        dump.sequences,
+        () => {}
+      )
+    ).toThrow(/Import statement \d+ failed: FOREIGN KEY constraint failed/);
+  });
+
+  test('fails when a sequence position does not carry over', () => {
+    const {converted, dump, statements} = imported();
+    const lines: string[] = [];
+    const withoutEmptyTableSequence = statements.filter(
+      statement =>
+        !(
+          statement.startsWith('INSERT INTO sqlite_sequence') &&
+          statement.includes('text_entries_textentryreused')
+        )
+    );
+    expect(
+      verify(withoutEmptyTableSequence, converted, dump.sequences, line =>
+        lines.push(line)
+      )
+    ).toBe(false);
+    expect(lines.join('\n')).toMatch(
+      /BAD text_entries_textentryreused\s+61 -> missing/
+    );
+  });
+});
+
+describe('renderSql', () => {
+  test('writes a header and every statement', () => {
+    const {statements} = imported();
+    const file = renderSql(statements);
+    expect(file.startsWith('-- Generated by scripts/import-postgres.ts')).toBe(
+      true
+    );
+    expect(file.trimEnd().endsWith(statements.at(-1) ?? '')).toBe(true);
+  });
+});

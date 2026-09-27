@@ -30,6 +30,8 @@ jobs:
         run: bun run cf-typegen && bun run typecheck
       - name: Test with coverage (fails under 98%)
         run: bun run test:coverage
+      - name: Test import and management scripts (fails under 98%)
+        run: bun run test:scripts
   deploy:
     runs-on: ubuntu-latest
     needs: test
