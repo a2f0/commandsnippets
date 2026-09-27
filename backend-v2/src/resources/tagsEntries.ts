@@ -1,6 +1,7 @@
-import {and, eq} from 'drizzle-orm';
+import {and, eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/tokens';
+import type {Db} from '../db/client';
 import {type TagTextEntry, tags, tagsEntries, textEntries} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
@@ -21,7 +22,55 @@ export const tagEntryOrdering: OrderedSpec = {
   scope: tagsEntries.tag_id,
   // Imported Django data can put another user's junction in a user's tag.
   owner: tagsEntries.user_id,
+  // Clients fetch junctions through /entries (included), which is filtered on
+  // the entry's revision: advance the entries whose junctions a move re-ranked.
+  // The moved junctions carry the owner's newest junction revision; nothing is
+  // touched if the move's guarded UPDATE did not apply.
+  touch: moved => sql`
+    UPDATE ${textEntries}
+    SET ${sql.identifier('date_updated')} = ${revision(
+      textEntries,
+      textEntries.date_updated,
+      textEntries.user_id,
+      moved.owner as number
+    )}
+    WHERE changes() > 0
+      AND ${textEntries.user_id} = ${moved.owner}
+      AND ${textEntries.id} IN (
+        SELECT j.text_entry_id FROM ${tagsEntries} AS j
+        WHERE j.tag_id = ${moved.scope}
+          AND j.user_id = ${moved.owner}
+          AND j.date_updated = (
+            SELECT MAX(date_updated) FROM ${tagsEntries}
+            WHERE user_id = ${moved.owner}
+          )
+      )
+  `,
 };
+
+/**
+ * Advance an entry's revision when the junction write batched before it
+ * applied (`changes()` counts only that statement's own rows, not triggers').
+ * Only the requester's own entries: legacy junctions can link another user's.
+ */
+const touchEntry = (db: Db, entryId: number, userId: number) =>
+  db
+    .update(textEntries)
+    .set({
+      date_updated: revision(
+        textEntries,
+        textEntries.date_updated,
+        textEntries.user_id,
+        userId
+      ),
+    })
+    .where(
+      and(
+        sql`changes() > 0`,
+        eq(textEntries.id, entryId),
+        eq(textEntries.user_id, userId)
+      )
+    );
 
 const owned = {
   table: tagsEntries,
@@ -77,22 +126,26 @@ tagEntryRoutes.post('/', async c => {
   if (junction === undefined) {
     const timestamp = now();
     try {
-      [junction] = await db
-        .insert(tagsEntries)
-        .values({
-          tag_id: tagId,
-          text_entry_id: textEntryId,
-          user_id: user.id,
-          order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
-          date_created: timestamp,
-          date_updated: revision(
-            tagsEntries,
-            tagsEntries.date_updated,
-            tagsEntries.user_id,
-            user.id
-          ),
-        })
-        .returning();
+      const [inserted] = await db.batch([
+        db
+          .insert(tagsEntries)
+          .values({
+            tag_id: tagId,
+            text_entry_id: textEntryId,
+            user_id: user.id,
+            order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
+            date_created: timestamp,
+            date_updated: revision(
+              tagsEntries,
+              tagsEntries.date_updated,
+              tagsEntries.user_id,
+              user.id
+            ),
+          })
+          .returning(),
+        touchEntry(db, textEntryId, user.id),
+      ]);
+      [junction] = inserted;
     } catch (error) {
       if (!isUniqueViolation(error)) {
         throw error;
@@ -104,19 +157,23 @@ tagEntryRoutes.post('/', async c => {
     // Imported Django data can hold a junction owned by another user between
     // this user's own tag and entry. It links only their data, so it is
     // theirs: take it over rather than return someone else's row.
-    [junction] = await db
-      .update(tagsEntries)
-      .set({
-        user_id: user.id,
-        date_updated: revision(
-          tagsEntries,
-          tagsEntries.date_updated,
-          tagsEntries.user_id,
-          user.id
-        ),
-      })
-      .where(eq(tagsEntries.id, junction.id))
-      .returning();
+    const [updated] = await db.batch([
+      db
+        .update(tagsEntries)
+        .set({
+          user_id: user.id,
+          date_updated: revision(
+            tagsEntries,
+            tagsEntries.date_updated,
+            tagsEntries.user_id,
+            user.id
+          ),
+        })
+        .where(eq(tagsEntries.id, junction.id))
+        .returning(),
+      touchEntry(db, textEntryId, user.id),
+    ]);
+    [junction] = updated;
   }
   return resourceResponse(c, TAG_TEXT_ENTRY, junction as TagTextEntry, 201);
 });
@@ -129,7 +186,11 @@ tagEntryRoutes.delete('/:id', async c => {
     TAG_TEXT_ENTRY,
     requireUser(c)
   );
-  await c.get('db').delete(tagsEntries).where(eq(tagsEntries.id, junction.id));
+  const db = c.get('db');
+  await db.batch([
+    db.delete(tagsEntries).where(eq(tagsEntries.id, junction.id)),
+    touchEntry(db, junction.text_entry_id, junction.user_id),
+  ]);
   return c.body(null, 204);
 });
 

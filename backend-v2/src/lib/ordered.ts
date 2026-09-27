@@ -18,9 +18,15 @@
  * only applies if the moved row still has the rank it was read with.
  */
 import {type SQL, sql} from 'drizzle-orm';
-import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
+import {
+  SQLiteAsyncDialect,
+  type SQLiteColumn,
+  type SQLiteTable,
+} from 'drizzle-orm/sqlite-core';
 import type {Db} from '../db/client';
 import {ApiError} from './errors';
+
+const dialect = new SQLiteAsyncDialect();
 
 export interface OrderedSpec {
   table: SQLiteTable;
@@ -35,6 +41,12 @@ export interface OrderedSpec {
    * relative to, the mover's own rows; other users' rows are never touched.
    */
   owner?: SQLiteColumn;
+  /**
+   * A statement run in the same batch as every move (atomically), e.g. to
+   * advance the revisions of parent rows clients sync the moved rows through.
+   * It runs after the move's UPDATE, so `changes()` tells whether that applied.
+   */
+  touch?: (moved: OrderedRow) => SQL;
 }
 
 export interface OrderedRow {
@@ -161,7 +173,7 @@ export class OrderedModel {
       ref === undefined || neighbor === undefined
         ? sql``
         : sql`AND ${this.neighborRank(ref, neighbor.side)} = ${neighbor.rank}`;
-    const result = await this.db.run(sql`
+    const move = sql`
       UPDATE ${table}
       SET ${sql.identifier(order.name)} = CASE
             WHEN ${id} = ${self.id} THEN ${target}
@@ -174,8 +186,21 @@ export class OrderedModel {
         AND (SELECT ${order} FROM ${table} WHERE ${id} = ${self.id}) = ${self.order}
         ${refGuard}
         ${neighborGuard}
-    `);
-    return result.meta.changes > 0;
+    `;
+    const touch = this.spec.touch?.(self);
+    if (touch === undefined) {
+      return (await this.db.run(move)).meta.changes > 0;
+    }
+    // Drizzle (0.45) cannot batch raw statements with parameters, so both are
+    // prepared on the D1 binding.
+    const d1 = this.db.$client;
+    const [moved] = await d1.batch(
+      [move, touch].map(statement => {
+        const query = dialect.sqlToQuery(statement);
+        return d1.prepare(query.sql).bind(...query.params);
+      })
+    );
+    return (moved?.meta.changes ?? 0) > 0;
   }
 
   /** `AND owner = <row's owner>` for specs with an owner column. */

@@ -85,9 +85,14 @@ Deliberate changes:
   cutover).
 
 - **`date_updated` comes from D1, not the Worker's clock** (`src/lib/revision.ts`):
-  the later of D1's clock and one microsecond past the user's latest row, so
+  the later of D1's clock and one millisecond past the user's latest row, so
   sync (`filter[date_updated.gt]`) never misses a write because two Workers'
   clocks disagreed.
+
+- **Tagging, untagging and junction reorders advance the entry's
+  `date_updated`**, in the same D1 batch as the junction write. Clients sync
+  junctions only as `/entries` includes, filtered on the entry's revision;
+  Django left entries untouched, so other devices missed those changes.
 
 Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing
