@@ -106,9 +106,10 @@ export type ClientType = 'web' | 'electron';
 
 /**
  * The Domain attribute, if any. Local development (DEBUG) and an empty
- * COOKIE_DOMAIN mean host-only cookies; staging uses the latter so its cookies
- * never overwrite or clear production's `.commandsnippets.com` ones, which
- * share their names.
+ * COOKIE_DOMAIN mean host-only cookies. Staging uses
+ * `.staging.commandsnippets.com`, so its cookies reach the staging web app
+ * (which reads LoggedIn) but never overwrite or clear production's
+ * `.commandsnippets.com` cookies of the same names.
  */
 function cookieDomain(c: Context<AppEnv>): {domain?: string} {
   const domain: string = c.env.COOKIE_DOMAIN;

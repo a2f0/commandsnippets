@@ -102,10 +102,11 @@ export class OrderedModel {
             ? ((await this.neighbor(ref, 'after')) ?? 0)
             : ref.order;
       }
-      if (await this.to(self, target, now)) {
+      if (await this.to(self, target, now, ref)) {
         return;
       }
-      // Someone else moved `self` between our read and write; re-read.
+      // Someone else moved `self` or `ref` between our read and write (the
+      // target was computed from both); re-read and recompute.
       [self, ref] = await Promise.all([this.reload(self), this.reload(ref)]);
     }
     throw ApiError.of(
@@ -117,9 +118,15 @@ export class OrderedModel {
 
   /**
    * Move `self` to rank `target`, shifting the rows in between by one.
-   * Returns false if `self` no longer has the rank it was read with.
+   * Returns false if `self` — or `ref`, when the target was derived from it —
+   * no longer has the rank it was read with.
    */
-  async to(self: OrderedRow, target: number, now: string): Promise<boolean> {
+  async to(
+    self: OrderedRow,
+    target: number,
+    now: string,
+    ref?: OrderedRow
+  ): Promise<boolean> {
     if (self.order === target) {
       return true;
     }
@@ -128,8 +135,12 @@ export class OrderedModel {
       self.order > target
         ? [target, self.order - 1, 1]
         : [self.order + 1, target, -1];
-    // The guard subquery is uncorrelated, so SQLite evaluates it once, before
-    // any row is modified.
+    // The guard subqueries are uncorrelated, so SQLite evaluates them once,
+    // before any row is modified.
+    const refGuard =
+      ref === undefined
+        ? sql``
+        : sql`AND (SELECT ${order} FROM ${table} WHERE ${id} = ${ref.id}) = ${ref.order}`;
     const result = await this.db.run(sql`
       UPDATE ${table}
       SET ${sql.identifier(order.name)} = CASE
@@ -140,6 +151,7 @@ export class OrderedModel {
       WHERE ${scope} = ${self.scope}
         AND (${id} = ${self.id} OR ${order} BETWEEN ${low} AND ${high})
         AND (SELECT ${order} FROM ${table} WHERE ${id} = ${self.id}) = ${self.order}
+        ${refGuard}
     `);
     return result.meta.changes > 0;
   }

@@ -11,7 +11,7 @@
     "COOKIE_DOMAIN": "localhost",
     "GITHUB_REDIRECT_URI": "http://localhost:8085/oauth/github",
     "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-dev://oauth/github",
-    "GOOGLE_REDIRECT_URI": "http://localhost:8080/oauth/google"
+    "GOOGLE_REDIRECT_URI": "http://localhost:8085/oauth/google"
   },
   "d1_databases": [
     {
@@ -23,11 +23,12 @@
   ],
   "env": {
     "staging": {
-      // Host-only cookies (no Domain): staging's must not overwrite or clear
-      // production's .commandsnippets.com cookies, which share their names.
+      // Scoped to staging hosts: visible to app.staging (which reads
+      // LoggedIn), never sent to production hosts, and distinct from
+      // production's .commandsnippets.com cookies of the same names.
       "vars": {
         "DEBUG": "false",
-        "COOKIE_DOMAIN": "",
+        "COOKIE_DOMAIN": ".staging.commandsnippets.com",
         "GITHUB_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/github",
         "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-staging://oauth/github",
         "GOOGLE_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/google"

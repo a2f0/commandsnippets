@@ -307,8 +307,21 @@ export function raceBeforeInsert(
   table: string,
   competitor: () => Promise<unknown>
 ): Cloudflare.Env {
+  return raceBeforeStatement(
+    new RegExp(`^\\s*insert into "${table}"`, 'i'),
+    competitor
+  );
+}
+
+/**
+ * Bindings whose D1 runs `competitor` immediately before the first statement
+ * matching `pattern` executes.
+ */
+export function raceBeforeStatement(
+  pattern: RegExp,
+  competitor: () => Promise<unknown>
+): Cloudflare.Env {
   let fired = false;
-  const pattern = new RegExp(`^insert into "${table}"`, 'i');
   const wrap = (
     statement: D1PreparedStatement,
     query: string

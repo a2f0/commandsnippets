@@ -65,12 +65,12 @@ Deliberate changes:
   same `Domain` they were set with.
 - **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
   matches `^http://localhost:*`).
-- **Staging cookies are host-only but otherwise production-grade**: no
-  `Domain`, so they can never overwrite or clear production's
-  `.commandsnippets.com` cookies of the same name, but `Secure` and
-  `SameSite=Strict` (Django staging got host-only cookies by running with
-  `DEBUG` on, which also dropped those). When both environments' cookies reach
-  the staging API, the first valid token wins.
+- **Staging cookies are scoped to `.staging.commandsnippets.com`** and are
+  `Secure`/`SameSite=Strict`: the staging web app can read `LoggedIn`, and they
+  never overwrite or clear production's `.commandsnippets.com` cookies of the
+  same names (Django staging ran with `DEBUG` on, which made them host-only and
+  non-Secure). Production's cookies still reach staging hosts, so the API tries
+  each `Authorization` cookie and accepts the first valid token.
 - `PATCH`/`PUT` on `/entry_reuses` is 405 (it would desync counters), and
   renaming a tag to an existing name is a 400 rather than a 500.
 

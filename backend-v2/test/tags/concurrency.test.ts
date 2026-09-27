@@ -8,6 +8,7 @@ import {
   db,
   json,
   raceBeforeInsert,
+  raceBeforeStatement,
   setUpBase,
   tagFactory,
   textEntryFactory,
@@ -176,5 +177,43 @@ describe('tag filters', () => {
     expect((await json(response)).errors[0].detail).toBe(
       'Enter a valid date/time.'
     );
+  });
+});
+
+describe('concurrent reorders', () => {
+  it('re-reads and still lands directly above a reference row that moved mid-reorder', async () => {
+    const {user1} = await setUpBase();
+    // A clean scope: A(0) B(1) C(2) D(3), owned by a fresh user.
+    const owner = user1;
+    await db().delete(tags).where(eq(tags.user_id, owner.id));
+    const [a, , c] = [
+      await tagFactory({user: owner, name: 'a', order: 0}),
+      await tagFactory({user: owner, name: 'b', order: 1}),
+      await tagFactory({user: owner, name: 'c', order: 2}),
+      await tagFactory({user: owner, name: 'd', order: 3}),
+    ];
+    // Just before the reorder's UPDATE runs, another request moves C (the
+    // reference) to the bottom.
+    const client = new ApiClient(
+      await tokenFor(owner.id),
+      raceBeforeStatement(/^\s*update "tags_tag"/i, async () => {
+        await db().update(tags).set({order: 10}).where(eq(tags.id, c.id));
+      })
+    );
+    const response = await client.post('/api/v1/tags/reorder', {
+      data: {
+        type: 'Tag',
+        attributes: {top: a.id, bottom: c.id},
+        relationships: {},
+      },
+    });
+    expect(response.status).toBe(200);
+
+    const ranked = (
+      await db().select().from(tags).where(eq(tags.user_id, owner.id))
+    )
+      .sort((x, y) => x.order - y.order)
+      .map(tag => tag.name);
+    expect(ranked).toEqual(['b', 'd', 'a', 'c']);
   });
 });

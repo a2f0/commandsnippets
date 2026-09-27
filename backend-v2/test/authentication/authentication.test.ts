@@ -38,7 +38,11 @@ describe('TestAuthentication', () => {
     const client = new ApiClient();
     mockFetch([
       {method: 'POST', url: GOOGLE_TOKEN_URL, body: {access_token: 'token'}},
-      {method: 'GET', url: GOOGLE_USERINFO_URL, body: {email: authUser.email}},
+      {
+        method: 'GET',
+        url: GOOGLE_USERINFO_URL,
+        body: {email: authUser.email, email_verified: true},
+      },
     ]);
 
     const response = await client.post('/api/v1/google-login/', {
@@ -159,7 +163,11 @@ describe('TokenAuthentication', () => {
     await db().delete(tokens).where(eq(tokens.user_id, user.id));
     mockFetch([
       {method: 'POST', url: GOOGLE_TOKEN_URL, body: {access_token: 'token'}},
-      {method: 'GET', url: GOOGLE_USERINFO_URL, body: {email: user.email}},
+      {
+        method: 'GET',
+        url: GOOGLE_USERINFO_URL,
+        body: {email: user.email, email_verified: true},
+      },
     ]);
     const client = new ApiClient();
     const response = await client.post('/api/v1/google-login/', {
@@ -176,7 +184,11 @@ describe('TokenAuthentication', () => {
     const user = await userFactory();
     mockFetch([
       {method: 'POST', url: GOOGLE_TOKEN_URL, body: {access_token: 'token'}},
-      {method: 'GET', url: GOOGLE_USERINFO_URL, body: {email: user.email}},
+      {
+        method: 'GET',
+        url: GOOGLE_USERINFO_URL,
+        body: {email: user.email, email_verified: true},
+      },
     ]);
     const client = new ApiClient();
     const payload = {

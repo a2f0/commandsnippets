@@ -20,6 +20,12 @@ const authenticationFailed = (detail: string) =>
   ApiError.of(403, detail, 'authentication_failed');
 
 const noEmail = 'No email found in Google user data';
+const unverifiedEmail = 'Google email is not verified';
+
+interface GoogleUserInfo {
+  email?: string;
+  email_verified?: boolean;
+}
 
 /** Log in (or sign up) the user for a verified email and set cookies. */
 async function login(
@@ -87,8 +93,13 @@ authRoutes.post('/api/v1/github-login', async c => {
   const emails = (await emailsResponse.json()) as Array<{
     email: string;
     primary: boolean;
+    verified?: boolean;
   }>;
-  const primary = emails.find(email => email.primary === true);
+  // Accounts are keyed by email, so an unverified one would let anyone who
+  // adds your address to their GitHub account sign in as you.
+  const primary = emails.find(
+    email => email.primary === true && email.verified === true
+  );
   if (primary === undefined) {
     return unauthorized(c);
   }
@@ -115,9 +126,13 @@ authRoutes.post('/api/v1/google-login', async c => {
   if (!userResponse.ok) {
     return unauthorized(c);
   }
-  const {email} = (await userResponse.json()) as {email?: string};
+  const {email, email_verified} = (await userResponse.json()) as GoogleUserInfo;
   if (!email) {
     throw ApiError.of(400, noEmail, 'invalid');
+  }
+  // Accounts are keyed by email: only a verified one proves ownership.
+  if (email_verified !== true) {
+    throw authenticationFailed(unverifiedEmail);
   }
   return login(c, localPart(email), email);
 });
@@ -135,9 +150,12 @@ authRoutes.post('/api/v1/integrated-oauth', async c => {
   if (!userResponse.ok) {
     throw authenticationFailed('Invalid access token provided');
   }
-  const {email} = (await userResponse.json()) as {email?: string};
+  const {email, email_verified} = (await userResponse.json()) as GoogleUserInfo;
   if (!email) {
     throw authenticationFailed(noEmail);
+  }
+  if (email_verified !== true) {
+    throw authenticationFailed(unverifiedEmail);
   }
   return login(c, localPart(email), email);
 });

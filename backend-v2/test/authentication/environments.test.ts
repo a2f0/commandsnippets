@@ -8,7 +8,15 @@ import {
   setCookies,
 } from './support';
 
-const STAGING = {DEBUG: 'false', COOKIE_DOMAIN: ''} as const;
+const STAGING = {
+  DEBUG: 'false',
+  COOKIE_DOMAIN: '.staging.commandsnippets.com',
+} as const;
+// No environment configures this today, so it is outside the generated union.
+const HOST_ONLY = {
+  DEBUG: 'false',
+  COOKIE_DOMAIN: '',
+} as unknown as Partial<Cloudflare.Env>;
 const PRODUCTION = {
   DEBUG: 'false',
   COOKIE_DOMAIN: '.commandsnippets.com',
@@ -34,14 +42,21 @@ const integratedLogin = (overrides: Partial<Cloudflare.Env>) => {
 // cookies must never overwrite or clear production's, and the staging API
 // must cope with receiving both.
 describe('staging and production cookies', () => {
-  it('staging sets host-only cookies that are still Secure and Strict', async () => {
+  it('staging scopes cookies to staging hosts, Secure and Strict', async () => {
     const cookies = setCookies(await integratedLogin(STAGING));
     for (const name of ['Authorization', 'LoggedIn']) {
       const attributes = cookies[name]?.attributes ?? {};
-      expect(attributes['domain']).toBeUndefined();
+      // Visible to app.staging (which reads LoggedIn), never to production.
+      expect(attributes['domain']).toBe('.staging.commandsnippets.com');
       expect(attributes['secure']).toBe(true);
       expect(attributes['samesite']).toBe('Strict');
     }
+  });
+
+  it('an empty COOKIE_DOMAIN sets host-only cookies', async () => {
+    const cookies = setCookies(await integratedLogin(HOST_ONLY));
+    expect(cookies['Authorization']?.attributes['domain']).toBeUndefined();
+    expect(cookies['Authorization']?.attributes['secure']).toBe(true);
   });
 
   it('production sets domain-wide cookies', async () => {
@@ -51,13 +66,15 @@ describe('staging and production cookies', () => {
     );
   });
 
-  it('staging logout only expires its own host-only cookies', async () => {
+  it('staging logout only expires its own staging-scoped cookies', async () => {
     const cookies = setCookies(
       await requestWithEnv(STAGING, 'POST', '/api-token-deauth/')
     );
     for (const name of ['Authorization', 'LoggedIn']) {
       expect(cookies[name]?.attributes['max-age']).toBe('0');
-      expect(cookies[name]?.attributes['domain']).toBeUndefined();
+      expect(cookies[name]?.attributes['domain']).toBe(
+        '.staging.commandsnippets.com'
+      );
     }
   });
 
