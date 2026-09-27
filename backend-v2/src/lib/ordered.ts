@@ -47,6 +47,12 @@ export interface OrderedRow {
 
 const MAX_ATTEMPTS = 3;
 
+/** The neighbor rank a move's target was read from, to guard against. */
+interface Neighbor {
+  side: 'before' | 'after';
+  rank: number;
+}
+
 export class OrderedModel {
   constructor(
     private readonly db: Db,
@@ -98,23 +104,24 @@ export class OrderedModel {
       if (self.order === ref.order) {
         return;
       }
+      // Moving across a gap, the target is the reference's neighbor, which a
+      // concurrent move can change without touching `self` or `ref`: guard it.
       let target: number;
-      if (direction === 'above') {
-        target =
-          self.order > ref.order
-            ? ref.order
-            : ((await this.neighbor(ref, 'before')) ?? 0);
+      let neighbor: Neighbor | undefined;
+      if (direction === 'above' && self.order < ref.order) {
+        target = (await this.neighbor(ref, 'before')) ?? 0;
+        neighbor = {side: 'before', rank: target};
+      } else if (direction === 'below' && self.order > ref.order) {
+        target = (await this.neighbor(ref, 'after')) ?? 0;
+        neighbor = {side: 'after', rank: target};
       } else {
-        target =
-          self.order > ref.order
-            ? ((await this.neighbor(ref, 'after')) ?? 0)
-            : ref.order;
+        target = ref.order;
       }
-      if (await this.to(self, target, now, ref)) {
+      if (await this.to(self, target, now, ref, neighbor)) {
         return;
       }
-      // Someone else moved `self` or `ref` between our read and write (the
-      // target was computed from both); re-read and recompute.
+      // Someone else moved `self`, `ref`, or the neighbor between our read
+      // and write (the target was computed from them); re-read and recompute.
       [self, ref] = await Promise.all([this.reload(self), this.reload(ref)]);
     }
     throw ApiError.of(
@@ -133,7 +140,8 @@ export class OrderedModel {
     self: OrderedRow,
     target: number,
     now: string | SQL,
-    ref?: OrderedRow
+    ref?: OrderedRow,
+    neighbor?: Neighbor
   ): Promise<boolean> {
     if (self.order === target) {
       return true;
@@ -149,6 +157,10 @@ export class OrderedModel {
       ref === undefined
         ? sql``
         : sql`AND (SELECT ${order} FROM ${table} WHERE ${id} = ${ref.id}) = ${ref.order}`;
+    const neighborGuard =
+      ref === undefined || neighbor === undefined
+        ? sql``
+        : sql`AND ${this.neighborRank(ref, neighbor.side)} = ${neighbor.rank}`;
     const result = await this.db.run(sql`
       UPDATE ${table}
       SET ${sql.identifier(order.name)} = CASE
@@ -161,6 +173,7 @@ export class OrderedModel {
         AND (${id} = ${self.id} OR ${order} BETWEEN ${low} AND ${high})
         AND (SELECT ${order} FROM ${table} WHERE ${id} = ${self.id}) = ${self.order}
         ${refGuard}
+        ${neighborGuard}
     `);
     return result.meta.changes > 0;
   }
@@ -177,16 +190,21 @@ export class OrderedModel {
     return sql`AND ${owner} = ${row.owner}`;
   }
 
+  /** The rank just before or after `ref` among the mover's rows, as SQL. */
+  private neighborRank(ref: OrderedRow, side: 'before' | 'after'): SQL {
+    const {table, order, scope} = this.spec;
+    const owned = this.ownedBy(ref);
+    return side === 'before'
+      ? sql`(SELECT MAX(${order}) FROM ${table} WHERE ${scope} = ${ref.scope} ${owned} AND ${order} < ${ref.order})`
+      : sql`(SELECT MIN(${order}) FROM ${table} WHERE ${scope} = ${ref.scope} ${owned} AND ${order} > ${ref.order})`;
+  }
+
   private async neighbor(
     ref: OrderedRow,
     side: 'before' | 'after'
   ): Promise<number | null> {
-    const {table, order, scope} = this.spec;
-    const owned = this.ownedBy(ref);
     const row = await this.db.get<{value: number | null}>(
-      side === 'before'
-        ? sql`SELECT MAX(${order}) AS value FROM ${table} WHERE ${scope} = ${ref.scope} ${owned} AND ${order} < ${ref.order}`
-        : sql`SELECT MIN(${order}) AS value FROM ${table} WHERE ${scope} = ${ref.scope} ${owned} AND ${order} > ${ref.order}`
+      sql`SELECT ${this.neighborRank(ref, side)} AS value`
     );
     return row?.value ?? null;
   }

@@ -4,8 +4,12 @@
  * strictly increasing values in commit order. A Worker's clock cannot promise
  * that: separate isolates on separate machines can be skewed, or hand out the
  * same microsecond. D1 serializes writes, so a value computed inside the write
- * itself - the later of D1's clock and one microsecond past the user's latest
+ * itself - the later of D1's clock and one millisecond past the user's latest
  * row - is strictly increasing per user and table.
+ *
+ * The step is a millisecond, not a microsecond, because clients compare
+ * revisions as JavaScript Dates (millisecond precision): two revisions in the
+ * same millisecond would look equal and the newer edit could be dropped.
  *
  * Timestamps stay in the fixed-width text format of `lib/clock.ts`; they are
  * converted to integer microseconds and back in SQL (julianday() would lose
@@ -29,7 +33,7 @@ export function revision(
     FROM (
       SELECT MAX(
         CAST(unixepoch('subsec') * 1000000 AS INTEGER),
-        COALESCE(MAX(${micros(dateUpdated)}), 0) + 1
+        COALESCE(MAX(${micros(dateUpdated)}), 0) + 1000
       ) AS v
       FROM ${table}
       WHERE ${owner} = ${ownerId}

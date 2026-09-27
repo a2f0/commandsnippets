@@ -34,7 +34,7 @@ describe('database-assigned revisions', () => {
     }
   });
 
-  it('follow a row another isolate stamped in the future, by one microsecond', async () => {
+  it('follow a row another isolate stamped in the future, by one millisecond', async () => {
     const {user1, user1Client} = await setUpBase();
     const future = '2999-01-01T00:00:00.000000';
     const stamped = await textEntryFactory({user: user1});
@@ -49,8 +49,12 @@ describe('database-assigned revisions', () => {
       })
     );
     expect(created.data.attributes.date_updated).toBe(
-      '2999-01-01T00:00:00.000001'
+      '2999-01-01T00:00:00.001000'
     );
+    // Clients compare as Dates (millisecond precision): still strictly newer.
+    expect(
+      new Date(created.data.attributes.date_updated) > new Date(future)
+    ).toBe(true);
   });
 
   it("are per user: another user's rows never push them forward", async () => {
@@ -90,8 +94,8 @@ describe('database-assigned revisions', () => {
       .from(tags)
       .where(eq(tags.user_id, user1.id));
     const byId = new Map(rows.map(row => [row.id, row.date_updated]));
-    expect(byId.get(a.id)).toBe('2999-01-01T00:00:00.000001');
-    expect(byId.get(b.id)).toBe('2999-01-01T00:00:00.000001');
+    expect(byId.get(a.id)).toBe('2999-01-01T00:00:00.001000');
+    expect(byId.get(b.id)).toBe('2999-01-01T00:00:00.001000');
   });
 
   it('are used by soft deletes too', async () => {
@@ -109,12 +113,12 @@ describe('database-assigned revisions', () => {
     await user1Client.delete(`/api/v1/entries/${entry.id}`);
     await user1Client.delete(`/api/v1/tags/${tag.id}`);
     expect((await refreshEntry(entry.id))?.date_updated).toBe(
-      '2999-01-01T00:00:00.000001'
+      '2999-01-01T00:00:00.001000'
     );
     const [deletedTag] = await db()
       .select()
       .from(tags)
       .where(eq(tags.id, tag.id));
-    expect(deletedTag?.date_updated).toBe('2999-01-01T00:00:00.000001');
+    expect(deletedTag?.date_updated).toBe('2999-01-01T00:00:00.001000');
   });
 });

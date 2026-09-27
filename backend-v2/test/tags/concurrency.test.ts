@@ -259,3 +259,37 @@ describe('reordering around other users’ legacy junctions', () => {
     expect(own).toEqual([j3.id, j1.id, j2.id]);
   });
 });
+
+describe('reorders across rank gaps', () => {
+  it("re-reads when a concurrent move changes the reference's neighbor", async () => {
+    const {user1} = await setUpBase();
+    await db().delete(tags).where(eq(tags.user_id, user1.id));
+    const s = await tagFactory({user: user1, name: 's', order: 0});
+    await tagFactory({user: user1, name: 'p', order: 1});
+    const r = await tagFactory({user: user1, name: 'r', order: 5});
+    const q = await tagFactory({user: user1, name: 'q', order: 9});
+    // Moving s above r targets r's neighbor (p, rank 1). Just before the
+    // UPDATE, another request moves q into the gap at rank 3.
+    const client = new ApiClient(
+      await tokenFor(user1.id),
+      raceBeforeStatement(/^\s*update "tags_tag"/i, async () => {
+        await db().update(tags).set({order: 3}).where(eq(tags.id, q.id));
+      })
+    );
+    const response = await client.post('/api/v1/tags/reorder', {
+      data: {
+        type: 'Tag',
+        attributes: {top: s.id, bottom: r.id},
+        relationships: {},
+      },
+    });
+    expect(response.status).toBe(200);
+    const ranked = (
+      await db().select().from(tags).where(eq(tags.user_id, user1.id))
+    )
+      .sort((x, y) => x.order - y.order)
+      .map(tag => tag.name);
+    // s is still directly above r, with q (moved into the gap) before it.
+    expect(ranked).toEqual(['p', 'q', 's', 'r']);
+  });
+});
