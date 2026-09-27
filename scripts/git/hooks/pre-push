@@ -134,6 +134,11 @@ if touches 'packages/backend-v2/' && [ -d "$REPO_ROOT/packages/backend-v2" ]; th
   step_timings_run backend-v2-scripts sh -c 'cd packages/backend-v2 && bun run test:scripts'
 fi
 
+if touches 'terraform/' && [ -d "$REPO_ROOT/terraform" ]; then
+  require_worktree_is_push terraform
+  step_timings_run terraform-fmt terraform fmt -check -recursive terraform
+fi
+
 if touches 'packages/website/' && [ -d "$REPO_ROOT/packages/website" ]; then
   require_worktree_is_push packages/website
   step_timings_run website-lint sh -c 'cd packages/website && bun run lint'

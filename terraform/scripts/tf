@@ -1,0 +1,24 @@
+#!/bin/bash
+# Run Terraform for one stack with the SOPS-encrypted credentials, which are
+# decrypted into this process's environment only:
+#   scripts/tf <zone|staging|production> <terraform arguments...>
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+stack=${1:-}
+if [ -z "$stack" ] || [ ! -d "$root/stacks/$stack" ]; then
+  stacks=$(for dir in "$root"/stacks/*/; do basename "$dir"; done | paste -sd '|' -)
+  echo "Usage: $0 <$stacks> <terraform arguments...>" >&2
+  exit 2
+fi
+shift
+
+# Only the R2 keys below may authenticate the state backend.
+unset AWS_PROFILE AWS_SESSION_TOKEN AWS_SHARED_CREDENTIALS_FILE
+# (Not `source <(...)`: macOS's bash 3.2 reads nothing from it.)
+while IFS='=' read -r key value; do
+  case "$key" in '' | \#*) continue ;; esac
+  export "$key=$value"
+done < <(sops decrypt --input-type dotenv --output-type dotenv "$root/secrets.env.sops")
+
+exec terraform -chdir="$root/stacks/$stack" "$@"

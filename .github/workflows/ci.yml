@@ -28,6 +28,7 @@ jobs:
       frontend: ${{ steps.scopes.outputs.frontend }}
       backendV2: ${{ steps.scopes.outputs.backendV2 }}
       website: ${{ steps.scopes.outputs.website }}
+      terraform: ${{ steps.scopes.outputs.terraform }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -101,10 +102,15 @@ jobs:
     if: needs.changes.outputs.website == 'true'
     uses: ./.github/workflows/website.yml
 
+  terraform:
+    needs: changes
+    if: needs.changes.outputs.terraform == 'true'
+    uses: ./.github/workflows/terraform.yml
+
   gate:
     name: CI gate
     if: always()
-    needs: [changes, tooling, backend, backend-v2, frontend, website]
+    needs: [changes, tooling, backend, backend-v2, frontend, website, terraform]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
