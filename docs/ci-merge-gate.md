@@ -17,7 +17,12 @@ exercise every lane.
 | `tooling` | inline in `ci.yml` | `packages/`, `scripts/`, tooling config |
 | `backend` | `backend.yml` (Backend CI) | `backend/`, API deploy/test scripts |
 | `frontend` | `frontend.yml` (Frontend CI) | `frontend/`, app deploy/test scripts |
-| `ios`, `android` | `frontend-*-testing.yml` | `frontend/`, `runCapacitorTests.sh` |
+| `ios` | `frontend-ios-testing.yml` | `frontend/`, `runCapacitorTests.sh` |
+
+The Android workflow (`frontend-android-testing.yml`) is **not** a lane for
+now: it has failed on every run since mid-August (AVD creation, and SDK setup on
+current runner images). It stays runnable by hand; once fixed, add it back as a
+`mobile` job in `ci.yml` and `CI_JOBS`.
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch

@@ -22,7 +22,6 @@ export const CI_JOBS = {
   backend: "backend",
   frontend: "frontend",
   ios: "mobile",
-  android: "mobile",
 } as const satisfies Record<string, CiScope>;
 
 /** Changes that can affect every lane run them all. */

@@ -80,7 +80,6 @@ describe("assertCiSuccess", () => {
     backend: { result },
     frontend: { result },
     ios: { result },
-    android: { result },
   });
 
   test("passes when required lanes succeeded or irrelevant ones skipped", () => {
@@ -92,20 +91,24 @@ describe("assertCiSuccess", () => {
     ).not.toThrow();
   });
 
-  test("mobile scope governs both the iOS and Android jobs", () => {
+  test("the mobile scope governs the iOS job", () => {
     const changes = {
       result: "success",
-      outputs: { tooling: "false", backend: "false", frontend: "true", mobile: "true" },
+      outputs: {
+        tooling: "false",
+        backend: "false",
+        frontend: "true",
+        mobile: "true",
+      },
     };
     const needs = {
       changes,
       tooling: { result: "skipped" },
       backend: { result: "skipped" },
       frontend: { result: "success" },
-      ios: { result: "success" },
-      android: { result: "skipped" },
+      ios: { result: "skipped" },
     };
-    expect(() => assertCiSuccess(needs)).toThrow("android must be success");
+    expect(() => assertCiSuccess(needs)).toThrow("ios must be success");
   });
 
   test("fails when change detection did not succeed", () => {
