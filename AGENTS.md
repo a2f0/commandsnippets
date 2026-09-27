@@ -10,7 +10,7 @@ Monorepo for the Commandsnippets app.
 | `packages/agent-tool/` | CLI behind the ship/review skills (root bun workspace) |
 | `backend/` | Django API (being replaced by `packages/backend-v2/`) |
 | `scripts/` | git hooks, CI policy, test entrypoints |
-| `terraform/` | Cloudflare DNS records for the domain |
+| `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
 
 ## Conventions
 

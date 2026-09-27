@@ -1,18 +1,17 @@
 # Terraform
-# https://github.com/github/gitignore/blob/master/Terraform.gitignore
 **/.terraform/*
+# Only the stacks pin providers; `terraform test` inits the modules.
+/modules/*/.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
+*.tfplan
 crash.log
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
-*.backend
+# Plaintext variable files; secrets live in secrets.env.sops.
 *.tfvars
-
-# Node.js
-node_modules/
 
 # Plaintext keys decrypted from the removed ssh_keys/*.sops files
 /ssh_keys/

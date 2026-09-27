@@ -38,6 +38,7 @@ describe("ciScopes", () => {
       frontend: false,
       backendV2: false,
       website: false,
+      terraform: false,
     });
     expect(ciScopes(["packages/backend-v2/src/app.ts"])).toEqual({
       tooling: false,
@@ -45,6 +46,7 @@ describe("ciScopes", () => {
       frontend: false,
       backendV2: true,
       website: false,
+      terraform: false,
     });
     expect(ciScopes(["packages/frontend/src/App.tsx"])).toEqual({
       tooling: false,
@@ -52,25 +54,36 @@ describe("ciScopes", () => {
       frontend: true,
       backendV2: false,
       website: false,
+      terraform: false,
     });
     expect(ciScopes(["scripts/runWebdriverTests.sh"]).frontend).toBe(true);
     expect(ciScopes(["scripts/runBackendTests.sh"]).backend).toBe(true);
+    expect(ciScopes(["terraform/stacks/zone/main.tf"])).toEqual({
+      tooling: false,
+      backend: false,
+      frontend: false,
+      backendV2: false,
+      website: false,
+      terraform: true,
+    });
     expect(ciScopes(["packages/website/src/pages/index.astro"])).toEqual({
       tooling: false,
       backend: false,
       frontend: false,
       backendV2: false,
       website: true,
+      terraform: false,
     });
   });
 
   test("skips every lane for unrelated paths", () => {
-    expect(ciScopes(["README.md", "terraform/dns/main.tf"])).toEqual({
+    expect(ciScopes(["README.md", "docs/ci-merge-gate.md"])).toEqual({
       tooling: false,
       backend: false,
       frontend: false,
       backendV2: false,
       website: false,
+      terraform: false,
     });
   });
 
@@ -95,6 +108,7 @@ describe("assertCiSuccess", () => {
       frontend: value,
       backendV2: value,
       website: value,
+      terraform: value,
     },
   });
   const jobs = (result: string) => ({
@@ -103,6 +117,7 @@ describe("assertCiSuccess", () => {
     "backend-v2": { result },
     frontend: { result },
     website: { result },
+    terraform: { result },
   });
 
   test("passes when required lanes succeeded or irrelevant ones skipped", () => {
@@ -123,6 +138,7 @@ describe("assertCiSuccess", () => {
         frontend: "true",
         backendV2: "false",
         website: "false",
+        terraform: "false",
       },
     };
     const needs = {
@@ -132,6 +148,7 @@ describe("assertCiSuccess", () => {
       "backend-v2": { result: "success" },
       frontend: { result: "success" },
       website: { result: "skipped" },
+      terraform: { result: "skipped" },
     };
     expect(() => assertCiSuccess(needs)).toThrow(
       "backend-v2 must be skipped",

@@ -1,0 +1,54 @@
+---
+name: Terraform CI
+# Pull requests run this through `CI` (ci.yml, the required `CI gate`). Plans
+# and applies need the SOPS-encrypted credentials and run locally
+# (terraform/scripts/tf); CI checks formatting, validity and lint.
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Read the Terraform version
+        id: version
+        run: echo "terraform=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ steps.version.outputs.terraform }}
+          terraform_wrapper: false
+      - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef # v6.3.1
+        with:
+          tflint_version: v0.64.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.11
+      - name: Check formatting
+        run: terraform fmt -check -recursive
+      - name: Lint and test the wrapper script
+        run: shellcheck scripts/tf && bun test ./scripts/
+      - name: Validate every stack
+        run: |
+          for stack in stacks/*/; do
+            terraform -chdir="$stack" init -backend=false -input=false
+            terraform -chdir="$stack" validate
+          done
+      - name: Test the modules (mocked provider)
+        run: |
+          for module in modules/*/; do
+            terraform -chdir="$module" init -backend=false -input=false
+            terraform -chdir="$module" test
+          done
+      - name: Lint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # One shared config: without --config, recursive mode would look for
+        # a .tflint.hcl in each stack and module and apply none of our rules.
+        run: |
+          tflint --init --config="$PWD/.tflint.hcl"
+          tflint --recursive --config="$PWD/.tflint.hcl"

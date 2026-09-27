@@ -19,6 +19,7 @@ exercise every lane.
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/` |
 | `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, app test scripts |
 | `website` | `website.yml` (Website CI) | `packages/website/` |
+| `terraform` | `terraform.yml` (Terraform CI) | `terraform/` |
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch

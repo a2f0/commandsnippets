@@ -157,8 +157,8 @@ Backups: D1 Time Travel restores to any point in the last 30 days
 ## Deployment
 
 One-time setup, after `bunx wrangler login` (`--device` over SSH) or with
-`CLOUDFLARE_API_TOKEN` set. The D1 databases already exist
-(`wrangler d1 create commandsnippets-{staging,production}`; their ids are in
+`CLOUDFLARE_API_TOKEN` set. The D1 databases are managed by Terraform
+(`../../terraform/stacks/{staging,production}`; their ids are in
 `wrangler.jsonc`). A Worker must be deployed before it can take secrets:
 
 ```shell

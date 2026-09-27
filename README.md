@@ -11,7 +11,7 @@ a monorepo.
 | `packages/frontend/` | Web client |
 | `packages/website/` | Public website (Astro) |
 | `scripts/` | Local entrypoints shared with CI/CD |
-| `terraform/` | Cloudflare DNS records for the domain |
+| `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
 
 Each directory retains the commit history of its original repository.
 
