@@ -24,14 +24,6 @@ export const ALLOWED_ORIGINS = [
   /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/,
   /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/,
   /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/,
-  // Bundled Capacitor builds: the iOS and Android WebView origins
-  // (capacitor.config.production.ts sets no server URL). Not in Django's list.
-  /^capacitor:\/\/localhost$/,
-  /^https:\/\/localhost$/,
-  // Electron app protocols
-  /^tearleads:\/\/app$/,
-  /^tearleads-staging:\/\/app$/,
-  /^tearleads-dev:\/\/app$/,
   // Production domains
   /^https:\/\/commandsnippets\.com$/,
   /^https:\/\/\w+\.commandsnippets\.com$/,
@@ -69,8 +61,8 @@ app.use(
  * Cross-site request forgery. A browser sends a cross-origin POST without a
  * CORS preflight only for form-like media types, so every POST must be JSON
  * (every client request already is), and any state-changing request whose
- * Origin is not one of ours is refused. Requests without an Origin (native
- * and non-browser clients) are unaffected.
+ * Origin is not one of ours is refused. Requests without an Origin
+ * (non-browser clients) are unaffected.
  */
 app.use('*', async (c, next) => {
   const {method} = c.req;

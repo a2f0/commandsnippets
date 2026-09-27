@@ -4,10 +4,10 @@ import {app} from '../../src/app';
 import {users} from '../../src/db/schema';
 import {createUser} from '../../src/services/users';
 import {
-  GOOGLE_USERINFO_URL,
+  googlePayload,
+  googleRoutes,
   mockFetch,
   setCookies,
-  tokenInfoRoute,
 } from '../authentication/support';
 import {db, raceBeforeStatement, tokenFor} from '../helpers';
 
@@ -23,25 +23,13 @@ describe('concurrent first logins', () => {
         competitor = (await createUser(db(), 'google_user', email)).id;
       }
     );
-    mockFetch([
-      tokenInfoRoute(),
-      {
-        method: 'GET',
-        url: GOOGLE_USERINFO_URL,
-        body: {email, email_verified: true},
-      },
-    ]);
+    mockFetch(googleRoutes(email));
     const response = await app.request(
-      'http://localhost/api/v1/integrated-oauth/',
+      'http://localhost/api/v1/google-login/',
       {
         method: 'POST',
         headers: {'Content-Type': 'application/vnd.api+json'},
-        body: JSON.stringify({
-          data: {
-            type: 'IntegratedOAuthLogin',
-            attributes: {provider: 'google', token: 'token'},
-          },
-        }),
+        body: JSON.stringify(googlePayload()),
       },
       bindings
     );

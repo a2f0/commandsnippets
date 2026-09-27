@@ -2,15 +2,10 @@ import {type Context, Hono} from 'hono';
 import type {AppEnv} from '../env';
 import {ApiError} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
-import {charField, choiceField, validateOrThrow} from '../lib/validation';
+import {charField, validateOrThrow} from '../lib/validation';
 import {getOrCreateUser, recordLogin} from '../services/users';
 import {GithubOAuthService, GoogleOAuthService} from './oauth';
-import {type ClientType, clearAuthCookies, setAuthCookies} from './tokens';
-
-export const INTEGRATED_OAUTH_FIELDS = {
-  provider: choiceField(['google']),
-  token: charField(),
-};
+import {clearAuthCookies, setAuthCookies} from './tokens';
 
 const unauthorized = (c: Context<AppEnv>) => c.json({errors: []}, 401);
 
@@ -31,15 +26,14 @@ interface GoogleUserInfo {
 async function login(
   c: Context<AppEnv>,
   username: string,
-  email: string,
-  clientType: ClientType = 'web'
+  email: string
 ): Promise<Response> {
   const db = c.get('db');
   const {user, created} = await getOrCreateUser(db, username, email);
   if (!created) {
     await recordLogin(db, user.id);
   }
-  await setAuthCookies(c, user.id, clientType);
+  await setAuthCookies(c, user.id);
   return c.json({});
 }
 
@@ -59,17 +53,14 @@ authRoutes.post('/api-token-deauth', c => {
   return c.json({});
 });
 
-/** Web/Electron GitHub OAuth: exchange the code, then read login + email. */
+/** GitHub OAuth: exchange the code, then read login + email. */
 authRoutes.post('/api/v1/github-login', async c => {
   const {attributes} = await parseResource(c.req.raw, {type: 'GithubLogin'});
-  const {code, clientType} = validateOrThrow<{
-    code: string;
-    clientType: ClientType;
-  }>(
-    {code: charField(), clientType: choiceField(['web', 'electron'])},
+  const {code} = validateOrThrow<{code: string}>(
+    {code: charField()},
     attributes
   );
-  const service = new GithubOAuthService(c.env, clientType);
+  const service = new GithubOAuthService(c.env);
 
   const tokenResponse = await service.accessToken(code);
   if (!tokenResponse.ok) {
@@ -103,7 +94,7 @@ authRoutes.post('/api/v1/github-login', async c => {
   if (primary === undefined) {
     return unauthorized(c);
   }
-  return login(c, username, primary.email, clientType);
+  return login(c, username, primary.email);
 });
 
 /** Web Google OAuth: exchange the authorization code, then read the email. */
@@ -131,33 +122,6 @@ authRoutes.post('/api/v1/google-login', async c => {
     throw ApiError.of(400, noEmail, 'invalid');
   }
   // Accounts are keyed by email: only a verified one proves ownership.
-  if (email_verified !== true) {
-    throw authenticationFailed(unverifiedEmail);
-  }
-  return login(c, localPart(email), email);
-});
-
-/** Native (iOS) sign-in: the client already holds a provider access token. */
-authRoutes.post('/api/v1/integrated-oauth', async c => {
-  const {attributes} = await parseResource(c.req.raw, {
-    type: 'IntegratedOAuthLogin',
-  });
-  const {token} = validateOrThrow<{provider: 'google'; token: string}>(
-    INTEGRATED_OAUTH_FIELDS,
-    attributes
-  );
-  const service = new GoogleOAuthService(c.env);
-  if (!(await service.issuedToNativeApp(token))) {
-    throw authenticationFailed('Invalid access token provided');
-  }
-  const userResponse = await service.user(token);
-  if (!userResponse.ok) {
-    throw authenticationFailed('Invalid access token provided');
-  }
-  const {email, email_verified} = (await userResponse.json()) as GoogleUserInfo;
-  if (!email) {
-    throw authenticationFailed(noEmail);
-  }
   if (email_verified !== true) {
     throw authenticationFailed(unverifiedEmail);
   }

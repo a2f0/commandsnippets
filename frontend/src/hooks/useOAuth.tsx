@@ -5,7 +5,6 @@ import {v4 as uuidv4} from 'uuid';
 
 import {useAppContext} from '../AppContext';
 import {tearleadsApi} from '../lib/api/tearleadsApi';
-import {isCapacitor, isElectron} from '../lib/platform';
 
 interface OAuthConfig {
   provider: 'github' | 'google';
@@ -14,7 +13,6 @@ interface OAuthConfig {
   scope: string;
   redirectUrl?: string;
   scopeCheck?: (scope: string | null) => boolean;
-  clientType: 'electron' | 'web';
 }
 
 interface OAuthCallbackParams {
@@ -29,13 +27,6 @@ export const useOAuth = (config: OAuthConfig) => {
   const [, setCookie] = useCookies(['loggedInUser']);
 
   const isOAuthCallback = () => {
-    // For Capacitor and Electron, OAuth callbacks come through deep links
-    if (isCapacitor() || isElectron()) {
-      const href = window.location.href;
-      return href.includes(`oauth/${config.provider}`);
-    }
-
-    // For web, check the pathname as before
     const path = window.location.pathname;
     return path.includes(`/oauth/${config.provider}`);
   };
@@ -59,7 +50,7 @@ export const useOAuth = (config: OAuthConfig) => {
       }
 
       if (config.provider === 'github') {
-        await tearleadsApi.githubLogin(code, config.clientType);
+        await tearleadsApi.githubLogin(code);
       } else {
         await tearleadsApi.googleLogin(code);
       }
@@ -80,29 +71,10 @@ export const useOAuth = (config: OAuthConfig) => {
   };
 
   useEffect(() => {
-    let queryString: string;
-    let code: string | null = null;
-    let scope: string | null = null;
-    let state: string | null = null;
-
-    // Handle deep link URLs for Capacitor and Electron
-    if (isCapacitor() || isElectron()) {
-      const href = window.location.href;
-      console.info(`Full URL (${config.provider} auth):`, href);
-
-      // Extract query parameters from deep link URL
-      const url = new URL(href);
-      code = url.searchParams.get('code');
-      scope = url.searchParams.get('scope');
-      state = url.searchParams.get('state');
-    } else {
-      // Web app - use standard query string parsing
-      queryString = window.location.search;
-      const urlParams = new URLSearchParams(queryString);
-      code = urlParams.get('code');
-      scope = urlParams.get('scope');
-      state = urlParams.get('state');
-    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const scope = urlParams.get('scope');
+    const state = urlParams.get('state');
 
     console.info(`code (${config.provider} auth): ${code}`);
     if (scope) {
@@ -146,15 +118,8 @@ export const useOAuth = (config: OAuthConfig) => {
       }
 
       authUrl.search = params.toString();
-      const authUrlString = authUrl.toString();
 
-      // For Electron, open OAuth URL in system browser
-      if (isElectron() && window.api?.openExternal) {
-        window.api.openExternal(authUrlString);
-      } else {
-        // For web and Capacitor, navigate in the current window
-        window.location.assign(authUrlString);
-      }
+      window.location.assign(authUrl.toString());
     } catch (error) {
       console.error(
         'Failed to use sessionStorage. OAuth flow cannot proceed.',

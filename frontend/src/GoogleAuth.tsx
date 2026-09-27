@@ -24,7 +24,6 @@ const GoogleAuth = () => {
       scope?.includes('https://www.googleapis.com/auth/userinfo.email') ??
       false,
     redirectUrl: getOAuthRedirectUrl('google'),
-    clientType: 'web' as const,
   };
 
   const {initiateLogin, isOAuthInProgress} = useOAuth(oauthConfig);

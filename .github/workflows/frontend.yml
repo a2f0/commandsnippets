@@ -11,7 +11,6 @@ on:
     branches: [main, staging]
     paths:
       - 'frontend/**'
-      - 'scripts/runElectronTests.sh'
       - 'scripts/runUnitTests.sh'
       - 'scripts/runWebdriverTests.sh'
       - '.github/workflows/frontend.yml'
@@ -63,39 +62,3 @@ jobs:
           name: wdio-video-reporter
           path: |
             frontend/_results_
-  electron-tests:
-    runs-on: ubuntu-latest
-    continue-on-error: false
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - name: Set up pnpm and Node.js
-        uses: pnpm/setup@v2.0.2
-        with:
-          version: '11.21.0'
-          runtime: 'node@24.19.0'
-          cache: true
-          cache-dependency-path: frontend/pnpm-lock.yaml
-          package-json-file: frontend/package.json
-          install: false
-      # yamllint disable-line rule:line-length
-      - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
-      - run: pnpm install
-      - name: Setup virtual display for Electron and install ImageMagick
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb imagemagick
-      - name: Build and run Electron E2E tests
-        run: ../scripts/runElectronTests.sh
-        env:
-          DISPLAY: :99
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v7.0.1
-        if: always()
-        with:
-          name: electron-test-results
-          path: |
-            frontend/_results_
-            frontend/logs/

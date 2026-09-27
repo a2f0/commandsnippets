@@ -5,8 +5,6 @@ import type {User} from './db/schema';
 export interface Secrets {
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
-  ELECTRON_GITHUB_CLIENT_ID: string;
-  ELECTRON_GITHUB_CLIENT_SECRET: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
 }

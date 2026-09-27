@@ -6,8 +6,9 @@ workerd, [D1](https://developers.cloudflare.com/d1/) (SQLite) through
 manager and script runner.
 
 It is a wire-compatible replacement for the Django backend in `../backend`:
-same routes, JSON:API documents, cookies, tokens and error messages, so the web,
-Electron, iOS and Android clients work unchanged.
+same routes, JSON:API documents, cookies, tokens and error messages, so the web
+client works unchanged. The frontend is web-only; the API endpoints and CORS
+origins that served the retired Electron and Capacitor apps are gone.
 
 ## Layout
 
@@ -58,11 +59,9 @@ Deliberate changes:
   had tied ranks (see below).
 - **Tagging checks ownership.** Creating a junction or a reuse only accepts the
   requester's own tag/entry (400 `Invalid pk`).
-- **Native Google tokens must be ours.** `/api/v1/integrated-oauth/` checks the
-  access token's audience with Google's tokeninfo against
-  `GOOGLE_NATIVE_CLIENT_IDS` (`wrangler.jsonc`; the iOS app's `GIDClientID`)
-  before reading the email. Django accepted a token issued to any Google app.
-  Add the Android client ID there before shipping Google sign-in on Android.
+- **Web only.** `/api/v1/integrated-oauth/` (native Google sign-in), the
+  Electron GitHub OAuth app (`clientType: 'electron'`, now ignored) with its
+  `SameSite=None` cookies, and the Electron and Capacitor CORS origins are gone.
 - **No password login.** `/api-token-auth/` is gone: the frontend never used it
   and Workers' WebCrypto caps PBKDF2 at 100k iterations, below Django's hashes.
   Django admin is gone too; use `wrangler d1 execute` or `scripts/manage.ts`.
@@ -109,12 +108,11 @@ The Django API and its hosts were shut down on 2026-09-27, so the production
 database no longer changes: import the dump taken before the shutdown (a
 `pg_dump -Fc` file).
 
-0. **Ship the clients first.** v2's reads are owner-only, so they need the
-   auth cookie, and client builds from before #47 sent no credentials
-   on entry/tag reads (`getEntries`/`getTags`); against v2 they would get 403s
-   and reset their sessions. The web app needs a new host (its S3/CloudFront
-   sites were torn down with the Django hosts); Electron and mobile builds need
-   new releases.
+0. **Host the web app first.** Its S3/CloudFront sites were torn down with the
+   Django hosts. It must be a build from after #47: v2's reads are owner-only,
+   and earlier builds sent no credentials on entry/tag reads
+   (`getEntries`/`getTags`), so against v2 they would get 403s and reset their
+   sessions.
 
 1. **Convert and verify.** This needs `pg_restore` but no Postgres server:
 
@@ -166,10 +164,10 @@ One-time setup, after `bunx wrangler login` (`--device` over SSH) or with
 for env in staging production; do
   bunx wrangler d1 migrations apply DB --remote --env "$env"
   bunx wrangler deploy --env "$env"
-  # Only the Worker's six secrets; the Django files hold many more.
+  # Only the Worker's four secrets; the Django files hold many more.
   sops -d --output-type json ../backend/.env-$env.sops.env |
-    jq '{GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, ELECTRON_GITHUB_CLIENT_ID,
-         ELECTRON_GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET}' |
+    jq '{GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID,
+         GOOGLE_CLIENT_SECRET}' |
     bunx wrangler secret bulk --env "$env"
 done
 ```

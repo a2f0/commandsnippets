@@ -122,8 +122,6 @@ export async function getOrCreateToken(
   return row?.key ?? key;
 }
 
-export type ClientType = 'web' | 'electron';
-
 /**
  * The Domain attribute, if any. Local development (DEBUG) and an empty
  * COOKIE_DOMAIN mean host-only cookies. Staging uses
@@ -136,22 +134,17 @@ function cookieDomain(c: Context<AppEnv>): {domain?: string} {
   return c.env.DEBUG === 'true' || domain === '' ? {} : {domain};
 }
 
-function cookieOptions(c: Context<AppEnv>, clientType: ClientType) {
+function cookieOptions(c: Context<AppEnv>) {
   const isLocalDev = c.env.DEBUG === 'true';
-  const isElectron = clientType === 'electron';
-  // Electron needs SameSite=None for cross-origin requests from its custom
-  // protocol (e.g. tearleads-staging://app) to the API.
-  const sameSite = isElectron ? 'None' : isLocalDev ? 'Lax' : 'Strict';
   return {
     path: '/',
     maxAge: AUTH_COOKIE_MAX_AGE,
-    sameSite,
-    secure: isElectron || !isLocalDev,
+    sameSite: isLocalDev ? 'Lax' : 'Strict',
+    secure: !isLocalDev,
     ...cookieDomain(c),
   } as const;
 }
 
-/** Django's `_create_auth_response`: set the auth + LoggedIn cookies. */
 /** Django's cookie names, used for cleaning up pre-migration cookies. */
 const DJANGO_COOKIES = ['Authorization', 'LoggedIn'] as const;
 
@@ -179,13 +172,13 @@ function expireLegacyHostOnly(c: Context<AppEnv>): void {
   }
 }
 
+/** Django's `_create_auth_response`: set the auth + LoggedIn cookies. */
 export async function setAuthCookies(
   c: Context<AppEnv>,
-  userId: number,
-  clientType: ClientType = 'web'
+  userId: number
 ): Promise<void> {
   const key = await getOrCreateToken(c.get('db'), userId);
-  const options = cookieOptions(c, clientType);
+  const options = cookieOptions(c);
   expireLegacyHostOnly(c);
   const names = cookieNames(c);
   setCookie(c, names.auth, key, {...options, httpOnly: true});
@@ -203,16 +196,5 @@ export function clearAuthCookies(c: Context<AppEnv>): void {
   const names = cookieNames(c);
   for (const name of [names.auth, names.loggedIn]) {
     expire(c, name, cookieDomain(c));
-    // Electron's cookies were set cross-site (SameSite=None; Secure), and a
-    // cross-site response is only allowed to change them with the same
-    // attributes; the plain expiry above covers every other client.
-    setCookie(c, name, '', {
-      path: '/',
-      maxAge: 0,
-      expires: new Date(0),
-      sameSite: 'None',
-      secure: true,
-      ...cookieDomain(c),
-    });
   }
 }

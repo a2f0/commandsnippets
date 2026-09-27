@@ -24,7 +24,7 @@ export class GoogleOAuthService {
   readonly redirectUri: string;
 
   constructor(
-    private readonly env: Bindings,
+    env: Bindings,
     private readonly fetcher: Fetcher = defaultFetch
   ) {
     this.clientId = requireSetting(env, 'GOOGLE_CLIENT_ID');
@@ -50,32 +50,6 @@ export class GoogleOAuthService {
       headers: {Authorization: `Bearer ${accessToken}`},
     });
   }
-
-  /**
-   * Whether `accessToken` was issued to one of our native apps
-   * (`GOOGLE_NATIVE_CLIENT_IDS`, comma-separated). Userinfo answers for a
-   * token issued to any app, so without this check any other app a user signed
-   * in to with Google could replay their token here and sign in as them.
-   */
-  async issuedToNativeApp(accessToken: string): Promise<boolean> {
-    const allowed = requireSetting(this.env, 'GOOGLE_NATIVE_CLIENT_IDS')
-      .split(',')
-      .map(id => id.trim())
-      .filter(id => id !== '');
-    // POST with the token in a header, as google-auth-library does, keeps it
-    // out of URLs.
-    const response = await this.fetcher(
-      'https://oauth2.googleapis.com/tokeninfo',
-      {method: 'POST', headers: {Authorization: `Bearer ${accessToken}`}}
-    );
-    if (!response.ok) {
-      return false;
-    }
-    const {aud} = (await response.json().catch(() => ({}))) as {
-      aud?: unknown;
-    };
-    return typeof aud === 'string' && allowed.includes(aud);
-  }
 }
 
 export class GithubOAuthService {
@@ -85,13 +59,11 @@ export class GithubOAuthService {
 
   constructor(
     env: Bindings,
-    clientType: 'web' | 'electron' = 'web',
     private readonly fetcher: Fetcher = defaultFetch
   ) {
-    const prefix = clientType === 'electron' ? 'ELECTRON_GITHUB' : 'GITHUB';
-    this.clientId = requireSetting(env, `${prefix}_CLIENT_ID`);
-    this.clientSecret = requireSetting(env, `${prefix}_CLIENT_SECRET`);
-    this.redirectUri = requireSetting(env, `${prefix}_REDIRECT_URI`);
+    this.clientId = requireSetting(env, 'GITHUB_CLIENT_ID');
+    this.clientSecret = requireSetting(env, 'GITHUB_CLIENT_SECRET');
+    this.redirectUri = requireSetting(env, 'GITHUB_REDIRECT_URI');
   }
 
   headers(accessToken: string): Record<string, string> {

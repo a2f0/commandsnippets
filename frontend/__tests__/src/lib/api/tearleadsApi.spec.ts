@@ -17,10 +17,6 @@ describe('tearleadsApi credentials', () => {
 
   const calls: Array<[string, () => Promise<unknown>]> = [
     ['googleLogin', () => tearleadsApi.googleLogin('code')],
-    [
-      'integratedOAuthLogin',
-      () => tearleadsApi.integratedOAuthLogin('google', 't'),
-    ],
     ['githubLogin', () => tearleadsApi.githubLogin('code')],
     ['getCurrentUser', () => tearleadsApi.getCurrentUser()],
     ['logout', () => tearleadsApi.logout()],
@@ -72,5 +68,26 @@ describe('tearleadsApi credentials', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const init = fetchSpy.mock.calls[0]?.[1];
     expect(init?.credentials).toBe('include');
+  });
+});
+
+describe('githubLogin', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // The Django backend rejects a GitHub login without clientType.
+  it('sends clientType web', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => new Response('{}', {status: 200}));
+    await tearleadsApi.githubLogin('code');
+    const init = fetchSpy.mock.calls[0]?.[1];
+    expect(JSON.parse(String(init?.body))).toEqual({
+      data: {
+        type: 'GithubLogin',
+        attributes: {code: 'code', clientType: 'web'},
+      },
+    });
   });
 });

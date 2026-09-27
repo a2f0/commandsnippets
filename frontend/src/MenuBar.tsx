@@ -6,7 +6,7 @@ import React from 'react';
 import {useAppContext} from './AppContext';
 import {UserProfileCircle} from './components/UserProfileCircle';
 import {GithubAuth} from './GithubAuth';
-import {GoogleAuthWrapper} from './GoogleAuthWrapper';
+import {GoogleAuth} from './GoogleAuth';
 import {useTypedTranslation} from './i18n/hooks';
 import {environment} from './lib/environment';
 import {DebugMenu} from './menu/debug/DebugMenu';
@@ -170,7 +170,7 @@ const MenuBar = () => {
         {!appConfig.loggedInUser && (
           <>
             <GithubAuth />
-            <GoogleAuthWrapper />
+            <GoogleAuth />
           </>
         )}
         {appConfig.loggedInUser && <UserProfileCircle />}
