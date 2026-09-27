@@ -18,7 +18,7 @@ updates:
       - 'a2f0'
 
   - package-ecosystem: 'bun'
-    directory: '/backend-v2'
+    directory: '/packages/backend-v2'
     schedule:
       interval: 'monthly'
     reviewers:
@@ -60,6 +60,6 @@ updates:
       - 'a2f0'
 
   - package-ecosystem: 'npm'
-    directory: '/frontend'
+    directory: '/packages/frontend'
     schedule:
       interval: 'monthly'

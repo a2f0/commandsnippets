@@ -14,10 +14,10 @@ exercise every lane.
 
 | Lane | Workflow | Scope |
 |---|---|---|
-| `tooling` | inline in `ci.yml` | `packages/`, `scripts/`, tooling config |
+| `tooling` | inline in `ci.yml` | `packages/agent-tool/`, `scripts/`, tooling config |
 | `backend` | `backend.yml` (Backend CI) | `backend/`, `runBackendTests.sh` |
-| `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `backend-v2/` |
-| `frontend` | `frontend.yml` (Frontend CI) | `frontend/`, app test scripts |
+| `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/` |
+| `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, app test scripts |
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch

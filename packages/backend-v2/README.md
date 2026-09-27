@@ -5,7 +5,7 @@ workerd, [D1](https://developers.cloudflare.com/d1/) (SQLite) through
 [Drizzle](https://orm.drizzle.team), with [Bun](https://bun.sh) as the package
 manager and script runner.
 
-It is a wire-compatible replacement for the Django backend in `../backend`:
+It is a wire-compatible replacement for the Django backend in `../../backend`:
 same routes, JSON:API documents, cookies, tokens and error messages, so the web
 client works unchanged. The frontend is web-only; the API endpoints and CORS
 origins that served the retired Electron and Capacitor apps are gone.
@@ -165,7 +165,7 @@ for env in staging production; do
   bunx wrangler d1 migrations apply DB --remote --env "$env"
   bunx wrangler deploy --env "$env"
   # Only the Worker's four secrets; the Django files hold many more.
-  sops -d --output-type json ../backend/.env-$env.sops.env |
+  sops -d --output-type json ../../backend/.env-$env.sops.env |
     jq '{GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID,
          GOOGLE_CLIENT_SECRET}' |
     bunx wrangler secret bulk --env "$env"
@@ -178,7 +178,7 @@ Then attach the custom domains (`api.staging.commandsnippets.com`,
 `api.commandsnippets.com`) to the Workers.
 
 CI: pull requests run lint, typecheck, and the coverage-gated tests as the
-`backend-v2` lane of the required `CI gate` (see `../docs/ci-merge-gate.md`).
+`backend-v2` lane of the required `CI gate` (see `../../docs/ci-merge-gate.md`).
 Pushes to `staging`/`main` run `Backend v2 CI`, which applies D1 migrations and
 deploys once the `BACKEND_V2_DEPLOY` repository variable is `true` and the
 `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist. Deploys stay

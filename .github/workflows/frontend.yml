@@ -10,7 +10,7 @@ on:
   push:
     branches: [main, staging]
     paths:
-      - 'frontend/**'
+      - 'packages/frontend/**'
       - 'scripts/runUnitTests.sh'
       - 'scripts/runWebdriverTests.sh'
       - '.github/workflows/frontend.yml'
@@ -20,7 +20,7 @@ jobs:
     continue-on-error: false
     defaults:
       run:
-        working-directory: frontend
+        working-directory: packages/frontend
     steps:
       - uses: actions/checkout@v7.0.1
       - name: Set up pnpm and Node.js
@@ -29,8 +29,8 @@ jobs:
           version: '11.21.0'
           runtime: 'node@24.19.0'
           cache: true
-          cache-dependency-path: frontend/pnpm-lock.yaml
-          package-json-file: frontend/package.json
+          cache-dependency-path: packages/frontend/pnpm-lock.yaml
+          package-json-file: packages/frontend/package.json
           install: false
       - name: Set up Python
         uses: actions/setup-python@v7.0.0
@@ -61,4 +61,4 @@ jobs:
         with:
           name: wdio-video-reporter
           path: |
-            frontend/_results_
+            packages/frontend/_results_

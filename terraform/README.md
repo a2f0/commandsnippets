@@ -2,7 +2,7 @@
 
 Terraform for the `commandsnippets.com` Cloudflare zone's domain-level records
 (`dns/`): Google Workspace MX, Google site verification, and CAA. The API runs
-on Cloudflare Workers (`../backend-v2`), whose custom domains create their own
+on Cloudflare Workers (`../packages/backend-v2`), whose custom domains create their own
 records.
 
 Secrets in this repo are managed by [SOPS](https://github.com/getsops/sops)
