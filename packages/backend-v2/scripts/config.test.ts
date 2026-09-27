@@ -5,7 +5,14 @@ import path from 'node:path';
 type Vars = Record<string, string>;
 interface WranglerConfig {
   vars: Vars;
-  env: Record<string, {vars: Vars}>;
+  env: Record<
+    string,
+    {
+      vars: Vars;
+      workers_dev?: boolean;
+      routes?: Array<{pattern: string; custom_domain: boolean}>;
+    }
+  >;
 }
 
 // wrangler.jsonc allows comments; strip line comments outside strings.
@@ -39,6 +46,17 @@ describe('wrangler.jsonc', () => {
     expect(new URL(config.vars['GOOGLE_REDIRECT_URI'] ?? '').origin).toBe(
       'http://localhost:8085'
     );
+  });
+
+  // Custom domains are wrangler's (Terraform manages the zone itself).
+  test('staging serves the API on api-staging; production waits for cutover', () => {
+    expect(config.env['staging']?.routes).toEqual([
+      {pattern: 'api-staging.commandsnippets.com', custom_domain: true},
+    ]);
+    expect(config.env['production']?.routes).toEqual([]);
+    // workers.dev only until production has its custom domain.
+    expect(config.env['staging']?.workers_dev).toBe(false);
+    expect(config.env['production']?.workers_dev).toBe(true);
   });
 
   test("staging cookies cannot collide with production's", () => {

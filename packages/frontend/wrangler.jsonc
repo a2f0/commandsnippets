@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "commandsnippets-app",
+  "compatibility_date": "2026-08-22",
+  // A static single-page app (no Worker script): files from the Vite build,
+  // and index.html for every other path, so client routes like /:user work.
+  // Build with the matching mode first (`pnpm run build:<env>`).
+  "assets": {
+    "directory": "./build",
+    "not_found_handling": "single-page-application"
+  },
+  "env": {
+    "staging": {
+      // The app reads its environment from the hostname (src/lib/environment.ts),
+      // so it only works on its custom domain, not on workers.dev.
+      "workers_dev": false,
+      "routes": [
+        { "pattern": "app-staging.commandsnippets.com", "custom_domain": true }
+      ]
+    },
+    "production": {
+      // app.commandsnippets.com is added at cutover, after the data import.
+      "workers_dev": false,
+      "routes": []
+    }
+  }
+}

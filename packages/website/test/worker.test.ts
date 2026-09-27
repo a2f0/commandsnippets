@@ -46,11 +46,28 @@ describe('wrangler.jsonc', () => {
     assets: {directory: string; not_found_handling: string};
     compatibility_flags: string[];
   };
+  const envs = config.env as unknown as Record<
+    string,
+    {
+      workers_dev: boolean;
+      routes: Array<{pattern: string; custom_domain: boolean}>;
+    }
+  >;
 
   test('each environment redirects to the app its pages link to', () => {
     expect(config.vars.APP_ORIGIN).toBe(appUrl('development'));
     for (const mode of ['staging', 'production']) {
       expect(config.env[mode]?.vars.APP_ORIGIN).toBe(appUrl(mode));
+    }
+  });
+
+  test('staging is served on website-staging; production waits for cutover', () => {
+    expect(envs['staging']?.routes).toEqual([
+      {pattern: 'website-staging.commandsnippets.com', custom_domain: true},
+    ]);
+    expect(envs['production']?.routes).toEqual([]);
+    for (const mode of ['staging', 'production']) {
+      expect(envs[mode]?.workers_dev).toBe(false);
     }
   });
 

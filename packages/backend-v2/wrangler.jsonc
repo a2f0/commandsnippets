@@ -23,6 +23,11 @@
   ],
   "env": {
     "staging": {
+      // Custom domain (Terraform manages the zone, wrangler the Worker's hosts).
+      "workers_dev": false,
+      "routes": [
+        { "pattern": "api-staging.commandsnippets.com", "custom_domain": true }
+      ],
       // Staging's hosts are app-staging / api-staging, so its cookies share
       // .commandsnippets.com with production's and are told apart by name.
       "vars": {
@@ -43,6 +48,10 @@
       ]
     },
     "production": {
+      // api.commandsnippets.com is added at cutover, after the data import;
+      // until then workers.dev is the only way to reach it.
+      "workers_dev": true,
+      "routes": [],
       "vars": {
         "DEBUG": "false",
         "COOKIE_DOMAIN": ".commandsnippets.com",
