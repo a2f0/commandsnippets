@@ -2,13 +2,12 @@
 name: Android Mobile Testing
 
 # yamllint disable-line rule:truthy
+# Not currently a `CI` lane: the workflow is broken on current runners (SDK
+# setup and AVD creation). Run it by hand until it is fixed, then add it back
+# to ci.yml and CI_JOBS. See docs/ci-merge-gate.md.
 on:
-  pull_request:
-    branches: '**'
-    paths:
-      - 'frontend/**'
-      - 'scripts/runCapacitorTests.sh'
-      - '.github/workflows/frontend-android-testing.yml'
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   android-appium-tests:

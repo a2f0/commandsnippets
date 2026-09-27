@@ -8,6 +8,15 @@ updates:
     reviewers:
       - 'a2f0'
 
+  # Root tooling (commitlint, TypeScript, agent-tool); SHA-pinned actions above
+  # are bumped along with their `# vX.Y.Z` comments.
+  - package-ecosystem: 'bun'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    reviewers:
+      - 'a2f0'
+
   - package-ecosystem: 'pip'
     directory: '/backend'
     schedule:

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+MESSAGE_FILE="$1"
+
+cd "$REPO_ROOT"
+
+# Strip Claude co-author trailers before linting, so they never reach a commit.
+"$REPO_ROOT/scripts/checks/stripClaudeCoauthors.sh" "$MESSAGE_FILE"
+
+echo "Linting commit message..."
+COMMITLINT="$REPO_ROOT/node_modules/.bin/commitlint"
+if [ -x "$COMMITLINT" ]; then
+  "$COMMITLINT" --config "$REPO_ROOT/commitlint.config.mts" --edit "$MESSAGE_FILE"
+else
+  npx --yes \
+    --package @commitlint/cli \
+    --package @commitlint/config-conventional \
+    commitlint \
+    --config "$REPO_ROOT/commitlint.config.mts" \
+    --edit "$MESSAGE_FILE"
+fi

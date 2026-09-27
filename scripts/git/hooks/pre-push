@@ -1,0 +1,138 @@
+#!/bin/sh
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# A copied hook must match the checked-out version before it can gate a push.
+if ! cmp -s "$0" "$REPO_ROOT/scripts/git/hooks/pre-push"; then
+  echo "Error: pre-push hook is stale. Run sh scripts/git/install-hooks.sh." >&2
+  exit 1
+fi
+
+# shellcheck disable=SC1091
+. "$REPO_ROOT/scripts/lib/stepTimings.sh"
+
+cd "$REPO_ROOT"
+
+push_remote=${1:-}
+zero_sha="0000000000000000000000000000000000000000"
+
+refs_file=$(mktemp)
+changed_file=$(mktemp)
+timings_log=$("$REPO_ROOT/scripts/git/showPushGateTimings.sh" --log-path 2>/dev/null) ||
+  timings_log=""
+
+# Every run is persisted so `showPushGateTimings.sh` (and the ship-pr report)
+# can read it back afterwards; a run that dies mid-check records where.
+record_timings() {
+  [ -n "$timings_log" ] || return 0
+  if [ "$1" -eq 0 ]; then
+    timings_status=passed
+  else
+    timings_status=failed
+  fi
+  # One head= field per commit pushed; a deletion falls back to HEAD.
+  timings_heads=$(awk -v zero="$zero_sha" '$2 != zero { print "head=" $2 }' "$refs_file")
+  [ -n "$timings_heads" ] || timings_heads="head=$(git rev-parse HEAD)"
+  # Deliberately unquoted: each line is one head= field of hex SHAs.
+  # shellcheck disable=SC2086
+  step_timings_append_log "$timings_log" \
+    "status=$timings_status" \
+    "branch=$(git rev-parse --abbrev-ref HEAD)" \
+    $timings_heads \
+    "remote=${push_remote:-unknown}"
+}
+
+on_exit() {
+  push_status=$?
+  record_timings "$push_status" || true
+  rm -f "$refs_file" "$changed_file"
+}
+
+trap on_exit EXIT
+trap 'exit 1' HUP INT TERM
+
+if [ -t 0 ]; then
+  : >"$refs_file"
+else
+  cat >"$refs_file"
+fi
+
+# The commits a pushed ref adds: everything since the remote's old tip, or
+# since main for a new branch.
+push_range() {
+  if [ "$2" = "$zero_sha" ]; then
+    printf 'main..%s\n' "$1"
+  else
+    printf '%s..%s\n' "$2" "$1"
+  fi
+}
+
+while read -r _ local_sha _ remote_sha; do
+  [ "$local_sha" != "$zero_sha" ] || continue
+  # --no-renames lists both sides of a move, so moving a file out of a checked
+  # area still triggers that area's checks.
+  git diff --name-only --no-renames "$(push_range "$local_sha" "$remote_sha" | sed 's/\.\./.../')" >>"$changed_file"
+done <"$refs_file"
+
+touches() {
+  grep -q "^$1" "$changed_file"
+}
+
+# The area checks run against the worktree, so they only vouch for the push
+# when the worktree *is* the pushed commit: every pushed ref must be HEAD, no
+# tracked file may differ from it, and no untracked file may sit under the
+# checked paths (it would be tested without being pushed).
+require_worktree_is_push() {
+  head_sha=$(git rev-parse HEAD)
+  while read -r _ local_sha _ _; do
+    [ "$local_sha" != "$zero_sha" ] || continue
+    if [ "$local_sha" != "$head_sha" ]; then
+      echo "Error: pre-push validates the checked-out commit, but this push sends $local_sha." >&2
+      echo "Check out the branch being pushed and push again." >&2
+      exit 1
+    fi
+  done <"$refs_file"
+  if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+    echo "Error: uncommitted changes would be validated instead of the pushed commit:" >&2
+    git status --short --untracked-files=no >&2
+    exit 1
+  fi
+  untracked=$(git status --porcelain --untracked-files=all -- "$@")
+  if [ -n "$untracked" ]; then
+    echo "Error: untracked files would be validated with the pushed commit:" >&2
+    printf '%s\n' "$untracked" >&2
+    exit 1
+  fi
+}
+
+step_timings_reset
+
+step_timings_run branch-name bun run lint:branch-name
+
+step_timings_begin commit-trust "Checking commit signatures and co-authors"
+while read -r _ local_sha _ remote_sha; do
+  [ "$local_sha" != "$zero_sha" ] || continue
+  "$REPO_ROOT/scripts/checks/checkCommitTrust.sh" --range "$(push_range "$local_sha" "$remote_sha")" </dev/null
+done <"$refs_file"
+step_timings_end
+
+if touches 'packages/' || touches 'scripts/' || touches 'commitlint.config.mts' ||
+  touches 'package.json' || touches 'bun.lock' || touches 'tsconfig'; then
+  require_worktree_is_push packages scripts
+  step_timings_run tooling-shell bun run lint:shell
+  step_timings_run tooling-typecheck bun run typecheck
+  step_timings_run tooling-tests sh -c 'bun run test:agent-tool && bun run test:scripts'
+fi
+
+if touches 'backend-v2/' && [ -d "$REPO_ROOT/backend-v2" ]; then
+  require_worktree_is_push backend-v2
+  step_timings_run backend-v2-lint sh -c 'cd backend-v2 && bun run lint'
+  step_timings_run backend-v2-typecheck sh -c 'cd backend-v2 && bun run typecheck'
+  step_timings_run backend-v2-tests sh -c 'cd backend-v2 && bun run test:coverage'
+fi
+
+step_timings_summary
+
+echo "All checks passed."
