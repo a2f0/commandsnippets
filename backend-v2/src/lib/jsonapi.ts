@@ -46,10 +46,8 @@ const JSON_MEDIA_TYPES = new Set([
   'application/json',
 ]);
 
-export async function parseResource(
-  request: Request,
-  {type, id}: ParseOptions
-): Promise<ParsedResource> {
+/** 415 unless the request declares a JSON body. */
+export function assertJsonMediaType(request: Request): void {
   const mediaType = (request.headers.get('Content-Type') ?? '')
     .split(';', 1)[0]
     ?.trim()
@@ -61,6 +59,13 @@ export async function parseResource(
       'unsupported_media_type'
     );
   }
+}
+
+export async function parseResource(
+  request: Request,
+  {type, id}: ParseOptions
+): Promise<ParsedResource> {
+  assertJsonMediaType(request);
   const text = await request.text();
   let document: unknown = {};
   if (text.trim() !== '') {

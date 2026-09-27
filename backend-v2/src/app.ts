@@ -6,6 +6,7 @@ import {authenticate} from './auth/tokens';
 import {createDb} from './db/client';
 import type {AppEnv} from './env';
 import {ApiError, describeError} from './lib/errors';
+import {assertJsonMediaType} from './lib/jsonapi';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
 import {tagRoutes} from './resources/tags';
@@ -59,6 +60,29 @@ app.use(
     maxAge: 86_400,
   })
 );
+
+/**
+ * Cross-site request forgery. A browser sends a cross-origin POST without a
+ * CORS preflight only for form-like media types, so every POST must be JSON
+ * (every client request already is), and any state-changing request whose
+ * Origin is not one of ours is refused. Requests without an Origin (native
+ * and non-browser clients) are unaffected.
+ */
+app.use('*', async (c, next) => {
+  const {method} = c.req;
+  if (method === 'POST') {
+    assertJsonMediaType(c.req.raw);
+  }
+  const origin = c.req.header('Origin');
+  if (
+    !['GET', 'HEAD', 'OPTIONS'].includes(method) &&
+    origin !== undefined &&
+    !ALLOWED_ORIGINS.some(pattern => pattern.test(origin))
+  ) {
+    throw ApiError.of(403, 'Origin not allowed.', 'origin_not_allowed');
+  }
+  await next();
+});
 
 app.use('*', async (c, next) => {
   c.set('db', createDb(c.env.DB));
