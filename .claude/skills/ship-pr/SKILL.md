@@ -332,15 +332,18 @@ loop, subject-only squash, and `MERGED`-state verification.
        [ "$RULESET_ENFORCES" != "true" ] || NON_BYPASS_STRICT=true
      done
      [ "$NON_BYPASS_STRICT" = "true" ] || { echo "Error: the authenticated actor can bypass strict base freshness for $REPO:$BASE_REF" >&2; exit 1; }
-     gh pr checks "$PR_NUMBER" --required --watch --fail-fast -R "$REPO" || { echo "Error: required checks did not pass for PR #$PR_NUMBER" >&2; exit 1; }
+     gh pr checks "$PR_NUMBER" --watch --fail-fast -R "$REPO" || { echo "Error: checks did not pass for PR #$PR_NUMBER" >&2; exit 1; }
      CURRENT_BASE_REF=$(gh pr view "$PR_NUMBER" --json baseRefName -q .baseRefName -R "$REPO")
      [ "$CURRENT_BASE_REF" = "$BASE_REF" ] || { echo "Error: PR base changed from reviewed branch $BASE_REF to $CURRENT_BASE_REF; re-review required" >&2; exit 1; }
      break
    done
    ```
 
-   Waiting for required checks readies the synchronous merge mutation; that
-   mutation never falls back to a latent automatic merge. A non-bypassable
+   Wait for **every** check, not just the ruleset's required ones: the
+   `squashMerge` helper refuses any pending or failed check (for example a
+   long-running mobile workflow on a frontend PR), so stopping at the required
+   checks would reach the merge early and fail. Waiting readies the synchronous
+   merge mutation; that mutation never falls back to a latent automatic merge. A non-bypassable
    server-side rule then closes the fetch-to-merge race: if the base advances
    after the check below, GitHub rejects the stale merge and the retry path can
    refresh and re-review it. Before every merge attempt, resolve and fetch the

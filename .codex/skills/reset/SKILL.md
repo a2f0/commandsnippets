@@ -119,6 +119,8 @@ TARGET_BRANCH=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name) 
    # Honor the *complete* upstream: the remote AND the branch name it maps to.
    UPSTREAM_REF=$(git config "branch.$TARGET_BRANCH.merge" 2>/dev/null || echo "refs/heads/$TARGET_BRANCH")
    git pull --ff-only "$REMOTE" "${UPSTREAM_REF#refs/heads/}" || { echo "Error: $TARGET_BRANCH could not fast-forward; hooks not installed" >&2; exit 1; }
+   UPSTREAM_OID=$(git rev-parse FETCH_HEAD) || { echo "Error: could not resolve the fetched $TARGET_BRANCH; hooks not installed" >&2; exit 1; }
+   [ "$(git rev-parse HEAD)" = "$UPSTREAM_OID" ] || { echo "Error: $TARGET_BRANCH has commits that are not on $REMOTE; hooks not installed" >&2; exit 1; }
    git fetch "$REMOTE" --prune || { echo "Error: prune failed; hooks not installed" >&2; exit 1; }
    ```
 
@@ -129,6 +131,12 @@ TARGET_BRANCH=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name) 
    `origin/main` would pull the nonexistent `origin/stable` and fail, or worse,
    fast-forward to the wrong branch where one happens to exist. Falling back to
    `refs/heads/$TARGET_BRANCH` keeps the untracked case working.
+
+   **Require `HEAD` to equal the fetched upstream commit.** `--ff-only`
+   "succeeds" when the local branch is already *ahead* of its upstream, and
+   installing then would copy hooks from unpublished local commits while
+   reporting the remote revision. Compare against `FETCH_HEAD` before the prune
+   fetch replaces it.
 
    **`--ff-only`** — the target branch must never acquire a merge commit here. A
    non-fast-forward means it has diverged locally; stop and report rather than

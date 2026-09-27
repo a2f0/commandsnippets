@@ -173,9 +173,11 @@ AGENT_TOOL="$ROOT_DIR/packages/agent-tool/src/index.ts"
    The tool:
    - Resolves the current branch and repo, and errors if an open PR already
      exists for the branch.
-   - **Never pushes.** It errors if the branch is not on the repository, or is
-     there at a commit other than the local head; step 3's push is what puts
-     it there, and it runs the pre-push hook, which the tool must not.
+   - **Never pushes.** It errors if the branch is not on its push remote, or
+     is there at a commit other than the local head; step 3's push is what
+     puts it there, and it runs the pre-push hook, which the tool must not.
+     From a fork checkout the push remote is the fork, and the PR head is
+     owner-qualified (`<owner>:<branch>`).
    - Rejects a multi-line title.
    - Validates the title with the repo's commitlint setup (the same
      `@commitlint/cli` binary and `commitlint.config.mts` the commit-msg hook

@@ -110,8 +110,9 @@ the PR is created, so conventional-commit syntax and the 50-char header limit
 apply. The body is read from stdin (empty when none is piped), the head is the
 current branch, and the base defaults to the repository's default branch. Errors
 if an open PR already exists for the branch. It never pushes: it errors unless
-the branch is on the repository at the local head, since the push runs the
-pre-push gate, which belongs to the caller. Backs the `open-pr` skill.
+the branch is on its push remote at the local head, since the push runs the
+pre-push gate, which belongs to the caller. From a fork checkout the push remote
+is the fork, and the PR head is owner-qualified. Backs the `open-pr` skill.
 
 ## Squash merge
 
@@ -137,7 +138,8 @@ the PR immediately before the mutation and refuses an observed retarget. GitHub
 does not expose an atomic expected-base input, so callers must not concurrently
 retarget the PR during that final request. Backs the `squash-merge` skill.
 
-Before invoking it, wait for CI with `gh pr checks --watch --fail-fast`.
+Before invoking it, wait for every check with `gh pr checks --watch --fail-fast`
+(not just `--required` ones).
 The helper refuses pending or failed checks, requires every core check in
 [the merge gate policy](../../docs/ci-merge-gate.md) to succeed in
 the CI workflow, and rechecks the head after reading the latest check runs.

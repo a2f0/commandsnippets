@@ -47,9 +47,17 @@ export function resolveOpencodeVariant(
 /**
  * Inline opencode config (`OPENCODE_CONFIG_CONTENT`) that defines the reviewer
  * agent and its confinement. This is the hermetic substitute for opencode
- * having no per-run "safe mode": the agent gets deny rules for every
- * state-changing or exfiltrating tool, and reads outside its own (empty) cwd
- * are gated by `external_directory` to the snapshot alone.
+ * having no per-run "safe mode": every tool is denied by default and only the
+ * read-only `read`/`glob`/`grep`/`list` tools are re-allowed, and reads
+ * outside its own (empty) cwd are gated by `external_directory` to the
+ * snapshot alone.
+ *
+ * The default deny matters because opencode's built-in ruleset starts from
+ * `"*": "allow"` and still loads the user's global config, so any MCP server
+ * defined there would otherwise hand the reviewer its tools. Opencode appends
+ * agent rules after its defaults and the last matching rule wins, so `"*"`
+ * must come first here for the specific allows after it to take effect. The
+ * named denies repeat the default for the tools that matter most.
  *
  * The snapshot path appears both as `mkdtempSync` wrote it and as `realpath`
  * resolves it, because on macOS the temp dir is a symlink (`/var` →
@@ -73,6 +81,11 @@ export function buildOpencodeInlineConfig(snapshotRoot: string): string {
           "You are a read-only code reviewer. Use only the read, glob, and grep tools; never modify files, run commands, or fetch anything.",
         model: OPENCODE_MODEL,
         permission: {
+          "*": "deny",
+          read: "allow",
+          glob: "allow",
+          grep: "allow",
+          list: "allow",
           edit: "deny",
           bash: "deny",
           question: "deny",

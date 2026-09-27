@@ -86,6 +86,23 @@ describe("buildOpencodeInlineConfig", () => {
     }
   });
 
+  test("denies every tool by default, including MCP tools", () => {
+    const config = JSON.parse(buildOpencodeInlineConfig(snapshotDir)) as {
+      agent: Record<string, { permission: Record<string, unknown> }>;
+    };
+    const permission = config.agent["commandsnippets-review"]?.permission ?? {};
+
+    // Opencode's defaults allow "*", and the last matching rule wins, so the
+    // default deny must precede the read-only allows.
+    expect(Object.keys(permission)[0]).toBe("*");
+    expect(permission["*"]).toBe("deny");
+    const allowed = Object.entries(permission)
+      .filter(([, rule]) => rule === "allow")
+      .map(([tool]) => tool)
+      .sort();
+    expect(allowed).toEqual(["glob", "grep", "list", "read"]);
+  });
+
   test("confines external reads to the snapshot alone", () => {
     const config = JSON.parse(buildOpencodeInlineConfig(snapshotDir)) as {
       agent: Record<
