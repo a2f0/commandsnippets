@@ -71,7 +71,9 @@ push_range() {
 
 while read -r _ local_sha _ remote_sha; do
   [ "$local_sha" != "$zero_sha" ] || continue
-  git diff --name-only "$(push_range "$local_sha" "$remote_sha" | sed 's/\.\./.../')" >>"$changed_file"
+  # --no-renames lists both sides of a move, so moving a file out of a checked
+  # area still triggers that area's checks.
+  git diff --name-only --no-renames "$(push_range "$local_sha" "$remote_sha" | sed 's/\.\./.../')" >>"$changed_file"
 done <"$refs_file"
 
 touches() {

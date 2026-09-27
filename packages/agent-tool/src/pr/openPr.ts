@@ -8,43 +8,10 @@ import {
   spawnExitCode,
 } from "../git/prContext";
 import { assertBranchPushed } from "./assertBranchPushed";
-import { headArgument, selectPushRemote } from "./headRepository";
+import { headArgument, resolvePushedHead } from "./headRepository";
 import { assertNoClaudeBranding } from "./assertNoClaudeBranding";
 import { singleLineSubject } from "./subjectLine";
 import { validateCommitSubject } from "./validateCommitSubject";
-
-function readGitConfig(key: string): string | null {
-  const result = spawnSync("git", ["config", "--get", key], {
-    encoding: "utf8",
-  });
-  const value = result.status === 0 ? result.stdout.trim() : "";
-  return value.length > 0 ? value : null;
-}
-
-/**
- * Where this branch was pushed: the push remote's URL and the repository it
- * names. In a fork checkout that is the fork, not the PR's base repository.
- */
-function resolvePushedHead(branch: string): {
-  readonly url: string;
-  readonly repo: string;
-} {
-  const remote = selectPushRemote(branch, readGitConfig);
-  const url = run("git", ["remote", "get-url", "--push", remote]);
-  const repo = run("gh", [
-    "repo",
-    "view",
-    url,
-    "--json",
-    "nameWithOwner",
-    "--jq",
-    ".nameWithOwner",
-  ]);
-  if (repo.length === 0) {
-    throw new Error(`Could not resolve the repository for remote '${remote}'.`);
-  }
-  return { url, repo };
-}
 
 /** Read the PR body from stdin, or "" when stdin is a terminal/empty. */
 function readBody(): string {
@@ -71,8 +38,9 @@ function readBody(): string {
  */
 export function openPr(rootDir: string, titleArg: string | undefined): number {
   const { branch, repo, defaultBranch } = resolveRepoContext();
+  const pushed = resolvePushedHead(branch);
 
-  const existing = findOpenPrNumber(branch, repo);
+  const existing = findOpenPrNumber(branch, repo, pushed.repo);
   if (existing.length > 0) {
     throw new Error(`An open PR already exists for '${branch}': #${existing}.`);
   }
@@ -86,7 +54,6 @@ export function openPr(rootDir: string, titleArg: string | undefined): number {
 
   // Local validation first; the remote head is the last thing checked, on the
   // remote the branch was actually pushed to (a fork, from a fork checkout).
-  const pushed = resolvePushedHead(branch);
   assertBranchPushed({
     branch,
     localHead: run("git", ["rev-parse", "HEAD"]),

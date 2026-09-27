@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
+  appendFileSync,
   chmodSync,
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   realpathSync,
@@ -204,7 +206,13 @@ describe("lintBranchName.ts", () => {
   const lint = (name: string) =>
     run(["bun", "scripts/checks/lintBranchName.ts", name], REPO_ROOT);
 
-  test.each(["main", "feat/backend-v2", "chore/ship-pr-flow", "fix/a.b_c"])(
+  test.each([
+    "main",
+    "staging",
+    "feat/backend-v2",
+    "chore/ship-pr-flow",
+    "fix/a.b_c",
+  ])(
     "accepts %s",
     (name) => {
       expect(lint(name).exitCode).toBe(0);
@@ -217,4 +225,139 @@ describe("lintBranchName.ts", () => {
       expect(lint(name).exitCode).toBe(1);
     },
   );
+});
+
+describe("pre-push", () => {
+  const ZERO = "0".repeat(40);
+
+  function git(repo: string, ...args: string[]): string {
+    const result = run(["git", ...args], repo);
+    expect(result.exitCode).toBe(0);
+    return result.stdout.trim();
+  }
+
+  // Commits skip the installed commit-msg hook, which needs commitlint.
+  function commitAll(repo: string, message: string): void {
+    git(repo, "add", "-A");
+    git(repo, "commit", "-q", "--no-verify", "--allow-empty", "-m", message);
+  }
+
+  /**
+   * A signed repo carrying the real hook and its helpers, with package
+   * scripts stubbed so a run shows which checks it triggered.
+   */
+  function hookRepo(): string {
+    const repo = signedRepo();
+    for (const dir of ["scripts/git", "scripts/lib"]) {
+      cpSync(path.join(REPO_ROOT, dir), path.join(repo, dir), {
+        recursive: true,
+      });
+    }
+    mkdirSync(path.join(repo, "scripts/checks"));
+    cpSync(TRUST, path.join(repo, "scripts/checks/checkCommitTrust.sh"));
+    writeFileSync(
+      path.join(repo, "package.json"),
+      JSON.stringify({
+        scripts: {
+          "lint:branch-name": "true",
+          "lint:shell": "echo LANE:tooling",
+          typecheck: "true",
+          "test:agent-tool": "true",
+          "test:scripts": "true",
+        },
+      }),
+    );
+    writeFileSync(path.join(repo, "scripts/notes.txt"), "notes\n");
+    commitAll(repo, "chore: add tooling");
+    expect(run(["sh", "scripts/git/install-hooks.sh"], repo).exitCode).toBe(0);
+    git(repo, "switch", "-q", "-c", "feat/x");
+    return repo;
+  }
+
+  function prePush(repo: string, sha = git(repo, "rev-parse", "HEAD")) {
+    const result = Bun.spawnSync([".git/hooks/pre-push", "origin", "url"], {
+      cwd: repo,
+      stdin: Buffer.from(`refs/heads/feat/x ${sha} refs/heads/feat/x ${ZERO}\n`),
+      env: {
+        ...process.env,
+        GIT_CONFIG_GLOBAL: "/dev/null",
+        GIT_CONFIG_NOSYSTEM: "1",
+        PUSH_GATE_TIMINGS_LOG: path.join(tempDir(), "timings.tsv"),
+      },
+    });
+    return {
+      exitCode: result.exitCode,
+      stdout: result.stdout.toString(),
+      stderr: result.stderr.toString(),
+    };
+  }
+
+  test("moving a file out of a checked area still runs its checks", () => {
+    const repo = hookRepo();
+    git(repo, "mv", "scripts/notes.txt", "notes.txt");
+    commitAll(repo, "chore: move notes");
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("LANE:tooling");
+  });
+
+  test("skips area checks for pushes outside every checked area", () => {
+    const repo = hookRepo();
+    writeFileSync(path.join(repo, "README.md"), "readme\n");
+    commitAll(repo, "docs: add readme");
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).not.toContain("LANE:tooling");
+  });
+
+  test("refuses to vouch for uncommitted tracked changes", () => {
+    const repo = hookRepo();
+    appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
+    commitAll(repo, "chore: edit notes");
+    appendFileSync(path.join(repo, "scripts/notes.txt"), "unpushed\n");
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("uncommitted changes");
+  });
+
+  test("refuses to vouch for untracked files under a checked area", () => {
+    const repo = hookRepo();
+    appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
+    commitAll(repo, "chore: edit notes");
+    writeFileSync(path.join(repo, "scripts/stray.test.ts"), "");
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("untracked files");
+  });
+
+  test("refuses to vouch for a pushed commit other than HEAD", () => {
+    const repo = hookRepo();
+    appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
+    commitAll(repo, "chore: edit notes");
+    const pushed = git(repo, "rev-parse", "HEAD");
+    commitAll(repo, "chore: later work");
+    const result = prePush(repo, pushed);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("validates the checked-out commit");
+  });
+
+  test("rejects a pushed commit with a co-author trailer", () => {
+    const repo = hookRepo();
+    writeFileSync(path.join(repo, "README.md"), "readme\n");
+    commitAll(
+      repo,
+      "docs: add readme\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+    );
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Co-authored-by trailer");
+  });
+
+  test("refuses to run a stale installed copy", () => {
+    const repo = hookRepo();
+    appendFileSync(path.join(repo, "scripts/git/hooks/pre-push"), "# edited\n");
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("pre-push hook is stale");
+  });
 });

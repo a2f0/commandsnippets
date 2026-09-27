@@ -1,3 +1,4 @@
+import { resolvePushedHead, selectPrForHead } from "../pr/headRepository";
 import { execFileSync, spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 
@@ -61,18 +62,6 @@ function fieldOf(value: unknown, key: string): unknown {
 function stringField(source: string, key: string): string {
   const value = fieldOf(safeParse(source), key);
   return typeof value === "string" ? value : "";
-}
-
-function firstPrNumber(source: string | null): string {
-  if (source === null) {
-    return "";
-  }
-  const parsed = safeParse(source);
-  if (!Array.isArray(parsed) || parsed.length === 0) {
-    return "";
-  }
-  const numberField = fieldOf(parsed[0], "number");
-  return typeof numberField === "number" ? String(numberField) : "";
 }
 
 function gitRefExists(ref: string): boolean {
@@ -307,7 +296,16 @@ export function resolveRepoContext(): {
  * otherwise pick the wrong review base or skip a duplicate-PR guard on a
  * transient failure.
  */
-export function findOpenPrNumber(branch: string, repo: string): string {
+/**
+ * The open PR in `repo` whose head is this branch *on its push remote*. `gh pr
+ * list --head` matches the branch name alone, so a same-named branch from
+ * another fork is filtered out by head repository.
+ */
+export function findOpenPrNumber(
+  branch: string,
+  repo: string,
+  headRepo: string = resolvePushedHead(branch).repo,
+): string {
   const raw = tryRun("gh", [
     "pr",
     "list",
@@ -316,7 +314,7 @@ export function findOpenPrNumber(branch: string, repo: string): string {
     "--state",
     "open",
     "--json",
-    "number",
+    "number,headRepository",
     "-R",
     repo,
   ]);
@@ -325,7 +323,7 @@ export function findOpenPrNumber(branch: string, repo: string): string {
       `Could not list open PRs for branch '${branch}'. Ensure gh is authenticated and reachable.`,
     );
   }
-  return firstPrNumber(raw);
+  return selectPrForHead(raw, headRepo);
 }
 
 /** Read a known-open PR's title and base identity from GitHub. */

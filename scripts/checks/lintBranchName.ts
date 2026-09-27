@@ -11,7 +11,8 @@ interface CommitlintConfigModule {
 
 const branchNamePattern =
   /^(?<type>[a-z][a-z0-9-]*)\/(?<name>[a-z0-9][a-z0-9._-]*(?:\/[a-z0-9][a-z0-9._-]*)*)$/;
-const exemptBranchNames = new Set(["main"]);
+// The default branch and the long-lived deploy branch.
+const exemptBranchNames = new Set(["main", "staging"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
