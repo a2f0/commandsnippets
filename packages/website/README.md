@@ -27,7 +27,10 @@ The web app used to be served on this host. `worker/index.ts` runs only when
 no page matches and sends the request to the app (`APP_ORIGIN` in
 `wrangler.jsonc`, which must match `appUrl` for the same mode), keeping the
 path and query, so `/:user` and `/:user/:tag` bookmarks keep working. Paths
-the website serves itself (`/privacy/`, `/terms/`, …) win.
+the website serves itself (`/privacy/`, `/terms/`, …) win. The
+`assets_navigation_has_no_effect` flag keeps browser navigations (bookmarks)
+on that path too; `test/routing.test.ts` checks the whole routing through
+`wrangler dev`, with and without `Sec-Fetch-Mode: navigate`.
 
 ## Deploying
 

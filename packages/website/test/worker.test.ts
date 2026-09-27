@@ -44,6 +44,7 @@ describe('wrangler.jsonc', () => {
     vars: {APP_ORIGIN: string};
     env: Record<string, {vars: {APP_ORIGIN: string}}>;
     assets: {directory: string; not_found_handling: string};
+    compatibility_flags: string[];
   };
 
   test('each environment redirects to the app its pages link to', () => {
@@ -56,5 +57,8 @@ describe('wrangler.jsonc', () => {
   test('serves the built pages and falls through to the Worker', () => {
     expect(config.assets.directory).toBe('./dist');
     expect(config.assets.not_found_handling).toBe('none');
+    expect(config.compatibility_flags).toContain(
+      'assets_navigation_has_no_effect'
+    );
   });
 });
