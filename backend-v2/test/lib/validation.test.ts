@@ -23,6 +23,17 @@ describe('validation fields', () => {
     expect(charField({allowBlank: true}).parse('  ')).toEqual({value: ''});
   });
 
+  it('charField measures length in characters, not UTF-16 units', () => {
+    const field = charField({maxLength: 3});
+    expect(field.parse('😀😀😀')).toEqual({value: '😀😀😀'});
+    expect(field.parse('😀😀😀😀')).toEqual({
+      error: {
+        detail: 'Ensure this field has no more than 3 characters.',
+        code: 'max_length',
+      },
+    });
+  });
+
   it('choiceField rejects null and unknown values', () => {
     const field = choiceField(['a']);
     expect(field.parse(null)).toEqual({

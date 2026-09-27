@@ -19,24 +19,33 @@ const owned = {
   userId: textEntries.user_id,
 };
 
-const hasTag = (condition: ReturnType<typeof sql>) =>
+/**
+ * Entries tagged with a tag matching `condition`, counting only the
+ * requester's own junctions and tags: imported rows can link another user's
+ * tag to this user's entry, and matching on it would reveal its name.
+ */
+const hasTag = (userId: number, condition: ReturnType<typeof sql>) =>
   sql`EXISTS (
     SELECT 1 FROM tags_tagtextentrythroughmodel AS j
     JOIN tags_tag AS t ON t.id = j.tag_id
-    WHERE j.text_entry_id = ${textEntries.id} AND ${condition}
+    WHERE j.text_entry_id = ${textEntries.id}
+      AND j.user_id = ${userId}
+      AND t.user_id = ${userId}
+      AND ${condition}
   )`;
 
 export const entryRoutes = new Hono<AppEnv>();
 
-entryRoutes.get('/', c =>
-  listResponse(c, {
+entryRoutes.get('/', c => {
+  const user = requireUser(c);
+  return listResponse(c, {
     ...owned,
     type: TEXT_ENTRY,
-    user: requireUser(c),
+    user,
     filters: {
       id: value => eq(textEntries.id, integer(value)),
-      tags__name: value => hasTag(sql`t.name = ${value}`),
-      tags__id: value => hasTag(sql`t.id = ${integer(value)}`),
+      tags__name: value => hasTag(user.id, sql`t.name = ${value}`),
+      tags__id: value => hasTag(user.id, sql`t.id = ${integer(value)}`),
       user__username: value => usernameIs(textEntries.user_id, value),
       tag_count: value => eq(textEntries.tag_count, integer(value)),
       is_deleted: value => eq(textEntries.is_deleted, boolean(value)),
@@ -55,8 +64,8 @@ entryRoutes.get('/', c =>
         icontains(textEntries.body, term),
         icontains(textEntries.subject, term)
       ) as ReturnType<typeof sql>,
-  })
-);
+  });
+});
 
 entryRoutes.get('/:id', async c => {
   const entry = await getOwned<TextEntry>(

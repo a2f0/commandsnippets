@@ -283,6 +283,47 @@ describe('convertDump', () => {
     expect(byId.get(22)?.[updated]).toBe('2021-01-01T00:00:00.000000');
   });
 
+  test('bumps entries whose junctions were re-ranked, and only those', () => {
+    const dump = parseDump(DUMP);
+    const junctions = dump.tables.get('tags_tagtextentrythroughmodel') ?? [];
+    // Tie junctions 30 and 31 at rank 0 inside tag 20, on entries 10 and 11.
+    junctions[0] = {
+      ...junctions[0],
+      tag_id: '20',
+      text_entry_id: '10',
+      order: '0',
+    };
+    junctions[1] = {
+      ...junctions[1],
+      tag_id: '20',
+      text_entry_id: '11',
+      order: '0',
+    };
+    const {converted, reranked} = convertDump(dump);
+    expect(reranked['tags_tagtextentrythroughmodel']).toBe(1);
+
+    const rows = (table: string) => {
+      const found = converted.find(c => c.table === table);
+      const columns = found?.spec.columns ?? [];
+      return new Map(
+        (found?.rows ?? []).map(r => [
+          r[columns.indexOf('id')],
+          Object.fromEntries(columns.map((c, i) => [c, r[i]])),
+        ])
+      );
+    };
+    const junction = rows('tags_tagtextentrythroughmodel');
+    const entries = rows('text_entries_textentry');
+    expect(junction.get(31)?.['order']).toBe(1);
+    // The client syncs junctions through /entries, filtered on the entry.
+    expect(entries.get(11)?.['date_updated']).toBe(
+      junction.get(31)?.['date_updated']
+    );
+    expect(entries.get(10)?.['date_updated']).toBe(
+      '2020-08-03T02:37:27.850203'
+    );
+  });
+
   test('requires every imported table', () => {
     expect(() =>
       convertDump(parseDump('COPY public.users_user (id) FROM stdin;\n\\.\n'))
@@ -376,7 +417,31 @@ describe('verify', () => {
         dump.sequences,
         () => {}
       )
-    ).toThrow(/Import statement \d+ failed: FOREIGN KEY constraint failed/);
+    ).toThrow(
+      /Import statement \d+ \(INSERT INTO tags_tagtextentrythroughmodel\) failed: FOREIGN KEY constraint failed/
+    );
+  });
+
+  test('never echoes statement values (auth tokens) in its errors', () => {
+    const {converted, dump} = imported();
+    const broken = converted.map(c =>
+      c.table === 'authtoken_token'
+        ? {...c, rows: c.rows.map(r => [r[0] ?? null, r[1] ?? null, 999])}
+        : c
+    );
+    let message = '';
+    try {
+      verify(
+        buildStatements(broken, dump.sequences),
+        broken,
+        dump.sequences,
+        () => {}
+      );
+    } catch (error) {
+      message = (error as Error).message;
+    }
+    expect(message).toContain('(INSERT INTO authtoken_token) failed');
+    expect(message).not.toContain(TOKEN);
   });
 
   test('fails when a sequence position does not carry over', () => {

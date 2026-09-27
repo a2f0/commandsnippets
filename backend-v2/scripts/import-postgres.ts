@@ -290,7 +290,11 @@ export interface Converted {
  * (current order, ties broken by id) and bump `date_updated` on rows whose
  * rank changed so clients re-sync them.
  */
-export function normalizeRanks(found: Converted, scopeColumn: string): number {
+export function normalizeRanks(
+  found: Converted,
+  scopeColumn: string,
+  timestamp: string = now()
+): Value[][] {
   const index = (column: string) => found.spec.columns.indexOf(column);
   const [id, order, scope, updated] = [
     'id',
@@ -303,8 +307,7 @@ export function normalizeRanks(found: Converted, scopeColumn: string): number {
     const key = row[scope as number] as Value;
     scopes.set(key, [...(scopes.get(key) ?? []), row]);
   }
-  const timestamp = now();
-  let changed = 0;
+  const changed: Value[][] = [];
   for (const rows of scopes.values()) {
     const ranks = rows.map(row => row[order as number]);
     if (new Set(ranks).size === ranks.length) {
@@ -319,7 +322,7 @@ export function normalizeRanks(found: Converted, scopeColumn: string): number {
       if (row[order as number] !== rank) {
         row[order as number] = rank;
         row[updated as number] = timestamp;
-        changed++;
+        changed.push(row);
       }
     });
   }
@@ -499,8 +502,10 @@ export function verify(
     try {
       db.run(statement);
     } catch (error) {
+      // Name the statement, never echo it: its values include auth tokens.
+      const target = /^(INSERT INTO|UPDATE) "?(\w+)"?/.exec(statement);
       throw new Error(
-        `Import statement ${index + 1} failed: ${(error as Error).message}\n${statement.slice(0, 200)}`
+        `Import statement ${index + 1} (${target ? `${target[1]} ${target[2]}` : 'unknown'}) failed: ${(error as Error).message}`
       );
     }
   }
@@ -557,6 +562,26 @@ export function verify(
 
 // ---------------------------------------------------------------------------
 
+/** Set `date_updated` on the rows of `table` whose id is in `ids`. */
+function touch(
+  converted: Converted[],
+  table: string,
+  ids: ReadonlySet<Value>,
+  timestamp: string
+): void {
+  const found = converted.find(entry => entry.table === table);
+  if (found === undefined || ids.size === 0) {
+    return;
+  }
+  const id = found.spec.columns.indexOf('id');
+  const updated = found.spec.columns.indexOf('date_updated');
+  for (const row of found.rows) {
+    if (ids.has(row[id] as Value)) {
+      row[updated] = timestamp;
+    }
+  }
+}
+
 /** Convert every imported table and re-rank scopes that have tied ranks. */
 export function convertDump(dump: Dump): {
   converted: Converted[];
@@ -571,12 +596,25 @@ export function convertDump(dump: Dump): {
     return {table, spec, rows: rows.map(row => convert(table, spec, row))};
   });
   const reranked: Record<string, number> = {};
+  const timestamp = now();
   for (const [table, scopeColumn] of [
     ['tags_tag', 'user_id'],
     ['tags_tagtextentrythroughmodel', 'tag_id'],
   ] as const) {
     const found = converted.find(entry => entry.table === table) as Converted;
-    reranked[table] = normalizeRanks(found, scopeColumn);
+    const changed = normalizeRanks(found, scopeColumn, timestamp);
+    reranked[table] = changed.length;
+    if (table === 'tags_tagtextentrythroughmodel') {
+      // Clients pick junction changes up through /entries (included junctions),
+      // which is filtered on the *entry's* date_updated: bump those entries too.
+      const entryIndex = found.spec.columns.indexOf('text_entry_id');
+      touch(
+        converted,
+        'text_entries_textentry',
+        new Set(changed.map(row => row[entryIndex] as Value)),
+        timestamp
+      );
+    }
   }
   const skipped = [...dump.tables.keys()].filter(table => !(table in TABLES));
   return {converted, skipped, reranked};

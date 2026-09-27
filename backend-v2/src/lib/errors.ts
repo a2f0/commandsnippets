@@ -69,3 +69,24 @@ export const fieldError = (
 /** A query-parameter validation error, e.g. `invalid filter[bad]`. */
 export const queryError = (detail: string) =>
   ApiError.of(400, detail, 'invalid');
+
+/**
+ * A loggable one-line summary of an unexpected error, with SQL parameters
+ * redacted: Drizzle's query errors embed every bound value in their message,
+ * and those include auth token keys. The stack is left out for the same
+ * reason (it repeats the message).
+ */
+export function describeError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return `Non-Error thrown: ${typeof error}`;
+  }
+  const message = error.message.replace(
+    /\nparams: [\s\S]*$/,
+    '\nparams: [redacted]'
+  );
+  const cause =
+    error.cause instanceof Error
+      ? ` (cause: ${error.cause.name}: ${error.cause.message})`
+      : '';
+  return `${error.name}: ${message}${cause}`;
+}

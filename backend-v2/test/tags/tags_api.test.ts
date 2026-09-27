@@ -611,3 +611,20 @@ describe('TestTagsApi v2', () => {
     expect(await tagsOf(base.user2)).toEqual(before);
   });
 });
+
+// Django (and SQLite's length()) count characters; UTF-16 would count each
+// emoji twice and reject valid names.
+describe('TestTagsApi unicode lengths', () => {
+  it('accepts a 24-character name of astral characters and rejects 25', async () => {
+    const {user1Client} = await setUpBase();
+    const create = (name: string) =>
+      user1Client.post('/api/v1/tags', {
+        data: {type: 'Tag', attributes: {name}},
+      });
+    const ok = await create('😀'.repeat(24));
+    expect(ok.status).toBe(201);
+    expect((await json(ok)).data.attributes.name).toBe('😀'.repeat(24));
+    const tooLong = await create('😀'.repeat(25));
+    expect(tooLong.status).toBe(400);
+  });
+});

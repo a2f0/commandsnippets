@@ -5,7 +5,7 @@ import {authRoutes} from './auth/routes';
 import {authenticate} from './auth/tokens';
 import {createDb} from './db/client';
 import type {AppEnv} from './env';
-import {ApiError} from './lib/errors';
+import {ApiError, describeError} from './lib/errors';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
 import {tagRoutes} from './resources/tags';
@@ -87,7 +87,7 @@ app.onError((error, c) => {
   if (error instanceof ApiError) {
     return jsonApi(c, {errors: error.errors}, error.status as 400);
   }
-  console.error(error);
+  console.error(describeError(error));
   return jsonApi(
     c,
     {

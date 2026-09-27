@@ -48,7 +48,9 @@ export function charField({
       if (text === '' && !allowBlank) {
         return fail('This field may not be blank.', 'blank');
       }
-      if (maxLength !== undefined && text.length > maxLength) {
+      // Count characters (code points) like Python's len() and SQLite's
+      // length(), not UTF-16 units: an emoji is one character, not two.
+      if (maxLength !== undefined && [...text].length > maxLength) {
         return fail(
           `Ensure this field has no more than ${maxLength} characters.`,
           'max_length'

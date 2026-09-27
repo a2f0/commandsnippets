@@ -83,3 +83,41 @@ describe('cross-user relationships from legacy data', () => {
     expect(JSON.stringify(body)).not.toContain('their-tag');
   });
 });
+
+describe('filters over cross-user relationships from legacy data', () => {
+  it("does not match entries by another user's tag", async () => {
+    const {user1, user2, user1Client} = await setUpBase();
+    const entry = await textEntryFactory({user: user1});
+    const foreignTag = await tagFactory({user: user2, name: 'their-tag'});
+    // Both the junction owned by the other user and one owned by the requester.
+    await tagTextEntryFactory({
+      tag: foreignTag,
+      text_entry: entry,
+      user: user2,
+    });
+    const own = await textEntryFactory({user: user1});
+    await tagTextEntryFactory({tag: foreignTag, text_entry: own, user: user1});
+
+    for (const filter of [
+      'filter[tags.name]=their-tag',
+      `filter[tags.id]=${foreignTag.id}`,
+    ]) {
+      const response = await user1Client.get(`/api/v1/entries?${filter}`);
+      expect(response.status).toBe(200);
+      expect((await json(response)).data).toEqual([]);
+    }
+  });
+
+  it("still matches the requester's own tags", async () => {
+    const {user1, user1Client} = await setUpBase();
+    const entry = await textEntryFactory({user: user1});
+    const tag = await tagFactory({user: user1, name: 'mine'});
+    await tagTextEntryFactory({tag, text_entry: entry, user: user1});
+    const response = await user1Client.get(
+      '/api/v1/entries?filter[tags.name]=mine'
+    );
+    expect((await json(response)).data.map((r: {id: string}) => r.id)).toEqual([
+      String(entry.id),
+    ]);
+  });
+});
