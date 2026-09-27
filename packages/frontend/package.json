@@ -39,7 +39,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.8",
     "@ffmpeg-installer/ffmpeg": "1.1.0",
-    "@swc/core": "1.15.47",
+    "@swc/core": "1.16.2",
     "@swc/helpers": "0.5.23",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.2",
