@@ -16,16 +16,6 @@ repos:
   rev: v0.11.0.1
   hooks:
     - id: shellcheck
-- repo: https://github.com/ansible/ansible-lint
-  rev: v26.8.0
-  hooks:
-    - id: ansible-lint
-      additional_dependencies:
-        - ansible-core==2.21.3
-      always_run: false
-      args:
-        - ansible
-      files: ^ansible/.*\.ya?ml$
 - repo: local
   hooks:
     - id: commitlint

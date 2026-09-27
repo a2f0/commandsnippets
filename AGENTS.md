@@ -7,8 +7,8 @@ Monorepo for the Commandsnippets (Tearleads) app.
 | `frontend/` | React client (web, Electron, Capacitor iOS/Android); pnpm |
 | `backend/` | Django API (being replaced by `backend-v2/`) |
 | `packages/agent-tool/` | CLI behind the ship/review skills |
-| `scripts/` | git hooks, CI policy, deploy helpers |
-| `terraform/`, `ansible/` | infrastructure |
+| `scripts/` | git hooks, CI policy, test entrypoints |
+| `terraform/` | Cloudflare DNS records for the domain |
 
 ## Conventions
 

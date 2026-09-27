@@ -8,9 +8,9 @@ export const CI_SCOPES = {
   tooling:
     /^(packages\/|scripts\/|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   backend:
-    /^(backend\/|scripts\/(deployApi|deployProductionApi|deployStagingApi|runBackendTests)\.sh$)/,
+    /^(backend\/|scripts\/runBackendTests\.sh$)/,
   frontend:
-    /^(frontend\/|scripts\/(deployApp|deployProductionApp|deployStagingApp|runElectronTests|runUnitTests|runWebdriverTests)\.sh$)/,
+    /^(frontend\/|scripts\/(runElectronTests|runUnitTests|runWebdriverTests)\.sh$)/,
   mobile: /^(frontend\/|scripts\/runCapacitorTests\.sh$)/,
   backendV2: /^backend-v2\//,
 } as const satisfies Record<string, RegExp>;

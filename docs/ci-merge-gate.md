@@ -15,9 +15,9 @@ exercise every lane.
 | Lane | Workflow | Scope |
 |---|---|---|
 | `tooling` | inline in `ci.yml` | `packages/`, `scripts/`, tooling config |
-| `backend` | `backend.yml` (Backend CI) | `backend/`, API deploy/test scripts |
+| `backend` | `backend.yml` (Backend CI) | `backend/`, `runBackendTests.sh` |
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `backend-v2/` |
-| `frontend` | `frontend.yml` (Frontend CI) | `frontend/`, app deploy/test scripts |
+| `frontend` | `frontend.yml` (Frontend CI) | `frontend/`, app test scripts |
 | `ios` | `frontend-ios-testing.yml` | `frontend/`, `runCapacitorTests.sh` |
 
 The Android workflow (`frontend-android-testing.yml`) is **not** a lane for
@@ -28,9 +28,9 @@ current runner images). It stays runnable by hand; once fixed, add it back as a
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch
 pushes themselves; `Backend CI` and `Frontend CI` still run on pushes to `main`
-and `staging`, where they deploy. Their deploy jobs check
-`github.workflow`, because a reusable workflow sees its caller's context, so a
-`CI` run can never deploy.
+and `staging`. `Backend v2 CI` also deploys from those pushes; its deploy job
+checks `github.workflow`, because a reusable workflow sees its caller's context,
+so a `CI` run can never deploy.
 
 Require the aggregate gate rather than individual path-filtered workflows:
 GitHub leaves checks from skipped workflows pending, while skipped jobs count as
