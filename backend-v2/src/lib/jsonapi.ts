@@ -5,7 +5,14 @@
  * messages, which clients and tests rely on).
  */
 import {desc, type SQL} from 'drizzle-orm';
-import {conflict, fieldError, notFound, parseError, queryError} from './errors';
+import {
+  ApiError,
+  conflict,
+  fieldError,
+  notFound,
+  parseError,
+  queryError,
+} from './errors';
 
 // ---------------------------------------------------------------------------
 // Request parsing
@@ -28,10 +35,32 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Request bodies must be JSON. Both accepted types make a cross-origin request
+ * "non-simple", so the browser preflights it and the CORS allowlist applies;
+ * `text/plain` or form posts would otherwise skip the preflight (login CSRF).
+ * DRF-JSON:API likewise answered other media types with 415.
+ */
+const JSON_MEDIA_TYPES = new Set([
+  'application/vnd.api+json',
+  'application/json',
+]);
+
 export async function parseResource(
   request: Request,
   {type, id}: ParseOptions
 ): Promise<ParsedResource> {
+  const mediaType = (request.headers.get('Content-Type') ?? '')
+    .split(';', 1)[0]
+    ?.trim()
+    .toLowerCase();
+  if (!JSON_MEDIA_TYPES.has(mediaType ?? '')) {
+    throw ApiError.of(
+      415,
+      `Unsupported media type "${mediaType}" in request.`,
+      'unsupported_media_type'
+    );
+  }
   const text = await request.text();
   let document: unknown = {};
   if (text.trim() !== '') {

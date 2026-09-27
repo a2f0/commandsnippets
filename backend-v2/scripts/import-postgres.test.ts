@@ -6,6 +6,7 @@ import {
   convertDump,
   decodeCopyField,
   loadMigrations,
+  MAX_STATEMENT_BYTES,
   parseDump,
   renderSql,
   TABLES,
@@ -393,6 +394,61 @@ describe('buildStatements', () => {
         "INSERT INTO tags_tag (name, date_created, date_updated, user_id, \"order\") VALUES ('new', 'x', 'x', 1, 9)"
       )
     ).toBe(201);
+  });
+});
+
+describe('statement size', () => {
+  test('keeps every statement under the D1 limit for maximum-length unicode rows', () => {
+    const {converted, dump} = imported();
+    const entries = converted.find(c => c.table === 'text_entries_textentry');
+    if (entries === undefined) {
+      throw new Error('entries missing');
+    }
+    const columns = entries.spec.columns;
+    const template = entries.rows[0] ?? [];
+    // 60 entries with the longest body and subject Django allowed, in
+    // four-byte characters: ~5 KB each, so 25 rows would be ~130 KB.
+    const big = Array.from({length: 60}, (_, i) =>
+      template.map((value, c) =>
+        columns[c] === 'id'
+          ? 1000 + i
+          : columns[c] === 'body'
+            ? '😀'.repeat(1024)
+            : columns[c] === 'subject'
+              ? '😀'.repeat(255)
+              : columns[c] === 'tag_count'
+                ? 0
+                : value
+      )
+    );
+    const withBig = converted.map(c =>
+      c === entries ? {...c, rows: [...c.rows, ...big]} : c
+    );
+    const statements = buildStatements(withBig, dump.sequences);
+    const sizes = statements.map(s => new TextEncoder().encode(s).length);
+    expect(Math.max(...sizes)).toBeLessThanOrEqual(MAX_STATEMENT_BYTES);
+    const entryInserts = statements.filter(s =>
+      s.startsWith('INSERT INTO "text_entries_textentry"')
+    );
+    expect(entryInserts.length).toBeGreaterThan(Math.ceil(62 / 25));
+    // Nothing is lost by the extra batching.
+    const db = load(statements);
+    expect(
+      (
+        db.query('SELECT COUNT(*) AS n FROM text_entries_textentry').get() as {
+          n: number;
+        }
+      ).n
+    ).toBe(62);
+    expect(
+      (
+        db
+          .query(
+            'SELECT length(body) AS n FROM text_entries_textentry WHERE id = 1000'
+          )
+          .get() as {n: number}
+      ).n
+    ).toBe(1024);
   });
 });
 

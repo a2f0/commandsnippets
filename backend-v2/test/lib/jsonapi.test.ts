@@ -3,7 +3,11 @@ import {ApiError} from '../../src/lib/errors';
 import {parseResource, type Registry, serialize} from '../../src/lib/jsonapi';
 
 const post = (body: string) =>
-  new Request('http://localhost/', {method: 'POST', body});
+  new Request('http://localhost/', {
+    method: 'POST',
+    body,
+    headers: {'Content-Type': 'application/vnd.api+json'},
+  });
 
 async function apiError(promise: Promise<unknown>): Promise<ApiError> {
   const error = await promise.then(

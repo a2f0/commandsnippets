@@ -113,6 +113,15 @@ export const TABLES: Record<string, TableSpec> = {
 
 const ROWS_PER_INSERT = 25;
 
+/**
+ * D1 rejects SQL statements over 100 KB. Rows are batched by UTF-8 size as
+ * well as count, with headroom: 25 maximum-length non-ASCII entries would
+ * otherwise come to ~130 KB.
+ */
+export const MAX_STATEMENT_BYTES = 90_000;
+
+const utf8Bytes = (text: string) => new TextEncoder().encode(text).length;
+
 // ---------------------------------------------------------------------------
 // Reading the archive
 // ---------------------------------------------------------------------------
@@ -340,15 +349,29 @@ export function buildStatements(
 ): string[] {
   const out: string[] = [];
   for (const {table, spec, rows} of converted) {
-    for (let i = 0; i < rows.length; i += ROWS_PER_INSERT) {
-      const values = rows
-        .slice(i, i + ROWS_PER_INSERT)
-        .map(row => `(${row.map(literal).join(', ')})`)
-        .join(',\n  ');
-      out.push(
-        `INSERT INTO ${quote(table)} (${spec.columns.map(quote).join(', ')}) VALUES\n  ${values};`
-      );
+    const head = `INSERT INTO ${quote(table)} (${spec.columns.map(quote).join(', ')}) VALUES\n  `;
+    let batch: string[] = [];
+    let bytes = utf8Bytes(head);
+    const flush = () => {
+      if (batch.length > 0) {
+        out.push(`${head}${batch.join(',\n  ')};`);
+      }
+      batch = [];
+      bytes = utf8Bytes(head);
+    };
+    for (const row of rows) {
+      const tuple = `(${row.map(literal).join(', ')})`;
+      const size = utf8Bytes(tuple) + 4; // separator and terminator
+      if (
+        batch.length >= ROWS_PER_INSERT ||
+        (batch.length > 0 && bytes + size > MAX_STATEMENT_BYTES)
+      ) {
+        flush();
+      }
+      batch.push(tuple);
+      bytes += size;
     }
+    flush();
   }
 
   // Inserting junctions and reuses fired the counter triggers on top of the

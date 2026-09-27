@@ -264,6 +264,8 @@ class TearleadsApi {
     });
     const resp = await fetchWithAuth(url.toString(), {
       method: 'GET',
+      // Reads are owner-only, so they must carry the auth cookie cross-origin.
+      credentials: 'include',
       ...(signal ? {signal} : {}),
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
@@ -282,6 +284,7 @@ class TearleadsApi {
     });
     const resp = await fetchWithAuth(url.toString(), {
       method: 'GET',
+      credentials: 'include',
       headers: {'Content-Type': 'application/vnd.api+json'},
     });
     if (!resp.ok) {
