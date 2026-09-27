@@ -52,7 +52,8 @@
       "!**/src/ts-out/**/*",
       "!**/dev-dist/**/*",
       "!**/dist",
-      "!**/node_modules"
+      "!**/node_modules",
+      "!public/mockServiceWorker.js"
     ]
   }
 }
