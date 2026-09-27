@@ -38,3 +38,7 @@ on that path too; `test/routing.test.ts` checks the whole routing through
 bun run deploy:staging      # astro build --mode staging && wrangler deploy
 bun run deploy:production
 ```
+
+Hostnames are custom domains in `wrangler.jsonc`, attached by the deploy:
+`website-staging.commandsnippets.com` for staging, and the apex
+`commandsnippets.com` for production at cutover.

@@ -13,6 +13,7 @@ allowBuilds:
   esbuild: true
   geckodriver: true
   msw: false
+  workerd: true
 overrides:
   '@babel/plugin-transform-modules-systemjs@<=7.29.3': 7.29.4
   '@puppeteer/browsers@^2.2.0': 3.2.0

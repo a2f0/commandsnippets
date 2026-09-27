@@ -37,6 +37,24 @@ Run TypeScript compilation check:
 npx tsc -b
 ```
 
+## Deploying
+
+The app is a static single-page app served by a Cloudflare Worker (assets only;
+`wrangler.jsonc`): files from `build/`, and `index.html` for any other path, so
+client routes like `/:user/:tag` work. `public/_headers` adds security headers
+and long-lived caching for the fingerprinted `/assets/`.
+
+```shell
+pnpm run deploy:staging      # vite build --mode staging, then wrangler deploy
+pnpm run deploy:production
+```
+
+Each environment's hostname is a custom domain in `wrangler.jsonc`, attached
+by the deploy: `app-staging.commandsnippets.com` for staging, and
+`app.commandsnippets.com` for production at cutover. The app picks its
+environment (API and OAuth callbacks) from that hostname, so it does not run
+on workers.dev.
+
 ## Other
 
 - Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information

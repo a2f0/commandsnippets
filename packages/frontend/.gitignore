@@ -25,3 +25,4 @@ _results_
 # Logs (WebdriverIO writes logs/)
 logs/
 *.log
+.wrangler/
