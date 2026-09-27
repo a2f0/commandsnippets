@@ -17,6 +17,13 @@ updates:
     reviewers:
       - 'a2f0'
 
+  - package-ecosystem: 'bun'
+    directory: '/backend-v2'
+    schedule:
+      interval: 'monthly'
+    reviewers:
+      - 'a2f0'
+
   - package-ecosystem: 'pip'
     directory: '/backend'
     schedule:

@@ -27,6 +27,7 @@ jobs:
       backend: ${{ steps.scopes.outputs.backend }}
       frontend: ${{ steps.scopes.outputs.frontend }}
       mobile: ${{ steps.scopes.outputs.mobile }}
+      backendV2: ${{ steps.scopes.outputs.backendV2 }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -89,6 +90,12 @@ jobs:
     uses: ./.github/workflows/frontend.yml
     secrets: inherit
 
+  backend-v2:
+    needs: changes
+    if: needs.changes.outputs.backendV2 == 'true'
+    uses: ./.github/workflows/backend-v2.yml
+    secrets: inherit
+
   ios:
     needs: changes
     if: needs.changes.outputs.mobile == 'true'
@@ -102,7 +109,7 @@ jobs:
   gate:
     name: CI gate
     if: always()
-    needs: [changes, tooling, backend, frontend, ios]
+    needs: [changes, tooling, backend, backend-v2, frontend, ios]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

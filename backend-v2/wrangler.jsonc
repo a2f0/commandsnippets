@@ -1,0 +1,60 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tearleads-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Local development. Mirrors Django's DEBUG=True cookie behavior.
+  "vars": {
+    "DEBUG": "true",
+    "COOKIE_DOMAIN": "localhost",
+    "GITHUB_REDIRECT_URI": "http://localhost:8085/oauth/github",
+    "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-dev://oauth/github",
+    "GOOGLE_REDIRECT_URI": "http://localhost:8080/oauth/google"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tearleads-development",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "env": {
+    "staging": {
+      "vars": {
+        "DEBUG": "false",
+        "COOKIE_DOMAIN": ".commandsnippets.com",
+        "GITHUB_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/github",
+        "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-staging://oauth/github",
+        "GOOGLE_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/google"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "tearleads-staging",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ]
+    },
+    "production": {
+      "vars": {
+        "DEBUG": "false",
+        "COOKIE_DOMAIN": ".commandsnippets.com",
+        "GITHUB_REDIRECT_URI": "https://commandsnippets.com/oauth/github",
+        "ELECTRON_GITHUB_REDIRECT_URI": "tearleads://oauth/github",
+        "GOOGLE_REDIRECT_URI": "https://commandsnippets.com/oauth/google"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "tearleads-production",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
+}

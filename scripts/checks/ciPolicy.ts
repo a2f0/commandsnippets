@@ -12,6 +12,7 @@ export const CI_SCOPES = {
   frontend:
     /^(frontend\/|scripts\/(deployApp|deployProductionApp|deployStagingApp|runElectronTests|runUnitTests|runWebdriverTests)\.sh$)/,
   mobile: /^(frontend\/|scripts\/runCapacitorTests\.sh$)/,
+  backendV2: /^backend-v2\//,
 } as const satisfies Record<string, RegExp>;
 
 export type CiScope = keyof typeof CI_SCOPES;
@@ -20,6 +21,7 @@ export type CiScope = keyof typeof CI_SCOPES;
 export const CI_JOBS = {
   tooling: "tooling",
   backend: "backend",
+  "backend-v2": "backendV2",
   frontend: "frontend",
   ios: "mobile",
 } as const satisfies Record<string, CiScope>;

@@ -16,6 +16,7 @@ exercise every lane.
 |---|---|---|
 | `tooling` | inline in `ci.yml` | `packages/`, `scripts/`, tooling config |
 | `backend` | `backend.yml` (Backend CI) | `backend/`, API deploy/test scripts |
+| `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `backend-v2/` |
 | `frontend` | `frontend.yml` (Frontend CI) | `frontend/`, app deploy/test scripts |
 | `ios` | `frontend-ios-testing.yml` | `frontend/`, `runCapacitorTests.sh` |
 
