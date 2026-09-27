@@ -28,6 +28,8 @@ export default defineConfig(async () => {
             GOOGLE_CLIENT_ID: 'google_client_id',
             GOOGLE_CLIENT_SECRET: 'google_client_secret',
             GOOGLE_REDIRECT_URI: 'google_redirect_uri',
+            GOOGLE_NATIVE_CLIENT_IDS:
+              'native_client_id, other_native_client_id',
           },
         },
       }),

@@ -146,7 +146,11 @@ authRoutes.post('/api/v1/integrated-oauth', async c => {
     INTEGRATED_OAUTH_FIELDS,
     attributes
   );
-  const userResponse = await new GoogleOAuthService(c.env).user(token);
+  const service = new GoogleOAuthService(c.env);
+  if (!(await service.issuedToNativeApp(token))) {
+    throw authenticationFailed('Invalid access token provided');
+  }
+  const userResponse = await service.user(token);
   if (!userResponse.ok) {
     throw authenticationFailed('Invalid access token provided');
   }

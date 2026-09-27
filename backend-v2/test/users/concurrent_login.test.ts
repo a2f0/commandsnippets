@@ -7,6 +7,7 @@ import {
   GOOGLE_USERINFO_URL,
   mockFetch,
   setCookies,
+  tokenInfoRoute,
 } from '../authentication/support';
 import {db, raceBeforeStatement, tokenFor} from '../helpers';
 
@@ -23,6 +24,7 @@ describe('concurrent first logins', () => {
       }
     );
     mockFetch([
+      tokenInfoRoute(),
       {
         method: 'GET',
         url: GOOGLE_USERINFO_URL,

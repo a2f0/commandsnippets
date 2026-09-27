@@ -1,7 +1,11 @@
 import {env} from 'cloudflare:workers';
 import {describe, expect, it} from 'vitest';
 import {app} from '../../src/app';
-import {GOOGLE_USERINFO_URL, mockFetch} from '../authentication/support';
+import {
+  GOOGLE_USERINFO_URL,
+  mockFetch,
+  tokenInfoRoute,
+} from '../authentication/support';
 import {refreshTag, setUpBase, tagFactory, tokenFor} from '../helpers';
 
 const post = (path: string, headers: Record<string, string>, body = '{}') =>
@@ -111,6 +115,7 @@ describe('bundled native app origins', () => {
 
   it('accepts a native login from the iOS origin', async () => {
     mockFetch([
+      tokenInfoRoute(),
       {
         method: 'GET',
         url: GOOGLE_USERINFO_URL,

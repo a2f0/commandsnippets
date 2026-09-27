@@ -6,6 +6,7 @@ import {
   mockFetch,
   requestWithEnv,
   setCookies,
+  tokenInfoRoute,
 } from './support';
 
 const STAGING = {
@@ -26,6 +27,7 @@ const PRODUCTION = {
 
 const integratedLogin = (overrides: Partial<Cloudflare.Env>) => {
   mockFetch([
+    tokenInfoRoute(),
     {
       method: 'GET',
       url: GOOGLE_USERINFO_URL,

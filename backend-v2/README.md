@@ -58,6 +58,11 @@ Deliberate changes:
   had tied ranks (see below).
 - **Tagging checks ownership.** Creating a junction or a reuse only accepts the
   requester's own tag/entry (400 `Invalid pk`).
+- **Native Google tokens must be ours.** `/api/v1/integrated-oauth/` checks the
+  access token's audience with Google's tokeninfo against
+  `GOOGLE_NATIVE_CLIENT_IDS` (`wrangler.jsonc`; the iOS app's `GIDClientID`)
+  before reading the email. Django accepted a token issued to any Google app.
+  Add the Android client ID there before shipping Google sign-in on Android.
 - **No password login.** `/api-token-auth/` is gone: the frontend never used it
   and Workers' WebCrypto caps PBKDF2 at 100k iterations, below Django's hashes.
   Django admin is gone too; use `wrangler d1 execute` or `scripts/manage.ts`.

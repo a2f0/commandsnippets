@@ -60,6 +60,16 @@ export const GITHUB_EMAILS_URL = 'https://api.github.com/user/emails';
 export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 export const GOOGLE_USERINFO_URL =
   'https://www.googleapis.com/oauth2/v3/userinfo';
+export const GOOGLE_TOKENINFO_URL = 'https://oauth2.googleapis.com/tokeninfo';
+
+/** Google's tokeninfo for an access token issued to client `aud`. */
+export function tokenInfoRoute(aud = 'native_client_id'): MockRoute {
+  return {
+    method: 'POST',
+    url: GOOGLE_TOKENINFO_URL,
+    body: {azp: aud, aud, scope: 'openid email profile', expires_in: '3599'},
+  };
+}
 
 /** The three GitHub endpoints answering successfully for `login`/`email`. */
 export function githubRoutes(

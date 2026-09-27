@@ -12,7 +12,10 @@
     "COOKIE_DOMAIN": "localhost",
     "GITHUB_REDIRECT_URI": "http://localhost:8085/oauth/github",
     "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-dev://oauth/github",
-    "GOOGLE_REDIRECT_URI": "http://localhost:8085/oauth/google"
+    "GOOGLE_REDIRECT_URI": "http://localhost:8085/oauth/google",
+    // Google client IDs of the native apps (iOS: GIDClientID in
+    // frontend/ios/App/Config/*.xcconfig) whose tokens may sign in.
+    "GOOGLE_NATIVE_CLIENT_IDS": "424258972420-f97gpnl6e0ri3a87gq583kmf1k606na6.apps.googleusercontent.com"
   },
   "d1_databases": [
     {
@@ -34,7 +37,10 @@
         "COOKIE_NAME_PREFIX": "Staging",
         "GITHUB_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/github",
         "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-staging://oauth/github",
-        "GOOGLE_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/google"
+        "GOOGLE_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/google",
+        // Google client IDs of the native apps (iOS: GIDClientID in
+        // frontend/ios/App/Config/*.xcconfig) whose tokens may sign in.
+        "GOOGLE_NATIVE_CLIENT_IDS": "424258972420-f97gpnl6e0ri3a87gq583kmf1k606na6.apps.googleusercontent.com"
       },
       "d1_databases": [
         {
@@ -52,7 +58,10 @@
         "COOKIE_NAME_PREFIX": "",
         "GITHUB_REDIRECT_URI": "https://commandsnippets.com/oauth/github",
         "ELECTRON_GITHUB_REDIRECT_URI": "tearleads://oauth/github",
-        "GOOGLE_REDIRECT_URI": "https://commandsnippets.com/oauth/google"
+        "GOOGLE_REDIRECT_URI": "https://commandsnippets.com/oauth/google",
+        // Google client IDs of the native apps (iOS: GIDClientID in
+        // frontend/ios/App/Config/*.xcconfig) whose tokens may sign in.
+        "GOOGLE_NATIVE_CLIENT_IDS": "424258972420-f97gpnl6e0ri3a87gq583kmf1k606na6.apps.googleusercontent.com"
       },
       "d1_databases": [
         {
