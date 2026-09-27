@@ -67,7 +67,7 @@ describe('TestGithubAuthentication', () => {
     expect(sent.get('client_secret')).toBe('test_client_secret');
     expect(sent.get('code')).toBe('code');
     // v2: GitHub rejects requests without a User-Agent.
-    expect(header(calls[0], 'User-Agent')).toBe('tearleads-api');
+    expect(header(calls[0], 'User-Agent')).toBe('commandsnippets-api');
   });
 
   it('test_user', async () => {
@@ -77,7 +77,7 @@ describe('TestGithubAuthentication', () => {
     expect(await response.json()).toEqual({login: 'login'});
     expect(calls[0]?.url).toBe('https://api.github.com/user');
     expect(header(calls[0], 'Authorization')).toBe('token access_token');
-    expect(header(calls[0], 'User-Agent')).toBe('tearleads-api');
+    expect(header(calls[0], 'User-Agent')).toBe('commandsnippets-api');
   });
 
   it('test_emails', async () => {

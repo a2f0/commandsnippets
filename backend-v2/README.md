@@ -1,4 +1,4 @@
-# Tearleads Backend v2
+# Commandsnippets Backend v2
 
 The Commandsnippets API on Cloudflare Workers: [Hono](https://hono.dev) on
 workerd, [D1](https://developers.cloudflare.com/d1/) (SQLite) through
@@ -157,19 +157,24 @@ Backups: D1 Time Travel restores to any point in the last 30 days
 
 ## Deployment
 
-One-time setup:
+One-time setup, after `bunx wrangler login` (`--device` over SSH) or with
+`CLOUDFLARE_API_TOKEN` set. The D1 databases already exist
+(`wrangler d1 create commandsnippets-{staging,production}`; their ids are in
+`wrangler.jsonc`). A Worker must be deployed before it can take secrets:
 
 ```shell
-bunx wrangler d1 create tearleads-staging     # paste ids into wrangler.jsonc
-bunx wrangler d1 create tearleads-production
 for env in staging production; do
-  for name in GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET ELECTRON_GITHUB_CLIENT_ID \
-      ELECTRON_GITHUB_CLIENT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
-    sops -d --extract "[\"$name\"]" ../backend/.env-$env.sops.env \
-      | bunx wrangler secret put "$name" --env "$env"
-  done
+  bunx wrangler d1 migrations apply DB --remote --env "$env"
+  bunx wrangler deploy --env "$env"
+  # Only the Worker's six secrets; the Django files hold many more.
+  sops -d --output-type json ../backend/.env-$env.sops.env |
+    jq '{GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, ELECTRON_GITHUB_CLIENT_ID,
+         ELECTRON_GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET}' |
+    bunx wrangler secret bulk --env "$env"
 done
 ```
+
+Secrets persist across deploys; rerun the last step only to rotate them.
 
 Then attach the custom domains (`api.staging.commandsnippets.com`,
 `api.commandsnippets.com`) to the Workers.
@@ -179,4 +184,4 @@ CI: pull requests run lint, typecheck, and the coverage-gated tests as the
 Pushes to `staging`/`main` run `Backend v2 CI`, which applies D1 migrations and
 deploys once the `BACKEND_V2_DEPLOY` repository variable is `true` and the
 `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist. Deploys stay
-off until then, so merging never deploys against placeholder database ids.
+off until then.

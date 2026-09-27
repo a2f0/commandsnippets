@@ -8,7 +8,7 @@ const defaultFetch: Fetcher = (input, init) => fetch(input, init);
 
 // GitHub's API rejects requests without a User-Agent; Python's requests sent
 // one implicitly, Workers' fetch does not.
-const USER_AGENT = 'tearleads-api';
+const USER_AGENT = 'commandsnippets-api';
 
 function requireSetting(env: Bindings, name: keyof Bindings): string {
   const value = env[name];

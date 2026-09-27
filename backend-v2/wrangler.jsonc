@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tearleads-api",
+  "name": "commandsnippets-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
@@ -20,7 +20,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "tearleads-development",
+      "database_name": "commandsnippets-development",
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
@@ -45,8 +45,8 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "tearleads-staging",
-          "database_id": "00000000-0000-0000-0000-000000000000",
+          "database_name": "commandsnippets-staging",
+          "database_id": "fa0a2b48-82ac-42c8-af40-00e3d834d0ac",
           "migrations_dir": "migrations"
         }
       ]
@@ -66,8 +66,8 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "tearleads-production",
-          "database_id": "00000000-0000-0000-0000-000000000000",
+          "database_name": "commandsnippets-production",
+          "database_id": "12e98511-6a2c-4d78-9bed-42990cc76072",
           "migrations_dir": "migrations"
         }
       ]
