@@ -126,7 +126,7 @@ jobs:
           package-json-file: frontend/package.json
           install: false
       - name: Configure AWS credentials (Production)
-        uses: aws-actions/configure-aws-credentials@v6.2.3
+        uses: aws-actions/configure-aws-credentials@v6.3.0
         # yamllint disable-line rule:line-length
         if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         with:
@@ -134,7 +134,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION }}
           aws-region: us-east-1
       - name: Configure AWS credentials (Staging)
-        uses: aws-actions/configure-aws-credentials@v6.2.3
+        uses: aws-actions/configure-aws-credentials@v6.3.0
         # yamllint disable-line rule:line-length
         if: ${{ github.ref == 'refs/heads/staging' && github.event_name == 'push' }}
         with:
