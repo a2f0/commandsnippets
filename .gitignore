@@ -1,9 +1,5 @@
-# Python and Ansible
-.ansible/
+# Python
 .venv/
-
-# SOPS plaintext
-/ansible/inventory.yaml
 
 # JavaScript tooling (root workspace)
 node_modules/

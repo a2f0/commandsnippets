@@ -69,9 +69,6 @@ sops updatekeys .env-staging.sops.env
 sops updatekeys .env-production.sops.env
 ```
 
-`./update_secrets.sh` decrypts staging and production secrets into temporary
-files, copies them to their deployment hosts, and removes the temporary files.
-
 ## Testing
 
 Run tests
@@ -107,7 +104,7 @@ docker compose run --rm backend python manage.py test tearleads.users.tests.test
 Take a backup
 
 ```shell
-docker compose -f compose-container-registry.yaml run --rm postgres backup
+docker compose run --rm postgres backup
 ```
 
 Delete a user
@@ -143,7 +140,7 @@ group by users_user.username;
 
 ### Upgrading the Postgres Docker Container
 
-1. Run `./refresh.sh` to obtain the most recent backup.
+1. Take a backup with `docker compose run --rm postgres backup`.
 2. Update the backend's [Dockerfile](compose/postgres/Dockerfile) to the new
    image.
 3. Update the `postgresXX_data_dev` volume in `docker compose.yaml` to the new
@@ -154,16 +151,13 @@ group by users_user.username;
    database connections.
 6. List backups with `docker compose run --rm postgres list-backups`
 7. Do a restore with `docker compose run --rm postgres restore backup-pg_dump-Fc`
-8. Update the data volume in `compose-staging.yaml` and
-   `compose-container-registry.yaml`.
-9. Update the container in `.github/workflows/main.yml`.
+8. Update the container in `.github/workflows/main.yml`.
 
 ### Upgrading the Python Version
 
 1. Update `.python-version`
-2. Update the version used in the Dockerfiles
-   [Dockerfile.dev](compose/django/Dockerfile.dev) and
-   [Dockerfile.prod](compose/django/Dockerfile.prod).
+2. Update the version used in
+   [Dockerfile.dev](compose/django/Dockerfile.dev).
 3. Update the version used by GitHub Actions in `main.yml`.
 4. Run `docker compose build --no-cache` to do a clean container build.
 5. Run unit and integration tests to make sure they pass.

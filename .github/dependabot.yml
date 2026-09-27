@@ -53,13 +53,6 @@ updates:
       - 'a2f0'
 
   - package-ecosystem: 'docker'
-    directory: '/backend/compose/nginx-proxy'
-    schedule:
-      interval: 'monthly'
-    reviewers:
-      - 'a2f0'
-
-  - package-ecosystem: 'docker'
     directory: '/backend/compose/postgres'
     schedule:
       interval: 'monthly'

@@ -13,3 +13,6 @@ override.tf.json
 
 # Node.js
 node_modules/
+
+# Plaintext keys decrypted from the removed ssh_keys/*.sops files
+/ssh_keys/

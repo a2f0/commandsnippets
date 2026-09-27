@@ -76,8 +76,8 @@ jobs:
       - name: Test hooks and CI policy
         run: bun run test:scripts
 
-  # The application workflows are reusable; their deploy jobs are guarded so
-  # they never run from here.
+  # The application workflows are reusable; backend-v2's deploy job is guarded
+  # so it never runs from here.
   backend:
     needs: changes
     if: needs.changes.outputs.backend == 'true'

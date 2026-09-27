@@ -2,8 +2,8 @@
 
 name: Frontend CI
 # yamllint disable-line rule:truthy
-# Pull requests run this through `CI` (ci.yml, the required `CI gate`); the push
-# trigger remains for the deploy branches.
+# Pull requests run this through `CI` (ci.yml, the required `CI gate`); pushes to
+# the long-lived branches rerun the checks.
 on:
   workflow_dispatch:
   workflow_call:
@@ -11,9 +11,6 @@ on:
     branches: [main, staging]
     paths:
       - 'frontend/**'
-      - 'scripts/deployApp.sh'
-      - 'scripts/deployProductionApp.sh'
-      - 'scripts/deployStagingApp.sh'
       - 'scripts/runElectronTests.sh'
       - 'scripts/runUnitTests.sh'
       - 'scripts/runWebdriverTests.sh'
@@ -102,57 +99,3 @@ jobs:
           path: |
             frontend/_results_
             frontend/logs/
-  deploy-code:
-    runs-on: ubuntu-latest
-    continue-on-error: false
-    needs: [code-quality, electron-tests]
-    # Never when called from `CI`: a reusable workflow sees the caller's context.
-    if: >-
-      github.workflow == 'Frontend CI' &&
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - name: Set up pnpm and Node.js
-        uses: pnpm/setup@v2.0.2
-        with:
-          version: '11.21.0'
-          runtime: 'node@24.19.0'
-          cache: true
-          cache-dependency-path: frontend/pnpm-lock.yaml
-          package-json-file: frontend/package.json
-          install: false
-      - name: Configure AWS credentials (Production)
-        uses: aws-actions/configure-aws-credentials@v6.2.3
-        # yamllint disable-line rule:line-length
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_PRODUCTION }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION }}
-          aws-region: us-east-1
-      - name: Configure AWS credentials (Staging)
-        uses: aws-actions/configure-aws-credentials@v6.2.3
-        # yamllint disable-line rule:line-length
-        if: ${{ github.ref == 'refs/heads/staging' && github.event_name == 'push' }}
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_STAGING }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
-          aws-region: us-east-1
-      # yamllint disable-line rule:line-length
-      - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
-      - run: pnpm install
-      - name: Deploy to S3 (Production)
-        # yamllint disable-line rule:line-length
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        env:
-          DEPLOY_DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
-        run: ../scripts/deployProductionApp.sh
-      - name: Deploy to S3 (Staging)
-        # yamllint disable-line rule:line-length
-        if: ${{ github.ref == 'refs/heads/staging' && github.event_name == 'push' }}
-        env:
-          DEPLOY_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
-        run: ../scripts/deployStagingApp.sh
