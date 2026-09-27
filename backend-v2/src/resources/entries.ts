@@ -136,10 +136,12 @@ const update = async (c: Context<AppEnv>) => {
     .update(textEntries)
     .set({
       ...changes,
-      ...searchColumns({
-        subject: changes.subject ?? entry.subject,
-        body: changes.body ?? entry.body,
-      }),
+      // Only the submitted fields' folds: recomputing an untouched field from
+      // this request's earlier read could clobber a concurrent edit's fold.
+      ...(changes.subject === undefined
+        ? {}
+        : {subject_folded: fold(changes.subject)}),
+      ...(changes.body === undefined ? {} : {body_folded: fold(changes.body)}),
       date_updated: now(),
     })
     .where(eq(textEntries.id, entry.id))

@@ -80,6 +80,9 @@ Deliberate changes:
   writes entries outside the API must set them too.
 - **Cookie names differ on staging** (`StagingAuthorization`,
   `StagingLoggedIn`), because production's cookies also reach staging hosts.
+  Until staging's API moves to v2, the staging frontend also accepts Django's
+  `LoggedIn` (a UI hint only; drop the fallback in `authUtils.ts` after
+  cutover).
 
 Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing

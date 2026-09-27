@@ -1,5 +1,15 @@
+import {eq} from 'drizzle-orm';
 import {describe, expect, it} from 'vitest';
-import {json, setUpBase, textEntryFactory} from '../helpers';
+import {textEntries} from '../../src/db/schema';
+import {
+  ApiClient,
+  db,
+  json,
+  raceBeforeStatement,
+  setUpBase,
+  textEntryFactory,
+  tokenFor,
+} from '../helpers';
 
 type Row = {id: string};
 
@@ -70,5 +80,45 @@ describe('Unicode-aware search', () => {
       })
     );
     expect(await search(user1Client, 'ärger')).toEqual([created.data.id]);
+  });
+});
+
+describe('search folds under concurrent edits', () => {
+  it("a body-only edit never rewrites the subject's fold", async () => {
+    const {user1} = await setUpBase();
+    const entry = await textEntryFactory({
+      user: user1,
+      subject: 'Alt',
+      body: 'first',
+    });
+    // Another request changes the subject after this one has read the entry,
+    // just before this one's UPDATE runs.
+    const client = new ApiClient(
+      await tokenFor(user1.id),
+      raceBeforeStatement(/^\s*update "text_entries_textentry"/i, async () => {
+        await db()
+          .update(textEntries)
+          .set({subject: 'Neu Über', subject_folded: 'neu über'})
+          .where(eq(textEntries.id, entry.id));
+      })
+    );
+    const response = await client.patch(`/api/v1/entries/${entry.id}`, {
+      data: {
+        type: 'TextEntry',
+        id: String(entry.id),
+        attributes: {body: 'Zweiter'},
+      },
+    });
+    expect(response.status).toBe(200);
+    const [row] = await db()
+      .select()
+      .from(textEntries)
+      .where(eq(textEntries.id, entry.id));
+    expect(row).toMatchObject({
+      subject: 'Neu Über',
+      subject_folded: 'neu über',
+      body: 'Zweiter',
+      body_folded: 'zweiter',
+    });
   });
 });

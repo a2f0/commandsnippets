@@ -10,19 +10,20 @@ import {SafeAreaProvider, useSafeArea} from './components/SafeAreaProvider';
 import {LeftDrawer} from './drawer/LeftDrawer';
 import {RightDrawer} from './drawer/RightDrawer';
 import {EntryList} from './EntryList';
-import {loggedInCookieName} from './lib/auth/authUtils';
+import {hasLoginCookie, loggedInCookieNames} from './lib/auth/authUtils';
 import {environment} from './lib/environment';
 import {MenuBar} from './MenuBar';
 import {StyledToolbar} from './styled/layout/StyledToolbar';
 
-const COOKIE_KEY = loggedInCookieName(environment);
+const COOKIE_KEYS = loggedInCookieNames(environment);
 const BORDER_COLOR = '#808080';
 
 const MainContent = () => {
   const location = useLocation();
   const appConfig = useAppContext();
   const navigate = useNavigate();
-  const [cookies] = useCookies([COOKIE_KEY]);
+  const [cookies] = useCookies(COOKIE_KEYS);
+  const loggedInCookie = hasLoginCookie(cookies, environment);
   const {insets, isNativePlatform} = useSafeArea();
 
   // Redirect to user's page when on root path.
@@ -35,11 +36,11 @@ const MainContent = () => {
   // If the user has cleared their cookies, log them out from the application state.
   // Note: this is not the Authorization cookie containing the authorization token.
   const handleCookieLogout = useCallback(() => {
-    if (!cookies[COOKIE_KEY] && appConfig.loggedInUser !== null) {
+    if (!loggedInCookie && appConfig.loggedInUser !== null) {
       console.warn('Cookie logout occurred.');
       appConfig.setLoggedInUser(null);
     }
-  }, [cookies[COOKIE_KEY], appConfig.loggedInUser, appConfig.setLoggedInUser]);
+  }, [loggedInCookie, appConfig.loggedInUser, appConfig.setLoggedInUser]);
 
   useEffect(() => {
     handleCookieLogout();
