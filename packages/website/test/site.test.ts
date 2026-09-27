@@ -12,6 +12,25 @@ describe('appUrl', () => {
     expect(appUrl('staging')).toBe('https://app-staging.commandsnippets.com');
     expect(appUrl('development')).toBe('http://localhost:8085');
   });
+
+  // Logging in starts on the app the website links to, and the OAuth state is
+  // kept in that origin's sessionStorage, so the API's OAuth callbacks
+  // (backend-v2's wrangler.jsonc) must return to the same origin.
+  test.each(['staging', 'production'])(
+    '%s: the linked app is where OAuth returns',
+    mode => {
+      const wrangler = JSON.parse(
+        readFileSync(join(root, '../backend-v2/wrangler.jsonc'), 'utf8')
+          .split('\n')
+          .map(line => line.replace(/^\s*\/\/.*$/, ''))
+          .join('\n')
+      ) as {env: Record<string, {vars: Record<string, string>}>};
+      const vars = wrangler.env[mode]?.vars ?? {};
+      for (const name of ['GITHUB_REDIRECT_URI', 'GOOGLE_REDIRECT_URI']) {
+        expect(new URL(vars[name] ?? '').origin).toBe(appUrl(mode));
+      }
+    }
+  );
 });
 
 // Build the real site per mode and check the HTML it produces.

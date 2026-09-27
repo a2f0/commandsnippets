@@ -11,7 +11,7 @@ import {
 
 const STAGING = {
   DEBUG: 'false',
-  COOKIE_DOMAIN: '.staging.commandsnippets.com',
+  COOKIE_DOMAIN: '.commandsnippets.com',
   COOKIE_NAME_PREFIX: 'Staging',
 } as const;
 // No environment configures this today, so it is outside the generated union.
@@ -53,7 +53,7 @@ const setCookieHeaders = (response: Response) =>
 // Staging and production share a parent domain, so production's cookies are
 // sent to staging hosts. Staging uses its own cookie names and scope.
 describe('staging and production cookies', () => {
-  it('staging sets its own cookie names, scoped to staging hosts', async () => {
+  it('staging sets its own cookie names on the shared domain', async () => {
     const set = setCookieHeaders(await googleLogin(STAGING)).filter(
       c => !c.expired
     );
@@ -62,9 +62,9 @@ describe('staging and production cookies', () => {
       'StagingLoggedIn',
     ]);
     for (const cookie of set) {
-      // Visible to app.staging (which reads StagingLoggedIn), never to
-      // production hosts.
-      expect(cookie.domain).toBe('.staging.commandsnippets.com');
+      // Visible to app-staging (which reads StagingLoggedIn); production
+      // ignores these names.
+      expect(cookie.domain).toBe('.commandsnippets.com');
       expect(cookie.secure).toBe(true);
       expect(cookie.sameSite).toBe('strict');
     }
@@ -122,15 +122,18 @@ describe('staging and production cookies', () => {
       expect(set).toContainEqual(
         expect.objectContaining({
           name,
-          domain: '.staging.commandsnippets.com',
+          domain: '.commandsnippets.com',
           expired: true,
         })
       );
     }
-    // Production's domain-wide cookies are never touched...
+    // Production's cookies (same domain, other names) are never touched...
     expect(
-      set.filter(c => c.domain === '.commandsnippets.com').map(c => c.name)
-    ).toEqual([]);
+      set
+        .filter(c => c.domain === '.commandsnippets.com')
+        .map(c => c.name)
+        .sort()
+    ).toEqual(['StagingAuthorization', 'StagingLoggedIn']);
     // ...while Django staging's host-only cookies are cleaned up.
     for (const name of ['Authorization', 'LoggedIn']) {
       expect(set).toContainEqual(

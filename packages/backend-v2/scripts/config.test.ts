@@ -42,10 +42,23 @@ describe('wrangler.jsonc', () => {
   });
 
   test("staging cookies cannot collide with production's", () => {
-    const production = config.env['production']?.vars['COOKIE_DOMAIN'];
-    const staging = config.env['staging']?.vars['COOKIE_DOMAIN'];
-    expect(production).toBe('.commandsnippets.com');
-    expect(staging).toBe('.staging.commandsnippets.com');
-    expect(staging).not.toBe(production);
+    // Both share the parent domain, so the cookie names must differ.
+    const production = config.env['production']?.vars ?? {};
+    const staging = config.env['staging']?.vars ?? {};
+    expect(production['COOKIE_DOMAIN']).toBe('.commandsnippets.com');
+    expect(staging['COOKIE_DOMAIN']).toBe('.commandsnippets.com');
+    expect(production['COOKIE_NAME_PREFIX']).toBe('');
+    expect(staging['COOKIE_NAME_PREFIX']).toBe('Staging');
+  });
+
+  // The web app lives on app / app-staging (the website has the apex); the
+  // OAuth callbacks must return to the origin that started the login.
+  test.each([
+    ['production', 'https://app.commandsnippets.com'],
+    ['staging', 'https://app-staging.commandsnippets.com'],
+  ])('%s: OAuth callbacks return to %s', (name, origin) => {
+    const vars = config.env[name]?.vars ?? {};
+    expect(new URL(vars['GITHUB_REDIRECT_URI'] ?? '').origin).toBe(origin);
+    expect(new URL(vars['GOOGLE_REDIRECT_URI'] ?? '').origin).toBe(origin);
   });
 });

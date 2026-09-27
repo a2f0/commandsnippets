@@ -124,10 +124,9 @@ export async function getOrCreateToken(
 
 /**
  * The Domain attribute, if any. Local development (DEBUG) and an empty
- * COOKIE_DOMAIN mean host-only cookies. Staging uses
- * `.staging.commandsnippets.com`, so its cookies reach the staging web app
- * (which reads LoggedIn) but never overwrite or clear production's
- * `.commandsnippets.com` cookies of the same names.
+ * COOKIE_DOMAIN mean host-only cookies. Staging and production share
+ * `.commandsnippets.com` (their hosts are app-staging and app), so staging's
+ * cookies are kept apart by name (COOKIE_NAME_PREFIX), not by domain.
  */
 function cookieDomain(c: Context<AppEnv>): {domain?: string} {
   const domain: string = c.env.COOKIE_DOMAIN;

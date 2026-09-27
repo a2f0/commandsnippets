@@ -69,12 +69,13 @@ Deliberate changes:
   same `Domain` they were set with.
 - **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
   matches `^http://localhost:*`).
-- **Staging cookies are scoped to `.staging.commandsnippets.com`** and are
-  `Secure`/`SameSite=Strict`: the staging web app can read `LoggedIn`, and they
-  never overwrite or clear production's `.commandsnippets.com` cookies of the
-  same names (Django staging ran with `DEBUG` on, which made them host-only and
-  non-Secure). Production's cookies still reach staging hosts, so the API tries
-  each `Authorization` cookie and accepts the first valid token.
+- **Staging has its own cookie names** (`StagingAuthorization`,
+  `StagingLoggedIn`), `Secure`/`SameSite=Strict` on `.commandsnippets.com`.
+  Staging's hosts are hyphenated first-level names (`app-staging`,
+  `api-staging`, `website-staging`: Universal SSL covers only one level below
+  the apex), so staging and production share the parent domain and are kept
+  apart by name; each API ignores the other's cookies. Django staging ran with
+  `DEBUG` on, which made its cookies host-only and non-Secure.
 - `PATCH`/`PUT` on `/entry_reuses` is 405 (it would desync counters), and
   renaming a tag to an existing name is a 400 rather than a 500.
 
@@ -174,7 +175,7 @@ done
 
 Secrets persist across deploys; rerun the last step only to rotate them.
 
-Then attach the custom domains (`api.staging.commandsnippets.com`,
+Then attach the custom domains (`api-staging.commandsnippets.com`,
 `api.commandsnippets.com`) to the Workers.
 
 CI: pull requests run lint, typecheck, and the coverage-gated tests as the
