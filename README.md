@@ -9,6 +9,7 @@ a monorepo.
 | `packages/agent-tool/` | CLI behind the ship/review skills |
 | `packages/backend-v2/` | Cloudflare Workers API |
 | `packages/frontend/` | Web client |
+| `packages/website/` | Public website (Astro) |
 | `scripts/` | Local entrypoints shared with CI/CD |
 | `terraform/` | Cloudflare DNS records for the domain |
 

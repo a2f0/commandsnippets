@@ -6,6 +6,7 @@ Monorepo for the Commandsnippets app.
 |---|---|
 | `packages/frontend/` | React web client; pnpm, own lockfile |
 | `packages/backend-v2/` | Cloudflare Workers API; bun, own lockfile |
+| `packages/website/` | Public website (Astro); bun, own lockfile |
 | `packages/agent-tool/` | CLI behind the ship/review skills (root bun workspace) |
 | `backend/` | Django API (being replaced by `packages/backend-v2/`) |
 | `scripts/` | git hooks, CI policy, test entrypoints |

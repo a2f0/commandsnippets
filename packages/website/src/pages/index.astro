@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+import {appUrl} from '../lib/appUrl';
+
+const app = appUrl(import.meta.env.MODE);
+---
+
+<Base title="Commandsnippets">
+  <section class="hero">
+    <h1>Solve, Curate, Retrieve.</h1>
+    <p id="tagLine">
+      An opinionated note-taking system for technical professionals.
+    </p>
+    <a class="login" href={app}>Get started</a>
+  </section>
+</Base>

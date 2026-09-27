@@ -10,7 +10,7 @@ describe('Tag List Context Menu Behavior', () => {
     await browser.resetMSWRequestCounts();
     // First, navigate to establish MSW is ready
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Work with the existing MSW setup - test starting with default tags, then add new one
     // Verify that MSW is working with some initial tags

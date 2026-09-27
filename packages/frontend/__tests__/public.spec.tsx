@@ -5,10 +5,12 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {AppRouter} from '../src/AppRouter';
 import {environment} from '../src/lib/environment';
 
-describe('Public Homepage', () => {
-  it('Renders', async () => {
+describe('Signed-out home page', () => {
+  it('Renders the sign-in page with both providers', async () => {
     render(<AppRouter />);
-    await waitFor(() => screen.getByText(/Solve, Curate, Retrieve./i));
+    await waitFor(() => screen.getByText(/Sign in to Commandsnippets/i));
+    expect(screen.getByText('Login with GitHub')).toBeTruthy();
+    expect(screen.getByText('Login with Google')).toBeTruthy();
   });
 
   it('Detects test environment', () => {

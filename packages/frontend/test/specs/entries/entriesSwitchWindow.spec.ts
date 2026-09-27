@@ -7,7 +7,7 @@ describe('Tab Switching Behavior', () => {
 
   it('should allow tab switching while editing', async () => {
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Verify MSW is providing expected data
     const apiCheck = await BasePage.checkTagsAndEntries();

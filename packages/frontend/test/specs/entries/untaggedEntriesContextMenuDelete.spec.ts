@@ -8,7 +8,7 @@ describe('Entries Context Menu Delete Entry', () => {
   it('Should allow delete entries from untagged entries', async () => {
     await browser.resetMSWRequestCounts();
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Verify MSW is providing expected data
     const apiCheck = await BasePage.checkTagsAndEntries();

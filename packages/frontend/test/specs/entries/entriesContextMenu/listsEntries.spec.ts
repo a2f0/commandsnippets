@@ -9,7 +9,7 @@ describe('TagsEntries Behavior', () => {
     // Navigate to page first, then login (exactly like search test)
     await BasePage.open('');
     await browser.login();
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Navigate to the tag page
     await BasePage.open('test/test-tag-1');

@@ -7,7 +7,7 @@ describe('Entry Main Menu Behavior', () => {
 
   it('should having a working context menu to create new entries', async () => {
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Verify MSW is providing expected data
     const apiCheck = await BasePage.checkTagsAndEntries();

@@ -2,7 +2,7 @@ import React from 'react';
 import {Routes as ReactRouterRoutes, Route} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
-import {PublicHomePage} from './components/public_home_page/PublicHomePage';
+import {SignInPage} from './components/sign_in_page/SignInPage';
 import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
 import {Main} from './Main';
@@ -19,7 +19,7 @@ const Routes = () => {
       {appConfig.loggedInUser ? (
         <Route path="/" element={<Main />} />
       ) : (
-        <Route path="/" element={<PublicHomePage />} />
+        <Route path="/" element={<SignInPage />} />
       )}
     </ReactRouterRoutes>
   );

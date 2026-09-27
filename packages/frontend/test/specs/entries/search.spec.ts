@@ -7,7 +7,7 @@ describe('TagsEntries Behavior', () => {
 
   it('should list tags_entries', async () => {
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Verify MSW is providing expected data
     const apiCheck = await BasePage.checkTagsAndEntries();
@@ -20,7 +20,7 @@ describe('TagsEntries Behavior', () => {
     // Reset counters right before navigating to authenticated view to assert counts for that load
     await browser.resetMSWRequestCounts();
     await browser.login();
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
     await BasePage.open('test/test-tag-1');
 
     // Verify entries list and search elements exist

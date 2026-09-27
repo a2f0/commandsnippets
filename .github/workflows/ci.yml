@@ -27,6 +27,7 @@ jobs:
       backend: ${{ steps.scopes.outputs.backend }}
       frontend: ${{ steps.scopes.outputs.frontend }}
       backendV2: ${{ steps.scopes.outputs.backendV2 }}
+      website: ${{ steps.scopes.outputs.website }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -95,10 +96,15 @@ jobs:
     uses: ./.github/workflows/backend-v2.yml
     secrets: inherit
 
+  website:
+    needs: changes
+    if: needs.changes.outputs.website == 'true'
+    uses: ./.github/workflows/website.yml
+
   gate:
     name: CI gate
     if: always()
-    needs: [changes, tooling, backend, backend-v2, frontend]
+    needs: [changes, tooling, backend, backend-v2, frontend, website]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

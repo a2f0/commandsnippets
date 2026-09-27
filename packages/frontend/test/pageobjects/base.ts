@@ -1,9 +1,9 @@
 import {entrySearchMethod} from '../../src/lib/shared';
 
 export class Base {
-  // home screen
-  get tagLine(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#tagLine');
+  // signed-out home screen
+  get signInPage(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#signInPage');
   }
 
   // file menu

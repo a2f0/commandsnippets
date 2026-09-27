@@ -7,7 +7,7 @@ describe('Tag Main Menu', () => {
 
   it('should have a working menu bar', async () => {
     await BasePage.open('');
-    await expect(BasePage.tagLine).toBeDisplayed();
+    await expect(BasePage.signInPage).toBeDisplayed();
 
     // Verify MSW is providing the expected tag data
     const apiCheck = await BasePage.checkTags();

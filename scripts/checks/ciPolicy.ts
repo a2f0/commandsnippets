@@ -12,6 +12,7 @@ export const CI_SCOPES = {
   frontend:
     /^(packages\/frontend\/|scripts\/(runUnitTests|runWebdriverTests)\.sh$)/,
   backendV2: /^packages\/backend-v2\//,
+  website: /^packages\/website\//,
 } as const satisfies Record<string, RegExp>;
 
 export type CiScope = keyof typeof CI_SCOPES;
@@ -22,6 +23,7 @@ export const CI_JOBS = {
   backend: "backend",
   "backend-v2": "backendV2",
   frontend: "frontend",
+  website: "website",
 } as const satisfies Record<string, CiScope>;
 
 /** Changes that can affect every lane run them all. */
