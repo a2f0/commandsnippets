@@ -4,11 +4,7 @@ import {analyzer} from 'vite-bundle-analyzer';
 import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
-import packageJson from './package.json';
-
-const reactPackages = ['react', 'react-dom', 'react-router-dom'];
-const mobxPackages = ['mobx', 'mobx-react', 'mobx-state-tree'];
-const NODE_MODULES_REGEX = /node_modules\/(@[^/]+\/[^/]+|[^/]+)/;
+import packageJson from './package.json' with {type: 'json'};
 
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
 export default defineConfig(({mode}) => {
@@ -93,30 +89,15 @@ export default defineConfig(({mode}) => {
       outDir: 'build',
       target: 'esnext',
       sourcemap: mode === 'analyze',
-      rollupOptions: {
+      rolldownOptions: {
         output: {
-          manualChunks: (id: string) => {
-            if (id.includes('node_modules')) {
-              const match = id.match(NODE_MODULES_REGEX);
-
-              if (match?.[1]) {
-                const packageName = match[1];
-                if (reactPackages.includes(packageName)) {
-                  return 'react-vendor';
-                }
-                if (
-                  packageName.startsWith('@mui/') ||
-                  packageName.startsWith('@emotion/')
-                ) {
-                  return 'mui-vendor';
-                }
-                if (mobxPackages.includes(packageName)) {
-                  return 'mobx-vendor';
-                }
-              }
-              return 'vendor';
-            }
-            return undefined;
+          // Vite 8 deprecates `manualChunks` for Rolldown's `codeSplitting`.
+          // Dependencies share one `vendor` chunk and app code is split
+          // automatically, the same output the old `manualChunks` produced:
+          // its react/mui/mobx groups never matched pnpm's real paths
+          // (`node_modules/.pnpm/...`), so everything fell through to vendor.
+          codeSplitting: {
+            groups: [{name: 'vendor', test: /[\\/]node_modules[\\/]/}],
           },
         },
       },
