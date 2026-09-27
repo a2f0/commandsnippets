@@ -82,8 +82,6 @@ tflint --init && tflint --recursive --config="$PWD/.tflint.hcl"
 bun test ./scripts/
 ```
 
-Dependabot proposes provider updates for each stack's lock file.
-
 ## Adding an environment
 
 Copy `stacks/staging`, change the backend `key` and the database name, and add
