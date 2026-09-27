@@ -38,19 +38,17 @@ describe('wrangler.jsonc', () => {
     });
   });
 
-  // OAuth returns to the app's own origin, so the app must be served there.
-  it('serves staging on the host its OAuth callbacks return to', () => {
-    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('staging');
-    const host = new URL(getOAuthRedirectUrl('github')).host;
-    expect(config.env['staging']?.routes).toEqual([
-      {pattern: host, custom_domain: true},
-    ]);
-  });
-
-  it('attaches production only at cutover, and never workers.dev', () => {
-    expect(config.env['production']?.routes).toEqual([]);
-    for (const env of ['staging', 'production']) {
+  // OAuth returns to the app's own origin, so the app must be served there,
+  // and only there (the hostname picks the environment, so not workers.dev).
+  it.each(['staging', 'production'])(
+    'serves %s only on the host its OAuth callbacks return to',
+    env => {
+      vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+      const host = new URL(getOAuthRedirectUrl('github')).host;
+      expect(config.env[env]?.routes).toEqual([
+        {pattern: host, custom_domain: true},
+      ]);
       expect(config.env[env]?.workers_dev).toBe(false);
     }
-  });
+  );
 });

@@ -30,9 +30,9 @@
       }
     },
     "production": {
-      // commandsnippets.com (the apex) is added at cutover.
+      // The apex; www redirects here (terraform/stacks/zone).
       "workers_dev": false,
-      "routes": [],
+      "routes": [{ "pattern": "commandsnippets.com", "custom_domain": true }],
       "vars": {
         "APP_ORIGIN": "https://app.commandsnippets.com"
       }

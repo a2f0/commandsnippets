@@ -61,14 +61,12 @@ describe('wrangler.jsonc', () => {
     }
   });
 
-  test('staging is served on website-staging; production waits for cutover', () => {
-    expect(envs['staging']?.routes).toEqual([
-      {pattern: 'website-staging.commandsnippets.com', custom_domain: true},
-    ]);
-    expect(envs['production']?.routes).toEqual([]);
-    for (const mode of ['staging', 'production']) {
-      expect(envs[mode]?.workers_dev).toBe(false);
-    }
+  test.each([
+    ['staging', 'website-staging.commandsnippets.com'],
+    ['production', 'commandsnippets.com'],
+  ])('%s is served only on %s', (mode, host) => {
+    expect(envs[mode]?.routes).toEqual([{pattern: host, custom_domain: true}]);
+    expect(envs[mode]?.workers_dev).toBe(false);
   });
 
   test('serves the built pages and falls through to the Worker', () => {

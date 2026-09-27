@@ -40,5 +40,6 @@ bun run deploy:production
 ```
 
 Hostnames are custom domains in `wrangler.jsonc`, attached by the deploy:
-`website-staging.commandsnippets.com` for staging, and the apex
-`commandsnippets.com` for production at cutover.
+`website-staging.commandsnippets.com` for staging and the apex
+`commandsnippets.com` for production (`www` redirects to it, from
+`terraform/stacks/zone`).

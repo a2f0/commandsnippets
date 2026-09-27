@@ -49,14 +49,14 @@ describe('wrangler.jsonc', () => {
   });
 
   // Custom domains are wrangler's (Terraform manages the zone itself).
-  test('staging serves the API on api-staging; production waits for cutover', () => {
-    expect(config.env['staging']?.routes).toEqual([
-      {pattern: 'api-staging.commandsnippets.com', custom_domain: true},
+  test.each([
+    ['staging', 'api-staging.commandsnippets.com'],
+    ['production', 'api.commandsnippets.com'],
+  ])('%s serves the API only on %s', (name, host) => {
+    expect(config.env[name]?.routes).toEqual([
+      {pattern: host, custom_domain: true},
     ]);
-    expect(config.env['production']?.routes).toEqual([]);
-    // workers.dev only until production has its custom domain.
-    expect(config.env['staging']?.workers_dev).toBe(false);
-    expect(config.env['production']?.workers_dev).toBe(true);
+    expect(config.env[name]?.workers_dev).toBe(false);
   });
 
   test("staging cookies cannot collide with production's", () => {
