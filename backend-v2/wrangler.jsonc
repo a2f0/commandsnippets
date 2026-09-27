@@ -1,0 +1,76 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tearleads-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Local development. Mirrors Django's DEBUG=True cookie behavior.
+  "vars": {
+    "DEBUG": "true",
+    "COOKIE_NAME_PREFIX": "",
+    "COOKIE_DOMAIN": "localhost",
+    "GITHUB_REDIRECT_URI": "http://localhost:8085/oauth/github",
+    "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-dev://oauth/github",
+    "GOOGLE_REDIRECT_URI": "http://localhost:8085/oauth/google",
+    // Google client IDs of the native apps (iOS: GIDClientID in
+    // frontend/ios/App/Config/*.xcconfig) whose tokens may sign in.
+    "GOOGLE_NATIVE_CLIENT_IDS": "424258972420-f97gpnl6e0ri3a87gq583kmf1k606na6.apps.googleusercontent.com"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tearleads-development",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "env": {
+    "staging": {
+      // Scoped to staging hosts: visible to app.staging (which reads
+      // LoggedIn), never sent to production hosts, and distinct from
+      // production's .commandsnippets.com cookies of the same names.
+      "vars": {
+        "DEBUG": "false",
+        "COOKIE_DOMAIN": ".staging.commandsnippets.com",
+        // Distinct names: production's cookies also reach staging hosts.
+        "COOKIE_NAME_PREFIX": "Staging",
+        "GITHUB_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/github",
+        "ELECTRON_GITHUB_REDIRECT_URI": "tearleads-staging://oauth/github",
+        "GOOGLE_REDIRECT_URI": "https://app.staging.commandsnippets.com/oauth/google",
+        // Google client IDs of the native apps (iOS: GIDClientID in
+        // frontend/ios/App/Config/*.xcconfig) whose tokens may sign in.
+        "GOOGLE_NATIVE_CLIENT_IDS": "424258972420-f97gpnl6e0ri3a87gq583kmf1k606na6.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "tearleads-staging",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ]
+    },
+    "production": {
+      "vars": {
+        "DEBUG": "false",
+        "COOKIE_DOMAIN": ".commandsnippets.com",
+        "COOKIE_NAME_PREFIX": "",
+        "GITHUB_REDIRECT_URI": "https://commandsnippets.com/oauth/github",
+        "ELECTRON_GITHUB_REDIRECT_URI": "tearleads://oauth/github",
+        "GOOGLE_REDIRECT_URI": "https://commandsnippets.com/oauth/google",
+        // Google client IDs of the native apps (iOS: GIDClientID in
+        // frontend/ios/App/Config/*.xcconfig) whose tokens may sign in.
+        "GOOGLE_NATIVE_CLIENT_IDS": "424258972420-f97gpnl6e0ri3a87gq583kmf1k606na6.apps.googleusercontent.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "tearleads-production",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
+}

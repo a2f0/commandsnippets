@@ -1,0 +1,192 @@
+/**
+ * Tables mirror the Django models (and keep Django's table/column names) so
+ * the Postgres import is a straight copy and existing ad-hoc SQL keeps working.
+ *
+ * Timestamps are stored as fixed-width naive UTC text with microseconds
+ * (`YYYY-MM-DDTHH:MM:SS.ffffff`), which sorts lexicographically. See
+ * `src/lib/clock.ts`.
+ *
+ * Postgres enforced varchar lengths; SQLite does not, so length CHECKs stand
+ * in for them.
+ */
+import {sql} from 'drizzle-orm';
+import {
+  check,
+  index,
+  integer,
+  sqliteTable,
+  text,
+  unique,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
+
+export const users = sqliteTable(
+  'users_user',
+  {
+    id: integer('id').primaryKey({autoIncrement: true}),
+    username: text('username').notNull().unique(),
+    email: text('email').notNull().default(''),
+    first_name: text('first_name').notNull().default(''),
+    last_name: text('last_name').notNull().default(''),
+    is_superuser: integer('is_superuser', {mode: 'boolean'})
+      .notNull()
+      .default(false),
+    is_staff: integer('is_staff', {mode: 'boolean'}).notNull().default(false),
+    is_active: integer('is_active', {mode: 'boolean'}).notNull().default(true),
+    last_login: text('last_login'),
+    date_joined: text('date_joined').notNull(),
+    date_updated: text('date_updated').notNull(),
+    login_count: integer('login_count').notNull().default(1),
+  },
+  table => [
+    check('users_user_username_length', sql`length(${table.username}) <= 150`),
+    check('users_user_email_length', sql`length(${table.email}) <= 254`),
+    check('users_user_login_count_check', sql`${table.login_count} >= 0`),
+    // Logins find accounts by email, so one non-empty email must map to one
+    // account; this is also what makes concurrent first logins safe. Django
+    // never enforced it (empty emails stay allowed, as they were).
+    uniqueIndex('users_user_email_unique')
+      .on(table.email)
+      .where(sql`${table.email} != ''`),
+  ]
+);
+
+export const tokens = sqliteTable(
+  'authtoken_token',
+  {
+    key: text('key').primaryKey(),
+    created: text('created').notNull(),
+    user_id: integer('user_id')
+      .notNull()
+      .unique()
+      .references(() => users.id, {onDelete: 'cascade'}),
+  },
+  table => [check('authtoken_token_key_length', sql`length(${table.key}) = 40`)]
+);
+
+export const textEntries = sqliteTable(
+  'text_entries_textentry',
+  {
+    id: integer('id').primaryKey({autoIncrement: true}),
+    body: text('body').notNull(),
+    subject: text('subject').notNull(),
+    date_created: text('date_created').notNull(),
+    date_updated: text('date_updated').notNull(),
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+    is_deleted: integer('is_deleted', {mode: 'boolean'})
+      .notNull()
+      .default(false),
+    tag_count: integer('tag_count').notNull().default(0),
+    reused_count: integer('reused_count').notNull().default(0),
+    reused_date: text('reused_date'),
+    // Folded copies of subject/body for Unicode-aware search (lib/search.ts).
+    subject_folded: text('subject_folded').notNull().default(''),
+    body_folded: text('body_folded').notNull().default(''),
+  },
+  table => [
+    check(
+      'text_entries_textentry_body_length',
+      sql`length(${table.body}) <= 1024`
+    ),
+    check(
+      'text_entries_textentry_subject_length',
+      sql`length(${table.subject}) <= 255`
+    ),
+    index('text_entries_textentry_user_id_idx').on(
+      table.user_id,
+      table.date_updated
+    ),
+  ]
+);
+
+export const tags = sqliteTable(
+  'tags_tag',
+  {
+    id: integer('id').primaryKey({autoIncrement: true}),
+    name: text('name').notNull(),
+    date_created: text('date_created').notNull(),
+    date_updated: text('date_updated').notNull(),
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+    entry_count: integer('entry_count').notNull().default(0),
+    date_last_used: text('date_last_used'),
+    order: integer('order').notNull(),
+    is_deleted: integer('is_deleted', {mode: 'boolean'})
+      .notNull()
+      .default(false),
+  },
+  table => [
+    unique('One tag of same name per user').on(table.name, table.user_id),
+    check('tags_tag_name_length', sql`length(${table.name}) <= 24`),
+    check('tags_tag_order_check', sql`${table.order} >= 0`),
+    index('tags_tag_user_order_idx').on(table.user_id, table.order),
+    index('tags_tag_user_updated_idx').on(table.user_id, table.date_updated),
+  ]
+);
+
+export const tagsEntries = sqliteTable(
+  'tags_tagtextentrythroughmodel',
+  {
+    id: integer('id').primaryKey({autoIncrement: true}),
+    order: integer('order').notNull(),
+    tag_id: integer('tag_id')
+      .notNull()
+      .references(() => tags.id, {onDelete: 'cascade'}),
+    text_entry_id: integer('text_entry_id')
+      .notNull()
+      .references(() => textEntries.id, {onDelete: 'cascade'}),
+    date_created: text('date_created').notNull(),
+    date_updated: text('date_updated').notNull(),
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+  },
+  table => [
+    unique('tags_tagtextentrythroughmodel_tag_id_text_entry_id_uniq').on(
+      table.tag_id,
+      table.text_entry_id
+    ),
+    check(
+      'tags_tagtextentrythroughmodel_order_check',
+      sql`${table.order} >= 0`
+    ),
+    index('tags_tagtextentrythroughmodel_tag_order_idx').on(
+      table.tag_id,
+      table.order
+    ),
+    index('tags_tagtextentrythroughmodel_text_entry_id_idx').on(
+      table.text_entry_id
+    ),
+    index('tags_tagtextentrythroughmodel_user_id_idx').on(table.user_id),
+  ]
+);
+
+export const entryReuses = sqliteTable(
+  'text_entries_textentryreused',
+  {
+    id: integer('id').primaryKey({autoIncrement: true}),
+    date_created: text('date_created').notNull(),
+    text_entry_id: integer('text_entry_id')
+      .notNull()
+      .references(() => textEntries.id, {onDelete: 'cascade'}),
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+  },
+  table => [
+    index('text_entries_textentryreused_text_entry_id_idx').on(
+      table.text_entry_id
+    ),
+    index('text_entries_textentryreused_user_id_idx').on(table.user_id),
+  ]
+);
+
+export type User = typeof users.$inferSelect;
+export type Token = typeof tokens.$inferSelect;
+export type Tag = typeof tags.$inferSelect;
+export type TextEntry = typeof textEntries.$inferSelect;
+export type TagTextEntry = typeof tagsEntries.$inferSelect;
+export type TextEntryReused = typeof entryReuses.$inferSelect;

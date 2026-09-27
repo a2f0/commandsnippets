@@ -1,0 +1,36 @@
+{
+  "name": "tearleads-backend-v2",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "wrangler types",
+    "dev": "wrangler dev --port 9001",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "cf-typegen": "wrangler types",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:scripts": "bun test --coverage ./scripts/"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.3",
+    "hono": "^4.13.9"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@types/bun": "1.4.1",
+    "@types/node": "^26.6.3",
+    "@vitest/coverage-istanbul": "^4.1",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1",
+    "wrangler": "^4.141.0"
+  }
+}

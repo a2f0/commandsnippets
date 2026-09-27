@@ -37,12 +37,21 @@ describe("ciScopes", () => {
       backend: true,
       frontend: false,
       mobile: false,
+      backendV2: false,
+    });
+    expect(ciScopes(["backend-v2/src/app.ts"])).toEqual({
+      tooling: false,
+      backend: false,
+      frontend: false,
+      mobile: false,
+      backendV2: true,
     });
     expect(ciScopes(["frontend/src/App.tsx"])).toEqual({
       tooling: false,
       backend: false,
       frontend: true,
       mobile: true,
+      backendV2: false,
     });
     expect(ciScopes(["scripts/runCapacitorTests.sh"]).mobile).toBe(true);
     expect(ciScopes(["scripts/runCapacitorTests.sh"]).frontend).toBe(false);
@@ -55,6 +64,7 @@ describe("ciScopes", () => {
       backend: false,
       frontend: false,
       mobile: false,
+      backendV2: false,
     });
   });
 
@@ -65,7 +75,7 @@ describe("ciScopes", () => {
       "package.json",
       "scripts/checks/ciPolicy.ts",
     ]) {
-      expect(Object.values(ciScopes([path]))).toEqual([true, true, true, true]);
+      expect(Object.values(ciScopes([path])).every(Boolean)).toBe(true);
     }
   });
 });
@@ -73,11 +83,18 @@ describe("ciScopes", () => {
 describe("assertCiSuccess", () => {
   const scopes = (value: string) => ({
     result: "success",
-    outputs: { tooling: value, backend: value, frontend: value, mobile: value },
+    outputs: {
+      tooling: value,
+      backend: value,
+      frontend: value,
+      mobile: value,
+      backendV2: value,
+    },
   });
   const jobs = (result: string) => ({
     tooling: { result },
     backend: { result },
+    "backend-v2": { result },
     frontend: { result },
     ios: { result },
   });
@@ -99,12 +116,14 @@ describe("assertCiSuccess", () => {
         backend: "false",
         frontend: "true",
         mobile: "true",
+        backendV2: "false",
       },
     };
     const needs = {
       changes,
       tooling: { result: "skipped" },
       backend: { result: "skipped" },
+      "backend-v2": { result: "skipped" },
       frontend: { result: "success" },
       ios: { result: "skipped" },
     };
