@@ -21,7 +21,7 @@
     "production": {
       "workers_dev": false,
       "routes": [
-        {"pattern": "app.commandsnippets.com", "custom_domain": true}
+        { "pattern": "app.commandsnippets.com", "custom_domain": true }
       ]
     }
   }
