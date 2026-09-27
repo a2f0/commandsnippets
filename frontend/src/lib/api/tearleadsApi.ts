@@ -48,9 +48,9 @@ class TearleadsApi {
     const payload: AuthPayload = {
       data: {
         type: 'GithubLogin',
-        attributes: {
-          code,
-        },
+        // The Django backend requires clientType until it is removed;
+        // backend-v2 ignores it.
+        attributes: {code, clientType: 'web'},
       },
     };
     const resp = await fetch(`${baseURL}/github-login/`, {
