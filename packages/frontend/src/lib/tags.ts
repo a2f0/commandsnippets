@@ -60,8 +60,8 @@ export function filterAndSort(store: Store): Array<ITagJsonApi> {
     });
   } else if (store.tagSortOrder === 'date_created') {
     sortedArray = tagObjects.sort((a, b) => {
-      const sort1 = new Date(a.attributes.date_updated);
-      const sort2 = new Date(b.attributes.date_updated);
+      const sort1 = new Date(a.attributes.date_created);
+      const sort2 = new Date(b.attributes.date_created);
       if (sort1 < sort2) {
         return -1;
       }
@@ -73,8 +73,8 @@ export function filterAndSort(store: Store): Array<ITagJsonApi> {
     });
   } else if (store.tagSortOrder === '-date_created') {
     sortedArray = tagObjects.sort((a, b) => {
-      const sort1 = new Date(a.attributes.date_updated);
-      const sort2 = new Date(b.attributes.date_updated);
+      const sort1 = new Date(a.attributes.date_created);
+      const sort2 = new Date(b.attributes.date_created);
       if (sort2 < sort1) {
         return -1;
       }
