@@ -1,12 +1,22 @@
 /**
  * The staff-only admin API (backend-v2 `src/resources/admin.ts`).
  *
- * Unlike `fetchWithAuth`, a 403 only logs the user out when it means they
- * are not signed in. `permission_denied` (signed in, but not staff) raises
- * AdminForbiddenError instead, so the page can say so.
+ * It calls `fetch` rather than `fetchWithAuth`, so the admin page can tell a
+ * user who is not staff from one whose session is gone, but it signs out by
+ * the same rule (`isSignedOutResponse`):
+ * - 403 `permission_denied` (signed in, but not staff) keeps the session and
+ *   raises AdminForbiddenError, so the page can say so.
+ * - 403 `not_authenticated`, or a 403 with no code, signs out
+ *   (`handleUnauthorized`) and raises AdminApiError.
+ * - Any other error, `origin_not_allowed` included, keeps the session and
+ *   raises AdminApiError.
+ *
+ * `getStaffStatus` raises AdminSignedOutError on the 401 that `/user` answers
+ * once the session has expired (or on a 403), and the page signs out.
  */
 import {handleUnauthorized} from '../auth/authUtils';
 import {baseURL} from './baseUrl';
+import {isSignedOutResponse} from './fetchWithAuth';
 
 export interface AdminUser {
   id: string;
@@ -189,10 +199,13 @@ async function adminFetch(
     return body;
   }
   const error = firstError(body);
-  if (response.status === 403) {
-    if (error?.['code'] === 'permission_denied') {
-      throw new AdminForbiddenError();
-    }
+  const code = error?.['code'];
+  const errorCode = isString(code) ? code : undefined;
+  if (response.status === 403 && errorCode === 'permission_denied') {
+    throw new AdminForbiddenError();
+  }
+  // The same sign-out rule as every other API call (fetchWithAuth).
+  if (isSignedOutResponse(response.status, errorCode)) {
     handleUnauthorized();
   }
   const detail = error?.['detail'];
@@ -204,8 +217,9 @@ async function adminFetch(
 
 /**
  * Whether the signed-in user is staff, straight from the API: the stored flag
- * can be stale. `/user` answers 401 when the session has expired, which
- * `fetchWithAuth` (403 only) would not treat as signed out.
+ * can be stale. `/user` answers 401 when the session has expired; that (or a
+ * 403) raises AdminSignedOutError and leaves signing out to the page, where
+ * `fetchWithAuth` would sign out from under it.
  */
 export async function getStaffStatus(): Promise<boolean> {
   const response = await fetch(`${baseURL}/user/`, {

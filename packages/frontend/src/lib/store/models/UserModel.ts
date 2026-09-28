@@ -19,6 +19,6 @@ export const UserModel = types
       Object.assign(self, object);
     },
     remove() {
-      getParent<typeof RootModel>(self, 2).removeTag(self.id);
+      getParent<typeof RootModel>(self, 2).removeUser(self.id);
     },
   }));

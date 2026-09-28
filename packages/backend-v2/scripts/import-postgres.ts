@@ -21,6 +21,7 @@ import path from 'node:path';
 import {now, parseDateTime} from '../src/lib/clock';
 import {fold} from '../src/lib/search';
 import RESERVED_USERNAMES from '../src/services/reserved-usernames.json';
+import {parseOrUsage, takeFlag, UsageError} from './lib/args';
 import * as migrations from './lib/migrations';
 import {run} from './lib/process';
 import {sqlLiteral} from './lib/sql';
@@ -668,24 +669,36 @@ export function convertDump(dump: Dump): {
   return {converted, skipped, reranked};
 }
 
+const USAGE =
+  'usage: bun scripts/import-postgres.ts <backup-pg_dump-Fc> [--out file.sql]';
+
+/**
+ * The archive and output file from CLI arguments: `--out` takes the argument
+ * after it, and the archive is the first other argument.
+ */
+function parseArgs(argv: string[]): {archive: string; out: string} {
+  const args = [...argv];
+  const out =
+    takeFlag(args, '--out') ??
+    path.join(import.meta.dirname, '..', 'data', 'import.sql');
+  const archive = args.find(arg => !arg.startsWith('--'));
+  if (archive === undefined) {
+    throw new UsageError('no archive given');
+  }
+  return {archive, out};
+}
+
 /** The CLI: convert, write, and verify. Returns the process exit code. */
 export async function main(
   args: string[],
   log: (line: string) => void = console.log,
   pgRestore?: string
 ): Promise<number> {
-  const archive = args.find(arg => !arg.startsWith('--'));
-  const outIndex = args.indexOf('--out');
-  const out =
-    outIndex === -1
-      ? path.join(import.meta.dirname, '..', 'data', 'import.sql')
-      : (args[outIndex + 1] as string);
-  if (archive === undefined) {
-    log(
-      'usage: bun scripts/import-postgres.ts <backup-pg_dump-Fc> [--out file.sql]'
-    );
+  const options = parseOrUsage(() => parseArgs(args), USAGE, log);
+  if (options === undefined) {
     return 2;
   }
+  const {archive, out} = options;
 
   const dump = parseDump(await restoreToSql(archive, pgRestore));
   const {converted, skipped, reranked} = convertDump(dump);

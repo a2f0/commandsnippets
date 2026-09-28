@@ -46,10 +46,10 @@ export interface MenuTranslations {
   collapseHud: string;
   details: string;
   noLogsAvailable: string;
-  logEntry: string;
-  logEntry_plural: string;
-  errorCaptured: string;
-  errorCaptured_plural: string;
+  logEntry_one: string;
+  logEntry_other: string;
+  errorCaptured_one: string;
+  errorCaptured_other: string;
   cpuUsage: string;
   memory: string;
   network: string;
@@ -82,8 +82,8 @@ export interface TagsTranslations {
   tagUpdated: string;
   tagDeleted: string;
   noTags: string;
-  tagCount: string;
-  tagCount_plural: string;
+  tagCount_one: string;
+  tagCount_other: string;
 }
 
 export interface EntriesTranslations {
@@ -97,8 +97,8 @@ export interface EntriesTranslations {
   entryUpdated: string;
   entryDeleted: string;
   noEntries: string;
-  entryCount: string;
-  entryCount_plural: string;
+  entryCount_one: string;
+  entryCount_other: string;
 }
 
 export interface AdminTranslations {
@@ -162,13 +162,32 @@ export type I18NextTranslations = {
   admin: AdminTranslations;
 } & Record<string, Record<string, string>>;
 
-// Helper types for keys
-export type CommonKeys = keyof CommonTranslations;
-export type MenuKeys = keyof MenuTranslations;
-export type TagsKeys = keyof TagsTranslations;
-export type EntriesKeys = keyof EntriesTranslations;
-export type AdminKeys = keyof AdminTranslations;
-
 export type NamespaceKeys = keyof Translations;
 
-export type TranslationKeys<NS extends NamespaceKeys> = keyof Translations[NS];
+/**
+ * i18next's plural suffixes, one key per plural form of the language
+ * (https://www.i18next.com/translation-function/plurals): `tagCount_one` and
+ * `tagCount_other` in English. i18next no longer reads the old `_plural`
+ * suffix (its v3 JSON format).
+ */
+type PluralSuffix = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+
+/** The key `t()` takes for a translation key: a plural key without its suffix. */
+type TranslationKey<Key> = Key extends `${infer Base}_${PluralSuffix}`
+  ? Base
+  : Key;
+
+/**
+ * The keys `t()` takes in a namespace. Pass a plural key (`tagCount`) with a
+ * `count`, and i18next picks the form: `t('tagCount', {count: 2})`.
+ */
+export type TranslationKeys<NS extends NamespaceKeys> = TranslationKey<
+  keyof Translations[NS]
+>;
+
+// Helper types for keys
+export type CommonKeys = TranslationKeys<'common'>;
+export type MenuKeys = TranslationKeys<'menu'>;
+export type TagsKeys = TranslationKeys<'tags'>;
+export type EntriesKeys = TranslationKeys<'entries'>;
+export type AdminKeys = TranslationKeys<'admin'>;

@@ -197,6 +197,29 @@ describe('adminApi', () => {
     expect(loggedOut()).toBe(true);
   });
 
+  it('keeps the session on a 403 that is not about it', async () => {
+    reply(403, {
+      errors: [{code: 'origin_not_allowed', detail: 'Origin not allowed.'}],
+    });
+    await expect(setUserActive('7', false)).rejects.toThrow(
+      'Origin not allowed.'
+    );
+    expect(loggedOut()).toBe(false);
+  });
+
+  it('logs out on a 401 or a 403 without a code, like every other call', async () => {
+    reply(401, {errors: []});
+    await expect(listAuditLog(1, 25)).rejects.toBeInstanceOf(AdminApiError);
+    expect(loggedOut()).toBe(true);
+
+    vi.mocked(console.info).mockClear();
+    vi.mocked(globalThis.fetch).mockResolvedValue(
+      new Response('Forbidden', {status: 403})
+    );
+    await expect(listAuditLog(1, 25)).rejects.toBeInstanceOf(AdminApiError);
+    expect(loggedOut()).toBe(true);
+  });
+
   it("reports the API's error detail", async () => {
     reply(400, {
       errors: [

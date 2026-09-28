@@ -63,11 +63,21 @@ return <div>{t('greeting', { name: 'John' })}</div>;
 ```tsx
 const { t } = useTypedTranslation('tags');
 
-// In translation file:
-// "tagCount": "{{count}} tag",
-// "tagCount_plural": "{{count}} tags"
+// In the translation objects (and in types.ts), one key per plural form:
+// tagCount_one: '{{count}} tag',
+// tagCount_other: '{{count}} tags',
+// t() takes the key without the suffix, and a count:
 return <div>{t('tagCount', { count: itemCount })}</div>;
 ```
+
+Plural keys use i18next's suffixes, `_one`, `_other` and so on, one for each
+plural category of the language (see
+[Plurals](https://www.i18next.com/translation-function/plurals)). i18next
+ignores the old `_plural` suffix. The typed `t()` takes the key without its
+suffix (`tagCount`), and i18next picks the form from `count`. A language whose
+plural form has no key falls back to English: Spanish, for example, has a
+`many` form for counts such as 1000000, which the Spanish translations do not
+define.
 
 ### Language Switching
 

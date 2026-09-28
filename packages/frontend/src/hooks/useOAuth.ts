@@ -77,7 +77,7 @@ export const useOAuth = (config: OAuthConfig) => {
     const scope = urlParams.get('scope');
     const state = urlParams.get('state');
 
-    console.info(`code (${config.provider} auth): ${code}`);
+    // Never log the code: it is a credential until it is exchanged.
     if (scope) {
       console.info(`scope (${config.provider} auth): ${scope}`);
     }

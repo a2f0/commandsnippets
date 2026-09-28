@@ -6,6 +6,7 @@ import {I18nextProvider, useTranslation} from 'react-i18next';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {LanguageSwitcher} from '../../../src/components/LanguageSwitcher';
+import {useTypedTranslation} from '../../../src/i18n/hooks';
 import {i18n} from '../../../src/i18n/i18n';
 import {darkTheme} from '../../../src/theme/themes';
 
@@ -117,31 +118,55 @@ describe('i18n', () => {
     localStorageSpy.mockRestore();
   });
 
-  it('should handle pluralization correctly', () => {
-    const tTags = i18n.getFixedT('en', 'tags');
+  it.each([
+    ['en', 'menu', 'logEntry', '1 log entry', '2 log entries'],
+    ['en', 'menu', 'errorCaptured', '1 error captured', '2 errors captured'],
+    ['en', 'tags', 'tagCount', '1 tag', '2 tags'],
+    ['en', 'entries', 'entryCount', '1 entry', '2 entries'],
+    [
+      'es',
+      'menu',
+      'logEntry',
+      '1 entrada de registro',
+      '2 entradas de registro',
+    ],
+    [
+      'es',
+      'menu',
+      'errorCaptured',
+      '1 error capturado',
+      '2 errores capturados',
+    ],
+    ['es', 'tags', 'tagCount', '1 etiqueta', '2 etiquetas'],
+    ['es', 'entries', 'entryCount', '1 entrada', '2 entradas'],
+  ])('pluralizes %s %s:%s for 1 and 2', (lng, ns, key, one, two) => {
+    const t = i18n.getFixedT(lng, ns);
 
-    // Test what's actually returned for debugging
-    const singular = tTags('tagCount', {count: 1});
-    const plural = tTags('tagCount', {count: 5});
+    expect(t(key, {count: 1})).toBe(one);
+    expect(t(key, {count: 2})).toBe(two);
+  });
 
-    // Basic functionality checks - just verify interpolation works
-    expect(singular).toContain('1');
-    expect(plural).toContain('5');
+  it.each([
+    ['en', '1 log entry', '2 log entries'],
+    ['es', '1 entrada de registro', '2 entradas de registro'],
+  ])('pluralizes through the typed t() in %s', async (lng, one, two) => {
+    const LogCount = ({count}: {count: number}) => {
+      const {t} = useTypedTranslation('menu');
+      return <p>{t('logEntry', {count})}</p>;
+    };
+    await act(async () => {
+      await i18n.changeLanguage(lng);
+    });
 
-    // For pluralization, just check that we get some form of the word
-    // i18next may or may not handle pluralization properly depending on setup
-    expect(singular).toMatch(/\btag\b/i); // Match 'tag' as whole word
-    expect(plural).toMatch(/\btag/i); // Match 'tag' or 'tags'
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LogCount count={1} />
+        <LogCount count={2} />
+      </I18nextProvider>
+    );
 
-    // Test Spanish pluralization
-    const tTagsEs = i18n.getFixedT('es', 'tags');
-    const singularEs = tTagsEs('tagCount', {count: 1});
-    const pluralEs = tTagsEs('tagCount', {count: 5});
-
-    expect(singularEs).toContain('1');
-    expect(singularEs).toMatch(/etiqueta/i);
-    expect(pluralEs).toContain('5');
-    expect(pluralEs).toMatch(/etiqueta/i);
+    expect(screen.getByText(one)).toBeInTheDocument();
+    expect(screen.getByText(two)).toBeInTheDocument();
   });
 
   it('should handle interpolation correctly', () => {

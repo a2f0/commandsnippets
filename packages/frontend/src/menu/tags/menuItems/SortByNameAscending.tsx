@@ -19,12 +19,12 @@ const SortByNameAscending = ({onClose}: IProps) => {
     <StyledMenuItem
       id="tags-menu-sort-name-ascending"
       onClick={() => {
-        appConfig.setTagSortOrder('-name');
+        appConfig.setTagSortOrder('name');
         onClose();
       }}
     >
       <ListItemIcon>
-        {appConfig.tagSortOrder === '-name' && <StyledCheckIcon />}
+        {appConfig.tagSortOrder === 'name' && <StyledCheckIcon />}
       </ListItemIcon>
       {t('sortByTagName')} <ArrowUpward fontSize="small" />
     </StyledMenuItem>

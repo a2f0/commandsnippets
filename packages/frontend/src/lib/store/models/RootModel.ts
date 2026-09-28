@@ -333,6 +333,12 @@ export const RootModel = types
         destroy(existingEntry);
       }
     },
+    removeUser(id: string) {
+      const existingUser = self.usersArray.find(user => user.id === id);
+      if (existingUser) {
+        destroy(existingUser);
+      }
+    },
     setActiveSearch(activeSearch: activeSearch) {
       self.activeSearch = activeSearch;
     },

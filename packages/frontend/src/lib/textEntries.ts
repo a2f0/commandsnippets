@@ -159,10 +159,10 @@ export function sort(
           return (
             textEntry.attributes.body
               .toLowerCase()
-              .includes(store.entrySearchString) ||
+              .includes(store.entrySearchString.toLowerCase()) ||
             textEntry.attributes.subject
               .toLowerCase()
-              .includes(store.entrySearchString)
+              .includes(store.entrySearchString.toLowerCase())
           );
         });
         textEntriesFiltered = filtered;
@@ -201,19 +201,6 @@ export function sort(
       sortedArray = textEntriesFiltered.slice().sort((a, b) => {
         const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
         const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
-        if (sort2 < sort1) {
-          return -1;
-        }
-        if (sort2 > sort1) {
-          return 1;
-        }
-        // equal
-        return 0;
-      });
-    } else if (sortOrder === '-body') {
-      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
-        const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
         if (sort1 < sort2) {
           return -1;
         }
@@ -223,10 +210,23 @@ export function sort(
         // equal
         return 0;
       });
+    } else if (sortOrder === '-body') {
+      sortedArray = textEntriesFiltered.slice().sort((a, b) => {
+        const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
+        const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
+        if (sort2 < sort1) {
+          return -1;
+        }
+        if (sort2 > sort1) {
+          return 1;
+        }
+        // equal
+        return 0;
+      });
     } else if (sortOrder === 'date_created') {
       sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = new Date(a.attributes.date_updated);
-        const sort2 = new Date(b.attributes.date_updated);
+        const sort1 = new Date(a.attributes.date_created);
+        const sort2 = new Date(b.attributes.date_created);
         if (sort1 < sort2) {
           return -1;
         }
@@ -238,8 +238,8 @@ export function sort(
       });
     } else if (sortOrder === '-date_created') {
       sortedArray = textEntriesFiltered.slice().sort((a, b) => {
-        const sort1 = new Date(a.attributes.date_updated);
-        const sort2 = new Date(b.attributes.date_updated);
+        const sort1 = new Date(a.attributes.date_created);
+        const sort2 = new Date(b.attributes.date_created);
         if (sort2 < sort1) {
           return -1;
         }

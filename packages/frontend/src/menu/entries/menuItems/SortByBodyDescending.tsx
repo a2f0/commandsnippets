@@ -2,7 +2,7 @@ import {ArrowDownward} from '@mui/icons-material';
 import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
-import {useAppContext} from '../../../AppContext';
+import {useEntrySortOrder} from '../../../hooks/useEntrySortOrder';
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../StyledMenuItem';
@@ -12,7 +12,7 @@ interface IProps {
 }
 
 const SortByBodyDescending = ({onClose}: IProps) => {
-  const appConfig = useAppContext();
+  const {sortOrder, setSortOrder} = useEntrySortOrder();
   const {t} = useTypedTranslation('menu');
 
   return (
@@ -20,14 +20,12 @@ const SortByBodyDescending = ({onClose}: IProps) => {
       id="tagged-entries-menu-sort-body-descending"
       key="SortMenuItemTextEntryBody-"
       onClick={() => {
-        appConfig.setTagTextEntryThroughModelSortOrder('-body');
+        setSortOrder('-body');
         onClose();
       }}
     >
       <ListItemIcon>
-        {appConfig.tagTextEntryThroughModelSortOrder === '-body' && (
-          <StyledCheckIcon />
-        )}
+        {sortOrder === '-body' && <StyledCheckIcon />}
       </ListItemIcon>
       {t('sortByBody')} <ArrowDownward fontSize="small" />
     </StyledMenuItem>
