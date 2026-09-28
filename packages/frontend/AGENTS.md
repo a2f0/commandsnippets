@@ -79,22 +79,45 @@ Run these from `packages/frontend`.
 - **Signing out when the session is gone**: `fetchWithAuth`
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API
-  error `code` is `not_authenticated` or `authentication_failed` or that has
-  no code; other 403s (`permission_denied`, `origin_not_allowed`) keep the
-  session. `store.ts` registers `resetApplicationState` as the handler.
+  error `code` (`src/lib/api/errorDocument.ts`) is `not_authenticated` or
+  `authentication_failed` or that has no code; other 403s
+  (`permission_denied`, `origin_not_allowed`) keep the session, and so does
+  any OK response, whatever its body. `store.ts` registers `resetApplicationState` as the handler.
   `authUtils` must not import the store: the models import the API client, so
   that would be an import cycle.
 
 ### API
+The API's contract is `@commandsnippets/api-shared` (`packages/api-shared`, a
+`file:` dependency; see the README's "The API contract"): zod schemas for
+every request and response document, the error `CODES`, and the types
+inferred from them. Take anything that crosses the wire from it rather than
+writing its type by hand.
 - `src/lib/api/apiClient.ts` - the JSON:API client for tags, entries and
-  auth. Every request sends the auth cookie (`credentials: 'include'`).
+  auth. Every request sends the auth cookie (`credentials: 'include'`), its
+  body is api-shared's request document (`TagCreateDocument`, ...), and every
+  response the client returns is parsed with its endpoint's document schema
+  (`tagListDocumentSchema`, ...). The calls that return nothing (the logins,
+  deletes and reorders) leave the body unread.
+- **A response that breaks the contract** (OK, but not JSON or not a document
+  its schema accepts) throws `InvalidResponseError`
+  (`src/lib/api/parseResponse.ts`): `<failure>: invalid response (<path>:
+  <issue>; ...)`, naming paths and types, never values. The call fails like
+  any failed request: its caller logs it, nothing from the body reaches the
+  store (a sync parses every page before it stores any), and the user stays
+  signed in (only the rule below signs out).
 - `src/lib/api/adminApi.ts` - the staff-only admin API, which handles its own
-  401/403 responses.
+  401/403 responses and parses with api-shared's admin schemas; a response
+  that breaks the contract is an `AdminApiError` with status 0.
+- `src/lib/api/errorDocument.ts` - the first error's `code` and `detail` from
+  an error response, each read on its own. Branch on `CODES`
+  (`CODES.permissionDenied`), never on the detail.
 - `src/lib/api/baseUrl.ts` - the API URL for the environment, which
   `src/lib/environment.ts` derives from the page's hostname and port.
-- `src/lib/api/requests/types.ts` and `src/lib/api/responses/types.ts` - the
-  request and response bodies, including the JSON:API resources
-  (`ITagJsonApi`, `ITextEntryJsonApi`, ...) that the store's models hold
+- `src/lib/api/responses/types.ts` - the JSON:API resources as the store's
+  models hold them (`ITagJsonApi`, `ITextEntryJsonApi`, ...), derived from
+  api-shared's resource types. The models' `type`s are literals, so their
+  instances are these types. `src/lib/api/requests/types.ts` - the
+  collections' query parameters.
 - `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
   client-side sorting and filtering of tags and entries.
 
@@ -141,6 +164,12 @@ Run these from `packages/frontend`.
 - **Mock Service Worker (MSW)**: `src/msw/` mocks the API in the browser. Only
   test mode (`bun run server-test`) starts it, from `src/index.tsx`; see
   `src/msw/README.md`. The service worker is `public/mockServiceWorker.js`.
+- **Mocks follow the API contract**: the MSW handlers, `__tests__/util/msw.ts`
+  and the fixtures in `test/mocks/` answer as the API does, and
+  `__tests__/src/msw/contract.spec.ts` parses every response with
+  api-shared's schemas (losing nothing), failing on drift or on a handler it
+  does not check. Type mock documents with api-shared's types, and build their
+  pagination, timestamps and error documents with `src/msw/documents.ts`.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
   `fake-indexeddb/auto`. Unit specs mock the API with `msw/node`
@@ -194,6 +223,7 @@ Run these from `packages/frontend`.
 - Never commit package.json changes without the corresponding bun.lock updates
 - When removing dependencies, use `bun remove <package>` to update both package.json and bun.lock
 - A new dependency with an install script it needs must be added to `trustedDependencies`; see the README's Dependencies section
+- `@commandsnippets/api-shared` is `file:../api-shared`: run `bun install` here after adding, moving or removing a file there or changing its `package.json`, or after editing one with an editor that saves by replacing the file (see the README's "The API contract")
 
 ### TypeScript
 - Always use `bun run compile` (or `bunx tsc -b`) after making changes to ensure TypeScript compiles

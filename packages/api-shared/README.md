@@ -63,27 +63,37 @@ peer dependency):
 ```
 
 Bun installs a `file:` dependency as a tree of per-file symlinks into
-`../api-shared` (and installs its devDependencies alongside). Tools that follow
-symlinks, which is all of them, then load the sources from `../api-shared`,
-where `import 'zod'` would find api-shared's own development copy, or nothing
-in CI, where only the consumer is installed. So each consumer points `zod` at
-its own copy:
+`../api-shared` (with the isolated linker, the web app's, as hard links into
+its `node_modules/.bun/` store), and installs its devDependencies alongside.
+Either way, `import 'zod'` in api-shared's sources resolves from where they
+are, not from the consumer: tools that follow symlinks, which is all of them,
+load them from `../api-shared`, whose own development copy of zod may differ
+(and is missing in CI, where only the consumer is installed), and hard links
+sit in the store next to the zod its devDependencies brought in. So each
+consumer points `zod` at its own copy:
 
-- TypeScript (`tsconfig.json`):
+- TypeScript (`tsconfig.json`, or the web app's `tsconfig-base.json`):
   `"paths": {"zod": ["./node_modules/zod"], "zod/*": ["./node_modules/zod/*"]}`
 - Vite and Vitest: `resolve: {dedupe: ['zod']}`
-- Wrangler (`wrangler.jsonc`): `"alias": {"zod": "./node_modules/zod/index.js"}`
+- Wrangler, where it bundles the code (backend-v2's `wrangler.jsonc`):
+  `"alias": {"zod": "./node_modules/zod/index.js"}`
+
+The consumers are the API (`packages/backend-v2`), which validates its input
+with the schemas, and the web app (`packages/frontend`), which types its
+requests with them and parses the responses (its `src/lib/api/`).
 
 Code that runs outside a bundler (the backend's Bun scripts) can only load
 modules without imports: `@commandsnippets/api-shared/datetime` is one, and
 must stay one (a test checks).
 
 **After changing api-shared, run `bun install` in each consumer**
-(`packages/backend-v2`) when you add, move or remove a file or change
-`package.json`: edits to existing files show through the symlinks at once, but
-the symlink tree is only rebuilt by an install. Commit a consumer's `bun.lock`
-if the install changes it. The pre-push hook and CI reinstall and check
-`backend-v2` whenever `packages/api-shared/` changes.
+(`packages/backend-v2`, `packages/frontend`) when you add, move or remove a
+file or change `package.json`: edits to existing files show through the links
+at once, but the tree of links is only rebuilt by an install. In the web app,
+also reinstall after an edit if your editor saves by replacing the file: its
+hard link keeps the old one. Commit a consumer's `bun.lock` if the install
+changes it. The pre-push hook and CI reinstall and check `backend-v2` whenever
+`packages/api-shared/` changes, and CI runs the web app's checks as well.
 
 ### Clients
 
@@ -109,6 +119,14 @@ const sort: TagSortField = 'order';
 
 Error responses parse with `errorDocumentSchema`; branch on `CODES`
 (`CODES.permissionDenied`) rather than on messages.
+
+The web app does all three: `apiClient.ts` types its request bodies with the
+document types and parses every response it returns with its endpoint's
+document schema, failing the call on one that does not fit;
+`errorDocument.ts` reads the first error's `code` and `detail` with
+`errorObjectSchema`'s fields, for the sign-out rule and the admin page. Its
+MSW mocks are checked against these schemas too
+(`__tests__/src/msw/contract.spec.ts` there).
 
 ## Adding a schema
 
