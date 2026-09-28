@@ -1,22 +1,19 @@
 import {eq} from 'drizzle-orm';
-import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
 import type {AppEnv} from '../env';
-import {ApiError, type ErrorObject, permissionDenied} from '../lib/errors';
+import {
+  ApiError,
+  type ErrorObject,
+  permissionDenied,
+  validationError,
+} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
-import {OrderedModel} from '../lib/ordered';
-import {revision} from '../lib/revision';
+import {OrderedModel, type OrderedSpec} from '../lib/ordered';
+import {nextRevision, type RevisedResource} from './owned';
 
-interface ReorderOptions {
-  type: string;
-  table: SQLiteTable;
-  id: SQLiteColumn;
-  order: SQLiteColumn;
-  dateUpdated: SQLiteColumn;
-  userId: SQLiteColumn;
-  scope: SQLiteColumn;
-}
+/** The resource and its ordering (whose owner/touch the move honors). */
+type ReorderOptions = RevisedResource & OrderedSpec;
 
 interface Row {
   id: number;
@@ -90,18 +87,14 @@ export async function reorder(
     throw permissionDenied();
   }
   if (top.scope !== bottom.scope) {
-    throw ApiError.of(
-      400,
-      'top and bottom must share the same ordering scope.',
-      'invalid'
-    );
+    throw validationError('top and bottom must share the same ordering scope.');
   }
 
   // Every row the move touches gets the requester's next revision (lib/revision).
   await new OrderedModel(db, options).above(
     top,
     bottom,
-    revision(options.table, options.dateUpdated, options.userId, user.id)
+    nextRevision(options, user.id)
   );
   return c.body(null, 200);
 }

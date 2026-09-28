@@ -29,11 +29,10 @@ import {
   type ResourceObject,
 } from '../lib/jsonapi';
 import {booleanField, parseBoolean, validateOrThrow} from '../lib/validation';
+import {icontains} from './filters';
+import {ADMIN_AUDIT_LOG_ENTRY, ADMIN_USER} from './resourceTypes';
 import {jsonApi} from './responses';
 import {parseId} from './viewset';
-
-export const ADMIN_USER = 'AdminUser';
-export const ADMIN_AUDIT_LOG_ENTRY = 'AdminAuditLogEntry';
 
 export const adminRoutes = new Hono<AppEnv>();
 
@@ -119,8 +118,7 @@ const USER_ORDERING: OrderingSpec = {
 
 /** `filter[search]`: a case-insensitive substring of the username or email. */
 function userSearch(term: string): SQL {
-  const pattern = `%${term.replace(/[\\%_]/g, match => `\\${match}`)}%`;
-  return sql`(${users.username} LIKE ${pattern} ESCAPE '\\' OR ${users.email} LIKE ${pattern} ESCAPE '\\')`;
+  return sql`(${icontains(users.username, term)} OR ${icontains(users.email, term)})`;
 }
 
 function listQuery(
@@ -181,7 +179,7 @@ adminRoutes.get('/users/:id', async c =>
 /** Only `is_active` can be changed; other attributes are rejected, not ignored. */
 const WRITABLE = new Set(['is_active']);
 
-const updateUser = async (c: Context<AppEnv>) => {
+adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
   const staff = requireStaff(c);
   const db = c.get('db');
   const target = await getUser(db, c.req.param('id'));
@@ -231,10 +229,7 @@ const updateUser = async (c: Context<AppEnv>) => {
         audit,
       ]));
   return jsonApi(c, document(renderUser(await getUser(db, String(target.id)))));
-};
-
-adminRoutes.patch('/users/:id', updateUser);
-adminRoutes.put('/users/:id', updateUser);
+});
 
 // ---------------------------------------------------------------------------
 // Audit log

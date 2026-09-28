@@ -5,7 +5,7 @@ import {authenticate} from './auth/authentication';
 import {authRoutes} from './auth/routes';
 import {createDb} from './db/client';
 import type {AppEnv} from './env';
-import {ApiError, describeError} from './lib/errors';
+import {ApiError, describeError, originNotAllowed} from './lib/errors';
 import {assertJsonMediaType} from './lib/jsonapi';
 import {adminRoutes} from './resources/admin';
 import {entryRoutes} from './resources/entries';
@@ -76,7 +76,7 @@ app.use('*', async (c, next) => {
     origin !== undefined &&
     !ALLOWED_ORIGINS.some(pattern => pattern.test(origin))
   ) {
-    throw ApiError.of(403, 'Origin not allowed.', 'origin_not_allowed');
+    throw originNotAllowed();
   }
   await next();
 });

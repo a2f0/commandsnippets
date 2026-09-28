@@ -1,13 +1,13 @@
 /**
  * The shared ModelViewSet behavior: list with filters/sort/pagination, object
- * lookup with ownership checks, and JSON:API responses.
+ * lookup with ownership checks, soft deletes, and JSON:API responses.
  */
 import {and, asc, count, eq, type SQL} from 'drizzle-orm';
-import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
+import type {SQLiteColumn} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
 import {requireUser} from '../auth/permissions';
-import type {User} from '../db/schema';
+import type {tags, textEntries, User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {notFound, permissionDenied} from '../lib/errors';
 import {
@@ -19,17 +19,11 @@ import {
   parseListQuery,
   serialize,
 } from '../lib/jsonapi';
+import {nextRevision, type OwnedResource, type RevisedResource} from './owned';
 import {jsonApi} from './responses';
 import {createRegistry} from './serializers';
 
-interface OwnedTable {
-  table: SQLiteTable;
-  id: SQLiteColumn;
-  userId: SQLiteColumn;
-}
-
-export interface ListOptions extends OwnedTable {
-  type: string;
+export interface ListOptions extends OwnedResource {
   user: User;
   filters: FilterSpec;
   ordering: OrderingSpec;
@@ -89,24 +83,23 @@ export function parseId(value: string | undefined, model: string): number {
 }
 
 /**
- * `get_object()` followed by the IsOwner object permission: 404 when missing,
- * 403 when owned by someone else.
+ * `get_object()` for the `:id` route parameter, followed by the IsOwner
+ * object permission: 403 when anonymous (checked before the id is parsed),
+ * 404 when missing, 403 when owned by someone else.
  */
 export async function getOwned<Row extends {user_id: number}>(
   c: Context<AppEnv>,
-  {table, id}: OwnedTable,
-  rawId: string | undefined,
-  model: string,
-  user: User
+  {type, table, id}: OwnedResource
 ): Promise<Row> {
+  const user = requireUser(c);
   const [row] = (await c
     .get('db')
     .select()
     .from(table)
-    .where(eq(id, parseId(rawId, model)))
+    .where(eq(id, parseId(c.req.param('id'), type)))
     .limit(1)) as Row[];
   if (row === undefined) {
-    throw notFound(`No ${model} matches the given query.`);
+    throw notFound(`No ${type} matches the given query.`);
   }
   if (row.user_id !== user.id) {
     throw permissionDenied();
@@ -132,4 +125,27 @@ export async function resourceResponse(
     include
   );
   return jsonApi(c, document(data[0] ?? null, included), status);
+}
+
+/** A resource whose rows are soft-deleted (`is_deleted`), never removed. */
+export interface SoftDeletedResource extends RevisedResource {
+  table: typeof tags | typeof textEntries;
+}
+
+/** DELETE that flags the row `is_deleted` and advances its revision. */
+export async function softDelete(
+  c: Context<AppEnv>,
+  resource: SoftDeletedResource
+): Promise<Response> {
+  const row = await getOwned<{id: number; user_id: number}>(c, resource);
+  const [deleted] = await c
+    .get('db')
+    .update(resource.table)
+    .set({
+      is_deleted: true,
+      date_updated: nextRevision(resource, row.user_id),
+    })
+    .where(eq(resource.id, row.id))
+    .returning();
+  return resourceResponse(c, resource.type, deleted as {id: number});
 }

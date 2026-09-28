@@ -58,6 +58,36 @@ export const parseError = (detail: string) =>
 
 export const conflict = (detail: string) => ApiError.of(409, detail, 'error');
 
+/**
+ * DRF's AuthenticationFailed. DRF coerces it to 403 when there is no
+ * WWW-Authenticate header, which was the case for this API.
+ */
+export const authenticationFailed = (detail: string) =>
+  ApiError.of(403, detail, 'authentication_failed');
+
+/** A state-changing request from an origin outside the CORS allowlist. */
+export const originNotAllowed = () =>
+  ApiError.of(403, 'Origin not allowed.', 'origin_not_allowed');
+
+export const unsupportedMediaType = (mediaType: string | undefined) =>
+  ApiError.of(
+    415,
+    `Unsupported media type "${mediaType}" in request.`,
+    'unsupported_media_type'
+  );
+
+/** DRF's ValidationError on the document as a whole. */
+export const validationError = (detail: string) =>
+  ApiError.of(400, detail, 'invalid');
+
+/** DRF's UniqueTogetherValidator, e.g. `uniqueTogether('name', 'user')`. */
+export const uniqueTogether = (...fields: string[]) =>
+  ApiError.of(
+    400,
+    `The fields ${fields.join(', ')} must make a unique set.`,
+    'unique'
+  );
+
 /** A single-field validation error, e.g. max_length on `name`. */
 export const fieldError = (
   field: string,

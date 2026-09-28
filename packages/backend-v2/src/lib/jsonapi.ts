@@ -6,12 +6,12 @@
  */
 import {desc, type SQL} from 'drizzle-orm';
 import {
-  ApiError,
   conflict,
   fieldError,
   notFound,
   parseError,
   queryError,
+  unsupportedMediaType,
 } from './errors';
 
 // ---------------------------------------------------------------------------
@@ -53,11 +53,7 @@ export function assertJsonMediaType(request: Request): void {
     ?.trim()
     .toLowerCase();
   if (!JSON_MEDIA_TYPES.has(mediaType ?? '')) {
-    throw ApiError.of(
-      415,
-      `Unsupported media type "${mediaType}" in request.`,
-      'unsupported_media_type'
-    );
+    throw unsupportedMediaType(mediaType);
   }
 }
 
