@@ -11,7 +11,7 @@ import {
   userFactory,
 } from '../helpers';
 
-// tearleads/users/tests/test_user_model.py
+// Django origin: backend/tearleads/users/tests/test_user_model.py
 //
 // Several Django tests wrapped creation in `try/except IntegrityError: pass`
 // and so asserted nothing. The ports below assert what v2 (and Django)

@@ -11,7 +11,7 @@ import {
 } from '../helpers';
 import {failureOf} from '../support/errors';
 
-// backend/tearleads/tags/tests/test_tag_entry_through_model_model.py
+// Django origin: backend/tearleads/tags/tests/test_tag_entry_through_model_model.py
 describe('TestTagsEntriesModel', () => {
   it('test_tag_count', async () => {
     const {user1} = await setUpBase();

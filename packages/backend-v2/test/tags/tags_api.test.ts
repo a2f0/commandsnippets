@@ -19,7 +19,7 @@ const reorderPayload = (top: number | string, bottom: number | string) => ({
   data: {type: 'Tag', attributes: {top, bottom}, relationships: {}},
 });
 
-// backend/tearleads/tags/tests/test_tags_api.py
+// Django origin: backend/tearleads/tags/tests/test_tags_api.py
 describe('TestTagsApi', () => {
   let base: Base;
 

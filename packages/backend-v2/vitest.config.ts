@@ -11,7 +11,9 @@ export default defineConfig(async () => {
       cloudflareTest({
         wrangler: {configPath: './wrangler.jsonc'},
         miniflare: {
-          // Mirrors scripts/runBackendTests.sh; Django tests ran with DEBUG off.
+          // Production cookie behavior (DEBUG off: Secure, SameSite=Strict,
+          // domain-scoped) on a local domain, and placeholder OAuth settings
+          // for the mocked providers.
           bindings: {
             TEST_MIGRATIONS: migrations,
             DEBUG: 'false',
@@ -34,7 +36,8 @@ export default defineConfig(async () => {
         provider: 'istanbul',
         include: ['src/**/*.ts'],
         reporter: ['text', 'json-summary'],
-        // Parity with backend/.coveragerc (fail_under = 98).
+        // The src/ gate (README, Development); scripts/ has its own in
+        // bunfig.toml.
         thresholds: {lines: 98, statements: 98},
       },
     },

@@ -13,7 +13,7 @@ import {
 } from '../helpers';
 import {failureOf} from '../support/errors';
 
-// backend/tearleads/tags/tests/test_tags_model.py
+// Django origin: backend/tearleads/tags/tests/test_tags_model.py
 describe('TestTagsModel', () => {
   it('test_deleting_tag_deletes_junction_and_leaves_entry_and_updates_tag_count', async () => {
     const {user1} = await setUpBase();

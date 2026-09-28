@@ -12,9 +12,9 @@ function preflight(origin: string) {
 // Django ran these two classes under the production and staging settings
 // modules; v2 has a single CORS allowlist, so both run against the same app.
 const suites = [
-  // tearleads/core/tests/test_cors_preflight.py::TestCORSPreflightProduction
+  // Django origin: backend/tearleads/core/tests/test_cors_preflight.py
   'TestCORSPreflightProduction',
-  // tearleads/core/tests/test_cors_preflight.py::TestCORSPreflightStaging
+  // Django origin: backend/tearleads/core/tests/test_cors_preflight.py
   'TestCORSPreflightStaging',
 ];
 

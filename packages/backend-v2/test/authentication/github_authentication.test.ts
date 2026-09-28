@@ -22,7 +22,7 @@ import {
   requestWithEnv,
 } from '../support/auth';
 
-// tearleads/authentication/tests/test_github_authentication.py
+// Django origin: backend/tearleads/authentication/tests/test_github_authentication.py
 describe('TestGithubAuthentication', () => {
   beforeEach(async () => {
     await setUpBase();

@@ -4,7 +4,7 @@ import packageJson from '../../package.json';
 import {users} from '../../src/db/schema';
 import {ApiClient, type Base, db, isoformat, json, setUpBase} from '../helpers';
 
-// tearleads/users/tests/test_users_api.py
+// Django origin: backend/tearleads/users/tests/test_users_api.py
 describe('TestUsersApi', () => {
   let base: Base;
 

@@ -38,7 +38,7 @@ const sentForm = (call: Call | undefined) =>
 const header = (call: Call | undefined, name: string) =>
   new Headers(call?.init?.headers).get(name);
 
-// tearleads/authentication/tests/test_github_authentication_service.py
+// Django origin: backend/tearleads/authentication/tests/test_github_authentication_service.py
 describe('TestGithubAuthentication', () => {
   it('test_access_token', async () => {
     const {fetcher, calls} = fakeFetch(

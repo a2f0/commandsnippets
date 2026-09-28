@@ -16,7 +16,7 @@ async function expectCheckFailure(
   );
 }
 
-// tearleads/text_entries/tests/test_text_entries_model.py
+// Django origin: backend/tearleads/text_entries/tests/test_text_entries_model.py
 // v2: Postgres raised DataError ("value too long for type character
 // varying(N)"); SQLite has no varchar lengths, so CHECK constraints stand in.
 describe('TestTextEntriesModel', () => {

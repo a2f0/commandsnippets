@@ -19,7 +19,7 @@ function fakeFetch(body: object): {fetcher: Fetcher; calls: Call[]} {
   return {fetcher, calls};
 }
 
-// tearleads/authentication/tests/test_google_authentication_service.py
+// Django origin: backend/tearleads/authentication/tests/test_google_authentication_service.py
 describe('TestGoogleAuthentication', () => {
   it('test_access_token', async () => {
     const {fetcher, calls} = fakeFetch({access_token: 'access_token'});

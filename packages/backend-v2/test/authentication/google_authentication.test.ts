@@ -33,7 +33,7 @@ function googleRoutes(userinfo: object) {
   ]);
 }
 
-// tearleads/authentication/tests/test_google_authentication.py
+// Django origin: backend/tearleads/authentication/tests/test_google_authentication.py
 describe('TestGoogleAuthentication', () => {
   beforeEach(async () => {
     await setUpBase();

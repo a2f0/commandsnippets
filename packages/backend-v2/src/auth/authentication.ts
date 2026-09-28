@@ -16,8 +16,9 @@ export async function authenticate(c: Context<AppEnv>): Promise<User | null> {
     cookieNames(c).auth
   );
   if (cookies.length > 0) {
-    // Staging's host-only cookie arrives alongside production's domain-wide
-    // one (same name), in browser-defined order: accept the first valid key.
+    // Browsers can send several cookies of this name (set with different
+    // Domain or Path attributes, e.g. a legacy host-only copy next to the
+    // domain-wide one), in an order they choose: accept the first valid key.
     for (const key of cookies) {
       const user = await userForKey(db, key);
       if (user !== null) {

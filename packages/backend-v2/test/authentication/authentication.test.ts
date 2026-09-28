@@ -22,7 +22,7 @@ async function assertLogoutResponseIsOk(response: Response) {
   expect(await json(response)).toEqual({});
 }
 
-// tearleads/authentication/tests/test_authentication.py
+// Django origin: backend/tearleads/authentication/tests/test_authentication.py
 describe('TestAuthentication', () => {
   it('test_successful_authentication_then_deauthentication', async () => {
     // v2 drops the /api-token-auth/ password login (Workers caps PBKDF2 at
