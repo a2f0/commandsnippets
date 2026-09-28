@@ -1,7 +1,8 @@
 ---
 name: Backend v2 CI
 # Pull requests run this through `CI` (ci.yml, the required `CI gate`); the push
-# trigger remains for the deploy branches.
+# trigger remains for the deploy branches. The Worker bundles api-shared, so a
+# change there deploys too.
 # yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
@@ -10,6 +11,7 @@ on:
     branches: [main, staging]
     paths:
       - 'packages/backend-v2/**'
+      - 'packages/api-shared/**'
       - '.github/workflows/backend-v2.yml'
 jobs:
   test:

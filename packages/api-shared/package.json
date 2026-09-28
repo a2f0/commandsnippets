@@ -1,0 +1,29 @@
+{
+  "name": "@commandsnippets/api-shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./datetime": "./src/datetime.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json",
+    "test": "bun test --coverage"
+  },
+  "peerDependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@tsconfig/strictest": "2.0.8",
+    "@types/bun": "1.4.2",
+    "typescript": "7.0.2",
+    "zod": "4.6.5"
+  }
+}

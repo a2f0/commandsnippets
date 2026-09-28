@@ -19,8 +19,10 @@
     "test:scripts": "bun test --coverage ./scripts/"
   },
   "dependencies": {
+    "@commandsnippets/api-shared": "file:../api-shared",
     "drizzle-orm": "^0.45.3",
-    "hono": "^4.13.9"
+    "hono": "^4.13.9",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",

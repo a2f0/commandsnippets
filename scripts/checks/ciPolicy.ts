@@ -3,15 +3,19 @@
  * See docs/ci-merge-gate.md.
  */
 
-/** Path patterns that make each scope of checks applicable. */
+/**
+ * Path patterns that make each scope of checks applicable. api-shared (the API
+ * contract) also runs the lanes of the packages that consume it.
+ */
 export const CI_SCOPES = {
   tooling:
     /^(packages\/agent-tool\/|scripts\/|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   backend:
     /^(backend\/|scripts\/runBackendTests\.sh$)/,
   frontend:
-    /^(packages\/frontend\/|scripts\/(runUnitTests|runWebdriverTests)\.sh$)/,
-  backendV2: /^packages\/backend-v2\//,
+    /^(packages\/(frontend|api-shared)\/|scripts\/(runUnitTests|runWebdriverTests)\.sh$)/,
+  backendV2: /^packages\/(backend-v2|api-shared)\//,
+  apiShared: /^packages\/api-shared\//,
   website: /^packages\/website\//,
   terraform: /^terraform\//,
 } as const satisfies Record<string, RegExp>;
@@ -23,6 +27,7 @@ export const CI_JOBS = {
   tooling: "tooling",
   backend: "backend",
   "backend-v2": "backendV2",
+  "api-shared": "apiShared",
   frontend: "frontend",
   website: "website",
   terraform: "terraform",

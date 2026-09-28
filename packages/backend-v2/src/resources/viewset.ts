@@ -2,10 +2,17 @@
  * The shared ModelViewSet behavior: list with filters/sort/pagination, object
  * lookup with ownership checks, soft deletes, and JSON:API responses.
  */
+import type {
+  FilterSchemas,
+  QueryEntries,
+  SearchMode,
+  ListQuery as SharedListQuery,
+} from '@commandsnippets/api-shared';
 import {and, asc, count, eq, type SQL} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
+import type {z} from 'zod';
 import {requireUser} from '../auth/permissions';
 import type {tags, textEntries, User} from '../db/schema';
 import type {AppEnv} from '../env';
@@ -25,11 +32,27 @@ import {nextRevision, type OwnedResource, type RevisedResource} from './owned';
 import {jsonApi} from './responses';
 import {createRegistry} from './serializers';
 
-interface ListPageSpec<Row> {
-  filters: FilterSpec;
-  ordering: OrderingSpec;
-  /** Refusals beyond parseListQuery's own, made before anything is read. */
-  refuse?: (query: ListQuery) => void;
+/**
+ * A collection's query: its api-shared schema, which validates the parameters
+ * (and refuses what the collection does not support), and the SQL for its
+ * filters and sort fields.
+ */
+export interface CollectionQuery<
+  F extends FilterSchemas,
+  S extends string,
+  Search extends SearchMode,
+> {
+  query: z.ZodType<SharedListQuery<F, S, Search>, QueryEntries>;
+  filters: NoInfer<FilterSpec<F>>;
+  ordering: NoInfer<OrderingSpec<S>>;
+}
+
+interface ListPageSpec<
+  Row,
+  F extends FilterSchemas,
+  S extends string,
+  Search extends SearchMode,
+> extends CollectionQuery<F, S, Search> {
   /** The condition selecting the listed rows (scope, filters, search). */
   where: (query: ListQuery) => SQL | undefined;
   /** The table counted for pagination. */
@@ -47,13 +70,17 @@ interface ListPageSpec<Row> {
  * The list pipeline every collection shares: validate the query, count the
  * matching rows, 404 on a page past the end, then fetch the page.
  */
-export async function listPage<Row>(
+export async function listPage<
+  Row,
+  F extends FilterSchemas,
+  S extends string,
+  Search extends SearchMode,
+>(
   c: Context<AppEnv>,
-  spec: ListPageSpec<Row>
+  spec: ListPageSpec<Row, F, S, Search>
 ): Promise<{query: ListQuery; rows: Row[]; pagination: Pagination}> {
   const url = new URL(c.req.url);
-  const query = parseListQuery(url, spec.filters, spec.ordering);
-  spec.refuse?.(query);
+  const query = parseListQuery(url, spec.query, spec.filters, spec.ordering);
   const where = spec.where(query);
   const [total] = await c
     .get('db')
@@ -82,24 +109,30 @@ export function pageOrder(
   return [...(query.orderBy ?? defaults), tieBreaker];
 }
 
-interface ListOptions extends OwnedResource {
+interface ListOptions<
+  F extends FilterSchemas,
+  S extends string,
+  Search extends SearchMode,
+> extends OwnedResource,
+    CollectionQuery<F, S, Search> {
   user: User;
-  filters: FilterSpec;
-  ordering: OrderingSpec;
   defaultOrdering: SQLiteColumn[];
+  /** `filter[search]`, where the query schema supports it. */
   search?: (term: string) => SQL;
 }
 
 /**
  * GET on a collection. Reads are scoped to the requesting user;
- * `filter[search]` is ignored where the resource defines no search.
+ * `filter[search]` applies where the query schema supports it.
  */
-export async function listResponse(
-  c: Context<AppEnv>,
-  options: ListOptions
-): Promise<Response> {
+export async function listResponse<
+  F extends FilterSchemas,
+  S extends string,
+  Search extends SearchMode,
+>(c: Context<AppEnv>, options: ListOptions<F, S, Search>): Promise<Response> {
   const db = c.get('db');
   const {query, rows, pagination} = await listPage(c, {
+    query: options.query,
     filters: options.filters,
     ordering: options.ordering,
     table: options.table,

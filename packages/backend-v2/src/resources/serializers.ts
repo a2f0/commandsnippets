@@ -1,7 +1,13 @@
 /**
  * JSON:API resource definitions: the equivalent of the DJA serializers
  * (types, attribute sets, relationships and default `included_resources`).
+ * Relationships and default includes are api-shared's (`RELATIONSHIPS`,
+ * `DEFAULT_INCLUDES`); the attributes are what its resource schemas describe.
  */
+import {
+  DEFAULT_INCLUDES,
+  type RELATIONSHIPS,
+} from '@commandsnippets/api-shared';
 import {and, asc, eq} from 'drizzle-orm';
 import {type Db, inIds} from '../db/client';
 import {
@@ -17,7 +23,7 @@ import {
   users,
 } from '../db/schema';
 import {isoformat} from '../lib/clock';
-import type {Registry, ResourceDef} from '../lib/jsonapi';
+import type {Registry, ResourceDef, ToMany, ToOne} from '../lib/jsonapi';
 import {
   TAG,
   TAG_TEXT_ENTRY,
@@ -25,6 +31,23 @@ import {
   TEXT_ENTRY_REUSED,
   USER,
 } from './resourceTypes';
+
+type Relationships = typeof RELATIONSHIPS;
+
+/**
+ * A resource's relationships as api-shared names them: the same names, each
+ * pointing at the same type, to-many exactly where the contract says so.
+ */
+type RelationshipsOf<T extends keyof Relationships, Row> = {
+  [K in keyof Relationships[T]]: Relationships[T][K] extends {
+    type: infer Related;
+    many: true;
+  }
+    ? ToMany & {type: Related}
+    : Relationships[T][K] extends {type: infer Related}
+      ? ToOne<Row> & {type: Related}
+      : never;
+};
 
 /**
  * Every loader is scoped to `userId`, the requesting user: reads are
@@ -48,8 +71,8 @@ export function createRegistry(db: Db, userId: number): Registry {
       is_staff: row.is_staff,
       date_updated: isoformat(row.date_updated),
     }),
-    relationships: {},
-    defaultIncludes: [],
+    relationships: {} satisfies RelationshipsOf<typeof USER, User>,
+    defaultIncludes: DEFAULT_INCLUDES[USER],
   };
 
   const tag: ResourceDef<Tag> = {
@@ -68,8 +91,10 @@ export function createRegistry(db: Db, userId: number): Registry {
       order: row.order,
       is_deleted: row.is_deleted,
     }),
-    relationships: {user: {type: USER, key: row => row.user_id}},
-    defaultIncludes: ['user'],
+    relationships: {
+      user: {type: USER, key: row => row.user_id},
+    } satisfies RelationshipsOf<typeof TAG, Tag>,
+    defaultIncludes: DEFAULT_INCLUDES[TAG],
   };
 
   const textEntry: ResourceDef<TextEntry> = {
@@ -108,8 +133,8 @@ export function createRegistry(db: Db, userId: number): Registry {
             .orderBy(asc(tagsEntries.date_updated), asc(tagsEntries.id)),
         parentKey: (row: TagTextEntry) => row.text_entry_id,
       },
-    },
-    defaultIncludes: ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user'],
+    } satisfies RelationshipsOf<typeof TEXT_ENTRY, TextEntry>,
+    defaultIncludes: DEFAULT_INCLUDES[TEXT_ENTRY],
   };
 
   const tagTextEntry: ResourceDef<TagTextEntry> = {
@@ -130,8 +155,8 @@ export function createRegistry(db: Db, userId: number): Registry {
       tag: {type: TAG, key: row => row.tag_id},
       text_entry: {type: TEXT_ENTRY, key: row => row.text_entry_id},
       user: {type: USER, key: row => row.user_id},
-    },
-    defaultIncludes: ['user', 'tag', 'text_entry'],
+    } satisfies RelationshipsOf<typeof TAG_TEXT_ENTRY, TagTextEntry>,
+    defaultIncludes: DEFAULT_INCLUDES[TAG_TEXT_ENTRY],
   };
 
   const textEntryReused: ResourceDef<TextEntryReused> = {
@@ -147,8 +172,8 @@ export function createRegistry(db: Db, userId: number): Registry {
     relationships: {
       text_entry: {type: TEXT_ENTRY, key: row => row.text_entry_id},
       user: {type: USER, key: row => row.user_id},
-    },
-    defaultIncludes: [],
+    } satisfies RelationshipsOf<typeof TEXT_ENTRY_REUSED, TextEntryReused>,
+    defaultIncludes: DEFAULT_INCLUDES[TEXT_ENTRY_REUSED],
   };
 
   return {

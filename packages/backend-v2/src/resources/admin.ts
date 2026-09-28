@@ -3,6 +3,12 @@
  * deactivate or reactivate accounts, and read the audit log of those changes.
  * Nothing here can grant staff; that stays a database change.
  */
+import {
+  type AdminAuditAction,
+  adminAuditLogListQuerySchema,
+  adminUserListQuerySchema,
+  adminUserUpdateAttributesSchema,
+} from '@commandsnippets/api-shared';
 import {and, asc, desc, eq, type SQL, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireStaff} from '../auth/permissions';
@@ -16,17 +22,14 @@ import {
 } from '../db/schema';
 import type {AppEnv} from '../env';
 import {isoformat, now} from '../lib/clock';
-import {fieldError, notFound, queryError} from '../lib/errors';
+import {fieldError, notFound} from '../lib/errors';
 import {
   document,
-  type FilterSpec,
-  type ListQuery,
   listDocument,
-  type OrderingSpec,
   parseResource,
   type ResourceObject,
 } from '../lib/jsonapi';
-import {booleanField, parseBoolean, validateOrThrow} from '../lib/validation';
+import {validateFields} from '../lib/validate';
 import {icontains} from './filters';
 import {ADMIN_AUDIT_LOG_ENTRY, ADMIN_USER} from './resourceTypes';
 import {jsonApi} from './responses';
@@ -89,49 +92,28 @@ function renderUser(row: AdminUserRow): ResourceObject {
   };
 }
 
-const booleanFilter =
-  (column: typeof users.is_active | typeof users.is_staff) =>
-  (value: string): SQL => {
-    const parsed = parseBoolean(value);
-    if (parsed === null) {
-      throw queryError('Must be a valid boolean.');
-    }
-    return eq(column, parsed);
-  };
-
-const USER_FILTERS: FilterSpec = {
-  is_active: booleanFilter(users.is_active),
-  is_staff: booleanFilter(users.is_staff),
-};
-
-const USER_ORDERING: OrderingSpec = {
-  username: sql`${users.username} COLLATE NOCASE`,
-  email: sql`${users.email} COLLATE NOCASE`,
-  date_joined: sql`${users.date_joined}`,
-  last_login: sql`${users.last_login}`,
-  login_count: sql`${users.login_count}`,
-  entry_count: entryCount,
-  tag_count: tagCount,
-};
-
 /** `filter[search]`: a case-insensitive substring of the username or email. */
 function userSearch(term: string): SQL {
   return sql`(${icontains(users.username, term)} OR ${icontains(users.email, term)})`;
 }
 
-/** The admin lists render no relationships, so `include` is refused. */
-function refuseInclude(query: ListQuery): void {
-  if (query.include !== null) {
-    throw queryError('include is not supported here.');
-  }
-}
-
 adminRoutes.get('/users', async c => {
   const db = c.get('db');
   const {rows, pagination} = await listPage(c, {
-    filters: USER_FILTERS,
-    ordering: USER_ORDERING,
-    refuse: refuseInclude,
+    query: adminUserListQuerySchema,
+    filters: {
+      is_active: value => eq(users.is_active, value),
+      is_staff: value => eq(users.is_staff, value),
+    },
+    ordering: {
+      username: sql`${users.username} COLLATE NOCASE`,
+      email: sql`${users.email} COLLATE NOCASE`,
+      date_joined: sql`${users.date_joined}`,
+      last_login: sql`${users.last_login}`,
+      login_count: sql`${users.login_count}`,
+      entry_count: entryCount,
+      tag_count: tagCount,
+    },
     where: query => {
       const conditions = [...query.filters];
       if (query.search !== null && query.search !== '') {
@@ -174,9 +156,6 @@ adminRoutes.get('/users/:id', async c =>
   )
 );
 
-/** Only `is_active` can be changed; other attributes are rejected, not ignored. */
-const WRITABLE = new Set(['is_active']);
-
 adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
   const staff = requireStaff(c);
   const db = c.get('db');
@@ -185,14 +164,10 @@ adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
     type: ADMIN_USER,
     id: String(target.id),
   });
-  const readOnly = Object.keys(attributes).find(name => !WRITABLE.has(name));
-  if (readOnly !== undefined) {
-    throw fieldError(readOnly, 'This field cannot be changed.', 'read_only');
-  }
-  const {is_active: isActive} = validateOrThrow<{is_active?: boolean}>(
-    {is_active: booleanField()},
-    attributes,
-    {partial: true}
+  // Only `is_active` can change; any other attribute is refused.
+  const {is_active: isActive} = validateFields(
+    adminUserUpdateAttributesSchema,
+    attributes
   );
   if (isActive === undefined || isActive === target.is_active) {
     return jsonApi(c, document(renderUser(target)));
@@ -207,7 +182,9 @@ adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
 
   const audit = db.insert(adminAuditLog).values({
     created: now(),
-    action: isActive ? 'activate_user' : 'deactivate_user',
+    action: (isActive
+      ? 'activate_user'
+      : 'deactivate_user') satisfies AdminAuditAction,
     actor_id: staff.id,
     actor_username: staff.username,
     target_user_id: target.id,
@@ -249,27 +226,15 @@ function renderAuditEntry(row: AdminAuditLogEntry): ResourceObject {
   };
 }
 
-const AUDIT_FILTERS: FilterSpec = {
-  target_user_id: value => {
-    if (!/^\d+$/.test(value)) {
-      throw queryError('Must be a valid integer.');
-    }
-    return eq(adminAuditLog.target_user_id, Number(value));
-  },
-};
-
 /** Newest first, always: nothing is sortable. */
 adminRoutes.get('/audit_log', async c => {
   const db = c.get('db');
   const {rows, pagination} = await listPage(c, {
-    filters: AUDIT_FILTERS,
-    ordering: {},
-    refuse: query => {
-      refuseInclude(query);
-      if (query.search !== null) {
-        throw queryError('filter[search] is not supported here.');
-      }
+    query: adminAuditLogListQuerySchema,
+    filters: {
+      target_user_id: value => eq(adminAuditLog.target_user_id, value),
     },
+    ordering: {},
     where: query => and(...query.filters),
     table: adminAuditLog,
     fetch: ({where, limit, offset}) =>

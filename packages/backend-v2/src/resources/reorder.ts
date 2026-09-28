@@ -1,3 +1,8 @@
+import {
+  CODES,
+  MESSAGES,
+  reorderAttributesSchema,
+} from '@commandsnippets/api-shared';
 import {eq} from 'drizzle-orm';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
@@ -10,6 +15,7 @@ import {
 } from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
+import {eachField} from '../lib/validate';
 import {nextRevision, type RevisedResource} from './owned';
 
 /** The resource and its ordering (whose owner/touch the move honors). */
@@ -36,47 +42,36 @@ export async function reorder(
   const db = c.get('db');
   const {attributes} = await parseResource(c.req.raw, {type: options.type});
 
-  // PrimaryKeyRelatedField validation for `top` and `bottom`.
+  // PrimaryKeyRelatedField validation for `top` and `bottom`: the pks'
+  // format (api-shared's `reorderAttributesSchema`), then that they exist.
   const errors: ErrorObject[] = [];
   const rows: Partial<Record<'top' | 'bottom', Row>> = {};
-  for (const field of ['top', 'bottom'] as const) {
-    const error = (detail: string, code: string) =>
+  const pointer = '/data/attributes';
+  for (const field of eachField(reorderAttributesSchema, attributes, pointer)) {
+    if ('error' in field) {
+      errors.push(field.error);
+      continue;
+    }
+    const [row] = (await db
+      .select({
+        id: options.id,
+        order: options.order,
+        user_id: options.userId,
+        owner: options.userId,
+        scope: options.scope,
+      })
+      .from(options.table)
+      .where(eq(options.id, Number(field.value)))
+      .limit(1)) as Row[];
+    if (row === undefined) {
       errors.push({
-        detail,
+        detail: MESSAGES.pkDoesNotExist(field.value),
         status: '400',
-        source: {pointer: `/data/attributes/${field}`},
-        code,
+        source: {pointer: `${pointer}/${field.name}`},
+        code: CODES.doesNotExist,
       });
-    const value = attributes[field];
-    if (value === undefined) {
-      error('This field is required.', 'required');
-    } else if (value === null) {
-      error('This field may not be null.', 'null');
-    } else if (!/^\d+$/.test(String(value)) || typeof value === 'boolean') {
-      error(
-        `Incorrect type. Expected pk value, received ${typeof value === 'string' ? 'str' : typeof value}.`,
-        'incorrect_type'
-      );
     } else {
-      const [row] = (await db
-        .select({
-          id: options.id,
-          order: options.order,
-          user_id: options.userId,
-          owner: options.userId,
-          scope: options.scope,
-        })
-        .from(options.table)
-        .where(eq(options.id, Number(value)))
-        .limit(1)) as Row[];
-      if (row === undefined) {
-        error(
-          `Invalid pk "${String(value)}" - object does not exist.`,
-          'does_not_exist'
-        );
-      } else {
-        rows[field] = row;
-      }
+      rows[field.name] = row;
     }
   }
   const {top, bottom} = rows;

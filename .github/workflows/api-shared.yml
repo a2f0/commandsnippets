@@ -1,0 +1,27 @@
+---
+name: API Shared CI
+# Pull requests run this through `CI` (ci.yml, the required `CI gate`), which
+# also runs the lanes of the packages that consume api-shared.
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/api-shared
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Lint
+        run: bun run lint
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Test with coverage (fails under 98%)
+        run: bun run test

@@ -28,8 +28,8 @@ and Capacitor apps are gone.
 | `src/db/schema.ts` | tables (same table and column names) | models |
 | `src/db/client.ts`, `src/db/errors.ts` | the Drizzle client; D1 constraint failures | — |
 | `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals) | migrations |
-| `src/lib/jsonapi.ts` | JSON:API parsing, includes, filters, sort, pagination | django-rest-framework-json-api |
-| `src/lib/validation.ts` | request attribute validation | DRF serializer fields |
+| `src/lib/jsonapi.ts` | JSON:API request parsing, includes, filters, sort, pagination (validated by api-shared's schemas) | django-rest-framework-json-api |
+| `src/lib/validate.ts` | api-shared's zod issues as JSON:API errors | DRF serializer fields' `is_valid()` |
 | `src/lib/errors.ts` | errors in the JSON:API error format | DRF exceptions, DJA's exception handler |
 | `src/lib/ordered.ts` | ranked rows (`above`, `below`) | django-ordered-model |
 | `src/lib/clock.ts` | naive-UTC microsecond timestamps | `USE_TZ = False` |
@@ -44,7 +44,31 @@ and Capacitor apps are gone.
 | `scripts/import-postgres.ts` | one-time Postgres → D1 import | — |
 | `scripts/lib/` | the scripts' shared helpers (migrations, SQL literals, processes) | — |
 | `test/` | the Django test suite, ported test-for-test, and v2's own tests | the apps' `tests/` |
+| `test/contract/` | the API's requests and responses against api-shared's schemas | — |
 | `test/support/`, `test/helpers.ts` | factories, an API client, the base test case | `BaseTestCase`, factory_boy |
+
+## Validation
+
+Request documents, attributes, relationships and query parameters are
+validated with the zod schemas of `../api-shared`, the API contract clients
+share: the schemas hold the rules and DRF's exact error messages, and
+`src/lib/validate.ts` turns their issues into JSON:API errors. Document and
+query errors stop at the first (in DRF's order); serializer fields report every
+failing field, in field order. What a schema cannot know stays here: that a pk
+exists and is the requester's (`resources/related.ts`, `resources/reorder.ts`),
+that a document's id matches the URL's, and what an `include` path reaches
+(checked against `resources/serializers.ts`, whose relationships must match
+api-shared's `RELATIONSHIPS`). `test/contract/` checks both directions: that
+documents the schemas accept, the API accepts (and rejects the rest with the
+schemas' messages), and that every response parses with its schema.
+
+api-shared is a `file:` dependency, which Bun installs as symlinks into
+`../api-shared`. So `tsconfig.base.json` (`paths`), `vitest.config.ts`
+(`resolve.dedupe`) and `wrangler.jsonc` (`alias`) resolve its `zod` import to
+this package's copy, and the Bun scripts import only its dependency-free
+`datetime` entry (through `src/lib/clock.ts`). After adding or removing files in
+`../api-shared`, or changing its `package.json`, run `bun install` here (see
+`../api-shared/README.md`).
 
 ## Development
 
@@ -282,8 +306,8 @@ The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
 `api.commandsnippets.com` for production. workers.dev is off for both.
 
 CI: pull requests run lint, typecheck, and the coverage-gated tests as the
-`backend-v2` lane of the required `CI gate` (see `../../docs/ci-merge-gate.md`).
-Pushes to `staging`/`main` run `Backend v2 CI`, which applies D1 migrations and
-deploys once the `BACKEND_V2_DEPLOY` repository variable is `true` and the
+`backend-v2` lane of the required `CI gate` (see `../../docs/ci-merge-gate.md`),
+for changes here or in `../api-shared`. Pushes to `staging`/`main` that change
+either run `Backend v2 CI`, which applies D1 migrations and deploys once the `BACKEND_V2_DEPLOY` repository variable is `true` and the
 `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist. Deploys stay
 off until then.

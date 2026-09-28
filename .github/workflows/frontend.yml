@@ -11,6 +11,7 @@ on:
     branches: [main, staging]
     paths:
       - 'packages/frontend/**'
+      - 'packages/api-shared/**'
       - 'scripts/runUnitTests.sh'
       - 'scripts/runWebdriverTests.sh'
       - '.github/workflows/frontend.yml'

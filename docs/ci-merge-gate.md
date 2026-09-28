@@ -16,15 +16,21 @@ exercise every lane.
 |---|---|---|
 | `tooling` | inline in `ci.yml` | `packages/agent-tool/`, `scripts/`, tooling config |
 | `backend` | `backend.yml` (Backend CI) | `backend/`, `runBackendTests.sh` |
-| `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/` |
-| `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, app test scripts |
+| `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/`, `packages/api-shared/` |
+| `api-shared` | `api-shared.yml` (API Shared CI) | `packages/api-shared/` |
+| `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts |
 | `website` | `website.yml` (Website CI) | `packages/website/` |
 | `terraform` | `terraform.yml` (Terraform CI) | `terraform/` |
+
+`packages/api-shared/` is the API contract its consumers build against, so a
+change there also runs the lanes of its consumers: `backend-v2`, and
+`frontend` (which will consume it).
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch
 pushes themselves; `Backend CI` and `Frontend CI` still run on pushes to `main`
-and `staging`. `Backend v2 CI` also deploys from those pushes; its deploy job
+and `staging`. `Backend v2 CI` also deploys from those pushes, including those
+that change only `packages/api-shared/` (the Worker bundles it); its deploy job
 checks `github.workflow`, because a reusable workflow sees its caller's context,
 so a `CI` run can never deploy.
 
@@ -57,7 +63,9 @@ merged hook change takes effect.
   checks for the areas the push touches. Those checks run against the
   worktree, so the hook first requires the pushed commit to be the checked-out
   `HEAD`, with no uncommitted tracked changes and no untracked files under the
-  checked paths. It refuses to run when the installed copy is stale. Per-check timings are logged under
+  checked paths. A change to `packages/api-shared/` installs and checks it, then
+  reinstalls and checks `packages/backend-v2/`, which bundles it. It refuses to
+  run when the installed copy is stale. Per-check timings are logged under
   `.git/commandsnippets/pushGateTimings.tsv`
   (`scripts/git/showPushGateTimings.sh`).
 

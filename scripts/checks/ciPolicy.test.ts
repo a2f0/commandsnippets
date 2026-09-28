@@ -37,6 +37,7 @@ describe("ciScopes", () => {
       backend: true,
       frontend: false,
       backendV2: false,
+      apiShared: false,
       website: false,
       terraform: false,
     });
@@ -45,6 +46,7 @@ describe("ciScopes", () => {
       backend: false,
       frontend: false,
       backendV2: true,
+      apiShared: false,
       website: false,
       terraform: false,
     });
@@ -53,6 +55,16 @@ describe("ciScopes", () => {
       backend: false,
       frontend: true,
       backendV2: false,
+      apiShared: false,
+      website: false,
+      terraform: false,
+    });
+    expect(ciScopes(["packages/api-shared/src/index.ts"])).toEqual({
+      tooling: false,
+      backend: false,
+      frontend: true,
+      backendV2: true,
+      apiShared: true,
       website: false,
       terraform: false,
     });
@@ -63,6 +75,7 @@ describe("ciScopes", () => {
       backend: false,
       frontend: false,
       backendV2: false,
+      apiShared: false,
       website: false,
       terraform: true,
     });
@@ -71,6 +84,7 @@ describe("ciScopes", () => {
       backend: false,
       frontend: false,
       backendV2: false,
+      apiShared: false,
       website: true,
       terraform: false,
     });
@@ -82,6 +96,7 @@ describe("ciScopes", () => {
       backend: false,
       frontend: false,
       backendV2: false,
+      apiShared: false,
       website: false,
       terraform: false,
     });
@@ -107,6 +122,7 @@ describe("assertCiSuccess", () => {
       backend: value,
       frontend: value,
       backendV2: value,
+      apiShared: value,
       website: value,
       terraform: value,
     },
@@ -115,6 +131,7 @@ describe("assertCiSuccess", () => {
     tooling: { result },
     backend: { result },
     "backend-v2": { result },
+    "api-shared": { result },
     frontend: { result },
     website: { result },
     terraform: { result },
@@ -137,6 +154,7 @@ describe("assertCiSuccess", () => {
         backend: "false",
         frontend: "true",
         backendV2: "false",
+        apiShared: "false",
         website: "false",
         terraform: "false",
       },
@@ -146,6 +164,7 @@ describe("assertCiSuccess", () => {
       tooling: { result: "skipped" },
       backend: { result: "skipped" },
       "backend-v2": { result: "success" },
+      "api-shared": { result: "skipped" },
       frontend: { result: "success" },
       website: { result: "skipped" },
       terraform: { result: "skipped" },
@@ -153,6 +172,35 @@ describe("assertCiSuccess", () => {
     expect(() => assertCiSuccess(needs)).toThrow(
       "backend-v2 must be skipped",
     );
+  });
+
+  test("api-shared changes require its lane and its consumers' lanes", () => {
+    const changes = {
+      result: "success",
+      outputs: {
+        tooling: "false",
+        backend: "false",
+        frontend: "true",
+        backendV2: "true",
+        apiShared: "true",
+        website: "false",
+        terraform: "false",
+      },
+    };
+    const needs = {
+      changes,
+      ...jobs("skipped"),
+      "backend-v2": { result: "success" },
+      "api-shared": { result: "success" },
+      frontend: { result: "success" },
+    };
+    expect(() => assertCiSuccess(needs)).not.toThrow();
+    expect(() =>
+      assertCiSuccess({ ...needs, "api-shared": { result: "skipped" } }),
+    ).toThrow("api-shared must be success: skipped");
+    expect(() =>
+      assertCiSuccess({ ...needs, "backend-v2": { result: "skipped" } }),
+    ).toThrow("backend-v2 must be success: skipped");
   });
 
   test("fails when change detection did not succeed", () => {

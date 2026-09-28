@@ -7,6 +7,9 @@ export default defineConfig(async () => {
     path.join(import.meta.dirname, 'migrations')
   );
   return {
+    // api-shared is installed as symlinks to ../api-shared, so Vite loads it
+    // from there (as source, which it transforms): resolve its zod to ours.
+    resolve: {dedupe: ['zod']},
     plugins: [
       cloudflareTest({
         wrangler: {configPath: './wrangler.jsonc'},

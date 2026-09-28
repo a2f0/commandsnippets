@@ -1,3 +1,4 @@
+import {CODES} from '@commandsnippets/api-shared';
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
 import packageJson from '../package.json';
@@ -100,7 +101,9 @@ app.route('/api/v1/admin', adminRoutes);
 app.notFound(c =>
   jsonApi(
     c,
-    {errors: [{detail: 'Not found.', status: '404', code: 'not_found'}]},
+    {
+      errors: [{detail: 'Not found.', status: '404', code: CODES.notFound}],
+    },
     404
   )
 );
@@ -114,7 +117,11 @@ app.onError((error, c) => {
     c,
     {
       errors: [
-        {detail: 'A server error occurred.', status: '500', code: 'error'},
+        {
+          detail: 'A server error occurred.',
+          status: '500',
+          code: CODES.serverError,
+        },
       ],
     },
     500

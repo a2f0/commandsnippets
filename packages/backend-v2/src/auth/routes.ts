@@ -1,8 +1,9 @@
+import {loginAttributesSchema} from '@commandsnippets/api-shared';
 import {type Context, Hono} from 'hono';
 import type {AppEnv} from '../env';
 import {authenticationFailed, validationError} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
-import {charField, validateOrThrow} from '../lib/validation';
+import {validateFields} from '../lib/validate';
 import {GITHUB_LOGIN, GOOGLE_LOGIN} from '../resources/resourceTypes';
 import {getOrCreateUser, recordLogin} from '../services/users';
 import {clearAuthCookies, setAuthCookies} from './cookies';
@@ -58,10 +59,7 @@ authRoutes.post('/api-token-deauth', c => {
 /** GitHub OAuth: exchange the code, then read login + email. */
 authRoutes.post('/api/v1/github-login', async c => {
   const {attributes} = await parseResource(c.req.raw, {type: GITHUB_LOGIN});
-  const {code} = validateOrThrow<{code: string}>(
-    {code: charField()},
-    attributes
-  );
+  const {code} = validateFields(loginAttributesSchema, attributes);
   const service = new GithubOAuthService(c.env);
 
   const tokenResponse = await service.accessToken(code);
@@ -102,10 +100,7 @@ authRoutes.post('/api/v1/github-login', async c => {
 /** Web Google OAuth: exchange the authorization code, then read the email. */
 authRoutes.post('/api/v1/google-login', async c => {
   const {attributes} = await parseResource(c.req.raw, {type: GOOGLE_LOGIN});
-  const {code} = validateOrThrow<{code: string}>(
-    {code: charField()},
-    attributes
-  );
+  const {code} = validateFields(loginAttributesSchema, attributes);
   const service = new GoogleOAuthService(c.env);
 
   const tokenResponse = await service.accessToken(code);
