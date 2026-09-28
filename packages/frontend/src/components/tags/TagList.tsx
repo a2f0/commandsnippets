@@ -1,3 +1,4 @@
+import type {TagDocument} from '@commandsnippets/api-shared';
 import {List} from '@mui/material';
 import {styled} from '@mui/material/styles';
 import invariant from 'invariant';
@@ -7,10 +8,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
-import type {
-  ITagJsonApi,
-  ITagJsonApiResponseSingle,
-} from '../../lib/api/responses/types';
+import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {
   activeSearch,
   appMode,
@@ -71,7 +69,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   );
 
   const handleDelete = useCallback(
-    (o: ITagJsonApiResponseSingle) => {
+    (o: TagDocument) => {
       const existing = appConfig.tagsArray.find(c => c.id === o.data.id);
       existing?.update(o.data);
       setTags(TagHelpers.filterAndSort(appConfig));

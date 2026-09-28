@@ -79,15 +79,18 @@ async function renderCallback(Callback: () => null) {
   });
 }
 
-async function completeLogin(isStaff: boolean | undefined) {
+async function completeLogin(isStaff: boolean) {
   openCallback('github', `code=${code}&state=xyz`);
   vi.spyOn(apiClient, 'githubLogin').mockResolvedValue(undefined);
   vi.spyOn(apiClient, 'getCurrentUser').mockResolvedValue({
     data: {
-      attributes:
-        isStaff === undefined
-          ? {username: 'dan'}
-          : {username: 'dan', is_staff: isStaff},
+      type: 'User',
+      id: '1',
+      attributes: {
+        username: 'dan',
+        is_staff: isStaff,
+        date_updated: '2026-09-01T00:00:00',
+      },
     },
   });
   await renderCallback(GithubCallback);
@@ -114,13 +117,9 @@ describe('useOAuth', () => {
     expect(store.isStaff).toBe(true);
   });
 
-  it('clears the flag for users who are not, or when the API omits it', async () => {
+  it('clears the flag for users who are not', async () => {
     act(() => store.setIsStaff(true));
     await completeLogin(false);
-    expect(store.isStaff).toBe(false);
-
-    act(() => store.setIsStaff(true));
-    await completeLogin(undefined);
     expect(store.isStaff).toBe(false);
   });
 

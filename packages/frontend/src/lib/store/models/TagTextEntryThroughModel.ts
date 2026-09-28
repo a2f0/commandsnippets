@@ -6,7 +6,7 @@ import type {RootModel} from './RootModel';
 export const TagTextEntryThroughModel = types
   .model('TagTextEntryThroughModelJsonAPI', {
     id: types.identifier,
-    type: types.string,
+    type: types.literal('TagTextEntryThroughModel'),
     attributes: types
       .model('TagTextEntryThroughModelAttributes', {
         order: types.number,
@@ -21,7 +21,7 @@ export const TagTextEntryThroughModel = types
             data: types
               .model('TagTextEntryThroughModelJsonApiRelationshipsTagData', {
                 id: types.string,
-                type: types.string,
+                type: types.literal('Tag'),
               })
               .actions(() => ({})),
           })
@@ -33,7 +33,7 @@ export const TagTextEntryThroughModel = types
                 'TagTextEntryThroughModelJsonApiRelationshipsTextEntryData',
                 {
                   id: types.string,
-                  type: types.string,
+                  type: types.literal('TextEntry'),
                 }
               )
               .actions(() => ({})),

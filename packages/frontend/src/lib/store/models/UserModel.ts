@@ -6,7 +6,7 @@ import type {RootModel} from './RootModel';
 export const UserModel = types
   .model('UserJsonApi', {
     id: types.identifier,
-    type: types.string,
+    type: types.literal('User'),
     attributes: types
       .model('UserAttributes', {
         username: types.string,

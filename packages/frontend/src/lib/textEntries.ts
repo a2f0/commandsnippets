@@ -1,18 +1,11 @@
+import type {IncludedResource} from '@commandsnippets/api-shared';
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {apiClient} from './api/apiClient';
 import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
-import {
-  isAJunction,
-  isATag,
-  isATextEntry,
-  isAUser,
-} from './api/responses/typeGuards';
 import type {
-  ITagJsonApi,
   ITagTextEntryThroughModelJsonApi,
   ITextEntryJsonApi,
-  IUserJsonApi,
 } from './api/responses/types';
 import {db} from './db/db';
 import type {Store} from './store/store';
@@ -311,19 +304,19 @@ export function sort(
   return plainObjects;
 }
 
+/**
+ * The user's entries (with `tag`, and `tag_count` tags, when not null)
+ * changed `since` (all when null), and the resources included with them,
+ * from `page` on: added to `entries`.
+ */
 export function fetch(
-  entries: Array<
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-  >,
+  entries: IncludedResource[],
   user: string,
   tag: string | null,
   page: number,
   since: string | null,
   tag_count: number | null
-) {
+): Promise<IncludedResource[]> {
   const params: EntriesQueryParams = {
     'page[number]': page,
     'filter[user.username]': user,
@@ -343,18 +336,10 @@ export function fetch(
     params['filter[tag_count]'] = tag_count;
   }
 
-  const f: Promise<
-    Array<
-      | ITextEntryJsonApi
-      | ITagTextEntryThroughModelJsonApi
-      | IUserJsonApi
-      | ITagJsonApi
-    >
-  > = apiClient.getEntries(params).then(response => {
+  return apiClient.getEntries(params).then(response => {
     const updatedEntries = entries.concat(response.data);
-    for (let i = 0; i < response.included?.length; i++) {
-      const item = response.included[i];
-      if (item && !updatedEntries.includes(item)) {
+    for (const item of response.included ?? []) {
+      if (!updatedEntries.includes(item)) {
         updatedEntries.push(item);
       }
     }
@@ -363,7 +348,6 @@ export function fetch(
     }
     return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
   });
-  return f;
 }
 
 export function fetchPage({
@@ -372,13 +356,8 @@ export function fetchPage({
   sort,
   search,
   signal,
-}: IEntryFetchPage) {
-  let entries: Array<
-    | ITextEntryJsonApi
-    | ITagTextEntryThroughModelJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-  > = [];
+}: IEntryFetchPage): Promise<IncludedResource[]> {
+  let entries: IncludedResource[] = [];
   const params: EntriesQueryParams = {
     'page[number]': page,
     'filter[user.username]': username,
@@ -390,30 +369,20 @@ export function fetchPage({
     params['filter[search]'] = search;
   }
 
-  const f: Promise<
-    | Array<
-        | ITextEntryJsonApi
-        | ITagTextEntryThroughModelJsonApi
-        | IUserJsonApi
-        | ITagJsonApi
-      >
-    | undefined
-  > = apiClient
+  return apiClient
     .getEntries({
       ...params,
       signal,
     })
     .then(response => {
       entries = entries.concat(response.data);
-      for (let i = 0; i < response.included?.length; i++) {
-        const item = response.included[i];
-        if (item && !entries.includes(item)) {
+      for (const item of response.included ?? []) {
+        if (!entries.includes(item)) {
           entries.push(item);
         }
       }
       return entries;
     });
-  return f;
 }
 
 export function needsScrollingIntoView(
@@ -455,14 +424,17 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
     } else {
       const entries = await fetch([], username, null, 13, null, null);
       for (const entry of entries) {
+        if (entry.type === 'TextEntryReused') {
+          throw new Error('unexpected type!');
+        }
         const updated = convertISO8601ToUnixTime(entry.attributes.date_updated);
-        if (isAUser(entry)) {
+        if (entry.type === 'User') {
           await db.putUser({
             id: entry.id,
             username: entry.attributes.username,
             updated,
           });
-        } else if (isATag(entry)) {
+        } else if (entry.type === 'Tag') {
           await db.putTag({
             id: entry.id,
             name: entry.attributes.name,
@@ -472,7 +444,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             synced: false,
             deleted: false,
           });
-        } else if (isATextEntry(entry)) {
+        } else if (entry.type === 'TextEntry') {
           await db.putEntry({
             id: entry.id,
             userId: entry.relationships.user.data.id,
@@ -482,7 +454,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             synced: false,
             deleted: false,
           });
-        } else if (isAJunction(entry)) {
+        } else {
           db.putJunction({
             id: entry.id,
             entryId: entry.relationships.text_entry.data.id,
@@ -493,8 +465,6 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             synced: false,
             deleted: false,
           });
-        } else {
-          throw new Error('unexpected type!');
         }
       }
     }

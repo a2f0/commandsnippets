@@ -16,7 +16,9 @@ export const testUser: IUserJsonApi = {
   attributes: {username: 'test', date_updated: date},
 };
 
-const owner = {user: {data: {id: testUser.id, type: 'User'}}};
+const owner: ITagJsonApi['relationships'] = {
+  user: {data: {id: testUser.id, type: 'User'}},
+};
 
 /** A tag of `testUser`'s. */
 export function tag(

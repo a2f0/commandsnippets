@@ -1,3 +1,4 @@
+import type {TextEntry} from '@commandsnippets/api-shared';
 import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
@@ -121,15 +122,11 @@ const EntryList = () => {
         setPreviousController(controller);
         const p = TextEntryHelpers.fetchPage(fetchParams);
         p.then(a => {
-          if (a) {
-            // type guard
-            const filtered: ITextEntryJsonApi[] = a.filter(
-              (i): i is ITextEntryJsonApi => {
-                return i.type === 'TextEntry';
-              }
-            );
-            setEntries(filtered);
-          }
+          setEntries(
+            a.filter((i): i is TextEntry => {
+              return i.type === 'TextEntry';
+            })
+          );
         }).catch((error: unknown) => {
           // A newer request (the next search) aborted this one: not an error.
           if (!controller.signal.aborted) {

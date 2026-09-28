@@ -1,11 +1,9 @@
+import type {TagDocument} from '@commandsnippets/api-shared';
 import Grid from '@mui/material/Grid';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {apiClient} from '../../lib/api/apiClient';
-import type {
-  ITagJsonApi,
-  ITagJsonApiResponseSingle,
-} from '../../lib/api/responses/types';
+import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
@@ -42,7 +40,7 @@ const TagEdit = ({
   const handleSave = () => {
     apiClient
       .updateTag(object.id, tagName)
-      .then((response: ITagJsonApiResponseSingle) => {
+      .then((response: TagDocument) => {
         handleSaveParent(response.data);
       })
       .catch(error => {

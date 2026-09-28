@@ -1,11 +1,12 @@
+import type {IncludedResource} from '@commandsnippets/api-shared';
 import {apiClient} from './api/apiClient';
 import type {TagsQueryParams} from './api/requests/types';
-import type {
-  ITagJsonApi,
-  ITagJsonApiResponse,
-  IUserJsonApi,
-} from './api/responses/types';
+import type {ITagJsonApi} from './api/responses/types';
 import type {Store} from './store/store';
+
+/** When a tag was last used, for sorting: never (null) is the epoch. */
+const lastUsed = (tag: ITagJsonApi) =>
+  new Date(tag.attributes.date_last_used ?? 0);
 
 export function filterAndSort(store: Store): Array<ITagJsonApi> {
   let sortedArray: Array<ITagJsonApi>;
@@ -112,8 +113,8 @@ export function filterAndSort(store: Store): Array<ITagJsonApi> {
     });
   } else if (store.tagSortOrder === 'date_last_used') {
     sortedArray = tagObjects.sort((a, b) => {
-      const sort1 = new Date(a.attributes.date_last_used);
-      const sort2 = new Date(b.attributes.date_last_used);
+      const sort1 = lastUsed(a);
+      const sort2 = lastUsed(b);
       if (sort1 < sort2) {
         return -1;
       }
@@ -125,8 +126,8 @@ export function filterAndSort(store: Store): Array<ITagJsonApi> {
     });
   } else if (store.tagSortOrder === '-date_last_used') {
     sortedArray = tagObjects.sort((a, b) => {
-      const sort1 = new Date(a.attributes.date_last_used);
-      const sort2 = new Date(b.attributes.date_last_used);
+      const sort1 = lastUsed(a);
+      const sort2 = lastUsed(b);
       if (sort2 < sort1) {
         return -1;
       }
@@ -184,12 +185,16 @@ export function filterAndSort(store: Store): Array<ITagJsonApi> {
   return plainObjects;
 }
 
+/**
+ * The user's tags changed `since` (all when null), and the resources
+ * included with them, from `page` on: added to `entries`.
+ */
 export function fetch(
-  entries: Array<ITagJsonApi | IUserJsonApi>,
+  entries: IncludedResource[],
   user: string,
   page: number,
   since: string | null
-) {
+): Promise<IncludedResource[]> {
   const params: TagsQueryParams = {
     'page[number]': page,
     'filter[user.username]': user,
@@ -200,22 +205,16 @@ export function fetch(
     params['filter[date_updated.gt]'] = since;
   }
 
-  const f: Promise<Array<ITagJsonApi | IUserJsonApi>> = apiClient
-    .getTags(params)
-    .then((response: ITagJsonApiResponse) => {
-      const updatedEntries = entries.concat(response.data);
-      if (response.included) {
-        for (let i = 0; i < response.included.length; i++) {
-          const item = response.included[i];
-          if (item && !updatedEntries.includes(item)) {
-            updatedEntries.push(item);
-          }
-        }
+  return apiClient.getTags(params).then(response => {
+    const updatedEntries = entries.concat(response.data);
+    for (const item of response.included ?? []) {
+      if (!updatedEntries.includes(item)) {
+        updatedEntries.push(item);
       }
-      if (response.links.next === null) {
-        return updatedEntries;
-      }
-      return fetch(updatedEntries, user, page + 1, since);
-    });
-  return f;
+    }
+    if (response.links.next === null) {
+      return updatedEntries;
+    }
+    return fetch(updatedEntries, user, page + 1, since);
+  });
 }

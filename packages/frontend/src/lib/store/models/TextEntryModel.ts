@@ -7,7 +7,7 @@ import type {RootModel} from './RootModel';
 export const TextEntryModel = types
   .model('TextEntryJsonApi', {
     id: types.identifier,
-    type: types.string,
+    type: types.literal('TextEntry'),
     attributes: types
       .model('TextEntryAttributes', {
         body: types.string,
@@ -26,7 +26,7 @@ export const TextEntryModel = types
             data: types
               .model('TextEntryRelationshipsUserData', {
                 id: types.string,
-                type: types.string,
+                type: types.literal('User'),
               })
               .actions(() => ({})),
           })

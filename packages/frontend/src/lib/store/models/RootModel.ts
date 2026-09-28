@@ -4,6 +4,7 @@ import type {
   ITagTextEntryThroughModelJsonApi,
   ITextEntryJsonApi,
   IUserJsonApi,
+  ResourceCollection,
 } from '../../api/responses/types';
 import {
   activeEntryEditField,
@@ -134,47 +135,28 @@ export const RootModel = types
     },
   }))
   .actions(self => ({
-    reconcileCollection(
-      collection: Array<
-        | ITextEntryJsonApi
-        | ITagTextEntryThroughModelJsonApi
-        | IUserJsonApi
-        | ITagJsonApi
-      >
-    ) {
-      // type guard
-      const text_entries: ITextEntryJsonApi[] = collection.filter(
-        (i): i is ITextEntryJsonApi => {
-          return i.type === 'TextEntry';
+    /** Store each resource by its type: entries, junctions, users, tags. */
+    reconcileCollection(collection: ResourceCollection) {
+      for (const element of collection) {
+        if (element.type === 'TextEntry') {
+          self.updateOrCreateTextEntry(element);
         }
-      );
-      text_entries.forEach(element => {
-        self.updateOrCreateTextEntry(element);
-      });
-
-      const tag_text_entry_through_models: ITagTextEntryThroughModelJsonApi[] =
-        collection.filter((i): i is ITagTextEntryThroughModelJsonApi => {
-          return i.type === 'TagTextEntryThroughModel';
-        });
-      tag_text_entry_through_models.forEach(element => {
-        self.updateOrCreateTagTextEntryThroughModel(element);
-      });
-
-      const users: IUserJsonApi[] = collection.filter(
-        (i): i is IUserJsonApi => {
-          return i.type === 'User';
+      }
+      for (const element of collection) {
+        if (element.type === 'TagTextEntryThroughModel') {
+          self.updateOrCreateTagTextEntryThroughModel(element);
         }
-      );
-      users.forEach(element => {
-        self.updateOrCreateUser(element);
-      });
-
-      const tags: ITagJsonApi[] = collection.filter((i): i is ITagJsonApi => {
-        return i.type === 'Tag';
-      });
-      tags.forEach(element => {
-        self.updateOrCreateTag(element);
-      });
+      }
+      for (const element of collection) {
+        if (element.type === 'User') {
+          self.updateOrCreateUser(element);
+        }
+      }
+      for (const element of collection) {
+        if (element.type === 'Tag') {
+          self.updateOrCreateTag(element);
+        }
+      }
     },
   }))
   .actions(self => ({
@@ -267,12 +249,7 @@ export const RootModel = types
         }
         const mostRecentTimestamp: string | null =
           TextEntryHelpers.getMostRecentTimeStamp(filteredTextEntries);
-        const collection: Array<
-          | ITextEntryJsonApi
-          | ITagTextEntryThroughModelJsonApi
-          | IUserJsonApi
-          | ITagJsonApi
-        > = yield TextEntryHelpers.fetch(
+        const collection: ResourceCollection = yield TextEntryHelpers.fetch(
           [],
           user,
           null,
@@ -280,15 +257,11 @@ export const RootModel = types
           mostRecentTimestamp,
           0
         );
-        // type guard
-        const text_entries: ITextEntryJsonApi[] = collection.filter(
-          (i): i is ITextEntryJsonApi => {
-            return i.type === 'TextEntry';
+        for (const element of collection) {
+          if (element.type === 'TextEntry') {
+            self.updateOrCreateUntaggedTextEntry(element);
           }
-        );
-        text_entries.forEach(element => {
-          self.updateOrCreateUntaggedTextEntry(element);
-        });
+        }
       } catch (error) {
         console.error(error);
         throw error;

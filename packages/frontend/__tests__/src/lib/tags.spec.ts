@@ -34,4 +34,21 @@ describe('filterAndSort', () => {
 
     expect(filterAndSort(store).map(t => t.attributes.name)).toEqual(expected);
   });
+
+  // The API sends null for a tag that was never used.
+  const used = [
+    tag('1', {name: 'used-last', date_last_used: '2021-01-01T00:00:00'}),
+    tag('2', {name: 'never-used', date_last_used: null}),
+    tag('3', {name: 'used-first', date_last_used: '2020-01-01T00:00:00'}),
+  ];
+
+  it.each([
+    ['date_last_used', ['never-used', 'used-first', 'used-last']],
+    ['-date_last_used', ['used-last', 'used-first', 'never-used']],
+  ])('sorts by %s, never used first', (sortOrder, expected) => {
+    const store = createStore(used);
+    store.setTagSortOrder(sortOrder);
+
+    expect(filterAndSort(store).map(t => t.attributes.name)).toEqual(expected);
+  });
 });

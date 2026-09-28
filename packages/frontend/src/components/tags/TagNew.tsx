@@ -68,7 +68,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
     apiClient
       .createTag(tagName)
       .then(response => {
-        appConfig.reconcileCollection(response.included);
+        appConfig.reconcileCollection(response.included ?? []);
         appConfig.updateOrCreateTag(response.data);
         handleNewParent();
         appConfig.setTagNew(null);

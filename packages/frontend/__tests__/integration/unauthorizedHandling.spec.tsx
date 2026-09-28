@@ -190,6 +190,23 @@ describe('Signing out when the API says the session is gone', () => {
     }
   );
 
+  it('keeps the session when an OK response breaks the contract', async () => {
+    server.use(
+      http.post(`${API}/tags`, () =>
+        HttpResponse.json({data: {id: '1', type: 'Tag'}}, {status: 201})
+      ),
+      http.get(`${API}/user/`, () => HttpResponse.json({data: null}))
+    );
+
+    await expect(apiClient.createTag('new-tag')).rejects.toThrow(
+      'Failed to create tag: invalid response ('
+    );
+    await expect(apiClient.getCurrentUser()).rejects.toThrow(
+      'Failed to fetch user: invalid response ('
+    );
+    expectStillSignedIn();
+  });
+
   it('signs out when /user answers 401 (the session expired)', async () => {
     server.use(
       http.get(`${API}/user/`, () =>

@@ -1,127 +1,51 @@
-// The JSON:API resources as the API sends them (the store's models in
-// src/lib/store/models/ keep this shape), then the response bodies.
+/**
+ * The JSON:API resources as the store keeps them (its models in
+ * src/lib/store/models/ have these shapes), derived from the API contract in
+ * `@commandsnippets/api-shared`: each is the resource the API sends, less the
+ * members the store does not keep. The response documents are api-shared's
+ * (`TagListDocument`, `TextEntryDocument`, ...).
+ */
+import type {
+  IncludedResource,
+  Tag,
+  TagTextEntry,
+  TextEntry,
+  User,
+} from '@commandsnippets/api-shared';
 
-export interface ITagJsonApi {
-  id: string;
-  type: string;
-  attributes: {
-    name: string;
-    entry_count: number;
-    order: number;
-    date_updated: string;
-    date_created: string;
-    date_last_used: string;
-    is_deleted: boolean;
-  };
-  relationships: {
-    user: {
-      data: {
-        id: string;
-        type: string;
-      };
-    };
-  };
+/** A tag, all of it. */
+export type ITagJsonApi = Tag;
+
+/**
+ * An entry, without its `text_entry_to_tag` linkage: the store keeps the
+ * junctions themselves (`ITagTextEntryThroughModelJsonApi`).
+ */
+export interface ITextEntryJsonApi extends Omit<TextEntry, 'relationships'> {
+  relationships: Pick<TextEntry['relationships'], 'user'>;
 }
 
-export interface ITextEntryJsonApi {
-  id: string;
-  type: string;
-  attributes: {
-    body: string;
-    subject: string;
-    date_updated: string;
-    date_created: string;
-    reused_count: number;
-    is_deleted: boolean;
-    tag_count: number;
-  };
-  relationships: {
-    user: {
-      data: {
-        id: string;
-        type: string;
-      };
-    };
-  };
+/** A tag on an entry, without its owner (the entry's and the tag's). */
+export interface ITagTextEntryThroughModelJsonApi
+  extends Omit<TagTextEntry, 'relationships'> {
+  relationships: Pick<TagTextEntry['relationships'], 'tag' | 'text_entry'>;
 }
 
-export interface ITagTextEntryThroughModelJsonApi {
-  id: string;
-  type: string;
-  attributes: {
-    order: number;
-    date_updated: string;
-    date_created: string;
-  };
-  relationships: {
-    tag: {
-      data: {
-        id: string;
-        type: string;
-      };
-    };
-    text_entry: {
-      data: {
-        id: string;
-        type: string;
-      };
-    };
-  };
+/** A user, without `is_staff` (the store keeps the signed-in user's apart). */
+export interface IUserJsonApi extends Omit<User, 'attributes'> {
+  attributes: Pick<User['attributes'], 'username' | 'date_updated'>;
 }
 
-export interface IUserJsonApi {
-  id: string;
-  type: string;
-  attributes: {
-    username: string;
-    date_updated: string;
-  };
-}
+/** A resource the store keeps. */
+export type StoreResource =
+  | ITagJsonApi
+  | ITextEntryJsonApi
+  | ITagTextEntryThroughModelJsonApi
+  | IUserJsonApi;
 
-export interface UserResponse {
-  data: {
-    attributes: {
-      username: string;
-      is_staff?: boolean;
-    };
-  };
-}
-
-export interface LogoutResponse extends Record<string, never> {}
-
-export interface TagTextEntryThroughModelResponse {
-  data: ITagTextEntryThroughModelJsonApi;
-  included?: unknown[];
-}
-
-export interface ITagJsonApiResponse {
-  data: ITagJsonApi[];
-  links: {
-    next: string | null;
-  };
-  included?: Array<IUserJsonApi>;
-}
-
-export interface ITagJsonApiResponseSingle {
-  data: ITagJsonApi;
-  included: Array<IUserJsonApi>;
-}
-
-export interface ITextEntryJsonApiResponse {
-  data: Array<ITextEntryJsonApi>;
-  links: {
-    next: string | null;
-  };
-  included: Array<
-    | ITagTextEntryThroughModelJsonApi
-    | ITextEntryJsonApi
-    | ITagJsonApi
-    | IUserJsonApi
-    | ITagJsonApi
-  >;
-}
-
-export interface ITextEntryJsonApiResponseSingle {
-  data: ITextEntryJsonApi;
-  included: Array<ITagTextEntryThroughModelJsonApi>;
-}
+/**
+ * Resources to put in the store: ones it holds, or a response's `data` and
+ * `included` (whose entry reuses it does not keep).
+ */
+export type ResourceCollection = ReadonlyArray<
+  StoreResource | IncludedResource
+>;

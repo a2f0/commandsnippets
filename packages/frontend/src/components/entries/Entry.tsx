@@ -1,3 +1,4 @@
+import type {TextEntryDocument} from '@commandsnippets/api-shared';
 import {Check, FileCopySharp} from '@mui/icons-material';
 import {styled} from '@mui/material/styles';
 import invariant from 'invariant';
@@ -8,10 +9,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
 import {apiClient} from '../../lib/api/apiClient';
-import type {
-  ITextEntryJsonApi,
-  ITextEntryJsonApiResponseSingle,
-} from '../../lib/api/responses/types';
+import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {appMode, getSelection, initialMouse} from '../../lib/shared';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
@@ -303,7 +301,7 @@ const Entry = ({
   }, []);
 
   const handleSave = useCallback(
-    (object: ITextEntryJsonApiResponseSingle) => {
+    (object: TextEntryDocument) => {
       const existing = appConfig.textEntriesArray.find(
         o => o.id === object.data.id
       );
