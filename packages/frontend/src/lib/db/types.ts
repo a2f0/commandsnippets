@@ -35,7 +35,7 @@ export interface IJunction {
   deleted: boolean;
 }
 
-export interface ITearleadsDB {
+export interface ICommandsnippetsDB {
   close: () => Promise<void>;
   getTagsForUserName: (username: string) => Promise<ITag[]>;
   putUser: (user: IUser) => Promise<void>;
@@ -46,5 +46,5 @@ export interface ITearleadsDB {
 }
 
 export interface IDatabase {
-  db: ITearleadsDB;
+  db: ICommandsnippetsDB;
 }

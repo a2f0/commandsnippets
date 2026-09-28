@@ -1,8 +1,10 @@
+import {apiClient} from './api/apiClient';
 import type {TagsQueryParams} from './api/requests/types';
-import type {ITagJsonApiResponse} from './api/responses/types';
-import {tearleadsApi} from './api/tearleadsApi';
-import type {ITagJsonApi} from './store/models/TagModel';
-import type {IUserJsonApi} from './store/models/UserModel';
+import type {
+  ITagJsonApi,
+  ITagJsonApiResponse,
+  IUserJsonApi,
+} from './api/responses/types';
 import type {Store} from './store/store';
 
 export function filterAndSort(store: Store): Array<ITagJsonApi> {
@@ -198,7 +200,7 @@ export function fetch(
     params['filter[date_updated.gt]'] = since;
   }
 
-  const f: Promise<Array<ITagJsonApi | IUserJsonApi>> = tearleadsApi
+  const f: Promise<Array<ITagJsonApi | IUserJsonApi>> = apiClient
     .getTags(params)
     .then((response: ITagJsonApiResponse) => {
       const updatedEntries = entries.concat(response.data);

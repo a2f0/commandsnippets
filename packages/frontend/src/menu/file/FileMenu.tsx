@@ -1,8 +1,8 @@
 import React from 'react';
 import {StyledMenu} from '../StyledMenu';
-import {Logout} from './menu_items/Logout';
-import {NewEntry} from './menu_items/NewEntry';
-import {NewTag} from './menu_items/NewTag';
+import {Logout} from './menuItems/Logout';
+import {NewEntry} from './menuItems/NewEntry';
+import {NewTag} from './menuItems/NewTag';
 
 interface IProps {
   onClose: () => void;

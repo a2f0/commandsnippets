@@ -1,7 +1,82 @@
-import type {ITagJsonApi} from '../../store/models/TagModel';
-import type {ITagTextEntryThroughModelJsonApi} from '../../store/models/TagTextEntryThroughModel';
-import type {ITextEntryJsonApi} from '../../store/models/TextEntryModel';
-import type {IUserJsonApi} from '../../store/models/UserModel';
+// The JSON:API resources as the API sends them (the store's models in
+// src/lib/store/models/ keep this shape), then the response bodies.
+
+export interface ITagJsonApi {
+  id: string;
+  type: string;
+  attributes: {
+    name: string;
+    entry_count: number;
+    order: number;
+    date_updated: string;
+    date_created: string;
+    date_last_used: string;
+    is_deleted: boolean;
+  };
+  relationships: {
+    user: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+  };
+}
+
+export interface ITextEntryJsonApi {
+  id: string;
+  type: string;
+  attributes: {
+    body: string;
+    subject: string;
+    date_updated: string;
+    date_created: string;
+    reused_count: number;
+    is_deleted: boolean;
+    tag_count: number;
+  };
+  relationships: {
+    user: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+  };
+}
+
+export interface ITagTextEntryThroughModelJsonApi {
+  id: string;
+  type: string;
+  attributes: {
+    order: number;
+    date_updated: string;
+    date_created: string;
+  };
+  relationships: {
+    tag: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+    text_entry: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+  };
+}
+
+export interface IUserJsonApi {
+  id: string;
+  type: string;
+  attributes: {
+    username: string;
+    date_updated: string;
+  };
+}
 
 export interface UserResponse {
   data: {

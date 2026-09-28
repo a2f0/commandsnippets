@@ -1,4 +1,4 @@
-# Tearleads Frontend
+# Commandsnippets Frontend
 
 A command snippet tool for computer programmers and system administrators. It's
 a tagging system that allows for user-defined ordering of both Tag and Entry
@@ -134,7 +134,7 @@ would replace jsdom's `localStorage`):
 
 ```shell
 ../../scripts/runUnitTests.sh
-../../scripts/runUnitTests.sh __tests__/reorderEntryList.spec.tsx
+../../scripts/runUnitTests.sh __tests__/integration/reorderEntryList.spec.tsx
 ```
 
 For watch mode, run `NODE_OPTIONS=--no-experimental-webstorage bunx vitest`

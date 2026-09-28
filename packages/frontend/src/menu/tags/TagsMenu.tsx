@@ -1,15 +1,15 @@
 import React from 'react';
 
 import {StyledMenu} from '../StyledMenu';
-import {SortByDateCreatedAscending} from './menu_items/SortByDateCreatedAscending';
-import {SortByDateCreatedDescending} from './menu_items/SortByDateCreatedDescending';
-import {SortByDateLastUsedAscending} from './menu_items/SortByDateLastUsedAscending';
-import {SortByDateLastUsedDescending} from './menu_items/SortByDateLastUsedDescending';
-import {SortByEntryCountAscending} from './menu_items/SortByEntryCountAscending';
-import {SortByEntryCountDescending} from './menu_items/SortByEntryCountDescending';
-import {SortByNameAscending} from './menu_items/SortByNameAscending';
-import {SortByNameDescending} from './menu_items/SortByNameDescending';
-import {SortByUserDefinedOrder} from './menu_items/SortByUserDefinedOrder';
+import {SortByDateCreatedAscending} from './menuItems/SortByDateCreatedAscending';
+import {SortByDateCreatedDescending} from './menuItems/SortByDateCreatedDescending';
+import {SortByDateLastUsedAscending} from './menuItems/SortByDateLastUsedAscending';
+import {SortByDateLastUsedDescending} from './menuItems/SortByDateLastUsedDescending';
+import {SortByEntryCountAscending} from './menuItems/SortByEntryCountAscending';
+import {SortByEntryCountDescending} from './menuItems/SortByEntryCountDescending';
+import {SortByNameAscending} from './menuItems/SortByNameAscending';
+import {SortByNameDescending} from './menuItems/SortByNameDescending';
+import {SortByUserDefinedOrder} from './menuItems/SortByUserDefinedOrder';
 
 interface IProps {
   onClose: () => void;

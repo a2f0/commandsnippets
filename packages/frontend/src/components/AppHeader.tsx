@@ -1,8 +1,8 @@
 import {AppBar} from '@mui/material';
 import React from 'react';
 
-import {MenuBar} from '../MenuBar';
-import {StyledToolbar} from '../styled/layout/StyledToolbar';
+import {MenuBar} from '../menu/MenuBar';
+import {StyledToolbar} from '../styled/StyledToolbar';
 
 const BORDER_COLOR = '#808080';
 

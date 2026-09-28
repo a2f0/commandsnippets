@@ -1,8 +1,10 @@
-import type {ITagJsonApi} from '../../store/models/TagModel';
-import type {ITagTextEntryThroughModelJsonApi} from '../../store/models/TagTextEntryThroughModel';
-import type {ITextEntryJsonApi} from '../../store/models/TextEntryModel';
-import type {IUserJsonApi} from '../../store/models/UserModel';
-import type {UserResponse} from './types';
+import type {
+  ITagJsonApi,
+  ITagTextEntryThroughModelJsonApi,
+  ITextEntryJsonApi,
+  IUserJsonApi,
+  UserResponse,
+} from './types';
 
 export function isUserResponse(response: unknown): response is UserResponse {
   return (

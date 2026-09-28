@@ -1,29 +1,8 @@
 import {getParent, types} from 'mobx-state-tree';
+import type {ITagJsonApi} from '../../api/responses/types';
 import {getMostRecentTimeStamp} from '../../shared';
 import {fetch, filterAndSort} from '../../tags';
 import type {RootModel} from './RootModel';
-
-export interface ITagJsonApi {
-  id: string;
-  type: string;
-  attributes: {
-    name: string;
-    entry_count: number;
-    order: number;
-    date_updated: string;
-    date_created: string;
-    date_last_used: string;
-    is_deleted: boolean;
-  };
-  relationships: {
-    user: {
-      data: {
-        id: string;
-        type: string;
-      };
-    };
-  };
-}
 
 export const TagModel = types
   .model('TagJsonAPI', {

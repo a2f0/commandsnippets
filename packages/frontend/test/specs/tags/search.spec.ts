@@ -10,7 +10,7 @@ describe('Tag Search Menu Behavior', () => {
     await BasePage.open('');
 
     const pageTitle = await browser.getTitle();
-    expect(pageTitle).toBe('Tearleads');
+    expect(pageTitle).toBe('Commandsnippets');
 
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 

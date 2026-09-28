@@ -1,13 +1,13 @@
-import {TearleadsDexie} from './adapters/dexie';
-import type {IDatabase, ITearleadsDB} from './types';
+import {CommandsnippetsDexie} from './adapters/dexie';
+import type {ICommandsnippetsDB, IDatabase} from './types';
 
 export class DB implements IDatabase {
-  db: ITearleadsDB;
-  constructor(db: ITearleadsDB) {
+  db: ICommandsnippetsDB;
+  constructor(db: ICommandsnippetsDB) {
     this.db = db;
   }
 }
-const dexie = new TearleadsDexie();
+const dexie = new CommandsnippetsDexie();
 
 const db = new DB(dexie).db;
 

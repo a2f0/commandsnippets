@@ -35,8 +35,8 @@ Run these from `packages/frontend`.
 #### Unit Tests (Vitest)
 - `../../scripts/runUnitTests.sh` - Run all unit tests, as CI does (it disables
   Node's experimental Web Storage, which would replace jsdom's `localStorage`)
-- `../../scripts/runUnitTests.sh __tests__/reorderEntryList.spec.tsx` - Run
-  specific files
+- Pass paths to run specific files, for example
+  `../../scripts/runUnitTests.sh __tests__/integration/reorderEntryList.spec.tsx`
 - For watch mode, run
   `NODE_OPTIONS=--no-experimental-webstorage bunx vitest` in a terminal.
   `bun run unit -- --watch` fails: `unit` already passes `--no-watch`.
@@ -66,8 +66,11 @@ Run these from `packages/frontend`.
   `src/lib/store/models/RootModel.ts` (with `TagModel`, `TextEntryModel`,
   `TagTextEntryThroughModel` and `UserModel` beside it). It is created
   synchronously when `store.ts` is first imported: the saved snapshot in
-  `localStorage` (`mst-tearleads-<environment>`) merged over `defaultState`
-  (`src/lib/shared.ts`). Every change is saved back to `localStorage`.
+  `localStorage` (`mst-commandsnippets-<environment>`) merged over
+  `defaultState` (`src/lib/shared.ts`). Every change is saved back to
+  `localStorage`. A snapshot saved under the key from before the rename to
+  Commandsnippets is moved to the current key on load; `store.ts` says when
+  that read can go.
 - **No migrations**: if a saved snapshot no longer fits the model, the store
   falls back to `defaultState` (a try/catch around `applySnapshot`). New model
   fields must be optional or have defaults so older snapshots still load.
@@ -80,13 +83,16 @@ Run these from `packages/frontend`.
   be an import cycle.
 
 ### API
-- `src/lib/api/tearleadsApi.ts` - the JSON:API client for tags, entries and
+- `src/lib/api/apiClient.ts` - the JSON:API client for tags, entries and
   auth. Every request sends the auth cookie (`credentials: 'include'`).
 - `src/lib/api/adminApi.ts` - the staff-only admin API, which handles its own
   401/403 responses.
 - `src/lib/api/baseUrl.ts` - the API URL for the environment, which
   `src/lib/environment.ts` derives from the page's hostname and port.
-- `src/lib/tags.ts` and `src/lib/text_entries.ts` - paging fetches and the
+- `src/lib/api/requests/types.ts` and `src/lib/api/responses/types.ts` - the
+  request and response bodies, including the JSON:API resources
+  (`ITagJsonApi`, `ITextEntryJsonApi`, ...) that the store's models hold
+- `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
   client-side sorting and filtering of tags and entries.
 
 ### Local Database (Debug only)
@@ -94,18 +100,34 @@ Run these from `packages/frontend`.
   "Populate IndexedDB" item writes to. The app does not read from it. There is
   no Turso/SQLite adapter any more.
 
-### UI
-- **Entry and tag lists**: `src/EntryList.tsx`, `src/Entry.tsx`,
-  `src/TagList.tsx`, `src/Tag.tsx`, with their context menus and editors in
-  `src/`
-- **Menu bar**: `src/MenuBar.tsx`; each menu is in `src/menu/<name>/`, and
-  `src/menu/StyledMenu.tsx` is their shared drop-down
-- **Drag and drop**: React DnD, with `src/DragHandle.tsx` and
-  `src/DragHandleContainer.tsx`, for reordering
+### Source layout
+- **App shell** (the root of `src/`): `index.tsx` (the entry point),
+  `AppRouter.tsx`, `App.tsx` (the providers), `AppContext.tsx` (the store's
+  context), `Routes.tsx` and `routePaths.ts`
+- **Pages**: `src/pages/`, one component per route: `EntriesPage.tsx`
+  (`/:user/:tag`), `AdminPage.tsx` (`/admin`) and `SignInPage.tsx` (`/` when
+  signed out)
+- **Components**: `src/components/<feature>/`: `entries/` and `tags/` (the
+  lists, their editors, context menus and styled fields), `admin/` (the admin
+  page's tabs), `auth/` (the GitHub and Google sign-in buttons, which are also
+  the OAuth callback routes), `bottomBar/`, `drawer/`, `dnd/` (drag handles
+  and the React DnD item types) and `errorBoundary/`. Components shared by
+  several features (`AppHeader`, `LanguageSwitcher`, `UserProfileCircle`) sit
+  at the root of `src/components/`.
+- **Menu bar**: `src/menu/MenuBar.tsx`; each menu is in `src/menu/<name>/`
+  (its items in `menuItems/`), and `src/menu/StyledMenu.tsx` and
+  `StyledMenuItem.tsx` are their shared drop-down and item (the context menus
+  use the item too)
+- **Shared styling**: `src/styled/` holds small styled components used across
+  features; `src/theme/` the MUI themes, the theme provider, the global
+  styles and the shared `sx` objects (`sx.ts`)
+- **Non-UI code**: `src/lib/` (the API clients, auth, the store, the Dexie
+  database and helpers), `src/hooks/`, `src/providers/`, `src/i18n/` and
+  `src/msw/`
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
   (`/:user/:tag`)
 - **Libraries**: Material UI, Emotion (styled components), React Router,
-  i18next (`src/i18n/`)
+  React DnD (reordering), i18next (`src/i18n/`)
 
 ### Top-level routes
 - Every top-level route in `src/routePaths.ts` must also be a reserved username
@@ -119,8 +141,14 @@ Run these from `packages/frontend`.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
   `fake-indexeddb/auto`. Unit specs mock the API with `msw/node`
-  (`__tests__/util/msw.ts`). `__tests__/hosting.spec.ts` builds the app and
-  serves it with `wrangler dev`.
+  (`__tests__/util/msw.ts`). The specs are in three places:
+  - `__tests__/src/` mirrors `src/`: the spec for `src/pages/AdminPage.tsx` is
+    `__tests__/src/pages/AdminPage.spec.tsx`
+  - `__tests__/integration/` renders the whole app (`TestAppRouter`) to test a
+    behavior across modules, such as reordering or signing out on a 403
+  - `__tests__/infra/` checks the hosting: `hosting.spec.ts` builds the app and
+    serves it with `wrangler dev`, and `wranglerConfig.spec.ts` checks
+    `wrangler.jsonc`
 - **WebdriverIO**: specs in `test/specs/`, run in Chrome only
   (`test/wdio.shared.conf.ts`, `test/wdio.headless.conf.ts`), with a page
   object in `test/pageobjects/` and response fixtures in `test/mocks/`.
@@ -143,10 +171,10 @@ Run these from `packages/frontend`.
 - Only commit when explicitly asked to in the current message.
 
 ### File Naming
-- Component files are PascalCase (`EntryList.tsx`); every other file is
-  camelCase (`fetchWithAuth.ts`).
-- Name new directories in camelCase too. Some existing names are snake_case
-  (`text_entries.ts`, `admin_page/`, `menu_items/`); don't copy them.
+- Component files are PascalCase (`EntryList.tsx`), and so are the
+  MobX-State-Tree models (`RootModel.ts`); every other file is camelCase
+  (`fetchWithAuth.ts`).
+- Directories are camelCase too (`bottomBar/`, `menuItems/`).
 
 ### Linting & Formatting
 - Run `bun run lint` and `bun run format` to check changes

@@ -30,6 +30,7 @@ export interface MenuTranslations {
   allEntries: string;
   untaggedEntries: string;
   about: string;
+  aboutDialogTitle: string;
   debug: string;
   newTag: string;
   newEntry: string;

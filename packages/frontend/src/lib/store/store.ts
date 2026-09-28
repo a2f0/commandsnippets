@@ -5,8 +5,49 @@ import {environment} from '../environment';
 import {type appState, defaultState} from '../shared';
 import {RootModel} from './models/RootModel';
 
-const localStorageKey = `mst-tearleads-${environment}`;
-const localStorateState = localStorage.getItem(localStorageKey);
+const localStorageKey = `mst-commandsnippets-${environment}`;
+
+// Before the app was renamed Commandsnippets (September 2026) it saved its
+// state under this key. readSavedState moves a snapshot from it once, so users
+// who last opened the app before the rename stay signed in with their
+// settings. Drop the legacy read, and its tests in store.spec.ts, a few months
+// after the rename ships (early 2027), once returning users have loaded the
+// app since.
+const legacyLocalStorageKey = `mst-tearleads-${environment}`;
+
+/**
+ * The saved snapshot's JSON, or null. The current key wins; a snapshot only
+ * under the legacy key moves to the current key, and the legacy key is
+ * removed either way.
+ */
+function readSavedState(): string | null {
+  const saved = localStorage.getItem(localStorageKey);
+  const legacy = localStorage.getItem(legacyLocalStorageKey);
+  if (legacy === null) {
+    return saved;
+  }
+  // Remove the legacy copy before writing the new one: a large cached
+  // snapshot stored twice can exceed the storage quota.
+  localStorage.removeItem(legacyLocalStorageKey);
+  if (saved !== null) {
+    return saved;
+  }
+  try {
+    localStorage.setItem(localStorageKey, legacy);
+  } catch (error) {
+    // Start from the snapshot in memory anyway, and put the legacy copy back
+    // so a later load retries the move.
+    console.warn('Could not move the saved state to its new key:', error);
+    try {
+      localStorage.setItem(legacyLocalStorageKey, legacy);
+    } catch {
+      // Storage is full: the snapshot is only in memory until the next save.
+    }
+  }
+  return legacy;
+}
+
+const localStorateState = readSavedState();
 let state: appState;
 if (localStorateState !== null) {
   state = JSON.parse(localStorateState);

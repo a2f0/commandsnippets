@@ -20,7 +20,7 @@ export const en: I18NextTranslations = {
     languageName: 'English',
     selectLanguage: 'Select language',
     settings: 'Settings',
-    logoAlt: 'Tearleads Logo',
+    logoAlt: 'Commandsnippets Logo',
   },
   menu: {
     file: 'File',
@@ -31,6 +31,7 @@ export const en: I18NextTranslations = {
     allEntries: 'All Entries',
     untaggedEntries: 'Untagged Entries',
     about: 'About',
+    aboutDialogTitle: 'About Commandsnippets',
     debug: 'Debug',
     newTag: 'New Tag',
     newEntry: 'New Entry',

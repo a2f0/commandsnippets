@@ -1,10 +1,10 @@
-import {TearleadsDexie} from '../../../../../src/lib/db/adapters/dexie';
+import {CommandsnippetsDexie} from '../../../../../src/lib/db/adapters/dexie';
 
-describe('TearleadsDexie', () => {
+describe('CommandsnippetsDexie', () => {
   describe('Models', () => {
     describe('User', () => {
       it('Inserts and retrieves a User', async () => {
-        const db = new TearleadsDexie();
+        const db = new CommandsnippetsDexie();
         await db.users.put({
           id: '1',
           username: 'u1',
@@ -14,14 +14,14 @@ describe('TearleadsDexie', () => {
         expect(user).toBeDefined();
       });
       it('Returns undefined when a user cannot be found', async () => {
-        const db = new TearleadsDexie();
+        const db = new CommandsnippetsDexie();
         const user = await db.users.where('username').equals('u2').first();
         expect(user).toBeUndefined();
       });
     });
     describe('Tag', () => {
       it('Inserts and retrieves a tag for a user', async () => {
-        const db = new TearleadsDexie();
+        const db = new CommandsnippetsDexie();
         await db.tags.put({
           id: '1',
           updated: 1,
@@ -33,7 +33,7 @@ describe('TearleadsDexie', () => {
         });
       });
       it('Inserts a tag without a userid', async () => {
-        const db = new TearleadsDexie();
+        const db = new CommandsnippetsDexie();
         await db.tags.put({
           id: '1',
           updated: 1,
@@ -47,7 +47,7 @@ describe('TearleadsDexie', () => {
     });
     describe('Static Methods', () => {
       it('implements getTagsForUserName', async () => {
-        const db = new TearleadsDexie();
+        const db = new CommandsnippetsDexie();
         await db.users.put({
           id: '1',
           username: 'u1',

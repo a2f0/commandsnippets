@@ -1,30 +1,7 @@
 import {getParent, types} from 'mobx-state-tree';
 
+import type {ITagTextEntryThroughModelJsonApi} from '../../api/responses/types';
 import type {RootModel} from './RootModel';
-
-export interface ITagTextEntryThroughModelJsonApi {
-  id: string;
-  type: string;
-  attributes: {
-    order: number;
-    date_updated: string;
-    date_created: string;
-  };
-  relationships: {
-    tag: {
-      data: {
-        id: string;
-        type: string;
-      };
-    };
-    text_entry: {
-      data: {
-        id: string;
-        type: string;
-      };
-    };
-  };
-}
 
 export const TagTextEntryThroughModel = types
   .model('TagTextEntryThroughModelJsonAPI', {

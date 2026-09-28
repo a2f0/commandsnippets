@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {StyledMenu} from '../StyledMenu';
-import {About} from './menu_items/About';
+import {About} from './menuItems/About';
 
 interface IProps {
   onClose: () => void;

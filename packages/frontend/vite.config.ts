@@ -24,8 +24,8 @@ export default defineConfig(({mode}) => {
       registerType: 'autoUpdate',
       includeAssets: ['pwa-icon-144x144.svg'],
       manifest: {
-        name: 'Tearleads',
-        short_name: 'Tearleads',
+        name: 'Commandsnippets',
+        short_name: 'Commandsnippets',
         description: 'Note taking for technical professionals.',
         theme_color: '#ffffff',
         icons: [
@@ -42,6 +42,8 @@ export default defineConfig(({mode}) => {
         skipWaiting: true,
         clientsClaim: true,
         navigateFallback: null,
+        // These cache names predate the rename to Commandsnippets. Keep them:
+        // new names would leave the caches browsers already hold behind.
         runtimeCaching: [
           {
             urlPattern: ({url}) =>
