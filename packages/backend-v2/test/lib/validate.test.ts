@@ -1,11 +1,12 @@
 import {
   booleanField,
   charField,
+  fail,
   QUERY_ERROR,
   reorderAttributesSchema,
 } from '@commandsnippets/api-shared';
 import {describe, expect, it} from 'vitest';
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {ApiError} from '../../src/lib/errors';
 import {
   eachField,
@@ -31,7 +32,7 @@ function errorsOf(run: () => unknown): Array<[string, string, string]> {
 }
 
 describe('validation fields', () => {
-  const one = (field: z.ZodType, value: unknown) =>
+  const one = (field: z.ZodMiniType, value: unknown) =>
     errorsOf(() => validateFields(z.object({f: field}), {f: value}));
 
   it('charField rejects null and non-strings, and trims', () => {
@@ -82,7 +83,7 @@ describe('validation fields', () => {
       ['/data/attributes/b', 'This field is required.', 'required'],
       ['/data/attributes/a', 'This field is required.', 'required'],
     ]);
-    expect(validateFields(schema.partial(), {})).toEqual({});
+    expect(validateFields(z.partial(schema), {})).toEqual({});
   });
 
   it('points under the given base', () => {
@@ -98,15 +99,13 @@ describe('validation fields', () => {
 
 describe('parseOrThrow', () => {
   it('throws only the first error, with its status and pointer', () => {
-    const schema = z.unknown().transform((_, ctx) => {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'first',
-        params: {code: 'not_found', status: 404, pointer: '/data'},
-      });
-      ctx.addIssue({code: 'custom', message: 'second', params: QUERY_ERROR});
-      return z.NEVER;
-    });
+    const schema = z.pipe(
+      z.unknown(),
+      z.transform((_, ctx) => {
+        fail(ctx, 'first', {code: 'not_found', status: 404, pointer: '/data'});
+        return fail(ctx, 'second', QUERY_ERROR);
+      })
+    );
     try {
       parseOrThrow(schema, 1);
       expect.unreachable();
@@ -125,7 +124,7 @@ describe('parseOrThrow', () => {
   });
 
   it('returns the parsed value', () => {
-    expect(parseOrThrow(z.string().transform(Number), '5')).toBe(5);
+    expect(parseOrThrow(z.pipe(z.string(), z.transform(Number)), '5')).toBe(5);
   });
 });
 

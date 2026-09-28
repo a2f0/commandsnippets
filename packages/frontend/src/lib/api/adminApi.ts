@@ -32,7 +32,7 @@ import {
   adminUserListDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 import {handleUnauthorized} from '../auth/authUtils';
 import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
@@ -110,7 +110,7 @@ export class AdminApiError extends Error {
  * An OK response's body parsed with its endpoint's document schema, or
  * AdminApiError (status 0) saying where it does not fit.
  */
-function parse<S extends z.ZodType>(schema: S, body: unknown): z.output<S> {
+function parse<S extends z.ZodMiniType>(schema: S, body: unknown): z.output<S> {
   const result = schema.safeParse(body);
   if (!result.success) {
     throw new AdminApiError(

@@ -7,7 +7,9 @@ TypeScript types inferred from them. The API validates its input with these
 schemas, and clients can parse its responses with them.
 
 It is TypeScript source with no build step, which each consumer compiles
-with its own code.
+with its own code. The schemas are built with
+[`zod/mini`](https://zod.dev/packages/mini), zod's tree-shakable functional
+API (see [zod/mini](#zodmini)).
 
 ## Entry points
 
@@ -63,7 +65,7 @@ behaviors:
   checked them (see the comments in `jsonapi/request.ts` and `query.ts`): use
   the first issue.
 - **Fields report every failing field**, one error each, in field order (the
-  object schema's key order): use all issues. `.partial()` makes every field
+  object schema's key order): use all issues. `z.partial()` makes every field
   optional (PATCH).
 
 Lookups are own-property only: `constructor` or `toString` is no one's
@@ -93,9 +95,11 @@ consumer points `zod` at its own copy:
 
 - TypeScript (`tsconfig.json`, or the web app's `tsconfig-base.json`):
   `"paths": {"zod": ["./node_modules/zod"], "zod/*": ["./node_modules/zod/*"]}`
-- Vite and Vitest: `resolve: {dedupe: ['zod']}`
-- Wrangler, where it bundles the code (backend-v2's `wrangler.jsonc`):
-  `"alias": {"zod": "./node_modules/zod/index.js"}`
+  (the second covers `zod/mini`)
+- Vite and Vitest: `resolve: {dedupe: ['zod']}` (subpaths included)
+- Wrangler, where it bundles the code (backend-v2's `wrangler.jsonc`): an
+  `alias` per import, since it matches them exactly:
+  `{"zod": "./node_modules/zod/index.js", "zod/mini": "./node_modules/zod/mini/index.js"}`
 
 The consumers are the API (`packages/backend-v2`), which validates its input
 with the schemas (it imports the root entry), and the web app
@@ -153,6 +157,39 @@ document schema, failing the call on one that does not fit;
 MSW mocks are checked against these schemas too
 (`__tests__/src/msw/contract.spec.ts` there).
 
+### zod/mini
+
+The schemas are `zod/mini` schemas (`z.ZodMiniType`), whose functional API
+bundlers can tree-shake: a client bundles only the zod it uses. Classic zod
+puts every method on every schema, so importing it at all bundles nearly all
+of it. In the web app's production bundle, zod/mini and the response schemas
+come to about 34 kB (11 kB gzipped), where classic zod and all the schemas
+took about 102 kB (30 kB gzipped).
+
+For a consumer, that means:
+
+- **Write zod/mini:** `z.optional(schema)`, `z.pipe(a, z.transform(fn))`,
+  `schema.check(z.refine(fn))` rather than `.optional()`, `.transform()` and
+  `.refine()`. `parse`, `safeParse`, `.shape` and `z.output` work as before.
+  Type a schema parameter as `z.ZodMiniType` (`import type * as z from
+  'zod/mini'`): a zod/mini schema is not a classic `z.ZodType`.
+- **Keep classic `zod` out of client code:** one runtime import of it brings
+  back everything zod/mini leaves out (the web app has a test for this).
+- **Load a locale:** zod/mini loads none, so zod's own messages (a response
+  field of the wrong type, say) all read `Invalid input`. Both consumers load
+  English once, which keeps them as classic zod wrote them
+  (`Invalid input: expected string, received number`):
+
+  ```ts
+  import {en} from 'zod/locales';
+  import * as z from 'zod/mini';
+
+  z.config(en());
+  ```
+
+  The API's own errors do not depend on it: every request-side failure
+  carries its message (below).
+
 ## Adding a schema
 
 1. Put it with its resource (or next to the generic helpers, if it is one),
@@ -166,7 +203,8 @@ MSW mocks are checked against these schemas too
    relationship goes in `RELATIONSHIPS` (and `DEFAULT_INCLUDES`).
 2. Any new error text goes in `MESSAGES` (and a new code in `CODES`), worded
    exactly as the API sends it. Report failures with `fail(ctx, message, meta)`
-   or `check(message, code)`, never zod's default messages.
+   in a `z.transform`, or `z.refine(fn, check(message, code))`, never zod's
+   default messages.
 3. Export the schema and its `z.output` type. A new module goes in
    `src/responses.ts` or `src/requests.ts`, which re-export each module (the
    root entry re-exports both).

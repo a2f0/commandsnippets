@@ -3,8 +3,9 @@
  * (`/api/v1/tags_entries`: create, delete and reorder only). Its requests are
  * in `requests/tagTextEntry.ts`.
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {
+  countSchema,
   relatedResourceSchema,
   relationshipsSchema,
   timestampSchema,
@@ -12,7 +13,7 @@ import {
 import {RELATIONSHIPS, TAG_TEXT_ENTRY} from './types';
 
 export const tagTextEntryAttributesSchema = z.object({
-  order: z.number().int().nonnegative(),
+  order: countSchema,
   date_updated: timestampSchema,
   date_created: timestampSchema,
 });

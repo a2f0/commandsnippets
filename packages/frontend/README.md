@@ -59,19 +59,26 @@ compiles and bundles with its own code:
   `/messages`, and only types from `/requests`, so the request-side schemas
   (the API's validation) stay out of the bundle. Type-only imports from the
   root entry compile away and are fine anywhere.
-- **One zod:** zod is api-shared's peer dependency, and its sources'
-  `import 'zod'` resolves from where they are installed.
-  `tsconfig-base.json`'s `paths` and Vite's `resolve.dedupe` (which Vitest
-  shares) point it at this package's `zod`, so there is one copy, for the
-  types and in the bundle.
+- **One zod, and only `zod/mini`:** zod is api-shared's peer dependency,
+  and its sources' `import 'zod/mini'` resolves from where they are
+  installed. `tsconfig-base.json`'s `paths` and Vite's `resolve.dedupe`
+  (which Vitest shares) point it at this package's `zod`, so there is one
+  copy, for the types and in the bundle. The schemas are zod/mini schemas
+  (`z.ZodMiniType`), and `src/` uses zod/mini too: a runtime import of
+  classic `zod` would bundle nearly all of it again
+  (`__tests__/src/lib/api/zod.spec.ts` fails on one).
+- **English messages:** zod/mini loads no locale, so `parseResponse.ts`
+  loads English (`z.config(en())`) for the issues an `InvalidResponseError`
+  describes.
 - **Reinstall after changing it:** the install hard-links api-shared's files
   into `node_modules/.bun/`. Run `bun install` here after adding, moving or
   removing a file there or changing its `package.json`, or after editing one
   with an editor that saves by replacing the file (the old one stays linked),
   and commit `bun.lock` if it changes. CI runs this package's checks whenever
   `packages/api-shared/` changes.
-- **Size:** zod and the schemas add about 30 kB, gzipped, to the production
-  bundle (most of it zod).
+- **Size:** zod/mini and the response schemas add about 34 kB to the
+  production bundle, 11 kB gzipped (classic zod and every schema took
+  about 30 kB gzipped).
 
 ## Code Quality
 

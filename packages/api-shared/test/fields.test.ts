@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'bun:test';
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {
   booleanField,
   charField,
@@ -187,7 +187,7 @@ describe('an object of fields', () => {
   });
 
   test('skips absent fields when partial, and drops unknown ones', () => {
-    expect(parsed(schema.partial(), {x: 1})).toEqual({});
-    expect(parsed(schema.partial(), {a: 'yes'})).toEqual({a: true});
+    expect(parsed(z.partial(schema), {x: 1})).toEqual({});
+    expect(parsed(z.partial(schema), {a: 'yes'})).toEqual({a: true});
   });
 });

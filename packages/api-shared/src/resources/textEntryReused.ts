@@ -2,7 +2,7 @@
  * `TextEntryReused`: a record of an entry being reused
  * (`/api/v1/entry_reuses`). Its requests are in `requests/textEntryReused.ts`.
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {relatedResourceSchema, relationshipsSchema} from '../jsonapi/response';
 import {RELATIONSHIPS, TEXT_ENTRY_REUSED} from './types';
 

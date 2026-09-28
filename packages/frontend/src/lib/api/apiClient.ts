@@ -24,7 +24,7 @@ import {
   type UserDocument,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {fetchWithAuth} from './fetchWithAuth';
 import {parseBody, readJson} from './parseResponse';
@@ -111,7 +111,7 @@ class ApiClient {
   }
 
   /** `request`, returning the JSON body parsed with the document `schema`. */
-  private async requestDocument<S extends z.ZodType>(
+  private async requestDocument<S extends z.ZodMiniType>(
     url: string,
     options: RequestOptions,
     failure: string,

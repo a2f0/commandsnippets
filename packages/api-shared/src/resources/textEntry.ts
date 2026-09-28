@@ -1,6 +1,7 @@
 /** `TextEntry`: `/api/v1/entries`. Its requests are in `requests/textEntry.ts`. */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {
+  countSchema,
   relatedResourceSchema,
   relationshipsSchema,
   timestampSchema,
@@ -12,9 +13,9 @@ export const textEntryAttributesSchema = z.object({
   subject: z.string(),
   date_updated: timestampSchema,
   date_created: timestampSchema,
-  reused_count: z.number().int().nonnegative(),
+  reused_count: countSchema,
   is_deleted: z.boolean(),
-  tag_count: z.number().int().nonnegative(),
+  tag_count: countSchema,
 });
 
 export const textEntrySchema = relatedResourceSchema(

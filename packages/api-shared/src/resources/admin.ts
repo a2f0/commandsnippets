@@ -3,8 +3,9 @@
  * `AdminAuditLogEntry` log of changes to them. Their requests are in
  * `requests/admin.ts`.
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {
+  countSchema,
   resourceIdSchema,
   resourceSchema,
   timestampSchema,
@@ -21,12 +22,12 @@ export const adminUserAttributesSchema = z.object({
   is_staff: z.boolean(),
   is_active: z.boolean(),
   date_joined: timestampSchema,
-  last_login: timestampSchema.nullable(),
-  login_count: z.number().int().nonnegative(),
+  last_login: z.nullable(timestampSchema),
+  login_count: countSchema,
   date_updated: timestampSchema,
   /** Live (not deleted) entries and tags. */
-  entry_count: z.number().int().nonnegative(),
-  tag_count: z.number().int().nonnegative(),
+  entry_count: countSchema,
+  tag_count: countSchema,
 });
 
 export const adminUserSchema = resourceSchema(
@@ -53,9 +54,9 @@ export type AdminAuditAction = (typeof ADMIN_AUDIT_ACTIONS)[number];
 export const adminAuditLogEntryAttributesSchema = z.object({
   created: timestampSchema,
   action: z.enum(ADMIN_AUDIT_ACTIONS),
-  actor_id: resourceIdSchema.nullable(),
+  actor_id: z.nullable(resourceIdSchema),
   actor_username: z.string(),
-  target_user_id: resourceIdSchema.nullable(),
+  target_user_id: z.nullable(resourceIdSchema),
   target_username: z.string(),
 });
 

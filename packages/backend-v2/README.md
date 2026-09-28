@@ -64,11 +64,21 @@ schemas' messages), and that every response parses with its schema.
 
 api-shared is a `file:` dependency, which Bun installs as symlinks into
 `../api-shared`. So `tsconfig.base.json` (`paths`), `vitest.config.ts`
-(`resolve.dedupe`) and `wrangler.jsonc` (`alias`) resolve its `zod` import to
-this package's copy, and the Bun scripts import only its dependency-free
-`datetime` entry (through `src/lib/clock.ts`). After adding or removing files in
-`../api-shared`, or changing its `package.json`, run `bun install` here (see
+(`resolve.dedupe`) and `wrangler.jsonc` (`alias`, one entry per import:
+`zod/mini`, and `zod`) resolve its zod imports to this package's copy, and
+the Bun scripts import only its dependency-free `datetime` entry (through
+`src/lib/clock.ts`). After adding or removing files in `../api-shared`, or
+changing its `package.json`, run `bun install` here (see
 `../api-shared/README.md`).
+
+The schemas are `zod/mini` schemas, so code here types them as
+`z.ZodMiniType` (`import type * as z from 'zod/mini'`), and
+`src/lib/validate.ts` loads zod's English locale, which zod/mini leaves out.
+The API's errors do not depend on it (every failure carries its own
+message), but zod's own issues keep reading as they did under classic zod.
+zod/mini tree-shakes: it and the schemas are about 73 kB of the Worker's
+387 KiB (85 KiB gzipped), where classic zod alone was about 760 kB of
+1109 KiB (194 KiB gzipped).
 
 ## Development
 

@@ -71,7 +71,7 @@ describe('entry points', () => {
     const {modules, packages} = graph('responses.ts');
     expect(modules.filter(isRequestSide)).toEqual([]);
     expect(modules).toContain('resources/documents.ts');
-    expect(packages).toEqual(['zod']);
+    expect(packages).toEqual(['zod/mini']);
   });
 
   test('./messages and ./datetime load nothing', () => {

@@ -1,6 +1,7 @@
 /** `Tag`: `/api/v1/tags`. Its requests are in `requests/tag.ts`. */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {
+  countSchema,
   relatedResourceSchema,
   relationshipsSchema,
   timestampSchema,
@@ -10,10 +11,10 @@ import {RELATIONSHIPS, TAG} from './types';
 export const tagAttributesSchema = z.object({
   name: z.string(),
   date_created: timestampSchema,
-  date_last_used: timestampSchema.nullable(),
+  date_last_used: z.nullable(timestampSchema),
   date_updated: timestampSchema,
-  entry_count: z.number().int().nonnegative(),
-  order: z.number().int().nonnegative(),
+  entry_count: countSchema,
+  order: countSchema,
   is_deleted: z.boolean(),
 });
 

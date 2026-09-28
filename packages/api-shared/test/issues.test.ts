@@ -1,15 +1,16 @@
 import {describe, expect, test} from 'bun:test';
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {check, errorMeta, fail, QUERY_ERROR} from '../src/issues';
 import {CODES, MESSAGES} from '../src/messages';
 
 describe('error metadata', () => {
   test('fail() reports a custom issue carrying its metadata', () => {
-    const schema = z
-      .unknown()
-      .transform((_, ctx) =>
+    const schema = z.pipe(
+      z.unknown(),
+      z.transform((_, ctx) =>
         fail(ctx, 'no', {code: 'x', status: 409, pointer: '/data'}, ['a'])
-      );
+      )
+    );
     const [issue] = schema.safeParse(1).error?.issues ?? [];
     expect(issue?.message).toBe('no');
     expect(issue?.path).toEqual(['a']);
@@ -21,10 +22,10 @@ describe('error metadata', () => {
   });
 
   test('check() stops at the first failed refinement', () => {
-    const schema = z
-      .unknown()
-      .refine(() => false, check('first', 'a'))
-      .refine(() => false, check('second', 'b'));
+    const schema = z.unknown().check(
+      z.refine(() => false, check('first', 'a')),
+      z.refine(() => false, check('second', 'b'))
+    );
     const issues = schema.safeParse(1).error?.issues ?? [];
     expect(issues.map(issue => issue.message)).toEqual(['first']);
     expect(errorMeta(issues[0] as z.core.$ZodIssue)).toEqual({code: 'a'});
@@ -33,8 +34,8 @@ describe('error metadata', () => {
   test("zod's own issues read as 400 invalid", () => {
     for (const schema of [
       z.string(),
-      z.unknown().refine(() => false),
-      z.unknown().refine(() => false, {params: {code: 5}}),
+      z.unknown().check(z.refine(() => false)),
+      z.unknown().check(z.refine(() => false, {params: {code: 5}})),
     ]) {
       const [issue] = schema.safeParse(5).error?.issues ?? [];
       expect(errorMeta(issue as z.core.$ZodIssue)).toEqual({code: 'invalid'});

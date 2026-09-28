@@ -8,16 +8,26 @@
  * Fields take `unknown` input (whatever JSON the client sent) and output the
  * normalized value (a trimmed string, a boolean, a primary key).
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {check, fail} from './issues';
 import {CODES, MESSAGES} from './messages';
 
 const required = check(MESSAGES.required, CODES.required);
-const notNull = check(MESSAGES.null, CODES.null);
+const notNull = () =>
+  z.refine(
+    (value: unknown) => value !== null,
+    check(MESSAGES.null, CODES.null)
+  );
 
-/** A value that is present: DRF's `required` (absent under `.partial()`). */
-const present = () =>
-  z.unknown().refine(value => value !== undefined, required);
+/**
+ * A value that is present (DRF's `required`; absent under `z.partial`), then
+ * `checks`, each stopping the field at its failure.
+ */
+const present = (...checks: z.core.$ZodCheck<unknown>[]) =>
+  z.unknown().check(
+    z.refine((value: unknown) => value !== undefined, required),
+    ...checks
+  );
 
 /**
  * DRF's CharField: a string or number (numbers become strings), trimmed,
@@ -25,18 +35,28 @@ const present = () =>
  * like Python's `len()` and SQLite's `length()`: an emoji is one character.
  */
 export function charField({maxLength}: {maxLength?: number} = {}) {
-  return present()
-    .refine(value => value !== null, notNull)
-    .refine(
-      (value): value is string | number =>
-        typeof value === 'string' || typeof value === 'number',
-      check(MESSAGES.notAString, CODES.invalid)
+  return z
+    .pipe(
+      present(
+        notNull(),
+        z.refine(
+          (value: unknown) =>
+            typeof value === 'string' || typeof value === 'number',
+          check(MESSAGES.notAString, CODES.invalid)
+        )
+      ),
+      z.transform((value: unknown) => String(value).trim())
     )
-    .transform(value => String(value).trim())
-    .refine(text => text !== '', check(MESSAGES.blank, CODES.blank))
-    .refine(
-      text => maxLength === undefined || [...text].length <= maxLength,
-      check(MESSAGES.maxLength(maxLength ?? 0), CODES.maxLength)
+    .check(
+      z.refine(
+        (text: string) => text !== '',
+        check(MESSAGES.blank, CODES.blank)
+      ),
+      z.refine(
+        (text: string) =>
+          maxLength === undefined || [...text].length <= maxLength,
+        check(MESSAGES.maxLength(maxLength ?? 0), CODES.maxLength)
+      )
     );
 }
 
@@ -74,12 +94,15 @@ export function parseBoolean(value: unknown): boolean | null {
 
 /** DRF's BooleanField: any of `parseBoolean`'s spellings; null is invalid. */
 export function booleanField() {
-  return present()
-    .refine(
-      value => parseBoolean(value) !== null,
-      check(MESSAGES.notABoolean, CODES.invalid)
-    )
-    .transform(value => parseBoolean(value) === true);
+  return z.pipe(
+    present(
+      z.refine(
+        (value: unknown) => parseBoolean(value) !== null,
+        check(MESSAGES.notABoolean, CODES.invalid)
+      )
+    ),
+    z.transform((value: unknown) => parseBoolean(value) === true)
+  );
 }
 
 /**
@@ -89,9 +112,9 @@ export function booleanField() {
  * check (`MESSAGES.pkDoesNotExist`).
  */
 export function pkField() {
-  return present()
-    .refine(value => value !== null, notNull)
-    .transform((value, ctx) => {
+  return z.pipe(
+    present(notNull()),
+    z.transform((value: unknown, ctx) => {
       const pk = String(value);
       if (!/^\d+$/.test(pk) || typeof value === 'boolean') {
         const received = typeof value === 'string' ? 'str' : typeof value;
@@ -100,7 +123,8 @@ export function pkField() {
         });
       }
       return pk;
-    });
+    })
+  );
 }
 
 /** A resource identifier object: `{type, id}`. */
@@ -123,9 +147,9 @@ export interface ToOneLinkage<T extends string = string> {
  * the requester's) is the server's check, with the same message.
  */
 export function relatedField<const T extends string>(type: T) {
-  return present()
-    .refine(value => value !== null, notNull)
-    .transform((value, ctx): ToOneLinkage<T> => {
+  return z.pipe(
+    present(notNull()),
+    z.transform((value: unknown, ctx): ToOneLinkage<T> => {
       const pk = String(value);
       if (!/^\d+$/.test(pk)) {
         return fail(ctx, MESSAGES.pkDoesNotExist(pk), {
@@ -133,5 +157,6 @@ export function relatedField<const T extends string>(type: T) {
         });
       }
       return {data: {type, id: pk}};
-    });
+    })
+  );
 }

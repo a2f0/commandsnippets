@@ -1,5 +1,5 @@
 /** `TagTextEntryThroughModel`'s requests (`/api/v1/tags_entries`). */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {relatedField} from '../../fields';
 import {createDocumentSchema, noFieldsSchema} from '../../jsonapi/request';
 import {TAG, TAG_TEXT_ENTRY, TEXT_ENTRY} from '../types';

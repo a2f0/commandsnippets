@@ -7,8 +7,8 @@
  * (400). Attributes and relationships are then validated as serializer
  * fields, every failing field reported.
  */
-import {z} from 'zod';
-import {DOCUMENT_POINTER, type ErrorMeta, fail} from '../issues';
+import * as z from 'zod/mini';
+import {DOCUMENT_POINTER, type ErrorMeta, fail, forward} from '../issues';
 import {CODES, MESSAGES} from '../messages';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -55,59 +55,62 @@ export function requestEnvelopeSchema<const T extends string>({
   type,
   id: endpointId,
   requireId = false,
-}: EnvelopeOptions<T>): z.ZodType<RequestResource<T>, unknown> {
-  return z.unknown().transform((document, ctx): RequestResource<T> => {
-    const data = isRecord(document) ? document['data'] : undefined;
-    if (!isRecord(data)) {
-      return fail(ctx, MESSAGES.noPrimaryData, PARSE_ERROR);
-    }
-    if (data['type'] !== type) {
-      return fail(
-        ctx,
-        MESSAGES.typeMismatch(String(data['type']), type),
-        CONFLICT
-      );
-    }
-    const id = data['id'] === undefined ? undefined : String(data['id']);
-    if (id === undefined && (endpointId !== undefined || requireId)) {
-      return fail(ctx, MESSAGES.idMissing, PARSE_ERROR);
-    }
-    if (endpointId !== undefined && id !== endpointId) {
-      return fail(ctx, MESSAGES.idMismatch(String(id), endpointId), CONFLICT);
-    }
-    // Resource linkage, `{data: {id}}` or `{data: null}`, for every
-    // relationship, whether the endpoint uses it or not.
-    const relationships: Array<[string, string | null]> = [];
-    const members = isRecord(data['relationships'])
-      ? data['relationships']
-      : {};
-    for (const [name, member] of Object.entries(members)) {
-      const linkage = isRecord(member) ? member['data'] : undefined;
-      if (linkage === null) {
-        relationships.push([name, null]);
-      } else if (isRecord(linkage) && linkage['id'] !== undefined) {
-        relationships.push([name, String(linkage['id'])]);
-      } else {
-        return fail(ctx, MESSAGES.invalidLinkage, {
-          code: CODES.invalid,
-          pointer: `/data/relationships/${name}`,
-        });
+}: EnvelopeOptions<T>): z.ZodMiniType<RequestResource<T>, unknown> {
+  return z.pipe(
+    z.unknown(),
+    z.transform((document: unknown, ctx): RequestResource<T> => {
+      const data = isRecord(document) ? document['data'] : undefined;
+      if (!isRecord(data)) {
+        return fail(ctx, MESSAGES.noPrimaryData, PARSE_ERROR);
       }
-    }
-    return {
-      type,
-      id,
-      attributes: isRecord(data['attributes']) ? data['attributes'] : {},
-      relationships: Object.fromEntries(relationships),
-    };
-  });
+      if (data['type'] !== type) {
+        return fail(
+          ctx,
+          MESSAGES.typeMismatch(String(data['type']), type),
+          CONFLICT
+        );
+      }
+      const id = data['id'] === undefined ? undefined : String(data['id']);
+      if (id === undefined && (endpointId !== undefined || requireId)) {
+        return fail(ctx, MESSAGES.idMissing, PARSE_ERROR);
+      }
+      if (endpointId !== undefined && id !== endpointId) {
+        return fail(ctx, MESSAGES.idMismatch(String(id), endpointId), CONFLICT);
+      }
+      // Resource linkage, `{data: {id}}` or `{data: null}`, for every
+      // relationship, whether the endpoint uses it or not.
+      const relationships: Array<[string, string | null]> = [];
+      const members = isRecord(data['relationships'])
+        ? data['relationships']
+        : {};
+      for (const [name, member] of Object.entries(members)) {
+        const linkage = isRecord(member) ? member['data'] : undefined;
+        if (linkage === null) {
+          relationships.push([name, null]);
+        } else if (isRecord(linkage) && linkage['id'] !== undefined) {
+          relationships.push([name, String(linkage['id'])]);
+        } else {
+          return fail(ctx, MESSAGES.invalidLinkage, {
+            code: CODES.invalid,
+            pointer: `/data/relationships/${name}`,
+          });
+        }
+      }
+      return {
+        type,
+        id,
+        attributes: isRecord(data['attributes']) ? data['attributes'] : {},
+        relationships: Object.fromEntries(relationships),
+      };
+    })
+  );
 }
 
 /**
  * Attribute or relationship fields: an object of `fields.ts` fields. Their
  * input is the envelope's `attributes`, or its normalized `relationships`.
  */
-export type FieldsSchema = z.ZodType<object>;
+export type FieldsSchema = z.ZodMiniType<object>;
 
 /** No attributes (or relationships): any given are ignored. */
 export const noFieldsSchema = z.object({});
@@ -131,17 +134,6 @@ export type RequestDocument<
     Member<'relationships', R>;
 };
 
-/** Report the issues of a nested parse under `path`. */
-function forward(
-  ctx: z.RefinementCtx,
-  issues: readonly z.core.$ZodIssue[],
-  path: PropertyKey[]
-): void {
-  for (const issue of issues) {
-    ctx.addIssue({...issue, path: [...path, ...issue.path]});
-  }
-}
-
 function documentSchema<
   T extends string,
   A extends FieldsSchema,
@@ -151,10 +143,11 @@ function documentSchema<
   type: T,
   parts: {attributes: A; relationships: R},
   requireId: Id
-): z.ZodType<RequestDocument<T, z.output<A>, z.output<R>, Id>, unknown> {
+): z.ZodMiniType<RequestDocument<T, z.output<A>, z.output<R>, Id>, unknown> {
   type Document = RequestDocument<T, z.output<A>, z.output<R>, Id>;
-  return requestEnvelopeSchema({type, requireId}).transform(
-    (resource, ctx): Document => {
+  return z.pipe(
+    requestEnvelopeSchema({type, requireId}),
+    z.transform((resource: RequestResource<T>, ctx): Document => {
       const attributes = parts.attributes.safeParse(resource.attributes);
       const relationships = parts.relationships.safeParse(
         resource.relationships
@@ -175,7 +168,7 @@ function documentSchema<
           relationships: relationships.data,
         },
       } as Document;
-    }
+    })
   );
 }
 

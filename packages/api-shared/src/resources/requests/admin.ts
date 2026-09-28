@@ -2,7 +2,7 @@
  * The admin API's requests (`/api/v1/admin`). Neither collection has
  * relationships, so both refuse `include`.
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {booleanField} from '../../fields';
 import {booleanFieldFilter, pkFilter} from '../../filters';
 import {fail} from '../../issues';
@@ -13,29 +13,32 @@ import {ADMIN_USER} from '../types';
 
 // Users
 
-const writableSchema = z.object({is_active: booleanField()}).partial();
+const writableSchema = z.partial(z.object({is_active: booleanField()}));
 
 /**
  * PATCH/PUT: only `is_active` can change. Any other attribute is refused
  * (the first one, as `read_only`) rather than ignored.
  */
-export const adminUserUpdateAttributesSchema = z
-  // A plain object first, so anything else fails validation instead of
-  // throwing below (the request envelope already turns non-objects into {}).
-  // Not z.record: it drops a `__proto__` key, which must be refused below.
-  .custom<Record<string, unknown>>(
-    value =>
-      typeof value === 'object' && value !== null && !Array.isArray(value)
-  )
-  .transform((attributes, ctx) => {
-    const readOnly = Object.keys(attributes).find(
-      name => !Object.hasOwn(writableSchema.shape, name)
-    );
-    return readOnly === undefined
-      ? attributes
-      : fail(ctx, MESSAGES.readOnly, {code: CODES.readOnly}, [readOnly]);
-  })
-  .pipe(writableSchema);
+export const adminUserUpdateAttributesSchema = z.pipe(
+  z.pipe(
+    // A plain object first, so anything else fails validation instead of
+    // throwing below (the request envelope already turns non-objects into
+    // {}). Not z.record: it drops a `__proto__` key, which must be refused.
+    z.custom<Record<string, unknown>>(
+      value =>
+        typeof value === 'object' && value !== null && !Array.isArray(value)
+    ),
+    z.transform((attributes: Record<string, unknown>, ctx) => {
+      const readOnly = Object.keys(attributes).find(
+        name => !Object.hasOwn(writableSchema.shape, name)
+      );
+      return readOnly === undefined
+        ? attributes
+        : fail(ctx, MESSAGES.readOnly, {code: CODES.readOnly}, [readOnly]);
+    })
+  ),
+  writableSchema
+);
 
 export const adminUserUpdateDocumentSchema = updateDocumentSchema(ADMIN_USER, {
   attributes: adminUserUpdateAttributesSchema,

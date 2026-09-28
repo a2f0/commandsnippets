@@ -2,7 +2,7 @@
  * `TextEntry`'s requests (`/api/v1/entries`): documents and the collection's
  * query.
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {booleanField, charField} from '../../fields';
 import {
   booleanFilter,
@@ -28,13 +28,13 @@ export const textEntryCreateAttributesSchema = z.object({
 });
 
 /** PATCH/PUT: edit, or (un)delete. */
-export const textEntryUpdateAttributesSchema = z
-  .object({
+export const textEntryUpdateAttributesSchema = z.partial(
+  z.object({
     body: charField({maxLength: TEXT_ENTRY_BODY_MAX_LENGTH}),
     subject: charField({maxLength: TEXT_ENTRY_SUBJECT_MAX_LENGTH}),
     is_deleted: booleanField(),
   })
-  .partial();
+);
 
 export const textEntryCreateDocumentSchema = createDocumentSchema(TEXT_ENTRY, {
   attributes: textEntryCreateAttributesSchema,

@@ -1,5 +1,5 @@
 /** `TextEntryReused`'s requests (`/api/v1/entry_reuses`). */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {relatedField} from '../../fields';
 import {createDocumentSchema, noFieldsSchema} from '../../jsonapi/request';
 import {listQuerySchema} from '../../query';

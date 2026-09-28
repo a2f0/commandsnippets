@@ -3,7 +3,7 @@
  * above `bottom` (django-ordered-model's `top.above(bottom)`). Both are pks
  * of the endpoint's resource type; the server checks that they exist.
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {pkField} from '../../fields';
 
 export const reorderAttributesSchema = z.object({

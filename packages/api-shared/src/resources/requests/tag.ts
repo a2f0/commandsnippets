@@ -1,5 +1,5 @@
 /** `Tag`'s requests (`/api/v1/tags`): documents and the collection's query. */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {booleanField, charField} from '../../fields';
 import {dateTimeFilter, textFilter} from '../../filters';
 import {
@@ -22,12 +22,12 @@ export const tagCreateAttributesSchema = z.object({
 });
 
 /** PATCH/PUT: rename, or (un)delete. */
-export const tagUpdateAttributesSchema = z
-  .object({
+export const tagUpdateAttributesSchema = z.partial(
+  z.object({
     name: charField({maxLength: TAG_NAME_MAX_LENGTH}),
     is_deleted: booleanField(),
   })
-  .partial();
+);
 
 export const tagCreateDocumentSchema = createDocumentSchema(TAG, {
   attributes: tagCreateAttributesSchema,
