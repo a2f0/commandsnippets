@@ -206,8 +206,6 @@ export const RootModel = types
         throw error;
       }
     }),
-    // Sync All Text Entries Based on a Cache Timestamp
-    syncTextEntries() {},
     fetchTextEntries: flow(function* fetchTextEntries(
       user: string,
       tag: string

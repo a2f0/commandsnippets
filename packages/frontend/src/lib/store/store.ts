@@ -4,8 +4,6 @@ import {environment} from '../environment';
 import {type appState, defaultState} from '../shared';
 import {RootModel} from './models/RootModel';
 
-export const defaultStateStringified: string = JSON.stringify(defaultState);
-
 const localStorageKey = `mst-tearleads-${environment}`;
 const localStorateState = localStorage.getItem(localStorageKey);
 let state: appState;
