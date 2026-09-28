@@ -27,8 +27,16 @@ Run these from `packages/frontend`.
 - `bun run lint` - Biome lint
 - `bun run format` - Check formatting with Biome (reports, does not write)
 - `bun run fix` - Fix lint and formatting issues (`biome check --write`)
-- `bun run compile` - TypeScript check (`tsc -b`). If it reports errors from
-  stale output after a type changes, delete `.ts-out` and rerun.
+- `bun run compile` - TypeScript check (`tsc -b --force`), which `bun install`
+  also runs (`prepare`). `--force` rebuilds every project each time (about 2
+  seconds) instead of reusing `.ts-out`: TypeScript 7.0.2's incremental build
+  leaves stale declarations when one build changes a global declaration file
+  (such as `types/window.d.ts`) along with other types
+  (microsoft/typescript-go#4664), so after a pull or checkout `tsc -b` failed
+  with errors like `Type 'string' is not assignable to type '"Tag"'` (and can
+  miss real errors the same way). Keep `--force` until a TypeScript release
+  has the fix (typescript-go#4665, so far only in the 7.1 dev builds);
+  `__tests__/infra/compile.spec.ts` fails if `compile` leaves stale output.
 
 ### Testing
 
@@ -179,9 +187,10 @@ writing its type by hand.
   - `__tests__/integration/` renders the whole app (`TestAppRouter`) to test a
     behavior across modules, such as reordering or signing out when the
     session is gone
-  - `__tests__/infra/` checks the hosting: `hosting.spec.ts` builds the app and
-    serves it with `wrangler dev`, and `wranglerConfig.spec.ts` checks
-    `wrangler.jsonc`
+  - `__tests__/infra/` checks the hosting and the build: `hosting.spec.ts`
+    builds the app and serves it with `wrangler dev`,
+    `wranglerConfig.spec.ts` checks `wrangler.jsonc`, and `compile.spec.ts`
+    runs `bun run compile` in a copy of the package across a type change
 - **WebdriverIO**: specs in `test/specs/`, run in Chrome only
   (`test/wdio.shared.conf.ts`, `test/wdio.headless.conf.ts`), with a page
   object in `test/pageobjects/` and response fixtures in `test/mocks/`.
@@ -226,7 +235,7 @@ writing its type by hand.
 - `@commandsnippets/api-shared` is `file:../api-shared`: run `bun install` here after adding, moving or removing a file there or changing its `package.json`, or after editing one with an editor that saves by replacing the file (see the README's "The API contract")
 
 ### TypeScript
-- Always use `bun run compile` (or `bunx tsc -b`) after making changes to ensure TypeScript compiles
+- Always run `bun run compile` after making changes to ensure TypeScript compiles (not a bare `tsc -b`, which can reuse stale output; see Code Quality)
 - Never use `any` as a type, or `as` for type assertion
 - **Use invariant for strict null checks**: When working with potentially null DOM elements or values that should exist but may be null according to TypeScript, use the `invariant` library for runtime assertions:
   ```typescript
