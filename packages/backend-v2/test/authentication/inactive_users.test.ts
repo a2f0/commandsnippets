@@ -77,6 +77,7 @@ describe('InactiveUsers', () => {
       const after = await refreshUser(user.id);
       expect(after?.login_count).toBe(user.login_count);
       expect(after?.last_login).toBe(user.last_login);
+      expect(after?.last_active).toBe(user.last_active);
     });
   }
 });

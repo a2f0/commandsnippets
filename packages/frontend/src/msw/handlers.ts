@@ -435,6 +435,7 @@ const adminUserResource = (user: MockAdminUser): AdminUser => ({
     is_active: user.is_active,
     date_joined: '2026-01-02T03:04:05.000000',
     last_login: '2026-09-01T00:00:00.000000',
+    last_active: '2026-09-02T00:00:00.000000',
     login_count: 4,
     date_updated: '2026-09-01T00:00:00.000000',
     entry_count: 12,

@@ -31,6 +31,7 @@ async function insertUserWithToken(
       date_joined: joined,
       date_updated: now(),
       last_login: joined,
+      last_active: joined,
       login_count: 1,
     }),
     db.insert(tokens).values(newToken(userId)),
@@ -123,10 +124,18 @@ export async function getOrCreateUser(
   }
 }
 
-/** A returning user's login: bump last_login and login_count. */
+/**
+ * A returning user's login: bump last_login and login_count. A login is
+ * activity too, whether or not the request carried a token.
+ */
 export async function recordLogin(db: Db, userId: number): Promise<void> {
+  const at = now();
   await db
     .update(users)
-    .set({last_login: now(), login_count: sql`${users.login_count} + 1`})
+    .set({
+      last_login: at,
+      last_active: at,
+      login_count: sql`${users.login_count} + 1`,
+    })
     .where(eq(users.id, userId));
 }

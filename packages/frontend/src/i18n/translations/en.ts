@@ -116,6 +116,7 @@ export const en: I18NextTranslations = {
     columnEmail: 'Email',
     columnJoined: 'Joined',
     columnLastLogin: 'Last login',
+    columnLastActive: 'Last active',
     columnLogins: 'Logins',
     columnEntries: 'Entries',
     columnTags: 'Tags',

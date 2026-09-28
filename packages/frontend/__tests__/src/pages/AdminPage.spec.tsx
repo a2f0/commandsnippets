@@ -44,6 +44,7 @@ const resource = (user: MockUser) => ({
     is_active: user.is_active,
     date_joined: '2026-01-02T03:04:05.000000',
     last_login: user.is_active ? '2026-09-01T00:00:00.000000' : null,
+    last_active: user.is_active ? '2026-09-02T00:00:00.000000' : null,
     login_count: 4,
     date_updated: '2026-09-01T00:00:00.000000',
     entry_count: 12,
@@ -403,6 +404,42 @@ describe('AdminPage', () => {
     await waitFor(() => {
       expect(listRequests.at(-1)?.get('sort')).toBe('username');
     });
+
+    // Most recently active first.
+    fireEvent.click(screen.getByRole('button', {name: 'Last active'}));
+
+    await waitFor(() => {
+      expect(listRequests.at(-1)?.get('sort')).toBe('-last_active');
+    });
+  });
+
+  it('shows when each user was last active, after their last login', async () => {
+    users = [
+      ...users,
+      {
+        id: '9',
+        username: 'bob',
+        email: 'bob@example.com',
+        is_staff: false,
+        is_active: false,
+      },
+    ];
+    await renderAt('/admin');
+    const table = await usersTable();
+    await within(table).findByText('alice');
+
+    const headers = within(table)
+      .getAllByRole('columnheader')
+      .map(header => header.textContent);
+    const column = headers.indexOf('Last active');
+    expect(column).toBe(headers.indexOf('Last login') + 1);
+    const cellText = (id: string) =>
+      within(present(document.getElementById(`adminUserRow${id}`), 'row'))
+        .getAllByRole('cell')
+        .map(cell => cell.textContent)[column];
+    // The fixtures' last_active: 2026-09-02 for active users, null otherwise.
+    expect(cellText('7')).toMatch(/2026/);
+    expect(cellText('9')).toBe('Never');
   });
 
   it('offers only menus that work here, and a link back to the entries', async () => {

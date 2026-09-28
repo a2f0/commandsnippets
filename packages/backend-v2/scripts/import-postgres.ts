@@ -65,6 +65,12 @@ export const TABLES: Record<string, TableSpec> = {
     booleans: ['is_staff', 'is_active'],
     integers: ['id', 'login_count'],
     timestamps: ['last_login', 'date_joined', 'date_updated'],
+    // Django had no last_active: start from the last login, as
+    // 0007_user_last_active.sql did for accounts already in D1.
+    computed: {
+      last_active: row =>
+        row['last_login'] == null ? null : parseDateTime(row['last_login']),
+    },
   },
   authtoken_token: {
     columns: ['key', 'created', 'user_id'],
