@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom';
-
 import {act} from '@testing-library/react';
 import {applySnapshot} from 'mobx-state-tree';
 import {HttpResponse, http} from 'msw';
@@ -11,8 +9,6 @@ import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import {defaultState} from '../src/lib/shared';
 import {store} from '../src/lib/store/store';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-
-Element.prototype.scrollIntoView = vi.fn();
 
 const server = setupServer(
   http.get('http://localhost:9001/api/v1/tags', () => {

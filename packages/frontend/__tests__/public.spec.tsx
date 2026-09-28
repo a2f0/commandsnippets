@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom';
-
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 
 import {AppRouter} from '../src/AppRouter';
@@ -23,7 +21,7 @@ describe('Signed-out home page', () => {
     expect(window.innerHeight).toBe(768);
   });
 
-  it('Has a window that cen be resized', async () => {
+  it('Has a window that can be resized', async () => {
     render(<AppRouter />);
     expect(window.innerWidth).toBe(1024);
     expect(window.innerHeight).toBe(768);
