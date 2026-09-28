@@ -69,6 +69,10 @@ CI runs both coverage gates:
 - `test:scripts` (`bunfig.toml`): 98% of lines and 95% of functions in
   `scripts/`; `src/` counts only toward the vitest gate.
 
+`typecheck` runs two configs that share `tsconfig.base.json`: `tsconfig.json`
+for the Worker and its tests (workerd types), and `tsconfig.scripts.json` for
+the scripts and the vitest and drizzle-kit configs (Bun and Node types).
+
 Changing the schema: edit `src/db/schema.ts`, then `bun run db:generate` and
 commit the generated migration. Triggers and other hand-written SQL go in a
 custom migration (`bunx drizzle-kit generate --custom --name <name>`).

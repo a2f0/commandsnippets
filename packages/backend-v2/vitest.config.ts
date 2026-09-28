@@ -33,7 +33,7 @@ export default defineConfig(async () => {
       exclude: [...configDefaults.exclude, 'scripts/**'],
       setupFiles: ['./test/setup.ts'],
       coverage: {
-        provider: 'istanbul',
+        provider: 'istanbul' as const,
         include: ['src/**/*.ts'],
         reporter: ['text', 'json-summary'],
         // The src/ gate (README, Development); scripts/ has its own in
