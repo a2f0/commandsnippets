@@ -8,12 +8,12 @@ import type {AppEnv} from './env';
 import {ApiError, describeError, originNotAllowed} from './lib/errors';
 import {assertJsonMediaType} from './lib/jsonapi';
 import {adminRoutes} from './resources/admin';
+import {currentUserRoutes} from './resources/currentUser';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
 import {jsonApi} from './resources/responses';
 import {tagRoutes} from './resources/tags';
 import {tagEntryRoutes} from './resources/tagsEntries';
-import {userRoutes} from './resources/users';
 
 export const API_VERSION = packageJson.version;
 
@@ -90,7 +90,7 @@ app.use('*', async (c, next) => {
 app.get('/healthcheck', c => c.body(null, 200));
 
 app.route('/', authRoutes);
-app.route('/api/v1/user', userRoutes);
+app.route('/api/v1/user', currentUserRoutes);
 app.route('/api/v1/tags', tagRoutes);
 app.route('/api/v1/entries', entryRoutes);
 app.route('/api/v1/tags_entries', tagEntryRoutes);
