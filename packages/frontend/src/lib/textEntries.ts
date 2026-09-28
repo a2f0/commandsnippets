@@ -159,10 +159,10 @@ export function sort(
           return (
             textEntry.attributes.body
               .toLowerCase()
-              .includes(store.entrySearchString) ||
+              .includes(store.entrySearchString.toLowerCase()) ||
             textEntry.attributes.subject
               .toLowerCase()
-              .includes(store.entrySearchString)
+              .includes(store.entrySearchString.toLowerCase())
           );
         });
         textEntriesFiltered = filtered;

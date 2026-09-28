@@ -2,7 +2,13 @@ import {describe, expect, it} from 'vitest';
 
 import type {ITextEntryJsonApi} from '../../../src/lib/api/responses/types';
 import {sort} from '../../../src/lib/textEntries';
-import {createStore, entry, testUser} from '../../util/storeFixtures';
+import {
+  createStore,
+  entry,
+  junction,
+  tag,
+  testUser,
+} from '../../util/storeFixtures';
 
 const username = testUser.attributes.username;
 
@@ -60,6 +66,37 @@ describe('sort', () => {
       const sorted = sort(username, null, entries, sortOrder, createStore());
 
       expect(sorted.map(e => e.id)).toEqual(expected);
+    });
+  });
+
+  describe('with a search', () => {
+    const entries = [
+      entry('1', {subject: 'Deploy script', body: 'kubectl apply'}),
+      entry('2', {subject: 'notes', body: 'git REBASE'}),
+      entry('3', {subject: 'other', body: 'other'}),
+    ];
+    const tagged = [
+      tag('1', {name: 'shell'}),
+      ...entries,
+      junction('1', '1', '1'),
+      junction('2', '1', '2'),
+      junction('3', '1', '3'),
+    ];
+
+    it.each([
+      ['an untagged list', null],
+      ['a tag list', 'shell'],
+    ])('%s matches the subject or body in any case', (_list, tagName) => {
+      const store = createStore(tagged);
+      const found = (search: string) => {
+        store.setEntrySearchString(search);
+        const sorted = sort(username, tagName, entries, 'date_updated', store);
+        return sorted.map(e => e.id);
+      };
+
+      expect(found('DEPLOY')).toEqual(['1']);
+      expect(found('Rebase')).toEqual(['2']);
+      expect(found('apply')).toEqual(['1']);
     });
   });
 });
