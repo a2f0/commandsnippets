@@ -54,6 +54,11 @@ describe('the saved snapshot', () => {
     localStorage.clear();
   });
 
+  // Restore the Storage and console spies even when a test fails.
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   afterAll(() => {
     localStorage.clear();
   });
@@ -67,6 +72,50 @@ describe('the saved snapshot', () => {
     expect(loaded.selectedTheme).toBe('lightTheme');
     expect(localStorage.getItem(key)).toBe(snapshot('dan'));
     expect(localStorage.getItem(legacyKey)).toBeNull();
+  });
+
+  it('removes the legacy copy before writing the new one', async () => {
+    localStorage.setItem(legacyKey, snapshot('dan'));
+    const remove = vi.spyOn(Storage.prototype, 'removeItem');
+    const set = vi.spyOn(Storage.prototype, 'setItem');
+
+    await loadStore();
+
+    const removedAt =
+      remove.mock.invocationCallOrder[
+        remove.mock.calls.findIndex(([name]) => name === legacyKey)
+      ];
+    const writtenAt =
+      set.mock.invocationCallOrder[
+        set.mock.calls.findIndex(([name]) => name === key)
+      ];
+    expect(removedAt).toBeLessThan(writtenAt ?? 0);
+  });
+
+  it('still loads, and keeps the legacy copy, when the new key cannot be written', async () => {
+    localStorage.setItem(legacyKey, snapshot('dan'));
+    const setItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      name,
+      value
+    ) {
+      if (name === key) {
+        throw new DOMException('Storage is full', 'QuotaExceededError');
+      }
+      setItem.call(this, name, value);
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const loaded = await loadStore();
+
+    expect(loaded.loggedInUser).toBe('dan');
+    expect(localStorage.getItem(key)).toBeNull();
+    expect(localStorage.getItem(legacyKey)).toBe(snapshot('dan'));
+    expect(warn).toHaveBeenCalledWith(
+      'Could not move the saved state to its new key:',
+      expect.any(DOMException)
+    );
   });
 
   it('prefers the current key when both keys are set', async () => {

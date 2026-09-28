@@ -17,19 +17,34 @@ const legacyLocalStorageKey = `mst-tearleads-${environment}`;
 
 /**
  * The saved snapshot's JSON, or null. The current key wins; a snapshot only
- * under the legacy key is copied to the current key, and the legacy key is
+ * under the legacy key moves to the current key, and the legacy key is
  * removed either way.
  */
 function readSavedState(): string | null {
   const saved = localStorage.getItem(localStorageKey);
   const legacy = localStorage.getItem(legacyLocalStorageKey);
-  if (saved === null && legacy !== null) {
+  if (legacy === null) {
+    return saved;
+  }
+  // Remove the legacy copy before writing the new one: a large cached
+  // snapshot stored twice can exceed the storage quota.
+  localStorage.removeItem(legacyLocalStorageKey);
+  if (saved !== null) {
+    return saved;
+  }
+  try {
     localStorage.setItem(localStorageKey, legacy);
+  } catch (error) {
+    // Start from the snapshot in memory anyway, and put the legacy copy back
+    // so a later load retries the move.
+    console.warn('Could not move the saved state to its new key:', error);
+    try {
+      localStorage.setItem(legacyLocalStorageKey, legacy);
+    } catch {
+      // Storage is full: the snapshot is only in memory until the next save.
+    }
   }
-  if (legacy !== null) {
-    localStorage.removeItem(legacyLocalStorageKey);
-  }
-  return saved ?? legacy;
+  return legacy;
 }
 
 const localStorateState = readSavedState();
