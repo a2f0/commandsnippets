@@ -29,6 +29,12 @@ checks), so a client that parses responses bundles only the response schemas.
 A client that sends requests needs only their types (`import type` from
 `./requests`), which compile away.
 
+The schema factories (`charField`, `createDocumentSchema`, `listQuerySchema`,
+...) are marked `// @__NO_SIDE_EFFECTS__`, as zod marks its own, so a bundler
+can drop a schema a module builds that nothing uses. Importing a constant
+such as `TEXT_ENTRY_SORT_FIELDS` from `./requests` then bundles the constant,
+not the request validators beside it.
+
 ## Layout
 
 | Path | What |
@@ -207,7 +213,8 @@ For a consumer, that means:
    default messages.
 3. Export the schema and its `z.output` type. A new module goes in
    `src/responses.ts` or `src/requests.ts`, which re-export each module (the
-   root entry re-exports both).
+   root entry re-exports both). Mark a new schema factory (a function named
+   `...Schema` or `...Field`) `// @__NO_SIDE_EFFECTS__`; a test checks.
 4. Test it in `test/`, and in the backend: validate with it there, and cover
    its responses in `test/contract/`.
 5. Run `bun install` in `packages/backend-v2` if you added a file (see above).

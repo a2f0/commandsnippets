@@ -46,6 +46,7 @@ export function splitInclude(include: string): string[] {
  * path fails), and expanded into every path and prefix they name (`a`, `a.b`)
  * as segment lists, shortest first.
  */
+// @__NO_SIDE_EFFECTS__
 export function includePathsSchema(graph: RelationshipGraph, type: string) {
   return z.pipe(
     z.array(z.string()),
@@ -80,6 +81,7 @@ export function includePathsSchema(graph: RelationshipGraph, type: string) {
 }
 
 /** An `include` query parameter value, resolved as `includePathsSchema`. */
+// @__NO_SIDE_EFFECTS__
 export function includeSchema(graph: RelationshipGraph, type: string) {
   return z.pipe(
     z.pipe(z.string(), z.transform(splitInclude)),

@@ -73,6 +73,7 @@ export function forward(
 }
 
 /** `z.refine` params reporting `message` with `code`, stopping at the check. */
+// @__NO_SIDE_EFFECTS__
 export function check(message: string, code: string) {
   return {message, abort: true, params: {code}} as const;
 }

@@ -227,6 +227,7 @@ const pageSizeSchema = z.pipe(
 );
 
 /** A collection's query parameters (see the module comment). */
+// @__NO_SIDE_EFFECTS__
 export function listQuerySchema<
   F extends FilterSchemas,
   S extends string,

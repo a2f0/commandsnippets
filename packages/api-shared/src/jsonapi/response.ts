@@ -23,16 +23,19 @@ export const timestampSchema = z
 /** A count or a rank: a non-negative integer. */
 export const countSchema = z.number().check(z.int(), z.nonnegative());
 
+// @__NO_SIDE_EFFECTS__
 export function resourceIdentifierSchema<const T extends string>(type: T) {
   return z.object({type: z.literal(type), id: resourceIdSchema});
 }
 
 /** A to-one relationship: `{data: {type, id}}`. */
+// @__NO_SIDE_EFFECTS__
 export function toOneSchema<const T extends string>(type: T) {
   return z.object({data: resourceIdentifierSchema(type)});
 }
 
 /** A to-many relationship: every related identifier, and their count. */
+// @__NO_SIDE_EFFECTS__
 export function toManySchema<const T extends string>(type: T) {
   return z.object({
     data: z.array(resourceIdentifierSchema(type)),
@@ -47,6 +50,7 @@ type RelationshipSchema<D extends RelationshipDef> = D extends {
   : ReturnType<typeof toOneSchema<D['type']>>;
 
 /** The relationships object of a resource with relationships `defs`. */
+// @__NO_SIDE_EFFECTS__
 export function relationshipsSchema<
   const D extends Readonly<Record<string, RelationshipDef>>,
 >(defs: D) {
@@ -63,6 +67,7 @@ export function relationshipsSchema<
 }
 
 /** A resource object without relationships (they are omitted when none). */
+// @__NO_SIDE_EFFECTS__
 export function resourceSchema<
   const T extends string,
   A extends z.ZodMiniObject,
@@ -71,6 +76,7 @@ export function resourceSchema<
 }
 
 /** A resource object with its relationships' linkage. */
+// @__NO_SIDE_EFFECTS__
 export function relatedResourceSchema<
   const T extends string,
   A extends z.ZodMiniObject,
@@ -94,6 +100,7 @@ function includedSchema<I extends z.ZodMiniType>(included: I) {
  * include can add (`z.never()` where none can); the member is omitted when
  * it would be empty.
  */
+// @__NO_SIDE_EFFECTS__
 export function documentSchema<
   D extends z.ZodMiniType,
   I extends z.ZodMiniType,
@@ -118,6 +125,7 @@ export const paginationMetaSchema = z.object({
 });
 
 /** A page of a collection (see `documentSchema` for `included`). */
+// @__NO_SIDE_EFFECTS__
 export function listDocumentSchema<
   D extends z.ZodMiniType,
   I extends z.ZodMiniType,

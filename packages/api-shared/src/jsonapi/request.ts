@@ -51,6 +51,7 @@ export interface EnvelopeOptions<T extends string> {
  * The envelope of a request document (see the module comment), for an
  * endpoint that accepts `type` (and, for PATCH/PUT, has `id`).
  */
+// @__NO_SIDE_EFFECTS__
 export function requestEnvelopeSchema<const T extends string>({
   type,
   id: endpointId,
@@ -173,6 +174,7 @@ function documentSchema<
 }
 
 /** A POST document of `type`: validates the envelope, then the fields. */
+// @__NO_SIDE_EFFECTS__
 export function createDocumentSchema<
   const T extends string,
   A extends FieldsSchema,
@@ -185,6 +187,7 @@ export function createDocumentSchema<
  * A PATCH/PUT document of `type`: as `createDocumentSchema`, with a required
  * `data.id` (servers also compare it to the endpoint's id).
  */
+// @__NO_SIDE_EFFECTS__
 export function updateDocumentSchema<
   const T extends string,
   A extends FieldsSchema,

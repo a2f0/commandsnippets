@@ -12,7 +12,9 @@ import * as z from 'zod/mini';
 import {check, fail} from './issues';
 import {CODES, MESSAGES} from './messages';
 
-const required = check(MESSAGES.required, CODES.required);
+// The checks are built in functions, not at the top level: a bundler keeps a
+// top-level read of `MESSAGES.x` (a getter could run), and with it all of
+// MESSAGES, even in a client that bundles none of these fields.
 const notNull = () =>
   z.refine(
     (value: unknown) => value !== null,
@@ -25,7 +27,10 @@ const notNull = () =>
  */
 const present = (...checks: z.core.$ZodCheck<unknown>[]) =>
   z.unknown().check(
-    z.refine((value: unknown) => value !== undefined, required),
+    z.refine(
+      (value: unknown) => value !== undefined,
+      check(MESSAGES.required, CODES.required)
+    ),
     ...checks
   );
 
@@ -34,6 +39,7 @@ const present = (...checks: z.core.$ZodCheck<unknown>[]) =>
  * not blank, and at most `maxLength` characters. Length counts code points,
  * like Python's `len()` and SQLite's `length()`: an emoji is one character.
  */
+// @__NO_SIDE_EFFECTS__
 export function charField({maxLength}: {maxLength?: number} = {}) {
   return z
     .pipe(
@@ -93,6 +99,7 @@ export function parseBoolean(value: unknown): boolean | null {
 }
 
 /** DRF's BooleanField: any of `parseBoolean`'s spellings; null is invalid. */
+// @__NO_SIDE_EFFECTS__
 export function booleanField() {
   return z.pipe(
     present(
@@ -111,6 +118,7 @@ export function booleanField() {
  * Outputs the pk as a string; whether the object exists is the server's
  * check (`MESSAGES.pkDoesNotExist`).
  */
+// @__NO_SIDE_EFFECTS__
 export function pkField() {
   return z.pipe(
     present(notNull()),
@@ -146,6 +154,7 @@ export interface ToOneLinkage<T extends string = string> {
  * they fail as DRF's `does_not_exist`; whether a numeric one exists (and is
  * the requester's) is the server's check, with the same message.
  */
+// @__NO_SIDE_EFFECTS__
 export function relatedField<const T extends string>(type: T) {
   return z.pipe(
     present(notNull()),

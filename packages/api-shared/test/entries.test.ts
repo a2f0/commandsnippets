@@ -86,12 +86,35 @@ describe('entry points', () => {
   });
 
   test('. loads every module', () => {
-    const all = (dir: string): string[] =>
-      readdirSync(dir, {withFileTypes: true}).flatMap(entry =>
-        entry.isDirectory()
-          ? all(join(dir, entry.name))
-          : [relative(SRC, join(dir, entry.name))]
-      );
-    expect(graph('index.ts').modules).toEqual(all(SRC).sort());
+    expect(graph('index.ts').modules).toEqual(allModules());
+  });
+
+  test('mark the schema factories side-effect-free', () => {
+    // As zod marks its own: a bundler can then drop a schema built at a
+    // module's top level that nothing uses, and with it the modules only that
+    // schema needed (a client importing TEXT_ENTRY_SORT_FIELDS from
+    // ./requests does not bundle the request validators).
+    const unmarked = allModules().flatMap(module => {
+      const lines = readFileSync(join(SRC, module), 'utf8').split('\n');
+      return lines.flatMap((line, index) => {
+        const name = /^export function (\w+(?:Schema|Field))\b/.exec(line)?.[1];
+        return name !== undefined &&
+          lines[index - 1]?.trim() !== '// @__NO_SIDE_EFFECTS__'
+          ? [`${module}: ${name}`]
+          : [];
+      });
+    });
+    expect(unmarked).toEqual([]);
   });
 });
+
+/** Every module in src/, sorted. */
+function allModules(dir = SRC): string[] {
+  return readdirSync(dir, {withFileTypes: true})
+    .flatMap(entry =>
+      entry.isDirectory()
+        ? allModules(join(dir, entry.name))
+        : [relative(SRC, join(dir, entry.name))]
+    )
+    .sort();
+}
