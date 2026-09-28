@@ -1,9 +1,9 @@
 import {act, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {type MockInstance, vi} from 'vitest';
-import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-import {server} from './util/msw';
-import {TestAppRouter} from './util/TestAppRouter';
+import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {server} from '../util/msw';
+import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -164,7 +164,7 @@ describe('MenuBar', () => {
 
     it('hides Debug menu in production environment', async () => {
       // Mock the environment module to return 'production' for this test only
-      vi.doMock('../src/lib/environment', () => ({
+      vi.doMock('../../src/lib/environment', () => ({
         environment: 'production',
       }));
 
@@ -173,7 +173,7 @@ describe('MenuBar', () => {
 
       // Dynamically import the TestAppRouter to use the mocked environment
       const {TestAppRouter: MockedTestAppRouter} = await import(
-        './util/TestAppRouter'
+        '../util/TestAppRouter'
       );
 
       const history = createMemoryHistory();
@@ -192,13 +192,13 @@ describe('MenuBar', () => {
       });
 
       // Restore the original module
-      vi.doUnmock('../src/lib/environment');
+      vi.doUnmock('../../src/lib/environment');
       vi.resetModules();
     });
 
     it('shows Debug menu in staging environment', async () => {
       // Mock the environment module to return 'staging' for this test only
-      vi.doMock('../src/lib/environment', () => ({
+      vi.doMock('../../src/lib/environment', () => ({
         environment: 'staging',
       }));
 
@@ -207,7 +207,7 @@ describe('MenuBar', () => {
 
       // Dynamically import the TestAppRouter to use the mocked environment
       const {TestAppRouter: MockedTestAppRouter} = await import(
-        './util/TestAppRouter'
+        '../util/TestAppRouter'
       );
 
       const history = createMemoryHistory();
@@ -224,7 +224,7 @@ describe('MenuBar', () => {
       });
 
       // Restore the original module
-      vi.doUnmock('../src/lib/environment');
+      vi.doUnmock('../../src/lib/environment');
       vi.resetModules();
     });
   });

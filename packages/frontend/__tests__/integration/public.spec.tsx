@@ -1,7 +1,7 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 
-import {AppRouter} from '../src/AppRouter';
-import {environment} from '../src/lib/environment';
+import {AppRouter} from '../../src/AppRouter';
+import {environment} from '../../src/lib/environment';
 
 describe('Signed-out home page', () => {
   it('Renders the sign-in page with both providers', async () => {

@@ -2,15 +2,15 @@ import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw';
 import {type MockInstance, vi} from 'vitest';
-import {AppContext} from '../src/AppContext';
-import {UserProfileCircle} from '../src/components/UserProfileCircle';
-import {tearleadsApi} from '../src/lib/api/tearleadsApi';
-import type {Store} from '../src/lib/store/store';
-import {darkTheme} from '../src/theme/themes';
-import {server} from './util/msw';
+import {AppContext} from '../../../src/AppContext';
+import {UserProfileCircle} from '../../../src/components/UserProfileCircle';
+import {tearleadsApi} from '../../../src/lib/api/tearleadsApi';
+import type {Store} from '../../../src/lib/store/store';
+import {darkTheme} from '../../../src/theme/themes';
+import {server} from '../../util/msw';
 
 // Mock the environment module to ensure it's not production
-vi.mock('../src/lib/environment', () => ({
+vi.mock('../../../src/lib/environment', () => ({
   environment: 'test',
 }));
 

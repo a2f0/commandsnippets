@@ -7,9 +7,9 @@ import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import {describe, expect, it} from 'vitest';
 
-import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
-import {server} from '../../util/msw';
-import {TestAppRouter} from '../../util/TestAppRouter';
+import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
+import {server} from '../../../../util/msw';
+import {TestAppRouter} from '../../../../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());

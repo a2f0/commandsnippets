@@ -10,9 +10,9 @@ import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 
-import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {store} from '../util/loggedInStore';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
+import {store} from '../../util/loggedInStore';
+import {TestAppRouter} from '../../util/TestAppRouter';
 
 const API = 'http://localhost:9001/api/v1';
 

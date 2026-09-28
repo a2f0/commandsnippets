@@ -10,7 +10,7 @@ import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 
 // The deployed hosting, end to end: a real build served by `wrangler dev` with
 // wrangler.jsonc (single-page-app fallback) and public/_headers.
-const root = fileURLToPath(new URL('..', import.meta.url));
+const root = fileURLToPath(new URL('../..', import.meta.url));
 const bin = (name: string) => join(root, 'node_modules', '.bin', name);
 let outDir = '';
 let port = 0;

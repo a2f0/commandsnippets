@@ -8,11 +8,11 @@ import {setupServer} from 'msw/node';
 import type {
   ITagJsonApiResponse,
   ITextEntryJsonApiResponse,
-} from '../src/lib/api/responses/types';
-import {entriesResponse} from '../test/mocks/entries/entriesResponse';
-import {tagsResponse} from '../test/mocks/tags/tagsResponse';
-import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-import {TestAppRouter} from './util/TestAppRouter';
+} from '../../src/lib/api/responses/types';
+import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
+import {tagsResponse} from '../../test/mocks/tags/tagsResponse';
+import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {TestAppRouter} from '../util/TestAppRouter';
 
 const response = {
   data: {

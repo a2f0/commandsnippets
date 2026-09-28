@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {type MockInstance, vi} from 'vitest';
-import {tearleadsApi} from '../src/lib/api/tearleadsApi';
-import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-import {server} from './util/msw';
-import {TestAppRouter} from './util/TestAppRouter';
+import {tearleadsApi} from '../../src/lib/api/tearleadsApi';
+import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {server} from '../util/msw';
+import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());

@@ -2,7 +2,7 @@
 // client's 401/403 handling imported the store, this order hit the import
 // cycle (store -> RootModel -> API client -> store) and RootModel was not yet
 // initialized when the store module created it.
-import {RootModel} from '../../../../src/lib/store/models/RootModel';
+import {RootModel} from '../../../../../src/lib/store/models/RootModel';
 
 describe('RootModel', () => {
   it('can be imported and created before the store module', () => {

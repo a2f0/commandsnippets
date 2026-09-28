@@ -8,10 +8,10 @@ import {
 } from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {vi} from 'vitest';
-import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-import {store as loggedInStore} from './util/loggedInStore';
-import {server} from './util/msw';
-import {TestAppRouter} from './util/TestAppRouter';
+import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {store as loggedInStore} from '../util/loggedInStore';
+import {server} from '../util/msw';
+import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterAll(() => server.close());

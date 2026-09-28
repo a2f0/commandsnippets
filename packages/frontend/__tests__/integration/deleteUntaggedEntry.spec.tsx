@@ -1,10 +1,10 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {beforeEach, describe, expect, it, type MockInstance, vi} from 'vitest';
-import {tearleadsApi} from '../src/lib/api/tearleadsApi';
-import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-import {server} from './util/msw';
-import {TestAppRouter} from './util/TestAppRouter';
+import {tearleadsApi} from '../../src/lib/api/tearleadsApi';
+import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {server} from '../util/msw';
+import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());

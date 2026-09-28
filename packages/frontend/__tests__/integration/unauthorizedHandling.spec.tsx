@@ -4,11 +4,11 @@ import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
 
-import {listUsers} from '../src/lib/api/adminApi';
-import {tearleadsApi} from '../src/lib/api/tearleadsApi';
-import {defaultState} from '../src/lib/shared';
-import {store} from '../src/lib/store/store';
-import {assignLoggedInCookie} from './util/assignLoggedInCookie';
+import {listUsers} from '../../src/lib/api/adminApi';
+import {tearleadsApi} from '../../src/lib/api/tearleadsApi';
+import {defaultState} from '../../src/lib/shared';
+import {store} from '../../src/lib/store/store';
+import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 
 const server = setupServer(
   http.get('http://localhost:9001/api/v1/tags', () => {

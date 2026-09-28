@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 
-import {AppContextProvider} from '../src/AppContext';
-import {BottomBar} from '../src/components/bottomBar/BottomBar';
-import {i18n} from '../src/i18n/i18n';
-import * as envModule from '../src/lib/environment';
-import {darkTheme} from '../src/theme/themes';
+import {AppContextProvider} from '../../../../src/AppContext';
+import {BottomBar} from '../../../../src/components/bottomBar/BottomBar';
+import {i18n} from '../../../../src/i18n/i18n';
+import * as envModule from '../../../../src/lib/environment';
+import {darkTheme} from '../../../../src/theme/themes';
 
 const BottomBarWithProviders = () => (
   <I18nextProvider i18n={i18n}>

@@ -35,8 +35,8 @@ Run these from `packages/frontend`.
 #### Unit Tests (Vitest)
 - `../../scripts/runUnitTests.sh` - Run all unit tests, as CI does (it disables
   Node's experimental Web Storage, which would replace jsdom's `localStorage`)
-- `../../scripts/runUnitTests.sh __tests__/reorderEntryList.spec.tsx` - Run
-  specific files
+- Pass paths to run specific files, for example
+  `../../scripts/runUnitTests.sh __tests__/integration/reorderEntryList.spec.tsx`
 - For watch mode, run
   `NODE_OPTIONS=--no-experimental-webstorage bunx vitest` in a terminal.
   `bun run unit -- --watch` fails: `unit` already passes `--no-watch`.
@@ -138,8 +138,14 @@ Run these from `packages/frontend`.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
   `fake-indexeddb/auto`. Unit specs mock the API with `msw/node`
-  (`__tests__/util/msw.ts`). `__tests__/hosting.spec.ts` builds the app and
-  serves it with `wrangler dev`.
+  (`__tests__/util/msw.ts`). The specs are in three places:
+  - `__tests__/src/` mirrors `src/`: the spec for `src/pages/AdminPage.tsx` is
+    `__tests__/src/pages/AdminPage.spec.tsx`
+  - `__tests__/integration/` renders the whole app (`TestAppRouter`) to test a
+    behavior across modules, such as reordering or signing out on a 403
+  - `__tests__/infra/` checks the hosting: `hosting.spec.ts` builds the app and
+    serves it with `wrangler dev`, and `wranglerConfig.spec.ts` checks
+    `wrangler.jsonc`
 - **WebdriverIO**: specs in `test/specs/`, run in Chrome only
   (`test/wdio.shared.conf.ts`, `test/wdio.headless.conf.ts`), with a page
   object in `test/pageobjects/` and response fixtures in `test/mocks/`.
