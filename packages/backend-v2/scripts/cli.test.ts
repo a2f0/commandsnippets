@@ -84,6 +84,55 @@ describe('import-postgres CLI', () => {
     expect(log[0]).toContain('usage:');
   });
 
+  test('takes the archive from after --out <file>', async () => {
+    const dir = tempDir();
+    const dumpFile = path.join(dir, 'dump.sql');
+    writeFileSync(dumpFile, MINIMAL_DUMP);
+    const argsFile = path.join(dir, 'args');
+    const pgRestore = fakeBinary(
+      dir,
+      'pg_restore',
+      `printf '%s\\n' "$@" > "${argsFile}"\ncat "${dumpFile}"`
+    );
+    const out = path.join(dir, 'import.sql');
+
+    expect(
+      await importMain(['--out', out, 'the-archive'], () => {}, pgRestore)
+    ).toBe(0);
+    expect(readFileSync(argsFile, 'utf8').trim().split('\n').at(-1)).toBe(
+      'the-archive'
+    );
+    expect(readFileSync(out, 'utf8')).toContain('INSERT INTO "users_user"');
+  });
+
+  test.each([
+    ['a trailing --out', (file: string) => [file, '--out']],
+    ['--out taking the only other argument', (file: string) => ['--out', file]],
+  ])('prints usage for %s before running pg_restore', async (_name, argv) => {
+    const dir = tempDir();
+    const dumpFile = path.join(dir, 'dump.sql');
+    writeFileSync(dumpFile, MINIMAL_DUMP);
+    const ran = path.join(dir, 'ran');
+    const pgRestore = fakeBinary(
+      dir,
+      'pg_restore',
+      `touch "${ran}"\ncat "${dumpFile}"`
+    );
+    const log: string[] = [];
+
+    expect(
+      await importMain(
+        argv(path.join(dir, 'file')),
+        l => log.push(l),
+        pgRestore
+      )
+    ).toBe(2);
+    expect(log).toEqual([
+      'usage: bun scripts/import-postgres.ts <backup-pg_dump-Fc> [--out file.sql]',
+    ]);
+    expect(existsSync(ran)).toBe(false);
+  });
+
   test('feeds the archive on stdin to a multi-word pg_restore (e.g. docker)', async () => {
     const dir = tempDir();
     const archive = path.join(dir, 'archive');
