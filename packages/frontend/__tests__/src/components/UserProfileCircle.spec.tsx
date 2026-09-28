@@ -4,7 +4,7 @@ import {HttpResponse, http} from 'msw';
 import {type MockInstance, vi} from 'vitest';
 import {AppContext} from '../../../src/AppContext';
 import {UserProfileCircle} from '../../../src/components/UserProfileCircle';
-import {tearleadsApi} from '../../../src/lib/api/tearleadsApi';
+import {apiClient} from '../../../src/lib/api/apiClient';
 import type {Store} from '../../../src/lib/store/store';
 import {darkTheme} from '../../../src/theme/themes';
 import {server} from '../../util/msw';
@@ -256,9 +256,9 @@ describe('UserProfileCircle', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
-      // Make tearleadsApi.logout throw immediately
+      // Make apiClient.logout throw immediately
       const logoutSpy = vi
-        .spyOn(tearleadsApi, 'logout')
+        .spyOn(apiClient, 'logout')
         .mockRejectedValue(new Error('Network failure'));
 
       renderWithContext('testuser');

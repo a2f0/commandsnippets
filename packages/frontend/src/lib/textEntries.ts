@@ -1,5 +1,6 @@
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
+import {apiClient} from './api/apiClient';
 import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
 import {
   isAJunction,
@@ -13,7 +14,6 @@ import type {
   ITextEntryJsonApi,
   IUserJsonApi,
 } from './api/responses/types';
-import {tearleadsApi} from './api/tearleadsApi';
 import {db} from './db/db';
 import type {Store} from './store/store';
 import {convertISO8601ToUnixTime} from './util/dateTime';
@@ -350,7 +350,7 @@ export function fetch(
       | IUserJsonApi
       | ITagJsonApi
     >
-  > = tearleadsApi.getEntries(params).then(response => {
+  > = apiClient.getEntries(params).then(response => {
     const updatedEntries = entries.concat(response.data);
     for (let i = 0; i < response.included?.length; i++) {
       const item = response.included[i];
@@ -398,7 +398,7 @@ export function fetchPage({
         | ITagJsonApi
       >
     | undefined
-  > = tearleadsApi
+  > = apiClient
     .getEntries({
       ...params,
       signal,

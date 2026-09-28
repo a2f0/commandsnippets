@@ -4,7 +4,7 @@ import {handleUnauthorized} from '../auth/authUtils';
  * `fetch`, but a 403 means the session is gone: sign the user out of the app
  * (`handleUnauthorized`) and return the response as usual.
  *
- * `tearleadsApi` sends every request through this except:
+ * `apiClient` sends every request through this except:
  * - `googleLogin` and `githubLogin`, which run before there is a session, so
  *   a 403 there is a failed login, not an expired one.
  *

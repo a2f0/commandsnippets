@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {tearleadsApi} from '../../../lib/api/tearleadsApi';
+import {apiClient} from '../../../lib/api/apiClient';
 import {resetApplicationState} from '../../../lib/store/store';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
@@ -14,7 +14,7 @@ const Logout = ({onClose}: IProps) => {
 
   const handleLogout = async () => {
     try {
-      await tearleadsApi.logout();
+      await apiClient.logout();
     } catch (error: unknown) {
       console.error('Logout error:', error);
     } finally {

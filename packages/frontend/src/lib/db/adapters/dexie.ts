@@ -1,7 +1,13 @@
 import {default as DexieDefault} from 'dexie';
-import type {IEntry, IJunction, ITag, ITearleadsDB, IUser} from '../types';
+import type {
+  ICommandsnippetsDB,
+  IEntry,
+  IJunction,
+  ITag,
+  IUser,
+} from '../types';
 
-class TearleadsDexie extends DexieDefault implements ITearleadsDB {
+class CommandsnippetsDexie extends DexieDefault implements ICommandsnippetsDB {
   users!: DexieDefault.Table<IUser, number>; // number is the type of the primary key
   tags!: DexieDefault.Table<ITag, number>;
   entries!: DexieDefault.Table<IEntry, number>;
@@ -9,6 +15,8 @@ class TearleadsDexie extends DexieDefault implements ITearleadsDB {
 
   // https://dexie.org/docs/Version/Version.stores()#description
   constructor() {
+    // The IndexedDB database's name from before the rename to Commandsnippets.
+    // Keep it: a new name would leave browsers' existing data behind.
     super('Tearleads');
     this.version(2).stores({
       users: 'id&, username, updated',
@@ -53,4 +61,4 @@ class TearleadsDexie extends DexieDefault implements ITearleadsDB {
   }
 }
 
-export {TearleadsDexie};
+export {CommandsnippetsDexie};

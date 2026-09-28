@@ -1,11 +1,11 @@
 import Grid from '@mui/material/Grid';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {apiClient} from '../../lib/api/apiClient';
 import type {
   ITagJsonApi,
   ITagJsonApiResponseSingle,
 } from '../../lib/api/responses/types';
-import {tearleadsApi} from '../../lib/api/tearleadsApi';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
@@ -40,7 +40,7 @@ const TagEdit = ({
   const inputCancelRef = useRef<HTMLButtonElement>(null);
 
   const handleSave = () => {
-    tearleadsApi
+    apiClient
       .updateTag(object.id, tagName)
       .then((response: ITagJsonApiResponseSingle) => {
         handleSaveParent(response.data);

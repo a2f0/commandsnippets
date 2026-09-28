@@ -1,10 +1,10 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 
-import {tearleadsApi} from '../../../../src/lib/api/tearleadsApi';
+import {apiClient} from '../../../../src/lib/api/apiClient';
 
 // Every API route is owner-only (reads included), so every request must send
 // the auth cookie to the API's origin.
-describe('tearleadsApi credentials', () => {
+describe('apiClient credentials', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -16,19 +16,19 @@ describe('tearleadsApi credentials', () => {
   });
 
   const calls: Array<[string, () => Promise<unknown>]> = [
-    ['googleLogin', () => tearleadsApi.googleLogin('code')],
-    ['githubLogin', () => tearleadsApi.githubLogin('code')],
-    ['getCurrentUser', () => tearleadsApi.getCurrentUser()],
-    ['logout', () => tearleadsApi.logout()],
-    ['createTag', () => tearleadsApi.createTag('name')],
-    ['deleteTag', () => tearleadsApi.deleteTag('1')],
-    ['updateTag', () => tearleadsApi.updateTag('1', 'name')],
-    ['createEntry', () => tearleadsApi.createEntry('s', 'b', '1')],
-    ['updateEntry', () => tearleadsApi.updateEntry('1', 's', 'b')],
+    ['googleLogin', () => apiClient.googleLogin('code')],
+    ['githubLogin', () => apiClient.githubLogin('code')],
+    ['getCurrentUser', () => apiClient.getCurrentUser()],
+    ['logout', () => apiClient.logout()],
+    ['createTag', () => apiClient.createTag('name')],
+    ['deleteTag', () => apiClient.deleteTag('1')],
+    ['updateTag', () => apiClient.updateTag('1', 'name')],
+    ['createEntry', () => apiClient.createEntry('s', 'b', '1')],
+    ['updateEntry', () => apiClient.updateEntry('1', 's', 'b')],
     [
       'getEntries',
       () =>
-        tearleadsApi.getEntries({
+        apiClient.getEntries({
           'page[number]': 1,
           'filter[user.username]': 'u',
           signal: new AbortController().signal,
@@ -37,19 +37,19 @@ describe('tearleadsApi credentials', () => {
     [
       'getTags',
       () =>
-        tearleadsApi.getTags({
+        apiClient.getTags({
           'page[number]': 1,
           'filter[user.username]': 'u',
           sort: 'date_updated',
         }),
     ],
-    ['tagEntry', () => tearleadsApi.tagEntry('1', '2')],
-    ['untagEntry', () => tearleadsApi.untagEntry('1')],
-    ['deleteEntry', () => tearleadsApi.deleteEntry('1')],
+    ['tagEntry', () => apiClient.tagEntry('1', '2')],
+    ['untagEntry', () => apiClient.untagEntry('1')],
+    ['deleteEntry', () => apiClient.deleteEntry('1')],
     [
       'reorderTag',
       () =>
-        tearleadsApi.reorderTag({
+        apiClient.reorderTag({
           data: {
             type: 'Tag',
             attributes: {top: '1', bottom: '2'},
@@ -57,7 +57,7 @@ describe('tearleadsApi credentials', () => {
           },
         }),
     ],
-    ['reorderEntry', () => tearleadsApi.reorderEntry('1', '2')],
+    ['reorderEntry', () => apiClient.reorderEntry('1', '2')],
   ];
 
   it.each(calls)('%s sends credentials: include', async (_name, call) => {
@@ -81,7 +81,7 @@ describe('githubLogin', () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockImplementation(async () => new Response('{}', {status: 200}));
-    await tearleadsApi.githubLogin('code');
+    await apiClient.githubLogin('code');
     const init = fetchSpy.mock.calls[0]?.[1];
     expect(JSON.parse(String(init?.body))).toEqual({
       data: {

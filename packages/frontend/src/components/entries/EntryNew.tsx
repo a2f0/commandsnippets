@@ -4,7 +4,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {tearleadsApi} from '../../lib/api/tearleadsApi';
+import {apiClient} from '../../lib/api/apiClient';
 import {activeEntryEditField, appMode} from '../../lib/shared';
 import {commonButtonSx} from '../../theme/sx';
 import {InputEntryBody} from './InputEntryBody';
@@ -56,12 +56,12 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
       return;
     }
 
-    tearleadsApi
+    apiClient
       .createEntry(subject, body, userObject.id)
       .then(response => {
         appConfig.updateOrCreateTextEntry(response.data);
 
-        return tearleadsApi.tagEntry(tagObject.id, response.data.id);
+        return apiClient.tagEntry(tagObject.id, response.data.id);
       })
       .then(response => {
         console.info(response.data);

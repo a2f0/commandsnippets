@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {type MockInstance, vi} from 'vitest';
-import {tearleadsApi} from '../../src/lib/api/tearleadsApi';
+import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
 import {TestAppRouter} from '../util/TestAppRouter';
@@ -17,7 +17,7 @@ describe('TagList', () => {
   let reorderTagSpy: MockInstance;
   let consoleMock: MockInstance;
   beforeEach(() => {
-    reorderTagSpy = vi.spyOn(tearleadsApi, 'reorderTag');
+    reorderTagSpy = vi.spyOn(apiClient, 'reorderTag');
     consoleMock = vi
       .spyOn(global.console, 'debug')
       .mockImplementation(() => undefined);

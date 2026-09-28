@@ -7,12 +7,12 @@ import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
+import {apiClient} from '../../lib/api/apiClient';
 import type {ReorderTag} from '../../lib/api/requests/types';
 import type {
   ITagJsonApi,
   ITagJsonApiResponseSingle,
 } from '../../lib/api/responses/types';
-import {tearleadsApi} from '../../lib/api/tearleadsApi';
 import {
   activeSearch,
   appMode,
@@ -173,7 +173,7 @@ const Tag = ({
                       relationships: {},
                     },
                   };
-                  await tearleadsApi.reorderTag(payload);
+                  await apiClient.reorderTag(payload);
                 }
               } else {
                 console.debug('useDrag end: it was not moved within the list.');
@@ -284,7 +284,7 @@ const Tag = ({
   };
 
   const deleteTag = () => {
-    tearleadsApi
+    apiClient
       .deleteTag(tagObject.id)
       .then(response => {
         handleDeleteParent(response);

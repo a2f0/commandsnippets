@@ -4,7 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import {v4 as uuidv4} from 'uuid';
 
 import {useAppContext} from '../AppContext';
-import {tearleadsApi} from '../lib/api/tearleadsApi';
+import {apiClient} from '../lib/api/apiClient';
 
 interface OAuthConfig {
   provider: 'github' | 'google';
@@ -50,11 +50,11 @@ export const useOAuth = (config: OAuthConfig) => {
       }
 
       if (config.provider === 'github') {
-        await tearleadsApi.githubLogin(code);
+        await apiClient.githubLogin(code);
       } else {
-        await tearleadsApi.googleLogin(code);
+        await apiClient.googleLogin(code);
       }
-      const response = await tearleadsApi.getCurrentUser();
+      const response = await apiClient.getCurrentUser();
       const username = response.data.attributes.username;
 
       appConfig.setLoggedInUser(username);

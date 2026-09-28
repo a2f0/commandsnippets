@@ -2,7 +2,7 @@ import Grid from '@mui/material/Grid';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useAppContext} from '../../AppContext';
-import {tearleadsApi} from '../../lib/api/tearleadsApi';
+import {apiClient} from '../../lib/api/apiClient';
 import {activeTagEditField, appMode} from '../../lib/shared';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
@@ -65,7 +65,7 @@ const TagNew = ({handleNewParent, id}: IProps) => {
   };
 
   const handleSave = () => {
-    tearleadsApi
+    apiClient
       .createTag(tagName)
       .then(response => {
         appConfig.reconcileCollection(response.included);

@@ -80,7 +80,7 @@ Run these from `packages/frontend`.
   be an import cycle.
 
 ### API
-- `src/lib/api/tearleadsApi.ts` - the JSON:API client for tags, entries and
+- `src/lib/api/apiClient.ts` - the JSON:API client for tags, entries and
   auth. Every request sends the auth cookie (`credentials: 'include'`).
 - `src/lib/api/adminApi.ts` - the staff-only admin API, which handles its own
   401/403 responses.

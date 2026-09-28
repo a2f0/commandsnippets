@@ -7,11 +7,11 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
+import {apiClient} from '../../lib/api/apiClient';
 import type {
   ITextEntryJsonApi,
   ITextEntryJsonApiResponseSingle,
 } from '../../lib/api/responses/types';
-import {tearleadsApi} from '../../lib/api/tearleadsApi';
 import {appMode, getSelection, initialMouse} from '../../lib/shared';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
@@ -132,7 +132,7 @@ const Entry = ({
           const dropResult = monitor.getDropResult();
           if (dropResult) {
             if (dropResult.type === 'Tag') {
-              tearleadsApi
+              apiClient
                 .tagEntry(dropResult.id, findEntry(id).entry.id)
                 .then(resp => {
                   appConfig.updateOrCreateTagTextEntryThroughModel(resp.data);
@@ -200,7 +200,7 @@ const Entry = ({
                   if (throughModelBottom === undefined) {
                     throw new Error('Bottom must be defined.');
                   }
-                  await tearleadsApi.reorderEntry(
+                  await apiClient.reorderEntry(
                     throughModelTop.id,
                     throughModelBottom.id
                   );
@@ -334,7 +334,7 @@ const Entry = ({
     try {
       if (entriesFilter === 'untagged') {
         // Delete the entry entirely for untagged entries
-        await tearleadsApi.deleteEntry(textEntryObject.id);
+        await apiClient.deleteEntry(textEntryObject.id);
         handleRemoveFromListParent(textEntryObject.id);
         // Also remove from the store
         const entryToRemove = appConfig.textEntriesArray.find(
@@ -369,7 +369,7 @@ const Entry = ({
           'Cannot untag entry: missing tagTextEntryThroughModel ID'
         );
 
-        await tearleadsApi.untagEntry(tagTextEntryThroughModelObject.id);
+        await apiClient.untagEntry(tagTextEntryThroughModelObject.id);
         tagTextEntryThroughModelObject.remove();
         handleRemoveFromListParent(textEntryObject.id);
 

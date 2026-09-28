@@ -5,7 +5,7 @@ import {observer} from 'mobx-react';
 import type React from 'react';
 import {useState} from 'react';
 import {useAppContext} from '../AppContext';
-import {tearleadsApi} from '../lib/api/tearleadsApi';
+import {apiClient} from '../lib/api/apiClient';
 import {environment} from '../lib/environment';
 import {resetApplicationState} from '../lib/store/store';
 
@@ -59,7 +59,7 @@ const UserProfileCircle: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await tearleadsApi.logout();
+      await apiClient.logout();
     } catch (error: unknown) {
       console.error('Logout error:', error);
     } finally {

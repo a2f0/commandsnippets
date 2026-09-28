@@ -58,7 +58,7 @@ interface RequestOptions {
   withAuth?: boolean;
 }
 
-class TearleadsApi {
+class ApiClient {
   /**
    * Send a request with the auth cookie, which every route needs (reads
    * included, since they are owner-only and cross-origin). Throws
@@ -350,6 +350,6 @@ class TearleadsApi {
   }
 }
 
-const tearleadsApi = new TearleadsApi();
+const apiClient = new ApiClient();
 
-export {tearleadsApi};
+export {apiClient};

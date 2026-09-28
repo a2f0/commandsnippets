@@ -5,11 +5,11 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useAppContext} from '../../AppContext';
 import {useTypedTranslation} from '../../i18n/hooks';
+import {apiClient} from '../../lib/api/apiClient';
 import type {
   ITextEntryJsonApi,
   ITextEntryJsonApiResponseSingle,
 } from '../../lib/api/responses/types';
-import {tearleadsApi} from '../../lib/api/tearleadsApi';
 import {activeEntryEditField, appMode} from '../../lib/shared';
 import {needsScrollingIntoView} from '../../lib/textEntries';
 import {commonButtonSx} from '../../theme/sx';
@@ -63,7 +63,7 @@ const EntryEdit = ({
   }, [theme]);
 
   const handleSave = () => {
-    tearleadsApi
+    apiClient
       .updateEntry(object.id, subject, body)
       .then(response => {
         handleSaveParent(response);

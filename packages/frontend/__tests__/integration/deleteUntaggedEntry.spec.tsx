@@ -1,7 +1,7 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {beforeEach, describe, expect, it, type MockInstance, vi} from 'vitest';
-import {tearleadsApi} from '../../src/lib/api/tearleadsApi';
+import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
 import {TestAppRouter} from '../util/TestAppRouter';
@@ -17,10 +17,10 @@ describe('Delete Untagged Entry', () => {
 
   beforeEach(() => {
     deleteEntrySpy = vi
-      .spyOn(tearleadsApi, 'deleteEntry')
+      .spyOn(apiClient, 'deleteEntry')
       .mockResolvedValue(undefined);
     untagEntrySpy = vi
-      .spyOn(tearleadsApi, 'untagEntry')
+      .spyOn(apiClient, 'untagEntry')
       .mockResolvedValue(undefined);
   });
 

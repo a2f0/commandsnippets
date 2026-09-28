@@ -4,7 +4,7 @@ import {MemoryRouter} from 'react-router-dom';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 
 import {useOAuth} from '../../../src/hooks/useOAuth';
-import {tearleadsApi} from '../../../src/lib/api/tearleadsApi';
+import {apiClient} from '../../../src/lib/api/apiClient';
 import {LoggedInAppContextProvider} from '../../util/LoggedInAppContextProvider';
 import {store} from '../../util/loggedInStore';
 
@@ -21,8 +21,8 @@ const Callback = () => {
 async function completeLogin(isStaff: boolean | undefined) {
   window.history.pushState({}, '', '/oauth/github?code=abc&state=xyz');
   window.sessionStorage.setItem('oauth_state', 'xyz');
-  vi.spyOn(tearleadsApi, 'githubLogin').mockResolvedValue(undefined);
-  vi.spyOn(tearleadsApi, 'getCurrentUser').mockResolvedValue({
+  vi.spyOn(apiClient, 'githubLogin').mockResolvedValue(undefined);
+  vi.spyOn(apiClient, 'getCurrentUser').mockResolvedValue({
     data: {
       attributes:
         isStaff === undefined

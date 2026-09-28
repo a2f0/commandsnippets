@@ -5,7 +5,7 @@ import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
 
 import {listUsers} from '../../src/lib/api/adminApi';
-import {tearleadsApi} from '../../src/lib/api/tearleadsApi';
+import {apiClient} from '../../src/lib/api/apiClient';
 import {defaultState} from '../../src/lib/shared';
 import {store} from '../../src/lib/store/store';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
@@ -62,7 +62,7 @@ describe('403 Unauthorized Handling', () => {
 
     // This will trigger a 403 response which should reset the state
     // The API will throw due to !resp.ok, but the 403 handler should still run
-    await expect(tearleadsApi.createTag('new-tag')).rejects.toThrow();
+    await expect(apiClient.createTag('new-tag')).rejects.toThrow();
 
     // Verify that the unauthorized handler was called
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -96,7 +96,7 @@ describe('403 Unauthorized Handling', () => {
 
     // This will trigger a 403 response
     await expect(
-      tearleadsApi.getTags({
+      apiClient.getTags({
         'filter[user.username]': 'testuser',
         'page[number]': 1,
         sort: 'order',
@@ -129,7 +129,7 @@ describe('403 Unauthorized Handling', () => {
     const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
     // This will trigger a 403 response
-    await expect(tearleadsApi.getCurrentUser()).rejects.toThrow();
+    await expect(apiClient.getCurrentUser()).rejects.toThrow();
 
     // Verify state was reset to defaults
     expect(store.loggedInUser).toBeNull();
@@ -156,7 +156,7 @@ describe('403 Unauthorized Handling', () => {
 
     // This will trigger a 403 response
     await expect(
-      tearleadsApi.getEntries({
+      apiClient.getEntries({
         'filter[user.username]': 'testuser',
         'page[number]': 1,
       })
