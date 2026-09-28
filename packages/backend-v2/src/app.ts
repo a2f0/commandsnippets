@@ -1,8 +1,8 @@
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
 import packageJson from '../package.json';
+import {authenticate} from './auth/authentication';
 import {authRoutes} from './auth/routes';
-import {authenticate} from './auth/tokens';
 import {createDb} from './db/client';
 import type {AppEnv} from './env';
 import {ApiError, describeError} from './lib/errors';

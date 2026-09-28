@@ -6,7 +6,7 @@ import {and, asc, count, eq, type SQL} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
-import {requireUser} from '../auth/tokens';
+import {requireUser} from '../auth/permissions';
 import type {User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {notFound, permissionDenied} from '../lib/errors';

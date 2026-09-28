@@ -4,8 +4,8 @@ import {ApiError} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {charField, validateOrThrow} from '../lib/validation';
 import {getOrCreateUser, recordLogin} from '../services/users';
+import {clearAuthCookies, setAuthCookies} from './cookies';
 import {GithubOAuthService, GoogleOAuthService} from './oauth';
-import {clearAuthCookies, setAuthCookies} from './tokens';
 
 const unauthorized = (c: Context<AppEnv>) => c.json({errors: []}, 401);
 

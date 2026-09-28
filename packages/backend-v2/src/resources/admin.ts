@@ -5,7 +5,7 @@
  */
 import {and, asc, count, desc, eq, type SQL, sql} from 'drizzle-orm';
 import {type Context, Hono} from 'hono';
-import {requireStaff} from '../auth/tokens';
+import {requireStaff} from '../auth/permissions';
 import type {Db} from '../db/client';
 import {
   type AdminAuditLogEntry,

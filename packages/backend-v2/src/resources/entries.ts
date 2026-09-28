@@ -1,6 +1,6 @@
 import {eq, or, sql} from 'drizzle-orm';
 import {type Context, Hono} from 'hono';
-import {requireUser} from '../auth/tokens';
+import {requireUser} from '../auth/permissions';
 import {type TextEntry, textEntries} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';

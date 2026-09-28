@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {authorizationCookies} from '../../src/auth/tokens';
+import {authorizationCookies} from '../../src/auth/cookies';
 import {setUpBase, tokenFor, userFactory} from '../helpers';
 import {
   googlePayload,

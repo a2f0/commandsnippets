@@ -1,7 +1,7 @@
 import {eq} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
-import {requireUser} from '../auth/tokens';
+import {requireUser} from '../auth/permissions';
 import type {AppEnv} from '../env';
 import {ApiError, type ErrorObject, permissionDenied} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';

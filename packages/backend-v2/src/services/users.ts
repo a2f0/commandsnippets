@@ -1,10 +1,10 @@
 import {asc, eq, sql} from 'drizzle-orm';
-import {generateKey} from '../auth/tokens';
 import type {Db} from '../db/client';
 import {isEmailViolation, isUniqueViolation} from '../db/errors';
 import {tokens, type User, users} from '../db/schema';
 import {now} from '../lib/clock';
 import RESERVED_USERNAMES from './reserved-usernames.json';
+import {newToken} from './tokens';
 
 function randomDigits(length: number): string {
   const bytes = crypto.getRandomValues(new Uint8Array(length));
@@ -33,9 +33,7 @@ async function insertUserWithToken(
       last_login: joined,
       login_count: 1,
     }),
-    db
-      .insert(tokens)
-      .values({key: generateKey(), created: now(), user_id: userId}),
+    db.insert(tokens).values(newToken(userId)),
   ]);
   const [user] = await db
     .select()

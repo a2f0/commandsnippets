@@ -1,6 +1,6 @@
 import {and, eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
-import {requireUser} from '../auth/tokens';
+import {requireUser} from '../auth/permissions';
 import type {Db} from '../db/client';
 import {isUniqueViolation} from '../db/errors';
 import {type TagTextEntry, tags, tagsEntries, textEntries} from '../db/schema';
