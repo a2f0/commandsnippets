@@ -22,10 +22,10 @@ import {now, parseDateTime} from '../src/lib/clock';
 import {fold} from '../src/lib/search';
 import RESERVED_USERNAMES from '../src/services/reserved-usernames.json';
 
-export type Value = string | number | null;
-export type Row = Record<string, string | null>;
+type Value = string | number | null;
+type Row = Record<string, string | null>;
 
-export interface TableSpec {
+interface TableSpec {
   /** Columns to copy, in insert order. */
   columns: string[];
   booleans?: string[];
@@ -199,7 +199,7 @@ export function decodeCopyField(field: string): string | null {
   );
 }
 
-export interface Dump {
+interface Dump {
   tables: Map<string, Row[]>;
   sequences: Map<string, number>;
 }
@@ -304,7 +304,7 @@ function literal(value: Value): string {
 
 const quote = (identifier: string) => `"${identifier}"`;
 
-export interface Converted {
+interface Converted {
   table: string;
   spec: TableSpec;
   rows: Value[][];
@@ -317,7 +317,7 @@ export interface Converted {
  * (current order, ties broken by id) and bump `date_updated` on rows whose
  * rank changed so clients re-sync them.
  */
-export function normalizeRanks(
+function normalizeRanks(
   found: Converted,
   scopeColumn: string,
   timestamp: string = now()

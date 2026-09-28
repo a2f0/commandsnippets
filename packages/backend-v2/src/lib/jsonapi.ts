@@ -18,7 +18,7 @@ import {
 // Request parsing
 // ---------------------------------------------------------------------------
 
-export interface ParsedResource {
+interface ParsedResource {
   id: string | undefined;
   attributes: Record<string, unknown>;
   relationships: Record<string, string | null>;
@@ -126,7 +126,7 @@ export async function parseResource(
 // Serialization
 // ---------------------------------------------------------------------------
 
-export interface ResourceIdentifier {
+interface ResourceIdentifier {
   type: string;
   id: string;
 }
@@ -170,14 +170,14 @@ interface Identified {
   id: number;
 }
 
-/** Expand `a.b,c` into validated paths plus their prefixes (`a`, `a.b`, `c`). */
 /**
  * The longest include path accepted. Clients use at most two segments
  * (`text_entry_to_tag.tag`); relationships are cyclic, so an unbounded path
  * could keep re-walking the same rows.
  */
-export const MAX_INCLUDE_DEPTH = 3;
+const MAX_INCLUDE_DEPTH = 3;
 
+/** Expand `a.b,c` into validated paths plus their prefixes (`a`, `a.b`, `c`). */
 function resolveIncludes(
   registry: Registry,
   type: string,
@@ -412,9 +412,9 @@ const QUERY_PARAM =
   /^(sort|include)$|^(?<kind>filter|fields|page)(\[[\w.-]+\])?$/;
 const FILTER_PARAM = /^filter\[([\w.-]+)\]$/;
 
-export const SEARCH_PARAM = 'filter[search]';
-export const PAGE_SIZE = 50;
-export const MAX_PAGE_SIZE = 100;
+const SEARCH_PARAM = 'filter[search]';
+const PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
 
 /** Maps a Django filter key (e.g. `date_updated__gt`) to a SQL condition. */
 export type FilterSpec = Record<string, (value: string) => SQL>;

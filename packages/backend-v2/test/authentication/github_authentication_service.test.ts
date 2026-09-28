@@ -1,8 +1,7 @@
 import {env} from 'cloudflare:workers';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vitest';
 import {type Fetcher, GithubOAuthService} from '../../src/auth/oauth';
 import type {Bindings} from '../../src/env';
-import {setUpBase} from '../helpers';
 
 // Wrangler types vars as literal unions, hence the cast.
 const TEST_ENV = {
@@ -41,10 +40,6 @@ const header = (call: Call | undefined, name: string) =>
 
 // tearleads/authentication/tests/test_github_authentication_service.py
 describe('TestGithubAuthentication', () => {
-  beforeEach(async () => {
-    await setUpBase();
-  });
-
   it('test_access_token', async () => {
     const {fetcher, calls} = fakeFetch(
       'access_token=access_token&scope=user%3Aemail&token_type=bearer',

@@ -15,10 +15,10 @@ import {jsonApi} from './resources/responses';
 import {tagRoutes} from './resources/tags';
 import {tagEntryRoutes} from './resources/tagsEntries';
 
-export const API_VERSION = packageJson.version;
+const API_VERSION = packageJson.version;
 
 /** Django's CORS_ALLOWED_ORIGIN_REGEXES, anchored at both ends. */
-export const ALLOWED_ORIGINS = [
+const ALLOWED_ORIGINS = [
   /^http:\/\/localhost(:\d+)?$/,
   /^http:\/\/127\.0\.0\.1(:\d+)?$/,
   // RFC 1918 private address space

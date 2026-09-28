@@ -88,7 +88,7 @@ const EXAMPLE_JUNCTIONS = [
  * new user. The junctions' insert triggers keep the counters and
  * date_last_used in step, as they did for the signal.
  */
-export async function seedExampleData(user: User): Promise<void> {
+async function seedExampleData(user: User): Promise<void> {
   const tagRows = [];
   for (const tag of EXAMPLE_TAGS) {
     const timestamp = now();
@@ -304,7 +304,7 @@ export {isoformat} from '../src/lib/clock';
 // APIClient
 // ---------------------------------------------------------------------------
 
-export interface Cookie {
+interface Cookie {
   value: string;
   attributes: Record<string, string | true>;
 }
@@ -481,19 +481,16 @@ export interface Base {
   user1: User;
   user2: User;
   user1Client: ApiClient;
-  unauthenticatedUser: User;
   unauthenticatedClient: ApiClient;
 }
 
 export async function setUpBase(): Promise<Base> {
   const user1 = await userFactory();
   const user2 = await userFactory();
-  const unauthenticatedUser = await userFactory();
   return {
     user1,
     user2,
     user1Client: new ApiClient(await tokenFor(user1.id)),
-    unauthenticatedUser,
     unauthenticatedClient: new ApiClient(),
   };
 }

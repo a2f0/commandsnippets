@@ -5,7 +5,7 @@ import type {AppEnv} from '../env';
 import {getOrCreateToken} from '../services/tokens';
 
 /** Django's AUTH_COOKIE_MAX_AGE: 28 days. */
-export const AUTH_COOKIE_MAX_AGE = 2_419_200;
+const AUTH_COOKIE_MAX_AGE = 2_419_200;
 
 /**
  * This environment's auth cookie names. Staging prefixes them: production's

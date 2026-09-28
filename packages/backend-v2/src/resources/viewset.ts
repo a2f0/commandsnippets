@@ -25,7 +25,7 @@ import {nextRevision, type OwnedResource, type RevisedResource} from './owned';
 import {jsonApi} from './responses';
 import {createRegistry} from './serializers';
 
-export interface ListPageSpec<Row> {
+interface ListPageSpec<Row> {
   filters: FilterSpec;
   ordering: OrderingSpec;
   /** Refusals beyond parseListQuery's own, made before anything is read. */
@@ -82,7 +82,7 @@ export function pageOrder(
   return [...(query.orderBy ?? defaults), tieBreaker];
 }
 
-export interface ListOptions extends OwnedResource {
+interface ListOptions extends OwnedResource {
   user: User;
   filters: FilterSpec;
   ordering: OrderingSpec;
@@ -194,7 +194,7 @@ export async function resourceResponse(
 }
 
 /** A resource whose rows are soft-deleted (`is_deleted`), never removed. */
-export interface SoftDeletedResource extends RevisedResource {
+interface SoftDeletedResource extends RevisedResource {
   table: typeof tags | typeof textEntries;
 }
 

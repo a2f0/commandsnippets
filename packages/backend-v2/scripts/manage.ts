@@ -218,7 +218,7 @@ export async function runCommand(
 }
 
 /** Run SQL against D1 through `wrangler d1 execute`. */
-export function wranglerQuery(
+function wranglerQuery(
   environment: string | undefined,
   persistTo: string | undefined,
   wrangler: string[] = ['bunx', 'wrangler']

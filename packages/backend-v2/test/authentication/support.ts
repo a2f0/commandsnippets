@@ -14,7 +14,7 @@ export interface MockRoute {
   contentType?: string;
 }
 
-export interface MockCall {
+interface MockCall {
   url: string;
   method: string;
   headers: Headers;
