@@ -47,6 +47,7 @@ export interface AdminUser {
   isActive: boolean;
   dateJoined: string;
   lastLogin: string | null;
+  lastActive: string | null;
   loginCount: number;
   entryCount: number;
   tagCount: number;
@@ -128,6 +129,7 @@ function toUser({id, attributes}: AdminUserResource): AdminUser {
     isActive: attributes.is_active,
     dateJoined: attributes.date_joined,
     lastLogin: attributes.last_login,
+    lastActive: attributes.last_active,
     loginCount: attributes.login_count,
     entryCount: attributes.entry_count,
     tagCount: attributes.tag_count,

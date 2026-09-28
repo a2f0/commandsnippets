@@ -118,6 +118,7 @@ export interface AdminTranslations {
   columnEmail: string;
   columnJoined: string;
   columnLastLogin: string;
+  columnLastActive: string;
   columnLogins: string;
   columnEntries: string;
   columnTags: string;
