@@ -1,16 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {type Base, setUpBase, textEntryFactory} from '../helpers';
-
-/** Collect messages through the error `cause` chain (Drizzle wraps D1). */
-function messages(error: unknown): string {
-  const parts: string[] = [];
-  let current: unknown = error;
-  while (current instanceof Error) {
-    parts.push(current.message);
-    current = current.cause;
-  }
-  return parts.join(' | ');
-}
+import {errorMessages} from '../support/errors';
 
 async function expectCheckFailure(
   promise: Promise<unknown>,
@@ -21,10 +11,12 @@ async function expectCheckFailure(
     (reason: unknown) => reason
   );
   expect(error).not.toBeNull();
-  expect(messages(error)).toContain(`CHECK constraint failed: ${constraint}`);
+  expect(errorMessages(error)).toContain(
+    `CHECK constraint failed: ${constraint}`
+  );
 }
 
-// tearleads/text_entries/tests/test_text_entries_model.py
+// Django origin: backend/tearleads/text_entries/tests/test_text_entries_model.py
 // v2: Postgres raised DataError ("value too long for type character
 // varying(N)"); SQLite has no varchar lengths, so CHECK constraints stand in.
 describe('TestTextEntriesModel', () => {

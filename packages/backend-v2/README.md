@@ -5,26 +5,46 @@ workerd, [D1](https://developers.cloudflare.com/d1/) (SQLite) through
 [Drizzle](https://orm.drizzle.team), with [Bun](https://bun.sh) as the package
 manager and script runner.
 
-It is a wire-compatible replacement for the Django backend in `../../backend`:
-same routes, JSON:API documents, cookies, tokens and error messages, so the web
-client works unchanged. The frontend is web-only; the API endpoints and CORS
-origins that served the retired Electron and Capacitor apps are gone.
+It replaces the Django backend in `../../backend`. Routes, JSON:API documents,
+cookies, tokens, timestamps and error messages follow Django's wherever clients
+rely on them, but it is not a drop-in replacement: reads are owner-only,
+staging has its own cookie names, and staff get an admin API (see
+[Differences from the Django backend](#differences-from-the-django-backend)).
+The web client must be a build that knows these (see
+[Importing the Postgres data](#importing-the-postgres-data), step 0). It is
+web-only: the API endpoints and CORS origins that served the retired Electron
+and Capacitor apps are gone.
 
 ## Layout
 
-| Path | Django equivalent |
-|---|---|
-| `src/db/schema.ts` | models (same table and column names) |
-| `migrations/` | migrations (`0001_counter_triggers.sql` replaces the counter signals) |
-| `src/lib/ordered.ts` | django-ordered-model |
-| `src/lib/jsonapi.ts` | django-rest-framework-json-api (parsing, includes, filters, sort, pagination) |
-| `src/lib/validation.ts` | DRF serializer fields |
-| `src/resources/*.ts` | viewsets and serializers |
-| `src/resources/admin.ts` | Django admin: the `/api/v1/admin` API for staff |
-| `src/auth/` | `tearleads.authentication` |
-| `scripts/manage.ts` | management commands |
-| `scripts/import-postgres.ts` | — (one-time Postgres → D1 import) |
-| `test/` | the Django test suite, ported test-for-test |
+| Path | Purpose | Django origin |
+|---|---|---|
+| `src/index.ts`, `src/app.ts` | Worker entry point; the app: CORS, CSRF, authentication, routes, JSON:API 404/500 | settings (CORS, middleware), `urls.py` |
+| `src/env.ts` | bindings, vars and secrets | settings |
+| `src/auth/authentication.ts` | the requesting user, from the auth cookie or an `Authorization` header | `CustomAuthentication` |
+| `src/auth/cookies.ts` | the auth cookies: per-environment names, domain, expiry | `_create_auth_response`, `deauthenticate` |
+| `src/auth/permissions.ts` | `requireUser`, `requireStaff` | DRF `IsAuthenticated`, `IsAdminUser` |
+| `src/auth/oauth.ts`, `src/auth/routes.ts` | GitHub and Google OAuth; login and logout routes | the `authentication` app |
+| `src/db/schema.ts` | tables (same table and column names) | models |
+| `src/db/client.ts`, `src/db/errors.ts` | the Drizzle client; D1 constraint failures | — |
+| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals) | migrations |
+| `src/lib/jsonapi.ts` | JSON:API parsing, includes, filters, sort, pagination | django-rest-framework-json-api |
+| `src/lib/validation.ts` | request attribute validation | DRF serializer fields |
+| `src/lib/errors.ts` | errors in the JSON:API error format | DRF exceptions, DJA's exception handler |
+| `src/lib/ordered.ts` | ranked rows (`above`, `below`) | django-ordered-model |
+| `src/lib/clock.ts` | naive-UTC microsecond timestamps | `USE_TZ = False` |
+| `src/lib/revision.ts` | `date_updated` assigned by D1 | — |
+| `src/lib/search.ts` | Unicode search folds | Postgres `UPPER()` in `icontains` |
+| `src/resources/{tags,entries,tagsEntries,entryReuses,currentUser}.ts` | the resource routes | viewsets |
+| `src/resources/serializers.ts`, `resourceTypes.ts` | resource definitions and type names | serializers |
+| `src/resources/viewset.ts`, `owned.ts`, `filters.ts`, `related.ts`, `reorder.ts`, `responses.ts` | shared list, lookup, ownership, soft-delete, filter and reorder behavior | `ModelViewSet`, `IsOwner`, django-filter |
+| `src/resources/admin.ts` | the `/api/v1/admin` API for staff | Django admin |
+| `src/services/users.ts`, `src/services/tokens.ts` | account creation, reserved usernames, logins; auth tokens | the `users` app; DRF `authtoken` |
+| `scripts/manage.ts` | management commands | `manage.py` commands |
+| `scripts/import-postgres.ts` | one-time Postgres → D1 import | — |
+| `scripts/lib/` | the scripts' shared helpers (migrations, SQL literals, processes) | — |
+| `test/` | the Django test suite, ported test-for-test, and v2's own tests | the apps' `tests/` |
+| `test/support/`, `test/helpers.ts` | factories, an API client, the base test case | `BaseTestCase`, factory_boy |
 
 ## Development
 
@@ -37,11 +57,21 @@ bun run dev                      # http://localhost:9001, as the frontend expect
 
 ```shell
 bun run test             # vitest inside workerd, against a real (local) D1
-bun run test:coverage    # fails under 98% line coverage, like .coveragerc
-bun run test:scripts     # import + management scripts (bun test), same bar
+bun run test:coverage    # the same, with the src/ coverage gate
+bun run test:scripts     # import + management scripts (bun test), own gate
 bun run typecheck
 bun run lint
 ```
+
+CI runs both coverage gates:
+
+- `test:coverage` (`vitest.config.ts`): 98% of lines and statements in `src/`.
+- `test:scripts` (`bunfig.toml`): 98% of lines and 95% of functions in
+  `scripts/`; `src/` counts only toward the vitest gate.
+
+`typecheck` runs two configs that share `tsconfig.base.json`: `tsconfig.json`
+for the Worker and its tests (workerd types), and `tsconfig.scripts.json` for
+the scripts and the vitest and drizzle-kit configs (Bun and Node types).
 
 Changing the schema: edit `src/db/schema.ts`, then `bun run db:generate` and
 commit the generated migration. Triggers and other hand-written SQL go in a
@@ -49,91 +79,103 @@ custom migration (`bunx drizzle-kit generate --custom --name <name>`).
 
 ## Differences from the Django backend
 
-Deliberate changes:
+Deliberate changes, by area. The admin API is new; see
+[its own section](#admin-api).
+
+### Access and auth
 
 - **Owner-only reads.** Every list/retrieve is scoped to the requesting user;
   anonymous reads get 403. (Django let anyone list anyone's entries and tags by
   username.)
-- **Ordering is scoped.** Tags are ranked per user and tag↔entry junctions per
-  tag (`order_with_respect_to`); Django used one global sequence per table.
-  Deletes leave gaps instead of compacting ranks. The import re-ranks scopes that
-  had tied ranks (see below).
 - **Tagging checks ownership.** Creating a junction or a reuse only accepts the
   requester's own tag/entry (400 `Invalid pk`).
-- **Web only.** `/api/v1/integrated-oauth/` (native Google sign-in), the
-  Electron GitHub OAuth app (`clientType: 'electron'`, now ignored) with its
-  `SameSite=None` cookies, and the Electron and Capacitor CORS origins are gone.
-- **No password login.** `/api-token-auth/` is gone: the frontend never used it
-  and Workers' WebCrypto caps PBKDF2 at 100k iterations, below Django's hashes.
-- **An admin API replaces Django admin.** `/api/v1/admin` is for `is_staff`
-  users only (403 for everyone else):
-  - `GET /users` lists every account, with live entry and tag counts.
-    Filters: `filter[is_active]`, `filter[is_staff]`, and `filter[search]`
-    (username or email). Sorts: `username`, `email`, `date_joined`,
-    `last_login`, `login_count`, `entry_count`, `tag_count`.
-  - `GET /users/:id` returns one account.
-  - `PATCH /users/:id` changes `is_active`, the only writable attribute.
-    Deactivating also deletes the account's token, so its sessions end at
-    once. Staff cannot deactivate themselves.
-  - `GET /audit_log` lists these changes, newest first
-    (`filter[target_user_id]`).
-
-  Nothing in the API grants staff; see Operations. `GET /api/v1/user` reports
-  the requester's own `is_staff`, which the web app uses to offer its `/admin`
-  page.
+- **Deactivated accounts are locked out.** An `is_active = false` account's
+  token is ignored (it is anonymous), and its logins get 403 `This account has
+  been deactivated.` Django only checked `is_active` on the retired password
+  login.
 - **Some usernames are reserved.** Usernames are the web app's first path
   segment (`/:user/:tag`), so its own top-level routes, listed in
   `src/services/reserved-usernames.json` (`admin`, `oauth`), are treated as
   taken in any letter case, and a new account gets the usual `-<digits>`
   suffix instead. The frontend's tests check its routes against the list.
-  `0006_rename_reserved_usernames.sql` renames any existing account with one
+  `0006_rename_reserved_usernames.sql` renamed any existing account with one
   to `<name>-<id>` (staging and production had none), and the Postgres import
-  refuses them. Reserving another name needs such a migration too;
-  `scripts/migrations.test.ts` fails without one.
-- **Deactivated accounts are locked out.** An `is_active = false` account's
-  token is ignored (it is anonymous), and its logins get 403 `This account has
-  been deactivated.` Django only checked `is_active` on the retired password
-  login.
-- **`is_superuser` is gone.** `is_staff` is the only admin flag. The schema
-  and the import stopped using the column in the `0004_admin.sql` release, and
-  `0005_drop_is_superuser.sql` drops it (see Deployment).
-- **Logout actually clears production cookies.** The expiring cookies carry the
-  same `Domain` they were set with.
-- **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
-  matches `^http://localhost:*`).
+  refuses them. Reserving another name takes a migration too (see
+  [Operations](#operations)).
+- **Web only.** `/api/v1/integrated-oauth/` (native Google sign-in), the
+  Electron GitHub OAuth app (`clientType: 'electron'`, now ignored) with its
+  `SameSite=None` cookies, and the Electron and Capacitor CORS origins are gone.
+- **No password login.** `/api-token-auth/` is gone: the frontend never used it
+  and Workers' WebCrypto caps PBKDF2 at 100k iterations, below Django's hashes.
 - **Staging has its own cookie names** (`StagingAuthorization`,
   `StagingLoggedIn`), `Secure`/`SameSite=Strict` on `.commandsnippets.com`.
   Staging's hosts are hyphenated first-level names (`app-staging`,
   `api-staging`, `website-staging`: Universal SSL covers only one level below
   the apex), so staging and production share the parent domain and are kept
   apart by name; each API ignores the other's cookies. Django staging ran with
-  `DEBUG` on, which made its cookies host-only and non-Secure.
-- `PATCH`/`PUT` on `/entry_reuses` is 405 (it would desync counters), and
-  renaming a tag to an existing name is a 400 rather than a 500.
+  `DEBUG` on, which made its cookies host-only and non-Secure; those leftovers
+  are expired whenever cookies are domain-scoped.
+- **Logout actually clears production cookies.** The expiring cookies carry the
+  same `Domain` they were set with.
+- **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
+  matches `^http://localhost:*`), and a state-changing request from any other
+  origin, or a POST that is not JSON, is refused before it reaches a route.
 
-- **Search folds Unicode in the app.** D1's SQLite has no ICU, so
-  `filter[search]` compares against `subject_folded`/`body_folded`, written by
-  every entry write path and the import (`src/lib/search.ts`). Anything that
-  writes entries outside the API must set them too.
-- **Cookie names differ on staging** (`StagingAuthorization`,
-  `StagingLoggedIn`), because production's cookies also reach staging hosts.
-  Until staging's API moves to v2, the staging frontend also accepts Django's
-  `LoggedIn` (a UI hint only; drop the fallback in `authUtils.ts` after
-  cutover).
+### Data and sync
 
+- **Ordering is scoped.** Tags are ranked per user and tag↔entry junctions per
+  tag (`order_with_respect_to`); Django used one global sequence per table.
+  Deletes leave gaps instead of compacting ranks. The import re-ranks scopes that
+  had tied ranks (see below).
 - **`date_updated` comes from D1, not the Worker's clock** (`src/lib/revision.ts`):
   the later of D1's clock and one millisecond past the user's latest row, so
   sync (`filter[date_updated.gt]`) never misses a write because two Workers'
   clocks disagreed.
-
 - **Tagging, untagging and junction reorders advance the entry's
   `date_updated`**, in the same D1 batch as the junction write. Clients sync
   junctions only as `/entries` includes, filtered on the entry's revision;
   Django left entries untouched, so other devices missed those changes.
+- **Search folds Unicode in the app.** D1's SQLite has no ICU, so
+  `filter[search]` compares against `subject_folded`/`body_folded`, written by
+  every entry write path and the import (`src/lib/search.ts`). Anything that
+  writes entries outside the API must set them too.
+- `PATCH`/`PUT` on `/entry_reuses` is 405 (it would desync counters), and
+  renaming a tag to an existing name is a 400 rather than a 500.
+
+### Schema
+
+- **Counters are triggers.** `0001_counter_triggers.sql` maintains tag and
+  entry counters in place of Django's signals.
+- **Length limits are CHECK constraints**, since SQLite has no varchar lengths.
+- **Emails are unique** among accounts that have one (logins find accounts by
+  email); the Postgres import refuses shared emails.
+- **`is_superuser` is gone.** `is_staff` is the only admin flag. The schema
+  and the import stopped using the column in the `0004_admin.sql` release, and
+  `0005_drop_is_superuser.sql` drops it (see Deployment).
 
 Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing
 sessions keep working), and ids continue from the Postgres sequences.
+
+## Admin API
+
+An admin API replaces Django admin. `/api/v1/admin` is for `is_staff` users
+only (403 for everyone else):
+
+- `GET /users` lists every account, with live entry and tag counts.
+  Filters: `filter[is_active]`, `filter[is_staff]`, and `filter[search]`
+  (username or email). Sorts: `username`, `email`, `date_joined`,
+  `last_login`, `login_count`, `entry_count`, `tag_count`.
+- `GET /users/:id` returns one account.
+- `PATCH /users/:id` changes `is_active`, the only writable attribute.
+  Deactivating also deletes the account's token, so its sessions end at
+  once. Staff cannot deactivate themselves.
+- `GET /audit_log` lists these changes, newest first
+  (`filter[target_user_id]`).
+
+Nothing in the API grants staff; see [Operations](#operations).
+`GET /api/v1/user` reports the requester's own `is_staff`, which the web app
+uses to offer its `/admin` page.
 
 ## Importing the Postgres data
 
@@ -190,6 +232,11 @@ cannot:
 bunx wrangler d1 execute DB --env production --remote \
   --command "UPDATE users_user SET is_staff = 1 WHERE email = 'someone@example.com'"
 ```
+
+Reserving another username (adding it to
+`src/services/reserved-usernames.json`) needs a migration that renames the
+existing accounts that have it, as `0006_rename_reserved_usernames.sql` did;
+`scripts/migrations.test.ts` fails without one.
 
 Backups: D1 Time Travel restores to any point in the last 30 days
 (`wrangler d1 time-travel restore`); `wrangler d1 export` produces a SQL dump.

@@ -1,10 +1,32 @@
 /**
- * Test support for the auth tests: a `responses`-style outbound HTTP mock and
- * a way to call the app with a modified environment.
+ * Test support for the auth tests: a `responses`-style outbound HTTP mock,
+ * canned OAuth provider answers, a way to call the app with a modified
+ * environment, and the auth cookies' expected attributes.
  */
 import {env} from 'cloudflare:workers';
-import {vi} from 'vitest';
-import {app} from '../../src/app';
+import {expect, vi} from 'vitest';
+import {
+  GITHUB_EMAILS_URL,
+  GITHUB_TOKEN_URL,
+  GITHUB_USER_URL,
+  GOOGLE_TOKEN_URL,
+  GOOGLE_USERINFO_URL,
+} from '../../src/auth/oauth';
+import {ApiClient, setCookieHeaders} from './client';
+
+export {
+  GITHUB_EMAILS_URL,
+  GITHUB_TOKEN_URL,
+  GITHUB_USER_URL,
+  GOOGLE_TOKEN_URL,
+  GOOGLE_USERINFO_URL,
+};
+
+/** Django's AUTH_COOKIE_MAX_AGE (28 days), as the cookies' Max-Age. */
+export const COOKIE_MAX_AGE = '2419200';
+
+/** The tests' COOKIE_DOMAIN binding (vitest.config.ts). */
+export const COOKIE_DOMAIN = 'localhost';
 
 export interface MockRoute {
   method: 'GET' | 'POST';
@@ -14,7 +36,7 @@ export interface MockRoute {
   contentType?: string;
 }
 
-export interface MockCall {
+interface MockCall {
   url: string;
   method: string;
   headers: Headers;
@@ -53,13 +75,6 @@ export function mockFetch(routes: MockRoute[]): MockCall[] {
   });
   return calls;
 }
-
-export const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
-export const GITHUB_USER_URL = 'https://api.github.com/user';
-export const GITHUB_EMAILS_URL = 'https://api.github.com/user/emails';
-export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
-export const GOOGLE_USERINFO_URL =
-  'https://www.googleapis.com/oauth2/v3/userinfo';
 
 /** Google's code exchange and userinfo answering for a verified `email`. */
 export function googleRoutes(email: string): MockRoute[] {
@@ -104,25 +119,25 @@ export function githubPayload(code = 'valid_code') {
 }
 
 /** Call the app with overridden bindings (e.g. DEBUG or missing secrets). */
-export async function requestWithEnv(
+export function requestWithEnv(
   overrides: Partial<Cloudflare.Env>,
   method: string,
   path: string,
   body?: unknown,
   headers: Record<string, string> = {}
 ): Promise<Response> {
-  return await app.request(
-    `http://localhost${path}`,
-    {
-      method,
-      headers: {'Content-Type': 'application/vnd.api+json', ...headers},
-      ...(body === undefined ? {} : {body: JSON.stringify(body)}),
-    },
-    {...env, ...overrides}
+  return new ApiClient(undefined, {...env, ...overrides}).request(
+    method,
+    path,
+    body,
+    headers
   );
 }
 
-/** Parse every Set-Cookie header into name -> lowercase attribute map. */
+/**
+ * A response's cookies by name (the last Set-Cookie of a name wins), values
+ * as sent (not URL-decoded).
+ */
 export function setCookies(
   response: Response
 ): Record<string, {value: string; attributes: Record<string, string | true>}> {
@@ -130,22 +145,28 @@ export function setCookies(
     string,
     {value: string; attributes: Record<string, string | true>}
   > = {};
-  for (const header of response.headers.getSetCookie()) {
-    const [pair = '', ...parts] = header.split(';').map(part => part.trim());
-    const separator = pair.indexOf('=');
-    const attributes: Record<string, string | true> = {};
-    for (const part of parts) {
-      const index = part.indexOf('=');
-      if (index === -1) {
-        attributes[part.toLowerCase()] = true;
-      } else {
-        attributes[part.slice(0, index).toLowerCase()] = part.slice(index + 1);
-      }
-    }
-    cookies[pair.slice(0, separator)] = {
-      value: pair.slice(separator + 1),
-      attributes,
-    };
+  for (const {name, value, attributes} of setCookieHeaders(response)) {
+    cookies[name] = {value, attributes};
   }
   return cookies;
+}
+
+/** A successful login's cookies in the client's jar, carrying `token`. */
+export function expectAuthCookies(client: ApiClient, token: string) {
+  expect(client.cookies.has('Authorization')).toBe(true);
+  expect(client.cookies.get('Authorization')?.value).toBe(token);
+  expect(client.cookies.get('Authorization')?.attributes['domain']).toBe(
+    COOKIE_DOMAIN
+  );
+  expect(client.cookies.get('Authorization')?.attributes['max-age']).toBe(
+    COOKIE_MAX_AGE
+  );
+  expect(client.cookies.has('LoggedIn')).toBe(true);
+  expect(client.cookies.get('LoggedIn')?.attributes['max-age']).toBe(
+    COOKIE_MAX_AGE
+  );
+  expect(client.cookies.get('LoggedIn')?.attributes['domain']).toBe(
+    COOKIE_DOMAIN
+  );
+  expect(client.cookies.get('Authorization')?.value).not.toBe('');
 }

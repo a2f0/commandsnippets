@@ -1,18 +1,24 @@
 import {and, eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
-import {requireUser} from '../auth/tokens';
+import {requireUser} from '../auth/permissions';
 import type {Db} from '../db/client';
-import {type TagTextEntry, tags, tagsEntries, textEntries} from '../db/schema';
+import {isUniqueViolation} from '../db/errors';
+import {type TagTextEntry, tagsEntries, textEntries} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
-import {revision} from '../lib/revision';
+import {
+  nextRevision,
+  tagResource,
+  tagTextEntryResource,
+  textEntryResource,
+} from './owned';
 import {resolveRelated} from './related';
 import {reorder} from './reorder';
-import {TAG_TEXT_ENTRY} from './serializers';
-import {getOwned, isUniqueViolation, resourceResponse} from './viewset';
+import {TAG_TEXT_ENTRY} from './resourceTypes';
+import {getOwned, resourceResponse} from './viewset';
 
 export const tagEntryOrdering: OrderedSpec = {
   table: tagsEntries,
@@ -28,10 +34,8 @@ export const tagEntryOrdering: OrderedSpec = {
   // touched if the move's guarded UPDATE did not apply.
   touch: moved => sql`
     UPDATE ${textEntries}
-    SET ${sql.identifier('date_updated')} = ${revision(
-      textEntries,
-      textEntries.date_updated,
-      textEntries.user_id,
+    SET ${sql.identifier('date_updated')} = ${nextRevision(
+      textEntryResource,
       moved.owner as number
     )}
     WHERE changes() > 0
@@ -56,14 +60,7 @@ export const tagEntryOrdering: OrderedSpec = {
 const touchEntry = (db: Db, entryId: number, userId: number) =>
   db
     .update(textEntries)
-    .set({
-      date_updated: revision(
-        textEntries,
-        textEntries.date_updated,
-        textEntries.user_id,
-        userId
-      ),
-    })
+    .set({date_updated: nextRevision(textEntryResource, userId)})
     .where(
       and(
         sql`changes() > 0`,
@@ -72,21 +69,11 @@ const touchEntry = (db: Db, entryId: number, userId: number) =>
       )
     );
 
-const owned = {
-  table: tagsEntries,
-  id: tagsEntries.id,
-  userId: tagsEntries.user_id,
-};
-
 /** Only create, destroy and reorder are routed (Django's viewset mixins). */
 export const tagEntryRoutes = new Hono<AppEnv>();
 
 tagEntryRoutes.post('/reorder', c =>
-  reorder(c, {
-    ...tagEntryOrdering,
-    type: TAG_TEXT_ENTRY,
-    userId: tagsEntries.user_id,
-  })
+  reorder(c, {...tagTextEntryResource, ...tagEntryOrdering})
 );
 
 /** Tag an entry: get_or_create on (tag, text_entry). Always 201. */
@@ -97,13 +84,8 @@ tagEntryRoutes.post('/', async c => {
     type: TAG_TEXT_ENTRY,
   });
   const ids = await resolveRelated(db, user.id, relationships, [
-    {name: 'tag', table: tags, id: tags.id, userId: tags.user_id},
-    {
-      name: 'text_entry',
-      table: textEntries,
-      id: textEntries.id,
-      userId: textEntries.user_id,
-    },
+    {name: 'tag', ...tagResource},
+    {name: 'text_entry', ...textEntryResource},
   ]);
   const tagId = ids['tag'] as number;
   const textEntryId = ids['text_entry'] as number;
@@ -135,12 +117,7 @@ tagEntryRoutes.post('/', async c => {
             user_id: user.id,
             order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
             date_created: timestamp,
-            date_updated: revision(
-              tagsEntries,
-              tagsEntries.date_updated,
-              tagsEntries.user_id,
-              user.id
-            ),
+            date_updated: nextRevision(tagTextEntryResource, user.id),
           })
           .returning(),
         touchEntry(db, textEntryId, user.id),
@@ -162,12 +139,7 @@ tagEntryRoutes.post('/', async c => {
         .update(tagsEntries)
         .set({
           user_id: user.id,
-          date_updated: revision(
-            tagsEntries,
-            tagsEntries.date_updated,
-            tagsEntries.user_id,
-            user.id
-          ),
+          date_updated: nextRevision(tagTextEntryResource, user.id),
         })
         .where(eq(tagsEntries.id, junction.id))
         .returning(),
@@ -179,13 +151,7 @@ tagEntryRoutes.post('/', async c => {
 });
 
 tagEntryRoutes.delete('/:id', async c => {
-  const junction = await getOwned<TagTextEntry>(
-    c,
-    owned,
-    c.req.param('id'),
-    TAG_TEXT_ENTRY,
-    requireUser(c)
-  );
+  const junction = await getOwned<TagTextEntry>(c, tagTextEntryResource);
   const db = c.get('db');
   await db.batch([
     db.delete(tagsEntries).where(eq(tagsEntries.id, junction.id)),

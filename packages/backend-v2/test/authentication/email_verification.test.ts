@@ -6,10 +6,11 @@ import {
   GOOGLE_USERINFO_URL,
   githubPayload,
   githubRoutes,
+  googlePayload,
   mockFetch,
   requestWithEnv,
   setCookies,
-} from './support';
+} from '../support/auth';
 
 // Accounts are looked up by email, so only a provider-verified address may
 // sign in. Otherwise anyone who attaches your address to their GitHub or
@@ -57,9 +58,7 @@ describe('OAuth email verification', () => {
         {},
         'POST',
         '/api/v1/google-login/',
-        {
-          data: {type: 'GoogleLogin', attributes: {code: 'code'}},
-        }
+        googlePayload()
       );
       expect(response.status).toBe(403);
       expect(

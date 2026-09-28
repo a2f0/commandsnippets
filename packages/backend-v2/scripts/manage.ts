@@ -13,6 +13,9 @@
  *   delete-user <username>             delete a user and all of their data
  */
 import {writeFileSync} from 'node:fs';
+import {takeFlag} from './lib/args';
+import {run} from './lib/process';
+import {sqlLiteral} from './lib/sql';
 
 export type Row = Record<string, string | number | null>;
 
@@ -21,8 +24,6 @@ export interface CommandContext {
   query: (sql: string) => Promise<Row[]>;
   out: (text: string) => void;
 }
-
-const literal = (value: string) => `'${value.replaceAll("'", "''")}'`;
 
 const pad = (value: unknown, width: number) => {
   const text = String(value ?? 'None');
@@ -168,7 +169,7 @@ export async function deleteUser(
     throw new Error('usage: delete-user <username>');
   }
   const [user] = await query(
-    `SELECT id FROM users_user WHERE username = ${literal(username)}`
+    `SELECT id FROM users_user WHERE username = ${sqlLiteral(username)}`
   );
   if (user === undefined) {
     throw new Error(`User matching query does not exist: ${username}`);
@@ -184,16 +185,8 @@ export async function runCommand(
   context: CommandContext
 ): Promise<number> {
   const args = [...argv];
-  const flag = (name: string) => {
-    const index = args.indexOf(name);
-    if (index === -1) {
-      return undefined;
-    }
-    const [, value] = args.splice(index, 2);
-    return value;
-  };
-  const format = flag('--format') ?? 'stdout';
-  const output = flag('--output');
+  const format = takeFlag(args, '--format') ?? 'stdout';
+  const output = takeFlag(args, '--output');
   const [command, username] = args;
   const commands: Record<string, () => Promise<void>> = {
     'list-users': () => listUsers(context),
@@ -218,7 +211,7 @@ export async function runCommand(
 }
 
 /** Run SQL against D1 through `wrangler d1 execute`. */
-export function wranglerQuery(
+function wranglerQuery(
   environment: string | undefined,
   persistTo: string | undefined,
   wrangler: string[] = ['bunx', 'wrangler']
@@ -231,7 +224,7 @@ export function wranglerQuery(
             ...(persistTo === undefined ? [] : ['--persist-to', persistTo]),
           ]
         : ['--remote', '--env', environment];
-    const proc = Bun.spawn(
+    const {stdout, stderr, code} = await run(
       [
         ...wrangler,
         'd1',
@@ -242,13 +235,8 @@ export function wranglerQuery(
         '--command',
         sql,
       ],
-      {cwd: `${import.meta.dirname}/..`, stdout: 'pipe', stderr: 'pipe'}
+      {cwd: `${import.meta.dirname}/..`}
     );
-    const [stdout, stderr, code] = await Promise.all([
-      new Response(proc.stdout).text(),
-      new Response(proc.stderr).text(),
-      proc.exited,
-    ]);
     if (code !== 0) {
       throw new Error(`wrangler d1 execute failed:\n${stderr || stdout}`);
     }
@@ -264,12 +252,8 @@ export function main(
   wrangler?: string[]
 ): Promise<number> {
   const args = [...argv];
-  const take = (name: string) => {
-    const index = args.indexOf(name);
-    return index === -1 ? undefined : args.splice(index, 2)[1];
-  };
-  const environment = take('--env');
-  const persistTo = take('--persist-to');
+  const environment = takeFlag(args, '--env');
+  const persistTo = takeFlag(args, '--persist-to');
   return runCommand(args, {
     query: wranglerQuery(environment, persistTo, wrangler),
     out,

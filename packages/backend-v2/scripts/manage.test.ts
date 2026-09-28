@@ -1,6 +1,6 @@
 import {Database} from 'bun:sqlite';
 import {beforeEach, describe, expect, test} from 'bun:test';
-import {loadMigrations} from './import-postgres';
+import * as migrations from './lib/migrations';
 import {
   type CommandContext,
   deleteUser,
@@ -77,7 +77,7 @@ function seedContent(userId: number, tags: number, entries: number) {
 beforeEach(() => {
   db = new Database(':memory:');
   db.run('PRAGMA foreign_keys = ON');
-  loadMigrations(db);
+  migrations.load(db);
   lines = [];
   seedUser(1, 'alice', 'alice@example.com', '2024-03-01T00:00:00.000000');
   seedUser(2, "o'brien", 'ob,rien@example.com', null);

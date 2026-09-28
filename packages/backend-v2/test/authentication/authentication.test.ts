@@ -1,34 +1,29 @@
 import {eq} from 'drizzle-orm';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vitest';
 import {tokens} from '../../src/db/schema';
 import {
   ApiClient,
-  type Base,
   db,
   json,
   refreshUser,
-  setUpBase,
   tokenFor,
   userFactory,
 } from '../helpers';
-import {GOOGLE_TOKEN_URL, GOOGLE_USERINFO_URL, mockFetch} from './support';
-
-const COOKIE_DOMAIN = 'localhost';
-const MAX_AGE = '2419200';
+import {
+  COOKIE_DOMAIN,
+  googlePayload,
+  googleRoutes,
+  COOKIE_MAX_AGE as MAX_AGE,
+  mockFetch,
+} from '../support/auth';
 
 async function assertLogoutResponseIsOk(response: Response) {
   expect(response.status).toBe(200);
   expect(await json(response)).toEqual({});
 }
 
-// tearleads/authentication/tests/test_authentication.py
+// Django origin: backend/tearleads/authentication/tests/test_authentication.py
 describe('TestAuthentication', () => {
-  let base: Base;
-
-  beforeEach(async () => {
-    base = await setUpBase();
-  });
-
   it('test_successful_authentication_then_deauthentication', async () => {
     // v2 drops the /api-token-auth/ password login (Workers caps PBKDF2 at
     // 100k iterations, below Django's hashes), so log in through a mocked
@@ -36,18 +31,12 @@ describe('TestAuthentication', () => {
     const authUser = await userFactory();
     const existingToken = await tokenFor(authUser.id);
     const client = new ApiClient();
-    mockFetch([
-      {method: 'POST', url: GOOGLE_TOKEN_URL, body: {access_token: 'token'}},
-      {
-        method: 'GET',
-        url: GOOGLE_USERINFO_URL,
-        body: {email: authUser.email, email_verified: true},
-      },
-    ]);
+    mockFetch(googleRoutes(authUser.email));
 
-    const response = await client.post('/api/v1/google-login/', {
-      data: {type: 'GoogleLogin', attributes: {code: 'valid_code'}},
-    });
+    const response = await client.post(
+      '/api/v1/google-login/',
+      googlePayload('valid_code')
+    );
 
     expect(response.status).toBe(200);
     expect(await tokenFor(authUser.id)).toBe(existingToken);
@@ -83,35 +72,6 @@ describe('TestAuthentication', () => {
     expect(client.cookies.get('LoggedIn')?.attributes['domain']).toBe(
       COOKIE_DOMAIN
     );
-  });
-
-  it('test_failed_authentication', async () => {
-    // v2 deviation: the password endpoint no longer exists.
-    const response = await base.user1Client.post('/api-token-auth/', {
-      username: 'user1',
-      password: 'wrongpassword',
-    });
-    expect(response.status).toBe(404);
-  });
-
-  it('test_blank_passwords_not_allowed', async () => {
-    // v2 deviation: users have no password column and the password endpoint
-    // is gone, so every variant is a 404 rather than a 400.
-    const user = await userFactory({
-      username: 'user',
-      email: 'user@example.com',
-    });
-    expect(user.id).not.toBeNull();
-    expect('password' in user).toBe(false);
-    const client = new ApiClient();
-    for (const payload of [
-      {username: 'user', password: ''},
-      {username: 'user'},
-      {username: 'user', password: null},
-    ]) {
-      const response = await client.post('/api-token-auth/', payload);
-      expect(response.status).toBe(404);
-    }
   });
 
   it('test_invalid_token_passed_to_logout', async () => {
@@ -161,18 +121,12 @@ describe('TokenAuthentication', () => {
     const user = await userFactory();
     const revoked = await tokenFor(user.id);
     await db().delete(tokens).where(eq(tokens.user_id, user.id));
-    mockFetch([
-      {method: 'POST', url: GOOGLE_TOKEN_URL, body: {access_token: 'token'}},
-      {
-        method: 'GET',
-        url: GOOGLE_USERINFO_URL,
-        body: {email: user.email, email_verified: true},
-      },
-    ]);
+    mockFetch(googleRoutes(user.email));
     const client = new ApiClient();
-    const response = await client.post('/api/v1/google-login/', {
-      data: {type: 'GoogleLogin', attributes: {code: 'valid_code'}},
-    });
+    const response = await client.post(
+      '/api/v1/google-login/',
+      googlePayload('valid_code')
+    );
     expect(response.status).toBe(200);
     const issued = await tokenFor(user.id);
     expect(issued).toMatch(/^[0-9a-f]{40}$/);
@@ -182,18 +136,9 @@ describe('TokenAuthentication', () => {
 
   it('keeps the user logged in across logins (login_count)', async () => {
     const user = await userFactory();
-    mockFetch([
-      {method: 'POST', url: GOOGLE_TOKEN_URL, body: {access_token: 'token'}},
-      {
-        method: 'GET',
-        url: GOOGLE_USERINFO_URL,
-        body: {email: user.email, email_verified: true},
-      },
-    ]);
+    mockFetch(googleRoutes(user.email));
     const client = new ApiClient();
-    const payload = {
-      data: {type: 'GoogleLogin', attributes: {code: 'valid_code'}},
-    };
+    const payload = googlePayload('valid_code');
     await client.post('/api/v1/google-login/', payload);
     await client.post('/api/v1/google-login/', payload);
     expect((await refreshUser(user.id))?.login_count).toBe(3);

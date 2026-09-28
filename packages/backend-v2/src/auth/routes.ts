@@ -1,18 +1,14 @@
 import {type Context, Hono} from 'hono';
 import type {AppEnv} from '../env';
-import {ApiError} from '../lib/errors';
+import {authenticationFailed, validationError} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {charField, validateOrThrow} from '../lib/validation';
+import {GITHUB_LOGIN, GOOGLE_LOGIN} from '../resources/resourceTypes';
 import {getOrCreateUser, recordLogin} from '../services/users';
+import {clearAuthCookies, setAuthCookies} from './cookies';
 import {GithubOAuthService, GoogleOAuthService} from './oauth';
-import {clearAuthCookies, setAuthCookies} from './tokens';
 
 const unauthorized = (c: Context<AppEnv>) => c.json({errors: []}, 401);
-
-const authenticationFailed = (detail: string) =>
-  // DRF coerces AuthenticationFailed to 403 when there is no
-  // WWW-Authenticate header, which was the case for this API.
-  ApiError.of(403, detail, 'authentication_failed');
 
 const noEmail = 'No email found in Google user data';
 const unverifiedEmail = 'Google email is not verified';
@@ -61,7 +57,7 @@ authRoutes.post('/api-token-deauth', c => {
 
 /** GitHub OAuth: exchange the code, then read login + email. */
 authRoutes.post('/api/v1/github-login', async c => {
-  const {attributes} = await parseResource(c.req.raw, {type: 'GithubLogin'});
+  const {attributes} = await parseResource(c.req.raw, {type: GITHUB_LOGIN});
   const {code} = validateOrThrow<{code: string}>(
     {code: charField()},
     attributes
@@ -105,7 +101,7 @@ authRoutes.post('/api/v1/github-login', async c => {
 
 /** Web Google OAuth: exchange the authorization code, then read the email. */
 authRoutes.post('/api/v1/google-login', async c => {
-  const {attributes} = await parseResource(c.req.raw, {type: 'GoogleLogin'});
+  const {attributes} = await parseResource(c.req.raw, {type: GOOGLE_LOGIN});
   const {code} = validateOrThrow<{code: string}>(
     {code: charField()},
     attributes
@@ -125,7 +121,7 @@ authRoutes.post('/api/v1/google-login', async c => {
   }
   const {email, email_verified} = (await userResponse.json()) as GoogleUserInfo;
   if (!email) {
-    throw ApiError.of(400, noEmail, 'invalid');
+    throw validationError(noEmail);
   }
   // Accounts are keyed by email: only a verified one proves ownership.
   if (email_verified !== true) {

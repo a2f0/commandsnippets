@@ -1,10 +1,14 @@
-import {env} from 'cloudflare:workers';
 import {describe, expect, it} from 'vitest';
-import {app} from '../../src/app';
-import {refreshTag, setUpBase, tagFactory, tokenFor} from '../helpers';
+import {
+  appRequest,
+  refreshTag,
+  setUpBase,
+  tagFactory,
+  tokenFor,
+} from '../helpers';
 
 const post = (path: string, headers: Record<string, string>, body = '{}') =>
-  app.request(`http://localhost${path}`, {method: 'POST', headers, body}, env);
+  appRequest(path, {method: 'POST', headers, body});
 
 // A cross-site form (or text/plain) POST skips the CORS preflight, and logout's
 // SameSite=None expiries would make such a forged logout effective.
@@ -49,27 +53,21 @@ describe('cross-site request forgery', () => {
   it('refuses state changes from a foreign origin even with a valid cookie', async () => {
     const {user1} = await setUpBase();
     const tag = await tagFactory({user: user1});
-    const response = await app.request(
-      `http://localhost/api/v1/tags/${tag.id}`,
-      {
-        method: 'DELETE',
-        headers: {
-          Cookie: `Authorization=${await tokenFor(user1.id)}`,
-          Origin: 'https://evil.example',
-        },
+    const response = await appRequest(`/api/v1/tags/${tag.id}`, {
+      method: 'DELETE',
+      headers: {
+        Cookie: `Authorization=${await tokenFor(user1.id)}`,
+        Origin: 'https://evil.example',
       },
-      env
-    );
+    });
     expect(response.status).toBe(403);
     expect((await refreshTag(tag.id))?.is_deleted).toBe(false);
   });
 
   it('leaves cross-origin reads to CORS', async () => {
-    const response = await app.request(
-      'http://localhost/healthcheck/',
-      {headers: {Origin: 'https://evil.example'}},
-      env
-    );
+    const response = await appRequest('/healthcheck/', {
+      headers: {Origin: 'https://evil.example'},
+    });
     expect(response.status).toBe(200);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });

@@ -1,9 +1,9 @@
 import {describe, expect, it} from 'vitest';
 import {
-  createRegistry,
   TAG_TEXT_ENTRY,
   TEXT_ENTRY_REUSED,
-} from '../../src/resources/serializers';
+} from '../../src/resources/resourceTypes';
+import {createRegistry} from '../../src/resources/serializers';
 import {
   db,
   entriesOf,

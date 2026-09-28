@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {setUpBase} from '../helpers';
 
-// tearleads/healthcheck/tests/test_healthcheck_api.py
+// Django origin: backend/tearleads/healthcheck/tests/test_healthcheck_api.py
 describe('TestHealthCheckApi', () => {
   it('test_health_check', async () => {
     const {user1Client} = await setUpBase();

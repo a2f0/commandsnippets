@@ -6,19 +6,19 @@
  */
 import {desc, type SQL} from 'drizzle-orm';
 import {
-  ApiError,
   conflict,
   fieldError,
   notFound,
   parseError,
   queryError,
+  unsupportedMediaType,
 } from './errors';
 
 // ---------------------------------------------------------------------------
 // Request parsing
 // ---------------------------------------------------------------------------
 
-export interface ParsedResource {
+interface ParsedResource {
   id: string | undefined;
   attributes: Record<string, unknown>;
   relationships: Record<string, string | null>;
@@ -35,16 +35,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** The JSON:API media type, which every response document is sent as. */
+export const JSON_API_MEDIA_TYPE = 'application/vnd.api+json';
+
 /**
  * Request bodies must be JSON. Both accepted types make a cross-origin request
  * "non-simple", so the browser preflights it and the CORS allowlist applies;
  * `text/plain` or form posts would otherwise skip the preflight (login CSRF).
  * DRF-JSON:API likewise answered other media types with 415.
  */
-const JSON_MEDIA_TYPES = new Set([
-  'application/vnd.api+json',
-  'application/json',
-]);
+const JSON_MEDIA_TYPES = new Set([JSON_API_MEDIA_TYPE, 'application/json']);
 
 /** 415 unless the request declares a JSON body. */
 export function assertJsonMediaType(request: Request): void {
@@ -53,11 +53,7 @@ export function assertJsonMediaType(request: Request): void {
     ?.trim()
     .toLowerCase();
   if (!JSON_MEDIA_TYPES.has(mediaType ?? '')) {
-    throw ApiError.of(
-      415,
-      `Unsupported media type "${mediaType}" in request.`,
-      'unsupported_media_type'
-    );
+    throw unsupportedMediaType(mediaType);
   }
 }
 
@@ -130,7 +126,7 @@ export async function parseResource(
 // Serialization
 // ---------------------------------------------------------------------------
 
-export interface ResourceIdentifier {
+interface ResourceIdentifier {
   type: string;
   id: string;
 }
@@ -174,14 +170,14 @@ interface Identified {
   id: number;
 }
 
-/** Expand `a.b,c` into validated paths plus their prefixes (`a`, `a.b`, `c`). */
 /**
  * The longest include path accepted. Clients use at most two segments
  * (`text_entry_to_tag.tag`); relationships are cyclic, so an unbounded path
  * could keep re-walking the same rows.
  */
-export const MAX_INCLUDE_DEPTH = 3;
+const MAX_INCLUDE_DEPTH = 3;
 
+/** Expand `a.b,c` into validated paths plus their prefixes (`a`, `a.b`, `c`). */
 function resolveIncludes(
   registry: Registry,
   type: string,
@@ -416,9 +412,9 @@ const QUERY_PARAM =
   /^(sort|include)$|^(?<kind>filter|fields|page)(\[[\w.-]+\])?$/;
 const FILTER_PARAM = /^filter\[([\w.-]+)\]$/;
 
-export const SEARCH_PARAM = 'filter[search]';
-export const PAGE_SIZE = 50;
-export const MAX_PAGE_SIZE = 100;
+const SEARCH_PARAM = 'filter[search]';
+const PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
 
 /** Maps a Django filter key (e.g. `date_updated__gt`) to a SQL condition. */
 export type FilterSpec = Record<string, (value: string) => SQL>;
@@ -549,4 +545,16 @@ export function paginate(
     },
     meta: {pagination: {page: query.page, pages, count}},
   };
+}
+
+/** A page of a collection: DJA's `links` and `meta`, then `data`/`included`. */
+export function listDocument(
+  data: ResourceObject[],
+  included: ResourceObject[],
+  pagination: Pagination
+): Record<string, unknown> {
+  return document(data, included, {
+    links: pagination.links,
+    meta: pagination.meta,
+  });
 }

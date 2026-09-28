@@ -1,10 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {
-  booleanField,
-  charField,
-  choiceField,
-  validate,
-} from '../../src/lib/validation';
+import {booleanField, charField, validate} from '../../src/lib/validation';
 
 describe('validation fields', () => {
   it('charField rejects null and non-strings, trims, and allows blank when asked', () => {
@@ -32,17 +27,6 @@ describe('validation fields', () => {
         code: 'max_length',
       },
     });
-  });
-
-  it('choiceField rejects null and unknown values', () => {
-    const field = choiceField(['a']);
-    expect(field.parse(null)).toEqual({
-      error: {detail: 'This field may not be null.', code: 'null'},
-    });
-    expect(field.parse('b')).toEqual({
-      error: {detail: '"b" is not a valid choice.', code: 'invalid_choice'},
-    });
-    expect(field.parse('a')).toEqual({value: 'a'});
   });
 
   it('booleanField accepts DRF truthy/falsy spellings', () => {

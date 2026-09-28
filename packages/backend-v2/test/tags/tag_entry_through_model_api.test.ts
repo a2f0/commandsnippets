@@ -30,7 +30,7 @@ const tagPayload = (tagId: number | string, textEntryId: number | string) => ({
   },
 });
 
-// backend/tearleads/tags/tests/test_tag_entry_through_model_api.py
+// Django origin: backend/tearleads/tags/tests/test_tag_entry_through_model_api.py
 describe('TestTagsEntriesApi', () => {
   let base: Base;
 

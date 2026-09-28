@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from 'vitest';
-import {requestWithEnv, setCookies} from '../authentication/support';
 import {json, setUpBase, tagsOf} from '../helpers';
+import {requestWithEnv, setCookies} from '../support/auth';
 
 const tagPayload = {data: {type: 'Tag', attributes: {name: 'via-form'}}};
 
