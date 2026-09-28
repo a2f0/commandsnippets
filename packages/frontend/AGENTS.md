@@ -76,11 +76,14 @@ Run these from `packages/frontend`.
   fields must be optional or have defaults so older snapshots still load.
 - **Context**: `src/AppContext.tsx` provides the store; components read it
   with `useAppContext()`.
-- **Signing out on a 403**: `fetchWithAuth` (`src/lib/api/fetchWithAuth.ts`)
-  calls `handleUnauthorized` (`src/lib/auth/authUtils.ts`) on a 403, and
-  `store.ts` registers `resetApplicationState` as its handler. `authUtils`
-  must not import the store: the models import the API client, so that would
-  be an import cycle.
+- **Signing out when the session is gone**: `fetchWithAuth`
+  (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
+  (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API
+  error `code` is `not_authenticated` or `authentication_failed` or that has
+  no code; other 403s (`permission_denied`, `origin_not_allowed`) keep the
+  session. `store.ts` registers `resetApplicationState` as the handler.
+  `authUtils` must not import the store: the models import the API client, so
+  that would be an import cycle.
 
 ### API
 - `src/lib/api/apiClient.ts` - the JSON:API client for tags, entries and
@@ -145,7 +148,8 @@ Run these from `packages/frontend`.
   - `__tests__/src/` mirrors `src/`: the spec for `src/pages/AdminPage.tsx` is
     `__tests__/src/pages/AdminPage.spec.tsx`
   - `__tests__/integration/` renders the whole app (`TestAppRouter`) to test a
-    behavior across modules, such as reordering or signing out on a 403
+    behavior across modules, such as reordering or signing out when the
+    session is gone
   - `__tests__/infra/` checks the hosting: `hosting.spec.ts` builds the app and
     serves it with `wrangler dev`, and `wranglerConfig.spec.ts` checks
     `wrangler.jsonc`

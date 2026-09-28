@@ -52,8 +52,9 @@ interface RequestOptions {
   signal?: AbortSignal | undefined;
   contentType?: 'application/vnd.api+json' | 'application/json';
   /**
-   * Whether a 403 signs the user out (`fetchWithAuth`). The logins run
-   * before there is a session, so they call `fetch` directly.
+   * Whether an answer that means the session is gone signs the user out
+   * (`fetchWithAuth`). The logins run before there is a session, so they
+   * call `fetch` directly.
    */
   withAuth?: boolean;
 }
