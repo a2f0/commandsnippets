@@ -23,6 +23,10 @@ export interface IParamTypes {
   tag: string;
 }
 
+function logFetchError(error: unknown) {
+  console.error('Failed to fetch entries:', error);
+}
+
 const EntryList = () => {
   const appConfig = useAppContext();
   const location = useLocation();
@@ -63,15 +67,21 @@ const EntryList = () => {
 
   const retrieveEntries = () => {
     if (entriesFilter === 'untagged' && user !== undefined) {
-      appConfig.fetchUntaggedTextEntries(user).then(() => {
-        filterAndSort();
-      });
+      appConfig
+        .fetchUntaggedTextEntries(user)
+        .then(() => {
+          filterAndSort();
+        })
+        .catch(logFetchError);
     } else if (entriesFilter === 'all') {
       filterAndSort();
     } else if (user !== undefined && tag !== undefined) {
-      appConfig.fetchTextEntries(user, tag).then(() => {
-        filterAndSort();
-      });
+      appConfig
+        .fetchTextEntries(user, tag)
+        .then(() => {
+          filterAndSort();
+        })
+        .catch(logFetchError);
     }
   };
 
@@ -119,6 +129,11 @@ const EntryList = () => {
               }
             );
             setEntries(filtered);
+          }
+        }).catch((error: unknown) => {
+          // A newer request (the next search) aborted this one: not an error.
+          if (!controller.signal.aborted) {
+            logFetchError(error);
           }
         });
       }
