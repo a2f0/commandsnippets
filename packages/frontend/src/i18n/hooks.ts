@@ -34,6 +34,7 @@ export {useTranslation} from 'react-i18next';
 
 // Export types for use in components
 export type {
+  AdminKeys,
   CommonKeys,
   EntriesKeys,
   MenuKeys,

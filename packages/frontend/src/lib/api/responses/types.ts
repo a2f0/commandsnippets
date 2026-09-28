@@ -7,6 +7,7 @@ export interface UserResponse {
   data: {
     attributes: {
       username: string;
+      is_staff?: boolean;
     };
   };
 }

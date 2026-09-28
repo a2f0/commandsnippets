@@ -107,7 +107,7 @@ const SECURITY_HEADERS = {
 };
 
 describe.each([false, true])('with navigate=%s', navigate => {
-  it.each(['/', '/dan', '/dan/kubernetes'])(
+  it.each(['/', '/dan', '/dan/kubernetes', '/admin'])(
     'serves the app shell for %s with the security headers',
     async path => {
       const response = await get(path, navigate);

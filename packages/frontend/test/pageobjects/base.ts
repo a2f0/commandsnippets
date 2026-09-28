@@ -6,6 +6,29 @@ export class Base {
     return $('#signInPage');
   }
 
+  // admin page
+  get adminLinkButton(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminLinkButton');
+  }
+  get adminPage(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminPage');
+  }
+  adminUserRow(id: string): ReturnType<WebdriverIO.Browser['$']> {
+    return $(`#adminUserRow${id}`);
+  }
+  adminUserToggle(id: string): ReturnType<WebdriverIO.Browser['$']> {
+    return $(`#adminUserToggle${id}`);
+  }
+  get adminConfirmButton(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminConfirmButton');
+  }
+  get adminAuditLogTab(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminAuditLogTab');
+  }
+  get adminAuditLog(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminAuditLog');
+  }
+
   // file menu
   get githubAuthButton(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#githubAuthButton');

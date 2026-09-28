@@ -100,11 +100,57 @@ export interface EntriesTranslations {
   entryCount_plural: string;
 }
 
+export interface AdminTranslations {
+  title: string;
+  menuLink: string;
+  usersTab: string;
+  auditLogTab: string;
+  forbidden: string;
+  loadError: string;
+  retry: string;
+  searchLabel: string;
+  statusLabel: string;
+  statusAll: string;
+  statusActive: string;
+  statusInactive: string;
+  columnUsername: string;
+  columnEmail: string;
+  columnJoined: string;
+  columnLastLogin: string;
+  columnLogins: string;
+  columnEntries: string;
+  columnTags: string;
+  columnStatus: string;
+  columnWhen: string;
+  columnAction: string;
+  columnBy: string;
+  columnUser: string;
+  staff: string;
+  active: string;
+  inactive: string;
+  never: string;
+  deactivate: string;
+  reactivate: string;
+  deactivateTitle: string;
+  deactivateBody: string;
+  reactivateTitle: string;
+  reactivateBody: string;
+  cannotDeactivateSelf: string;
+  updateError: string;
+  noUsers: string;
+  noAuditEntries: string;
+  actionDeactivateUser: string;
+  actionActivateUser: string;
+  rowsPerPage: string;
+  displayedRows: string;
+}
+
 export interface Translations {
   common: CommonTranslations;
   menu: MenuTranslations;
   tags: TagsTranslations;
   entries: EntriesTranslations;
+  admin: AdminTranslations;
 }
 
 export type I18NextTranslations = {
@@ -112,6 +158,7 @@ export type I18NextTranslations = {
   menu: MenuTranslations;
   tags: TagsTranslations;
   entries: EntriesTranslations;
+  admin: AdminTranslations;
 } & Record<string, Record<string, string>>;
 
 // Helper types for keys
@@ -119,6 +166,7 @@ export type CommonKeys = keyof CommonTranslations;
 export type MenuKeys = keyof MenuTranslations;
 export type TagsKeys = keyof TagsTranslations;
 export type EntriesKeys = keyof EntriesTranslations;
+export type AdminKeys = keyof AdminTranslations;
 
 export type NamespaceKeys = keyof Translations;
 

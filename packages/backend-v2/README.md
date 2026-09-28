@@ -78,7 +78,14 @@ Deliberate changes:
   - `GET /audit_log` lists these changes, newest first
     (`filter[target_user_id]`).
 
-  Nothing in the API grants staff; see Operations.
+  Nothing in the API grants staff; see Operations. `GET /api/v1/user` reports
+  the requester's own `is_staff`, which the web app uses to offer its `/admin`
+  page.
+- **Some usernames are reserved.** Usernames are the web app's first path
+  segment (`/:user/:tag`), so its own top-level routes, listed in
+  `src/services/reserved-usernames.json` (`admin`, `oauth`), are treated as
+  taken in any letter case, and a new account gets the usual `-<digits>`
+  suffix instead. The frontend's tests check its routes against the list.
 - **Deactivated accounts are locked out.** An `is_active = false` account's
   token is ignored (it is anonymous), and its logins get 403 `This account has
   been deactivated.` Django only checked `is_active` on the retired password

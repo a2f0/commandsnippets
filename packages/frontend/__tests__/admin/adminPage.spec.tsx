@@ -1,0 +1,331 @@
+import '@testing-library/jest-dom';
+
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import {createMemoryHistory} from 'history';
+import {HttpResponse, http} from 'msw';
+import {setupServer} from 'msw/node';
+import {vi} from 'vitest';
+
+import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {store} from '../util/loggedInStore';
+import {TestAppRouter} from '../util/TestAppRouter';
+
+Element.prototype.scrollIntoView = vi.fn();
+
+const API = 'http://localhost:9001/api/v1';
+
+interface MockUser {
+  id: string;
+  username: string;
+  email: string;
+  is_staff: boolean;
+  is_active: boolean;
+}
+
+let viewerIsStaff = true;
+let adminForbidden = false;
+let users: MockUser[] = [];
+let listRequests: URLSearchParams[] = [];
+let patches: unknown[] = [];
+
+const resource = (user: MockUser) => ({
+  type: 'AdminUser',
+  id: user.id,
+  attributes: {
+    username: user.username,
+    email: user.email,
+    first_name: '',
+    last_name: '',
+    is_staff: user.is_staff,
+    is_active: user.is_active,
+    date_joined: '2026-01-02T03:04:05.000000',
+    last_login: user.is_active ? '2026-09-01T00:00:00.000000' : null,
+    login_count: 4,
+    date_updated: '2026-09-01T00:00:00.000000',
+    entry_count: 12,
+    tag_count: 3,
+  },
+});
+
+const forbidden = () =>
+  HttpResponse.json(
+    {
+      errors: [
+        {
+          code: 'permission_denied',
+          detail: 'You do not have permission to perform this action.',
+        },
+      ],
+    },
+    {status: 403}
+  );
+
+const server = setupServer(
+  http.get(`${API}/user/`, () =>
+    HttpResponse.json({
+      data: {
+        type: 'User',
+        id: '1',
+        attributes: {
+          username: 'test',
+          is_staff: viewerIsStaff,
+          date_updated: '2026-09-01T00:00:00.000000',
+        },
+      },
+    })
+  ),
+  http.get(`${API}/admin/users`, ({request}) => {
+    if (adminForbidden) {
+      return forbidden();
+    }
+    const params = new URL(request.url).searchParams;
+    listRequests.push(params);
+    const search = params.get('filter[search]')?.toLowerCase();
+    const active = params.get('filter[is_active]');
+    const matching = users.filter(
+      user =>
+        (search === undefined ||
+          user.username.includes(search) ||
+          user.email.includes(search)) &&
+        (active === null || String(user.is_active) === active)
+    );
+    return HttpResponse.json({
+      data: matching.map(resource),
+      links: {},
+      meta: {pagination: {page: 1, pages: 1, count: matching.length}},
+    });
+  }),
+  http.patch(`${API}/admin/users/:id`, async ({params, request}) => {
+    const body = await request.json();
+    patches.push(body);
+    const user = users.find(candidate => candidate.id === params['id']);
+    if (user === undefined) {
+      return HttpResponse.json({errors: []}, {status: 404});
+    }
+    user.is_active = !user.is_active;
+    return HttpResponse.json({data: resource(user)});
+  }),
+  http.get(`${API}/admin/audit_log`, () =>
+    HttpResponse.json({
+      data: [
+        {
+          type: 'AdminAuditLogEntry',
+          id: '9',
+          attributes: {
+            created: '2026-09-28T12:00:00.000000',
+            action: 'deactivate_user',
+            actor_id: '1',
+            actor_username: 'test',
+            target_user_id: '7',
+            target_username: 'alice',
+          },
+        },
+      ],
+      links: {},
+      meta: {pagination: {page: 1, pages: 1, count: 1}},
+    })
+  )
+);
+
+beforeAll(() => server.listen());
+afterAll(() => server.close());
+
+beforeEach(() => {
+  assignLoggedInCookie();
+  viewerIsStaff = true;
+  adminForbidden = false;
+  listRequests = [];
+  patches = [];
+  users = [
+    {
+      id: '1',
+      username: 'test',
+      email: 'test@example.com',
+      is_staff: true,
+      is_active: true,
+    },
+    {
+      id: '7',
+      username: 'alice',
+      email: 'alice@example.com',
+      is_staff: false,
+      is_active: true,
+    },
+  ];
+});
+
+afterEach(() => {
+  server.resetHandlers();
+  act(() => {
+    store.setIsStaff(false);
+    store.setLoggedInUser('test');
+  });
+});
+
+async function renderAt(path: string) {
+  const history = createMemoryHistory();
+  history.push(path);
+  await act(async () => {
+    render(<TestAppRouter history={history} />);
+  });
+  return history;
+}
+
+const usersTable = () => screen.findByRole('table', {name: 'Users'});
+
+function present<T>(value: T | null | undefined, what: string): T {
+  if (value === null || value === undefined) {
+    throw new Error(`missing ${what}`);
+  }
+  return value;
+}
+
+describe('AdminPage', () => {
+  it('serves /admin as the admin page, not the page of a user named "admin"', async () => {
+    await renderAt('/admin');
+
+    const table = await usersTable();
+    expect(document.getElementById('adminPage')).toBeInTheDocument();
+    expect(within(table).getByText('alice@example.com')).toBeInTheDocument();
+    expect(within(table).getByText('Staff')).toBeInTheDocument();
+    expect(store.isStaff).toBe(true);
+    // The menu now offers the page.
+    expect(document.getElementById('adminLinkButton')).toHaveAttribute(
+      'href',
+      '/admin'
+    );
+  });
+
+  it('turns away users who are not staff, without logging them out', async () => {
+    viewerIsStaff = false;
+    act(() => store.setIsStaff(true));
+
+    await renderAt('/admin');
+
+    expect(
+      await screen.findByText('You do not have access to this page.')
+    ).toBeInTheDocument();
+    expect(listRequests).toHaveLength(0);
+    expect(store.isStaff).toBe(false);
+    expect(store.loggedInUser).toBe('test');
+    expect(document.getElementById('adminLinkButton')).toBeNull();
+  });
+
+  it('shows the sign-in page to signed-out visitors', async () => {
+    act(() => store.setLoggedInUser(null));
+
+    await renderAt('/admin');
+
+    expect(document.getElementById('signInPage')).toBeInTheDocument();
+    expect(listRequests).toHaveLength(0);
+  });
+
+  it('says so when access is revoked while the page is open', async () => {
+    adminForbidden = true;
+
+    await renderAt('/admin');
+
+    expect(
+      await screen.findByText('You do not have access to this page.')
+    ).toBeInTheDocument();
+    expect(store.loggedInUser).toBe('test');
+  });
+
+  it('deactivates a user after confirmation', async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    fireEvent.click(
+      present(document.getElementById('adminUserToggle7'), 'toggle')
+    );
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Deactivate alice?')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', {name: 'Deactivate'}));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', {name: 'Reactivate'})
+      ).toBeInTheDocument();
+    });
+    expect(patches).toEqual([
+      {data: {type: 'AdminUser', id: '7', attributes: {is_active: false}}},
+    ]);
+    const row = present(document.getElementById('adminUserRow7'), 'row');
+    expect(within(row).getByText('Deactivated')).toBeInTheDocument();
+  });
+
+  it('changes nothing when the confirmation is cancelled', async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    fireEvent.click(
+      present(document.getElementById('adminUserToggle7'), 'toggle')
+    );
+    fireEvent.click(await screen.findByRole('button', {name: 'Cancel'}));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(patches).toHaveLength(0);
+  });
+
+  it("won't let staff deactivate their own account", async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    expect(document.getElementById('adminUserToggle1')).toBeDisabled();
+    expect(document.getElementById('adminUserToggle7')).toBeEnabled();
+  });
+
+  it('searches and filters by status', async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    fireEvent.change(screen.getByLabelText('Search username or email'), {
+      target: {value: 'ali'},
+    });
+    await waitFor(() => {
+      expect(listRequests.at(-1)?.get('filter[search]')).toBe('ali');
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('test@example.com')).toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('button', {name: 'Deactivated'}));
+    await waitFor(() => {
+      expect(listRequests.at(-1)?.get('filter[is_active]')).toBe('false');
+    });
+    expect(await screen.findByText('No users match.')).toBeInTheDocument();
+  });
+
+  it('sorts by a column', async () => {
+    await renderAt('/admin');
+    await usersTable();
+    expect(listRequests.at(-1)?.get('sort')).toBe('-date_joined');
+
+    fireEvent.click(screen.getByRole('button', {name: 'Username'}));
+
+    await waitFor(() => {
+      expect(listRequests.at(-1)?.get('sort')).toBe('username');
+    });
+  });
+
+  it('shows the audit log', async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    fireEvent.click(screen.getByRole('tab', {name: 'Audit log'}));
+
+    const table = await screen.findByRole('table', {name: 'Audit log'});
+    const cell = await within(table).findByText('alice');
+    const row = present(cell.closest('tr'), 'audit row');
+    expect(within(row).getByText('Deactivated')).toBeInTheDocument();
+  });
+});

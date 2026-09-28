@@ -15,7 +15,7 @@ import {
 // v2: the admin API (/api/v1/admin), for is_staff users.
 async function staffClient(): Promise<{staff: User; client: ApiClient}> {
   const staff = await userFactory(
-    {username: 'admin', email: 'admin@example.com'},
+    {username: 'staff', email: 'staff@example.com'},
     {examples: false}
   );
   await db().update(users).set({is_staff: true}).where(eq(users.id, staff.id));
@@ -177,8 +177,8 @@ describe('AdminApi users', () => {
       (await json(await client.get(`/api/v1/admin/users?${query}`))).data[0]
         .attributes.username;
     expect(await first('sort=-entry_count')).toBe('dave');
-    expect(await first('sort=username')).toBe('admin');
-    expect(await first('sort=-username')).toBe('dave');
+    expect(await first('sort=username')).toBe('dave');
+    expect(await first('sort=-username')).toBe('staff');
 
     const paged = await json(
       await client.get('/api/v1/admin/users?page[size]=1&page[number]=2')
@@ -197,7 +197,7 @@ describe('AdminApi users', () => {
   it('retrieves one user, 404ing for missing or malformed ids', async () => {
     const response = await client.get(`/api/v1/admin/users/${staff.id}`);
     expect(response.status).toBe(200);
-    expect((await json(response)).data.attributes.username).toBe('admin');
+    expect((await json(response)).data.attributes.username).toBe('staff');
     expect((await client.get('/api/v1/admin/users/999999')).status).toBe(404);
     expect((await client.get('/api/v1/admin/users/abc')).status).toBe(404);
   });
@@ -237,7 +237,7 @@ describe('AdminApi deactivation', () => {
         created: expect.any(String),
         action: 'deactivate_user',
         actor_id: staff.id,
-        actor_username: 'admin',
+        actor_username: 'staff',
         target_user_id: target.id,
         target_username: 'target',
       },
@@ -375,7 +375,7 @@ describe('AdminApi audit log', () => {
         created: expect.any(String),
         action: 'deactivate_user',
         actor_id: expect.any(String),
-        actor_username: 'admin',
+        actor_username: 'staff',
         target_user_id: String(two.id),
         target_username: 'two',
       },

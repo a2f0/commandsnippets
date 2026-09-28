@@ -9,6 +9,7 @@ import {GithubAuth} from './GithubAuth';
 import {GoogleAuth} from './GoogleAuth';
 import {useTypedTranslation} from './i18n/hooks';
 import {environment} from './lib/environment';
+import {AdminLinkButton} from './menu/admin/AdminLinkButton';
 import {DebugMenu} from './menu/debug/DebugMenu';
 import {DebugMenuButton} from './menu/debug/DebugMenuButton';
 import {EntriesMenu} from './menu/entries/EntriesMenu';
@@ -157,6 +158,7 @@ const MenuBar = () => {
           <DebugMenuButton onClick={handleDebugMenuClick} />
         )}
         <HelpMenuButton onClick={handleHelpMenuClick} />
+        {appConfig.loggedInUser && appConfig.isStaff && <AdminLinkButton />}
       </Aligner>
       <Box
         sx={{

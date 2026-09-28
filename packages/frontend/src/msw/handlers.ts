@@ -222,6 +222,64 @@ let entriesResponse: ITextEntryJsonApiResponse = JSON.parse(
 // Runtime override for test data - allows tests to inject custom responses
 let runtimeEntriesOverride: ITextEntryJsonApiResponse | null = null;
 // Define all possible API base URLs
+// Admin page data: the signed-in test user (id 1, staff) and one other.
+interface MockAdminUser {
+  id: string;
+  username: string;
+  email: string;
+  is_staff: boolean;
+  is_active: boolean;
+}
+interface MockAuditEntry {
+  id: string;
+  created: string;
+  action: string;
+  target: string;
+}
+const originalAdminUsers: MockAdminUser[] = [
+  {
+    id: '1',
+    username: 'test',
+    email: 'test@example.com',
+    is_staff: true,
+    is_active: true,
+  },
+  {
+    id: '7',
+    username: 'alice',
+    email: 'alice@example.com',
+    is_staff: false,
+    is_active: true,
+  },
+];
+let adminUsers: MockAdminUser[] = structuredClone(originalAdminUsers);
+let adminAuditLog: MockAuditEntry[] = [];
+
+const adminUserResource = (user: MockAdminUser) => ({
+  type: 'AdminUser',
+  id: user.id,
+  attributes: {
+    username: user.username,
+    email: user.email,
+    first_name: '',
+    last_name: '',
+    is_staff: user.is_staff,
+    is_active: user.is_active,
+    date_joined: '2026-01-02T03:04:05.000000',
+    last_login: '2026-09-01T00:00:00.000000',
+    login_count: 4,
+    date_updated: '2026-09-01T00:00:00.000000',
+    entry_count: 12,
+    tag_count: 3,
+  },
+});
+
+const adminPage = (data: unknown[]) => ({
+  data,
+  links: {},
+  meta: {pagination: {page: 1, pages: 1, count: data.length}},
+});
+
 const apiBaseUrls = [
   'http://localhost:9001/api/v1',
   'https://api-staging.commandsnippets.com/api/v1',
@@ -234,6 +292,74 @@ const createHandlers = () => {
 
   for (const baseUrl of apiBaseUrls) {
     handlers.push(
+      // The signed-in user (read by the admin page)
+      http.get(`${baseUrl}/user/`, ({request}) => {
+        recordRequest('GET', request.url);
+        return HttpResponse.json({
+          data: {
+            type: 'User',
+            id: '1',
+            attributes: {
+              username: 'test',
+              is_staff: true,
+              date_updated: '2026-09-01T00:00:00.000000',
+            },
+          },
+        });
+      }),
+
+      // Admin API
+      http.get(`${baseUrl}/admin/users`, ({request}) => {
+        recordRequest('GET', request.url);
+        const params = new URL(request.url).searchParams;
+        const search = params.get('filter[search]')?.toLowerCase();
+        const active = params.get('filter[is_active]');
+        const matching = adminUsers.filter(
+          user =>
+            (search === undefined ||
+              user.username.includes(search) ||
+              user.email.includes(search)) &&
+            (active === null || String(user.is_active) === active)
+        );
+        return HttpResponse.json(adminPage(matching.map(adminUserResource)));
+      }),
+      http.patch(`${baseUrl}/admin/users/:id`, async ({params, request}) => {
+        recordRequest('PATCH', request.url);
+        const user = adminUsers.find(
+          candidate => candidate.id === params['id']
+        );
+        if (user === undefined) {
+          return HttpResponse.json({errors: []}, {status: 404});
+        }
+        user.is_active = !user.is_active;
+        adminAuditLog.unshift({
+          id: String(adminAuditLog.length + 1),
+          created: '2026-09-28T12:00:00.000000',
+          action: user.is_active ? 'activate_user' : 'deactivate_user',
+          target: user.username,
+        });
+        return HttpResponse.json({data: adminUserResource(user)});
+      }),
+      http.get(`${baseUrl}/admin/audit_log`, ({request}) => {
+        recordRequest('GET', request.url);
+        return HttpResponse.json(
+          adminPage(
+            adminAuditLog.map(entry => ({
+              type: 'AdminAuditLogEntry',
+              id: entry.id,
+              attributes: {
+                created: entry.created,
+                action: entry.action,
+                actor_id: '1',
+                actor_username: 'test',
+                target_user_id: null,
+                target_username: entry.target,
+              },
+            }))
+          )
+        );
+      }),
+
       // Health check endpoint
       http.get(`${baseUrl}/health`, ({request}) => {
         recordRequest('GET', request.url);
@@ -517,6 +643,8 @@ export const resetMSWState = () => {
   tagsResponse = JSON.parse(JSON.stringify(originalTagsResponse));
   entriesResponse = JSON.parse(JSON.stringify(originalEntriesResponse));
   runtimeEntriesOverride = null;
+  adminUsers = structuredClone(originalAdminUsers);
+  adminAuditLog = [];
 };
 
 // Function to set runtime entries override for tests

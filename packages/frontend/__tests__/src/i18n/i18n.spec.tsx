@@ -74,7 +74,7 @@ describe('i18n', () => {
   });
 
   it('should have all required namespaces loaded', () => {
-    const expectedNamespaces = ['common', 'menu', 'tags', 'entries'];
+    const expectedNamespaces = ['common', 'menu', 'tags', 'entries', 'admin'];
     const enData = i18n.store.data['en'];
     const loadedNamespaces = enData ? Object.keys(enData) : [];
 
@@ -85,7 +85,7 @@ describe('i18n', () => {
 
   it('should have translations for both languages in all namespaces', () => {
     const languages = ['en', 'es'] as const;
-    const namespaces = ['common', 'menu', 'tags', 'entries'];
+    const namespaces = ['common', 'menu', 'tags', 'entries', 'admin'];
 
     languages.forEach(lang => {
       const langData = i18n.store.data[lang];

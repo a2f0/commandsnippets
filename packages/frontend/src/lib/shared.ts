@@ -35,6 +35,7 @@ export enum activeTagEditField {
 
 export interface appState {
   loggedInUser: string | null;
+  isStaff: boolean;
   selectedTheme: string;
   tagSortOrder: string;
   entryNew: string | null;
@@ -53,6 +54,7 @@ export interface appState {
 
 export const defaultState: appState = {
   loggedInUser: null,
+  isStaff: false,
   selectedTheme: 'darkTheme',
   tagSortOrder: 'order',
   entryNew: null,

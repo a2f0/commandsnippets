@@ -28,6 +28,9 @@ export const RootModel = types
     tagTextEntryThroughModel: types.array(TagTextEntryThroughModel),
     usersArray: types.array(UserModel),
     loggedInUser: types.maybeNull(types.string),
+    // Whether the signed-in user is staff (offers the admin page). Optional so
+    // snapshots saved before it existed still load.
+    isStaff: types.optional(types.boolean, false),
     selectedTheme: types.string,
     tagSortOrder: types.string,
     entryNew: types.maybeNull(types.string),
@@ -301,6 +304,9 @@ export const RootModel = types
     },
     setLoggedInUser(handle: string | null) {
       self.loggedInUser = handle;
+    },
+    setIsStaff(isStaff: boolean) {
+      self.isStaff = isStaff;
     },
     removeTag(id: string) {
       const existingTag = self.tagsArray.find(c => c.id === id);
