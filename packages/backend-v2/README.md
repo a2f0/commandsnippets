@@ -225,6 +225,10 @@ bun scripts/manage.ts usage-report --env production [--format csv --output repor
 bun scripts/manage.ts delete-user <username> --env production
 ```
 
+Without `--env` they use the local development database. A bare or unknown
+`--env`, like any flag missing its value, prints the usage and exits 2 rather
+than falling back to another database.
+
 Grant or revoke staff (access to `/api/v1/admin`) in the database; the API
 cannot:
 

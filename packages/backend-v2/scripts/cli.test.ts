@@ -1,6 +1,7 @@
 import {afterEach, describe, expect, test} from 'bun:test';
 import {
   chmodSync,
+  existsSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -125,6 +126,7 @@ describe('manage CLI', () => {
     return {
       wrangler: ['sh', binary],
       args: () => readFileSync(argsFile, 'utf8').trim().split('\n'),
+      called: () => existsSync(argsFile),
     };
   }
 
@@ -165,6 +167,30 @@ describe('manage CLI', () => {
       '--env',
       'production',
     ]);
+  });
+
+  // Falling back to the local database, or passing wrangler an environment
+  // it does not define, would run the command against the wrong database.
+  test.each([
+    ['a bare --env', ['--env']],
+    ['an unknown --env', ['--env', 'prod']],
+    ['--env followed by another flag', ['--env', '--persist-to', '/state']],
+    ['a bare --persist-to', ['--persist-to']],
+  ])('refuses %s before querying any database', async (_name, flags) => {
+    const dir = tempDir();
+    const fake = fakeWrangler(dir, '[{"results":[]}]');
+    const out: string[] = [];
+    expect(
+      await manageMain(
+        ['list-users', ...flags],
+        l => out.push(l),
+        fake.wrangler
+      )
+    ).toBe(2);
+    expect(out).toEqual([
+      'usage: bun scripts/manage.ts <list-users|list-recent-logins|usage-report|delete-user> [--env staging|production]',
+    ]);
+    expect(fake.called()).toBe(false);
   });
 
   test('reports a failed wrangler call', async () => {

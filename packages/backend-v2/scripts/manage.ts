@@ -6,6 +6,8 @@
  *
  * Without --env the local development database is used (optionally from
  * --persist-to <dir>); with --env the remote database for that environment.
+ * A bare or unknown --env, like any flag missing its value, is a usage error
+ * rather than a fallback to another database.
  *
  *   list-users                         emails of all users
  *   list-recent-logins                 users by most recent login
@@ -13,11 +15,23 @@
  *   delete-user <username>             delete a user and all of their data
  */
 import {writeFileSync} from 'node:fs';
-import {takeFlag} from './lib/args';
+import {parseOrUsage, takeFlag, UsageError} from './lib/args';
 import {run} from './lib/process';
 import {sqlLiteral} from './lib/sql';
 
 export type Row = Record<string, string | number | null>;
+
+/** The wrangler.jsonc environments `--env` can target. */
+export const ENVIRONMENTS = ['staging', 'production'];
+
+const COMMANDS = [
+  'list-users',
+  'list-recent-logins',
+  'usage-report',
+  'delete-user',
+] as const;
+
+const USAGE = `usage: bun scripts/manage.ts <${COMMANDS.join('|')}> [--env ${ENVIRONMENTS.join('|')}]`;
 
 /** Where commands read from and write to; tests substitute both. */
 export interface CommandContext {
@@ -185,24 +199,31 @@ export async function runCommand(
   context: CommandContext
 ): Promise<number> {
   const args = [...argv];
-  const format = takeFlag(args, '--format') ?? 'stdout';
-  const output = takeFlag(args, '--output');
-  const [command, username] = args;
-  const commands: Record<string, () => Promise<void>> = {
-    'list-users': () => listUsers(context),
-    'list-recent-logins': () => listRecentLogins(context),
-    'usage-report': () => usageReport(context, {format, output}),
-    'delete-user': () => deleteUser(context, username),
-  };
-  const run = command === undefined ? undefined : commands[command];
-  if (run === undefined) {
-    context.out(
-      `usage: bun scripts/manage.ts <${Object.keys(commands).join('|')}> [--env staging|production]`
-    );
+  const flags = parseOrUsage(
+    () => ({
+      format: takeFlag(args, '--format') ?? 'stdout',
+      output: takeFlag(args, '--output'),
+    }),
+    USAGE,
+    context.out
+  );
+  if (flags === undefined) {
     return 2;
   }
+  const [command, username] = args;
+  const name = COMMANDS.find(known => known === command);
+  if (name === undefined) {
+    context.out(USAGE);
+    return 2;
+  }
+  const commands: Record<(typeof COMMANDS)[number], () => Promise<void>> = {
+    'list-users': () => listUsers(context),
+    'list-recent-logins': () => listRecentLogins(context),
+    'usage-report': () => usageReport(context, flags),
+    'delete-user': () => deleteUser(context, username),
+  };
   try {
-    await run();
+    await commands[name]();
     return 0;
   } catch (error) {
     context.out((error as Error).message);
@@ -245,17 +266,35 @@ function wranglerQuery(
   };
 }
 
+/** `--env`'s value, which must name a configured environment. */
+function takeEnvironment(args: string[]): string | undefined {
+  const environment = takeFlag(args, '--env');
+  if (environment !== undefined && !ENVIRONMENTS.includes(environment)) {
+    throw new UsageError(`unknown environment ${environment}`);
+  }
+  return environment;
+}
+
 /** The CLI entry point; returns the process exit code. */
-export function main(
+export async function main(
   argv: string[],
   out: (text: string) => void = console.log,
   wrangler?: string[]
 ): Promise<number> {
   const args = [...argv];
-  const environment = takeFlag(args, '--env');
-  const persistTo = takeFlag(args, '--persist-to');
+  const target = parseOrUsage(
+    () => ({
+      environment: takeEnvironment(args),
+      persistTo: takeFlag(args, '--persist-to'),
+    }),
+    USAGE,
+    out
+  );
+  if (target === undefined) {
+    return 2;
+  }
   return runCommand(args, {
-    query: wranglerQuery(environment, persistTo, wrangler),
+    query: wranglerQuery(target.environment, target.persistTo, wrangler),
     out,
   });
 }
