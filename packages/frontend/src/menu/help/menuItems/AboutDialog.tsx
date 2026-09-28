@@ -9,6 +9,7 @@ import {
 import React from 'react';
 
 import packageJson from '../../../../package.json';
+import {useTypedTranslation} from '../../../i18n/hooks';
 
 interface IProps {
   dialogOpen: boolean;
@@ -16,6 +17,8 @@ interface IProps {
 }
 
 const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
+  const {t} = useTypedTranslation('menu');
+
   return (
     <Dialog
       id="HelpMenuAboutDialog"
@@ -26,7 +29,7 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
-      <DialogTitle>About Tearleads</DialogTitle>
+      <DialogTitle>{t('aboutDialogTitle')}</DialogTitle>
       <DialogContent>
         <DialogContentText sx={{color: theme => theme.palette.text.primary}}>
           v{packageJson.version}

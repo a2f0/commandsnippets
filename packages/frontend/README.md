@@ -1,4 +1,4 @@
-# Tearleads Frontend
+# Commandsnippets Frontend
 
 A command snippet tool for computer programmers and system administrators. It's
 a tagging system that allows for user-defined ordering of both Tag and Entry

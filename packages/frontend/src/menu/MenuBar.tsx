@@ -122,7 +122,7 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           pb: 0.5,
         }}
       >
-        <img src="/tearleads-logo-small.svg" alt={t('logoAlt')} />
+        <img src="/logo-small.svg" alt={t('logoAlt')} />
       </Box>
       <Aligner>
         {appConfig.loggedInUser && (

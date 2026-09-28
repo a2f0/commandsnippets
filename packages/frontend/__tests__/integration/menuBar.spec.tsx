@@ -51,9 +51,9 @@ describe('MenuBar', () => {
       });
 
       await waitFor(() => {
-        const logo = screen.getByAltText('Tearleads Logo');
+        const logo = screen.getByAltText('Commandsnippets Logo');
         expect(logo).toBeInTheDocument();
-        expect(logo).toHaveAttribute('src', '/tearleads-logo-small.svg');
+        expect(logo).toHaveAttribute('src', '/logo-small.svg');
       });
     });
 
@@ -245,7 +245,7 @@ describe('MenuBar', () => {
         expect(menuBar).toBeInTheDocument();
 
         // Check that the logo exists
-        const logo = screen.getByAltText('Tearleads Logo');
+        const logo = screen.getByAltText('Commandsnippets Logo');
         expect(logo).toBeInTheDocument();
       });
     });
