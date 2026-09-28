@@ -42,14 +42,14 @@ export function allColumns(spec: TableSpec): string[] {
 /** Tables to import, in foreign-key order. Everything else is Django-internal. */
 export const TABLES: Record<string, TableSpec> = {
   users_user: {
-    // `password` is dropped: v2 has no password login.
+    // `password` is dropped (v2 has no password login), and so is
+    // `is_superuser` (v2 has only is_staff).
     columns: [
       'id',
       'username',
       'email',
       'first_name',
       'last_name',
-      'is_superuser',
       'is_staff',
       'is_active',
       'last_login',
@@ -57,7 +57,7 @@ export const TABLES: Record<string, TableSpec> = {
       'date_updated',
       'login_count',
     ],
-    booleans: ['is_superuser', 'is_staff', 'is_active'],
+    booleans: ['is_staff', 'is_active'],
     integers: ['id', 'login_count'],
     timestamps: ['last_login', 'date_joined', 'date_updated'],
   },

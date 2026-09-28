@@ -7,6 +7,7 @@ import {createDb} from './db/client';
 import type {AppEnv} from './env';
 import {ApiError, describeError} from './lib/errors';
 import {assertJsonMediaType} from './lib/jsonapi';
+import {adminRoutes} from './resources/admin';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
 import {tagRoutes} from './resources/tags';
@@ -94,6 +95,7 @@ app.route('/api/v1/tags', tagRoutes);
 app.route('/api/v1/entries', entryRoutes);
 app.route('/api/v1/tags_entries', tagEntryRoutes);
 app.route('/api/v1/entry_reuses', entryReuseRoutes);
+app.route('/api/v1/admin', adminRoutes);
 
 app.notFound(c =>
   jsonApi(

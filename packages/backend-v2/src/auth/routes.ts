@@ -22,7 +22,10 @@ interface GoogleUserInfo {
   email_verified?: boolean;
 }
 
-/** Log in (or sign up) the user for a verified email and set cookies. */
+/**
+ * Log in (or sign up) the user for a verified email and set cookies. A
+ * deactivated account is refused before anything is recorded or issued.
+ */
 async function login(
   c: Context<AppEnv>,
   username: string,
@@ -30,6 +33,9 @@ async function login(
 ): Promise<Response> {
   const db = c.get('db');
   const {user, created} = await getOrCreateUser(db, username, email);
+  if (!user.is_active) {
+    throw authenticationFailed('This account has been deactivated.');
+  }
   if (!created) {
     await recordLogin(db, user.id);
   }
