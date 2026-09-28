@@ -245,6 +245,8 @@ console.error('ERROR: Build failed');
   - `assignLoggedInCookie.ts` - sets the `LoggedIn` cookie the UI checks
   - `TestAppRouter.tsx` - the app in a memory router, signed in
   - `msw.ts` - an `msw/node` server with the default API responses
+  - `storeFixtures.ts` - a store of a test's own (`createStore`), signed in,
+    and builders for the tags, entries and junctions it holds
 - Prefer `screen.findBy*` over `waitFor(() => screen.getBy*)` for async
   elements
 - Use `act()` for async renders: `await act(async () => render(<Component />))`

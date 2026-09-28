@@ -1,7 +1,6 @@
 import React from 'react';
 
-import {useAppContext} from '../../AppContext';
-import {entrySearchMethod} from '../../lib/shared';
+import {useEntrySortOrder} from '../../hooks/useEntrySortOrder';
 import {StyledDivider} from '../../styled/StyledDivider';
 import {StyledMenu} from '../StyledMenu';
 import {AllEntries} from './menuItems/AllEntries';
@@ -24,7 +23,11 @@ interface IProps {
 }
 
 const EntriesMenu = ({onClose, anchorEl}: IProps) => {
-  const appConfig = useAppContext();
+  // The subject, body and date created items sort the list on screen
+  // (useEntrySortOrder). The untagged and all-entries lists have no tag
+  // order, and the API, which sorts the all-entries list, cannot sort by tag
+  // count, so only a tag's list offers those sorts.
+  const {tagList} = useEntrySortOrder();
   return (
     <StyledMenu
       id="entries-menu"
@@ -35,7 +38,7 @@ const EntriesMenu = ({onClose, anchorEl}: IProps) => {
       <AllEntries onClose={onClose} />
       <UntaggedEntries onClose={onClose} />
       <StyledDivider />
-      {appConfig.entrySearchMethod === entrySearchMethod.currentTagOnly && [
+      {tagList && [
         <SortByUserDefinedOrder onClose={onClose} key="SortMenuItemOrder" />,
         <SortByDateTaggedDescending onClose={onClose} key="SortDateTagged" />,
         <SortByDateTaggedAscending onClose={onClose} key="SortDateTagged-" />,
@@ -46,8 +49,16 @@ const EntriesMenu = ({onClose, anchorEl}: IProps) => {
       <SortByBodyAscending onClose={onClose} />
       <SortByDateCreatedDescending onClose={onClose} />
       <SortByDateCreatedAscending onClose={onClose} />
-      <SortByTagCountDescending onClose={onClose} />
-      <SortByTagCountAscending onClose={onClose} />
+      {tagList && [
+        <SortByTagCountDescending
+          onClose={onClose}
+          key="SortTagCountDescending"
+        />,
+        <SortByTagCountAscending
+          onClose={onClose}
+          key="SortTagCountAscending"
+        />,
+      ]}
     </StyledMenu>
   );
 };
