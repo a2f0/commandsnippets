@@ -268,22 +268,82 @@ describe('adminApi', () => {
     expect(await getStaffStatus()).toBe(false);
   });
 
+  it('rejects a /user response that is not a user document', async () => {
+    reply(200, {data: {type: 'User', id: '1', attributes: {username: 'a'}}});
+    const result = getStaffStatus();
+    await expect(result).rejects.toBeInstanceOf(AdminApiError);
+    await expect(result).rejects.toThrow(
+      'Invalid admin API response: data.attributes.is_staff: '
+    );
+    expect(loggedOut()).toBe(false);
+  });
+
   it('reports an expired session (401) as signed out', async () => {
     reply(401, {errors: []});
     await expect(getStaffStatus()).rejects.toBeInstanceOf(AdminSignedOutError);
   });
 
-  it('rejects responses of the wrong shape', async () => {
+  const allUsers = () =>
+    listUsers({
+      search: '',
+      status: 'all',
+      sort: 'username',
+      descending: false,
+      page: 1,
+      pageSize: 25,
+    });
+
+  it('rejects responses of the wrong shape, keeping the session', async () => {
     reply(200, page([userResource({is_active: 'yes'})]));
-    await expect(
-      listUsers({
-        search: '',
-        status: 'all',
-        sort: 'username',
-        descending: false,
-        page: 1,
-        pageSize: 25,
-      })
-    ).rejects.toThrow('Invalid admin API response: is_active');
+    const result = allUsers();
+    await expect(result).rejects.toBeInstanceOf(AdminApiError);
+    await expect(result).rejects.toThrow(
+      'Invalid admin API response: data.0.attributes.is_active: '
+    );
+    expect(loggedOut()).toBe(false);
+  });
+
+  it('rejects a page without pagination, and a body that is not JSON', async () => {
+    reply(200, {data: [userResource()], links: {}});
+    await expect(allUsers()).rejects.toThrow(
+      /^Invalid admin API response: links\.first: /
+    );
+
+    vi.mocked(globalThis.fetch).mockResolvedValue(
+      new Response('<h1>OK</h1>', {status: 200})
+    );
+    await expect(listAuditLog(1, 25)).rejects.toThrow(
+      'Invalid admin API response: (document): '
+    );
+  });
+
+  it('rejects an audit log entry with an unknown action', async () => {
+    reply(
+      200,
+      page([
+        {
+          type: 'AdminAuditLogEntry',
+          id: '1',
+          attributes: {
+            created: '2026-09-28T12:00:00',
+            action: 'delete_user',
+            actor_id: null,
+            actor_username: 'a2f0',
+            target_user_id: null,
+            target_username: 'alice',
+          },
+        },
+      ])
+    );
+    await expect(listAuditLog(1, 25)).rejects.toThrow(
+      'Invalid admin API response: data.0.attributes.action: '
+    );
+  });
+
+  it('rejects a changed user that is not an AdminUser', async () => {
+    reply(200, {data: {...userResource(), type: 'User'}});
+    await expect(setUserActive('7', false)).rejects.toThrow(
+      'Invalid admin API response: data.type: '
+    );
   });
 });
