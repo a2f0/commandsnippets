@@ -2,7 +2,7 @@ import React from 'react';
 import {useParams} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {fetchAllEntriesForUser} from '../../../lib/text_entries';
+import {fetchAllEntriesForUser} from '../../../lib/textEntries';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {

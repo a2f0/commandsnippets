@@ -1,6 +1,6 @@
 import {useCallback, useState} from 'react';
 
-import type {ErrorInfo} from '../components/ErrorBoundary';
+import type {ErrorInfo} from '../components/errorBoundary';
 
 export interface LogEntry {
   id: string;

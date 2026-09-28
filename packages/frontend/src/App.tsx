@@ -6,7 +6,7 @@ import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import {I18nextProvider} from 'react-i18next';
 
-import {ErrorBoundary, type ErrorInfo} from './components/ErrorBoundary';
+import {ErrorBoundary, type ErrorInfo} from './components/errorBoundary';
 import {getGlobalErrorStore} from './hooks/useErrorStore';
 import {i18n} from './i18n/i18n';
 import {ErrorStoreProvider} from './providers/ErrorStoreProvider';

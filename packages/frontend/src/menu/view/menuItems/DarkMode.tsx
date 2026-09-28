@@ -1,43 +1,44 @@
 import {ListItemIcon} from '@mui/material';
+
 import React from 'react';
-import {lightTheme, type Theme} from '../../../../src/theme/themes';
 import {useAppContext} from '../../../AppContext';
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {darkTheme, type Theme} from '../../../theme/themes';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;
 }
 
-const LightMode = ({onClose}: IProps) => {
+const DarkMode = ({onClose}: IProps) => {
   const appConfig = useAppContext();
   const {t} = useTypedTranslation('menu');
 
   const handleThemeSwitcher = (chosenTheme: Theme) => {
-    if (chosenTheme === lightTheme) {
-      appConfig.setSelectedTheme('lightTheme');
-    } else {
+    if (chosenTheme === darkTheme) {
       appConfig.setSelectedTheme('darkTheme');
+    } else {
+      appConfig.setSelectedTheme('lightTheme');
     }
   };
 
   return (
     <StyledMenuItem
-      id="view-menu-light-theme"
+      id="view-menu-dark-theme"
       onClick={() => {
-        handleThemeSwitcher(lightTheme);
+        handleThemeSwitcher(darkTheme);
         onClose();
       }}
     >
       <ListItemIcon>
-        {appConfig.selectedTheme === 'lightTheme' && <StyledCheckIcon />}
+        {appConfig.selectedTheme === 'darkTheme' && <StyledCheckIcon />}
       </ListItemIcon>
-      {t('lightMode')}
+      {t('darkMode')}
     </StyledMenuItem>
   );
 };
 
-const memoizedLightMode = React.memo(LightMode);
+const memoizedDarkMode = React.memo(DarkMode);
 
-export {memoizedLightMode as LightMode};
+export {memoizedDarkMode as DarkMode};

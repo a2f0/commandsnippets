@@ -1,8 +1,8 @@
 import React from 'react';
 
 import {StyledMenu} from '../StyledMenu';
-import {PopulateIndexedDB} from './menu_items/PopulateIndexedDB';
-import {TriggerTestError} from './menu_items/TriggerTestError';
+import {PopulateIndexedDB} from './menuItems/PopulateIndexedDB';
+import {TriggerTestError} from './menuItems/TriggerTestError';
 
 interface IProps {
   onClose: () => void;

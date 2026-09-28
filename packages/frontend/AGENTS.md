@@ -86,7 +86,7 @@ Run these from `packages/frontend`.
   401/403 responses.
 - `src/lib/api/baseUrl.ts` - the API URL for the environment, which
   `src/lib/environment.ts` derives from the page's hostname and port.
-- `src/lib/tags.ts` and `src/lib/text_entries.ts` - paging fetches and the
+- `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
   client-side sorting and filtering of tags and entries.
 
 ### Local Database (Debug only)
@@ -105,12 +105,13 @@ Run these from `packages/frontend`.
   lists, their editors, context menus and styled fields), `admin/` (the admin
   page's tabs), `auth/` (the GitHub and Google sign-in buttons, which are also
   the OAuth callback routes), `bottomBar/`, `drawer/`, `dnd/` (drag handles
-  and the React DnD item types) and `ErrorBoundary/`. Components shared by
+  and the React DnD item types) and `errorBoundary/`. Components shared by
   several features (`AppHeader`, `LanguageSwitcher`, `UserProfileCircle`) sit
   at the root of `src/components/`.
-- **Menu bar**: `src/menu/MenuBar.tsx`; each menu is in `src/menu/<name>/`,
-  and `src/menu/StyledMenu.tsx` and `StyledMenuItem.tsx` are their shared
-  drop-down and item (the context menus use the item too)
+- **Menu bar**: `src/menu/MenuBar.tsx`; each menu is in `src/menu/<name>/`
+  (its items in `menuItems/`), and `src/menu/StyledMenu.tsx` and
+  `StyledMenuItem.tsx` are their shared drop-down and item (the context menus
+  use the item too)
 - **Shared styling**: `src/styled/` holds small styled components used across
   features; `src/theme/` the MUI themes, the theme provider, the global
   styles and the shared `sx` objects (`sx.ts`)
@@ -158,10 +159,10 @@ Run these from `packages/frontend`.
 - Only commit when explicitly asked to in the current message.
 
 ### File Naming
-- Component files are PascalCase (`EntryList.tsx`); every other file is
-  camelCase (`fetchWithAuth.ts`).
-- Name new directories in camelCase too. Some existing names are snake_case
-  (`text_entries.ts`, `menu_items/`); don't copy them.
+- Component files are PascalCase (`EntryList.tsx`), and so are the
+  MobX-State-Tree models (`RootModel.ts`); every other file is camelCase
+  (`fetchWithAuth.ts`).
+- Directories are camelCase too (`bottomBar/`, `menuItems/`).
 
 ### Linting & Formatting
 - Run `bun run lint` and `bun run format` to check changes

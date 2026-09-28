@@ -9,7 +9,7 @@ import type {ITextEntryJsonApiResponseSingle} from '../../lib/api/responses/type
 import {tearleadsApi} from '../../lib/api/tearleadsApi';
 import {activeEntryEditField, appMode} from '../../lib/shared';
 import type {ITextEntryJsonApi} from '../../lib/store/models/TextEntryModel';
-import {needsScrollingIntoView} from '../../lib/text_entries';
+import {needsScrollingIntoView} from '../../lib/textEntries';
 import {commonButtonSx} from '../../theme/sx';
 import {InputEntryBody} from './InputEntryBody';
 import {InputEntrySubject} from './InputEntrySubject';

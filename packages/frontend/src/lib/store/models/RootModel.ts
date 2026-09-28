@@ -7,18 +7,18 @@ import {
   appMode,
   entrySearchMethod,
 } from '../../shared';
-import type {ITagJsonApi} from './../models/TagModel';
-import {TagHelpers, TagModel} from './../models/TagModel';
+import type {ITagJsonApi} from './TagModel';
+import {TagHelpers, TagModel} from './TagModel';
 import {
   type ITagTextEntryThroughModelJsonApi,
   TagTextEntryThroughModel,
-} from './../models/TagTextEntryThroughModel';
+} from './TagTextEntryThroughModel';
 import {
   type ITextEntryJsonApi,
   TextEntryHelpers,
   TextEntryModel,
-} from './../models/TextEntryModel';
-import {type IUserJsonApi, UserModel} from './../models/UserModel';
+} from './TextEntryModel';
+import {type IUserJsonApi, UserModel} from './UserModel';
 
 export const RootModel = types
   .model({

@@ -13,7 +13,7 @@ import {appMode, getSelection, initialMouse} from '../../lib/shared';
 import type {ITextEntryJsonApi} from '../../lib/store/models/TextEntryModel';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
-import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/ItemTypes';
+import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/itemTypes';
 import {MemoizedEntryBody} from './EntryBody';
 import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';

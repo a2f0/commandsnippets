@@ -1,6 +1,6 @@
 import {getParent, types} from 'mobx-state-tree';
 import {getMostRecentTimeStamp} from '../../shared';
-import {fetch, fetchPage, sort} from '../../text_entries';
+import {fetch, fetchPage, sort} from '../../textEntries';
 import type {RootModel} from './RootModel';
 
 export interface ITextEntryJsonApi {

@@ -17,10 +17,10 @@ import {
   initialMouse,
 } from '../../lib/shared';
 import type {ITagJsonApi} from '../../lib/store/models/TagModel';
-import {needsScrollingIntoView} from '../../lib/text_entries';
+import {needsScrollingIntoView} from '../../lib/textEntries';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
-import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/ItemTypes';
+import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/itemTypes';
 import {TagContextMenu} from './TagContextMenu';
 import {TagEdit} from './TagEdit';
 import {TagLabel} from './TagLabel';

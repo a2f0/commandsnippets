@@ -14,8 +14,8 @@ import {
   type ITextEntryJsonApi,
   TextEntryHelpers,
 } from '../../lib/store/models/TextEntryModel';
-import {needsScrollingIntoView} from '../../lib/text_entries';
-import {ItemTypes} from '../dnd/ItemTypes';
+import {needsScrollingIntoView} from '../../lib/textEntries';
+import {ItemTypes} from '../dnd/itemTypes';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';

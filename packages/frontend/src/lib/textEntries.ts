@@ -1,6 +1,5 @@
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
-import {db} from '../../src/lib/db/db';
 import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
 import {
   isAJunction,
@@ -9,6 +8,7 @@ import {
   isAUser,
 } from './api/responses/typeGuards';
 import {tearleadsApi} from './api/tearleadsApi';
+import {db} from './db/db';
 import type {ITagJsonApi} from './store/models/TagModel';
 import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
 import type {ITextEntryJsonApi} from './store/models/TextEntryModel';

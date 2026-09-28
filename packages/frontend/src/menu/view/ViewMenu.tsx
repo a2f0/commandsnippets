@@ -1,9 +1,9 @@
 import React from 'react';
 import {StyledDivider} from '../../styled/StyledDivider';
 import {StyledMenu} from '../StyledMenu';
-import {DarkMode} from './menu_items/DarkMode';
-import {LightMode} from './menu_items/LightMode';
-import {ShowTagCounts} from './menu_items/ShowTagCounts';
+import {DarkMode} from './menuItems/DarkMode';
+import {LightMode} from './menuItems/LightMode';
+import {ShowTagCounts} from './menuItems/ShowTagCounts';
 
 interface IProps {
   onClose: () => void;

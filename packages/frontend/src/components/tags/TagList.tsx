@@ -15,7 +15,7 @@ import {
   initialMouse,
 } from '../../lib/shared';
 import {type ITagJsonApi, TagHelpers} from '../../lib/store/models/TagModel';
-import {ItemTypes} from '../dnd/ItemTypes';
+import {ItemTypes} from '../dnd/itemTypes';
 import {Tag} from './Tag';
 import {TagListContextMenu} from './TagListContextMenu';
 import {TagNew} from './TagNew';
