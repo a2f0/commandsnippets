@@ -2,11 +2,13 @@ import type {
   GithubLoginDocument,
   GoogleLoginDocument,
   TagCreateDocument,
+  TagListParams,
   TagReorderDocument,
   TagTextEntryCreateDocument,
   TagTextEntryReorderDocument,
   TagUpdateDocument,
   TextEntryCreateDocument,
+  TextEntryListParams,
   TextEntryUpdateDocument,
 } from '@commandsnippets/api-shared/requests';
 import {
@@ -28,32 +30,9 @@ import type * as z from 'zod/mini';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {fetchWithAuth} from './fetchWithAuth';
 import {parseBody, readJson} from './parseResponse';
-import type {EntriesQueryParams, TagsQueryParams} from './requests/types';
+import {urlWithQuery} from './searchParams';
 
 type LogoutResponse = z.output<typeof emptyObjectSchema>;
-
-type QueryValue = string | number | boolean | undefined;
-type QueryParams<T> = {[K in keyof T]?: QueryValue};
-
-/** Query parameters in their order, leaving out the undefined ones. */
-function toSearchParams<T extends QueryParams<T>>(params: T): URLSearchParams {
-  const searchParams = new URLSearchParams();
-  for (const [key, value] of Object.entries<QueryValue>(params)) {
-    if (value !== undefined) {
-      searchParams.append(key, String(value));
-    }
-  }
-  return searchParams;
-}
-
-function urlWithQuery<T extends QueryParams<T>>(
-  path: string,
-  params: T
-): string {
-  const url = new URL(path);
-  url.search = toSearchParams(params).toString();
-  return url.toString();
-}
 
 interface RequestOptions {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
@@ -266,7 +245,7 @@ class ApiClient {
   }
 
   public async getEntries(
-    params: EntriesQueryParams & {signal?: AbortSignal}
+    params: TextEntryListParams & {signal?: AbortSignal}
   ): Promise<TextEntryListDocument> {
     const {signal, ...queryParams} = params;
     return this.requestDocument(
@@ -277,7 +256,7 @@ class ApiClient {
     );
   }
 
-  public async getTags(params: TagsQueryParams): Promise<TagListDocument> {
+  public async getTags(params: TagListParams): Promise<TagListDocument> {
     return this.requestDocument(
       urlWithQuery(`${baseURL}/tags`, params),
       {method: 'GET'},

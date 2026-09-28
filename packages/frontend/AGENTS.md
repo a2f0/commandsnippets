@@ -116,8 +116,20 @@ writing its type by hand.
 - `src/lib/api/responses/types.ts` - the JSON:API resources as the store's
   models hold them (`ITagJsonApi`, `ITextEntryJsonApi`, ...), derived from
   api-shared's resource types. The models' `type`s are literals, so their
-  instances are these types. `src/lib/api/requests/types.ts` - the
-  collections' query parameters.
+  instances are these types.
+- **Query parameters** are api-shared's too: `TagListParams`,
+  `TextEntryListParams`, `AdminUserListParams`, ... (from
+  `@commandsnippets/api-shared/requests`), which name each collection's
+  filters, sort keys and include paths, so a parameter the API would refuse
+  does not compile. `apiClient.ts` and `adminApi.ts` take them and
+  `src/lib/api/searchParams.ts` writes them as a query string.
+  `src/lib/api/requests/types.ts` has the entries page fetch's own parameters
+  (`IEntryFetchPage`), and `requests/entrySort.ts` turns the store's
+  `entrySortOrder` (a string) into a sort key of the API's.
+- **Import the smaller entries** of api-shared (`/responses`, `/messages`,
+  types from `/requests`) and only `zod/mini`: a runtime import of classic
+  `zod` puts nearly all of it in the bundle (`__tests__/src/lib/api/zod.spec.ts`
+  fails on one).
 - `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
   client-side sorting and filtering of tags and entries.
 

@@ -1,31 +1,20 @@
-// The collections' query parameters as the client sends them. The request
-// documents are api-shared's (`TagCreateDocument`, `TextEntryUpdateDocument`,
-// ...).
+// The requests' types are api-shared's: documents (`TagCreateDocument`,
+// `TextEntryUpdateDocument`, ...) and the collections' query parameters
+// (`TagListParams`, `TextEntryListParams`, ...), derived from the schemas the
+// API validates them with.
+import type {
+  SortKey,
+  TextEntryListParams,
+  TextEntrySortField,
+} from '@commandsnippets/api-shared/requests';
 
-export interface EntriesQueryParams {
-  'page[number]'?: number;
-  'filter[user.username]'?: string;
-  'filter[tags.name]'?: string;
-  'filter[date_updated.gt]'?: string;
-  'filter[untagged]'?: boolean;
-  'filter[term]'?: string;
-  'filter[tag_count]'?: number;
-  'filter[search]'?: string;
-  sort?: string;
-  include?: string;
-}
-
-export interface TagsQueryParams {
-  'page[number]': number;
-  'filter[user.username]': string;
-  sort: string;
-  'filter[date_updated.gt]'?: string;
-}
+/** `GET /api/v1/entries`'s query: `TextEntryListParams`, as `textEntries.ts` names it. */
+export type EntriesQueryParams = TextEntryListParams;
 
 export interface IEntryFetchPage {
   page: number;
   username: string;
-  sort: string;
+  sort: SortKey<TextEntrySortField>;
   search?: string;
   signal: AbortSignal;
 }

@@ -2,13 +2,14 @@
 import * as z from 'zod/mini';
 import {booleanField, charField} from '../../fields';
 import {dateTimeFilter, textFilter} from '../../filters';
+import type {IncludePath} from '../../include';
 import {
   createDocumentSchema,
   noFieldsSchema,
   updateDocumentSchema,
 } from '../../jsonapi/request';
-import {listQuerySchema} from '../../query';
-import {TAG} from '../types';
+import {type ListParams, listQuerySchema} from '../../query';
+import {type RELATIONSHIPS, TAG} from '../types';
 import {reorderAttributesSchema} from './reorder';
 
 export const TAG_NAME_MAX_LENGTH = 24;
@@ -62,8 +63,11 @@ export const TAG_SORT_FIELDS = [
   'order',
 ] as const;
 
-/** `filter[search]` is accepted and ignored. */
-export const tagListQuerySchema = listQuerySchema({
+/**
+ * The collection's query, which `tagListQuerySchema` validates and
+ * `TagListParams` types. `filter[search]` is accepted and ignored.
+ */
+const tagListQuery = {
   filters: {
     name: textFilter,
     user__username: textFilter,
@@ -73,7 +77,14 @@ export const tagListQuerySchema = listQuerySchema({
   sort: TAG_SORT_FIELDS,
   search: 'ignored',
   include: 'resolved',
-});
+} as const;
+
+export const tagListQuerySchema = listQuerySchema(tagListQuery);
 
 export type TagSortField = (typeof TAG_SORT_FIELDS)[number];
 export type TagListQuery = z.output<typeof tagListQuerySchema>;
+/** `GET /api/v1/tags`'s query parameters, as a client sends them. */
+export type TagListParams = ListParams<
+  typeof tagListQuery,
+  IncludePath<typeof RELATIONSHIPS, typeof TAG>
+>;

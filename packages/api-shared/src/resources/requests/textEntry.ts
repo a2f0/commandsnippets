@@ -10,13 +10,14 @@ import {
   integerFilter,
   textFilter,
 } from '../../filters';
+import type {IncludePath} from '../../include';
 import {
   createDocumentSchema,
   noFieldsSchema,
   updateDocumentSchema,
 } from '../../jsonapi/request';
-import {listQuerySchema} from '../../query';
-import {TEXT_ENTRY} from '../types';
+import {type ListParams, listQuerySchema} from '../../query';
+import {type RELATIONSHIPS, TEXT_ENTRY} from '../types';
 
 export const TEXT_ENTRY_SUBJECT_MAX_LENGTH = 255;
 export const TEXT_ENTRY_BODY_MAX_LENGTH = 1024;
@@ -69,10 +70,11 @@ export const TEXT_ENTRY_SORT_FIELDS = [
 ] as const;
 
 /**
- * `filter[search]` matches the subject or body, case-insensitively
- * (Unicode-aware).
+ * The collection's query, which `textEntryListQuerySchema` validates and
+ * `TextEntryListParams` types. `filter[search]` matches the subject or body,
+ * case-insensitively (Unicode-aware).
  */
-export const textEntryListQuerySchema = listQuerySchema({
+const textEntryListQuery = {
   filters: {
     id: integerFilter,
     tags__name: textFilter,
@@ -86,7 +88,14 @@ export const textEntryListQuerySchema = listQuerySchema({
   sort: TEXT_ENTRY_SORT_FIELDS,
   search: 'supported',
   include: 'resolved',
-});
+} as const;
+
+export const textEntryListQuerySchema = listQuerySchema(textEntryListQuery);
 
 export type TextEntrySortField = (typeof TEXT_ENTRY_SORT_FIELDS)[number];
 export type TextEntryListQuery = z.output<typeof textEntryListQuerySchema>;
+/** `GET /api/v1/entries`'s query parameters, as a client sends them. */
+export type TextEntryListParams = ListParams<
+  typeof textEntryListQuery,
+  IncludePath<typeof RELATIONSHIPS, typeof TEXT_ENTRY>
+>;

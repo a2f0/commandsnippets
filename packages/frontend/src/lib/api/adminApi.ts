@@ -20,6 +20,8 @@
  */
 import {CODES} from '@commandsnippets/api-shared/messages';
 import type {
+  AdminAuditLogListParams,
+  AdminUserListParams,
   AdminUserSortField,
   AdminUserUpdateDocument,
 } from '@commandsnippets/api-shared/requests';
@@ -38,6 +40,7 @@ import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {isSignedOutResponse} from './fetchWithAuth';
 import {describeIssues} from './parseResponse';
+import {toSearchParams} from './searchParams';
 
 export type {AdminUserSortField};
 
@@ -209,19 +212,18 @@ export async function listUsers(
   query: AdminUsersQuery,
   signal?: AbortSignal
 ): Promise<AdminPage<AdminUser>> {
-  const params = new URLSearchParams({
-    'page[number]': String(query.page),
-    'page[size]': String(query.pageSize),
-    sort: `${query.descending ? '-' : ''}${query.sort}`,
-  });
-  if (query.search.trim() !== '') {
-    params.set('filter[search]', query.search.trim());
-  }
-  if (query.status !== 'all') {
-    params.set('filter[is_active]', String(query.status === 'active'));
-  }
+  const search = query.search.trim();
+  const params: AdminUserListParams = {
+    'page[number]': query.page,
+    'page[size]': query.pageSize,
+    sort: query.descending ? `-${query.sort}` : query.sort,
+    ...(search === '' ? {} : {'filter[search]': search}),
+    ...(query.status === 'all'
+      ? {}
+      : {'filter[is_active]': query.status === 'active'}),
+  };
   const init: RequestInit = signal === undefined ? {} : {signal};
-  const body = await adminFetch(`/users?${params}`, init);
+  const body = await adminFetch(`/users?${toSearchParams(params)}`, init);
   return toPage(parse(adminUserListDocumentSchema, body), toUser);
 }
 
@@ -244,11 +246,11 @@ export async function listAuditLog(
   pageSize: number,
   signal?: AbortSignal
 ): Promise<AdminPage<AdminAuditEntry>> {
-  const params = new URLSearchParams({
-    'page[number]': String(page),
-    'page[size]': String(pageSize),
-  });
+  const params: AdminAuditLogListParams = {
+    'page[number]': page,
+    'page[size]': pageSize,
+  };
   const init: RequestInit = signal === undefined ? {} : {signal};
-  const body = await adminFetch(`/audit_log?${params}`, init);
+  const body = await adminFetch(`/audit_log?${toSearchParams(params)}`, init);
   return toPage(parse(adminAuditLogListDocumentSchema, body), toAuditEntry);
 }

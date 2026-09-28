@@ -332,6 +332,63 @@ describe('apiClient requests', () => {
     expect(requested).toBe(url);
     expect(JSON.parse(String(init?.body))).toEqual(body);
   });
+
+  // The collections' queries: their parameters, in the caller's order.
+  const queries: Array<[string, () => Promise<unknown>, string]> = [
+    [
+      'getEntries',
+      () =>
+        apiClient.getEntries({
+          'page[number]': 2,
+          'filter[user.username]': 'u',
+          sort: '-date_created',
+          include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
+          'filter[date_updated.gt]': '2024-01-01T12:34:56.123456',
+          'filter[tags.name]': 'a b&c',
+          'filter[tag_count]': 0,
+          signal: new AbortController().signal,
+        }),
+      `${API}/entries?page%5Bnumber%5D=2&filter%5Buser.username%5D=u` +
+        '&sort=-date_created' +
+        '&include=text_entry_to_tag.tag%2Ctext_entry_to_tag.user%2Cuser' +
+        '&filter%5Bdate_updated.gt%5D=2024-01-01T12%3A34%3A56.123456' +
+        '&filter%5Btags.name%5D=a+b%26c&filter%5Btag_count%5D=0',
+    ],
+    [
+      'getEntries',
+      () =>
+        apiClient.getEntries({
+          'page[number]': 1,
+          'filter[user.username]': 'u',
+          sort: 'subject',
+          include: 'user',
+          'filter[search]': 'ls -la',
+          signal: new AbortController().signal,
+        }),
+      `${API}/entries?page%5Bnumber%5D=1&filter%5Buser.username%5D=u` +
+        '&sort=subject&include=user&filter%5Bsearch%5D=ls+-la',
+    ],
+    [
+      'getTags',
+      () =>
+        apiClient.getTags({
+          'page[number]': 3,
+          'filter[user.username]': 'u',
+          sort: 'date_updated',
+          'filter[date_updated.gt]': '2024-01-01T12:34:56',
+        }),
+      `${API}/tags?page%5Bnumber%5D=3&filter%5Buser.username%5D=u` +
+        '&sort=date_updated&filter%5Bdate_updated.gt%5D=2024-01-01T12%3A34%3A56',
+    ],
+  ];
+
+  it.each(queries)('%s sends its query', async (name, call, url) => {
+    const response = calls.find(candidate => candidate.name === name);
+    invariant(response, `${name} has a response`);
+    const fetchSpy = reply(response.status, response.body);
+    await call();
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe(url);
+  });
 });
 
 describe('apiClient responses', () => {

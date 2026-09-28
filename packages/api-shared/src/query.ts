@@ -77,6 +77,63 @@ export interface ListQuery<
   include: string | null;
 }
 
+// The query as a client writes it
+
+/** A django-filter name as clients write it: `user__username`, `user.username`. */
+type Dotted<K extends string> = K extends `${infer Head}__${infer Tail}`
+  ? `${Head}.${Dotted<Tail>}`
+  : K;
+
+/**
+ * One to three `T`s, comma-separated (`a`, `a,b`, `a,b,c`): a `sort` or
+ * `include` list. The API takes longer ones; a type spelling every longer
+ * combination out would be too large to check.
+ */
+export type CommaList<T extends string> = T | `${T},${T}` | `${T},${T},${T}`;
+
+/** A `sort` term: a field ascending, or `-field` descending. */
+export type SortKey<S extends string> = S | `-${S}`;
+
+/** `{...A, ...B}` as one object type (what an editor shows). */
+type Merge<T> = {[K in keyof T]: T[K]};
+
+/**
+ * A collection's query parameters as a client sends them (as
+ * `URLSearchParams` of the object), derived from the spec its query schema
+ * is built from, so the two cannot drift:
+ *
+ * - `filter[...]` for each of the spec's filters, named with `.` (the API
+ *   takes `__` too), its value what the filter parses the string into
+ *   (`string`, `number` or `boolean`);
+ * - `sort`, of the spec's sort fields, where there are any;
+ * - `page[number]` and `page[size]`;
+ * - `filter[search]`, where search is `'supported'` (the API ignores it where
+ *   it is `'ignored'`, and refuses it where it is `'refused'`);
+ * - `include`, of `Paths` (`IncludePath`), where includes are `'resolved'`.
+ */
+export type ListParams<
+  Spec extends ListQuerySpec<FilterSchemas, string, SearchMode>,
+  Paths extends string = never,
+> = Merge<
+  {
+    [K in keyof Spec['filters'] & string as `filter[${Dotted<K>}]`]?: z.output<
+      Spec['filters'][K]
+    >;
+  } & ([Spec['sort'][number]] extends [never]
+    ? unknown
+    : {sort?: CommaList<SortKey<Spec['sort'][number]>>}) & {
+      'page[number]'?: number;
+      'page[size]'?: number;
+    } & (Spec['search'] extends 'supported'
+      ? {'filter[search]'?: string}
+      : unknown) &
+    (Spec['include'] extends 'resolved'
+      ? {include?: CommaList<Paths>}
+      : unknown)
+>;
+
+// The query as the API validates it
+
 /** DJA's QueryParameterValidationFilter: the parameters JSON:API defines. */
 const QUERY_PARAM =
   /^(sort|include)$|^(?<kind>filter|fields|page)(\[[\w.-]+\])?$/;

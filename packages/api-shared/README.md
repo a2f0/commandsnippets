@@ -44,15 +44,15 @@ not the request validators beside it.
 | `src/issues.ts` | how a schema failure carries an API error (`fail`, `errorMeta`) |
 | `src/fields.ts` | DRF serializer fields: `charField`, `booleanField`, `pkField`, `relatedField` |
 | `src/filters.ts` | `filter[...]` value schemas (`integerFilter`, `dateTimeFilter`, ...) |
-| `src/query.ts` | `listQuerySchema`: a collection's `filter`, `sort`, `page`, `include`, `filter[search]` |
-| `src/include.ts` | `include` paths over a relationship graph |
+| `src/query.ts` | `listQuerySchema`: a collection's `filter`, `sort`, `page`, `include`, `filter[search]`; `ListParams`, the same as a client sends them |
+| `src/include.ts` | `include` paths over a relationship graph (`IncludePath`: every path, as a type) |
 | `src/datetime.ts` | the timestamp format and `parseDateTime` |
 | `src/jsonapi/request.ts` | request envelopes and create/update document schemas |
 | `src/jsonapi/response.ts` | resource, document, list-document and error-document schemas |
 | `src/resources/types.ts` | resource type names, `RELATIONSHIPS`, `DEFAULT_INCLUDES` |
 | `src/resources/*.ts` | per resource: the resource as the API renders it (response schemas and types) |
 | `src/resources/documents.ts` | each endpoint's response documents |
-| `src/resources/requests/*.ts` | per resource: request documents, the collection's query, and their types |
+| `src/resources/requests/*.ts` | per resource: request documents, the collection's query (and its `...ListParams`), and their types |
 | `test/` | `bun test` unit tests |
 
 Schemas are named `...Schema` (`tagSchema`, `tagListQuerySchema`); their
@@ -138,18 +138,38 @@ const page = tagListDocumentSchema.parse(await response.json());
 const users = page.included?.filter(resource => resource.type === 'User');
 ```
 
-Type a request with its document type (the schemas' output), and a query with
-the collection's sort fields:
+Type a request with its document type (the schemas' output), and a
+collection's query with its `...ListParams` type:
 
 ```ts
 import type {
   TagCreateDocument,
-  TagSortField,
+  TextEntryListParams,
 } from '@commandsnippets/api-shared/requests';
 
 const body: TagCreateDocument = {data: {type: 'Tag', attributes: {name}}};
-const sort: TagSortField = 'order';
+const query: TextEntryListParams = {
+  'page[number]': 1,
+  'filter[user.username]': username,
+  'filter[tag_count]': 0,
+  sort: '-date_created',
+  include: 'text_entry_to_tag.tag,user',
+};
 ```
+
+Each collection has one (`TagListParams`, `TextEntryListParams`,
+`TextEntryReusedListParams`, `AdminUserListParams`,
+`AdminAuditLogListParams`), derived by `ListParams` from the spec its query
+schema is built from, so the two cannot drift: `filter[...]` for each filter
+(named with `.`), its value the type the filter parses it into (`number` for
+`filter[tag_count]`); `sort`, a comma-separated list of `SortKey`s (`field`
+or `-field`); `page[number]` and `page[size]`; `filter[search]` where the
+collection searches; and `include`, a list of `IncludePath`s, where it
+resolves includes. What the API would refuse does not type-check. The lists
+type-check up to three items (`CommaList`); the API takes more. Send the
+object as `URLSearchParams`, the values as `String()` writes them
+(`test/params.test.ts` checks that every parameter a type allows, the schema
+accepts).
 
 Error responses parse with `errorDocumentSchema`; branch on `CODES`
 (`@commandsnippets/api-shared/messages`, `CODES.permissionDenied`) rather
@@ -204,9 +224,12 @@ For a consumer, that means:
    `listDocumentSchema` in `documents.ts`); requests in
    `src/resources/requests/` (`charField` and friends for fields,
    `createDocumentSchema`/`updateDocumentSchema` for documents,
-   `listQuerySchema` for a collection's query). A response module must not
-   import a request-side one: clients bundle `./responses` alone. A new
-   relationship goes in `RELATIONSHIPS` (and `DEFAULT_INCLUDES`).
+   `listQuerySchema` for a collection's query: write its spec as an
+   `as const` object, build the schema from it, and export
+   `ListParams<typeof spec, IncludePath<...>>` beside it). A response
+   module must not import a request-side one: clients bundle `./responses`
+   alone. A new relationship goes in `RELATIONSHIPS` (and
+   `DEFAULT_INCLUDES`).
 2. Any new error text goes in `MESSAGES` (and a new code in `CODES`), worded
    exactly as the API sends it. Report failures with `fail(ctx, message, meta)`
    in a `z.transform`, or `z.refine(fn, check(message, code))`, never zod's

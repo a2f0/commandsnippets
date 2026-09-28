@@ -8,7 +8,7 @@ import {booleanFieldFilter, pkFilter} from '../../filters';
 import {fail} from '../../issues';
 import {noFieldsSchema, updateDocumentSchema} from '../../jsonapi/request';
 import {CODES, MESSAGES} from '../../messages';
-import {listQuerySchema} from '../../query';
+import {type ListParams, listQuerySchema} from '../../query';
 import {ADMIN_USER} from '../types';
 
 // Users
@@ -62,27 +62,45 @@ export const ADMIN_USER_SORT_FIELDS = [
   'tag_count',
 ] as const;
 
-/** `filter[search]`: a case-insensitive substring of the username or email. */
-export const adminUserListQuerySchema = listQuerySchema({
+/**
+ * The collection's query, which `adminUserListQuerySchema` validates and
+ * `AdminUserListParams` types. `filter[search]`: a case-insensitive
+ * substring of the username or email.
+ */
+const adminUserListQuery = {
   filters: {is_active: booleanFieldFilter, is_staff: booleanFieldFilter},
   sort: ADMIN_USER_SORT_FIELDS,
   search: 'supported',
   include: 'refused',
-});
+} as const;
+
+export const adminUserListQuerySchema = listQuerySchema(adminUserListQuery);
 
 export type AdminUserSortField = (typeof ADMIN_USER_SORT_FIELDS)[number];
 export type AdminUserListQuery = z.output<typeof adminUserListQuerySchema>;
+/** `GET /api/v1/admin/users`'s query parameters, as a client sends them. */
+export type AdminUserListParams = ListParams<typeof adminUserListQuery>;
 
 // The audit log
 
-/** Newest first, always: nothing is sortable, and there is no search. */
-export const adminAuditLogListQuerySchema = listQuerySchema({
+/**
+ * The collection's query, which `adminAuditLogListQuerySchema` validates and
+ * `AdminAuditLogListParams` types. Newest first, always: nothing is
+ * sortable, and there is no search.
+ */
+const adminAuditLogListQuery = {
   filters: {target_user_id: pkFilter},
   sort: [],
   search: 'refused',
   include: 'refused',
-});
+} as const;
+
+export const adminAuditLogListQuerySchema = listQuerySchema(
+  adminAuditLogListQuery
+);
 
 export type AdminAuditLogListQuery = z.output<
   typeof adminAuditLogListQuerySchema
 >;
+/** `GET /api/v1/admin/audit_log`'s query parameters, as a client sends them. */
+export type AdminAuditLogListParams = ListParams<typeof adminAuditLogListQuery>;

@@ -25,6 +25,28 @@ export type RelationshipGraph = Readonly<
  */
 export const MAX_INCLUDE_DEPTH = 3;
 
+/** A tuple of `N` elements: a type-level counter. */
+type Counter<N extends number, T extends unknown[] = []> = T['length'] extends N
+  ? T
+  : Counter<N, [...T, unknown]>;
+
+/**
+ * Every include path from `type` over `graph` (`a`, `a.b`, ...), at most
+ * `MAX_INCLUDE_DEPTH` relationships long: what `includeSchema` accepts,
+ * one path at a time.
+ */
+export type IncludePath<
+  G extends RelationshipGraph,
+  T extends keyof G,
+  Depth extends unknown[] = Counter<typeof MAX_INCLUDE_DEPTH>,
+> = Depth extends [unknown, ...infer Rest]
+  ? {
+      [K in keyof G[T] & string]:
+        | K
+        | `${K}.${IncludePath<G, G[T][K]['type'] & keyof G, Rest>}`;
+    }[keyof G[T] & string]
+  : never;
+
 /** An own property only: `constructor` is nobody's relationship. */
 function own<T>(
   record: Readonly<Record<string, T>>,
