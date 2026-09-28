@@ -13,22 +13,14 @@ import {notFound, permissionDenied} from '../lib/errors';
 import {
   document,
   type FilterSpec,
+  listDocument,
   type OrderingSpec,
   paginate,
   parseListQuery,
   serialize,
 } from '../lib/jsonapi';
+import {jsonApi} from './responses';
 import {createRegistry} from './serializers';
-
-export const JSON_API = 'application/vnd.api+json';
-
-export function jsonApi(
-  c: Context<AppEnv>,
-  body: unknown,
-  status: ContentfulStatusCode = 200
-): Response {
-  return c.body(JSON.stringify(body), status, {'Content-Type': JSON_API});
-}
 
 interface OwnedTable {
   table: SQLiteTable;
@@ -85,10 +77,7 @@ export async function listResponse(
     rows,
     query.include
   );
-  return jsonApi(
-    c,
-    document(data, included, {links: pagination.links, meta: pagination.meta})
-  );
+  return jsonApi(c, listDocument(data, included, pagination));
 }
 
 /** Parse a URL primary key; anything but a positive integer is a 404. */

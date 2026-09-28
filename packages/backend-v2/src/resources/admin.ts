@@ -21,6 +21,7 @@ import {
   document,
   type FilterSpec,
   type ListQuery,
+  listDocument,
   type OrderingSpec,
   paginate,
   parseListQuery,
@@ -28,7 +29,8 @@ import {
   type ResourceObject,
 } from '../lib/jsonapi';
 import {booleanField, parseBoolean, validateOrThrow} from '../lib/validation';
-import {jsonApi, parseId} from './viewset';
+import {jsonApi} from './responses';
+import {parseId} from './viewset';
 
 export const ADMIN_USER = 'AdminUser';
 export const ADMIN_AUDIT_LOG_ENTRY = 'AdminAuditLogEntry';
@@ -151,10 +153,10 @@ adminRoutes.get('/users', async c => {
     .offset(pagination.offset);
   return jsonApi(
     c,
-    document(
+    listDocument(
       rows.map(row => renderUser(toRow(row))),
       [],
-      {links: pagination.links, meta: pagination.meta}
+      pagination
     )
   );
 });
@@ -283,11 +285,5 @@ adminRoutes.get('/audit_log', async c => {
     .orderBy(desc(adminAuditLog.created), desc(adminAuditLog.id))
     .limit(query.pageSize)
     .offset(pagination.offset);
-  return jsonApi(
-    c,
-    document(rows.map(renderAuditEntry), [], {
-      links: pagination.links,
-      meta: pagination.meta,
-    })
-  );
+  return jsonApi(c, listDocument(rows.map(renderAuditEntry), [], pagination));
 });

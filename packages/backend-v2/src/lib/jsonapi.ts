@@ -35,16 +35,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** The JSON:API media type, which every response document is sent as. */
+export const JSON_API_MEDIA_TYPE = 'application/vnd.api+json';
+
 /**
  * Request bodies must be JSON. Both accepted types make a cross-origin request
  * "non-simple", so the browser preflights it and the CORS allowlist applies;
  * `text/plain` or form posts would otherwise skip the preflight (login CSRF).
  * DRF-JSON:API likewise answered other media types with 415.
  */
-const JSON_MEDIA_TYPES = new Set([
-  'application/vnd.api+json',
-  'application/json',
-]);
+const JSON_MEDIA_TYPES = new Set([JSON_API_MEDIA_TYPE, 'application/json']);
 
 /** 415 unless the request declares a JSON body. */
 export function assertJsonMediaType(request: Request): void {
@@ -549,4 +549,16 @@ export function paginate(
     },
     meta: {pagination: {page: query.page, pages, count}},
   };
+}
+
+/** A page of a collection: DJA's `links` and `meta`, then `data`/`included`. */
+export function listDocument(
+  data: ResourceObject[],
+  included: ResourceObject[],
+  pagination: Pagination
+): Record<string, unknown> {
+  return document(data, included, {
+    links: pagination.links,
+    meta: pagination.meta,
+  });
 }

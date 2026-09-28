@@ -10,10 +10,10 @@ import {assertJsonMediaType} from './lib/jsonapi';
 import {adminRoutes} from './resources/admin';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
+import {jsonApi} from './resources/responses';
 import {tagRoutes} from './resources/tags';
 import {tagEntryRoutes} from './resources/tagsEntries';
 import {userRoutes} from './resources/users';
-import {jsonApi} from './resources/viewset';
 
 export const API_VERSION = packageJson.version;
 

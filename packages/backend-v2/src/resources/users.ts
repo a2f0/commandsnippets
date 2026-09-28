@@ -1,7 +1,8 @@
 import {Hono} from 'hono';
 import type {AppEnv} from '../env';
+import {jsonApi} from './responses';
 import {USER} from './serializers';
-import {jsonApi, resourceResponse} from './viewset';
+import {resourceResponse} from './viewset';
 
 export const userRoutes = new Hono<AppEnv>();
 
