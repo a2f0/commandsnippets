@@ -307,7 +307,7 @@ function createJunction(
   const created = now();
   const junction: TagTextEntry = {
     type: 'TagTextEntryThroughModel',
-    id: String(Math.max(0, ...junctions.map(({id}) => Number(id))) + 1),
+    id: nextId('TagTextEntryThroughModel', junctions),
     attributes: {
       order: ranks.length > 0 ? Math.max(...ranks) + 1 : 0,
       date_updated: nextRevision(
@@ -342,6 +342,7 @@ function createJunction(
  * made) and the entry's new revision.
  */
 function deleteJunction(state: EntriesState, junction: TagTextEntry) {
+  retireId('TagTextEntryThroughModel', junction.id);
   setIncluded(
     state,
     (state.included ?? []).filter(resource => resource !== junction)
@@ -681,9 +682,7 @@ const createHandlers = () => {
           );
           const entry: TextEntry = {
             type: 'TextEntry',
-            id: String(
-              Math.max(0, ...state.data.map(({id}) => Number(id))) + 1
-            ),
+            id: nextId('TextEntry', state.data),
             attributes: {
               body,
               subject,
@@ -870,6 +869,7 @@ const createHandlers = () => {
         }
 
         // Remove the entry from our mock data
+        retireId('TextEntry', entryId);
         entriesResponse.data = entriesResponse.data.filter(
           entry => entry.id !== entryId
         );
@@ -941,7 +941,27 @@ const createHandlers = () => {
 export const handlers = createHandlers();
 
 // Reset function to restore original state
+/**
+ * The last id handed out, per resource. Like SQLite's AUTOINCREMENT, an id is
+ * never handed out twice, even after the row that had the highest one is
+ * deleted: a reused entry id would pick up the deleted entry's junctions.
+ */
+const lastIds = new Map<string, number>();
+
+/** Deleting a row retires its id, so nextId never hands it out again. */
+function retireId(kind: string, id: string): void {
+  lastIds.set(kind, Math.max(lastIds.get(kind) ?? 0, Number(id)));
+}
+
+function nextId(kind: string, existing: ReadonlyArray<{id: string}>): string {
+  const next =
+    Math.max(lastIds.get(kind) ?? 0, ...existing.map(({id}) => Number(id))) + 1;
+  lastIds.set(kind, next);
+  return String(next);
+}
+
 export const resetMSWState = () => {
+  lastIds.clear();
   tags = structuredClone(originalTags);
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;

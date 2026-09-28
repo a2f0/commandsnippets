@@ -294,6 +294,20 @@ describe('POST /entries', () => {
     expect(entryOf(await getEntries(), '3')).toEqual(data);
   });
 
+  it('never reuses the id of a deleted entry', async () => {
+    expect((await send('DELETE', '/entries/2')).status).toBe(200);
+    const {json} = await send('POST', '/entries', {
+      data: {type: 'TextEntry', attributes: {subject: 'new', body: 'body'}},
+    });
+    const {data} = textEntryDocumentSchema.parse(json);
+    // Entry 2 had junctions; a reused id would pick them up.
+    expect(data.id).toBe('3');
+    expect(data.attributes.tag_count).toBe(0);
+    expect(
+      entryOf(await getEntries(), '3')?.relationships.text_entry_to_tag
+    ).toEqual({data: [], meta: {count: 0}});
+  });
+
   it('reports every invalid attribute', async () => {
     const {status, json} = await send('POST', '/entries', {
       data: {type: 'TextEntry', attributes: {subject: 7, body: null}},
@@ -552,6 +566,32 @@ describe('DELETE /tags_entries/:id', () => {
     expect(tag.attributes.entry_count).toBe(1);
     // Junction 2's.
     expect(tag.attributes.date_last_used).toBe('2020-04-13T18:20:00');
+  });
+
+  it('never reuses the id of a deleted junction', async () => {
+    const tagged = await send('POST', '/tags_entries', {
+      data: {
+        type: 'TagTextEntryThroughModel',
+        relationships: {
+          tag: {data: {type: 'Tag', id: '3'}},
+          text_entry: {data: {type: 'TextEntry', id: '2'}},
+        },
+      },
+    });
+    const first = tagTextEntryDocumentSchema.parse(tagged.json).data.id;
+    expect((await send('DELETE', `/tags_entries/${first}`)).status).toBe(204);
+    const again = await send('POST', '/tags_entries', {
+      data: {
+        type: 'TagTextEntryThroughModel',
+        relationships: {
+          tag: {data: {type: 'Tag', id: '3'}},
+          text_entry: {data: {type: 'TextEntry', id: '2'}},
+        },
+      },
+    });
+    expect(tagTextEntryDocumentSchema.parse(again.json).data.id).toBe(
+      String(Number(first) + 1)
+    );
   });
 
   it('answers an unknown junction with a 404', async () => {
