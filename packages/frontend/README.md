@@ -35,8 +35,6 @@ bun run dev
 - **Install scripts:** only the packages in `trustedDependencies` run theirs
   (the WebDriver and ffmpeg binaries, esbuild, workerd). This list replaces
   Bun's default allowlist.
-  - `@swc/core`'s only checks that its native binary, an optional dependency,
-    loads, and fetches `@swc/wasm` if it doesn't.
   - `msw`'s would rewrite `public/mockServiceWorker.js`; regenerate that with
     `bunx msw init public` after upgrading msw.
 - **`overrides`:** these pin fixed versions of indirect dependencies that
