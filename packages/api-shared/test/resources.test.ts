@@ -233,6 +233,14 @@ describe('request fields', () => {
     ).toBe('Must be a valid boolean.');
   });
 
+  test('admin: attributes that are not an object fail instead of throwing', () => {
+    for (const value of [null, undefined, [], 'is_active', 5]) {
+      expect(adminUserUpdateAttributesSchema.safeParse(value).success).toBe(
+        false
+      );
+    }
+  });
+
   test('logins: a code', () => {
     expect(
       parsed(loginAttributesSchema, {code: ' c ', clientType: 'web'})

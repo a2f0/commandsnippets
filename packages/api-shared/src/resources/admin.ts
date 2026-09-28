@@ -50,7 +50,13 @@ const writableSchema = z.object({is_active: booleanField()}).partial();
  * (the first one, as `read_only`) rather than ignored.
  */
 export const adminUserUpdateAttributesSchema = z
-  .custom<Record<string, unknown>>()
+  // A plain object first, so anything else fails validation instead of
+  // throwing below (the request envelope already turns non-objects into {}).
+  // Not z.record: it drops a `__proto__` key, which must be refused below.
+  .custom<Record<string, unknown>>(
+    value =>
+      typeof value === 'object' && value !== null && !Array.isArray(value)
+  )
   .transform((attributes, ctx) => {
     const readOnly = Object.keys(attributes).find(
       name => !Object.hasOwn(writableSchema.shape, name)
