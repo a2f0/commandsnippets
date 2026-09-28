@@ -2,6 +2,9 @@ import {Database} from 'bun:sqlite';
 import {describe, expect, test} from 'bun:test';
 import {readdirSync, readFileSync} from 'node:fs';
 import path from 'node:path';
+import {is} from 'drizzle-orm';
+import {getTableConfig, SQLiteTable} from 'drizzle-orm/sqlite-core';
+import * as schema from '../src/db/schema';
 
 // Migrations run against databases with data in them. Every table cascades
 // from users_user, so a migration that rebuilt it (drizzle-kit's
@@ -10,6 +13,13 @@ const dir = path.join(import.meta.dirname, '..', 'migrations');
 const files = readdirSync(dir)
   .filter(name => name.endsWith('.sql'))
   .sort();
+/**
+ * Columns a migration has not dropped yet although src/db/schema.ts no longer
+ * has them: the first release of a two-release column removal (README,
+ * Deployment). Empty between removals.
+ */
+const PENDING_DROPS: Record<string, string[]> = {};
+
 /** The schema the Postgres import loaded; later migrations run on real data. */
 const IMPORTED = '0003_unique_user_email.sql';
 
@@ -87,6 +97,31 @@ describe('migrations', () => {
     expect(
       db.query('SELECT username, is_staff, is_active FROM users_user').get()
     ).toEqual({username: 'alice', is_staff: 1, is_active: 1});
+  });
+
+  test('leave the database matching src/db/schema.ts', () => {
+    const db = new Database(':memory:');
+    for (const file of files) {
+      apply(db, file);
+    }
+    const tables = Object.values(schema).filter(value =>
+      is(value, SQLiteTable)
+    );
+    expect(tables.length).toBeGreaterThan(0);
+    for (const table of tables) {
+      const {name, columns} = getTableConfig(table);
+      const actual = (
+        db.query(`PRAGMA table_info(${name})`).all() as {name: string}[]
+      ).map(column => column.name);
+      const expected = [
+        ...columns.map(column => column.name),
+        ...(PENDING_DROPS[name] ?? []),
+      ];
+      expect({table: name, columns: actual.sort()}).toEqual({
+        table: name,
+        columns: expected.sort(),
+      });
+    }
   });
 
   test('none rebuilds users_user', () => {
