@@ -28,6 +28,8 @@ export const adminUserAttributesSchema = z.object({
   is_active: z.boolean(),
   date_joined: timestampSchema,
   last_login: timestampSchema.nullable(),
+  /** The latest authenticated request or login; null if neither is on record. */
+  last_active: timestampSchema.nullable(),
   login_count: z.number().int().nonnegative(),
   date_updated: timestampSchema,
   /** Live (not deleted) entries and tags. */
@@ -84,6 +86,7 @@ export const ADMIN_USER_SORT_FIELDS = [
   'email',
   'date_joined',
   'last_login',
+  'last_active',
   'login_count',
   'entry_count',
   'tag_count',

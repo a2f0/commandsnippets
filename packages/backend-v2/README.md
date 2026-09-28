@@ -176,6 +176,12 @@ Deliberate changes, by area. The admin API is new; see
 - **`is_superuser` is gone.** `is_staff` is the only admin flag. The schema
   and the import stopped using the column in the `0004_admin.sql` release, and
   `0005_drop_is_superuser.sql` drops it (see Deployment).
+- **`users_user.last_active`** is the time of the user's latest authenticated
+  request or login. The token lookup bumps it in the same statement
+  (`UPDATE ... RETURNING`), so every request that authenticates writes to D1.
+  It does not advance `date_updated`, and only the admin API shows it.
+  `0007_user_last_active.sql` (and the Postgres import) start existing
+  accounts at their `last_login`.
 
 Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing
@@ -189,7 +195,7 @@ only (403 for everyone else):
 - `GET /users` lists every account, with live entry and tag counts.
   Filters: `filter[is_active]`, `filter[is_staff]`, and `filter[search]`
   (username or email). Sorts: `username`, `email`, `date_joined`,
-  `last_login`, `login_count`, `entry_count`, `tag_count`.
+  `last_login`, `last_active`, `login_count`, `entry_count`, `tag_count`.
 - `GET /users/:id` returns one account.
 - `PATCH /users/:id` changes `is_active`, the only writable attribute.
   Deactivating also deletes the account's token, so its sessions end at

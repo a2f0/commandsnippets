@@ -33,6 +33,10 @@ export const users = sqliteTable(
     // Deactivated accounts cannot log in, and their tokens are not accepted.
     is_active: integer('is_active', {mode: 'boolean'}).notNull().default(true),
     last_login: text('last_login'),
+    // The last authenticated request or login (src/services/tokens.ts);
+    // accounts from before the column started at last_login. It does not
+    // advance date_updated, which clients sync on.
+    last_active: text('last_active'),
     date_joined: text('date_joined').notNull(),
     date_updated: text('date_updated').notNull(),
     login_count: integer('login_count').notNull().default(1),

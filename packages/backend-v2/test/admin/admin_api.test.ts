@@ -117,6 +117,7 @@ describe('AdminApi users', () => {
       is_active: true,
       date_joined: expect.any(String),
       last_login: expect.any(String),
+      last_active: expect.any(String),
       login_count: 1,
       date_updated: expect.any(String),
       entry_count: 1,
@@ -179,6 +180,9 @@ describe('AdminApi users', () => {
     expect(await first('sort=-entry_count')).toBe('dave');
     expect(await first('sort=username')).toBe('dave');
     expect(await first('sort=-username')).toBe('staff');
+    // Each of staff's requests makes them the most recently active.
+    expect(await first('sort=-last_active')).toBe('staff');
+    expect(await first('sort=last_active')).toBe('dave');
 
     const paged = await json(
       await client.get('/api/v1/admin/users?page[size]=1&page[number]=2')
