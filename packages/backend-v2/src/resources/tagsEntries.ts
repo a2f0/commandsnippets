@@ -2,6 +2,7 @@ import {and, eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/tokens';
 import type {Db} from '../db/client';
+import {isUniqueViolation} from '../db/errors';
 import {type TagTextEntry, tags, tagsEntries, textEntries} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
@@ -12,7 +13,7 @@ import {revision} from '../lib/revision';
 import {resolveRelated} from './related';
 import {reorder} from './reorder';
 import {TAG_TEXT_ENTRY} from './serializers';
-import {getOwned, isUniqueViolation, resourceResponse} from './viewset';
+import {getOwned, resourceResponse} from './viewset';
 
 export const tagEntryOrdering: OrderedSpec = {
   table: tagsEntries,

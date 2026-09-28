@@ -11,7 +11,7 @@ import {
   tagTextEntryFactory,
   textEntryFactory,
 } from '../helpers';
-import {failureOf} from './errors';
+import {failureOf} from '../support/errors';
 
 // backend/tearleads/tags/tests/test_tags_model.py
 describe('TestTagsModel', () => {

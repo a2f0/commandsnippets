@@ -1,6 +1,7 @@
 import {and, eq, sql} from 'drizzle-orm';
 import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/tokens';
+import {isUniqueViolation} from '../db/errors';
 import {type Tag, tags} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now, parseDateTime} from '../lib/clock';
@@ -11,12 +12,7 @@ import {revision} from '../lib/revision';
 import {booleanField, charField, validateOrThrow} from '../lib/validation';
 import {reorder} from './reorder';
 import {TAG} from './serializers';
-import {
-  getOwned,
-  isUniqueViolation,
-  listResponse,
-  resourceResponse,
-} from './viewset';
+import {getOwned, listResponse, resourceResponse} from './viewset';
 
 const NAME_MAX_LENGTH = 24;
 

@@ -1,9 +1,9 @@
 import {asc, eq, sql} from 'drizzle-orm';
 import {generateKey} from '../auth/tokens';
 import type {Db} from '../db/client';
+import {isEmailViolation, isUniqueViolation} from '../db/errors';
 import {tokens, type User, users} from '../db/schema';
 import {now} from '../lib/clock';
-import {isUniqueViolation} from '../resources/viewset';
 import RESERVED_USERNAMES from './reserved-usernames.json';
 
 function randomDigits(length: number): string {
@@ -88,13 +88,6 @@ export async function createUser(
     candidate = `${username}-${randomDigits(suffixLength)}`;
   }
   throw new Error(`Could not find a free username for ${username}`);
-}
-
-function isEmailViolation(error: unknown): boolean {
-  const message = `${(error as Error)?.message ?? ''} ${
-    (error as {cause?: Error})?.cause?.message ?? ''
-  }`;
-  return /UNIQUE constraint failed: users_user\.email/.test(message);
 }
 
 /**

@@ -144,10 +144,3 @@ export async function resourceResponse(
   );
   return jsonApi(c, document(data[0] ?? null, included), status);
 }
-
-/** Map a unique-constraint failure from D1 to a handled error. */
-export function isUniqueViolation(error: unknown): boolean {
-  const message = String((error as Error)?.message ?? error);
-  const cause = String((error as {cause?: Error})?.cause?.message ?? '');
-  return /UNIQUE constraint failed/.test(message + cause);
-}
