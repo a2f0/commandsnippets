@@ -42,4 +42,24 @@ describe('sort', () => {
       expect(subjects(sorted)).toEqual(expected);
     });
   });
+
+  describe('by text', () => {
+    // Case-insensitive; the subjects and bodies sort in different orders.
+    const entries = [
+      entry('1', {subject: 'bravo', body: 'Charlie'}),
+      entry('2', {subject: 'Charlie', body: 'alpha'}),
+      entry('3', {subject: 'alpha', body: 'bravo'}),
+    ];
+
+    it.each([
+      ['subject', ['3', '1', '2']],
+      ['-subject', ['2', '1', '3']],
+      ['body', ['2', '3', '1']],
+      ['-body', ['1', '3', '2']],
+    ])('sorts by %s', (sortOrder, expected) => {
+      const sorted = sort(username, null, entries, sortOrder, createStore());
+
+      expect(sorted.map(e => e.id)).toEqual(expected);
+    });
+  });
 });

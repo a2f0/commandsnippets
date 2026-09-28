@@ -201,10 +201,10 @@ export function sort(
       sortedArray = textEntriesFiltered.slice().sort((a, b) => {
         const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
         const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
-        if (sort2 < sort1) {
+        if (sort1 < sort2) {
           return -1;
         }
-        if (sort2 > sort1) {
+        if (sort1 > sort2) {
           return 1;
         }
         // equal
@@ -214,10 +214,10 @@ export function sort(
       sortedArray = textEntriesFiltered.slice().sort((a, b) => {
         const sort1 = a.attributes.body.toUpperCase(); // ignore upper and lowercase
         const sort2 = b.attributes.body.toUpperCase(); // ignore upper and lowercase
-        if (sort1 < sort2) {
+        if (sort2 < sort1) {
           return -1;
         }
-        if (sort1 > sort2) {
+        if (sort2 > sort1) {
           return 1;
         }
         // equal
