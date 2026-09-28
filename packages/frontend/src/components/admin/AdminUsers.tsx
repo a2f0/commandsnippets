@@ -54,6 +54,7 @@ const COLUMNS: Column[] = [
   {label: 'columnEmail', sort: 'email', numeric: false},
   {label: 'columnJoined', sort: 'date_joined', numeric: false},
   {label: 'columnLastLogin', sort: 'last_login', numeric: false},
+  {label: 'columnLastActive', sort: 'last_active', numeric: false},
   {label: 'columnLogins', sort: 'login_count', numeric: true},
   {label: 'columnEntries', sort: 'entry_count', numeric: true},
   {label: 'columnTags', sort: 'tag_count', numeric: true},
@@ -303,6 +304,7 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{formatDate(user.dateJoined)}</TableCell>
                   <TableCell>{formatDate(user.lastLogin)}</TableCell>
+                  <TableCell>{formatDate(user.lastActive)}</TableCell>
                   <TableCell align="right">{user.loginCount}</TableCell>
                   <TableCell align="right">{user.entryCount}</TableCell>
                   <TableCell align="right">{user.tagCount}</TableCell>

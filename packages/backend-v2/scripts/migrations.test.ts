@@ -22,9 +22,10 @@ const IMPORTED = '0003_unique_user_email.sql';
 
 function seed(db: Database): void {
   const at = '2026-01-01T00:00:00.000000';
+  const login = '2026-02-01T00:00:00.000000';
   db.run(
-    `INSERT INTO users_user (id, username, email, is_staff, is_active, date_joined, date_updated)
-     VALUES (1, 'alice', 'alice@example.com', 1, 1, '${at}', '${at}')`
+    `INSERT INTO users_user (id, username, email, is_staff, is_active, last_login, date_joined, date_updated)
+     VALUES (1, 'alice', 'alice@example.com', 1, 1, '${login}', '${at}', '${at}')`
   );
   // Every username the web app's routes reserve, capitalized: a migration
   // must rename existing accounts that have one (0006 did for the first two).
@@ -91,10 +92,19 @@ describe('migrations', () => {
     expect(
       db
         .query(
-          'SELECT username, is_staff, is_active FROM users_user WHERE id = 1'
+          'SELECT username, is_staff, is_active, last_active FROM users_user WHERE id = 1'
         )
         .get()
-    ).toEqual({username: 'alice', is_staff: 1, is_active: 1});
+    ).toEqual({
+      username: 'alice',
+      is_staff: 1,
+      is_active: 1,
+      // 0007 starts it at the last login; never logged in stays NULL.
+      last_active: '2026-02-01T00:00:00.000000',
+    });
+    expect(
+      db.query('SELECT last_active FROM users_user WHERE id = 2').get()
+    ).toEqual({last_active: null});
     const usernames = (
       db.query('SELECT username FROM users_user ORDER BY id').all() as {
         username: string;

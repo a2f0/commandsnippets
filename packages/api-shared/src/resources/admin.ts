@@ -23,6 +23,8 @@ export const adminUserAttributesSchema = z.object({
   is_active: z.boolean(),
   date_joined: timestampSchema,
   last_login: z.nullable(timestampSchema),
+  /** The latest authenticated request or login; null if neither is on record. */
+  last_active: z.nullable(timestampSchema),
   login_count: countSchema,
   date_updated: timestampSchema,
   /** Live (not deleted) entries and tags. */

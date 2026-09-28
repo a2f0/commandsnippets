@@ -246,6 +246,8 @@ describe('convert', () => {
       '2021-11-15T17:57:23.366384',
       '2021-11-15T17:57:23.367596',
       3,
+      // last_active, computed from last_login
+      '2021-11-15T17:57:23.366384',
     ]);
   });
 
@@ -385,6 +387,22 @@ describe('buildStatements', () => {
         )
         .get()
     ).toEqual({subject_folded: 'ÜBER STRASSEN', body_folded: 'ÇA VA'});
+  });
+
+  test('starts last_active at the last login', () => {
+    const db = load(imported().statements);
+    expect(
+      db
+        .query('SELECT id, last_login, last_active FROM users_user ORDER BY id')
+        .all()
+    ).toEqual([
+      {
+        id: 1,
+        last_login: '2021-11-15T17:57:23.366384',
+        last_active: '2021-11-15T17:57:23.366384',
+      },
+      {id: 2, last_login: null, last_active: null},
+    ]);
   });
 
   test('keeps text byte-for-byte, including quotes and escapes', () => {

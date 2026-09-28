@@ -57,6 +57,7 @@ export const ADMIN_USER_SORT_FIELDS = [
   'email',
   'date_joined',
   'last_login',
+  'last_active',
   'login_count',
   'entry_count',
   'tag_count',

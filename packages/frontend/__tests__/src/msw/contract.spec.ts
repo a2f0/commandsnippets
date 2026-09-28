@@ -12,8 +12,13 @@ import {
   adminUserListDocumentSchema,
   emptyObjectSchema,
   errorDocumentSchema,
+  type TagTextEntryCreateDocument,
+  type TagUpdateDocument,
+  type TextEntryCreateDocument,
+  type TextEntryUpdateDocument,
   tagDocumentSchema,
   tagListDocumentSchema,
+  tagTextEntryDocumentSchema,
   textEntryDocumentSchema,
   textEntryListDocumentSchema,
   userDocumentSchema,
@@ -58,14 +63,20 @@ interface Exchange {
   status: number;
   /** The response document's schema; none for an empty body. */
   schema?: z.ZodMiniType;
+  /** The request document, sent as JSON:API; otherwise `{}` (not JSON:API). */
+  body?: unknown;
 }
 
 /** Send `exchange`'s request and check the response against it. */
-async function check({method, url, status, schema}: Exchange) {
-  const response = await fetch(url, {
-    method,
-    ...(method === 'GET' || method === 'DELETE' ? {} : {body: '{}'}),
-  });
+async function check({method, url, status, schema, body}: Exchange) {
+  const init: RequestInit = {method};
+  if (body !== undefined) {
+    init.body = JSON.stringify(body);
+    init.headers = {'Content-Type': 'application/vnd.api+json'};
+  } else if (method !== 'GET' && method !== 'DELETE') {
+    init.body = '{}';
+  }
+  const response = await fetch(url, init);
   expect(response.status).toBe(status);
   const text = await response.text();
   if (schema === undefined) {
@@ -74,6 +85,20 @@ async function check({method, url, status, schema}: Exchange) {
     expectContract(schema, JSON.parse(text));
   }
 }
+
+/** A `POST /tags_entries` document: tag `entryId` with `tagId`. */
+const tagEntryDocument = (
+  tagId: string,
+  entryId: string
+): TagTextEntryCreateDocument => ({
+  data: {
+    type: 'TagTextEntryThroughModel',
+    relationships: {
+      tag: {data: {type: 'Tag', id: tagId}},
+      text_entry: {data: {type: 'TextEntry', id: entryId}},
+    },
+  },
+});
 
 // In the order they run: the handlers keep state (resetMSWState).
 const exchanges: Exchange[] = [
@@ -128,6 +153,37 @@ const exchanges: Exchange[] = [
     schema: tagDocumentSchema,
   },
   {
+    handler: `PATCH ${API}/tags/:id`,
+    method: 'PATCH',
+    url: `${API}/tags/2`,
+    status: 200,
+    schema: tagDocumentSchema,
+    body: {
+      data: {type: 'Tag', id: '2', attributes: {name: 'renamed'}},
+    } satisfies TagUpdateDocument,
+  },
+  {
+    // Another of the user's tags has that name.
+    handler: `PATCH ${API}/tags/:id`,
+    method: 'PATCH',
+    url: `${API}/tags/2`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: {
+      data: {type: 'Tag', id: '2', attributes: {name: 'test-tag-1'}},
+    } satisfies TagUpdateDocument,
+  },
+  {
+    handler: `PATCH ${API}/tags/:id`,
+    method: 'PATCH',
+    url: `${API}/tags/99`,
+    status: 404,
+    schema: errorDocumentSchema,
+    body: {
+      data: {type: 'Tag', id: '99', attributes: {name: 'renamed'}},
+    } satisfies TagUpdateDocument,
+  },
+  {
     handler: `GET ${API}/entries`,
     method: 'GET',
     url: `${API}/entries?page%5Bnumber%5D=1`,
@@ -140,6 +196,66 @@ const exchanges: Exchange[] = [
     url: `${API}/entries`,
     status: 201,
     schema: textEntryDocumentSchema,
+    body: {
+      data: {type: 'TextEntry', attributes: {subject: 'new', body: 'new body'}},
+    } satisfies TextEntryCreateDocument,
+  },
+  {
+    handler: `POST ${API}/entries`,
+    method: 'POST',
+    url: `${API}/entries`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: {data: {type: 'TextEntry', attributes: {subject: 'new'}}},
+  },
+  {
+    handler: `PATCH ${API}/entries/:id`,
+    method: 'PATCH',
+    url: `${API}/entries/1`,
+    status: 200,
+    schema: textEntryDocumentSchema,
+    body: {
+      data: {
+        type: 'TextEntry',
+        id: '1',
+        attributes: {subject: 'edited', body: 'edited body'},
+      },
+    } satisfies TextEntryUpdateDocument,
+  },
+  {
+    handler: `PATCH ${API}/entries/:id`,
+    method: 'PATCH',
+    url: `${API}/entries/99`,
+    status: 404,
+    schema: errorDocumentSchema,
+    body: {
+      data: {type: 'TextEntry', id: '99', attributes: {subject: 'x'}},
+    } satisfies TextEntryUpdateDocument,
+  },
+  {
+    handler: `POST ${API}/tags_entries`,
+    method: 'POST',
+    url: `${API}/tags_entries`,
+    status: 201,
+    schema: tagTextEntryDocumentSchema,
+    body: tagEntryDocument('2', '1'),
+  },
+  {
+    // Get-or-create: the same junction again.
+    handler: `POST ${API}/tags_entries`,
+    method: 'POST',
+    url: `${API}/tags_entries`,
+    status: 201,
+    schema: tagTextEntryDocumentSchema,
+    body: tagEntryDocument('2', '1'),
+  },
+  {
+    handler: `POST ${API}/tags_entries`,
+    method: 'POST',
+    url: `${API}/tags_entries`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: tagEntryDocument('99', '1'),
   },
   {
     handler: `POST ${API}/tags_entries/reorder`,
@@ -187,6 +303,14 @@ const exchanges: Exchange[] = [
     method: 'DELETE',
     url: `${API}/tags_entries/1`,
     status: 204,
+  },
+  {
+    // Junction 1 is gone now.
+    handler: `DELETE ${API}/tags_entries/:id`,
+    method: 'DELETE',
+    url: `${API}/tags_entries/1`,
+    status: 404,
+    schema: errorDocumentSchema,
   },
   {
     handler: `POST ${HOST}/api-token-deauth/`,

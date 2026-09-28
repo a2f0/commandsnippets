@@ -14,6 +14,7 @@ src/msw/
 ├── worker.ts         # MSW service worker setup
 ├── handlers.ts       # All API mock handlers
 ├── documents.ts      # Pagination, timestamps and errors as the API renders them
+├── requests.ts       # Request documents parsed (and refused) as the API does
 ├── browser.ts        # Window globals the E2E tests use
 ├── healthCheck.ts    # Health check utilities
 ├── requestCounter.ts # Request counting utilities for testing
@@ -64,9 +65,18 @@ Main initialization function that:
 Contains all API mock handlers:
 - Tags CRUD operations
 - Entries CRUD operations
+- Tagging and untagging entries (`/tags_entries`)
 - Health check endpoint
 - Authentication endpoints
 - Stateful mock data with reset capability
+
+The write handlers keep that state as the API keeps its database. A rename,
+an edit or a new junction gets a new revision (`date_updated`, past every
+other of the user's rows in its table), and tagging and untagging do what the
+API's triggers do (the entry's `tag_count`, the tag's `entry_count` and
+`date_last_used`) and advance the entry's revision and junction linkage. Their
+request documents are checked as the API checks them (`requests.ts`), with the
+same error documents. `__tests__/src/msw/handlers.spec.ts` covers this.
 
 Every response is what the API would send, typed with
 `@commandsnippets/api-shared`'s document types and built with

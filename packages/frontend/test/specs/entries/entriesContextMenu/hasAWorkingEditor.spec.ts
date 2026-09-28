@@ -76,16 +76,40 @@ describe('TagsEntries Behavior', () => {
     await browser.keys('Tab');
     await expect(BasePage.textEntryEdit1Save).toBeFocused();
 
+    // Save from the keyboard: the editor closes and the entry shows the
+    // API's answer
+    await browser.keys('Enter');
+    await expect(BasePage.textEntryEdit1).not.toBeExisting();
+    await expect(BasePage.tagsEntries1).toHaveText(
+      expect.stringContaining('test-entry-1-subject-modified')
+    );
+    await browser.toBeRequestedTimes(
+      'PATCH',
+      'http://localhost:9001/api/v1/entries/1',
+      1
+    );
+
+    // The API keeps the edit
+    expect(await BasePage.fetchApi('/entries')).toMatchObject({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          id: '1',
+          attributes: expect.objectContaining({
+            subject: 'test-entry-1-subject-modified',
+            body: 'test entry 1\nnew-line-added',
+          }),
+        }),
+      ]),
+    });
+
     // All editor functionality has been validated:
     // PASS: Editor opens with context menu
     // PASS: All fields are present and displayed
     // PASS: Initial values loaded from MSW data
     // PASS: Tab navigation through all fields works
     // PASS: Text editing works (subject and body)
-    // PASS: Save button is reachable via keyboard
+    // PASS: Save button is reachable via keyboard, and saves the entry
     console.log('OK: Editor functionality fully tested');
-
-    // Note: Close functionality would be tested but has UI overlap issues in test environment
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });
