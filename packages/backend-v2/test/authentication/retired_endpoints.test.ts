@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {ApiClient, type Base, setUpBase, userFactory} from '../helpers';
-import {requestWithEnv, setCookies} from './support';
+import {requestWithEnv, setCookies} from '../support/auth';
 
 // Native (Capacitor) sign-in left with the apps: the endpoint is gone, so a
 // token posted there reaches no provider and signs nobody in.

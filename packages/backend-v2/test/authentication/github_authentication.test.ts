@@ -11,6 +11,7 @@ import {
   userFactory,
 } from '../helpers';
 import {
+  expectAuthCookies,
   GITHUB_EMAILS_URL,
   GITHUB_TOKEN_URL,
   GITHUB_USER_URL,
@@ -19,27 +20,7 @@ import {
   type MockRoute,
   mockFetch,
   requestWithEnv,
-} from './support';
-
-const COOKIE_DOMAIN = 'localhost';
-const MAX_AGE = '2419200';
-
-function expectAuthCookies(client: ApiClient, token: string) {
-  expect(client.cookies.has('Authorization')).toBe(true);
-  expect(client.cookies.get('Authorization')?.value).toBe(token);
-  expect(client.cookies.get('Authorization')?.attributes['domain']).toBe(
-    COOKIE_DOMAIN
-  );
-  expect(client.cookies.get('Authorization')?.attributes['max-age']).toBe(
-    MAX_AGE
-  );
-  expect(client.cookies.has('LoggedIn')).toBe(true);
-  expect(client.cookies.get('LoggedIn')?.attributes['max-age']).toBe(MAX_AGE);
-  expect(client.cookies.get('LoggedIn')?.attributes['domain']).toBe(
-    COOKIE_DOMAIN
-  );
-  expect(client.cookies.get('Authorization')?.value).not.toBe('');
-}
+} from '../support/auth';
 
 // tearleads/authentication/tests/test_github_authentication.py
 describe('TestGithubAuthentication', () => {

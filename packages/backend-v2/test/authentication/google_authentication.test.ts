@@ -7,10 +7,12 @@ import {
   userByUsername,
   userFactory,
 } from '../helpers';
-import {GOOGLE_TOKEN_URL, GOOGLE_USERINFO_URL, mockFetch} from './support';
-
-const COOKIE_DOMAIN = 'localhost';
-const MAX_AGE = '2419200';
+import {
+  expectAuthCookies,
+  GOOGLE_TOKEN_URL,
+  GOOGLE_USERINFO_URL,
+  mockFetch,
+} from '../support/auth';
 
 const payload = {
   data: {type: 'GoogleLogin', attributes: {code: 'valid_code'}},
@@ -29,23 +31,6 @@ function googleRoutes(userinfo: object) {
     },
     {method: 'GET', url: GOOGLE_USERINFO_URL, body: userinfo},
   ]);
-}
-
-function expectAuthCookies(client: ApiClient, token: string) {
-  expect(client.cookies.has('Authorization')).toBe(true);
-  expect(client.cookies.get('Authorization')?.value).toBe(token);
-  expect(client.cookies.get('Authorization')?.attributes['domain']).toBe(
-    COOKIE_DOMAIN
-  );
-  expect(client.cookies.get('Authorization')?.attributes['max-age']).toBe(
-    MAX_AGE
-  );
-  expect(client.cookies.has('LoggedIn')).toBe(true);
-  expect(client.cookies.get('LoggedIn')?.attributes['max-age']).toBe(MAX_AGE);
-  expect(client.cookies.get('LoggedIn')?.attributes['domain']).toBe(
-    COOKIE_DOMAIN
-  );
-  expect(client.cookies.get('Authorization')?.value).not.toBe('');
 }
 
 // tearleads/authentication/tests/test_google_authentication.py

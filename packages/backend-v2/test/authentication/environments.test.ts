@@ -1,13 +1,18 @@
 import {describe, expect, it} from 'vitest';
 import {authorizationCookies} from '../../src/auth/cookies';
-import {setUpBase, tokenFor, userFactory} from '../helpers';
+import {
+  setCookieHeaders as parsedSetCookies,
+  setUpBase,
+  tokenFor,
+  userFactory,
+} from '../helpers';
 import {
   googlePayload,
   googleRoutes,
   mockFetch,
   requestWithEnv,
   setCookies,
-} from './support';
+} from '../support/auth';
 
 const STAGING = {
   DEBUG: 'false',
@@ -35,20 +40,19 @@ const googleLogin = (overrides: Partial<Cloudflare.Env>) => {
   );
 };
 
-/** Every Set-Cookie header, including repeated names. */
+const lowerCase = (value: string | true | undefined) =>
+  typeof value === 'string' ? value.toLowerCase() : undefined;
+
+/** Every Set-Cookie header, including repeated names, summarized. */
 const setCookieHeaders = (response: Response) =>
-  response.headers.getSetCookie().map(header => {
-    const [pair = '', ...attributes] = header.split(';').map(p => p.trim());
-    const lower = attributes.map(a => a.toLowerCase());
-    return {
-      name: pair.slice(0, pair.indexOf('=')),
-      value: pair.slice(pair.indexOf('=') + 1),
-      domain: lower.find(a => a.startsWith('domain='))?.slice(7),
-      expired: lower.includes('max-age=0'),
-      secure: lower.includes('secure'),
-      sameSite: lower.find(a => a.startsWith('samesite='))?.slice(9),
-    };
-  });
+  parsedSetCookies(response).map(({name, value, attributes}) => ({
+    name,
+    value,
+    domain: lowerCase(attributes['domain']),
+    expired: attributes['max-age'] === '0',
+    secure: attributes['secure'] === true,
+    sameSite: lowerCase(attributes['samesite']),
+  }));
 
 // Staging and production share a parent domain, so production's cookies are
 // sent to staging hosts. Staging uses its own cookie names and scope.
