@@ -1,3 +1,7 @@
+import {
+  textEntryReusedCreateRelationshipsSchema,
+  textEntryReusedListQuerySchema,
+} from '@commandsnippets/api-shared';
 import {eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
@@ -17,6 +21,7 @@ entryReuseRoutes.get('/', c =>
   listResponse(c, {
     ...textEntryReusedResource,
     user: requireUser(c),
+    query: textEntryReusedListQuerySchema,
     filters: {},
     ordering: {date_created: sql`${entryReuses.date_created}`},
     defaultOrdering: [entryReuses.date_created, entryReuses.id],
@@ -35,13 +40,17 @@ entryReuseRoutes.post('/', async c => {
   const {relationships} = await parseResource(c.req.raw, {
     type: TEXT_ENTRY_REUSED,
   });
-  const ids = await resolveRelated(db, user.id, relationships, [
-    {name: 'text_entry', ...textEntryResource},
-  ]);
+  const ids = await resolveRelated(
+    db,
+    user.id,
+    relationships,
+    textEntryReusedCreateRelationshipsSchema,
+    {text_entry: textEntryResource}
+  );
   const [created] = await db
     .insert(entryReuses)
     .values({
-      text_entry_id: ids['text_entry'] as number,
+      text_entry_id: ids.text_entry,
       user_id: user.id,
       date_created: now(),
     })

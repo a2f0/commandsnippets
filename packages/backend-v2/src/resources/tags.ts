@@ -1,3 +1,8 @@
+import {
+  tagCreateAttributesSchema,
+  tagListQuerySchema,
+  tagUpdateAttributesSchema,
+} from '@commandsnippets/api-shared';
 import {and, eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
@@ -8,14 +13,12 @@ import {now} from '../lib/clock';
 import {uniqueTogether} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
-import {booleanField, charField, validateOrThrow} from '../lib/validation';
-import {dateTime, usernameIs} from './filters';
+import {validateFields} from '../lib/validate';
+import {usernameIs} from './filters';
 import {nextRevision, tagResource} from './owned';
 import {reorder} from './reorder';
 import {TAG} from './resourceTypes';
 import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
-
-const NAME_MAX_LENGTH = 24;
 
 export const tagOrdering: OrderedSpec = {
   table: tags,
@@ -31,10 +34,11 @@ tagRoutes.get('/', c =>
   listResponse(c, {
     ...tagResource,
     user: requireUser(c),
+    query: tagListQuerySchema,
     filters: {
       name: value => eq(tags.name, value),
       user__username: value => usernameIs(tags.user_id, value),
-      date_updated__gt: value => sql`${tags.date_updated} > ${dateTime(value)}`,
+      date_updated__gt: value => sql`${tags.date_updated} > ${value}`,
     },
     ordering: {
       date_last_used: sql`${tags.date_last_used}`,
@@ -91,10 +95,7 @@ tagRoutes.post('/', async c => {
     }
   }
 
-  const {name} = validateOrThrow<{name: string}>(
-    {name: charField({maxLength: NAME_MAX_LENGTH})},
-    attributes
-  );
+  const {name} = validateFields(tagCreateAttributesSchema, attributes);
   const timestamp = now();
   try {
     const [created] = await db
@@ -128,14 +129,7 @@ tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     type: TAG,
     id: String(tag.id),
   });
-  const changes = validateOrThrow<{name?: string; is_deleted?: boolean}>(
-    {
-      name: charField({maxLength: NAME_MAX_LENGTH}),
-      is_deleted: booleanField(),
-    },
-    attributes,
-    {partial: true}
-  );
+  const changes = validateFields(tagUpdateAttributesSchema, attributes);
   try {
     const [updated] = await db
       .update(tags)

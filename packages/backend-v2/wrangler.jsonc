@@ -5,6 +5,9 @@
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // api-shared is installed as symlinks to ../api-shared, so the bundler
+  // resolves its imports from there: bundle this package's (only) zod.
+  "alias": { "zod": "./node_modules/zod/index.js" },
   // Local development. Mirrors Django's DEBUG=True cookie behavior.
   "vars": {
     "DEBUG": "true",

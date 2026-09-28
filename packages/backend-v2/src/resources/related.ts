@@ -1,53 +1,55 @@
+import {CODES, MESSAGES, type ToOneLinkage} from '@commandsnippets/api-shared';
 import {and, eq} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
+import type {z} from 'zod';
 import type {Db} from '../db/client';
 import {ApiError, type ErrorObject} from '../lib/errors';
+import {eachField} from '../lib/validate';
 
-interface RelatedField {
-  name: string;
+/** Where a relationship's pk must be one of the requesting user's rows. */
+interface RelatedTable {
   table: SQLiteTable;
   id: SQLiteColumn;
   userId: SQLiteColumn;
 }
 
+const POINTER = '/data/relationships';
+
 /**
- * PrimaryKeyRelatedField validation for relationships in a request document,
- * with the queryset limited to the requesting user's rows.
+ * PrimaryKeyRelatedField validation for a request document's relationships,
+ * with the queryset limited to the requesting user's rows: `schema`'s fields
+ * (present, not null, a pk; see api-shared's `relatedField`), then that each
+ * pk exists in its `tables` entry. Every field's error is reported, in field
+ * order.
  */
-export async function resolveRelated(
+export async function resolveRelated<Shape extends Record<string, z.ZodType>>(
   db: Db,
   userId: number,
   relationships: Record<string, string | null>,
-  fields: RelatedField[]
-): Promise<Record<string, number>> {
+  schema: z.ZodObject<Shape>,
+  tables: {[K in keyof Shape]: RelatedTable}
+): Promise<{[K in keyof Shape]: number}> {
   const errors: ErrorObject[] = [];
   const ids: Record<string, number> = {};
-  for (const field of fields) {
-    const error = (detail: string, code: string) =>
-      errors.push({
-        detail,
-        status: '400',
-        source: {pointer: `/data/relationships/${field.name}`},
-        code,
-      });
-    const value = relationships[field.name];
-    if (value === undefined) {
-      error('This field is required.', 'required');
+  for (const field of eachField(schema, relationships, POINTER)) {
+    if ('error' in field) {
+      errors.push(field.error);
       continue;
     }
-    if (value === null) {
-      error('This field may not be null.', 'null');
-      continue;
-    }
-    const [row] = /^\d+$/.test(value)
-      ? await db
-          .select({id: field.id})
-          .from(field.table)
-          .where(and(eq(field.id, Number(value)), eq(field.userId, userId)))
-          .limit(1)
-      : [];
+    const {table, id, userId: owner} = tables[field.name];
+    const pk = (field.value as ToOneLinkage).data.id;
+    const [row] = await db
+      .select({id})
+      .from(table)
+      .where(and(eq(id, Number(pk)), eq(owner, userId)))
+      .limit(1);
     if (row === undefined) {
-      error(`Invalid pk "${value}" - object does not exist.`, 'does_not_exist');
+      errors.push({
+        detail: MESSAGES.pkDoesNotExist(pk),
+        status: '400',
+        source: {pointer: `${POINTER}/${field.name}`},
+        code: CODES.doesNotExist,
+      });
     } else {
       ids[field.name] = row.id as number;
     }
@@ -55,5 +57,5 @@ export async function resolveRelated(
   if (errors.length > 0) {
     throw new ApiError(400, errors);
   }
-  return ids;
+  return ids as {[K in keyof Shape]: number};
 }

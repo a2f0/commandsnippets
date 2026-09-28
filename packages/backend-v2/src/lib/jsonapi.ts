@@ -1,38 +1,36 @@
 /**
  * A small port of the parts of django-rest-framework-json-api this API used:
  * request document parsing, resource serialization with `include`, and the
- * query-parameter/filter/sort/pagination conventions (including their error
- * messages, which clients and tests rely on).
+ * query-parameter/filter/sort/pagination conventions. What they accept, and
+ * their error messages (which clients and tests rely on), are api-shared's
+ * schemas.
  */
-import {desc, type SQL} from 'drizzle-orm';
 import {
-  conflict,
-  fieldError,
-  notFound,
-  parseError,
-  queryError,
-  unsupportedMediaType,
-} from './errors';
+  type FilterSchemas,
+  includePathsSchema,
+  MESSAGES,
+  type QueryEntries,
+  type RelationshipGraph,
+  type RequestResource,
+  requestEnvelopeSchema,
+  type SearchMode,
+  type ListQuery as SharedListQuery,
+  splitInclude,
+} from '@commandsnippets/api-shared';
+import {desc, type SQL} from 'drizzle-orm';
+import type {z} from 'zod';
+import {notFound, parseError, unsupportedMediaType} from './errors';
+import {parseOrThrow} from './validate';
 
 // ---------------------------------------------------------------------------
 // Request parsing
 // ---------------------------------------------------------------------------
-
-interface ParsedResource {
-  id: string | undefined;
-  attributes: Record<string, unknown>;
-  relationships: Record<string, string | null>;
-}
 
 interface ParseOptions {
   /** The resource type the endpoint accepts (DJA's resource_name). */
   type: string;
   /** For PATCH/PUT: the id from the URL, which the document must match. */
   id?: string;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** The JSON:API media type, which every response document is sent as. */
@@ -57,10 +55,15 @@ export function assertJsonMediaType(request: Request): void {
   }
 }
 
+/**
+ * A request document's primary data (api-shared's `requestEnvelopeSchema`):
+ * 415 unless JSON, 400 on a JSON syntax error, then the envelope's first
+ * error. Attributes and relationships are validated by the caller.
+ */
 export async function parseResource(
   request: Request,
   {type, id}: ParseOptions
-): Promise<ParsedResource> {
+): Promise<RequestResource> {
   assertJsonMediaType(request);
   const text = await request.text();
   let document: unknown = {};
@@ -68,58 +71,10 @@ export async function parseResource(
     try {
       document = JSON.parse(text);
     } catch (error) {
-      throw parseError(`JSON parse error - ${(error as Error).message}`);
+      throw parseError(MESSAGES.jsonParseError((error as Error).message));
     }
   }
-  const data = isRecord(document) ? document['data'] : undefined;
-  if (!isRecord(data)) {
-    throw parseError('Received document does not contain primary data');
-  }
-  if (data['type'] !== type) {
-    throw conflict(
-      `The resource object's type (${String(data['type'])}) is not the type ` +
-        `that constitute the collection represented by the endpoint (${type}).`
-    );
-  }
-  const dataId = data['id'] === undefined ? undefined : String(data['id']);
-  if (id !== undefined) {
-    if (dataId === undefined) {
-      throw parseError(
-        "The resource identifier object must contain an 'id' member"
-      );
-    }
-    if (dataId !== id) {
-      throw conflict(
-        `The resource object's id (${dataId}) does not match the endpoint's id (${id}).`
-      );
-    }
-  }
-
-  const relationships: Record<string, string | null> = {};
-  const rawRelationships = isRecord(data['relationships'])
-    ? data['relationships']
-    : {};
-  for (const [name, value] of Object.entries(rawRelationships)) {
-    const linkage = isRecord(value) ? value['data'] : undefined;
-    if (linkage === null) {
-      relationships[name] = null;
-    } else if (isRecord(linkage) && linkage['id'] !== undefined) {
-      relationships[name] = String(linkage['id']);
-    } else {
-      throw fieldError(
-        name,
-        'Received data is not a valid JSONAPI Resource Identifier Object',
-        'invalid',
-        'relationships'
-      );
-    }
-  }
-
-  return {
-    id: dataId,
-    attributes: isRecord(data['attributes']) ? data['attributes'] : {},
-    relationships,
-  };
+  return parseOrThrow(requestEnvelopeSchema({type, id}), document);
 }
 
 // ---------------------------------------------------------------------------
@@ -140,13 +95,13 @@ export interface ResourceObject extends ResourceIdentifier {
   >;
 }
 
-type ToOne<Row> = {
+export type ToOne<Row> = {
   type: string;
   many?: false;
   key: (row: Row) => number | null;
 };
 
-type ToMany = {
+export type ToMany = {
   type: string;
   many: true;
   /** Load the related rows for these parent ids, in relationship order. */
@@ -161,7 +116,7 @@ export interface ResourceDef<Row = never> {
   attributes: (row: Row) => Record<string, unknown>;
   relationships: Record<string, ToOne<Row> | ToMany>;
   /** DJA's JSONAPIMeta.included_resources: used when `include` is absent. */
-  defaultIncludes: string[];
+  defaultIncludes: readonly string[];
 }
 
 export type Registry = Record<string, ResourceDef<never>>;
@@ -170,14 +125,25 @@ interface Identified {
   id: number;
 }
 
-/**
- * The longest include path accepted. Clients use at most two segments
- * (`text_entry_to_tag.tag`); relationships are cyclic, so an unbounded path
- * could keep re-walking the same rows.
- */
-const MAX_INCLUDE_DEPTH = 3;
+/** The registry's relationships, as api-shared's include schema walks them. */
+function relationshipGraph(registry: Registry): RelationshipGraph {
+  return Object.fromEntries(
+    Object.entries(registry).map(([type, def]) => [
+      type,
+      Object.fromEntries(
+        Object.entries(def.relationships).map(([name, relationship]) => [
+          name,
+          {type: relationship.type, many: relationship.many === true},
+        ])
+      ),
+    ])
+  );
+}
 
-/** Expand `a.b,c` into validated paths plus their prefixes (`a`, `a.b`, `c`). */
+/**
+ * Validate the include paths (or the resource's default includes) and expand
+ * them into paths plus their prefixes (`a`, `a.b`, `c`), shortest first.
+ */
 function resolveIncludes(
   registry: Registry,
   type: string,
@@ -187,35 +153,10 @@ function resolveIncludes(
   if (root === undefined) {
     throw new Error(`Unknown resource type ${type}`);
   }
-  const requested =
-    include === null
-      ? root.defaultIncludes
-      : include
-          .split(',')
-          .map(path => path.trim())
-          .filter(path => path !== '');
-  const paths = new Map<string, string[]>();
-  for (const path of requested) {
-    const segments = path.split('.');
-    if (segments.length > MAX_INCLUDE_DEPTH) {
-      throw queryError(
-        `Include path ${path} is deeper than ${MAX_INCLUDE_DEPTH} relationships.`
-      );
-    }
-    let def: ResourceDef<never> | undefined = root;
-    segments.forEach((segment, index) => {
-      const relationship = def?.relationships[segment];
-      if (relationship === undefined) {
-        throw queryError(
-          `This endpoint does not support the include parameter for path ${path}`
-        );
-      }
-      def = registry[relationship.type];
-      const prefix = segments.slice(0, index + 1);
-      paths.set(prefix.join('.'), prefix);
-    });
-  }
-  return [...paths.values()].sort((a, b) => a.length - b.length);
+  return parseOrThrow(
+    includePathsSchema(relationshipGraph(registry), type),
+    include === null ? [...root.defaultIncludes] : splitInclude(include)
+  );
 }
 
 /**
@@ -408,20 +349,15 @@ export function document(
 // Query parameters: validation, filters, sorting, pagination
 // ---------------------------------------------------------------------------
 
-const QUERY_PARAM =
-  /^(sort|include)$|^(?<kind>filter|fields|page)(\[[\w.-]+\])?$/;
-const FILTER_PARAM = /^filter\[([\w.-]+)\]$/;
+/** Each filter's SQL condition, built from its parsed value. */
+export type FilterSpec<F extends FilterSchemas> = {
+  [K in keyof F & string]: (value: z.output<F[K]>) => SQL;
+};
 
-const SEARCH_PARAM = 'filter[search]';
-const PAGE_SIZE = 50;
-const MAX_PAGE_SIZE = 100;
+/** Maps each sortable field to the SQL expression to order by. */
+export type OrderingSpec<S extends string> = Record<S, SQL>;
 
-/** Maps a Django filter key (e.g. `date_updated__gt`) to a SQL condition. */
-export type FilterSpec = Record<string, (value: string) => SQL>;
-
-/** Maps a sortable field name to the SQL expression to order by. */
-export type OrderingSpec = Record<string, SQL>;
-
+/** A collection query as SQL: api-shared's `ListQuery`, with conditions. */
 export interface ListQuery {
   filters: SQL[];
   search: string | null;
@@ -431,83 +367,33 @@ export interface ListQuery {
   include: string | null;
 }
 
-export function parseListQuery(
+/**
+ * Validate a collection's query parameters with its api-shared schema (the
+ * first error is thrown), then build its filters' conditions and ordering.
+ */
+export function parseListQuery<
+  F extends FilterSchemas,
+  S extends string,
+  Search extends SearchMode,
+>(
   url: URL,
-  filterSpec: FilterSpec,
-  orderingSpec: OrderingSpec
+  schema: z.ZodType<SharedListQuery<F, S, Search>, QueryEntries>,
+  filterSpec: FilterSpec<F>,
+  orderingSpec: OrderingSpec<S>
 ): ListQuery {
-  const params = url.searchParams;
-  for (const key of new Set(params.keys())) {
-    const match = QUERY_PARAM.exec(key);
-    if (!match) {
-      throw queryError(`invalid query parameter: ${key}`);
-    }
-    if (match.groups?.['kind'] !== 'filter' && params.getAll(key).length > 1) {
-      throw queryError(`repeated query parameter not allowed: ${key}`);
-    }
-  }
-
-  const filters: SQL[] = [];
-  for (const key of new Set(params.keys())) {
-    // Keys were validated above, so this only matches well-formed filters.
-    const assoc = FILTER_PARAM.exec(key)?.[1];
-    if (assoc === undefined || key === SEARCH_PARAM) {
-      continue;
-    }
-    const values = params.getAll(key);
-    if (values.some(value => value === '')) {
-      throw queryError(`missing value for query parameter ${key}`);
-    }
-    const filterKey = assoc.replaceAll('.', '__');
-    const filter = filterSpec[filterKey];
-    if (filter === undefined) {
-      throw queryError(`invalid filter[${filterKey}]`);
-    }
-    for (const value of values) {
-      filters.push(filter(value));
-    }
-  }
-
-  let orderBy: SQL[] | null = null;
-  const sort = params.get('sort');
-  if (sort !== null && sort !== '') {
-    const terms = sort.split(',').map(term => term.trim());
-    const bad = terms.filter(
-      term => !(term.replaceAll('.', '__').replace(/^-/, '') in orderingSpec)
-    );
-    if (bad.length > 0) {
-      throw queryError(
-        `invalid sort parameter${bad.length > 1 ? 's' : ''}: ${bad.join(',')}`
-      );
-    }
-    orderBy = terms.map(term => {
-      const field = orderingSpec[term.replace(/^-/, '')] as SQL;
-      return term.startsWith('-') ? desc(field) : field;
-    });
-  }
-
-  const positiveInt = (value: string | null) =>
-    value !== null && /^\d+$/.test(value) && Number(value) > 0
-      ? Number(value)
-      : null;
-  const page = params.has('page[number]')
-    ? positiveInt(params.get('page[number]'))
-    : 1;
-  if (page === null) {
-    throw notFound('Invalid page.');
-  }
-  const pageSize = Math.min(
-    positiveInt(params.get('page[size]')) ?? PAGE_SIZE,
-    MAX_PAGE_SIZE
-  );
-
+  const query = parseOrThrow(schema, [...url.searchParams]);
   return {
-    filters,
-    search: params.get(SEARCH_PARAM),
-    orderBy,
-    page,
-    pageSize,
-    include: params.get('include'),
+    filters: query.filters.map(({name, value}) =>
+      (filterSpec[name] as (value: unknown) => SQL)(value)
+    ),
+    search: query.search,
+    orderBy:
+      query.sort?.map(({field, descending}) =>
+        descending ? desc(orderingSpec[field]) : orderingSpec[field]
+      ) ?? null,
+    page: query.page,
+    pageSize: query.pageSize,
+    include: query.include,
   };
 }
 
@@ -525,7 +411,7 @@ export function paginate(
 ): Pagination {
   const pages = Math.max(1, Math.ceil(count / query.pageSize));
   if (query.page > pages) {
-    throw notFound('Invalid page.');
+    throw notFound(MESSAGES.invalidPage);
   }
   const link = (page: number | null) => {
     if (page === null) {

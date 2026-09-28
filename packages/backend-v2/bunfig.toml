@@ -1,8 +1,9 @@
 # `bun test` runs only the scripts' tests (scripts/*.test.ts, on Bun with
 # bun:sqlite). The scripts import some of src/, whose coverage the Worker's
-# vitest run in workerd measures instead. This gate is 98% of lines and 95% of
-# functions in scripts/ (README, Development).
+# vitest run in workerd measures instead, and through it api-shared, which has
+# its own tests. This gate is 98% of lines and 95% of functions in scripts/
+# (README, Development).
 [test]
 coverageSkipTestFiles = true
-coveragePathIgnorePatterns = ["src/**"]
+coveragePathIgnorePatterns = ["src/**", "../api-shared/**"]
 coverageThreshold = { lines = 0.98, functions = 0.95 }

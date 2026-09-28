@@ -9,6 +9,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    // api-shared is installed as symlinks to ../api-shared, so its imports
+    // resolve from there: point them at this package's (only) zod.
+    "paths": {
+      "zod": ["./node_modules/zod"],
+      "zod/*": ["./node_modules/zod/*"]
+    }
   }
 }

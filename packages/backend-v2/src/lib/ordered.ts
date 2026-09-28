@@ -17,6 +17,7 @@
  * D1 has no interactive transactions, so each move is a single UPDATE that
  * only applies if the moved row still has the rank it was read with.
  */
+import {CODES} from '@commandsnippets/api-shared';
 import {type SQL, sql} from 'drizzle-orm';
 import {
   SQLiteAsyncDialect,
@@ -139,7 +140,7 @@ export class OrderedModel {
     throw ApiError.of(
       409,
       'The ordering changed while it was being updated. Please retry.',
-      'conflict'
+      CODES.orderingConflict
     );
   }
 

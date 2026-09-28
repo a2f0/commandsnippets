@@ -1,3 +1,8 @@
+import {
+  textEntryCreateAttributesSchema,
+  textEntryListQuerySchema,
+  textEntryUpdateAttributesSchema,
+} from '@commandsnippets/api-shared';
 import {eq, or, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
@@ -6,14 +11,11 @@ import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {parseResource} from '../lib/jsonapi';
 import {fold, searchColumns} from '../lib/search';
-import {booleanField, charField, validateOrThrow} from '../lib/validation';
-import {boolean, dateTime, icontains, integer, usernameIs} from './filters';
+import {validateFields} from '../lib/validate';
+import {icontains, usernameIs} from './filters';
 import {nextRevision, textEntryResource} from './owned';
 import {TEXT_ENTRY} from './resourceTypes';
 import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
-
-const SUBJECT_MAX_LENGTH = 255;
-const BODY_MAX_LENGTH = 1024;
 
 /**
  * Entries tagged with a tag matching `condition`, counting only the
@@ -37,15 +39,15 @@ entryRoutes.get('/', c => {
   return listResponse(c, {
     ...textEntryResource,
     user,
+    query: textEntryListQuerySchema,
     filters: {
-      id: value => eq(textEntries.id, integer(value)),
+      id: value => eq(textEntries.id, value),
       tags__name: value => hasTag(user.id, sql`t.name = ${value}`),
-      tags__id: value => hasTag(user.id, sql`t.id = ${integer(value)}`),
+      tags__id: value => hasTag(user.id, sql`t.id = ${value}`),
       user__username: value => usernameIs(textEntries.user_id, value),
-      tag_count: value => eq(textEntries.tag_count, integer(value)),
-      is_deleted: value => eq(textEntries.is_deleted, boolean(value)),
-      date_updated__gt: value =>
-        sql`${textEntries.date_updated} > ${dateTime(value)}`,
+      tag_count: value => eq(textEntries.tag_count, value),
+      is_deleted: value => eq(textEntries.is_deleted, value),
+      date_updated__gt: value => sql`${textEntries.date_updated} > ${value}`,
     },
     ordering: {
       body: sql`${textEntries.body} COLLATE NOCASE`,
@@ -72,13 +74,7 @@ entryRoutes.get('/:id', async c => {
 entryRoutes.post('/', async c => {
   const user = requireUser(c);
   const {attributes} = await parseResource(c.req.raw, {type: TEXT_ENTRY});
-  const fields = validateOrThrow<{body: string; subject: string}>(
-    {
-      body: charField({maxLength: BODY_MAX_LENGTH}),
-      subject: charField({maxLength: SUBJECT_MAX_LENGTH}),
-    },
-    attributes
-  );
+  const fields = validateFields(textEntryCreateAttributesSchema, attributes);
   const timestamp = now();
   const [created] = await c
     .get('db')
@@ -100,19 +96,7 @@ entryRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     type: TEXT_ENTRY,
     id: String(entry.id),
   });
-  const changes = validateOrThrow<{
-    body?: string;
-    subject?: string;
-    is_deleted?: boolean;
-  }>(
-    {
-      body: charField({maxLength: BODY_MAX_LENGTH}),
-      subject: charField({maxLength: SUBJECT_MAX_LENGTH}),
-      is_deleted: booleanField(),
-    },
-    attributes,
-    {partial: true}
-  );
+  const changes = validateFields(textEntryUpdateAttributesSchema, attributes);
   const [updated] = await c
     .get('db')
     .update(textEntries)

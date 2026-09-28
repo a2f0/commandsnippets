@@ -1,3 +1,4 @@
+import {tagTextEntryCreateRelationshipsSchema} from '@commandsnippets/api-shared';
 import {and, eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
@@ -83,12 +84,13 @@ tagEntryRoutes.post('/', async c => {
   const {relationships} = await parseResource(c.req.raw, {
     type: TAG_TEXT_ENTRY,
   });
-  const ids = await resolveRelated(db, user.id, relationships, [
-    {name: 'tag', ...tagResource},
-    {name: 'text_entry', ...textEntryResource},
-  ]);
-  const tagId = ids['tag'] as number;
-  const textEntryId = ids['text_entry'] as number;
+  const {tag: tagId, text_entry: textEntryId} = await resolveRelated(
+    db,
+    user.id,
+    relationships,
+    tagTextEntryCreateRelationshipsSchema,
+    {tag: tagResource, text_entry: textEntryResource}
+  );
 
   const find = async () =>
     (
