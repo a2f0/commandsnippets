@@ -1,0 +1,6 @@
+# `bun test` runs the schemas' unit tests (test/). The gate is 98% of lines
+# and functions in src/ (README).
+[test]
+coverageSkipTestFiles = true
+coveragePathIgnorePatterns = ["test/**"]
+coverageThreshold = { lines = 0.98, functions = 0.98 }

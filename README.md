@@ -7,6 +7,7 @@ a monorepo.
 | --- | --- |
 | `backend/` | Django API (being replaced by `packages/backend-v2/`) |
 | `packages/agent-tool/` | CLI behind the ship/review skills |
+| `packages/api-shared/` | API contract (zod schemas) shared by the API and its clients |
 | `packages/backend-v2/` | Cloudflare Workers API |
 | `packages/frontend/` | Web client |
 | `packages/website/` | Public website (Astro) |
