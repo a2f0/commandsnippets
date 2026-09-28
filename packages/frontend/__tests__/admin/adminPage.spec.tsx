@@ -406,6 +406,20 @@ describe('AdminPage', () => {
     });
   });
 
+  it("gets back to the user's entries from the menu", async () => {
+    const history = await renderAt('/admin');
+    await usersTable();
+
+    fireEvent.click(screen.getByRole('menu', {name: 'Entries'}));
+    fireEvent.click(await screen.findByText('All Entries'));
+
+    await waitFor(() => {
+      expect(`${history.location.pathname}${history.location.search}`).toBe(
+        '/test?entries=all'
+      );
+    });
+  });
+
   it('shows the audit log', async () => {
     await renderAt('/admin');
     await usersTable();

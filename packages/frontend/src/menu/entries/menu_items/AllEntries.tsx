@@ -2,6 +2,7 @@ import {ListItemIcon} from '@mui/material';
 import React from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 
+import {useAppContext} from '../../../AppContext';
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {entrySearchMethod} from '../../../lib/shared';
 import {StyledMenuItem} from '../../../StyledMenuItem';
@@ -13,6 +14,7 @@ interface IProps {
 
 const AllEntries = ({onClose}: IProps) => {
   const {t} = useTypedTranslation('menu');
+  const appConfig = useAppContext();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const {user} = useParams();
@@ -23,8 +25,11 @@ const AllEntries = ({onClose}: IProps) => {
       id={`entries-menu-list-method-${entrySearchMethod.allEntries}`}
       onClick={() => {
         onClose();
-        if (user !== undefined) {
-          navigate(`/${user}?entries=all`);
+        // Pages without a user in the path (such as /admin) show the
+        // signed-in user's entries.
+        const owner = user ?? appConfig.loggedInUser;
+        if (owner !== null) {
+          navigate(`/${owner}?entries=all`);
         }
       }}
     >
