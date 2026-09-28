@@ -6,8 +6,13 @@ import {StyledToolbar} from '../styled/layout/StyledToolbar';
 
 const BORDER_COLOR = '#808080';
 
+interface IProps {
+  /** False on pages other than the entries page (see MenuBar). */
+  entriesPage?: boolean;
+}
+
 /** The sticky top bar with the menu, shared by the main and admin pages. */
-const AppHeader = () => (
+const AppHeader = ({entriesPage = true}: IProps) => (
   <AppBar
     position="sticky"
     sx={{
@@ -20,7 +25,7 @@ const AppHeader = () => (
     }}
   >
     <StyledToolbar>
-      <MenuBar />
+      <MenuBar entriesPage={entriesPage} />
     </StyledToolbar>
   </AppBar>
 );

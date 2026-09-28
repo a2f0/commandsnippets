@@ -84,7 +84,7 @@ const AdminPage = () => {
 
   return (
     <Box sx={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>
-      <AppHeader />
+      <AppHeader entriesPage={false} />
       <Box component="main" id="adminPage" sx={{flex: 1, p: 3}}>
         <Typography variant="h1" sx={{fontSize: '1.75rem', mb: 2}}>
           {t('title')}

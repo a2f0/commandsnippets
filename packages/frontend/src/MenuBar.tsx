@@ -10,6 +10,7 @@ import {GoogleAuth} from './GoogleAuth';
 import {useTypedTranslation} from './i18n/hooks';
 import {environment} from './lib/environment';
 import {AdminLinkButton} from './menu/admin/AdminLinkButton';
+import {EntriesLinkButton} from './menu/admin/EntriesLinkButton';
 import {DebugMenu} from './menu/debug/DebugMenu';
 import {DebugMenuButton} from './menu/debug/DebugMenuButton';
 import {EntriesMenu} from './menu/entries/EntriesMenu';
@@ -60,7 +61,15 @@ const Aligner = styled('div')`
   display: flex;
 `;
 
-const MenuBar = () => {
+interface IProps {
+  /**
+   * The Tags and Entries menus and File's New Tag and New Entry act on the
+   * entries page; other pages (the admin page) get a link back to it instead.
+   */
+  entriesPage?: boolean;
+}
+
+const MenuBar = ({entriesPage = true}: IProps) => {
   const appConfig = useAppContext();
   const {t} = useTypedTranslation('common');
 
@@ -152,12 +161,15 @@ const MenuBar = () => {
           <FileMenuButton onClick={handleFileMenuClick} />
         )}
         <ViewMenuButton onClick={handleViewMenuClick} />
-        <TagsMenuButton onClick={handleTagsMenuClick} />
-        <EntriesMenuButton onClick={handleEntriesMenuClick} />
+        {entriesPage && <TagsMenuButton onClick={handleTagsMenuClick} />}
+        {entriesPage && <EntriesMenuButton onClick={handleEntriesMenuClick} />}
         {environment !== 'production' && (
           <DebugMenuButton onClick={handleDebugMenuClick} />
         )}
         <HelpMenuButton onClick={handleHelpMenuClick} />
+        {!entriesPage && appConfig.loggedInUser && (
+          <EntriesLinkButton username={appConfig.loggedInUser} />
+        )}
         {appConfig.loggedInUser && appConfig.isStaff && <AdminLinkButton />}
       </Aligner>
       <Box
@@ -177,7 +189,11 @@ const MenuBar = () => {
         )}
         {appConfig.loggedInUser && <UserProfileCircle />}
       </Box>
-      <FileMenu onClose={handleFileMenuClose} anchorEl={fileMenuAnchorEl} />
+      <FileMenu
+        onClose={handleFileMenuClose}
+        anchorEl={fileMenuAnchorEl}
+        entriesPage={entriesPage}
+      />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
       <TagsMenu onClose={handleTagsMenuClose} anchorEl={tagsMenuAnchorEl} />
       <EntriesMenu

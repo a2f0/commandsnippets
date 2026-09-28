@@ -406,17 +406,21 @@ describe('AdminPage', () => {
     });
   });
 
-  it("gets back to the user's entries from the menu", async () => {
+  it('offers only menus that work here, and a link back to the entries', async () => {
     const history = await renderAt('/admin');
     await usersTable();
 
-    fireEvent.click(screen.getByRole('menu', {name: 'Entries'}));
-    fireEvent.click(await screen.findByText('All Entries'));
+    expect(screen.queryByRole('menu', {name: 'Tags'})).toBeNull();
+    expect(screen.queryByRole('menu', {name: 'Entries'})).toBeNull();
+    fireEvent.click(screen.getByRole('menu', {name: 'File'}));
+    expect(await screen.findByText('Logout')).toBeInTheDocument();
+    expect(document.getElementById('file-menu-new-entry')).toBeNull();
 
+    const back = present(document.getElementById('entriesLinkButton'), 'link');
+    expect(back).toHaveAttribute('href', '/test');
+    fireEvent.click(back);
     await waitFor(() => {
-      expect(`${history.location.pathname}${history.location.search}`).toBe(
-        '/test?entries=all'
-      );
+      expect(history.location.pathname).toBe('/test');
     });
   });
 

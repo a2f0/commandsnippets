@@ -92,6 +92,8 @@ new top-level route to both.
 reactivates them, and shows the audit log, through the API's `/api/v1/admin`.
 The page checks access with the API on every visit, and the menu shows an
 Admin link to staff once their login or a visit to the page has recorded it.
+Its menu bar leaves out what only works on the entries page (the Tags and
+Entries menus, New Tag and New Entry) and links back to your entries instead.
 
 ## Other
 
