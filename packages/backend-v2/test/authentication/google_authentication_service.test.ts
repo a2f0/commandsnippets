@@ -1,7 +1,6 @@
 import {env} from 'cloudflare:workers';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vitest';
 import {type Fetcher, GoogleOAuthService} from '../../src/auth/oauth';
-import {setUpBase} from '../helpers';
 
 interface Call {
   url: string;
@@ -20,12 +19,8 @@ function fakeFetch(body: object): {fetcher: Fetcher; calls: Call[]} {
   return {fetcher, calls};
 }
 
-// tearleads/authentication/tests/test_google_authentication_service.py
+// Django origin: backend/tearleads/authentication/tests/test_google_authentication_service.py
 describe('TestGoogleAuthentication', () => {
-  beforeEach(async () => {
-    await setUpBase();
-  });
-
   it('test_access_token', async () => {
     const {fetcher, calls} = fakeFetch({access_token: 'access_token'});
     const service = new GoogleOAuthService(env, fetcher);

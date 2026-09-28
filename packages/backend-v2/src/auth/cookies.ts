@@ -1,31 +1,11 @@
-import {and, eq} from 'drizzle-orm';
+/** The auth cookies: Django's `Authorization` token cookie and `LoggedIn` hint. */
 import type {Context} from 'hono';
 import {setCookie} from 'hono/cookie';
-import type {Db} from '../db/client';
-import {tokens, type User, users} from '../db/schema';
 import type {AppEnv} from '../env';
-import {now} from '../lib/clock';
-import {notAuthenticated, permissionDenied} from '../lib/errors';
+import {getOrCreateToken} from '../services/tokens';
 
 /** Django's AUTH_COOKIE_MAX_AGE: 28 days. */
-export const AUTH_COOKIE_MAX_AGE = 2_419_200;
-
-/** DRF's Token.generate_key(): 20 random bytes, hex encoded. */
-export function generateKey(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(20));
-  return [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
-/** The active user a token belongs to; a deactivated account's token is ignored. */
-async function userForKey(db: Db, key: string): Promise<User | null> {
-  const [row] = await db
-    .select({user: users})
-    .from(tokens)
-    .innerJoin(users, eq(tokens.user_id, users.id))
-    .where(and(eq(tokens.key, key), eq(users.is_active, true)))
-    .limit(1);
-  return row?.user ?? null;
-}
+const AUTH_COOKIE_MAX_AGE = 2_419_200;
 
 /**
  * This environment's auth cookie names. Staging prefixes them: production's
@@ -58,78 +38,6 @@ export function authorizationCookies(
         return value;
       }
     });
-}
-
-/**
- * The Django `CustomAuthentication` class: the `Authorization` cookie wins if
- * present (even when invalid); otherwise an `Authorization: <scheme> <key>`
- * header.
- */
-export async function authenticate(c: Context<AppEnv>): Promise<User | null> {
-  const db = c.get('db');
-  const cookies = authorizationCookies(
-    c.req.header('Cookie'),
-    cookieNames(c).auth
-  );
-  if (cookies.length > 0) {
-    // Staging's host-only cookie arrives alongside production's domain-wide
-    // one (same name), in browser-defined order: accept the first valid key.
-    for (const key of cookies) {
-      const user = await userForKey(db, key);
-      if (user !== null) {
-        return user;
-      }
-    }
-    return null;
-  }
-  const header = c.req.header('Authorization');
-  if (header !== undefined) {
-    const parts = header.split(/\s+/).filter(part => part !== '');
-    return parts.length === 2 ? userForKey(db, parts[1] as string) : null;
-  }
-  return null;
-}
-
-/** DRF's IsAuthenticated: anonymous requests get a 403. */
-export function requireUser(c: Context<AppEnv>): User {
-  const user = c.get('user');
-  if (user === null) {
-    throw notAuthenticated();
-  }
-  return user;
-}
-
-/** DRF's IsAdminUser: `is_staff` users only; everyone else gets a 403. */
-export function requireStaff(c: Context<AppEnv>): User {
-  const user = requireUser(c);
-  if (!user.is_staff) {
-    throw permissionDenied();
-  }
-  return user;
-}
-
-/** Token.objects.get_or_create(user=user) */
-export async function getOrCreateToken(
-  db: Db,
-  userId: number
-): Promise<string> {
-  const [existing] = await db
-    .select({key: tokens.key})
-    .from(tokens)
-    .where(eq(tokens.user_id, userId));
-  if (existing !== undefined) {
-    return existing.key;
-  }
-  const key = generateKey();
-  await db
-    .insert(tokens)
-    .values({key, created: now(), user_id: userId})
-    .onConflictDoNothing();
-  const [row] = await db
-    .select({key: tokens.key})
-    .from(tokens)
-    .where(eq(tokens.user_id, userId));
-  return row?.key ?? key;
 }
 
 /**

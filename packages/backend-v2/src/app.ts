@@ -1,24 +1,24 @@
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
 import packageJson from '../package.json';
+import {authenticate} from './auth/authentication';
 import {authRoutes} from './auth/routes';
-import {authenticate} from './auth/tokens';
 import {createDb} from './db/client';
 import type {AppEnv} from './env';
-import {ApiError, describeError} from './lib/errors';
+import {ApiError, describeError, originNotAllowed} from './lib/errors';
 import {assertJsonMediaType} from './lib/jsonapi';
 import {adminRoutes} from './resources/admin';
+import {currentUserRoutes} from './resources/currentUser';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
+import {jsonApi} from './resources/responses';
 import {tagRoutes} from './resources/tags';
 import {tagEntryRoutes} from './resources/tagsEntries';
-import {userRoutes} from './resources/users';
-import {jsonApi} from './resources/viewset';
 
-export const API_VERSION = packageJson.version;
+const API_VERSION = packageJson.version;
 
 /** Django's CORS_ALLOWED_ORIGIN_REGEXES, anchored at both ends. */
-export const ALLOWED_ORIGINS = [
+const ALLOWED_ORIGINS = [
   /^http:\/\/localhost(:\d+)?$/,
   /^http:\/\/127\.0\.0\.1(:\d+)?$/,
   // RFC 1918 private address space
@@ -76,7 +76,7 @@ app.use('*', async (c, next) => {
     origin !== undefined &&
     !ALLOWED_ORIGINS.some(pattern => pattern.test(origin))
   ) {
-    throw ApiError.of(403, 'Origin not allowed.', 'origin_not_allowed');
+    throw originNotAllowed();
   }
   await next();
 });
@@ -90,7 +90,7 @@ app.use('*', async (c, next) => {
 app.get('/healthcheck', c => c.body(null, 200));
 
 app.route('/', authRoutes);
-app.route('/api/v1/user', userRoutes);
+app.route('/api/v1/user', currentUserRoutes);
 app.route('/api/v1/tags', tagRoutes);
 app.route('/api/v1/entries', entryRoutes);
 app.route('/api/v1/tags_entries', tagEntryRoutes);

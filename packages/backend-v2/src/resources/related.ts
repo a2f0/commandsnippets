@@ -3,7 +3,7 @@ import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Db} from '../db/client';
 import {ApiError, type ErrorObject} from '../lib/errors';
 
-export interface RelatedField {
+interface RelatedField {
   name: string;
   table: SQLiteTable;
   id: SQLiteColumn;

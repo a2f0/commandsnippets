@@ -1,15 +1,14 @@
 import {eq} from 'drizzle-orm';
 import {describe, expect, it} from 'vitest';
-import {app} from '../../src/app';
 import {users} from '../../src/db/schema';
 import {createUser} from '../../src/services/users';
+import {ApiClient, db, raceBeforeStatement, tokenFor} from '../helpers';
 import {
   googlePayload,
   googleRoutes,
   mockFetch,
   setCookies,
-} from '../authentication/support';
-import {db, raceBeforeStatement, tokenFor} from '../helpers';
+} from '../support/auth';
 
 describe('concurrent first logins', () => {
   it('two first logins for one email end up with one account', async () => {
@@ -24,14 +23,9 @@ describe('concurrent first logins', () => {
       }
     );
     mockFetch(googleRoutes(email));
-    const response = await app.request(
-      'http://localhost/api/v1/google-login/',
-      {
-        method: 'POST',
-        headers: {'Content-Type': 'application/vnd.api+json'},
-        body: JSON.stringify(googlePayload()),
-      },
-      bindings
+    const response = await new ApiClient(undefined, bindings).post(
+      '/api/v1/google-login/',
+      googlePayload()
     );
     expect(response.status).toBe(200);
 

@@ -26,7 +26,7 @@ const entryPayload = (attributes: Record<string, unknown>, id?: string) => ({
   data: {type: 'TextEntry', ...(id === undefined ? {} : {id}), attributes},
 });
 
-// tearleads/text_entries/tests/test_text_entries_api.py
+// Django origin: backend/tearleads/text_entries/tests/test_text_entries_api.py
 describe('TestTextEntriesApi', () => {
   let base: Base;
 

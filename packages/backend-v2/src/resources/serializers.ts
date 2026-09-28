@@ -18,12 +18,13 @@ import {
 } from '../db/schema';
 import {isoformat} from '../lib/clock';
 import type {Registry, ResourceDef} from '../lib/jsonapi';
-
-export const USER = 'User';
-export const TAG = 'Tag';
-export const TEXT_ENTRY = 'TextEntry';
-export const TAG_TEXT_ENTRY = 'TagTextEntryThroughModel';
-export const TEXT_ENTRY_REUSED = 'TextEntryReused';
+import {
+  TAG,
+  TAG_TEXT_ENTRY,
+  TEXT_ENTRY,
+  TEXT_ENTRY_REUSED,
+  USER,
+} from './resourceTypes';
 
 /**
  * Every loader is scoped to `userId`, the requesting user: reads are

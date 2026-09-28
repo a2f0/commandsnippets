@@ -1,27 +1,21 @@
 import {eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
-import {requireUser} from '../auth/tokens';
-import {entryReuses, type TextEntryReused, textEntries} from '../db/schema';
+import {requireUser} from '../auth/permissions';
+import {entryReuses, type TextEntryReused} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
+import {textEntryResource, textEntryReusedResource} from './owned';
 import {resolveRelated} from './related';
-import {TEXT_ENTRY_REUSED} from './serializers';
+import {TEXT_ENTRY_REUSED} from './resourceTypes';
 import {getOwned, listResponse, resourceResponse} from './viewset';
-
-const owned = {
-  table: entryReuses,
-  id: entryReuses.id,
-  userId: entryReuses.user_id,
-};
 
 export const entryReuseRoutes = new Hono<AppEnv>();
 
 entryReuseRoutes.get('/', c =>
   listResponse(c, {
-    ...owned,
-    type: TEXT_ENTRY_REUSED,
+    ...textEntryReusedResource,
     user: requireUser(c),
     filters: {},
     ordering: {date_created: sql`${entryReuses.date_created}`},
@@ -30,13 +24,7 @@ entryReuseRoutes.get('/', c =>
 );
 
 entryReuseRoutes.get('/:id', async c => {
-  const reuse = await getOwned<TextEntryReused>(
-    c,
-    owned,
-    c.req.param('id'),
-    TEXT_ENTRY_REUSED,
-    requireUser(c)
-  );
+  const reuse = await getOwned<TextEntryReused>(c, textEntryReusedResource);
   return resourceResponse(c, TEXT_ENTRY_REUSED, reuse);
 });
 
@@ -48,12 +36,7 @@ entryReuseRoutes.post('/', async c => {
     type: TEXT_ENTRY_REUSED,
   });
   const ids = await resolveRelated(db, user.id, relationships, [
-    {
-      name: 'text_entry',
-      table: textEntries,
-      id: textEntries.id,
-      userId: textEntries.user_id,
-    },
+    {name: 'text_entry', ...textEntryResource},
   ]);
   const [created] = await db
     .insert(entryReuses)
@@ -72,13 +55,7 @@ entryReuseRoutes.post('/', async c => {
 });
 
 entryReuseRoutes.delete('/:id', async c => {
-  const reuse = await getOwned<TextEntryReused>(
-    c,
-    owned,
-    c.req.param('id'),
-    TEXT_ENTRY_REUSED,
-    requireUser(c)
-  );
+  const reuse = await getOwned<TextEntryReused>(c, textEntryReusedResource);
   await c.get('db').delete(entryReuses).where(eq(entryReuses.id, reuse.id));
   return c.body(null, 204);
 });

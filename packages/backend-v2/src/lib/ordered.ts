@@ -24,7 +24,7 @@ import {
   type SQLiteTable,
 } from 'drizzle-orm/sqlite-core';
 import type {Db} from '../db/client';
-import {ApiError} from './errors';
+import {ApiError, notFound} from './errors';
 
 const dialect = new SQLiteAsyncDialect();
 
@@ -241,7 +241,7 @@ export class OrderedModel {
       sql`SELECT ${id} AS id, ${order} AS "order", ${scope} AS scope ${ownerColumn} FROM ${table} WHERE ${id} = ${row.id}`
     );
     if (fresh === undefined) {
-      throw ApiError.of(404, 'Not found.', 'not_found');
+      throw notFound('Not found.');
     }
     return fresh;
   }

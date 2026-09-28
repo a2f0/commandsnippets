@@ -1,6 +1,6 @@
 /**
  * DRF-style serializer field validation: same rules and messages as
- * CharField / ChoiceField / BooleanField, so API errors match the Django API.
+ * CharField / BooleanField, so API errors match the Django API.
  */
 import {ApiError, type ErrorObject} from './errors';
 
@@ -11,7 +11,7 @@ interface FieldError {
 
 type FieldResult = {value: unknown} | {error: FieldError};
 
-export interface Field {
+interface Field {
   required: boolean;
   parse: (value: unknown) => FieldResult;
 }
@@ -57,27 +57,6 @@ export function charField({
         );
       }
       return {value: text};
-    },
-  };
-}
-
-export function choiceField(
-  choices: readonly string[],
-  {required = true}: {required?: boolean} = {}
-): Field {
-  return {
-    required,
-    parse(value) {
-      if (value === null) {
-        return fail('This field may not be null.', 'null');
-      }
-      if (typeof value !== 'string' || !choices.includes(value)) {
-        return fail(
-          `"${String(value)}" is not a valid choice.`,
-          'invalid_choice'
-        );
-      }
-      return {value};
     },
   };
 }
@@ -129,7 +108,7 @@ export function booleanField({
   };
 }
 
-export type ValidationResult<T> =
+type ValidationResult<T> =
   | {valid: true; data: T}
   | {valid: false; errors: Record<string, FieldError[]>};
 
@@ -167,7 +146,7 @@ export function validate<T extends Record<string, unknown>>(
 export function validateOrThrow<T extends Record<string, unknown>>(
   fields: Record<keyof T & string, Field>,
   data: Record<string, unknown>,
-  options: {partial?: boolean; relationships?: string[]} = {}
+  options: {partial?: boolean} = {}
 ): T {
   const result = validate<T>(fields, data, options);
   if (result.valid) {
@@ -178,11 +157,7 @@ export function validateOrThrow<T extends Record<string, unknown>>(
       fieldErrors.map(({detail, code}) => ({
         detail,
         status: '400',
-        source: {
-          pointer: options.relationships?.includes(name)
-            ? `/data/relationships/${name}`
-            : `/data/attributes/${name}`,
-        },
+        source: {pointer: `/data/attributes/${name}`},
         code,
       }))
   );

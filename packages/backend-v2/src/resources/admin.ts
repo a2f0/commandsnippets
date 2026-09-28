@@ -3,9 +3,9 @@
  * deactivate or reactivate accounts, and read the audit log of those changes.
  * Nothing here can grant staff; that stays a database change.
  */
-import {and, asc, count, desc, eq, type SQL, sql} from 'drizzle-orm';
-import {type Context, Hono} from 'hono';
-import {requireStaff} from '../auth/tokens';
+import {and, asc, desc, eq, type SQL, sql} from 'drizzle-orm';
+import {Hono} from 'hono';
+import {requireStaff} from '../auth/permissions';
 import type {Db} from '../db/client';
 import {
   type AdminAuditLogEntry,
@@ -21,17 +21,16 @@ import {
   document,
   type FilterSpec,
   type ListQuery,
+  listDocument,
   type OrderingSpec,
-  paginate,
-  parseListQuery,
   parseResource,
   type ResourceObject,
 } from '../lib/jsonapi';
 import {booleanField, parseBoolean, validateOrThrow} from '../lib/validation';
-import {jsonApi, parseId} from './viewset';
-
-export const ADMIN_USER = 'AdminUser';
-export const ADMIN_AUDIT_LOG_ENTRY = 'AdminAuditLogEntry';
+import {icontains} from './filters';
+import {ADMIN_AUDIT_LOG_ENTRY, ADMIN_USER} from './resourceTypes';
+import {jsonApi} from './responses';
+import {listPage, pageOrder, parseId} from './viewset';
 
 export const adminRoutes = new Hono<AppEnv>();
 
@@ -117,44 +116,43 @@ const USER_ORDERING: OrderingSpec = {
 
 /** `filter[search]`: a case-insensitive substring of the username or email. */
 function userSearch(term: string): SQL {
-  const pattern = `%${term.replace(/[\\%_]/g, match => `\\${match}`)}%`;
-  return sql`(${users.username} LIKE ${pattern} ESCAPE '\\' OR ${users.email} LIKE ${pattern} ESCAPE '\\')`;
+  return sql`(${icontains(users.username, term)} OR ${icontains(users.email, term)})`;
 }
 
-function listQuery(
-  c: Context<AppEnv>,
-  filters: FilterSpec,
-  ordering: OrderingSpec
-): {url: URL; query: ListQuery} {
-  const url = new URL(c.req.url);
-  const query = parseListQuery(url, filters, ordering);
+/** The admin lists render no relationships, so `include` is refused. */
+function refuseInclude(query: ListQuery): void {
   if (query.include !== null) {
     throw queryError('include is not supported here.');
   }
-  return {url, query};
 }
 
 adminRoutes.get('/users', async c => {
   const db = c.get('db');
-  const {url, query} = listQuery(c, USER_FILTERS, USER_ORDERING);
-  const conditions = [...query.filters];
-  if (query.search !== null && query.search !== '') {
-    conditions.push(userSearch(query.search));
-  }
-  const where = and(...conditions);
-  const [total] = await db.select({value: count()}).from(users).where(where);
-  const pagination = paginate(url, query, total?.value ?? 0);
-  const rows = await selectUsers(db)
-    .where(where)
-    .orderBy(...(query.orderBy ?? [asc(users.date_joined)]), asc(users.id))
-    .limit(query.pageSize)
-    .offset(pagination.offset);
+  const {rows, pagination} = await listPage(c, {
+    filters: USER_FILTERS,
+    ordering: USER_ORDERING,
+    refuse: refuseInclude,
+    where: query => {
+      const conditions = [...query.filters];
+      if (query.search !== null && query.search !== '') {
+        conditions.push(userSearch(query.search));
+      }
+      return and(...conditions);
+    },
+    table: users,
+    fetch: ({query, where, limit, offset}) =>
+      selectUsers(db)
+        .where(where)
+        .orderBy(...pageOrder(query, [asc(users.date_joined)], asc(users.id)))
+        .limit(limit)
+        .offset(offset),
+  });
   return jsonApi(
     c,
-    document(
+    listDocument(
       rows.map(row => renderUser(toRow(row))),
       [],
-      {links: pagination.links, meta: pagination.meta}
+      pagination
     )
   );
 });
@@ -179,7 +177,7 @@ adminRoutes.get('/users/:id', async c =>
 /** Only `is_active` can be changed; other attributes are rejected, not ignored. */
 const WRITABLE = new Set(['is_active']);
 
-const updateUser = async (c: Context<AppEnv>) => {
+adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
   const staff = requireStaff(c);
   const db = c.get('db');
   const target = await getUser(db, c.req.param('id'));
@@ -229,10 +227,7 @@ const updateUser = async (c: Context<AppEnv>) => {
         audit,
       ]));
   return jsonApi(c, document(renderUser(await getUser(db, String(target.id)))));
-};
-
-adminRoutes.patch('/users/:id', updateUser);
-adminRoutes.put('/users/:id', updateUser);
+});
 
 // ---------------------------------------------------------------------------
 // Audit log
@@ -263,31 +258,28 @@ const AUDIT_FILTERS: FilterSpec = {
   },
 };
 
-/** Newest first. */
+/** Newest first, always: nothing is sortable. */
 adminRoutes.get('/audit_log', async c => {
   const db = c.get('db');
-  const {url, query} = listQuery(c, AUDIT_FILTERS, {});
-  if (query.search !== null) {
-    throw queryError('filter[search] is not supported here.');
-  }
-  const where = and(...query.filters);
-  const [total] = await db
-    .select({value: count()})
-    .from(adminAuditLog)
-    .where(where);
-  const pagination = paginate(url, query, total?.value ?? 0);
-  const rows = await db
-    .select()
-    .from(adminAuditLog)
-    .where(where)
-    .orderBy(desc(adminAuditLog.created), desc(adminAuditLog.id))
-    .limit(query.pageSize)
-    .offset(pagination.offset);
-  return jsonApi(
-    c,
-    document(rows.map(renderAuditEntry), [], {
-      links: pagination.links,
-      meta: pagination.meta,
-    })
-  );
+  const {rows, pagination} = await listPage(c, {
+    filters: AUDIT_FILTERS,
+    ordering: {},
+    refuse: query => {
+      refuseInclude(query);
+      if (query.search !== null) {
+        throw queryError('filter[search] is not supported here.');
+      }
+    },
+    where: query => and(...query.filters),
+    table: adminAuditLog,
+    fetch: ({where, limit, offset}) =>
+      db
+        .select()
+        .from(adminAuditLog)
+        .where(where)
+        .orderBy(desc(adminAuditLog.created), desc(adminAuditLog.id))
+        .limit(limit)
+        .offset(offset),
+  });
+  return jsonApi(c, listDocument(rows.map(renderAuditEntry), [], pagination));
 });

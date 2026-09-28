@@ -1,22 +1,19 @@
 import {and, eq, sql} from 'drizzle-orm';
-import {type Context, Hono} from 'hono';
-import {requireUser} from '../auth/tokens';
+import {Hono} from 'hono';
+import {requireUser} from '../auth/permissions';
+import {isUniqueViolation} from '../db/errors';
 import {type Tag, tags} from '../db/schema';
 import type {AppEnv} from '../env';
-import {now, parseDateTime} from '../lib/clock';
-import {ApiError, queryError} from '../lib/errors';
+import {now} from '../lib/clock';
+import {uniqueTogether} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
-import {revision} from '../lib/revision';
 import {booleanField, charField, validateOrThrow} from '../lib/validation';
+import {dateTime, usernameIs} from './filters';
+import {nextRevision, tagResource} from './owned';
 import {reorder} from './reorder';
-import {TAG} from './serializers';
-import {
-  getOwned,
-  isUniqueViolation,
-  listResponse,
-  resourceResponse,
-} from './viewset';
+import {TAG} from './resourceTypes';
+import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
 
 const NAME_MAX_LENGTH = 24;
 
@@ -28,29 +25,16 @@ export const tagOrdering: OrderedSpec = {
   scope: tags.user_id,
 };
 
-const owned = {table: tags, id: tags.id, userId: tags.user_id};
-
-const uniqueNameError = () =>
-  ApiError.of(400, 'The fields name, user must make a unique set.', 'unique');
-
 export const tagRoutes = new Hono<AppEnv>();
 
 tagRoutes.get('/', c =>
   listResponse(c, {
-    ...owned,
-    type: TAG,
+    ...tagResource,
     user: requireUser(c),
     filters: {
       name: value => eq(tags.name, value),
-      user__username: value =>
-        sql`${tags.user_id} IN (SELECT id FROM users_user WHERE username = ${value})`,
-      date_updated__gt: value => {
-        const parsed = parseDateTime(value);
-        if (parsed === null) {
-          throw queryError('Enter a valid date/time.');
-        }
-        return sql`${tags.date_updated} > ${parsed}`;
-      },
+      user__username: value => usernameIs(tags.user_id, value),
+      date_updated__gt: value => sql`${tags.date_updated} > ${dateTime(value)}`,
     },
     ordering: {
       date_last_used: sql`${tags.date_last_used}`,
@@ -64,22 +48,10 @@ tagRoutes.get('/', c =>
   })
 );
 
-tagRoutes.post('/reorder', c =>
-  reorder(c, {
-    ...tagOrdering,
-    type: TAG,
-    userId: tags.user_id,
-  })
-);
+tagRoutes.post('/reorder', c => reorder(c, {...tagResource, ...tagOrdering}));
 
 tagRoutes.get('/:id', async c => {
-  const tag = await getOwned<Tag>(
-    c,
-    owned,
-    c.req.param('id'),
-    TAG,
-    requireUser(c)
-  );
+  const tag = await getOwned<Tag>(c, tagResource);
   return resourceResponse(c, TAG, tag);
 });
 
@@ -111,12 +83,7 @@ tagRoutes.post('/', async c => {
         .update(tags)
         .set({
           is_deleted: false,
-          date_updated: revision(
-            tags,
-            tags.date_updated,
-            tags.user_id,
-            user.id
-          ),
+          date_updated: nextRevision(tagResource, user.id),
         })
         .where(eq(tags.id, existing.id))
         .returning();
@@ -137,7 +104,7 @@ tagRoutes.post('/', async c => {
         user_id: user.id,
         order: new OrderedModel(db, tagOrdering).nextOrderSql(user.id),
         date_created: timestamp,
-        date_updated: revision(tags, tags.date_updated, tags.user_id, user.id),
+        date_updated: nextRevision(tagResource, user.id),
         date_last_used: timestamp,
       })
       .returning();
@@ -154,10 +121,9 @@ tagRoutes.post('/', async c => {
   }
 });
 
-const update = async (c: Context<AppEnv>) => {
-  const user = requireUser(c);
+tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
   const db = c.get('db');
-  const tag = await getOwned<Tag>(c, owned, c.req.param('id'), TAG, user);
+  const tag = await getOwned<Tag>(c, tagResource);
   const {attributes} = await parseResource(c.req.raw, {
     type: TAG,
     id: String(tag.id),
@@ -175,44 +141,18 @@ const update = async (c: Context<AppEnv>) => {
       .update(tags)
       .set({
         ...changes,
-        date_updated: revision(tags, tags.date_updated, tags.user_id, user.id),
+        date_updated: nextRevision(tagResource, tag.user_id),
       })
       .where(eq(tags.id, tag.id))
       .returning();
     return resourceResponse(c, TAG, updated as Tag);
   } catch (error) {
     if (isUniqueViolation(error)) {
-      throw uniqueNameError();
+      throw uniqueTogether('name', 'user');
     }
     throw error;
   }
-};
-
-tagRoutes.patch('/:id', update);
-tagRoutes.put('/:id', update);
+});
 
 /** Tags are soft-deleted. */
-tagRoutes.delete('/:id', async c => {
-  const tag = await getOwned<Tag>(
-    c,
-    owned,
-    c.req.param('id'),
-    TAG,
-    requireUser(c)
-  );
-  const [deleted] = await c
-    .get('db')
-    .update(tags)
-    .set({
-      is_deleted: true,
-      date_updated: revision(
-        tags,
-        tags.date_updated,
-        tags.user_id,
-        tag.user_id
-      ),
-    })
-    .where(eq(tags.id, tag.id))
-    .returning();
-  return resourceResponse(c, TAG, deleted as Tag);
-});
+tagRoutes.delete('/:id', c => softDelete(c, tagResource));

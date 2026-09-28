@@ -6,13 +6,13 @@ import {
   convert,
   convertDump,
   decodeCopyField,
-  loadMigrations,
   MAX_STATEMENT_BYTES,
   parseDump,
   renderSql,
   TABLES,
   verify,
 } from './import-postgres';
+import * as migrations from './lib/migrations';
 
 const T = '\t';
 const row = (...fields: string[]) => fields.join(T);
@@ -171,7 +171,7 @@ function imported() {
 function load(statements: string[]): Database {
   const db = new Database(':memory:');
   db.run('PRAGMA foreign_keys = ON');
-  loadMigrations(db);
+  migrations.load(db);
   for (const statement of statements) {
     db.run(statement);
   }

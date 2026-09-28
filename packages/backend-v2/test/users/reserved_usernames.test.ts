@@ -1,12 +1,8 @@
 import {describe, expect, it} from 'vitest';
 import RESERVED_USERNAMES from '../../src/services/reserved-usernames.json';
 import {createUser, isReservedUsername} from '../../src/services/users';
-import {
-  googlePayload,
-  googleRoutes,
-  mockFetch,
-} from '../authentication/support';
 import {ApiClient, db, userByUsername} from '../helpers';
+import {googlePayload, googleRoutes, mockFetch} from '../support/auth';
 
 // v2: usernames are the web app's first path segment, so its own top-level
 // routes (/admin, /oauth/...) are never given out.

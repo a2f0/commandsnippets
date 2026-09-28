@@ -15,7 +15,7 @@ import {
   googlePayload,
   googleRoutes,
   mockFetch,
-} from './support';
+} from '../support/auth';
 
 // v2: deactivated accounts (users.is_active = false) are locked out. Django
 // only enforced this on its retired password login.

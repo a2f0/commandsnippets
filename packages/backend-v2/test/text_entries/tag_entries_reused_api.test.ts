@@ -22,9 +22,9 @@ const reusePayload = (textEntryId: number | string) => ({
   },
 });
 
-// tearleads/text_entries/tests/test_tag_entries_reused_api.py
-// (the Django class is named TestTagsEntriesApi, kept here for traceability)
-describe('TestTagsEntriesApi', () => {
+// Django origin: backend/tearleads/text_entries/tests/test_tag_entries_reused_api.py
+// (its class is misnamed TestTagsEntriesApi there)
+describe('TestTagEntriesReusedApi', () => {
   let base: Base;
 
   beforeEach(async () => {

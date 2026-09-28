@@ -10,6 +10,13 @@ const defaultFetch: Fetcher = (input, init) => fetch(input, init);
 // one implicitly, Workers' fetch does not.
 const USER_AGENT = 'commandsnippets-api';
 
+export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+export const GOOGLE_USERINFO_URL =
+  'https://www.googleapis.com/oauth2/v3/userinfo';
+export const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
+export const GITHUB_USER_URL = 'https://api.github.com/user';
+export const GITHUB_EMAILS_URL = 'https://api.github.com/user/emails';
+
 function requireSetting(env: Bindings, name: keyof Bindings): string {
   const value = env[name];
   if (typeof value !== 'string' || value === '') {
@@ -33,7 +40,7 @@ export class GoogleOAuthService {
   }
 
   accessToken(code: string): Promise<Response> {
-    return this.fetcher('https://oauth2.googleapis.com/token', {
+    return this.fetcher(GOOGLE_TOKEN_URL, {
       method: 'POST',
       body: new URLSearchParams({
         client_id: this.clientId,
@@ -46,7 +53,7 @@ export class GoogleOAuthService {
   }
 
   user(accessToken: string): Promise<Response> {
-    return this.fetcher('https://www.googleapis.com/oauth2/v3/userinfo', {
+    return this.fetcher(GOOGLE_USERINFO_URL, {
       headers: {Authorization: `Bearer ${accessToken}`},
     });
   }
@@ -71,7 +78,7 @@ export class GithubOAuthService {
   }
 
   accessToken(code: string): Promise<Response> {
-    return this.fetcher('https://github.com/login/oauth/access_token', {
+    return this.fetcher(GITHUB_TOKEN_URL, {
       method: 'POST',
       headers: {'User-Agent': USER_AGENT},
       body: new URLSearchParams({
@@ -84,13 +91,13 @@ export class GithubOAuthService {
   }
 
   user(accessToken: string): Promise<Response> {
-    return this.fetcher('https://api.github.com/user', {
+    return this.fetcher(GITHUB_USER_URL, {
       headers: this.headers(accessToken),
     });
   }
 
   emails(accessToken: string): Promise<Response> {
-    return this.fetcher('https://api.github.com/user/emails', {
+    return this.fetcher(GITHUB_EMAILS_URL, {
       headers: this.headers(accessToken),
     });
   }

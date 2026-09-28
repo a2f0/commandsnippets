@@ -3,12 +3,11 @@ import {userFactory} from '../helpers';
 import {
   githubPayload,
   githubRoutes,
+  COOKIE_MAX_AGE as MAX_AGE,
   mockFetch,
   requestWithEnv,
   setCookies,
-} from './support';
-
-const MAX_AGE = '2419200';
+} from '../support/auth';
 
 async function login(debug: 'true' | 'false') {
   await userFactory({username: 'login', email: 'user@example.com'});
