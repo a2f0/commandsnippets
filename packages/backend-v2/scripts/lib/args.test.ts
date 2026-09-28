@@ -17,6 +17,11 @@ describe('takeFlag', () => {
   test('refuses a flag with no value rather than treating it as absent', () => {
     expect(() => takeFlag(['cmd', '--out'], '--out')).toThrow(UsageError);
   });
+
+  test('refuses another flag where the value belongs', () => {
+    const args = ['cmd', '--format', '--output', 'report.csv'];
+    expect(() => takeFlag(args, '--format')).toThrow(UsageError);
+  });
 });
 
 describe('parseOrUsage', () => {

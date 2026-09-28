@@ -8,7 +8,8 @@ export class UsageError extends Error {
 
 /**
  * Remove flag `name` and the value after it from `args`, returning the value
- * (undefined when the flag is absent). A flag with no value after it is a
+ * (undefined when the flag is absent). A flag with no value after it, or with
+ * another flag where its value belongs (`--format --output x`), is a
  * UsageError: running on the default instead could quietly target the wrong
  * database or file.
  */
@@ -17,10 +18,12 @@ export function takeFlag(args: string[], name: string): string | undefined {
   if (index === -1) {
     return undefined;
   }
-  if (index === args.length - 1) {
+  const value = args[index + 1];
+  if (value === undefined || value.startsWith('--')) {
     throw new UsageError(`${name} needs a value`);
   }
-  return args.splice(index, 2)[1];
+  args.splice(index, 2);
+  return value;
 }
 
 /**

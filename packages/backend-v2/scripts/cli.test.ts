@@ -225,6 +225,8 @@ describe('manage CLI', () => {
     ['an unknown --env', ['--env', 'prod']],
     ['--env followed by another flag', ['--env', '--persist-to', '/state']],
     ['a bare --persist-to', ['--persist-to']],
+    // Otherwise `--output` would be taken as the format and no file written.
+    ['--format followed by another flag', ['--format', '--output', 'r.csv']],
   ])('refuses %s before querying any database', async (_name, flags) => {
     const dir = tempDir();
     const fake = fakeWrangler(dir, '[{"results":[]}]');
