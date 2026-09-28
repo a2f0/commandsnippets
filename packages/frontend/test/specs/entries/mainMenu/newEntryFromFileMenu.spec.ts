@@ -43,6 +43,49 @@ describe('Entry Main Menu', () => {
       'Test body content from file menu'
     );
 
+    // Save: the API creates the entry (id 3), and the app tags it with the
+    // tag shown (test-tag-1), so the tag's list shows it
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    // Clear of the bottom bar, which covers the lower edge of the page
+    await BasePage.entryNewTopSave.scrollIntoView({block: 'center'});
+    await BasePage.entryNewTopSave.waitAndLeftClick();
+    await expect(BasePage.entryNewTop).not.toBeExisting();
+    await expect(BasePage.tagsEntry('3')).toHaveText(
+      expect.stringContaining('Test Subject from File Menu')
+    );
+    await browser.toBeRequestedTimes(
+      'POST',
+      'http://localhost:9001/api/v1/entries',
+      1
+    );
+    await browser.toBeRequestedTimes(
+      'POST',
+      'http://localhost:9001/api/v1/tags_entries',
+      1
+    );
+
+    // The API holds the entry, tagged once, and the junction to tag 1
+    expect(await BasePage.fetchApi('/entries')).toMatchObject({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          id: '3',
+          attributes: expect.objectContaining({
+            subject: 'Test Subject from File Menu',
+            tag_count: 1,
+          }),
+        }),
+      ]),
+      included: expect.arrayContaining([
+        expect.objectContaining({
+          type: 'TagTextEntryThroughModel',
+          relationships: expect.objectContaining({
+            tag: {data: {type: 'Tag', id: '1'}},
+            text_entry: {data: {type: 'TextEntry', id: '3'}},
+          }),
+        }),
+      ]),
+    });
+
     console.log(
       'OK: File menu entry creation test completed: all basic MSW-integrated functionality verified'
     );

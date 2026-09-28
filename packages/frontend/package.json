@@ -28,7 +28,7 @@
     "build:production": "vite build --mode production",
     "analyze": "bun run build:analyze",
     "clean": "rimraf build",
-    "compile": "tsc -b",
+    "compile": "tsc -b --force",
     "prepare": "bun run compile",
     "deploy:staging": "bun run build:staging && wrangler deploy --env staging",
     "deploy:production": "bun run build:production && wrangler deploy --env production"

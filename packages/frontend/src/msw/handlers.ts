@@ -3,15 +3,33 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   CODES,
+  type IncludedResource,
+  type Tag,
   type TagDocument,
   type TagListDocument,
+  type TagTextEntry,
+  type TagTextEntryDocument,
+  type TextEntry,
   type TextEntryDocument,
   type TextEntryListDocument,
+  tagTextEntryCreateRelationshipsSchema,
+  tagUpdateAttributesSchema,
+  textEntryCreateAttributesSchema,
+  textEntryUpdateAttributesSchema,
   type User,
 } from '@commandsnippets/api-shared';
 import {HttpResponse, http} from 'msw';
-import {errorDocument, now, onePage} from './documents';
+import {errorDocument, nextRevision, now, onePage} from './documents';
 import {recordRequest} from './requestCounter';
+import {
+  apiError,
+  type ErrorObject,
+  errorResponse,
+  MockApiError,
+  parseResource,
+  relatedId,
+  validateFields,
+} from './requests';
 
 // The responses follow the API contract (api-shared's document schemas);
 // __tests__/src/msw/contract.spec.ts checks every one of them.
@@ -173,12 +191,204 @@ const originalEntriesResponse: Pick<
   ],
 };
 
+type EntriesState = Pick<TextEntryListDocument, 'data' | 'included'>;
+
 // Mutable copy for stateful operations
-let entriesResponse: Pick<TextEntryListDocument, 'data' | 'included'> =
-  structuredClone(originalEntriesResponse);
+let entriesResponse: EntriesState = structuredClone(originalEntriesResponse);
 
 // Runtime override for test data - allows tests to inject custom responses
 let runtimeEntriesOverride: TextEntryListDocument | null = null;
+
+/**
+ * The entries (with their junctions in `included`) that the handlers answer
+ * with and write to: the runtime override when there is one.
+ */
+const activeEntries = (): EntriesState =>
+  runtimeEntriesOverride ?? entriesResponse;
+
+const isJunction = (resource: IncludedResource): resource is TagTextEntry =>
+  resource.type === 'TagTextEntryThroughModel';
+
+const junctionsOf = (state: EntriesState) =>
+  (state.included ?? []).filter(isJunction);
+
+/** `included` is left out when it would be empty. */
+const setIncluded = (state: EntriesState, included: IncludedResource[]) => {
+  if (included.length > 0) {
+    state.included = included;
+  } else {
+    delete state.included;
+  }
+};
+
+const compare = (a: string | number, b: string | number) =>
+  a < b ? -1 : a > b ? 1 : 0;
+
+/** The order the API renders `included` in: by type, then by id (as text). */
+const byTypeAndId = (a: IncludedResource, b: IncludedResource) =>
+  compare(a.type, b.type) || compare(a.id, b.id);
+
+/** The resource of `resources` with `id`, or the API's 404 for `type`. */
+function findOr404<R extends {id: string}>(
+  resources: readonly R[],
+  id: string,
+  type: string
+): R {
+  const resource = resources.find(candidate => candidate.id === id);
+  if (resource === undefined) {
+    throw apiError(404, CODES.notFound, `No ${type} matches the given query.`);
+  }
+  return resource;
+}
+
+/**
+ * Point `entry`'s `text_entry_to_tag` at its junctions, in the API's order
+ * (by revision, then id).
+ */
+function linkJunctions(state: EntriesState, entry: TextEntry) {
+  const data = junctionsOf(state)
+    .filter(junction => junction.relationships.text_entry.data.id === entry.id)
+    .sort(
+      (a, b) =>
+        compare(a.attributes.date_updated, b.attributes.date_updated) ||
+        compare(Number(a.id), Number(b.id))
+    )
+    .map(({type, id}) => ({type, id}));
+  entry.relationships = {
+    ...entry.relationships,
+    text_entry_to_tag: {data, meta: {count: data.length}},
+  };
+}
+
+/** Advance `entry`'s revision, as a write to its junctions does. */
+function touchEntry(state: EntriesState, entry: TextEntry) {
+  entry.attributes = {
+    ...entry.attributes,
+    date_updated: nextRevision(
+      state.data.map(candidate => candidate.attributes.date_updated)
+    ),
+  };
+}
+
+/**
+ * An entry's default `included`: its junctions, their tags and its owner
+ * (`text_entry_to_tag`, `text_entry_to_tag.tag`, `user`).
+ */
+function entryIncluded(state: EntriesState, entry: TextEntry) {
+  const junctions = junctionsOf(state).filter(
+    junction => junction.relationships.text_entry.data.id === entry.id
+  );
+  const tagIds = new Set(
+    junctions.map(junction => junction.relationships.tag.data.id)
+  );
+  const included: IncludedResource[] = [
+    ...tags.filter(tag => tagIds.has(tag.id)),
+    ...junctions,
+    testUser,
+  ];
+  return included.sort(byTypeAndId);
+}
+
+/**
+ * Tag `entry` with `tag`, as the API does: a junction at the bottom of the
+ * tag (its highest rank + 1, or 0), then its database triggers (the entry's
+ * `tag_count` and the tag's `entry_count` go up, and the tag is last used
+ * now; the tag's revision stays) and the entry's new revision.
+ */
+function createJunction(
+  state: EntriesState,
+  tag: Tag,
+  entry: TextEntry
+): TagTextEntry {
+  const junctions = junctionsOf(state);
+  const ranks = junctions
+    .filter(junction => junction.relationships.tag.data.id === tag.id)
+    .map(junction => junction.attributes.order);
+  const created = now();
+  const junction: TagTextEntry = {
+    type: 'TagTextEntryThroughModel',
+    id: nextId('TagTextEntryThroughModel', junctions),
+    attributes: {
+      order: ranks.length > 0 ? Math.max(...ranks) + 1 : 0,
+      date_updated: nextRevision(
+        junctions.map(candidate => candidate.attributes.date_updated)
+      ),
+      date_created: created,
+    },
+    relationships: {
+      tag: {data: {type: 'Tag', id: tag.id}},
+      text_entry: {data: {type: 'TextEntry', id: entry.id}},
+      ...ownedByTestUser,
+    },
+  };
+  setIncluded(state, [...(state.included ?? []), junction]);
+  entry.attributes = {
+    ...entry.attributes,
+    tag_count: countJunctions(state, 'text_entry', entry.id),
+  };
+  tag.attributes = {
+    ...tag.attributes,
+    entry_count: countJunctions(state, 'tag', tag.id),
+    date_last_used: created,
+  };
+  touchEntry(state, entry);
+  linkJunctions(state, entry);
+  return junction;
+}
+
+/**
+ * A tag's `entry_count` or an entry's `tag_count`: the junctions there are,
+ * as the database triggers keep them. Counted rather than stepped, so a
+ * runtime override of the entries (whose junctions the tags' counts never
+ * included) cannot take a count below zero.
+ */
+function countJunctions(
+  state: EntriesState,
+  side: 'tag' | 'text_entry',
+  id: string
+): number {
+  return junctionsOf(state).filter(
+    junction => junction.relationships[side].data.id === id
+  ).length;
+}
+
+/**
+ * Untag: remove the junction, then its database triggers (the counts go
+ * down, and the tag was last used when its newest remaining junction was
+ * made) and the entry's new revision.
+ */
+function deleteJunction(state: EntriesState, junction: TagTextEntry) {
+  retireId('TagTextEntryThroughModel', junction.id);
+  setIncluded(
+    state,
+    (state.included ?? []).filter(resource => resource !== junction)
+  );
+  const entry = state.data.find(
+    candidate => candidate.id === junction.relationships.text_entry.data.id
+  );
+  if (entry !== undefined) {
+    entry.attributes = {
+      ...entry.attributes,
+      tag_count: countJunctions(state, 'text_entry', entry.id),
+    };
+    touchEntry(state, entry);
+    linkJunctions(state, entry);
+  }
+  const tag = tags.find(
+    candidate => candidate.id === junction.relationships.tag.data.id
+  );
+  if (tag !== undefined) {
+    const remaining = junctionsOf(state)
+      .filter(candidate => candidate.relationships.tag.data.id === tag.id)
+      .map(candidate => candidate.attributes.date_created)
+      .sort(compare);
+    tag.attributes = {
+      ...tag.attributes,
+      entry_count: remaining.length,
+      date_last_used: remaining.at(-1) ?? null,
+    };
+  }
+}
 
 // Admin page data: the signed-in test user (id 1, staff) and one other.
 interface MockAdminUser {
@@ -382,6 +592,47 @@ const createHandlers = () => {
         });
       }),
 
+      // Rename or (un)delete a tag: the attributes sent, and a new revision
+      http.patch(`${baseUrl}/tags/:id`, async ({params, request}) => {
+        recordRequest('PATCH', request.url);
+        console.log('OK: MSW intercepted tag PATCH request:', request.url);
+        try {
+          const tag = findOr404(tags, String(params['id']), 'Tag');
+          const {attributes} = await parseResource(request, {
+            type: 'Tag',
+            id: tag.id,
+          });
+          const changes = validateFields(tagUpdateAttributesSchema, attributes);
+          // A user's tags have unique names, the deleted ones' included.
+          if (
+            tags.some(
+              other =>
+                other.id !== tag.id && other.attributes.name === changes.name
+            )
+          ) {
+            throw apiError(
+              400,
+              CODES.unique,
+              'The fields name, user must make a unique set.'
+            );
+          }
+          tag.attributes = {
+            ...tag.attributes,
+            ...(changes.name === undefined ? {} : {name: changes.name}),
+            ...(changes.is_deleted === undefined
+              ? {}
+              : {is_deleted: changes.is_deleted}),
+            date_updated: nextRevision(
+              tags.map(candidate => candidate.attributes.date_updated)
+            ),
+          };
+          const body: TagDocument = {data: tag, included: [testUser]};
+          return HttpResponse.json(body, {status: 200});
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
+
       // Entries endpoint (with optional query parameters)
       http.get(`${baseUrl}/entries`, req => {
         recordRequest('GET', req.request.url);
@@ -432,36 +683,138 @@ const createHandlers = () => {
         });
       }),
 
-      // Create new entry endpoint
+      // Create an entry from the attributes sent (untagged: tagging it is
+      // POST /tags_entries)
       http.post(`${baseUrl}/entries`, async ({request}) => {
         recordRequest('POST', request.url);
         console.log('OK: MSW intercepted entries POST request');
-
-        // Return a new entry response
-        const newEntry: TextEntryDocument = {
-          data: {
+        try {
+          const state = activeEntries();
+          const {attributes} = await parseResource(request, {
             type: 'TextEntry',
-            id: '3',
+          });
+          const {subject, body} = validateFields(
+            textEntryCreateAttributesSchema,
+            attributes
+          );
+          const entry: TextEntry = {
+            type: 'TextEntry',
+            id: nextId('TextEntry', state.data),
             attributes: {
-              body: 'new entry body',
-              subject: 'new-entry-subject',
-              date_updated: now(),
+              body,
+              subject,
+              date_updated: nextRevision(
+                state.data.map(candidate => candidate.attributes.date_updated)
+              ),
               date_created: now(),
               reused_count: 0,
               is_deleted: false,
-              tag_count: 1,
+              tag_count: 0,
             },
             relationships: {
               ...ownedByTestUser,
               text_entry_to_tag: {data: [], meta: {count: 0}},
             },
-          },
-          included: [testUser],
-        };
+          };
+          state.data = [...state.data, entry];
+          const newEntry: TextEntryDocument = {
+            data: entry,
+            included: [testUser],
+          };
+          return HttpResponse.json(newEntry, {status: 201});
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
 
-        return HttpResponse.json(newEntry, {
-          status: 201,
-        });
+      // Edit or (un)delete an entry: the attributes sent, and a new revision
+      http.patch(`${baseUrl}/entries/:id`, async ({params, request}) => {
+        recordRequest('PATCH', request.url);
+        console.log('OK: MSW intercepted entry PATCH request:', request.url);
+        try {
+          const state = activeEntries();
+          const entry = findOr404(
+            state.data,
+            String(params['id']),
+            'TextEntry'
+          );
+          const {attributes} = await parseResource(request, {
+            type: 'TextEntry',
+            id: entry.id,
+          });
+          const changes = validateFields(
+            textEntryUpdateAttributesSchema,
+            attributes
+          );
+          entry.attributes = {
+            ...entry.attributes,
+            ...(changes.subject === undefined
+              ? {}
+              : {subject: changes.subject}),
+            ...(changes.body === undefined ? {} : {body: changes.body}),
+            ...(changes.is_deleted === undefined
+              ? {}
+              : {is_deleted: changes.is_deleted}),
+            date_updated: nextRevision(
+              state.data.map(candidate => candidate.attributes.date_updated)
+            ),
+          };
+          const body: TextEntryDocument = {
+            data: entry,
+            included: entryIncluded(state, entry),
+          };
+          return HttpResponse.json(body, {status: 200});
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
+
+      // Tag an entry: get-or-create its junction with the tag, always 201
+      http.post(`${baseUrl}/tags_entries`, async ({request}) => {
+        recordRequest('POST', request.url);
+        console.log('OK: MSW intercepted tags_entries POST request');
+        try {
+          const state = activeEntries();
+          const {relationships} = await parseResource(request, {
+            type: 'TagTextEntryThroughModel',
+          });
+          const fields = tagTextEntryCreateRelationshipsSchema.shape;
+          const errors: ErrorObject[] = [];
+          const tagId = relatedId(
+            fields.tag,
+            'tag',
+            relationships,
+            id => tags.some(tag => tag.id === id),
+            errors
+          );
+          const entryId = relatedId(
+            fields.text_entry,
+            'text_entry',
+            relationships,
+            id => state.data.some(entry => entry.id === id),
+            errors
+          );
+          if (tagId === undefined || entryId === undefined) {
+            throw new MockApiError(400, errors);
+          }
+          const tag = findOr404(tags, tagId, 'Tag');
+          const entry = findOr404(state.data, entryId, 'TextEntry');
+          let junction = junctionsOf(state).find(
+            candidate =>
+              candidate.relationships.tag.data.id === tagId &&
+              candidate.relationships.text_entry.data.id === entryId
+          );
+          if (junction === undefined) {
+            junction = createJunction(state, tag, entry);
+          }
+          const body: TagTextEntryDocument = {
+            data: junction,
+            included: [tag, entry, testUser].sort(byTypeAndId),
+          };
+          return HttpResponse.json(body, {status: 201});
+        } catch (error) {
+          return errorResponse(error);
+        }
       }),
 
       // Reorder endpoints: 200 with no body
@@ -533,6 +886,7 @@ const createHandlers = () => {
         }
 
         // Remove the entry from our mock data
+        retireId('TextEntry', entryId);
         entriesResponse.data = entriesResponse.data.filter(
           entry => entry.id !== entryId
         );
@@ -556,6 +910,19 @@ const createHandlers = () => {
           'OK: MSW intercepted untag (tags_entries) DELETE request for id:',
           tagEntryId
         );
+        try {
+          const state = activeEntries();
+          deleteJunction(
+            state,
+            findOr404(
+              junctionsOf(state),
+              tagEntryId,
+              'TagTextEntryThroughModel'
+            )
+          );
+        } catch (error) {
+          return errorResponse(error);
+        }
 
         // Return 204 No Content for successful untag
         return new HttpResponse(null, {status: 204});
@@ -591,7 +958,27 @@ const createHandlers = () => {
 export const handlers = createHandlers();
 
 // Reset function to restore original state
+/**
+ * The last id handed out, per resource. Like SQLite's AUTOINCREMENT, an id is
+ * never handed out twice, even after the row that had the highest one is
+ * deleted: a reused entry id would pick up the deleted entry's junctions.
+ */
+const lastIds = new Map<string, number>();
+
+/** Deleting a row retires its id, so nextId never hands it out again. */
+function retireId(kind: string, id: string): void {
+  lastIds.set(kind, Math.max(lastIds.get(kind) ?? 0, Number(id)));
+}
+
+function nextId(kind: string, existing: ReadonlyArray<{id: string}>): string {
+  const next =
+    Math.max(lastIds.get(kind) ?? 0, ...existing.map(({id}) => Number(id))) + 1;
+  lastIds.set(kind, next);
+  return String(next);
+}
+
 export const resetMSWState = () => {
+  lastIds.clear();
   tags = structuredClone(originalTags);
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;
@@ -603,5 +990,6 @@ export const resetMSWState = () => {
 export const setRuntimeEntriesOverride = (
   override: TextEntryListDocument | null
 ) => {
-  runtimeEntriesOverride = override;
+  // A copy: the handlers write to it (tagging, editing).
+  runtimeEntriesOverride = override === null ? null : structuredClone(override);
 };

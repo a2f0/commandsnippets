@@ -422,7 +422,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
     if (username === undefined) {
       console.info('Cannot fetch all entried for undefined user.');
     } else {
-      const entries = await fetch([], username, null, 13, null, null);
+      const entries = await fetch([], username, null, 1, null, null);
       for (const entry of entries) {
         if (entry.type === 'TextEntryReused') {
           throw new Error('unexpected type!');
@@ -455,10 +455,10 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
             deleted: false,
           });
         } else {
-          db.putJunction({
+          await db.putJunction({
             id: entry.id,
             entryId: entry.relationships.text_entry.data.id,
-            userId: entry.relationships.tag.data.id,
+            userId: entry.relationships.user.data.id,
             tagId: entry.relationships.tag.data.id,
             order: entry.attributes.order,
             updated,
