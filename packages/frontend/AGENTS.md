@@ -133,6 +133,10 @@ writing its type by hand.
 - `src/lib/db/` wraps a Dexie (IndexedDB) database that only the Debug menu's
   "Populate IndexedDB" item writes to. The app does not read from it. There is
   no Turso/SQLite adapter any more.
+- That item runs `fetchAllEntriesForUser` (`src/lib/textEntries.ts`): every
+  page of the user's entries, stored with the users, tags and junctions
+  included (`__tests__/src/lib/textEntries.spec.ts` checks it against
+  `fake-indexeddb`).
 
 ### Source layout
 - **App shell** (the root of `src/`): `index.tsx` (the entry point),
