@@ -9,15 +9,15 @@ Tearleads is a command snippet tool for computer programmers and system administ
 ## Development Commands
 
 ### Setup
-- `npm i -g pnpm` - Install pnpm globally
-- `pnpm install` - Install dependencies
-- `pnpm run dev` - Start development server on http://localhost:8085
+- Requires Bun, and Node.js at the `.nvmrc` version (Vite, Vitest, WebdriverIO and wrangler run on it)
+- `bun install` - Install dependencies
+- `bun run dev` - Start development server on http://localhost:8085
 
 ### Code Quality
-- `pnpm run lint` - Run Biome linting
-- `pnpm run format` - Run Biome formatting
-- `pnpm run fix` - Auto-fix linting and formatting issues (runs `biome check --write`)
-- `pnpm run compile` or `npx tsc -b` - TypeScript compilation check
+- `bun run lint` - Run Biome linting
+- `bun run format` - Run Biome formatting
+- `bun run fix` - Auto-fix linting and formatting issues (runs `biome check --write`)
+- `bun run compile` or `bunx tsc -b` - TypeScript compilation check
 
 ### Testing
 
@@ -26,20 +26,20 @@ Tearleads is a command snippet tool for computer programmers and system administ
 When running integration tests, it is recommended to use the headless option. The headless configuration is defined in `test/wdio.headless.conf.ts`
 
 - `../../scripts/runWebdriverTests.sh` - Start the server and run the same headless E2E tests as CI (recommended)
-- `pnpm run test-headless` - Run E2E tests headless (requires server-test running separately)
+- `bun run test-headless` - Run E2E tests headless (requires server-test running separately)
 - `scripts/runSpecHeadless.sh <spec-file>` - Run specific spec file headless
 - `scripts/runSpec.sh <spec-file>` - Run specific spec file with browser UI
 
 #### Unit Tests (Vitest)
-- `pnpm run unit` - Run unit tests
-- `pnpm run unit -- --watch` - Run unit tests in watch mode
-- `pnpm run unit -- __tests__/reorderEntryList.spec.tsx` - Run specific unit test
+- `bun run unit` - Run unit tests
+- `bun run unit -- --watch` - Run unit tests in watch mode
+- `bun run unit -- __tests__/reorderEntryList.spec.tsx` - Run specific unit test
 
 ### Build
-- `pnpm run build` - Build production bundle
-- `pnpm run build:analyze` or `pnpm run analyze` - Build with bundle analysis
-- `pnpm run postbuild` - Post-build script (runs automatically after build)
-- `pnpm run clean` - Remove build directory
+- `bun run build` - Build production bundle
+- `bun run build:analyze` or `bun run analyze` - Build with bundle analysis
+- `bun run postbuild` - Post-build script (runs automatically after build)
+- `bun run clean` - Remove build directory
 
 ## Architecture
 
@@ -136,9 +136,9 @@ When implementing major architectural changes (like the StoreV2 migration):
 - Name new files with camel case
 
 ### Linting & Formatting
-- Always run `pnpm run lint` and `pnpm run format` to test changes
+- Always run `bun run lint` and `bun run format` to test changes
 - Always ensure `biome check --write` passes without errors when making changes
-- Use `pnpm run fix` (which runs `biome check --write`) to automatically fix issues
+- Use `bun run fix` (which runs `biome check --write`) to automatically fix issues
 - Never add linting or formatting exceptions in code
 
 #### Pre-commit Hook Handling
@@ -175,15 +175,16 @@ git commit -m "fix: your commit message"
 
 ### Dependencies
 - Always pin dependencies to exact versions (no ^ or ~ prefix) when adding or updating packages
-- Use `pnpm add --save-exact <package>` for new dependencies
-- Use `pnpm add -D --save-exact <package>` for new dev dependencies
+- Use `bun add --exact <package>` for new dependencies
+- Use `bun add -d --exact <package>` for new dev dependencies
 - When manually editing package.json, ensure version numbers have no range specifiers
-- Always run `pnpm install` after modifying package.json to update pnpm-lock.yaml
-- Never commit package.json changes without the corresponding pnpm-lock.yaml updates
-- When removing dependencies, use `pnpm remove <package>` to update both package.json and pnpm-lock.yaml
+- Always run `bun install` after modifying package.json to update bun.lock
+- Never commit package.json changes without the corresponding bun.lock updates
+- When removing dependencies, use `bun remove <package>` to update both package.json and bun.lock
+- A new dependency with an install script it needs must be added to `trustedDependencies`; see the README's Dependencies section
 
 ### TypeScript
-- Always use `pnpm run compile` (or `npx tsc -b`) after making changes to ensure TypeScript compiles
+- Always use `bun run compile` (or `bunx tsc -b`) after making changes to ensure TypeScript compiles
 - Never use `any` as a type, or `as` for type assertion
 - **Use invariant for strict null checks**: When working with potentially null DOM elements or values that should exist but may be null according to TypeScript, use the `invariant` library for runtime assertions:
   ```typescript
@@ -201,7 +202,7 @@ git commit -m "fix: your commit message"
 - This approach provides better error messages and satisfies TypeScript's strict null checks without unsafe type assertions
 
 ### Package Manager
-- Always use `pnpm` for the JavaScript package manager
+- Always use `bun` for the JavaScript package manager
 
 ### Language
 - Always write code in TypeScript, never JavaScript
@@ -224,8 +225,8 @@ console.error('ERROR: Build failed');
 ```
 
 ### Testing
-- Run unit tests with `pnpm run unit` or specific tests with path (e.g., `pnpm run unit -- __tests__/reorderEntryList.spec.tsx`)
-- Run E2E tests with `pnpm run ci-headless` for full suite
+- Run unit tests with `bun run unit` or specific tests with path (e.g., `bun run unit -- __tests__/reorderEntryList.spec.tsx`)
+- Run E2E tests with `bun run ci-headless` for full suite
 - Run specific E2E test with `scripts/runSpecHeadless.sh <spec-file>` (e.g., `scripts/runSpecHeadless.sh test/specs/tags/search.spec.ts`)
 
 #### Testing Best Practices
@@ -267,8 +268,8 @@ gh run download <RUN_ID>
 
 #### 3. Common CI/CD Failure Patterns
 - **E2E Test Flakiness**: Look for timing issues, missing waits, or MSW state problems
-- **Linting/Formatting**: Run `pnpm run fix` locally to resolve
-- **TypeScript Errors**: Run `pnpm run compile` to identify and fix type issues
+- **Linting/Formatting**: Run `bun run fix` locally to resolve
+- **TypeScript Errors**: Run `bun run compile` to identify and fix type issues
 - **Dependency Issues**: Check for missing or incorrectly pinned dependencies
 
 #### 4. Typical Workflow for CI/CD Failures
@@ -278,10 +279,10 @@ RUN_ID=$(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 gh run view "$RUN_ID" --log-failed
 
 # 2. Reproduce locally
-pnpm run ci-headless  # for E2E test failures
-pnpm run unit         # for unit test failures
-pnpm run lint         # for linting failures
-pnpm run compile      # for TypeScript failures
+bun run ci-headless  # for E2E test failures
+bun run unit         # for unit test failures
+bun run lint         # for linting failures
+bun run compile      # for TypeScript failures
 
 # 3. Fix the issue and test locally
 # 4. Commit the fix
@@ -382,7 +383,7 @@ gh api repos/a2f0/tearleads-frontend/pulls/comments/<PR_NUMBER> \
 #### 2. Address Issues and Commit Fixes
 - Create conventional commits that address the specific feedback
 - Include commit hash references when responding to review comments
-- Ensure all fixes pass tests: `pnpm run unit`, `pnpm tsc -b`, `pnpm biome check --fix`
+- Ensure all fixes pass tests: `bun run unit`, `bunx tsc -b`, `bunx biome check --fix`
 
 #### 3. Tag and Confirm Resolution
 For each addressed issue, tag the review agent and ask for confirmation:

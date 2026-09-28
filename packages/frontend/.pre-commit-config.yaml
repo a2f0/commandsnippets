@@ -14,12 +14,12 @@ repos:
     hooks:
       - id: biome-check-fix
         name: biome check --write
-        entry: pnpm exec biome check --write
+        entry: bun x biome check --write
         pass_filenames: false
         language: system
       - id: tsc -b
         name: tsc -b
-        entry: pnpm tsc -b
+        entry: bun x tsc -b
         pass_filenames: false
         language: system
       - id: yamllint

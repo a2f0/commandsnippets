@@ -15,11 +15,11 @@
     "server": "vite serve --host",
     "server-test": "vite serve --mode test --port 8081",
     "dev": "vite serve --host",
-    "test": "npx wdio test/wdio.shared.conf.ts",
-    "test-headless": "npx wdio test/wdio.headless.conf.ts",
-    "ci": "start-server-and-test server-test http-get://localhost:8081 test",
-    "ci-headless": "start-server-and-test server-test http-get://localhost:8081 test-headless",
-    "unit": "npx vitest --no-watch",
+    "test": "wdio test/wdio.shared.conf.ts",
+    "test-headless": "wdio test/wdio.headless.conf.ts",
+    "ci": "start-server-and-test 'bun run server-test' http-get://localhost:8081 'bun run test'",
+    "ci-headless": "start-server-and-test 'bun run server-test' http-get://localhost:8081 'bun run test-headless'",
+    "unit": "vitest --no-watch",
     "fix": "biome check --write",
     "format": "biome format",
     "lint": "biome lint",
@@ -27,12 +27,12 @@
     "build:analyze": "vite build --mode analyze",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
-    "analyze": "pnpm run build:analyze",
+    "analyze": "bun run build:analyze",
     "clean": "rimraf build",
     "compile": "tsc -b",
-    "prepare": "npm run compile",
-    "deploy:staging": "pnpm run build:staging && wrangler deploy --env staging",
-    "deploy:production": "pnpm run build:production && wrangler deploy --env production"
+    "prepare": "bun run compile",
+    "deploy:staging": "bun run build:staging && wrangler deploy --env staging",
+    "deploy:production": "bun run build:production && wrangler deploy --env production"
   },
   "keywords": [],
   "author": "Dan Sullivan",
@@ -109,7 +109,24 @@
     "react-router-dom": "7.18.4",
     "uuid": "14.0.2"
   },
-  "packageManager": "pnpm@12.6.0",
+  "overrides": {
+    "@puppeteer/browsers": "3.2.3",
+    "serialize-javascript": "7.1.2"
+  },
+  "trustedDependencies": [
+    "@ffmpeg-installer/darwin-arm64",
+    "@ffmpeg-installer/darwin-x64",
+    "@ffmpeg-installer/linux-arm",
+    "@ffmpeg-installer/linux-arm64",
+    "@ffmpeg-installer/linux-ia32",
+    "@ffmpeg-installer/linux-x64",
+    "@ffmpeg-installer/win32-ia32",
+    "@ffmpeg-installer/win32-x64",
+    "edgedriver",
+    "esbuild",
+    "geckodriver",
+    "workerd"
+  ],
   "msw": {
     "workerDirectory": [
       "public"

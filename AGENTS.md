@@ -4,7 +4,7 @@ Monorepo for the Commandsnippets app.
 
 | Path | What |
 |---|---|
-| `packages/frontend/` | React web client; pnpm, own lockfile |
+| `packages/frontend/` | React web client; bun (Vite and Vitest on Node), own lockfile |
 | `packages/backend-v2/` | Cloudflare Workers API; bun, own lockfile |
 | `packages/website/` | Public website (Astro); bun, own lockfile |
 | `packages/agent-tool/` | CLI behind the ship/review skills (root bun workspace) |

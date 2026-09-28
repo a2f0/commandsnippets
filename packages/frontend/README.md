@@ -6,12 +6,15 @@ A command snippet tool for computer programmers and system administrators. It's 
 
 ### Prerequisites
 
+- [Bun](https://bun.com) installs dependencies and runs the scripts.
+- Node.js, at the version in `.nvmrc`: Vite, Vitest, WebdriverIO and wrangler
+  run on it.
+
 ### Setup
 
 ```shell
-npm i -g pnpm
 # Install dependencies
-pnpm install
+bun install
 
 # Install pre-commit hooks
 pip install pre-commit
@@ -19,22 +22,44 @@ pre-commit install
 pre-commit run --all-files
 
 # Start development server
-pnpm run dev
+bun run dev
 ```
+
+### Dependencies
+
+`bun install` reads `bun.lock` and `bunfig.toml`:
+
+- **Install layout:** an isolated `node_modules`, so code can import only the
+  packages it declares.
+- **New releases:** versions published less than a day ago are not installed.
+- **Install scripts:** only the packages in `trustedDependencies` run theirs
+  (the WebDriver and ffmpeg binaries, esbuild, workerd). This list replaces
+  Bun's default allowlist.
+  - `@swc/core`'s only checks that its native binary, an optional dependency,
+    loads, and fetches `@swc/wasm` if it doesn't.
+  - `msw`'s would rewrite `public/mockServiceWorker.js`; regenerate that with
+    `bunx msw init public` after upgrading msw.
+- **`overrides`:** these pin fixed versions of indirect dependencies that
+  `bun audit` flags:
+  - `@puppeteer/browsers` 3.x drops `extract-zip`, which has path-traversal
+    advisories (GHSA-jmr9-qjv8-65gv, GHSA-7pqw-9j4j-h8q3).
+  - `serialize-javascript` 7.0.5 or later fixes GHSA-5c6j-r48x-rmvq and
+    GHSA-qj8w-gfj5-8c6v.
+  - Drop an override once `bun audit` passes without it.
 
 ## Code Quality
 
 Run linting and formatting:
 
 ```shell
-pnpm run lint
-pnpm run format
+bun run lint
+bun run format
 ```
 
 Run TypeScript compilation check:
 
 ```shell
-npx tsc -b
+bunx tsc -b
 ```
 
 ## Deploying
@@ -45,8 +70,8 @@ client routes like `/:user/:tag` work. `public/_headers` adds security headers
 and long-lived caching for the fingerprinted `/assets/`.
 
 ```shell
-pnpm run deploy:staging      # vite build --mode staging, then wrangler deploy
-pnpm run deploy:production
+bun run deploy:staging      # vite build --mode staging, then wrangler deploy
+bun run deploy:production
 ```
 
 Each environment's hostname is a custom domain in `wrangler.jsonc`, attached
@@ -66,24 +91,24 @@ on workers.dev.
 Start the server and run tests in a single command:
 
 ```shell
-pnpm run ci
-pnpm run ci-headless
+bun run ci
+bun run ci-headless
 ```
 
 Start the testing server (on different port than normal development server), and then run tests manually in a separate command:
 
 ```shell
-pnpm run server-test
+bun run server-test
 # in a different console tab
-pnpm run test
-pnpm run test-headless
+bun run test
+bun run test-headless
 ```
 
 Run a specific spec:
 
 ```shell
-pnpm run server-test
-pnpm run test -- --spec=test/specs/entries/entriesContextMenu.spec.ts
+bun run server-test
+bun run test -- --spec=test/specs/entries/entriesContextMenu.spec.ts
 ```
 
 or
@@ -97,7 +122,7 @@ or
 Run unit tests:
 
 ```shell
-pnpm run unit
-pnpm run unit -- --watch
-pnpm run unit -- __tests__/reorderEntryList.spec.tsx
+bun run unit
+bun run unit -- --watch
+bun run unit -- __tests__/reorderEntryList.spec.tsx
 ```

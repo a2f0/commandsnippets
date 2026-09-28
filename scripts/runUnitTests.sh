@@ -9,4 +9,4 @@ cd "$(dirname "$script_directory")/packages/frontend"
 NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--no-experimental-webstorage"
 export NODE_OPTIONS
 
-exec pnpm exec vitest --no-watch "$@"
+exec bun x vitest --no-watch "$@"
