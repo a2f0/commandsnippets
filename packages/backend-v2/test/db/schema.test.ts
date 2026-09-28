@@ -1,6 +1,7 @@
 import {getTableConfig} from 'drizzle-orm/sqlite-core';
 import {describe, expect, it} from 'vitest';
 import {
+  adminAuditLog,
   entryReuses,
   tags,
   tagsEntries,
@@ -40,6 +41,23 @@ describe('schema', () => {
       indexes: ['users_user_email_unique'],
       unique: [],
       references: [],
+    });
+  });
+
+  // v2: the admin audit log outlives the users it names.
+  it('admin_audit_log', () => {
+    expect(config(adminAuditLog)).toEqual({
+      name: 'admin_audit_log',
+      checks: [],
+      indexes: [
+        'admin_audit_log_created_idx',
+        'admin_audit_log_target_user_id_idx',
+      ],
+      unique: [],
+      references: [
+        'actor_id->users_user set null',
+        'target_user_id->users_user set null',
+      ],
     });
   });
 

@@ -230,16 +230,16 @@ describe('convert', () => {
   }
   const user = parseDump(DUMP).tables.get('users_user')?.[0] ?? {};
 
-  test('drops the password and converts booleans and timestamps', () => {
+  test('drops the password and is_superuser, converts booleans and timestamps', () => {
     const values = convert('users_user', spec, user);
     expect(spec.columns).not.toContain('password');
+    expect(spec.columns).not.toContain('is_superuser');
     expect(values).toEqual([
       1,
       'alice',
       'alice@example.com',
       '',
       '',
-      0,
       0,
       1,
       '2021-11-15T17:57:23.366384',

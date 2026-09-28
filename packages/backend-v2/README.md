@@ -20,6 +20,7 @@ origins that served the retired Electron and Capacitor apps are gone.
 | `src/lib/jsonapi.ts` | django-rest-framework-json-api (parsing, includes, filters, sort, pagination) |
 | `src/lib/validation.ts` | DRF serializer fields |
 | `src/resources/*.ts` | viewsets and serializers |
+| `src/resources/admin.ts` | Django admin: the `/api/v1/admin` API for staff |
 | `src/auth/` | `tearleads.authentication` |
 | `scripts/manage.ts` | management commands |
 | `scripts/import-postgres.ts` | — (one-time Postgres → D1 import) |
@@ -64,7 +65,26 @@ Deliberate changes:
   `SameSite=None` cookies, and the Electron and Capacitor CORS origins are gone.
 - **No password login.** `/api-token-auth/` is gone: the frontend never used it
   and Workers' WebCrypto caps PBKDF2 at 100k iterations, below Django's hashes.
-  Django admin is gone too; use `wrangler d1 execute` or `scripts/manage.ts`.
+- **An admin API replaces Django admin.** `/api/v1/admin` is for `is_staff`
+  users only (403 for everyone else):
+  - `GET /users` lists every account, with live entry and tag counts.
+    Filters: `filter[is_active]`, `filter[is_staff]`, and `filter[search]`
+    (username or email). Sorts: `username`, `email`, `date_joined`,
+    `last_login`, `login_count`, `entry_count`, `tag_count`.
+  - `GET /users/:id` returns one account.
+  - `PATCH /users/:id` changes `is_active`, the only writable attribute.
+    Deactivating also deletes the account's token, so its sessions end at
+    once. Staff cannot deactivate themselves.
+  - `GET /audit_log` lists these changes, newest first
+    (`filter[target_user_id]`).
+
+  Nothing in the API grants staff; see Operations.
+- **Deactivated accounts are locked out.** An `is_active = false` account's
+  token is ignored (it is anonymous), and its logins get 403 `This account has
+  been deactivated.` Django only checked `is_active` on the retired password
+  login.
+- **`is_superuser` is gone.** `is_staff` is the only admin flag
+  (`0004_admin.sql` drops the column in place; the import skips it).
 - **Logout actually clears production cookies.** The expiring cookies carry the
   same `Domain` they were set with.
 - **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
@@ -151,6 +171,14 @@ bun scripts/manage.ts usage-report --env production [--format csv --output repor
 bun scripts/manage.ts delete-user <username> --env production
 ```
 
+Grant or revoke staff (access to `/api/v1/admin`) in the database; the API
+cannot:
+
+```shell
+bunx wrangler d1 execute DB --env production --remote \
+  --command "UPDATE users_user SET is_staff = 1 WHERE email = 'someone@example.com'"
+```
+
 Backups: D1 Time Travel restores to any point in the last 30 days
 (`wrangler d1 time-travel restore`); `wrangler d1 export` produces a SQL dump.
 
@@ -174,6 +202,11 @@ done
 ```
 
 Secrets persist across deploys; rerun the last step only to rotate them.
+
+Migrations normally go before the deploy. One that removes something the
+running Worker still reads goes after it instead: every request loads the
+user row, so dropping a `users_user` column first (as `0004_admin.sql` does)
+would fail every request until the new code is live. Deploy, then migrate.
 
 The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
 `wrangler deploy`: `api-staging.commandsnippets.com` for staging and

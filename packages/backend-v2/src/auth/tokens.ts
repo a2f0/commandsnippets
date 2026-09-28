@@ -1,11 +1,11 @@
-import {eq} from 'drizzle-orm';
+import {and, eq} from 'drizzle-orm';
 import type {Context} from 'hono';
 import {setCookie} from 'hono/cookie';
 import type {Db} from '../db/client';
 import {tokens, type User, users} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
-import {notAuthenticated} from '../lib/errors';
+import {notAuthenticated, permissionDenied} from '../lib/errors';
 
 /** Django's AUTH_COOKIE_MAX_AGE: 28 days. */
 export const AUTH_COOKIE_MAX_AGE = 2_419_200;
@@ -16,12 +16,13 @@ export function generateKey(): string {
   return [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/** The active user a token belongs to; a deactivated account's token is ignored. */
 async function userForKey(db: Db, key: string): Promise<User | null> {
   const [row] = await db
     .select({user: users})
     .from(tokens)
     .innerJoin(users, eq(tokens.user_id, users.id))
-    .where(eq(tokens.key, key))
+    .where(and(eq(tokens.key, key), eq(users.is_active, true)))
     .limit(1);
   return row?.user ?? null;
 }
@@ -94,6 +95,15 @@ export function requireUser(c: Context<AppEnv>): User {
   const user = c.get('user');
   if (user === null) {
     throw notAuthenticated();
+  }
+  return user;
+}
+
+/** DRF's IsAdminUser: `is_staff` users only; everyone else gets a 403. */
+export function requireStaff(c: Context<AppEnv>): User {
+  const user = requireUser(c);
+  if (!user.is_staff) {
+    throw permissionDenied();
   }
   return user;
 }

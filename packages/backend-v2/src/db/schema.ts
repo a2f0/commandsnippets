@@ -28,10 +28,9 @@ export const users = sqliteTable(
     email: text('email').notNull().default(''),
     first_name: text('first_name').notNull().default(''),
     last_name: text('last_name').notNull().default(''),
-    is_superuser: integer('is_superuser', {mode: 'boolean'})
-      .notNull()
-      .default(false),
+    // Staff use the admin API (/api/v1/admin). Django's is_superuser is gone.
     is_staff: integer('is_staff', {mode: 'boolean'}).notNull().default(false),
+    // Deactivated accounts cannot log in, and their tokens are not accepted.
     is_active: integer('is_active', {mode: 'boolean'}).notNull().default(true),
     last_login: text('last_login'),
     date_joined: text('date_joined').notNull(),
@@ -62,6 +61,31 @@ export const tokens = sqliteTable(
       .references(() => users.id, {onDelete: 'cascade'}),
   },
   table => [check('authtoken_token_key_length', sql`length(${table.key}) = 40`)]
+);
+
+/**
+ * What staff did through the admin API. Usernames are copied in so the log
+ * still reads after a user is deleted (the ids are then set to NULL).
+ */
+export const adminAuditLog = sqliteTable(
+  'admin_audit_log',
+  {
+    id: integer('id').primaryKey({autoIncrement: true}),
+    created: text('created').notNull(),
+    action: text('action').notNull(),
+    actor_id: integer('actor_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    actor_username: text('actor_username').notNull(),
+    target_user_id: integer('target_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    target_username: text('target_username').notNull(),
+  },
+  table => [
+    index('admin_audit_log_created_idx').on(table.created),
+    index('admin_audit_log_target_user_id_idx').on(table.target_user_id),
+  ]
 );
 
 export const textEntries = sqliteTable(
@@ -190,3 +214,4 @@ export type Tag = typeof tags.$inferSelect;
 export type TextEntry = typeof textEntries.$inferSelect;
 export type TagTextEntry = typeof tagsEntries.$inferSelect;
 export type TextEntryReused = typeof entryReuses.$inferSelect;
+export type AdminAuditLogEntry = typeof adminAuditLog.$inferSelect;
