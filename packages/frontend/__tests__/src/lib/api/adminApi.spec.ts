@@ -1,3 +1,4 @@
+import {CODES} from '@commandsnippets/api-shared';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {
@@ -9,6 +10,7 @@ import {
   listUsers,
   setUserActive,
 } from '../../../../src/lib/api/adminApi';
+import {errorDocument, onePage} from '../../../../src/msw/documents';
 
 const API = 'http://localhost:9001/api/v1/admin';
 
@@ -33,9 +35,21 @@ const userResource = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const page = (data: unknown[]) => ({
+  ...onePage(`${API}/users`, data.length),
   data,
-  links: {},
-  meta: {pagination: {page: 1, pages: 1, count: data.length}},
+});
+
+/** GET /user for a user who is (or is not) staff. */
+const currentUser = (isStaff: boolean) => ({
+  data: {
+    type: 'User',
+    id: '1',
+    attributes: {
+      username: 'a',
+      is_staff: isStaff,
+      date_updated: '2026-01-01T00:00:00',
+    },
+  },
 });
 
 const reply = (status: number, body: unknown) =>
@@ -178,11 +192,14 @@ describe('adminApi', () => {
   });
 
   it('turns permission_denied into AdminForbiddenError without logging out', async () => {
-    reply(403, {
-      errors: [
-        {code: 'permission_denied', detail: 'You do not have permission'},
-      ],
-    });
+    reply(
+      403,
+      errorDocument(
+        403,
+        CODES.permissionDenied,
+        'You do not have permission to perform this action.'
+      )
+    );
     await expect(setUserActive('7', false)).rejects.toBeInstanceOf(
       AdminForbiddenError
     );
@@ -190,17 +207,23 @@ describe('adminApi', () => {
   });
 
   it('logs out when the session is gone', async () => {
-    reply(403, {
-      errors: [{code: 'not_authenticated', detail: 'No credentials'}],
-    });
+    reply(
+      403,
+      errorDocument(
+        403,
+        CODES.notAuthenticated,
+        'Authentication credentials were not provided.'
+      )
+    );
     await expect(listAuditLog(1, 25)).rejects.toBeInstanceOf(AdminApiError);
     expect(loggedOut()).toBe(true);
   });
 
   it('keeps the session on a 403 that is not about it', async () => {
-    reply(403, {
-      errors: [{code: 'origin_not_allowed', detail: 'Origin not allowed.'}],
-    });
+    reply(
+      403,
+      errorDocument(403, CODES.originNotAllowed, 'Origin not allowed.')
+    );
     await expect(setUserActive('7', false)).rejects.toThrow(
       'Origin not allowed.'
     );
@@ -221,30 +244,27 @@ describe('adminApi', () => {
   });
 
   it("reports the API's error detail", async () => {
-    reply(400, {
-      errors: [
-        {code: 'invalid', detail: 'You cannot deactivate your own account.'},
-      ],
-    });
+    reply(
+      400,
+      errorDocument(
+        400,
+        CODES.invalid,
+        'You cannot deactivate your own account.'
+      )
+    );
     await expect(setUserActive('1', false)).rejects.toThrow(
       'You cannot deactivate your own account.'
     );
   });
 
   it('reads the staff flag from /user', async () => {
-    const fetchSpy = reply(200, {
-      data: {
-        type: 'User',
-        id: '1',
-        attributes: {username: 'a', is_staff: true},
-      },
-    });
+    const fetchSpy = reply(200, currentUser(true));
     expect(await getStaffStatus()).toBe(true);
     expect(requestOf(fetchSpy).url).toBe('http://localhost:9001/api/v1/user/');
     expect(requestOf(fetchSpy).init?.credentials).toBe('include');
 
     vi.restoreAllMocks();
-    reply(200, {data: {type: 'User', id: '1', attributes: {username: 'a'}}});
+    reply(200, currentUser(false));
     expect(await getStaffStatus()).toBe(false);
   });
 

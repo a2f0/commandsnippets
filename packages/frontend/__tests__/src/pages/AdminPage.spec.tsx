@@ -1,3 +1,4 @@
+import {CODES} from '@commandsnippets/api-shared';
 import {
   act,
   fireEvent,
@@ -10,6 +11,7 @@ import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 
+import {errorDocument, onePage, pagination} from '../../../src/msw/documents';
 import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
 import {store} from '../../util/loggedInStore';
 import {TestAppRouter} from '../../util/TestAppRouter';
@@ -51,14 +53,11 @@ const resource = (user: MockUser) => ({
 
 const forbidden = () =>
   HttpResponse.json(
-    {
-      errors: [
-        {
-          code: 'permission_denied',
-          detail: 'You do not have permission to perform this action.',
-        },
-      ],
-    },
+    errorDocument(
+      403,
+      CODES.permissionDenied,
+      'You do not have permission to perform this action.'
+    ),
     {status: 403}
   );
 
@@ -96,14 +95,13 @@ const server = setupServer(
     const pages = Math.max(1, Math.ceil(matching.length / size));
     if (number > pages) {
       return HttpResponse.json(
-        {errors: [{code: 'not_found', detail: 'Invalid page.'}]},
+        errorDocument(404, CODES.notFound, 'Invalid page.'),
         {status: 404}
       );
     }
     return HttpResponse.json({
+      ...pagination(request.url, number, pages, matching.length),
       data: matching.slice((number - 1) * size, number * size).map(resource),
-      links: {},
-      meta: {pagination: {page: number, pages, count: matching.length}},
     });
   }),
   http.patch(`${API}/admin/users/:id`, async ({params, request}) => {
@@ -111,13 +109,21 @@ const server = setupServer(
     patches.push(body);
     const user = users.find(candidate => candidate.id === params['id']);
     if (user === undefined) {
-      return HttpResponse.json({errors: []}, {status: 404});
+      return HttpResponse.json(
+        errorDocument(
+          404,
+          CODES.notFound,
+          'No AdminUser matches the given query.'
+        ),
+        {status: 404}
+      );
     }
     user.is_active = !user.is_active;
     return HttpResponse.json({data: resource(user)});
   }),
-  http.get(`${API}/admin/audit_log`, () =>
+  http.get(`${API}/admin/audit_log`, ({request}) =>
     HttpResponse.json({
+      ...onePage(request.url, 1),
       data: [
         {
           type: 'AdminAuditLogEntry',
@@ -132,8 +138,6 @@ const server = setupServer(
           },
         },
       ],
-      links: {},
-      meta: {pagination: {page: 1, pages: 1, count: 1}},
     })
   )
 );

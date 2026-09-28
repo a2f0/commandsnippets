@@ -1,13 +1,20 @@
+import type {
+  TagTextEntry,
+  TextEntry,
+  TextEntryListDocument,
+} from '@commandsnippets/api-shared';
 import type {JsonObject} from '@wdio/types';
 
-import type {ITextEntryJsonApiResponse} from '../../../src/lib/api/responses/types';
+import {onePage} from '../../../src/msw/documents';
+
+const user = {data: {type: 'User', id: '1'}} as const;
 
 // Generate many entries for Holy Grail layout testing
 const generateManyEntries = (
   count: number
-): ITextEntryJsonApiResponse & JsonObject => {
-  const entries = [];
-  const throughModels = [];
+): TextEntryListDocument & JsonObject => {
+  const entries: TextEntry[] = [];
+  const throughModels: TagTextEntry[] = [];
 
   for (let i = 1; i <= count; i++) {
     entries.push({
@@ -23,11 +30,10 @@ const generateManyEntries = (
         tag_count: 1,
       },
       relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
+        user,
+        text_entry_to_tag: {
+          data: [{type: 'TagTextEntryThroughModel', id: `${i}`}],
+          meta: {count: 1},
         },
       },
     });
@@ -41,26 +47,15 @@ const generateManyEntries = (
         date_created: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.994989`,
       },
       relationships: {
-        tag: {
-          data: {
-            type: 'Tag',
-            id: '1',
-          },
-        },
-        text_entry: {
-          data: {
-            type: 'TextEntry',
-            id: `${i}`,
-          },
-        },
+        tag: {data: {type: 'Tag', id: '1'}},
+        text_entry: {data: {type: 'TextEntry', id: `${i}`}},
+        user,
       },
     });
   }
 
   return {
-    links: {
-      next: null,
-    },
+    ...onePage('http://localhost:9001/api/v1/entries', count),
     data: entries,
     included: [
       ...throughModels,
@@ -69,6 +64,7 @@ const generateManyEntries = (
         id: '1',
         attributes: {
           username: 'test',
+          is_staff: true,
           date_updated: '2020-04-13T18:20:00',
         },
       },

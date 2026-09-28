@@ -1,10 +1,11 @@
+import type {TagListDocument} from '@commandsnippets/api-shared';
 import type {JsonObject} from '@wdio/types';
 
-import type {ITagJsonApiResponse} from '../../../src/lib/api/responses/types';
-export const tagsResponse: ITagJsonApiResponse & JsonObject = {
-  links: {
-    next: null,
-  },
+import {onePage} from '../../../src/msw/documents';
+
+/** GET /api/v1/tags: the test user's four tags, and the user. */
+export const tagsResponse: TagListDocument & JsonObject = {
+  ...onePage('http://localhost:9001/api/v1/tags', 4),
   data: [
     {
       type: 'Tag',
@@ -97,6 +98,7 @@ export const tagsResponse: ITagJsonApiResponse & JsonObject = {
       id: '1',
       attributes: {
         username: 'test',
+        is_staff: true,
         date_updated: '2020-04-13T18:20:00',
       },
     },

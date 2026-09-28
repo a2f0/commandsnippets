@@ -1,3 +1,4 @@
+import type {TagDocument} from '@commandsnippets/api-shared';
 import {act} from '@testing-library/react';
 import {applySnapshot} from 'mobx-state-tree';
 import {HttpResponse, http} from 'msw';
@@ -23,11 +24,19 @@ const apiError = (status: number, code: string, detail: string) =>
     {status}
   );
 
-const tag = {
+const tag: TagDocument = {
   data: {
     id: '1',
     type: 'Tag',
-    attributes: {name: 'new-tag'},
+    attributes: {
+      name: 'new-tag',
+      date_created: '2026-09-28T12:00:00',
+      date_last_used: '2026-09-28T12:00:00',
+      date_updated: '2026-09-28T12:00:00.000001',
+      entry_count: 0,
+      order: 1,
+      is_deleted: false,
+    },
     relationships: {user: {data: {id: '1', type: 'User'}}},
   },
 };
