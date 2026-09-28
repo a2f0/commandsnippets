@@ -2,7 +2,7 @@ import {ArrowUpward} from '@mui/icons-material';
 import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
-import {useAppContext} from '../../../AppContext';
+import {useEntrySortOrder} from '../../../hooks/useEntrySortOrder';
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../StyledMenuItem';
@@ -12,7 +12,7 @@ interface IProps {
 }
 
 const SortByBodyAscending = ({onClose}: IProps) => {
-  const appConfig = useAppContext();
+  const {sortOrder, setSortOrder} = useEntrySortOrder();
   const {t} = useTypedTranslation('menu');
 
   return (
@@ -20,15 +20,11 @@ const SortByBodyAscending = ({onClose}: IProps) => {
       id="tagged-entries-menu-sort-body-ascending"
       key="SortMenuItemTextEntryBody"
       onClick={() => {
-        appConfig.setTagTextEntryThroughModelSortOrder('body');
+        setSortOrder('body');
         onClose();
       }}
     >
-      <ListItemIcon>
-        {appConfig.tagTextEntryThroughModelSortOrder === 'body' && (
-          <StyledCheckIcon />
-        )}
-      </ListItemIcon>
+      <ListItemIcon>{sortOrder === 'body' && <StyledCheckIcon />}</ListItemIcon>
       {t('sortByBody')} <ArrowUpward fontSize="small" />
     </StyledMenuItem>
   );
