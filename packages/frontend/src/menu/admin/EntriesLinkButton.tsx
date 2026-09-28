@@ -3,7 +3,7 @@ import React from 'react';
 import {Link as RouterLink} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../i18n/hooks';
-import {menuBarButtonSx} from '../../MenuBarButton';
+import {menuBarButtonSx} from '../MenuBarButton';
 
 interface IProps {
   username: string;

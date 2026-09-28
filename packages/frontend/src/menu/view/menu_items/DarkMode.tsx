@@ -6,8 +6,8 @@ import {darkTheme, type Theme} from '../../../../src/theme/themes';
 
 import {useAppContext} from '../../../AppContext';
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {StyledMenuItem} from '../../../StyledMenuItem';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

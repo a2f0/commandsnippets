@@ -2,7 +2,7 @@ import React from 'react';
 import {useAppContext} from '../../../AppContext';
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {appMode} from '../../../lib/shared';
-import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

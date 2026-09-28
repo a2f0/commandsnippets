@@ -94,18 +94,33 @@ Run these from `packages/frontend`.
   "Populate IndexedDB" item writes to. The app does not read from it. There is
   no Turso/SQLite adapter any more.
 
-### UI
-- **Entry and tag lists**: `src/EntryList.tsx`, `src/Entry.tsx`,
-  `src/TagList.tsx`, `src/Tag.tsx`, with their context menus and editors in
-  `src/`
-- **Menu bar**: `src/MenuBar.tsx`; each menu is in `src/menu/<name>/`, and
-  `src/menu/StyledMenu.tsx` is their shared drop-down
-- **Drag and drop**: React DnD, with `src/DragHandle.tsx` and
-  `src/DragHandleContainer.tsx`, for reordering
+### Source layout
+- **App shell** (the root of `src/`): `index.tsx` (the entry point),
+  `AppRouter.tsx`, `App.tsx` (the providers), `AppContext.tsx` (the store's
+  context), `Routes.tsx` and `routePaths.ts`
+- **Pages**: `src/pages/`, one component per route: `EntriesPage.tsx`
+  (`/:user/:tag`), `AdminPage.tsx` (`/admin`) and `SignInPage.tsx` (`/` when
+  signed out)
+- **Components**: `src/components/<feature>/`: `entries/` and `tags/` (the
+  lists, their editors, context menus and styled fields), `admin/` (the admin
+  page's tabs), `auth/` (the GitHub and Google sign-in buttons, which are also
+  the OAuth callback routes), `bottomBar/`, `drawer/`, `dnd/` (drag handles
+  and the React DnD item types) and `ErrorBoundary/`. Components shared by
+  several features (`AppHeader`, `LanguageSwitcher`, `UserProfileCircle`) sit
+  at the root of `src/components/`.
+- **Menu bar**: `src/menu/MenuBar.tsx`; each menu is in `src/menu/<name>/`,
+  and `src/menu/StyledMenu.tsx` and `StyledMenuItem.tsx` are their shared
+  drop-down and item (the context menus use the item too)
+- **Shared styling**: `src/styled/` holds small styled components used across
+  features; `src/theme/` the MUI themes, the theme provider, the global
+  styles and the shared `sx` objects (`sx.ts`)
+- **Non-UI code**: `src/lib/` (the API clients, auth, the store, the Dexie
+  database and helpers), `src/hooks/`, `src/providers/`, `src/i18n/` and
+  `src/msw/`
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
   (`/:user/:tag`)
 - **Libraries**: Material UI, Emotion (styled components), React Router,
-  i18next (`src/i18n/`)
+  React DnD (reordering), i18next (`src/i18n/`)
 
 ### Top-level routes
 - Every top-level route in `src/routePaths.ts` must also be a reserved username
@@ -146,7 +161,7 @@ Run these from `packages/frontend`.
 - Component files are PascalCase (`EntryList.tsx`); every other file is
   camelCase (`fetchWithAuth.ts`).
 - Name new directories in camelCase too. Some existing names are snake_case
-  (`text_entries.ts`, `admin_page/`, `menu_items/`); don't copy them.
+  (`text_entries.ts`, `menu_items/`); don't copy them.
 
 ### Linting & Formatting
 - Run `bun run lint` and `bun run format` to check changes

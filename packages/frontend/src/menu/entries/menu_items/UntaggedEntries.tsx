@@ -4,8 +4,8 @@ import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {entrySearchMethod} from '../../../lib/shared';
-import {StyledMenuItem} from '../../../StyledMenuItem';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

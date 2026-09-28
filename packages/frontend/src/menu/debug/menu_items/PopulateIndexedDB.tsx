@@ -3,7 +3,7 @@ import {useParams} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {fetchAllEntriesForUser} from '../../../lib/text_entries';
-import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

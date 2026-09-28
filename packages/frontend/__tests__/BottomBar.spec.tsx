@@ -5,8 +5,8 @@ import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 
 import {AppContextProvider} from '../src/AppContext';
+import {BottomBar} from '../src/components/bottomBar/BottomBar';
 import {i18n} from '../src/i18n/i18n';
-import {BottomBar} from '../src/lib/bottom_bar/BottomBar';
 import * as envModule from '../src/lib/environment';
 import {darkTheme} from '../src/theme/themes';
 

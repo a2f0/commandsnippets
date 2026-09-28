@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledMenuItem} from '../../StyledMenuItem';
 import {AboutDialog} from './AboutDialog';
 
 interface IProps {

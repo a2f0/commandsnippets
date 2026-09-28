@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {StyledMenuItem} from '../../../StyledMenuItem';
+import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

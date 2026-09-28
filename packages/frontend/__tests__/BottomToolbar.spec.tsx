@@ -4,7 +4,7 @@ import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
 import {describe, expect, it} from 'vitest';
 import {AppContextProvider} from '../src/AppContext';
-import {BottomToolbar} from '../src/components/BottomToolbar';
+import {BottomToolbar} from '../src/components/bottomBar/BottomToolbar';
 import {i18n} from '../src/i18n/i18n';
 import {darkTheme} from '../src/theme/themes';
 

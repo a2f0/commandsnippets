@@ -4,8 +4,8 @@ import React from 'react';
 
 import {useAppContext} from '../../../AppContext';
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {StyledMenuItem} from '../../../StyledMenuItem';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
+import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
   onClose: () => void;

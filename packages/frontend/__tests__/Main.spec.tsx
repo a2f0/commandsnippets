@@ -8,20 +8,20 @@ import {MemoryRouter} from 'react-router-dom';
 import {describe, expect, it, vi} from 'vitest';
 import {AppContextProvider} from '../src/AppContext';
 import {i18n} from '../src/i18n/i18n';
-import {Main} from '../src/Main';
+import {EntriesPage} from '../src/pages/EntriesPage';
 import {darkTheme} from '../src/theme/themes';
 
 vi.mock('react-cookie', () => ({
   useCookies: () => [{}, vi.fn(), vi.fn()],
 }));
 
-const MainWithProviders = () => (
+const EntriesPageWithProviders = () => (
   <I18nextProvider i18n={i18n}>
     <ThemeProvider theme={darkTheme}>
       <MemoryRouter>
         <DndProvider backend={HTML5Backend}>
           <AppContextProvider>
-            <Main />
+            <EntriesPage />
           </AppContextProvider>
         </DndProvider>
       </MemoryRouter>
@@ -29,9 +29,9 @@ const MainWithProviders = () => (
   </I18nextProvider>
 );
 
-describe('Main Component Holy Grail Layout', () => {
+describe('EntriesPage Holy Grail Layout', () => {
   it('should have a flex column layout filling the viewport', () => {
-    const {container} = render(<MainWithProviders />);
+    const {container} = render(<EntriesPageWithProviders />);
 
     const mainContainer = container.firstElementChild;
     expect(mainContainer).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('Main Component Holy Grail Layout', () => {
   });
 
   it('should render header AppBar with sticky positioning', () => {
-    const {container} = render(<MainWithProviders />);
+    const {container} = render(<EntriesPageWithProviders />);
 
     const appBars = container.querySelectorAll('.MuiAppBar-root');
     const headerAppBar = appBars[0];
@@ -64,7 +64,7 @@ describe('Main Component Holy Grail Layout', () => {
   });
 
   it('should render content area with flex layout', () => {
-    const {container} = render(<MainWithProviders />);
+    const {container} = render(<EntriesPageWithProviders />);
 
     const mainContainer = container.firstElementChild;
     const contentArea = mainContainer?.children[1];
@@ -81,7 +81,7 @@ describe('Main Component Holy Grail Layout', () => {
   });
 
   it('should render BottomToolbar as last child with marginTop auto', () => {
-    const {container} = render(<MainWithProviders />);
+    const {container} = render(<EntriesPageWithProviders />);
 
     const mainContainer = container.firstElementChild;
     const lastChild = mainContainer?.lastElementChild;
@@ -97,7 +97,7 @@ describe('Main Component Holy Grail Layout', () => {
   });
 
   it('should maintain layout structure with header, content, and fixed footer', () => {
-    const {container} = render(<MainWithProviders />);
+    const {container} = render(<EntriesPageWithProviders />);
 
     const mainContainer = container.firstElementChild;
     expect(mainContainer).toBeInTheDocument();

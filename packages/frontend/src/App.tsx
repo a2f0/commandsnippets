@@ -11,8 +11,8 @@ import {getGlobalErrorStore} from './hooks/useErrorStore';
 import {i18n} from './i18n/i18n';
 import {ErrorStoreProvider} from './providers/ErrorStoreProvider';
 import {Routes} from './Routes';
-import {MemoizedThemedGlobalStyle} from './styled/layout/ThemedGlobalStyles';
 import {ThemeProvider} from './theme/Theme';
+import {MemoizedThemedGlobalStyle} from './theme/ThemedGlobalStyles';
 
 const App = React.memo(
   observer(() => {
