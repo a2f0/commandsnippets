@@ -178,6 +178,10 @@ writing its type by hand.
   api-shared's schemas (losing nothing), failing on drift or on a handler it
   does not check. Type mock documents with api-shared's types, and build their
   pagination, timestamps and error documents with `src/msw/documents.ts`.
+  The handlers of `POST /entries`, the `PATCH`es and `/tags_entries` parse the
+  request document as the API does (`src/msw/requests.ts`) and keep the mock
+  state as its database would (revisions, counters, junctions);
+  `__tests__/src/msw/handlers.spec.ts` checks them.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
   `fake-indexeddb/auto`. Unit specs mock the API with `msw/node`
