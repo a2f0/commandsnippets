@@ -13,8 +13,5 @@
     "jsx": "react-jsx",
     "incremental": true,
     "verbatimModuleSyntax": true
-  },
-  "ts-node": {
-    "swc": true
   }
 }

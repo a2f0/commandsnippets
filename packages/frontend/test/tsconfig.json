@@ -4,6 +4,6 @@
     "composite": true,
     "types": ["@wdio/globals/types", "@wdio/mocha-framework"]
   },
-  "include": ["**/*.ts", "**/*.tsx", "../types/**/*", "./types.d.ts"],
+  "include": ["**/*.ts", "**/*.tsx", "../types/**/*"],
   "references": [{ "path": "../src" }]
 }

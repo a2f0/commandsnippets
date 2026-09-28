@@ -13,10 +13,6 @@
   "files.autoSaveDelay": 999,
   "typescript.tsdk": "node_modules/typescript/lib",
 
-  "search.exclude": {
-    "**/src/ts-out": true
-  },
-
   "javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
   "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false
 }

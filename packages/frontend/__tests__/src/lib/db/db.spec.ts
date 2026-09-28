@@ -1,9 +1,6 @@
-import '@testing-library/jest-dom';
-import 'fake-indexeddb/auto';
-
 import {db} from '../../../../src/lib/db/db';
 
-describe('TearleadsDexie', () => {
+describe('db', () => {
   describe('Models', () => {
     describe('User', () => {
       it('Inserts and retrieves a User', async () => {

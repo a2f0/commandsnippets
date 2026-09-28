@@ -1,17 +1,14 @@
-import '@testing-library/jest-dom';
-
 import {act} from '@testing-library/react';
 import {applySnapshot} from 'mobx-state-tree';
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
 
+import {listUsers} from '../src/lib/api/adminApi';
 import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import {defaultState} from '../src/lib/shared';
 import {store} from '../src/lib/store/store';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
-
-Element.prototype.scrollIntoView = vi.fn();
 
 const server = setupServer(
   http.get('http://localhost:9001/api/v1/tags', () => {
@@ -25,6 +22,12 @@ const server = setupServer(
   }),
   http.get('http://localhost:9001/api/v1/user/', () => {
     return HttpResponse.json({error: 'Forbidden'}, {status: 403});
+  }),
+  http.get('http://localhost:9001/api/v1/admin/users', () => {
+    return HttpResponse.json(
+      {errors: [{code: 'not_authenticated'}]},
+      {status: 403}
+    );
   })
 );
 
@@ -162,6 +165,40 @@ describe('403 Unauthorized Handling', () => {
     // Verify state was reset to defaults
     expect(store.loggedInUser).toBeNull();
     expect(store.entrySortOrder).toBe('date_updated');
+
+    consoleSpy.mockRestore();
+  });
+
+  it('should reset application state when the admin API says the session is gone', async () => {
+    act(() => {
+      applySnapshot(store, {
+        ...defaultState,
+        loggedInUser: 'testuser',
+        isStaff: true,
+      });
+    });
+
+    expect(store.loggedInUser).toBe('testuser');
+    expect(store.isStaff).toBe(true);
+
+    const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    await expect(
+      listUsers({
+        search: '',
+        status: 'all',
+        sort: 'username',
+        descending: false,
+        page: 1,
+        pageSize: 25,
+      })
+    ).rejects.toThrow();
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Unauthorized access detected, resetting application state'
+    );
+    expect(store.loggedInUser).toBeNull();
+    expect(store.isStaff).toBe(false);
 
     consoleSpy.mockRestore();
   });

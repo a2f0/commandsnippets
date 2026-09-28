@@ -6,8 +6,8 @@ import type React from 'react';
 import {useState} from 'react';
 import {useAppContext} from '../AppContext';
 import {tearleadsApi} from '../lib/api/tearleadsApi';
-import {resetApplicationState} from '../lib/auth/authUtils';
 import {environment} from '../lib/environment';
+import {resetApplicationState} from '../lib/store/store';
 
 const StyledButton = styled(Button)(({theme}) => ({
   alignSelf: 'flex-end',

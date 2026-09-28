@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom';
-
 import {
   act,
   fireEvent,
@@ -14,8 +12,6 @@ import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {store as loggedInStore} from './util/loggedInStore';
 import {server} from './util/msw';
 import {TestAppRouter} from './util/TestAppRouter';
-
-Element.prototype.scrollIntoView = vi.fn();
 
 beforeAll(() => server.listen());
 afterAll(() => server.close());

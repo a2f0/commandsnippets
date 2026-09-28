@@ -100,10 +100,6 @@ export interface EntriesQueryParams {
   'filter[search]'?: string;
   sort?: string;
   include?: string;
-  page?: {
-    limit?: number;
-    offset?: number;
-  };
 }
 
 export interface TagsQueryParams {

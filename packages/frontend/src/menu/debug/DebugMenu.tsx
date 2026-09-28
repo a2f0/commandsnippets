@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {StyledMenu} from '../../MenuBar';
+import {StyledMenu} from '../StyledMenu';
 import {PopulateIndexedDB} from './menu_items/PopulateIndexedDB';
 import {TriggerTestError} from './menu_items/TriggerTestError';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyledMenu} from '../../MenuBar';
+import {StyledMenu} from '../StyledMenu';
 import {Logout} from './menu_items/Logout';
 import {NewEntry} from './menu_items/NewEntry';
 import {NewTag} from './menu_items/NewTag';

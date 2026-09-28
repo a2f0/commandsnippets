@@ -1,12 +1,9 @@
-import '@testing-library/jest-dom';
-
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
-import {vi} from 'vitest';
 
 import type {
   ITagJsonApiResponse,
@@ -14,10 +11,8 @@ import type {
 } from '../src/lib/api/responses/types';
 import {entriesResponse} from '../test/mocks/entries/entriesResponse';
 import {tagsResponse} from '../test/mocks/tags/tagsResponse';
-import {assignLoggedInCookie} from './util//assignLoggedInCookie';
+import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {TestAppRouter} from './util/TestAppRouter';
-
-Element.prototype.scrollIntoView = vi.fn();
 
 const response = {
   data: {

@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom';
-
 import {act, render, waitFor} from '@testing-library/react';
 import {CookiesProvider} from 'react-cookie';
 import {MemoryRouter} from 'react-router-dom';

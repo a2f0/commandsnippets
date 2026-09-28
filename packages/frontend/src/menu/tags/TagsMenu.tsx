@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {StyledMenu} from '../../MenuBar';
+import {StyledMenu} from '../StyledMenu';
 import {SortByDateCreatedAscending} from './menu_items/SortByDateCreatedAscending';
 import {SortByDateCreatedDescending} from './menu_items/SortByDateCreatedDescending';
 import {SortByDateLastUsedAscending} from './menu_items/SortByDateLastUsedAscending';

@@ -10,15 +10,8 @@ node_modules/
 /.blackbox/pubring.kbx~
 /.blackbox/secring.gpg/.env
 
-.vercel
-chrome
-chromedriver
-
 # Vite PWA
 dev-dist
-
-# Turso Databases
-*.db
 
 _results_
 

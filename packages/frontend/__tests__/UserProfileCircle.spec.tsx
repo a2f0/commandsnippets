@@ -1,11 +1,10 @@
-import '@testing-library/jest-dom';
-
 import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw';
 import {type MockInstance, vi} from 'vitest';
 import {AppContext} from '../src/AppContext';
 import {UserProfileCircle} from '../src/components/UserProfileCircle';
+import {tearleadsApi} from '../src/lib/api/tearleadsApi';
 import type {Store} from '../src/lib/store/store';
 import {darkTheme} from '../src/theme/themes';
 import {server} from './util/msw';
@@ -257,11 +256,9 @@ describe('UserProfileCircle', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
-      // Mock tearleadsApi.logout to throw immediately
-      const tearleadsApi = await import('../src/lib/api/tearleadsApi');
-      const originalLogout = tearleadsApi.tearleadsApi.logout;
-      tearleadsApi.tearleadsApi.logout = vi
-        .fn()
+      // Make tearleadsApi.logout throw immediately
+      const logoutSpy = vi
+        .spyOn(tearleadsApi, 'logout')
         .mockRejectedValue(new Error('Network failure'));
 
       renderWithContext('testuser');
@@ -295,8 +292,8 @@ describe('UserProfileCircle', () => {
         expect(screen.queryByText('Logout')).not.toBeInTheDocument();
       });
 
-      // Restore the original function
-      tearleadsApi.tearleadsApi.logout = originalLogout;
+      expect(logoutSpy).toHaveBeenCalledTimes(1);
+      logoutSpy.mockRestore();
       consoleErrorSpy.mockRestore();
     });
   });
