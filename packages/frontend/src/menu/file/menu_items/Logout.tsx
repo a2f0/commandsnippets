@@ -2,7 +2,7 @@ import React from 'react';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {tearleadsApi} from '../../../lib/api/tearleadsApi';
-import {resetApplicationState} from '../../../lib/auth/authUtils';
+import {resetApplicationState} from '../../../lib/store/store';
 import {StyledMenuItem} from '../../../StyledMenuItem';
 
 interface IProps {

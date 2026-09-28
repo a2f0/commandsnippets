@@ -1,5 +1,6 @@
 import type {IDisposer, Instance} from 'mobx-state-tree';
 import {applySnapshot, destroy, onSnapshot} from 'mobx-state-tree';
+import {setUnauthorizedHandler} from '../auth/authUtils';
 import {environment} from '../environment';
 import {type appState, defaultState} from '../shared';
 import {RootModel} from './models/RootModel';
@@ -50,9 +51,15 @@ export function createAppStateStore(
   return store;
 }
 
+/** Sign out of the app: put every stored setting back to its default. */
+export function resetApplicationState() {
+  applySnapshot(store, defaultState);
+}
+
 let store: ReturnType<typeof createAppStateStore>;
 state = mergeInDefaultState(state);
 store = createAppStateStore(state);
+setUnauthorizedHandler(resetApplicationState);
 
 export type Store = ReturnType<typeof createAppStateStore>;
 export {store};

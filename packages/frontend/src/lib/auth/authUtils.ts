@@ -1,14 +1,18 @@
-import {applySnapshot} from 'mobx-state-tree';
-import {defaultState} from '../shared';
-import {store} from '../store/store';
+let unauthorizedHandler: () => void = () => {};
 
-export function resetApplicationState() {
-  applySnapshot(store, defaultState);
+/**
+ * Set what `handleUnauthorized` does. The store module registers its reset
+ * here: the API client calls `handleUnauthorized` and the store's models
+ * import the API client, so importing the store from here was a cycle.
+ */
+export function setUnauthorizedHandler(handler: () => void): void {
+  unauthorizedHandler = handler;
 }
 
+/** The API says the session is gone: sign the user out of the app. */
 export function handleUnauthorized() {
   console.info('Unauthorized access detected, resetting application state');
-  resetApplicationState();
+  unauthorizedHandler();
 }
 
 /**
