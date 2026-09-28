@@ -1,10 +1,11 @@
+import {eq} from 'drizzle-orm';
 import {describe, expect, it} from 'vitest';
+import {tagsEntries} from '../../src/db/schema';
 import {createUser} from '../../src/services/users';
 import {
   db,
   entriesOf,
   isoformat,
-  junctionsOf,
   tagsOf,
   tokenFor,
   userFactory,
@@ -69,54 +70,27 @@ describe('TestUserModel', () => {
   });
 });
 
-// v2: what Django's User.save() and post_save signal did on creation.
+// v2: what Django's User.save() and post_save signal did on creation, minus
+// the example tags and entries: new accounts start empty.
 describe('UserCreationDefaults', () => {
-  it('creates a token and the example tags, entries and junctions', async () => {
-    const user = await userFactory();
+  it('creates a token and no tags, entries or junctions', async () => {
+    const user = await createUser(db(), 'new-user', 'new-user@example.com');
     expect(await tokenFor(user.id)).toMatch(/^[0-9a-f]{40}$/);
     expect(user.last_login).toBe(user.date_joined);
     expect(user.login_count).toBe(1);
 
-    const [tag1, tag2] = await tagsOf(user);
-    expect([tag1?.name, tag1?.order, tag1?.entry_count]).toEqual([
-      'example-postgres',
-      1,
-      2,
-    ]);
-    expect([tag2?.name, tag2?.order, tag2?.entry_count]).toEqual([
-      'example-tag-2',
-      2,
-      1,
-    ]);
-
-    const [entry1, entry2] = await entriesOf(user);
-    expect(entry1?.subject).toBe(
-      'close all postgres connections other than the current one'
-    );
-    expect(entry1?.body).toContain('pg_terminate_backend');
-    expect(entry1?.tag_count).toBe(1);
-    expect(entry2?.subject).toBe(
-      'show where a postgres session is originating from'
-    );
-    expect(entry2?.tag_count).toBe(2);
-
-    const junctions1 = await junctionsOf(entry1 as never);
-    const junctions2 = await junctionsOf(entry2 as never);
-    expect(junctions1.map(j => [j.tag_id, j.order])).toEqual([[tag1?.id, 1]]);
-    expect(junctions2.map(j => [j.tag_id, j.order])).toEqual([
-      [tag1?.id, 2],
-      [tag2?.id, 3],
-    ]);
-    // date_last_used tracks the tag's most recent junction.
-    expect(tag1?.date_last_used).toBe(junctions2[0]?.date_created);
-    expect(tag2?.date_last_used).toBe(junctions2[1]?.date_created);
+    expect(await tagsOf(user)).toEqual([]);
+    expect(await entriesOf(user)).toEqual([]);
+    const junctions = await db()
+      .select()
+      .from(tagsEntries)
+      .where(eq(tagsEntries.user_id, user.id));
+    expect(junctions).toEqual([]);
   });
 
-  it('gives each row a distinct, increasing timestamp', async () => {
-    const user = await userFactory();
-    const [tag1, tag2] = await tagsOf(user);
+  it('gives the user row increasing timestamps', async () => {
+    const user = await createUser(db(), 'timestamps', 'timestamps@example.com');
     expect(user.date_joined < user.date_updated).toBe(true);
-    expect((tag1?.date_created ?? '') < (tag2?.date_created ?? '')).toBe(true);
     expect(isoformat(user.date_updated)).toMatch(
       /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{6})?$/
     );
