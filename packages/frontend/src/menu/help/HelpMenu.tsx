@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {StyledMenu} from '../../MenuBar';
+import {StyledMenu} from '../StyledMenu';
 import {About} from './menu_items/About';
 
 interface IProps {

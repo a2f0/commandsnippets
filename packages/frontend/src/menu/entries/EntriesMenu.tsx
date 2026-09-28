@@ -2,8 +2,8 @@ import React from 'react';
 
 import {useAppContext} from '../../AppContext';
 import {entrySearchMethod} from '../../lib/shared';
-import {StyledMenu} from '../../MenuBar';
 import {StyledDivider} from '../../styled/StyledDivider';
+import {StyledMenu} from '../StyledMenu';
 import {AllEntries} from './menu_items/AllEntries';
 import {SortByBodyAscending} from './menu_items/SortByBodyAscending';
 import {SortByBodyDescending} from './menu_items/SortByBodyDescending';

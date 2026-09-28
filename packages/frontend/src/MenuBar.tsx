@@ -1,4 +1,4 @@
-import {Box, Fade, Menu} from '@mui/material';
+import {Box} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import {observer} from 'mobx-react';
 import React from 'react';
@@ -23,38 +23,6 @@ import {TagsMenu} from './menu/tags/TagsMenu';
 import {TagsMenuButton} from './menu/tags/TagsMenuButton';
 import {ViewMenu} from './menu/view/ViewMenu';
 import {ViewMenuButton} from './menu/view/ViewMenuButton';
-
-interface IStyledMenuProps {
-  id: string;
-  anchorEl: HTMLElement | null;
-  open: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}
-
-export const StyledMenu = ({
-  id,
-  anchorEl,
-  open,
-  onClose,
-  children,
-}: IStyledMenuProps) => {
-  return (
-    <Menu
-      id={id}
-      anchorEl={anchorEl}
-      onClose={onClose}
-      transitionDuration={0}
-      anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
-      transformOrigin={{vertical: 'top', horizontal: 'left'}}
-      keepMounted
-      open={open}
-      slots={{transition: Fade}}
-    >
-      {children}
-    </Menu>
-  );
-};
 
 const Aligner = styled('div')`
   min-height: ${props => props.theme.appBar.height}px;
