@@ -54,6 +54,11 @@ that does not fit fails the call, and never reaches the app's state or signs
 anyone out (AGENTS.md, "API"). It is TypeScript source, which this package
 compiles and bundles with its own code:
 
+- **Import the smaller entries:** `src/lib/api/` imports the response
+  schemas from `@commandsnippets/api-shared/responses`, `CODES` from
+  `/messages`, and only types from `/requests`, so the request-side schemas
+  (the API's validation) stay out of the bundle. Type-only imports from the
+  root entry compile away and are fine anywhere.
 - **One zod:** zod is api-shared's peer dependency, and its sources'
   `import 'zod'` resolves from where they are installed.
   `tsconfig-base.json`'s `paths` and Vite's `resolve.dedupe` (which Vitest

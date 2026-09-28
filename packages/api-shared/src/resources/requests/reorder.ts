@@ -4,7 +4,7 @@
  * of the endpoint's resource type; the server checks that they exist.
  */
 import {z} from 'zod';
-import {pkField} from '../fields';
+import {pkField} from '../../fields';
 
 export const reorderAttributesSchema = z.object({
   top: pkField(),

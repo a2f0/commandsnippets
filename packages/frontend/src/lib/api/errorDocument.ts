@@ -3,7 +3,7 @@
  * the first error in a JSON:API error document (api-shared's
  * `errorDocumentSchema`). Branch on the code (`CODES`), never on the detail.
  */
-import {errorObjectSchema} from '@commandsnippets/api-shared';
+import {errorObjectSchema} from '@commandsnippets/api-shared/responses';
 import {z} from 'zod';
 
 /** A member read with the contract's schema for it, or undefined. */

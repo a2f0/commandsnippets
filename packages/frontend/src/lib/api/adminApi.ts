@@ -18,18 +18,20 @@
  * An OK response that does not fit its document schema raises AdminApiError
  * with status 0 (`Invalid admin API response: ...`), and keeps the session.
  */
+import {CODES} from '@commandsnippets/api-shared/messages';
+import type {
+  AdminUserSortField,
+  AdminUserUpdateDocument,
+} from '@commandsnippets/api-shared/requests';
 import {
   type AdminAuditAction,
   type AdminAuditLogEntry,
   type AdminUser as AdminUserResource,
-  type AdminUserSortField,
-  type AdminUserUpdateDocument,
   adminAuditLogListDocumentSchema,
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
-  CODES,
   userDocumentSchema,
-} from '@commandsnippets/api-shared';
+} from '@commandsnippets/api-shared/responses';
 import type {z} from 'zod';
 import {handleUnauthorized} from '../auth/authUtils';
 import {baseURL} from './baseUrl';

@@ -1,19 +1,21 @@
+import type {
+  GithubLoginDocument,
+  GoogleLoginDocument,
+  TagCreateDocument,
+  TagReorderDocument,
+  TagTextEntryCreateDocument,
+  TagTextEntryReorderDocument,
+  TagUpdateDocument,
+  TextEntryCreateDocument,
+  TextEntryUpdateDocument,
+} from '@commandsnippets/api-shared/requests';
 import {
   emptyObjectSchema,
-  type GithubLoginDocument,
-  type GoogleLoginDocument,
-  type TagCreateDocument,
   type TagDocument,
   type TagListDocument,
-  type TagReorderDocument,
-  type TagTextEntryCreateDocument,
   type TagTextEntryDocument,
-  type TagTextEntryReorderDocument,
-  type TagUpdateDocument,
-  type TextEntryCreateDocument,
   type TextEntryDocument,
   type TextEntryListDocument,
-  type TextEntryUpdateDocument,
   tagDocumentSchema,
   tagListDocumentSchema,
   tagTextEntryDocumentSchema,
@@ -21,7 +23,7 @@ import {
   textEntryListDocumentSchema,
   type UserDocument,
   userDocumentSchema,
-} from '@commandsnippets/api-shared';
+} from '@commandsnippets/api-shared/responses';
 import type {z} from 'zod';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {fetchWithAuth} from './fetchWithAuth';
