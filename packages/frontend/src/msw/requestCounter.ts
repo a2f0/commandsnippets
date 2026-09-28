@@ -15,17 +15,20 @@ function makeKey(method: HttpMethod, url: string): string {
   return `${method} ${url}`;
 }
 
+/**
+ * Count a request under its exact URL and under the URL without its query,
+ * so tests can match either. A URL without a query is one key, counted once.
+ */
 export function recordRequest(method: HttpMethod, url: string): void {
   const urlString = `${url}`;
-  const exactKey = makeKey(method, urlString);
   const normalizedUrl = urlString.split('?')[0] ?? urlString;
-  const normalizedKey = makeKey(method, normalizedUrl);
-
-  const exactCurrent = requestCountMap.get(exactKey) ?? 0;
-  requestCountMap.set(exactKey, exactCurrent + 1);
-
-  const normalizedCurrent = requestCountMap.get(normalizedKey) ?? 0;
-  requestCountMap.set(normalizedKey, normalizedCurrent + 1);
+  const keys = new Set([
+    makeKey(method, urlString),
+    makeKey(method, normalizedUrl),
+  ]);
+  for (const key of keys) {
+    requestCountMap.set(key, (requestCountMap.get(key) ?? 0) + 1);
+  }
 }
 
 export function getRequestCount(method: HttpMethod, url: string): number {

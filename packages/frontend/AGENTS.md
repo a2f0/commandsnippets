@@ -92,6 +92,9 @@ When running integration tests, it is recommended to use the headless option. Th
 - User-defined ordering is a key feature for both Tags and Entries
 - Unauthorized access handling via store registration pattern
 
+### Top-level routes
+- Every top-level route in `src/routePaths.ts` must also be a reserved username in backend-v2 `src/services/reserved-usernames.json` (usernames are the first path segment); `__tests__/src/routePaths.spec.ts` checks this
+
 ## Documentation Maintenance
 
 - When you encounter errors in the documentation (e.g., outdated commands, incorrect descriptions) or identify areas where existing documentation could be refined for clarity or accuracy, please update this `AGENTS.md` file accordingly.

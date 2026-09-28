@@ -58,6 +58,7 @@ export const useOAuth = (config: OAuthConfig) => {
       const username = response.data.attributes.username;
 
       appConfig.setLoggedInUser(username);
+      appConfig.setIsStaff(response.data.attributes.is_staff === true);
       setCookie('loggedInUser', username, {
         path: '/',
         secure: window.location.protocol === 'https:',

@@ -1,6 +1,8 @@
+import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
 import packageJson from '../../package.json';
-import {ApiClient, type Base, isoformat, json, setUpBase} from '../helpers';
+import {users} from '../../src/db/schema';
+import {ApiClient, type Base, db, isoformat, json, setUpBase} from '../helpers';
 
 // tearleads/users/tests/test_users_api.py
 describe('TestUsersApi', () => {
@@ -17,11 +19,22 @@ describe('TestUsersApi', () => {
     expect(Object.keys(body.data)).toHaveLength(3);
     expect(body.data.type).toBe('User');
     expect(body.data.id).toBe(String(base.user1.id));
-    expect(Object.keys(body.data.attributes)).toHaveLength(2);
+    expect(Object.keys(body.data.attributes)).toHaveLength(3);
     expect(body.data.attributes.username).toBe(base.user1.username);
+    expect(body.data.attributes.is_staff).toBe(false);
     expect(body.data.attributes.date_updated).toBe(
       isoformat(base.user1.date_updated)
     );
+  });
+
+  // v2: the web app offers the admin page to staff.
+  it('reports is_staff for staff users', async () => {
+    await db()
+      .update(users)
+      .set({is_staff: true})
+      .where(eq(users.id, base.user1.id));
+    const body = await json(await base.user1Client.get('/api/v1/user/'));
+    expect(body.data.attributes.is_staff).toBe(true);
   });
 
   it('test_unauthenticated_user', async () => {

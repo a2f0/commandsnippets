@@ -551,6 +551,25 @@ describe('verify', () => {
     );
   });
 
+  test("fails on a username reserved for the web app's routes", () => {
+    const dump = parseDump(DUMP);
+    const people = dump.tables.get('users_user') ?? [];
+    people[0] = {...people[0], username: 'Admin'};
+    const {converted} = convertDump(dump);
+    const lines: string[] = [];
+    expect(
+      verify(
+        buildStatements(converted, dump.sequences),
+        converted,
+        dump.sequences,
+        line => lines.push(line)
+      )
+    ).toBe(false);
+    expect(lines.join('\n')).toContain(
+      'FAIL usernames reserved for web app routes (rename them first): 1'
+    );
+  });
+
   test('fails when a sequence position does not carry over', () => {
     const {converted, dump, statements} = imported();
     const lines: string[] = [];

@@ -40,8 +40,11 @@ export function createRegistry(db: Db, userId: number): Registry {
         .select()
         .from(users)
         .where(and(inIds(users.id, ids), eq(users.id, userId))),
+    // Only ever the requester's own row (see `load`), so is_staff tells the
+    // web app whether to offer the admin page; the admin API checks it again.
     attributes: row => ({
       username: row.username,
+      is_staff: row.is_staff,
       date_updated: isoformat(row.date_updated),
     }),
     relationships: {},

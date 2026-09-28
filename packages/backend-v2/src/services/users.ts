@@ -4,6 +4,7 @@ import type {Db} from '../db/client';
 import {tokens, type User, users} from '../db/schema';
 import {now} from '../lib/clock';
 import {isUniqueViolation} from '../resources/viewset';
+import RESERVED_USERNAMES from './reserved-usernames.json';
 
 function randomDigits(length: number): string {
   const bytes = crypto.getRandomValues(new Uint8Array(length));
@@ -43,9 +44,21 @@ async function insertUserWithToken(
   return user as User;
 }
 
+const reserved = new Set(RESERVED_USERNAMES.map(name => name.toLowerCase()));
+
 /**
- * Django's User.save() for new users: if the username is taken, append
- * `-<random digits>`, growing the suffix until it is free.
+ * Usernames are the web app's first path segment (`/:user/:tag`), so none may
+ * be one of the app's own top-level routes (`/admin`, `/oauth/...`).
+ * React Router matches paths case-insensitively, so neither may `Admin`.
+ * The frontend checks its routes against `reserved-usernames.json`.
+ */
+export function isReservedUsername(username: string): boolean {
+  return reserved.has(username.toLowerCase());
+}
+
+/**
+ * Django's User.save() for new users: if the username is taken (or reserved),
+ * append `-<random digits>`, growing the suffix until it is free.
  */
 export async function createUser(
   db: Db,
@@ -54,11 +67,13 @@ export async function createUser(
 ): Promise<User> {
   let candidate = username;
   for (let suffixLength = 1; suffixLength <= 20; suffixLength++) {
-    const [taken] = await db
-      .select({id: users.id})
-      .from(users)
-      .where(eq(users.username, candidate))
-      .limit(1);
+    const [taken] = isReservedUsername(candidate)
+      ? [{id: 0}]
+      : await db
+          .select({id: users.id})
+          .from(users)
+          .where(eq(users.username, candidate))
+          .limit(1);
     if (taken === undefined) {
       try {
         return await insertUserWithToken(db, candidate, email);

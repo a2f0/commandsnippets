@@ -5,6 +5,7 @@ import path from 'node:path';
 import {is} from 'drizzle-orm';
 import {getTableConfig, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import * as schema from '../src/db/schema';
+import RESERVED_USERNAMES from '../src/services/reserved-usernames.json';
 
 // Migrations run against databases with data in them. Every table cascades
 // from users_user, so a migration that rebuilt it (drizzle-kit's
@@ -39,6 +40,15 @@ function seed(db: Database): void {
     `INSERT INTO users_user (id, username, email, is_staff, is_active, date_joined, date_updated)
      VALUES (1, 'alice', 'alice@example.com', 1, 1, '${at}', '${at}')`
   );
+  // Every username the web app's routes reserve, capitalized: a migration
+  // must rename existing accounts that have one (0006 did for the first two).
+  RESERVED_USERNAMES.forEach((name, index) => {
+    const username = name.charAt(0).toUpperCase() + name.slice(1);
+    db.run(
+      `INSERT INTO users_user (id, username, email, date_joined, date_updated)
+       VALUES (${index + 2}, '${username}', '${name}@example.com', '${at}', '${at}')`
+    );
+  });
   db.run(
     `INSERT INTO authtoken_token (key, created, user_id) VALUES ('${'a'.repeat(40)}', '${at}', 1)`
   );
@@ -88,15 +98,28 @@ describe('migrations', () => {
     }
     seed(db);
     const before = counts(db);
-    expect(Object.values(before).every(n => n === 1)).toBe(true);
+    expect(before['users_user']).toBe(1 + RESERVED_USERNAMES.length);
 
     for (const file of files.slice(imported + 1)) {
       apply(db, file);
       expect({file, counts: counts(db)}).toEqual({file, counts: before});
     }
     expect(
-      db.query('SELECT username, is_staff, is_active FROM users_user').get()
+      db
+        .query(
+          'SELECT username, is_staff, is_active FROM users_user WHERE id = 1'
+        )
+        .get()
     ).toEqual({username: 'alice', is_staff: 1, is_active: 1});
+    const usernames = (
+      db.query('SELECT username FROM users_user ORDER BY id').all() as {
+        username: string;
+      }[]
+    ).map(row => row.username);
+    expect(usernames[1]).toBe('Admin-2');
+    expect(
+      usernames.filter(name => RESERVED_USERNAMES.includes(name.toLowerCase()))
+    ).toEqual([]);
   });
 
   test('leave the database matching src/db/schema.ts', () => {

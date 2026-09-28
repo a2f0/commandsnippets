@@ -81,11 +81,10 @@ describe('Entries Context Menu Delete Entry', () => {
       'http://localhost:9001/api/v1/entries/1'
     );
 
-    // Note: Due to the component lifecycle and event handling in the browser,
-    // 2 DELETE requests are made. This is expected behavior and the entry
-    // is successfully deleted without issues.
+    // One DELETE for the entry. (The request counter used to count URLs
+    // without a query twice, which read as two requests here.)
     const newRequests = finalDeleteCount - initialDeleteCount;
-    expect(newRequests).toBe(2);
+    expect(newRequests).toBe(1);
 
     // Verify the entry is removed from the DOM
     await expect(BasePage.tagsEntries1).not.toBeDisplayed();

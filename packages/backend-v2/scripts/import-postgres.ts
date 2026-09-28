@@ -20,6 +20,7 @@ import {mkdirSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import {now, parseDateTime} from '../src/lib/clock';
 import {fold} from '../src/lib/search';
+import RESERVED_USERNAMES from '../src/services/reserved-usernames.json';
 
 export type Value = string | number | null;
 export type Row = Record<string, string | null>;
@@ -466,6 +467,15 @@ interface Check {
 }
 
 const CHECKS: Check[] = [
+  {
+    // The web app's own routes (src/services/users.ts); migrations rename
+    // such accounts, but the import loads users after the migrations ran.
+    name: 'usernames reserved for web app routes (rename them first)',
+    sql: `SELECT id, username FROM users_user WHERE lower(username) IN (${RESERVED_USERNAMES.map(
+      name => `'${name}'`
+    ).join(', ')})`,
+    level: 'error',
+  },
   {
     name: 'foreign key violations',
     sql: 'PRAGMA foreign_key_check',

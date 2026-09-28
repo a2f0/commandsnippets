@@ -80,6 +80,21 @@ by the deploy: `app-staging.commandsnippets.com` for staging and
 environment (API and OAuth callbacks) from that hostname, so it does not run
 on workers.dev.
 
+## Routes and the admin page
+
+The first path segment is a username (`/:user/:tag`), so the app's own
+top-level routes (`src/routePaths.ts`: `/admin`, `/oauth/...`) are reserved
+usernames in the API (backend-v2 `src/services/reserved-usernames.json`).
+`__tests__/src/routePaths.spec.ts` fails if a route is missing there; add a
+new top-level route to both.
+
+`/admin` is for staff (`users.is_staff`): it lists accounts, deactivates and
+reactivates them, and shows the audit log, through the API's `/api/v1/admin`.
+The page checks access with the API on every visit, and the menu shows an
+Admin link to staff once their login or a visit to the page has recorded it.
+Its menu bar leaves out what only works on the entries page (the Tags and
+Entries menus, New Tag and New Entry) and links back to your entries instead.
+
 ## Other
 
 - Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information

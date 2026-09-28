@@ -1,21 +1,19 @@
-import {AppBar, Box} from '@mui/material';
+import {Box} from '@mui/material';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect} from 'react';
 import {useCookies} from 'react-cookie';
 import {useLocation, useNavigate} from 'react-router-dom';
 
 import {useAppContext} from './AppContext';
+import {AppHeader} from './components/AppHeader';
 import {BottomToolbar} from './components/BottomToolbar';
 import {LeftDrawer} from './drawer/LeftDrawer';
 import {RightDrawer} from './drawer/RightDrawer';
 import {EntryList} from './EntryList';
 import {hasLoginCookie, loggedInCookieNames} from './lib/auth/authUtils';
 import {environment} from './lib/environment';
-import {MenuBar} from './MenuBar';
-import {StyledToolbar} from './styled/layout/StyledToolbar';
 
 const COOKIE_KEYS = loggedInCookieNames(environment);
-const BORDER_COLOR = '#808080';
 
 const MainContent = () => {
   const location = useLocation();
@@ -52,21 +50,7 @@ const MainContent = () => {
         minHeight: '100vh',
       }}
     >
-      <AppBar
-        position="sticky"
-        sx={{
-          boxShadow: 'none',
-          backgroundImage: 'none',
-          borderBottom: `1px solid ${BORDER_COLOR}`,
-          backgroundColor: theme => theme.header.background,
-          top: 0,
-          height: theme => `${theme.appBar.height}px`,
-        }}
-      >
-        <StyledToolbar>
-          <MenuBar />
-        </StyledToolbar>
-      </AppBar>
+      <AppHeader />
       <Box
         sx={{
           display: 'flex',
