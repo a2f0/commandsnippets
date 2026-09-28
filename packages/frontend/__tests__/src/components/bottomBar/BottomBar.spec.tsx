@@ -170,8 +170,9 @@ describe('BottomBar Component', () => {
       const logsTab = await screen.findByRole('tab', {name: /Logs/i});
       await user.click(logsTab);
 
-      // Should show log count when there are logs (from default initialization)
-      expect(screen.getByText(/\d+ log entr/)).toBeInTheDocument();
+      // Should show log count when there are logs (the 3 from default
+      // initialization), in the plural
+      expect(screen.getByText('3 log entries')).toBeInTheDocument();
     });
 
     it('switches tab content when different tab is clicked', async () => {
