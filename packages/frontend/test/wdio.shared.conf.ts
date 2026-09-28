@@ -326,7 +326,7 @@ export const config: WebdriverIO.Config = {
         (key: string, value: string) => {
           window.localStorage.setItem(key, value);
         },
-        'mst-tearleads-test',
+        'mst-commandsnippets-test',
         JSON.stringify(appState)
       );
       await browser.setCookies({

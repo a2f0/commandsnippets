@@ -66,8 +66,11 @@ Run these from `packages/frontend`.
   `src/lib/store/models/RootModel.ts` (with `TagModel`, `TextEntryModel`,
   `TagTextEntryThroughModel` and `UserModel` beside it). It is created
   synchronously when `store.ts` is first imported: the saved snapshot in
-  `localStorage` (`mst-tearleads-<environment>`) merged over `defaultState`
-  (`src/lib/shared.ts`). Every change is saved back to `localStorage`.
+  `localStorage` (`mst-commandsnippets-<environment>`) merged over
+  `defaultState` (`src/lib/shared.ts`). Every change is saved back to
+  `localStorage`. A snapshot saved under the key from before the rename to
+  Commandsnippets is moved to the current key on load; `store.ts` says when
+  that read can go.
 - **No migrations**: if a saved snapshot no longer fits the model, the store
   falls back to `defaultState` (a try/catch around `applySnapshot`). New model
   fields must be optional or have defaults so older snapshots still load.
