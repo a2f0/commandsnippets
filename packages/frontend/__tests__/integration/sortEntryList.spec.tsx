@@ -1,3 +1,4 @@
+import type {TextEntryListDocument} from '@commandsnippets/api-shared';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
@@ -5,7 +6,6 @@ import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
-import type {ITextEntryJsonApiResponse} from '../../src/lib/api/responses/types';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {store} from '../util/loggedInStore';
@@ -104,7 +104,7 @@ describe('Sorting the entries list from the Entries menu', () => {
       http.get('*/api/v1/entries', ({request}) => {
         const sort = new URL(request.url).searchParams.get('sort');
         const data = [...entriesResponse.data];
-        return HttpResponse.json<ITextEntryJsonApiResponse>({
+        return HttpResponse.json<TextEntryListDocument>({
           ...entriesResponse,
           data: sort === '-subject' ? data.reverse() : data,
         });

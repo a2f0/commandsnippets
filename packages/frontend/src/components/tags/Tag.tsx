@@ -1,3 +1,7 @@
+import type {
+  TagDocument,
+  TagReorderDocument,
+} from '@commandsnippets/api-shared';
 import type {StyledComponent} from '@emotion/styled';
 import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
@@ -8,11 +12,7 @@ import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
 import {apiClient} from '../../lib/api/apiClient';
-import type {ReorderTag} from '../../lib/api/requests/types';
-import type {
-  ITagJsonApi,
-  ITagJsonApiResponseSingle,
-} from '../../lib/api/responses/types';
+import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {
   activeSearch,
   appMode,
@@ -55,7 +55,7 @@ interface DroppableItem {
 interface ITagProps {
   id: string;
   object: ITagJsonApi;
-  handleDeleteParent: (object: ITagJsonApiResponseSingle) => void;
+  handleDeleteParent: (object: TagDocument) => void;
   moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
@@ -163,7 +163,7 @@ const Tag = ({
                   orderedBottom = entryBelow;
                 }
                 if (orderedTop !== null && orderedBottom !== null) {
-                  const payload: ReorderTag = {
+                  const payload: TagReorderDocument = {
                     data: {
                       type: 'Tag',
                       attributes: {

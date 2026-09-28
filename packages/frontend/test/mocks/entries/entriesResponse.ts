@@ -1,10 +1,28 @@
+import type {
+  TextEntry,
+  TextEntryListDocument,
+} from '@commandsnippets/api-shared';
 import type {JsonObject} from '@wdio/types';
 
-import type {ITextEntryJsonApiResponse} from '../../../src/lib/api/responses/types';
-export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
-  links: {
-    next: null,
-  },
+import {onePage} from '../../../src/msw/documents';
+
+/** The owner of every resource here: the test user. */
+const user = {data: {type: 'User', id: '1'}} as const;
+
+/** Entry `id`'s tags: the one junction of the same id. */
+const taggedBy = (
+  id: string
+): TextEntry['relationships']['text_entry_to_tag'] => ({
+  data: [{type: 'TagTextEntryThroughModel', id}],
+  meta: {count: 1},
+});
+
+/**
+ * GET /api/v1/entries: four entries, each tagged test-tag-1 by the junction
+ * of its own id, with the tag, the junctions and the user included.
+ */
+export const entriesResponse: TextEntryListDocument & JsonObject = {
+  ...onePage('http://localhost:9001/api/v1/entries', 4),
   data: [
     {
       type: 'TextEntry',
@@ -18,14 +36,7 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         is_deleted: false,
         tag_count: 1,
       },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
+      relationships: {user, text_entry_to_tag: taggedBy('1')},
     },
     {
       type: 'TextEntry',
@@ -39,14 +50,7 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         is_deleted: false,
         tag_count: 1,
       },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
+      relationships: {user, text_entry_to_tag: taggedBy('2')},
     },
     {
       type: 'TextEntry',
@@ -60,14 +64,7 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         is_deleted: false,
         tag_count: 1,
       },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
+      relationships: {user, text_entry_to_tag: taggedBy('3')},
     },
     {
       type: 'TextEntry',
@@ -81,14 +78,7 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         is_deleted: false,
         tag_count: 1,
       },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
+      relationships: {user, text_entry_to_tag: taggedBy('4')},
     },
   ],
   included: [
@@ -104,14 +94,7 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         order: 1,
         is_deleted: false,
       },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
+      relationships: {user},
     },
     {
       type: 'TagTextEntryThroughModel',
@@ -122,18 +105,9 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         date_created: '2020-04-13T18:20:00',
       },
       relationships: {
-        tag: {
-          data: {
-            type: 'Tag',
-            id: '1',
-          },
-        },
-        text_entry: {
-          data: {
-            type: 'TextEntry',
-            id: '1',
-          },
-        },
+        tag: {data: {type: 'Tag', id: '1'}},
+        text_entry: {data: {type: 'TextEntry', id: '1'}},
+        user,
       },
     },
     {
@@ -145,18 +119,9 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         date_created: '2020-04-13T18:20:00',
       },
       relationships: {
-        tag: {
-          data: {
-            type: 'Tag',
-            id: '1',
-          },
-        },
-        text_entry: {
-          data: {
-            type: 'TextEntry',
-            id: '2',
-          },
-        },
+        tag: {data: {type: 'Tag', id: '1'}},
+        text_entry: {data: {type: 'TextEntry', id: '2'}},
+        user,
       },
     },
     {
@@ -168,18 +133,9 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         date_created: '2020-04-14T18:20:00',
       },
       relationships: {
-        tag: {
-          data: {
-            type: 'Tag',
-            id: '1',
-          },
-        },
-        text_entry: {
-          data: {
-            type: 'TextEntry',
-            id: '3',
-          },
-        },
+        tag: {data: {type: 'Tag', id: '1'}},
+        text_entry: {data: {type: 'TextEntry', id: '3'}},
+        user,
       },
     },
     {
@@ -191,18 +147,9 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
         date_created: '2020-04-15T18:20:00',
       },
       relationships: {
-        tag: {
-          data: {
-            type: 'Tag',
-            id: '1',
-          },
-        },
-        text_entry: {
-          data: {
-            type: 'TextEntry',
-            id: '4',
-          },
-        },
+        tag: {data: {type: 'Tag', id: '1'}},
+        text_entry: {data: {type: 'TextEntry', id: '4'}},
+        user,
       },
     },
     {
@@ -210,6 +157,7 @@ export const entriesResponse: ITextEntryJsonApiResponse & JsonObject = {
       id: '1',
       attributes: {
         username: 'test',
+        is_staff: true,
         date_updated: '2020-04-13T18:20:00',
       },
     },

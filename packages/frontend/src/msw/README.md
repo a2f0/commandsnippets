@@ -13,6 +13,7 @@ src/msw/
 ├── config.ts         # Configuration constants and utilities
 ├── worker.ts         # MSW service worker setup
 ├── handlers.ts       # All API mock handlers
+├── documents.ts      # Pagination, timestamps and errors as the API renders them
 ├── browser.ts        # Window globals the E2E tests use
 ├── healthCheck.ts    # Health check utilities
 ├── requestCounter.ts # Request counting utilities for testing
@@ -66,6 +67,12 @@ Contains all API mock handlers:
 - Health check endpoint
 - Authentication endpoints
 - Stateful mock data with reset capability
+
+Every response is what the API would send, typed with
+`@commandsnippets/api-shared`'s document types and built with
+`documents.ts`. `__tests__/src/msw/contract.spec.ts` parses each one with
+api-shared's schemas, and fails on a handler it does not check: add a new
+handler's request there.
 
 ### `config.ts`
 Centralized configuration:

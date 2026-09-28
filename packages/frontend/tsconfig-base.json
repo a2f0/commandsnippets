@@ -12,6 +12,10 @@
     "resolveJsonModule": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "zod": ["./node_modules/zod"],
+      "zod/*": ["./node_modules/zod/*"]
+    }
   }
 }

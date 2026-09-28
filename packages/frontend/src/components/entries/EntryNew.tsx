@@ -57,7 +57,7 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
     }
 
     apiClient
-      .createEntry(subject, body, userObject.id)
+      .createEntry(subject, body)
       .then(response => {
         appConfig.updateOrCreateTextEntry(response.data);
 

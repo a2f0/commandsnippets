@@ -1,26 +1,34 @@
+import {
+  emptyObjectSchema,
+  type GithubLoginDocument,
+  type GoogleLoginDocument,
+  type TagCreateDocument,
+  type TagDocument,
+  type TagListDocument,
+  type TagReorderDocument,
+  type TagTextEntryCreateDocument,
+  type TagTextEntryDocument,
+  type TagTextEntryReorderDocument,
+  type TagUpdateDocument,
+  type TextEntryCreateDocument,
+  type TextEntryDocument,
+  type TextEntryListDocument,
+  type TextEntryUpdateDocument,
+  tagDocumentSchema,
+  tagListDocumentSchema,
+  tagTextEntryDocumentSchema,
+  textEntryDocumentSchema,
+  textEntryListDocumentSchema,
+  type UserDocument,
+  userDocumentSchema,
+} from '@commandsnippets/api-shared';
+import type {z} from 'zod';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {fetchWithAuth} from './fetchWithAuth';
-import type {
-  AuthPayload,
-  EntriesQueryParams,
-  EntryPayload,
-  EntryUpdatePayload,
-  ReorderEntry,
-  ReorderTag,
-  TagEntryPayload,
-  TagPayload,
-  TagsQueryParams,
-} from './requests/types';
-import {isUserResponse} from './responses/typeGuards';
-import type {
-  ITagJsonApiResponse,
-  ITagJsonApiResponseSingle,
-  ITextEntryJsonApiResponse,
-  ITextEntryJsonApiResponseSingle,
-  LogoutResponse,
-  TagTextEntryThroughModelResponse,
-  UserResponse,
-} from './responses/types';
+import {parseBody, readJson} from './parseResponse';
+import type {EntriesQueryParams, TagsQueryParams} from './requests/types';
+
+type LogoutResponse = z.output<typeof emptyObjectSchema>;
 
 type QueryValue = string | number | boolean | undefined;
 type QueryParams<T> = {[K in keyof T]?: QueryValue};
@@ -59,6 +67,14 @@ interface RequestOptions {
   withAuth?: boolean;
 }
 
+/**
+ * The API client. Request bodies are api-shared's request documents, and
+ * every response the client returns is parsed with its endpoint's document
+ * schema first. An OK response that does not fit throws InvalidResponseError
+ * (`${failure}: invalid response (...)`, see parseResponse.ts), so callers
+ * handle it as a failed request and the store never sees the body. The calls
+ * that return nothing (the logins, deletes and reorders) do not read it.
+ */
 class ApiClient {
   /**
    * Send a request with the auth cookie, which every route needs (reads
@@ -92,19 +108,20 @@ class ApiClient {
     return resp;
   }
 
-  /** `request`, returning the JSON body as the API documents it (unchecked). */
-  private async requestJson<T>(
+  /** `request`, returning the JSON body parsed with the document `schema`. */
+  private async requestDocument<S extends z.ZodType>(
     url: string,
     options: RequestOptions,
-    failure: string
-  ): Promise<T> {
+    failure: string,
+    schema: S
+  ): Promise<z.output<S>> {
     const resp = await this.request(url, options, failure);
-    return resp.json() as Promise<T>;
+    return parseBody(schema, await readJson(resp, failure), failure);
   }
 
   // Authentication methods
   public async googleLogin(code: string): Promise<void> {
-    const payload: AuthPayload = {
+    const payload: GoogleLoginDocument = {
       data: {
         type: 'GoogleLogin',
         attributes: {
@@ -120,12 +137,10 @@ class ApiClient {
   }
 
   public async githubLogin(code: string): Promise<void> {
-    const payload: AuthPayload = {
+    const payload: GithubLoginDocument = {
       data: {
         type: 'GithubLogin',
-        // The Django backend requires clientType until it is removed;
-        // backend-v2 ignores it.
-        attributes: {code, clientType: 'web'},
+        attributes: {code},
       },
     };
     await this.request(
@@ -135,37 +150,33 @@ class ApiClient {
     );
   }
 
-  public async getCurrentUser(): Promise<UserResponse> {
-    const resp = await this.request(
+  public async getCurrentUser(): Promise<UserDocument> {
+    return this.requestDocument(
       `${baseURL}/user/`,
       {method: 'GET'},
-      'Failed to fetch user'
+      'Failed to fetch user',
+      userDocumentSchema
     );
-    const json = await resp.json();
-    if (isUserResponse(json)) {
-      return json;
-    }
-    throw new Error('Invalid user response');
   }
 
   public async logout(): Promise<LogoutResponse> {
+    const failure = 'Logout failed';
     const resp = await this.request(
       `${baseHTTPURL}/api-token-deauth/`,
       {method: 'POST', body: {}, contentType: 'application/json'},
-      'Logout failed'
+      failure
     );
-
-    try {
-      return await resp.json();
-    } catch {
-      // Handle cases where response is OK but body is empty or not valid JSON
-      return {};
-    }
+    // The API answers `{}`; an OK logout with no body at all is one too.
+    return parseBody(
+      emptyObjectSchema,
+      await readJson(resp, failure, {}),
+      failure
+    );
   }
 
   // Tag methods
-  public async createTag(name: string): Promise<ITagJsonApiResponseSingle> {
-    const payload: TagPayload = {
+  public async createTag(name: string): Promise<TagDocument> {
+    const payload: TagCreateDocument = {
       data: {
         type: 'Tag',
         attributes: {
@@ -173,66 +184,59 @@ class ApiClient {
         },
       },
     };
-    return this.requestJson(
+    return this.requestDocument(
       `${baseURL}/tags`,
       {method: 'POST', body: payload},
-      'Failed to create tag'
+      'Failed to create tag',
+      tagDocumentSchema
     );
   }
 
-  public async deleteTag(tagId: string): Promise<ITagJsonApiResponseSingle> {
-    return this.requestJson(
+  public async deleteTag(tagId: string): Promise<TagDocument> {
+    return this.requestDocument(
       `${baseURL}/tags/${tagId}`,
       {method: 'DELETE'},
-      'Failed to delete tag'
+      'Failed to delete tag',
+      tagDocumentSchema
     );
   }
 
-  public async updateTag(
-    tagId: string,
-    name: string
-  ): Promise<ITagJsonApiResponseSingle> {
-    const payload = {
+  public async updateTag(tagId: string, name: string): Promise<TagDocument> {
+    const payload: TagUpdateDocument = {
       data: {
         id: tagId,
         type: 'Tag',
         attributes: {name},
       },
     };
-    return this.requestJson(
+    return this.requestDocument(
       `${baseURL}/tags/${tagId}`,
       {method: 'PATCH', body: payload},
-      'Failed to update tag'
+      'Failed to update tag',
+      tagDocumentSchema
     );
   }
 
   // Entry methods
   public async createEntry(
     subject: string,
-    body: string,
-    userId: string
-  ): Promise<ITextEntryJsonApiResponseSingle> {
-    const payload: EntryPayload = {
+    body: string
+  ): Promise<TextEntryDocument> {
+    // The entry is the requester's: the API takes no `user` relationship.
+    const payload: TextEntryCreateDocument = {
       data: {
         type: 'TextEntry',
         attributes: {
           subject,
           body,
         },
-        relationships: {
-          user: {
-            data: {
-              id: userId,
-              type: 'User',
-            },
-          },
-        },
       },
     };
-    return this.requestJson(
+    return this.requestDocument(
       `${baseURL}/entries`,
       {method: 'POST', body: payload},
-      'Failed to create entry'
+      'Failed to create entry',
+      textEntryDocumentSchema
     );
   }
 
@@ -240,8 +244,8 @@ class ApiClient {
     entryId: string,
     subject: string,
     body: string
-  ): Promise<ITextEntryJsonApiResponseSingle> {
-    const payload: EntryUpdatePayload = {
+  ): Promise<TextEntryDocument> {
+    const payload: TextEntryUpdateDocument = {
       data: {
         id: entryId,
         type: 'TextEntry',
@@ -251,37 +255,40 @@ class ApiClient {
         },
       },
     };
-    return this.requestJson(
+    return this.requestDocument(
       `${baseURL}/entries/${entryId}`,
       {method: 'PATCH', body: payload},
-      'Failed to update entry'
+      'Failed to update entry',
+      textEntryDocumentSchema
     );
   }
 
   public async getEntries(
     params: EntriesQueryParams & {signal?: AbortSignal}
-  ): Promise<ITextEntryJsonApiResponse> {
+  ): Promise<TextEntryListDocument> {
     const {signal, ...queryParams} = params;
-    return this.requestJson(
+    return this.requestDocument(
       urlWithQuery(`${baseURL}/entries`, queryParams),
       {method: 'GET', signal},
-      'Failed to fetch entries'
+      'Failed to fetch entries',
+      textEntryListDocumentSchema
     );
   }
 
-  public async getTags(params: TagsQueryParams): Promise<ITagJsonApiResponse> {
-    return this.requestJson(
+  public async getTags(params: TagsQueryParams): Promise<TagListDocument> {
+    return this.requestDocument(
       urlWithQuery(`${baseURL}/tags`, params),
       {method: 'GET'},
-      'Failed to fetch tags'
+      'Failed to fetch tags',
+      tagListDocumentSchema
     );
   }
 
   public async tagEntry(
     tagId: string,
     entryId: string
-  ): Promise<TagTextEntryThroughModelResponse> {
-    const payload: TagEntryPayload = {
+  ): Promise<TagTextEntryDocument> {
+    const payload: TagTextEntryCreateDocument = {
       data: {
         type: 'TagTextEntryThroughModel',
         attributes: {},
@@ -301,10 +308,11 @@ class ApiClient {
         },
       },
     };
-    return this.requestJson(
+    return this.requestDocument(
       `${baseURL}/tags_entries`,
       {method: 'POST', body: payload},
-      'Failed to tag entry'
+      'Failed to tag entry',
+      tagTextEntryDocumentSchema
     );
   }
 
@@ -324,7 +332,7 @@ class ApiClient {
     );
   }
 
-  public async reorderTag(payload: ReorderTag): Promise<void> {
+  public async reorderTag(payload: TagReorderDocument): Promise<void> {
     await this.request(
       `${baseURL}/tags/reorder`,
       {method: 'POST', body: payload},
@@ -333,7 +341,7 @@ class ApiClient {
   }
 
   public async reorderEntry(top: string, bottom: string): Promise<void> {
-    const payload: ReorderEntry = {
+    const payload: TagTextEntryReorderDocument = {
       data: {
         type: 'TagTextEntryThroughModel',
         attributes: {

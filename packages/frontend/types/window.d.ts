@@ -15,7 +15,7 @@ declare global {
     // Runtime entries override function for tests
     setRuntimeEntriesOverride?: (
       override:
-        | import('../src/lib/api/responses/types').ITextEntryJsonApiResponse
+        | import('@commandsnippets/api-shared').TextEntryListDocument
         | null
     ) => void;
 

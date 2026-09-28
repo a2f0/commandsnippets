@@ -1,4 +1,6 @@
+import {CODES} from '@commandsnippets/api-shared';
 import {handleUnauthorized} from '../auth/authUtils';
+import {firstError} from './errorDocument';
 
 /**
  * The 403 error codes that mean the session is gone: `not_authenticated`
@@ -9,30 +11,18 @@ import {handleUnauthorized} from '../auth/authUtils';
  * a state-changing request from outside the CORS allowlist.
  */
 const signedOutCodes: ReadonlySet<string> = new Set([
-  'not_authenticated',
-  'authentication_failed',
+  CODES.notAuthenticated,
+  CODES.authenticationFailed,
 ]);
 
 /**
  * The `code` of the first error in a JSON:API error document
  * (`{errors: [{status, code, detail, ...}]}`), or undefined when the body is
- * not one or its first error has no string code.
+ * not one or its first error has no string code (`firstError`).
  */
 async function firstErrorCode(response: Response): Promise<string | undefined> {
   const body: unknown = await response.json().catch(() => undefined);
-  if (
-    typeof body !== 'object' ||
-    body === null ||
-    !('errors' in body) ||
-    !Array.isArray(body.errors)
-  ) {
-    return undefined;
-  }
-  const error: unknown = body.errors[0];
-  if (typeof error !== 'object' || error === null || !('code' in error)) {
-    return undefined;
-  }
-  return typeof error.code === 'string' ? error.code : undefined;
+  return firstError(body).code;
 }
 
 /**

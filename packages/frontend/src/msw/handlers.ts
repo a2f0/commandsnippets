@@ -1,122 +1,103 @@
+import {
+  type AdminAuditAction,
+  type AdminAuditLogEntry,
+  type AdminUser,
+  CODES,
+  type TagDocument,
+  type TagListDocument,
+  type TextEntryDocument,
+  type TextEntryListDocument,
+  type User,
+} from '@commandsnippets/api-shared';
 import {HttpResponse, http} from 'msw';
-import type {
-  ITagJsonApiResponse,
-  ITagJsonApiResponseSingle,
-  ITextEntryJsonApiResponse,
-} from '../lib/api/responses/types';
+import {errorDocument, now, onePage} from './documents';
 import {recordRequest} from './requestCounter';
 
-// Mock data for tags (matches test/mocks/tags/tagsResponse.ts)
-// Keep original immutable for resets
-const originalTagsResponse: ITagJsonApiResponse = {
-  data: [
-    {
-      type: 'Tag',
-      id: '1',
-      attributes: {
-        name: 'test-tag-1',
-        entry_count: 2,
-        order: 1,
-        date_updated: '2020-05-07T18:20:00',
-        date_created: '2020-05-07T18:20:00',
-        date_last_used: '2020-05-07T18:20:00',
-        is_deleted: false,
-      },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
-    },
-    {
-      type: 'Tag',
-      id: '2',
-      attributes: {
-        name: 'test-tag-2',
-        entry_count: 0,
-        order: 2,
-        date_updated: '2021-05-07T18:20:00',
-        date_created: '2021-05-07T18:20:00',
-        date_last_used: '2021-05-07T18:20:00',
-        is_deleted: false,
-      },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
-    },
-    {
-      type: 'Tag',
-      id: '3',
-      attributes: {
-        name: 'test-tag-3',
-        entry_count: 0,
-        order: 2,
-        date_updated: '2022-05-07T18:20:00',
-        date_created: '2022-05-07T18:20:00',
-        date_last_used: '2022-05-07T18:20:00',
-        is_deleted: false,
-      },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
-    },
-    {
-      type: 'Tag',
-      id: '4',
-      attributes: {
-        name: 'test-tag-4',
-        entry_count: 0,
-        order: 2,
-        date_updated: '2022-05-08T18:20:00',
-        date_created: '2022-05-08T18:20:00',
-        date_last_used: '2022-05-08T18:20:00',
-        is_deleted: false,
-      },
-      relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
-        },
-      },
-    },
-  ],
-  included: [
-    {
-      type: 'User',
-      id: '1',
-      attributes: {
-        username: 'test',
-        date_updated: '2020-04-13T18:20:00',
-      },
-    },
-  ],
-  links: {
-    next: null,
+// The responses follow the API contract (api-shared's document schemas);
+// __tests__/src/msw/contract.spec.ts checks every one of them.
+
+// The signed-in test user, as `included` holds it.
+const testUser: User = {
+  type: 'User',
+  id: '1',
+  attributes: {
+    username: 'test',
+    is_staff: true,
+    date_updated: '2020-04-13T18:20:00',
   },
 };
 
+const ownedByTestUser = {user: {data: {type: 'User', id: '1'}}} as const;
+
+// Mock data for tags (matches test/mocks/tags/tagsResponse.ts)
+// Keep original immutable for resets
+const originalTags: TagListDocument['data'] = [
+  {
+    type: 'Tag',
+    id: '1',
+    attributes: {
+      name: 'test-tag-1',
+      entry_count: 2,
+      order: 1,
+      date_updated: '2020-05-07T18:20:00',
+      date_created: '2020-05-07T18:20:00',
+      date_last_used: '2020-05-07T18:20:00',
+      is_deleted: false,
+    },
+    relationships: ownedByTestUser,
+  },
+  {
+    type: 'Tag',
+    id: '2',
+    attributes: {
+      name: 'test-tag-2',
+      entry_count: 0,
+      order: 2,
+      date_updated: '2021-05-07T18:20:00',
+      date_created: '2021-05-07T18:20:00',
+      date_last_used: '2021-05-07T18:20:00',
+      is_deleted: false,
+    },
+    relationships: ownedByTestUser,
+  },
+  {
+    type: 'Tag',
+    id: '3',
+    attributes: {
+      name: 'test-tag-3',
+      entry_count: 0,
+      order: 2,
+      date_updated: '2022-05-07T18:20:00',
+      date_created: '2022-05-07T18:20:00',
+      date_last_used: '2022-05-07T18:20:00',
+      is_deleted: false,
+    },
+    relationships: ownedByTestUser,
+  },
+  {
+    type: 'Tag',
+    id: '4',
+    attributes: {
+      name: 'test-tag-4',
+      entry_count: 0,
+      order: 2,
+      date_updated: '2022-05-08T18:20:00',
+      date_created: '2022-05-08T18:20:00',
+      date_last_used: '2022-05-08T18:20:00',
+      is_deleted: false,
+    },
+    relationships: ownedByTestUser,
+  },
+];
+
 // Mutable copy for stateful operations
-let tagsResponse: ITagJsonApiResponse = JSON.parse(
-  JSON.stringify(originalTagsResponse)
-);
+let tags: TagListDocument['data'] = structuredClone(originalTags);
 
 // Original immutable entries for resets
-const originalEntriesResponse: ITextEntryJsonApiResponse = {
+const originalEntriesResponse: Pick<
+  TextEntryListDocument,
+  'data' | 'included'
+> = {
   data: [
     {
       type: 'TextEntry',
@@ -131,11 +112,10 @@ const originalEntriesResponse: ITextEntryJsonApiResponse = {
         tag_count: 1,
       },
       relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
+        ...ownedByTestUser,
+        text_entry_to_tag: {
+          data: [{type: 'TagTextEntryThroughModel', id: '1'}],
+          meta: {count: 1},
         },
       },
     },
@@ -152,11 +132,10 @@ const originalEntriesResponse: ITextEntryJsonApiResponse = {
         tag_count: 1,
       },
       relationships: {
-        user: {
-          data: {
-            type: 'User',
-            id: '1',
-          },
+        ...ownedByTestUser,
+        text_entry_to_tag: {
+          data: [{type: 'TagTextEntryThroughModel', id: '2'}],
+          meta: {count: 1},
         },
       },
     },
@@ -171,18 +150,9 @@ const originalEntriesResponse: ITextEntryJsonApiResponse = {
         date_created: '2020-04-13T18:20:00',
       },
       relationships: {
-        tag: {
-          data: {
-            type: 'Tag',
-            id: '1',
-          },
-        },
-        text_entry: {
-          data: {
-            type: 'TextEntry',
-            id: '1',
-          },
-        },
+        tag: {data: {type: 'Tag', id: '1'}},
+        text_entry: {data: {type: 'TextEntry', id: '1'}},
+        ...ownedByTestUser,
       },
     },
     {
@@ -194,34 +164,22 @@ const originalEntriesResponse: ITextEntryJsonApiResponse = {
         date_created: '2020-04-13T18:20:00',
       },
       relationships: {
-        tag: {
-          data: {
-            type: 'Tag',
-            id: '1',
-          },
-        },
-        text_entry: {
-          data: {
-            type: 'TextEntry',
-            id: '2',
-          },
-        },
+        tag: {data: {type: 'Tag', id: '1'}},
+        text_entry: {data: {type: 'TextEntry', id: '2'}},
+        ...ownedByTestUser,
       },
     },
+    testUser,
   ],
-  links: {
-    next: null,
-  },
 };
 
 // Mutable copy for stateful operations
-let entriesResponse: ITextEntryJsonApiResponse = JSON.parse(
-  JSON.stringify(originalEntriesResponse)
-);
+let entriesResponse: Pick<TextEntryListDocument, 'data' | 'included'> =
+  structuredClone(originalEntriesResponse);
 
 // Runtime override for test data - allows tests to inject custom responses
-let runtimeEntriesOverride: ITextEntryJsonApiResponse | null = null;
-// Define all possible API base URLs
+let runtimeEntriesOverride: TextEntryListDocument | null = null;
+
 // Admin page data: the signed-in test user (id 1, staff) and one other.
 interface MockAdminUser {
   id: string;
@@ -233,7 +191,7 @@ interface MockAdminUser {
 interface MockAuditEntry {
   id: string;
   created: string;
-  action: string;
+  action: AdminAuditAction;
   target: string;
 }
 const originalAdminUsers: MockAdminUser[] = [
@@ -255,7 +213,7 @@ const originalAdminUsers: MockAdminUser[] = [
 let adminUsers: MockAdminUser[] = structuredClone(originalAdminUsers);
 let adminAuditLog: MockAuditEntry[] = [];
 
-const adminUserResource = (user: MockAdminUser) => ({
+const adminUserResource = (user: MockAdminUser): AdminUser => ({
   type: 'AdminUser',
   id: user.id,
   attributes: {
@@ -274,10 +232,23 @@ const adminUserResource = (user: MockAdminUser) => ({
   },
 });
 
-const adminPage = (data: unknown[]) => ({
+const adminAuditLogResource = (entry: MockAuditEntry): AdminAuditLogEntry => ({
+  type: 'AdminAuditLogEntry',
+  id: entry.id,
+  attributes: {
+    created: entry.created,
+    action: entry.action,
+    actor_id: '1',
+    actor_username: 'test',
+    target_user_id: null,
+    target_username: entry.target,
+  },
+});
+
+/** A one-page list document of `data`, for the request to `url`. */
+const listDocument = <T>(url: string, data: T[]) => ({
+  ...onePage(url, data.length),
   data,
-  links: {},
-  meta: {pagination: {page: 1, pages: 1, count: data.length}},
 });
 
 const apiBaseUrls = [
@@ -321,7 +292,9 @@ const createHandlers = () => {
               user.email.includes(search)) &&
             (active === null || String(user.is_active) === active)
         );
-        return HttpResponse.json(adminPage(matching.map(adminUserResource)));
+        return HttpResponse.json(
+          listDocument(request.url, matching.map(adminUserResource))
+        );
       }),
       http.patch(`${baseUrl}/admin/users/:id`, async ({params, request}) => {
         recordRequest('PATCH', request.url);
@@ -329,7 +302,14 @@ const createHandlers = () => {
           candidate => candidate.id === params['id']
         );
         if (user === undefined) {
-          return HttpResponse.json({errors: []}, {status: 404});
+          return HttpResponse.json(
+            errorDocument(
+              404,
+              CODES.notFound,
+              'No AdminUser matches the given query.'
+            ),
+            {status: 404}
+          );
         }
         user.is_active = !user.is_active;
         adminAuditLog.unshift({
@@ -343,20 +323,7 @@ const createHandlers = () => {
       http.get(`${baseUrl}/admin/audit_log`, ({request}) => {
         recordRequest('GET', request.url);
         return HttpResponse.json(
-          adminPage(
-            adminAuditLog.map(entry => ({
-              type: 'AdminAuditLogEntry',
-              id: entry.id,
-              attributes: {
-                created: entry.created,
-                action: entry.action,
-                actor_id: '1',
-                actor_username: 'test',
-                target_user_id: null,
-                target_username: entry.target,
-              },
-            }))
-          )
+          listDocument(request.url, adminAuditLog.map(adminAuditLogResource))
         );
       }),
 
@@ -376,6 +343,10 @@ const createHandlers = () => {
       http.get(`${baseUrl}/tags`, req => {
         recordRequest('GET', req.request.url);
         console.log('OK: MSW intercepted tags request:', req.request.url);
+        const tagsResponse: TagListDocument = {
+          ...listDocument(req.request.url, tags),
+          included: [testUser],
+        };
         return HttpResponse.json(tagsResponse, {
           status: 200,
         });
@@ -387,38 +358,22 @@ const createHandlers = () => {
         console.log('OK: MSW intercepted tags POST request');
 
         // Return a new tag response
-        const newTag: ITagJsonApiResponseSingle = {
+        const newTag: TagDocument = {
           data: {
             type: 'Tag',
             id: '5', // Use a new ID
             attributes: {
               name: 'new-tag',
-              date_updated: new Date().toISOString(),
-              date_created: new Date().toISOString(),
-              date_last_used: new Date().toISOString(),
+              date_updated: now(),
+              date_created: now(),
+              date_last_used: now(),
               is_deleted: false,
               entry_count: 0,
               order: 5,
             },
-            relationships: {
-              user: {
-                data: {
-                  type: 'User',
-                  id: '1',
-                },
-              },
-            },
+            relationships: ownedByTestUser,
           },
-          included: [
-            {
-              type: 'User',
-              id: '1',
-              attributes: {
-                username: 'test',
-                date_updated: '2020-04-13T18:20:00',
-              },
-            },
-          ],
+          included: [testUser],
         };
 
         return HttpResponse.json(newTag, {
@@ -431,7 +386,8 @@ const createHandlers = () => {
         recordRequest('GET', req.request.url);
 
         // Use runtime override if available, otherwise use default entries
-        let responseData = runtimeEntriesOverride || entriesResponse;
+        let responseData: Pick<TextEntryListDocument, 'data' | 'included'> =
+          runtimeEntriesOverride || entriesResponse;
 
         // Handle date filtering if specified
         const url = new URL(req.request.url);
@@ -446,27 +402,31 @@ const createHandlers = () => {
 
           // Create filtered response with only newer entries and related through models
           const entryIds = filteredEntries.map(entry => entry.id);
-          const filteredThroughModels = runtimeEntriesOverride.included.filter(
-            item => {
-              if (item.type !== 'TagTextEntryThroughModel') return false;
-              if (!('relationships' in item)) return false;
-              const relationships = item.relationships;
-              if (!('text_entry' in relationships)) return false;
-              return entryIds.includes(relationships.text_entry.data.id);
-            }
+          const included = runtimeEntriesOverride.included ?? [];
+          const filteredThroughModels = included.filter(
+            item =>
+              item.type === 'TagTextEntryThroughModel' &&
+              entryIds.includes(item.relationships.text_entry.data.id)
           );
-          const otherIncluded = runtimeEntriesOverride.included.filter(
+          const otherIncluded = included.filter(
             item => item.type !== 'TagTextEntryThroughModel'
           );
+          const filteredIncluded = [...filteredThroughModels, ...otherIncluded];
 
           responseData = {
-            ...runtimeEntriesOverride,
             data: filteredEntries,
-            included: [...filteredThroughModels, ...otherIncluded],
+            // `included` is left out when it would be empty.
+            ...(filteredIncluded.length > 0
+              ? {included: filteredIncluded}
+              : {}),
           };
         }
 
-        return HttpResponse.json(responseData, {
+        const body: TextEntryListDocument = {
+          ...onePage(req.request.url, responseData.data.length),
+          ...responseData,
+        };
+        return HttpResponse.json(body, {
           status: 200,
         });
       }),
@@ -477,38 +437,25 @@ const createHandlers = () => {
         console.log('OK: MSW intercepted entries POST request');
 
         // Return a new entry response
-        const newEntry = {
+        const newEntry: TextEntryDocument = {
           data: {
             type: 'TextEntry',
             id: '3',
             attributes: {
               body: 'new entry body',
               subject: 'new-entry-subject',
-              date_updated: new Date().toISOString(),
-              date_created: new Date().toISOString(),
+              date_updated: now(),
+              date_created: now(),
               reused_count: 0,
               is_deleted: false,
               tag_count: 1,
             },
             relationships: {
-              user: {
-                data: {
-                  type: 'User',
-                  id: '1',
-                },
-              },
+              ...ownedByTestUser,
+              text_entry_to_tag: {data: [], meta: {count: 0}},
             },
           },
-          included: [
-            {
-              type: 'User',
-              id: '1',
-              attributes: {
-                username: 'test',
-                date_updated: '2020-04-13T18:20:00',
-              },
-            },
-          ],
+          included: [testUser],
         };
 
         return HttpResponse.json(newEntry, {
@@ -516,15 +463,15 @@ const createHandlers = () => {
         });
       }),
 
-      // Reorder endpoints
+      // Reorder endpoints: 200 with no body
       http.post(`${baseUrl}/tags_entries/reorder`, ({request}) => {
         recordRequest('POST', request.url);
-        return HttpResponse.json({data: null}, {status: 200});
+        return new HttpResponse(null, {status: 200});
       }),
 
       http.post(`${baseUrl}/tags/reorder`, ({request}) => {
         recordRequest('POST', request.url);
-        return HttpResponse.json({data: null}, {status: 200});
+        return new HttpResponse(null, {status: 200});
       }),
 
       // Delete tag endpoint with stateful behavior
@@ -534,13 +481,20 @@ const createHandlers = () => {
         console.log('OK: MSW intercepted tag DELETE request for id:', tagId);
 
         // Find the tag to delete
-        const tagToDelete = tagsResponse.data.find(tag => tag.id === tagId);
+        const tagToDelete = tags.find(tag => tag.id === tagId);
         if (!tagToDelete) {
-          return HttpResponse.json({error: 'Tag not found'}, {status: 404});
+          return HttpResponse.json(
+            errorDocument(
+              404,
+              CODES.notFound,
+              'No Tag matches the given query.'
+            ),
+            {status: 404}
+          );
         }
 
-        // Return the deleted tag with is_deleted: true
-        const deletedTagResponse: ITagJsonApiResponseSingle = {
+        // Return the deleted tag with is_deleted: true (tags are soft-deleted)
+        const deletedTagResponse: TagDocument = {
           data: {
             ...tagToDelete,
             attributes: {
@@ -548,7 +502,7 @@ const createHandlers = () => {
               is_deleted: true,
             },
           },
-          included: tagsResponse.included || [],
+          included: [testUser],
         };
 
         return HttpResponse.json(deletedTagResponse, {status: 200});
@@ -563,12 +517,34 @@ const createHandlers = () => {
           entryId
         );
 
+        const entryToDelete = (
+          runtimeEntriesOverride ?? entriesResponse
+        ).data.find(entry => entry.id === entryId);
+        if (!entryToDelete) {
+          return HttpResponse.json(
+            errorDocument(
+              404,
+              CODES.notFound,
+              'No TextEntry matches the given query.'
+            ),
+            {status: 404}
+          );
+        }
+
         // Remove the entry from our mock data
         entriesResponse.data = entriesResponse.data.filter(
           entry => entry.id !== entryId
         );
 
-        return HttpResponse.json(null, {status: 204});
+        // Entries are soft-deleted: the API answers with the deleted entry.
+        const deletedEntryResponse: TextEntryDocument = {
+          data: {
+            ...entryToDelete,
+            attributes: {...entryToDelete.attributes, is_deleted: true},
+          },
+          included: [testUser],
+        };
+        return HttpResponse.json(deletedEntryResponse, {status: 200});
       }),
 
       // Untag entry endpoint (tags_entries)
@@ -581,29 +557,29 @@ const createHandlers = () => {
         );
 
         // Return 204 No Content for successful untag
-        return HttpResponse.json(null, {status: 204});
+        return new HttpResponse(null, {status: 204});
       })
     );
   }
 
-  // Auth endpoint (different pattern)
+  // Auth endpoint (different pattern): the API answers `{}`
   handlers.push(
     http.post('http://localhost:9001/api-token-deauth/', ({request}) => {
       recordRequest('POST', request.url);
-      return HttpResponse.json({data: {}}, {status: 200});
+      return HttpResponse.json({}, {status: 200});
     }),
     http.post(
       'https://api-staging.commandsnippets.com/api-token-deauth/',
       ({request}) => {
         recordRequest('POST', request.url);
-        return HttpResponse.json({data: {}}, {status: 200});
+        return HttpResponse.json({}, {status: 200});
       }
     ),
     http.post(
       'https://api.commandsnippets.com/api-token-deauth/',
       ({request}) => {
         recordRequest('POST', request.url);
-        return HttpResponse.json({data: {}}, {status: 200});
+        return HttpResponse.json({}, {status: 200});
       }
     )
   );
@@ -615,8 +591,8 @@ export const handlers = createHandlers();
 
 // Reset function to restore original state
 export const resetMSWState = () => {
-  tagsResponse = JSON.parse(JSON.stringify(originalTagsResponse));
-  entriesResponse = JSON.parse(JSON.stringify(originalEntriesResponse));
+  tags = structuredClone(originalTags);
+  entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;
   adminUsers = structuredClone(originalAdminUsers);
   adminAuditLog = [];
@@ -624,7 +600,7 @@ export const resetMSWState = () => {
 
 // Function to set runtime entries override for tests
 export const setRuntimeEntriesOverride = (
-  override: ITextEntryJsonApiResponse | null
+  override: TextEntryListDocument | null
 ) => {
   runtimeEntriesOverride = override;
 };

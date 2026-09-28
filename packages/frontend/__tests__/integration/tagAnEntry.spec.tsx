@@ -1,20 +1,27 @@
+import type {
+  TagListDocument,
+  TagTextEntryDocument,
+  TextEntryListDocument,
+} from '@commandsnippets/api-shared';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
-
-import type {
-  ITagJsonApiResponse,
-  ITextEntryJsonApiResponse,
-} from '../../src/lib/api/responses/types';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {tagsResponse} from '../../test/mocks/tags/tagsResponse';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {TestAppRouter} from '../util/TestAppRouter';
 
-const response = {
+// Tagging entry 1 with test-tag-2: the new junction, with its tag, entry and
+// user included (the API's default include).
+const [entry] = entriesResponse.data;
+const tag = tagsResponse.data[1];
+const user = tagsResponse.included?.[0];
+invariant(entry && tag && user, 'the fixtures have entry 1, tag 2 and a user');
+
+const response: TagTextEntryDocument = {
   data: {
     type: 'TagTextEntryThroughModel',
     id: '5',
@@ -26,7 +33,7 @@ const response = {
     relationships: {
       tag: {
         data: {
-          type: 'test-tag-2',
+          type: 'Tag',
           id: '2',
         },
       },
@@ -44,21 +51,21 @@ const response = {
       },
     },
   },
-  included: [],
+  included: [user, tag, entry],
 };
 
 const server = setupServer(
   http.get('http://localhost:9001/api/v1/tags', () => {
-    return HttpResponse.json<ITagJsonApiResponse>(tagsResponse, {status: 200});
+    return HttpResponse.json<TagListDocument>(tagsResponse, {status: 200});
   }),
   http.get('http://localhost:9001/api/v1/entries', () => {
-    return HttpResponse.json<ITextEntryJsonApiResponse>(entriesResponse, {
+    return HttpResponse.json<TextEntryListDocument>(entriesResponse, {
       status: 200,
     });
   }),
   http.post('http://localhost:9001/api/v1/tags_entries', () => {
     return HttpResponse.json(response, {
-      status: 200,
+      status: 201,
     });
   })
 );

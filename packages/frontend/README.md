@@ -45,6 +45,29 @@ the repository root with `bun install && bun run hooks:install`.
     GHSA-qj8w-gfj5-8c6v.
   - Drop an override once `bun audit` passes without it.
 
+### The API contract
+
+`@commandsnippets/api-shared` (`../api-shared`, a `file:` dependency) is the
+API's contract as [zod](https://zod.dev) schemas. The API client types its
+requests with it and parses every response it returns with it: a response
+that does not fit fails the call, and never reaches the app's state or signs
+anyone out (AGENTS.md, "API"). It is TypeScript source, which this package
+compiles and bundles with its own code:
+
+- **One zod:** zod is api-shared's peer dependency, and its sources'
+  `import 'zod'` resolves from where they are installed.
+  `tsconfig-base.json`'s `paths` and Vite's `resolve.dedupe` (which Vitest
+  shares) point it at this package's `zod`, so there is one copy, for the
+  types and in the bundle.
+- **Reinstall after changing it:** the install hard-links api-shared's files
+  into `node_modules/.bun/`. Run `bun install` here after adding, moving or
+  removing a file there or changing its `package.json`, or after editing one
+  with an editor that saves by replacing the file (the old one stays linked),
+  and commit `bun.lock` if it changes. CI runs this package's checks whenever
+  `packages/api-shared/` changes.
+- **Size:** zod and the schemas add about 30 kB, gzipped, to the production
+  bundle (most of it zod).
+
 ## Code Quality
 
 Check linting and formatting (`bun run fix` fixes what it can):

@@ -1,3 +1,4 @@
+import type {TextEntryDocument} from '@commandsnippets/api-shared';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {useTheme} from '@mui/material/styles';
@@ -6,10 +7,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useAppContext} from '../../AppContext';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {apiClient} from '../../lib/api/apiClient';
-import type {
-  ITextEntryJsonApi,
-  ITextEntryJsonApiResponseSingle,
-} from '../../lib/api/responses/types';
+import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {activeEntryEditField, appMode} from '../../lib/shared';
 import {needsScrollingIntoView} from '../../lib/textEntries';
 import {commonButtonSx} from '../../theme/sx';
@@ -18,7 +16,7 @@ import {InputEntrySubject} from './InputEntrySubject';
 
 export interface IEntryEdit {
   object: ITextEntryJsonApi;
-  handleSaveParent: (object: ITextEntryJsonApiResponseSingle) => void;
+  handleSaveParent: (object: TextEntryDocument) => void;
   handleCancelEditParent: () => void;
   id: string;
 }

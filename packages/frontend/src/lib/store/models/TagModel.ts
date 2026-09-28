@@ -7,7 +7,7 @@ import type {RootModel} from './RootModel';
 export const TagModel = types
   .model('TagJsonAPI', {
     id: types.identifier,
-    type: types.string,
+    type: types.literal('Tag'),
     attributes: types
       .model('TagAtributes', {
         name: types.string,
@@ -15,7 +15,8 @@ export const TagModel = types
         order: types.number,
         date_updated: types.string,
         date_created: types.string,
-        date_last_used: types.string,
+        // Null for a tag never used (older snapshots always hold a string).
+        date_last_used: types.maybeNull(types.string),
         is_deleted: types.boolean,
       })
       .actions(() => ({})),
@@ -26,7 +27,7 @@ export const TagModel = types
             data: types
               .model('TagRelationshipsUserData', {
                 id: types.string,
-                type: types.string,
+                type: types.literal('User'),
               })
               .actions(() => ({})),
           })
