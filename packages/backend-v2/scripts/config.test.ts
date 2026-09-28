@@ -1,6 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 import {readFileSync} from 'node:fs';
 import path from 'node:path';
+import {ENVIRONMENTS} from './manage';
 
 type Vars = Record<string, string>;
 interface WranglerConfig {
@@ -41,6 +42,10 @@ describe('wrangler.jsonc', () => {
       expect(github.pathname).toBe('/oauth/github');
     }
   );
+
+  test('manage.ts --env accepts exactly the configured environments', () => {
+    expect([...ENVIRONMENTS].sort()).toEqual(Object.keys(config.env).sort());
+  });
 
   test('the local web app runs on the frontend dev server port', () => {
     expect(new URL(config.vars['GOOGLE_REDIRECT_URI'] ?? '').origin).toBe(
