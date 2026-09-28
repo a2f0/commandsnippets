@@ -8,11 +8,13 @@ import {
   Typography,
 } from '@mui/material';
 import {observer} from 'mobx-react';
+import {applySnapshot} from 'mobx-state-tree';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import {useAppContext} from '../../AppContext';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {tearleadsApi} from '../../lib/api/tearleadsApi';
+import {AdminSignedOutError, getStaffStatus} from '../../lib/api/adminApi';
+import {defaultState} from '../../lib/shared';
 import {AppHeader} from '../AppHeader';
 import {SignInPage} from '../sign_in_page/SignInPage';
 import {AdminAuditLog} from './AdminAuditLog';
@@ -37,18 +39,23 @@ const AdminPage = () => {
     async (isCancelled: () => boolean) => {
       setAccess('checking');
       try {
-        const user = await tearleadsApi.getCurrentUser();
+        const isStaff = await getStaffStatus();
         if (isCancelled()) {
           return;
         }
-        const isStaff = user.data.attributes.is_staff === true;
         appConfig.setIsStaff(isStaff);
         setAccess(isStaff ? 'staff' : 'forbidden');
       } catch (error: unknown) {
-        if (!isCancelled()) {
-          console.error('Admin access check failed:', error);
-          setAccess('error');
+        if (isCancelled()) {
+          return;
         }
+        if (error instanceof AdminSignedOutError) {
+          // The session expired: sign out locally, which shows sign-in.
+          applySnapshot(appConfig, defaultState);
+          return;
+        }
+        console.error('Admin access check failed:', error);
+        setAccess('error');
       }
     },
     [appConfig]

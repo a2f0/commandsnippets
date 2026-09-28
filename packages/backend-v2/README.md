@@ -86,6 +86,10 @@ Deliberate changes:
   `src/services/reserved-usernames.json` (`admin`, `oauth`), are treated as
   taken in any letter case, and a new account gets the usual `-<digits>`
   suffix instead. The frontend's tests check its routes against the list.
+  `0006_rename_reserved_usernames.sql` renames any existing account with one
+  to `<name>-<id>` (staging and production had none), and the Postgres import
+  refuses them. Reserving another name needs such a migration too;
+  `scripts/migrations.test.ts` fails without one.
 - **Deactivated accounts are locked out.** An `is_active = false` account's
   token is ignored (it is anonymous), and its logins get 403 `This account has
   been deactivated.` Django only checked `is_active` on the retired password

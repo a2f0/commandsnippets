@@ -27,6 +27,7 @@ import React, {useEffect, useState} from 'react';
 import type {AdminKeys} from '../../i18n/hooks';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {
+  AdminApiError,
   AdminForbiddenError,
   type AdminPage,
   type AdminUser,
@@ -111,6 +112,15 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
           onForbidden();
           return;
         }
+        // The page no longer exists (a change emptied the last one).
+        if (
+          error instanceof AdminApiError &&
+          error.status === 404 &&
+          query.page > 1
+        ) {
+          setQuery(current => ({...current, page: current.page - 1}));
+          return;
+        }
         console.error('Loading users failed:', error);
         setLoadFailed(true);
       })
@@ -143,18 +153,11 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
     setUpdating(true);
     setUpdateError(null);
     try {
-      const updated = await setUserActive(target.id, !target.isActive);
-      setUsers(current =>
-        current === null
-          ? current
-          : {
-              ...current,
-              items: current.items.map(user =>
-                user.id === updated.id ? updated : user
-              ),
-            }
-      );
+      await setUserActive(target.id, !target.isActive);
       setPending(null);
+      // Reload the page: the change can move the user out of the status
+      // filter and changes the counts.
+      setQuery(current => ({...current}));
     } catch (error: unknown) {
       if (error instanceof AdminForbiddenError) {
         onForbidden();

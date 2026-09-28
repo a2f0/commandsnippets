@@ -3,6 +3,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   AdminApiError,
   AdminForbiddenError,
+  AdminSignedOutError,
+  getStaffStatus,
   listAuditLog,
   listUsers,
   setUserActive,
@@ -204,6 +206,28 @@ describe('adminApi', () => {
     await expect(setUserActive('1', false)).rejects.toThrow(
       'You cannot deactivate your own account.'
     );
+  });
+
+  it('reads the staff flag from /user', async () => {
+    const fetchSpy = reply(200, {
+      data: {
+        type: 'User',
+        id: '1',
+        attributes: {username: 'a', is_staff: true},
+      },
+    });
+    expect(await getStaffStatus()).toBe(true);
+    expect(requestOf(fetchSpy).url).toBe('http://localhost:9001/api/v1/user/');
+    expect(requestOf(fetchSpy).init?.credentials).toBe('include');
+
+    vi.restoreAllMocks();
+    reply(200, {data: {type: 'User', id: '1', attributes: {username: 'a'}}});
+    expect(await getStaffStatus()).toBe(false);
+  });
+
+  it('reports an expired session (401) as signed out', async () => {
+    reply(401, {errors: []});
+    await expect(getStaffStatus()).rejects.toBeInstanceOf(AdminSignedOutError);
   });
 
   it('rejects responses of the wrong shape', async () => {

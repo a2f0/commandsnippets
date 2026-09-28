@@ -96,10 +96,19 @@ const server = setupServer(
           user.email.includes(search)) &&
         (active === null || String(user.is_active) === active)
     );
+    const size = Number(params.get('page[size]') ?? '25');
+    const number = Number(params.get('page[number]') ?? '1');
+    const pages = Math.max(1, Math.ceil(matching.length / size));
+    if (number > pages) {
+      return HttpResponse.json(
+        {errors: [{code: 'not_found', detail: 'Invalid page.'}]},
+        {status: 404}
+      );
+    }
     return HttpResponse.json({
-      data: matching.map(resource),
+      data: matching.slice((number - 1) * size, number * size).map(resource),
       links: {},
-      meta: {pagination: {page: 1, pages: 1, count: matching.length}},
+      meta: {pagination: {page: number, pages, count: matching.length}},
     });
   }),
   http.patch(`${API}/admin/users/:id`, async ({params, request}) => {
@@ -218,6 +227,22 @@ describe('AdminPage', () => {
     expect(document.getElementById('adminLinkButton')).toBeNull();
   });
 
+  it('signs out a session that has expired', async () => {
+    server.use(
+      http.get(`${API}/user/`, () =>
+        HttpResponse.json({errors: []}, {status: 401})
+      )
+    );
+
+    await renderAt('/admin');
+
+    await waitFor(() => {
+      expect(document.getElementById('signInPage')).toBeInTheDocument();
+    });
+    expect(store.loggedInUser).toBeNull();
+    expect(listRequests).toHaveLength(0);
+  });
+
   it('shows the sign-in page to signed-out visitors', async () => {
     act(() => store.setLoggedInUser(null));
 
@@ -259,6 +284,70 @@ describe('AdminPage', () => {
     ]);
     const row = present(document.getElementById('adminUserRow7'), 'row');
     expect(within(row).getByText('Deactivated')).toBeInTheDocument();
+  });
+
+  it('reloads after a change, so a status filter stays accurate', async () => {
+    await renderAt('/admin');
+    await usersTable();
+    fireEvent.click(screen.getByRole('button', {name: 'Active'}));
+    await waitFor(() => {
+      expect(listRequests.at(-1)?.get('filter[is_active]')).toBe('true');
+    });
+
+    fireEvent.click(
+      present(document.getElementById('adminUserToggle7'), 'toggle')
+    );
+    fireEvent.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'Deactivate',
+      })
+    );
+
+    await waitFor(() => {
+      expect(document.getElementById('adminUserRow7')).toBeNull();
+    });
+    expect(listRequests.at(-1)?.get('filter[is_active]')).toBe('true');
+  });
+
+  it('steps back a page when a change empties the last one', async () => {
+    users = [
+      ...users,
+      ...Array.from({length: 24}, (_, index) => ({
+        id: String(100 + index),
+        username: `user${index}`,
+        email: `user${index}@example.com`,
+        is_staff: false,
+        is_active: true,
+      })),
+    ];
+    await renderAt('/admin');
+    await usersTable();
+    fireEvent.click(screen.getByRole('button', {name: 'Active'}));
+    await waitFor(() => {
+      expect(listRequests.at(-1)?.get('filter[is_active]')).toBe('true');
+    });
+    // 26 active users: page 2 holds the 26th alone.
+    fireEvent.click(await screen.findByRole('button', {name: /next page/i}));
+    await waitFor(() => {
+      expect(listRequests.at(-1)?.get('page[number]')).toBe('2');
+    });
+    const [lastRow] = await screen.findAllByRole('button', {
+      name: 'Deactivate',
+    });
+    fireEvent.click(present(lastRow, 'toggle'));
+    fireEvent.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'Deactivate',
+      })
+    );
+
+    await waitFor(() => {
+      expect(listRequests.at(-1)?.get('page[number]')).toBe('1');
+    });
+    expect(await usersTable()).toBeInTheDocument();
+    expect(
+      screen.queryByText('Could not load this data. Try again.')
+    ).toBeNull();
   });
 
   it('changes nothing when the confirmation is cancelled', async () => {

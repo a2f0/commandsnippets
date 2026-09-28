@@ -64,6 +64,14 @@ export class AdminForbiddenError extends Error {
   }
 }
 
+/** The session is gone (401 or 403 from `/user`): the user must sign in. */
+export class AdminSignedOutError extends Error {
+  constructor() {
+    super('Not signed in.');
+    this.name = 'AdminSignedOutError';
+  }
+}
+
 export class AdminApiError extends Error {
   readonly status: number;
 
@@ -192,6 +200,31 @@ async function adminFetch(
     response.status,
     isString(detail) ? detail : response.statusText
   );
+}
+
+/**
+ * Whether the signed-in user is staff, straight from the API: the stored flag
+ * can be stale. `/user` answers 401 when the session has expired, which
+ * `fetchWithAuth` (403 only) would not treat as signed out.
+ */
+export async function getStaffStatus(): Promise<boolean> {
+  const response = await fetch(`${baseURL}/user/`, {
+    credentials: 'include',
+    headers: {'Content-Type': 'application/vnd.api+json'},
+  });
+  if (response.status === 401 || response.status === 403) {
+    throw new AdminSignedOutError();
+  }
+  if (!response.ok) {
+    throw new AdminApiError(response.status, response.statusText);
+  }
+  const body: unknown = await response.json();
+  const data = isRecord(body) ? body['data'] : undefined;
+  const attributes = isRecord(data) ? data['attributes'] : undefined;
+  if (!isRecord(attributes)) {
+    throw invalid('user');
+  }
+  return attributes['is_staff'] === true;
 }
 
 export async function listUsers(
