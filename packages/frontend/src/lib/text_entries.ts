@@ -309,11 +309,6 @@ export function sort(
   return plainObjects;
 }
 
-export function filter(array: Array<ITextEntryJsonApi>): ITextEntryJsonApi[] {
-  const filteredArray: Array<ITextEntryJsonApi> = array;
-  return filteredArray;
-}
-
 export function fetch(
   entries: Array<
     | ITextEntryJsonApi

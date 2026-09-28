@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom';
-
 import {
   act,
   fireEvent,
@@ -11,13 +9,10 @@ import {
 import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
-import {vi} from 'vitest';
 
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {store} from '../util/loggedInStore';
 import {TestAppRouter} from '../util/TestAppRouter';
-
-Element.prototype.scrollIntoView = vi.fn();
 
 const API = 'http://localhost:9001/api/v1';
 

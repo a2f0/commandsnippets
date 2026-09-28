@@ -25,14 +25,5 @@ declare global {
       getAll: () => Array<{method: HttpMethod; url: string; count: number}>;
       reset: () => void;
     };
-
-    // MSW utilities for testing
-    msw?: {
-      http: typeof import('msw').http;
-      HttpResponse: typeof import('msw').HttpResponse;
-    };
-
-    // Test debugging
-    lastApiResponse?: unknown;
   }
 }

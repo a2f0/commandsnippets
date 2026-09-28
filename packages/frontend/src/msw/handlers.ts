@@ -471,31 +471,6 @@ const createHandlers = () => {
         });
       }),
 
-      // Entries by tag endpoint
-      http.get(`${baseUrl}/tags/:tagId/entries`, ({params, request}) => {
-        recordRequest('GET', request.url);
-        const tagId = `${params['tagId']}`;
-
-        // For tag 1, return the entries, for others return empty
-        if (tagId === '1') {
-          const responseData = runtimeEntriesOverride || entriesResponse;
-          return HttpResponse.json(responseData, {
-            status: 200,
-          });
-        }
-
-        return HttpResponse.json(
-          {
-            data: [],
-            included: [],
-            links: {next: null},
-          },
-          {
-            status: 200,
-          }
-        );
-      }),
-
       // Create new entry endpoint
       http.post(`${baseUrl}/entries`, async ({request}) => {
         recordRequest('POST', request.url);

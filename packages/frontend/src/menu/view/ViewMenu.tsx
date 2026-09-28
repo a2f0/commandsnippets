@@ -1,7 +1,6 @@
 import React from 'react';
-
-import {StyledMenu} from '../../MenuBar';
 import {StyledDivider} from '../../styled/StyledDivider';
+import {StyledMenu} from '../StyledMenu';
 import {DarkMode} from './menu_items/DarkMode';
 import {LightMode} from './menu_items/LightMode';
 import {ShowTagCounts} from './menu_items/ShowTagCounts';

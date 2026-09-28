@@ -1,6 +1,5 @@
 // Browser-specific MSW utilities for exposing worker and utilities globally
 
-import {HttpResponse, http} from 'msw';
 import {resetMSWState, setRuntimeEntriesOverride} from './handlers';
 import {
   getAllRequestCounts,
@@ -26,11 +25,5 @@ export function exposeMSWToGlobal(): void {
     getCount: getRequestCount,
     getAll: getAllRequestCounts,
     reset: resetRequestCounts,
-  };
-
-  // Expose MSW utilities for testing
-  window.msw = {
-    http,
-    HttpResponse,
   };
 }

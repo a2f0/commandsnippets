@@ -1,6 +1,8 @@
 # Tearleads Frontend
 
-A command snippet tool for computer programmers and system administrators. It's a tagging system that allows for user-defined ordering of both Tag and Entry objects, using MobX-State-Tree for local data persistence and synchronization.
+A command snippet tool for computer programmers and system administrators. It's
+a tagging system that allows for user-defined ordering of both Tag and Entry
+objects, using MobX-State-Tree for the app's state, saved in `localStorage`.
 
 ## Development
 
@@ -16,14 +18,12 @@ A command snippet tool for computer programmers and system administrators. It's 
 # Install dependencies
 bun install
 
-# Install pre-commit hooks
-pip install pre-commit
-pre-commit install
-pre-commit run --all-files
-
 # Start development server
 bun run dev
 ```
+
+The git hooks are the repository's (`scripts/git/hooks`); install them from
+the repository root with `bun install && bun run hooks:install`.
 
 ### Dependencies
 
@@ -35,8 +35,6 @@ bun run dev
 - **Install scripts:** only the packages in `trustedDependencies` run theirs
   (the WebDriver and ffmpeg binaries, esbuild, workerd). This list replaces
   Bun's default allowlist.
-  - `@swc/core`'s only checks that its native binary, an optional dependency,
-    loads, and fetches `@swc/wasm` if it doesn't.
   - `msw`'s would rewrite `public/mockServiceWorker.js`; regenerate that with
     `bunx msw init public` after upgrading msw.
 - **`overrides`:** these pin fixed versions of indirect dependencies that
@@ -49,7 +47,7 @@ bun run dev
 
 ## Code Quality
 
-Run linting and formatting:
+Check linting and formatting (`bun run fix` fixes what it can):
 
 ```shell
 bun run lint
@@ -59,7 +57,7 @@ bun run format
 Run TypeScript compilation check:
 
 ```shell
-bunx tsc -b
+bun run compile
 ```
 
 ## Deploying
@@ -95,15 +93,12 @@ Admin link to staff once their login or a visit to the page has recorded it.
 Its menu bar leaves out what only works on the entries page (the Tags and
 Entries menus, New Tag and New Entry) and links back to your entries instead.
 
-## Other
-
-- Please see the [wiki](https://github.com/a2f0/tearleads-frontend/wiki) for coding standards and other important information
-
 ## Testing
 
 ### E2E Tests
 
-Start the server and run tests in a single command:
+Start the server and run tests in a single command (Chrome only;
+`../../scripts/runWebdriverTests.sh` runs the headless suite as CI does):
 
 ```shell
 bun run ci
@@ -123,7 +118,7 @@ Run a specific spec:
 
 ```shell
 bun run server-test
-bun run test -- --spec=test/specs/entries/entriesContextMenu.spec.ts
+bun run test -- --spec=test/specs/entries/entriesContextMenu/listsEntries.spec.ts
 ```
 
 or
@@ -134,10 +129,13 @@ or
 
 ### Unit Tests
 
-Run unit tests:
+Run unit tests (the script disables Node's experimental Web Storage, which
+would replace jsdom's `localStorage`):
 
 ```shell
-bun run unit
-bun run unit -- --watch
-bun run unit -- __tests__/reorderEntryList.spec.tsx
+../../scripts/runUnitTests.sh
+../../scripts/runUnitTests.sh __tests__/reorderEntryList.spec.tsx
 ```
+
+For watch mode, run `NODE_OPTIONS=--no-experimental-webstorage bunx vitest`
+in a terminal.

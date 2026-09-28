@@ -1,6 +1,8 @@
 # MSW (Mock Service Worker) Module
 
-This directory contains the complete MSW setup for API mocking in development and test environments.
+This directory contains the MSW setup that mocks the API in the browser. Only
+test mode (`bun run server-test`, which the E2E tests use) turns it on; the
+development server talks to a real API.
 
 ## File Structure
 
@@ -11,7 +13,7 @@ src/msw/
 ├── config.ts         # Configuration constants and utilities
 ├── worker.ts         # MSW service worker setup
 ├── handlers.ts       # All API mock handlers
-├── browser.ts        # Browser-specific utilities (window globals)
+├── browser.ts        # Window globals the E2E tests use
 ├── healthCheck.ts    # Health check utilities
 ├── requestCounter.ts # Request counting utilities for testing
 └── README.md         # This file
@@ -20,6 +22,8 @@ src/msw/
 ## Usage
 
 ### In Application Code
+
+`src/index.tsx` is what limits MSW to test mode:
 
 ```typescript
 // src/index.tsx
@@ -36,6 +40,8 @@ if (import.meta.env.MODE === 'test') {
 // Tests automatically get access to:
 // window.__MSW_WORKER__ - The MSW worker instance
 // window.resetMSWState - Function to reset mock data
+// window.setRuntimeEntriesOverride - Function to replace the entries response
+// window.__MSW_REQUESTS__ - Request counts (getCount, getAll, reset)
 
 afterEach(async () => {
   await browser.resetMSWHandlers();
@@ -46,7 +52,9 @@ afterEach(async () => {
 
 ### `enableMocking.ts`
 Main initialization function that:
-1. Checks environment (only runs in test mode)
+1. Returns early unless the build is development or test
+   (`MSW_CONFIG.isEnabled`). This check alone would also mock the development
+   server; the test-only gate is the caller in `src/index.tsx`.
 2. Starts MSW service worker
 3. Exposes utilities globally
 4. Performs health check
@@ -70,6 +78,8 @@ Centralized configuration:
 Browser-specific utilities:
 - Exposes MSW worker to `window.__MSW_WORKER__`
 - Exposes reset function to `window.resetMSWState`
+- Exposes `window.setRuntimeEntriesOverride` and the request counters
+  (`window.__MSW_REQUESTS__`)
 
 ### `healthCheck.ts`
 Health check utilities to verify MSW is working

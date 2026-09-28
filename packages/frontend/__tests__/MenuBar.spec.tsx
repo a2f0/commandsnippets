@@ -1,13 +1,9 @@
-import '@testing-library/jest-dom';
-
 import {act, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {type MockInstance, vi} from 'vitest';
 import {assignLoggedInCookie} from './util/assignLoggedInCookie';
 import {server} from './util/msw';
 import {TestAppRouter} from './util/TestAppRouter';
-
-Element.prototype.scrollIntoView = vi.fn();
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());

@@ -13,7 +13,6 @@ type LogEntry = {
   stackTrace?: unknown;
 };
 
-/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace WebdriverIO {
     interface Element {
