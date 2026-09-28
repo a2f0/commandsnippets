@@ -94,8 +94,9 @@ export default defineConfig(({mode}) => {
           // Vite 8 deprecates `manualChunks` for Rolldown's `codeSplitting`.
           // Dependencies share one `vendor` chunk and app code is split
           // automatically, the same output the old `manualChunks` produced:
-          // its react/mui/mobx groups never matched pnpm's real paths
-          // (`node_modules/.pnpm/...`), so everything fell through to vendor.
+          // its react/mui/mobx groups never matched an isolated install's real
+          // paths (`node_modules/.pnpm/...`, now `.bun/...`), so everything
+          // fell through to vendor.
           codeSplitting: {
             groups: [{name: 'vendor', test: /[\\/]node_modules[\\/]/}],
           },

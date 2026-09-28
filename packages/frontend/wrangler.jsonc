@@ -4,7 +4,7 @@
   "compatibility_date": "2026-08-22",
   // A static single-page app (no Worker script): files from the Vite build,
   // and index.html for every other path, so client routes like /:user work.
-  // Build with the matching mode first (`pnpm run build:<env>`).
+  // Build with the matching mode first (`bun run build:<env>`).
   "assets": {
     "directory": "./build",
     "not_found_handling": "single-page-application"

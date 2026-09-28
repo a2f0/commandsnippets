@@ -6,4 +6,4 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-pnpm start-server-and-test server-test http-get://localhost:8081 "npx wdio test/wdio.shared.conf.ts --spec $1"
+bun x start-server-and-test 'bun run server-test' http-get://localhost:8081 "bun x wdio test/wdio.shared.conf.ts --spec $1"
