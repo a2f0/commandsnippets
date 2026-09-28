@@ -244,9 +244,10 @@ describe("pre-push", () => {
 
   /**
    * A signed repo carrying the real hook and its helpers, with package
-   * scripts stubbed so a run shows which checks it triggered.
+   * scripts stubbed so a run shows which checks it triggered. `setup` adds
+   * to `main` before the feature branch starts.
    */
-  function hookRepo(): string {
+  function hookRepo(setup?: (repo: string) => void): string {
     const repo = signedRepo();
     for (const dir of ["scripts/git", "scripts/lib"]) {
       cpSync(path.join(REPO_ROOT, dir), path.join(repo, dir), {
@@ -269,6 +270,7 @@ describe("pre-push", () => {
     );
     writeFileSync(path.join(repo, "scripts/notes.txt"), "notes\n");
     commitAll(repo, "chore: add tooling");
+    setup?.(repo);
     expect(run(["sh", "scripts/git/install-hooks.sh"], repo).exitCode).toBe(0);
     git(repo, "switch", "-q", "-c", "feat/x");
     return repo;
@@ -409,6 +411,95 @@ describe("pre-push", () => {
     const output = result.stdout + result.stderr;
     expect(result.exitCode).not.toBe(0);
     expect(output).toContain("LANE:terraform-wrapper");
+    expect(output).not.toContain("All checks passed.");
+  });
+
+  /**
+   * Stub api-shared and backend-v2 packages (on main) whose scripts report
+   * which checks ran; `failing` is an api-shared script that fails.
+   */
+  function packageAreas(failing?: string) {
+    return (repo: string) => {
+      const stub = (lane: string, names: string[]) =>
+        Object.fromEntries(
+          names.map((name) => [
+            name,
+            `echo LANE:${lane}:${name}${name === failing ? " && exit 1" : ""}`,
+          ]),
+        );
+      writeFileSync(path.join(repo, ".gitignore"), "node_modules/\n");
+      for (const [dir, scripts] of [
+        ["api-shared", stub("api-shared", ["lint", "typecheck", "test"])],
+        [
+          "backend-v2",
+          stub("backend-v2", [
+            "lint",
+            "typecheck",
+            "test:coverage",
+            "test:scripts",
+          ]),
+        ],
+      ] as const) {
+        mkdirSync(path.join(repo, "packages", dir, "src"), { recursive: true });
+        writeFileSync(
+          path.join(repo, "packages", dir, "package.json"),
+          JSON.stringify({ name: dir, scripts }),
+        );
+        writeFileSync(path.join(repo, "packages", dir, "src/index.ts"), "");
+      }
+      commitAll(repo, "chore: add packages");
+    };
+  }
+
+  function editPackage(repo: string, dir: string): void {
+    appendFileSync(path.join(repo, "packages", dir, "src/index.ts"), "//\n");
+    commitAll(repo, `feat: edit ${dir}`);
+  }
+
+  test("api-shared changes check it, then reinstall and check backend-v2", () => {
+    const repo = hookRepo(packageAreas());
+    editPackage(repo, "api-shared");
+    const result = prePush(repo);
+    const output = result.stdout + result.stderr;
+    expect(result.exitCode).toBe(0);
+    for (const lane of [
+      "[api-shared-install]",
+      "LANE:api-shared:lint",
+      "LANE:api-shared:typecheck",
+      "LANE:api-shared:test",
+      "[backend-v2-install]",
+      "LANE:backend-v2:lint",
+      "LANE:backend-v2:typecheck",
+      "LANE:backend-v2:test:coverage",
+      "LANE:backend-v2:test:scripts",
+    ]) {
+      expect(output).toContain(lane);
+    }
+    expect(output.indexOf("[backend-v2-install]")).toBeGreaterThan(
+      output.indexOf("LANE:api-shared:test"),
+    );
+    expect(output).not.toContain("LANE:tooling");
+  });
+
+  test("backend-v2 changes alone neither check api-shared nor reinstall", () => {
+    const repo = hookRepo(packageAreas());
+    editPackage(repo, "backend-v2");
+    const result = prePush(repo);
+    const output = result.stdout + result.stderr;
+    expect(result.exitCode).toBe(0);
+    expect(output).toContain("LANE:backend-v2:lint");
+    expect(output).not.toContain("api-shared");
+    expect(output).not.toContain("[backend-v2-install]");
+  });
+
+  test("a failing api-shared check blocks the push", () => {
+    const repo = hookRepo(packageAreas("typecheck"));
+    editPackage(repo, "api-shared");
+    const result = prePush(repo);
+    const output = result.stdout + result.stderr;
+    expect(result.exitCode).not.toBe(0);
+    expect(output).toContain("LANE:api-shared:typecheck");
+    expect(output).not.toContain("LANE:api-shared:test");
     expect(output).not.toContain("All checks passed.");
   });
 

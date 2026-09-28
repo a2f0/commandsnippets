@@ -126,8 +126,22 @@ if touches 'packages/agent-tool/' || touches 'scripts/' || touches 'commitlint.c
   step_timings_run tooling-tests sh -c 'bun run test:agent-tool && bun run test:scripts'
 fi
 
-if touches 'packages/backend-v2/' && [ -d "$REPO_ROOT/packages/backend-v2" ]; then
+if touches 'packages/api-shared/' && [ -d "$REPO_ROOT/packages/api-shared" ]; then
+  require_worktree_is_push packages/api-shared
+  step_timings_run api-shared-install sh -c 'cd packages/api-shared && bun install --frozen-lockfile'
+  step_timings_run api-shared-lint sh -c 'cd packages/api-shared && bun run lint'
+  step_timings_run api-shared-typecheck sh -c 'cd packages/api-shared && bun run typecheck'
+  step_timings_run api-shared-tests sh -c 'cd packages/api-shared && bun run test'
+fi
+
+# backend-v2 bundles api-shared, so a change to either checks backend-v2, after
+# reinstalling it (api-shared is installed from ../api-shared).
+if { touches 'packages/backend-v2/' || touches 'packages/api-shared/'; } &&
+  [ -d "$REPO_ROOT/packages/backend-v2" ]; then
   require_worktree_is_push packages/backend-v2
+  if touches 'packages/api-shared/'; then
+    step_timings_run backend-v2-install sh -c 'cd packages/backend-v2 && bun install --frozen-lockfile'
+  fi
   step_timings_run backend-v2-lint sh -c 'cd packages/backend-v2 && bun run lint'
   step_timings_run backend-v2-typecheck sh -c 'cd packages/backend-v2 && bun run typecheck'
   step_timings_run backend-v2-tests sh -c 'cd packages/backend-v2 && bun run test:coverage'

@@ -63,7 +63,9 @@ merged hook change takes effect.
   checks for the areas the push touches. Those checks run against the
   worktree, so the hook first requires the pushed commit to be the checked-out
   `HEAD`, with no uncommitted tracked changes and no untracked files under the
-  checked paths. It refuses to run when the installed copy is stale. Per-check timings are logged under
+  checked paths. A change to `packages/api-shared/` installs and checks it, then
+  reinstalls and checks `packages/backend-v2/`, which bundles it. It refuses to
+  run when the installed copy is stale. Per-check timings are logged under
   `.git/commandsnippets/pushGateTimings.tsv`
   (`scripts/git/showPushGateTimings.sh`).
 
