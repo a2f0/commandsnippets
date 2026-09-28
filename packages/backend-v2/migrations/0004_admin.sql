@@ -1,3 +1,7 @@
+-- src/db/schema.ts no longer has users_user.is_superuser, but the column stays
+-- until the Worker that stopped reading it is deployed everywhere: the one
+-- running before this release selects it on every request. A later
+-- migration drops it.
 CREATE TABLE `admin_audit_log` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`created` text NOT NULL,
@@ -11,5 +15,4 @@ CREATE TABLE `admin_audit_log` (
 );
 --> statement-breakpoint
 CREATE INDEX `admin_audit_log_created_idx` ON `admin_audit_log` (`created`);--> statement-breakpoint
-CREATE INDEX `admin_audit_log_target_user_id_idx` ON `admin_audit_log` (`target_user_id`);--> statement-breakpoint
-ALTER TABLE `users_user` DROP COLUMN `is_superuser`;
+CREATE INDEX `admin_audit_log_target_user_id_idx` ON `admin_audit_log` (`target_user_id`);

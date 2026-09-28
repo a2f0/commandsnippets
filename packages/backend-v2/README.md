@@ -83,8 +83,9 @@ Deliberate changes:
   token is ignored (it is anonymous), and its logins get 403 `This account has
   been deactivated.` Django only checked `is_active` on the retired password
   login.
-- **`is_superuser` is gone.** `is_staff` is the only admin flag
-  (`0004_admin.sql` drops the column in place; the import skips it).
+- **`is_superuser` is gone.** `is_staff` is the only admin flag. The schema
+  and the import no longer have the column; a migration after
+  `0004_admin.sql` drops it from the database (see Deployment).
 - **Logout actually clears production cookies.** The expiring cookies carry the
   same `Domain` they were set with.
 - **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
@@ -203,10 +204,14 @@ done
 
 Secrets persist across deploys; rerun the last step only to rotate them.
 
-Migrations normally go before the deploy. One that removes something the
-running Worker still reads goes after it instead: every request loads the
-user row, so dropping a `users_user` column first (as `0004_admin.sql` does)
-would fail every request until the new code is live. Deploy, then migrate.
+Migrations run before the deploy (here and in CI), so a migration must work
+with the Worker that is still running. Removing a column takes two releases:
+first stop reading it (drop it from `src/db/schema.ts`, but not from the
+database), then drop it in a later migration. Every request loads the user
+row, so dropping a `users_user` column the running Worker still selects fails
+every request until the new code is live. `is_superuser` went this way.
+`scripts/migrations.test.ts` checks that migrations after the import keep
+every row and never rebuild `users_user` (which cascades to all user data).
 
 The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
 `wrangler deploy`: `api-staging.commandsnippets.com` for staging and
