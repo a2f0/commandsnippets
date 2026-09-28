@@ -84,8 +84,8 @@ Deliberate changes:
   been deactivated.` Django only checked `is_active` on the retired password
   login.
 - **`is_superuser` is gone.** `is_staff` is the only admin flag. The schema
-  and the import no longer have the column; a migration after
-  `0004_admin.sql` drops it from the database (see Deployment).
+  and the import stopped using the column in the `0004_admin.sql` release, and
+  `0005_drop_is_superuser.sql` drops it (see Deployment).
 - **Logout actually clears production cookies.** The expiring cookies carry the
   same `Domain` they were set with.
 - **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
@@ -211,7 +211,9 @@ database), then drop it in a later migration. Every request loads the user
 row, so dropping a `users_user` column the running Worker still selects fails
 every request until the new code is live. `is_superuser` went this way.
 `scripts/migrations.test.ts` checks that migrations after the import keep
-every row and never rebuild `users_user` (which cascades to all user data).
+every row, never rebuild `users_user` (which cascades to all user data), and
+leave the database matching `src/db/schema.ts`. Between the two releases, list
+the column in its `PENDING_DROPS`.
 
 The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
 `wrangler deploy`: `api-staging.commandsnippets.com` for staging and
