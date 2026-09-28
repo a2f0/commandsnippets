@@ -48,14 +48,27 @@ async function firstErrorCode(response: Response): Promise<string | undefined> {
  * on a dead session would leave a signed-in app whose every request fails.
  */
 async function meansSignedOut(response: Response): Promise<boolean> {
-  if (response.status === 401) {
+  if (response.status !== 403) {
+    return isSignedOutResponse(response.status, undefined);
+  }
+  return isSignedOutResponse(
+    response.status,
+    await firstErrorCode(response.clone())
+  );
+}
+
+/**
+ * The sign-out rule on a status and the first error's `code` (see
+ * `meansSignedOut`), shared with `adminApi`, which parses the body itself.
+ */
+export function isSignedOutResponse(
+  status: number,
+  code: string | undefined
+): boolean {
+  if (status === 401) {
     return true;
   }
-  if (response.status !== 403) {
-    return false;
-  }
-  const code = await firstErrorCode(response.clone());
-  return code === undefined || signedOutCodes.has(code);
+  return status === 403 && (code === undefined || signedOutCodes.has(code));
 }
 
 /**

@@ -2,20 +2,21 @@
  * The staff-only admin API (backend-v2 `src/resources/admin.ts`).
  *
  * It calls `fetch` rather than `fetchWithAuth`, so the admin page can tell a
- * user who is not staff from one whose session is gone. The admin routes
- * answer 403, never 401, and it reads their codes as `fetchWithAuth` does:
+ * user who is not staff from one whose session is gone, but it signs out by
+ * the same rule (`isSignedOutResponse`):
  * - 403 `permission_denied` (signed in, but not staff) keeps the session and
  *   raises AdminForbiddenError, so the page can say so.
- * - 403 `not_authenticated` (the session is gone), or a 403 with no code,
- *   signs out (`handleUnauthorized`) and raises AdminApiError.
- * One difference: every other 403 signs out here too, so `origin_not_allowed`
- * does, where `fetchWithAuth` keeps the session.
+ * - 403 `not_authenticated`, or a 403 with no code, signs out
+ *   (`handleUnauthorized`) and raises AdminApiError.
+ * - Any other error, `origin_not_allowed` included, keeps the session and
+ *   raises AdminApiError.
  *
  * `getStaffStatus` raises AdminSignedOutError on the 401 that `/user` answers
  * once the session has expired (or on a 403), and the page signs out.
  */
 import {handleUnauthorized} from '../auth/authUtils';
 import {baseURL} from './baseUrl';
+import {isSignedOutResponse} from './fetchWithAuth';
 
 export interface AdminUser {
   id: string;
@@ -198,10 +199,13 @@ async function adminFetch(
     return body;
   }
   const error = firstError(body);
-  if (response.status === 403) {
-    if (error?.['code'] === 'permission_denied') {
-      throw new AdminForbiddenError();
-    }
+  const code = error?.['code'];
+  const errorCode = isString(code) ? code : undefined;
+  if (response.status === 403 && errorCode === 'permission_denied') {
+    throw new AdminForbiddenError();
+  }
+  // The same sign-out rule as every other API call (fetchWithAuth).
+  if (isSignedOutResponse(response.status, errorCode)) {
     handleUnauthorized();
   }
   const detail = error?.['detail'];
