@@ -20,7 +20,7 @@ import type {ITagJsonApi} from '../../lib/store/models/TagModel';
 import {needsScrollingIntoView} from '../../lib/text_entries';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
-import {ItemTypes} from '../dnd/ItemTypes';
+import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/ItemTypes';
 import {TagContextMenu} from './TagContextMenu';
 import {TagEdit} from './TagEdit';
 import {TagLabel} from './TagLabel';
@@ -45,21 +45,9 @@ const TagLabelWrapper = styled('div', {
   children?: React.ReactNode;
 }>;
 
-export interface DraggableItem {
-  id: string;
-  type: string;
-  originalIndex: number;
-  index: number;
-}
-
 interface DroppableItem {
   isOver: boolean;
   canDrop: boolean;
-}
-
-export interface DropResult {
-  id: string;
-  type: string;
 }
 
 interface ITagProps {

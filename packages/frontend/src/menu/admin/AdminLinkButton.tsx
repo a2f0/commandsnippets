@@ -4,7 +4,7 @@ import {Link as RouterLink} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../i18n/hooks';
 import {ADMIN_PATH} from '../../routePaths';
-import {menuBarButtonSx} from '../MenuBarButton';
+import {menuBarButtonSx} from '../../theme/sx';
 
 /** A plain link to the admin page, shown to staff in the menu bar. */
 const AdminLinkButton = () => {
