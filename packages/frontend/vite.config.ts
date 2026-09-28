@@ -87,6 +87,10 @@ export default defineConfig(({mode}) => {
   }
 
   return {
+    // api-shared (the API contract) is installed from ../api-shared, and Vite
+    // resolves its imports from where its files are: bundle (and test with)
+    // this package's zod, the only copy.
+    resolve: {dedupe: ['zod']},
     build: {
       outDir: 'build',
       target: 'esnext',

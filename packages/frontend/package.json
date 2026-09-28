@@ -76,6 +76,7 @@
     "wrangler": "4.141.0"
   },
   "dependencies": {
+    "@commandsnippets/api-shared": "file:../api-shared",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@mui/icons-material": "9.4.0",
@@ -94,7 +95,8 @@
     "react-highlight-words": "0.21.0",
     "react-i18next": "17.0.15",
     "react-router-dom": "7.18.4",
-    "uuid": "14.0.2"
+    "uuid": "14.0.2",
+    "zod": "4.6.5"
   },
   "overrides": {
     "@puppeteer/browsers": "3.2.3",
