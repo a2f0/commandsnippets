@@ -188,9 +188,26 @@ describe('runCommand', () => {
     expect(lines[0]?.startsWith('username,email')).toBe(true);
   });
 
+  test('reports usage for a flag with no value, not a default', async () => {
+    expect(
+      await runCommand(
+        ['usage-report', '--format', 'csv', '--output'],
+        context()
+      )
+    ).toBe(2);
+    expect(lines).toEqual([
+      expect.stringContaining('usage: bun scripts/manage.ts'),
+    ]);
+  });
+
   test('reports usage for an unknown command and errors as exit 1', async () => {
     expect(await runCommand(['frobnicate'], context())).toBe(2);
     expect(lines[0]).toContain('usage: bun scripts/manage.ts');
+    lines = [];
+    // Names every object inherits are not commands either.
+    for (const command of ['constructor', 'toString']) {
+      expect(await runCommand([command], context())).toBe(2);
+    }
     lines = [];
     expect(await runCommand(['delete-user', 'nobody'], context())).toBe(1);
     expect(lines).toEqual(['User matching query does not exist: nobody']);
