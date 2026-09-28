@@ -148,7 +148,9 @@ Deliberate changes, by area. The admin API is new; see
   the apex), so staging and production share the parent domain and are kept
   apart by name; each API ignores the other's cookies. Django staging ran with
   `DEBUG` on, which made its cookies host-only and non-Secure; those leftovers
-  are expired whenever cookies are domain-scoped.
+  are expired whenever cookies are domain-scoped. That cleanup can go after
+  2026-10-25, when the last of them (set for 28 days, before the 2026-09-27
+  shutdown) has lapsed; see `src/auth/cookies.ts`.
 - **Logout actually clears production cookies.** The expiring cookies carry the
   same `Domain` they were set with.
 - **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer
