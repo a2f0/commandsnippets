@@ -530,6 +530,25 @@ describe('POST /tags_entries', () => {
 });
 
 describe('DELETE /tags_entries/:id', () => {
+  it("keeps the counts right when the runtime override's junctions go", async () => {
+    setRuntimeEntriesOverride(manyEntriesResponse);
+    const tagOne = (manyEntriesResponse.included ?? []).filter(
+      resource =>
+        resource.type === 'TagTextEntryThroughModel' &&
+        resource.relationships.tag.data.id === '1'
+    );
+    expect(tagOne.length).toBeGreaterThanOrEqual(3);
+    for (const junction of tagOne.slice(0, 3)) {
+      expect(
+        (await send('DELETE', `/tags_entries/${junction.id}`)).status
+      ).toBe(204);
+    }
+    // getTags parses with the schema, which refuses a negative count.
+    expect(tagOf(await getTags(), '1')?.attributes.entry_count).toBe(
+      tagOne.length - 3
+    );
+  });
+
   it('untags the entry, and updates the counts, the linkage and the revisions', async () => {
     const {json} = await send('POST', '/tags_entries', tagEntry('2', '1'));
     const junction = tagTextEntryDocumentSchema.parse(json).data;

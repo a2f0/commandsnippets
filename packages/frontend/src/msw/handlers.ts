@@ -324,16 +324,32 @@ function createJunction(
   setIncluded(state, [...(state.included ?? []), junction]);
   entry.attributes = {
     ...entry.attributes,
-    tag_count: entry.attributes.tag_count + 1,
+    tag_count: countJunctions(state, 'text_entry', entry.id),
   };
   tag.attributes = {
     ...tag.attributes,
-    entry_count: tag.attributes.entry_count + 1,
+    entry_count: countJunctions(state, 'tag', tag.id),
     date_last_used: created,
   };
   touchEntry(state, entry);
   linkJunctions(state, entry);
   return junction;
+}
+
+/**
+ * A tag's `entry_count` or an entry's `tag_count`: the junctions there are,
+ * as the database triggers keep them. Counted rather than stepped, so a
+ * runtime override of the entries (whose junctions the tags' counts never
+ * included) cannot take a count below zero.
+ */
+function countJunctions(
+  state: EntriesState,
+  side: 'tag' | 'text_entry',
+  id: string
+): number {
+  return junctionsOf(state).filter(
+    junction => junction.relationships[side].data.id === id
+  ).length;
 }
 
 /**
@@ -353,7 +369,7 @@ function deleteJunction(state: EntriesState, junction: TagTextEntry) {
   if (entry !== undefined) {
     entry.attributes = {
       ...entry.attributes,
-      tag_count: entry.attributes.tag_count - 1,
+      tag_count: countJunctions(state, 'text_entry', entry.id),
     };
     touchEntry(state, entry);
     linkJunctions(state, entry);
@@ -368,7 +384,7 @@ function deleteJunction(state: EntriesState, junction: TagTextEntry) {
       .sort(compare);
     tag.attributes = {
       ...tag.attributes,
-      entry_count: tag.attributes.entry_count - 1,
+      entry_count: remaining.length,
       date_last_used: remaining.at(-1) ?? null,
     };
   }
