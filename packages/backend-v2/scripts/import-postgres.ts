@@ -16,11 +16,14 @@
  * ignored) and delete it when done.
  */
 import {Database} from 'bun:sqlite';
-import {mkdirSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {mkdirSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import {now, parseDateTime} from '../src/lib/clock';
 import {fold} from '../src/lib/search';
 import RESERVED_USERNAMES from '../src/services/reserved-usernames.json';
+import * as migrations from './lib/migrations';
+import {run} from './lib/process';
+import {sqlLiteral} from './lib/sql';
 
 type Value = string | number | null;
 type Row = Record<string, string | null>;
@@ -146,7 +149,7 @@ export async function restoreToSql(
 ): Promise<string> {
   const command = pgRestore.split(' ');
   const usesStdin = command.length > 1;
-  const proc = Bun.spawn(
+  const {stdout, stderr, code} = await run(
     [
       ...command,
       '--data-only',
@@ -155,17 +158,8 @@ export async function restoreToSql(
       '-',
       ...(usesStdin ? [] : [archive]),
     ],
-    {
-      stdin: usesStdin ? Bun.file(archive) : 'ignore',
-      stdout: 'pipe',
-      stderr: 'pipe',
-    }
+    {stdin: usesStdin ? Bun.file(archive) : 'ignore'}
   );
-  const [stdout, stderr, code] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-    proc.exited,
-  ]);
   if (code !== 0) {
     throw new Error(`pg_restore failed (${code}):\n${stderr}`);
   }
@@ -292,16 +286,6 @@ export function convert(table: string, spec: TableSpec, row: Row): Value[] {
   return [...copied, ...computed];
 }
 
-function literal(value: Value): string {
-  if (value === null) {
-    return 'NULL';
-  }
-  if (typeof value === 'number') {
-    return String(value);
-  }
-  return `'${value.replaceAll("'", "''")}'`;
-}
-
 const quote = (identifier: string) => `"${identifier}"`;
 
 interface Converted {
@@ -378,7 +362,7 @@ export function buildStatements(
       bytes = utf8Bytes(head);
     };
     for (const row of rows) {
-      const tuple = `(${row.map(literal).join(', ')})`;
+      const tuple = `(${row.map(sqlLiteral).join(', ')})`;
       const size = utf8Bytes(tuple) + 4; // separator and terminator
       if (
         batch.length >= ROWS_PER_INSERT ||
@@ -403,7 +387,8 @@ export function buildStatements(
     for (const row of found.rows) {
       const assignments = columns
         .map(
-          column => `${quote(column)} = ${literal(row[index(column)] as Value)}`
+          column =>
+            `${quote(column)} = ${sqlLiteral(row[index(column)] as Value)}`
         )
         .join(', ');
       out.push(
@@ -445,20 +430,6 @@ export function renderSql(statements: string[]): string {
 // Verifying
 // ---------------------------------------------------------------------------
 
-export function loadMigrations(db: Database): void {
-  const dir = path.join(import.meta.dirname, '..', 'migrations');
-  for (const file of readdirSync(dir)
-    .filter(name => name.endsWith('.sql'))
-    .sort()) {
-    const text = readFileSync(path.join(dir, file), 'utf8');
-    for (const statement of text.split('--> statement-breakpoint')) {
-      if (statement.trim() !== '') {
-        db.run(statement);
-      }
-    }
-  }
-}
-
 interface Check {
   name: string;
   sql: string;
@@ -472,7 +443,7 @@ const CHECKS: Check[] = [
     // such accounts, but the import loads users after the migrations ran.
     name: 'usernames reserved for web app routes (rename them first)',
     sql: `SELECT id, username FROM users_user WHERE lower(username) IN (${RESERVED_USERNAMES.map(
-      name => `'${name}'`
+      sqlLiteral
     ).join(', ')})`,
     level: 'error',
   },
@@ -574,7 +545,7 @@ export function verify(
 
   const db = new Database(':memory:');
   db.run('PRAGMA foreign_keys = ON');
-  loadMigrations(db);
+  migrations.load(db);
   for (const [index, statement] of statements.entries()) {
     try {
       db.run(statement);

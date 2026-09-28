@@ -1,19 +1,15 @@
 import {Database} from 'bun:sqlite';
 import {describe, expect, test} from 'bun:test';
-import {readdirSync, readFileSync} from 'node:fs';
-import path from 'node:path';
 import {is} from 'drizzle-orm';
 import {getTableConfig, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import * as schema from '../src/db/schema';
 import RESERVED_USERNAMES from '../src/services/reserved-usernames.json';
+import * as migrations from './lib/migrations';
 
 // Migrations run against databases with data in them. Every table cascades
 // from users_user, so a migration that rebuilt it (drizzle-kit's
 // create-copy-drop for some SQLite changes) would delete everyone's data.
-const dir = path.join(import.meta.dirname, '..', 'migrations');
-const files = readdirSync(dir)
-  .filter(name => name.endsWith('.sql'))
-  .sort();
+const files = migrations.files();
 /**
  * Columns a migration has not dropped yet although src/db/schema.ts no longer
  * has them: the first release of a two-release column removal (README,
@@ -23,16 +19,6 @@ const PENDING_DROPS: Record<string, string[]> = {};
 
 /** The schema the Postgres import loaded; later migrations run on real data. */
 const IMPORTED = '0003_unique_user_email.sql';
-
-const read = (file: string) => readFileSync(path.join(dir, file), 'utf8');
-
-function apply(db: Database, file: string): void {
-  for (const statement of read(file).split('--> statement-breakpoint')) {
-    if (statement.trim() !== '') {
-      db.run(statement);
-    }
-  }
-}
 
 function seed(db: Database): void {
   const at = '2026-01-01T00:00:00.000000';
@@ -93,15 +79,13 @@ describe('migrations', () => {
     db.run('PRAGMA foreign_keys = ON');
     const imported = files.indexOf(IMPORTED);
     expect(imported).toBeGreaterThan(0);
-    for (const file of files.slice(0, imported + 1)) {
-      apply(db, file);
-    }
+    migrations.load(db, {through: IMPORTED});
     seed(db);
     const before = counts(db);
     expect(before['users_user']).toBe(1 + RESERVED_USERNAMES.length);
 
     for (const file of files.slice(imported + 1)) {
-      apply(db, file);
+      migrations.apply(db, file);
       expect({file, counts: counts(db)}).toEqual({file, counts: before});
     }
     expect(
@@ -124,9 +108,7 @@ describe('migrations', () => {
 
   test('leave the database matching src/db/schema.ts', () => {
     const db = new Database(':memory:');
-    for (const file of files) {
-      apply(db, file);
-    }
+    migrations.load(db);
     const tables = Object.values(schema).filter(value =>
       is(value, SQLiteTable)
     );
@@ -149,8 +131,14 @@ describe('migrations', () => {
 
   test('none rebuilds users_user', () => {
     const rebuilds = files.filter(file =>
-      /DROP TABLE `?users_user|__new_users_user/.test(read(file))
+      /DROP TABLE `?users_user|__new_users_user/.test(migrations.read(file))
     );
     expect(rebuilds).toEqual([]);
+  });
+
+  test('load refuses an unknown migration', () => {
+    expect(() =>
+      migrations.load(new Database(':memory:'), {through: '9999_none.sql'})
+    ).toThrow('No migration named 9999_none.sql');
   });
 });
