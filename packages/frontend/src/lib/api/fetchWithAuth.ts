@@ -1,4 +1,4 @@
-import {CODES} from '@commandsnippets/api-shared';
+import {CODES} from '@commandsnippets/api-shared/messages';
 import {handleUnauthorized} from '../auth/authUtils';
 import {firstError} from './errorDocument';
 

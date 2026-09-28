@@ -1,7 +1,7 @@
 import {CODES, MESSAGES, type ToOneLinkage} from '@commandsnippets/api-shared';
 import {and, eq} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 import type {Db} from '../db/client';
 import {ApiError, type ErrorObject} from '../lib/errors';
 import {eachField} from '../lib/validate';
@@ -22,11 +22,13 @@ const POINTER = '/data/relationships';
  * pk exists in its `tables` entry. Every field's error is reported, in field
  * order.
  */
-export async function resolveRelated<Shape extends Record<string, z.ZodType>>(
+export async function resolveRelated<
+  Shape extends Record<string, z.ZodMiniType>,
+>(
   db: Db,
   userId: number,
   relationships: Record<string, string | null>,
-  schema: z.ZodObject<Shape>,
+  schema: z.ZodMiniObject<Shape>,
   tables: {[K in keyof Shape]: RelatedTable}
 ): Promise<{[K in keyof Shape]: number}> {
   const errors: ErrorObject[] = [];

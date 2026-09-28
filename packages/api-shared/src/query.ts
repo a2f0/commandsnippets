@@ -9,9 +9,9 @@
  * The input is the query string's `[key, value]` pairs in order
  * (`[...url.searchParams]`).
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import type {FilterSchema} from './filters';
-import {DOCUMENT_POINTER, fail, QUERY_ERROR} from './issues';
+import {DOCUMENT_POINTER, fail, forward, QUERY_ERROR} from './issues';
 import {CODES, MESSAGES} from './messages';
 
 export type QueryEntries = ReadonlyArray<readonly [string, string]>;
@@ -77,6 +77,63 @@ export interface ListQuery<
   include: string | null;
 }
 
+// The query as a client writes it
+
+/** A django-filter name as clients write it: `user__username`, `user.username`. */
+type Dotted<K extends string> = K extends `${infer Head}__${infer Tail}`
+  ? `${Head}.${Dotted<Tail>}`
+  : K;
+
+/**
+ * One to three `T`s, comma-separated (`a`, `a,b`, `a,b,c`): a `sort` or
+ * `include` list. The API takes longer ones; a type spelling every longer
+ * combination out would be too large to check.
+ */
+export type CommaList<T extends string> = T | `${T},${T}` | `${T},${T},${T}`;
+
+/** A `sort` term: a field ascending, or `-field` descending. */
+export type SortKey<S extends string> = S | `-${S}`;
+
+/** `{...A, ...B}` as one object type (what an editor shows). */
+type Merge<T> = {[K in keyof T]: T[K]};
+
+/**
+ * A collection's query parameters as a client sends them (as
+ * `URLSearchParams` of the object), derived from the spec its query schema
+ * is built from, so the two cannot drift:
+ *
+ * - `filter[...]` for each of the spec's filters, named with `.` (the API
+ *   takes `__` too), its value what the filter parses the string into
+ *   (`string`, `number` or `boolean`);
+ * - `sort`, of the spec's sort fields, where there are any;
+ * - `page[number]` and `page[size]`;
+ * - `filter[search]`, where search is `'supported'` (the API ignores it where
+ *   it is `'ignored'`, and refuses it where it is `'refused'`);
+ * - `include`, of `Paths` (`IncludePath`), where includes are `'resolved'`.
+ */
+export type ListParams<
+  Spec extends ListQuerySpec<FilterSchemas, string, SearchMode>,
+  Paths extends string = never,
+> = Merge<
+  {
+    [K in keyof Spec['filters'] & string as `filter[${Dotted<K>}]`]?: z.output<
+      Spec['filters'][K]
+    >;
+  } & ([Spec['sort'][number]] extends [never]
+    ? unknown
+    : {sort?: CommaList<SortKey<Spec['sort'][number]>>}) & {
+      'page[number]'?: number;
+      'page[size]'?: number;
+    } & (Spec['search'] extends 'supported'
+      ? {'filter[search]'?: string}
+      : unknown) &
+    (Spec['include'] extends 'resolved'
+      ? {include?: CommaList<Paths>}
+      : unknown)
+>;
+
+// The query as the API validates it
+
 /** DJA's QueryParameterValidationFilter: the parameters JSON:API defines. */
 const QUERY_PARAM =
   /^(sort|include)$|^(?<kind>filter|fields|page)(\[[\w.-]+\])?$/;
@@ -96,9 +153,9 @@ interface Grouped {
 }
 
 /** Unknown or repeated parameters fail; the rest are grouped. */
-const groupedSchema = z
-  .array(z.tuple([z.string(), z.string()]))
-  .transform((entries, ctx): Grouped => {
+const groupedSchema = z.pipe(
+  z.array(z.tuple([z.string(), z.string()])),
+  z.transform((entries: Array<[string, string]>, ctx): Grouped => {
     const values = new Map<string, string[]>();
     for (const [key, value] of entries) {
       const list = values.get(key);
@@ -128,7 +185,8 @@ const groupedSchema = z
       search: first(SEARCH_PARAM),
       include: first('include'),
     };
-  });
+  })
+);
 
 /** An own property only: `constructor` is nobody's filter. */
 function own<T>(
@@ -139,9 +197,9 @@ function own<T>(
 }
 
 function filtersSchema<F extends FilterSchemas>(filters: F) {
-  return z
-    .array(z.tuple([z.string(), z.array(z.string())]))
-    .transform((params, ctx) => {
+  return z.pipe(
+    z.array(z.tuple([z.string(), z.array(z.string())])),
+    z.transform((params: Array<[string, string[]]>, ctx) => {
       const parsed: Array<FilterValue<F>> = [];
       for (const [key, values] of params) {
         if (values.some(value => value === '')) {
@@ -155,24 +213,22 @@ function filtersSchema<F extends FilterSchemas>(filters: F) {
         for (const value of values) {
           const result = filter.safeParse(value);
           if (!result.success) {
-            for (const issue of result.error.issues) {
-              ctx.addIssue({...issue, path: []});
-            }
+            forward(ctx, result.error.issues);
             return z.NEVER;
           }
           parsed.push({name, value: result.data} as FilterValue<F>);
         }
       }
       return parsed;
-    });
+    })
+  );
 }
 
 function sortSchema<S extends string>(fields: readonly S[]) {
   const allowed = new Set<string>(fields);
-  return z
-    .string()
-    .nullable()
-    .transform((sort, ctx): Array<SortTerm<S>> | null => {
+  return z.pipe(
+    z.nullable(z.string()),
+    z.transform((sort: string | null, ctx): Array<SortTerm<S>> | null => {
       if (sort === null || sort === '') {
         return null;
       }
@@ -195,7 +251,8 @@ function sortSchema<S extends string>(fields: readonly S[]) {
         field: name as S,
         descending: term.startsWith('-'),
       }));
-    });
+    })
+  );
 }
 
 const positiveInt = (value: string | null) =>
@@ -204,10 +261,9 @@ const positiveInt = (value: string | null) =>
     : null;
 
 /** `page[number]`: a positive integer, or DRF's 404 `Invalid page.`. */
-const pageSchema = z
-  .string()
-  .nullable()
-  .transform((page, ctx) =>
+const pageSchema = z.pipe(
+  z.nullable(z.string()),
+  z.transform((page: string | null, ctx) =>
     page === null
       ? 1
       : (positiveInt(page) ??
@@ -216,45 +272,51 @@ const pageSchema = z
           status: 404,
           pointer: DOCUMENT_POINTER,
         }))
-  );
+  )
+);
 
 /** `page[size]`: capped at MAX_PAGE_SIZE; anything invalid means the default. */
-const pageSizeSchema = z
-  .string()
-  .nullable()
-  .transform(size => Math.min(positiveInt(size) ?? PAGE_SIZE, MAX_PAGE_SIZE));
+const pageSizeSchema = z.pipe(
+  z.nullable(z.string()),
+  z.transform((size: string | null) =>
+    Math.min(positiveInt(size) ?? PAGE_SIZE, MAX_PAGE_SIZE)
+  )
+);
 
 /** A collection's query parameters (see the module comment). */
+// @__NO_SIDE_EFFECTS__
 export function listQuerySchema<
   F extends FilterSchemas,
   S extends string,
   Search extends SearchMode,
 >(
   spec: ListQuerySpec<F, S, Search>
-): z.ZodType<ListQuery<F, S, Search>, QueryEntries> {
-  return groupedSchema
-    .pipe(
-      z.object({
-        filters: filtersSchema(spec.filters),
-        sort: sortSchema(spec.sort),
-        page: pageSchema,
-        pageSize: pageSizeSchema,
-        search: z.string().nullable(),
-        include: z.string().nullable(),
-      })
+): z.ZodMiniType<ListQuery<F, S, Search>, QueryEntries> {
+  const querySchema = z.object({
+    filters: filtersSchema(spec.filters),
+    sort: sortSchema(spec.sort),
+    page: pageSchema,
+    pageSize: pageSizeSchema,
+    search: z.nullable(z.string()),
+    include: z.nullable(z.string()),
+  });
+  return z.pipe(
+    z.pipe(groupedSchema, querySchema),
+    z.transform(
+      (query: z.output<typeof querySchema>, ctx): ListQuery<F, S, Search> => {
+        if (spec.include === 'refused' && query.include !== null) {
+          return fail(ctx, MESSAGES.includeRefused, QUERY_ERROR);
+        }
+        if (spec.search === 'refused' && query.search !== null) {
+          return fail(ctx, MESSAGES.searchRefused, QUERY_ERROR);
+        }
+        return {
+          ...query,
+          search: (spec.search === 'supported'
+            ? query.search
+            : null) as ListQuery<F, S, Search>['search'],
+        };
+      }
     )
-    .transform((query, ctx): ListQuery<F, S, Search> => {
-      if (spec.include === 'refused' && query.include !== null) {
-        return fail(ctx, MESSAGES.includeRefused, QUERY_ERROR);
-      }
-      if (spec.search === 'refused' && query.search !== null) {
-        return fail(ctx, MESSAGES.searchRefused, QUERY_ERROR);
-      }
-      return {
-        ...query,
-        search: (spec.search === 'supported'
-          ? query.search
-          : null) as ListQuery<F, S, Search>['search'],
-      };
-    });
+  );
 }

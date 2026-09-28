@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'bun:test';
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {booleanField, charField, relatedField} from '../src/fields';
 import {
   createDocumentSchema,
@@ -182,7 +182,7 @@ describe('document schemas', () => {
     relationships: z.object({owner: relatedField('User')}),
   });
   const update = updateDocumentSchema('Tag', {
-    attributes: attributes.partial(),
+    attributes: z.partial(attributes),
     relationships: noFieldsSchema,
   });
 

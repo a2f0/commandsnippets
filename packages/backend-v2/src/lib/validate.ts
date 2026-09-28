@@ -7,8 +7,14 @@
  * order, which is the schema's key order).
  */
 import {errorMeta} from '@commandsnippets/api-shared';
-import type {z} from 'zod';
+import {en} from 'zod/locales';
+import * as z from 'zod/mini';
 import {ApiError, type ErrorObject} from './errors';
+
+// api-shared's schemas are zod/mini, which loads no locale: zod's own
+// messages (from checks the request schemas do not use, so never sent so far)
+// would all read `Invalid input`. English keeps them as classic zod wrote them.
+z.config(en());
 
 /**
  * An issue as an error object. The pointer is the issue's own, else the
@@ -34,7 +40,7 @@ export function toErrorObject(
 }
 
 /** Parse `input`, or throw its first error (DRF raises at the first check). */
-export function parseOrThrow<S extends z.ZodType>(
+export function parseOrThrow<S extends z.ZodMiniType>(
   schema: S,
   input: z.input<S>
 ): z.output<S> {
@@ -50,7 +56,7 @@ export function parseOrThrow<S extends z.ZodType>(
  * `Serializer(data=input).is_valid(raise_exception=True)`: the validated
  * fields, or a 400 with every failing field's error, pointing under `base`.
  */
-export function validateFields<S extends z.ZodType>(
+export function validateFields<S extends z.ZodMiniType>(
   schema: S,
   input: Record<string, unknown>,
   base = '/data/attributes'
@@ -66,7 +72,7 @@ export function validateFields<S extends z.ZodType>(
 }
 
 /** One field's outcome, when fields are validated one at a time. */
-export type FieldResult<Shape extends Record<string, z.ZodType>> = {
+export type FieldResult<Shape extends Record<string, z.ZodMiniType>> = {
   [K in keyof Shape & string]:
     | {name: K; value: z.output<Shape[K]>}
     | {name: K; error: ErrorObject};
@@ -77,8 +83,8 @@ export type FieldResult<Shape extends Record<string, z.ZodType>> = {
  * can go on to check the valid ones (e.g. that a pk exists) and still report
  * every field's error together, as DRF does.
  */
-export function eachField<Shape extends Record<string, z.ZodType>>(
-  schema: z.ZodObject<Shape>,
+export function eachField<Shape extends Record<string, z.ZodMiniType>>(
+  schema: z.ZodMiniObject<Shape>,
   input: Record<string, unknown>,
   base: string
 ): Array<FieldResult<Shape>> {

@@ -11,7 +11,7 @@ import type {
   TagTextEntry,
   TextEntry,
   User,
-} from '@commandsnippets/api-shared';
+} from '@commandsnippets/api-shared/responses';
 
 /** A tag, all of it. */
 export type ITagJsonApi = Tag;

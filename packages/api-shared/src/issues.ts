@@ -5,7 +5,7 @@
  * into error objects with `errorMeta`; clients can read the same `detail` and
  * `code` from an error response (see `errorDocumentSchema`).
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {CODES} from './messages';
 
 export interface ErrorMeta {
@@ -30,25 +30,50 @@ export const QUERY_ERROR: ErrorMeta = {
 };
 
 /**
+ * What a transform (`z.transform`) gets besides its input: the parse's
+ * payload, whose `issues` a failure joins.
+ */
+export type TransformContext = z.core.ParsePayload;
+
+/**
  * Report a failure as a custom issue carrying `meta`. Returns `z.NEVER`, so
  * a transform can `return fail(...)`.
  */
 export function fail(
-  ctx: z.RefinementCtx,
+  ctx: TransformContext,
   message: string,
   meta: ErrorMeta,
   path?: PropertyKey[]
 ): never {
-  ctx.addIssue({
+  ctx.issues.push({
     code: 'custom',
     message,
     params: {...meta},
+    input: ctx.value,
     ...(path === undefined ? {} : {path}),
   });
   return z.NEVER;
 }
 
-/** `refine` params reporting `message` with `code`, stopping at the check. */
+/** Report the issues of a nested parse (`safeParse`), under `path`. */
+export function forward(
+  ctx: TransformContext,
+  issues: readonly z.core.$ZodIssue[],
+  path: PropertyKey[] = []
+): void {
+  for (const issue of issues) {
+    // Its input is this payload's, as zod's own `addIssue` sets it; parsing
+    // drops it from the finished issue either way.
+    ctx.issues.push({
+      ...issue,
+      input: ctx.value,
+      path: [...path, ...issue.path],
+    } as z.core.$ZodRawIssue);
+  }
+}
+
+/** `z.refine` params reporting `message` with `code`, stopping at the check. */
+// @__NO_SIDE_EFFECTS__
 export function check(message: string, code: string) {
   return {message, abort: true, params: {code}} as const;
 }

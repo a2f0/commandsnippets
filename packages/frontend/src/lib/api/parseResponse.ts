@@ -2,7 +2,13 @@
  * Checking a successful response's body against the API contract (the
  * document schemas of `@commandsnippets/api-shared`) before the app uses it.
  */
-import type {z} from 'zod';
+import {en} from 'zod/locales';
+import * as z from 'zod/mini';
+
+// The schemas are zod/mini, which loads no locale: without one, every issue
+// `describeIssues` logs would read just `Invalid input`. English names the
+// expected and received types, as classic zod did.
+z.config(en());
 
 /**
  * An OK response whose body is not what the API documents for its endpoint:
@@ -46,7 +52,7 @@ export function describeIssues(issues: readonly z.core.$ZodIssue[]): string {
  * `body` parsed with `schema`; otherwise InvalidResponseError, whose message
  * starts with `failure` (what the caller was doing).
  */
-export function parseBody<S extends z.ZodType>(
+export function parseBody<S extends z.ZodMiniType>(
   schema: S,
   body: unknown,
   failure: string

@@ -33,7 +33,7 @@ import {
   it,
   vi,
 } from 'vitest';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 
 import {
   handlers,
@@ -49,7 +49,7 @@ const HOST = 'http://localhost:9001';
 const API = `${HOST}/api/v1`;
 
 /** `body` parses with `schema`, and parsing drops nothing from it. */
-function expectContract(schema: z.ZodType, body: unknown) {
+function expectContract(schema: z.ZodMiniType, body: unknown) {
   const result = schema.safeParse(body);
   expect(result.error?.issues ?? []).toEqual([]);
   expect(result.data).toEqual(body);
@@ -62,7 +62,7 @@ interface Exchange {
   url: string;
   status: number;
   /** The response document's schema; none for an empty body. */
-  schema?: z.ZodType;
+  schema?: z.ZodMiniType;
   /** The request document, sent as JSON:API; otherwise `{}` (not JSON:API). */
   body?: unknown;
 }

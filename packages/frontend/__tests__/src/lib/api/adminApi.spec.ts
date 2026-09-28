@@ -104,6 +104,10 @@ describe('adminApi', () => {
       'filter[search]': 'ali',
       'filter[is_active]': 'false',
     });
+    expect(parsed.search).toBe(
+      '?page%5Bnumber%5D=2&page%5Bsize%5D=25&sort=-last_login' +
+        '&filter%5Bsearch%5D=ali&filter%5Bis_active%5D=false'
+    );
     expect(init?.credentials).toBe('include');
     expect(result).toEqual({
       items: [

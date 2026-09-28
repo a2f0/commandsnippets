@@ -3,7 +3,7 @@
  * resources to add to a document's `included`, as django-rest-framework-json-api
  * resolves them over the relationship graph.
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {fail, QUERY_ERROR} from './issues';
 import {MESSAGES} from './messages';
 
@@ -24,6 +24,28 @@ export type RelationshipGraph = Readonly<
  * could keep re-walking the same rows.
  */
 export const MAX_INCLUDE_DEPTH = 3;
+
+/** A tuple of `N` elements: a type-level counter. */
+type Counter<N extends number, T extends unknown[] = []> = T['length'] extends N
+  ? T
+  : Counter<N, [...T, unknown]>;
+
+/**
+ * Every include path from `type` over `graph` (`a`, `a.b`, ...), at most
+ * `MAX_INCLUDE_DEPTH` relationships long: what `includeSchema` accepts,
+ * one path at a time.
+ */
+export type IncludePath<
+  G extends RelationshipGraph,
+  T extends keyof G,
+  Depth extends unknown[] = Counter<typeof MAX_INCLUDE_DEPTH>,
+> = Depth extends [unknown, ...infer Rest]
+  ? {
+      [K in keyof G[T] & string]:
+        | K
+        | `${K}.${IncludePath<G, G[T][K]['type'] & keyof G, Rest>}`;
+    }[keyof G[T] & string]
+  : never;
 
 /** An own property only: `constructor` is nobody's relationship. */
 function own<T>(
@@ -46,38 +68,45 @@ export function splitInclude(include: string): string[] {
  * path fails), and expanded into every path and prefix they name (`a`, `a.b`)
  * as segment lists, shortest first.
  */
+// @__NO_SIDE_EFFECTS__
 export function includePathsSchema(graph: RelationshipGraph, type: string) {
-  return z.array(z.string()).transform((requested, ctx) => {
-    const paths = new Map<string, string[]>();
-    for (const path of requested) {
-      const segments = path.split('.');
-      if (segments.length > MAX_INCLUDE_DEPTH) {
-        return fail(
-          ctx,
-          MESSAGES.includeTooDeep(path, MAX_INCLUDE_DEPTH),
-          QUERY_ERROR
-        );
-      }
-      let relationships = own(graph, type);
-      for (const [index, segment] of segments.entries()) {
-        const relationship =
-          relationships === undefined ? undefined : own(relationships, segment);
-        if (relationship === undefined) {
-          return fail(ctx, MESSAGES.includeNotSupported(path), QUERY_ERROR);
+  return z.pipe(
+    z.array(z.string()),
+    z.transform((requested: string[], ctx) => {
+      const paths = new Map<string, string[]>();
+      for (const path of requested) {
+        const segments = path.split('.');
+        if (segments.length > MAX_INCLUDE_DEPTH) {
+          return fail(
+            ctx,
+            MESSAGES.includeTooDeep(path, MAX_INCLUDE_DEPTH),
+            QUERY_ERROR
+          );
         }
-        relationships = own(graph, relationship.type);
-        const prefix = segments.slice(0, index + 1);
-        paths.set(prefix.join('.'), prefix);
+        let relationships = own(graph, type);
+        for (const [index, segment] of segments.entries()) {
+          const relationship =
+            relationships === undefined
+              ? undefined
+              : own(relationships, segment);
+          if (relationship === undefined) {
+            return fail(ctx, MESSAGES.includeNotSupported(path), QUERY_ERROR);
+          }
+          relationships = own(graph, relationship.type);
+          const prefix = segments.slice(0, index + 1);
+          paths.set(prefix.join('.'), prefix);
+        }
       }
-    }
-    return [...paths.values()].sort((a, b) => a.length - b.length);
-  });
+      return [...paths.values()].sort((a, b) => a.length - b.length);
+    })
+  );
 }
 
 /** An `include` query parameter value, resolved as `includePathsSchema`. */
+// @__NO_SIDE_EFFECTS__
 export function includeSchema(graph: RelationshipGraph, type: string) {
-  return z
-    .string()
-    .transform(splitInclude)
-    .pipe(includePathsSchema(graph, type));
+  return z.pipe(
+    z.pipe(z.string(), z.transform(splitInclude)),
+    includePathsSchema(graph, type)
+  );
 }

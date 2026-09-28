@@ -18,24 +18,29 @@
  * An OK response that does not fit its document schema raises AdminApiError
  * with status 0 (`Invalid admin API response: ...`), and keeps the session.
  */
+import {CODES} from '@commandsnippets/api-shared/messages';
+import type {
+  AdminAuditLogListParams,
+  AdminUserListParams,
+  AdminUserSortField,
+  AdminUserUpdateDocument,
+} from '@commandsnippets/api-shared/requests';
 import {
   type AdminAuditAction,
   type AdminAuditLogEntry,
   type AdminUser as AdminUserResource,
-  type AdminUserSortField,
-  type AdminUserUpdateDocument,
   adminAuditLogListDocumentSchema,
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
-  CODES,
   userDocumentSchema,
-} from '@commandsnippets/api-shared';
-import type {z} from 'zod';
+} from '@commandsnippets/api-shared/responses';
+import type * as z from 'zod/mini';
 import {handleUnauthorized} from '../auth/authUtils';
 import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {isSignedOutResponse} from './fetchWithAuth';
 import {describeIssues} from './parseResponse';
+import {toSearchParams} from './searchParams';
 
 export type {AdminUserSortField};
 
@@ -109,7 +114,7 @@ export class AdminApiError extends Error {
  * An OK response's body parsed with its endpoint's document schema, or
  * AdminApiError (status 0) saying where it does not fit.
  */
-function parse<S extends z.ZodType>(schema: S, body: unknown): z.output<S> {
+function parse<S extends z.ZodMiniType>(schema: S, body: unknown): z.output<S> {
   const result = schema.safeParse(body);
   if (!result.success) {
     throw new AdminApiError(
@@ -209,19 +214,18 @@ export async function listUsers(
   query: AdminUsersQuery,
   signal?: AbortSignal
 ): Promise<AdminPage<AdminUser>> {
-  const params = new URLSearchParams({
-    'page[number]': String(query.page),
-    'page[size]': String(query.pageSize),
-    sort: `${query.descending ? '-' : ''}${query.sort}`,
-  });
-  if (query.search.trim() !== '') {
-    params.set('filter[search]', query.search.trim());
-  }
-  if (query.status !== 'all') {
-    params.set('filter[is_active]', String(query.status === 'active'));
-  }
+  const search = query.search.trim();
+  const params: AdminUserListParams = {
+    'page[number]': query.page,
+    'page[size]': query.pageSize,
+    sort: query.descending ? `-${query.sort}` : query.sort,
+    ...(search === '' ? {} : {'filter[search]': search}),
+    ...(query.status === 'all'
+      ? {}
+      : {'filter[is_active]': query.status === 'active'}),
+  };
   const init: RequestInit = signal === undefined ? {} : {signal};
-  const body = await adminFetch(`/users?${params}`, init);
+  const body = await adminFetch(`/users?${toSearchParams(params)}`, init);
   return toPage(parse(adminUserListDocumentSchema, body), toUser);
 }
 
@@ -244,11 +248,11 @@ export async function listAuditLog(
   pageSize: number,
   signal?: AbortSignal
 ): Promise<AdminPage<AdminAuditEntry>> {
-  const params = new URLSearchParams({
-    'page[number]': String(page),
-    'page[size]': String(pageSize),
-  });
+  const params: AdminAuditLogListParams = {
+    'page[number]': page,
+    'page[size]': pageSize,
+  };
   const init: RequestInit = signal === undefined ? {} : {signal};
-  const body = await adminFetch(`/audit_log?${params}`, init);
+  const body = await adminFetch(`/audit_log?${toSearchParams(params)}`, init);
   return toPage(parse(adminAuditLogListDocumentSchema, body), toAuditEntry);
 }

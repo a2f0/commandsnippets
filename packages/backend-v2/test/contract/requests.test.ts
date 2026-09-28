@@ -20,7 +20,7 @@ import {
 } from '@commandsnippets/api-shared';
 import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 import {users} from '../../src/db/schema';
 import {
   ApiClient,
@@ -43,7 +43,7 @@ import {githubRoutes, mockFetch} from '../support/auth';
  * (with `status`), or rejected with the same error details.
  */
 async function expectAgreement(
-  schema: z.ZodType,
+  schema: z.ZodMiniType,
   send: (document: unknown) => Promise<Response>,
   status: number,
   documents: unknown[]

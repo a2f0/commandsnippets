@@ -3,11 +3,12 @@
  * the first error in a JSON:API error document (api-shared's
  * `errorDocumentSchema`). Branch on the code (`CODES`), never on the detail.
  */
-import {errorObjectSchema} from '@commandsnippets/api-shared';
-import {z} from 'zod';
+import {errorObjectSchema} from '@commandsnippets/api-shared/responses';
+import * as z from 'zod/mini';
 
 /** A member read with the contract's schema for it, or undefined. */
-const member = <T>(schema: z.ZodType<T>) => schema.optional().catch(undefined);
+const member = <T>(schema: z.ZodMiniType<T>) =>
+  z.catch(z.optional(schema), undefined);
 
 /**
  * The first error's `code` and `detail`, each read on its own: one that is

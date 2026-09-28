@@ -1,5 +1,5 @@
 /** `User`: the requesting user (`GET /api/v1/user`), and included owners. */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {resourceSchema, timestampSchema} from '../jsonapi/response';
 import {USER} from './types';
 

@@ -64,11 +64,21 @@ schemas' messages), and that every response parses with its schema.
 
 api-shared is a `file:` dependency, which Bun installs as symlinks into
 `../api-shared`. So `tsconfig.base.json` (`paths`), `vitest.config.ts`
-(`resolve.dedupe`) and `wrangler.jsonc` (`alias`) resolve its `zod` import to
-this package's copy, and the Bun scripts import only its dependency-free
-`datetime` entry (through `src/lib/clock.ts`). After adding or removing files in
-`../api-shared`, or changing its `package.json`, run `bun install` here (see
+(`resolve.dedupe`) and `wrangler.jsonc` (`alias`, one entry per import:
+`zod/mini`, and `zod`) resolve its zod imports to this package's copy, and
+the Bun scripts import only its dependency-free `datetime` entry (through
+`src/lib/clock.ts`). After adding or removing files in `../api-shared`, or
+changing its `package.json`, run `bun install` here (see
 `../api-shared/README.md`).
+
+The schemas are `zod/mini` schemas, so code here types them as
+`z.ZodMiniType` (`import type * as z from 'zod/mini'`), and
+`src/lib/validate.ts` loads zod's English locale, which zod/mini leaves out.
+The API's errors do not depend on it (every failure carries its own
+message), but zod's own issues keep reading as they did under classic zod.
+zod/mini tree-shakes: it and the schemas are about 73 kB of the Worker's
+387 KiB (85 KiB gzipped), where classic zod alone was about 760 kB of
+1109 KiB (194 KiB gzipped).
 
 ## Development
 
@@ -138,7 +148,9 @@ Deliberate changes, by area. The admin API is new; see
   the apex), so staging and production share the parent domain and are kept
   apart by name; each API ignores the other's cookies. Django staging ran with
   `DEBUG` on, which made its cookies host-only and non-Secure; those leftovers
-  are expired whenever cookies are domain-scoped.
+  are expired whenever cookies are domain-scoped. That cleanup can go after
+  2026-10-25, when the last of them (set for 28 days, before the 2026-09-27
+  shutdown) has lapsed; see `src/auth/cookies.ts`.
 - **Logout actually clears production cookies.** The expiring cookies carry the
   same `Domain` they were set with.
 - **CORS origin patterns are anchored** (`http://localhost.evil.com` no longer

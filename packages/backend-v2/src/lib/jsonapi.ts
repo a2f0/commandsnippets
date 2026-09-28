@@ -18,7 +18,7 @@ import {
   splitInclude,
 } from '@commandsnippets/api-shared';
 import {desc, type SQL} from 'drizzle-orm';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 import {notFound, parseError, unsupportedMediaType} from './errors';
 import {parseOrThrow} from './validate';
 
@@ -377,7 +377,7 @@ export function parseListQuery<
   Search extends SearchMode,
 >(
   url: URL,
-  schema: z.ZodType<SharedListQuery<F, S, Search>, QueryEntries>,
+  schema: z.ZodMiniType<SharedListQuery<F, S, Search>, QueryEntries>,
   filterSpec: FilterSpec<F>,
   orderingSpec: OrderingSpec<S>
 ): ListQuery {

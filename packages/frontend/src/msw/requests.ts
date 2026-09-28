@@ -16,7 +16,7 @@ import {
   type ToOneLinkage,
 } from '@commandsnippets/api-shared';
 import {HttpResponse} from 'msw';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 
 export type ErrorObject = z.output<typeof errorObjectSchema>;
 
@@ -122,7 +122,7 @@ export async function parseResource<const T extends string>(
 }
 
 /** The validated fields, or a 400 with every failing field's error. */
-export function validateFields<S extends z.ZodType>(
+export function validateFields<S extends z.ZodMiniType>(
   schema: S,
   input: Record<string, unknown>
 ): z.output<S> {
@@ -143,7 +143,7 @@ export function validateFields<S extends z.ZodType>(
  * answering, so that each failing one is reported.
  */
 export function relatedId(
-  field: z.ZodType<ToOneLinkage>,
+  field: z.ZodMiniType<ToOneLinkage>,
   name: string,
   relationships: Record<string, string | null>,
   exists: (id: string) => boolean,

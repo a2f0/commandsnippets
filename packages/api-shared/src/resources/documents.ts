@@ -3,7 +3,7 @@
  * include path reaches, so documents of the user's own resources share one
  * union (narrow it by `type`).
  */
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {documentSchema, listDocumentSchema} from '../jsonapi/response';
 import {adminAuditLogEntrySchema, adminUserSchema} from './admin';
 import {tagSchema} from './tag';

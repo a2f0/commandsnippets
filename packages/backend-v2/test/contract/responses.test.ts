@@ -22,7 +22,7 @@ import {
 } from '@commandsnippets/api-shared';
 import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {z} from 'zod';
+import * as z from 'zod/mini';
 import {users} from '../../src/db/schema';
 import {
   ApiClient,
@@ -50,7 +50,7 @@ import {
 
 /** `response` has `status` and a body `schema` parses without loss. */
 async function expectDocument(
-  schema: z.ZodType,
+  schema: z.ZodMiniType,
   response: Response,
   status = 200
 ): Promise<Json> {

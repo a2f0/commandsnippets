@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'bun:test';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 import {
   ADMIN_USER_SORT_FIELDS,
   type AdminAuditLogListDocument,
@@ -66,7 +66,7 @@ const links = {
 const meta = {pagination: {page: 1, pages: 2, count: 3}};
 
 /** Parses, losing nothing. */
-function roundTrips(schema: z.ZodType, document: unknown) {
+function roundTrips(schema: z.ZodMiniType, document: unknown) {
   expect(parsed(schema, document)).toEqual(document as never);
 }
 
@@ -164,7 +164,7 @@ describe('response documents', () => {
 });
 
 describe('relationships', () => {
-  const shapes: Array<[string, z.ZodObject]> = [
+  const shapes: Array<[string, z.ZodMiniObject]> = [
     ['Tag', tagSchema],
     ['TextEntry', textEntrySchema],
     ['TagTextEntryThroughModel', tagTextEntrySchema],
@@ -172,7 +172,8 @@ describe('relationships', () => {
   ];
 
   test.each(shapes)("%s renders the graph's relationships", (type, schema) => {
-    const relationships = (schema.shape['relationships'] as z.ZodObject).shape;
+    const relationships = (schema.shape['relationships'] as z.ZodMiniObject)
+      .shape;
     const graph = RELATIONSHIPS[type as keyof typeof RELATIONSHIPS];
     expect(Object.keys(relationships)).toEqual(Object.keys(graph));
   });

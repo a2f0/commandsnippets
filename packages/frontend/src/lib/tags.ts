@@ -1,6 +1,6 @@
 import type {IncludedResource} from '@commandsnippets/api-shared';
+import type {TagListParams} from '@commandsnippets/api-shared/requests';
 import {apiClient} from './api/apiClient';
-import type {TagsQueryParams} from './api/requests/types';
 import type {ITagJsonApi} from './api/responses/types';
 import type {Store} from './store/store';
 
@@ -195,7 +195,7 @@ export function fetch(
   page: number,
   since: string | null
 ): Promise<IncludedResource[]> {
-  const params: TagsQueryParams = {
+  const params: TagListParams = {
     'page[number]': page,
     'filter[user.username]': user,
     sort: 'date_updated',

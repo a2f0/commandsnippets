@@ -3,10 +3,10 @@
  * with the provider's authorization code. Success is `{}` with the auth
  * cookies set; a failed exchange is a 401 `{errors: []}`.
  */
-import {z} from 'zod';
-import {charField} from '../fields';
-import {createDocumentSchema, noFieldsSchema} from '../jsonapi/request';
-import {GITHUB_LOGIN, GOOGLE_LOGIN} from './types';
+import * as z from 'zod/mini';
+import {charField} from '../../fields';
+import {createDocumentSchema, noFieldsSchema} from '../../jsonapi/request';
+import {GITHUB_LOGIN, GOOGLE_LOGIN} from '../types';
 
 /** The code, trimmed. Other attributes (the old `clientType`) are ignored. */
 export const loginAttributesSchema = z.object({code: charField()});

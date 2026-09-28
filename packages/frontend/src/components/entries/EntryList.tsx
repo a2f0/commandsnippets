@@ -9,6 +9,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
+import {entrySortKey} from '../../lib/api/requests/entrySort';
 import type {IEntryFetchPage} from '../../lib/api/requests/types';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
@@ -112,7 +113,7 @@ const EntryList = () => {
         const fetchParams: IEntryFetchPage = {
           page: 1,
           username: user,
-          sort: appConfig.entrySortOrder,
+          sort: entrySortKey(appConfig.entrySortOrder),
           search: appConfig.entrySearchString,
           signal: controller.signal,
         };

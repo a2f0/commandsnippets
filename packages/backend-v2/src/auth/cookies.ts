@@ -62,6 +62,15 @@ function cookieOptions(c: Context<AppEnv>) {
   } as const;
 }
 
+// REMOVE AFTER 2026-10-25: DJANGO_COOKIES and expireLegacyHostOnly, with its
+// two calls below and their tests in test/authentication/environments.test.ts
+// ("legacy host-only cookies", and the Django half of "staging logout expires
+// only staging cookies (and Django leftovers)"). They expire the host-only
+// cookies Django staging set. Django shut down on 2026-09-27, and its cookies
+// lasted 28 days (AUTH_COOKIE_MAX_AGE), so after 2026-10-25 no browser holds
+// one, and this only adds two expired Set-Cookie headers to every login and
+// logout.
+
 /** Django's cookie names, used for cleaning up pre-migration cookies. */
 const DJANGO_COOKIES = ['Authorization', 'LoggedIn'] as const;
 
@@ -80,6 +89,8 @@ function expire(c: Context<AppEnv>, name: string, domain: {domain?: string}) {
  * host; browsers keep those separately from the domain-scoped ones and send
  * the older one first, so left alone a pre-migration cookie would keep
  * authenticating (possibly as a different user) after logout or re-login.
+ * Remove after 2026-10-25, when the last of them has expired (see
+ * DJANGO_COOKIES).
  */
 function expireLegacyHostOnly(c: Context<AppEnv>): void {
   if (cookieDomain(c).domain !== undefined) {

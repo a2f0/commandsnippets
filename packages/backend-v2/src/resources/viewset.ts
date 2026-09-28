@@ -12,7 +12,7 @@ import {and, asc, count, eq, type SQL} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
-import type {z} from 'zod';
+import type * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
 import type {tags, textEntries, User} from '../db/schema';
 import type {AppEnv} from '../env';
@@ -42,7 +42,7 @@ export interface CollectionQuery<
   S extends string,
   Search extends SearchMode,
 > {
-  query: z.ZodType<SharedListQuery<F, S, Search>, QueryEntries>;
+  query: z.ZodMiniType<SharedListQuery<F, S, Search>, QueryEntries>;
   filters: NoInfer<FilterSpec<F>>;
   ordering: NoInfer<OrderingSpec<S>>;
 }
