@@ -8,7 +8,10 @@ import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
 import type {ReorderTag} from '../../lib/api/requests/types';
-import type {ITagJsonApiResponseSingle} from '../../lib/api/responses/types';
+import type {
+  ITagJsonApi,
+  ITagJsonApiResponseSingle,
+} from '../../lib/api/responses/types';
 import {tearleadsApi} from '../../lib/api/tearleadsApi';
 import {
   activeSearch,
@@ -16,7 +19,6 @@ import {
   type IMouse,
   initialMouse,
 } from '../../lib/shared';
-import type {ITagJsonApi} from '../../lib/store/models/TagModel';
 import {needsScrollingIntoView} from '../../lib/textEntries';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';

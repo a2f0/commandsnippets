@@ -1,8 +1,10 @@
 import type {TagsQueryParams} from './api/requests/types';
-import type {ITagJsonApiResponse} from './api/responses/types';
+import type {
+  ITagJsonApi,
+  ITagJsonApiResponse,
+  IUserJsonApi,
+} from './api/responses/types';
 import {tearleadsApi} from './api/tearleadsApi';
-import type {ITagJsonApi} from './store/models/TagModel';
-import type {IUserJsonApi} from './store/models/UserModel';
 import type {Store} from './store/store';
 
 export function filterAndSort(store: Store): Array<ITagJsonApi> {

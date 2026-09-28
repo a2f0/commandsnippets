@@ -1,5 +1,10 @@
 import {destroy, flow, types} from 'mobx-state-tree';
-
+import type {
+  ITagJsonApi,
+  ITagTextEntryThroughModelJsonApi,
+  ITextEntryJsonApi,
+  IUserJsonApi,
+} from '../../api/responses/types';
 import {
   activeEntryEditField,
   activeSearch,
@@ -7,18 +12,10 @@ import {
   appMode,
   entrySearchMethod,
 } from '../../shared';
-import type {ITagJsonApi} from './TagModel';
 import {TagHelpers, TagModel} from './TagModel';
-import {
-  type ITagTextEntryThroughModelJsonApi,
-  TagTextEntryThroughModel,
-} from './TagTextEntryThroughModel';
-import {
-  type ITextEntryJsonApi,
-  TextEntryHelpers,
-  TextEntryModel,
-} from './TextEntryModel';
-import {type IUserJsonApi, UserModel} from './UserModel';
+import {TagTextEntryThroughModel} from './TagTextEntryThroughModel';
+import {TextEntryHelpers, TextEntryModel} from './TextEntryModel';
+import {UserModel} from './UserModel';
 
 export const RootModel = types
   .model({

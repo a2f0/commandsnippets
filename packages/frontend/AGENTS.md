@@ -86,6 +86,9 @@ Run these from `packages/frontend`.
   401/403 responses.
 - `src/lib/api/baseUrl.ts` - the API URL for the environment, which
   `src/lib/environment.ts` derives from the page's hostname and port.
+- `src/lib/api/requests/types.ts` and `src/lib/api/responses/types.ts` - the
+  request and response bodies, including the JSON:API resources
+  (`ITagJsonApi`, `ITextEntryJsonApi`, ...) that the store's models hold
 - `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
   client-side sorting and filtering of tags and entries.
 

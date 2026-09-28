@@ -7,10 +7,12 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
-import type {ITextEntryJsonApiResponseSingle} from '../../lib/api/responses/types';
+import type {
+  ITextEntryJsonApi,
+  ITextEntryJsonApiResponseSingle,
+} from '../../lib/api/responses/types';
 import {tearleadsApi} from '../../lib/api/tearleadsApi';
 import {appMode, getSelection, initialMouse} from '../../lib/shared';
-import type {ITextEntryJsonApi} from '../../lib/store/models/TextEntryModel';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
 import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/itemTypes';

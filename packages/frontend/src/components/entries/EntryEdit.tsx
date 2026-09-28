@@ -5,10 +5,12 @@ import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useAppContext} from '../../AppContext';
 import {useTypedTranslation} from '../../i18n/hooks';
-import type {ITextEntryJsonApiResponseSingle} from '../../lib/api/responses/types';
+import type {
+  ITextEntryJsonApi,
+  ITextEntryJsonApiResponseSingle,
+} from '../../lib/api/responses/types';
 import {tearleadsApi} from '../../lib/api/tearleadsApi';
 import {activeEntryEditField, appMode} from '../../lib/shared';
-import type {ITextEntryJsonApi} from '../../lib/store/models/TextEntryModel';
 import {needsScrollingIntoView} from '../../lib/textEntries';
 import {commonButtonSx} from '../../theme/sx';
 import {InputEntryBody} from './InputEntryBody';

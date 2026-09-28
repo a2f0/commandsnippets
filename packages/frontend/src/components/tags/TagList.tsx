@@ -7,14 +7,17 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
-import type {ITagJsonApiResponseSingle} from '../../lib/api/responses/types';
+import type {
+  ITagJsonApi,
+  ITagJsonApiResponseSingle,
+} from '../../lib/api/responses/types';
 import {
   activeSearch,
   appMode,
   type IMouse,
   initialMouse,
 } from '../../lib/shared';
-import {type ITagJsonApi, TagHelpers} from '../../lib/store/models/TagModel';
+import {TagHelpers} from '../../lib/store/models/TagModel';
 import {ItemTypes} from '../dnd/itemTypes';
 import {Tag} from './Tag';
 import {TagListContextMenu} from './TagListContextMenu';

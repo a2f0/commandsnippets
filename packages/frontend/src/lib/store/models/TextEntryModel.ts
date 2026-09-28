@@ -1,29 +1,8 @@
 import {getParent, types} from 'mobx-state-tree';
+import type {ITextEntryJsonApi} from '../../api/responses/types';
 import {getMostRecentTimeStamp} from '../../shared';
 import {fetch, fetchPage, sort} from '../../textEntries';
 import type {RootModel} from './RootModel';
-
-export interface ITextEntryJsonApi {
-  id: string;
-  type: string;
-  attributes: {
-    body: string;
-    subject: string;
-    date_updated: string;
-    date_created: string;
-    reused_count: number;
-    is_deleted: boolean;
-    tag_count: number;
-  };
-  relationships: {
-    user: {
-      data: {
-        id: string;
-        type: string;
-      };
-    };
-  };
-}
 
 export const TextEntryModel = types
   .model('TextEntryJsonApi', {

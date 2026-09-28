@@ -1,15 +1,7 @@
 import {getParent, types} from 'mobx-state-tree';
 
+import type {IUserJsonApi} from '../../api/responses/types';
 import type {RootModel} from './RootModel';
-
-export interface IUserJsonApi {
-  id: string;
-  type: string;
-  attributes: {
-    username: string;
-    date_updated: string;
-  };
-}
 
 export const UserModel = types
   .model('UserJsonApi', {

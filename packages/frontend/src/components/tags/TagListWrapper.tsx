@@ -5,8 +5,8 @@ import React, {useEffect, useRef, useState} from 'react';
 import {useLocation, useNavigate, useParams} from 'react-router-dom';
 
 import {useAppContext} from '../../AppContext';
-import type {TagModel} from '../../lib/store/models/TagModel';
-import {type ITagJsonApi, TagHelpers} from '../../lib/store/models/TagModel';
+import type {ITagJsonApi} from '../../lib/api/responses/types';
+import {TagHelpers, type TagModel} from '../../lib/store/models/TagModel';
 import {TagList} from './TagList';
 
 export interface IUser {

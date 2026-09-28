@@ -9,11 +9,9 @@ import {useDrop} from 'react-dnd';
 import {useLocation, useParams, useSearchParams} from 'react-router-dom';
 import {useAppContext} from '../../AppContext';
 import type {IEntryFetchPage} from '../../lib/api/requests/types';
+import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
-import {
-  type ITextEntryJsonApi,
-  TextEntryHelpers,
-} from '../../lib/store/models/TextEntryModel';
+import {TextEntryHelpers} from '../../lib/store/models/TextEntryModel';
 import {needsScrollingIntoView} from '../../lib/textEntries';
 import {ItemTypes} from '../dnd/itemTypes';
 import {Entry} from './Entry';

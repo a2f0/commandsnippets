@@ -7,12 +7,14 @@ import {
   isATextEntry,
   isAUser,
 } from './api/responses/typeGuards';
+import type {
+  ITagJsonApi,
+  ITagTextEntryThroughModelJsonApi,
+  ITextEntryJsonApi,
+  IUserJsonApi,
+} from './api/responses/types';
 import {tearleadsApi} from './api/tearleadsApi';
 import {db} from './db/db';
-import type {ITagJsonApi} from './store/models/TagModel';
-import type {ITagTextEntryThroughModelJsonApi} from './store/models/TagTextEntryThroughModel';
-import type {ITextEntryJsonApi} from './store/models/TextEntryModel';
-import type {IUserJsonApi} from './store/models/UserModel';
 import type {Store} from './store/store';
 import {convertISO8601ToUnixTime} from './util/dateTime';
 
