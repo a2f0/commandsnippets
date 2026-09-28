@@ -17,15 +17,15 @@ const SortBySubjectDescending = ({onClose}: IProps) => {
 
   return (
     <StyledMenuItem
-      id="tagged-entries-menu-sort-subject-ascending"
-      key="SortMenuItemTextEntrySubject"
+      id="tagged-entries-menu-sort-subject-descending"
+      key="SortMenuItemTextEntrySubject-"
       onClick={() => {
-        appConfig.setTagTextEntryThroughModelSortOrder('subject');
+        appConfig.setTagTextEntryThroughModelSortOrder('-subject');
         onClose();
       }}
     >
       <ListItemIcon>
-        {appConfig.tagTextEntryThroughModelSortOrder === 'subject' && (
+        {appConfig.tagTextEntryThroughModelSortOrder === '-subject' && (
           <StyledCheckIcon />
         )}
       </ListItemIcon>
