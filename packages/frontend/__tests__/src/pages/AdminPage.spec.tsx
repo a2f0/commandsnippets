@@ -205,10 +205,13 @@ describe('AdminPage', () => {
     expect(within(table).getByText('alice@example.com')).toBeInTheDocument();
     expect(within(table).getByText('Staff')).toBeInTheDocument();
     expect(store.isStaff).toBe(true);
-    // The menu now offers the page.
-    expect(document.getElementById('adminLinkButton')).toHaveAttribute(
-      'href',
-      '/admin'
+    // The menu's mode tabs now show, on Admin.
+    const adminTab = screen.getByRole('tab', {name: 'Admin'});
+    expect(adminTab).toHaveAttribute('href', '/admin');
+    expect(adminTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', {name: 'User'})).toHaveAttribute(
+      'aria-selected',
+      'false'
     );
   });
 
@@ -224,7 +227,12 @@ describe('AdminPage', () => {
     expect(listRequests).toHaveLength(0);
     expect(store.isStaff).toBe(false);
     expect(store.loggedInUser).toBe('test');
-    expect(document.getElementById('adminLinkButton')).toBeNull();
+    expect(document.getElementById('modeTabs')).toBeNull();
+    // They get a plain link back to their entries instead.
+    expect(document.getElementById('entriesLinkButton')).toHaveAttribute(
+      'href',
+      '/test'
+    );
   });
 
   it('signs out a session that has expired', async () => {
@@ -442,9 +450,14 @@ describe('AdminPage', () => {
     expect(cellText('9')).toBe('Never');
   });
 
-  it('offers only menus that work here, and a link back to the entries', async () => {
+  it('offers only menus that work here, and the User tab back to the entries', async () => {
     const history = await renderAt('/admin');
     await usersTable();
+
+    // Staff have the mode tabs, so no separate link.
+    expect(document.getElementById('entriesLinkButton')).toBeNull();
+    const back = screen.getByRole('tab', {name: 'User'});
+    expect(back).toHaveAttribute('href', '/test');
 
     expect(screen.queryByRole('menu', {name: 'Tags'})).toBeNull();
     expect(screen.queryByRole('menu', {name: 'Entries'})).toBeNull();
@@ -452,8 +465,6 @@ describe('AdminPage', () => {
     expect(await screen.findByText('Logout')).toBeInTheDocument();
     expect(document.getElementById('file-menu-new-entry')).toBeNull();
 
-    const back = present(document.getElementById('entriesLinkButton'), 'link');
-    expect(back).toHaveAttribute('href', '/test');
     fireEvent.click(back);
     await waitFor(() => {
       expect(history.location.pathname).toBe('/test');

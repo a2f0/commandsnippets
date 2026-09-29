@@ -9,8 +9,8 @@ import {GoogleAuth} from '../components/auth/GoogleAuth';
 import {UserProfileCircle} from '../components/UserProfileCircle';
 import {useTypedTranslation} from '../i18n/hooks';
 import {environment} from '../lib/environment';
-import {AdminLinkButton} from './admin/AdminLinkButton';
 import {EntriesLinkButton} from './admin/EntriesLinkButton';
+import {ModeTabs} from './admin/ModeTabs';
 import {DebugMenu} from './debug/DebugMenu';
 import {DebugMenuButton} from './debug/DebugMenuButton';
 import {EntriesMenu} from './entries/EntriesMenu';
@@ -32,7 +32,8 @@ const Aligner = styled('div')`
 interface IProps {
   /**
    * The Tags and Entries menus and File's New Tag and New Entry act on the
-   * entries page; other pages (the admin page) get a link back to it instead.
+   * entries page; other pages (the admin page) get a way back to it instead:
+   * a link, or for staff the User tab of the mode tabs.
    */
   entriesPage?: boolean;
 }
@@ -135,27 +136,32 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           <DebugMenuButton onClick={handleDebugMenuClick} />
         )}
         <HelpMenuButton onClick={handleHelpMenuClick} />
-        {!entriesPage && appConfig.loggedInUser && (
+        {/* Staff go back with the mode tabs instead. */}
+        {!entriesPage && appConfig.loggedInUser && !appConfig.isStaff && (
           <EntriesLinkButton username={appConfig.loggedInUser} />
         )}
-        {appConfig.loggedInUser && appConfig.isStaff && <AdminLinkButton />}
       </Aligner>
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'flex-end',
-          alignItems: 'center',
+          alignSelf: 'stretch',
           flexGrow: 1,
           mr: 1,
         }}
       >
-        {!appConfig.loggedInUser && (
-          <>
-            <GithubAuth />
-            <GoogleAuth />
-          </>
+        {appConfig.loggedInUser && appConfig.isStaff && (
+          <ModeTabs username={appConfig.loggedInUser} />
         )}
-        {appConfig.loggedInUser && <UserProfileCircle />}
+        <Box sx={{display: 'flex', alignItems: 'center', alignSelf: 'center'}}>
+          {!appConfig.loggedInUser && (
+            <>
+              <GithubAuth />
+              <GoogleAuth />
+            </>
+          )}
+          {appConfig.loggedInUser && <UserProfileCircle />}
+        </Box>
       </Box>
       <FileMenu
         onClose={handleFileMenuClose}

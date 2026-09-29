@@ -16,8 +16,11 @@ describe('Admin page', () => {
     await expect(BasePage.adminUserRow('7')).toHaveText(
       expect.stringContaining('alice@example.com')
     );
-    // Staff get the menu link once the page has confirmed their access.
-    await expect(BasePage.adminLinkButton).toBeDisplayed();
+    // Staff get the mode tabs once the page has confirmed their access.
+    await expect(BasePage.adminModeTab).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
     // Their own account cannot be deactivated.
     await expect(BasePage.adminUserToggle('1')).toBeDisabled();
 
@@ -34,6 +37,13 @@ describe('Admin page', () => {
     await expect(BasePage.adminAuditLog).toHaveText(
       expect.stringContaining('alice')
     );
+
+    // The User tab switches back to the app as any user sees it.
+    await BasePage.userModeTab.waitAndLeftClick();
+    await expect(BasePage.adminPage).not.toBeDisplayed();
+    await expect(BasePage.userModeTab).toHaveAttribute('aria-selected', 'true');
+    await BasePage.adminModeTab.waitAndLeftClick();
+    await expect(BasePage.adminPage).toBeDisplayed();
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });
