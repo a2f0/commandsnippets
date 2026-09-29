@@ -15,11 +15,12 @@ import {
   type User,
 } from '../../src/db/schema';
 import {
-  type ApiClient,
+  ApiClient,
   db,
   isoformat,
   type Json,
   json,
+  raceBeforeStatement,
   refreshEntry,
   refreshJunction,
   refreshTag,
@@ -27,6 +28,7 @@ import {
   tagFactory,
   tagTextEntryFactory,
   textEntryFactory,
+  tokenFor,
 } from '../helpers';
 
 /** Every page of `path` from `after`, one keyset page at a time. */
@@ -329,6 +331,91 @@ describe('untagging soft-deletes the junction', () => {
     expect(body.data.attributes.order).toBe(later.order + 1);
     expect((await refreshTag(tag.id))?.entry_count).toBe(2);
     expect((await refreshEntry(entry.id))?.tag_count).toBe(1);
+  });
+
+  it("takes over and restores another user's deleted legacy junction", async () => {
+    const {user1, user2, client} = await setUpTagged();
+    const tag = await tagFactory({user: user1});
+    const entry = await textEntryFactory({user: user1});
+    // Legacy data: user2's junction between user1's tag and entry, deleted.
+    const legacy = await tagTextEntryFactory({
+      tag,
+      text_entry: entry,
+      user: user2,
+      is_deleted: true,
+    });
+    const response = await client.post(
+      '/api/v1/tags_entries',
+      tagPayload(tag, entry)
+    );
+    expect(response.status).toBe(201);
+    expect(await refreshJunction(legacy.id)).toMatchObject({
+      user_id: user1.id,
+      is_deleted: false,
+    });
+    expect((await refreshTag(tag.id))?.entry_count).toBe(1);
+  });
+
+  it('recomputes date_last_used from the junctions left in the tag', async () => {
+    const {user1, client, tag, junction} = await setUpTagged();
+    const kept = await tagTextEntryFactory({
+      tag,
+      text_entry: await textEntryFactory({user: user1}),
+      user: user1,
+      order: 1,
+    });
+    await db()
+      .update(tagsEntries)
+      .set({date_created: '2020-01-01T00:00:00.000000'})
+      .where(eq(tagsEntries.id, kept.id));
+    await db()
+      .update(tagsEntries)
+      .set({date_created: '2030-01-01T00:00:00.000000'})
+      .where(eq(tagsEntries.id, junction.id));
+    await client.delete(`/api/v1/tags_entries/${junction.id}`);
+    expect((await refreshTag(tag.id))?.date_last_used).toBe(
+      '2020-01-01T00:00:00.000000'
+    );
+  });
+
+  it('restoring answers with the junction a concurrent request restored', async () => {
+    const {user1, client, tag, entry, junction} = await setUpTagged();
+    await client.delete(`/api/v1/tags_entries/${junction.id}`);
+    const racing = new ApiClient(
+      await tokenFor(user1.id),
+      raceBeforeStatement(/^\s*update "tags_tagtextentrythroughmodel"/i, () =>
+        db()
+          .update(tagsEntries)
+          .set({is_deleted: false})
+          .where(eq(tagsEntries.id, junction.id))
+      )
+    );
+    const response = await racing.post(
+      '/api/v1/tags_entries',
+      tagPayload(tag, entry)
+    );
+    expect(response.status).toBe(201);
+    expect((await json(response)).data).toMatchObject({
+      id: String(junction.id),
+      attributes: {is_deleted: false},
+    });
+  });
+
+  it('restoring a junction a concurrent request removed is a conflict', async () => {
+    const {user1, client, tag, entry, junction} = await setUpTagged();
+    await client.delete(`/api/v1/tags_entries/${junction.id}`);
+    const racing = new ApiClient(
+      await tokenFor(user1.id),
+      raceBeforeStatement(/^\s*update "tags_tagtextentrythroughmodel"/i, () =>
+        db().delete(tagsEntries).where(eq(tagsEntries.id, junction.id))
+      )
+    );
+    const response = await racing.post(
+      '/api/v1/tags_entries',
+      tagPayload(tag, entry)
+    );
+    expect(response.status).toBe(409);
+    expect((await json(response)).errors[0].code).toBe('conflict');
   });
 
   it('keeps a deleted junction out of reorders', async () => {

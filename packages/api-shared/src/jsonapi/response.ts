@@ -158,7 +158,7 @@ export const errorDocumentSchema = z.object({
 /** The body of a login or logout: `{}`. */
 export const emptyObjectSchema = z.strictObject({});
 
-/** A keyset page's link to the page after it: null on a page not full. */
+/** A keyset page's link to the page after it: null once no rows are left. */
 export const cursorLinksSchema = z.object({next: z.nullable(z.url())});
 
 /**

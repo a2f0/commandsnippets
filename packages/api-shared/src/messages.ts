@@ -22,7 +22,7 @@ export const CODES = {
   unsupportedMediaType: 'unsupported_media_type',
   /** A 409: the document's type or id does not match the endpoint. */
   conflict: 'error',
-  /** A 409: a reorder raced another write; retrying can succeed. */
+  /** A 409: a reorder or a tagging raced another write; retrying can succeed. */
   orderingConflict: 'conflict',
   // Everything else.
   notFound: 'not_found',

@@ -1,4 +1,5 @@
 import {
+  CODES,
   tagTextEntryCreateRelationshipsSchema,
   tagTextEntryListQuerySchema,
 } from '@commandsnippets/api-shared';
@@ -10,7 +11,7 @@ import {isUniqueViolation} from '../db/errors';
 import {type TagTextEntry, tagsEntries, textEntries} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
-import {methodNotAllowed, notFound} from '../lib/errors';
+import {ApiError, methodNotAllowed, notFound} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {
@@ -201,6 +202,18 @@ tagEntryRoutes.post('/', async c => {
       touchEntry(db, textEntryId, user.id),
     ]);
     [junction] = updated.length > 0 ? updated : [await find()];
+    // A concurrent request restored it (fine), or deleted or removed it.
+    if (
+      junction === undefined ||
+      junction.is_deleted ||
+      junction.user_id !== user.id
+    ) {
+      throw ApiError.of(
+        409,
+        'The tag changed while it was being updated. Please retry.',
+        CODES.orderingConflict
+      );
+    }
   }
   return resourceResponse(c, TAG_TEXT_ENTRY, junction as TagTextEntry, 201);
 });
