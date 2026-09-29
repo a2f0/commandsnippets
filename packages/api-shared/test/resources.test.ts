@@ -22,10 +22,13 @@ import {
   type TagUpdateDocument,
   type TextEntryCreateDocument,
   tagCreateAttributesSchema,
+  tagCursorListDocumentSchema,
   tagDocumentSchema,
   tagListDocumentSchema,
   tagListQuerySchema,
   tagSchema,
+  tagTextEntryCursorListDocumentSchema,
+  tagTextEntryListQuerySchema,
   tagTextEntrySchema,
   tagUpdateAttributesSchema,
   textEntryListQuerySchema,
@@ -57,6 +60,21 @@ const tag = {
   },
   relationships: {user: {data: {type: 'User', id: '1'}}},
 };
+const junction = {
+  type: 'TagTextEntryThroughModel',
+  id: '5',
+  attributes: {
+    order: 0,
+    date_updated: ts,
+    date_created: ts,
+    is_deleted: true,
+  },
+  relationships: {
+    tag: {data: {type: 'Tag', id: '2'}},
+    text_entry: {data: {type: 'TextEntry', id: '6'}},
+    user: {data: {type: 'User', id: '1'}},
+  },
+};
 const links = {
   first: 'http://localhost/api/v1/tags?page%5Bnumber%5D=1',
   last: 'http://localhost/api/v1/tags?page%5Bnumber%5D=2',
@@ -81,6 +99,20 @@ describe('response documents', () => {
       included: [user],
     });
     roundTrips(tagListDocumentSchema, {links, meta, data: []});
+    // A keyset page: the link past its last row, or none on a last page.
+    roundTrips(tagCursorListDocumentSchema, {
+      links: {
+        next: 'http://localhost/api/v1/tags?page%5Bafter%5D=2024-01-01T12%3A34%3A56.123456%2C2',
+      },
+      data: [tag],
+      included: [user],
+    });
+    roundTrips(tagCursorListDocumentSchema, {links: {next: null}, data: []});
+    roundTrips(tagTextEntryCursorListDocumentSchema, {
+      links: {next: null},
+      data: [junction],
+      included: [tag],
+    });
     roundTrips(adminAuditLogListDocumentSchema, {
       links,
       meta,
@@ -117,6 +149,9 @@ describe('response documents', () => {
         meta,
         data: [],
       })
+    ).toHaveLength(1);
+    expect(
+      failures(tagCursorListDocumentSchema, {links: {}, data: []})
     ).toHaveLength(1);
     expect(failures(userSchema, {...user, id: 1})).toHaveLength(1);
     expect(
@@ -267,6 +302,7 @@ describe('collection queries', () => {
       sort: [{field: 'order', descending: true}],
       page: 1,
       pageSize: 50,
+      after: null,
       include: null,
     });
   });
@@ -287,6 +323,58 @@ describe('collection queries', () => {
         ],
       })
     );
+  });
+
+  test('junctions: by tag or entry, deleted too, in revision order', () => {
+    expect(
+      parsed(tagTextEntryListQuerySchema, [
+        ['filter[tag.id]', '3'],
+        ['filter[is_deleted]', 'true'],
+        ['page[after]', '2024-01-01T12:34:56.123456,9'],
+        ['include', 'text_entry'],
+      ])
+    ).toEqual({
+      filters: [
+        {name: 'tag__id', value: 3},
+        {name: 'is_deleted', value: true},
+      ],
+      search: null,
+      sort: null,
+      page: 1,
+      pageSize: 50,
+      after: {dateUpdated: '2024-01-01T12:34:56.123456', id: 9},
+      include: 'text_entry',
+    });
+    expect(
+      parsed(tagTextEntryListQuerySchema, [['filter[text_entry.id]', '4']])
+        .filters
+    ).toEqual([{name: 'text_entry__id', value: 4}]);
+    expect(
+      failures(tagTextEntryListQuerySchema, [['filter[search]', 'x']])[0]
+        ?.message
+    ).toBe('filter[search] is not supported here.');
+    expect(
+      failures(tagTextEntryListQuerySchema, [['sort', 'order']])[0]?.message
+    ).toBe('invalid sort parameter: order');
+  });
+
+  test('keyset pages only where rows have revisions', () => {
+    const after: [string, string] = ['page[after]', '2024-01-01,1'];
+    for (const schema of [tagListQuerySchema, textEntryListQuerySchema]) {
+      expect(parsed(schema, [after]).after).toEqual({
+        dateUpdated: '2024-01-01T00:00:00.000000',
+        id: 1,
+      });
+    }
+    for (const schema of [
+      textEntryReusedListQuerySchema,
+      adminUserListQuerySchema,
+      adminAuditLogListQuerySchema,
+    ]) {
+      expect(failures(schema, [after])[0]?.message).toBe(
+        'page[after] is not supported here.'
+      );
+    }
   });
 
   test('entry reuses have no filters', () => {

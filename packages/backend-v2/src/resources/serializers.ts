@@ -127,7 +127,10 @@ export function createRegistry(db: Db, userId: number): Registry {
             .where(
               and(
                 inIds(tagsEntries.text_entry_id, parentIds),
-                eq(tagsEntries.user_id, userId)
+                eq(tagsEntries.user_id, userId),
+                // The entry's tags: a deleted junction is only in the
+                // junction list, which shows its tag's syncs it left.
+                eq(tagsEntries.is_deleted, false)
               )
             )
             .orderBy(asc(tagsEntries.date_updated), asc(tagsEntries.id)),
@@ -150,6 +153,7 @@ export function createRegistry(db: Db, userId: number): Registry {
       order: row.order,
       date_updated: isoformat(row.date_updated),
       date_created: isoformat(row.date_created),
+      is_deleted: row.is_deleted,
     }),
     relationships: {
       tag: {type: TAG, key: row => row.tag_id},

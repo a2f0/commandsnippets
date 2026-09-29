@@ -13,7 +13,7 @@ API (see [zod/mini](#zodmini)).
 
 ## Entry points
 
-`package.json` exports five entries, and declares `"sideEffects": false`, so
+`package.json` exports six entries, and declares `"sideEffects": false`, so
 a bundler drops any module whose exports go unused:
 
 | Import | What | Who |
@@ -23,6 +23,7 @@ a bundler drops any module whose exports go unused:
 | `@commandsnippets/api-shared/requests` | request documents, fields, filters and collection queries: schemas, messages and types | the API; clients, for types |
 | `@commandsnippets/api-shared/messages` | `CODES` and `MESSAGES` | anyone |
 | `@commandsnippets/api-shared/datetime` | the timestamp format and `parseDateTime` (no imports; see below) | the backend's Bun scripts |
+| `@commandsnippets/api-shared/cursor` | keyset cursors: `CURSOR_START`, `cursorOf`, `parseCursor` (no zod; also in `./responses` and `./requests`) | clients, to page |
 
 `./responses` loads none of the request-side modules (`test/entries.test.ts`
 checks), so a client that parses responses bundles only the response schemas.
@@ -47,8 +48,9 @@ not the request validators beside it.
 | `src/query.ts` | `listQuerySchema`: a collection's `filter`, `sort`, `page`, `include`, `filter[search]`; `ListParams`, the same as a client sends them |
 | `src/include.ts` | `include` paths over a relationship graph (`IncludePath`: every path, as a type) |
 | `src/datetime.ts` | the timestamp format and `parseDateTime` |
+| `src/cursor.ts` | keyset cursors (`page[after]`): `<date_updated>,<id>` |
 | `src/jsonapi/request.ts` | request envelopes and create/update document schemas |
-| `src/jsonapi/response.ts` | resource, document, list-document and error-document schemas |
+| `src/jsonapi/response.ts` | resource, document, list-document (numbered and keyset pages) and error-document schemas |
 | `src/resources/types.ts` | resource type names, `RELATIONSHIPS`, `DEFAULT_INCLUDES` |
 | `src/resources/*.ts` | per resource: the resource as the API renders it (response schemas and types) |
 | `src/resources/documents.ts` | each endpoint's response documents |
@@ -158,18 +160,28 @@ const query: TextEntryListParams = {
 ```
 
 Each collection has one (`TagListParams`, `TextEntryListParams`,
-`TextEntryReusedListParams`, `AdminUserListParams`,
-`AdminAuditLogListParams`), derived by `ListParams` from the spec its query
-schema is built from, so the two cannot drift: `filter[...]` for each filter
-(named with `.`), its value the type the filter parses it into (`number` for
-`filter[tag_count]`); `sort`, a comma-separated list of `SortKey`s (`field`
-or `-field`); `page[number]` and `page[size]`; `filter[search]` where the
-collection searches; and `include`, a list of `IncludePath`s, where it
+`TagTextEntryListParams`, `TextEntryReusedListParams`,
+`AdminUserListParams`, `AdminAuditLogListParams`), derived by `ListParams`
+from the spec its query schema is built from, so the two cannot drift:
+`filter[...]` for each filter (named with `.`), its value the type the filter
+parses it into (`number` for `filter[tag_count]`); `sort`, a comma-separated
+list of `SortKey`s (`field` or `-field`); `page[number]` and `page[size]`;
+`page[after]` where the collection pages by revision; `filter[search]` where
+the collection searches; and `include`, a list of `IncludePath`s, where it
 resolves includes. What the API would refuse does not type-check. The lists
 type-check up to three items (`CommaList`); the API takes more. Send the
 object as `URLSearchParams`, the values as `String()` writes them
 (`test/params.test.ts` checks that every parameter a type allows, the schema
 accepts).
+
+Tags, entries and junctions also page by revision (`date_updated`, then
+`id`): `page[after]=<cursor>` lists the rows past a cursor, oldest first,
+uncounted, with `links.next` while rows are left (`tagCursorListDocumentSchema`
+and its siblings parse them). Start from `CURSOR_START` and page from each
+page's last row (`cursorOf(row)`): a row that changes meanwhile moves past
+the cursor and a later page lists it, so a sync that reads until `next` is
+null has every change since it started, and keeps the last cursor to resume
+from. `page[after]` takes no `page[number]` or `sort`.
 
 Error responses parse with `errorDocumentSchema`; branch on `CODES`
 (`@commandsnippets/api-shared/messages`, `CODES.permissionDenied`) rather

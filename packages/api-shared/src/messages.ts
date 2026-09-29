@@ -73,6 +73,12 @@ export const MESSAGES = {
   invalidSort: (terms: readonly string[]) =>
     `invalid sort parameter${terms.length > 1 ? 's' : ''}: ${terms.join(',')}`,
   invalidPage: 'Invalid page.',
+  invalidCursor: (value: string) =>
+    `invalid page[after]: ${value} (expected <date_updated>,<id>)`,
+  cursorRefused: 'page[after] is not supported here.',
+  cursorWithPage: 'page[after] and page[number] cannot be combined.',
+  cursorWithSort:
+    'page[after] pages in revision order (date_updated, id): leave out sort.',
   includeTooDeep: (path: string, max: number) =>
     `Include path ${path} is deeper than ${max} relationships.`,
   includeNotSupported: (path: string) =>

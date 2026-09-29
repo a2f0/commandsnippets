@@ -166,6 +166,7 @@ const originalEntriesResponse: Pick<
         order: 1,
         date_updated: '2020-04-13T18:20:00',
         date_created: '2020-04-13T18:20:00',
+        is_deleted: false,
       },
       relationships: {
         tag: {data: {type: 'Tag', id: '1'}},
@@ -180,6 +181,7 @@ const originalEntriesResponse: Pick<
         order: 2,
         date_updated: '2020-04-13T18:20:00',
         date_created: '2020-04-13T18:20:00',
+        is_deleted: false,
       },
       relationships: {
         tag: {data: {type: 'Tag', id: '1'}},
@@ -343,6 +345,7 @@ function createJunction(
         junctions.map(candidate => candidate.attributes.date_updated)
       ),
       date_created: created,
+      is_deleted: false,
     },
     relationships: {
       tag: {data: {type: 'Tag', id: tag.id}},

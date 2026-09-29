@@ -29,6 +29,7 @@ const response: TagTextEntryDocument = {
       order: 1,
       date_updated: '2022-05-14T02:33:53.995003',
       date_created: '2022-05-14T02:33:53.994989',
+      is_deleted: false,
     },
     relationships: {
       tag: {

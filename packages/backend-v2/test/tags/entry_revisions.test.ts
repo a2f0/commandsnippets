@@ -197,7 +197,9 @@ describe('tagging and untagging advance the entry revision', () => {
       `/api/v1/tags_entries/${junction.id}`
     );
     expect(response.status).toBe(204);
-    expect(await refreshJunction(junction.id)).toBeUndefined();
+    expect(await refreshJunction(junction.id)).toMatchObject({
+      is_deleted: true,
+    });
     expect(await advanced(entry)).toBe(true);
   });
 

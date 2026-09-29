@@ -171,6 +171,11 @@ export const tagsEntries = sqliteTable(
     user_id: integer('user_id')
       .notNull()
       .references(() => users.id, {onDelete: 'cascade'}),
+    // Untagging soft-deletes the junction, so a tag's junctions after a
+    // cursor show the entries that left it (resources/tagsEntries.ts).
+    is_deleted: integer('is_deleted', {mode: 'boolean'})
+      .notNull()
+      .default(false),
   },
   table => [
     unique('tags_tagtextentrythroughmodel_tag_id_text_entry_id_uniq').on(
@@ -188,7 +193,15 @@ export const tagsEntries = sqliteTable(
     index('tags_tagtextentrythroughmodel_text_entry_id_idx').on(
       table.text_entry_id
     ),
-    index('tags_tagtextentrythroughmodel_user_id_idx').on(table.user_id),
+    // The junction lists in revision order: a user's, and a tag's.
+    index('tags_tagtextentrythroughmodel_user_updated_idx').on(
+      table.user_id,
+      table.date_updated
+    ),
+    index('tags_tagtextentrythroughmodel_tag_updated_idx').on(
+      table.tag_id,
+      table.date_updated
+    ),
   ]
 );
 

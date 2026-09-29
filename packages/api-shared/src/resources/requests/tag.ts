@@ -77,6 +77,7 @@ const tagListQuery = {
   sort: TAG_SORT_FIELDS,
   search: 'ignored',
   include: 'resolved',
+  cursor: 'supported',
 } as const;
 
 export const tagListQuerySchema = listQuerySchema(tagListQuery);

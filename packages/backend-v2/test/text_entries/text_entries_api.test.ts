@@ -87,8 +87,9 @@ describe('TestTextEntriesApi', () => {
     const junctionData = included[1];
     expect(junctionData.type).toBe('TagTextEntryThroughModel');
     expect(junctionData.id).toBe(String(tagsEntries1.id));
-    expect(Object.keys(junctionData.attributes).length).toBe(3);
+    expect(Object.keys(junctionData.attributes).length).toBe(4);
     expect(junctionData.attributes.order).toBe(tagsEntries1.order);
+    expect(junctionData.attributes.is_deleted).toBe(false);
     expect(junctionData.attributes.date_updated).toBe(
       isoformat(tagsEntries1.date_updated)
     );

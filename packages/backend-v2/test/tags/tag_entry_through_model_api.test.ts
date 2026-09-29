@@ -49,9 +49,9 @@ describe('TestTagsEntriesApi', () => {
     expect(response.status).toBe(405);
   });
 
-  it('test_list_fails', async () => {
+  it('test_retrieve_fails', async () => {
     base = await setUpBase();
-    const response = await base.user1Client.get('/api/v1/tags_entries');
+    const response = await base.user1Client.get('/api/v1/tags_entries/1');
     expect(response.status).toBe(405);
   });
 
@@ -248,8 +248,10 @@ describe('TestTagsEntriesApi', () => {
     );
     expect(response.status).toBe(204);
 
-    // Verify the relationship was deleted
-    expect(await refreshJunction(tagTextEntry.id)).toBeUndefined();
+    // Verify the relationship was deleted: kept, flagged, for the tag's sync.
+    expect(await refreshJunction(tagTextEntry.id)).toMatchObject({
+      is_deleted: true,
+    });
   });
 
   it('test_delete_fails_when_user_doesnt_own_relationship', async () => {
@@ -328,6 +330,7 @@ describe('TestTagsEntriesApi v2', () => {
       'order',
       'date_updated',
       'date_created',
+      'is_deleted',
     ]);
     expect(body.data.relationships.tag.data).toEqual({
       type: 'Tag',

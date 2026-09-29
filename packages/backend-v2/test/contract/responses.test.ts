@@ -8,12 +8,17 @@ import {
   adminAuditLogListDocumentSchema,
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
+  CURSOR_START,
   emptyObjectSchema,
   errorDocumentSchema,
+  tagCursorListDocumentSchema,
   tagDocumentSchema,
   tagListDocumentSchema,
   tagSchema,
+  tagTextEntryCursorListDocumentSchema,
   tagTextEntryDocumentSchema,
+  tagTextEntryListDocumentSchema,
+  textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
   textEntryListDocumentSchema,
   textEntryReusedDocumentSchema,
@@ -255,6 +260,52 @@ describe('TagTextEntryThroughModel', () => {
     expect(deleted.status).toBe(204);
     expect(await deleted.text()).toBe('');
   });
+
+  it('lists, deleted ones too, numbered or after a cursor', async () => {
+    const tag = await tagFactory({user: base.user1});
+    const text_entry = await textEntryFactory({user: base.user1});
+    await tagTextEntryFactory({user: base.user1, tag, text_entry});
+    await tagTextEntryFactory({
+      user: base.user1,
+      tag: await tagFactory({user: base.user1}),
+      text_entry,
+      is_deleted: true,
+    });
+    const listed = await expectDocument(
+      tagTextEntryListDocumentSchema,
+      await client.get('/api/v1/tags_entries?include=text_entry')
+    );
+    expect(
+      listed.data.map((junction: Json) => junction.attributes.is_deleted)
+    ).toContain(true);
+    const page = await expectDocument(
+      tagTextEntryCursorListDocumentSchema,
+      await client.get(
+        `/api/v1/tags_entries?page[after]=${CURSOR_START}&page[size]=1`
+      )
+    );
+    expect(page.data).toHaveLength(1);
+    expect(page.links.next).toContain('page%5Bafter%5D=');
+  });
+});
+
+describe('keyset pages', () => {
+  it('of tags and entries parse as keyset documents', async () => {
+    const tags = await expectDocument(
+      tagCursorListDocumentSchema,
+      await client.get(`/api/v1/tags?page[after]=${CURSOR_START}`)
+    );
+    expect(tags.data.length).toBeGreaterThan(0);
+    expect(tags.links).toEqual({next: null});
+    const entries = await expectDocument(
+      textEntryCursorListDocumentSchema,
+      await client.get(
+        `/api/v1/entries?page[after]=${CURSOR_START}&page[size]=1`
+      )
+    );
+    expect(entries.data).toHaveLength(1);
+    expect(entries.included.length).toBeGreaterThan(0);
+  });
 });
 
 describe('TextEntryReused', () => {
@@ -394,7 +445,9 @@ describe('errors', () => {
       [other.get(`/api/v1/tags/${tag?.id}`), 403],
       [base.unauthenticatedClient.get('/api/v1/tags'), 403],
       [client.get('/api/v1/admin/users'), 403],
-      [client.get('/api/v1/tags_entries'), 405],
+      [client.get('/api/v1/tags_entries/1'), 405],
+      [client.get('/api/v1/tags?page[after]=nope'), 400],
+      [client.get('/api/v1/entry_reuses?page[after]=1970-01-01,0'), 400],
       [
         appRequest('/api/v1/tags', {
           method: 'POST',

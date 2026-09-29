@@ -73,7 +73,12 @@ export function junction(
   return {
     id,
     type: 'TagTextEntryThroughModel',
-    attributes: {order: Number(id), date_updated: date, date_created: date},
+    attributes: {
+      order: Number(id),
+      date_updated: date,
+      date_created: date,
+      is_deleted: false,
+    },
     relationships: {
       tag: {data: {id: tagId, type: 'Tag'}},
       text_entry: {data: {id: entryId, type: 'TextEntry'}},

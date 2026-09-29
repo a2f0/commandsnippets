@@ -177,7 +177,12 @@ describe('fetchAllEntriesForUser', () => {
         {
           type: 'TagTextEntryThroughModel',
           id,
-          attributes: {order: number, date_updated: date, date_created: date},
+          attributes: {
+            order: number,
+            date_updated: date,
+            date_created: date,
+            is_deleted: false,
+          },
           relationships: {
             tag: {data: {type: 'Tag', id: '5'}},
             text_entry: {data: {type: 'TextEntry', id}},

@@ -88,6 +88,7 @@ const textEntryListQuery = {
   sort: TEXT_ENTRY_SORT_FIELDS,
   search: 'supported',
   include: 'resolved',
+  cursor: 'supported',
 } as const;
 
 export const textEntryListQuerySchema = listQuerySchema(textEntryListQuery);

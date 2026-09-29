@@ -20,7 +20,8 @@ import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
 /**
  * Entries tagged with a tag matching `condition`, counting only the
  * requester's own junctions and tags: imported rows can link another user's
- * tag to this user's entry, and matching on it would reveal its name.
+ * tag to this user's entry, and matching on it would reveal its name. A
+ * deleted junction (untagged) does not count.
  */
 const hasTag = (userId: number, condition: ReturnType<typeof sql>) =>
   sql`EXISTS (
@@ -28,6 +29,7 @@ const hasTag = (userId: number, condition: ReturnType<typeof sql>) =>
     JOIN tags_tag AS t ON t.id = j.tag_id
     WHERE j.text_entry_id = ${textEntries.id}
       AND j.user_id = ${userId}
+      AND j.is_deleted = 0
       AND t.user_id = ${userId}
       AND ${condition}
   )`;

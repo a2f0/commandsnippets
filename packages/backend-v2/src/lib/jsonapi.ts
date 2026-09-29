@@ -6,6 +6,7 @@
  * schemas.
  */
 import {
+  type Cursor,
   type FilterSchemas,
   includePathsSchema,
   MESSAGES,
@@ -364,6 +365,8 @@ export interface ListQuery {
   orderBy: SQL[] | null;
   page: number;
   pageSize: number;
+  /** A keyset page's cursor (`page[after]`), or null for a numbered page. */
+  after: Cursor | null;
   include: string | null;
 }
 
@@ -393,14 +396,23 @@ export function parseListQuery<
       ) ?? null,
     page: query.page,
     pageSize: query.pageSize,
+    after: query.after,
     include: query.include,
   };
 }
 
-export interface Pagination {
+/** A numbered page's place in its collection, or a keyset page's link on. */
+export type Pagination = NumberedPagination | CursorPagination;
+
+export interface NumberedPagination {
   offset: number;
   links: Record<string, string | null>;
   meta: {pagination: {page: number; pages: number; count: number}};
+}
+
+/** A keyset page (`page[after]`): the page after it, when there is one. */
+export interface CursorPagination {
+  links: {next: string | null};
 }
 
 /** Page-number pagination with DJA's links/meta shape. */
@@ -408,7 +420,7 @@ export function paginate(
   url: URL,
   query: ListQuery,
   count: number
-): Pagination {
+): NumberedPagination {
   const pages = Math.max(1, Math.ceil(count / query.pageSize));
   if (query.page > pages) {
     throw notFound(MESSAGES.invalidPage);
@@ -433,14 +445,36 @@ export function paginate(
   };
 }
 
-/** A page of a collection: DJA's `links` and `meta`, then `data`/`included`. */
+/**
+ * A page of a collection: DJA's `links` and `meta` (a keyset page's `links`),
+ * then `data`/`included`.
+ */
 export function listDocument(
   data: ResourceObject[],
   included: ResourceObject[],
   pagination: Pagination
 ): Record<string, unknown> {
-  return document(data, included, {
-    links: pagination.links,
-    meta: pagination.meta,
-  });
+  return document(
+    data,
+    included,
+    'meta' in pagination
+      ? {links: pagination.links, meta: pagination.meta}
+      : {links: pagination.links}
+  );
+}
+
+/**
+ * A keyset page's links: `next` pages after `cursor`, the page's last row,
+ * when rows are left past it.
+ */
+export function cursorPagination(
+  url: URL,
+  cursor: string | null
+): CursorPagination {
+  if (cursor === null) {
+    return {links: {next: null}};
+  }
+  const next = new URL(url);
+  next.searchParams.set('page[after]', cursor);
+  return {links: {next: next.toString()}};
 }

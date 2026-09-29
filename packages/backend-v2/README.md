@@ -27,7 +27,7 @@ and Capacitor apps are gone.
 | `src/auth/oauth.ts`, `src/auth/routes.ts` | GitHub and Google OAuth; login and logout routes | the `authentication` app |
 | `src/db/schema.ts` | tables (same table and column names) | models |
 | `src/db/client.ts`, `src/db/errors.ts` | the Drizzle client; D1 constraint failures | — |
-| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries) | migrations |
+| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries; `0010_junction_revisions.sql` soft-deletes junctions and advances them with their entries) | migrations |
 | `src/lib/jsonapi.ts` | JSON:API request parsing, includes, filters, sort, pagination (validated by api-shared's schemas) | django-rest-framework-json-api |
 | `src/lib/validate.ts` | api-shared's zod issues as JSON:API errors | DRF serializer fields' `is_valid()` |
 | `src/lib/errors.ts` | errors in the JSON:API error format | DRF exceptions, DJA's exception handler |
@@ -168,17 +168,34 @@ Deliberate changes, by area. The admin API is new; see
   sync (`filter[date_updated.gt]`) never misses a write because two Workers'
   clocks disagreed.
 - **Tagging, untagging and junction reorders advance the entry's
-  `date_updated`**, in the same D1 batch as the junction write. Clients sync
-  junctions only as `/entries` includes, filtered on the entry's revision;
-  Django left entries untouched, so other devices missed those changes.
+  `date_updated`**, in the same D1 batch as the junction write, so a sync of
+  `/entries` gets each entry's junctions (its `text_entry_to_tag`) as they
+  are after the change; Django left entries untouched, so other devices
+  missed those changes.
+- **Untagging soft-deletes the junction** (`is_deleted`), and tagging the
+  pair again restores it, at the bottom of the tag. A deleted junction is out
+  of its tag: out of the counters, `date_last_used`, `filter[tags.id]`, the
+  entry's `text_entry_to_tag`, and reorders (it keeps its old rank). An
+  entry's revision advances its junctions' too (`0010_junction_revisions.sql`),
+  so `GET /tags_entries?filter[tag.id]=<tag>`, which lists deleted junctions,
+  after a cursor is everything that changed in the tag: joins, departures,
+  re-ranks and edits (`include=text_entry` for the entries). Django had no
+  junction list (405) and deleted junctions outright.
+- **Keyset pages.** Tags, entries and junctions take `page[after]=<cursor>`
+  (api-shared's `cursor.ts`): the rows past `<date_updated>,<id>`, in that
+  order, uncounted, with `links.next` while rows are left. Revisions only
+  grow (`src/lib/revision.ts`) and a changed row moves past every cursor, so
+  a sync that pages until `next` is null misses nothing, even rows one write
+  stamped alike (a reorder) that a page boundary splits, which a
+  `filter[date_updated.gt]` cursor would skip. Numbered pages are
+  unchanged.
 - **A tag's `date_updated` advances with its entries.** Whenever one of its
   entries advances (an edit, a soft delete, or any of the junction writes
   above), an entry leaves it, or its counters change, so does the tag
   (`0008_tag_revisions.sql`, triggers in the same statement as the write).
-  The web client reads a tag's entries (`filter[tags.id]`) once, then syncs
-  the entries changed since (`filter[date_updated.gt]`) only when the tag's
-  revision from the tags sync is newer than the one it last synced them at;
-  Django only advanced a tag when the tag itself was edited.
+  A client needs to sync a tag only when its revision from the tags sync is
+  newer than the one it last synced it at; Django only advanced a tag when
+  the tag itself was edited.
 - **Search folds Unicode in the app.** D1's SQLite has no ICU, so
   `filter[search]` compares against `subject_folded`/`body_folded`, written by
   every entry write path and the import (`src/lib/search.ts`). Anything that

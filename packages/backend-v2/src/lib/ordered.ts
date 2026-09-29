@@ -43,6 +43,12 @@ export interface OrderedSpec {
    */
   owner?: SQLiteColumn;
   /**
+   * The rows that hold a place in the order, when others do not: soft-deleted
+   * junctions keep their rank but are never shifted, moved, or positioned
+   * against (nor offered as a move's rows, `reorder.ts`).
+   */
+  ranked?: SQL;
+  /**
    * A statement run in the same batch as every move (atomically), e.g. to
    * advance the revisions of parent rows clients sync the moved rows through.
    * It runs after the move's UPDATE, so `changes()` tells whether that applied.
@@ -204,16 +210,21 @@ export class OrderedModel {
     return (moved?.meta.changes ?? 0) > 0;
   }
 
-  /** `AND owner = <row's owner>` for specs with an owner column. */
+  /**
+   * The conditions on the rows a move shifts and positions against: `AND
+   * owner = <row's owner>` for specs with an owner column, and the spec's
+   * `ranked` condition.
+   */
   private ownedBy(row: OrderedRow): SQL {
-    const {owner} = this.spec;
+    const {owner, ranked} = this.spec;
+    const live = ranked === undefined ? sql`` : sql`AND ${ranked}`;
     if (owner === undefined) {
-      return sql``;
+      return live;
     }
     if (row.owner === undefined) {
       throw new Error('An owned ordering needs the row owner');
     }
-    return sql`AND ${owner} = ${row.owner}`;
+    return sql`AND ${owner} = ${row.owner} ${live}`;
   }
 
   /** The rank just before or after `ref` among the mover's rows, as SQL. */

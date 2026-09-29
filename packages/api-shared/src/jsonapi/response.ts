@@ -1,7 +1,8 @@
 /**
  * Response documents, as the API renders them: resource objects with their
  * relationships' linkage, single and list documents (`included`, and DJA's
- * pagination `links` and `meta`), and the error document.
+ * pagination `links` and `meta`, or a keyset page's `links`), and the error
+ * document.
  *
  * The schemas mirror the output exactly and transform nothing, so a parsed
  * document equals the one received (unknown members are dropped).
@@ -156,3 +157,22 @@ export const errorDocumentSchema = z.object({
 
 /** The body of a login or logout: `{}`. */
 export const emptyObjectSchema = z.strictObject({});
+
+/** A keyset page's link to the page after it: null on a page not full. */
+export const cursorLinksSchema = z.object({next: z.nullable(z.url())});
+
+/**
+ * A keyset page of a collection (`page[after]`, see `cursor.ts`): rows in
+ * revision order and no count (see `documentSchema` for `included`).
+ */
+// @__NO_SIDE_EFFECTS__
+export function cursorListDocumentSchema<
+  D extends z.ZodMiniType,
+  I extends z.ZodMiniType,
+>(data: D, included: I) {
+  return z.object({
+    links: cursorLinksSchema,
+    data: z.array(data),
+    included: includedSchema(included),
+  });
+}
