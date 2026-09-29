@@ -36,12 +36,19 @@ export function cursorOf(resource: {
 /** Parse a `page[after]` value; null when it is not a cursor. */
 export function parseCursor(value: string): Cursor | null {
   const comma = value.lastIndexOf(',');
-  const id = value.slice(comma + 1);
+  const digits = value.slice(comma + 1);
+  const id = Number(digits);
   const dateUpdated = parseDateTime(value.slice(0, comma));
-  if (comma === -1 || !/^\d+$/.test(id) || dateUpdated === null) {
+  // An id past 2^53 would round to another row's.
+  if (
+    comma === -1 ||
+    !/^\d+$/.test(digits) ||
+    !Number.isSafeInteger(id) ||
+    dateUpdated === null
+  ) {
     return null;
   }
-  return {dateUpdated, id: Number(id)};
+  return {dateUpdated, id};
 }
 
 /**

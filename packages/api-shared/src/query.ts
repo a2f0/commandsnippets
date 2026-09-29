@@ -106,8 +106,45 @@ export type CommaList<T extends string> = T | `${T},${T}` | `${T},${T},${T}`;
 /** A `sort` term: a field ascending, or `-field` descending. */
 export type SortKey<S extends string> = S | `-${S}`;
 
-/** `{...A, ...B}` as one object type (what an editor shows). */
-type Merge<T> = {[K in keyof T]: T[K]};
+/**
+ * `{...A, ...B}` as one object type (what an editor shows); of each member,
+ * for a union.
+ */
+type Merge<T> = T extends unknown ? {[K in keyof T]: T[K]} : never;
+
+/** `sort`, where the spec has sort fields. */
+type SortParams<Spec extends ListQuerySpec<FilterSchemas, string, SearchMode>> =
+  [Spec['sort'][number]] extends [never]
+    ? unknown
+    : {sort?: CommaList<SortKey<Spec['sort'][number]>>};
+
+/** `sort`, ruled out (where the spec has sort fields). */
+type NoSort<Spec extends ListQuerySpec<FilterSchemas, string, SearchMode>> = [
+  Spec['sort'][number],
+] extends [never]
+  ? unknown
+  : {sort?: never};
+
+/**
+ * A numbered page (`page[number]`, `sort`), or, where keyset pages are
+ * `'supported'`, a keyset page (`page[after]`, which takes neither): each
+ * form names every key, the other form's as `never`.
+ */
+type PageParams<Spec extends ListQuerySpec<FilterSchemas, string, SearchMode>> =
+  Spec['cursor'] extends 'supported'
+    ?
+        | (SortParams<Spec> & {
+            'page[number]'?: number;
+            'page[size]'?: number;
+            'page[after]'?: never;
+          })
+        | (NoSort<Spec> & {
+            'page[number]'?: never;
+            'page[size]'?: number;
+            /** A cursor (`cursorOf`, `CURSOR_START`). */
+            'page[after]': string;
+          })
+    : SortParams<Spec> & {'page[number]'?: number; 'page[size]'?: number};
 
 /**
  * A collection's query parameters as a client sends them (as
@@ -118,8 +155,8 @@ type Merge<T> = {[K in keyof T]: T[K]};
  *   takes `__` too), its value what the filter parses the string into
  *   (`string`, `number` or `boolean`);
  * - `sort`, of the spec's sort fields, where there are any;
- * - `page[number]` and `page[size]`, and `page[after]` where keyset pages
- *   are `'supported'`;
+ * - `page[number]` and `page[size]`; or, where keyset pages are
+ *   `'supported'`, `page[after]` and `page[size]` instead (with no `sort`);
  * - `filter[search]`, where search is `'supported'` (the API ignores it where
  *   it is `'ignored'`, and refuses it where it is `'refused'`);
  * - `include`, of `Paths` (`IncludePath`), where includes are `'resolved'`.
@@ -132,17 +169,7 @@ export type ListParams<
     [K in keyof Spec['filters'] & string as `filter[${Dotted<K>}]`]?: z.output<
       Spec['filters'][K]
     >;
-  } & ([Spec['sort'][number]] extends [never]
-    ? unknown
-    : {sort?: CommaList<SortKey<Spec['sort'][number]>>}) & {
-      'page[number]'?: number;
-      'page[size]'?: number;
-    } & (Spec['cursor'] extends 'supported'
-      ? {
-          /** A cursor (`cursorOf`, `CURSOR_START`); not with a number or sort. */
-          'page[after]'?: string;
-        }
-      : unknown) &
+  } & PageParams<Spec> &
     (Spec['search'] extends 'supported'
       ? {'filter[search]'?: string}
       : unknown) &

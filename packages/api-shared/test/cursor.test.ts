@@ -28,9 +28,14 @@ describe('cursors', () => {
       'x,7',
       '2024-01-01T12:34:56,7.5',
       '2024-01-01T12:34:56,-7',
+      '2024-01-01T12:34:56,9007199254740993',
+      `2024-01-01T12:34:56,${'9'.repeat(400)}`,
     ]) {
       expect(parseCursor(value)).toBeNull();
     }
+    expect(parseCursor('2024-01-01T12:34:56,9007199254740991')?.id).toBe(
+      Number.MAX_SAFE_INTEGER
+    );
     // The last comma splits: a timestamp has none.
     expect(parseCursor('2024-01-01 12:34:56+00:00,7')).toEqual({
       dateUpdated: '2024-01-01T12:34:56.000000',

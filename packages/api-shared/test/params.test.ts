@@ -177,7 +177,20 @@ describe('list params', () => {
     const search: TagListParams = {'filter[search]': 'x'};
     // @ts-expect-error: entry reuses have no revision order to page in.
     const after: TextEntryReusedListParams = {'page[after]': 'x'};
-    expect([untagged, sort, include, admin, search, after]).toHaveLength(6);
+    // @ts-expect-error: a keyset page has no number...
+    const numbered: TagListParams = {'page[after]': 'x', 'page[number]': 2};
+    // @ts-expect-error: ...and no sort: it is in revision order.
+    const sorted: TextEntryListParams = {'page[after]': 'x', sort: 'subject'};
+    expect([
+      untagged,
+      sort,
+      include,
+      admin,
+      search,
+      after,
+      numbered,
+      sorted,
+    ]).toHaveLength(8);
   });
 
   test('are queries the schemas accept', () => {
