@@ -9,6 +9,7 @@ import {
   tagTextEntryCursorListDocumentSchema,
   tagTextEntryListDocumentSchema,
   textEntryCursorListDocumentSchema,
+  userDocumentSchema,
 } from '@commandsnippets/api-shared';
 import {setupServer} from 'msw/node';
 import {
@@ -27,10 +28,12 @@ import {
   CommandsnippetsDatabase,
   tagCursorKey,
 } from '../../../../src/lib/db/database';
+import {ForeignDataError} from '../../../../src/lib/sync/store';
 import {
-  createSyncEngine,
+  createSyncEngine as createEngine,
   isTagSynced,
   type SyncApi,
+  SyncUserError,
 } from '../../../../src/lib/sync/sync';
 import {handlers, resetMSWState} from '../../../../src/msw/handlers';
 
@@ -59,6 +62,13 @@ afterEach(async () => {
 const read = async (path: string) => (await fetch(`${API}${path}`)).json();
 const after = (value: string) => encodeURIComponent(value);
 
+/** The mock API's signed-in user's sync of `db`. */
+const createSyncEngine = (
+  database: CommandsnippetsDatabase,
+  api: SyncApi,
+  lockName: string
+) => createEngine(database, api, lockName, 'test');
+
 /** The sync's reads, `size` rows a page (the app reads 100). */
 function pagedApi(size: number, pages: string[] = []): SyncApi {
   const page = (path: string) => {
@@ -66,6 +76,7 @@ function pagedApi(size: number, pages: string[] = []): SyncApi {
     return read(`${path}&page[size]=${size}`);
   };
   return {
+    getCurrentUser: async () => userDocumentSchema.parse(await read('/user/')),
     getTagsAfter: async cursor =>
       tagCursorListDocumentSchema.parse(
         await page(`/tags?page[after]=${after(cursor)}`)
@@ -174,37 +185,108 @@ describe('syncAll', () => {
     expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(true);
   });
 
-  it('gives each tag its cursor once its junctions are all read', async () => {
-    // A third entry, untagged, and newest: read on a page of its own.
-    await send('POST', '/entries', {
-      data: {type: 'TextEntry', attributes: {subject: 'third', body: 'x'}},
-    });
-    const synced: Array<[string, string[]]> = [];
+  it('gives no tag its cursor until the entries are all read', async () => {
     const api = pagedApi(1);
-    const sync = createSyncEngine(
+    let entriesPages = 0;
+    const failing: SyncApi = {
+      ...api,
+      getEntriesAfter: async cursor => {
+        entriesPages += 1;
+        if (entriesPages === 2) {
+          throw new Error('offline');
+        }
+        return api.getEntriesAfter(cursor);
+      },
+    };
+    await expect(
+      createSyncEngine(db, failing, 'spec').syncAll()
+    ).rejects.toThrow('offline');
+    // A page of entries is stored, with its cursor; no tag claims a sync.
+    expect(await db.entries.count()).toBe(1);
+    expect(await db.cursors.get('entries')).toBeDefined();
+    expect(await db.cursors.where('key').startsWith('tag:').count()).toBe(0);
+
+    // The next sync goes on from the cursor, to the end.
+    const pages: string[] = [];
+    await createSyncEngine(db, pagedApi(1, pages), 'spec').syncAll();
+    expect(pages.filter(page => page.startsWith('/entries'))).toHaveLength(1);
+    for (const tagId of ['1', '2', '3', '4']) {
+      expect(await isTagSynced(db, tagId)).toBe(true);
+    }
+  });
+
+  it('lets a tag sync asked for meanwhile run between two pages', async () => {
+    const api = pagedApi(1);
+    const reads: string[] = [];
+    let sync: ReturnType<typeof createSyncEngine> | undefined;
+    let tagSync: Promise<void> | undefined;
+    sync = createSyncEngine(
       db,
       {
         ...api,
         getEntriesAfter: async cursor => {
-          const tags = await db.cursors
-            .where('key')
-            .startsWith('tag:')
-            .primaryKeys();
-          synced.push([cursor, tags.sort()]);
+          reads.push('entries');
+          // The tag shown, asked for during the first page.
+          tagSync ??= sync?.syncTag('1');
           return api.getEntriesAfter(cursor);
+        },
+        getTagJunctionsAfter: async (tagId, cursor) => {
+          reads.push(`tag ${tagId}`);
+          return api.getTagJunctionsAfter(tagId, cursor);
         },
       },
       'spec'
     );
     await sync.syncAll();
+    await tagSync;
+    // Tag 1's two junctions (a page each), between the entries' two pages.
+    expect(reads).toEqual(['entries', 'tag 1', 'tag 1', 'entries']);
+    expect(await isTagSynced(db, '1')).toBe(true);
+  });
 
-    // As each page is read: tags 2-4 have no entries, whole after the first
-    // page; tag 1 has two (one a page), whole after the second.
-    expect(synced.map(([, tags]) => tags)).toEqual([
-      [],
-      ['tag:2', 'tag:3', 'tag:4'],
-      ['tag:1', 'tag:2', 'tag:3', 'tag:4'],
-    ]);
+  it("refuses to sync another user's data into the database", async () => {
+    const api = pagedApi(2);
+    const bob: SyncApi = {
+      ...api,
+      getCurrentUser: async () => ({
+        data: {
+          type: 'User',
+          id: '2',
+          attributes: {
+            username: 'bob',
+            is_staff: false,
+            date_updated: '2020-01-01T00:00:00',
+          },
+        },
+      }),
+    };
+    await expect(createSyncEngine(db, bob, 'spec').syncAll()).rejects.toThrow(
+      SyncUserError
+    );
+    await expect(
+      createSyncEngine(db, bob, 'spec').syncTag('1')
+    ).rejects.toThrow(SyncUserError);
+    expect(await db.tags.count()).toBe(0);
+
+    // A page with another user's row is not stored, and its cursor stays.
+    const foreign: SyncApi = {
+      ...api,
+      getTagsAfter: async cursor => {
+        const page = await api.getTagsAfter(cursor);
+        return {
+          ...page,
+          data: page.data.map(tag => ({
+            ...tag,
+            relationships: {user: {data: {type: 'User', id: '2'}}},
+          })),
+        };
+      },
+    };
+    await expect(
+      createSyncEngine(db, foreign, 'spec').syncAll()
+    ).rejects.toThrow(ForeignDataError);
+    expect(await db.tags.count()).toBe(0);
+    expect(await db.cursors.get('tags')).toBeUndefined();
   });
 
   it('keeps a newer revision stored than the one it reads', async () => {
@@ -244,6 +326,7 @@ describe('syncAll', () => {
     const sync = createSyncEngine(
       db,
       {
+        getCurrentUser: slow(api.getCurrentUser),
         getTagsAfter: slow(api.getTagsAfter),
         getEntriesAfter: slow(api.getEntriesAfter),
         getTagJunctionsAfter: slow(api.getTagJunctionsAfter),

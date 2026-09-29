@@ -185,16 +185,20 @@ writing its type by hand.
   tabs). `syncAll` reads the tags, then the entries with their junctions,
   after the master cursors `tags` and `entries` (from the start on a fresh
   sign-in), storing each page with its cursor in one transaction, so a sync
-  resumes where one stopped; as it goes it gives each tag a cursor of its own
-  (`tag:<id>`, once the pages listed as many of its junctions as its
-  `entry_count`, and every tag at the end). `syncTag` reads one tag's
+  resumes where one stopped; when the entries are read to the end, every tag
+  gets a cursor of its own (`tag:<id>`: the newest junction revision when
+  the sync began, and the tag's revision). `syncTag` reads one tag's
   junctions (`GET /tags_entries?filter[tag.id]=`, deleted ones too) after its
-  cursor; a tag is synced while its cursor holds its revision
-  (`isTagSynced`).
+  cursor, from the start without one; a tag sync asked for while the
+  collection syncs runs between two of its pages. A tag is synced while its
+  cursor holds its revision (`isTagSynced`). Each sync first checks the
+  API's user (`GET /user/`) is the database's, and refuses a page with
+  another user's rows.
 - `src/lib/sync/store.ts`: what a sync stores: each resource unless the
-  database holds a newer revision of it, and an entry's
-  `text_entry_to_tag` (all of its junctions not deleted) marks the ones it
-  leaves out deleted.
+  database holds a newer revision of it; an entry stored decides its
+  junctions (its `text_entry_to_tag` lists all of them not deleted, so the
+  ones it leaves out are deleted), and an older copy of an entry leaves them
+  alone; at the same revision, a deleted junction stays deleted.
 - The UI still reads the MobX-State-Tree store; the Debug menu's "Sync
   IndexedDB" runs `syncAll` and logs what the database holds.
 

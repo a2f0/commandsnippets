@@ -22,7 +22,11 @@ export function syncSession(username: string): SyncSession {
     session?.db.close();
     const name = databaseName(environment, username);
     const db = new CommandsnippetsDatabase(name);
-    session = {username, db, sync: createSyncEngine(db, apiClient, name)};
+    session = {
+      username,
+      db,
+      sync: createSyncEngine(db, apiClient, name, username),
+    };
   }
   return session;
 }

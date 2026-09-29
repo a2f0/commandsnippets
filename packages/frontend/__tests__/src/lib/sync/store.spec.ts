@@ -5,7 +5,13 @@ import type {
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 
 import {CommandsnippetsDatabase} from '../../../../src/lib/db/database';
-import {putEntries, putNewer} from '../../../../src/lib/sync/store';
+import {
+  checkOwner,
+  ForeignDataError,
+  putEntries,
+  putJunctions,
+  putNewer,
+} from '../../../../src/lib/sync/store';
 
 const owner = {user: {data: {type: 'User', id: '1'}}} as const;
 
@@ -111,5 +117,40 @@ describe('putEntries', () => {
       [junction('5', '1', '2024-01-01T00:00:00')]
     );
     expect((await db.junctions.get('5'))?.attributes.is_deleted).toBe(false);
+  });
+
+  it('never brings back a junction with an older copy of its entry', async () => {
+    // Entry 1's newer listing left junction 1 out: deleted here.
+    await db.junctions.put(junction('1', '1'));
+    await putEntries(db, [entry('1', '2024-01-02T00:00:00', [])]);
+    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(true);
+
+    // An older response lists it, with the revision it had then.
+    await putEntries(
+      db,
+      [entry('1', '2024-01-01T00:00:00', ['1'])],
+      [junction('1', '1')]
+    );
+    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(true);
+    // A tag's list with that revision, active, does not either.
+    await putJunctions(db, [junction('1', '1')]);
+    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(true);
+    // Restoring it gives it a newer revision, which is stored.
+    await putJunctions(db, [junction('1', '1', '2024-01-03T00:00:00')]);
+    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(false);
+  });
+});
+
+describe('checkOwner', () => {
+  it("refuses another user's resource", () => {
+    expect(() => checkOwner('1', [junction('1', '1')])).not.toThrow();
+    const theirs = {
+      ...junction('2', '1'),
+      relationships: {
+        ...junction('2', '1').relationships,
+        user: {data: {type: 'User', id: '2'}},
+      },
+    } as const;
+    expect(() => checkOwner('1', [theirs])).toThrow(ForeignDataError);
   });
 });
