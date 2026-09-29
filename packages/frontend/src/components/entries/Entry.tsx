@@ -81,6 +81,14 @@ const Entry = ({
   const appConfig = useAppContext();
   const [textEntryObject, setTextEntryObject] =
     useState<ITextEntryJsonApi>(object);
+  // The list is shown from the store before its sync: show a newer revision
+  // of the entry when the sync lists one (revisions compare as strings, see
+  // lib/revisions.ts).
+  if (
+    object.attributes.date_updated > textEntryObject.attributes.date_updated
+  ) {
+    setTextEntryObject(object);
+  }
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
@@ -202,6 +210,15 @@ const Entry = ({
                     throughModelTop.id,
                     throughModelBottom.id
                   );
+                  // The list shows the new order already; bring the store's
+                  // ranks up to date so the next listing keeps it.
+                  if (user !== undefined && tag !== undefined) {
+                    appConfig
+                      .syncTagEntries(user, tag, true)
+                      .catch((error: unknown) => {
+                        console.error('Failed to fetch entries:', error);
+                      });
+                  }
                 }
               } else {
                 console.debug('useDrag end: it was not moved within the list.');

@@ -287,8 +287,12 @@ describe('convertDump', () => {
     expect(byId.get(22)?.[updated]).toBe('2021-01-01T00:00:00.000000');
   });
 
-  test('bumps entries whose junctions were re-ranked, and only those', () => {
+  test('bumps the entries and tags whose junctions were re-ranked, and only those', () => {
     const dump = parseDump(DUMP);
+    // Untie the tags (tags 20 and 21 share rank 5), so only the junctions'
+    // re-ranking can bump a tag.
+    const tagRows = dump.tables.get('tags_tag') ?? [];
+    tagRows[1] = {...tagRows[1], order: '6'};
     const junctions = dump.tables.get('tags_tagtextentrythroughmodel') ?? [];
     // Tie junctions 30 and 31 at rank 0 inside tag 20, on entries 10 and 11.
     junctions[0] = {
@@ -304,7 +308,7 @@ describe('convertDump', () => {
       order: '0',
     };
     const {converted, reranked} = convertDump(dump);
-    expect(reranked['tags_tagtextentrythroughmodel']).toBe(1);
+    expect(reranked).toEqual({tags_tag: 0, tags_tagtextentrythroughmodel: 1});
 
     const rows = (table: string) => {
       const found = converted.find(c => c.table === table);
@@ -326,6 +330,12 @@ describe('convertDump', () => {
     expect(entries.get(10)?.['date_updated']).toBe(
       '2020-08-03T02:37:27.850203'
     );
+    // The client syncs a tag's entries only once the tag's revision moves.
+    const tags = rows('tags_tag');
+    expect(tags.get(20)?.['date_updated']).toBe(
+      junction.get(31)?.['date_updated']
+    );
+    expect(tags.get(21)?.['date_updated']).toBe('2021-01-01T00:00:00.000000');
   });
 
   test('requires every imported table', () => {
@@ -346,8 +356,9 @@ describe('buildStatements', () => {
     expect(lines.join('\n')).not.toContain('FAIL');
   });
 
-  test('restores counters exactly, despite the triggers firing on insert', () => {
-    const db = load(imported().statements);
+  test('restores counters and tag revisions exactly, despite the triggers firing on insert', () => {
+    const {converted, statements} = imported();
+    const db = load(statements);
     expect(
       db
         .query(
@@ -359,6 +370,22 @@ describe('buildStatements', () => {
       {id: 21, entry_count: 1, date_last_used: '2021-02-02T00:00:00.000000'},
       {id: 22, entry_count: 0, date_last_used: null},
     ]);
+    // The revisions converted (tags 20 and 21 re-ranked, so bumped), not
+    // the ones the junction triggers stamped on insert.
+    const tags = converted.find(c => c.table === 'tags_tag');
+    const columns = tags?.spec.columns ?? [];
+    const revisions = (tags?.rows ?? [])
+      .map(r => ({
+        id: r[columns.indexOf('id')],
+        date_updated: r[columns.indexOf('date_updated')],
+      }))
+      .sort((a, b) => Number(a.id) - Number(b.id));
+    expect(revisions.map(r => r.date_updated)).toContain(
+      '2021-01-01T00:00:00.000000'
+    );
+    expect(
+      db.query('SELECT id, date_updated FROM tags_tag ORDER BY id').all()
+    ).toEqual(revisions);
     expect(
       db
         .query('SELECT tag_count FROM text_entries_textentry WHERE id = 10')

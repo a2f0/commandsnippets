@@ -1,13 +1,20 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
+import {applySnapshot} from 'mobx-state-tree';
 import {beforeEach, describe, expect, it, type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
+import {defaultState} from '../../src/lib/shared';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {store} from '../util/loggedInStore';
 import {server} from '../util/msw';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
+afterEach(() => {
+  server.resetHandlers();
+  // The mocked deletes and untags change the store, not the API's data.
+  applySnapshot(store, {...defaultState, loggedInUser: 'test'});
+});
 afterAll(() => server.close());
 beforeEach(() => assignLoggedInCookie());
 

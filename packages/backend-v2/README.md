@@ -27,7 +27,7 @@ and Capacitor apps are gone.
 | `src/auth/oauth.ts`, `src/auth/routes.ts` | GitHub and Google OAuth; login and logout routes | the `authentication` app |
 | `src/db/schema.ts` | tables (same table and column names) | models |
 | `src/db/client.ts`, `src/db/errors.ts` | the Drizzle client; D1 constraint failures | — |
-| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals) | migrations |
+| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries) | migrations |
 | `src/lib/jsonapi.ts` | JSON:API request parsing, includes, filters, sort, pagination (validated by api-shared's schemas) | django-rest-framework-json-api |
 | `src/lib/validate.ts` | api-shared's zod issues as JSON:API errors | DRF serializer fields' `is_valid()` |
 | `src/lib/errors.ts` | errors in the JSON:API error format | DRF exceptions, DJA's exception handler |
@@ -171,6 +171,14 @@ Deliberate changes, by area. The admin API is new; see
   `date_updated`**, in the same D1 batch as the junction write. Clients sync
   junctions only as `/entries` includes, filtered on the entry's revision;
   Django left entries untouched, so other devices missed those changes.
+- **A tag's `date_updated` advances with its entries.** Whenever one of its
+  entries advances (an edit, a soft delete, or any of the junction writes
+  above), an entry leaves it, or its counters change, so does the tag
+  (`0008_tag_revisions.sql`, triggers in the same statement as the write).
+  The web client syncs a tag's entries (`filter[tags.id]` and
+  `filter[date_updated.gt]`) only when the tag's revision from the tags sync
+  is newer than the one it last synced them at; Django only advanced a tag
+  when the tag itself was edited.
 - **Search folds Unicode in the app.** D1's SQLite has no ICU, so
   `filter[search]` compares against `subject_folded`/`body_folded`, written by
   every entry write path and the import (`src/lib/search.ts`). Anything that
@@ -181,7 +189,11 @@ Deliberate changes, by area. The admin API is new; see
 ### Schema
 
 - **Counters are triggers.** `0001_counter_triggers.sql` maintains tag and
-  entry counters in place of Django's signals.
+  entry counters in place of Django's signals. `0008_tag_revisions.sql`
+  re-creates the junction triggers so they also advance the tag's revision,
+  and adds one that advances an entry's tags whenever the entry's revision
+  does. The triggers compute revisions with `src/lib/revision.ts`'s formula,
+  written out in SQL.
 - **Length limits are CHECK constraints**, since SQLite has no varchar lengths.
 - **Emails are unique** among accounts that have one (logins find accounts by
   email); the Postgres import refuses shared emails.

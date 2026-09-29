@@ -1,3 +1,4 @@
+import type {IncludedResource} from '@commandsnippets/api-shared';
 import {destroy, flow, types} from 'mobx-state-tree';
 import type {
   ITagJsonApi,
@@ -6,6 +7,7 @@ import type {
   IUserJsonApi,
   ResourceCollection,
 } from '../../api/responses/types';
+import {syncedThrough} from '../../revisions';
 import {
   activeEntryEditField,
   activeSearch,
@@ -17,6 +19,17 @@ import {TagHelpers, TagModel} from './TagModel';
 import {TagTextEntryThroughModel} from './TagTextEntryThroughModel';
 import {TextEntryHelpers, TextEntryModel} from './TextEntryModel';
 import {UserModel} from './UserModel';
+
+/**
+ * How far a tag's entries are synced (`syncTagEntries`): the tag's revision
+ * then, and the newest entry revision its syncs have listed. Only syncs move
+ * it, never the app's own writes, so a change another client made before one
+ * of ours is never skipped.
+ */
+const TagSyncCursor = types.model('TagSyncCursor', {
+  tag: types.string,
+  entries: types.maybeNull(types.string),
+});
 
 export const RootModel = types
   .model({
@@ -42,6 +55,10 @@ export const RootModel = types
     currentUser: types.maybeNull(types.string),
     showTagCounts: types.boolean,
     allEntriesCacheTimestamp: types.string,
+    // The newest tag revision the tags syncs have listed (see TagSyncCursor).
+    tagsSyncedThrough: types.maybeNull(types.string),
+    // By tag id.
+    tagSyncCursors: types.map(TagSyncCursor),
   })
   .volatile<{
     activeSearch: activeSearch;
@@ -67,17 +84,21 @@ export const RootModel = types
     appMode: appMode.tagsList,
   }))
   .actions(self => ({
+    // Each updateOrCreate returns whether it changed the store: a resource it
+    // did not hold, or a newer revision of one it did.
     updateOrCreateTextEntry(object: ITextEntryJsonApi) {
       const existing = self.textEntriesArray.find(o => o.id === object.id);
       if (existing === undefined) {
         self.textEntriesArray.push(object);
-      } else {
-        const existingTimestamp = new Date(existing.attributes.date_updated);
-        const incomingTimeStamp = new Date(object.attributes.date_updated);
-        if (incomingTimeStamp > existingTimestamp) {
-          existing.update(object);
-        }
+        return true;
       }
+      const existingTimestamp = new Date(existing.attributes.date_updated);
+      const incomingTimeStamp = new Date(object.attributes.date_updated);
+      if (incomingTimeStamp > existingTimestamp) {
+        existing.update(object);
+        return true;
+      }
+      return false;
     },
     updateOrCreateUntaggedTextEntry(object: ITextEntryJsonApi) {
       const existing = self.untaggedTextEntriesArray.find(
@@ -85,25 +106,29 @@ export const RootModel = types
       );
       if (existing === undefined) {
         self.untaggedTextEntriesArray.push(object);
-      } else {
-        const existingTimestamp = new Date(existing.attributes.date_updated);
-        const incomingTimeStamp = new Date(object.attributes.date_updated);
-        if (incomingTimeStamp > existingTimestamp) {
-          existing.update(object);
-        }
+        return true;
       }
+      const existingTimestamp = new Date(existing.attributes.date_updated);
+      const incomingTimeStamp = new Date(object.attributes.date_updated);
+      if (incomingTimeStamp > existingTimestamp) {
+        existing.update(object);
+        return true;
+      }
+      return false;
     },
     updateOrCreateTag(object: ITagJsonApi) {
       const existing = self.tagsArray.find(o => o.id === object.id);
       if (existing === undefined) {
         self.tagsArray.push(object);
-      } else {
-        const existingTimestamp = new Date(existing.attributes.date_updated);
-        const incomingTimeStamp = new Date(object.attributes.date_updated);
-        if (incomingTimeStamp > existingTimestamp) {
-          existing.update(object);
-        }
+        return true;
       }
+      const existingTimestamp = new Date(existing.attributes.date_updated);
+      const incomingTimeStamp = new Date(object.attributes.date_updated);
+      if (incomingTimeStamp > existingTimestamp) {
+        existing.update(object);
+        return true;
+      }
+      return false;
     },
     updateOrCreateTagTextEntryThroughModel(
       object: ITagTextEntryThroughModelJsonApi
@@ -113,124 +138,164 @@ export const RootModel = types
       );
       if (existing === undefined) {
         self.tagTextEntryThroughModel.push(object);
-      } else {
-        const existingTimestamp = new Date(existing.attributes.date_updated);
-        const incomingTimeStamp = new Date(object.attributes.date_updated);
-        if (incomingTimeStamp > existingTimestamp) {
-          existing.update(object);
-        }
+        return true;
       }
+      const existingTimestamp = new Date(existing.attributes.date_updated);
+      const incomingTimeStamp = new Date(object.attributes.date_updated);
+      if (incomingTimeStamp > existingTimestamp) {
+        existing.update(object);
+        return true;
+      }
+      return false;
     },
     updateOrCreateUser(object: IUserJsonApi) {
       const existing = self.usersArray.find(o => o.id === object.id);
       if (existing === undefined) {
         self.usersArray.push(object);
-      } else {
-        const existingTimestamp = new Date(existing.attributes.date_updated);
-        const incomingTimeStamp = new Date(object.attributes.date_updated);
-        if (incomingTimeStamp > existingTimestamp) {
-          existing.update(object);
-        }
+        return true;
       }
+      const existingTimestamp = new Date(existing.attributes.date_updated);
+      const incomingTimeStamp = new Date(object.attributes.date_updated);
+      if (incomingTimeStamp > existingTimestamp) {
+        existing.update(object);
+        return true;
+      }
+      return false;
+    },
+  }))
+  .views(self => ({
+    /** `user`'s tag named `name`, when the store holds it. */
+    findTag(user: string, name: string) {
+      const owner = self.usersArray.find(o => o.attributes.username === user);
+      return self.tagsArray.find(
+        tag =>
+          tag.attributes.name === name &&
+          tag.relationships.user.data.id === owner?.id
+      );
     },
   }))
   .actions(self => ({
-    /** Store each resource by its type: entries, junctions, users, tags. */
+    /**
+     * Store each resource by its type: entries, junctions, users, tags.
+     * Returns whether the store changed.
+     */
     reconcileCollection(collection: ResourceCollection) {
+      let changed = false;
       for (const element of collection) {
         if (element.type === 'TextEntry') {
-          self.updateOrCreateTextEntry(element);
+          changed = self.updateOrCreateTextEntry(element) || changed;
         }
       }
       for (const element of collection) {
         if (element.type === 'TagTextEntryThroughModel') {
-          self.updateOrCreateTagTextEntryThroughModel(element);
+          changed =
+            self.updateOrCreateTagTextEntryThroughModel(element) || changed;
         }
       }
       for (const element of collection) {
         if (element.type === 'User') {
-          self.updateOrCreateUser(element);
+          changed = self.updateOrCreateUser(element) || changed;
         }
       }
       for (const element of collection) {
         if (element.type === 'Tag') {
-          self.updateOrCreateTag(element);
+          changed = self.updateOrCreateTag(element) || changed;
         }
       }
+      return changed;
+    },
+    /**
+     * Drop the store's links to tag `tagId` that `collection`, all of the
+     * tag's entries with their junctions, no longer has. Returns whether any
+     * went.
+     */
+    pruneTagJunctions(tagId: string, collection: ResourceCollection) {
+      const kept = new Set(
+        collection.flatMap(element =>
+          element.type === 'TagTextEntryThroughModel' ? [element.id] : []
+        )
+      );
+      const stale = self.tagTextEntryThroughModel.filter(
+        junction =>
+          junction.relationships.tag.data.id === tagId && !kept.has(junction.id)
+      );
+      for (const junction of stale) {
+        destroy(junction);
+      }
+      return stale.length > 0;
     },
   }))
   .actions(self => ({
+    /** Sync the user's tags changed since the last tags sync. */
     fetchTags: flow(function* fetchTags(user: string) {
       try {
-        const existingUser = self.usersArray.find(
-          o => o.attributes.username === user
-        );
-        let filteredTags: Array<ITagJsonApi> = [];
-        if (existingUser !== undefined) {
-          filteredTags = self.tagsArray.filter(element => {
-            return element.relationships.user.data.id === existingUser.id;
-          });
-        }
-        const mostRecentTimestamp: string | null =
-          TagHelpers.getMostRecentTimeStamp(filteredTags);
-        const collection = yield TagHelpers.fetch(
+        const since = self.tagsSyncedThrough;
+        const collection: IncludedResource[] = yield TagHelpers.fetch(
           [],
           user,
           1,
-          mostRecentTimestamp
+          since
         );
         self.reconcileCollection(collection);
+        self.tagsSyncedThrough = syncedThrough(collection, 'Tag', since);
       } catch (error) {
         console.error(error);
         throw error;
       }
     }),
-    fetchTextEntries: flow(function* fetchTextEntries(
+    /** One sync of tag `tagId`'s entries (see `syncTagEntries`). */
+    runTagSync: flow(function* runTagSync(
       user: string,
-      tag: string
+      tagId: string,
+      force: boolean
     ) {
-      try {
-        const userObject = self.usersArray.find(
-          element => element.attributes.username === user
-        );
+      const tag = self.tagsArray.find(candidate => candidate.id === tagId);
+      if (tag === undefined) {
+        return false;
+      }
+      const revision = tag.attributes.date_updated;
+      const cursor = self.tagSyncCursors.get(tagId);
+      if (!force && cursor?.tag === revision) {
+        return false;
+      }
+      const since = cursor?.entries ?? null;
+      const changes: IncludedResource[] = yield TextEntryHelpers.fetch(
+        [],
+        user,
+        tagId,
+        1,
+        since,
+        null
+      );
+      let changed = self.reconcileCollection(changes);
+      let entries = syncedThrough(changes, 'TextEntry', since);
 
-        const textEntriesFiltered: ITextEntryJsonApi[] = [];
-
-        const tagObject = self.tagsArray.find(
-          element =>
-            element.attributes.name === tag &&
-            element.relationships.user.data.id === userObject?.id
-        );
-
-        const tagTextEntryThroughModelFiltered =
-          self.tagTextEntryThroughModel.filter(
-            element => element.relationships.tag.data.id === tagObject?.id
-          );
-
-        tagTextEntryThroughModelFiltered.forEach(element => {
-          const entry = self.textEntriesArray.find(textEntry => {
-            return textEntry.id === element.relationships.text_entry.data.id;
-          });
-          if (entry !== undefined) {
-            textEntriesFiltered.push(entry);
-          }
-        });
-
-        const mostRecentTimestamp: string | null =
-          TextEntryHelpers.getMostRecentTimeStamp(textEntriesFiltered);
-        const collection = yield TextEntryHelpers.fetch(
+      // Changes list no entry that left the tag. More entries linked to it
+      // here than it counts means some did: read the tag whole, and drop the
+      // links it no longer has.
+      const linked = self.tagTextEntryThroughModel.filter(
+        junction => junction.relationships.tag.data.id === tagId
+      ).length;
+      const counted = self.tagsArray.find(candidate => candidate.id === tagId)
+        ?.attributes.entry_count;
+      if (counted !== undefined && linked > counted) {
+        const all: IncludedResource[] = yield TextEntryHelpers.fetch(
           [],
           user,
-          tag,
+          tagId,
           1,
-          mostRecentTimestamp,
+          null,
           null
         );
-        self.reconcileCollection(collection);
-      } catch (error) {
-        console.error(error);
-        throw error;
+        changed = self.reconcileCollection(all) || changed;
+        changed = self.pruneTagJunctions(tagId, all) || changed;
+        entries = syncedThrough(all, 'TextEntry', entries);
       }
+
+      // The revision read before the requests: one the tag reached while
+      // they ran may cover changes they missed, so it is synced next time.
+      self.tagSyncCursors.set(tagId, {tag: revision, entries});
+      return changed;
     }),
     fetchUntaggedTextEntries: flow(function* fetchUntaggedTextEntries(
       user: string
@@ -375,4 +440,44 @@ export const RootModel = types
     setShowTagCounts(value: boolean) {
       self.showTagCounts = value;
     },
-  }));
+  }))
+  .actions(self => {
+    /** Each tag's latest sync, by tag id: a tag's syncs run one at a time. */
+    const tagSyncs = new Map<string, Promise<boolean>>();
+    return {
+      /**
+       * Sync the entries of `user`'s tag `name` into the store, and return
+       * whether the store changed meanwhile. The API advances a tag's
+       * revision whenever one of its entries changes, joins or leaves it, so
+       * nothing is requested while the tag's revision is the one it was last
+       * synced at (unless `force`: after a write of the app's own that the
+       * store does not reflect, such as a reorder). Otherwise only the
+       * entries changed since the last sync are read. The tag's revision
+       * comes from the tags sync (`fetchTags`).
+       */
+      syncTagEntries(user: string, name: string, force = false) {
+        const tag = self.findTag(user, name);
+        if (tag === undefined) {
+          return Promise.resolve(false);
+        }
+        const tagId = tag.id;
+        // After the tag's sync in flight, whose failure its caller handles:
+        // this one then starts from the cursor that one left, and reports
+        // that one's changes too (its caller may no longer list them).
+        const sync = (tagSyncs.get(tagId) ?? Promise.resolve(false))
+          .catch(() => false)
+          .then(
+            async earlier =>
+              (await self.runTagSync(user, tagId, force)) || earlier
+          );
+        tagSyncs.set(tagId, sync);
+        const settled = () => {
+          if (tagSyncs.get(tagId) === sync) {
+            tagSyncs.delete(tagId);
+          }
+        };
+        sync.then(settled, settled);
+        return sync;
+      },
+    };
+  });

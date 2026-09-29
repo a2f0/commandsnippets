@@ -14,6 +14,10 @@
  * Timestamps stay in the fixed-width text format of `lib/clock.ts`; they are
  * converted to integer microseconds and back in SQL (julianday() would lose
  * the microseconds to floating point).
+ *
+ * The triggers of `migrations/0008_tag_revisions.sql` advance tags with the
+ * same formula written out in SQL (a tag's revision moves with its entries):
+ * a change here needs a migration re-creating them.
  */
 import {type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';

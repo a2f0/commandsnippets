@@ -305,14 +305,14 @@ export function sort(
 }
 
 /**
- * The user's entries (with `tag`, and `tag_count` tags, when not null)
- * changed `since` (all when null), and the resources included with them,
- * from `page` on: added to `entries`.
+ * The user's entries (tagged `tagId`, and with `tag_count` tags, when not
+ * null) changed `since` (all when null), and the resources included with
+ * them, from `page` on: added to `entries`.
  */
 export function fetch(
   entries: IncludedResource[],
   user: string,
-  tag: string | null,
+  tagId: string | null,
   page: number,
   since: string | null,
   tag_count: number | null
@@ -328,8 +328,8 @@ export function fetch(
     params['filter[date_updated.gt]'] = since;
   }
 
-  if (tag !== null) {
-    params['filter[tags.name]'] = tag;
+  if (tagId !== null) {
+    params['filter[tags.id]'] = Number(tagId);
   }
 
   if (tag_count !== null) {
@@ -346,7 +346,7 @@ export function fetch(
     if (response.links.next === null) {
       return updatedEntries;
     }
-    return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
+    return fetch(updatedEntries, user, tagId, page + 1, since, tag_count);
   });
 }
 

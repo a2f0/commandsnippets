@@ -30,7 +30,8 @@ export const tagEntryOrdering: OrderedSpec = {
   // Imported Django data can put another user's junction in a user's tag.
   owner: tagsEntries.user_id,
   // Clients fetch junctions through /entries (included), which is filtered on
-  // the entry's revision: advance the entries whose junctions a move re-ranked.
+  // the entry's revision: advance the entries whose junctions a move re-ranked
+  // (their trigger advances the tag too, migrations/0008_tag_revisions.sql).
   // The moved junctions carry the owner's newest junction revision; nothing is
   // touched if the move's guarded UPDATE did not apply.
   touch: moved => sql`
@@ -57,6 +58,8 @@ export const tagEntryOrdering: OrderedSpec = {
  * Advance an entry's revision when the junction write batched before it
  * applied (`changes()` counts only that statement's own rows, not triggers').
  * Only the requester's own entries: legacy junctions can link another user's.
+ * The entry's trigger then advances its tags; the junction's own triggers
+ * advance the tag it joined or left (migrations/0008_tag_revisions.sql).
  */
 const touchEntry = (db: Db, entryId: number, userId: number) =>
   db

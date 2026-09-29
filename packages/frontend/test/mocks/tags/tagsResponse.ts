@@ -15,7 +15,8 @@ export const tagsResponse: TagListDocument & JsonObject = {
         date_created: '2020-05-07T18:20:00',
         date_updated: '2020-05-07T18:20:00',
         date_last_used: '2020-05-07T18:20:00',
-        entry_count: 2,
+        // The four junctions of test/mocks/entries/entriesResponse.ts.
+        entry_count: 4,
         order: 1,
         is_deleted: false,
       },

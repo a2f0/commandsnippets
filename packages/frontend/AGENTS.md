@@ -84,6 +84,20 @@ Run these from `packages/frontend`.
   fields must be optional or have defaults so older snapshots still load.
 - **Context**: `src/AppContext.tsx` provides the store; components read it
   with `useAppContext()`.
+- **Sync**: the store syncs changes only (`filter[date_updated.gt]`), from
+  cursors it keeps in the snapshot and that only syncs move (the app's own
+  writes store newer revisions, which must not skip another client's older
+  changes): `tagsSyncedThrough` for the tags (`fetchTags`, when the tag list
+  loads), and `tagSyncCursors` for each tag's entries (`syncTagEntries`).
+  The API advances a tag's revision whenever one of its entries changes,
+  joins or leaves it, so selecting a tag lists its entries from the store at
+  once and requests nothing while the tag's revision is the one its cursor
+  holds; otherwise `EntryList` syncs the tag in the background and lists it
+  again only if the store changed. A tag whose store holds more entries than
+  its `entry_count` lost some elsewhere, which a diff cannot list: it is read
+  whole and the links it no longer has are dropped. The app's own writes that
+  the store does not reflect (a reorder) sync the tag with `force`. `Entry`
+  and `Tag` show a newer revision of their resource when a sync lists one.
 - **Signing out when the session is gone**: `fetchWithAuth`
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API
@@ -139,7 +153,8 @@ writing its type by hand.
   `zod` puts nearly all of it in the bundle (`__tests__/src/lib/api/zod.spec.ts`
   fails on one).
 - `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
-  client-side sorting and filtering of tags and entries.
+  client-side sorting and filtering of tags and entries;
+  `src/lib/revisions.ts` compares the revisions the syncs' cursors hold.
 
 ### Local Database (Debug only)
 - `src/lib/db/` wraps a Dexie (IndexedDB) database that only the Debug menu's
