@@ -241,6 +241,35 @@ describe('the junction list', () => {
   });
 });
 
+describe('the junction list, numbered', () => {
+  it('lists the newest first on request, and those changed since a revision', async () => {
+    const {user1, client, entry, junction} = await setUpTagged();
+    const newer = await tagTextEntryFactory({
+      tag: await tagFactory({user: user1}),
+      text_entry: entry,
+      user: user1,
+    });
+    await db()
+      .update(tagsEntries)
+      .set({date_updated: '2031-01-01T00:00:00.000000'})
+      .where(eq(tagsEntries.id, newer.id));
+    // The client's mark: the newest junction revision there is.
+    const newest = await json(
+      await client.get('/api/v1/tags_entries?sort=-date_updated&page[size]=1')
+    );
+    expect(newest.data.map((row: Json) => row.id)).toEqual([String(newer.id)]);
+    expect(newest.data[0].attributes.date_updated).toBe('2031-01-01T00:00:00');
+
+    const since = await json(
+      await client.get(
+        `/api/v1/tags_entries?filter[date_updated.gt]=${encodeURIComponent('2030-01-01T00:00:00')}`
+      )
+    );
+    expect(since.data.map((row: Json) => row.id)).toEqual([String(newer.id)]);
+    expect(junction.id).not.toBe(newer.id);
+  });
+});
+
 describe('untagging soft-deletes the junction', () => {
   it('flags it, moves the counters, and advances the tag and entry', async () => {
     const {client, tag, entry, junction} = await setUpTagged();

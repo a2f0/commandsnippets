@@ -5,6 +5,7 @@ import type {
   TagListParams,
   TagReorderDocument,
   TagTextEntryCreateDocument,
+  TagTextEntryListParams,
   TagTextEntryReorderDocument,
   TagUpdateDocument,
   TextEntryCreateDocument,
@@ -13,14 +14,22 @@ import type {
 } from '@commandsnippets/api-shared/requests';
 import {
   emptyObjectSchema,
+  type TagCursorListDocument,
   type TagDocument,
   type TagListDocument,
+  type TagTextEntryCursorListDocument,
   type TagTextEntryDocument,
+  type TagTextEntryListDocument,
+  type TextEntryCursorListDocument,
   type TextEntryDocument,
   type TextEntryListDocument,
+  tagCursorListDocumentSchema,
   tagDocumentSchema,
   tagListDocumentSchema,
+  tagTextEntryCursorListDocumentSchema,
   tagTextEntryDocumentSchema,
+  tagTextEntryListDocumentSchema,
+  textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
   textEntryListDocumentSchema,
   type UserDocument,
@@ -253,6 +262,72 @@ class ApiClient {
       {method: 'GET', signal},
       'Failed to fetch entries',
       textEntryListDocumentSchema
+    );
+  }
+
+  // The sync's reads (lib/sync/): keyset pages in revision order.
+
+  /** The page of the user's tags after `after`. */
+  public async getTagsAfter(after: string): Promise<TagCursorListDocument> {
+    const params: TagListParams = {'page[after]': after, 'page[size]': 100};
+    return this.requestDocument(
+      urlWithQuery(`${baseURL}/tags`, params),
+      {method: 'GET'},
+      'Failed to sync tags',
+      tagCursorListDocumentSchema
+    );
+  }
+
+  /** The page of the user's entries after `after`, with their junctions. */
+  public async getEntriesAfter(
+    after: string
+  ): Promise<TextEntryCursorListDocument> {
+    const params: TextEntryListParams = {
+      'page[after]': after,
+      'page[size]': 100,
+      include: 'text_entry_to_tag',
+    };
+    return this.requestDocument(
+      urlWithQuery(`${baseURL}/entries`, params),
+      {method: 'GET'},
+      'Failed to sync entries',
+      textEntryCursorListDocumentSchema
+    );
+  }
+
+  /**
+   * The page of tag `tagId`'s junctions (deleted ones too) after `after`,
+   * with their entries and the entries' junctions.
+   */
+  public async getTagJunctionsAfter(
+    tagId: string,
+    after: string
+  ): Promise<TagTextEntryCursorListDocument> {
+    const params: TagTextEntryListParams = {
+      'filter[tag.id]': Number(tagId),
+      'page[after]': after,
+      'page[size]': 100,
+      include: 'text_entry,text_entry.text_entry_to_tag',
+    };
+    return this.requestDocument(
+      urlWithQuery(`${baseURL}/tags_entries`, params),
+      {method: 'GET'},
+      'Failed to sync tag',
+      tagTextEntryCursorListDocumentSchema
+    );
+  }
+
+  /** The user's newest junction revision, of any tag's (none: null). */
+  public async getNewestJunction(): Promise<TagTextEntryListDocument> {
+    const params: TagTextEntryListParams = {
+      sort: '-date_updated',
+      'page[size]': 1,
+    };
+    return this.requestDocument(
+      urlWithQuery(`${baseURL}/tags_entries`, params),
+      {method: 'GET'},
+      'Failed to read the newest junction',
+      tagTextEntryListDocumentSchema
     );
   }
 

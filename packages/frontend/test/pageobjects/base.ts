@@ -53,6 +53,14 @@ export class Base {
     return $('#file-menu-logout');
   }
 
+  // debug menu
+  get debugMenuButton(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#debug-menu-button');
+  }
+  get debugMenuSyncIndexedDB(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#debug-menu-sync-indexed-db');
+  }
+
   // entries menu
   get entriesMenu(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#entries-menu');

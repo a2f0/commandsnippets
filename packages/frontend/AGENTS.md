@@ -174,14 +174,33 @@ writing its type by hand.
   read), since a skipped row would be pruned and passed by the cursor;
   `src/lib/revisions.ts` compares the revisions the cursors hold.
 
-### Local Database (Debug only)
-- `src/lib/db/` wraps a Dexie (IndexedDB) database that only the Debug menu's
-  "Populate IndexedDB" item writes to. The app does not read from it. There is
-  no Turso/SQLite adapter any more.
-- That item runs `fetchAllEntriesForUser` (`src/lib/textEntries.ts`): every
-  page of the user's entries, stored with the users, tags and junctions
-  included (`__tests__/src/lib/textEntries.spec.ts` checks it against
-  `fake-indexeddb`).
+### IndexedDB and its sync (not yet what the app shows)
+- `src/lib/db/database.ts`: the signed-in user's Dexie database
+  (`commandsnippets-<environment>-<username>`): their tags, entries and
+  junctions (deleted ones too) as api-shared's resources, and the `cursors`
+  the sync keeps. Signing out deletes it (`resetApplicationState` ends the
+  session, `src/lib/sync/session.ts`).
+- `src/lib/sync/sync.ts`: keyset reads (`page[after]`, api-shared's
+  `cursor.ts`) from those cursors, one sync at a time (a Web Lock across
+  tabs). `syncAll` reads the tags, then the entries with their junctions,
+  after the master cursors `tags` and `entries` (from the start on a fresh
+  sign-in), storing each page with its cursor in one transaction, so a sync
+  resumes where one stopped; when the entries are read to the end, every tag
+  gets a cursor of its own (`tag:<id>`: the newest junction revision when
+  the sync began, and the tag's revision). `syncTag` reads one tag's
+  junctions (`GET /tags_entries?filter[tag.id]=`, deleted ones too) after its
+  cursor, from the start without one; a tag sync asked for while the
+  collection syncs runs between two of its pages. A tag is synced while its
+  cursor holds its revision (`isTagSynced`). Each sync first checks the
+  API's user (`GET /user/`) is the database's, and refuses a page with
+  another user's rows.
+- `src/lib/sync/store.ts`: what a sync stores: each resource unless the
+  database holds a newer revision of it; an entry stored decides its
+  junctions (its `text_entry_to_tag` lists all of them not deleted, so the
+  ones it leaves out are deleted), and an older copy of an entry leaves them
+  alone; at the same revision, a deleted junction stays deleted.
+- The UI still reads the MobX-State-Tree store; the Debug menu's "Sync
+  IndexedDB" runs `syncAll` and logs what the database holds.
 
 ### Source layout
 - **App shell** (the root of `src/`): `index.tsx` (the entry point),
@@ -205,8 +224,8 @@ writing its type by hand.
   features; `src/theme/` the MUI themes, the theme provider, the global
   styles and the shared `sx` objects (`sx.ts`)
 - **Non-UI code**: `src/lib/` (the API clients, auth, the store, the Dexie
-  database and helpers), `src/hooks/`, `src/providers/`, `src/i18n/` and
-  `src/msw/`
+  database and its sync, and helpers), `src/hooks/`, `src/providers/`,
+  `src/i18n/` and `src/msw/`
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
   (`/:user/:tag`)
 - **Libraries**: Material UI, Emotion (styled components), React Router,
@@ -229,8 +248,12 @@ writing its type by hand.
   pagination, timestamps and error documents with `src/msw/documents.ts`.
   The handlers of `POST /entries`, the `PATCH`es and `/tags_entries` parse the
   request document as the API does (`src/msw/requests.ts`) and keep the mock
-  state as its database would (revisions, counters, junctions);
-  `__tests__/src/msw/handlers.spec.ts` checks them.
+  state as its database would (revisions, counters, junctions: deletes are
+  soft, and untagging keeps the junction for the junction list);
+  `__tests__/src/msw/handlers.spec.ts` checks them. Keyset pages
+  (`page[after]`, `src/msw/keyset.ts`) of `/tags`, `/entries` and
+  `/tags_entries` answer as the API does; numbered pages of `/entries` still
+  leave deleted entries out, as the current lists expect.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
   `fake-indexeddb/auto`. Unit specs mock the API with `msw/node`

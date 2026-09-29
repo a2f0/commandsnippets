@@ -70,7 +70,7 @@ export const en: I18NextTranslations = {
     sortByDateLastUsed: 'Sort by Date Last Used',
     sortByEntryCount: 'Sort by Entry Count',
     triggerTestError: 'Trigger Test Error',
-    populateIndexedDB: 'Populate IndexedDB',
+    syncIndexedDB: 'Sync IndexedDB',
   },
   tags: {
     tagName: 'Tag Name',

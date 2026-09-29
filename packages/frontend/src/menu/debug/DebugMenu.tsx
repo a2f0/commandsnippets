@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {StyledMenu} from '../StyledMenu';
-import {PopulateIndexedDB} from './menuItems/PopulateIndexedDB';
+import {SyncIndexedDB} from './menuItems/SyncIndexedDB';
 import {TriggerTestError} from './menuItems/TriggerTestError';
 
 interface IProps {
@@ -16,7 +16,7 @@ const DebugMenu = ({onClose, anchorEl}: IProps) => (
     open={Boolean(anchorEl)}
     onClose={onClose}
   >
-    <PopulateIndexedDB onClose={onClose} />
+    <SyncIndexedDB onClose={onClose} />
     <TriggerTestError onClose={onClose} />
   </StyledMenu>
 );
