@@ -260,7 +260,34 @@ function linkJunctions(state: EntriesState, entry: TextEntry) {
   };
 }
 
-/** Advance `entry`'s revision, as a write to its junctions does. */
+/** The next revision of the tags. */
+const nextTagRevision = () =>
+  nextRevision(tags.map(tag => tag.attributes.date_updated));
+
+/**
+ * Advance the revisions of `entry`'s tags, as the database does whenever the
+ * entry's revision advances (all to the same one).
+ */
+function touchTagsOf(state: EntriesState, entry: TextEntry) {
+  const tagIds = new Set(
+    junctionsOf(state)
+      .filter(
+        junction => junction.relationships.text_entry.data.id === entry.id
+      )
+      .map(junction => junction.relationships.tag.data.id)
+  );
+  const revision = nextTagRevision();
+  for (const tag of tags) {
+    if (tagIds.has(tag.id)) {
+      tag.attributes = {...tag.attributes, date_updated: revision};
+    }
+  }
+}
+
+/**
+ * Advance `entry`'s revision, as a write to its junctions does, and so its
+ * tags' revisions.
+ */
 function touchEntry(state: EntriesState, entry: TextEntry) {
   entry.attributes = {
     ...entry.attributes,
@@ -268,6 +295,7 @@ function touchEntry(state: EntriesState, entry: TextEntry) {
       state.data.map(candidate => candidate.attributes.date_updated)
     ),
   };
+  touchTagsOf(state, entry);
 }
 
 /**
@@ -292,8 +320,9 @@ function entryIncluded(state: EntriesState, entry: TextEntry) {
 /**
  * Tag `entry` with `tag`, as the API does: a junction at the bottom of the
  * tag (its highest rank + 1, or 0), then its database triggers (the entry's
- * `tag_count` and the tag's `entry_count` go up, and the tag is last used
- * now; the tag's revision stays) and the entry's new revision.
+ * `tag_count` and the tag's `entry_count` go up, the tag is last used now and
+ * its revision advances) and the entry's new revision (which advances its
+ * tags' revisions again).
  */
 function createJunction(
   state: EntriesState,
@@ -330,6 +359,7 @@ function createJunction(
     ...tag.attributes,
     entry_count: countJunctions(state, 'tag', tag.id),
     date_last_used: created,
+    date_updated: nextTagRevision(),
   };
   touchEntry(state, entry);
   linkJunctions(state, entry);
@@ -354,8 +384,9 @@ function countJunctions(
 
 /**
  * Untag: remove the junction, then its database triggers (the counts go
- * down, and the tag was last used when its newest remaining junction was
- * made) and the entry's new revision.
+ * down, the tag was last used when its newest remaining junction was made,
+ * and its revision advances) and the entry's new revision (which advances
+ * the tags it is still in).
  */
 function deleteJunction(state: EntriesState, junction: TagTextEntry) {
   retireId('TagTextEntryThroughModel', junction.id);
@@ -386,6 +417,7 @@ function deleteJunction(state: EntriesState, junction: TagTextEntry) {
       ...tag.attributes,
       entry_count: remaining.length,
       date_last_used: remaining.at(-1) ?? null,
+      date_updated: nextTagRevision(),
     };
   }
 }
@@ -728,6 +760,7 @@ const createHandlers = () => {
       }),
 
       // Edit or (un)delete an entry: the attributes sent, and a new revision
+      // (its tags' too)
       http.patch(`${baseUrl}/entries/:id`, async ({params, request}) => {
         recordRequest('PATCH', request.url);
         console.log('OK: MSW intercepted entry PATCH request:', request.url);
@@ -759,6 +792,7 @@ const createHandlers = () => {
               state.data.map(candidate => candidate.attributes.date_updated)
             ),
           };
+          touchTagsOf(state, entry);
           const body: TextEntryDocument = {
             data: entry,
             included: entryIncluded(state, entry),

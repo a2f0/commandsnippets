@@ -9,8 +9,10 @@ describe('Holy Grail Layout with Many Entries', () => {
     await BasePage.open('');
     await browser.login();
 
-    // Navigate to the test page first
-    await BasePage.open('test');
+    // Open another tag first: the app syncs a tag's entries once and then
+    // only when its revision moves, so test-tag-1 must first be synced after
+    // the override below replaces the entries.
+    await BasePage.open('test/test-tag-2');
 
     // Override MSW handlers to use manyEntriesResponse mock
     const mswResult = await browser.execute(mockData => {

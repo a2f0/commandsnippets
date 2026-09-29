@@ -1,7 +1,8 @@
-import type {IncludedResource} from '@commandsnippets/api-shared';
+import type {IncludedResource, Tag} from '@commandsnippets/api-shared';
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {apiClient} from './api/apiClient';
+import {type ListRevision, readPages} from './api/readPages';
 import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
 import type {
   ITagTextEntryThroughModelJsonApi,
@@ -305,49 +306,63 @@ export function sort(
 }
 
 /**
- * The user's entries (with `tag`, and `tag_count` tags, when not null)
- * changed `since` (all when null), and the resources included with them,
- * from `page` on: added to `entries`.
+ * The user's entries (tagged `tagId`, and with `tag_count` tags, when not
+ * null) changed `since` (all when null), and the resources included with
+ * them, from every page (see readPages). Entries leave a tag's list as well
+ * as join it, so a read of a tag's is checked against the tag's revision
+ * (`tagRevision`, known before the read), which every page includes (every
+ * entry listed is in the tag) and the API advances whenever the tag's
+ * entries change, join or leave it.
  */
 export function fetch(
-  entries: IncludedResource[],
   user: string,
-  tag: string | null,
-  page: number,
+  tagId: string | null,
   since: string | null,
-  tag_count: number | null
+  tag_count: number | null,
+  tagRevision?: string
 ): Promise<IncludedResource[]> {
-  const params: EntriesQueryParams = {
-    'page[number]': page,
-    'filter[user.username]': user,
-    sort: 'date_updated',
-    include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
-  };
-
-  if (since !== null) {
-    params['filter[date_updated.gt]'] = since;
-  }
-
-  if (tag !== null) {
-    params['filter[tags.name]'] = tag;
-  }
-
-  if (tag_count !== null) {
-    params['filter[tag_count]'] = tag_count;
-  }
-
-  return apiClient.getEntries(params).then(response => {
-    const updatedEntries = entries.concat(response.data);
-    for (const item of response.included ?? []) {
-      if (!updatedEntries.includes(item)) {
-        updatedEntries.push(item);
+  return readPages(
+    page => {
+      const params: EntriesQueryParams = {
+        'page[number]': page,
+        'filter[user.username]': user,
+        sort: 'date_updated',
+        include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
+      };
+      if (since !== null) {
+        params['filter[date_updated.gt]'] = since;
       }
-    }
-    if (response.links.next === null) {
-      return updatedEntries;
-    }
-    return fetch(updatedEntries, user, tag, page + 1, since, tag_count);
-  });
+      if (tagId !== null) {
+        params['filter[tags.id]'] = Number(tagId);
+      }
+      if (tag_count !== null) {
+        params['filter[tag_count]'] = tag_count;
+      }
+      return apiClient.getEntries(params);
+    },
+    listRevision(tagId, tagRevision)
+  );
+}
+
+/**
+ * Tag `tagId`'s revision as a revision of its list of entries, for
+ * readPages: `before`, then as each page includes it.
+ */
+function listRevision(
+  tagId: string | null,
+  before: string | undefined
+): ListRevision | undefined {
+  if (tagId === null || before === undefined) {
+    return undefined;
+  }
+  return {
+    before,
+    of: page =>
+      page.included?.find(
+        (resource): resource is Tag =>
+          resource.type === 'Tag' && resource.id === tagId
+      )?.attributes.date_updated,
+  };
 }
 
 export function fetchPage({
@@ -422,7 +437,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
     if (username === undefined) {
       console.info('Cannot fetch all entried for undefined user.');
     } else {
-      const entries = await fetch([], username, null, 1, null, null);
+      const entries = await fetch(username, null, null, null);
       for (const entry of entries) {
         if (entry.type === 'TextEntryReused') {
           throw new Error('unexpected type!');

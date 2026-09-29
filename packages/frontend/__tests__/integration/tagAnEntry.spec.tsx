@@ -51,7 +51,29 @@ const response: TagTextEntryDocument = {
       },
     },
   },
-  included: [user, tag, entry],
+  // The entry as tagging leaves it: advanced, with both of its junctions.
+  included: [
+    user,
+    tag,
+    {
+      ...entry,
+      attributes: {
+        ...entry.attributes,
+        tag_count: 2,
+        date_updated: '2022-05-14T02:33:53.995003',
+      },
+      relationships: {
+        ...entry.relationships,
+        text_entry_to_tag: {
+          data: [
+            {type: 'TagTextEntryThroughModel', id: '1'},
+            {type: 'TagTextEntryThroughModel', id: '5'},
+          ],
+          meta: {count: 2},
+        },
+      },
+    },
+  ],
 };
 
 const server = setupServer(

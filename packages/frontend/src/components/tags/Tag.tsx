@@ -78,6 +78,12 @@ const Tag = ({
   setSelectedTag,
 }: ITagProps) => {
   const [tagObject, setTagObject] = useState<ITagJsonApi>(object);
+  // The list is shown from the store before the tags sync: show a newer
+  // revision of the tag when the sync brings one (revisions compare as
+  // strings, see lib/revisions.ts).
+  if (object.attributes.date_updated > tagObject.attributes.date_updated) {
+    setTagObject(object);
+  }
   const appConfig = useAppContext();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);

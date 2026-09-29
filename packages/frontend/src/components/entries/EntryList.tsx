@@ -3,7 +3,7 @@ import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import invariant from 'invariant';
-import {autorun} from 'mobx';
+import {autorun, reaction} from 'mobx';
 import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
@@ -53,19 +53,23 @@ const EntryList = () => {
   const [previousController, setPreviousController] = useState<
     AbortController | undefined
   >(undefined);
-  useEffect(
-    () =>
-      autorun(() => {
+  useEffect(() => {
+    if (entriesFilter === 'untagged' || entriesFilter === 'all') {
+      return autorun(() => {
         retrieveEntries();
-      }),
-    [
-      location,
-      searchParams,
-      appConfig.tagTextEntryThroughModelSortOrder,
-      appConfig.entrySortOrder,
-      appConfig.entrySearchMethod,
-    ]
-  );
+      });
+    }
+    if (user !== undefined && tag !== undefined) {
+      return showTag(user, tag);
+    }
+    return undefined;
+  }, [
+    location,
+    searchParams,
+    appConfig.tagTextEntryThroughModelSortOrder,
+    appConfig.entrySortOrder,
+    appConfig.entrySearchMethod,
+  ]);
 
   const retrieveEntries = () => {
     if (entriesFilter === 'untagged' && user !== undefined) {
@@ -77,14 +81,39 @@ const EntryList = () => {
         .catch(logFetchError);
     } else if (entriesFilter === 'all') {
       filterAndSort();
-    } else if (user !== undefined && tag !== undefined) {
-      appConfig
-        .fetchTextEntries(user, tag)
-        .then(() => {
-          filterAndSort();
-        })
-        .catch(logFetchError);
     }
+  };
+
+  /**
+   * List the tag's entries the store holds, at once, then sync them in the
+   * background whenever the tag's revision moves past the one they were
+   * synced at (on the first visit, and when a tags sync brings a newer one;
+   * each tags sync also retries a sync that failed). List them again
+   * whenever a response changes the store: this tag's sync, or another's
+   * (a sync still running from a tag shown before, a tagging) that changed
+   * entries this tag shares. Returns the cleanup.
+   */
+  const showTag = (user: string, tag: string) => {
+    filterAndSort();
+    const disposers = [
+      reaction(
+        () =>
+          `${appConfig.findTag(user, tag)?.attributes.date_updated} ${appConfig.tagsSyncedAt}`,
+        () => {
+          appConfig.syncTagEntries(user, tag).catch(logFetchError);
+        },
+        {fireImmediately: true}
+      ),
+      reaction(
+        () => appConfig.storeVersion,
+        () => filterAndSort()
+      ),
+    ];
+    return () => {
+      for (const dispose of disposers) {
+        dispose();
+      }
+    };
   };
 
   useEffect(() => {

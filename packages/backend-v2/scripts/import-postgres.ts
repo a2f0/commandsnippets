@@ -383,8 +383,9 @@ export function buildStatements(
     flush();
   }
 
-  // Inserting junctions and reuses fired the counter triggers on top of the
-  // counters copied from Postgres; put the source values back.
+  // Inserting junctions and reuses fired the triggers on top of the values
+  // copied from Postgres (counters, and the tags' revisions); put the source
+  // values back.
   const restore = (table: string, columns: string[]) => {
     const found = converted.find(entry => entry.table === table);
     if (found === undefined) {
@@ -403,7 +404,7 @@ export function buildStatements(
       );
     }
   };
-  restore('tags_tag', ['entry_count', 'date_last_used']);
+  restore('tags_tag', ['entry_count', 'date_last_used', 'date_updated']);
   restore('text_entries_textentry', [
     'tag_count',
     'reused_count',
@@ -661,14 +662,21 @@ export function convertDump(dump: Dump): {
     reranked[table] = changed.length;
     if (table === 'tags_tagtextentrythroughmodel') {
       // Clients pick junction changes up through /entries (included junctions),
-      // which is filtered on the *entry's* date_updated: bump those entries too.
-      const entryIndex = found.spec.columns.indexOf('text_entry_id');
-      touch(
-        converted,
-        'text_entries_textentry',
-        new Set(changed.map(row => row[entryIndex] as Value)),
-        timestamp
-      );
+      // which is filtered on the *entry's* date_updated, and only sync a tag's
+      // entries once the tag's own revision moves: bump both, as the API's
+      // re-ranking does (migrations/0008_tag_revisions.sql).
+      const column = (name: string) => found.spec.columns.indexOf(name);
+      for (const [target, key] of [
+        ['text_entries_textentry', column('text_entry_id')],
+        ['tags_tag', column('tag_id')],
+      ] as const) {
+        touch(
+          converted,
+          target,
+          new Set(changed.map(row => row[key] as Value)),
+          timestamp
+        );
+      }
     }
   }
   const skipped = [...dump.tables.keys()].filter(table => !(table in TABLES));

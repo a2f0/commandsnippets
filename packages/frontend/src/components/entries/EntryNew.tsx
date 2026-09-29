@@ -65,7 +65,11 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
       })
       .then(response => {
         console.info(response.data);
-        appConfig.updateOrCreateTagTextEntryThroughModel(response.data);
+        // The junction, and the entry and tag as they are now.
+        appConfig.reconcileCollection([
+          response.data,
+          ...(response.included ?? []),
+        ]);
         filterAndSortParent();
         appConfig.setEntryNew(null);
       })

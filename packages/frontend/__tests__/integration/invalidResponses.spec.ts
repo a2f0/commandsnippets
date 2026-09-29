@@ -82,6 +82,8 @@ describe('A response that breaks the contract', () => {
   });
 
   it('fails the whole sync when a later page breaks it', async () => {
+    server.use(http.get(`${API}/tags`, () => HttpResponse.json(tagsResponse)));
+    await store.fetchTags('test');
     server.use(
       http.get(`${API}/entries`, ({request}) => {
         const page = new URL(request.url).searchParams.get('page[number]');
@@ -98,12 +100,13 @@ describe('A response that breaks the contract', () => {
     );
 
     await expect(
-      store.fetchTextEntries('test', 'test-tag-1')
+      store.syncTagEntries('test', 'test-tag-1')
     ).rejects.toBeInstanceOf(InvalidResponseError);
 
-    // Not even the first page's entries.
+    // Not even the first page's entries, and the tag is not synced.
     expect(store.textEntriesArray).toHaveLength(0);
     expect(store.tagTextEntryThroughModel).toHaveLength(0);
+    expect(store.tagSyncCursors.size).toBe(0);
     expect(store.loggedInUser).toBe('test');
   });
 });

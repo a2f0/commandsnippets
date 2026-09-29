@@ -358,6 +358,20 @@ describe('PATCH /entries/:id', () => {
     expect(entryOf(await getEntries(), '1')).toEqual(data);
   });
 
+  it("advances the revisions of the entry's tags, and only theirs", async () => {
+    const before = await getTags();
+    await send('PATCH', '/entries/1', editEntry('1', {body: 'edited'}));
+    const after = await getTags();
+    // Entry 1 is in tag 1 only.
+    expect(
+      tagOf(after, '1').attributes.date_updated >
+        latest(before.data.map(tag => tag.attributes.date_updated))
+    ).toBe(true);
+    for (const id of ['2', '3', '4']) {
+      expect(tagOf(after, id)).toEqual(tagOf(before, id));
+    }
+  });
+
   it('leaves out the attributes not sent', async () => {
     const {json} = await send(
       'PATCH',
@@ -434,13 +448,23 @@ describe('POST /tags_entries', () => {
     const entry = entryOf(entries, '1');
     expect(included).toEqual([tag, entry, expect.objectContaining({id: '1'})]);
 
-    // The triggers: the counts, and the tag last used now (its revision
-    // stays); the entry's revision advances.
+    // The triggers: the counts, the tag last used now, and a new revision
+    // of the tag and of the entry, which advances the entry's other tag too.
     expect(tag.attributes).toEqual({
       ...tagOf(tagsBefore, '2').attributes,
       entry_count: 1,
       date_last_used: junction.attributes.date_created,
+      date_updated: tag.attributes.date_updated,
     });
+    const newestTagBefore = latest(
+      tagsBefore.data.map(candidate => candidate.attributes.date_updated)
+    );
+    for (const id of ['1', '2']) {
+      expect(tagOf(tags, id).attributes.date_updated > newestTagBefore).toBe(
+        true
+      );
+    }
+    expect(tagOf(tags, '3')).toEqual(tagOf(tagsBefore, '3'));
     expect(entry.attributes.tag_count).toBe(2);
     expect(
       entry.attributes.date_updated >
@@ -552,7 +576,7 @@ describe('DELETE /tags_entries/:id', () => {
   it('untags the entry, and updates the counts, the linkage and the revisions', async () => {
     const {json} = await send('POST', '/tags_entries', tagEntry('2', '1'));
     const junction = tagTextEntryDocumentSchema.parse(json).data;
-    const entriesBefore = await getEntries();
+    const [tagsBefore, entriesBefore] = [await getTags(), await getEntries()];
 
     const {status} = await send('DELETE', `/tags_entries/${junction.id}`);
     expect(status).toBe(204);
@@ -564,6 +588,15 @@ describe('DELETE /tags_entries/:id', () => {
       entry_count: 0,
       date_last_used: null,
     });
+    // The tag it left, and the one it is still in, advance.
+    const newestTagBefore = latest(
+      tagsBefore.data.map(candidate => candidate.attributes.date_updated)
+    );
+    for (const id of ['1', '2']) {
+      expect(tagOf(tags, id).attributes.date_updated > newestTagBefore).toBe(
+        true
+      );
+    }
     expect(entry.attributes.tag_count).toBe(1);
     expect(
       entry.attributes.date_updated >

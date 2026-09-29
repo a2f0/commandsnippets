@@ -84,6 +84,33 @@ Run these from `packages/frontend`.
   fields must be optional or have defaults so older snapshots still load.
 - **Context**: `src/AppContext.tsx` provides the store; components read it
   with `useAppContext()`.
+- **Sync**: the store syncs changes only (`filter[date_updated.gt]`), from
+  cursors it keeps in the snapshot and that only syncs move (the app's own
+  writes store newer revisions, which must not skip another client's older
+  changes): `tagsSyncedThrough` for the tags (`fetchTags`, when the tag list
+  loads and when the app comes back into view, at most every 30 seconds:
+  `TagListWrapper`), and `tagSyncCursors` for each tag's entries
+  (`syncTagEntries`).
+  - The API advances a tag's revision whenever one of its entries changes,
+    joins or leaves it, so selecting a tag lists its entries from the store
+    at once and requests nothing while the tag's revision is the one its
+    cursor holds. Otherwise (and when a tags sync moves the revision of the
+    tag shown, or retries a failed sync) `EntryList` syncs the tag in the
+    background, and it lists the tag again whenever a response changes the
+    store (the volatile `storeVersion`), whichever sync it answered: another
+    tag's can change entries this one shares.
+  - A tag's first sync reads it whole (`filter[tags.id]`) and drops the
+    links to it the read lacks; later ones read every entry changed since
+    (no tag filter: an entry that left the tag changed too). Every response
+    that lists an entry decides its links (`reconcileCollection`: its
+    `text_entry_to_tag` lists all of its junctions) unless the store holds a
+    newer revision of the entry, so a response that arrives late never
+    undoes a newer one. A link the first read cannot place (stored while it
+    ran) stays, and the tag is synced again from the read.
+  - The app's own writes that the store does not reflect (a reorder) sync
+    the tag with `force`, and tagging stores the entry and tag its response
+    includes. `Entry` and `Tag` show a newer revision of their resource when
+    a sync lists one.
 - **Signing out when the session is gone**: `fetchWithAuth`
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API
@@ -139,7 +166,13 @@ writing its type by hand.
   `zod` puts nearly all of it in the bundle (`__tests__/src/lib/api/zod.spec.ts`
   fails on one).
 - `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
-  client-side sorting and filtering of tags and entries.
+  client-side sorting and filtering of tags and entries. The syncs' fetches
+  read every page with `src/lib/api/readPages.ts`, which reads a list again
+  when its offset pages shifted while read (a row read twice, a total that
+  changed, or, for a tag's entries read in several pages, a last page whose
+  included tag has another revision than the one the store held before the
+  read), since a skipped row would be pruned and passed by the cursor;
+  `src/lib/revisions.ts` compares the revisions the cursors hold.
 
 ### Local Database (Debug only)
 - `src/lib/db/` wraps a Dexie (IndexedDB) database that only the Debug menu's

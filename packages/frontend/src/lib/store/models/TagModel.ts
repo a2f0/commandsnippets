@@ -1,6 +1,5 @@
 import {getParent, types} from 'mobx-state-tree';
 import type {ITagJsonApi} from '../../api/responses/types';
-import {getMostRecentTimeStamp} from '../../shared';
 import {fetch, filterAndSort} from '../../tags';
 import type {RootModel} from './RootModel';
 
@@ -47,5 +46,4 @@ export const TagModel = types
 export const TagHelpers = {
   filterAndSort,
   fetch,
-  getMostRecentTimeStamp,
 };
