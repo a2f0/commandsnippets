@@ -336,6 +336,112 @@ describe('syncTagEntries', () => {
     ]);
   });
 
+  /** Answer entries requests only once the returned function is called. */
+  function serveEntriesLater(
+    respond: (query: URLSearchParams, url: string) => object
+  ) {
+    let answer = () => {};
+    const answered = new Promise<void>(resolve => {
+      answer = resolve;
+    });
+    requests = [];
+    server.use(
+      http.get(`${API}/entries`, async ({request}) => {
+        const query = new URL(request.url).searchParams;
+        requests.push(query);
+        await answered;
+        return HttpResponse.json(respond(query, request.url));
+      })
+    );
+    return answer;
+  }
+
+  it('drops a link an older response stored while a newer one was in flight', async () => {
+    const store = createStore([
+      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 1}),
+      tag('2', {date_updated: '2024-01-01T00:00:00'}),
+    ]);
+    serveEntries((_query, url) =>
+      entriesDocument(
+        url,
+        [apiEntry('10', '2024-01-02T00:00:00', [tagged])],
+        [tagged]
+      )
+    );
+    await store.syncTagEntries('test', 'tag-1');
+
+    // The tag moved: entry 10 was tagged with tag 2 and untagged again.
+    store.updateOrCreateTag(
+      tag('1', {date_updated: '2024-02-01T00:00:00', entry_count: 1})
+    );
+    const answer = serveEntriesLater((_query, url) =>
+      entriesDocument(
+        url,
+        [apiEntry('10', '2024-01-06T00:00:00', [tagged])],
+        [tagged]
+      )
+    );
+    const sync = store.syncTagEntries('test', 'tag-1');
+    await vi.waitFor(() => expect(requests).toHaveLength(1));
+    // An older response, asked for earlier, arrives first: tagged with 2.
+    const tagging = apiJunction('200', '2', '10');
+    store.reconcileCollection([
+      apiEntry('10', '2024-01-05T00:00:00', [tagged, tagging]),
+      tagged,
+      tagging,
+    ]);
+    expect(store.tagTextEntryThroughModel).toHaveLength(2);
+    answer();
+    await sync;
+
+    expect(store.tagTextEntryThroughModel.map(link => link.id)).toEqual([
+      '100',
+    ]);
+  });
+
+  it('syncs a tag again when its first read leaves a link in doubt', async () => {
+    const store = createStore([
+      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 1}),
+    ]);
+    const answer = serveEntriesLater((_query, url) =>
+      entriesDocument(
+        url,
+        [apiEntry('10', '2024-01-02T00:00:00', [tagged])],
+        [tagged]
+      )
+    );
+    const sync = store.syncTagEntries('test', 'tag-1');
+    await vi.waitFor(() => expect(requests).toHaveLength(1));
+    // Stored while the read ran, by a response that may be older than it
+    // (entry 11 then left the tag) or newer (it had not joined yet).
+    store.reconcileCollection([
+      apiEntry('11', '2024-03-01T00:00:00', [alsoTagged]),
+      alsoTagged,
+    ]);
+    answer();
+    await sync;
+    expect(store.tagTextEntryThroughModel.map(link => link.id).sort()).toEqual([
+      '100',
+      '101',
+    ]);
+    expect(getSnapshot(store.tagSyncCursors)).toEqual({
+      '1': {tag: null, entries: '2024-01-02T00:00:00'},
+    });
+
+    // The next sync, at the same revision, lists entry 11 as it is now.
+    serveEntries((_query, url) =>
+      entriesDocument(url, [apiEntry('11', '2024-04-01T00:00:00')], [])
+    );
+    expect(await store.syncTagEntries('test', 'tag-1')).toBe(true);
+    expect(requests[0]?.get('filter[date_updated.gt]')).toBe(
+      '2024-01-02T00:00:00'
+    );
+    expect(store.tagTextEntryThroughModel.map(link => link.id)).toEqual([
+      '100',
+    ]);
+    expect(store.tagSyncCursors.get('1')?.tag).toBe('2024-01-01T00:00:00');
+  });
+
   it('brings back no link of an entry the store holds a newer revision of', () => {
     const store = createStore([tag('1', {}), tag('2', {})]);
     store.reconcileCollection([

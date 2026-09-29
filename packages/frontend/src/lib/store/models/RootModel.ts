@@ -1,5 +1,5 @@
 import type {IncludedResource} from '@commandsnippets/api-shared';
-import {destroy, flow, types} from 'mobx-state-tree';
+import {destroy, flow, type Instance, types} from 'mobx-state-tree';
 import type {
   ITagJsonApi,
   ITagTextEntryThroughModelJsonApi,
@@ -27,7 +27,8 @@ import {UserModel} from './UserModel';
  * of ours is never skipped.
  */
 const TagSyncCursor = types.model('TagSyncCursor', {
-  tag: types.string,
+  // Null: synced through `entries` but at no revision, so synced again.
+  tag: types.maybeNull(types.string),
   entries: types.maybeNull(types.string),
 });
 
@@ -71,7 +72,7 @@ export const RootModel = types
     tagSearchString: string;
     tagSelectedID: string;
     appMode: appMode;
-    // Advances whenever a sync changes the store (reconcileCollection,
+    // Advances whenever a response changes the store (reconcileCollection,
     // pruneTagJunctions): a list shown from the store compares it to tell
     // whether any sync, its own or another's, changed what it shows.
     storeVersion: number;
@@ -184,7 +185,10 @@ export const RootModel = types
   }))
   .actions(self => ({
     /**
-     * Store each resource by its type: entries, junctions, users, tags.
+     * Store each resource by its type: entries, junctions, users, tags; and
+     * drop the links of each entry whose `text_entry_to_tag` (all of its
+     * junctions) no longer lists them, unless the store holds a newer
+     * revision of the entry (or the collection lists the link itself).
      * Returns whether the store changed.
      */
     reconcileCollection(collection: ResourceCollection) {
@@ -217,6 +221,38 @@ export const RootModel = types
             self.updateOrCreateTagTextEntryThroughModel(element) || changed;
         }
       }
+      const linked = new Map<string, Set<string>>();
+      for (const element of collection) {
+        if (
+          element.type === 'TextEntry' &&
+          'text_entry_to_tag' in element.relationships &&
+          !outdated.has(element.id)
+        ) {
+          linked.set(
+            element.id,
+            new Set(
+              element.relationships.text_entry_to_tag.data.map(({id}) => id)
+            )
+          );
+        }
+      }
+      const listed = new Set(
+        collection.flatMap(element =>
+          element.type === 'TagTextEntryThroughModel' ? [element.id] : []
+        )
+      );
+      const unlinked = self.tagTextEntryThroughModel.filter(junction => {
+        const junctions = linked.get(junction.relationships.text_entry.data.id);
+        return (
+          junctions !== undefined &&
+          !junctions.has(junction.id) &&
+          !listed.has(junction.id)
+        );
+      });
+      for (const junction of unlinked) {
+        destroy(junction);
+        changed = true;
+      }
       for (const element of collection) {
         if (element.type === 'User') {
           changed = self.updateOrCreateUser(element) || changed;
@@ -233,73 +269,51 @@ export const RootModel = types
       return changed;
     },
     /**
-     * Drop the store's links of each entry in `collection` that the entry's
-     * `text_entry_to_tag` (all of its junctions) no longer lists, of those
-     * in `held`: the links the store held when the request was sent (one
-     * stored since came from a newer response). Returns whether any went.
-     */
-    pruneEntryJunctions(
-      collection: ResourceCollection,
-      held: ReadonlySet<string>
-    ) {
-      const linked = new Map<string, Set<string>>();
-      for (const element of collection) {
-        if (
-          element.type === 'TextEntry' &&
-          'text_entry_to_tag' in element.relationships
-        ) {
-          linked.set(
-            element.id,
-            new Set(
-              element.relationships.text_entry_to_tag.data.map(({id}) => id)
-            )
-          );
-        }
-      }
-      const stale = self.tagTextEntryThroughModel.filter(junction => {
-        const junctions = linked.get(junction.relationships.text_entry.data.id);
-        return (
-          held.has(junction.id) &&
-          junctions !== undefined &&
-          !junctions.has(junction.id)
-        );
-      });
-      for (const junction of stale) {
-        destroy(junction);
-      }
-      if (stale.length > 0) {
-        self.storeVersion += 1;
-      }
-      return stale.length > 0;
-    },
-    /**
-     * Drop the store's links to tag `tagId` that `collection`, all of the
-     * tag's entries with their junctions, no longer has, of those in `held`
-     * (see pruneEntryJunctions). Returns whether any went.
+     * Drop the store's links to tag `tagId` that `collection`, the tag's
+     * entries read whole, no longer has, of entries it does not list (those
+     * it lists had theirs reconciled). A link is gone when the store held it
+     * before the read was asked for, or holds its entry at a revision no
+     * newer than the newest the read lists; otherwise it may be newer than
+     * the read, and stays in doubt. Returns whether any went, and whether
+     * any stayed in doubt.
      */
     pruneTagJunctions(
       tagId: string,
-      collection: ResourceCollection,
+      collection: readonly IncludedResource[],
       held: ReadonlySet<string>
     ) {
-      const kept = new Set(
+      const read = new Set(
         collection.flatMap(element =>
-          element.type === 'TagTextEntryThroughModel' ? [element.id] : []
+          element.type === 'TextEntry' ? [element.id] : []
         )
       );
-      const stale = self.tagTextEntryThroughModel.filter(
-        junction =>
-          junction.relationships.tag.data.id === tagId &&
-          held.has(junction.id) &&
-          !kept.has(junction.id)
-      );
+      const newest = syncedThrough(collection, 'TextEntry', null);
+      const stale: Array<Instance<typeof TagTextEntryThroughModel>> = [];
+      let doubtful = false;
+      for (const junction of self.tagTextEntryThroughModel) {
+        const entryId = junction.relationships.text_entry.data.id;
+        if (junction.relationships.tag.data.id !== tagId || read.has(entryId)) {
+          continue;
+        }
+        const entry = self.textEntriesArray.find(o => o.id === entryId);
+        if (
+          held.has(junction.id) ||
+          (newest !== null &&
+            entry !== undefined &&
+            entry.attributes.date_updated <= newest)
+        ) {
+          stale.push(junction);
+        } else {
+          doubtful = true;
+        }
+      }
       for (const junction of stale) {
         destroy(junction);
       }
       if (stale.length > 0) {
         self.storeVersion += 1;
       }
-      return stale.length > 0;
+      return {pruned: stale.length > 0, doubtful};
     },
   }))
   .actions(self => ({
@@ -353,15 +367,22 @@ export const RootModel = types
         null
       );
       let changed = self.reconcileCollection(changes);
-      changed = self.pruneEntryJunctions(changes, held) || changed;
+      let doubtful = false;
       if (since === null) {
-        changed = self.pruneTagJunctions(tagId, changes, held) || changed;
+        const pruned = self.pruneTagJunctions(tagId, changes, held);
+        changed = pruned.pruned || changed;
+        doubtful = pruned.doubtful;
       }
       const entries = syncedThrough(changes, 'TextEntry', since);
 
       // The revision read before the request: one the tag reached while it
-      // ran may cover changes it missed, so it is synced next time.
-      self.tagSyncCursors.set(tagId, {tag: revision, entries});
+      // ran may cover changes it missed, so it is synced next time. A link
+      // left in doubt has the tag synced next time too: from `entries`, which
+      // then lists its entry, changed since.
+      self.tagSyncCursors.set(tagId, {
+        tag: doubtful ? null : revision,
+        entries,
+      });
       return changed;
     }),
     fetchUntaggedTextEntries: flow(function* fetchUntaggedTextEntries(
