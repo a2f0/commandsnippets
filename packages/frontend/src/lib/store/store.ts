@@ -95,9 +95,10 @@ export function createAppStateStore(
 
 /** Sign out of the app: put every stored setting back to its default. */
 export function resetApplicationState() {
+  const username = store.loggedInUser;
   applySnapshot(store, defaultState);
   // The signed-in user's IndexedDB data goes with them.
-  endSyncSession().catch((error: unknown) => {
+  endSyncSession(username).catch((error: unknown) => {
     console.error('ERROR: could not delete the IndexedDB data:', error);
   });
 }

@@ -709,6 +709,25 @@ describe('keyset pages (the sync reads)', () => {
     expect(tag.attributes.date_updated > before).toBe(true);
   });
 
+  it('filter by a revision strictly newer, whatever the id', async () => {
+    // Tag 1's revision exactly: tags with it are not changed since.
+    const tag = tagOf(await getTags(), '1');
+    const since = await send(
+      'GET',
+      `/tags_entries?filter[date_updated.gt]=${encodeURIComponent('2020-04-13T18:20:00')}`
+    );
+    expect(since.json.data).toEqual([]);
+    const tags = tagCursorListDocumentSchema.parse(
+      (
+        await send(
+          'GET',
+          `/tags?page[after]=${CURSOR_START}&filter[date_updated.gt]=${encodeURIComponent(tag.attributes.date_updated)}`
+        )
+      ).json
+    );
+    expect(tags.data.map(({id}) => id)).toEqual(['2', '3', '4']);
+  });
+
   it("list a tag's junctions changed by an edit of their entry", async () => {
     const tagOne = async (after = CURSOR_START) =>
       tagTextEntryCursorListDocumentSchema.parse(

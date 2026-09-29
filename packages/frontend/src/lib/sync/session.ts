@@ -2,6 +2,7 @@
  * The signed-in user's database and its sync (`sync.ts`): opened for a user
  * on first use, and deleted when they sign out.
  */
+import {Dexie} from 'dexie';
 import {apiClient} from '../api/apiClient';
 import {CommandsnippetsDatabase, databaseName} from '../db/database';
 import {environment} from '../environment';
@@ -26,12 +27,20 @@ export function syncSession(username: string): SyncSession {
   return session;
 }
 
-/** Sign out: close the open session and delete its data. */
-export async function endSyncSession(): Promise<void> {
+/**
+ * Sign `username` out: close the open session, and delete their data whether
+ * or not this page opened it (they may have synced before a reload).
+ */
+export async function endSyncSession(username: string | null): Promise<void> {
   const ending = session;
   session = null;
+  ending?.db.close();
+  const names = new Set<string>();
   if (ending !== null) {
-    ending.db.close();
-    await ending.db.delete();
+    names.add(ending.db.name);
   }
+  if (username !== null) {
+    names.add(databaseName(environment, username));
+  }
+  await Promise.all([...names].map(name => Dexie.delete(name)));
 }

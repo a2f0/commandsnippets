@@ -4,6 +4,7 @@ import {
   type AdminUser,
   CODES,
   type IncludedResource,
+  parseDateTime,
   type Tag,
   type TagCursorListDocument,
   type TagDocument,
@@ -30,7 +31,7 @@ import {
   onePage,
   pagination,
 } from './documents';
-import {afterOf, byRevision, keysetPage} from './keyset';
+import {afterOf, byRevision, keysetPage, positionOf} from './keyset';
 import {recordRequest} from './requestCounter';
 import {
   apiError,
@@ -563,15 +564,15 @@ const booleanFilter = (url: URL, name: string) => {
   return value === null ? null : value === 'true' || value === '1';
 };
 
-/** Whether `resource` passes `filter[date_updated.gt]`, when given. */
+/**
+ * Whether `resource` passes `filter[date_updated.gt]`, when given: a revision
+ * strictly newer (by the timestamp alone, as the API compares).
+ */
 const changedSince = (url: URL, resource: TagTextEntry | Tag | TextEntry) => {
   const since = url.searchParams.get('filter[date_updated.gt]');
   return (
     since === null ||
-    byRevision(resource, {
-      id: '0',
-      attributes: {date_updated: since},
-    }) > 0
+    positionOf(resource).dateUpdated > (parseDateTime(since) ?? since)
   );
 };
 
