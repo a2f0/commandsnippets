@@ -4,11 +4,13 @@
  * stores them.
  */
 import {act, render, screen, waitFor} from '@testing-library/react';
+import {Dexie} from 'dexie';
 import {createMemoryHistory} from 'history';
 import {delay, HttpResponse, http} from 'msw';
 import {type MockInstance, vi} from 'vitest';
 import {SYNC_INTERVAL_MS} from '../../src/lib/data/useSync';
 import {tagCursorKey} from '../../src/lib/db/database';
+import {STORAGE_KEY} from '../../src/lib/state/appState';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
@@ -187,5 +189,42 @@ describe('The entries page', () => {
     expect(listed()).toEqual([]);
     const {db} = syncSession(TEST_USER);
     expect(await db.entries.count()).toBe(0);
+  });
+
+  it("takes up the sign-in another tab saved, leaving it that tab's", async () => {
+    // Another tab signed in as someone else, and saved it.
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...saved,
+        state: {...saved.state, loggedInUser: 'someone-else'},
+      })
+    );
+    server.use(
+      http.get('*/api/v1/user/', () =>
+        HttpResponse.json({
+          data: {
+            type: 'User',
+            id: '1',
+            attributes: {
+              username: 'someone-else',
+              is_staff: false,
+              date_updated: '2020-01-01T00:00:00',
+            },
+          },
+        })
+      )
+    );
+    const test = syncSession(TEST_USER).db.name;
+    renderAt('/test/test-tag-1');
+
+    await waitFor(() => expect(store.loggedInUser).toBe('someone-else'));
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject(
+      {state: {loggedInUser: 'someone-else'}}
+    );
+    // The first user's data goes; the other's syncs.
+    await waitFor(async () => expect(await Dexie.exists(test)).toBe(false));
+    await waitFor(() => expect(listed()).toHaveLength(4));
   });
 });

@@ -8,7 +8,7 @@
  */
 import type {Tag} from '@commandsnippets/api-shared/responses';
 import {useEffect} from 'react';
-import {resetApplicationState} from '../state/appState';
+import {leaveForeignSession} from '../state/appState';
 import {ForeignDataError} from '../sync/store';
 import {isTagSynced, SyncUserError} from '../sync/sync';
 import {useSession} from './hooks';
@@ -17,12 +17,13 @@ export const SYNC_INTERVAL_MS = 30_000;
 
 /**
  * A sync that failed: logged, and when the API answers for another user
- * (another tab signed in as someone else), signed out here too.
+ * (another tab signed in as someone else), this tab leaves the session
+ * (`leaveForeignSession`).
  */
 function syncFailed(error: unknown): void {
   if (error instanceof SyncUserError || error instanceof ForeignDataError) {
     console.error('ERROR: the API answers for another user:', error);
-    resetApplicationState();
+    void leaveForeignSession();
     return;
   }
   console.error('ERROR: sync failed:', error);

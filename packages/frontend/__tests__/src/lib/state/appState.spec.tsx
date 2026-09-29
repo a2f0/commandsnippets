@@ -1,4 +1,4 @@
-import {act, render} from '@testing-library/react';
+import {act, render, screen} from '@testing-library/react';
 import {Dexie} from 'dexie';
 import {useEffect} from 'react';
 import {describe, expect, it, vi} from 'vitest';
@@ -106,6 +106,25 @@ describe('useAppConfig', () => {
     act(() => store.setEntrySearchString('read'));
     expect(renders).toEqual(['', 'read']);
     expect(effects).toHaveLength(1);
+  });
+
+  it('renders again for a change made before it subscribed', () => {
+    // A child's mount effect runs before its parent's.
+    const Child = () => {
+      useEffect(() => store.setEntrySearchString('from-child'), []);
+      return null;
+    };
+    const Parent = () => {
+      const appConfig = useAppConfig();
+      return (
+        <div data-testid="parent">
+          {appConfig.entrySearchString}
+          <Child />
+        </div>
+      );
+    };
+    render(<Parent />);
+    expect(screen.getByTestId('parent')).toHaveTextContent('from-child');
   });
 
   it('reads the current state, as later as it is read', () => {

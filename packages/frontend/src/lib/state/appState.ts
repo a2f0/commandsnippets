@@ -6,7 +6,7 @@
  * signed-in user and their preferences are saved to localStorage; the rest
  * starts afresh with each page.
  */
-import {useEffect, useReducer, useState} from 'react';
+import {useCallback, useRef, useState, useSyncExternalStore} from 'react';
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 import {setUnauthorizedHandler} from '../auth/authUtils';
@@ -200,19 +200,20 @@ export function useAppConfig(): AppState {
         },
       })
   );
-  const [, render] = useReducer((count: number) => count + 1, 0);
-  useEffect(
-    () =>
-      useAppState.subscribe((state, previous) => {
-        for (const field of read) {
-          if (state[field] !== previous[field]) {
-            render();
-            return;
-          }
-        }
-      }),
-    [read]
-  );
+  // The state as of the last change to a field read, which React compares
+  // after it subscribes too: a change made before then renders again.
+  const seen = useRef(useAppState.getState());
+  const snapshot = useCallback(() => {
+    const state = useAppState.getState();
+    for (const field of read) {
+      if (state[field] !== seen.current[field]) {
+        seen.current = state;
+        break;
+      }
+    }
+    return seen.current;
+  }, [read]);
+  useSyncExternalStore(useAppState.subscribe, snapshot);
   return config;
 }
 
@@ -222,6 +223,41 @@ export function useAppConfig(): AppState {
  */
 export function resetApplicationState(): void {
   useAppState.setState({...defaultSavedState, ...defaultUiState});
+}
+
+/** The user a saved state names, if it names one. */
+const savedUserOf = (state: unknown): string | null =>
+  typeof state === 'object' &&
+  state !== null &&
+  'loggedInUser' in state &&
+  typeof state.loggedInUser === 'string'
+    ? state.loggedInUser
+    : null;
+
+/**
+ * Leave a session the API no longer answers for (the cookie is another
+ * user's): when another tab has saved that sign-in since, take it up here
+ * rather than clearing it for every tab; otherwise sign out.
+ */
+export async function leaveForeignSession(): Promise<void> {
+  try {
+    const saved = await useAppState.persist
+      .getOptions()
+      .storage?.getItem(STORAGE_KEY);
+    const savedUser = savedUserOf(saved?.state);
+    if (
+      savedUser !== null &&
+      savedUser !== useAppState.getState().loggedInUser
+    ) {
+      await useAppState.persist.rehydrate();
+      // What this tab showed was the other user's: its ids mean nothing now.
+      useAppState.setState(defaultUiState);
+      return;
+    }
+  } catch (error: unknown) {
+    console.error('ERROR: could not read the saved sign-in:', error);
+  }
+  resetApplicationState();
 }
 
 // A user's IndexedDB data goes with them, however they leave: the menu, the

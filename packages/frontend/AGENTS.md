@@ -81,7 +81,8 @@ API; everything else the app keeps is a zustand store.
   (`useAppState(state => state.tagSortOrder)`), or the whole state with
   `useAppConfig()`: one object that stays the same across renders (a safe
   hook dependency) and reads the current state on every access, rendering
-  again when a field it read changes. Code outside React uses
+  again when a field it read changes (`useSyncExternalStore`, so a change
+  before it subscribed counts too). Code outside React uses
   `useAppState.getState()`. `resetApplicationState()` signs out: every
   setting back to its default.
 - **Signing out deletes the user's data**: the store deletes a user's
@@ -112,7 +113,9 @@ API; everything else the app keeps is a zustand store.
   minute while in view (`useCollectionSync`); the tag shown syncs on its own
   whenever it is not synced through the revision the database holds, and
   every half minute while not (`useTagSync`). A sync that finds the API
-  answering for another user signs out here too. When another tab deletes
+  answering for another user leaves the session (`leaveForeignSession`):
+  it takes up the sign-in another tab saved since, or signs out. When
+  another tab deletes
   the database (a sign-out there), `useSession` renders again with the next
   session.
 - **The sync**: `src/lib/sync/sync.ts`, keyset reads (`page[after]`,
