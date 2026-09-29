@@ -314,6 +314,21 @@ describe('AdminPage', () => {
     expect(users.find(user => user.id === '7')?.is_active).toBe(true);
   });
 
+  it("shows nothing of the last user's once the tab takes up another's sign-in", async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    // Another tab signed in as someone who is not staff; this one takes it up.
+    viewerIsStaff = false;
+    act(() => store.setLoggedInUser('someone-else'));
+
+    expect(screen.queryByRole('table', {name: 'Users'})).toBeNull();
+    expect(
+      await screen.findByText('You do not have access to this page.')
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('table', {name: 'Users'})).toBeNull();
+  });
+
   it('reloads after a change, so a status filter stays accurate', async () => {
     await renderAt('/admin');
     await usersTable();
