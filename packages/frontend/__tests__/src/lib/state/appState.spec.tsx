@@ -2,13 +2,14 @@ import {act, render, screen} from '@testing-library/react';
 import {Dexie} from 'dexie';
 import {useEffect} from 'react';
 import {describe, expect, it, vi} from 'vitest';
-
+import {apiClient, UserMismatchError} from '../../../../src/lib/api/apiClient';
 import {
   defaultSavedState,
   leaveForeignSession,
   RETIRED_STORAGE_KEYS,
   resetApplicationState,
   STORAGE_KEY,
+  signOut,
   useAppConfig,
 } from '../../../../src/lib/state/appState';
 import {syncSession} from '../../../../src/lib/sync/session';
@@ -122,6 +123,42 @@ describe('leaving a session the API no longer answers for', () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject(
       {state: {loggedInUser: 'someone-else'}}
     );
+  });
+});
+
+describe('signOut', () => {
+  it('signs out, whether or not the API could end the session', async () => {
+    for (const logout of [
+      () => Promise.resolve({}),
+      () => Promise.reject(new Error('Logout failed: Bad Gateway')),
+    ]) {
+      signIn();
+      vi.spyOn(apiClient, 'logout').mockImplementation(logout);
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      await signOut();
+      expect(store.loggedInUser).toBeNull();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("leaves another tab's sign-in standing when the session is theirs", async () => {
+    // This tab signed in as alice; another has signed in as test since.
+    act(() => store.setLoggedInUser('alice'));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({state: {...defaultSavedState, loggedInUser: TEST_USER}})
+    );
+    vi.spyOn(apiClient, 'logout').mockRejectedValue(
+      new UserMismatchError('Logout failed', 'alice')
+    );
+
+    await signOut();
+
+    expect(store.loggedInUser).toBe(TEST_USER);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject(
+      {state: {loggedInUser: TEST_USER}}
+    );
+    vi.restoreAllMocks();
   });
 });
 

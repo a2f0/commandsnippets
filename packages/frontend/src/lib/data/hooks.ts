@@ -104,12 +104,17 @@ async function liveEntries(
   return entries.map(entry => ({entry, tagged: tagged.has(entry.id)}));
 }
 
-/** The user's entries (not deleted): all of them, or those in no tag. */
-export function useEntries(which: 'all' | 'untagged'): TextEntry[] | undefined {
+/**
+ * The user's entries (not deleted): all of them, or those in no tag; none
+ * (`null`) for a list that shows neither, which reads nothing.
+ */
+export function useEntries(
+  which: 'all' | 'untagged' | null
+): TextEntry[] | undefined {
   const db = useSession()?.db;
   return useLiveQuery(
     async () =>
-      db === undefined
+      db === undefined || which === null
         ? []
         : (await liveEntries(db))
             .filter(({tagged}) => which === 'all' || !tagged)

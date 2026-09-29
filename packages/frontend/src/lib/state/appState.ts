@@ -9,7 +9,7 @@
 import {useCallback, useRef, useState, useSyncExternalStore} from 'react';
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
-import {apiClient} from '../api/apiClient';
+import {apiClient, UserMismatchError} from '../api/apiClient';
 import {setUnauthorizedHandler} from '../auth/authUtils';
 import {environment} from '../environment';
 import {
@@ -267,6 +267,26 @@ export async function leaveForeignSession(username: string): Promise<void> {
   if (signedIn()) {
     resetApplicationState();
   }
+}
+
+/**
+ * Sign out through the API (it ends the session), then here
+ * (`resetApplicationState`). When the API refuses as another user's (another
+ * tab has signed in as someone else since), this tab leaves the session
+ * instead (`leaveForeignSession`), and the other sign-in stands.
+ */
+export async function signOut(): Promise<void> {
+  const username = useAppState.getState().loggedInUser;
+  try {
+    await apiClient.logout();
+  } catch (error: unknown) {
+    if (error instanceof UserMismatchError && username !== null) {
+      await leaveForeignSession(username);
+      return;
+    }
+    console.error('Logout error:', error);
+  }
+  resetApplicationState();
 }
 
 // A user's IndexedDB data goes with them, however they leave: the menu, the

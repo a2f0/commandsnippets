@@ -39,7 +39,10 @@ const EntryList = () => {
   const currentTag = useTagNamed(listsAll ? undefined : tag);
   useTagSync(currentTag);
   const tagged = useTagEntries(currentTag?.id);
-  const listed = useEntries(entriesList === 'all' ? 'all' : 'untagged');
+  // (Nothing to read for a tag's list.)
+  const listed = useEntries(
+    listsAll ? (entriesList === 'all' ? 'all' : 'untagged') : null
+  );
   const tagOrder = useAppState(
     state => state.tagTextEntryThroughModelSortOrder
   );

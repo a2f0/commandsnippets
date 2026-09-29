@@ -1289,20 +1289,28 @@ const createHandlers = () => {
   handlers.push(
     http.post('http://localhost:9001/api-token-deauth/', ({request}) => {
       recordRequest('POST', request.url);
-      return HttpResponse.json({}, {status: 200});
+      return (
+        refuseAnotherUsersWrite(request) ?? HttpResponse.json({}, {status: 200})
+      );
     }),
     http.post(
       'https://api-staging.commandsnippets.com/api-token-deauth/',
       ({request}) => {
         recordRequest('POST', request.url);
-        return HttpResponse.json({}, {status: 200});
+        return (
+          refuseAnotherUsersWrite(request) ??
+          HttpResponse.json({}, {status: 200})
+        );
       }
     ),
     http.post(
       'https://api.commandsnippets.com/api-token-deauth/',
       ({request}) => {
         recordRequest('POST', request.url);
-        return HttpResponse.json({}, {status: 200});
+        return (
+          refuseAnotherUsersWrite(request) ??
+          HttpResponse.json({}, {status: 200})
+        );
       }
     )
   );
