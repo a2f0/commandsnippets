@@ -99,6 +99,27 @@ describe('leaving a session the API no longer answers for', () => {
     );
   }
 
+  it("leaves another tab's saved sign-in as this one changes, and takes it up", async () => {
+    signIn();
+    savedElsewhere('someone-else');
+
+    // This tab goes on: a search typed, a preference picked.
+    act(() => {
+      store.setEntrySearchString('typing');
+      store.setSelectedTheme('lightTheme');
+    });
+    const saved = () => JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(saved()).toMatchObject({state: {loggedInUser: 'someone-else'}});
+
+    await leaveForeignSession(TEST_USER);
+    expect(store.loggedInUser).toBe('someone-else');
+    // Its own again: this tab saves what it changes.
+    act(() => store.setSelectedTheme('darkTheme'));
+    expect(saved()).toMatchObject({
+      state: {loggedInUser: 'someone-else', selectedTheme: 'darkTheme'},
+    });
+  });
+
   it('signs out when no other sign-in was saved', async () => {
     signIn();
     await leaveForeignSession(TEST_USER);

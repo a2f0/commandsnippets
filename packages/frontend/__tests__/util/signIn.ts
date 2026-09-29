@@ -7,6 +7,7 @@ import {
   type AppState,
   defaultSavedState,
   defaultUiState,
+  STORAGE_KEY,
   useAppState,
 } from '../../src/lib/state/appState';
 import {endSyncSession} from '../../src/lib/sync/session';
@@ -19,8 +20,13 @@ export function signIn(): void {
   useAppState.setState({loggedInUser: TEST_USER});
 }
 
-/** Every setting back to its default, and the user's IndexedDB data gone. */
+/**
+ * Every setting back to its default, nothing saved (as a test may have
+ * saved another tab's sign-in), and the user's IndexedDB data gone.
+ */
 export async function resetApp(): Promise<void> {
+  localStorage.removeItem(STORAGE_KEY);
+  await useAppState.persist.rehydrate();
   useAppState.setState({...defaultSavedState, ...defaultUiState});
   await endSyncSession(TEST_USER);
 }

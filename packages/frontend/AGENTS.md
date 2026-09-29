@@ -77,14 +77,18 @@ API; everything else the app keeps is a zustand store.
   signed-in user and their preferences (theme, sort orders, tag counts) are
   saved to `localStorage` (`commandsnippets-<environment>`, zustand's persist
   format, merged over the defaults); the rest starts afresh with each page.
+  Tabs share it: a tab saves only while the saved sign-in is the one it
+  last read or wrote, so a stale tab never saves its user back over another
+  tab's sign-in (`guardedStorage`).
   Components read one field with a selector
   (`useAppState(state => state.tagSortOrder)`), or the whole state with
   `useAppConfig()`: one object that stays the same across renders (a safe
   hook dependency) and reads the current state on every access, rendering
   again when a field it read changes (`useSyncExternalStore`, so a change
   before it subscribed counts too). Code outside React uses
-  `useAppState.getState()`. `resetApplicationState()` signs out: every
-  setting back to its default.
+  `useAppState.getState()`. `resetApplicationState()` signs out here: every
+  setting back to its default; `signOut()` ends the API's session first (the
+  logout menus).
 - **Signing out deletes the user's data**: the store deletes a user's
   IndexedDB database whenever `loggedInUser` leaves them, however it
   happens (the menu, the cookie gone, a session the API ended, another

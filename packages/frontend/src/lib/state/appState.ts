@@ -8,7 +8,11 @@
  */
 import {useCallback, useRef, useState, useSyncExternalStore} from 'react';
 import {create} from 'zustand';
-import {createJSONStorage, persist} from 'zustand/middleware';
+import {
+  createJSONStorage,
+  persist,
+  type StateStorage,
+} from 'zustand/middleware';
 import {apiClient, UserMismatchError} from '../api/apiClient';
 import {setUnauthorizedHandler} from '../auth/authUtils';
 import {environment} from '../environment';
@@ -126,6 +130,65 @@ for (const key of RETIRED_STORAGE_KEYS) {
   }
 }
 
+/** The user a saved state names, if it names one. */
+const savedUserOf = (state: unknown): string | null =>
+  typeof state === 'object' &&
+  state !== null &&
+  'loggedInUser' in state &&
+  typeof state.loggedInUser === 'string'
+    ? state.loggedInUser
+    : null;
+
+/** The user a saved state's JSON names, if it names one. */
+function savedUserIn(json: string | null): string | null {
+  if (json === null) {
+    return null;
+  }
+  try {
+    const saved: unknown = JSON.parse(json);
+    return typeof saved === 'object' && saved !== null && 'state' in saved
+      ? savedUserOf(saved.state)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+// The saved sign-in as this tab last read or wrote it (undefined: not read).
+let knownUser: string | null | undefined;
+
+/**
+ * Where the state is saved: localStorage, shared by every tab, which a tab
+ * writes only while the saved sign-in is the one it last read or wrote.
+ * zustand saves on every change (a search typed too), so a tab whose user
+ * another tab has since signed out, or in as someone else, would otherwise
+ * save its user back over theirs; that tab leaves the session when the API
+ * tells it (`leaveForeignSession`, which reads the saved state again). An
+ * unchanged state is not written again.
+ */
+const guardedStorage: StateStorage = {
+  getItem: name => {
+    const json = localStorage.getItem(name);
+    knownUser = savedUserIn(json);
+    return json;
+  },
+  setItem: (name, json) => {
+    const current = localStorage.getItem(name);
+    if (
+      json === current ||
+      (knownUser !== undefined && savedUserIn(current) !== knownUser)
+    ) {
+      return;
+    }
+    localStorage.setItem(name, json);
+    knownUser = savedUserIn(json);
+  },
+  removeItem: name => {
+    localStorage.removeItem(name);
+    knownUser = null;
+  },
+};
+
 export const useAppState = create<AppState>()(
   persist(
     set => ({
@@ -157,7 +220,7 @@ export const useAppState = create<AppState>()(
     }),
     {
       name: STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => guardedStorage),
       partialize: (state): SavedState => ({
         loggedInUser: state.loggedInUser,
         isStaff: state.isStaff,
@@ -225,15 +288,6 @@ export function useAppConfig(): AppState {
 export function resetApplicationState(): void {
   useAppState.setState({...defaultSavedState, ...defaultUiState});
 }
-
-/** The user a saved state names, if it names one. */
-const savedUserOf = (state: unknown): string | null =>
-  typeof state === 'object' &&
-  state !== null &&
-  'loggedInUser' in state &&
-  typeof state.loggedInUser === 'string'
-    ? state.loggedInUser
-    : null;
 
 /**
  * Leave `username`'s session, which the API no longer answers for (the
