@@ -457,6 +457,68 @@ describe('untagging soft-deletes the junction', () => {
   });
 });
 
+describe('a reorder racing an untagging', () => {
+  /** A tag ranking three live junctions: 0, 1, 2. */
+  async function setUpRanked() {
+    const {user1} = await setUpBase();
+    const tag = await tagFactory({user: user1});
+    const ranked: TagTextEntry[] = [];
+    for (const order of [0, 1, 2]) {
+      ranked.push(
+        await tagTextEntryFactory({
+          tag,
+          text_entry: await textEntryFactory({user: user1}),
+          user: user1,
+          order,
+        })
+      );
+    }
+    return {
+      user1,
+      ranked: ranked as [TagTextEntry, TagTextEntry, TagTextEntry],
+    };
+  }
+
+  /** A client whose move runs just after `junction` is soft-deleted. */
+  const racingDeletion = async (userId: number, junction: TagTextEntry) =>
+    new ApiClient(
+      await tokenFor(userId),
+      raceBeforeStatement(
+        /^\s*update "tags_tagtextentrythroughmodel"\s+set "order"/i,
+        () =>
+          db()
+            .update(tagsEntries)
+            .set({is_deleted: true})
+            .where(eq(tagsEntries.id, junction.id))
+      )
+    );
+
+  const reorder = (client: ApiClient, top: number, bottom: number) =>
+    client.post('/api/v1/tags_entries/reorder', {
+      data: {type: 'TagTextEntryThroughModel', attributes: {top, bottom}},
+    });
+
+  const ranks = async (rows: TagTextEntry[]) =>
+    Promise.all(rows.map(async row => (await refreshJunction(row.id))?.order));
+
+  it('never shifts the live rows around a mover deleted meanwhile', async () => {
+    const {user1, ranked} = await setUpRanked();
+    const [first, , last] = ranked;
+    const client = await racingDeletion(user1.id, last);
+    // `last` above `first`: it is gone by the time the move runs.
+    expect((await reorder(client, last.id, first.id)).status).toBe(404);
+    expect(await ranks(ranked)).toEqual([0, 1, 2]);
+  });
+
+  it('never moves next to a reference deleted meanwhile', async () => {
+    const {user1, ranked} = await setUpRanked();
+    const [first, , last] = ranked;
+    const client = await racingDeletion(user1.id, first);
+    expect((await reorder(client, last.id, first.id)).status).toBe(404);
+    expect(await ranks(ranked)).toEqual([0, 1, 2]);
+  });
+});
+
 describe("a tag's junctions after a cursor are its changes", () => {
   it('list joins, edits, re-ranks and departures, and nothing else', async () => {
     const {user1, client, tag, entry, junction} = await setUpTagged();

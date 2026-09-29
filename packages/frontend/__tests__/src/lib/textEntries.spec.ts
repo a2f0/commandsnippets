@@ -68,6 +68,45 @@ describe('sort', () => {
     });
   });
 
+  describe('by date tagged', () => {
+    // Tagged in one order; the junctions' revisions (which entry edits
+    // advance) in another.
+    const tagged = (id: string, created: string, updated: string) => ({
+      ...junction(id, '5', id),
+      attributes: {
+        order: Number(id),
+        date_created: created,
+        date_updated: updated,
+        is_deleted: false,
+      },
+    });
+    const resources = [
+      tag('5', {}),
+      entry('1', {subject: 'tagged-last'}),
+      entry('2', {subject: 'tagged-first'}),
+      entry('3', {subject: 'tagged-second'}),
+      tagged('1', '2021-01-01T00:00:00', '2019-01-01T00:00:00'),
+      tagged('2', '2019-01-01T00:00:00', '2021-01-01T00:00:00'),
+      tagged('3', '2020-01-01T00:00:00', '2020-06-01T00:00:00'),
+    ];
+
+    it.each([
+      ['date_tagged', ['tagged-first', 'tagged-second', 'tagged-last']],
+      ['-date_tagged', ['tagged-last', 'tagged-second', 'tagged-first']],
+    ])('sorts by %s: when each was tagged', (sortOrder, expected) => {
+      const store = createStore(resources);
+      const sorted = sort(
+        username,
+        'tag-5',
+        store.textEntriesArray,
+        sortOrder,
+        store
+      );
+
+      expect(subjects(sorted)).toEqual(expected);
+    });
+  });
+
   describe('by text', () => {
     // Case-insensitive; the subjects and bodies sort in different orders.
     const entries = [
