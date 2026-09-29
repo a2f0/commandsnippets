@@ -354,7 +354,7 @@ export async function leaveForeignSession(username: string): Promise<void> {
 
 /**
  * Sign out through the API (it ends the session), then here
- * (`resetApplicationState`). When the API refuses as another user's (another
+ * (`resetApplicationState`) while the same user is signed in. When the API refuses as another user's (another
  * tab has signed in as someone else since), this tab leaves the session
  * instead (`leaveForeignSession`), and the other sign-in stands.
  */
@@ -369,7 +369,11 @@ export async function signOut(): Promise<void> {
     }
     console.error('Logout error:', error);
   }
-  resetApplicationState();
+  // Unless this tab has left that session meanwhile (another tab's sign-in
+  // taken up), which stands.
+  if (useAppState.getState().loggedInUser === username) {
+    resetApplicationState();
+  }
 }
 
 // A user's IndexedDB data goes with them, however they leave: the menu, the

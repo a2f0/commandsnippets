@@ -185,6 +185,24 @@ describe('signOut', () => {
     }
   });
 
+  it('leaves a sign-in this tab took up while the logout was answered', async () => {
+    signIn();
+    let answer = () => {};
+    vi.spyOn(apiClient, 'logout').mockReturnValue(
+      new Promise(resolve => {
+        answer = () => resolve({});
+      })
+    );
+
+    const signingOut = signOut();
+    act(() => store.setLoggedInUser('someone-else'));
+    answer();
+    await signingOut;
+
+    expect(store.loggedInUser).toBe('someone-else');
+    vi.restoreAllMocks();
+  });
+
   it("leaves another tab's sign-in standing when the session is theirs", async () => {
     // This tab signed in as alice; another has signed in as test since.
     act(() => store.setLoggedInUser('alice'));

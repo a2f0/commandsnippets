@@ -291,6 +291,29 @@ describe('AdminPage', () => {
     expect(within(row).getByText('Deactivated')).toBeInTheDocument();
   });
 
+  it("leaves the session when it is another user's, deactivating no one", async () => {
+    // Another tab has signed in as someone else since.
+    server.use(
+      http.patch(`${API}/admin/users/:id`, () =>
+        HttpResponse.json(
+          errorDocument(409, CODES.userMismatch, 'Not that user.'),
+          {status: 409}
+        )
+      )
+    );
+    await renderAt('/admin');
+    await usersTable();
+
+    fireEvent.click(
+      present(document.getElementById('adminUserToggle7'), 'toggle')
+    );
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', {name: 'Deactivate'}));
+
+    await waitFor(() => expect(store.loggedInUser).toBeNull());
+    expect(users.find(user => user.id === '7')?.is_active).toBe(true);
+  });
+
   it('reloads after a change, so a status filter stays accurate', async () => {
     await renderAt('/admin');
     await usersTable();

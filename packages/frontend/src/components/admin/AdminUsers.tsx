@@ -37,7 +37,9 @@ import {
   listUsers,
   setUserActive,
 } from '../../lib/api/adminApi';
+import {UserMismatchError} from '../../lib/api/apiClient';
 import {formatTimestamp} from '../../lib/formatTimestamp';
+import {leaveForeignSession} from '../../lib/state/appState';
 import {commonButtonSx} from '../../theme/sx';
 
 const PAGE_SIZES = [25, 50, 100];
@@ -162,6 +164,12 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
     } catch (error: unknown) {
       if (error instanceof AdminForbiddenError) {
         onForbidden();
+        return;
+      }
+      if (error instanceof UserMismatchError) {
+        // Another tab has signed in as someone else: this one leaves.
+        setPending(null);
+        void leaveForeignSession(error.username);
         return;
       }
       const message = error instanceof Error ? error.message : String(error);
