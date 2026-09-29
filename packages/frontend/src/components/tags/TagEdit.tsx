@@ -9,8 +9,8 @@ import {StyledTextFieldTags} from './StyledTextFieldTags';
 
 export interface ITagEdit {
   object: ITagJsonApi;
-  /** After the rename is stored. */
-  handleSaveParent: () => void;
+  /** After the rename is stored, with the renamed tag. */
+  handleSaveParent: (renamed: ITagJsonApi) => void;
   handleCancelEditParent: () => void;
 }
 
@@ -43,7 +43,7 @@ const TagEdit = ({
       return;
     }
     renameTag(session, object.id, tagName)
-      .then(() => handleSaveParent())
+      .then(renamed => handleSaveParent(renamed))
       .catch((error: unknown) => {
         console.error('Unexpected error updating tag:', error);
       });

@@ -3,7 +3,8 @@
  * when the entries page opens, and again when it comes back into view and
  * every half minute while in view; and the tag shown, whenever it is not
  * synced through the revision the database holds (on a first sign-in, before
- * the collection is whole; and when a sync brings it a newer revision).
+ * the collection is whole; when a sync brings it a newer revision; and
+ * every half minute, after a sync of it failed).
  */
 import type {Tag} from '@commandsnippets/api-shared/responses';
 import {useEffect} from 'react';
@@ -69,17 +70,38 @@ export function useCollectionSync(): void {
   }, [session]);
 }
 
-/** Sync `tag` whenever it is not synced through its stored revision. */
+/**
+ * Sync `tag` whenever it is not synced through its stored revision: when it
+ * is shown or gets a newer one, and every half minute while in view (after
+ * a sync that failed).
+ */
 export function useTagSync(tag: Tag | null | undefined): void {
   const session = useSession();
   const tagId = tag?.id;
   const revision = tag?.attributes.date_updated;
   useEffect(() => {
     if (session === null || tagId === undefined || revision === undefined) {
-      return;
+      return undefined;
     }
-    isTagSynced(session.db, tagId)
-      .then(synced => (synced ? undefined : session.sync.syncTag(tagId)))
-      .catch(syncFailed);
+    let running = false;
+    const run = () => {
+      if (running) {
+        return;
+      }
+      running = true;
+      isTagSynced(session.db, tagId)
+        .then(synced => (synced ? undefined : session.sync.syncTag(tagId)))
+        .catch(syncFailed)
+        .finally(() => {
+          running = false;
+        });
+    };
+    run();
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        run();
+      }
+    }, SYNC_INTERVAL_MS);
+    return () => clearInterval(timer);
   }, [session, tagId, revision]);
 }

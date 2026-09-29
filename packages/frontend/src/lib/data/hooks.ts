@@ -10,14 +10,24 @@ import type {
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
 import {useLiveQuery} from 'dexie-react-hooks';
+import {useSyncExternalStore} from 'react';
 import type {CommandsnippetsDatabase} from '../db/database';
 import {useAppState} from '../state/appState';
-import {type SyncSession, syncSession} from '../sync/session';
+import {
+  type SyncSession,
+  sessionsEndedCount,
+  subscribeSessions,
+  syncSession,
+} from '../sync/session';
 import type {TaggedEntry} from './sort';
 
-/** The signed-in user's database and sync, or null when signed out. */
+/**
+ * The signed-in user's database and sync, or null when signed out: another
+ * when the session ends under the user (another tab signed out and in).
+ */
 export function useSession(): SyncSession | null {
   const username = useAppState(state => state.loggedInUser);
+  useSyncExternalStore(subscribeSessions, sessionsEndedCount);
   return username === null ? null : syncSession(username);
 }
 

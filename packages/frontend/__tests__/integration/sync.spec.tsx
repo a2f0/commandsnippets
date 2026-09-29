@@ -31,7 +31,10 @@ beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 function renderAt(route: string) {
   const history = createMemoryHistory();
@@ -108,6 +111,45 @@ describe('The entries page', () => {
       'ERROR: sync failed:',
       expect.any(Error)
     );
+  });
+
+  it('retries the tag shown every half minute while its sync fails', async () => {
+    vi.useFakeTimers({toFake: ['setInterval', 'clearInterval']});
+    let tagReads = 0;
+    server.use(
+      http.get('*/api/v1/entries', () =>
+        HttpResponse.json({errors: []}, {status: 500})
+      ),
+      // The tag's junctions fail once; the mark the collection sync reads
+      // first goes through.
+      http.get('*/api/v1/tags_entries', ({request}) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('filter[tag.id]') === null) {
+          return undefined;
+        }
+        tagReads += 1;
+        return tagReads === 1
+          ? HttpResponse.json({errors: []}, {status: 500})
+          : undefined;
+      })
+    );
+    const failures = () =>
+      consoleError.mock.calls.filter(([message]) =>
+        String(message).startsWith('ERROR: sync failed:')
+      ).length;
+    renderAt('/test/test-tag-1');
+    // The collection's sync failed, and the tag's.
+    // (vi.waitFor: its polling runs under the fake interval.)
+    await vi.waitFor(() => expect(failures()).toBe(2));
+    expect(listed()).toEqual([]);
+
+    act(() => {
+      vi.advanceTimersByTime(SYNC_INTERVAL_MS);
+    });
+    vi.useRealTimers();
+
+    await waitFor(() => expect(listed()).toHaveLength(4));
+    expect(tagReads).toBeGreaterThanOrEqual(2);
   });
 
   it('drops an entry untagged elsewhere from the tag shown', async () => {

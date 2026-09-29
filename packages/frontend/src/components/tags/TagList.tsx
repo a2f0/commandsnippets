@@ -46,10 +46,11 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
   // The list as the database has it now (a drag reorders this copy until
   // the drop is stored), and the tag selected in it.
+  const {tagSelectedID} = appConfig;
   useEffect(() => {
     setTags(tagsFromWrapper);
     const current = tagsFromWrapper.find(
-      element => element.id === appConfig.tagSelectedID
+      element => element.id === tagSelectedID
     );
     const [first] = tagsFromWrapper;
     if (current !== undefined) {
@@ -57,7 +58,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     } else if (first !== undefined) {
       setSelectedTag(first.id);
     }
-  }, [tagsFromWrapper, appConfig]);
+  }, [tagsFromWrapper, tagSelectedID]);
 
   const findEntry = useCallback(
     (id: string) => {

@@ -101,15 +101,20 @@ API; everything else the app keeps is a zustand store.
   searches them (case-insensitively in any script, as the API's search).
   Deleted tags and entries are left out; untagged entries are those in no
   tag.
-- **Writes**: `src/lib/data/writes.ts` calls the API, then stores what it
-  answered (`putResources`). A write answered with no body (untagging,
-  deleting an entry, reordering) stores what it knows and syncs the rest.
+- **Writes**: `src/lib/data/writes.ts` first checks the API answers for the
+  database's user (`SyncEngine.verifyOwner`), calls the API, then stores
+  what it answered (`putResources`). A write answered with no body
+  (untagging, deleting an entry, reordering) marks the row deleted unless a
+  sync stored a newer revision meanwhile (`markDeleted`), and syncs the
+  rest.
 - **When the data syncs**: `src/lib/data/useSync.ts`. The entries page syncs
   the collection when it opens, when it comes back into view, and every half
   minute while in view (`useCollectionSync`); the tag shown syncs on its own
-  whenever it is not synced through the revision the database holds
-  (`useTagSync`). A sync that finds the API answering for another user signs
-  out here too.
+  whenever it is not synced through the revision the database holds, and
+  every half minute while not (`useTagSync`). A sync that finds the API
+  answering for another user signs out here too. When another tab deletes
+  the database (a sign-out there), `useSession` renders again with the next
+  session.
 - **The sync**: `src/lib/sync/sync.ts`, keyset reads (`page[after]`,
   api-shared's `cursor.ts`) from the stored cursors, one sync at a time (a
   Web Lock across tabs), so each response is stored in the order it was

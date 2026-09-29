@@ -80,7 +80,7 @@ const Tag = ({
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
-  const {user} = useParams();
+  const {user, tag: shownTag} = useParams();
   const navigate = useNavigate();
   const tagRef = useRef<HTMLLIElement>(null);
 
@@ -278,8 +278,12 @@ const Tag = ({
     setIsEditing(false);
   };
 
-  const handleSave = () => {
+  // The tag shown follows its new name.
+  const handleSave = (renamed: ITagJsonApi) => {
     setIsEditing(false);
+    if (shownTag === tagObject.attributes.name) {
+      navigate(`/${user}/${renamed.attributes.name}`, {replace: true});
+    }
   };
 
   const deleteTag = () => {
@@ -381,6 +385,7 @@ const Tag = ({
               id={`tag-${id}`}
               data-testid={`tag-${id}`}
               role="tag"
+              aria-current={isSelected ? 'true' : undefined}
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
               sx={{
