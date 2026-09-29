@@ -9,12 +9,9 @@ describe('Holy Grail Layout with Many Entries', () => {
     await BasePage.open('');
     await browser.login();
 
-    // Open another tag first: the app syncs a tag's entries once and then
-    // only when its revision moves, so test-tag-1 must first be synced after
-    // the override below replaces the entries.
-    await BasePage.open('test/test-tag-2');
-
-    // Override MSW handlers to use manyEntriesResponse mock
+    // Override MSW handlers to use manyEntriesResponse mock, before the
+    // signed-in page loads: its first sync reads them (the override holds
+    // across the load).
     const mswResult = await browser.execute(mockData => {
       if (!window.setRuntimeEntriesOverride) {
         return {
@@ -36,6 +33,8 @@ describe('Holy Grail Layout with Many Entries', () => {
     if (!mswResult.success) {
       throw new Error(`Failed to override MSW handlers: ${mswResult.error}`);
     }
+
+    await BasePage.open('test/test-tag-2');
 
     // Wait for elements to load
     await BasePage.tagList.waitForDisplayed({timeout: 10000});
