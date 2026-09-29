@@ -1,8 +1,6 @@
 import type {Capabilities} from '@wdio/types';
 import video from 'wdio-video-reporter';
 
-import {defaultState} from '../src/lib/shared';
-
 // Define LogEntry type to match webdriver's actual type
 type LogEntry = {
   level: string;
@@ -318,16 +316,15 @@ export const config: WebdriverIO.Config = {
       true
     );
     browser.addCommand('login', async () => {
-      const appState = {
-        ...defaultState,
-        loggedInUser: 'test',
-      };
+      // The app's saved state (src/lib/state/appState.ts: zustand's persist
+      // format, merged over the defaults): the test user signed in.
+      const saved = {state: {loggedInUser: 'test'}, version: 0};
       await browser.execute(
         (key: string, value: string) => {
           window.localStorage.setItem(key, value);
         },
-        'mst-commandsnippets-test',
-        JSON.stringify(appState)
+        'commandsnippets-test',
+        JSON.stringify(saved)
       );
       await browser.setCookies({
         name: 'LoggedIn',

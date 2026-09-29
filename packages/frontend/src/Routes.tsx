@@ -1,16 +1,15 @@
 import React from 'react';
 import {Routes as ReactRouterRoutes, Route} from 'react-router-dom';
-
-import {useAppContext} from './AppContext';
 import {GithubAuth} from './components/auth/GithubAuth';
 import {GoogleAuth} from './components/auth/GoogleAuth';
+import {useAppConfig} from './lib/state/appState';
 import {AdminPage} from './pages/AdminPage';
 import {EntriesPage} from './pages/EntriesPage';
 import {SignInPage} from './pages/SignInPage';
 import {ADMIN_PATH, GITHUB_OAUTH_PATH, GOOGLE_OAUTH_PATH} from './routePaths';
 
 const Routes = () => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
 
   return (
     <ReactRouterRoutes>

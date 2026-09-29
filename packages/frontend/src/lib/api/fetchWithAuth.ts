@@ -1,5 +1,5 @@
 import {CODES} from '@commandsnippets/api-shared/messages';
-import {handleUnauthorized} from '../auth/authUtils';
+import {handleUnauthorized, signedInUser} from '../auth/authUtils';
 import {firstError} from './errorDocument';
 
 /**
@@ -88,10 +88,11 @@ export async function fetchWithAuth(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
+  const user = signedInUser();
   const response = await fetch(url, options);
 
   if (await meansSignedOut(response)) {
-    handleUnauthorized();
+    handleUnauthorized(user);
   }
 
   return response;

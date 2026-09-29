@@ -1,28 +1,24 @@
-import {autorun} from 'mobx';
-import {observer} from 'mobx-react';
-import React, {useEffect} from 'react';
+import React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import {useAppContext} from '../../AppContext';
+import {useAppState} from '../../lib/state/appState';
 
 interface IProps {
   label: string;
 }
 
 const TagLabel = ({label}: IProps) => {
-  const appConfig = useAppContext();
-
-  useEffect(() => autorun(() => {}), [appConfig.tagSearchString]);
+  const tagSearchString = useAppState(state => state.tagSearchString);
 
   return (
     <Highlighter
-      searchWords={[`${appConfig.tagSearchString}`]}
+      searchWords={[tagSearchString]}
       autoEscape={true}
       textToHighlight={label}
     />
   );
 };
 
-const memoizedTagLabel = React.memo(observer(TagLabel));
+const memoizedTagLabel = React.memo(TagLabel);
 
 export {memoizedTagLabel as TagLabel};

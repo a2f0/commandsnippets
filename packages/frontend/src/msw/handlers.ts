@@ -3,6 +3,7 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   CODES,
+  EXPECTED_USER_HEADER,
   type IncludedResource,
   parseDateTime,
   type Tag,
@@ -167,6 +168,24 @@ const originalEntriesResponse: Pick<
           data: [{type: 'TagTextEntryThroughModel', id: '2'}],
           meta: {count: 1},
         },
+      },
+    },
+    {
+      // In no tag: the untagged list's.
+      type: 'TextEntry',
+      id: '3',
+      attributes: {
+        body: 'test entry 3',
+        subject: 'test-entry-3-subject',
+        date_updated: '2022-05-14T02:33:53.995003',
+        date_created: '2022-05-14T02:33:53.994989',
+        reused_count: 0,
+        is_deleted: false,
+        tag_count: 0,
+      },
+      relationships: {
+        ...ownedByTestUser,
+        text_entry_to_tag: {data: [], meta: {count: 0}},
       },
     },
   ],
@@ -654,12 +673,44 @@ const apiBaseUrls = [
   'https://api.commandsnippets.com/api/v1',
 ] as const;
 
+/** The user the mock API is signed in as (what `/user/` answers). */
+const SIGNED_IN_USER = 'test';
+
+/**
+ * A write naming another user than the signed-in one, refused as the API
+ * refuses it (409 `user_mismatch`); anything else goes on to the handlers.
+ */
+function refuseAnotherUsersWrite(request: Request) {
+  const expected = request.headers.get(EXPECTED_USER_HEADER);
+  if (
+    expected === null ||
+    request.method === 'GET' ||
+    decodeURIComponent(expected) === SIGNED_IN_USER
+  ) {
+    return undefined;
+  }
+  return HttpResponse.json(
+    {
+      errors: [
+        {
+          detail: 'The request is not signed in as the user it names.',
+          status: '409',
+          source: {pointer: '/data'},
+          code: CODES.userMismatch,
+        },
+      ],
+    },
+    {status: 409}
+  );
+}
+
 // Create handlers for all URLs
 const createHandlers = () => {
   const handlers = [];
 
   for (const baseUrl of apiBaseUrls) {
     handlers.push(
+      http.all(`${baseUrl}/*`, ({request}) => refuseAnotherUsersWrite(request)),
       // The signed-in user (read by the admin page)
       http.get(`${baseUrl}/user/`, ({request}) => {
         recordRequest('GET', request.url);
@@ -668,7 +719,7 @@ const createHandlers = () => {
             type: 'User',
             id: '1',
             attributes: {
-              username: 'test',
+              username: SIGNED_IN_USER,
               is_staff: true,
               date_updated: '2026-09-01T00:00:00.000000',
             },
@@ -887,14 +938,9 @@ const createHandlers = () => {
           return errorResponse(error);
         }
 
-        // Use runtime override if available, otherwise use default entries.
-        // Deleted entries are left out: numbered pages serve the current
-        // lists, which dropped an entry when it was deleted.
-        const active = runtimeEntriesOverride || entriesResponse;
-        let responseData: Pick<TextEntryListDocument, 'data' | 'included'> = {
-          ...active,
-          data: active.data.filter(entry => !entry.attributes.is_deleted),
-        };
+        // Use runtime override if available, otherwise use default entries
+        let responseData: Pick<TextEntryListDocument, 'data' | 'included'> =
+          runtimeEntriesOverride || entriesResponse;
 
         // Handle date filtering if specified
         const url = new URL(req.request.url);
@@ -1243,20 +1289,28 @@ const createHandlers = () => {
   handlers.push(
     http.post('http://localhost:9001/api-token-deauth/', ({request}) => {
       recordRequest('POST', request.url);
-      return HttpResponse.json({}, {status: 200});
+      return (
+        refuseAnotherUsersWrite(request) ?? HttpResponse.json({}, {status: 200})
+      );
     }),
     http.post(
       'https://api-staging.commandsnippets.com/api-token-deauth/',
       ({request}) => {
         recordRequest('POST', request.url);
-        return HttpResponse.json({}, {status: 200});
+        return (
+          refuseAnotherUsersWrite(request) ??
+          HttpResponse.json({}, {status: 200})
+        );
       }
     ),
     http.post(
       'https://api.commandsnippets.com/api-token-deauth/',
       ({request}) => {
         recordRequest('POST', request.url);
-        return HttpResponse.json({}, {status: 200});
+        return (
+          refuseAnotherUsersWrite(request) ??
+          HttpResponse.json({}, {status: 200})
+        );
       }
     )
   );

@@ -1,5 +1,4 @@
 import {GitHub} from '@mui/icons-material';
-import {observer} from 'mobx-react';
 import React from 'react';
 
 import {useOAuth} from '../../hooks/useOAuth';
@@ -43,6 +42,6 @@ const GithubAuth = () => {
   );
 };
 
-const memoizedGithubAuth = React.memo(observer(GithubAuth));
+const memoizedGithubAuth = React.memo(GithubAuth);
 
 export {memoizedGithubAuth as GithubAuth};

@@ -16,6 +16,33 @@ export interface SyncSession {
 
 let session: SyncSession | null = null;
 
+// Told when the open session ends, for the UI to open the next
+// (`subscribeSessions`).
+const listeners = new Set<() => void>();
+let sessionsEnded = 0;
+
+function ended(): void {
+  sessionsEnded += 1;
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+/**
+ * Call `listener` whenever the open session ends (a sign-out, here or in
+ * another tab): the next `syncSession` opens another. Returns the
+ * unsubscribe.
+ */
+export function subscribeSessions(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/** How many sessions have ended: it changes when one does. */
+export const sessionsEndedCount = (): number => sessionsEnded;
+
 /**
  * `username`'s session, opening it (and closing another user's). A session
  * ends when another tab deletes or upgrades its database (a sign-out there):
@@ -30,6 +57,7 @@ export function syncSession(username: string): SyncSession {
     db.on('versionchange', () => {
       if (session?.db === db) {
         session = null;
+        ended();
       }
     });
     session = {
@@ -49,6 +77,9 @@ export async function endSyncSession(username: string | null): Promise<void> {
   const ending = session;
   session = null;
   ending?.db.close();
+  if (ending !== null) {
+    ended();
+  }
   const names = new Set<string>();
   if (ending !== null) {
     names.add(ending.db.name);

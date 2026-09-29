@@ -2,9 +2,8 @@ import {useEffect} from 'react';
 import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 import {v4 as uuidv4} from 'uuid';
-
-import {useAppContext} from '../AppContext';
 import {apiClient} from '../lib/api/apiClient';
+import {useAppConfig} from '../lib/state/appState';
 
 interface OAuthConfig {
   provider: 'github' | 'google';
@@ -22,7 +21,7 @@ interface OAuthCallbackParams {
 }
 
 export const useOAuth = (config: OAuthConfig) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const navigate = useNavigate();
   const [, setCookie] = useCookies(['loggedInUser']);
 

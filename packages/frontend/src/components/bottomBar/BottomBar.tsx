@@ -1,7 +1,6 @@
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
-import {observer} from 'mobx-react';
 import React, {useCallback, useState} from 'react';
 import {useErrorStore} from '../../hooks/useErrorStore';
 import {useWindowSize} from '../../hooks/useWindowSize';
@@ -349,6 +348,6 @@ const BottomBar = () => {
   );
 };
 
-const memoizedBottomBar = React.memo(observer(BottomBar));
+const memoizedBottomBar = React.memo(BottomBar);
 
 export {memoizedBottomBar as BottomBar};

@@ -2,33 +2,22 @@ import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw';
 import {type MockInstance, vi} from 'vitest';
-import {AppContext} from '../../../src/AppContext';
 import {UserProfileCircle} from '../../../src/components/UserProfileCircle';
 import {apiClient} from '../../../src/lib/api/apiClient';
-import type {Store} from '../../../src/lib/store/store';
 import {darkTheme} from '../../../src/theme/themes';
 import {server} from '../../util/msw';
+import {store} from '../../util/signIn';
 
 // Mock the environment module to ensure it's not production
 vi.mock('../../../src/lib/environment', () => ({
   environment: 'test',
 }));
 
-// Mock store with MobX-like interface
-const createMockStore = (
-  loggedInUser: string | null = 'testuser'
-): Partial<Store> => ({
-  loggedInUser,
-  setLoggedInUser: vi.fn(),
-});
-
 const renderWithContext = (loggedInUser: string | null = 'testuser') => {
-  const mockStore = createMockStore(loggedInUser);
+  store.setLoggedInUser(loggedInUser);
   return render(
     <ThemeProvider theme={darkTheme}>
-      <AppContext.Provider value={mockStore as Store}>
-        <UserProfileCircle />
-      </AppContext.Provider>
+      <UserProfileCircle />
     </ThemeProvider>
   );
 };

@@ -1,18 +1,36 @@
-let unauthorizedHandler: () => void = () => {};
+let unauthorizedHandler: (username: string | null) => void = () => {};
+let signedInUserOf: () => string | null = () => null;
 
 /**
  * Set what `handleUnauthorized` does. The store module registers its reset
  * here: the API client calls `handleUnauthorized` and the store's models
  * import the API client, so importing the store from here was a cycle.
  */
-export function setUnauthorizedHandler(handler: () => void): void {
+export function setUnauthorizedHandler(
+  handler: (username: string | null) => void
+): void {
   unauthorizedHandler = handler;
 }
 
-/** The API says the session is gone: sign the user out of the app. */
-export function handleUnauthorized() {
+/**
+ * Set where the signed-in user is read (the app state registers it), for
+ * requests to say who sent them: the API client names the user in its writes,
+ * and an answer that the session is gone signs out only that user.
+ */
+export function setSignedInUser(user: () => string | null): void {
+  signedInUserOf = user;
+}
+
+/** The signed-in user, as a request is sent (null: none). */
+export const signedInUser = (): string | null => signedInUserOf();
+
+/**
+ * The API says the session a request was sent in, as `username`, is gone:
+ * sign them out of the app (unless it has left that session since).
+ */
+export function handleUnauthorized(username: string | null) {
   console.info('Unauthorized access detected, resetting application state');
-  unauthorizedHandler();
+  unauthorizedHandler(username);
 }
 
 /**

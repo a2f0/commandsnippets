@@ -1,25 +1,22 @@
-import type {
-  TagDocument,
-  TagReorderDocument,
-} from '@commandsnippets/api-shared';
+import type {TagReorderDocument} from '@commandsnippets/api-shared';
 import type {StyledComponent} from '@emotion/styled';
 import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {styled, useTheme} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
-import {useAppContext} from '../../AppContext';
-import {apiClient} from '../../lib/api/apiClient';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
+import {useSession} from '../../lib/data/hooks';
+import {deleteTag as deleteStoredTag, reorderTags} from '../../lib/data/writes';
+import {needsScrollingIntoView} from '../../lib/scroll';
 import {
   activeSearch,
   appMode,
   type IMouse,
   initialMouse,
 } from '../../lib/shared';
-import {needsScrollingIntoView} from '../../lib/textEntries';
+import {useAppConfig} from '../../lib/state/appState';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
 import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/itemTypes';
@@ -55,7 +52,6 @@ interface DroppableItem {
 interface ITagProps {
   id: string;
   object: ITagJsonApi;
-  handleDeleteParent: (object: TagDocument) => void;
   moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
@@ -68,7 +64,6 @@ interface ITagProps {
 const Tag = ({
   id,
   object,
-  handleDeleteParent,
   moveEntry,
   findEntry,
   index,
@@ -77,20 +72,15 @@ const Tag = ({
   movedSelectedUp,
   setSelectedTag,
 }: ITagProps) => {
-  const [tagObject, setTagObject] = useState<ITagJsonApi>(object);
-  // The list is shown from the store before the tags sync: show a newer
-  // revision of the tag when the sync brings one (revisions compare as
-  // strings, see lib/revisions.ts).
-  if (object.attributes.date_updated > tagObject.attributes.date_updated) {
-    setTagObject(object);
-  }
-  const appConfig = useAppContext();
+  const tagObject = object;
+  const appConfig = useAppConfig();
+  const session = useSession();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
-  const {user} = useParams();
+  const {user, tag: shownTag} = useParams();
   const navigate = useNavigate();
   const tagRef = useRef<HTMLLIElement>(null);
 
@@ -168,7 +158,11 @@ const Tag = ({
                   orderedTop = entry;
                   orderedBottom = entryBelow;
                 }
-                if (orderedTop !== null && orderedBottom !== null) {
+                if (
+                  orderedTop !== null &&
+                  orderedBottom !== null &&
+                  session !== null
+                ) {
                   const payload: TagReorderDocument = {
                     data: {
                       type: 'Tag',
@@ -179,7 +173,11 @@ const Tag = ({
                       relationships: {},
                     },
                   };
-                  await apiClient.reorderTag(payload);
+                  await reorderTags(session, payload).catch(
+                    (error: unknown) => {
+                      console.error('Failed to reorder tags:', error);
+                    }
+                  );
                 }
               } else {
                 console.debug('useDrag end: it was not moved within the list.');
@@ -280,24 +278,21 @@ const Tag = ({
     setIsEditing(false);
   };
 
-  const handleSave = (object: ITagJsonApi) => {
-    const existing = appConfig.tagsArray.find(o => o.id === object.id);
-    existing?.update(object);
-
-    setTagObject(object);
-
+  // The tag shown follows its new name.
+  const handleSave = (renamed: ITagJsonApi) => {
     setIsEditing(false);
+    if (shownTag === tagObject.attributes.name) {
+      navigate(`/${user}/${renamed.attributes.name}`, {replace: true});
+    }
   };
 
   const deleteTag = () => {
-    apiClient
-      .deleteTag(tagObject.id)
-      .then(response => {
-        handleDeleteParent(response);
-      })
-      .catch((error: unknown) => {
-        console.error('Failed to delete tag:', error);
-      });
+    if (session === null) {
+      return;
+    }
+    deleteStoredTag(session, tagObject.id).catch((error: unknown) => {
+      console.error('Failed to delete tag:', error);
+    });
   };
 
   const handleBeginEdit = () => {
@@ -390,6 +385,7 @@ const Tag = ({
               id={`tag-${id}`}
               data-testid={`tag-${id}`}
               role="tag"
+              aria-current={isSelected ? 'true' : undefined}
               onMouseEnter={mouseEnter}
               onMouseLeave={mouseLeave}
               sx={{
@@ -437,6 +433,6 @@ const Tag = ({
   );
 };
 
-const memoizedTag = React.memo(observer(Tag));
+const memoizedTag = React.memo(Tag);
 
 export {memoizedTag as Tag};

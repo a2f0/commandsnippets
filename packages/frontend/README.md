@@ -2,7 +2,9 @@
 
 A command snippet tool for computer programmers and system administrators. It's
 a tagging system that allows for user-defined ordering of both Tag and Entry
-objects, using MobX-State-Tree for the app's state, saved in `localStorage`.
+objects. The user's data is kept in IndexedDB (Dexie), synced with the API,
+and the rest of the app's state in a zustand store saved in `localStorage`
+(see `AGENTS.md`).
 
 ## Development
 

@@ -11,6 +11,7 @@ import {
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
   CURSOR_START,
+  EXPECTED_USER_HEADER,
   emptyObjectSchema,
   errorDocumentSchema,
   type TagTextEntryCreateDocument,
@@ -70,14 +71,15 @@ interface Exchange {
   schema?: z.ZodMiniType;
   /** The request document, sent as JSON:API; otherwise `{}` (not JSON:API). */
   body?: unknown;
+  headers?: Record<string, string>;
 }
 
 /** Send `exchange`'s request and check the response against it. */
-async function check({method, url, status, schema, body}: Exchange) {
-  const init: RequestInit = {method};
+async function check({method, url, status, schema, body, headers}: Exchange) {
+  const init: RequestInit = {method, headers: {...headers}};
   if (body !== undefined) {
     init.body = JSON.stringify(body);
-    init.headers = {'Content-Type': 'application/vnd.api+json'};
+    init.headers = {...headers, 'Content-Type': 'application/vnd.api+json'};
   } else if (method !== 'GET' && method !== 'DELETE') {
     init.body = '{}';
   }
@@ -381,6 +383,16 @@ const exchanges: Exchange[] = [
     url: `${HOST}/api-token-deauth/`,
     status: 200,
     schema: emptyObjectSchema,
+  },
+  {
+    // A write naming another user than the signed-in one.
+    handler: `/.+/ ${API}/*`,
+    method: 'POST',
+    url: `${API}/tags`,
+    headers: {[EXPECTED_USER_HEADER]: 'someone-else'},
+    status: 409,
+    schema: errorDocumentSchema,
+    body: {data: {type: 'Tag', attributes: {name: 'theirs'}}},
   },
 ];
 

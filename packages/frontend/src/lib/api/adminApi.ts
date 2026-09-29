@@ -9,6 +9,9 @@
  *   raises AdminForbiddenError, so the page can say so.
  * - 403 `not_authenticated`, or a 403 with no code, signs out
  *   (`handleUnauthorized`) and raises AdminApiError.
+ * - A write names the signed-in user (`EXPECTED_USER_HEADER`); a 409
+ *   `user_mismatch` (the session is another user's) raises
+ *   UserMismatchError, and the page leaves the session.
  * - Any other error, `origin_not_allowed` included, keeps the session and
  *   raises AdminApiError.
  *
@@ -18,7 +21,10 @@
  * An OK response that does not fit its document schema raises AdminApiError
  * with status 0 (`Invalid admin API response: ...`), and keeps the session.
  */
-import {CODES} from '@commandsnippets/api-shared/messages';
+import {
+  CODES,
+  EXPECTED_USER_HEADER,
+} from '@commandsnippets/api-shared/messages';
 import type {
   AdminAuditLogListParams,
   AdminUserListParams,
@@ -35,7 +41,8 @@ import {
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
-import {handleUnauthorized} from '../auth/authUtils';
+import {handleUnauthorized, signedInUser} from '../auth/authUtils';
+import {UserMismatchError} from './apiClient';
 import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {isSignedOutResponse} from './fetchWithAuth';
@@ -169,22 +176,33 @@ async function adminFetch(
   path: string,
   init: RequestInit = {}
 ): Promise<unknown> {
+  const user = signedInUser();
+  // A write names the signed-in user, as every write does (`apiClient`).
+  const named = (init.method ?? 'GET') !== 'GET' ? user : null;
   const response = await fetch(`${baseURL}/admin${path}`, {
     ...init,
     credentials: 'include',
-    headers: {'Content-Type': 'application/vnd.api+json'},
+    headers: {
+      'Content-Type': 'application/vnd.api+json',
+      ...(named === null
+        ? {}
+        : {[EXPECTED_USER_HEADER]: encodeURIComponent(named)}),
+    },
   });
   const body: unknown = await response.json().catch(() => null);
   if (response.ok) {
     return body;
   }
   const {code, detail} = firstError(body);
+  if (named !== null && code === CODES.userMismatch) {
+    throw new UserMismatchError('Admin request failed', named);
+  }
   if (response.status === 403 && code === CODES.permissionDenied) {
     throw new AdminForbiddenError();
   }
   // The same sign-out rule as every other API call (fetchWithAuth).
   if (isSignedOutResponse(response.status, code)) {
-    handleUnauthorized();
+    handleUnauthorized(user);
   }
   throw new AdminApiError(response.status, detail ?? response.statusText);
 }

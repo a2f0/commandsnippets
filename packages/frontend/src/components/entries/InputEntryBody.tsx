@@ -1,10 +1,9 @@
 import styled from '@emotion/styled';
 import {TextareaAutosize} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import React, {useEffect, useRef, useState} from 'react';
-import {useAppContext} from '../../AppContext';
 import {activeEntryEditField} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 import type {Theme} from '../../theme/themes';
 
 export interface StyledTextAreaIProps {
@@ -45,7 +44,7 @@ const InputEntryBody = ({
 }: IProps) => {
   const [value, setValue] = useState<string>(valueParent);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
 
   const theme = useTheme<Theme>();
 
@@ -93,6 +92,6 @@ const InputEntryBody = ({
   );
 };
 
-const memoizedInputEntryBody = React.memo(observer(InputEntryBody));
+const memoizedInputEntryBody = React.memo(InputEntryBody);
 
 export {memoizedInputEntryBody as InputEntryBody};

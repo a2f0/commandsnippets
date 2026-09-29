@@ -1,21 +1,21 @@
 import Grid from '@mui/material/Grid';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {useAppContext} from '../../AppContext';
-import {apiClient} from '../../lib/api/apiClient';
+import {useSession} from '../../lib/data/hooks';
+import {createTag} from '../../lib/data/writes';
 import {activeTagEditField, appMode} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
 
 interface IProps {
-  handleNewParent: () => void;
   id: string;
 }
 
-const TagNew = ({handleNewParent, id}: IProps) => {
+const TagNew = ({id}: IProps) => {
+  const session = useSession();
   const [tagName, setTagName] = useState<string>('');
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
   const inputTagNameRef = React.useRef<HTMLInputElement>(null);
@@ -65,12 +65,11 @@ const TagNew = ({handleNewParent, id}: IProps) => {
   };
 
   const handleSave = () => {
-    apiClient
-      .createTag(tagName)
-      .then(response => {
-        appConfig.reconcileCollection(response.included ?? []);
-        appConfig.updateOrCreateTag(response.data);
-        handleNewParent();
+    if (session === null) {
+      return;
+    }
+    createTag(session, tagName)
+      .then(() => {
         appConfig.setTagNew(null);
       })
       .catch((error: unknown) => {
@@ -149,6 +148,6 @@ const TagNew = ({handleNewParent, id}: IProps) => {
   );
 };
 
-const memoizedTagNew = React.memo(observer(TagNew));
+const memoizedTagNew = React.memo(TagNew);
 
 export {memoizedTagNew as TagNew};

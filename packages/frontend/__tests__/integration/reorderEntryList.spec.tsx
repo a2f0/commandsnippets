@@ -6,12 +6,16 @@ import {type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
+import {signIn} from '../util/signIn';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
+});
 
 describe('Entries List', () => {
   let reorderEntrySpy: MockInstance;
@@ -81,6 +85,8 @@ describe('Entries List', () => {
     await waitFor(() => screen.getByText(/test-tag-2/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/test-tag-3/i), {timeout: 3000});
     await waitFor(() => screen.getByText(/test-tag-4/i), {timeout: 3000});
+    // The tags sync first; the entries after.
+    await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(4));
     let entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-1-subject');
@@ -190,7 +196,9 @@ describe('Entries List', () => {
       fireEvent.drop(entries[1]);
     });
 
-    expect(reorderEntrySpy).toBeCalledWith('1', '3');
+    // The reorder reads the junctions from IndexedDB first.
+
+    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('1', '3'));
   });
   it('Reorders 0 -> 2', async () => {
     const user = userEvent.setup();
@@ -265,7 +273,9 @@ describe('Entries List', () => {
       fireEvent.drop(entries[2]);
     });
 
-    expect(reorderEntrySpy).toBeCalledWith('1', '4');
+    // The reorder reads the junctions from IndexedDB first.
+
+    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('1', '4'));
   });
   it('Reorders 0 -> 3', async () => {
     const user = userEvent.setup();
@@ -356,7 +366,9 @@ describe('Entries List', () => {
       fireEvent.drop(entries[3]);
     });
 
-    expect(reorderEntrySpy).toBeCalledWith('4', '1');
+    // The reorder reads the junctions from IndexedDB first.
+
+    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('4', '1'));
   });
   it('Reorders 1 -> 2', async () => {
     const user = userEvent.setup();
@@ -415,7 +427,9 @@ describe('Entries List', () => {
       fireEvent.drop(entries[2]);
     });
 
-    expect(reorderEntrySpy).toBeCalledWith('2', '4');
+    // The reorder reads the junctions from IndexedDB first.
+
+    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('2', '4'));
   });
 
   it('Reorders 2 -> 1', async () => {
@@ -475,6 +489,8 @@ describe('Entries List', () => {
       fireEvent.drop(entries[1]);
     });
 
-    expect(reorderEntrySpy).toBeCalledWith('3', '2');
+    // The reorder reads the junctions from IndexedDB first.
+
+    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('3', '2'));
   });
 });

@@ -1,8 +1,7 @@
 import React from 'react';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {apiClient} from '../../../lib/api/apiClient';
-import {resetApplicationState} from '../../../lib/store/store';
+import {signOut} from '../../../lib/state/appState';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
@@ -13,14 +12,8 @@ const Logout = ({onClose}: IProps) => {
   const {t} = useTypedTranslation('common');
 
   const handleLogout = async () => {
-    try {
-      await apiClient.logout();
-    } catch (error: unknown) {
-      console.error('Logout error:', error);
-    } finally {
-      resetApplicationState();
-      onClose();
-    }
+    await signOut();
+    onClose();
   };
 
   return (

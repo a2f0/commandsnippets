@@ -1,6 +1,6 @@
 import {useSearchParams} from 'react-router-dom';
 
-import {useAppContext} from '../AppContext';
+import {useAppConfig} from '../lib/state/appState';
 
 /**
  * The sort order of the entries list on screen, for the Entries menu to set
@@ -9,7 +9,7 @@ import {useAppContext} from '../AppContext';
  * (`?entries=untagged`, `?entries=all`) by `entrySortOrder`.
  */
 export function useEntrySortOrder() {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
   const tagList = entriesFilter !== 'untagged' && entriesFilter !== 'all';

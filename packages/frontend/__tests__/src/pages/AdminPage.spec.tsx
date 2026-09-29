@@ -13,7 +13,7 @@ import {setupServer} from 'msw/node';
 
 import {errorDocument, onePage, pagination} from '../../../src/msw/documents';
 import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
-import {store} from '../../util/loggedInStore';
+import {signIn, store} from '../../util/signIn';
 import {TestAppRouter} from '../../util/TestAppRouter';
 
 const API = 'http://localhost:9001/api/v1';
@@ -147,6 +147,7 @@ beforeAll(() => server.listen());
 afterAll(() => server.close());
 
 beforeEach(() => {
+  signIn();
   assignLoggedInCookie();
   viewerIsStaff = true;
   adminForbidden = false;
@@ -172,10 +173,6 @@ beforeEach(() => {
 
 afterEach(() => {
   server.resetHandlers();
-  act(() => {
-    store.setIsStaff(false);
-    store.setLoggedInUser('test');
-  });
 });
 
 async function renderAt(path: string) {
@@ -292,6 +289,44 @@ describe('AdminPage', () => {
     ]);
     const row = present(document.getElementById('adminUserRow7'), 'row');
     expect(within(row).getByText('Deactivated')).toBeInTheDocument();
+  });
+
+  it("leaves the session when it is another user's, deactivating no one", async () => {
+    // Another tab has signed in as someone else since.
+    server.use(
+      http.patch(`${API}/admin/users/:id`, () =>
+        HttpResponse.json(
+          errorDocument(409, CODES.userMismatch, 'Not that user.'),
+          {status: 409}
+        )
+      )
+    );
+    await renderAt('/admin');
+    await usersTable();
+
+    fireEvent.click(
+      present(document.getElementById('adminUserToggle7'), 'toggle')
+    );
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', {name: 'Deactivate'}));
+
+    await waitFor(() => expect(store.loggedInUser).toBeNull());
+    expect(users.find(user => user.id === '7')?.is_active).toBe(true);
+  });
+
+  it("shows nothing of the last user's once the tab takes up another's sign-in", async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    // Another tab signed in as someone who is not staff; this one takes it up.
+    viewerIsStaff = false;
+    act(() => store.setLoggedInUser('someone-else'));
+
+    expect(screen.queryByRole('table', {name: 'Users'})).toBeNull();
+    expect(
+      await screen.findByText('You do not have access to this page.')
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('table', {name: 'Users'})).toBeNull();
   });
 
   it('reloads after a change, so a status filter stays accurate', async () => {

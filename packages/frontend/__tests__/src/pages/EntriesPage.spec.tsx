@@ -6,10 +6,12 @@ import {HTML5Backend} from 'react-dnd-html5-backend';
 import {I18nextProvider} from 'react-i18next';
 import {MemoryRouter} from 'react-router-dom';
 import {describe, expect, it, vi} from 'vitest';
-import {AppContextProvider} from '../../../src/AppContext';
 import {i18n} from '../../../src/i18n/i18n';
 import {EntriesPage} from '../../../src/pages/EntriesPage';
 import {darkTheme} from '../../../src/theme/themes';
+import {signIn} from '../../util/signIn';
+
+beforeEach(() => signIn());
 
 vi.mock('react-cookie', () => ({
   useCookies: () => [{}, vi.fn(), vi.fn()],
@@ -20,9 +22,7 @@ const EntriesPageWithProviders = () => (
     <ThemeProvider theme={darkTheme}>
       <MemoryRouter>
         <DndProvider backend={HTML5Backend}>
-          <AppContextProvider>
-            <EntriesPage />
-          </AppContextProvider>
+          <EntriesPage />
         </DndProvider>
       </MemoryRouter>
     </ThemeProvider>

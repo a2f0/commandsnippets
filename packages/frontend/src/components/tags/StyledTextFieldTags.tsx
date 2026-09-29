@@ -1,9 +1,7 @@
 import {TextField} from '@mui/material';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect} from 'react';
-
-import {useAppContext} from '../../AppContext';
 import {activeSearch, appMode} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -15,7 +13,7 @@ const StyledTextFieldTags = React.forwardRef<
   HTMLInputElement,
   IStyledTextFieldProps
 >(({id, value, onChange}: IStyledTextFieldProps, ref) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const keyListener = useCallback((event: KeyboardEvent) => {
     const trappedModes = [appMode.tagsList, appMode.entriesList];
     const trappedKeys = ['Tab', 'ArrowLeft', 'ArrowRight'];
@@ -88,6 +86,6 @@ const StyledTextFieldTags = React.forwardRef<
 
 StyledTextFieldTags.displayName = 'StyledTextFieldTags';
 
-const memoizedStyledTextFieldTags = React.memo(observer(StyledTextFieldTags));
+const memoizedStyledTextFieldTags = React.memo(StyledTextFieldTags);
 
 export {memoizedStyledTextFieldTags as StyledTextFieldTags};

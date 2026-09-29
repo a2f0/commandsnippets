@@ -1,9 +1,7 @@
 import {TextField} from '@mui/material';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect} from 'react';
-
-import {useAppContext} from '../../AppContext';
 import {activeSearch} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -16,7 +14,7 @@ const StyledTextFieldTextEntries = ({
   value,
   onChange,
 }: IStyledTextFieldProps) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -73,7 +71,7 @@ const StyledTextFieldTextEntries = ({
 };
 
 const memoizedStyledTextFieldTextEntries = React.memo(
-  observer(StyledTextFieldTextEntries)
+  StyledTextFieldTextEntries
 );
 
 export {memoizedStyledTextFieldTextEntries as StyledTextFieldEntries};

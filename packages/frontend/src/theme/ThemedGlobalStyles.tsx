@@ -1,6 +1,5 @@
 import {GlobalStyles} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import React from 'react';
 
 const ThemedGlobalStyle = () => {
@@ -18,6 +17,4 @@ const ThemedGlobalStyle = () => {
   );
 };
 
-export const MemoizedThemedGlobalStyle = React.memo(
-  observer(ThemedGlobalStyle)
-);
+export const MemoizedThemedGlobalStyle = React.memo(ThemedGlobalStyle);

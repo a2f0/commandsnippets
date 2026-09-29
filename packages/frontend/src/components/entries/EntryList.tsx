@@ -3,18 +3,15 @@ import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import invariant from 'invariant';
-import {autorun, reaction} from 'mobx';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
-import {useLocation, useParams, useSearchParams} from 'react-router-dom';
-import {useAppContext} from '../../AppContext';
-import {entrySortKey} from '../../lib/api/requests/entrySort';
-import type {IEntryFetchPage} from '../../lib/api/requests/types';
-import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
+import {useParams, useSearchParams} from 'react-router-dom';
+import {useEntries, useTagEntries, useTagNamed} from '../../lib/data/hooks';
+import {sortEntries, sortTagEntries} from '../../lib/data/sort';
+import {useTagSync} from '../../lib/data/useSync';
+import {needsScrollingIntoView} from '../../lib/scroll';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
-import {TextEntryHelpers} from '../../lib/store/models/TextEntryModel';
-import {needsScrollingIntoView} from '../../lib/textEntries';
+import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
@@ -25,19 +22,60 @@ export interface IParamTypes {
   tag: string;
 }
 
-function logFetchError(error: unknown) {
-  console.error('Failed to fetch entries:', error);
-}
-
+/**
+ * The entries shown: a tag's (`/:user/:tag`), or all or the untagged ones
+ * (`?entries=all`, `?entries=untagged`), from IndexedDB as syncs and writes
+ * store them, sorted and searched. The tag shown syncs whenever it is not
+ * synced through its revision.
+ */
 const EntryList = () => {
-  const appConfig = useAppContext();
-  const location = useLocation();
-  const {user, tag} = useParams();
+  const appConfig = useAppConfig();
+  const {tag} = useParams();
   const theme: Theme = useTheme();
   const [searchParams] = useSearchParams();
-  const entriesFilter = searchParams.get('entries');
+  const entriesList = searchParams.get('entries');
+  const listsAll = entriesList === 'all' || entriesList === 'untagged';
 
-  const [entries, setEntries] = useState<Array<ITextEntryJsonApi>>([]);
+  const currentTag = useTagNamed(listsAll ? undefined : tag);
+  useTagSync(currentTag);
+  const tagged = useTagEntries(currentTag?.id);
+  // (Nothing to read for a tag's list.)
+  const listed = useEntries(
+    listsAll ? (entriesList === 'all' ? 'all' : 'untagged') : null
+  );
+  const tagOrder = useAppState(
+    state => state.tagTextEntryThroughModelSortOrder
+  );
+  const entryOrder = useAppState(state => state.entrySortOrder);
+  const search = useAppState(state => state.entrySearchString);
+  const shown = useMemo(() => {
+    if (listsAll) {
+      return listed === undefined
+        ? undefined
+        : sortEntries(listed, entryOrder, search);
+    }
+    return tagged === undefined
+      ? undefined
+      : sortTagEntries(tagged, tagOrder, search);
+  }, [listsAll, listed, tagged, entryOrder, tagOrder, search]);
+
+  // The list as the database has it now: a drag reorders this copy until the
+  // drop is stored.
+  const [entries, setEntries] = useState<Array<TextEntry>>([]);
+  useEffect(() => {
+    if (shown === undefined) {
+      return;
+    }
+    setEntries(shown);
+    const [first] = shown;
+    if (
+      first !== undefined &&
+      !shown.some(entry => entry.id === appConfig.entrySelectedID)
+    ) {
+      appConfig.setEntrySelectedID(first.id);
+    }
+  }, [shown, appConfig]);
+
   const [elRefs, setElRefs] = useState<
     Array<React.RefObject<HTMLDivElement | null>>
   >([]);
@@ -49,142 +87,6 @@ const EntryList = () => {
       )
     );
   }, [entries.length]);
-
-  const [previousController, setPreviousController] = useState<
-    AbortController | undefined
-  >(undefined);
-  useEffect(() => {
-    if (entriesFilter === 'untagged' || entriesFilter === 'all') {
-      return autorun(() => {
-        retrieveEntries();
-      });
-    }
-    if (user !== undefined && tag !== undefined) {
-      return showTag(user, tag);
-    }
-    return undefined;
-  }, [
-    location,
-    searchParams,
-    appConfig.tagTextEntryThroughModelSortOrder,
-    appConfig.entrySortOrder,
-    appConfig.entrySearchMethod,
-  ]);
-
-  const retrieveEntries = () => {
-    if (entriesFilter === 'untagged' && user !== undefined) {
-      appConfig
-        .fetchUntaggedTextEntries(user)
-        .then(() => {
-          filterAndSort();
-        })
-        .catch(logFetchError);
-    } else if (entriesFilter === 'all') {
-      filterAndSort();
-    }
-  };
-
-  /**
-   * List the tag's entries the store holds, at once, then sync them in the
-   * background whenever the tag's revision moves past the one they were
-   * synced at (on the first visit, and when a tags sync brings a newer one;
-   * each tags sync also retries a sync that failed). List them again
-   * whenever a response changes the store: this tag's sync, or another's
-   * (a sync still running from a tag shown before, a tagging) that changed
-   * entries this tag shares. Returns the cleanup.
-   */
-  const showTag = (user: string, tag: string) => {
-    filterAndSort();
-    const disposers = [
-      reaction(
-        () =>
-          `${appConfig.findTag(user, tag)?.attributes.date_updated} ${appConfig.tagsSyncedAt}`,
-        () => {
-          appConfig.syncTagEntries(user, tag).catch(logFetchError);
-        },
-        {fireImmediately: true}
-      ),
-      reaction(
-        () => appConfig.storeVersion,
-        () => filterAndSort()
-      ),
-    ];
-    return () => {
-      for (const dispose of disposers) {
-        dispose();
-      }
-    };
-  };
-
-  useEffect(() => {
-    filterAndSort();
-  }, [appConfig.entrySearchString]);
-
-  const filterAndSort = () => {
-    let array: ITextEntryJsonApi[] = [];
-    if (entriesFilter === 'untagged') {
-      if (user !== undefined) {
-        array = TextEntryHelpers.sort(
-          user,
-          null,
-          appConfig.untaggedTextEntriesArray,
-          appConfig.entrySortOrder,
-          appConfig
-        );
-        if (array[0]) {
-          appConfig.setEntrySelectedID(array[0].id);
-        }
-        setEntries(array);
-      }
-    } else if (entriesFilter === 'all') {
-      if (user !== undefined) {
-        const controller = new AbortController();
-        const fetchParams: IEntryFetchPage = {
-          page: 1,
-          username: user,
-          sort: entrySortKey(appConfig.entrySortOrder),
-          search: appConfig.entrySearchString,
-          signal: controller.signal,
-        };
-        if (previousController !== undefined) {
-          previousController.abort('New request initiated');
-        }
-        setPreviousController(controller);
-        const p = TextEntryHelpers.fetchPage(fetchParams);
-        p.then(a => {
-          setEntries(
-            a.filter((i): i is TextEntry => {
-              return i.type === 'TextEntry';
-            })
-          );
-        }).catch((error: unknown) => {
-          // A newer request (the next search) aborted this one: not an error.
-          if (!controller.signal.aborted) {
-            logFetchError(error);
-          }
-        });
-      }
-    } else {
-      if (user !== undefined && tag !== undefined) {
-        const array = TextEntryHelpers.sort(
-          user,
-          tag,
-          appConfig.textEntriesArray,
-          appConfig.tagTextEntryThroughModelSortOrder,
-          appConfig
-        );
-        setEntries(array);
-        const current = array.find(
-          element => element.id === appConfig.entrySelectedID
-        );
-        if (current === undefined) {
-          if (array[0]) {
-            appConfig.setEntrySelectedID(array[0].id);
-          }
-        }
-      }
-    }
-  };
 
   const keyListener = useCallback(
     (event: KeyboardEvent) => {
@@ -276,7 +178,7 @@ const EntryList = () => {
     [findEntry, entries]
   );
 
-  const findEntryByIndex = (index: number): ITextEntryJsonApi | null => {
+  const findEntryByIndex = (index: number): TextEntry | null => {
     if (index > entries.length - 1) {
       return null;
     }
@@ -290,14 +192,6 @@ const EntryList = () => {
   // Add this function to properly connect the drop ref
   const dropBoxRef = (el: HTMLDivElement | null) => {
     drop(el);
-  };
-
-  const handleRemoveFromList = (id: string) => {
-    setEntries(
-      entries.filter(element => {
-        return element.id !== id;
-      })
-    );
   };
 
   const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -332,7 +226,7 @@ const EntryList = () => {
       }}
     >
       {appConfig.entryNew === 'textEntry-top' && (
-        <EntryNew id="textEntryNewTop" filterAndSortParent={filterAndSort} />
+        <EntryNew id="textEntryNewTop" tagId={currentTag?.id} />
       )}
       {entries.map((element, i) => {
         const index = i;
@@ -344,16 +238,15 @@ const EntryList = () => {
               index={index}
               moveEntry={moveEntry}
               findEntry={findEntry}
-              handleRemoveFromListParent={handleRemoveFromList}
               object={element}
-              filterAndSortParent={filterAndSort}
+              tagId={currentTag?.id}
               findEntryByIndex={findEntryByIndex}
             />
           </div>
         );
       })}
       {appConfig.entryNew === 'textEntry-bottom' && (
-        <EntryNew id="textEntryNewBottom" filterAndSortParent={filterAndSort} />
+        <EntryNew id="textEntryNewBottom" tagId={currentTag?.id} />
       )}
       <Box
         onContextMenu={handleContextClick}
@@ -366,6 +259,6 @@ const EntryList = () => {
   );
 };
 
-const memoizedEntryList = React.memo(observer(EntryList));
+const memoizedEntryList = React.memo(EntryList);
 
 export {memoizedEntryList as EntryList};

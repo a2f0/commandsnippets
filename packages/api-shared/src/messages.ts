@@ -31,6 +31,11 @@ export const CODES = {
   permissionDenied: 'permission_denied',
   authenticationFailed: 'authentication_failed',
   originNotAllowed: 'origin_not_allowed',
+  /**
+   * A 409: a write names another user (`EXPECTED_USER_HEADER`) than the one
+   * the request is signed in as.
+   */
+  userMismatch: 'user_mismatch',
   serverError: 'error',
 } as const;
 
@@ -91,3 +96,11 @@ export const MESSAGES = {
   enterABoolean: 'Enter a valid boolean.',
   enterADateTime: 'Enter a valid date/time.',
 } as const;
+
+/**
+ * The header a client's writes name the user they act for with (their
+ * username, URI-encoded): the API refuses a state-changing request signed in
+ * as anyone else (409 `user_mismatch`), so a browser tab whose session
+ * another tab has replaced cannot write into the new user's account.
+ */
+export const EXPECTED_USER_HEADER = 'X-Expected-User';

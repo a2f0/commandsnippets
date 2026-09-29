@@ -63,14 +63,14 @@ describe('Debug: Sync IndexedDB', () => {
     await BasePage.debugMenuButton.waitAndLeftClick();
     await BasePage.debugMenuSyncIndexedDB.waitAndLeftClick();
 
-    // The mock API's 4 tags, 2 entries and 2 junctions, with the cursors:
+    // The mock API's 4 tags, 3 entries and 2 junctions, with the cursors:
     // the master two and one per tag.
     await browser.waitUntil(async () => (await countRows())['cursors'] === 6, {
       timeoutMsg: 'the sync did not finish',
     });
     expect(await countRows()).toEqual({
       tags: 4,
-      entries: 2,
+      entries: 3,
       junctions: 2,
       cursors: 6,
     });

@@ -1,16 +1,16 @@
-import type {TagDocument} from '@commandsnippets/api-shared';
 import Grid from '@mui/material/Grid';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {apiClient} from '../../lib/api/apiClient';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
+import {useSession} from '../../lib/data/hooks';
+import {renameTag} from '../../lib/data/writes';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
 
 export interface ITagEdit {
   object: ITagJsonApi;
-  handleSaveParent: (object: ITagJsonApi) => void;
+  /** After the rename is stored, with the renamed tag. */
+  handleSaveParent: (renamed: ITagJsonApi) => void;
   handleCancelEditParent: () => void;
 }
 
@@ -20,6 +20,7 @@ const TagEdit = ({
   object,
 }: ITagEdit) => {
   const [tagName, setTagName] = useState<string>(object.attributes.name);
+  const session = useSession();
   const escFunction = useCallback((event: KeyboardEvent) => {
     if (event.code === 'Escape') {
       handleCancel();
@@ -38,12 +39,12 @@ const TagEdit = ({
   const inputCancelRef = useRef<HTMLButtonElement>(null);
 
   const handleSave = () => {
-    apiClient
-      .updateTag(object.id, tagName)
-      .then((response: TagDocument) => {
-        handleSaveParent(response.data);
-      })
-      .catch(error => {
+    if (session === null) {
+      return;
+    }
+    renameTag(session, object.id, tagName)
+      .then(renamed => handleSaveParent(renamed))
+      .catch((error: unknown) => {
         console.error('Unexpected error updating tag:', error);
       });
   };
@@ -93,6 +94,6 @@ const TagEdit = ({
   );
 };
 
-const memoizedTagEdit = React.memo(observer(TagEdit));
+const memoizedTagEdit = React.memo(TagEdit);
 
 export {memoizedTagEdit as TagEdit};

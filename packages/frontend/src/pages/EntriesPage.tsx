@@ -1,26 +1,27 @@
 import {Box} from '@mui/material';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect} from 'react';
 import {useCookies} from 'react-cookie';
 import {useLocation, useNavigate} from 'react-router-dom';
-
-import {useAppContext} from '../AppContext';
 import {AppHeader} from '../components/AppHeader';
 import {BottomToolbar} from '../components/bottomBar/BottomToolbar';
 import {LeftDrawer} from '../components/drawer/LeftDrawer';
 import {RightDrawer} from '../components/drawer/RightDrawer';
 import {EntryList} from '../components/entries/EntryList';
 import {hasLoginCookie, loggedInCookieNames} from '../lib/auth/authUtils';
+import {useCollectionSync} from '../lib/data/useSync';
 import {environment} from '../lib/environment';
+import {useAppConfig, useAppState} from '../lib/state/appState';
 
 const COOKIE_KEYS = loggedInCookieNames(environment);
 
 const EntriesPageContent = () => {
   const location = useLocation();
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const navigate = useNavigate();
   const [cookies] = useCookies(COOKIE_KEYS);
   const loggedInCookie = hasLoginCookie(cookies, environment);
+  // The user's data, from the API into IndexedDB, which the lists show.
+  useCollectionSync();
 
   // Redirect to user's page when on root path.
   useEffect(() => {
@@ -67,10 +68,16 @@ const EntriesPageContent = () => {
   );
 };
 
-const MemoizedEntriesPageContent = React.memo(observer(EntriesPageContent));
+const MemoizedEntriesPageContent = React.memo(EntriesPageContent);
 
+/**
+ * Each user's page is their own: another user's (this tab may take up
+ * another tab's sign-in) starts afresh, keeping none of the last user's
+ * lists, copies or editors while their data loads.
+ */
 const EntriesPage = () => {
-  return <MemoizedEntriesPageContent />;
+  const loggedInUser = useAppState(state => state.loggedInUser);
+  return <MemoizedEntriesPageContent key={loggedInUser ?? ''} />;
 };
 
 export {EntriesPage};

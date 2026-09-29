@@ -1,4 +1,4 @@
-import {CODES} from '@commandsnippets/api-shared';
+import {CODES, EXPECTED_USER_HEADER} from '@commandsnippets/api-shared';
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
 import packageJson from '../package.json';
@@ -6,7 +6,12 @@ import {authenticate} from './auth/authentication';
 import {authRoutes} from './auth/routes';
 import {createDb} from './db/client';
 import type {AppEnv} from './env';
-import {ApiError, describeError, originNotAllowed} from './lib/errors';
+import {
+  ApiError,
+  describeError,
+  originNotAllowed,
+  userMismatch,
+} from './lib/errors';
 import {assertJsonMediaType} from './lib/jsonapi';
 import {adminRoutes} from './resources/admin';
 import {currentUserRoutes} from './resources/currentUser';
@@ -33,6 +38,9 @@ const ALLOWED_ORIGINS = [
   /^https:\/\/[a-z0-9]+(?:-[a-z0-9]+)*\.commandsnippets\.com$/,
 ];
 
+/** The methods that change nothing. */
+const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
+
 export const app = new Hono<AppEnv>({strict: false});
 
 app.use('*', async (c, next) => {
@@ -53,6 +61,7 @@ app.use(
       'content-type',
       'user-agent',
       'x-csrftoken',
+      EXPECTED_USER_HEADER.toLowerCase(),
       'x-requested-with',
     ],
     maxAge: 86_400,
@@ -73,7 +82,7 @@ app.use('*', async (c, next) => {
   }
   const origin = c.req.header('Origin');
   if (
-    !['GET', 'HEAD', 'OPTIONS'].includes(method) &&
+    !SAFE_METHODS.includes(method) &&
     origin !== undefined &&
     !ALLOWED_ORIGINS.some(pattern => pattern.test(origin))
   ) {
@@ -82,9 +91,41 @@ app.use('*', async (c, next) => {
   await next();
 });
 
+/** A URI-encoded username, or null when it is not validly encoded. */
+function decodedUsername(encoded: string): string | null {
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    return null;
+  }
+}
+
 app.use('*', async (c, next) => {
   c.set('db', createDb(c.env.DB));
   c.set('user', await authenticate(c));
+  await next();
+});
+
+/**
+ * A state-changing request that names the user it acts for
+ * (`EXPECTED_USER_HEADER`) is refused when signed in as anyone else: a
+ * browser tab whose session another tab replaced cannot write into the new
+ * user's account (409 `user_mismatch`). Checked with the request's own
+ * session, so no switch can come between the check and the write. Anonymous
+ * requests are left to the routes (403 `not_authenticated`), and requests
+ * that name no user are unaffected.
+ */
+app.use('*', async (c, next) => {
+  const expected = c.req.header(EXPECTED_USER_HEADER);
+  const user = c.get('user');
+  if (
+    expected !== undefined &&
+    user !== null &&
+    !SAFE_METHODS.includes(c.req.method) &&
+    decodedUsername(expected) !== user.username
+  ) {
+    throw userMismatch();
+  }
   await next();
 });
 

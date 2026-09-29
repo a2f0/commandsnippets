@@ -1,19 +1,17 @@
+import type {User} from '@commandsnippets/api-shared/responses';
 import type {
   ITagJsonApi,
   ITagTextEntryThroughModelJsonApi,
   ITextEntryJsonApi,
-  IUserJsonApi,
 } from '../../src/lib/api/responses/types';
-import {defaultState} from '../../src/lib/shared';
-import {RootModel} from '../../src/lib/store/models/RootModel';
-import type {Store} from '../../src/lib/store/store';
+import {syncSession} from '../../src/lib/sync/session';
 
 const date = '2020-01-01T00:00:00';
 
-export const testUser: IUserJsonApi = {
+export const testUser: User = {
   id: '1',
   type: 'User',
-  attributes: {username: 'test', date_updated: date},
+  attributes: {username: 'test', is_staff: false, date_updated: date},
 };
 
 const owner: ITagJsonApi['relationships'] = {
@@ -45,7 +43,8 @@ export function tag(
 /** An entry of `testUser`'s. */
 export function entry(
   id: string,
-  attributes: Partial<ITextEntryJsonApi['attributes']>
+  attributes: Partial<ITextEntryJsonApi['attributes']>,
+  junctionIds: readonly string[] = []
 ): ITextEntryJsonApi {
   return {
     id,
@@ -57,10 +56,19 @@ export function entry(
       date_created: date,
       reused_count: 0,
       is_deleted: false,
-      tag_count: 0,
+      tag_count: junctionIds.length,
       ...attributes,
     },
-    relationships: owner,
+    relationships: {
+      ...owner,
+      text_entry_to_tag: {
+        data: junctionIds.map(junctionId => ({
+          type: 'TagTextEntryThroughModel',
+          id: junctionId,
+        })),
+        meta: {count: junctionIds.length},
+      },
+    },
   };
 }
 
@@ -82,22 +90,32 @@ export function junction(
     relationships: {
       tag: {data: {id: tagId, type: 'Tag'}},
       text_entry: {data: {id: entryId, type: 'TextEntry'}},
+      ...owner,
     },
   };
 }
 
-/**
- * A store of its own (not the app's `store`), signed in as `testUser` and
- * holding `resources`: tagged entries, tags and their junctions.
- */
-export function createStore(
-  resources: Array<
+/** Store `resources` in the signed-in user's IndexedDB database. */
+export async function seed(
+  resources: ReadonlyArray<
     ITagJsonApi | ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi
-  > = []
-): Store {
-  const store = RootModel.create(defaultState);
-  store.setLoggedInUser(testUser.attributes.username);
-  store.setCurrentUser(testUser.attributes.username);
-  store.reconcileCollection([testUser, ...resources]);
-  return store;
+  >
+): Promise<void> {
+  const {db} = syncSession(testUser.attributes.username);
+  await db.tags.bulkPut(resources.filter(isTag));
+  await db.entries.bulkPut(resources.filter(isEntry));
+  await db.junctions.bulkPut(resources.filter(isJunction));
 }
+
+type Resource =
+  | ITagJsonApi
+  | ITextEntryJsonApi
+  | ITagTextEntryThroughModelJsonApi;
+const isTag = (resource: Resource): resource is ITagJsonApi =>
+  resource.type === 'Tag';
+const isEntry = (resource: Resource): resource is ITextEntryJsonApi =>
+  resource.type === 'TextEntry';
+const isJunction = (
+  resource: Resource
+): resource is ITagTextEntryThroughModelJsonApi =>
+  resource.type === 'TagTextEntryThroughModel';

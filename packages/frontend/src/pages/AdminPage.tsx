@@ -7,17 +7,13 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import {observer} from 'mobx-react';
-import {applySnapshot} from 'mobx-state-tree';
 import React, {useCallback, useEffect, useState} from 'react';
-
-import {useAppContext} from '../AppContext';
 import {AppHeader} from '../components/AppHeader';
 import {AdminAuditLog} from '../components/admin/AdminAuditLog';
 import {AdminUsers} from '../components/admin/AdminUsers';
 import {useTypedTranslation} from '../i18n/hooks';
 import {AdminSignedOutError, getStaffStatus} from '../lib/api/adminApi';
-import {defaultState} from '../lib/shared';
+import {resetApplicationState, useAppConfig} from '../lib/state/appState';
 import {SignInPage} from './SignInPage';
 
 type Access = 'checking' | 'staff' | 'forbidden' | 'error';
@@ -28,41 +24,49 @@ type AdminTab = 'users' | 'auditLog';
  * stored flag can be stale), and the admin API checks it again on each call.
  */
 const AdminPage = () => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const {t} = useTypedTranslation('admin');
   const {t: tCommon} = useTypedTranslation('common');
-  const [access, setAccess] = useState<Access>('checking');
+  // Each user's access is their own: checked again for another user (this
+  // tab may take up another tab's sign-in), and until then nothing of the
+  // last user's is shown.
+  const [checked, setChecked] = useState<{
+    user: string | null;
+    access: Access;
+  }>({user: null, access: 'checking'});
   const [tab, setTab] = useState<AdminTab>('users');
-  const loggedIn = appConfig.loggedInUser !== null;
+  const {loggedInUser} = appConfig;
+  const access = checked.user === loggedInUser ? checked.access : 'checking';
 
   const checkAccess = useCallback(
     async (isCancelled: () => boolean) => {
-      setAccess('checking');
+      const user = appConfig.loggedInUser;
+      setChecked({user, access: 'checking'});
       try {
         const isStaff = await getStaffStatus();
         if (isCancelled()) {
           return;
         }
         appConfig.setIsStaff(isStaff);
-        setAccess(isStaff ? 'staff' : 'forbidden');
+        setChecked({user, access: isStaff ? 'staff' : 'forbidden'});
       } catch (error: unknown) {
         if (isCancelled()) {
           return;
         }
         if (error instanceof AdminSignedOutError) {
           // The session expired: sign out locally, which shows sign-in.
-          applySnapshot(appConfig, defaultState);
+          resetApplicationState();
           return;
         }
         console.error('Admin access check failed:', error);
-        setAccess('error');
+        setChecked({user, access: 'error'});
       }
     },
     [appConfig]
   );
 
   useEffect(() => {
-    if (!loggedIn) {
+    if (loggedInUser === null) {
       return;
     }
     let cancelled = false;
@@ -70,15 +74,15 @@ const AdminPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [loggedIn, checkAccess]);
+  }, [loggedInUser, checkAccess]);
 
   // Stable, so the tabs' data effects don't re-run on every render.
   const forbid = useCallback(() => {
     appConfig.setIsStaff(false);
-    setAccess('forbidden');
+    setChecked({user: appConfig.loggedInUser, access: 'forbidden'});
   }, [appConfig]);
 
-  if (!loggedIn) {
+  if (loggedInUser === null) {
     return <SignInPage />;
   }
 
@@ -133,11 +137,12 @@ const AdminPage = () => {
             </Tabs>
             {tab === 'users' ? (
               <AdminUsers
-                currentUsername={appConfig.loggedInUser}
+                key={loggedInUser}
+                currentUsername={loggedInUser}
                 onForbidden={forbid}
               />
             ) : (
-              <AdminAuditLog onForbidden={forbid} />
+              <AdminAuditLog key={loggedInUser} onForbidden={forbid} />
             )}
           </>
         )}
@@ -146,6 +151,6 @@ const AdminPage = () => {
   );
 };
 
-const memoizedAdminPage = React.memo(observer(AdminPage));
+const memoizedAdminPage = React.memo(AdminPage);
 
 export {memoizedAdminPage as AdminPage};

@@ -2,17 +2,17 @@ import {act, fireEvent, render, screen} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 
 import {assignLoggedInCookie} from '../../../util/assignLoggedInCookie';
-import {store} from '../../../util/loggedInStore';
 import {server} from '../../../util/msw';
+import {signIn, store} from '../../../util/signIn';
 import {TestAppRouter} from '../../../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
-afterEach(() => {
-  server.resetHandlers();
-  act(() => store.setIsStaff(false));
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
 });
+afterEach(() => server.resetHandlers());
 
 async function renderAt(path: string) {
   const history = createMemoryHistory();

@@ -1,3 +1,7 @@
+import {
+  CODES,
+  EXPECTED_USER_HEADER,
+} from '@commandsnippets/api-shared/messages';
 import type {
   GithubLoginDocument,
   GoogleLoginDocument,
@@ -16,32 +20,45 @@ import {
   emptyObjectSchema,
   type TagCursorListDocument,
   type TagDocument,
-  type TagListDocument,
   type TagTextEntryCursorListDocument,
   type TagTextEntryDocument,
   type TagTextEntryListDocument,
   type TextEntryCursorListDocument,
   type TextEntryDocument,
-  type TextEntryListDocument,
   tagCursorListDocumentSchema,
   tagDocumentSchema,
-  tagListDocumentSchema,
   tagTextEntryCursorListDocumentSchema,
   tagTextEntryDocumentSchema,
   tagTextEntryListDocumentSchema,
   textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
-  textEntryListDocumentSchema,
   type UserDocument,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
+import {signedInUser} from '../auth/authUtils';
 import {baseHTTPURL, baseURL} from './baseUrl';
+import {firstError} from './errorDocument';
 import {fetchWithAuth} from './fetchWithAuth';
 import {parseBody, readJson} from './parseResponse';
 import {urlWithQuery} from './searchParams';
 
 type LogoutResponse = z.output<typeof emptyObjectSchema>;
+
+/**
+ * A write the API refused because the request is signed in as another user
+ * than the one it named (`EXPECTED_USER_HEADER`): another tab has signed in
+ * as someone else since this one did.
+ */
+export class UserMismatchError extends Error {
+  constructor(
+    failure: string,
+    readonly username: string
+  ) {
+    super(`${failure}: the session is not ${username}'s`);
+    this.name = 'UserMismatchError';
+  }
+}
 
 interface RequestOptions {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
@@ -68,8 +85,10 @@ interface RequestOptions {
 class ApiClient {
   /**
    * Send a request with the auth cookie, which every route needs (reads
-   * included, since they are owner-only and cross-origin). Throws
-   * `${failure}: ${statusText}` unless the response is OK.
+   * included, since they are owner-only and cross-origin), naming the acting
+   * user in a write. Throws `UserMismatchError` when the API refuses a write
+   * as another user's, else `${failure}: ${statusText}` unless the response
+   * is OK.
    */
   private async request(
     url: string,
@@ -82,17 +101,31 @@ class ApiClient {
     }: RequestOptions,
     failure: string
   ): Promise<Response> {
+    // Writes name the signed-in user: the API refuses one signed in as
+    // anyone else (`UserMismatchError`).
+    const user = withAuth && method !== 'GET' ? signedInUser() : null;
     const init: RequestInit = {
       method,
       credentials: 'include',
       ...(signal ? {signal} : {}),
-      headers: {'Content-Type': contentType},
+      headers: {
+        'Content-Type': contentType,
+        ...(user === null
+          ? {}
+          : {[EXPECTED_USER_HEADER]: encodeURIComponent(user)}),
+      },
       ...(body === undefined ? {} : {body: JSON.stringify(body)}),
     };
     const resp = withAuth
       ? await fetchWithAuth(url, init)
       : await fetch(url, init);
     if (!resp.ok) {
+      if (user !== null && resp.status === 409) {
+        const body: unknown = await resp.json().catch(() => undefined);
+        if (firstError(body).code === CODES.userMismatch) {
+          throw new UserMismatchError(failure, user);
+        }
+      }
       throw new Error(`${failure}: ${resp.statusText}`);
     }
     return resp;
@@ -253,18 +286,6 @@ class ApiClient {
     );
   }
 
-  public async getEntries(
-    params: TextEntryListParams & {signal?: AbortSignal}
-  ): Promise<TextEntryListDocument> {
-    const {signal, ...queryParams} = params;
-    return this.requestDocument(
-      urlWithQuery(`${baseURL}/entries`, queryParams),
-      {method: 'GET', signal},
-      'Failed to fetch entries',
-      textEntryListDocumentSchema
-    );
-  }
-
   // The sync's reads (lib/sync/): keyset pages in revision order.
 
   /** The page of the user's tags after `after`. */
@@ -328,15 +349,6 @@ class ApiClient {
       {method: 'GET'},
       'Failed to read the newest junction',
       tagTextEntryListDocumentSchema
-    );
-  }
-
-  public async getTags(params: TagListParams): Promise<TagListDocument> {
-    return this.requestDocument(
-      urlWithQuery(`${baseURL}/tags`, params),
-      {method: 'GET'},
-      'Failed to fetch tags',
-      tagListDocumentSchema
     );
   }
 

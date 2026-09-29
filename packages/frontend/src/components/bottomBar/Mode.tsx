@@ -1,11 +1,10 @@
 import {Typography} from '@mui/material';
-import {observer} from 'mobx-react';
 import React from 'react';
 
-import {useAppContext} from '../../AppContext';
+import {useAppConfig} from '../../lib/state/appState';
 
 const Mode = () => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   return (
     <Typography
       variant="caption"
@@ -20,6 +19,6 @@ const Mode = () => {
   );
 };
 
-const memoizedMode = React.memo(observer(Mode));
+const memoizedMode = React.memo(Mode);
 
 export {memoizedMode as Mode};

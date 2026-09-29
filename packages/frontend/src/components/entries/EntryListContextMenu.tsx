@@ -1,8 +1,8 @@
 import {Menu} from '@mui/material';
 import React, {useEffect, useState} from 'react';
-import {useAppContext} from '../../AppContext';
 import type {IMouse} from '../../lib/shared';
 import {appMode} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 
 export interface IEntryContextMenu {
@@ -55,7 +55,7 @@ const StyledMenu = ({
 };
 
 const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,

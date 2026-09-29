@@ -17,7 +17,7 @@ describe('Entries Context Menu Untag', () => {
     expect(apiCheck.tagsOk).toBe(true);
     expect(apiCheck.entriesOk).toBe(true);
     expect(apiCheck.tagsCount).toBe(4); // MSW provides 4 tags
-    expect(apiCheck.entriesCount).toBe(2); // MSW provides 2 entries
+    expect(apiCheck.entriesCount).toBe(3); // MSW provides 3 entries
 
     await browser.login();
     await BasePage.open('test/test-tag-1');

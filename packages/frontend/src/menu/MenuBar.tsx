@@ -1,14 +1,12 @@
 import {Box} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import React from 'react';
-
-import {useAppContext} from '../AppContext';
 import {GithubAuth} from '../components/auth/GithubAuth';
 import {GoogleAuth} from '../components/auth/GoogleAuth';
 import {UserProfileCircle} from '../components/UserProfileCircle';
 import {useTypedTranslation} from '../i18n/hooks';
 import {environment} from '../lib/environment';
+import {useAppConfig} from '../lib/state/appState';
 import {EntriesLinkButton} from './admin/EntriesLinkButton';
 import {ModeTabs} from './admin/ModeTabs';
 import {DebugMenu} from './debug/DebugMenu';
@@ -39,7 +37,7 @@ interface IProps {
 }
 
 const MenuBar = ({entriesPage = true}: IProps) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const {t} = useTypedTranslation('common');
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
@@ -180,6 +178,6 @@ const MenuBar = ({entriesPage = true}: IProps) => {
   );
 };
 
-const memoizedMenuBar = React.memo(observer(MenuBar));
+const memoizedMenuBar = React.memo(MenuBar);
 
 export {memoizedMenuBar as MenuBar};

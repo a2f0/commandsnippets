@@ -1,129 +1,57 @@
-import {autorun} from 'mobx';
-import {observer} from 'mobx-react';
-import type {Instance} from 'mobx-state-tree';
-import React, {useEffect, useRef, useState} from 'react';
-import {useLocation, useNavigate, useParams} from 'react-router-dom';
-
-import {useAppContext} from '../../AppContext';
-import type {ITagJsonApi} from '../../lib/api/responses/types';
-import {TagHelpers, type TagModel} from '../../lib/store/models/TagModel';
+import React, {useEffect, useMemo} from 'react';
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
+import {useTags} from '../../lib/data/hooks';
+import {sortTags} from '../../lib/data/sort';
+import {useAppState} from '../../lib/state/appState';
 import {TagList} from './TagList';
 
 /**
- * The least time between tags syncs run because the app came back into view:
- * switching away and straight back asks the API nothing.
+ * The user's tags (from IndexedDB, as syncs and writes store them), sorted
+ * and searched. With no tag or entries list in the URL, it opens the first.
  */
-export const TAGS_REFRESH_INTERVAL_MS = 30_000;
-
-export interface IUser {
-  id: number;
-  type: string;
-  attributes: {
-    username: string;
-  };
-}
-
 const TagListWrapper = () => {
-  const appConfig = useAppContext();
   const navigate = useNavigate();
-  const location = useLocation();
-  const {user} = useParams();
-  const {tag} = useParams();
+  const {user, tag} = useParams();
+  const [searchParams] = useSearchParams();
+  const entriesList = searchParams.get('entries');
+  const allTags = useTags();
+  const tagSortOrder = useAppState(state => state.tagSortOrder);
+  const tagSearchString = useAppState(state => state.tagSearchString);
+  const setTagSelectedID = useAppState(state => state.setTagSelectedID);
 
-  const [userName, _setUsername] = useState<string | undefined>(undefined);
-  // Used to access the react state from within the listener.
-  const userRef = useRef(user);
-  const setUsername = (data: string | undefined) => {
-    userRef.current = data;
-    _setUsername(data);
-  };
-  useEffect(() => {
-    setUsername(user);
-  }, [location]);
-
-  const [tags, _setTags] = useState<Array<ITagJsonApi>>([]);
-  // Used to access the react state from within the listener.
-  const tagsRef = useRef(tags);
-  const setTags = (data: Array<ITagJsonApi>) => {
-    tagsRef.current = data;
-    _setTags(data);
-  };
-
-  useEffect(() => {
-    if (userName !== undefined) {
-      appConfig.setCurrentUser(userName);
-      appConfig.fetchTags(userName).then(() => {
-        const array = TagHelpers.filterAndSort(appConfig);
-        if (array.length > 1) {
-          let selected: Instance<typeof TagModel> | undefined;
-          if (tag) {
-            // Then its a URL query param
-            selected = appConfig.tagsArray.find(c => c.attributes.name === tag);
-          } else {
-            // Then its the first tag in the list
-            const firstTag = array[0];
-            if (firstTag !== undefined) {
-              selected = appConfig.tagsArray.find(c => c.id === firstTag.id);
-            }
-          }
-          if (selected !== undefined) {
-            appConfig.setTagSelectedID(selected.id);
-            navigate(`/${userName}/${selected.attributes.name}`);
-          }
-        }
-        setTags(array);
-      });
-    }
-  }, [appConfig.tagSortOrder, userName]);
-
-  // Changes made elsewhere reach the app through the tags sync (selecting a
-  // tag asks the API nothing while its revision holds), so sync the tags
-  // again when the app comes back into view.
-  useEffect(() => {
-    if (userName === undefined) {
-      return undefined;
-    }
-    const refresh = () => {
-      if (
-        document.visibilityState === 'visible' &&
-        Date.now() - appConfig.tagsSyncedAt >= TAGS_REFRESH_INTERVAL_MS
-      ) {
-        appConfig.fetchTags(userName).catch(() => {
-          // fetchTags logs it; the next return into view retries.
-        });
-      }
-    };
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refresh);
-    return () => {
-      window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refresh);
-    };
-  }, [appConfig, userName]);
-
-  useEffect(
+  const tags = useMemo(
     () =>
-      autorun(() => {
-        setTags(TagHelpers.filterAndSort(appConfig));
-        const current = tags.find(
-          element => element.id === appConfig.tagSelectedID
-        );
-        if (current === undefined) {
-          if (tags[0]) {
-            appConfig.setTagSelectedID(tags[0].id);
-          }
-        }
-      }),
-    [appConfig.tagSearchString]
+      allTags === undefined
+        ? undefined
+        : sortTags(allTags, tagSortOrder, tagSearchString),
+    [allTags, tagSortOrder, tagSearchString]
   );
 
-  if (!user) {
-    return;
+  const first = tags?.[0];
+  const current = tags?.find(candidate => candidate.attributes.name === tag);
+  useEffect(() => {
+    if (user === undefined) {
+      return;
+    }
+    if (current !== undefined) {
+      setTagSelectedID(current.id);
+    } else if (
+      tag === undefined &&
+      entriesList === null &&
+      first !== undefined
+    ) {
+      setTagSelectedID(first.id);
+      navigate(`/${user}/${first.attributes.name}`);
+    }
+  }, [user, tag, entriesList, current, first, navigate, setTagSelectedID]);
+
+  if (user === undefined) {
+    return null;
   }
 
-  return <TagList tagsFromWrapper={tags} username={user} />;
+  return <TagList tagsFromWrapper={tags ?? []} username={user} />;
 };
 
-const memoizedTagListWrapper = React.memo(observer(TagListWrapper));
+const memoizedTagListWrapper = React.memo(TagListWrapper);
 
 export {memoizedTagListWrapper as TagListWrapper};

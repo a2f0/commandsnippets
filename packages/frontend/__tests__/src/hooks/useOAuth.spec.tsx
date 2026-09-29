@@ -7,8 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {useOAuth} from '../../../src/hooks/useOAuth';
 import {apiClient} from '../../../src/lib/api/apiClient';
-import {LoggedInAppContextProvider} from '../../util/LoggedInAppContextProvider';
-import {store} from '../../util/loggedInStore';
+import {signIn, store} from '../../util/signIn';
 
 // The authorization code is a credential until it is exchanged: it must never
 // be written to the console.
@@ -69,11 +68,9 @@ async function renderCallback(Callback: () => null) {
   await act(async () => {
     render(
       <MemoryRouter>
-        <LoggedInAppContextProvider>
-          <CookiesProvider>
-            <Callback />
-          </CookiesProvider>
-        </LoggedInAppContextProvider>
+        <CookiesProvider>
+          <Callback />
+        </CookiesProvider>
       </MemoryRouter>
     );
   });
@@ -101,15 +98,12 @@ describe('useOAuth', () => {
   let consoleOutput: () => string;
 
   beforeEach(() => {
+    signIn();
     consoleOutput = captureConsole();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    act(() => {
-      store.setLoggedInUser('test');
-      store.setIsStaff(false);
-    });
   });
 
   it('records whether the user who logged in is staff', async () => {

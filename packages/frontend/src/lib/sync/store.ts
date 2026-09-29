@@ -89,21 +89,20 @@ export async function putNewer<R extends Revised>(
 }
 
 /**
- * Junctions: at the same revision, a deleted copy stays. A deletion this
- * database worked out from an entry's listing keeps the junction's last
- * revision (the API's is newer, and not read), and an active copy of that
- * revision is older news: restoring a junction gives it a new revision.
+ * At the same revision, a deleted copy stays. A deletion this database
+ * stored without the API's revision (worked out from an entry's listing, or
+ * a delete the API answered with no body) keeps the last one, and an active
+ * copy of that revision is older news: restoring gives a new revision.
  */
+const deletedStays = <R extends {attributes: {is_deleted: boolean}}>(
+  incoming: R,
+  held: R
+) => incoming.attributes.is_deleted || !held.attributes.is_deleted;
+
 const putJunctionsNewer = (
   db: CommandsnippetsDatabase,
   junctions: readonly TagTextEntry[]
-) =>
-  putNewer(
-    db.junctions,
-    junctions,
-    (incoming, held) =>
-      incoming.attributes.is_deleted || !held.attributes.is_deleted
-  );
+) => putNewer(db.junctions, junctions, deletedStays);
 
 const isJunction = (resource: IncludedResource): resource is TagTextEntry =>
   resource.type === 'TagTextEntryThroughModel';
@@ -122,7 +121,7 @@ export async function putEntries(
   entries: readonly TextEntry[],
   included: readonly IncludedResource[] = []
 ): Promise<void> {
-  const stored = await putNewer(db.entries, entries);
+  const stored = await putNewer(db.entries, entries, deletedStays);
   const storedIds = new Set(stored.map(({id}) => id));
   await putJunctionsNewer(
     db,
@@ -172,4 +171,51 @@ export async function putJunctions(
 ): Promise<void> {
   await putJunctionsNewer(db, junctions);
   await putEntries(db, included.filter(isEntry), included);
+}
+
+const isTag = (resource: IncludedResource): resource is Tag =>
+  resource.type === 'Tag';
+
+/**
+ * Mark `row` deleted, as a write the API answered with no body did, keeping
+ * its revision (the sync stores the API's newer one) — unless the database
+ * holds another revision of it by now: one a sync stored while the write
+ * ran, newer than what the write knew, which stays.
+ */
+export async function markDeleted<
+  R extends Revised & {attributes: {is_deleted: boolean}},
+>(table: Table<R, string>, row: R): Promise<void> {
+  await table.db.transaction('rw', table, async () => {
+    const stored = await table.get(row.id);
+    if (stored?.attributes.date_updated !== row.attributes.date_updated) {
+      return;
+    }
+    await table.put({
+      ...stored,
+      attributes: {...stored.attributes, is_deleted: true},
+    });
+  });
+}
+
+/**
+ * Store a write's answer (its `data` and `included`): tags, entries with
+ * their junctions, and junctions whose entries are not among them.
+ */
+export async function putResources(
+  db: CommandsnippetsDatabase,
+  resources: readonly IncludedResource[]
+): Promise<void> {
+  await db.transaction('rw', [db.tags, db.entries, db.junctions], async () => {
+    await putTags(db, resources.filter(isTag));
+    const entries = resources.filter(isEntry);
+    const entryIds = new Set(entries.map(({id}) => id));
+    const junctions = resources.filter(isJunction);
+    await putJunctionsNewer(
+      db,
+      junctions.filter(
+        junction => !entryIds.has(junction.relationships.text_entry.data.id)
+      )
+    );
+    await putEntries(db, entries, junctions);
+  });
 }

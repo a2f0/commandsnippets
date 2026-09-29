@@ -1,4 +1,4 @@
-import {CODES} from '@commandsnippets/api-shared';
+import {CODES, EXPECTED_USER_HEADER} from '@commandsnippets/api-shared';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {
@@ -10,7 +10,9 @@ import {
   listUsers,
   setUserActive,
 } from '../../../../src/lib/api/adminApi';
+import {UserMismatchError} from '../../../../src/lib/api/apiClient';
 import {errorDocument, onePage} from '../../../../src/msw/documents';
+import {signIn, TEST_USER} from '../../../util/signIn';
 
 const API = 'http://localhost:9001/api/v1/admin';
 
@@ -160,6 +162,37 @@ describe('adminApi', () => {
       data: {type: 'AdminUser', id: '7', attributes: {is_active: false}},
     });
     expect(user.isActive).toBe(false);
+  });
+
+  it('names the signed-in user in a write, and not in a read', async () => {
+    signIn();
+    const fetchSpy = reply(200, {data: userResource({is_active: false})});
+    await setUserActive('7', false);
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(page([])), {}));
+    await listUsers({
+      search: '',
+      status: 'all',
+      sort: 'username',
+      descending: false,
+      page: 1,
+      pageSize: 25,
+    });
+
+    const named = fetchSpy.mock.calls.map(([, init]) =>
+      new Headers(init?.headers).get(EXPECTED_USER_HEADER)
+    );
+    expect(named).toEqual([TEST_USER, null]);
+  });
+
+  it("raises UserMismatchError when the session is another user's", async () => {
+    signIn();
+    reply(409, errorDocument(409, CODES.userMismatch, 'Not that user.'));
+
+    const change = setUserActive('7', false);
+
+    await expect(change).rejects.toBeInstanceOf(UserMismatchError);
+    await expect(change).rejects.toMatchObject({username: TEST_USER});
+    expect(loggedOut()).toBe(false);
   });
 
   it('lists the audit log', async () => {
