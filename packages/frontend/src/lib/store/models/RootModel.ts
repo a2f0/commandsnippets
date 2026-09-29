@@ -189,13 +189,30 @@ export const RootModel = types
      */
     reconcileCollection(collection: ResourceCollection) {
       let changed = false;
+      // Entries the store holds a newer revision of (revisions compare as
+      // strings, see lib/revisions.ts): their junctions here are older news,
+      // which the newer response stored or removed already.
+      const outdated = new Set<string>();
       for (const element of collection) {
         if (element.type === 'TextEntry') {
+          const stored = self.textEntriesArray.find(o => o.id === element.id);
+          if (
+            stored !== undefined &&
+            stored.attributes.date_updated > element.attributes.date_updated
+          ) {
+            outdated.add(element.id);
+          }
           changed = self.updateOrCreateTextEntry(element) || changed;
         }
       }
       for (const element of collection) {
-        if (element.type === 'TagTextEntryThroughModel') {
+        if (
+          element.type === 'TagTextEntryThroughModel' &&
+          !(
+            outdated.has(element.relationships.text_entry.data.id) &&
+            !self.tagTextEntryThroughModel.some(o => o.id === element.id)
+          )
+        ) {
           changed =
             self.updateOrCreateTagTextEntryThroughModel(element) || changed;
         }
@@ -217,10 +234,14 @@ export const RootModel = types
     },
     /**
      * Drop the store's links of each entry in `collection` that the entry's
-     * `text_entry_to_tag` (all of its junctions) no longer lists. Returns
-     * whether any went.
+     * `text_entry_to_tag` (all of its junctions) no longer lists, of those
+     * in `held`: the links the store held when the request was sent (one
+     * stored since came from a newer response). Returns whether any went.
      */
-    pruneEntryJunctions(collection: ResourceCollection) {
+    pruneEntryJunctions(
+      collection: ResourceCollection,
+      held: ReadonlySet<string>
+    ) {
       const linked = new Map<string, Set<string>>();
       for (const element of collection) {
         if (
@@ -237,7 +258,11 @@ export const RootModel = types
       }
       const stale = self.tagTextEntryThroughModel.filter(junction => {
         const junctions = linked.get(junction.relationships.text_entry.data.id);
-        return junctions !== undefined && !junctions.has(junction.id);
+        return (
+          held.has(junction.id) &&
+          junctions !== undefined &&
+          !junctions.has(junction.id)
+        );
       });
       for (const junction of stale) {
         destroy(junction);
@@ -249,10 +274,14 @@ export const RootModel = types
     },
     /**
      * Drop the store's links to tag `tagId` that `collection`, all of the
-     * tag's entries with their junctions, no longer has. Returns whether any
-     * went.
+     * tag's entries with their junctions, no longer has, of those in `held`
+     * (see pruneEntryJunctions). Returns whether any went.
      */
-    pruneTagJunctions(tagId: string, collection: ResourceCollection) {
+    pruneTagJunctions(
+      tagId: string,
+      collection: ResourceCollection,
+      held: ReadonlySet<string>
+    ) {
       const kept = new Set(
         collection.flatMap(element =>
           element.type === 'TagTextEntryThroughModel' ? [element.id] : []
@@ -260,7 +289,9 @@ export const RootModel = types
       );
       const stale = self.tagTextEntryThroughModel.filter(
         junction =>
-          junction.relationships.tag.data.id === tagId && !kept.has(junction.id)
+          junction.relationships.tag.data.id === tagId &&
+          held.has(junction.id) &&
+          !kept.has(junction.id)
       );
       for (const junction of stale) {
         destroy(junction);
@@ -310,6 +341,9 @@ export const RootModel = types
       // its tags are now: an entry that left the tag changed too (untagging
       // advances it), and each lists all of its junctions.
       const since = cursor?.entries ?? null;
+      const held = new Set(
+        self.tagTextEntryThroughModel.map(junction => junction.id)
+      );
       const changes: IncludedResource[] = yield TextEntryHelpers.fetch(
         [],
         user,
@@ -319,9 +353,9 @@ export const RootModel = types
         null
       );
       let changed = self.reconcileCollection(changes);
-      changed = self.pruneEntryJunctions(changes) || changed;
+      changed = self.pruneEntryJunctions(changes, held) || changed;
       if (since === null) {
-        changed = self.pruneTagJunctions(tagId, changes) || changed;
+        changed = self.pruneTagJunctions(tagId, changes, held) || changed;
       }
       const entries = syncedThrough(changes, 'TextEntry', since);
 

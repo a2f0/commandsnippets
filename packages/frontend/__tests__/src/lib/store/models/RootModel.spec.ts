@@ -283,6 +283,79 @@ describe('syncTagEntries', () => {
     ]);
   });
 
+  it('keeps a link a newer response stored while it was in flight', async () => {
+    const store = createStore([
+      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 1}),
+      tag('2', {date_updated: '2024-01-01T00:00:00'}),
+    ]);
+    serveEntries((_query, url) =>
+      entriesDocument(
+        url,
+        [apiEntry('10', '2024-01-02T00:00:00', [tagged])],
+        [tagged]
+      )
+    );
+    await store.syncTagEntries('test', 'tag-1');
+
+    // The tag moved: its changes are asked for, and answered late, with
+    // entry 10 as it was before the app tagged it with tag 2 below.
+    store.updateOrCreateTag(
+      tag('1', {date_updated: '2024-02-01T00:00:00', entry_count: 1})
+    );
+    let answer = () => {};
+    const answered = new Promise<void>(resolve => {
+      answer = resolve;
+    });
+    requests = [];
+    server.use(
+      http.get(`${API}/entries`, async ({request}) => {
+        requests.push(new URL(request.url).searchParams);
+        await answered;
+        return HttpResponse.json(
+          entriesDocument(
+            request.url,
+            [apiEntry('10', '2024-02-01T00:00:00', [tagged])],
+            [tagged]
+          )
+        );
+      })
+    );
+    const sync = store.syncTagEntries('test', 'tag-1');
+    await vi.waitFor(() => expect(requests).toHaveLength(1));
+    const tagging = apiJunction('200', '2', '10');
+    store.reconcileCollection([
+      tagging,
+      apiEntry('10', '2024-03-01T00:00:00', [tagged, tagging]),
+    ]);
+    answer();
+    await sync;
+
+    expect(store.tagTextEntryThroughModel.map(link => link.id).sort()).toEqual([
+      '100',
+      '200',
+    ]);
+  });
+
+  it('brings back no link of an entry the store holds a newer revision of', () => {
+    const store = createStore([tag('1', {}), tag('2', {})]);
+    store.reconcileCollection([
+      apiEntry('10', '2024-03-01T00:00:00', [tagged]),
+      tagged,
+    ]);
+    // Entry 10 as it was when tag 2 still had it.
+    const untagged = apiJunction('200', '2', '10');
+    expect(
+      store.reconcileCollection([
+        apiEntry('10', '2024-02-01T00:00:00', [tagged, untagged]),
+        tagged,
+        untagged,
+      ])
+    ).toBe(false);
+    expect(store.tagTextEntryThroughModel.map(link => link.id)).toEqual([
+      '100',
+    ]);
+  });
+
   it('syncs a tag whose revision has not moved when forced', async () => {
     const store = createStore([
       tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 1}),

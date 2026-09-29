@@ -98,7 +98,10 @@ const EntryList = () => {
     let listed = appConfig.storeVersion;
     let showing = true;
     const dispose = reaction(
-      () => appConfig.findTag(user, tag)?.attributes.date_updated,
+      // The tag's revision, and each tags sync, which also retries a sync of
+      // the tag that failed (one whose cursor is current asks nothing).
+      () =>
+        `${appConfig.findTag(user, tag)?.attributes.date_updated} ${appConfig.tagsSyncedAt}`,
       () => {
         appConfig
           .syncTagEntries(user, tag)

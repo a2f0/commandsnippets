@@ -100,7 +100,11 @@ Run these from `packages/frontend`.
   it whole (`filter[tags.id]`) and drops the links to it the read lacks;
   later ones read every entry changed since (no tag filter: an entry that
   left the tag changed too) and drop the links each entry's
-  `text_entry_to_tag` no longer lists. The app's own writes that the store
+  `text_entry_to_tag` no longer lists. Only links the store held when the
+  request was sent are dropped, and no link comes from an entry older than
+  the store's copy: a response that arrives late is older news than one
+  stored meanwhile. Each tags sync also retries a failed sync of the tag
+  shown. The app's own writes that the store
   does not reflect (a reorder) sync the tag with `force`, and tagging stores
   the entry and tag its response includes. `Entry` and `Tag` show a newer
   revision of their resource when a sync lists one.

@@ -454,6 +454,37 @@ describe('Selecting a tag', () => {
     expect(screen.getByText('entry-9-subject')).toBeInTheDocument();
   });
 
+  it('retries a failed sync of the tag shown when the tags are synced again', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    server.use(
+      http.get(`${API}/entries`, () =>
+        HttpResponse.json({errors: []}, {status: 500})
+      )
+    );
+    const history = createMemoryHistory();
+    history.push('/test/test-tag-1');
+    render(<TestAppRouter history={history} />);
+    await waitFor(() =>
+      expect(console.error).toHaveBeenCalledWith(
+        'Failed to fetch entries:',
+        expect.any(Error)
+      )
+    );
+    expect(screen.queryAllByRole('entry')).toHaveLength(0);
+
+    // Back into view later: no tag changed, but the tag shown is behind.
+    server.resetHandlers();
+    const now = vi
+      .spyOn(Date, 'now')
+      .mockReturnValue(store.tagsSyncedAt + TAGS_REFRESH_INTERVAL_MS);
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    now.mockRestore();
+
+    await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(4));
+  });
+
   it('shows a tag the tags sync brings a newer revision of', async () => {
     const history = createMemoryHistory();
     history.push('/test/test-tag-1');
