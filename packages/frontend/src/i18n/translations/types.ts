@@ -69,7 +69,7 @@ export interface MenuTranslations {
   sortByDateLastUsed: string;
   sortByEntryCount: string;
   triggerTestError: string;
-  populateIndexedDB: string;
+  syncIndexedDB: string;
 }
 
 export interface TagsTranslations {

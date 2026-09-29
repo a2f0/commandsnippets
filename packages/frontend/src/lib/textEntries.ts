@@ -8,9 +8,7 @@ import type {
   ITagTextEntryThroughModelJsonApi,
   ITextEntryJsonApi,
 } from './api/responses/types';
-import {db} from './db/db';
 import type {Store} from './store/store';
-import {convertISO8601ToUnixTime} from './util/dateTime';
 
 export function sort(
   username: string,
@@ -432,60 +430,4 @@ export function needsScrollingIntoView(
     throw new Error('needsScrollingIntoView expects rectangle');
   }
   return false;
-}
-
-export async function fetchAllEntriesForUser(username: string | undefined) {
-  if (db !== undefined) {
-    if (username === undefined) {
-      console.info('Cannot fetch all entried for undefined user.');
-    } else {
-      const entries = await fetch(username, null, null, null);
-      for (const entry of entries) {
-        if (entry.type === 'TextEntryReused') {
-          throw new Error('unexpected type!');
-        }
-        const updated = convertISO8601ToUnixTime(entry.attributes.date_updated);
-        if (entry.type === 'User') {
-          await db.putUser({
-            id: entry.id,
-            username: entry.attributes.username,
-            updated,
-          });
-        } else if (entry.type === 'Tag') {
-          await db.putTag({
-            id: entry.id,
-            name: entry.attributes.name,
-            entryCount: entry.attributes.entry_count,
-            updated,
-            userId: entry.relationships.user.data.id,
-            synced: false,
-            deleted: false,
-          });
-        } else if (entry.type === 'TextEntry') {
-          await db.putEntry({
-            id: entry.id,
-            userId: entry.relationships.user.data.id,
-            subject: entry.attributes.subject,
-            body: entry.attributes.body,
-            updated,
-            synced: false,
-            deleted: false,
-          });
-        } else {
-          await db.putJunction({
-            id: entry.id,
-            entryId: entry.relationships.text_entry.data.id,
-            userId: entry.relationships.user.data.id,
-            tagId: entry.relationships.tag.data.id,
-            order: entry.attributes.order,
-            updated,
-            synced: false,
-            deleted: false,
-          });
-        }
-      }
-    }
-  } else {
-    throw new Error('db is undefined');
-  }
 }

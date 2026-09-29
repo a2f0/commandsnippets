@@ -5,15 +5,21 @@
  */
 import {
   CODES,
+  CURSOR_START,
+  cursorOf,
   type IncludedResource,
   type TagListDocument,
   type TagTextEntryCreateDocument,
   type TagUpdateDocument,
   type TextEntryListDocument,
   type TextEntryUpdateDocument,
+  tagCursorListDocumentSchema,
   tagDocumentSchema,
   tagListDocumentSchema,
+  tagTextEntryCursorListDocumentSchema,
   tagTextEntryDocumentSchema,
+  tagTextEntryListDocumentSchema,
+  textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
   textEntryListDocumentSchema,
 } from '@commandsnippets/api-shared';
@@ -620,30 +626,31 @@ describe('DELETE /tags_entries/:id', () => {
     expect(tag.attributes.date_last_used).toBe('2020-04-13T18:20:00');
   });
 
-  it('never reuses the id of a deleted junction', async () => {
-    const tagged = await send('POST', '/tags_entries', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        relationships: {
-          tag: {data: {type: 'Tag', id: '3'}},
-          text_entry: {data: {type: 'TextEntry', id: '2'}},
-        },
-      },
-    });
-    const first = tagTextEntryDocumentSchema.parse(tagged.json).data.id;
-    expect((await send('DELETE', `/tags_entries/${first}`)).status).toBe(204);
-    const again = await send('POST', '/tags_entries', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        relationships: {
-          tag: {data: {type: 'Tag', id: '3'}},
-          text_entry: {data: {type: 'TextEntry', id: '2'}},
-        },
-      },
-    });
-    expect(tagTextEntryDocumentSchema.parse(again.json).data.id).toBe(
-      String(Number(first) + 1)
+  it('keeps the deleted junction, which tagging the pair again restores', async () => {
+    const tagged = await send('POST', '/tags_entries', tagEntry('3', '2'));
+    const first = tagTextEntryDocumentSchema.parse(tagged.json).data;
+    expect((await send('DELETE', `/tags_entries/${first.id}`)).status).toBe(
+      204
     );
+    const listed = tagTextEntryListDocumentSchema.parse(
+      (await send('GET', '/tags_entries?filter[tag.id]=3')).json
+    );
+    expect(listed.data).toEqual([
+      expect.objectContaining({
+        id: first.id,
+        attributes: expect.objectContaining({is_deleted: true}),
+      }),
+    ]);
+    const again = tagTextEntryDocumentSchema.parse(
+      (await send('POST', '/tags_entries', tagEntry('3', '2'))).json
+    ).data;
+    expect(again.id).toBe(first.id);
+    expect(again.attributes.is_deleted).toBe(false);
+    // A new junction still gets an id no junction had.
+    const other = tagTextEntryDocumentSchema.parse(
+      (await send('POST', '/tags_entries', tagEntry('4', '2'))).json
+    ).data;
+    expect(Number(other.id)).toBeGreaterThan(Number(first.id));
   });
 
   it('answers an unknown junction with a 404', async () => {
@@ -658,3 +665,78 @@ describe('DELETE /tags_entries/:id', () => {
     );
   });
 });
+
+describe('keyset pages (the sync reads)', () => {
+  it('list every row past the cursor in revision order, a page at a time', async () => {
+    const first = tagCursorListDocumentSchema.parse(
+      (await send('GET', `/tags?page[after]=${CURSOR_START}&page[size]=3`)).json
+    );
+    expect(first.data.map(({id}) => id)).toEqual(['1', '2', '3']);
+    invariant(first.links.next, 'a page follows');
+    const last = first.data.at(-1);
+    invariant(last, 'the page has rows');
+    const second = tagCursorListDocumentSchema.parse(
+      (
+        await send(
+          'GET',
+          `/tags?page[after]=${encodeURIComponent(cursorOf(last))}&page[size]=3`
+        )
+      ).json
+    );
+    expect(second.data.map(({id}) => id)).toEqual(['4']);
+    expect(second.links.next).toBeNull();
+  });
+
+  it('list a deleted entry, which numbered pages leave out', async () => {
+    expect((await send('DELETE', '/entries/2')).status).toBe(200);
+    const page = textEntryCursorListDocumentSchema.parse(
+      (await send('GET', `/entries?page[after]=${CURSOR_START}`)).json
+    );
+    expect(entryIdsAndDeletion(page.data)).toEqual([
+      ['1', false],
+      ['2', true],
+    ]);
+    // Its revision advanced past the other's.
+    expect(page.data.at(-1)?.id).toBe('2');
+    expect((await getEntries()).data.map(({id}) => id)).toEqual(['1']);
+  });
+
+  it('keep a deleted tag, with a new revision', async () => {
+    const before = tagOf(await getTags(), '3').attributes.date_updated;
+    expect((await send('DELETE', '/tags/3')).status).toBe(200);
+    const tag = tagOf(await getTags(), '3');
+    expect(tag.attributes.is_deleted).toBe(true);
+    expect(tag.attributes.date_updated > before).toBe(true);
+  });
+
+  it("list a tag's junctions changed by an edit of their entry", async () => {
+    const tagOne = async (after = CURSOR_START) =>
+      tagTextEntryCursorListDocumentSchema.parse(
+        (
+          await send(
+            'GET',
+            `/tags_entries?filter[tag.id]=1&page[after]=${encodeURIComponent(after)}&include=text_entry`
+          )
+        ).json
+      );
+    const all = await tagOne();
+    const last = all.data.at(-1);
+    invariant(last, 'tag 1 has junctions');
+    expect(all.included?.map(({id}) => id)).toEqual(['1', '2']);
+    expect((await tagOne(cursorOf(last))).data).toEqual([]);
+
+    await send('PATCH', '/entries/2', editEntry('2', {body: 'edited'}));
+    const changed = await tagOne(cursorOf(last));
+    expect(changed.data.map(({id}) => id)).toEqual(['2']);
+    expect(changed.included).toEqual([
+      expect.objectContaining({
+        id: '2',
+        attributes: expect.objectContaining({body: 'edited'}),
+      }),
+    ]);
+  });
+});
+
+const entryIdsAndDeletion = (
+  entries: ReadonlyArray<{id: string; attributes: {is_deleted: boolean}}>
+) => entries.map(({id, attributes}) => [id, attributes.is_deleted]);

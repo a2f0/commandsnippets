@@ -3,6 +3,7 @@ import {applySnapshot, destroy, onSnapshot} from 'mobx-state-tree';
 import {setUnauthorizedHandler} from '../auth/authUtils';
 import {environment} from '../environment';
 import {type appState, defaultState} from '../shared';
+import {endSyncSession} from '../sync/session';
 import {RootModel} from './models/RootModel';
 
 const localStorageKey = `mst-commandsnippets-${environment}`;
@@ -95,6 +96,10 @@ export function createAppStateStore(
 /** Sign out of the app: put every stored setting back to its default. */
 export function resetApplicationState() {
   applySnapshot(store, defaultState);
+  // The signed-in user's IndexedDB data goes with them.
+  endSyncSession().catch((error: unknown) => {
+    console.error('ERROR: could not delete the IndexedDB data:', error);
+  });
 }
 
 let store: ReturnType<typeof createAppStateStore>;

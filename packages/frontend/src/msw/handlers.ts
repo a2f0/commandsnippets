@@ -5,11 +5,15 @@ import {
   CODES,
   type IncludedResource,
   type Tag,
+  type TagCursorListDocument,
   type TagDocument,
   type TagListDocument,
   type TagTextEntry,
+  type TagTextEntryCursorListDocument,
   type TagTextEntryDocument,
+  type TagTextEntryListDocument,
   type TextEntry,
+  type TextEntryCursorListDocument,
   type TextEntryDocument,
   type TextEntryListDocument,
   tagTextEntryCreateRelationshipsSchema,
@@ -19,7 +23,14 @@ import {
   type User,
 } from '@commandsnippets/api-shared';
 import {HttpResponse, http} from 'msw';
-import {errorDocument, nextRevision, now, onePage} from './documents';
+import {
+  errorDocument,
+  nextRevision,
+  now,
+  onePage,
+  pagination,
+} from './documents';
+import {afterOf, byRevision, keysetPage} from './keyset';
 import {recordRequest} from './requestCounter';
 import {
   apiError,
@@ -201,6 +212,11 @@ let entriesResponse: EntriesState = structuredClone(originalEntriesResponse);
 // Runtime override for test data - allows tests to inject custom responses
 let runtimeEntriesOverride: TextEntryListDocument | null = null;
 
+// Deleted junctions: untagging soft-deletes (backend-v2 keeps the row, which
+// the junction list shows). Kept apart from the entries' `included`, which
+// holds only the junctions the entries have.
+let deletedJunctions: TagTextEntry[] = [];
+
 /**
  * The entries (with their junctions in `included`) that the handlers answer
  * with and write to: the runtime override when there is one.
@@ -266,6 +282,32 @@ function linkJunctions(state: EntriesState, entry: TextEntry) {
 const nextTagRevision = () =>
   nextRevision(tags.map(tag => tag.attributes.date_updated));
 
+/** Every junction, deleted ones too. */
+const allJunctions = (state: EntriesState) => [
+  ...junctionsOf(state),
+  ...deletedJunctions,
+];
+
+/** The next revision of the junctions. */
+const nextJunctionRevision = (state: EntriesState) =>
+  nextRevision(
+    allJunctions(state).map(junction => junction.attributes.date_updated)
+  );
+
+/**
+ * Advance the revisions of `entry`'s junctions, as the database does whenever
+ * the entry's revision advances (all to the same one), so the tags' junction
+ * lists show the change.
+ */
+function touchJunctionsOf(state: EntriesState, entry: TextEntry) {
+  const revision = nextJunctionRevision(state);
+  for (const junction of junctionsOf(state)) {
+    if (junction.relationships.text_entry.data.id === entry.id) {
+      junction.attributes = {...junction.attributes, date_updated: revision};
+    }
+  }
+}
+
 /**
  * Advance the revisions of `entry`'s tags, as the database does whenever the
  * entry's revision advances (all to the same one).
@@ -288,7 +330,7 @@ function touchTagsOf(state: EntriesState, entry: TextEntry) {
 
 /**
  * Advance `entry`'s revision, as a write to its junctions does, and so its
- * tags' revisions.
+ * tags' and junctions' revisions.
  */
 function touchEntry(state: EntriesState, entry: TextEntry) {
   entry.attributes = {
@@ -298,6 +340,7 @@ function touchEntry(state: EntriesState, entry: TextEntry) {
     ),
   };
   touchTagsOf(state, entry);
+  touchJunctionsOf(state, entry);
 }
 
 /**
@@ -321,10 +364,11 @@ function entryIncluded(state: EntriesState, entry: TextEntry) {
 
 /**
  * Tag `entry` with `tag`, as the API does: a junction at the bottom of the
- * tag (its highest rank + 1, or 0), then its database triggers (the entry's
- * `tag_count` and the tag's `entry_count` go up, the tag is last used now and
- * its revision advances) and the entry's new revision (which advances its
- * tags' revisions again).
+ * tag (its highest rank + 1, or 0), restoring the pair's deleted one if there
+ * is one, then its database triggers (the entry's `tag_count` and the tag's
+ * `entry_count` go up, the tag is last used now and its revision advances)
+ * and the entry's new revision (which advances its tags' and junctions'
+ * revisions again).
  */
 function createJunction(
   state: EntriesState,
@@ -332,18 +376,24 @@ function createJunction(
   entry: TextEntry
 ): TagTextEntry {
   const junctions = junctionsOf(state);
-  const ranks = junctions
+  const ranks = allJunctions(state)
     .filter(junction => junction.relationships.tag.data.id === tag.id)
     .map(junction => junction.attributes.order);
   const created = now();
+  const deleted = deletedJunctions.find(
+    candidate =>
+      candidate.relationships.tag.data.id === tag.id &&
+      candidate.relationships.text_entry.data.id === entry.id
+  );
+  deletedJunctions = deletedJunctions.filter(
+    candidate => candidate !== deleted
+  );
   const junction: TagTextEntry = {
     type: 'TagTextEntryThroughModel',
-    id: nextId('TagTextEntryThroughModel', junctions),
+    id: deleted?.id ?? nextId('TagTextEntryThroughModel', junctions),
     attributes: {
       order: ranks.length > 0 ? Math.max(...ranks) + 1 : 0,
-      date_updated: nextRevision(
-        junctions.map(candidate => candidate.attributes.date_updated)
-      ),
+      date_updated: nextJunctionRevision(state),
       date_created: created,
       is_deleted: false,
     },
@@ -386,13 +436,21 @@ function countJunctions(
 }
 
 /**
- * Untag: remove the junction, then its database triggers (the counts go
- * down, the tag was last used when its newest remaining junction was made,
- * and its revision advances) and the entry's new revision (which advances
- * the tags it is still in).
+ * Untag: soft-delete the junction (with a new revision), then its database
+ * triggers (the counts go down, the tag was last used when its newest
+ * remaining junction was made, and its revision advances) and the entry's new
+ * revision (which advances the tags and junctions it is still in).
  */
 function deleteJunction(state: EntriesState, junction: TagTextEntry) {
   retireId('TagTextEntryThroughModel', junction.id);
+  deletedJunctions.push({
+    ...junction,
+    attributes: {
+      ...junction.attributes,
+      is_deleted: true,
+      date_updated: nextJunctionRevision(state),
+    },
+  });
   setIncluded(
     state,
     (state.included ?? []).filter(resource => resource !== junction)
@@ -424,6 +482,98 @@ function deleteJunction(state: EntriesState, junction: TagTextEntry) {
     };
   }
 }
+
+/**
+ * The resources `include` adds to a page of `primary`, as the API renders
+ * them: sorted by type, then by id; primary resources left out; the member
+ * left out when empty. Each path walks from the primary resources:
+ * `text_entry_to_tag` to an entry's junctions (not deleted), `tag` and
+ * `text_entry` from a junction, `user` to the owner.
+ */
+function includedFor(
+  state: EntriesState,
+  primary: ReadonlyArray<Tag | TextEntry | TagTextEntry>,
+  paths: readonly string[]
+): {included?: IncludedResource[]} {
+  const found = new Map<string, IncludedResource>();
+  const add = (resource: IncludedResource) =>
+    found.set(`${resource.type}:${resource.id}`, resource);
+  for (const path of paths) {
+    let current: IncludedResource[] = [...primary];
+    for (const segment of path.split('.')) {
+      const next: IncludedResource[] = [];
+      for (const resource of current) {
+        if (segment === 'user') {
+          next.push(testUser);
+        } else if (
+          segment === 'text_entry_to_tag' &&
+          resource.type === 'TextEntry'
+        ) {
+          next.push(
+            ...junctionsOf(state).filter(
+              junction =>
+                junction.relationships.text_entry.data.id === resource.id
+            )
+          );
+        } else if (
+          segment === 'tag' &&
+          resource.type === 'TagTextEntryThroughModel'
+        ) {
+          const tag = tags.find(
+            candidate => candidate.id === resource.relationships.tag.data.id
+          );
+          if (tag !== undefined) {
+            next.push(tag);
+          }
+        } else if (
+          segment === 'text_entry' &&
+          resource.type === 'TagTextEntryThroughModel'
+        ) {
+          const entry = state.data.find(
+            candidate =>
+              candidate.id === resource.relationships.text_entry.data.id
+          );
+          if (entry !== undefined) {
+            next.push(entry);
+          }
+        }
+      }
+      next.forEach(add);
+      current = next;
+    }
+  }
+  for (const resource of primary) {
+    found.delete(`${resource.type}:${resource.id}`);
+  }
+  const included = [...found.values()].sort(byTypeAndId);
+  return included.length > 0 ? {included} : {};
+}
+
+/** The request's `include` paths, or the resource's default ones. */
+const includePaths = (url: URL, defaults: readonly string[]) => {
+  const include = url.searchParams.get('include');
+  return include === null
+    ? defaults
+    : include.split(',').filter(path => path !== '');
+};
+
+/** `filter[name]` as a boolean, when given. */
+const booleanFilter = (url: URL, name: string) => {
+  const value = url.searchParams.get(`filter[${name}]`);
+  return value === null ? null : value === 'true' || value === '1';
+};
+
+/** Whether `resource` passes `filter[date_updated.gt]`, when given. */
+const changedSince = (url: URL, resource: TagTextEntry | Tag | TextEntry) => {
+  const since = url.searchParams.get('filter[date_updated.gt]');
+  return (
+    since === null ||
+    byRevision(resource, {
+      id: '0',
+      attributes: {date_updated: since},
+    }) > 0
+  );
+};
 
 // Admin page data: the signed-in test user (id 1, staff) and one other.
 interface MockAdminUser {
@@ -589,6 +739,30 @@ const createHandlers = () => {
       http.get(`${baseUrl}/tags`, req => {
         recordRequest('GET', req.request.url);
         console.log('OK: MSW intercepted tags request:', req.request.url);
+        const url = new URL(req.request.url);
+        try {
+          // A keyset page, as the API renders it (the sync's reads).
+          const after = afterOf(url);
+          if (after !== null) {
+            const {data, links} = keysetPage(
+              url,
+              tags.filter(tag => changedSince(url, tag)),
+              after
+            );
+            const body: TagCursorListDocument = {
+              links,
+              data,
+              ...includedFor(
+                activeEntries(),
+                data,
+                includePaths(url, ['user'])
+              ),
+            };
+            return HttpResponse.json(body, {status: 200});
+          }
+        } catch (error) {
+          return errorResponse(error);
+        }
         const tagsResponse: TagListDocument = {
           ...listDocument(req.request.url, tags),
           included: [testUser],
@@ -672,9 +846,54 @@ const createHandlers = () => {
       http.get(`${baseUrl}/entries`, req => {
         recordRequest('GET', req.request.url);
 
-        // Use runtime override if available, otherwise use default entries
-        let responseData: Pick<TextEntryListDocument, 'data' | 'included'> =
-          runtimeEntriesOverride || entriesResponse;
+        try {
+          // A keyset page, as the API renders it (the sync's reads): deleted
+          // entries too, filtered by tag, deletion and revision.
+          const url = new URL(req.request.url);
+          const after = afterOf(url);
+          if (after !== null) {
+            const state = activeEntries();
+            const tagId = url.searchParams.get('filter[tags.id]');
+            const deleted = booleanFilter(url, 'is_deleted');
+            const rows = state.data.filter(
+              entry =>
+                changedSince(url, entry) &&
+                (deleted === null || entry.attributes.is_deleted === deleted) &&
+                (tagId === null ||
+                  junctionsOf(state).some(
+                    junction =>
+                      junction.relationships.text_entry.data.id === entry.id &&
+                      junction.relationships.tag.data.id === tagId
+                  ))
+            );
+            const {data, links} = keysetPage(url, rows, after);
+            const body: TextEntryCursorListDocument = {
+              links,
+              data,
+              ...includedFor(
+                state,
+                data,
+                includePaths(url, [
+                  'text_entry_to_tag',
+                  'text_entry_to_tag.tag',
+                  'user',
+                ])
+              ),
+            };
+            return HttpResponse.json(body, {status: 200});
+          }
+        } catch (error) {
+          return errorResponse(error);
+        }
+
+        // Use runtime override if available, otherwise use default entries.
+        // Deleted entries are left out: numbered pages serve the current
+        // lists, which dropped an entry when it was deleted.
+        const active = runtimeEntriesOverride || entriesResponse;
+        let responseData: Pick<TextEntryListDocument, 'data' | 'included'> = {
+          ...active,
+          data: active.data.filter(entry => !entry.attributes.is_deleted),
+        };
 
         // Handle date filtering if specified
         const url = new URL(req.request.url);
@@ -682,7 +901,7 @@ const createHandlers = () => {
 
         if (dateFilter && runtimeEntriesOverride) {
           const filterDate = new Date(dateFilter);
-          const filteredEntries = runtimeEntriesOverride.data.filter(entry => {
+          const filteredEntries = responseData.data.filter(entry => {
             const entryDate = new Date(entry.attributes.date_updated);
             return entryDate > filterDate;
           });
@@ -796,6 +1015,7 @@ const createHandlers = () => {
             ),
           };
           touchTagsOf(state, entry);
+          touchJunctionsOf(state, entry);
           const body: TextEntryDocument = {
             data: entry,
             included: entryIncluded(state, entry),
@@ -806,7 +1026,63 @@ const createHandlers = () => {
         }
       }),
 
-      // Tag an entry: get-or-create its junction with the tag, always 201
+      // The junctions, deleted ones too: numbered (newest first with
+      // `sort=-date_updated`) or keyset pages, by tag, entry and deletion
+      http.get(`${baseUrl}/tags_entries`, ({request}) => {
+        recordRequest('GET', request.url);
+        try {
+          const url = new URL(request.url);
+          const state = activeEntries();
+          const tagId = url.searchParams.get('filter[tag.id]');
+          const entryId = url.searchParams.get('filter[text_entry.id]');
+          const deleted = booleanFilter(url, 'is_deleted');
+          const rows = allJunctions(state).filter(
+            junction =>
+              changedSince(url, junction) &&
+              (tagId === null ||
+                junction.relationships.tag.data.id === tagId) &&
+              (entryId === null ||
+                junction.relationships.text_entry.data.id === entryId) &&
+              (deleted === null || junction.attributes.is_deleted === deleted)
+          );
+          const paths = includePaths(url, ['user', 'tag', 'text_entry']);
+          const after = afterOf(url);
+          if (after !== null) {
+            const {data, links} = keysetPage(url, rows, after);
+            const body: TagTextEntryCursorListDocument = {
+              links,
+              data,
+              ...includedFor(state, data, paths),
+            };
+            return HttpResponse.json(body, {status: 200});
+          }
+          const sorted = [...rows].sort(byRevision);
+          if (url.searchParams.get('sort') === '-date_updated') {
+            sorted.reverse();
+          }
+          const size = Math.min(
+            Number(url.searchParams.get('page[size]') ?? 50) || 50,
+            100
+          );
+          const page = Number(url.searchParams.get('page[number]') ?? 1);
+          const pages = Math.max(1, Math.ceil(sorted.length / size));
+          if (!Number.isInteger(page) || page < 1 || page > pages) {
+            throw apiError(404, CODES.notFound, 'Invalid page.');
+          }
+          const data = sorted.slice((page - 1) * size, page * size);
+          const body: TagTextEntryListDocument = {
+            ...pagination(request.url, page, pages, sorted.length),
+            data,
+            ...includedFor(state, data, paths),
+          };
+          return HttpResponse.json(body, {status: 200});
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
+
+      // Tag an entry: get-or-create its junction with the tag (restoring the
+      // pair's deleted one), always 201
       http.post(`${baseUrl}/tags_entries`, async ({request}) => {
         recordRequest('POST', request.url);
         console.log('OK: MSW intercepted tags_entries POST request');
@@ -884,15 +1160,14 @@ const createHandlers = () => {
           );
         }
 
-        // Return the deleted tag with is_deleted: true (tags are soft-deleted)
+        // Tags are soft-deleted, with a new revision.
+        tagToDelete.attributes = {
+          ...tagToDelete.attributes,
+          is_deleted: true,
+          date_updated: nextTagRevision(),
+        };
         const deletedTagResponse: TagDocument = {
-          data: {
-            ...tagToDelete,
-            attributes: {
-              ...tagToDelete.attributes,
-              is_deleted: true,
-            },
-          },
+          data: tagToDelete,
           included: [testUser],
         };
 
@@ -908,9 +1183,8 @@ const createHandlers = () => {
           entryId
         );
 
-        const entryToDelete = (
-          runtimeEntriesOverride ?? entriesResponse
-        ).data.find(entry => entry.id === entryId);
+        const state = activeEntries();
+        const entryToDelete = state.data.find(entry => entry.id === entryId);
         if (!entryToDelete) {
           return HttpResponse.json(
             errorDocument(
@@ -922,18 +1196,15 @@ const createHandlers = () => {
           );
         }
 
-        // Remove the entry from our mock data
-        retireId('TextEntry', entryId);
-        entriesResponse.data = entriesResponse.data.filter(
-          entry => entry.id !== entryId
-        );
-
-        // Entries are soft-deleted: the API answers with the deleted entry.
+        // Entries are soft-deleted, with a new revision (their tags' and
+        // junctions' too); the API answers with the deleted entry.
+        entryToDelete.attributes = {
+          ...entryToDelete.attributes,
+          is_deleted: true,
+        };
+        touchEntry(state, entryToDelete);
         const deletedEntryResponse: TextEntryDocument = {
-          data: {
-            ...entryToDelete,
-            attributes: {...entryToDelete.attributes, is_deleted: true},
-          },
+          data: entryToDelete,
           included: [testUser],
         };
         return HttpResponse.json(deletedEntryResponse, {status: 200});
@@ -1019,6 +1290,7 @@ export const resetMSWState = () => {
   tags = structuredClone(originalTags);
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;
+  deletedJunctions = [];
   adminUsers = structuredClone(originalAdminUsers);
   adminAuditLog = [];
 };
@@ -1029,4 +1301,6 @@ export const setRuntimeEntriesOverride = (
 ) => {
   // A copy: the handlers write to it (tagging, editing).
   runtimeEntriesOverride = override === null ? null : structuredClone(override);
+  // Deleted junctions were the replaced entries'.
+  deletedJunctions = [];
 };

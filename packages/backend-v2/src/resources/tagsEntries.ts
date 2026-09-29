@@ -35,9 +35,11 @@ export const tagEntryOrdering: OrderedSpec = {
   owner: tagsEntries.user_id,
   // A deleted junction is out of its tag's order (it keeps its old rank).
   ranked: sql`${tagsEntries.is_deleted} = 0`,
-  // Clients fetch junctions through /entries (included), which is filtered on
-  // the entry's revision: advance the entries whose junctions a move re-ranked
-  // (their trigger advances the tag too, migrations/0008_tag_revisions.sql).
+  // Clients sync junctions as /entries includes, filtered on the entry's
+  // revision: advance the entries whose junctions a move re-ranked (their
+  // trigger advances the tag, migrations/0008_tag_revisions.sql, and the
+  // entry's junctions, 0010_junction_revisions.sql). The tag's junction list
+  // sees the move itself: the shifted junctions carry its revision.
   // The moved junctions carry the owner's newest junction revision; nothing is
   // touched if the move's guarded UPDATE did not apply.
   touch: moved => sql`
