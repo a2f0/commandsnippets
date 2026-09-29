@@ -72,6 +72,65 @@ const editedEntry1: TextEntry = {
   },
 };
 
+// Entry 1 in test-tag-2 as well as test-tag-1, by junction 5.
+const junction5: TagTextEntry = {
+  ...fixtureJunction1,
+  id: '5',
+  relationships: {
+    ...fixtureJunction1.relationships,
+    tag: {data: {type: 'Tag', id: '2'}},
+  },
+};
+
+/** `entry` (entry 1) with the junctions of `ids`. */
+const linkedBy = (entry: TextEntry, ids: string[]): TextEntry => ({
+  ...entry,
+  relationships: {
+    ...entry.relationships,
+    text_entry_to_tag: {
+      data: ids.map(id => ({type: 'TagTextEntryThroughModel', id})),
+      meta: {count: ids.length},
+    },
+  },
+});
+const inBoth = (entry: TextEntry) => linkedBy(entry, ['1', '5']);
+const sharedEntry1 = inBoth(fixtureEntry1);
+const tag2 = {
+  ...fixtureTag2,
+  attributes: {...fixtureTag2.attributes, entry_count: 1},
+};
+
+/** The API with entry 1 in both test-tag-1 and test-tag-2. */
+function serveSharedEntry() {
+  server.use(
+    http.get(`${API}/tags`, ({request}) =>
+      HttpResponse.json({
+        ...onePage(request.url, 2),
+        data: [fixtureTag1, tag2],
+        included: tagsResponse.included,
+      })
+    ),
+    http.get(`${API}/entries`, ({request}) => {
+      const tagId = new URL(request.url).searchParams.get('filter[tags.id]');
+      return HttpResponse.json(
+        tagId === '2'
+          ? {
+              ...onePage(request.url, 1),
+              data: [sharedEntry1],
+              included: [fixtureJunction1, junction5],
+            }
+          : {
+              ...entriesResponse,
+              data: entriesResponse.data.map(entry =>
+                entry.id === '1' ? inBoth(entry) : entry
+              ),
+              included: [...(entriesResponse.included ?? []), junction5],
+            }
+      );
+    })
+  );
+}
+
 /** GET /tags answering with `tags`, each at revision `2030-01-01`. */
 const tagsAdvanced = (...tags: (typeof tagsResponse.data)[number][]) =>
   http.get(`${API}/tags`, ({request}) =>
@@ -242,59 +301,7 @@ describe('Selecting a tag', () => {
   });
 
   it('lists a change another tag sharing its entry stored after it was shown', async () => {
-    // Entry 1 is in test-tag-2 as well, by junction 5.
-    const junction5: TagTextEntry = {
-      ...fixtureJunction1,
-      id: '5',
-      relationships: {
-        ...fixtureJunction1.relationships,
-        tag: {data: {type: 'Tag', id: '2'}},
-      },
-    };
-    const inBoth = (entry: TextEntry): TextEntry => ({
-      ...entry,
-      relationships: {
-        ...entry.relationships,
-        text_entry_to_tag: {
-          data: [
-            {type: 'TagTextEntryThroughModel', id: '1'},
-            {type: 'TagTextEntryThroughModel', id: '5'},
-          ],
-          meta: {count: 2},
-        },
-      },
-    });
-    const tag2 = {
-      ...fixtureTag2,
-      attributes: {...fixtureTag2.attributes, entry_count: 1},
-    };
-    server.use(
-      http.get(`${API}/tags`, ({request}) =>
-        HttpResponse.json({
-          ...onePage(request.url, 2),
-          data: [fixtureTag1, tag2],
-          included: tagsResponse.included,
-        })
-      ),
-      http.get(`${API}/entries`, ({request}) => {
-        const tagId = new URL(request.url).searchParams.get('filter[tags.id]');
-        return HttpResponse.json(
-          tagId === '2'
-            ? {
-                ...onePage(request.url, 1),
-                data: [inBoth(fixtureEntry1)],
-                included: [fixtureJunction1, junction5],
-              }
-            : {
-                ...entriesResponse,
-                data: entriesResponse.data.map(entry =>
-                  entry.id === '1' ? inBoth(entry) : entry
-                ),
-                included: [...(entriesResponse.included ?? []), junction5],
-              }
-        );
-      })
-    );
+    serveSharedEntry();
     const history = createMemoryHistory();
     history.push('/test/test-tag-2');
     const {rerender} = render(<TestAppRouter history={history} />);
@@ -483,6 +490,62 @@ describe('Selecting a tag', () => {
     now.mockRestore();
 
     await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(4));
+  });
+
+  it('lists a link another sync still running removed from the tag shown', async () => {
+    serveSharedEntry();
+    const history = createMemoryHistory();
+    history.push('/test/test-tag-2');
+    const {rerender} = render(<TestAppRouter history={history} />);
+    const show = (route: string) =>
+      act(() => {
+        history.push(route);
+        rerender(<TestAppRouter history={history} />);
+      });
+    await screen.findByText('entry-1-subject');
+    show('/test/test-tag-1');
+    await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(4));
+    show('/test/test-tag-2');
+    await settle();
+
+    // Entry 1 left test-tag-1 elsewhere. The tags sync so far brings only
+    // test-tag-2's new revision: its sync starts, answered late.
+    const answer = gate();
+    server.use(
+      tagsAdvanced(tag2),
+      http.get(`${API}/entries`, async ({request}) => {
+        await answer.opened;
+        return HttpResponse.json({
+          ...onePage(request.url, 1),
+          data: [
+            linkedBy(
+              {
+                ...fixtureEntry1,
+                attributes: {
+                  ...fixtureEntry1.attributes,
+                  date_updated: '2030-01-01T00:00:00',
+                },
+              },
+              ['5']
+            ),
+          ],
+          included: [junction5],
+        });
+      })
+    );
+    const getEntries = vi.spyOn(apiClient, 'getEntries');
+    await act(() => store.fetchTags('test'));
+    await waitFor(() => expect(getEntries).toHaveBeenCalledTimes(1));
+
+    // test-tag-1, synced at its revision, is listed from the store; then
+    // test-tag-2's sync stores that entry 1 left it.
+    show('/test/test-tag-1');
+    expect(screen.getAllByRole('entry')).toHaveLength(4);
+    answer.open();
+
+    await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(3));
+    expect(screen.queryByText('entry-1-subject')).not.toBeInTheDocument();
+    expect(getEntries).toHaveBeenCalledTimes(1);
   });
 
   it('shows a tag the tags sync brings a newer revision of', async () => {

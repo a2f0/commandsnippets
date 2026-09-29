@@ -87,37 +87,32 @@ const EntryList = () => {
   /**
    * List the tag's entries the store holds, at once, then sync them in the
    * background whenever the tag's revision moves past the one they were
-   * synced at (on the first visit, and when a tags sync brings a newer one),
-   * listing them again only when a sync changed the store since they were
-   * listed: this one, or another that stored the same changes first (a sync
-   * in flight when the tag was shown, or another tag's that shares entries).
-   * Returns the cleanup, after which a sync still running lists nothing.
+   * synced at (on the first visit, and when a tags sync brings a newer one;
+   * each tags sync also retries a sync that failed). List them again
+   * whenever a response changes the store: this tag's sync, or another's
+   * (a sync still running from a tag shown before, a tagging) that changed
+   * entries this tag shares. Returns the cleanup.
    */
   const showTag = (user: string, tag: string) => {
     filterAndSort();
-    let listed = appConfig.storeVersion;
-    let showing = true;
-    const dispose = reaction(
-      // The tag's revision, and each tags sync, which also retries a sync of
-      // the tag that failed (one whose cursor is current asks nothing).
-      () =>
-        `${appConfig.findTag(user, tag)?.attributes.date_updated} ${appConfig.tagsSyncedAt}`,
-      () => {
-        appConfig
-          .syncTagEntries(user, tag)
-          .then(() => {
-            if (showing && appConfig.storeVersion !== listed) {
-              listed = appConfig.storeVersion;
-              filterAndSort();
-            }
-          })
-          .catch(logFetchError);
-      },
-      {fireImmediately: true}
-    );
+    const disposers = [
+      reaction(
+        () =>
+          `${appConfig.findTag(user, tag)?.attributes.date_updated} ${appConfig.tagsSyncedAt}`,
+        () => {
+          appConfig.syncTagEntries(user, tag).catch(logFetchError);
+        },
+        {fireImmediately: true}
+      ),
+      reaction(
+        () => appConfig.storeVersion,
+        () => filterAndSort()
+      ),
+    ];
     return () => {
-      showing = false;
-      dispose();
+      for (const dispose of disposers) {
+        dispose();
+      }
     };
   };
 

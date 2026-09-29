@@ -90,25 +90,27 @@ Run these from `packages/frontend`.
   changes): `tagsSyncedThrough` for the tags (`fetchTags`, when the tag list
   loads and when the app comes back into view, at most every 30 seconds:
   `TagListWrapper`), and `tagSyncCursors` for each tag's entries
-  (`syncTagEntries`). The API advances a tag's revision whenever one of its
-  entries changes, joins or leaves it, so selecting a tag lists its entries
-  from the store at once and requests nothing while the tag's revision is the
-  one its cursor holds; otherwise (and when a tags sync moves the revision of
-  the tag shown) `EntryList` syncs the tag in the background and lists it
-  again only if a sync changed the store since it listed it (the store's
-  volatile `storeVersion`, which any response advances). A tag's first sync
-  reads it whole (`filter[tags.id]`) and drops the links to it the read
-  lacks; later ones read every entry changed since (no tag filter: an entry
-  that left the tag changed too). Every response that lists an entry decides
-  its links (`reconcileCollection`: its `text_entry_to_tag` lists all of its
-  junctions) unless the store holds a newer revision of the entry, so a
-  response that arrives late never undoes a newer one. A link the first read
-  cannot place (stored while it ran) stays, and the tag is synced again from
-  the read. Each tags sync also retries a failed sync of the tag shown. The
-  app's own writes that the store
-  does not reflect (a reorder) sync the tag with `force`, and tagging stores
-  the entry and tag its response includes. `Entry` and `Tag` show a newer
-  revision of their resource when a sync lists one.
+  (`syncTagEntries`).
+  - The API advances a tag's revision whenever one of its entries changes,
+    joins or leaves it, so selecting a tag lists its entries from the store
+    at once and requests nothing while the tag's revision is the one its
+    cursor holds. Otherwise (and when a tags sync moves the revision of the
+    tag shown, or retries a failed sync) `EntryList` syncs the tag in the
+    background, and it lists the tag again whenever a response changes the
+    store (the volatile `storeVersion`), whichever sync it answered: another
+    tag's can change entries this one shares.
+  - A tag's first sync reads it whole (`filter[tags.id]`) and drops the
+    links to it the read lacks; later ones read every entry changed since
+    (no tag filter: an entry that left the tag changed too). Every response
+    that lists an entry decides its links (`reconcileCollection`: its
+    `text_entry_to_tag` lists all of its junctions) unless the store holds a
+    newer revision of the entry, so a response that arrives late never
+    undoes a newer one. A link the first read cannot place (stored while it
+    ran) stays, and the tag is synced again from the read.
+  - The app's own writes that the store does not reflect (a reorder) sync
+    the tag with `force`, and tagging stores the entry and tag its response
+    includes. `Entry` and `Tag` show a newer revision of their resource when
+    a sync lists one.
 - **Signing out when the session is gone**: `fetchWithAuth`
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API
