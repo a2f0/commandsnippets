@@ -1,10 +1,10 @@
 /**
- * The user's writes: each makes sure the API answers for the database's
- * user (`SyncEngine.owner`), calls the API, then stores what it answered in
- * the user's IndexedDB database (`putResources`, that user's rows only), so
- * every list shows it at once. A write the API answers with no body
- * (untagging, deleting an entry, reordering) stores what it knows and syncs
- * for the rest.
+ * The user's writes: each first asks the API whose account it answers for
+ * (`SyncEngine.verifyOwner`), and writes only to the database's user's; then
+ * calls the API and stores what it answered in the user's IndexedDB database
+ * (`putResources`, that user's rows only), so every list shows it at once. A
+ * write the API answers with no body (untagging, deleting an entry,
+ * reordering) marks what it knows and syncs for the rest.
  */
 
 import type {TagReorderDocument} from '@commandsnippets/api-shared/requests';
@@ -16,14 +16,11 @@ import type {
 } from '@commandsnippets/api-shared/responses';
 import {apiClient} from '../api/apiClient';
 import type {SyncSession} from '../sync/session';
-import {checkOwner, putResources} from '../sync/store';
+import {checkOwner, markDeleted, putResources} from '../sync/store';
 import {junctionOf} from './hooks';
 
-/**
- * Make sure the API answers for the database's user before writing (another
- * tab may have signed in as someone else): `SyncUserError` when not.
- */
-const ownerOf = (session: SyncSession) => session.sync.owner();
+/** The API's user id, when it is the database's: `SyncUserError` when not. */
+const ownerOf = (session: SyncSession) => session.sync.verifyOwner();
 
 /** Store a write's answer (its `data` and `included`), the owner's rows only. */
 async function store(
@@ -119,14 +116,10 @@ export async function deleteEntry(
   entryId: string
 ): Promise<void> {
   await ownerOf(session);
-  await apiClient.deleteEntry(entryId);
   const entry = await session.db.entries.get(entryId);
+  await apiClient.deleteEntry(entryId);
   if (entry !== undefined) {
-    // Its revision stays: the sync stores the API's newer one.
-    await session.db.entries.put({
-      ...entry,
-      attributes: {...entry.attributes, is_deleted: true},
-    });
+    await markDeleted(session.db.entries, entry);
   }
   syncLater(session.sync.syncAll());
 }
@@ -154,11 +147,7 @@ export async function untagEntry(
   }
   await ownerOf(session);
   await apiClient.untagEntry(junction.id);
-  // Its revision stays: the tag's sync stores the API's newer one.
-  await session.db.junctions.put({
-    ...junction,
-    attributes: {...junction.attributes, is_deleted: true},
-  });
+  await markDeleted(session.db.junctions, junction);
   syncLater(session.sync.syncTag(tagId));
 }
 

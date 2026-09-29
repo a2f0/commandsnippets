@@ -177,6 +177,27 @@ const isTag = (resource: IncludedResource): resource is Tag =>
   resource.type === 'Tag';
 
 /**
+ * Mark `row` deleted, as a write the API answered with no body did, keeping
+ * its revision (the sync stores the API's newer one) — unless the database
+ * holds another revision of it by now: one a sync stored while the write
+ * ran, newer than what the write knew, which stays.
+ */
+export async function markDeleted<
+  R extends Revised & {attributes: {is_deleted: boolean}},
+>(table: Table<R, string>, row: R): Promise<void> {
+  await table.db.transaction('rw', table, async () => {
+    const stored = await table.get(row.id);
+    if (stored?.attributes.date_updated !== row.attributes.date_updated) {
+      return;
+    }
+    await table.put({
+      ...stored,
+      attributes: {...stored.attributes, is_deleted: true},
+    });
+  });
+}
+
+/**
  * Store a write's answer (its `data` and `included`): tags, entries with
  * their junctions, and junctions whose entries are not among them.
  */

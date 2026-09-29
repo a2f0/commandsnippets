@@ -4,6 +4,7 @@
  * the signed-in user's IndexedDB database.
  */
 
+import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {
   afterAll,
@@ -27,7 +28,7 @@ import {
   untagEntry,
 } from '../../../../src/lib/data/writes';
 import {syncSession} from '../../../../src/lib/sync/session';
-import {ForeignDataError} from '../../../../src/lib/sync/store';
+import {ForeignDataError, putJunctions} from '../../../../src/lib/sync/store';
 import {SyncUserError} from '../../../../src/lib/sync/sync';
 import {server} from '../../../util/msw';
 import {signIn, TEST_USER} from '../../../util/signIn';
@@ -127,29 +128,58 @@ describe('the writes', () => {
     expect(await inTag('2')).toEqual([]);
   });
 
-  it('write nothing before a sync while the API answers for another user', async () => {
-    // Another tab signed in as someone else: the cookie is theirs.
-    server.use(
-      http.get('*/api/v1/user/', () =>
-        HttpResponse.json({
-          data: {
-            type: 'User',
-            id: '2',
-            attributes: {
-              username: 'someone-else',
-              is_staff: false,
-              date_updated: '2026-09-01T00:00:00.000000',
+  it.each([
+    ['before a sync', false],
+    ['after one', true],
+  ])(
+    'write nothing while the API answers for another user, %s',
+    async (_when, synced) => {
+      if (synced) {
+        await session().sync.syncAll();
+      }
+      const tags = await session().db.tags.count();
+      // Another tab signed in as someone else: the cookie is theirs.
+      server.use(
+        http.get('*/api/v1/user/', () =>
+          HttpResponse.json({
+            data: {
+              type: 'User',
+              id: '2',
+              attributes: {
+                username: 'someone-else',
+                is_staff: false,
+                date_updated: '2026-09-01T00:00:00.000000',
+              },
             },
-          },
-        })
-      )
-    );
-    const create = vi.spyOn(apiClient, 'createTag');
+          })
+        )
+      );
+      const create = vi.spyOn(apiClient, 'createTag');
 
-    await expect(createTag(session(), 'theirs')).rejects.toBeInstanceOf(
-      SyncUserError
-    );
-    expect(create).not.toHaveBeenCalled();
-    expect(await session().db.tags.count()).toBe(0);
+      await expect(createTag(session(), 'theirs')).rejects.toBeInstanceOf(
+        SyncUserError
+      );
+      expect(create).not.toHaveBeenCalled();
+      expect(await session().db.tags.count()).toBe(tags);
+    }
+  );
+
+  it('leave a revision a sync stored while an untag ran', async () => {
+    await session().sync.syncAll();
+    vi.spyOn(session().sync, 'syncTag').mockResolvedValue();
+    const held = await session().db.junctions.get('2');
+    invariant(held, 'entry 2 is in tag 1');
+    // Tagged again elsewhere: a sync stores the newer revision meanwhile.
+    const retagged = {
+      ...held,
+      attributes: {...held.attributes, date_updated: '2030-01-01T00:00:00'},
+    };
+    vi.spyOn(apiClient, 'untagEntry').mockImplementation(async () => {
+      await putJunctions(session().db, [retagged]);
+    });
+
+    await untagEntry(session(), '1', '2');
+    expect(await session().db.junctions.get('2')).toEqual(retagged);
+    expect(await inTag('1')).toEqual(['1', '2', '3', '4']);
   });
 });

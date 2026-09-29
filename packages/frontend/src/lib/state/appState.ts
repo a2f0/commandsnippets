@@ -109,8 +109,9 @@ export const STORAGE_KEY = `commandsnippets-${environment}`;
  * Where the MobX-State-Tree store saved its snapshot (with the user's whole
  * collection in it), under the current name and the one from before the
  * rename to Commandsnippets. Nothing reads them: they are removed on load,
- * so no user's snippets stay behind in them. (Remove this with the next
- * change that needs no such cleanup, once the app has loaded everywhere.)
+ * so no user's snippets stay behind in them. The preferences in them are
+ * not carried over, by choice: the app is greenfield, with no migrations
+ * from its earlier state (a user signs in again, and picks them again).
  */
 export const RETIRED_STORAGE_KEYS = [
   `mst-commandsnippets-${environment}`,

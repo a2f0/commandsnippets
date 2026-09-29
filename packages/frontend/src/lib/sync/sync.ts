@@ -110,16 +110,11 @@ async function readAfter<P extends Page>(
 }
 
 /** The API's user id, which must be `username`'s. */
-async function ownerOf(
-  api: SyncApi,
-  username: string,
-  verified: (id: string) => void
-): Promise<string> {
+async function ownerOf(api: SyncApi, username: string): Promise<string> {
   const {data} = await api.getCurrentUser();
   if (data.attributes.username !== username) {
     throw new SyncUserError(username, data.attributes.username);
   }
-  verified(data.id);
   return data.id;
 }
 
@@ -139,10 +134,9 @@ async function syncAll(
   db: CommandsnippetsDatabase,
   api: SyncApi,
   username: string,
-  pause: () => boolean,
-  verified: (id: string) => void
+  pause: () => boolean
 ): Promise<boolean> {
-  const owner = await ownerOf(api, username, verified);
+  const owner = await ownerOf(api, username);
   const mark = await junctionsMark(api);
   await readAfter(
     db,
@@ -183,10 +177,9 @@ async function syncTag(
   db: CommandsnippetsDatabase,
   api: SyncApi,
   username: string,
-  tagId: string,
-  verified: (id: string) => void
+  tagId: string
 ): Promise<void> {
-  const owner = await ownerOf(api, username, verified);
+  const owner = await ownerOf(api, username);
   const tag = await db.tags.get(tagId);
   if (tag === undefined) {
     return;
@@ -236,12 +229,11 @@ export interface SyncEngine {
   /** Sync one tag (see the module comment). */
   syncTag(tagId: string): Promise<void>;
   /**
-   * The database owner's user id: the one the API last answered for (each
-   * sync checks it), or, before any, the API's user once checked against the
-   * database's (`SyncUserError` when they differ). The writes ask for it
-   * before they write.
+   * The API's user id, asked for now: `SyncUserError` when it is not the
+   * database's user (another tab signed in as someone else). The writes ask
+   * before each write, so none reaches another user's account.
    */
-  owner(): Promise<string>;
+  verifyOwner(): Promise<string>;
 }
 
 /**
@@ -257,10 +249,6 @@ export function createSyncEngine(
 ): SyncEngine {
   let queue: Promise<unknown> = Promise.resolve();
   let tagSyncsWaiting = 0;
-  let ownerId: string | null = null;
-  const verified = (id: string) => {
-    ownerId = id;
-  };
   const exclusive = <T>(task: () => Promise<T>): Promise<T> => {
     const locks = globalThis.navigator?.locks;
     const run = () =>
@@ -270,21 +258,18 @@ export function createSyncEngine(
     return result;
   };
   const syncAllToTheEnd = (): Promise<void> =>
-    exclusive(() =>
-      syncAll(db, api, username, () => tagSyncsWaiting > 0, verified)
-    ).then(done => (done ? undefined : syncAllToTheEnd()));
+    exclusive(() => syncAll(db, api, username, () => tagSyncsWaiting > 0)).then(
+      done => (done ? undefined : syncAllToTheEnd())
+    );
   return {
     syncAll: syncAllToTheEnd,
     syncTag: tagId => {
       tagSyncsWaiting += 1;
       return exclusive(() => {
         tagSyncsWaiting -= 1;
-        return syncTag(db, api, username, tagId, verified);
+        return syncTag(db, api, username, tagId);
       });
     },
-    owner: () =>
-      ownerId === null
-        ? ownerOf(api, username, verified)
-        : Promise.resolve(ownerId),
+    verifyOwner: () => ownerOf(api, username),
   };
 }
