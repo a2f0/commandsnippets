@@ -7,8 +7,11 @@ export class Base {
   }
 
   // admin page
-  get adminLinkButton(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#adminLinkButton');
+  get userModeTab(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#userModeTab');
+  }
+  get adminModeTab(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminModeTab');
   }
   get adminPage(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#adminPage');

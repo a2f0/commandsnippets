@@ -101,7 +101,9 @@ export const en: I18NextTranslations = {
   },
   admin: {
     title: 'Admin',
-    menuLink: 'Admin',
+    modeLabel: 'User or admin',
+    userMode: 'User',
+    adminMode: 'Admin',
     usersTab: 'Users',
     auditLogTab: 'Audit log',
     forbidden: 'You do not have access to this page.',

@@ -123,10 +123,12 @@ new top-level route to both.
 
 `/admin` is for staff (`users.is_staff`): it lists accounts, deactivates and
 reactivates them, and shows the audit log, through the API's `/api/v1/admin`.
-The page checks access with the API on every visit, and the menu shows an
-Admin link to staff once their login or a visit to the page has recorded it.
-Its menu bar leaves out what only works on the entries page (the Tags and
-Entries menus, New Tag and New Entry) and links back to your entries instead.
+The page checks access with the API on every visit. Once their login or a
+visit to the page has recorded it, staff get two tabs at the right of the menu
+bar, User and Admin, to switch between their entries (the app as any user sees
+it) and this page. Its menu bar leaves out what only works on the entries page
+(the Tags and Entries menus, New Tag and New Entry); the User tab (for anyone
+else, a link) goes back to your entries.
 
 ## Testing
 

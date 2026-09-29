@@ -103,7 +103,9 @@ export interface EntriesTranslations {
 
 export interface AdminTranslations {
   title: string;
-  menuLink: string;
+  modeLabel: string;
+  userMode: string;
+  adminMode: string;
   usersTab: string;
   auditLogTab: string;
   forbidden: string;
