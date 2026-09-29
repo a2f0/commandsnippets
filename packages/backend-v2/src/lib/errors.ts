@@ -69,6 +69,13 @@ export const authenticationFailed = (detail: string) =>
 export const originNotAllowed = () =>
   ApiError.of(403, 'Origin not allowed.', CODES.originNotAllowed);
 
+export const userMismatch = () =>
+  ApiError.of(
+    409,
+    'The request is not signed in as the user it names.',
+    CODES.userMismatch
+  );
+
 export const unsupportedMediaType = (mediaType: string | undefined) =>
   ApiError.of(
     415,

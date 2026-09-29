@@ -228,12 +228,6 @@ export interface SyncEngine {
   syncAll(): Promise<void>;
   /** Sync one tag (see the module comment). */
   syncTag(tagId: string): Promise<void>;
-  /**
-   * The API's user id, asked for now: `SyncUserError` when it is not the
-   * database's user (another tab signed in as someone else). The writes ask
-   * before each write, so none reaches another user's account.
-   */
-  verifyOwner(): Promise<string>;
 }
 
 /**
@@ -270,6 +264,5 @@ export function createSyncEngine(
         return syncTag(db, api, username, tagId);
       });
     },
-    verifyOwner: () => ownerOf(api, username),
   };
 }

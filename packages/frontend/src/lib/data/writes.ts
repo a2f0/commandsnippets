@@ -1,9 +1,10 @@
 /**
- * The user's writes: each first asks the API whose account it answers for
- * (`SyncEngine.verifyOwner`), and writes only to the database's user's; then
- * calls the API and stores what it answered in the user's IndexedDB database
- * (`putResources`, that user's rows only), so every list shows it at once. A
- * write the API answers with no body (untagging, deleting an entry,
+ * The user's writes: each calls the API, which refuses it unless signed in
+ * as the user it names (the signed-in user here, `apiClient.setActingUser`;
+ * `UserMismatchError` when another tab has signed in as someone else since,
+ * and this tab leaves the session). Then it stores what the API answered in
+ * the user's IndexedDB database (`putResources`), so every list shows it at
+ * once. A write the API answers with no body (untagging, deleting an entry,
  * reordering) marks what it knows and syncs for the rest.
  */
 
@@ -14,26 +15,39 @@ import type {
   TagTextEntry,
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
-import {apiClient} from '../api/apiClient';
+import {apiClient, UserMismatchError} from '../api/apiClient';
+import {leaveForeignSession} from '../state/appState';
 import type {SyncSession} from '../sync/session';
-import {checkOwner, markDeleted, putResources} from '../sync/store';
+import {markDeleted, putResources} from '../sync/store';
 import {junctionOf} from './hooks';
 
-/** The API's user id, when it is the database's: `SyncUserError` when not. */
-const ownerOf = (session: SyncSession) => session.sync.verifyOwner();
+/**
+ * Send a write: when the API refuses it as another user's, `session`'s tab
+ * leaves the session (`leaveForeignSession`), and the write still fails.
+ */
+async function send<T>(
+  session: SyncSession,
+  write: () => Promise<T>
+): Promise<T> {
+  try {
+    return await write();
+  } catch (error: unknown) {
+    if (error instanceof UserMismatchError) {
+      void leaveForeignSession(session.username);
+    }
+    throw error;
+  }
+}
 
-/** Store a write's answer (its `data` and `included`), the owner's rows only. */
+/** Store a write's answer: its `data` and `included`. */
 async function store(
   session: SyncSession,
-  owner: string,
   document: {
     data: IncludedResource;
     included?: IncludedResource[] | undefined;
   }
 ): Promise<void> {
-  const resources = [document.data, ...(document.included ?? [])];
-  checkOwner(owner, resources);
-  await putResources(session.db, resources);
+  await putResources(session.db, [document.data, ...(document.included ?? [])]);
 }
 
 /** A sync the write does not wait for: its failure is logged. */
@@ -47,9 +61,8 @@ export async function createTag(
   session: SyncSession,
   name: string
 ): Promise<Tag> {
-  const owner = await ownerOf(session);
-  const document = await apiClient.createTag(name);
-  await store(session, owner, document);
+  const document = await send(session, () => apiClient.createTag(name));
+  await store(session, document);
   return document.data;
 }
 
@@ -58,9 +71,8 @@ export async function renameTag(
   tagId: string,
   name: string
 ): Promise<Tag> {
-  const owner = await ownerOf(session);
-  const document = await apiClient.updateTag(tagId, name);
-  await store(session, owner, document);
+  const document = await send(session, () => apiClient.updateTag(tagId, name));
+  await store(session, document);
   return document.data;
 }
 
@@ -68,8 +80,7 @@ export async function deleteTag(
   session: SyncSession,
   tagId: string
 ): Promise<void> {
-  const owner = await ownerOf(session);
-  await store(session, owner, await apiClient.deleteTag(tagId));
+  await store(session, await send(session, () => apiClient.deleteTag(tagId)));
 }
 
 /** Move tag `top` above tag `bottom`: the tags sync their new ranks. */
@@ -77,8 +88,7 @@ export async function reorderTags(
   session: SyncSession,
   payload: TagReorderDocument
 ): Promise<void> {
-  await ownerOf(session);
-  await apiClient.reorderTag(payload);
+  await send(session, () => apiClient.reorderTag(payload));
   syncLater(session.sync.syncAll());
 }
 
@@ -89,9 +99,10 @@ export async function createEntry(
   body: string,
   tagId?: string
 ): Promise<TextEntry> {
-  const owner = await ownerOf(session);
-  const created = await apiClient.createEntry(subject, body);
-  await store(session, owner, created);
+  const created = await send(session, () =>
+    apiClient.createEntry(subject, body)
+  );
+  await store(session, created);
   if (tagId !== undefined) {
     await tagEntry(session, tagId, created.data.id);
   }
@@ -104,9 +115,10 @@ export async function updateEntry(
   subject: string,
   body: string
 ): Promise<TextEntry> {
-  const owner = await ownerOf(session);
-  const document = await apiClient.updateEntry(entryId, subject, body);
-  await store(session, owner, document);
+  const document = await send(session, () =>
+    apiClient.updateEntry(entryId, subject, body)
+  );
+  await store(session, document);
   return document.data;
 }
 
@@ -115,9 +127,8 @@ export async function deleteEntry(
   session: SyncSession,
   entryId: string
 ): Promise<void> {
-  await ownerOf(session);
   const entry = await session.db.entries.get(entryId);
-  await apiClient.deleteEntry(entryId);
+  await send(session, () => apiClient.deleteEntry(entryId));
   if (entry !== undefined) {
     await markDeleted(session.db.entries, entry);
   }
@@ -129,9 +140,10 @@ export async function tagEntry(
   tagId: string,
   entryId: string
 ): Promise<TagTextEntry> {
-  const owner = await ownerOf(session);
-  const document = await apiClient.tagEntry(tagId, entryId);
-  await store(session, owner, document);
+  const document = await send(session, () =>
+    apiClient.tagEntry(tagId, entryId)
+  );
+  await store(session, document);
   return document.data;
 }
 
@@ -145,8 +157,7 @@ export async function untagEntry(
   if (junction === undefined) {
     return;
   }
-  await ownerOf(session);
-  await apiClient.untagEntry(junction.id);
+  await send(session, () => apiClient.untagEntry(junction.id));
   await markDeleted(session.db.junctions, junction);
   syncLater(session.sync.syncTag(tagId));
 }
@@ -168,7 +179,6 @@ export async function reorderEntries(
   if (top === undefined || bottom === undefined) {
     throw new Error('The entries to reorder are not in the tag');
   }
-  await ownerOf(session);
-  await apiClient.reorderEntry(top.id, bottom.id);
+  await send(session, () => apiClient.reorderEntry(top.id, bottom.id));
   await session.sync.syncTag(tagId);
 }

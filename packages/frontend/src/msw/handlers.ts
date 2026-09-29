@@ -3,6 +3,7 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   CODES,
+  EXPECTED_USER_HEADER,
   type IncludedResource,
   parseDateTime,
   type Tag,
@@ -672,12 +673,44 @@ const apiBaseUrls = [
   'https://api.commandsnippets.com/api/v1',
 ] as const;
 
+/** The user the mock API is signed in as (what `/user/` answers). */
+const SIGNED_IN_USER = 'test';
+
+/**
+ * A write naming another user than the signed-in one, refused as the API
+ * refuses it (409 `user_mismatch`); anything else goes on to the handlers.
+ */
+function refuseAnotherUsersWrite(request: Request) {
+  const expected = request.headers.get(EXPECTED_USER_HEADER);
+  if (
+    expected === null ||
+    request.method === 'GET' ||
+    decodeURIComponent(expected) === SIGNED_IN_USER
+  ) {
+    return undefined;
+  }
+  return HttpResponse.json(
+    {
+      errors: [
+        {
+          detail: 'The request is not signed in as the user it names.',
+          status: '409',
+          source: {pointer: '/data'},
+          code: CODES.userMismatch,
+        },
+      ],
+    },
+    {status: 409}
+  );
+}
+
 // Create handlers for all URLs
 const createHandlers = () => {
   const handlers = [];
 
   for (const baseUrl of apiBaseUrls) {
     handlers.push(
+      http.all(`${baseUrl}/*`, ({request}) => refuseAnotherUsersWrite(request)),
       // The signed-in user (read by the admin page)
       http.get(`${baseUrl}/user/`, ({request}) => {
         recordRequest('GET', request.url);
@@ -686,7 +719,7 @@ const createHandlers = () => {
             type: 'User',
             id: '1',
             attributes: {
-              username: 'test',
+              username: SIGNED_IN_USER,
               is_staff: true,
               date_updated: '2026-09-01T00:00:00.000000',
             },

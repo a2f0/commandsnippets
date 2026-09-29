@@ -2,6 +2,7 @@
  * The lists' sorting and searching, done on the user's data in IndexedDB.
  * Sort orders are the menus' keys: a field, or `-field` descending.
  */
+import {parseDateTime} from '@commandsnippets/api-shared/datetime';
 import type {
   Tag,
   TagTextEntry,
@@ -19,8 +20,12 @@ function by<T>(order: string, key: (item: T) => Key) {
   };
 }
 
-/** A date as a comparable number (never, null: the epoch). */
-const time = (value: string | null) => new Date(value ?? 0).getTime();
+/**
+ * A date in the fixed-width UTC form, which compares chronologically as a
+ * string to the microsecond (never, null: before every date).
+ */
+const time = (value: string | null) =>
+  value === null ? '' : (parseDateTime(value) ?? value);
 
 const TAG_KEYS: Record<string, (tag: Tag) => Key> = {
   name: tag => tag.attributes.name.toUpperCase(),

@@ -9,6 +9,7 @@
 import {useCallback, useRef, useState, useSyncExternalStore} from 'react';
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
+import {apiClient} from '../api/apiClient';
 import {setUnauthorizedHandler} from '../auth/authUtils';
 import {environment} from '../environment';
 import {
@@ -280,3 +281,6 @@ useAppState.subscribe((state, previous) => {
 });
 
 setUnauthorizedHandler(resetApplicationState);
+// Every write names the signed-in user: the API refuses it when the cookie
+// is another user's (another tab signed in since).
+apiClient.setActingUser(() => useAppState.getState().loggedInUser);

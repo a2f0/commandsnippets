@@ -102,9 +102,12 @@ API; everything else the app keeps is a zustand store.
   searches them (case-insensitively in any script, as the API's search).
   Deleted tags and entries are left out; untagged entries are those in no
   tag.
-- **Writes**: `src/lib/data/writes.ts` first checks the API answers for the
-  database's user (`SyncEngine.verifyOwner`), calls the API, then stores
-  what it answered (`putResources`). A write answered with no body
+- **Writes**: `src/lib/data/writes.ts` calls the API, then stores what it
+  answered (`putResources`). Every write names the signed-in user
+  (`X-Expected-User`, api-shared's `EXPECTED_USER_HEADER`; set by
+  `apiClient.setActingUser`), and the API refuses it when the cookie is
+  another user's (409 `user_mismatch`: `UserMismatchError`, and the tab
+  leaves the session). A write answered with no body
   (untagging, deleting an entry, reordering) marks the row deleted unless a
   sync stored a newer revision meanwhile (`markDeleted`), and syncs the
   rest.

@@ -4,8 +4,10 @@
  * the signed-in user's IndexedDB database.
  */
 
+import {EXPECTED_USER_HEADER} from '@commandsnippets/api-shared/messages';
+import {act} from '@testing-library/react';
+import {Dexie} from 'dexie';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
 import {
   afterAll,
   afterEach,
@@ -16,7 +18,7 @@ import {
   it,
   vi,
 } from 'vitest';
-import {apiClient} from '../../../../src/lib/api/apiClient';
+import {apiClient, UserMismatchError} from '../../../../src/lib/api/apiClient';
 import {entriesOfTag} from '../../../../src/lib/data/hooks';
 import {
   createEntry,
@@ -24,14 +26,12 @@ import {
   deleteEntry,
   deleteTag,
   renameTag,
-  tagEntry,
   untagEntry,
 } from '../../../../src/lib/data/writes';
 import {syncSession} from '../../../../src/lib/sync/session';
-import {ForeignDataError, putJunctions} from '../../../../src/lib/sync/store';
-import {SyncUserError} from '../../../../src/lib/sync/sync';
+import {putJunctions} from '../../../../src/lib/sync/store';
 import {server} from '../../../util/msw';
-import {signIn, TEST_USER} from '../../../util/signIn';
+import {signIn, store, TEST_USER} from '../../../util/signIn';
 
 beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
 afterEach(() => server.resetHandlers());
@@ -108,61 +108,41 @@ describe('the writes', () => {
     );
   });
 
-  it("refuse to store another user's rows once the sync knows the user", async () => {
-    await session().sync.syncAll();
-    const answer = await apiClient.tagEntry('2', '1');
-    vi.spyOn(apiClient, 'tagEntry').mockResolvedValue({
-      ...answer,
-      data: {
-        ...answer.data,
-        relationships: {
-          ...answer.data.relationships,
-          user: {data: {type: 'User', id: '2'}},
-        },
-      },
+  it("are refused as another user's, storing nothing, and the tab leaves", async () => {
+    // This tab signed in as alice; another has signed in as the mock API's
+    // user since, and the cookie is theirs.
+    act(() => store.setLoggedInUser('alice'));
+    const alice = syncSession('alice');
+    const requested: Array<string | null> = [];
+    server.events.on('request:start', ({request}) => {
+      requested.push(request.headers.get(EXPECTED_USER_HEADER));
     });
 
-    await expect(tagEntry(session(), '2', '3')).rejects.toBeInstanceOf(
-      ForeignDataError
+    await expect(createTag(alice, 'theirs')).rejects.toBeInstanceOf(
+      UserMismatchError
     );
-    expect(await inTag('2')).toEqual([]);
+
+    expect(requested).toEqual(['alice']);
+    // Signed out here, alice's database with it.
+    await vi.waitFor(() => expect(store.loggedInUser).toBeNull());
+    await vi.waitFor(async () =>
+      expect(await Dexie.exists(alice.db.name)).toBe(false)
+    );
+    server.events.removeAllListeners();
   });
 
-  it.each([
-    ['before a sync', false],
-    ['after one', true],
-  ])(
-    'write nothing while the API answers for another user, %s',
-    async (_when, synced) => {
-      if (synced) {
-        await session().sync.syncAll();
-      }
-      const tags = await session().db.tags.count();
-      // Another tab signed in as someone else: the cookie is theirs.
-      server.use(
-        http.get('*/api/v1/user/', () =>
-          HttpResponse.json({
-            data: {
-              type: 'User',
-              id: '2',
-              attributes: {
-                username: 'someone-else',
-                is_staff: false,
-                date_updated: '2026-09-01T00:00:00.000000',
-              },
-            },
-          })
-        )
-      );
-      const create = vi.spyOn(apiClient, 'createTag');
+  it('name the signed-in user, URI-encoded', async () => {
+    const requested: Array<string | null> = [];
+    server.events.on('request:start', ({request}) => {
+      requested.push(request.headers.get(EXPECTED_USER_HEADER));
+    });
+    await createTag(session(), 'mine');
+    act(() => store.setLoggedInUser('jörg'));
+    await createTag(syncSession('jörg'), 'his').catch(() => undefined);
+    server.events.removeAllListeners();
 
-      await expect(createTag(session(), 'theirs')).rejects.toBeInstanceOf(
-        SyncUserError
-      );
-      expect(create).not.toHaveBeenCalled();
-      expect(await session().db.tags.count()).toBe(tags);
-    }
-  );
+    expect(requested).toEqual([TEST_USER, encodeURIComponent('jörg')]);
+  });
 
   it('leave a revision a sync stored while an untag ran', async () => {
     await session().sync.syncAll();

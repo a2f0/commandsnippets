@@ -113,6 +113,20 @@ describe('sortEntries', () => {
     expect(sortEntries(texts, order, '').map(({id}) => id)).toEqual(expected);
   });
 
+  it('sorts by the microsecond, as the API stamps them', () => {
+    // One millisecond apart and less; the API gives six fractional digits.
+    const close = [
+      entry('1', {date_updated: '2026-01-01T00:00:00.000900'}),
+      entry('2', {date_updated: '2026-01-01T00:00:00.000100'}),
+      entry('3', {date_updated: '2026-01-01T00:00:00.000500'}),
+    ];
+    expect(sortEntries(close, 'date_updated', '').map(({id}) => id)).toEqual([
+      '2',
+      '3',
+      '1',
+    ]);
+  });
+
   it('matches the subject or body in any case, in any script', () => {
     const texts = [
       entry('1', {subject: 'Deploy script', body: 'kubectl apply'}),
