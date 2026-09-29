@@ -105,6 +105,25 @@ export const defaultUiState: UiState = {
 
 export const STORAGE_KEY = `commandsnippets-${environment}`;
 
+/**
+ * Where the MobX-State-Tree store saved its snapshot (with the user's whole
+ * collection in it), under the current name and the one from before the
+ * rename to Commandsnippets. Nothing reads them: they are removed on load,
+ * so no user's snippets stay behind in them. (Remove this with the next
+ * change that needs no such cleanup, once the app has loaded everywhere.)
+ */
+export const RETIRED_STORAGE_KEYS = [
+  `mst-commandsnippets-${environment}`,
+  `mst-tearleads-${environment}`,
+];
+for (const key of RETIRED_STORAGE_KEYS) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage unavailable: nothing was saved there either.
+  }
+}
+
 export const useAppState = create<AppState>()(
   persist(
     set => ({

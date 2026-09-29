@@ -5,6 +5,7 @@ import {describe, expect, it, vi} from 'vitest';
 
 import {
   defaultSavedState,
+  RETIRED_STORAGE_KEYS,
   resetApplicationState,
   STORAGE_KEY,
   useAppConfig,
@@ -26,6 +27,17 @@ describe('the app state', () => {
       loggedInUser: 'dan',
       selectedTheme: 'lightTheme',
     });
+  });
+
+  it("removes the retired MobX-State-Tree snapshots, with the user's snippets in them", async () => {
+    for (const key of RETIRED_STORAGE_KEYS) {
+      localStorage.setItem(key, '{"textEntries":[{"subject":"private"}]}');
+    }
+    vi.resetModules();
+    await import('../../../../src/lib/state/appState');
+    for (const key of RETIRED_STORAGE_KEYS) {
+      expect(localStorage.getItem(key)).toBeNull();
+    }
   });
 
   it('goes back to its defaults on sign-out', () => {

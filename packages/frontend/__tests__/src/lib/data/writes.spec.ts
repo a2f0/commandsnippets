@@ -3,8 +3,11 @@
  * state as the API's database would: each stores what the API answered in
  * the signed-in user's IndexedDB database.
  */
+
+import {HttpResponse, http} from 'msw';
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -12,7 +15,6 @@ import {
   it,
   vi,
 } from 'vitest';
-
 import {apiClient} from '../../../../src/lib/api/apiClient';
 import {entriesOfTag} from '../../../../src/lib/data/hooks';
 import {
@@ -26,10 +28,12 @@ import {
 } from '../../../../src/lib/data/writes';
 import {syncSession} from '../../../../src/lib/sync/session';
 import {ForeignDataError} from '../../../../src/lib/sync/store';
+import {SyncUserError} from '../../../../src/lib/sync/sync';
 import {server} from '../../../util/msw';
 import {signIn, TEST_USER} from '../../../util/signIn';
 
 beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 beforeEach(() => {
   signIn();
@@ -121,5 +125,31 @@ describe('the writes', () => {
       ForeignDataError
     );
     expect(await inTag('2')).toEqual([]);
+  });
+
+  it('write nothing before a sync while the API answers for another user', async () => {
+    // Another tab signed in as someone else: the cookie is theirs.
+    server.use(
+      http.get('*/api/v1/user/', () =>
+        HttpResponse.json({
+          data: {
+            type: 'User',
+            id: '2',
+            attributes: {
+              username: 'someone-else',
+              is_staff: false,
+              date_updated: '2026-09-01T00:00:00.000000',
+            },
+          },
+        })
+      )
+    );
+    const create = vi.spyOn(apiClient, 'createTag');
+
+    await expect(createTag(session(), 'theirs')).rejects.toBeInstanceOf(
+      SyncUserError
+    );
+    expect(create).not.toHaveBeenCalled();
+    expect(await session().db.tags.count()).toBe(0);
   });
 });

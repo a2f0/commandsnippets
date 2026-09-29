@@ -235,8 +235,13 @@ export interface SyncEngine {
   syncAll(): Promise<void>;
   /** Sync one tag (see the module comment). */
   syncTag(tagId: string): Promise<void>;
-  /** The user id the API last answered for (a sync checks), or null. */
-  owner(): string | null;
+  /**
+   * The database owner's user id: the one the API last answered for (each
+   * sync checks it), or, before any, the API's user once checked against the
+   * database's (`SyncUserError` when they differ). The writes ask for it
+   * before they write.
+   */
+  owner(): Promise<string>;
 }
 
 /**
@@ -277,6 +282,9 @@ export function createSyncEngine(
         return syncTag(db, api, username, tagId, verified);
       });
     },
-    owner: () => ownerId,
+    owner: () =>
+      ownerId === null
+        ? ownerOf(api, username, verified)
+        : Promise.resolve(ownerId),
   };
 }
