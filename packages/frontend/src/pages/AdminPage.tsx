@@ -7,17 +7,13 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import {observer} from 'mobx-react';
-import {applySnapshot} from 'mobx-state-tree';
 import React, {useCallback, useEffect, useState} from 'react';
-
-import {useAppContext} from '../AppContext';
 import {AppHeader} from '../components/AppHeader';
 import {AdminAuditLog} from '../components/admin/AdminAuditLog';
 import {AdminUsers} from '../components/admin/AdminUsers';
 import {useTypedTranslation} from '../i18n/hooks';
 import {AdminSignedOutError, getStaffStatus} from '../lib/api/adminApi';
-import {defaultState} from '../lib/shared';
+import {resetApplicationState, useAppConfig} from '../lib/state/appState';
 import {SignInPage} from './SignInPage';
 
 type Access = 'checking' | 'staff' | 'forbidden' | 'error';
@@ -28,7 +24,7 @@ type AdminTab = 'users' | 'auditLog';
  * stored flag can be stale), and the admin API checks it again on each call.
  */
 const AdminPage = () => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const {t} = useTypedTranslation('admin');
   const {t: tCommon} = useTypedTranslation('common');
   const [access, setAccess] = useState<Access>('checking');
@@ -51,7 +47,7 @@ const AdminPage = () => {
         }
         if (error instanceof AdminSignedOutError) {
           // The session expired: sign out locally, which shows sign-in.
-          applySnapshot(appConfig, defaultState);
+          resetApplicationState();
           return;
         }
         console.error('Admin access check failed:', error);
@@ -146,6 +142,6 @@ const AdminPage = () => {
   );
 };
 
-const memoizedAdminPage = React.memo(observer(AdminPage));
+const memoizedAdminPage = React.memo(AdminPage);
 
 export {memoizedAdminPage as AdminPage};

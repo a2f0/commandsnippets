@@ -1,9 +1,7 @@
-import {observer} from 'mobx-react';
 import React from 'react';
 import Highlighter from 'react-highlight-words';
-
-import {useAppContext} from '../../AppContext';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
+import {useAppConfig} from '../../lib/state/appState';
 
 export interface IProps {
   object: ITextEntryJsonApi;
@@ -14,7 +12,7 @@ const style = {
 };
 
 const EntrySubject = ({object}: IProps) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
 
   return (
     <Highlighter
@@ -26,4 +24,4 @@ const EntrySubject = ({object}: IProps) => {
   );
 };
 
-export const MemoizedEntrySubject = React.memo(observer(EntrySubject));
+export const MemoizedEntrySubject = React.memo(EntrySubject);

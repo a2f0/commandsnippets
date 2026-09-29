@@ -5,21 +5,19 @@ import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
 import {describe, expect, it} from 'vitest';
 
-import {AppContext} from '../../../../src/AppContext';
 import {i18n} from '../../../../src/i18n/i18n';
-import {TagHelpers} from '../../../../src/lib/store/models/TagModel';
-import type {Store} from '../../../../src/lib/store/store';
+import type {ITagJsonApi} from '../../../../src/lib/api/responses/types';
+import {sortTags} from '../../../../src/lib/data/sort';
 import {TagsMenu} from '../../../../src/menu/tags/TagsMenu';
 import {darkTheme} from '../../../../src/theme/themes';
-import {createStore, tag} from '../../../util/storeFixtures';
+import {store} from '../../../util/signIn';
+import {tag} from '../../../util/storeFixtures';
 
-function renderTagsMenu(store: Store) {
+function renderTagsMenu() {
   return render(
     <I18nextProvider i18n={i18n}>
       <ThemeProvider theme={darkTheme}>
-        <AppContext.Provider value={store}>
-          <TagsMenu anchorEl={document.body} onClose={() => {}} />
-        </AppContext.Provider>
+        <TagsMenu anchorEl={document.body} onClose={() => {}} />
       </ThemeProvider>
     </I18nextProvider>
   );
@@ -36,8 +34,9 @@ function sortItem(label: string, arrow: Arrow) {
   return item;
 }
 
-function tagNames(store: Store) {
-  return TagHelpers.filterAndSort(store).map(t => t.attributes.name);
+/** `tags` as the tag list sorts them now. */
+function tagNames(tags: ITagJsonApi[]) {
+  return sortTags(tags, store.tagSortOrder, '').map(t => t.attributes.name);
 }
 
 describe('TagsMenu', () => {
@@ -64,16 +63,15 @@ describe('TagsMenu', () => {
     ])(
       'sorts the tags %s and checks that item',
       async (_direction, arrow, id, expected) => {
-        const store = createStore(tags);
-        const {unmount} = renderTagsMenu(store);
+        const {unmount} = renderTagsMenu();
 
         await userEvent.click(sortItem('Sort by Tag Name', arrow));
 
-        expect(tagNames(store)).toEqual(expected);
+        expect(tagNames(tags)).toEqual(expected);
 
-        // The items read the store when the menu renders again (reopens).
+        // The items read the order when the menu renders again (reopens).
         unmount();
-        renderTagsMenu(store);
+        renderTagsMenu();
         const item = sortItem('Sort by Tag Name', arrow);
         expect(item).toHaveAttribute('id', id);
         expect(within(item).getByTestId('CheckIcon')).toBeInTheDocument();

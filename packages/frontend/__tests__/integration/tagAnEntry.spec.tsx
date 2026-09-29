@@ -1,102 +1,20 @@
-import type {
-  TagListDocument,
-  TagTextEntryDocument,
-  TextEntryListDocument,
-} from '@commandsnippets/api-shared';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
-import {setupServer} from 'msw/node';
-import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
-import {tagsResponse} from '../../test/mocks/tags/tagsResponse';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {server} from '../util/msw';
+import {signIn} from '../util/signIn';
 import {TestAppRouter} from '../util/TestAppRouter';
 
-// Tagging entry 1 with test-tag-2: the new junction, with its tag, entry and
-// user included (the API's default include).
-const [entry] = entriesResponse.data;
-const tag = tagsResponse.data[1];
-const user = tagsResponse.included?.[0];
-invariant(entry && tag && user, 'the fixtures have entry 1, tag 2 and a user');
-
-const response: TagTextEntryDocument = {
-  data: {
-    type: 'TagTextEntryThroughModel',
-    id: '5',
-    attributes: {
-      order: 1,
-      date_updated: '2022-05-14T02:33:53.995003',
-      date_created: '2022-05-14T02:33:53.994989',
-      is_deleted: false,
-    },
-    relationships: {
-      tag: {
-        data: {
-          type: 'Tag',
-          id: '2',
-        },
-      },
-      text_entry: {
-        data: {
-          type: 'TextEntry',
-          id: '1',
-        },
-      },
-      user: {
-        data: {
-          type: 'User',
-          id: '1',
-        },
-      },
-    },
-  },
-  // The entry as tagging leaves it: advanced, with both of its junctions.
-  included: [
-    user,
-    tag,
-    {
-      ...entry,
-      attributes: {
-        ...entry.attributes,
-        tag_count: 2,
-        date_updated: '2022-05-14T02:33:53.995003',
-      },
-      relationships: {
-        ...entry.relationships,
-        text_entry_to_tag: {
-          data: [
-            {type: 'TagTextEntryThroughModel', id: '1'},
-            {type: 'TagTextEntryThroughModel', id: '5'},
-          ],
-          meta: {count: 2},
-        },
-      },
-    },
-  ],
-};
-
-const server = setupServer(
-  http.get('http://localhost:9001/api/v1/tags', () => {
-    return HttpResponse.json<TagListDocument>(tagsResponse, {status: 200});
-  }),
-  http.get('http://localhost:9001/api/v1/entries', () => {
-    return HttpResponse.json<TextEntryListDocument>(entriesResponse, {
-      status: 200,
-    });
-  }),
-  http.post('http://localhost:9001/api/v1/tags_entries', () => {
-    return HttpResponse.json(response, {
-      status: 201,
-    });
-  })
-);
-
+// The mock API tags entry 1 with test-tag-2 as the API would.
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
+});
 
 describe('Tag An Entry', () => {
   it('Is Taggable', async () => {

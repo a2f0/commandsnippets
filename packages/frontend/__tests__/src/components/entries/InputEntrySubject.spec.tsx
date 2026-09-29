@@ -3,7 +3,9 @@ import {render, screen} from '@testing-library/react';
 import {vi} from 'vitest';
 import {InputEntrySubject} from '../../../../src/components/entries/InputEntrySubject';
 import {darkTheme} from '../../../../src/theme/themes';
-import {LoggedInAppContextProvider} from '../../../util/LoggedInAppContextProvider';
+import {signIn} from '../../../util/signIn';
+
+beforeEach(() => signIn());
 
 describe('InputEntrySubject', () => {
   const defaultProps = {
@@ -16,9 +18,7 @@ describe('InputEntrySubject', () => {
   beforeEach(() => {
     render(
       <ThemeProvider theme={darkTheme}>
-        <LoggedInAppContextProvider>
-          <InputEntrySubject {...defaultProps} />
-        </LoggedInAppContextProvider>
+        <InputEntrySubject {...defaultProps} />
       </ThemeProvider>
     );
   });

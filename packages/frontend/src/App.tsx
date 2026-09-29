@@ -1,6 +1,5 @@
 import {CssBaseline} from '@mui/material';
 import {StyledEngineProvider} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import React from 'react';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
@@ -14,33 +13,31 @@ import {Routes} from './Routes';
 import {ThemeProvider} from './theme/Theme';
 import {MemoizedThemedGlobalStyle} from './theme/ThemedGlobalStyles';
 
-const App = React.memo(
-  observer(() => {
-    const handleError = (errorInfo: ErrorInfo) => {
-      const store = getGlobalErrorStore();
-      if (store) {
-        store.addError(errorInfo);
-      }
-    };
+const App = React.memo(() => {
+  const handleError = (errorInfo: ErrorInfo) => {
+    const store = getGlobalErrorStore();
+    if (store) {
+      store.addError(errorInfo);
+    }
+  };
 
-    return (
-      <ErrorStoreProvider>
-        <ErrorBoundary onError={handleError}>
-          <I18nextProvider i18n={i18n}>
-            <StyledEngineProvider injectFirst>
-              <ThemeProvider>
-                <CssBaseline />
-                <MemoizedThemedGlobalStyle />
-                <DndProvider backend={HTML5Backend}>
-                  <Routes />
-                </DndProvider>
-              </ThemeProvider>
-            </StyledEngineProvider>
-          </I18nextProvider>
-        </ErrorBoundary>
-      </ErrorStoreProvider>
-    );
-  })
-);
+  return (
+    <ErrorStoreProvider>
+      <ErrorBoundary onError={handleError}>
+        <I18nextProvider i18n={i18n}>
+          <StyledEngineProvider injectFirst>
+            <ThemeProvider>
+              <CssBaseline />
+              <MemoizedThemedGlobalStyle />
+              <DndProvider backend={HTML5Backend}>
+                <Routes />
+              </DndProvider>
+            </ThemeProvider>
+          </StyledEngineProvider>
+        </I18nextProvider>
+      </ErrorBoundary>
+    </ErrorStoreProvider>
+  );
+});
 
 export {App};

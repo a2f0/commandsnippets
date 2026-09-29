@@ -1,26 +1,26 @@
 import {Box, Button} from '@mui/material';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {useParams} from 'react-router-dom';
-import {useAppContext} from '../../AppContext';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {apiClient} from '../../lib/api/apiClient';
+import {useSession} from '../../lib/data/hooks';
+import {createEntry} from '../../lib/data/writes';
 import {activeEntryEditField, appMode} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 import {commonButtonSx} from '../../theme/sx';
 import {InputEntryBody} from './InputEntryBody';
 import {InputEntrySubject} from './InputEntrySubject';
 
 export interface IEntryNewProps {
-  filterAndSortParent: () => void;
   id: string;
+  /** The tag the entry goes in (none: untagged). */
+  tagId: string | undefined;
 }
 
-const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
+const EntryNew = ({id, tagId}: IEntryNewProps) => {
   const {t} = useTypedTranslation('common');
   const [subject, setSubject] = useState<string>('');
   const [body, setBody] = useState<string>('');
-  const appConfig = useAppContext();
-  const {user, tag} = useParams();
+  const appConfig = useAppConfig();
+  const session = useSession();
 
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
@@ -41,36 +41,11 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   }, [appConfig.setActiveEntryEditField, appConfig.setAppMode]);
 
   const handleSave = () => {
-    const userObject = appConfig.usersArray.find(
-      element => element.attributes.username === user
-    );
-
-    const tagObject = appConfig.tagsArray.find(
-      element =>
-        element.attributes.name === tag &&
-        element.relationships.user.data.id === userObject?.id
-    );
-
-    if (!userObject?.id || !tagObject?.id) {
-      console.error('Missing user or tag for entry creation');
+    if (session === null) {
       return;
     }
-
-    apiClient
-      .createEntry(subject, body)
-      .then(response => {
-        appConfig.updateOrCreateTextEntry(response.data);
-
-        return apiClient.tagEntry(tagObject.id, response.data.id);
-      })
-      .then(response => {
-        console.info(response.data);
-        // The junction, and the entry and tag as they are now.
-        appConfig.reconcileCollection([
-          response.data,
-          ...(response.included ?? []),
-        ]);
-        filterAndSortParent();
+    createEntry(session, subject, body, tagId)
+      .then(() => {
         appConfig.setEntryNew(null);
       })
       .catch((error: unknown) => {
@@ -202,6 +177,6 @@ const EntryNew = ({filterAndSortParent, id}: IEntryNewProps) => {
   );
 };
 
-const memoizedEntryNew = React.memo(observer(EntryNew));
+const memoizedEntryNew = React.memo(EntryNew);
 
 export {memoizedEntryNew as EntryNew};

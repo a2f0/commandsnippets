@@ -6,25 +6,21 @@ import {I18nextProvider} from 'react-i18next';
 import {MemoryRouter} from 'react-router-dom';
 import {describe, expect, it} from 'vitest';
 
-import {AppContext} from '../../../../src/AppContext';
 import {i18n} from '../../../../src/i18n/i18n';
-import type {Store} from '../../../../src/lib/store/store';
 import {EntriesMenu} from '../../../../src/menu/entries/EntriesMenu';
 import {darkTheme} from '../../../../src/theme/themes';
-import {createStore} from '../../../util/storeFixtures';
+import {store} from '../../../util/signIn';
 
 const tagList = '/test/shell';
 const untaggedList = '/test?entries=untagged';
 const allEntriesList = '/test?entries=all';
 
-function renderEntriesMenu(store: Store, route: string) {
+function renderEntriesMenu(route: string) {
   return render(
     <I18nextProvider i18n={i18n}>
       <ThemeProvider theme={darkTheme}>
         <MemoryRouter initialEntries={[route]}>
-          <AppContext.Provider value={store}>
-            <EntriesMenu anchorEl={document.body} onClose={() => {}} />
-          </AppContext.Provider>
+          <EntriesMenu anchorEl={document.body} onClose={() => {}} />
         </MemoryRouter>
       </ThemeProvider>
     </I18nextProvider>
@@ -55,7 +51,7 @@ function bodyDescending() {
 
 describe('EntriesMenu', () => {
   it('offers every sort for a tag list, checking the one it applies', () => {
-    renderEntriesMenu(createStore(), tagList);
+    renderEntriesMenu(tagList);
 
     const {labels, checked} = sortItems();
     expect(labels).toEqual([
@@ -74,7 +70,7 @@ describe('EntriesMenu', () => {
   it.each([untaggedList, allEntriesList])(
     'offers the entry sorts on %s, checking none by default',
     route => {
-      renderEntriesMenu(createStore(), route);
+      renderEntriesMenu(route);
 
       const {labels, checked} = sortItems();
       expect(labels).toEqual([
@@ -94,8 +90,7 @@ describe('EntriesMenu', () => {
   ])(
     'on %s sets and checks %s, which that list sorts by',
     async (route, field) => {
-      const store = createStore();
-      const {unmount} = renderEntriesMenu(store, route);
+      const {unmount} = renderEntriesMenu(route);
       const other =
         field === 'entrySortOrder'
           ? 'tagTextEntryThroughModelSortOrder'
@@ -108,7 +103,7 @@ describe('EntriesMenu', () => {
       expect(store[other]).toBe(otherBefore);
       // The items read the store when the menu renders again (reopens).
       unmount();
-      renderEntriesMenu(store, route);
+      renderEntriesMenu(route);
       expect(sortItems().checked).toEqual([bodyDescending()]);
     }
   );

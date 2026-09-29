@@ -6,12 +6,16 @@ import {type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
+import {signIn} from '../util/signIn';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
+});
 
 describe('TagList', () => {
   let reorderTagSpy: MockInstance;

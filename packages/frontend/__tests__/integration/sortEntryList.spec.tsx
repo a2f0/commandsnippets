@@ -1,25 +1,23 @@
-import type {TextEntryListDocument} from '@commandsnippets/api-shared';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
-import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {store} from '../util/loggedInStore';
 import {server} from '../util/msw';
+import {signIn} from '../util/signIn';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
+});
 afterEach(() => {
   vi.restoreAllMocks();
-  store.setTagTextEntryThroughModelSortOrder('order');
-  store.setEntrySortOrder('date_updated');
 });
 
 type Arrow = 'ArrowUpwardIcon' | 'ArrowDownwardIcon';
@@ -85,41 +83,31 @@ describe('Sorting the entries list from the Entries menu', () => {
   });
 
   it('sorts the untagged list by the chosen sort and checks it', async () => {
+    // The mock API's fixtures are all in tag 1: two in no tag.
+    await apiClient.createEntry('entry-8-subject', 'body');
+    await apiClient.createEntry('entry-9-subject', 'body');
     renderApp('/test?entries=untagged');
-    await expectListed(ascending);
 
     await sortBy('Sort by Subject', 'ArrowDownwardIcon');
-    await expectListed(descending);
+    await expectListed(['entry-9-subject', 'entry-8-subject']);
 
     await sortBy('Sort by Subject', 'ArrowUpwardIcon');
-    await expectListed(ascending);
+    await expectListed(['entry-8-subject', 'entry-9-subject']);
 
     const item = await openSortItem('Sort by Subject', 'ArrowUpwardIcon');
     expect(within(item).getByTestId('CheckIcon')).toBeInTheDocument();
   });
 
-  it('has the API sort the all-entries list by the chosen sort', async () => {
-    // The API sorts this list; this one knows how to reverse the subjects.
-    server.use(
-      http.get('*/api/v1/entries', ({request}) => {
-        const sort = new URL(request.url).searchParams.get('sort');
-        const data = [...entriesResponse.data];
-        return HttpResponse.json<TextEntryListDocument>({
-          ...entriesResponse,
-          data: sort === '-subject' ? data.reverse() : data,
-        });
-      })
-    );
-    const getEntries = vi.spyOn(apiClient, 'getEntries');
+  it('sorts the all-entries list by the chosen sort, here', async () => {
     renderApp('/test?entries=all');
+    await sortBy('Sort by Subject', 'ArrowUpwardIcon');
     await expectListed(ascending);
+    const reads = vi.spyOn(apiClient, 'getEntriesAfter');
 
     await sortBy('Sort by Subject', 'ArrowDownwardIcon');
 
     await expectListed(descending);
-    expect(getEntries).toHaveBeenLastCalledWith(
-      expect.objectContaining({sort: '-subject'})
-    );
+    expect(reads).not.toHaveBeenCalled();
     const item = await openSortItem('Sort by Subject', 'ArrowDownwardIcon');
     expect(within(item).getByTestId('CheckIcon')).toBeInTheDocument();
   });

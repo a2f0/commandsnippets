@@ -1,15 +1,13 @@
-import type {TagDocument} from '@commandsnippets/api-shared';
+import {CURSOR_START, type TagDocument} from '@commandsnippets/api-shared';
 import {act} from '@testing-library/react';
-import {applySnapshot} from 'mobx-state-tree';
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
 
 import {listUsers} from '../../src/lib/api/adminApi';
 import {apiClient} from '../../src/lib/api/apiClient';
-import {defaultState} from '../../src/lib/shared';
-import {store} from '../../src/lib/store/store';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {signIn, store} from '../util/signIn';
 
 const API = 'http://localhost:9001/api/v1';
 
@@ -47,24 +45,19 @@ beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
 afterEach(() => {
   server.resetHandlers();
   vi.restoreAllMocks();
-  act(() => {
-    applySnapshot(store, defaultState);
-  });
 });
 afterAll(() => server.close());
 beforeEach(() => {
+  signIn();
   assignLoggedInCookie();
   // handleUnauthorized announces itself on console.info.
   vi.spyOn(console, 'info').mockImplementation(() => {});
   act(() => {
-    applySnapshot(store, {
-      ...defaultState,
-      loggedInUser: 'testuser',
-      isStaff: true,
-      selectedTheme: 'lightTheme',
-      tagSortOrder: 'name',
-      entryNew: 'some-entry',
-    });
+    store.setLoggedInUser('testuser');
+    store.setIsStaff(true);
+    store.setSelectedTheme('lightTheme');
+    store.setTagSortOrder('name');
+    store.setEntryNew('some-entry');
   });
 });
 
@@ -231,36 +224,29 @@ describe('Signing out when the API says the session is gone', () => {
     expectSignedOut();
   });
 
-  it('signs out when reading tags or entries is not authenticated', async () => {
-    const notAuthenticated = () =>
-      apiError(
-        403,
-        'not_authenticated',
-        'Authentication credentials were not provided.'
-      );
+  it("signs out when the sync's reads are not authenticated", async () => {
     server.use(
-      http.get(`${API}/tags`, notAuthenticated),
-      http.get(`${API}/entries`, notAuthenticated)
+      http.get(`${API}/tags`, () =>
+        apiError(
+          403,
+          'not_authenticated',
+          'Authentication credentials were not provided.'
+        )
+      ),
+      http.get(`${API}/entries`, () =>
+        apiError(
+          403,
+          'not_authenticated',
+          'Authentication credentials were not provided.'
+        )
+      )
     );
 
-    await expect(
-      apiClient.getTags({
-        'filter[user.username]': 'testuser',
-        'page[number]': 1,
-        sort: 'order',
-      })
-    ).rejects.toThrow('Failed to fetch tags: Forbidden');
+    await expect(apiClient.getTagsAfter(CURSOR_START)).rejects.toThrow();
     expectSignedOut();
 
-    act(() => {
-      applySnapshot(store, {...defaultState, loggedInUser: 'testuser'});
-    });
-    await expect(
-      apiClient.getEntries({
-        'filter[user.username]': 'testuser',
-        'page[number]': 1,
-      })
-    ).rejects.toThrow('Failed to fetch entries: Forbidden');
+    act(() => store.setLoggedInUser('testuser'));
+    await expect(apiClient.getEntriesAfter(CURSOR_START)).rejects.toThrow();
     expect(store.loggedInUser).toBeNull();
   });
 

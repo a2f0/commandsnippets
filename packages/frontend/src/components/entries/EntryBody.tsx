@@ -1,12 +1,10 @@
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import React from 'react';
 import Highlighter from 'react-highlight-words';
-
-import {useAppContext} from '../../AppContext';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {appMode} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 
 export interface IProps {
   handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -14,7 +12,7 @@ export interface IProps {
 }
 
 const EntryBody = ({object, handleClick}: IProps) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const theme: Theme = useTheme();
 
   const style = {
@@ -52,4 +50,4 @@ const EntryBody = ({object, handleClick}: IProps) => {
   );
 };
 
-export const MemoizedEntryBody = React.memo(observer(EntryBody));
+export const MemoizedEntryBody = React.memo(EntryBody);

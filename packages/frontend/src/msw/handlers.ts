@@ -169,6 +169,24 @@ const originalEntriesResponse: Pick<
         },
       },
     },
+    {
+      // In no tag: the untagged list's.
+      type: 'TextEntry',
+      id: '3',
+      attributes: {
+        body: 'test entry 3',
+        subject: 'test-entry-3-subject',
+        date_updated: '2022-05-14T02:33:53.995003',
+        date_created: '2022-05-14T02:33:53.994989',
+        reused_count: 0,
+        is_deleted: false,
+        tag_count: 0,
+      },
+      relationships: {
+        ...ownedByTestUser,
+        text_entry_to_tag: {data: [], meta: {count: 0}},
+      },
+    },
   ],
   included: [
     {
@@ -887,14 +905,9 @@ const createHandlers = () => {
           return errorResponse(error);
         }
 
-        // Use runtime override if available, otherwise use default entries.
-        // Deleted entries are left out: numbered pages serve the current
-        // lists, which dropped an entry when it was deleted.
-        const active = runtimeEntriesOverride || entriesResponse;
-        let responseData: Pick<TextEntryListDocument, 'data' | 'included'> = {
-          ...active,
-          data: active.data.filter(entry => !entry.attributes.is_deleted),
-        };
+        // Use runtime override if available, otherwise use default entries
+        let responseData: Pick<TextEntryListDocument, 'data' | 'included'> =
+          runtimeEntriesOverride || entriesResponse;
 
         // Handle date filtering if specified
         const url = new URL(req.request.url);

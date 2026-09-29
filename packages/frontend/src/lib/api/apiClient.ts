@@ -16,22 +16,18 @@ import {
   emptyObjectSchema,
   type TagCursorListDocument,
   type TagDocument,
-  type TagListDocument,
   type TagTextEntryCursorListDocument,
   type TagTextEntryDocument,
   type TagTextEntryListDocument,
   type TextEntryCursorListDocument,
   type TextEntryDocument,
-  type TextEntryListDocument,
   tagCursorListDocumentSchema,
   tagDocumentSchema,
-  tagListDocumentSchema,
   tagTextEntryCursorListDocumentSchema,
   tagTextEntryDocumentSchema,
   tagTextEntryListDocumentSchema,
   textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
-  textEntryListDocumentSchema,
   type UserDocument,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
@@ -253,18 +249,6 @@ class ApiClient {
     );
   }
 
-  public async getEntries(
-    params: TextEntryListParams & {signal?: AbortSignal}
-  ): Promise<TextEntryListDocument> {
-    const {signal, ...queryParams} = params;
-    return this.requestDocument(
-      urlWithQuery(`${baseURL}/entries`, queryParams),
-      {method: 'GET', signal},
-      'Failed to fetch entries',
-      textEntryListDocumentSchema
-    );
-  }
-
   // The sync's reads (lib/sync/): keyset pages in revision order.
 
   /** The page of the user's tags after `after`. */
@@ -328,15 +312,6 @@ class ApiClient {
       {method: 'GET'},
       'Failed to read the newest junction',
       tagTextEntryListDocumentSchema
-    );
-  }
-
-  public async getTags(params: TagListParams): Promise<TagListDocument> {
-    return this.requestDocument(
-      urlWithQuery(`${baseURL}/tags`, params),
-      {method: 'GET'},
-      'Failed to fetch tags',
-      tagListDocumentSchema
     );
   }
 

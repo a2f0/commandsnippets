@@ -1,8 +1,8 @@
 import {ListItemIcon} from '@mui/material';
 
 import React from 'react';
-import {useAppContext} from '../../../AppContext';
 import {useTypedTranslation} from '../../../i18n/hooks';
+import {useAppConfig} from '../../../lib/state/appState';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {darkTheme, type Theme} from '../../../theme/themes';
 import {StyledMenuItem} from '../../StyledMenuItem';
@@ -12,7 +12,7 @@ interface IProps {
 }
 
 const DarkMode = ({onClose}: IProps) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const {t} = useTypedTranslation('menu');
 
   const handleThemeSwitcher = (chosenTheme: Theme) => {

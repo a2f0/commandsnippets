@@ -1,22 +1,22 @@
-import type {TextEntryDocument} from '@commandsnippets/api-shared';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {useTheme} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {useAppContext} from '../../AppContext';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {apiClient} from '../../lib/api/apiClient';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
+import {useSession} from '../../lib/data/hooks';
+import {updateEntry} from '../../lib/data/writes';
+import {needsScrollingIntoView} from '../../lib/scroll';
 import {activeEntryEditField, appMode} from '../../lib/shared';
-import {needsScrollingIntoView} from '../../lib/textEntries';
+import {useAppConfig} from '../../lib/state/appState';
 import {commonButtonSx} from '../../theme/sx';
 import {InputEntryBody} from './InputEntryBody';
 import {InputEntrySubject} from './InputEntrySubject';
 
 export interface IEntryEdit {
   object: ITextEntryJsonApi;
-  handleSaveParent: (object: TextEntryDocument) => void;
+  /** After the edit is stored. */
+  handleSaveParent: () => void;
   handleCancelEditParent: () => void;
   id: string;
 }
@@ -31,7 +31,8 @@ const EntryEdit = ({
   const saveRef = useRef<HTMLButtonElement>(null);
   const [subject, setSubject] = useState<string>(object.attributes.subject);
   const [body, setBody] = useState<string>(object.attributes.body);
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
+  const session = useSession();
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
   const theme = useTheme();
@@ -61,11 +62,11 @@ const EntryEdit = ({
   }, [theme]);
 
   const handleSave = () => {
-    apiClient
-      .updateEntry(object.id, subject, body)
-      .then(response => {
-        handleSaveParent(response);
-      })
+    if (session === null) {
+      return;
+    }
+    updateEntry(session, object.id, subject, body)
+      .then(() => handleSaveParent())
       .catch((error: unknown) => {
         console.error('Failed to update entry:', error);
       });
@@ -193,6 +194,6 @@ const EntryEdit = ({
   );
 };
 
-const memoizedEntryEdit = React.memo(observer(EntryEdit));
+const memoizedEntryEdit = React.memo(EntryEdit);
 
 export {memoizedEntryEdit as EntryEdit};

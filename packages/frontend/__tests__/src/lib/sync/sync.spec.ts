@@ -141,7 +141,7 @@ describe('syncAll', () => {
     await createSyncEngine(db, apiClient, 'spec').syncAll();
 
     expect(ids(await db.tags.toArray())).toEqual(['1', '2', '3', '4']);
-    expect(ids(await db.entries.toArray())).toEqual(['1', '2']);
+    expect(ids(await db.entries.toArray())).toEqual(['1', '2', '3']);
     expect(await activeJunctions()).toEqual(['1', '2']);
     // A master cursor each, and a cursor for every tag at its revision.
     expect(await db.cursors.get('tags')).toBeDefined();
@@ -209,7 +209,8 @@ describe('syncAll', () => {
     // The next sync goes on from the cursor, to the end.
     const pages: string[] = [];
     await createSyncEngine(db, pagedApi(1, pages), 'spec').syncAll();
-    expect(pages.filter(page => page.startsWith('/entries'))).toHaveLength(1);
+    // The two entries after the first page's (a page each).
+    expect(pages.filter(page => page.startsWith('/entries'))).toHaveLength(2);
     for (const tagId of ['1', '2', '3', '4']) {
       expect(await isTagSynced(db, tagId)).toBe(true);
     }
@@ -239,8 +240,8 @@ describe('syncAll', () => {
     );
     await sync.syncAll();
     await tagSync;
-    // Tag 1's two junctions (a page each), between the entries' two pages.
-    expect(reads).toEqual(['entries', 'tag 1', 'tag 1', 'entries']);
+    // Tag 1's two junctions (a page each), after the entries' first page.
+    expect(reads).toEqual(['entries', 'tag 1', 'tag 1', 'entries', 'entries']);
     expect(await isTagSynced(db, '1')).toBe(true);
   });
 

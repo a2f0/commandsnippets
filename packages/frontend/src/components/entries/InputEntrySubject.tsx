@@ -1,10 +1,9 @@
 import {TextField} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import React, {useEffect, useRef, useState} from 'react';
-import {useAppContext} from '../../AppContext';
 import {activeEntryEditField} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 
 export interface IProps {
   handleChangeParent: (value: string) => void;
@@ -22,7 +21,7 @@ const InputEntrySubject = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [value, setValue] = useState<string>(valueParent);
   const theme: Theme = useTheme();
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(event.target.value);
@@ -87,6 +86,6 @@ const InputEntrySubject = ({
   );
 };
 
-const memoizedInputEntrySubject = React.memo(observer(InputEntrySubject));
+const memoizedInputEntrySubject = React.memo(InputEntrySubject);
 
 export {memoizedInputEntrySubject as InputEntrySubject};

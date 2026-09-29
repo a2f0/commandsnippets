@@ -1,16 +1,18 @@
-import type {TextEntryDocument} from '@commandsnippets/api-shared';
+import type {TextEntry} from '@commandsnippets/api-shared';
 import {Check, FileCopySharp} from '@mui/icons-material';
 import {styled} from '@mui/material/styles';
-import invariant from 'invariant';
-import {autorun} from 'mobx';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
-import {useParams, useSearchParams} from 'react-router-dom';
-import {useAppContext} from '../../AppContext';
-import {apiClient} from '../../lib/api/apiClient';
-import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
+import {useSearchParams} from 'react-router-dom';
+import {useSession} from '../../lib/data/hooks';
+import {
+  deleteEntry,
+  reorderEntries,
+  tagEntry,
+  untagEntry,
+} from '../../lib/data/writes';
 import {appMode, getSelection, initialMouse} from '../../lib/shared';
+import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
 import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/itemTypes';
@@ -61,11 +63,11 @@ interface IEntryProps {
   id: string;
   index: number;
   moveEntry: (id: string, to: number) => void;
-  findEntry: (id: string) => {entry: ITextEntryJsonApi; index: number};
-  handleRemoveFromListParent: (id: string) => void;
-  object: ITextEntryJsonApi;
-  filterAndSortParent: () => void;
-  findEntryByIndex: (id: number) => ITextEntryJsonApi | null;
+  findEntry: (id: string) => {entry: TextEntry; index: number};
+  object: TextEntry;
+  /** The tag the list shows, when it shows one. */
+  tagId: string | undefined;
+  findEntryByIndex: (id: number) => TextEntry | null;
 }
 
 const Entry = ({
@@ -73,22 +75,13 @@ const Entry = ({
   index,
   moveEntry,
   findEntry,
-  handleRemoveFromListParent,
   object,
-  filterAndSortParent,
+  tagId,
   findEntryByIndex,
 }: IEntryProps) => {
-  const appConfig = useAppContext();
-  const [textEntryObject, setTextEntryObject] =
-    useState<ITextEntryJsonApi>(object);
-  // The list is shown from the store before its sync: show a newer revision
-  // of the entry when the sync lists one (revisions compare as strings, see
-  // lib/revisions.ts).
-  if (
-    object.attributes.date_updated > textEntryObject.attributes.date_updated
-  ) {
-    setTextEntryObject(object);
-  }
+  const appConfig = useAppConfig();
+  const session = useSession();
+  const textEntryObject = object;
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
@@ -97,7 +90,6 @@ const Entry = ({
     showCopyIcon: false,
   });
   const [showCheckIcon, setShowCheckIcon] = useState(false);
-  const {tag, user} = useParams();
   const [searchParams] = useSearchParams();
   const entriesFilter = searchParams.get('entries');
   const previewRef = useRef<HTMLDivElement>(null);
@@ -138,25 +130,14 @@ const Entry = ({
           const dropResult = monitor.getDropResult();
           if (dropResult) {
             if (dropResult.type === 'Tag') {
-              apiClient
-                .tagEntry(dropResult.id, findEntry(id).entry.id)
-                .then(resp => {
-                  // The junction, and the entry and tag as they are now: the
-                  // entry may be one the store does not hold (from the
-                  // untagged or all list), and the tag's next listing may be
-                  // from the store alone.
-                  appConfig.reconcileCollection([
-                    resp.data,
-                    ...(resp.included ?? []),
-                  ]);
-                })
-                .catch((error: unknown) => {
-                  console.error('Failed to tag entry:', error);
-                });
-              if (entriesFilter === 'untagged') {
-                //Then an untagged entry was tagged
-                handleRemoveFromListParent(object.id);
-                appConfig.removeUntaggedTextEntry(object.id);
+              // Stored with the entry as it is now: the untagged list drops
+              // it, and the tag lists it.
+              if (session !== null) {
+                tagEntry(session, dropResult.id, findEntry(id).entry.id).catch(
+                  (error: unknown) => {
+                    console.error('Failed to tag entry:', error);
+                  }
+                );
               }
             } else if (draggedItem.type === 'entry') {
               // Then it was dropped on an entry (this is being reordered in the list).
@@ -167,8 +148,8 @@ const Entry = ({
                 );
                 const entry = findEntry(id).entry;
                 const entry_below = findEntryByIndex(index + 1);
-                let ordered_top: ITextEntryJsonApi | null;
-                let ordered_bottom: ITextEntryJsonApi | null;
+                let ordered_top: TextEntry | null;
+                let ordered_bottom: TextEntry | null;
                 if (entry_below === null) {
                   //Then it was moved to the bottom position, get the entry before it.
                   ordered_top = findEntryByIndex(index - 1);
@@ -177,55 +158,22 @@ const Entry = ({
                   ordered_top = entry;
                   ordered_bottom = entry_below;
                 }
-                if (ordered_top !== null && ordered_bottom !== null) {
-                  // Then find the junction entries.
-                  const userObject = appConfig.usersArray.find(
-                    element =>
-                      element.id === textEntryObject.relationships.user.data.id
-                  );
-
-                  const tagObject = appConfig.tagsArray.find(
-                    element =>
-                      element.relationships.user.data.id === userObject?.id &&
-                      element.relationships.user.data.id ===
-                        textEntryObject.relationships.user.data.id &&
-                      element.attributes.name === tag
-                  );
-
-                  const throughModelTop =
-                    appConfig.tagTextEntryThroughModel.find(
-                      element =>
-                        element.relationships.tag.data.id === tagObject?.id &&
-                        element.relationships.text_entry.data.id ===
-                          ordered_top?.id
-                    );
-
-                  const throughModelBottom =
-                    appConfig.tagTextEntryThroughModel.find(
-                      element =>
-                        element.relationships.tag.data.id === tagObject?.id &&
-                        element.relationships.text_entry.data.id ===
-                          ordered_bottom?.id
-                    );
-                  if (throughModelTop === undefined) {
-                    throw new Error('Top must be defined.');
-                  }
-                  if (throughModelBottom === undefined) {
-                    throw new Error('Bottom must be defined.');
-                  }
-                  await apiClient.reorderEntry(
-                    throughModelTop.id,
-                    throughModelBottom.id
-                  );
-                  // The list shows the new order already; bring the store's
-                  // ranks up to date so the next listing keeps it.
-                  if (user !== undefined && tag !== undefined) {
-                    appConfig
-                      .syncTagEntries(user, tag, true)
-                      .catch((error: unknown) => {
-                        console.error('Failed to fetch entries:', error);
-                      });
-                  }
+                if (
+                  ordered_top !== null &&
+                  ordered_bottom !== null &&
+                  session !== null &&
+                  tagId !== undefined
+                ) {
+                  // The list shows the new order already; the tag's sync
+                  // stores the new ranks.
+                  await reorderEntries(
+                    session,
+                    tagId,
+                    ordered_top.id,
+                    ordered_bottom.id
+                  ).catch((error: unknown) => {
+                    console.error('Failed to reorder entries:', error);
+                  });
                 }
               } else {
                 console.debug('useDrag end: it was not moved within the list.');
@@ -294,12 +242,10 @@ const Entry = ({
   drag(dragRef);
   drop(dropRef);
 
+  const mostRecentCopyID = useAppState(state => state.mostRecentCopyID);
   useEffect(() => {
-    const dispose = autorun(() => {
-      setShowCheckIcon(appConfig.mostRecentCopyID === object.id);
-    });
-    return dispose;
-  }, [appConfig.mostRecentCopyID, object.id]);
+    setShowCheckIcon(mostRecentCopyID === object.id);
+  }, [mostRecentCopyID, object.id]);
 
   const mouseEnter = useCallback(() => {
     setHoverState({
@@ -324,17 +270,9 @@ const Entry = ({
     setIsEditing(false);
   }, []);
 
-  const handleSave = useCallback(
-    (object: TextEntryDocument) => {
-      const existing = appConfig.textEntriesArray.find(
-        o => o.id === object.data.id
-      );
-      existing?.update(object.data);
-      setTextEntryObject(object.data);
-      setIsEditing(false);
-    },
-    [appConfig]
-  );
+  const handleSave = useCallback(() => {
+    setIsEditing(false);
+  }, []);
 
   const handleContextClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -352,59 +290,17 @@ const Entry = ({
     appConfig.setEntryNew(`textEntry-${object.id}-top`);
   }, [appConfig, object.id]);
 
+  /** Delete an untagged entry; take a tag's entry out of the tag. */
   const handleRemoveFromList = useCallback(async () => {
+    if (session === null) {
+      return;
+    }
     try {
       if (entriesFilter === 'untagged') {
-        // Delete the entry entirely for untagged entries
-        await apiClient.deleteEntry(textEntryObject.id);
-        handleRemoveFromListParent(textEntryObject.id);
-        // Also remove from the store
-        const entryToRemove = appConfig.textEntriesArray.find(
-          entry => entry.id === textEntryObject.id
-        );
-        entryToRemove?.remove();
-      } else {
-        // Untag the entry for tagged entries
-        const userObject = appConfig.usersArray.find(
-          element => element.attributes.username === user
-        );
-        invariant(userObject, `User '${user}' not found in the store.`);
-
-        const tagObject = appConfig.tagsArray.find(
-          element =>
-            element.attributes.name === tag &&
-            element.relationships.user.data.id === userObject.id
-        );
-        invariant(
-          tagObject,
-          `Tag '${tag}' for user '${user}' not found in the store.`
-        );
-
-        const tagTextEntryThroughModelObject =
-          appConfig.tagTextEntryThroughModel.find(
-            element =>
-              element.relationships.tag.data.id === tagObject.id &&
-              element.relationships.text_entry.data.id === textEntryObject.id
-          );
-        invariant(
-          tagTextEntryThroughModelObject,
-          'Cannot untag entry: missing tagTextEntryThroughModel ID'
-        );
-
-        await apiClient.untagEntry(tagTextEntryThroughModelObject.id);
-        tagTextEntryThroughModelObject.remove();
-        handleRemoveFromListParent(textEntryObject.id);
-
-        // Check if the entry has any remaining tags.
-        const hasRemainingTags = appConfig.tagTextEntryThroughModel.some(
-          junction =>
-            junction.relationships.text_entry.data.id === textEntryObject.id
-        );
-
-        // If it has no more tags, add it to the untagged list.
-        if (!hasRemainingTags) {
-          appConfig.updateOrCreateUntaggedTextEntry(textEntryObject);
-        }
+        await deleteEntry(session, textEntryObject.id);
+      } else if (tagId !== undefined) {
+        // An entry left in no tag joins the untagged list.
+        await untagEntry(session, tagId, textEntryObject.id);
       }
     } catch (error) {
       console.error(
@@ -414,14 +310,7 @@ const Entry = ({
         error
       );
     }
-  }, [
-    entriesFilter,
-    textEntryObject,
-    handleRemoveFromListParent,
-    appConfig,
-    user,
-    tag,
-  ]);
+  }, [entriesFilter, textEntryObject.id, session, tagId]);
 
   const copyToClipboard = useCallback(
     (text: string) => {
@@ -490,10 +379,7 @@ const Entry = ({
   return (
     <>
       {appConfig.entryNew === `textEntry-${object.id}-top` && (
-        <EntryNew
-          id={`textEntryNew-${object.id}-top`}
-          filterAndSortParent={filterAndSortParent}
-        />
+        <EntryNew id={`textEntryNew-${object.id}-top`} tagId={tagId} />
       )}
       {!isEditing && (
         // biome-ignore lint/a11y/noStaticElementInteractions: Custom role 'entry' is required for tests and drag-and-drop, not a standard ARIA role.
@@ -570,10 +456,7 @@ const Entry = ({
         </div>
       )}
       {appConfig.entryNew === `textEntry-${object.id}-bottom` && (
-        <EntryNew
-          id={`textEntryNew-${object.id}-bottom`}
-          filterAndSortParent={filterAndSortParent}
-        />
+        <EntryNew id={`textEntryNew-${object.id}-bottom`} tagId={tagId} />
       )}
 
       {appConfig.loggedInUser && <>{contextMenu}</>}
@@ -590,6 +473,6 @@ const Entry = ({
   );
 };
 
-const memoizedEntry = React.memo(observer(Entry));
+const memoizedEntry = React.memo(Entry);
 
 export {memoizedEntry as Entry};

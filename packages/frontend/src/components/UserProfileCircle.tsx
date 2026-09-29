@@ -1,13 +1,11 @@
 import {Person as PersonIcon} from '@mui/icons-material';
 import {Avatar, Button, Divider, Menu, MenuItem} from '@mui/material';
 import {styled} from '@mui/material/styles';
-import {observer} from 'mobx-react';
 import type React from 'react';
 import {useState} from 'react';
-import {useAppContext} from '../AppContext';
 import {apiClient} from '../lib/api/apiClient';
 import {environment} from '../lib/environment';
-import {resetApplicationState} from '../lib/store/store';
+import {resetApplicationState, useAppConfig} from '../lib/state/appState';
 
 const StyledButton = styled(Button)(({theme}) => ({
   alignSelf: 'flex-end',
@@ -45,7 +43,7 @@ const StyledMenu = styled(Menu)(({theme}) => ({
 }));
 
 const UserProfileCircle: React.FC = () => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -175,6 +173,6 @@ const UserProfileCircle: React.FC = () => {
   );
 };
 
-const ObservedUserProfileCircle = observer(UserProfileCircle);
+const ObservedUserProfileCircle = UserProfileCircle;
 
 export {ObservedUserProfileCircle as UserProfileCircle};

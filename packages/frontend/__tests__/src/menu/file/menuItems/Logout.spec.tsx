@@ -4,12 +4,16 @@ import {createMemoryHistory} from 'history';
 
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {server} from '../../../../util/msw';
+import {signIn} from '../../../../util/signIn';
 import {TestAppRouter} from '../../../../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
+});
 
 describe('File Menu', () => {
   it('Logs out', async () => {

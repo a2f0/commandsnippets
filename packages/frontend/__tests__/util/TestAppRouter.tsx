@@ -1,21 +1,27 @@
 import type {MemoryHistory} from 'history';
+import {useSyncExternalStore} from 'react';
 import {CookiesProvider} from 'react-cookie';
 import {Router} from 'react-router-dom';
 import {App} from '../../src/App';
-import {LoggedInAppContextProvider} from './LoggedInAppContextProvider';
 
 export interface IProps {
   history: MemoryHistory;
 }
 
+/**
+ * The app in a memory router that follows `history` (a navigation renders
+ * the new location). Sign in first (`signIn`) for a signed-in app.
+ */
 const TestAppRouter = ({history}: IProps) => {
+  const location = useSyncExternalStore(
+    listener => history.listen(listener),
+    () => history.location
+  );
   return (
-    <Router location={history.location} navigator={history}>
-      <LoggedInAppContextProvider>
-        <CookiesProvider defaultSetOptions={{path: '/'}}>
-          <App />
-        </CookiesProvider>
-      </LoggedInAppContextProvider>
+    <Router location={location} navigator={history}>
+      <CookiesProvider defaultSetOptions={{path: '/'}}>
+        <App />
+      </CookiesProvider>
     </Router>
   );
 };

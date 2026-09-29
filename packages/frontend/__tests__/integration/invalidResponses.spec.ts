@@ -1,13 +1,11 @@
 /**
  * An OK response that breaks the API contract fails the sync that asked for
- * it: nothing from it reaches the store, and the user stays signed in
- * (src/lib/api/parseResponse.ts).
+ * it: nothing from it reaches the database, its cursor stays where it was,
+ * and the user stays signed in (src/lib/api/parseResponse.ts).
  */
-
+import {CURSOR_START} from '@commandsnippets/api-shared';
 import invariant from 'invariant';
-import {applySnapshot, getSnapshot} from 'mobx-state-tree';
 import {HttpResponse, http} from 'msw';
-import {setupServer} from 'msw/node';
 import {
   afterAll,
   afterEach,
@@ -20,93 +18,105 @@ import {
 } from 'vitest';
 
 import {InvalidResponseError} from '../../src/lib/api/parseResponse';
-import {defaultState} from '../../src/lib/shared';
-import {store} from '../../src/lib/store/store';
-import {pagination} from '../../src/msw/documents';
+import {syncSession} from '../../src/lib/sync/session';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
-import {tagsResponse} from '../../test/mocks/tags/tagsResponse';
-
-const API = 'http://localhost:9001/api/v1';
-
-const server = setupServer();
+import {server} from '../util/msw';
+import {signIn, store, TEST_USER} from '../util/signIn';
 
 beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
 afterAll(() => server.close());
 beforeEach(() => {
-  applySnapshot(store, {...defaultState, loggedInUser: 'test'});
-  // The store's syncs log their failures.
-  vi.spyOn(console, 'error').mockImplementation(() => {});
-  vi.spyOn(console, 'info').mockImplementation(() => {});
+  signIn();
+  // The mock API announces each request.
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 afterEach(() => {
   server.resetHandlers();
   vi.restoreAllMocks();
-  applySnapshot(store, defaultState);
 });
 
-describe('A response that breaks the contract', () => {
-  it('leaves the store as it was, signed in', async () => {
-    const [first, ...rest] = tagsResponse.data;
-    invariant(first, 'the fixture has tags');
-    server.use(http.get(`${API}/tags`, () => HttpResponse.json(tagsResponse)));
-    await store.fetchTags('test');
-    expect(store.tagsArray).toHaveLength(4);
-    const before = getSnapshot(store);
+/** The database's rows and cursors, to compare before and after. */
+async function contents() {
+  const {db} = syncSession(TEST_USER);
+  return {
+    tags: await db.tags.toArray(),
+    entries: await db.entries.toArray(),
+    junctions: await db.junctions.toArray(),
+    cursors: await db.cursors.toArray(),
+  };
+}
 
-    // A newer version of a tag, which would replace the stored one.
+describe('A response that breaks the contract', () => {
+  it('leaves the database as it was, signed in', async () => {
+    const {sync} = syncSession(TEST_USER);
+    await sync.syncAll();
+    const before = await contents();
+    expect(before.tags).toHaveLength(4);
+
+    // A newer version of a tag, which would replace the stored one, with a
+    // rank the contract refuses.
     server.use(
-      http.get(`${API}/tags`, () =>
+      http.get('*/api/v1/tags', () =>
         HttpResponse.json({
-          ...tagsResponse,
+          links: {next: null},
           data: [
             {
-              ...first,
+              ...before.tags[0],
               attributes: {
-                ...first.attributes,
+                ...before.tags[0]?.attributes,
                 name: 'renamed',
                 date_updated: '2030-01-01T00:00:00',
                 order: -1,
               },
             },
-            ...rest,
           ],
         })
       )
     );
-    await expect(store.fetchTags('test')).rejects.toBeInstanceOf(
-      InvalidResponseError
-    );
+    await expect(sync.syncAll()).rejects.toBeInstanceOf(InvalidResponseError);
 
-    expect(getSnapshot(store)).toEqual(before);
-    expect(store.loggedInUser).toBe('test');
+    expect(await contents()).toEqual(before);
+    expect(store.loggedInUser).toBe(TEST_USER);
   });
 
-  it('fails the whole sync when a later page breaks it', async () => {
-    server.use(http.get(`${API}/tags`, () => HttpResponse.json(tagsResponse)));
-    await store.fetchTags('test');
+  it('keeps the pages read before a broken one, and goes on from them', async () => {
+    const {db, sync} = syncSession(TEST_USER);
+    // A first page of one entry, which a broken one follows.
+    const [first] = entriesResponse.data;
+    invariant(first, 'the fixture has entries');
+    const junction = entriesResponse.included?.find(
+      resource =>
+        resource.type === 'TagTextEntryThroughModel' &&
+        resource.relationships.text_entry.data.id === first.id
+    );
+    invariant(junction, 'the fixture tags its entries');
     server.use(
-      http.get(`${API}/entries`, ({request}) => {
-        const page = new URL(request.url).searchParams.get('page[number]');
-        return page === '1'
+      http.get('*/api/v1/entries', ({request}) => {
+        const after = new URL(request.url).searchParams.get('page[after]');
+        return after === CURSOR_START
           ? HttpResponse.json({
-              ...entriesResponse,
-              ...pagination(request.url, 1, 2, 5),
+              links: {next: `${request.url}&next`},
+              data: [first],
+              included: [junction],
             })
           : HttpResponse.json({
-              ...pagination(request.url, 2, 2, 5),
+              links: {next: null},
               data: [{type: 'TextEntry', id: '5'}],
             });
       })
     );
 
-    await expect(
-      store.syncTagEntries('test', 'test-tag-1')
-    ).rejects.toBeInstanceOf(InvalidResponseError);
+    await expect(sync.syncAll()).rejects.toBeInstanceOf(InvalidResponseError);
+    // The first page, with its cursor; no tag claims a sync.
+    expect(await db.entries.count()).toBe(1);
+    const cursor = await db.cursors.get('entries');
+    expect(cursor).toBeDefined();
+    expect(await db.cursors.where('key').startsWith('tag:').count()).toBe(0);
+    expect(store.loggedInUser).toBe(TEST_USER);
 
-    // Not even the first page's entries, and the tag is not synced.
-    expect(store.textEntriesArray).toHaveLength(0);
-    expect(store.tagTextEntryThroughModel).toHaveLength(0);
-    expect(store.tagSyncCursors.size).toBe(0);
-    expect(store.loggedInUser).toBe('test');
+    // The next sync goes on from the first page.
+    server.resetHandlers();
+    await sync.syncAll();
+    expect(await db.entries.count()).toBe(4);
   });
 });

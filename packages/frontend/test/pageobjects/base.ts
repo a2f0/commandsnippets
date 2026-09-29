@@ -250,6 +250,15 @@ export class Base {
   tagsEntry(id: string): ReturnType<WebdriverIO.Browser['$']> {
     return $(`#tagsEntries-${id}`);
   }
+  tagsEntryContextMenu(id: string): ReturnType<WebdriverIO.Browser['$']> {
+    return $(`#tagsEntriesContextMenu-${id}`);
+  }
+  tagsEntryContextMenuDelete(id: string): ReturnType<WebdriverIO.Browser['$']> {
+    return $(`#tagsEntriesContextMenu${id}Delete`);
+  }
+  tagsEntryContextMenuUntag(id: string): ReturnType<WebdriverIO.Browser['$']> {
+    return $(`#tagsEntriesContextMenu${id}Untag`);
+  }
   get entrySearch(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntrySearch');
   }

@@ -1,5 +1,4 @@
 import {Typography} from '@mui/material';
-import {observer} from 'mobx-react';
 import React from 'react';
 
 import packageJson from '../../../package.json';
@@ -19,6 +18,6 @@ const Version = () => {
   );
 };
 
-const memoizedVersion = React.memo(observer(Version));
+const memoizedVersion = React.memo(Version);
 
 export {memoizedVersion as Version};

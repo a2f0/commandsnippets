@@ -70,56 +70,77 @@ Run these from `packages/frontend`.
 ## Architecture
 
 ### State
-- **Store**: one MobX-State-Tree instance, `src/lib/store/store.ts`, of
-  `src/lib/store/models/RootModel.ts` (with `TagModel`, `TextEntryModel`,
-  `TagTextEntryThroughModel` and `UserModel` beside it). It is created
-  synchronously when `store.ts` is first imported: the saved snapshot in
-  `localStorage` (`mst-commandsnippets-<environment>`) merged over
-  `defaultState` (`src/lib/shared.ts`). Every change is saved back to
-  `localStorage`. A snapshot saved under the key from before the rename to
-  Commandsnippets is moved to the current key on load; `store.ts` says when
-  that read can go.
-- **No migrations**: if a saved snapshot no longer fits the model, the store
-  falls back to `defaultState` (a try/catch around `applySnapshot`). New model
-  fields must be optional or have defaults so older snapshots still load.
-- **Context**: `src/AppContext.tsx` provides the store; components read it
-  with `useAppContext()`.
-- **Sync**: the store syncs changes only (`filter[date_updated.gt]`), from
-  cursors it keeps in the snapshot and that only syncs move (the app's own
-  writes store newer revisions, which must not skip another client's older
-  changes): `tagsSyncedThrough` for the tags (`fetchTags`, when the tag list
-  loads and when the app comes back into view, at most every 30 seconds:
-  `TagListWrapper`), and `tagSyncCursors` for each tag's entries
-  (`syncTagEntries`).
-  - The API advances a tag's revision whenever one of its entries changes,
-    joins or leaves it, so selecting a tag lists its entries from the store
-    at once and requests nothing while the tag's revision is the one its
-    cursor holds. Otherwise (and when a tags sync moves the revision of the
-    tag shown, or retries a failed sync) `EntryList` syncs the tag in the
-    background, and it lists the tag again whenever a response changes the
-    store (the volatile `storeVersion`), whichever sync it answered: another
-    tag's can change entries this one shares.
-  - A tag's first sync reads it whole (`filter[tags.id]`) and drops the
-    links to it the read lacks; later ones read every entry changed since
-    (no tag filter: an entry that left the tag changed too). Every response
-    that lists an entry decides its links (`reconcileCollection`: its
-    `text_entry_to_tag` lists all of its junctions) unless the store holds a
-    newer revision of the entry, so a response that arrives late never
-    undoes a newer one. A link the first read cannot place (stored while it
-    ran) stays, and the tag is synced again from the read.
-  - The app's own writes that the store does not reflect (a reorder) sync
-    the tag with `force`, and tagging stores the entry and tag its response
-    includes. `Entry` and `Tag` show a newer revision of their resource when
-    a sync lists one.
+The user's data (tags, entries, junctions) is in IndexedDB, synced with the
+API; everything else the app keeps is a zustand store.
+- **App state**: `src/lib/state/appState.ts`, a zustand store (`useAppState`)
+  of who is signed in, their preferences and what the UI is doing. The
+  signed-in user and their preferences (theme, sort orders, tag counts) are
+  saved to `localStorage` (`commandsnippets-<environment>`, zustand's persist
+  format, merged over the defaults); the rest starts afresh with each page.
+  Components read one field with a selector
+  (`useAppState(state => state.tagSortOrder)`), or the whole state with
+  `useAppConfig()`: one object that stays the same across renders (a safe
+  hook dependency) and reads the current state on every access, rendering
+  again when a field it read changes. Code outside React uses
+  `useAppState.getState()`. `resetApplicationState()` signs out: every
+  setting back to its default.
+- **Signing out deletes the user's data**: the store deletes a user's
+  IndexedDB database whenever `loggedInUser` leaves them, however it
+  happens (the menu, the cookie gone, a session the API ended, another
+  sign-in; `endSyncSession`).
+- **The user's data**: `src/lib/db/database.ts`, a Dexie database per
+  environment and user (`commandsnippets-<environment>-<username>`) of
+  their tags, entries and junctions (deleted ones too) as api-shared's
+  resources, and the sync's `cursors`. `src/lib/sync/session.ts` opens it for
+  the signed-in user, with its sync; a session ends when another tab deletes
+  or upgrades the database, and the next opens it anew.
+- **What the UI shows**: `src/lib/data/hooks.ts`, live queries of the
+  database (`dexie-react-hooks`: `useTags`, `useTagNamed`, `useTagEntries`,
+  `useEntries('all' | 'untagged')`), so a list shows each change the moment
+  a sync or a write stores it, in any tab; `src/lib/data/sort.ts` sorts and
+  searches them (case-insensitively in any script, as the API's search).
+  Deleted tags and entries are left out; untagged entries are those in no
+  tag.
+- **Writes**: `src/lib/data/writes.ts` calls the API, then stores what it
+  answered (`putResources`). A write answered with no body (untagging,
+  deleting an entry, reordering) stores what it knows and syncs the rest.
+- **When the data syncs**: `src/lib/data/useSync.ts`. The entries page syncs
+  the collection when it opens, when it comes back into view, and every half
+  minute while in view (`useCollectionSync`); the tag shown syncs on its own
+  whenever it is not synced through the revision the database holds
+  (`useTagSync`). A sync that finds the API answering for another user signs
+  out here too.
+- **The sync**: `src/lib/sync/sync.ts`, keyset reads (`page[after]`,
+  api-shared's `cursor.ts`) from the stored cursors, one sync at a time (a
+  Web Lock across tabs), so each response is stored in the order it was
+  read. `syncAll` reads the tags, then the entries with their junctions,
+  after the master cursors `tags` and `entries` (from the start on a fresh
+  sign-in), storing each page with its cursor in one transaction, so a sync
+  resumes where one stopped; when the entries are read to the end, every tag
+  gets a cursor of its own (`tag:<id>`: the newest junction revision when the
+  sync began, and the tag's revision). `syncTag` reads one tag's junctions
+  (`GET /tags_entries?filter[tag.id]=`, deleted ones too: entries that left
+  it) after its cursor, from the start without one; a tag sync asked for
+  while the collection syncs runs between two of its pages. A tag is synced
+  while its cursor holds its revision (`isTagSynced`). Each sync first checks
+  the API's user (`GET /user/`) is the database's, and refuses a page with
+  another user's rows (a stale tab after someone else signed in).
+- **What a sync stores**: `src/lib/sync/store.ts`: each resource unless the
+  database holds a newer revision of it (revisions compare within a table);
+  an entry stored decides its junctions (its `text_entry_to_tag` lists all
+  of them not deleted, so the ones it leaves out are deleted), and an older
+  copy of an entry leaves them alone; at the same revision, a deleted copy
+  stays deleted (a delete stored without the API's revision).
 - **Signing out when the session is gone**: `fetchWithAuth`
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API
   error `code` (`src/lib/api/errorDocument.ts`) is `not_authenticated` or
   `authentication_failed` or that has no code; other 403s
   (`permission_denied`, `origin_not_allowed`) keep the session, and so does
-  any OK response, whatever its body. `store.ts` registers `resetApplicationState` as the handler.
-  `authUtils` must not import the store: the models import the API client, so
-  that would be an import cycle.
+  any OK response, whatever its body. `appState.ts` registers
+  `resetApplicationState` as the handler. `authUtils` must not import the
+  store: the store imports the sync, which imports the API client, so that
+  would be an import cycle.
 
 ### API
 The API's contract is `@commandsnippets/api-shared` (`packages/api-shared`, a
@@ -157,55 +178,18 @@ writing its type by hand.
   `@commandsnippets/api-shared/requests`), which name each collection's
   filters, sort keys and include paths, so a parameter the API would refuse
   does not compile. `apiClient.ts` and `adminApi.ts` take them and
-  `src/lib/api/searchParams.ts` writes them as a query string.
-  `src/lib/api/requests/types.ts` has the entries page fetch's own parameters
-  (`IEntryFetchPage`), and `requests/entrySort.ts` turns the store's
-  `entrySortOrder` (a string) into a sort key of the API's.
+  `src/lib/api/searchParams.ts` writes them as a query string. The app's
+  reads are the sync's keyset pages (`getTagsAfter`, `getEntriesAfter`,
+  `getTagJunctionsAfter`, `getNewestJunction`).
 - **Import the smaller entries** of api-shared (`/responses`, `/messages`,
   types from `/requests`) and only `zod/mini`: a runtime import of classic
   `zod` puts nearly all of it in the bundle (`__tests__/src/lib/api/zod.spec.ts`
   fails on one).
-- `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
-  client-side sorting and filtering of tags and entries. The syncs' fetches
-  read every page with `src/lib/api/readPages.ts`, which reads a list again
-  when its offset pages shifted while read (a row read twice, a total that
-  changed, or, for a tag's entries read in several pages, a last page whose
-  included tag has another revision than the one the store held before the
-  read), since a skipped row would be pruned and passed by the cursor;
-  `src/lib/revisions.ts` compares the revisions the cursors hold.
-
-### IndexedDB and its sync (not yet what the app shows)
-- `src/lib/db/database.ts`: the signed-in user's Dexie database
-  (`commandsnippets-<environment>-<username>`): their tags, entries and
-  junctions (deleted ones too) as api-shared's resources, and the `cursors`
-  the sync keeps. Signing out deletes it (`resetApplicationState` ends the
-  session, `src/lib/sync/session.ts`).
-- `src/lib/sync/sync.ts`: keyset reads (`page[after]`, api-shared's
-  `cursor.ts`) from those cursors, one sync at a time (a Web Lock across
-  tabs). `syncAll` reads the tags, then the entries with their junctions,
-  after the master cursors `tags` and `entries` (from the start on a fresh
-  sign-in), storing each page with its cursor in one transaction, so a sync
-  resumes where one stopped; when the entries are read to the end, every tag
-  gets a cursor of its own (`tag:<id>`: the newest junction revision when
-  the sync began, and the tag's revision). `syncTag` reads one tag's
-  junctions (`GET /tags_entries?filter[tag.id]=`, deleted ones too) after its
-  cursor, from the start without one; a tag sync asked for while the
-  collection syncs runs between two of its pages. A tag is synced while its
-  cursor holds its revision (`isTagSynced`). Each sync first checks the
-  API's user (`GET /user/`) is the database's, and refuses a page with
-  another user's rows.
-- `src/lib/sync/store.ts`: what a sync stores: each resource unless the
-  database holds a newer revision of it; an entry stored decides its
-  junctions (its `text_entry_to_tag` lists all of them not deleted, so the
-  ones it leaves out are deleted), and an older copy of an entry leaves them
-  alone; at the same revision, a deleted junction stays deleted.
-- The UI still reads the MobX-State-Tree store; the Debug menu's "Sync
-  IndexedDB" runs `syncAll` and logs what the database holds.
 
 ### Source layout
 - **App shell** (the root of `src/`): `index.tsx` (the entry point),
-  `AppRouter.tsx`, `App.tsx` (the providers), `AppContext.tsx` (the store's
-  context), `Routes.tsx` and `routePaths.ts`
+  `AppRouter.tsx`, `App.tsx` (the providers), `Routes.tsx` and
+  `routePaths.ts`
 - **Pages**: `src/pages/`, one component per route: `EntriesPage.tsx`
   (`/:user/:tag`), `AdminPage.tsx` (`/admin`) and `SignInPage.tsx` (`/` when
   signed out)
@@ -223,8 +207,9 @@ writing its type by hand.
 - **Shared styling**: `src/styled/` holds small styled components used across
   features; `src/theme/` the MUI themes, the theme provider, the global
   styles and the shared `sx` objects (`sx.ts`)
-- **Non-UI code**: `src/lib/` (the API clients, auth, the store, the Dexie
-  database and its sync, and helpers), `src/hooks/`, `src/providers/`,
+- **Non-UI code**: `src/lib/` (the API clients, auth, the app state
+  (`state/`), the Dexie database (`db/`), its sync (`sync/`), what the UI
+  reads and writes (`data/`), and helpers), `src/hooks/`, `src/providers/`,
   `src/i18n/` and `src/msw/`
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
   (`/:user/:tag`)
@@ -252,8 +237,8 @@ writing its type by hand.
   soft, and untagging keeps the junction for the junction list);
   `__tests__/src/msw/handlers.spec.ts` checks them. Keyset pages
   (`page[after]`, `src/msw/keyset.ts`) of `/tags`, `/entries` and
-  `/tags_entries` answer as the API does; numbered pages of `/entries` still
-  leave deleted entries out, as the current lists expect.
+  `/tags_entries` answer as the API does. The mock's data: four tags, entries
+  1 and 2 in tag 1, and entry 3 in no tag.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
   `fake-indexeddb/auto`. Unit specs mock the API with `msw/node`
@@ -289,9 +274,8 @@ writing its type by hand.
 - Only commit when explicitly asked to in the current message.
 
 ### File Naming
-- Component files are PascalCase (`EntryList.tsx`), and so are the
-  MobX-State-Tree models (`RootModel.ts`); every other file is camelCase
-  (`fetchWithAuth.ts`).
+- Component files are PascalCase (`EntryList.tsx`); every other file is
+  camelCase (`fetchWithAuth.ts`).
 - Directories are camelCase too (`bottomBar/`, `menuItems/`).
 
 ### Linting & Formatting
@@ -355,18 +339,21 @@ console.error('ERROR: Build failed');
 - After changing E2E specs or `test/mocks/`, run the unit tests too
   (`../../scripts/runUnitTests.sh`): some unit specs import those mocks.
 - Unit tests are Vitest specs in `__tests__/`. Helpers in `__tests__/util/`:
-  - `LoggedInAppContextProvider.tsx` - provides a store with a signed-in user
-  - `loggedInStore.ts` - that store
+  - `signIn.ts` - `signIn()` (as the mock API's user, `test`), `resetApp()`,
+    and `store`, the app state as components use it (`store.setIsStaff(...)`)
   - `assignLoggedInCookie.ts` - sets the `LoggedIn` cookie the UI checks
-  - `TestAppRouter.tsx` - the app in a memory router, signed in
-  - `msw.ts` - an `msw/node` server with the default API responses
-  - `storeFixtures.ts` - a store of a test's own (`createStore`), signed in,
-    and builders for the tags, entries and junctions it holds
+  - `TestAppRouter.tsx` - the app in a memory router that follows its
+    history; sign in first for a signed-in app
+  - `msw.ts` - an `msw/node` server of the mock API (`src/msw/handlers.ts`),
+    with the entries of `test/mocks/entries/entriesResponse.ts`
+  - `storeFixtures.ts` - builders of tags, entries and junctions, and
+    `seed()`, which stores them in the signed-in user's database
+- Every jsdom test starts signed out, with no IndexedDB data and the mock
+  API's data reset (`__tests__/setup.ts`); sign in with `signIn()` in a
+  `beforeEach`.
 - Prefer `screen.findBy*` over `waitFor(() => screen.getBy*)` for async
   elements
 - Use `act()` for async renders: `await act(async () => render(<Component />))`
-- Reset the store between tests (`applySnapshot(store, defaultState)`) when a
-  test changes it
 - E2E specs open pages with `BasePage.open()` (`test/pageobjects/base.ts`),
   which waits for MSW, sign in with `browser.login()`, and reset MSW in
   `afterEach` with `browser.resetMSWHandlers()`; the custom commands are in

@@ -1,13 +1,9 @@
-import type {TagDocument} from '@commandsnippets/api-shared';
 import {List} from '@mui/material';
 import {styled} from '@mui/material/styles';
 import invariant from 'invariant';
-import {autorun} from 'mobx';
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
-import {useAppContext} from '../../AppContext';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {
   activeSearch,
@@ -15,7 +11,7 @@ import {
   type IMouse,
   initialMouse,
 } from '../../lib/shared';
-import {TagHelpers} from '../../lib/store/models/TagModel';
+import {useAppConfig} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
 import {Tag} from './Tag';
 import {TagListContextMenu} from './TagListContextMenu';
@@ -39,7 +35,7 @@ interface IProps {
   username: string;
 }
 const TagList = ({tagsFromWrapper, username}: IProps) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const navigate = useNavigate();
 
   const [selectedTag, setSelectedTag] = useState<string>();
@@ -48,34 +44,20 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
   const [mouse, setMouse] = useState(initialMouse);
 
-  useEffect(
-    () =>
-      autorun(() => {
-        const tags = TagHelpers.filterAndSort(appConfig);
-        setTags(TagHelpers.filterAndSort(appConfig));
-        const current = tags.find(
-          element => element.id === appConfig.tagSelectedID
-        );
-        if (current === undefined) {
-          if (tags[0]) {
-            console.info(
-              `set selected tag ${tags[0].attributes.name} id ${tags[0].id}`
-            );
-            setSelectedTag(tags[0].id);
-          }
-        }
-      }),
-    [appConfig.tagSearchString]
-  );
-
-  const handleDelete = useCallback(
-    (o: TagDocument) => {
-      const existing = appConfig.tagsArray.find(c => c.id === o.data.id);
-      existing?.update(o.data);
-      setTags(TagHelpers.filterAndSort(appConfig));
-    },
-    [appConfig]
-  );
+  // The list as the database has it now (a drag reorders this copy until
+  // the drop is stored), and the tag selected in it.
+  useEffect(() => {
+    setTags(tagsFromWrapper);
+    const current = tagsFromWrapper.find(
+      element => element.id === appConfig.tagSelectedID
+    );
+    const [first] = tagsFromWrapper;
+    if (current !== undefined) {
+      setSelectedTag(current.id);
+    } else if (first !== undefined) {
+      setSelectedTag(first.id);
+    }
+  }, [tagsFromWrapper, appConfig]);
 
   const findEntry = useCallback(
     (id: string) => {
@@ -115,10 +97,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     },
     [findEntry, tags]
   );
-
-  const handleNew = () => {
-    setTags(TagHelpers.filterAndSort(appConfig));
-  };
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
@@ -195,9 +173,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
   return (
     <>
-      {appConfig.tagNew === 'top' && (
-        <TagNew id="tagNewTop" handleNewParent={handleNew} />
-      )}
+      {appConfig.tagNew === 'top' && <TagNew id="tagNewTop" />}
       <List
         ref={dropBoxRef}
         dense={true}
@@ -221,7 +197,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
                 object={object}
                 key={object.id}
                 id={object.id}
-                handleDeleteParent={handleDelete}
                 moveEntry={moveEntry}
                 findEntry={findEntry}
                 index={i}
@@ -237,7 +212,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         </LeftToRight>
         {appConfig.tagNew === 'bottom' && (
           <LeftToRight>
-            <TagNew id="tagNewBottom" handleNewParent={handleNew} />
+            <TagNew id="tagNewBottom" />
           </LeftToRight>
         )}
         {appConfig.loggedInUser && <>{contextMenu}</>}
@@ -246,6 +221,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   );
 };
 
-const memoizedTagList = React.memo(observer(TagList));
+const memoizedTagList = React.memo(TagList);
 
 export {memoizedTagList as TagList};

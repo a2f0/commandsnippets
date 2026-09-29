@@ -13,7 +13,7 @@ import {setupServer} from 'msw/node';
 
 import {errorDocument, onePage, pagination} from '../../../src/msw/documents';
 import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
-import {store} from '../../util/loggedInStore';
+import {signIn, store} from '../../util/signIn';
 import {TestAppRouter} from '../../util/TestAppRouter';
 
 const API = 'http://localhost:9001/api/v1';
@@ -147,6 +147,7 @@ beforeAll(() => server.listen());
 afterAll(() => server.close());
 
 beforeEach(() => {
+  signIn();
   assignLoggedInCookie();
   viewerIsStaff = true;
   adminForbidden = false;
@@ -172,10 +173,6 @@ beforeEach(() => {
 
 afterEach(() => {
   server.resetHandlers();
-  act(() => {
-    store.setIsStaff(false);
-    store.setLoggedInUser('test');
-  });
 });
 
 async function renderAt(path: string) {

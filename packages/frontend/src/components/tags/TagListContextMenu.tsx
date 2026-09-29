@@ -1,7 +1,7 @@
 import {Menu} from '@mui/material';
 import React, {useEffect, useState} from 'react';
-import {useAppContext} from '../../AppContext';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 
 interface ITagContextMenuProps {
@@ -47,7 +47,7 @@ const StyledMenu = ({
 };
 
 const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
 
   const [mousePosition, setMousePosition] = useState<IMouse>(initialMouse);
 

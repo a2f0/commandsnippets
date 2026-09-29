@@ -1,9 +1,8 @@
 import {Google} from '@mui/icons-material';
-import {observer} from 'mobx-react';
 import React from 'react';
-import {useAppContext} from '../../AppContext';
 import {useOAuth} from '../../hooks/useOAuth';
 import {getOAuthRedirectUrl} from '../../lib/oauth';
+import {useAppConfig} from '../../lib/state/appState';
 import {LoginButton} from './LoginButton';
 
 // Get Google Client ID for web
@@ -12,7 +11,7 @@ const getGoogleClientID = () => {
 };
 
 const GoogleAuth = () => {
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
 
   // OAuth configuration for web
   const oauthConfig = {
@@ -45,6 +44,6 @@ const GoogleAuth = () => {
   );
 };
 
-const memoizedGoogleAuth = React.memo(observer(GoogleAuth));
+const memoizedGoogleAuth = React.memo(GoogleAuth);
 
 export {memoizedGoogleAuth as GoogleAuth};

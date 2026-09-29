@@ -1,13 +1,11 @@
-import {observer} from 'mobx-react';
 import React, {useCallback, useEffect, useState} from 'react';
-
-import {useAppContext} from '../../AppContext';
 import {activeSearch, appMode} from '../../lib/shared';
+import {useAppConfig} from '../../lib/state/appState';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
 
 const TagSearchField = () => {
   const [tagSearch, setTagSearch] = useState<string>('');
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const escFunction = useCallback((event: KeyboardEvent) => {
@@ -79,6 +77,6 @@ const TagSearchField = () => {
   );
 };
 
-const memoizedTagSearchField = React.memo(observer(TagSearchField));
+const memoizedTagSearchField = React.memo(TagSearchField);
 
 export {memoizedTagSearchField as TagSearchField};

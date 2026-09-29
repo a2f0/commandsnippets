@@ -277,7 +277,7 @@ describe('POST /entries', () => {
     const {data, included} = textEntryDocumentSchema.parse(json);
     expect(data).toEqual({
       type: 'TextEntry',
-      id: '3',
+      id: '4',
       attributes: {
         subject: 'new',
         body: 'body',
@@ -297,21 +297,17 @@ describe('POST /entries', () => {
         latest(before.data.map(entry => entry.attributes.date_updated))
     ).toBe(true);
     expect(identifiers(included)).toEqual(['User:1']);
-    expect(entryOf(await getEntries(), '3')).toEqual(data);
+    expect(entryOf(await getEntries(), '4')).toEqual(data);
   });
 
-  it('never reuses the id of a deleted entry', async () => {
-    expect((await send('DELETE', '/entries/2')).status).toBe(200);
+  it('keeps a deleted entry, whose id no new entry gets', async () => {
+    expect((await send('DELETE', '/entries/3')).status).toBe(200);
     const {json} = await send('POST', '/entries', {
       data: {type: 'TextEntry', attributes: {subject: 'new', body: 'body'}},
     });
     const {data} = textEntryDocumentSchema.parse(json);
-    // Entry 2 had junctions; a reused id would pick them up.
-    expect(data.id).toBe('3');
-    expect(data.attributes.tag_count).toBe(0);
-    expect(
-      entryOf(await getEntries(), '3')?.relationships.text_entry_to_tag
-    ).toEqual({data: [], meta: {count: 0}});
+    expect(data.id).toBe('4');
+    expect(entryOf(await getEntries(), '3')?.attributes.is_deleted).toBe(true);
   });
 
   it('reports every invalid attribute', async () => {
@@ -328,7 +324,7 @@ describe('POST /entries', () => {
         '/data/attributes/body'
       )
     );
-    expect((await getEntries()).data).toHaveLength(2);
+    expect((await getEntries()).data).toHaveLength(3);
   });
 });
 
@@ -687,18 +683,17 @@ describe('keyset pages (the sync reads)', () => {
     expect(second.links.next).toBeNull();
   });
 
-  it('list a deleted entry, which numbered pages leave out', async () => {
+  it('list a deleted entry, with a new revision', async () => {
     expect((await send('DELETE', '/entries/2')).status).toBe(200);
     const page = textEntryCursorListDocumentSchema.parse(
       (await send('GET', `/entries?page[after]=${CURSOR_START}`)).json
     );
+    // Its revision advanced past the others'.
     expect(entryIdsAndDeletion(page.data)).toEqual([
       ['1', false],
+      ['3', false],
       ['2', true],
     ]);
-    // Its revision advanced past the other's.
-    expect(page.data.at(-1)?.id).toBe('2');
-    expect((await getEntries()).data.map(({id}) => id)).toEqual(['1']);
   });
 
   it('keep a deleted tag, with a new revision', async () => {

@@ -9,8 +9,8 @@ import {
 import {createMemoryHistory} from 'history';
 import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {store as loggedInStore} from '../util/loggedInStore';
 import {server} from '../util/msw';
+import {signIn} from '../util/signIn';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
@@ -45,8 +45,7 @@ describe('Dark Mode Toggle', () => {
     // Assign logged in cookie
     assignLoggedInCookie();
 
-    // Ensure MobX store theme is reset to a known default for test isolation
-    loggedInStore.setSelectedTheme('darkTheme');
+    signIn();
   });
 
   afterEach(() => {

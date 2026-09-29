@@ -4,14 +4,17 @@ import {HttpResponse, http} from 'msw';
 import {type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {store} from '../util/loggedInStore';
 import {server} from '../util/msw';
+import {signIn, store} from '../util/signIn';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
+});
 
 // The rejections nothing handled while a test ran.
 let unhandled: unknown[] = [];
@@ -28,7 +31,6 @@ beforeEach(() => {
 afterEach(() => {
   process.off('unhandledRejection', collectUnhandled);
   vi.restoreAllMocks();
-  store.setEntrySearchString('');
 });
 
 /** Give Node time to report a rejection left unhandled. */
@@ -42,46 +44,38 @@ function renderApp(route: string) {
   render(<TestAppRouter history={history} />);
 }
 
-function failEntryFetches() {
-  server.use(
-    http.get('*/api/v1/entries', () =>
-      HttpResponse.json({errors: []}, {status: 500})
-    )
-  );
-}
+const syncError = ['ERROR: sync failed:', expect.any(Error)];
 
-const fetchError = ['Failed to fetch entries:', expect.any(Error)];
-
-describe('Entry list fetches', () => {
-  it('drops an all-entries request a newer search aborted, silently', async () => {
+describe('The entry lists', () => {
+  it('search the entries the database holds, asking the API nothing', async () => {
     renderApp('/test?entries=all');
     await screen.findByText('entry-1-subject');
-    const getEntries = vi.spyOn(apiClient, 'getEntries');
+    const reads = vi.spyOn(apiClient, 'getEntriesAfter');
 
     act(() => {
-      store.setEntrySearchString('entry');
+      store.setEntrySearchString('entry-3');
     });
-    await waitFor(() => expect(getEntries).toHaveBeenCalledTimes(2));
-    await settle();
 
-    const signals = getEntries.mock.calls.map(([params]) => params.signal);
-    expect(signals.some(signal => signal?.aborted)).toBe(true);
-    expect(unhandled).toEqual([]);
-    expect(consoleError).not.toHaveBeenCalledWith(...fetchError);
-    // The newer request's entries are listed.
-    expect(screen.getAllByRole('entry')).toHaveLength(4);
+    await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(1));
+    // The search's match is highlighted: the subject spans elements.
+    expect(screen.getByRole('entry')).toHaveTextContent('entry-3-subject');
+    expect(reads).not.toHaveBeenCalled();
   });
 
   it.each([
     ['the all-entries list', '/test?entries=all'],
     ['the untagged list', '/test?entries=untagged'],
     ['a tag list', '/test/test-tag-1'],
-  ])('logs a failed fetch for %s', async (_list, route) => {
-    failEntryFetches();
+  ])('log a sync that fails, for %s', async (_list, route) => {
+    server.use(
+      http.get('*/api/v1/entries', () =>
+        HttpResponse.json({errors: []}, {status: 500})
+      )
+    );
     renderApp(route);
 
     await waitFor(() =>
-      expect(consoleError).toHaveBeenCalledWith(...fetchError)
+      expect(consoleError).toHaveBeenCalledWith(...syncError)
     );
     await settle();
 

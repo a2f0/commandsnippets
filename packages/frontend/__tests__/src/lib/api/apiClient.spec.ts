@@ -4,6 +4,7 @@ import type {
   TextEntryDocument,
   UserDocument,
 } from '@commandsnippets/api-shared';
+import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import invariant from 'invariant';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
@@ -133,34 +134,44 @@ const calls: Call[] = [
     },
   },
   {
-    name: 'getEntries',
-    call: () =>
-      apiClient.getEntries({
-        'page[number]': 1,
-        'filter[user.username]': 'u',
-        signal: new AbortController().signal,
-      }),
+    name: 'getEntriesAfter',
+    call: () => apiClient.getEntriesAfter(CURSOR_START),
     status: 200,
-    body: entriesResponse,
+    body: {links: {next: null}, data: [entry], included: [junction]},
     malformed: {
-      // No pagination: the old mocks' `links: {next: null}`.
-      body: {...entriesResponse, links: {next: null}},
-      failure: 'Failed to fetch entries',
+      // A numbered page's links, and no `next`.
+      body: {links: {first: `${API}/entries`}, data: [entry]},
+      failure: 'Failed to sync entries',
     },
   },
   {
-    name: 'getTags',
-    call: () =>
-      apiClient.getTags({
-        'page[number]': 1,
-        'filter[user.username]': 'u',
-        sort: 'date_updated',
-      }),
+    name: 'getTagsAfter',
+    call: () => apiClient.getTagsAfter(CURSOR_START),
     status: 200,
-    body: tagsResponse,
+    body: {links: {next: null}, data: [tag], included: [user]},
     malformed: {
-      body: {...tagsResponse, included: []},
-      failure: 'Failed to fetch tags',
+      body: {links: {next: null}, data: [tag], included: []},
+      failure: 'Failed to sync tags',
+    },
+  },
+  {
+    name: 'getTagJunctionsAfter',
+    call: () => apiClient.getTagJunctionsAfter('1', CURSOR_START),
+    status: 200,
+    body: {links: {next: null}, data: [junction], included: [entry]},
+    malformed: {
+      body: {links: {next: 'nowhere'}, data: [junction]},
+      failure: 'Failed to sync tag',
+    },
+  },
+  {
+    name: 'getNewestJunction',
+    call: () => apiClient.getNewestJunction(),
+    status: 200,
+    body: {...tagsResponse, data: [junction], included: [user]},
+    malformed: {
+      body: {links: {next: null}, data: [junction]},
+      failure: 'Failed to read the newest junction',
     },
   },
   {
@@ -333,52 +344,30 @@ describe('apiClient requests', () => {
     expect(JSON.parse(String(init?.body))).toEqual(body);
   });
 
-  // The collections' queries: their parameters, in the caller's order.
+  // The sync's reads: keyset pages in revision order.
+  const after = encodeURIComponent(CURSOR_START);
   const queries: Array<[string, () => Promise<unknown>, string]> = [
     [
-      'getEntries',
-      () =>
-        apiClient.getEntries({
-          'page[number]': 2,
-          'filter[user.username]': 'u',
-          sort: '-date_created',
-          include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
-          'filter[date_updated.gt]': '2024-01-01T12:34:56.123456',
-          'filter[tags.name]': 'a b&c',
-          'filter[tag_count]': 0,
-          signal: new AbortController().signal,
-        }),
-      `${API}/entries?page%5Bnumber%5D=2&filter%5Buser.username%5D=u` +
-        '&sort=-date_created' +
-        '&include=text_entry_to_tag.tag%2Ctext_entry_to_tag.user%2Cuser' +
-        '&filter%5Bdate_updated.gt%5D=2024-01-01T12%3A34%3A56.123456' +
-        '&filter%5Btags.name%5D=a+b%26c&filter%5Btag_count%5D=0',
+      'getTagsAfter',
+      () => apiClient.getTagsAfter(CURSOR_START),
+      `${API}/tags?page%5Bafter%5D=${after}&page%5Bsize%5D=100`,
     ],
     [
-      'getEntries',
-      () =>
-        apiClient.getEntries({
-          'page[number]': 1,
-          'filter[user.username]': 'u',
-          sort: 'subject',
-          include: 'user',
-          'filter[search]': 'ls -la',
-          signal: new AbortController().signal,
-        }),
-      `${API}/entries?page%5Bnumber%5D=1&filter%5Buser.username%5D=u` +
-        '&sort=subject&include=user&filter%5Bsearch%5D=ls+-la',
+      'getEntriesAfter',
+      () => apiClient.getEntriesAfter(CURSOR_START),
+      `${API}/entries?page%5Bafter%5D=${after}&page%5Bsize%5D=100` +
+        '&include=text_entry_to_tag',
     ],
     [
-      'getTags',
-      () =>
-        apiClient.getTags({
-          'page[number]': 3,
-          'filter[user.username]': 'u',
-          sort: 'date_updated',
-          'filter[date_updated.gt]': '2024-01-01T12:34:56',
-        }),
-      `${API}/tags?page%5Bnumber%5D=3&filter%5Buser.username%5D=u` +
-        '&sort=date_updated&filter%5Bdate_updated.gt%5D=2024-01-01T12%3A34%3A56',
+      'getTagJunctionsAfter',
+      () => apiClient.getTagJunctionsAfter('5', CURSOR_START),
+      `${API}/tags_entries?filter%5Btag.id%5D=5&page%5Bafter%5D=${after}` +
+        '&page%5Bsize%5D=100&include=text_entry%2Ctext_entry.text_entry_to_tag',
+    ],
+    [
+      'getNewestJunction',
+      () => apiClient.getNewestJunction(),
+      `${API}/tags_entries?sort=-date_updated&page%5Bsize%5D=1`,
     ],
   ];
 
@@ -450,13 +439,9 @@ describe('apiClient responses', () => {
     );
 
     reply(200, {links: {}, meta: {}, data: {}});
-    await expect(
-      apiClient.getTags({
-        'page[number]': 1,
-        'filter[user.username]': 'u',
-        sort: 'order',
-      })
-    ).rejects.toThrow(/; and 3 more\)$/);
+    await expect(apiClient.getNewestJunction()).rejects.toThrow(
+      /; and 3 more\)$/
+    );
   });
 
   it('takes an OK logout with no body', async () => {

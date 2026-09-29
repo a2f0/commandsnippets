@@ -2,7 +2,7 @@ import React from 'react';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {apiClient} from '../../../lib/api/apiClient';
-import {resetApplicationState} from '../../../lib/store/store';
+import {resetApplicationState} from '../../../lib/state/appState';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {

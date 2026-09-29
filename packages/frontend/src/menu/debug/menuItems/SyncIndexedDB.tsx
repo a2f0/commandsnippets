@@ -1,7 +1,6 @@
 import React from 'react';
-
-import {useAppContext} from '../../../AppContext';
 import {useTypedTranslation} from '../../../i18n/hooks';
+import {useAppConfig} from '../../../lib/state/appState';
 import {syncSession} from '../../../lib/sync/session';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
@@ -10,12 +9,12 @@ interface IProps {
 }
 
 /**
- * Sync the signed-in user's IndexedDB database (`lib/sync/`), which the app
- * does not read yet, and log what it holds.
+ * Sync the signed-in user's IndexedDB database now (`lib/sync/`; the entries
+ * page syncs it on its own too), and log what it holds.
  */
 const SyncIndexedDB = ({onClose}: IProps) => {
   const {t} = useTypedTranslation('menu');
-  const appConfig = useAppContext();
+  const appConfig = useAppConfig();
 
   const sync = async (username: string) => {
     const {db, sync} = syncSession(username);

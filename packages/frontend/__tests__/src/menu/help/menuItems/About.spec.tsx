@@ -13,12 +13,16 @@ import {i18n} from '../../../../../src/i18n/i18n';
 import {AboutDialog} from '../../../../../src/menu/help/menuItems/AboutDialog';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {server} from '../../../../util/msw';
+import {signIn} from '../../../../util/signIn';
 import {TestAppRouter} from '../../../../util/TestAppRouter';
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-beforeEach(() => assignLoggedInCookie());
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
+});
 
 describe('Help Menu', () => {
   it('Is clickable', async () => {
