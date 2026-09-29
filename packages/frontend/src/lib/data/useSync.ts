@@ -9,6 +9,7 @@
 import type {Tag} from '@commandsnippets/api-shared/responses';
 import {useEffect} from 'react';
 import {leaveForeignSession} from '../state/appState';
+import type {SyncSession} from '../sync/session';
 import {ForeignDataError} from '../sync/store';
 import {isTagSynced, SyncUserError} from '../sync/sync';
 import {useSession} from './hooks';
@@ -20,10 +21,10 @@ export const SYNC_INTERVAL_MS = 30_000;
  * (another tab signed in as someone else), this tab leaves the session
  * (`leaveForeignSession`).
  */
-function syncFailed(error: unknown): void {
+function syncFailed(session: SyncSession, error: unknown): void {
   if (error instanceof SyncUserError || error instanceof ForeignDataError) {
     console.error('ERROR: the API answers for another user:', error);
-    void leaveForeignSession();
+    void leaveForeignSession(session.username);
     return;
   }
   console.error('ERROR: sync failed:', error);
@@ -46,7 +47,7 @@ export function useCollectionSync(): void {
       startedAt = Date.now();
       session.sync
         .syncAll()
-        .catch(syncFailed)
+        .catch((error: unknown) => syncFailed(session, error))
         .finally(() => {
           running = false;
         });
@@ -92,7 +93,7 @@ export function useTagSync(tag: Tag | null | undefined): void {
       running = true;
       isTagSynced(session.db, tagId)
         .then(synced => (synced ? undefined : session.sync.syncTag(tagId)))
-        .catch(syncFailed)
+        .catch((error: unknown) => syncFailed(session, error))
         .finally(() => {
           running = false;
         });

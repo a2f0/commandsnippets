@@ -5,13 +5,14 @@ import {describe, expect, it, vi} from 'vitest';
 
 import {
   defaultSavedState,
+  leaveForeignSession,
   RETIRED_STORAGE_KEYS,
   resetApplicationState,
   STORAGE_KEY,
   useAppConfig,
 } from '../../../../src/lib/state/appState';
 import {syncSession} from '../../../../src/lib/sync/session';
-import {signIn, store} from '../../../util/signIn';
+import {signIn, store, TEST_USER} from '../../../util/signIn';
 
 describe('the app state', () => {
   it('saves the signed-in user and their preferences, nothing else', () => {
@@ -81,6 +82,46 @@ describe('signing out', () => {
     const heidi = await hasData('heidi');
     store.setLoggedInUser('ivan');
     await gone(heidi);
+  });
+});
+
+describe('leaving a session the API no longer answers for', () => {
+  /** Another tab signed in as `username`, and saved it. */
+  function savedElsewhere(username: string) {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...saved,
+        state: {...saved.state, loggedInUser: username},
+      })
+    );
+  }
+
+  it('signs out when no other sign-in was saved', async () => {
+    signIn();
+    await leaveForeignSession(TEST_USER);
+    expect(store.loggedInUser).toBeNull();
+  });
+
+  it("takes up another tab's, which the old session's late failures leave", async () => {
+    signIn();
+    savedElsewhere('someone-else');
+
+    // Its collection sync and its tag sync both fail, one after the other.
+    await Promise.all([
+      leaveForeignSession(TEST_USER),
+      leaveForeignSession(TEST_USER),
+    ]);
+    expect(store.loggedInUser).toBe('someone-else');
+    act(() => store.setEntrySearchString('theirs'));
+    await leaveForeignSession(TEST_USER);
+
+    expect(store.loggedInUser).toBe('someone-else');
+    expect(store.entrySearchString).toBe('theirs');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject(
+      {state: {loggedInUser: 'someone-else'}}
+    );
   });
 });
 

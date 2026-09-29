@@ -235,20 +235,26 @@ const savedUserOf = (state: unknown): string | null =>
     : null;
 
 /**
- * Leave a session the API no longer answers for (the cookie is another
- * user's): when another tab has saved that sign-in since, take it up here
- * rather than clearing it for every tab; otherwise sign out.
+ * Leave `username`'s session, which the API no longer answers for (the
+ * cookie is another user's): when another tab has saved that sign-in since,
+ * take it up here rather than clearing it for every tab; otherwise sign out.
+ * Once `username` is not signed in here (a failure of theirs came late),
+ * nothing changes.
  */
-export async function leaveForeignSession(): Promise<void> {
+export async function leaveForeignSession(username: string): Promise<void> {
+  const signedIn = () => useAppState.getState().loggedInUser === username;
+  if (!signedIn()) {
+    return;
+  }
   try {
     const saved = await useAppState.persist
       .getOptions()
       .storage?.getItem(STORAGE_KEY);
+    if (!signedIn()) {
+      return;
+    }
     const savedUser = savedUserOf(saved?.state);
-    if (
-      savedUser !== null &&
-      savedUser !== useAppState.getState().loggedInUser
-    ) {
+    if (savedUser !== null && savedUser !== username) {
       await useAppState.persist.rehydrate();
       // What this tab showed was the other user's: its ids mean nothing now.
       useAppState.setState(defaultUiState);
@@ -257,7 +263,9 @@ export async function leaveForeignSession(): Promise<void> {
   } catch (error: unknown) {
     console.error('ERROR: could not read the saved sign-in:', error);
   }
-  resetApplicationState();
+  if (signedIn()) {
+    resetApplicationState();
+  }
 }
 
 // A user's IndexedDB data goes with them, however they leave: the menu, the
