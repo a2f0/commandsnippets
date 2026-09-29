@@ -32,6 +32,9 @@ const TagSyncCursor = types.model('TagSyncCursor', {
   entries: types.maybeNull(types.string),
 });
 
+/** An entry as a collection to reconcile lists it. */
+type ListedEntry = Extract<ResourceCollection[number], {type: 'TextEntry'}>;
+
 export const RootModel = types
   .model({
     tagsArray: types.array(TagModel),
@@ -188,66 +191,67 @@ export const RootModel = types
      * Store each resource by its type: entries, junctions, users, tags; and
      * drop the links of each entry whose `text_entry_to_tag` (all of its
      * junctions) no longer lists them, unless the store holds a newer
-     * revision of the entry (or the collection lists the link itself).
-     * Returns whether the store changed.
+     * revision of the entry. An entry listed twice (pages read while it
+     * changed) counts as its newest copy. Returns whether the store changed.
      */
     reconcileCollection(collection: ResourceCollection) {
       let changed = false;
-      // Entries the store holds a newer revision of (revisions compare as
-      // strings, see lib/revisions.ts): their junctions here are older news,
-      // which the newer response stored or removed already.
-      const outdated = new Set<string>();
+      // The newest copy of each entry listed (revisions compare as strings,
+      // see lib/revisions.ts).
+      const entries = new Map<string, ListedEntry>();
       for (const element of collection) {
         if (element.type === 'TextEntry') {
-          const stored = self.textEntriesArray.find(o => o.id === element.id);
+          const other = entries.get(element.id);
           if (
-            stored !== undefined &&
-            stored.attributes.date_updated > element.attributes.date_updated
+            other === undefined ||
+            element.attributes.date_updated > other.attributes.date_updated
           ) {
-            outdated.add(element.id);
+            entries.set(element.id, element);
           }
-          changed = self.updateOrCreateTextEntry(element) || changed;
         }
       }
-      for (const element of collection) {
-        if (
-          element.type === 'TagTextEntryThroughModel' &&
-          !(
-            outdated.has(element.relationships.text_entry.data.id) &&
-            !self.tagTextEntryThroughModel.some(o => o.id === element.id)
-          )
-        ) {
-          changed =
-            self.updateOrCreateTagTextEntryThroughModel(element) || changed;
-        }
-      }
+      // Entries the store holds a newer revision of, whose links here are
+      // older news (the newer response stored or removed them already); and
+      // each other entry's links, where its copy lists them all.
+      const outdated = new Set<string>();
       const linked = new Map<string, Set<string>>();
-      for (const element of collection) {
+      for (const entry of entries.values()) {
+        const stored = self.textEntriesArray.find(o => o.id === entry.id);
         if (
-          element.type === 'TextEntry' &&
-          'text_entry_to_tag' in element.relationships &&
-          !outdated.has(element.id)
+          stored !== undefined &&
+          stored.attributes.date_updated > entry.attributes.date_updated
         ) {
+          outdated.add(entry.id);
+          continue;
+        }
+        changed = self.updateOrCreateTextEntry(entry) || changed;
+        if ('text_entry_to_tag' in entry.relationships) {
           linked.set(
-            element.id,
+            entry.id,
             new Set(
-              element.relationships.text_entry_to_tag.data.map(({id}) => id)
+              entry.relationships.text_entry_to_tag.data.map(({id}) => id)
             )
           );
         }
       }
-      const listed = new Set(
-        collection.flatMap(element =>
-          element.type === 'TagTextEntryThroughModel' ? [element.id] : []
-        )
-      );
+      for (const element of collection) {
+        if (element.type !== 'TagTextEntryThroughModel') {
+          continue;
+        }
+        const entryId = element.relationships.text_entry.data.id;
+        if (
+          linked.get(entryId)?.has(element.id) === false ||
+          (outdated.has(entryId) &&
+            !self.tagTextEntryThroughModel.some(o => o.id === element.id))
+        ) {
+          continue;
+        }
+        changed =
+          self.updateOrCreateTagTextEntryThroughModel(element) || changed;
+      }
       const unlinked = self.tagTextEntryThroughModel.filter(junction => {
         const junctions = linked.get(junction.relationships.text_entry.data.id);
-        return (
-          junctions !== undefined &&
-          !junctions.has(junction.id) &&
-          !listed.has(junction.id)
-        );
+        return junctions !== undefined && !junctions.has(junction.id);
       });
       for (const junction of unlinked) {
         destroy(junction);
@@ -323,9 +327,7 @@ export const RootModel = types
         self.tagsSyncedAt = Date.now();
         const since = self.tagsSyncedThrough;
         const collection: IncludedResource[] = yield TagHelpers.fetch(
-          [],
           user,
-          1,
           since
         );
         self.reconcileCollection(collection);
@@ -359,10 +361,8 @@ export const RootModel = types
         self.tagTextEntryThroughModel.map(junction => junction.id)
       );
       const changes: IncludedResource[] = yield TextEntryHelpers.fetch(
-        [],
         user,
         since === null ? tagId : null,
-        1,
         since,
         null
       );
@@ -403,10 +403,8 @@ export const RootModel = types
         const mostRecentTimestamp: string | null =
           TextEntryHelpers.getMostRecentTimeStamp(filteredTextEntries);
         const collection: ResourceCollection = yield TextEntryHelpers.fetch(
-          [],
           user,
           null,
-          1,
           mostRecentTimestamp,
           0
         );

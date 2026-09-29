@@ -15,7 +15,7 @@ import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
 import {RootModel} from '../../../../../src/lib/store/models/RootModel';
-import {onePage} from '../../../../../src/msw/documents';
+import {onePage, pagination} from '../../../../../src/msw/documents';
 import {createStore, tag, testUser} from '../../../../util/storeFixtures';
 
 describe('RootModel', () => {
@@ -440,6 +440,78 @@ describe('syncTagEntries', () => {
       '100',
     ]);
     expect(store.tagSyncCursors.get('1')?.tag).toBe('2024-01-01T00:00:00');
+  });
+
+  it('decides the links of an entry listed twice by its newer copy', () => {
+    const store = createStore([tag('1', {}), tag('2', {})]);
+    const untagged = apiJunction('200', '2', '10');
+    // Pages read while entry 10 was untagged from tag 2 list it twice.
+    store.reconcileCollection([
+      apiEntry('10', '2024-01-01T00:00:00', [tagged, untagged]),
+      tagged,
+      untagged,
+      apiEntry('10', '2024-02-01T00:00:00', [tagged]),
+      tagged,
+    ]);
+    expect(store.tagTextEntryThroughModel.map(link => link.id)).toEqual([
+      '100',
+    ]);
+    expect(store.textEntriesArray[0]?.attributes.date_updated).toBe(
+      '2024-02-01T00:00:00'
+    );
+  });
+
+  it('reads a tag again when its pages shift while they are read', async () => {
+    const store = createStore([
+      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 2}),
+    ]);
+    // Links the store holds from before the tag had a cursor.
+    store.reconcileCollection([
+      apiEntry('10', '2024-01-02T00:00:00', [tagged]),
+      tagged,
+      apiEntry('11', '2024-01-03T00:00:00', [alsoTagged]),
+      alsoTagged,
+    ]);
+    // Entry 10 is edited after the first page is read: it moves to the end,
+    // and entry 11 onto the first page, so the first read skips it.
+    const edited = apiEntry('10', '2024-02-01T00:00:00', [tagged]);
+    const answers = [
+      [apiEntry('10', '2024-01-02T00:00:00', [tagged])],
+      [edited],
+      [apiEntry('11', '2024-01-03T00:00:00', [alsoTagged])],
+      [edited],
+    ];
+    requests = [];
+    server.use(
+      http.get(`${API}/entries`, ({request}) => {
+        const query = new URL(request.url).searchParams;
+        requests.push(query);
+        const number = Number(query.get('page[number]'));
+        const data = answers[requests.length - 1] ?? [];
+        return HttpResponse.json({
+          ...pagination(request.url, number, 2, 2),
+          data,
+          included: data.flatMap(entry =>
+            entry.id === '10' ? [tagged] : [alsoTagged]
+          ),
+        });
+      })
+    );
+
+    expect(await store.syncTagEntries('test', 'tag-1')).toBe(true);
+    expect(requests.map(query => query.get('page[number]'))).toEqual([
+      '1',
+      '2',
+      '1',
+      '2',
+    ]);
+    expect(store.tagTextEntryThroughModel.map(link => link.id).sort()).toEqual([
+      '100',
+      '101',
+    ]);
+    expect(getSnapshot(store.tagSyncCursors)).toEqual({
+      '1': {tag: '2024-01-01T00:00:00', entries: '2024-02-01T00:00:00'},
+    });
   });
 
   it('brings back no link of an entry the store holds a newer revision of', () => {

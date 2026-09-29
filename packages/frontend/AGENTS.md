@@ -164,8 +164,11 @@ writing its type by hand.
   `zod` puts nearly all of it in the bundle (`__tests__/src/lib/api/zod.spec.ts`
   fails on one).
 - `src/lib/tags.ts` and `src/lib/textEntries.ts` - paging fetches and the
-  client-side sorting and filtering of tags and entries;
-  `src/lib/revisions.ts` compares the revisions the syncs' cursors hold.
+  client-side sorting and filtering of tags and entries. The syncs' fetches
+  read every page with `src/lib/api/readPages.ts`, which reads a list again
+  when its offset pages shifted while read (a row read twice, or a total
+  that changed), since a skipped row would be pruned and passed by the
+  cursor; `src/lib/revisions.ts` compares the revisions the cursors hold.
 
 ### Local Database (Debug only)
 - `src/lib/db/` wraps a Dexie (IndexedDB) database that only the Debug menu's

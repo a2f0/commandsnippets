@@ -2,6 +2,7 @@ import type {IncludedResource} from '@commandsnippets/api-shared';
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {apiClient} from './api/apiClient';
+import {readPages} from './api/readPages';
 import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
 import type {
   ITagTextEntryThroughModelJsonApi,
@@ -307,46 +308,31 @@ export function sort(
 /**
  * The user's entries (tagged `tagId`, and with `tag_count` tags, when not
  * null) changed `since` (all when null), and the resources included with
- * them, from `page` on: added to `entries`.
+ * them, from every page (see readPages).
  */
 export function fetch(
-  entries: IncludedResource[],
   user: string,
   tagId: string | null,
-  page: number,
   since: string | null,
   tag_count: number | null
 ): Promise<IncludedResource[]> {
-  const params: EntriesQueryParams = {
-    'page[number]': page,
-    'filter[user.username]': user,
-    sort: 'date_updated',
-    include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
-  };
-
-  if (since !== null) {
-    params['filter[date_updated.gt]'] = since;
-  }
-
-  if (tagId !== null) {
-    params['filter[tags.id]'] = Number(tagId);
-  }
-
-  if (tag_count !== null) {
-    params['filter[tag_count]'] = tag_count;
-  }
-
-  return apiClient.getEntries(params).then(response => {
-    const updatedEntries = entries.concat(response.data);
-    for (const item of response.included ?? []) {
-      if (!updatedEntries.includes(item)) {
-        updatedEntries.push(item);
-      }
+  return readPages(page => {
+    const params: EntriesQueryParams = {
+      'page[number]': page,
+      'filter[user.username]': user,
+      sort: 'date_updated',
+      include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
+    };
+    if (since !== null) {
+      params['filter[date_updated.gt]'] = since;
     }
-    if (response.links.next === null) {
-      return updatedEntries;
+    if (tagId !== null) {
+      params['filter[tags.id]'] = Number(tagId);
     }
-    return fetch(updatedEntries, user, tagId, page + 1, since, tag_count);
+    if (tag_count !== null) {
+      params['filter[tag_count]'] = tag_count;
+    }
+    return apiClient.getEntries(params);
   });
 }
 
@@ -422,7 +408,7 @@ export async function fetchAllEntriesForUser(username: string | undefined) {
     if (username === undefined) {
       console.info('Cannot fetch all entried for undefined user.');
     } else {
-      const entries = await fetch([], username, null, 1, null, null);
+      const entries = await fetch(username, null, null, null);
       for (const entry of entries) {
         if (entry.type === 'TextEntryReused') {
           throw new Error('unexpected type!');

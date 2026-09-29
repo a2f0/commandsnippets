@@ -1,6 +1,7 @@
 import type {IncludedResource} from '@commandsnippets/api-shared';
 import type {TagListParams} from '@commandsnippets/api-shared/requests';
 import {apiClient} from './api/apiClient';
+import {readPages} from './api/readPages';
 import type {ITagJsonApi} from './api/responses/types';
 import type {Store} from './store/store';
 
@@ -187,34 +188,21 @@ export function filterAndSort(store: Store): Array<ITagJsonApi> {
 
 /**
  * The user's tags changed `since` (all when null), and the resources
- * included with them, from `page` on: added to `entries`.
+ * included with them, from every page (see readPages).
  */
 export function fetch(
-  entries: IncludedResource[],
   user: string,
-  page: number,
   since: string | null
 ): Promise<IncludedResource[]> {
-  const params: TagListParams = {
-    'page[number]': page,
-    'filter[user.username]': user,
-    sort: 'date_updated',
-  };
-
-  if (since !== null) {
-    params['filter[date_updated.gt]'] = since;
-  }
-
-  return apiClient.getTags(params).then(response => {
-    const updatedEntries = entries.concat(response.data);
-    for (const item of response.included ?? []) {
-      if (!updatedEntries.includes(item)) {
-        updatedEntries.push(item);
-      }
+  return readPages(page => {
+    const params: TagListParams = {
+      'page[number]': page,
+      'filter[user.username]': user,
+      sort: 'date_updated',
+    };
+    if (since !== null) {
+      params['filter[date_updated.gt]'] = since;
     }
-    if (response.links.next === null) {
-      return updatedEntries;
-    }
-    return fetch(updatedEntries, user, page + 1, since);
+    return apiClient.getTags(params);
   });
 }
