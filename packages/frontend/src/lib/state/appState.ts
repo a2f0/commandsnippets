@@ -6,6 +6,8 @@
  * signed-in user and their preferences are saved to localStorage; the rest
  * starts afresh with each page.
  */
+
+import {Dexie} from 'dexie';
 import {useCallback, useRef, useState, useSyncExternalStore} from 'react';
 import {create} from 'zustand';
 import {
@@ -14,7 +16,8 @@ import {
   type StateStorage,
 } from 'zustand/middleware';
 import {apiClient, UserMismatchError} from '../api/apiClient';
-import {setUnauthorizedHandler} from '../auth/authUtils';
+import {setSignedInUser, setUnauthorizedHandler} from '../auth/authUtils';
+import {databaseName} from '../db/database';
 import {environment} from '../environment';
 import {
   activeEntryEditField,
@@ -110,26 +113,6 @@ export const defaultUiState: UiState = {
 
 export const STORAGE_KEY = `commandsnippets-${environment}`;
 
-/**
- * Where the MobX-State-Tree store saved its snapshot (with the user's whole
- * collection in it), under the current name and the one from before the
- * rename to Commandsnippets. Nothing reads them: they are removed on load,
- * so no user's snippets stay behind in them. The preferences in them are
- * not carried over, by choice: the app is greenfield, with no migrations
- * from its earlier state (a user signs in again, and picks them again).
- */
-export const RETIRED_STORAGE_KEYS = [
-  `mst-commandsnippets-${environment}`,
-  `mst-tearleads-${environment}`,
-];
-for (const key of RETIRED_STORAGE_KEYS) {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // Storage unavailable: nothing was saved there either.
-  }
-}
-
 /** The user a saved state names, if it names one. */
 const savedUserOf = (state: unknown): string | null =>
   typeof state === 'object' &&
@@ -153,6 +136,52 @@ function savedUserIn(json: string | null): string | null {
     return null;
   }
 }
+
+/**
+ * Where the MobX-State-Tree store saved its snapshot (with the user's whole
+ * collection in it), under the current name and the one from before the
+ * rename to Commandsnippets. Nothing reads them: they are removed on load
+ * (`retiredSnapshotsRemoved`), so no user's snippets stay behind in them.
+ * The preferences in them are not carried over, by choice: the app is
+ * greenfield, with no migrations from its earlier state (a user signs in
+ * again, and picks them again).
+ */
+export const RETIRED_STORAGE_KEYS = [
+  `mst-commandsnippets-${environment}`,
+  `mst-tearleads-${environment}`,
+];
+
+/**
+ * Remove the retired snapshot under `key`: first the IndexedDB database of
+ * the user it names (that app could sync one, named for them, which nothing
+ * would delete once the snapshot, and so the name, is gone), then the
+ * snapshot. A delete that fails keeps the snapshot, for the next load.
+ */
+async function removeRetiredSnapshot(key: string): Promise<void> {
+  const json = localStorage.getItem(key);
+  if (json === null) {
+    return;
+  }
+  let user: string | null = null;
+  try {
+    user = savedUserOf(JSON.parse(json));
+  } catch {
+    // Not JSON: it names no one.
+  }
+  if (user !== null) {
+    await Dexie.delete(databaseName(environment, user));
+  }
+  localStorage.removeItem(key);
+}
+
+/** Settled once the retired snapshots are removed (or could not be). */
+export const retiredSnapshotsRemoved: Promise<void> = Promise.all(
+  RETIRED_STORAGE_KEYS.map(key =>
+    removeRetiredSnapshot(key).catch((error: unknown) => {
+      console.error('ERROR: could not remove a retired snapshot:', error);
+    })
+  )
+).then(() => undefined);
 
 // The saved sign-in as this tab last read or wrote it (undefined: not read).
 let knownUser: string | null | undefined;
@@ -354,7 +383,12 @@ useAppState.subscribe((state, previous) => {
   }
 });
 
-setUnauthorizedHandler(resetApplicationState);
-// Every write names the signed-in user: the API refuses it when the cookie
-// is another user's (another tab signed in since).
-apiClient.setActingUser(() => useAppState.getState().loggedInUser);
+setSignedInUser(() => useAppState.getState().loggedInUser);
+// An answer that the session is gone signs out the user it was sent as; one
+// that comes after this tab has left that session (another tab's sign-in
+// taken up) changes nothing.
+setUnauthorizedHandler(username => {
+  if (useAppState.getState().loggedInUser === username) {
+    resetApplicationState();
+  }
+});

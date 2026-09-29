@@ -36,6 +36,7 @@ import {
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
+import {signedInUser} from '../auth/authUtils';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {fetchWithAuth} from './fetchWithAuth';
@@ -82,18 +83,6 @@ interface RequestOptions {
  * that return nothing (the logins, deletes and reorders) do not read it.
  */
 class ApiClient {
-  /** The user this tab acts for (see `setActingUser`). */
-  private actingUser: () => string | null = () => null;
-
-  /**
-   * Name `user()` in every write (`EXPECTED_USER_HEADER`), so the API
-   * refuses one signed in as anyone else (`UserMismatchError`). The app
-   * state sets it to the signed-in user.
-   */
-  public setActingUser(user: () => string | null): void {
-    this.actingUser = user;
-  }
-
   /**
    * Send a request with the auth cookie, which every route needs (reads
    * included, since they are owner-only and cross-origin), naming the acting
@@ -112,7 +101,9 @@ class ApiClient {
     }: RequestOptions,
     failure: string
   ): Promise<Response> {
-    const user = withAuth && method !== 'GET' ? this.actingUser() : null;
+    // Writes name the signed-in user: the API refuses one signed in as
+    // anyone else (`UserMismatchError`).
+    const user = withAuth && method !== 'GET' ? signedInUser() : null;
     const init: RequestInit = {
       method,
       credentials: 'include',

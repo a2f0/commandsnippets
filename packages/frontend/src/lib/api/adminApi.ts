@@ -35,7 +35,7 @@ import {
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
-import {handleUnauthorized} from '../auth/authUtils';
+import {handleUnauthorized, signedInUser} from '../auth/authUtils';
 import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {isSignedOutResponse} from './fetchWithAuth';
@@ -169,6 +169,7 @@ async function adminFetch(
   path: string,
   init: RequestInit = {}
 ): Promise<unknown> {
+  const user = signedInUser();
   const response = await fetch(`${baseURL}/admin${path}`, {
     ...init,
     credentials: 'include',
@@ -184,7 +185,7 @@ async function adminFetch(
   }
   // The same sign-out rule as every other API call (fetchWithAuth).
   if (isSignedOutResponse(response.status, code)) {
-    handleUnauthorized();
+    handleUnauthorized(user);
   }
   throw new AdminApiError(response.status, detail ?? response.statusText);
 }

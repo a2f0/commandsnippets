@@ -1,8 +1,13 @@
 import {act, render, screen} from '@testing-library/react';
 import {Dexie} from 'dexie';
+import invariant from 'invariant';
 import {useEffect} from 'react';
 import {describe, expect, it, vi} from 'vitest';
 import {apiClient, UserMismatchError} from '../../../../src/lib/api/apiClient';
+import {
+  CommandsnippetsDatabase,
+  databaseName,
+} from '../../../../src/lib/db/database';
 import {
   defaultSavedState,
   leaveForeignSession,
@@ -14,6 +19,7 @@ import {
 } from '../../../../src/lib/state/appState';
 import {syncSession} from '../../../../src/lib/sync/session';
 import {signIn, store, TEST_USER} from '../../../util/signIn';
+import {tag} from '../../../util/storeFixtures';
 
 describe('the app state', () => {
   it('saves the signed-in user and their preferences, nothing else', () => {
@@ -31,12 +37,29 @@ describe('the app state', () => {
     });
   });
 
-  it("removes the retired MobX-State-Tree snapshots, with the user's snippets in them", async () => {
-    for (const key of RETIRED_STORAGE_KEYS) {
-      localStorage.setItem(key, '{"textEntries":[{"subject":"private"}]}');
-    }
+  it("removes the retired MobX-State-Tree snapshots, and the named user's database first", async () => {
+    // What that app saved: the signed-in user and their snippets, and the
+    // database its sync kept for them.
+    const [current, renamed] = RETIRED_STORAGE_KEYS;
+    invariant(current && renamed, 'two retired keys');
+    localStorage.setItem(
+      current,
+      JSON.stringify({
+        loggedInUser: 'olduser',
+        textEntries: [{subject: 'private'}],
+      })
+    );
+    localStorage.setItem(renamed, 'not JSON');
+    const name = databaseName('test', 'olduser');
+    const old = new CommandsnippetsDatabase(name);
+    await old.tags.put(tag('1', {name: 'private'}));
+    old.close();
+
     vi.resetModules();
-    await import('../../../../src/lib/state/appState');
+    const reloaded = await import('../../../../src/lib/state/appState');
+    await reloaded.retiredSnapshotsRemoved;
+
+    expect(await Dexie.exists(name)).toBe(false);
     for (const key of RETIRED_STORAGE_KEYS) {
       expect(localStorage.getItem(key)).toBeNull();
     }

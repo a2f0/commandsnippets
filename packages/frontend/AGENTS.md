@@ -109,7 +109,7 @@ API; everything else the app keeps is a zustand store.
 - **Writes**: `src/lib/data/writes.ts` calls the API, then stores what it
   answered (`putResources`). Every write names the signed-in user
   (`X-Expected-User`, api-shared's `EXPECTED_USER_HEADER`; set by
-  `apiClient.setActingUser`), and the API refuses it when the cookie is
+  `authUtils.signedInUser`), and the API refuses it when the cookie is
   another user's (409 `user_mismatch`: `UserMismatchError`, and the tab
   leaves the session). A write answered with no body
   (untagging, deleting an entry, reordering) marks the row deleted unless a
@@ -152,8 +152,9 @@ API; everything else the app keeps is a zustand store.
   error `code` (`src/lib/api/errorDocument.ts`) is `not_authenticated` or
   `authentication_failed` or that has no code; other 403s
   (`permission_denied`, `origin_not_allowed`) keep the session, and so does
-  any OK response, whatever its body. `appState.ts` registers
-  `resetApplicationState` as the handler. `authUtils` must not import the
+  any OK response, whatever its body. `appState.ts` registers the handler:
+  `resetApplicationState`, when the request was sent as the user still
+  signed in (a late answer to a session the tab has left changes nothing). `authUtils` must not import the
   store: the store imports the sync, which imports the API client, so that
   would be an import cycle.
 

@@ -250,6 +250,30 @@ describe('Signing out when the API says the session is gone', () => {
     expect(store.loggedInUser).toBeNull();
   });
 
+  it("leaves the user this tab has taken up since when an earlier user's answer is late", async () => {
+    let sent = false;
+    let answer = () => {};
+    server.use(
+      http.get(`${API}/tags`, async () => {
+        sent = true;
+        await new Promise<void>(resolve => {
+          answer = resolve;
+        });
+        return HttpResponse.json({errors: []}, {status: 401});
+      })
+    );
+    const read = apiClient.getTagsAfter(CURSOR_START);
+    await vi.waitFor(() => expect(sent).toBe(true));
+
+    // Meanwhile this tab takes up another tab's sign-in.
+    act(() => store.setLoggedInUser('someone-else'));
+    answer();
+
+    await expect(read).rejects.toThrow('Unauthorized');
+    expect(store.loggedInUser).toBe('someone-else');
+    expect(store.selectedTheme).toBe('lightTheme');
+  });
+
   it("keeps the session when an entry is someone else's", async () => {
     server.use(
       http.patch(`${API}/entries/7`, () =>
