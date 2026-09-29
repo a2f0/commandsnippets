@@ -96,12 +96,14 @@ Run these from `packages/frontend`.
   one its cursor holds; otherwise (and when a tags sync moves the revision of
   the tag shown) `EntryList` syncs the tag in the background and lists it
   again only if a sync changed the store since it listed it (the store's
-  volatile `storeVersion`, which any sync advances). A tag whose store holds
-  more entries than its `entry_count` lost some elsewhere, which a diff cannot
-  list: it is read whole and the links it no longer has are dropped. The
-  app's own writes that the store does not reflect (a reorder) sync the tag
-  with `force`. `Entry` and `Tag` show a newer revision of their resource
-  when a sync lists one.
+  volatile `storeVersion`, which any sync advances). A tag's first sync reads
+  it whole (`filter[tags.id]`) and drops the links to it the read lacks;
+  later ones read every entry changed since (no tag filter: an entry that
+  left the tag changed too) and drop the links each entry's
+  `text_entry_to_tag` no longer lists. The app's own writes that the store
+  does not reflect (a reorder) sync the tag with `force`, and tagging stores
+  the entry and tag its response includes. `Entry` and `Tag` show a newer
+  revision of their resource when a sync lists one.
 - **Signing out when the session is gone**: `fetchWithAuth`
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API

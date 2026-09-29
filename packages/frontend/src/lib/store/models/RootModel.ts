@@ -216,6 +216,38 @@ export const RootModel = types
       return changed;
     },
     /**
+     * Drop the store's links of each entry in `collection` that the entry's
+     * `text_entry_to_tag` (all of its junctions) no longer lists. Returns
+     * whether any went.
+     */
+    pruneEntryJunctions(collection: ResourceCollection) {
+      const linked = new Map<string, Set<string>>();
+      for (const element of collection) {
+        if (
+          element.type === 'TextEntry' &&
+          'text_entry_to_tag' in element.relationships
+        ) {
+          linked.set(
+            element.id,
+            new Set(
+              element.relationships.text_entry_to_tag.data.map(({id}) => id)
+            )
+          );
+        }
+      }
+      const stale = self.tagTextEntryThroughModel.filter(junction => {
+        const junctions = linked.get(junction.relationships.text_entry.data.id);
+        return junctions !== undefined && !junctions.has(junction.id);
+      });
+      for (const junction of stale) {
+        destroy(junction);
+      }
+      if (stale.length > 0) {
+        self.storeVersion += 1;
+      }
+      return stale.length > 0;
+    },
+    /**
      * Drop the store's links to tag `tagId` that `collection`, all of the
      * tag's entries with their junctions, no longer has. Returns whether any
      * went.
@@ -273,42 +305,28 @@ export const RootModel = types
       if (!force && cursor?.tag === revision) {
         return false;
       }
+      // The first time, the tag's entries whole (dropping the links to it
+      // they do not have); after that, every entry changed since, whatever
+      // its tags are now: an entry that left the tag changed too (untagging
+      // advances it), and each lists all of its junctions.
       const since = cursor?.entries ?? null;
       const changes: IncludedResource[] = yield TextEntryHelpers.fetch(
         [],
         user,
-        tagId,
+        since === null ? tagId : null,
         1,
         since,
         null
       );
       let changed = self.reconcileCollection(changes);
-      let entries = syncedThrough(changes, 'TextEntry', since);
-
-      // Changes list no entry that left the tag. More entries linked to it
-      // here than it counts means some did: read the tag whole, and drop the
-      // links it no longer has.
-      const linked = self.tagTextEntryThroughModel.filter(
-        junction => junction.relationships.tag.data.id === tagId
-      ).length;
-      const counted = self.tagsArray.find(candidate => candidate.id === tagId)
-        ?.attributes.entry_count;
-      if (counted !== undefined && linked > counted) {
-        const all: IncludedResource[] = yield TextEntryHelpers.fetch(
-          [],
-          user,
-          tagId,
-          1,
-          null,
-          null
-        );
-        changed = self.reconcileCollection(all) || changed;
-        changed = self.pruneTagJunctions(tagId, all) || changed;
-        entries = syncedThrough(all, 'TextEntry', entries);
+      changed = self.pruneEntryJunctions(changes) || changed;
+      if (since === null) {
+        changed = self.pruneTagJunctions(tagId, changes) || changed;
       }
+      const entries = syncedThrough(changes, 'TextEntry', since);
 
-      // The revision read before the requests: one the tag reached while
-      // they ran may cover changes they missed, so it is synced next time.
+      // The revision read before the request: one the tag reached while it
+      // ran may cover changes it missed, so it is synced next time.
       self.tagSyncCursors.set(tagId, {tag: revision, entries});
       return changed;
     }),

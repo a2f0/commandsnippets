@@ -141,7 +141,14 @@ const Entry = ({
               apiClient
                 .tagEntry(dropResult.id, findEntry(id).entry.id)
                 .then(resp => {
-                  appConfig.updateOrCreateTagTextEntryThroughModel(resp.data);
+                  // The junction, and the entry and tag as they are now: the
+                  // entry may be one the store does not hold (from the
+                  // untagged or all list), and the tag's next listing may be
+                  // from the store alone.
+                  appConfig.reconcileCollection([
+                    resp.data,
+                    ...(resp.included ?? []),
+                  ]);
                 })
                 .catch((error: unknown) => {
                   console.error('Failed to tag entry:', error);

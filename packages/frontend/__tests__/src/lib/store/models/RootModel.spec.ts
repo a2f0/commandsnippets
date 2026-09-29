@@ -186,6 +186,7 @@ describe('syncTagEntries', () => {
     expect(requests[0]?.get('filter[date_updated.gt]')).toBe(
       '2024-01-02T00:00:00'
     );
+    expect(requests[0]?.has('filter[tags.id]')).toBe(false);
     expect(store.textEntriesArray[0]?.attributes.subject).toBe('edited');
 
     // A newer revision whose changes the store holds already.
@@ -223,9 +224,11 @@ describe('syncTagEntries', () => {
     );
   });
 
-  it('drops the links of entries that left the tag', async () => {
+  it('drops the links of entries that left the tag, whatever its count says', async () => {
+    // Imported data can count another user's junction in a user's tag, which
+    // no read of theirs lists.
     const store = createStore([
-      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 2}),
+      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 3}),
     ]);
     const entries = [
       apiEntry('10', '2024-01-02T00:00:00', [tagged]),
@@ -237,24 +240,47 @@ describe('syncTagEntries', () => {
     await store.syncTagEntries('test', 'tag-1');
     expect(store.tagTextEntryThroughModel).toHaveLength(2);
 
-    // Entry 11 was untagged elsewhere: no change lists it any more.
+    // Entry 11 was untagged elsewhere, which advanced it and the tag. The
+    // changes are every entry changed since, whatever its tags are now.
     store.updateOrCreateTag(
-      tag('1', {date_updated: '2024-02-01T00:00:00', entry_count: 1})
+      tag('1', {date_updated: '2024-02-01T00:00:00', entry_count: 2})
     );
-    serveEntries((query, url) =>
-      query.has('filter[date_updated.gt]')
-        ? entriesDocument(url, [], [])
-        : entriesDocument(url, [entries[0] as TextEntry], [tagged])
+    serveEntries((_query, url) =>
+      entriesDocument(url, [apiEntry('11', '2024-02-01T00:00:00')], [])
     );
     expect(await store.syncTagEntries('test', 'tag-1')).toBe(true);
-    expect(requests.map(query => query.has('filter[date_updated.gt]'))).toEqual(
-      [true, false]
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.has('filter[tags.id]')).toBe(false);
+    expect(requests[0]?.get('filter[date_updated.gt]')).toBe(
+      '2024-01-03T00:00:00'
     );
     expect(store.tagTextEntryThroughModel.map(link => link.id)).toEqual([
       '100',
     ]);
     // The entry stays: it can be in other tags, or untagged.
     expect(store.textEntriesArray).toHaveLength(2);
+  });
+
+  it('drops the links to a tag that its first sync does not list', async () => {
+    // Links stored before the tag had a cursor (an older snapshot).
+    const store = createStore([
+      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 1}),
+    ]);
+    store.reconcileCollection([
+      apiEntry('11', '2023-01-01T00:00:00', [alsoTagged]),
+      alsoTagged,
+    ]);
+    serveEntries((_query, url) =>
+      entriesDocument(
+        url,
+        [apiEntry('10', '2024-01-02T00:00:00', [tagged])],
+        [tagged]
+      )
+    );
+    expect(await store.syncTagEntries('test', 'tag-1')).toBe(true);
+    expect(store.tagTextEntryThroughModel.map(link => link.id)).toEqual([
+      '100',
+    ]);
   });
 
   it('syncs a tag whose revision has not moved when forced', async () => {

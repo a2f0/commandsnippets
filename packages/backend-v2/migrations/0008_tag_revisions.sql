@@ -1,7 +1,8 @@
 -- A tag's revision (date_updated) advances whenever anything clients sync
--- through the tag changes. Clients sync a tag's entries with
--- `GET /entries?filter[tags.id]=<tag>&filter[date_updated.gt]=<cursor>`, and
--- skip that request while the tag's revision (from
+-- through the tag changes. Clients read a tag's entries once
+-- (`GET /entries?filter[tags.id]=<tag>`), then the entries changed since
+-- (`filter[date_updated.gt]=<cursor>`, which lists an entry that left the tag
+-- too), and skip that request while the tag's revision (from
 -- `GET /tags?filter[date_updated.gt]=...`) is the one they last synced it at.
 -- So a tag advances when:
 -- - one of its entries advances (an edit, a soft delete, and the entry touches

@@ -175,10 +175,10 @@ Deliberate changes, by area. The admin API is new; see
   entries advances (an edit, a soft delete, or any of the junction writes
   above), an entry leaves it, or its counters change, so does the tag
   (`0008_tag_revisions.sql`, triggers in the same statement as the write).
-  The web client syncs a tag's entries (`filter[tags.id]` and
-  `filter[date_updated.gt]`) only when the tag's revision from the tags sync
-  is newer than the one it last synced them at; Django only advanced a tag
-  when the tag itself was edited.
+  The web client reads a tag's entries (`filter[tags.id]`) once, then syncs
+  the entries changed since (`filter[date_updated.gt]`) only when the tag's
+  revision from the tags sync is newer than the one it last synced them at;
+  Django only advanced a tag when the tag itself was edited.
 - **Search folds Unicode in the app.** D1's SQLite has no ICU, so
   `filter[search]` compares against `subject_folded`/`body_folded`, written by
   every entry write path and the import (`src/lib/search.ts`). Anything that

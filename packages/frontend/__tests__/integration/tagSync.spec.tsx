@@ -6,7 +6,8 @@
  * view.
  */
 import type {TagTextEntry, TextEntry} from '@commandsnippets/api-shared';
-import {act, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {applySnapshot} from 'mobx-state-tree';
@@ -191,10 +192,11 @@ describe('Selecting a tag', () => {
 
     await screen.findByText('entry-1-edited');
     expect(getEntries).toHaveBeenCalledTimes(1);
+    // Every entry changed since the tag's last sync, whatever its tags.
     expect(getEntries.mock.calls[0]?.[0]).toMatchObject({
-      'filter[tags.id]': 1,
       'filter[date_updated.gt]': '2021-03-19T18:20:00',
     });
+    expect(getEntries.mock.calls[0]?.[0]).not.toHaveProperty('filter[tags.id]');
     expect(screen.getAllByRole('entry')).toHaveLength(4);
   });
 
@@ -308,14 +310,15 @@ describe('Selecting a tag', () => {
     await settle();
 
     // Entry 1 was edited elsewhere: both tags advanced. Each tag's changes
-    // come back when let through.
-    const gates = {'1': gate(), '2': gate()};
+    // (test-tag-2's asked for first) come back when let through.
+    const gates = [gate(), gate()];
+    let asked = 0;
     server.use(
       tagsAdvanced(fixtureTag1, tag2),
       http.get(`${API}/entries`, async ({request}) => {
-        const tagId = new URL(request.url).searchParams.get('filter[tags.id]');
-        invariant(tagId === '1' || tagId === '2', 'a tag sync');
-        await gates[tagId].opened;
+        const answer = gates[asked++];
+        invariant(answer, 'one sync of each tag');
+        await answer.opened;
         return HttpResponse.json({
           ...onePage(request.url, 1),
           data: [inBoth(editedEntry1)],
@@ -330,16 +333,125 @@ describe('Selecting a tag', () => {
     expect(screen.getByText('entry-1-subject')).toBeInTheDocument();
 
     // test-tag-2's sync stores the edit; test-tag-1's then finds it stored.
-    gates['2'].open();
+    await waitFor(() => expect(asked).toBe(2));
+    gates[0]?.open();
     await waitFor(() =>
       expect(
         store.textEntriesArray.find(entry => entry.id === '1')?.attributes
           .subject
       ).toBe('entry-1-edited')
     );
-    gates['1'].open();
+    gates[1]?.open();
 
     await screen.findByText('entry-1-edited');
+  });
+
+  it('lists an entry tagged from the untagged list in a synced tag', async () => {
+    const user = userEvent.setup();
+    const untagged: TextEntry = {
+      ...fixtureEntry1,
+      id: '9',
+      attributes: {
+        ...fixtureEntry1.attributes,
+        subject: 'entry-9-subject',
+        body: 'entry-9-body',
+        tag_count: 0,
+      },
+      relationships: {
+        ...fixtureEntry1.relationships,
+        text_entry_to_tag: {data: [], meta: {count: 0}},
+      },
+    };
+    const junction9: TagTextEntry = {
+      ...fixtureJunction1,
+      id: '9',
+      relationships: {
+        ...fixtureJunction1.relationships,
+        tag: {data: {type: 'Tag', id: '2'}},
+        text_entry: {data: {type: 'TextEntry', id: '9'}},
+      },
+    };
+    const tagged: TextEntry = {
+      ...untagged,
+      attributes: {
+        ...untagged.attributes,
+        tag_count: 1,
+        date_updated: '2030-01-01T00:00:00',
+      },
+      relationships: {
+        ...untagged.relationships,
+        text_entry_to_tag: {
+          data: [{type: 'TagTextEntryThroughModel', id: '9'}],
+          meta: {count: 1},
+        },
+      },
+    };
+    const owner = tagsResponse.included?.[0];
+    invariant(owner, 'the fixture has the user');
+    server.use(
+      http.get(`${API}/entries`, ({request}) => {
+        const query = new URL(request.url).searchParams;
+        return HttpResponse.json(
+          query.get('filter[tag_count]') === '0'
+            ? {...onePage(request.url, 1), data: [untagged], included: [owner]}
+            : {...onePage(request.url, 0), data: []}
+        );
+      }),
+      http.post(`${API}/tags_entries`, () =>
+        HttpResponse.json(
+          {
+            data: junction9,
+            included: [
+              {
+                ...fixtureTag2,
+                attributes: {
+                  ...fixtureTag2.attributes,
+                  entry_count: 1,
+                  date_updated: '2030-01-01T00:00:00',
+                },
+              },
+              tagged,
+              owner,
+            ],
+          },
+          {status: 201}
+        )
+      )
+    );
+    const history = createMemoryHistory();
+    history.push('/test/test-tag-2');
+    const {rerender} = render(<TestAppRouter history={history} />);
+    const show = (route: string) =>
+      act(() => {
+        history.push(route);
+        rerender(<TestAppRouter history={history} />);
+      });
+    await waitFor(() => expect(store.tagSyncCursors.has('2')).toBe(true));
+    show('/test?entries=untagged');
+    await screen.findByText('entry-9-subject');
+
+    // Drag it onto test-tag-2.
+    const [handleContainer] = screen.getAllByRole('entryDragHandleContainer');
+    invariant(handleContainer, 'the entry has a drag handle');
+    await user.pointer({target: handleContainer});
+    const tags = screen.getAllByRole('tag');
+    await act(async () => {
+      fireEvent.dragStart(screen.getByRole('entryDragHandle'));
+      invariant(tags[1], 'test-tag-2 is listed');
+      fireEvent.dragEnter(tags[1]);
+      fireEvent.dragOver(tags[1]);
+      await new Promise(resolve => setTimeout(resolve, 0));
+      fireEvent.drop(tags[1]);
+    });
+    await waitFor(() =>
+      expect(
+        store.tagTextEntryThroughModel.some(junction => junction.id === '9')
+      ).toBe(true)
+    );
+
+    // Listed at once, from the store.
+    show('/test/test-tag-2');
+    expect(screen.getByText('entry-9-subject')).toBeInTheDocument();
   });
 
   it('shows a tag the tags sync brings a newer revision of', async () => {
