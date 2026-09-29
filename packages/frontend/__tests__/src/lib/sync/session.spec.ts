@@ -1,5 +1,5 @@
 import Dexie from 'dexie';
-import {afterEach, describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 
 import {
   CommandsnippetsDatabase,
@@ -41,5 +41,19 @@ describe('syncSession', () => {
 
     await endSyncSession('dave');
     expect(await Dexie.exists(name)).toBe(false);
+  });
+
+  it('opens anew after another tab deleted the database', async () => {
+    const first = syncSession('erin');
+    await first.db.cursors.put({key: 'tags', after: '1970-01-01T00:00:00,0'});
+    // Another tab signs erin out: its deletion closes this tab's connection.
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await Dexie.delete(first.db.name);
+    expect(first.db.isOpen()).toBe(false);
+
+    const again = syncSession('erin');
+    expect(again).not.toBe(first);
+    await again.db.cursors.put({key: 'tags', after: '1970-01-01T00:00:00,0'});
+    expect(await again.db.cursors.count()).toBe(1);
   });
 });

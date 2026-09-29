@@ -1,3 +1,4 @@
+import {Dexie} from 'dexie';
 import {applySnapshot, getSnapshot} from 'mobx-state-tree';
 import {
   afterAll,
@@ -8,10 +9,10 @@ import {
   it,
   vi,
 } from 'vitest';
-
 import {defaultState} from '../../../../src/lib/shared';
 import {RootModel} from '../../../../src/lib/store/models/RootModel';
-import {store} from '../../../../src/lib/store/store';
+import {resetApplicationState, store} from '../../../../src/lib/store/store';
+import {syncSession} from '../../../../src/lib/sync/session';
 
 // The store is saved to localStorage, and a snapshot that fails to load is
 // replaced with the default state, which logs the user out. Snapshots saved
@@ -29,6 +30,41 @@ describe('isStaff', () => {
 
     expect(store.loggedInUser).toBe('dan');
     expect(store.isStaff).toBe(false);
+  });
+});
+
+// However the user leaves, their IndexedDB data goes: the menu's sign-out
+// (resetApplicationState), the cookie gone (EntriesPage), another sign-in.
+describe('signing out', () => {
+  afterEach(() => {
+    applySnapshot(store, defaultState);
+  });
+
+  const hasData = async (username: string) => {
+    const {db} = syncSession(username);
+    await db.cursors.put({key: 'tags', after: '1970-01-01T00:00:00,0'});
+    return db.name;
+  };
+  const gone = (name: string) =>
+    vi.waitFor(async () => expect(await Dexie.exists(name)).toBe(false));
+
+  it('deletes the IndexedDB data when the username is cleared', async () => {
+    store.setLoggedInUser('frank');
+    const name = await hasData('frank');
+    store.setLoggedInUser(null);
+    await gone(name);
+  });
+
+  it('deletes it on resetApplicationState, and on another sign-in', async () => {
+    store.setLoggedInUser('grace');
+    const grace = await hasData('grace');
+    resetApplicationState();
+    await gone(grace);
+
+    store.setLoggedInUser('heidi');
+    const heidi = await hasData('heidi');
+    store.setLoggedInUser('ivan');
+    await gone(heidi);
   });
 });
 

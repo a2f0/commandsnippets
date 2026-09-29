@@ -1,3 +1,4 @@
+import {type IReactionDisposer, reaction} from 'mobx';
 import type {IDisposer, Instance} from 'mobx-state-tree';
 import {applySnapshot, destroy, onSnapshot} from 'mobx-state-tree';
 import {setUnauthorizedHandler} from '../auth/authUtils';
@@ -57,6 +58,7 @@ if (localStorateState !== null) {
 }
 
 let snapshotListener: IDisposer;
+let signOutListener: IReactionDisposer | undefined;
 
 // Merge in the default state to incorporate any new configuraiton options
 function mergeInDefaultState(state: appState) {
@@ -90,17 +92,30 @@ export function createAppStateStore(
   snapshotListener = onSnapshot(store, snapshot => {
     localStorage.setItem(localStorageKey, JSON.stringify(snapshot));
   });
+
+  // A user's IndexedDB data goes with them, however they leave: the menu,
+  // the cookie gone, a session the API ended, another sign-in.
+  signOutListener?.();
+  const signedIn = store;
+  signOutListener = reaction(
+    () => signedIn.loggedInUser,
+    (user, previous) => {
+      if (previous !== null && user !== previous) {
+        endSyncSession(previous).catch((error: unknown) => {
+          console.error('ERROR: could not delete the IndexedDB data:', error);
+        });
+      }
+    }
+  );
   return store;
 }
 
-/** Sign out of the app: put every stored setting back to its default. */
+/**
+ * Sign out of the app: put every stored setting back to its default (which
+ * deletes the user's IndexedDB data, see createAppStateStore).
+ */
 export function resetApplicationState() {
-  const username = store.loggedInUser;
   applySnapshot(store, defaultState);
-  // The signed-in user's IndexedDB data goes with them.
-  endSyncSession(username).catch((error: unknown) => {
-    console.error('ERROR: could not delete the IndexedDB data:', error);
-  });
 }
 
 let store: ReturnType<typeof createAppStateStore>;

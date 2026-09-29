@@ -16,12 +16,22 @@ export interface SyncSession {
 
 let session: SyncSession | null = null;
 
-/** `username`'s session, opening it (and closing another user's). */
+/**
+ * `username`'s session, opening it (and closing another user's). A session
+ * ends when another tab deletes or upgrades its database (a sign-out there):
+ * the next is opened anew.
+ */
 export function syncSession(username: string): SyncSession {
-  if (session?.username !== username) {
+  if (session?.username !== username || session.db.hasBeenClosed()) {
     session?.db.close();
     const name = databaseName(environment, username);
     const db = new CommandsnippetsDatabase(name);
+    // Dexie closes the connection then (its own listener).
+    db.on('versionchange', () => {
+      if (session?.db === db) {
+        session = null;
+      }
+    });
     session = {
       username,
       db,
