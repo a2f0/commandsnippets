@@ -9,6 +9,12 @@ import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {TagHelpers, type TagModel} from '../../lib/store/models/TagModel';
 import {TagList} from './TagList';
 
+/**
+ * The least time between tags syncs run because the app came back into view:
+ * switching away and straight back asks the API nothing.
+ */
+export const TAGS_REFRESH_INTERVAL_MS = 30_000;
+
 export interface IUser {
   id: number;
   type: string;
@@ -69,6 +75,31 @@ const TagListWrapper = () => {
       });
     }
   }, [appConfig.tagSortOrder, userName]);
+
+  // Changes made elsewhere reach the app through the tags sync (selecting a
+  // tag asks the API nothing while its revision holds), so sync the tags
+  // again when the app comes back into view.
+  useEffect(() => {
+    if (userName === undefined) {
+      return undefined;
+    }
+    const refresh = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        Date.now() - appConfig.tagsSyncedAt >= TAGS_REFRESH_INTERVAL_MS
+      ) {
+        appConfig.fetchTags(userName).catch(() => {
+          // fetchTags logs it; the next return into view retries.
+        });
+      }
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [appConfig, userName]);
 
   useEffect(
     () =>

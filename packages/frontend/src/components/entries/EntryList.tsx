@@ -88,19 +88,23 @@ const EntryList = () => {
    * List the tag's entries the store holds, at once, then sync them in the
    * background whenever the tag's revision moves past the one they were
    * synced at (on the first visit, and when a tags sync brings a newer one),
-   * listing them again only when the sync changed the store. Returns the
-   * cleanup, after which a sync still running no longer lists anything.
+   * listing them again only when a sync changed the store since they were
+   * listed: this one, or another that stored the same changes first (a sync
+   * in flight when the tag was shown, or another tag's that shares entries).
+   * Returns the cleanup, after which a sync still running lists nothing.
    */
   const showTag = (user: string, tag: string) => {
     filterAndSort();
+    let listed = appConfig.storeVersion;
     let showing = true;
     const dispose = reaction(
       () => appConfig.findTag(user, tag)?.attributes.date_updated,
       () => {
         appConfig
           .syncTagEntries(user, tag)
-          .then(changed => {
-            if (showing && changed) {
+          .then(() => {
+            if (showing && appConfig.storeVersion !== listed) {
+              listed = appConfig.storeVersion;
               filterAndSort();
             }
           })

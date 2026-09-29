@@ -88,16 +88,20 @@ Run these from `packages/frontend`.
   cursors it keeps in the snapshot and that only syncs move (the app's own
   writes store newer revisions, which must not skip another client's older
   changes): `tagsSyncedThrough` for the tags (`fetchTags`, when the tag list
-  loads), and `tagSyncCursors` for each tag's entries (`syncTagEntries`).
-  The API advances a tag's revision whenever one of its entries changes,
-  joins or leaves it, so selecting a tag lists its entries from the store at
-  once and requests nothing while the tag's revision is the one its cursor
-  holds; otherwise `EntryList` syncs the tag in the background and lists it
-  again only if the store changed. A tag whose store holds more entries than
-  its `entry_count` lost some elsewhere, which a diff cannot list: it is read
-  whole and the links it no longer has are dropped. The app's own writes that
-  the store does not reflect (a reorder) sync the tag with `force`. `Entry`
-  and `Tag` show a newer revision of their resource when a sync lists one.
+  loads and when the app comes back into view, at most every 30 seconds:
+  `TagListWrapper`), and `tagSyncCursors` for each tag's entries
+  (`syncTagEntries`). The API advances a tag's revision whenever one of its
+  entries changes, joins or leaves it, so selecting a tag lists its entries
+  from the store at once and requests nothing while the tag's revision is the
+  one its cursor holds; otherwise (and when a tags sync moves the revision of
+  the tag shown) `EntryList` syncs the tag in the background and lists it
+  again only if a sync changed the store since it listed it (the store's
+  volatile `storeVersion`, which any sync advances). A tag whose store holds
+  more entries than its `entry_count` lost some elsewhere, which a diff cannot
+  list: it is read whole and the links it no longer has are dropped. The
+  app's own writes that the store does not reflect (a reorder) sync the tag
+  with `force`. `Entry` and `Tag` show a newer revision of their resource
+  when a sync lists one.
 - **Signing out when the session is gone**: `fetchWithAuth`
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API

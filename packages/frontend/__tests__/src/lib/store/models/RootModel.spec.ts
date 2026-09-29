@@ -289,7 +289,7 @@ describe('syncTagEntries', () => {
     expect(store.tagTextEntryThroughModel[0]?.attributes.order).toBe(7);
   });
 
-  it('runs one sync of a tag at a time, each reporting the changes it waited for', async () => {
+  it('runs one sync of a tag at a time', async () => {
     const store = createStore([
       tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 1}),
     ]);
@@ -304,8 +304,8 @@ describe('syncTagEntries', () => {
       store.syncTagEntries('test', 'tag-1'),
       store.syncTagEntries('test', 'tag-1'),
     ]);
-    // The second waited for the first, and reports its changes.
-    expect(results).toEqual([true, true]);
+    // The second waited for the first, whose cursor it found current.
+    expect(results).toEqual([true, false]);
     expect(requests).toHaveLength(1);
   });
 

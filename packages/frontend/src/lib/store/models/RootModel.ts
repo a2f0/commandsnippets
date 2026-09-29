@@ -71,6 +71,12 @@ export const RootModel = types
     tagSearchString: string;
     tagSelectedID: string;
     appMode: appMode;
+    // Advances whenever a sync changes the store (reconcileCollection,
+    // pruneTagJunctions): a list shown from the store compares it to tell
+    // whether any sync, its own or another's, changed what it shows.
+    storeVersion: number;
+    // When the latest tags sync started (Date.now()), for pacing them.
+    tagsSyncedAt: number;
   }>(() => ({
     activeSearch: activeSearch.tags,
     activeEntryEditField: activeEntryEditField.subject,
@@ -82,6 +88,8 @@ export const RootModel = types
     tagSearchString: '',
     tagSelectedID: '',
     appMode: appMode.tagsList,
+    storeVersion: 0,
+    tagsSyncedAt: 0,
   }))
   .actions(self => ({
     // Each updateOrCreate returns whether it changed the store: a resource it
@@ -202,6 +210,9 @@ export const RootModel = types
           changed = self.updateOrCreateTag(element) || changed;
         }
       }
+      if (changed) {
+        self.storeVersion += 1;
+      }
       return changed;
     },
     /**
@@ -222,6 +233,9 @@ export const RootModel = types
       for (const junction of stale) {
         destroy(junction);
       }
+      if (stale.length > 0) {
+        self.storeVersion += 1;
+      }
       return stale.length > 0;
     },
   }))
@@ -229,6 +243,7 @@ export const RootModel = types
     /** Sync the user's tags changed since the last tags sync. */
     fetchTags: flow(function* fetchTags(user: string) {
       try {
+        self.tagsSyncedAt = Date.now();
         const since = self.tagsSyncedThrough;
         const collection: IncludedResource[] = yield TagHelpers.fetch(
           [],
@@ -447,13 +462,13 @@ export const RootModel = types
     return {
       /**
        * Sync the entries of `user`'s tag `name` into the store, and return
-       * whether the store changed meanwhile. The API advances a tag's
-       * revision whenever one of its entries changes, joins or leaves it, so
-       * nothing is requested while the tag's revision is the one it was last
-       * synced at (unless `force`: after a write of the app's own that the
-       * store does not reflect, such as a reorder). Otherwise only the
-       * entries changed since the last sync are read. The tag's revision
-       * comes from the tags sync (`fetchTags`).
+       * whether this sync changed it. The API advances a tag's revision
+       * whenever one of its entries changes, joins or leaves it, so nothing
+       * is requested while the tag's revision is the one it was last synced
+       * at (unless `force`: after a write of the app's own that the store
+       * does not reflect, such as a reorder). Otherwise only the entries
+       * changed since the last sync are read. The tag's revision comes from
+       * the tags sync (`fetchTags`).
        */
       syncTagEntries(user: string, name: string, force = false) {
         const tag = self.findTag(user, name);
@@ -462,14 +477,10 @@ export const RootModel = types
         }
         const tagId = tag.id;
         // After the tag's sync in flight, whose failure its caller handles:
-        // this one then starts from the cursor that one left, and reports
-        // that one's changes too (its caller may no longer list them).
+        // this one then starts from the cursor that one left.
         const sync = (tagSyncs.get(tagId) ?? Promise.resolve(false))
           .catch(() => false)
-          .then(
-            async earlier =>
-              (await self.runTagSync(user, tagId, force)) || earlier
-          );
+          .then(() => self.runTagSync(user, tagId, force));
         tagSyncs.set(tagId, sync);
         const settled = () => {
           if (tagSyncs.get(tagId) === sync) {
