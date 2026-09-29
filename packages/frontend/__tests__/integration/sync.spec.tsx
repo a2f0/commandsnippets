@@ -166,6 +166,18 @@ describe('The entries page', () => {
     expect(listed().some(text => text.includes('entry-2-subject'))).toBe(false);
   });
 
+  it("shows none of the last user's tags or entries once another signs in", async () => {
+    renderAt('/test/test-tag-1');
+    await waitFor(() => expect(listed()).toHaveLength(4));
+    expect(screen.queryAllByRole('tag')).not.toEqual([]);
+
+    // This tab takes up another tab's sign-in.
+    act(() => store.setLoggedInUser('someone-else'));
+
+    expect(listed()).toEqual([]);
+    expect(screen.queryAllByRole('tag')).toEqual([]);
+  });
+
   it('signs out when the API answers for another user', async () => {
     // Another tab signed in as someone else: the cookie is theirs now.
     server.use(
