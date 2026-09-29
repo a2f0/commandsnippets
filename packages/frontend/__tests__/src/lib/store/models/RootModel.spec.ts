@@ -492,9 +492,18 @@ describe('syncTagEntries', () => {
         return HttpResponse.json({
           ...pagination(request.url, number, 2, 2),
           data,
-          included: data.flatMap(entry =>
-            entry.id === '10' ? [tagged] : [alsoTagged]
-          ),
+          included: [
+            ...data.flatMap(entry =>
+              entry.id === '10' ? [tagged] : [alsoTagged]
+            ),
+            // The tag, which the edit advanced before the second page.
+            tag('1', {
+              date_updated:
+                requests.length === 1
+                  ? '2024-01-01T00:00:00'
+                  : '2024-02-01T00:00:00',
+            }),
+          ],
         });
       })
     );
@@ -559,6 +568,49 @@ describe('syncTagEntries', () => {
           ...pagination(request.url, number, 2, 4),
           data: answer.entries.map(id => entry(id, revisions[id] ?? '')),
           included: [...answer.entries.map(link), answer.tag],
+        });
+      })
+    );
+
+    await store.syncTagEntries('test', 'tag-1');
+    expect(requests).toHaveLength(4);
+    expect(store.tagTextEntryThroughModel.map(({id}) => id).sort()).toEqual([
+      '111',
+      '112',
+      '113',
+      '114',
+    ]);
+  });
+
+  it("reads a tag again when its last page's revision is not the one it began with", async () => {
+    const store = createStore([
+      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 4}),
+    ]);
+    const link = (id: string) => apiJunction(`1${id}`, '1', id);
+    const entry = (id: string) =>
+      apiEntry(id, `2024-01-0${Number(id) - 8}T00:00:00`, [link(id)]);
+    store.reconcileCollection([entry('12'), link('12')]);
+    // Entry 10 leaves the tag and 14 joins it after the first page's rows
+    // are read but before the tag it includes is: the pages agree on the
+    // tag's revision, and the first read skips entry 12.
+    const after = tag('1', {date_updated: '2024-02-01T00:00:00'});
+    const pages = [
+      ['10', '11'],
+      ['13', '14'],
+      ['11', '12'],
+      ['13', '14'],
+    ];
+    requests = [];
+    server.use(
+      http.get(`${API}/entries`, ({request}) => {
+        const query = new URL(request.url).searchParams;
+        requests.push(query);
+        const ids = pages[requests.length - 1];
+        invariant(ids, 'four pages');
+        return HttpResponse.json({
+          ...pagination(request.url, Number(query.get('page[number]')), 2, 4),
+          data: ids.map(entry),
+          included: [...ids.map(link), after],
         });
       })
     );

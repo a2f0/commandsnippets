@@ -167,9 +167,10 @@ writing its type by hand.
   client-side sorting and filtering of tags and entries. The syncs' fetches
   read every page with `src/lib/api/readPages.ts`, which reads a list again
   when its offset pages shifted while read (a row read twice, a total that
-  changed, or, for a tag's entries, a different revision of the tag, which
-  every page includes), since a skipped row would be pruned and passed by
-  the cursor; `src/lib/revisions.ts` compares the revisions the cursors hold.
+  changed, or, for a tag's entries read in several pages, a last page whose
+  included tag has another revision than the one the store held before the
+  read), since a skipped row would be pruned and passed by the cursor;
+  `src/lib/revisions.ts` compares the revisions the cursors hold.
 
 ### Local Database (Debug only)
 - `src/lib/db/` wraps a Dexie (IndexedDB) database that only the Debug menu's

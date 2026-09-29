@@ -75,20 +75,35 @@ describe('readPages', () => {
     expect(asked).toEqual([1, 2, 1]);
   });
 
-  it('reads the list again when the revision it reads changes between pages', async () => {
-    // A row left the list after page 1 and another joined: same total, no
-    // row read twice, yet one row skipped. The list's revision moved.
+  it('reads a list of several pages again unless it ends at the revision it began with', async () => {
+    // A row left the list and another joined while it was read: same total,
+    // no row read twice, yet one row skipped. The list's revision moved.
     const {asked, read} = answering([
       page(1, 2, 3, [tag1, tag2]),
       page(2, 2, 3, [tag3]),
       page(1, 2, 3, [tag2, tag3]),
       page(2, 2, 3, [tag1]),
     ]);
-    const revisions = ['r1', 'r2', 'r2', 'r2'];
+    // The revision each page includes: the pages of the first read were
+    // read before (r1) and after (r2) the change.
+    const revisions = ['r2', 'r2', 'r2', 'r2'];
     let pages = 0;
-    const result = await readPages(read, () => revisions[pages++]);
+    const result = await readPages(read, {
+      before: 'r1',
+      of: () => revisions[pages++],
+    });
     expect(result).toEqual([tag2, tag3, user, tag1, user]);
     expect(asked).toEqual([1, 2, 1, 2]);
+  });
+
+  it('takes a single page as it is', async () => {
+    const {asked, read} = answering([page(1, 1, 2, [tag1, tag2])]);
+    expect(await readPages(read, {before: 'r1', of: () => 'r2'})).toEqual([
+      tag1,
+      tag2,
+      user,
+    ]);
+    expect(asked).toEqual([1]);
   });
 
   it('fails when the list changes on every read', async () => {

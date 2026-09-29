@@ -364,7 +364,8 @@ export const RootModel = types
         user,
         since === null ? tagId : null,
         since,
-        null
+        null,
+        revision
       );
       let changed = self.reconcileCollection(changes);
       let doubtful = false;

@@ -2,7 +2,7 @@ import type {IncludedResource, Tag} from '@commandsnippets/api-shared';
 import type {Theme} from '@mui/material/styles';
 import type {RefObject} from 'react';
 import {apiClient} from './api/apiClient';
-import {readPages} from './api/readPages';
+import {type ListRevision, readPages} from './api/readPages';
 import type {EntriesQueryParams, IEntryFetchPage} from './api/requests/types';
 import type {
   ITagTextEntryThroughModelJsonApi,
@@ -309,46 +309,61 @@ export function sort(
  * The user's entries (tagged `tagId`, and with `tag_count` tags, when not
  * null) changed `since` (all when null), and the resources included with
  * them, from every page (see readPages). Entries leave a tag's list as well
- * as join it, so its pages are checked against the tag's revision, which
- * each page includes (every entry listed is in the tag), and which the API
- * advances whenever the tag's entries change, join or leave it.
+ * as join it, so a read of a tag's is checked against the tag's revision
+ * (`tagRevision`, known before the read), which every page includes (every
+ * entry listed is in the tag) and the API advances whenever the tag's
+ * entries change, join or leave it.
  */
 export function fetch(
   user: string,
   tagId: string | null,
   since: string | null,
-  tag_count: number | null
+  tag_count: number | null,
+  tagRevision?: string
 ): Promise<IncludedResource[]> {
-  return readPages(page => {
-    const params: EntriesQueryParams = {
-      'page[number]': page,
-      'filter[user.username]': user,
-      sort: 'date_updated',
-      include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
-    };
-    if (since !== null) {
-      params['filter[date_updated.gt]'] = since;
-    }
-    if (tagId !== null) {
-      params['filter[tags.id]'] = Number(tagId);
-    }
-    if (tag_count !== null) {
-      params['filter[tag_count]'] = tag_count;
-    }
-    return apiClient.getEntries(params);
-  }, tagRevision(tagId));
+  return readPages(
+    page => {
+      const params: EntriesQueryParams = {
+        'page[number]': page,
+        'filter[user.username]': user,
+        sort: 'date_updated',
+        include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
+      };
+      if (since !== null) {
+        params['filter[date_updated.gt]'] = since;
+      }
+      if (tagId !== null) {
+        params['filter[tags.id]'] = Number(tagId);
+      }
+      if (tag_count !== null) {
+        params['filter[tag_count]'] = tag_count;
+      }
+      return apiClient.getEntries(params);
+    },
+    listRevision(tagId, tagRevision)
+  );
 }
 
-/** The revision of tag `tagId` a page includes, for readPages. */
-const tagRevision =
-  (tagId: string | null) =>
-  (page: {included?: IncludedResource[] | undefined}) =>
-    tagId === null
-      ? undefined
-      : page.included?.find(
-          (resource): resource is Tag =>
-            resource.type === 'Tag' && resource.id === tagId
-        )?.attributes.date_updated;
+/**
+ * Tag `tagId`'s revision as a revision of its list of entries, for
+ * readPages: `before`, then as each page includes it.
+ */
+function listRevision(
+  tagId: string | null,
+  before: string | undefined
+): ListRevision | undefined {
+  if (tagId === null || before === undefined) {
+    return undefined;
+  }
+  return {
+    before,
+    of: page =>
+      page.included?.find(
+        (resource): resource is Tag =>
+          resource.type === 'Tag' && resource.id === tagId
+      )?.attributes.date_updated,
+  };
+}
 
 export function fetchPage({
   page,
