@@ -73,6 +73,7 @@ const adminUserListQuery = {
   sort: ADMIN_USER_SORT_FIELDS,
   search: 'supported',
   include: 'refused',
+  cursor: 'refused',
 } as const;
 
 export const adminUserListQuerySchema = listQuerySchema(adminUserListQuery);
@@ -94,6 +95,7 @@ const adminAuditLogListQuery = {
   sort: [],
   search: 'refused',
   include: 'refused',
+  cursor: 'refused',
 } as const;
 
 export const adminAuditLogListQuerySchema = listQuerySchema(

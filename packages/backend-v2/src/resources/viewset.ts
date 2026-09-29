@@ -8,7 +8,7 @@ import type {
   SearchMode,
   ListQuery as SharedListQuery,
 } from '@commandsnippets/api-shared';
-import {and, asc, count, eq, type SQL} from 'drizzle-orm';
+import {and, asc, count, eq, type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
@@ -16,8 +16,10 @@ import type * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
 import type {tags, textEntries, User} from '../db/schema';
 import type {AppEnv} from '../env';
+import {isoformat} from '../lib/clock';
 import {notFound, permissionDenied} from '../lib/errors';
 import {
+  cursorPagination,
   document,
   type FilterSpec,
   type ListQuery,
@@ -47,6 +49,14 @@ export interface CollectionQuery<
   ordering: NoInfer<OrderingSpec<S>>;
 }
 
+/** Revision order, for keyset pages (`page[after]`). */
+interface RevisionOrder<Row> {
+  dateUpdated: SQLiteColumn;
+  id: SQLiteColumn;
+  /** The cursor at a row: its rendered revision and id (api-shared's `cursorOf`). */
+  cursor: (row: Row) => string;
+}
+
 interface ListPageSpec<
   Row,
   F extends FilterSchemas,
@@ -57,18 +67,23 @@ interface ListPageSpec<
   where: (query: ListQuery) => SQL | undefined;
   /** The table counted for pagination. */
   table: SQLiteTable;
-  /** Read one page of rows. */
+  /** Where the query schema supports `page[after]`. */
+  revisions?: RevisionOrder<Row>;
+  /** Read one page of rows, in `orderBy` when given (a keyset page's). */
   fetch: (page: {
     query: ListQuery;
     where: SQL | undefined;
     limit: number;
     offset: number;
+    orderBy?: SQL[];
   }) => Promise<Row[]>;
 }
 
 /**
  * The list pipeline every collection shares: validate the query, count the
- * matching rows, 404 on a page past the end, then fetch the page.
+ * matching rows, 404 on a page past the end, then fetch the page. A keyset
+ * page (`page[after]`) instead reads the rows past its cursor in revision
+ * order, uncounted, and one more to tell whether a page follows.
  */
 export async function listPage<
   Row,
@@ -82,6 +97,32 @@ export async function listPage<
   const url = new URL(c.req.url);
   const query = parseListQuery(url, spec.query, spec.filters, spec.ordering);
   const where = spec.where(query);
+  if (query.after !== null) {
+    if (spec.revisions === undefined) {
+      throw new Error('page[after] needs a collection in revision order');
+    }
+    const {dateUpdated, id, cursor} = spec.revisions;
+    const rows = await spec.fetch({
+      query,
+      where: and(
+        where,
+        sql`(${dateUpdated}, ${id}) > (${query.after.dateUpdated}, ${query.after.id})`
+      ),
+      limit: query.pageSize + 1,
+      offset: 0,
+      orderBy: [asc(dateUpdated), asc(id)],
+    });
+    const page = rows.slice(0, query.pageSize);
+    const last = page.at(-1);
+    return {
+      query,
+      rows: page,
+      pagination: cursorPagination(
+        url,
+        rows.length > page.length && last !== undefined ? cursor(last) : null
+      ),
+    };
+  }
   const [total] = await c
     .get('db')
     .select({value: count()})
@@ -109,12 +150,20 @@ export function pageOrder(
   return [...(query.orderBy ?? defaults), tieBreaker];
 }
 
+/** A listed row: rows carry a revision where keyset pages are supported. */
+interface RevisedRow {
+  id: number;
+  date_updated: string;
+}
+
 interface ListOptions<
   F extends FilterSchemas,
   S extends string,
   Search extends SearchMode,
 > extends OwnedResource,
     CollectionQuery<F, S, Search> {
+  /** The rows' revision, for keyset pages (where the query supports them). */
+  dateUpdated?: SQLiteColumn;
   user: User;
   defaultOrdering: SQLiteColumn[];
   /** `filter[search]`, where the query schema supports it. */
@@ -146,22 +195,33 @@ export async function listResponse<
       }
       return and(...conditions);
     },
+    ...(options.dateUpdated === undefined
+      ? {}
+      : {
+          revisions: {
+            dateUpdated: options.dateUpdated,
+            id: options.id,
+            cursor: (row: RevisedRow) =>
+              `${isoformat(row.date_updated)},${row.id}`,
+          },
+        }),
     // The requested fields (or the model's Meta.ordering), then the primary
     // key.
-    fetch: async ({query, where, limit, offset}) =>
+    fetch: async ({query, where, limit, offset, orderBy}) =>
       (await db
         .select()
         .from(options.table)
         .where(where)
         .orderBy(
-          ...pageOrder(
-            query,
-            options.defaultOrdering.map(column => asc(column)),
-            asc(options.id)
-          )
+          ...(orderBy ??
+            pageOrder(
+              query,
+              options.defaultOrdering.map(column => asc(column)),
+              asc(options.id)
+            ))
         )
         .limit(limit)
-        .offset(offset)) as Array<{id: number}>,
+        .offset(offset)) as RevisedRow[],
   });
 
   const {data, included} = await serialize(

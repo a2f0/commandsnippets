@@ -18,6 +18,7 @@ const schema = listQuerySchema({
   sort: ['name', 'date_created'],
   search: 'supported',
   include: 'resolved',
+  cursor: 'supported',
 });
 
 /** The query string's pairs, in order. */
@@ -60,6 +61,7 @@ describe('listQuerySchema', () => {
       ],
       page: 2,
       pageSize: 10,
+      after: null,
       include: 'x.y',
     });
   });
@@ -71,6 +73,7 @@ describe('listQuerySchema', () => {
       sort: null,
       page: 1,
       pageSize: PAGE_SIZE,
+      after: null,
       include: null,
     });
     expect(parsed(schema, entries('sort=&include=&filter=1&page=1'))).toEqual(
@@ -197,6 +200,7 @@ describe('listQuerySchema', () => {
         sort: [],
         search,
         include: 'resolved',
+        cursor: 'refused',
       });
     expect(parsed(schema, entries('filter[search]=')).search).toBe('');
     expect(
@@ -218,6 +222,7 @@ describe('listQuerySchema', () => {
       sort: [],
       search: 'refused',
       include: 'refused',
+      cursor: 'refused',
     });
     expect(error('include=', refusing)).toEqual([
       'include is not supported here.',
@@ -232,5 +237,80 @@ describe('listQuerySchema', () => {
       404,
     ]);
     expect(parsed(refusing, []).include).toBeNull();
+  });
+
+  test('page[after]: a keyset cursor, on its own', () => {
+    expect(
+      parsed(
+        schema,
+        entries('page[after]=2024-01-01T12:34:56.5,7&page[size]=5')
+      )
+    ).toEqual(
+      expect.objectContaining({
+        after: {dateUpdated: '2024-01-01T12:34:56.500000', id: 7},
+        page: 1,
+        pageSize: 5,
+      })
+    );
+    expect(
+      parsed(schema, entries('page[after]=1970-01-01T00:00:00,0')).after
+    ).toEqual({dateUpdated: '1970-01-01T00:00:00.000000', id: 0});
+    // Filters narrow the rows it pages over.
+    expect(
+      parsed(schema, entries('filter[id]=3&page[after]=2024-01-01,1')).filters
+    ).toEqual([{name: 'id', value: 3}]);
+    for (const value of [
+      '',
+      'x',
+      '2024-01-01',
+      '2024-01-01,',
+      'x,1',
+      '2024-01-01,-1',
+    ]) {
+      expect(error(`page[after]=${encodeURIComponent(value)}`)).toEqual([
+        `invalid page[after]: ${value} (expected <date_updated>,<id>)`,
+        400,
+      ]);
+    }
+    expect(error('page[after]=2024-01-01,1&page[number]=1')).toEqual([
+      'page[after] and page[number] cannot be combined.',
+      400,
+    ]);
+    expect(error('page[after]=2024-01-01,1&sort=name')).toEqual([
+      'page[after] pages in revision order (date_updated, id): leave out sort.',
+      400,
+    ]);
+    // After the other parameters' own errors.
+    expect(error('page[after]=x&page[number]=0')).toEqual([
+      'Invalid page.',
+      404,
+    ]);
+    expect(error('page[after]=x&sort=x')).toEqual([
+      'invalid sort parameter: x',
+      400,
+    ]);
+    expect(error('page[after]=x&page[after]=y')).toEqual([
+      'repeated query parameter not allowed: page[after]',
+      400,
+    ]);
+  });
+
+  test('page[after]: refused where keyset pages are', () => {
+    const refusing = listQuerySchema({
+      filters: {},
+      sort: [],
+      search: 'refused',
+      include: 'refused',
+      cursor: 'refused',
+    });
+    expect(error('page[after]=2024-01-01,1', refusing)).toEqual([
+      'page[after] is not supported here.',
+      400,
+    ]);
+    expect(error('page[after]=x', refusing)).toEqual([
+      'invalid page[after]: x (expected <date_updated>,<id>)',
+      400,
+    ]);
+    expect(parsed(refusing, []).after).toBeNull();
   });
 });

@@ -62,6 +62,7 @@ describe('entry points', () => {
       './responses': './src/responses.ts',
       './requests': './src/requests.ts',
       './messages': './src/messages.ts',
+      './cursor': './src/cursor.ts',
       './datetime': './src/datetime.ts',
     });
     expect(packageJson.sideEffects).toBe(false);
@@ -81,6 +82,13 @@ describe('entry points', () => {
     });
     expect(graph('datetime.ts')).toEqual({
       modules: ['datetime.ts'],
+      packages: [],
+    });
+  });
+
+  test('./cursor loads only the datetime parser (no zod)', () => {
+    expect(graph('cursor.ts')).toEqual({
+      modules: ['cursor.ts', 'datetime.ts'],
       packages: [],
     });
   });

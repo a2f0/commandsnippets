@@ -43,6 +43,12 @@ export interface OrderedSpec {
    */
   owner?: SQLiteColumn;
   /**
+   * The rows that hold a place in the order, when others do not: soft-deleted
+   * junctions keep their rank but are never shifted, moved, or positioned
+   * against (nor offered as a move's rows, `reorder.ts`).
+   */
+  ranked?: SQL;
+  /**
    * A statement run in the same batch as every move (atomically), e.g. to
    * advance the revisions of parent rows clients sync the moved rows through.
    * It runs after the move's UPDATE, so `changes()` tells whether that applied.
@@ -165,11 +171,10 @@ export class OrderedModel {
         ? [target, self.order - 1, 1]
         : [self.order + 1, target, -1];
     // The guard subqueries are uncorrelated, so SQLite evaluates them once,
-    // before any row is modified.
+    // before any row is modified. A row that left the order since it was
+    // read (a deleted junction keeps its rank) has none: the guard fails.
     const refGuard =
-      ref === undefined
-        ? sql``
-        : sql`AND (SELECT ${order} FROM ${table} WHERE ${id} = ${ref.id}) = ${ref.order}`;
+      ref === undefined ? sql`` : sql`AND ${this.rankOf(ref)} = ${ref.order}`;
     const neighborGuard =
       ref === undefined || neighbor === undefined
         ? sql``
@@ -184,7 +189,7 @@ export class OrderedModel {
       WHERE ${scope} = ${self.scope}
         ${this.ownedBy(self)}
         AND (${id} = ${self.id} OR ${order} BETWEEN ${low} AND ${high})
-        AND (SELECT ${order} FROM ${table} WHERE ${id} = ${self.id}) = ${self.order}
+        AND ${this.rankOf(self)} = ${self.order}
         ${refGuard}
         ${neighborGuard}
     `;
@@ -204,16 +209,28 @@ export class OrderedModel {
     return (moved?.meta.changes ?? 0) > 0;
   }
 
-  /** `AND owner = <row's owner>` for specs with an owner column. */
+  /**
+   * The conditions on the rows a move shifts and positions against: `AND
+   * owner = <row's owner>` for specs with an owner column, and the spec's
+   * `ranked` condition.
+   */
   private ownedBy(row: OrderedRow): SQL {
-    const {owner} = this.spec;
+    const {owner, ranked} = this.spec;
+    const live = ranked === undefined ? sql`` : sql`AND ${ranked}`;
     if (owner === undefined) {
-      return sql``;
+      return live;
     }
     if (row.owner === undefined) {
       throw new Error('An owned ordering needs the row owner');
     }
-    return sql`AND ${owner} = ${row.owner}`;
+    return sql`AND ${owner} = ${row.owner} ${live}`;
+  }
+
+  /** `row`'s rank as SQL: null once it is out of the order (`ranked`). */
+  private rankOf(row: OrderedRow): SQL {
+    const {table, id, order, ranked} = this.spec;
+    const live = ranked === undefined ? sql`` : sql`AND ${ranked}`;
+    return sql`(SELECT ${order} FROM ${table} WHERE ${id} = ${row.id} ${live})`;
   }
 
   /** The rank just before or after `ref` among the mover's rows, as SQL. */
@@ -235,11 +252,13 @@ export class OrderedModel {
     return row?.value ?? null;
   }
 
+  /** `row` as it is now: not found once it is out of the order. */
   private async reload(row: OrderedRow): Promise<OrderedRow> {
-    const {table, id, order, scope, owner} = this.spec;
+    const {table, id, order, scope, owner, ranked} = this.spec;
     const ownerColumn = owner === undefined ? sql`` : sql`, ${owner} AS owner`;
+    const live = ranked === undefined ? sql`` : sql`AND ${ranked}`;
     const fresh = await this.db.get<OrderedRow>(
-      sql`SELECT ${id} AS id, ${order} AS "order", ${scope} AS scope ${ownerColumn} FROM ${table} WHERE ${id} = ${row.id}`
+      sql`SELECT ${id} AS id, ${order} AS "order", ${scope} AS scope ${ownerColumn} FROM ${table} WHERE ${id} = ${row.id} ${live}`
     );
     if (fresh === undefined) {
       throw notFound('Not found.');

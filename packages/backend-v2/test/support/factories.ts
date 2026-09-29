@@ -174,6 +174,7 @@ export async function tagTextEntryFactory(fields: {
   text_entry: TextEntry;
   user: User;
   order?: number;
+  is_deleted?: boolean;
 }): Promise<TagTextEntry> {
   const timestamp = now();
   const [junction] = await db()
@@ -183,6 +184,7 @@ export async function tagTextEntryFactory(fields: {
       text_entry_id: fields.text_entry.id,
       user_id: fields.user.id,
       order: fields.order ?? 0,
+      is_deleted: fields.is_deleted ?? false,
       date_created: timestamp,
       date_updated: timestamp,
     })

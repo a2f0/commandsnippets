@@ -40,6 +40,7 @@ const textEntryReusedListQuery = {
   sort: TEXT_ENTRY_REUSED_SORT_FIELDS,
   search: 'ignored',
   include: 'resolved',
+  cursor: 'refused',
 } as const;
 
 export const textEntryReusedListQuerySchema = listQuerySchema(

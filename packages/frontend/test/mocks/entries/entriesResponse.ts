@@ -103,6 +103,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
         order: 1,
         date_updated: '2020-04-13T18:20:00',
         date_created: '2020-04-13T18:20:00',
+        is_deleted: false,
       },
       relationships: {
         tag: {data: {type: 'Tag', id: '1'}},
@@ -117,6 +118,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
         order: 1,
         date_updated: '2020-04-13T18:20:00',
         date_created: '2020-04-13T18:20:00',
+        is_deleted: false,
       },
       relationships: {
         tag: {data: {type: 'Tag', id: '1'}},
@@ -131,6 +133,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
         order: 1,
         date_updated: '2020-04-14T18:20:00',
         date_created: '2020-04-14T18:20:00',
+        is_deleted: false,
       },
       relationships: {
         tag: {data: {type: 'Tag', id: '1'}},
@@ -145,6 +148,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
         order: 1,
         date_updated: '2020-04-15T18:20:00',
         date_created: '2020-04-15T18:20:00',
+        is_deleted: false,
       },
       relationships: {
         tag: {data: {type: 'Tag', id: '1'}},

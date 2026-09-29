@@ -93,6 +93,7 @@ function apiJunction(id: string, tagId: string, entryId: string): TagTextEntry {
       order: Number(id),
       date_updated: '2020-01-01T00:00:00',
       date_created: '2020-01-01T00:00:00',
+      is_deleted: false,
     },
     relationships: {
       tag: {data: {type: 'Tag', id: tagId}},

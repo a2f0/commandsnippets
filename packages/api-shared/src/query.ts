@@ -1,15 +1,19 @@
 /**
  * A collection's query parameters, validated as django-rest-framework-json-api
  * and django-filter did: `filter[...]`, `sort`, `page[number]`/`page[size]`,
- * `include`, and `filter[search]`. A query fails at its first error, checked
- * in this order: unknown or repeated parameters, then filters (in parameter
- * order: an empty value, an unknown name, then each value), then `sort`, then
- * `page[number]`, then any refused `include` and `filter[search]`.
+ * `include`, and `filter[search]`; and keyset pages (`page[after]`, see
+ * `cursor.ts`), which are the API's own. A query fails at its first error,
+ * checked in this order: unknown or repeated parameters, then filters (in
+ * parameter order: an empty value, an unknown name, then each value), then
+ * `sort`, then `page[number]`, then `page[after]` (its value, then whether
+ * the collection refuses it, or it is combined with `page[number]` or
+ * `sort`), then any refused `include` and `filter[search]`.
  *
  * The input is the query string's `[key, value]` pairs in order
  * (`[...url.searchParams]`).
  */
 import * as z from 'zod/mini';
+import {type Cursor, parseCursor} from './cursor';
 import type {FilterSchema} from './filters';
 import {DOCUMENT_POINTER, fail, forward, QUERY_ERROR} from './issues';
 import {CODES, MESSAGES} from './messages';
@@ -45,6 +49,12 @@ export interface ListQuerySpec<
    * collections without relationships.
    */
   include: 'resolved' | 'refused';
+  /**
+   * `page[after]`: keyset pages in revision order (`'supported'`, for
+   * collections whose rows carry a `date_updated` revision), or an error
+   * (`'refused'`).
+   */
+  cursor: 'supported' | 'refused';
 }
 
 export type SearchMode = 'supported' | 'ignored' | 'refused';
@@ -70,9 +80,11 @@ export interface ListQuery<
   search: Search extends 'supported' ? string | null : null;
   /** Null when absent or empty (the collection's default order applies). */
   sort: Array<SortTerm<S>> | null;
-  /** 1-based. */
+  /** 1-based; 1 for a keyset page. */
   page: number;
   pageSize: number;
+  /** `page[after]`: a keyset page's cursor, or null for a numbered page. */
+  after: Cursor | null;
   /** The raw `include`, or null; always null when refused. */
   include: string | null;
 }
@@ -94,8 +106,45 @@ export type CommaList<T extends string> = T | `${T},${T}` | `${T},${T},${T}`;
 /** A `sort` term: a field ascending, or `-field` descending. */
 export type SortKey<S extends string> = S | `-${S}`;
 
-/** `{...A, ...B}` as one object type (what an editor shows). */
-type Merge<T> = {[K in keyof T]: T[K]};
+/**
+ * `{...A, ...B}` as one object type (what an editor shows); of each member,
+ * for a union.
+ */
+type Merge<T> = T extends unknown ? {[K in keyof T]: T[K]} : never;
+
+/** `sort`, where the spec has sort fields. */
+type SortParams<Spec extends ListQuerySpec<FilterSchemas, string, SearchMode>> =
+  [Spec['sort'][number]] extends [never]
+    ? unknown
+    : {sort?: CommaList<SortKey<Spec['sort'][number]>>};
+
+/** `sort`, ruled out (where the spec has sort fields). */
+type NoSort<Spec extends ListQuerySpec<FilterSchemas, string, SearchMode>> = [
+  Spec['sort'][number],
+] extends [never]
+  ? unknown
+  : {sort?: never};
+
+/**
+ * A numbered page (`page[number]`, `sort`), or, where keyset pages are
+ * `'supported'`, a keyset page (`page[after]`, which takes neither): each
+ * form names every key, the other form's as `never`.
+ */
+type PageParams<Spec extends ListQuerySpec<FilterSchemas, string, SearchMode>> =
+  Spec['cursor'] extends 'supported'
+    ?
+        | (SortParams<Spec> & {
+            'page[number]'?: number;
+            'page[size]'?: number;
+            'page[after]'?: never;
+          })
+        | (NoSort<Spec> & {
+            'page[number]'?: never;
+            'page[size]'?: number;
+            /** A cursor (`cursorOf`, `CURSOR_START`). */
+            'page[after]': string;
+          })
+    : SortParams<Spec> & {'page[number]'?: number; 'page[size]'?: number};
 
 /**
  * A collection's query parameters as a client sends them (as
@@ -106,7 +155,8 @@ type Merge<T> = {[K in keyof T]: T[K]};
  *   takes `__` too), its value what the filter parses the string into
  *   (`string`, `number` or `boolean`);
  * - `sort`, of the spec's sort fields, where there are any;
- * - `page[number]` and `page[size]`;
+ * - `page[number]` and `page[size]`; or, where keyset pages are
+ *   `'supported'`, `page[after]` and `page[size]` instead (with no `sort`);
  * - `filter[search]`, where search is `'supported'` (the API ignores it where
  *   it is `'ignored'`, and refuses it where it is `'refused'`);
  * - `include`, of `Paths` (`IncludePath`), where includes are `'resolved'`.
@@ -119,12 +169,8 @@ export type ListParams<
     [K in keyof Spec['filters'] & string as `filter[${Dotted<K>}]`]?: z.output<
       Spec['filters'][K]
     >;
-  } & ([Spec['sort'][number]] extends [never]
-    ? unknown
-    : {sort?: CommaList<SortKey<Spec['sort'][number]>>}) & {
-      'page[number]'?: number;
-      'page[size]'?: number;
-    } & (Spec['search'] extends 'supported'
+  } & PageParams<Spec> &
+    (Spec['search'] extends 'supported'
       ? {'filter[search]'?: string}
       : unknown) &
     (Spec['include'] extends 'resolved'
@@ -148,6 +194,9 @@ interface Grouped {
   /** Null when `page[number]` is absent (page 1). */
   page: string | null;
   pageSize: string | null;
+  after: string | null;
+  /** Whether `page[number]` was given (its parse is 1 when it is not). */
+  numbered: boolean;
   search: string | null;
   include: string | null;
 }
@@ -182,6 +231,8 @@ const groupedSchema = z.pipe(
       sort: first('sort'),
       page: first('page[number]'),
       pageSize: first('page[size]'),
+      after: first('page[after]'),
+      numbered: values.has('page[number]'),
       search: first(SEARCH_PARAM),
       include: first('include'),
     };
@@ -283,6 +334,17 @@ const pageSizeSchema = z.pipe(
   )
 );
 
+/** `page[after]`: a cursor (`parseCursor`), or a 400. */
+const afterSchema = z.pipe(
+  z.nullable(z.string()),
+  z.transform((after: string | null, ctx) =>
+    after === null
+      ? null
+      : (parseCursor(after) ??
+        fail(ctx, MESSAGES.invalidCursor(after), QUERY_ERROR))
+  )
+);
+
 /** A collection's query parameters (see the module comment). */
 // @__NO_SIDE_EFFECTS__
 export function listQuerySchema<
@@ -297,13 +359,27 @@ export function listQuerySchema<
     sort: sortSchema(spec.sort),
     page: pageSchema,
     pageSize: pageSizeSchema,
+    after: afterSchema,
+    numbered: z.boolean(),
     search: z.nullable(z.string()),
     include: z.nullable(z.string()),
   });
   return z.pipe(
     z.pipe(groupedSchema, querySchema),
     z.transform(
-      (query: z.output<typeof querySchema>, ctx): ListQuery<F, S, Search> => {
+      (
+        {numbered, ...query}: z.output<typeof querySchema>,
+        ctx
+      ): ListQuery<F, S, Search> => {
+        if (spec.cursor === 'refused' && query.after !== null) {
+          return fail(ctx, MESSAGES.cursorRefused, QUERY_ERROR);
+        }
+        if (query.after !== null && numbered) {
+          return fail(ctx, MESSAGES.cursorWithPage, QUERY_ERROR);
+        }
+        if (query.after !== null && query.sort !== null) {
+          return fail(ctx, MESSAGES.cursorWithSort, QUERY_ERROR);
+        }
         if (spec.include === 'refused' && query.include !== null) {
           return fail(ctx, MESSAGES.includeRefused, QUERY_ERROR);
         }

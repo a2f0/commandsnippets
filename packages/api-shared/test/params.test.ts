@@ -9,9 +9,11 @@ import {
   includeSchema,
   RELATIONSHIPS,
   type TagListParams,
+  type TagTextEntryListParams,
   type TextEntryListParams,
   type TextEntryReusedListParams,
   tagListQuerySchema,
+  tagTextEntryListQuerySchema,
   textEntryListQuerySchema,
   textEntryReusedListQuerySchema,
 } from '../src/index';
@@ -89,6 +91,7 @@ describe('list params', () => {
         | 'sort'
         | 'page[number]'
         | 'page[size]'
+        | 'page[after]'
         | 'include'
       >
     >();
@@ -101,6 +104,21 @@ describe('list params', () => {
         | 'sort'
         | 'page[number]'
         | 'page[size]'
+        | 'page[after]'
+        | 'include'
+      >
+    >();
+    assert<
+      Equal<
+        keyof TagTextEntryListParams,
+        | 'filter[tag.id]'
+        | 'filter[text_entry.id]'
+        | 'filter[is_deleted]'
+        | 'filter[date_updated.gt]'
+        | 'sort'
+        | 'page[number]'
+        | 'page[size]'
+        | 'page[after]'
         | 'include'
       >
     >();
@@ -157,7 +175,22 @@ describe('list params', () => {
     const admin: AdminUserListParams = {include: 'user'};
     // @ts-expect-error: tags ignore search; sending it is a mistake.
     const search: TagListParams = {'filter[search]': 'x'};
-    expect([untagged, sort, include, admin, search]).toHaveLength(5);
+    // @ts-expect-error: entry reuses have no revision order to page in.
+    const after: TextEntryReusedListParams = {'page[after]': 'x'};
+    // @ts-expect-error: a keyset page has no number...
+    const numbered: TagListParams = {'page[after]': 'x', 'page[number]': 2};
+    // @ts-expect-error: ...and no sort: it is in revision order.
+    const sorted: TextEntryListParams = {'page[after]': 'x', sort: 'subject'};
+    expect([
+      untagged,
+      sort,
+      include,
+      admin,
+      search,
+      after,
+      numbered,
+      sorted,
+    ]).toHaveLength(8);
   });
 
   test('are queries the schemas accept', () => {
@@ -176,7 +209,7 @@ describe('list params', () => {
           'filter[search]': 'term',
           sort: '-date_created,subject,body',
           include: 'text_entry_to_tag.tag,text_entry_to_tag.user,user',
-        } satisfies Required<TextEntryListParams>,
+        } satisfies Required<Omit<TextEntryListParams, 'page[after]'>>,
         textEntryListQuerySchema,
       ],
       [
@@ -188,7 +221,7 @@ describe('list params', () => {
           'filter[date_updated.gt]': '2024-01-01T12:34:56',
           sort: '-order',
           include: 'user',
-        } satisfies Required<TagListParams>,
+        } satisfies Required<Omit<TagListParams, 'page[after]'>>,
         tagListQuerySchema,
       ],
       [
@@ -218,6 +251,37 @@ describe('list params', () => {
           'filter[target_user_id]': 7,
         } satisfies Required<AdminAuditLogListParams>,
         adminAuditLogListQuerySchema,
+      ],
+      // Keyset pages: a cursor instead of a number, in revision order.
+      [
+        {
+          'page[after]': '1970-01-01T00:00:00,0',
+          'page[size]': 100,
+          'filter[tags.id]': 4,
+        } satisfies TextEntryListParams,
+        textEntryListQuerySchema,
+      ],
+      [
+        {
+          'page[after]': '2024-01-01T12:34:56.123456,3',
+          'filter[date_updated.gt]': '2024-01-01T12:34:56',
+        } satisfies TagListParams,
+        tagListQuerySchema,
+      ],
+      [
+        {
+          'page[after]': '2024-01-01T12:34:56,3',
+          'page[size]': 100,
+          'filter[tag.id]': 2,
+          'filter[text_entry.id]': 6,
+          'filter[is_deleted]': true,
+          'filter[date_updated.gt]': '2024-01-01T12:34:56',
+          include: 'text_entry,tag',
+        } satisfies Omit<
+          Required<TagTextEntryListParams>,
+          'page[number]' | 'sort'
+        >,
+        tagTextEntryListQuerySchema,
       ],
     ];
     for (const [params, schema] of cases) {

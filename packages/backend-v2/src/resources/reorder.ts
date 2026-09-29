@@ -3,7 +3,7 @@ import {
   MESSAGES,
   reorderAttributesSchema,
 } from '@commandsnippets/api-shared';
-import {eq} from 'drizzle-orm';
+import {and, eq} from 'drizzle-orm';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
 import type {AppEnv} from '../env';
@@ -61,7 +61,8 @@ export async function reorder(
         scope: options.scope,
       })
       .from(options.table)
-      .where(eq(options.id, Number(field.value)))
+      // A row out of the order (a deleted junction) does not exist here.
+      .where(and(eq(options.id, Number(field.value)), options.ranked))
       .limit(1)) as Row[];
     if (row === undefined) {
       errors.push({

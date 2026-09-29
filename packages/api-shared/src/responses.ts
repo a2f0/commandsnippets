@@ -5,6 +5,7 @@
  * request-side modules (a test checks), so a client bundles only these.
  */
 
+export * from './cursor';
 export * from './jsonapi/response';
 export * from './resources/admin';
 export * from './resources/documents';

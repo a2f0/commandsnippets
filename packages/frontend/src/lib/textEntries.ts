@@ -60,10 +60,12 @@ export function sort(
           return 0;
         });
     } else if (sortOrder === 'date_tagged') {
+      // When the entry was tagged: the junction's creation (tagging again
+      // restores it as new). Its revision also moves with the entry's edits.
       tagTextEntryThroughModelFilteredAndOrdered =
         tagTextEntryThroughModelFiltered.sort((a, b) => {
-          const sort1 = new Date(a.attributes.date_updated);
-          const sort2 = new Date(b.attributes.date_updated);
+          const sort1 = new Date(a.attributes.date_created);
+          const sort2 = new Date(b.attributes.date_created);
           if (sort1 < sort2) {
             return -1;
           }
@@ -76,8 +78,8 @@ export function sort(
     } else if (sortOrder === '-date_tagged') {
       tagTextEntryThroughModelFilteredAndOrdered =
         tagTextEntryThroughModelFiltered.sort((a, b) => {
-          const sort1 = new Date(a.attributes.date_updated);
-          const sort2 = new Date(b.attributes.date_updated);
+          const sort1 = new Date(a.attributes.date_created);
+          const sort2 = new Date(b.attributes.date_created);
           if (sort2 < sort1) {
             return -1;
           }

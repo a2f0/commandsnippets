@@ -5,6 +5,7 @@
  * type names.
  */
 
+export * from './cursor';
 export * from './fields';
 export * from './filters';
 export * from './include';

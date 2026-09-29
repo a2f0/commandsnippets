@@ -4,7 +4,11 @@
  * union (narrow it by `type`).
  */
 import * as z from 'zod/mini';
-import {documentSchema, listDocumentSchema} from '../jsonapi/response';
+import {
+  cursorListDocumentSchema,
+  documentSchema,
+  listDocumentSchema,
+} from '../jsonapi/response';
 import {adminAuditLogEntrySchema, adminUserSchema} from './admin';
 import {tagSchema} from './tag';
 import {tagTextEntrySchema} from './tagTextEntry';
@@ -37,6 +41,10 @@ export const tagListDocumentSchema = listDocumentSchema(
   tagSchema,
   includedResourceSchema
 );
+export const tagCursorListDocumentSchema = cursorListDocumentSchema(
+  tagSchema,
+  includedResourceSchema
+);
 
 /**
  * `/api/v1/entries` (the default `include` is the owner, and each junction
@@ -50,9 +58,21 @@ export const textEntryListDocumentSchema = listDocumentSchema(
   textEntrySchema,
   includedResourceSchema
 );
+export const textEntryCursorListDocumentSchema = cursorListDocumentSchema(
+  textEntrySchema,
+  includedResourceSchema
+);
 
-/** `POST /api/v1/tags_entries` (the default `include` is all three ends). */
+/** `/api/v1/tags_entries` (the default `include` is all three ends). */
 export const tagTextEntryDocumentSchema = documentSchema(
+  tagTextEntrySchema,
+  includedResourceSchema
+);
+export const tagTextEntryListDocumentSchema = listDocumentSchema(
+  tagTextEntrySchema,
+  includedResourceSchema
+);
+export const tagTextEntryCursorListDocumentSchema = cursorListDocumentSchema(
   tagTextEntrySchema,
   includedResourceSchema
 );
@@ -83,11 +103,23 @@ export const adminAuditLogListDocumentSchema = listDocumentSchema(
 export type UserDocument = z.output<typeof userDocumentSchema>;
 export type TagDocument = z.output<typeof tagDocumentSchema>;
 export type TagListDocument = z.output<typeof tagListDocumentSchema>;
+export type TagCursorListDocument = z.output<
+  typeof tagCursorListDocumentSchema
+>;
 export type TextEntryDocument = z.output<typeof textEntryDocumentSchema>;
 export type TextEntryListDocument = z.output<
   typeof textEntryListDocumentSchema
 >;
+export type TextEntryCursorListDocument = z.output<
+  typeof textEntryCursorListDocumentSchema
+>;
 export type TagTextEntryDocument = z.output<typeof tagTextEntryDocumentSchema>;
+export type TagTextEntryListDocument = z.output<
+  typeof tagTextEntryListDocumentSchema
+>;
+export type TagTextEntryCursorListDocument = z.output<
+  typeof tagTextEntryCursorListDocumentSchema
+>;
 export type TextEntryReusedDocument = z.output<
   typeof textEntryReusedDocumentSchema
 >;

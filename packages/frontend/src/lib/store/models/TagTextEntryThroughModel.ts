@@ -12,6 +12,7 @@ export const TagTextEntryThroughModel = types
         order: types.number,
         date_updated: types.string,
         date_created: types.string,
+        is_deleted: types.optional(types.boolean, false),
       })
       .actions(() => ({})),
     relationships: types

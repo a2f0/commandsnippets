@@ -15,9 +15,10 @@
  * converted to integer microseconds and back in SQL (julianday() would lose
  * the microseconds to floating point).
  *
- * The triggers of `migrations/0008_tag_revisions.sql` advance tags with the
- * same formula written out in SQL (a tag's revision moves with its entries):
- * a change here needs a migration re-creating them.
+ * The triggers of `migrations/0008_tag_revisions.sql` and
+ * `0010_junction_revisions.sql` advance tags and junctions with the same
+ * formula written out in SQL (a tag's revision, and its junctions', move with
+ * its entries): a change here needs a migration re-creating them.
  */
 import {type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';

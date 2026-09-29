@@ -9,7 +9,8 @@
     "./responses": "./src/responses.ts",
     "./requests": "./src/requests.ts",
     "./messages": "./src/messages.ts",
-    "./datetime": "./src/datetime.ts"
+    "./datetime": "./src/datetime.ts",
+    "./cursor": "./src/cursor.ts"
   },
   "files": [
     "src"

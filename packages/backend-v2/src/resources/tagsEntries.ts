@@ -1,4 +1,8 @@
-import {tagTextEntryCreateRelationshipsSchema} from '@commandsnippets/api-shared';
+import {
+  CODES,
+  tagTextEntryCreateRelationshipsSchema,
+  tagTextEntryListQuerySchema,
+} from '@commandsnippets/api-shared';
 import {and, eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
@@ -7,7 +11,7 @@ import {isUniqueViolation} from '../db/errors';
 import {type TagTextEntry, tagsEntries, textEntries} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
-import {methodNotAllowed} from '../lib/errors';
+import {ApiError, methodNotAllowed, notFound} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {
@@ -19,7 +23,7 @@ import {
 import {resolveRelated} from './related';
 import {reorder} from './reorder';
 import {TAG_TEXT_ENTRY} from './resourceTypes';
-import {getOwned, resourceResponse} from './viewset';
+import {getOwned, listResponse, resourceResponse} from './viewset';
 
 export const tagEntryOrdering: OrderedSpec = {
   table: tagsEntries,
@@ -29,6 +33,8 @@ export const tagEntryOrdering: OrderedSpec = {
   scope: tagsEntries.tag_id,
   // Imported Django data can put another user's junction in a user's tag.
   owner: tagsEntries.user_id,
+  // A deleted junction is out of its tag's order (it keeps its old rank).
+  ranked: sql`${tagsEntries.is_deleted} = 0`,
   // Clients fetch junctions through /entries (included), which is filtered on
   // the entry's revision: advance the entries whose junctions a move re-ranked
   // (their trigger advances the tag too, migrations/0008_tag_revisions.sql).
@@ -73,14 +79,39 @@ const touchEntry = (db: Db, entryId: number, userId: number) =>
       )
     );
 
-/** Only create, destroy and reorder are routed (Django's viewset mixins). */
+/** List, create, destroy and reorder are routed. */
 export const tagEntryRoutes = new Hono<AppEnv>();
+
+/**
+ * The requester's junctions, deleted ones too, by default in revision order:
+ * after a cursor (`page[after]`), a tag's (`filter[tag.id]`) are what changed
+ * in it since.
+ */
+tagEntryRoutes.get('/', c =>
+  listResponse(c, {
+    ...tagTextEntryResource,
+    user: requireUser(c),
+    query: tagTextEntryListQuerySchema,
+    filters: {
+      tag__id: value => eq(tagsEntries.tag_id, value),
+      text_entry__id: value => eq(tagsEntries.text_entry_id, value),
+      is_deleted: value => eq(tagsEntries.is_deleted, value),
+      date_updated__gt: value => sql`${tagsEntries.date_updated} > ${value}`,
+    },
+    ordering: {date_updated: sql`${tagsEntries.date_updated}`},
+    defaultOrdering: [tagsEntries.date_updated, tagsEntries.id],
+  })
+);
 
 tagEntryRoutes.post('/reorder', c =>
   reorder(c, {...tagTextEntryResource, ...tagEntryOrdering})
 );
 
-/** Tag an entry: get_or_create on (tag, text_entry). Always 201. */
+/**
+ * Tag an entry: get_or_create on (tag, text_entry), restoring the pair's
+ * deleted junction (at the bottom of the tag, as a new one would be). Always
+ * 201.
+ */
 tagEntryRoutes.post('/', async c => {
   const user = requireUser(c);
   const db = c.get('db');
@@ -135,36 +166,84 @@ tagEntryRoutes.post('/', async c => {
       junction = await find();
     }
   }
-  if (junction !== undefined && junction.user_id !== user.id) {
+  if (
+    junction !== undefined &&
+    (junction.user_id !== user.id || junction.is_deleted)
+  ) {
     // Imported Django data can hold a junction owned by another user between
     // this user's own tag and entry. It links only their data, so it is
-    // theirs: take it over rather than return someone else's row.
+    // theirs: take it over rather than return someone else's row. A deleted
+    // one comes back, as a new junction would: at the bottom of the tag.
+    const {id, user_id, is_deleted} = junction;
+    const restore = is_deleted
+      ? {
+          is_deleted: false,
+          order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
+          date_created: now(),
+        }
+      : {};
     const [updated] = await db.batch([
       db
         .update(tagsEntries)
         .set({
           user_id: user.id,
           date_updated: nextRevision(tagTextEntryResource, user.id),
+          ...restore,
         })
-        .where(eq(tagsEntries.id, junction.id))
+        // Only as read: a concurrent request may have restored it already.
+        .where(
+          and(
+            eq(tagsEntries.id, id),
+            eq(tagsEntries.user_id, user_id),
+            eq(tagsEntries.is_deleted, is_deleted)
+          )
+        )
         .returning(),
       touchEntry(db, textEntryId, user.id),
     ]);
-    [junction] = updated;
+    [junction] = updated.length > 0 ? updated : [await find()];
+    // A concurrent request restored it (fine), or deleted or removed it.
+    if (
+      junction === undefined ||
+      junction.is_deleted ||
+      junction.user_id !== user.id
+    ) {
+      throw ApiError.of(
+        409,
+        'The tag changed while it was being updated. Please retry.',
+        CODES.orderingConflict
+      );
+    }
   }
   return resourceResponse(c, TAG_TEXT_ENTRY, junction as TagTextEntry, 201);
 });
 
+/** Untag: soft-delete the junction (a deleted one is gone: 404). */
 tagEntryRoutes.delete('/:id', async c => {
   const junction = await getOwned<TagTextEntry>(c, tagTextEntryResource);
+  if (junction.is_deleted) {
+    throw notFound(`No ${TAG_TEXT_ENTRY} matches the given query.`);
+  }
   const db = c.get('db');
   await db.batch([
-    db.delete(tagsEntries).where(eq(tagsEntries.id, junction.id)),
+    db
+      .update(tagsEntries)
+      .set({
+        is_deleted: true,
+        date_updated: nextRevision(tagTextEntryResource, junction.user_id),
+      })
+      .where(
+        and(eq(tagsEntries.id, junction.id), eq(tagsEntries.is_deleted, false))
+      ),
     touchEntry(db, junction.text_entry_id, junction.user_id),
   ]);
   return c.body(null, 204);
 });
 
-tagEntryRoutes.on(['GET', 'PATCH', 'PUT'], ['/', '/:id'], c => {
+tagEntryRoutes.on(['PATCH', 'PUT'], ['/', '/:id'], c => {
+  throw methodNotAllowed(c.req.method);
+});
+
+tagEntryRoutes.get('/:id', c => {
   throw methodNotAllowed(c.req.method);
 });

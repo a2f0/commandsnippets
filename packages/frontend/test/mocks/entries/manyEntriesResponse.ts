@@ -45,6 +45,7 @@ const generateManyEntries = (
         order: i,
         date_updated: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.995003`,
         date_created: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.994989`,
+        is_deleted: false,
       },
       relationships: {
         tag: {data: {type: 'Tag', id: '1'}},
