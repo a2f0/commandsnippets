@@ -10,6 +10,7 @@ import type {
   TextEntry,
   User,
 } from '@commandsnippets/api-shared';
+import invariant from 'invariant';
 import {getSnapshot} from 'mobx-state-tree';
 import {HttpResponse, http} from 'msw';
 import {setupServer} from 'msw/node';
@@ -512,6 +513,64 @@ describe('syncTagEntries', () => {
     expect(getSnapshot(store.tagSyncCursors)).toEqual({
       '1': {tag: '2024-01-01T00:00:00', entries: '2024-02-01T00:00:00'},
     });
+  });
+
+  it('reads a tag again when an entry leaves and another joins it between pages', async () => {
+    const store = createStore([
+      tag('1', {date_updated: '2024-01-01T00:00:00', entry_count: 4}),
+    ]);
+    const link = (id: string) => apiJunction(`1${id}`, '1', id);
+    const entry = (id: string, revision: string) =>
+      apiEntry(id, revision, [link(id)]);
+    // The store links entries 10 and 12 to the tag, from before its cursor.
+    store.reconcileCollection([
+      entry('10', '2024-01-02T00:00:00'),
+      link('10'),
+      entry('12', '2024-01-04T00:00:00'),
+      link('12'),
+    ]);
+    // Entries 10 to 13 are in the tag; after the first page (10 and 11),
+    // 10 leaves it and 14 joins: the second page is 13 and 14, skipping 12.
+    // Each page includes the tag, which both changes advanced.
+    const before = tag('1', {date_updated: '2024-01-01T00:00:00'});
+    const after = tag('1', {date_updated: '2024-02-01T00:00:00'});
+    const pages = [
+      {tag: before, entries: ['10', '11']},
+      {tag: after, entries: ['13', '14']},
+      {tag: after, entries: ['11', '12']},
+      {tag: after, entries: ['13', '14']},
+    ];
+    const revisions: Record<string, string> = {
+      '10': '2024-01-02T00:00:00',
+      '11': '2024-01-03T00:00:00',
+      '12': '2024-01-04T00:00:00',
+      '13': '2024-01-05T00:00:00',
+      '14': '2024-02-01T00:00:00',
+    };
+    requests = [];
+    server.use(
+      http.get(`${API}/entries`, ({request}) => {
+        const query = new URL(request.url).searchParams;
+        requests.push(query);
+        const answer = pages[requests.length - 1];
+        invariant(answer, 'four pages');
+        const number = Number(query.get('page[number]'));
+        return HttpResponse.json({
+          ...pagination(request.url, number, 2, 4),
+          data: answer.entries.map(id => entry(id, revisions[id] ?? '')),
+          included: [...answer.entries.map(link), answer.tag],
+        });
+      })
+    );
+
+    await store.syncTagEntries('test', 'tag-1');
+    expect(requests).toHaveLength(4);
+    expect(store.tagTextEntryThroughModel.map(({id}) => id).sort()).toEqual([
+      '111',
+      '112',
+      '113',
+      '114',
+    ]);
   });
 
   it('brings back no link of an entry the store holds a newer revision of', () => {
