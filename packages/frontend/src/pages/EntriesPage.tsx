@@ -18,7 +18,10 @@ const EntriesPageContent = () => {
   const location = useLocation();
   const appConfig = useAppConfig();
   const navigate = useNavigate();
-  const [cookies] = useCookies(COOKIE_KEYS);
+  // Read `document.cookie` afresh on mount: CookiesProvider parsed it when the
+  // page loaded, before a sign-in's API answer set the login cookie, and that
+  // stale copy would sign the user straight back out.
+  const [cookies] = useCookies(COOKIE_KEYS, {doNotUpdate: false});
   const loggedInCookie = hasLoginCookie(cookies, environment);
   // The user's data, from the API into IndexedDB, which the lists show.
   useCollectionSync();
