@@ -14,7 +14,6 @@ import {AdminUsers} from '../components/admin/AdminUsers';
 import {useTypedTranslation} from '../i18n/hooks';
 import {AdminSignedOutError, getStaffStatus} from '../lib/api/adminApi';
 import {resetApplicationState, useAppConfig} from '../lib/state/appState';
-import {SignInPage} from './SignInPage';
 
 type Access = 'checking' | 'staff' | 'forbidden' | 'error';
 type AdminTab = 'users' | 'auditLog';
@@ -54,7 +53,7 @@ const AdminPage = () => {
           return;
         }
         if (error instanceof AdminSignedOutError) {
-          // The session expired: sign out locally, which shows sign-in.
+          // The session expired: sign out locally, which goes to sign-in.
           resetApplicationState();
           return;
         }
@@ -81,10 +80,6 @@ const AdminPage = () => {
     appConfig.setIsStaff(false);
     setChecked({user: appConfig.loggedInUser, access: 'forbidden'});
   }, [appConfig]);
-
-  if (loggedInUser === null) {
-    return <SignInPage />;
-  }
 
   return (
     <Box sx={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>

@@ -14,6 +14,24 @@ beforeEach(() => {
   assignLoggedInCookie();
 });
 
+/**
+ * Sign in to the modules `vi.resetModules()` loaded afresh for a mocked
+ * `environment`: their store starts signed out, and staging reads its own
+ * login cookie. Signed out, every page would be the sign-in page.
+ */
+async function signInFreshModules(environment: string) {
+  const [{useAppState}, {loggedInCookieNames}] = await Promise.all([
+    import('../../src/lib/state/appState'),
+    import('../../src/lib/auth/authUtils'),
+  ]);
+  useAppState.setState({loggedInUser: 'test'});
+  assignLoggedInCookie(
+    loggedInCookieNames(environment)
+      .map(name => `${name}=True`)
+      .join('; ')
+  );
+}
+
 describe('MenuBar', () => {
   let consoleMock: MockInstance;
 
@@ -179,6 +197,7 @@ describe('MenuBar', () => {
       const {TestAppRouter: MockedTestAppRouter} = await import(
         '../util/TestAppRouter'
       );
+      await signInFreshModules('production');
 
       const history = createMemoryHistory();
       const route = '/test/test';
@@ -190,6 +209,7 @@ describe('MenuBar', () => {
 
       await waitFor(() => {
         // In production, the Debug menu should not be rendered
+        expect(screen.getByRole('menu', {name: 'File'})).toBeInTheDocument();
         expect(
           screen.queryByRole('menu', {name: 'Debug'})
         ).not.toBeInTheDocument();
@@ -213,6 +233,7 @@ describe('MenuBar', () => {
       const {TestAppRouter: MockedTestAppRouter} = await import(
         '../util/TestAppRouter'
       );
+      await signInFreshModules('staging');
 
       const history = createMemoryHistory();
       const route = '/test/test';
