@@ -23,8 +23,8 @@ export interface AccountStatus {
  *
  * Every statement applies only while the account is still as read, in one
  * batch (a transaction), so a change that raced this one (a mark while this
- * reactivates, say) is never overwritten: nothing changes, and this returns
- * false.
+ * reactivates, say) is never overwritten, even one since undone: nothing
+ * changes, and this returns false.
  */
 export async function changeAccountStatus(
   db: Db,
@@ -35,8 +35,11 @@ export async function changeAccountStatus(
   const wasMarked = target.date_marked_for_deletion !== null;
   const marking = next.marked && !wasMarked;
   const timestamp = now();
+  // Every status change advances date_updated, so a change that came and
+  // went (a mark, then an unmark) still counts.
   const asRead = and(
     eq(users.id, target.id),
+    eq(users.date_updated, target.date_updated),
     eq(users.is_active, target.is_active),
     target.date_marked_for_deletion === null
       ? isNull(users.date_marked_for_deletion)

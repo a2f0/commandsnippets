@@ -129,6 +129,19 @@ describe('response documents', () => {
             target_username: 'alice',
           },
         },
+        {
+          // An action added after the client was built still reads.
+          type: 'AdminAuditLogEntry',
+          id: '2',
+          attributes: {
+            created: ts,
+            action: 'a_future_action',
+            actor_id: '1',
+            actor_username: 'staff',
+            target_user_id: null,
+            target_username: 'bob',
+          },
+        },
       ],
     });
   });

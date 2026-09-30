@@ -543,6 +543,28 @@ describe('AdminApi marking for deletion', () => {
     ]);
   });
 
+  it('never applies a change read before a mark that was since undone', async () => {
+    await patch({is_active: false});
+    const stale = await getTarget();
+    // Marked and unmarked since: back to deactivated and unmarked.
+    await patch({marked_for_deletion: true});
+    await patch({marked_for_deletion: false});
+
+    expect(
+      await changeAccountStatus(db(), staff, stale, {
+        active: true,
+        marked: false,
+      })
+    ).toBe(false);
+
+    expect((await refreshUser(target.id))?.is_active).toBe(false);
+    expect((await auditRows()).map(row => row.action)).toEqual([
+      'deactivate_user',
+      'mark_user_for_deletion',
+      'unmark_user_for_deletion',
+    ]);
+  });
+
   it('changes nothing, sessions included, once the account has changed', async () => {
     await patch({is_active: false});
     // The mark read the account before it was reactivated and signed in to.

@@ -166,6 +166,19 @@ const server = setupServer(
             target_username: 'bob',
           },
         },
+        {
+          // An action this app does not know yet shows by its name.
+          type: 'AdminAuditLogEntry',
+          id: '11',
+          attributes: {
+            created: '2026-09-28T14:00:00.000000',
+            action: 'delete_user',
+            actor_id: '1',
+            actor_username: 'test',
+            target_user_id: null,
+            target_username: 'carol',
+          },
+        },
       ],
     })
   )
@@ -641,6 +654,9 @@ describe('AdminPage', () => {
     ).toBeInTheDocument();
     expect(
       within(await actionOf('bob')).getByText('Marked for deletion')
+    ).toBeInTheDocument();
+    expect(
+      within(await actionOf('carol')).getByText('delete_user')
     ).toBeInTheDocument();
   });
 });

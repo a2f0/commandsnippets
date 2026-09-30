@@ -47,6 +47,11 @@ export type AdminUser = z.output<typeof adminUserSchema>;
 
 // The audit log
 
+/**
+ * The actions the API records. It adds more over time, so an entry's
+ * `action` is any string: a client shows one it does not know by its name
+ * rather than failing on the page.
+ */
 export const ADMIN_AUDIT_ACTIONS = [
   'activate_user',
   'deactivate_user',
@@ -62,7 +67,7 @@ export type AdminAuditAction = (typeof ADMIN_AUDIT_ACTIONS)[number];
  */
 export const adminAuditLogEntryAttributesSchema = z.object({
   created: timestampSchema,
-  action: z.enum(ADMIN_AUDIT_ACTIONS),
+  action: z.string(),
   actor_id: z.nullable(resourceIdSchema),
   actor_username: z.string(),
   target_user_id: z.nullable(resourceIdSchema),

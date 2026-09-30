@@ -33,7 +33,6 @@ import type {
   AdminUserUpdateDocument,
 } from '@commandsnippets/api-shared/requests';
 import {
-  type AdminAuditAction,
   type AdminAuditLogEntry,
   type AdminUser as AdminUserResource,
   adminAuditLogListDocumentSchema,
@@ -72,7 +71,8 @@ export interface AdminUser {
 export interface AdminAuditEntry {
   id: string;
   created: string;
-  action: AdminAuditAction;
+  /** One of api-shared's `ADMIN_AUDIT_ACTIONS`, or a newer one. */
+  action: string;
   actorUsername: string;
   targetUsername: string;
 }

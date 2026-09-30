@@ -383,7 +383,7 @@ describe('adminApi', () => {
     );
   });
 
-  it('rejects an audit log entry with an unknown action', async () => {
+  it('accepts an audit log entry with an action it does not know', async () => {
     reply(
       200,
       page([
@@ -401,9 +401,8 @@ describe('adminApi', () => {
         },
       ])
     );
-    await expect(listAuditLog(1, 25)).rejects.toThrow(
-      'Invalid admin API response: data.0.attributes.action: '
-    );
+    const {items} = await listAuditLog(1, 25);
+    expect(items.map(entry => entry.action)).toEqual(['delete_user']);
   });
 
   it('rejects a changed user that is not an AdminUser', async () => {
