@@ -7,7 +7,10 @@ import {
 
 function actionsWith(overrides: Partial<AgentToolActions>): AgentToolActions {
   return {
+    bumpVersions: () => 0,
+    checkVersions: () => 0,
     openPr: () => 0,
+    resolveVersionConflicts: () => 0,
     solicitClaudeCodeReview: () => 0,
     solicitCodexReview: () => 0,
     solicitOpencodeReview: () => 0,
@@ -78,5 +81,44 @@ describe("runAgentToolAction", () => {
       "solicitCodexReview",
       "solicitOpencodeReview",
     ]);
+  });
+
+  test("exposes the version actions with the base OID", () => {
+    const calls: (string | undefined)[][] = [];
+    const actions = actionsWith({
+      bumpVersions: (_rootDir, baseOid) => {
+        calls.push(["bumpVersions", baseOid]);
+        return 0;
+      },
+      checkVersions: (_rootDir, baseOid) => {
+        calls.push(["checkVersions", baseOid]);
+        return 1;
+      },
+      resolveVersionConflicts: () => {
+        calls.push(["resolveVersionConflicts"]);
+        return 0;
+      },
+    });
+
+    expect(runAgentToolAction("/repo", ["bumpVersions", "abc"], actions)).toBe(
+      0,
+    );
+    expect(runAgentToolAction("/repo", ["checkVersions", "abc"], actions)).toBe(
+      1,
+    );
+    runAgentToolAction("/repo", ["resolveVersionConflicts"], actions);
+
+    expect(calls).toEqual([
+      ["bumpVersions", "abc"],
+      ["checkVersions", "abc"],
+      ["resolveVersionConflicts"],
+    ]);
+    expect(() =>
+      runAgentToolAction(
+        "/repo",
+        ["resolveVersionConflicts", "extra"],
+        actions,
+      ),
+    ).toThrow("resolveVersionConflicts accepts at most 0 positional arguments");
   });
 });

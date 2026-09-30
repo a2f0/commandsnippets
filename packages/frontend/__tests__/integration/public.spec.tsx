@@ -6,7 +6,7 @@ import {environment} from '../../src/lib/environment';
 describe('Signed-out home page', () => {
   it('Renders the sign-in page with both providers', async () => {
     render(<AppRouter />);
-    await waitFor(() => screen.getByText(/Sign in to Commandsnippets/i));
+    await waitFor(() => screen.getByText(/Login to Continue/i));
     expect(screen.getByText('Login with GitHub')).toBeTruthy();
     expect(screen.getByText('Login with Google')).toBeTruthy();
   });

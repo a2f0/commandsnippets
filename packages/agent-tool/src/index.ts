@@ -27,6 +27,13 @@
  *                               `(#<pr>)` reference to the subject. Optional
  *                               [sha] binds the merge to the reviewed head;
  *                               [base-ref] rejects a retargeted PR before it.
+ *   bumpVersions <base-oid>     Patch-bump each changed versioned package one
+ *                               past its version at <base-oid> (prints the
+ *                               rewritten package.json paths)
+ *   checkVersions <base-oid>    Exit non-zero when a versioned package is not
+ *                               at the version bumpVersions would write
+ *   resolveVersionConflicts     Finish a base merge whose only conflicts are
+ *                               versioned package.json version fields
  */
 import { execFileSync } from "node:child_process";
 

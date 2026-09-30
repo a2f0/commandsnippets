@@ -24,7 +24,7 @@ const SignInPage = () => {
         component="h1"
         sx={{color: theme => theme.palette.text.primary}}
       >
-        Sign in to Commandsnippets
+        Login to Continue
       </Typography>
       <Box sx={{display: 'flex', gap: 1}}>
         <GithubAuth />
