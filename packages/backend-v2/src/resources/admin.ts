@@ -5,10 +5,10 @@
  * Nothing here can grant staff; that stays a database change.
  */
 import {
-  type AdminAuditAction,
   adminAuditLogListQuerySchema,
   adminUserListQuerySchema,
   adminUserUpdateAttributesSchema,
+  CODES,
 } from '@commandsnippets/api-shared';
 import {and, asc, desc, eq, type SQL, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
@@ -17,13 +17,12 @@ import type {Db} from '../db/client';
 import {
   type AdminAuditLogEntry,
   adminAuditLog,
-  tokens,
   type User,
   users,
 } from '../db/schema';
 import type {AppEnv} from '../env';
-import {isoformat, now} from '../lib/clock';
-import {fieldError, notFound} from '../lib/errors';
+import {isoformat} from '../lib/clock';
+import {ApiError, fieldError, notFound} from '../lib/errors';
 import {
   document,
   listDocument,
@@ -31,6 +30,7 @@ import {
   type ResourceObject,
 } from '../lib/jsonapi';
 import {validateFields} from '../lib/validate';
+import {changeAccountStatus} from '../services/accounts';
 import {icontains} from './filters';
 import {ADMIN_AUDIT_LOG_ENTRY, ADMIN_USER} from './resourceTypes';
 import {jsonApi} from './responses';
@@ -203,41 +203,13 @@ adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
     );
   }
 
-  const audit = (action: AdminAuditAction) =>
-    db.insert(adminAuditLog).values({
-      created: now(),
-      action,
-      actor_id: staff.id,
-      actor_username: staff.username,
-      target_user_id: target.id,
-      target_username: target.username,
-    });
-  const update = db
-    .update(users)
-    .set({
-      is_active: active,
-      date_marked_for_deletion: marked
-        ? (target.date_marked_for_deletion ?? now())
-        : null,
-      date_updated: now(),
-    })
-    .where(eq(users.id, target.id));
-  // Deactivating or marking for deletion deletes the account's token (one per
-  // user, shared by all of their browsers), so every open session ends now,
-  // not at cookie expiry.
-  await db.batch([
-    update,
-    ...(deactivating || marking
-      ? [db.delete(tokens).where(eq(tokens.user_id, target.id))]
-      : []),
-    // Marking records only the mark: it implies the deactivation.
-    ...(marked !== wasMarked
-      ? [audit(marking ? 'mark_user_for_deletion' : 'unmark_user_for_deletion')]
-      : []),
-    ...(active !== target.is_active && !marking
-      ? [audit(active ? 'activate_user' : 'deactivate_user')]
-      : []),
-  ]);
+  if (!(await changeAccountStatus(db, staff, target, {active, marked}))) {
+    throw ApiError.of(
+      409,
+      'The account changed while it was being updated. Please retry.',
+      CODES.orderingConflict
+    );
+  }
   return jsonApi(c, document(renderUser(await getUser(db, String(target.id)))));
 });
 

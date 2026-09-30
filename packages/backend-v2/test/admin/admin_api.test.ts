@@ -1,6 +1,8 @@
 import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {adminAuditLog, tokens, type User, users} from '../../src/db/schema';
+import {changeAccountStatus} from '../../src/services/accounts';
+import {getOrCreateToken} from '../../src/services/tokens';
 import {
   ApiClient,
   db,
@@ -357,6 +359,13 @@ describe('AdminApi marking for deletion', () => {
     client.patch(path, userPatch(target.id, attributes));
   const targetTokens = () =>
     db().select().from(tokens).where(eq(tokens.user_id, target.id));
+  const getTarget = async () => {
+    const user = await refreshUser(target.id);
+    if (user === undefined) {
+      throw new Error('target is gone');
+    }
+    return user;
+  };
 
   beforeEach(async () => {
     ({staff, client} = await staffClient());
@@ -510,6 +519,56 @@ describe('AdminApi marking for deletion', () => {
     expect(unmarked.status).toBe(200);
     expect(await tokenFor(other.id)).toBe(tokenBefore);
     expect((await auditRows()).length).toBe(1);
+  });
+
+  it('never overwrites a mark that raced a reactivation', async () => {
+    await patch({is_active: false});
+    // The reactivation read the account before the mark landed.
+    const stale = await getTarget();
+    await patch({marked_for_deletion: true});
+
+    expect(
+      await changeAccountStatus(db(), staff, stale, {
+        active: true,
+        marked: false,
+      })
+    ).toBe(false);
+
+    const after = await refreshUser(target.id);
+    expect(after?.is_active).toBe(false);
+    expect(after?.date_marked_for_deletion).not.toBeNull();
+    expect((await auditRows()).map(row => row.action)).toEqual([
+      'deactivate_user',
+      'mark_user_for_deletion',
+    ]);
+  });
+
+  it('changes nothing, sessions included, once the account has changed', async () => {
+    await patch({is_active: false});
+    // The mark read the account before it was reactivated and signed in to.
+    const stale = await getTarget();
+    await patch({is_active: true});
+    const token = await getOrCreateToken(db(), target.id);
+
+    expect(
+      await changeAccountStatus(db(), staff, stale, {
+        active: false,
+        marked: true,
+      })
+    ).toBe(false);
+
+    const after = await refreshUser(target.id);
+    expect([after?.is_active, after?.date_marked_for_deletion]).toEqual([
+      true,
+      null,
+    ]);
+    expect(await targetTokens()).toEqual([
+      expect.objectContaining({key: token}),
+    ]);
+    expect((await auditRows()).map(row => row.action)).toEqual([
+      'deactivate_user',
+      'activate_user',
+    ]);
   });
 
   it('will not let staff mark themselves', async () => {

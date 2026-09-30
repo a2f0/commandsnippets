@@ -240,7 +240,8 @@ only (403 for everyone else):
   also deactivates the account and deletes its token; a marked account
   cannot be reactivated until it is unmarked, and unmarking leaves it
   deactivated. Nothing deletes a marked account yet. Staff cannot deactivate
-  or mark themselves.
+  or mark themselves. A change applies only to the account as it was read: one
+  that raced another change is refused (409 `conflict`) and can be retried.
 - `GET /audit_log` lists these changes, newest first
   (`filter[target_user_id]`).
 
