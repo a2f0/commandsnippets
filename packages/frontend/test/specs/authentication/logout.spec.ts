@@ -1,11 +1,11 @@
 import {BasePage} from '../../pageobjects/base';
 
-describe('Logged Out User Behavior', () => {
+describe('Logging Out', () => {
   afterEach(async () => {
     await browser.resetMSWHandlers();
   });
 
-  it('should have different context menus for logged out users', async () => {
+  it('should send the user to the sign-in page', async () => {
     // Navigate to page first, then login (using MSW)
     await BasePage.open('');
     await browser.login();
@@ -29,8 +29,9 @@ describe('Logged Out User Behavior', () => {
     await expect(BasePage.fileMenuLogout).toBeDisplayed();
     await BasePage.fileMenuLogout.waitAndLeftClick();
 
-    // Confirm state after logout
-    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    // Logging out leaves the user's page for the sign-in page.
+    await expect(browser).toHaveUrl('http://localhost:8081/');
+    await expect(BasePage.signInPage).toBeDisplayed();
     await expect(BasePage.googleAuthButton).toBeExisting();
     await expect(BasePage.googleAuthButton).toBeDisplayed();
     await expect(BasePage.githubAuthButton).toBeExisting();

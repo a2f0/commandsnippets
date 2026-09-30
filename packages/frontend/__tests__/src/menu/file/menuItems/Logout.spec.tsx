@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 describe('File Menu', () => {
-  it('Logs out', async () => {
+  it('Logs out to the sign-in page', async () => {
     const user = userEvent.setup();
     const history = createMemoryHistory();
     const route = '/test/test-tag-1';
@@ -31,6 +31,7 @@ describe('File Menu', () => {
     await user.pointer({target: logoutButton, keys: '[MouseLeft]'});
     await waitFor(() => screen.getByText(/Login with Google/i));
     await waitFor(() => screen.getByText(/Login with GitHub/i));
-    expect(history.location.pathname).toBe('/test/test-tag-1');
+    expect(history.location.pathname).toBe('/');
+    expect(document.getElementById('signInPage')).toBeInTheDocument();
   });
 });

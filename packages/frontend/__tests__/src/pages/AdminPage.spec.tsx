@@ -239,20 +239,22 @@ describe('AdminPage', () => {
       )
     );
 
-    await renderAt('/admin');
+    const history = await renderAt('/admin');
 
     await waitFor(() => {
       expect(document.getElementById('signInPage')).toBeInTheDocument();
     });
+    expect(history.location.pathname).toBe('/');
     expect(store.loggedInUser).toBeNull();
     expect(listRequests).toHaveLength(0);
   });
 
-  it('shows the sign-in page to signed-out visitors', async () => {
+  it('sends signed-out visitors to the sign-in page', async () => {
     act(() => store.setLoggedInUser(null));
 
-    await renderAt('/admin');
+    const history = await renderAt('/admin');
 
+    expect(history.location.pathname).toBe('/');
     expect(document.getElementById('signInPage')).toBeInTheDocument();
     expect(listRequests).toHaveLength(0);
   });

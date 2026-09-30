@@ -1,8 +1,6 @@
 import {Box} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import React from 'react';
-import {GithubAuth} from '../components/auth/GithubAuth';
-import {GoogleAuth} from '../components/auth/GoogleAuth';
 import {UserProfileCircle} from '../components/UserProfileCircle';
 import {useTypedTranslation} from '../i18n/hooks';
 import {environment} from '../lib/environment';
@@ -152,12 +150,6 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           <ModeTabs username={appConfig.loggedInUser} />
         )}
         <Box sx={{display: 'flex', alignItems: 'center', alignSelf: 'center'}}>
-          {!appConfig.loggedInUser && (
-            <>
-              <GithubAuth />
-              <GoogleAuth />
-            </>
-          )}
           {appConfig.loggedInUser && <UserProfileCircle />}
         </Box>
       </Box>
