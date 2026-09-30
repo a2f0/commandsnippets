@@ -1,5 +1,4 @@
 import {useEffect} from 'react';
-import {useCookies} from 'react-cookie';
 import {useNavigate} from 'react-router-dom';
 import {v4 as uuidv4} from 'uuid';
 import {apiClient} from '../lib/api/apiClient';
@@ -23,7 +22,6 @@ interface OAuthCallbackParams {
 export const useOAuth = (config: OAuthConfig) => {
   const appConfig = useAppConfig();
   const navigate = useNavigate();
-  const [, setCookie] = useCookies(['loggedInUser']);
 
   const isOAuthCallback = () => {
     const path = window.location.pathname;
@@ -58,11 +56,6 @@ export const useOAuth = (config: OAuthConfig) => {
 
       appConfig.setLoggedInUser(username);
       appConfig.setIsStaff(response.data.attributes.is_staff);
-      setCookie('loggedInUser', username, {
-        path: '/',
-        secure: window.location.protocol === 'https:',
-        sameSite: 'strict',
-      });
       navigate(`/${username}`);
     } catch (error: unknown) {
       console.error(`${config.provider} authentication error:`, error);
