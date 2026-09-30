@@ -9,6 +9,7 @@ import type {BatchItem} from 'drizzle-orm/batch';
 import type {Db} from '../db/client';
 import {adminAuditLog, tokens, type User, users} from '../db/schema';
 import {now} from '../lib/clock';
+import {revision} from '../lib/revision';
 
 export interface AccountStatus {
   active: boolean;
@@ -35,7 +36,8 @@ export async function changeAccountStatus(
   const wasMarked = target.date_marked_for_deletion !== null;
   const marking = next.marked && !wasMarked;
   const timestamp = now();
-  // Every status change advances date_updated, so a change that came and
+  // Every status change advances date_updated (a revision the database
+  // assigns, so no Worker's clock can repeat one), so a change that came and
   // went (a mark, then an unmark) still counts.
   const asRead = and(
     eq(users.id, target.id),
@@ -85,7 +87,7 @@ export async function changeAccountStatus(
       date_marked_for_deletion: next.marked
         ? (target.date_marked_for_deletion ?? timestamp)
         : null,
-      date_updated: timestamp,
+      date_updated: revision(users, users.date_updated, users.id, target.id),
     })
     .where(asRead)
     .returning({id: users.id});

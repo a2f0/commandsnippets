@@ -565,6 +565,23 @@ describe('AdminApi marking for deletion', () => {
     ]);
   });
 
+  it('advances date_updated past a revision ahead of this clock', async () => {
+    // Written by a Worker whose clock runs ahead of this one's.
+    const ahead = '2999-01-01T00:00:00.000000';
+    await db()
+      .update(users)
+      .set({date_updated: ahead})
+      .where(eq(users.id, target.id));
+
+    await patch({marked_for_deletion: true});
+    const marked = (await getTarget()).date_updated;
+    await patch({marked_for_deletion: false});
+    const unmarked = (await getTarget()).date_updated;
+
+    expect(marked > ahead).toBe(true);
+    expect(unmarked > marked).toBe(true);
+  });
+
   it('changes nothing, sessions included, once the account has changed', async () => {
     await patch({is_active: false});
     // The mark read the account before it was reactivated and signed in to.
