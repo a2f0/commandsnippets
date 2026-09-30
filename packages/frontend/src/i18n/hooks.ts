@@ -29,9 +29,6 @@ export function useTypedTranslation<NS extends NamespaceKeys = 'common'>(
   };
 }
 
-// Re-export the original hook for backward compatibility
-export {useTranslation} from 'react-i18next';
-
 // Export types for use in components
 export type {
   AdminKeys,

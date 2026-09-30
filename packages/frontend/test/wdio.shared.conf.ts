@@ -23,7 +23,6 @@ declare global {
     }
     interface Browser {
       currentTestErrors: LogEntry[];
-      logout: () => Promise<void>;
       login: () => Promise<void>;
       waitForMSW: () => Promise<void>;
       resetMSWHandlers: () => Promise<void>;
@@ -275,16 +274,6 @@ export const config: WebdriverIO.Config = {
       }
     );
 
-    browser.addCommand('logout', async () => {
-      await browser.execute(
-        (key: string, value: string) => {
-          window.localStorage.setItem(key, value);
-        },
-        'LoggedIn',
-        'None'
-      );
-      await browser.deleteCookies();
-    });
     // Create a properly typed wrapper for the log event handler
     function addLogEntryHandler(
       browser: WebdriverIO.Browser,
