@@ -133,6 +133,7 @@ describe('list params', () => {
         keyof AdminUserListParams,
         | 'filter[is_active]'
         | 'filter[is_staff]'
+        | 'filter[username]'
         | 'filter[search]'
         | 'sort'
         | 'page[number]'
@@ -239,6 +240,7 @@ describe('list params', () => {
           'page[size]': 25,
           'filter[is_active]': true,
           'filter[is_staff]': false,
+          'filter[username]': 'alice',
           'filter[search]': 'ali',
           sort: '-last_login',
         } satisfies Required<AdminUserListParams>,

@@ -136,6 +136,10 @@ export const en: I18NextTranslations = {
     markedForDeletion: 'Marked for deletion',
     never: 'Never',
     userActions: 'Actions for {{username}}',
+    viewData: 'View data',
+    readOnlyBadge: 'Read-only: {{username}}',
+    readOnlyTooltip:
+      "You are viewing {{username}}'s data. It cannot be changed here.",
     deactivate: 'Deactivate',
     reactivate: 'Reactivate',
     deactivateTitle: 'Deactivate {{username}}?',

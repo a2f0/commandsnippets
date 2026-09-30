@@ -138,6 +138,9 @@ export interface AdminTranslations {
   markedForDeletion: string;
   never: string;
   userActions: string;
+  viewData: string;
+  readOnlyBadge: string;
+  readOnlyTooltip: string;
   deactivate: string;
   reactivate: string;
   deactivateTitle: string;

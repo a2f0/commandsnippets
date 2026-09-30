@@ -20,9 +20,39 @@ describe('syncSession', () => {
     expect(alice.db.isOpen()).toBe(false);
   });
 
+  it("opens another user's data in the same database, read-only", () => {
+    const own = syncSession('frank');
+    const other = syncSession('frank', 'alice');
+
+    expect(own).toMatchObject({username: 'frank', owner: 'frank'});
+    expect(own.readOnly).toBe(false);
+    expect(other).toMatchObject({username: 'frank', owner: 'alice'});
+    expect(other.readOnly).toBe(true);
+    expect(other.db).toBe(own.db);
+    expect(other.sync).not.toBe(own.sync);
+    expect(syncSession('frank', 'alice')).toBe(other);
+    expect(syncSession('frank', 'frank')).toBe(own);
+  });
+
+  it("deletes the other users' data read with it when the session ends", async () => {
+    const other = syncSession('gina', 'alice');
+    await other.db.cursors.put({
+      owner: 'alice',
+      key: 'tags',
+      after: '1970-01-01T00:00:00,0',
+    });
+
+    await endSyncSession('gina');
+    expect(await Dexie.exists(other.db.name)).toBe(false);
+  });
+
   it('deletes the data when the session ends', async () => {
     const {db} = syncSession('carol');
-    await db.cursors.put({key: 'tags', after: '1970-01-01T00:00:00,0'});
+    await db.cursors.put({
+      owner: 'carol',
+      key: 'tags',
+      after: '1970-01-01T00:00:00,0',
+    });
     expect(await Dexie.exists(db.name)).toBe(true);
 
     await endSyncSession('carol');
@@ -35,7 +65,11 @@ describe('syncSession', () => {
     // Synced before the page reloaded: the data is there, the session not.
     const name = databaseName('test', 'dave');
     const earlier = new CommandsnippetsDatabase(name);
-    await earlier.cursors.put({key: 'tags', after: '1970-01-01T00:00:00,0'});
+    await earlier.cursors.put({
+      owner: 'dave',
+      key: 'tags',
+      after: '1970-01-01T00:00:00,0',
+    });
     earlier.close();
     expect(await Dexie.exists(name)).toBe(true);
 
@@ -45,7 +79,11 @@ describe('syncSession', () => {
 
   it('opens anew after another tab deleted the database', async () => {
     const first = syncSession('erin');
-    await first.db.cursors.put({key: 'tags', after: '1970-01-01T00:00:00,0'});
+    await first.db.cursors.put({
+      owner: 'erin',
+      key: 'tags',
+      after: '1970-01-01T00:00:00,0',
+    });
     // Another tab signs erin out: its deletion closes this tab's connection.
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     await Dexie.delete(first.db.name);
@@ -53,7 +91,11 @@ describe('syncSession', () => {
 
     const again = syncSession('erin');
     expect(again).not.toBe(first);
-    await again.db.cursors.put({key: 'tags', after: '1970-01-01T00:00:00,0'});
+    await again.db.cursors.put({
+      owner: 'erin',
+      key: 'tags',
+      after: '1970-01-01T00:00:00,0',
+    });
     expect(await again.db.cursors.count()).toBe(1);
   });
 });

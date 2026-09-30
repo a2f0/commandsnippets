@@ -505,16 +505,37 @@ function deleteJunction(state: EntriesState, junction: TagTextEntry) {
 }
 
 /**
+ * A user's data as the mocks hold it: the user, their tags, their entries
+ * (with their junctions), and their deleted junctions.
+ */
+interface MockOwner {
+  user: User;
+  tags: readonly Tag[];
+  state: EntriesState;
+  deleted: readonly TagTextEntry[];
+}
+
+/** The signed-in test user's data (what the owner-only routes answer). */
+const testOwner = (): MockOwner => ({
+  user: testUser,
+  tags,
+  state: activeEntries(),
+  deleted: deletedJunctions,
+});
+
+/**
  * The resources `include` adds to a page of `primary`, as the API renders
  * them: sorted by type, then by id; primary resources left out; the member
  * left out when empty. Each path walks from the primary resources:
  * `text_entry_to_tag` to an entry's junctions (not deleted), `tag` and
- * `text_entry` from a junction, `user` to the owner.
+ * `text_entry` from a junction, `user` to the owner (the test user's data,
+ * unless `owner` names another's).
  */
 function includedFor(
   state: EntriesState,
   primary: ReadonlyArray<Tag | TextEntry | TagTextEntry>,
-  paths: readonly string[]
+  paths: readonly string[],
+  owner: Pick<MockOwner, 'user' | 'tags'> = testOwner()
 ): {included?: IncludedResource[]} {
   const found = new Map<string, IncludedResource>();
   const add = (resource: IncludedResource) =>
@@ -525,7 +546,7 @@ function includedFor(
       const next: IncludedResource[] = [];
       for (const resource of current) {
         if (segment === 'user') {
-          next.push(testUser);
+          next.push(owner.user);
         } else if (
           segment === 'text_entry_to_tag' &&
           resource.type === 'TextEntry'
@@ -540,7 +561,7 @@ function includedFor(
           segment === 'tag' &&
           resource.type === 'TagTextEntryThroughModel'
         ) {
-          const tag = tags.find(
+          const tag = owner.tags.find(
             candidate => candidate.id === resource.relationships.tag.data.id
           );
           if (tag !== undefined) {
@@ -595,6 +616,87 @@ const changedSince = (url: URL, resource: TagTextEntry | Tag | TextEntry) => {
     positionOf(resource).dateUpdated > (parseDateTime(since) ?? since)
   );
 };
+
+// Alice's data (user 7), which staff read through the admin API: one tag
+// with one entry. Staff change no one's data but their own, so it never
+// changes.
+const ALICE_DATE = '2026-09-01T00:00:00.000000';
+const aliceUser: User = {
+  type: 'User',
+  id: '7',
+  attributes: {username: 'alice', is_staff: false, date_updated: ALICE_DATE},
+};
+const aliceIs = {data: {type: 'User', id: '7'}} as const;
+const aliceTags: Tag[] = [
+  {
+    type: 'Tag',
+    id: '70',
+    attributes: {
+      name: 'alices-tag',
+      date_created: ALICE_DATE,
+      date_last_used: ALICE_DATE,
+      date_updated: ALICE_DATE,
+      entry_count: 1,
+      order: 0,
+      is_deleted: false,
+    },
+    relationships: {user: aliceIs},
+  },
+];
+const aliceJunction: TagTextEntry = {
+  type: 'TagTextEntryThroughModel',
+  id: '700',
+  attributes: {
+    order: 0,
+    date_created: ALICE_DATE,
+    date_updated: ALICE_DATE,
+    is_deleted: false,
+  },
+  relationships: {
+    tag: {data: {type: 'Tag', id: '70'}},
+    text_entry: {data: {type: 'TextEntry', id: '71'}},
+    user: aliceIs,
+  },
+};
+const aliceEntries: EntriesState = {
+  data: [
+    {
+      type: 'TextEntry',
+      id: '71',
+      attributes: {
+        subject: 'alices-entry',
+        body: 'echo alice',
+        date_created: ALICE_DATE,
+        date_updated: ALICE_DATE,
+        reused_count: 0,
+        is_deleted: false,
+        tag_count: 1,
+      },
+      relationships: {
+        user: aliceIs,
+        text_entry_to_tag: {
+          data: [{type: 'TagTextEntryThroughModel', id: '700'}],
+          meta: {count: 1},
+        },
+      },
+    },
+  ],
+  included: [aliceJunction],
+};
+
+/**
+ * The data of admin user `id` (`/admin/users/:id/...`): the test user's, or
+ * alice's; the API's 404 for anyone else.
+ */
+function adminDataOf(id: string): MockOwner {
+  if (id === '1') {
+    return testOwner();
+  }
+  if (id === '7') {
+    return {user: aliceUser, tags: aliceTags, state: aliceEntries, deleted: []};
+  }
+  throw apiError(404, CODES.notFound, 'No AdminUser matches the given query.');
+}
 
 // Admin page data: the signed-in test user (id 1, staff) and one other.
 interface MockAdminUser {
@@ -738,17 +840,129 @@ const createHandlers = () => {
         const params = new URL(request.url).searchParams;
         const search = params.get('filter[search]')?.toLowerCase();
         const active = params.get('filter[is_active]');
+        const username = params.get('filter[username]');
         const matching = adminUsers.filter(
           user =>
             (search === undefined ||
               user.username.includes(search) ||
               user.email.includes(search)) &&
-            (active === null || String(user.is_active) === active)
+            (active === null || String(user.is_active) === active) &&
+            (username === null || user.username === username)
         );
         return HttpResponse.json(
           listDocument(request.url, matching.map(adminUserResource))
         );
       }),
+      // A user's data, read-only, as the admin API renders it: the same
+      // pages as the owner-only lists (the sync's keyset reads, and the
+      // newest junction).
+      http.get(`${baseUrl}/admin/users/:id/tags`, ({params, request}) => {
+        recordRequest('GET', request.url);
+        try {
+          const owner = adminDataOf(String(params['id']));
+          const url = new URL(request.url);
+          const rows = owner.tags.filter(tag => changedSince(url, tag));
+          const paths = includePaths(url, ['user']);
+          const after = afterOf(url);
+          if (after !== null) {
+            const {data, links} = keysetPage(url, rows, after);
+            const body: TagCursorListDocument = {
+              links,
+              data,
+              ...includedFor(owner.state, data, paths, owner),
+            };
+            return HttpResponse.json(body);
+          }
+          const body: TagListDocument = {
+            ...listDocument(request.url, rows),
+            ...includedFor(owner.state, rows, paths, owner),
+          };
+          return HttpResponse.json(body);
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
+      http.get(`${baseUrl}/admin/users/:id/entries`, ({params, request}) => {
+        recordRequest('GET', request.url);
+        try {
+          const owner = adminDataOf(String(params['id']));
+          const url = new URL(request.url);
+          const rows = owner.state.data.filter(entry =>
+            changedSince(url, entry)
+          );
+          const paths = includePaths(url, [
+            'text_entry_to_tag',
+            'text_entry_to_tag.tag',
+            'user',
+          ]);
+          const after = afterOf(url);
+          if (after !== null) {
+            const {data, links} = keysetPage(url, rows, after);
+            const body: TextEntryCursorListDocument = {
+              links,
+              data,
+              ...includedFor(owner.state, data, paths, owner),
+            };
+            return HttpResponse.json(body);
+          }
+          const body: TextEntryListDocument = {
+            ...listDocument(request.url, rows),
+            ...includedFor(owner.state, rows, paths, owner),
+          };
+          return HttpResponse.json(body);
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
+      http.get(
+        `${baseUrl}/admin/users/:id/tags_entries`,
+        ({params, request}) => {
+          recordRequest('GET', request.url);
+          try {
+            const owner = adminDataOf(String(params['id']));
+            const url = new URL(request.url);
+            const tagId = url.searchParams.get('filter[tag.id]');
+            const rows = [...junctionsOf(owner.state), ...owner.deleted].filter(
+              junction =>
+                changedSince(url, junction) &&
+                (tagId === null || junction.relationships.tag.data.id === tagId)
+            );
+            const paths = includePaths(url, ['user', 'tag', 'text_entry']);
+            const after = afterOf(url);
+            if (after !== null) {
+              const {data, links} = keysetPage(url, rows, after);
+              const body: TagTextEntryCursorListDocument = {
+                links,
+                data,
+                ...includedFor(owner.state, data, paths, owner),
+              };
+              return HttpResponse.json(body);
+            }
+            const sorted = [...rows].sort(byRevision);
+            if (url.searchParams.get('sort') === '-date_updated') {
+              sorted.reverse();
+            }
+            const size = Math.min(
+              Number(url.searchParams.get('page[size]') ?? 50) || 50,
+              100
+            );
+            const data = sorted.slice(0, size);
+            const body: TagTextEntryListDocument = {
+              ...pagination(
+                request.url,
+                1,
+                Math.max(1, Math.ceil(sorted.length / size)),
+                sorted.length
+              ),
+              data,
+              ...includedFor(owner.state, data, paths, owner),
+            };
+            return HttpResponse.json(body);
+          } catch (error) {
+            return errorResponse(error);
+          }
+        }
+      ),
       // Deactivate, reactivate, or (un)mark for deletion, as the API does
       // (marking deactivates too); staff cannot do either to themselves.
       http.patch(`${baseUrl}/admin/users/:id`, async ({params, request}) => {

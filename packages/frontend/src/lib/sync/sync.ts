@@ -1,8 +1,10 @@
 /**
- * The sync between the API and the signed-in user's IndexedDB database
- * (`lib/db/database.ts`): keyset reads (api-shared's `cursor.ts`) from
- * cursors the database keeps, so a sync resumes where the last one stopped,
- * and a first one (no cursors: a fresh sign-in) reads everything.
+ * The sync between the API and one user's data in the signed-in user's
+ * IndexedDB database (`lib/db/database.ts`): their own, or for staff another
+ * user's, read through the admin API. Keyset reads (api-shared's
+ * `cursor.ts`) from cursors the database keeps for that user, so a sync
+ * resumes where the last one stopped, and a first one (no cursors: a fresh
+ * sign-in) reads everything.
  *
  * - `syncAll` syncs the whole collection: the tags changed since the `tags`
  *   cursor, then the entries (with their junctions) changed since the
@@ -24,9 +26,9 @@
  * asked for while the collection syncs (the tag shown, on a first sign-in)
  * runs between two pages of it, which then goes on from its cursor.
  *
- * Every sync first checks that the API's user is the database's (another tab
- * may have signed in as someone else), and refuses a page with anyone else's
- * data (`ForeignDataError`).
+ * Every sync first checks that the API reads the data of the user it syncs
+ * (for their own: another tab may have signed in as someone else), and
+ * refuses a page with anyone else's data (`ForeignDataError`).
  */
 import {CURSOR_START, cursorOf} from '@commandsnippets/api-shared/cursor';
 import type {
@@ -34,7 +36,6 @@ import type {
   TagTextEntryCursorListDocument,
   TagTextEntryListDocument,
   TextEntryCursorListDocument,
-  UserDocument,
 } from '@commandsnippets/api-shared/responses';
 import {
   type CommandsnippetsDatabase,
@@ -43,9 +44,13 @@ import {
 } from '../db/database';
 import {checkOwner, putEntries, putJunctions, putTags} from './store';
 
-/** The API reads a sync makes (`apiClient`'s). */
+/**
+ * The API reads a sync makes: of the signed-in user's own data
+ * (`apiClient`'s), or of another user's (`adminSyncApi`).
+ */
 export interface SyncApi {
-  getCurrentUser(): Promise<UserDocument>;
+  /** The user whose data the reads return. */
+  getOwner(): Promise<{id: string; username: string}>;
   getTagsAfter(after: string): Promise<TagCursorListDocument>;
   getEntriesAfter(after: string): Promise<TextEntryCursorListDocument>;
   getTagJunctionsAfter(
@@ -55,7 +60,7 @@ export interface SyncApi {
   getNewestJunction(): Promise<TagTextEntryListDocument>;
 }
 
-/** The API answers for another user than the database's. */
+/** The API answers for another user than the one synced. */
 export class SyncUserError extends Error {
   constructor(expected: string, actual: string) {
     super(`The API's user is ${actual}, not ${expected}: not synced`);
@@ -69,13 +74,14 @@ type Page = {
 };
 
 /**
- * Read the pages after the stored cursor `key` (from the start without one),
- * storing each (`store`) with the cursor past it in one transaction, until
- * the last, or until `pause` (checked between pages) asks to stop. Returns
- * whether it read to the end.
+ * Read the pages after `owner`'s stored cursor `key` (from the start without
+ * one), storing each (`store`) with the cursor past it in one transaction,
+ * until the last, or until `pause` (checked between pages) asks to stop.
+ * Returns whether it read to the end.
  */
 async function readAfter<P extends Page>(
   db: CommandsnippetsDatabase,
+  owner: string,
   key: string,
   read: (after: string) => Promise<P>,
   store: (page: P) => Promise<void>,
@@ -84,9 +90,11 @@ async function readAfter<P extends Page>(
     pause?: () => boolean;
   } = {}
 ): Promise<boolean> {
-  const {cursor = (after: string) => ({key, after}), pause = () => false} =
-    options;
-  let after = (await db.cursors.get(key))?.after ?? CURSOR_START;
+  const {
+    cursor = (after: string) => ({owner, key, after}),
+    pause = () => false,
+  } = options;
+  let after = (await db.cursors.get([owner, key]))?.after ?? CURSOR_START;
   for (;;) {
     const page = await read(after);
     const last = page.data.at(-1);
@@ -109,13 +117,13 @@ async function readAfter<P extends Page>(
   }
 }
 
-/** The API's user id, which must be `username`'s. */
-async function ownerOf(api: SyncApi, username: string): Promise<string> {
-  const {data} = await api.getCurrentUser();
-  if (data.attributes.username !== username) {
-    throw new SyncUserError(username, data.attributes.username);
+/** The id of the user whose data the API reads, who must be `owner`. */
+async function ownerOf(api: SyncApi, owner: string): Promise<string> {
+  const {id, username} = await api.getOwner();
+  if (username !== owner) {
+    throw new SyncUserError(owner, username);
   }
-  return data.id;
+  return id;
 }
 
 /**
@@ -129,31 +137,33 @@ async function junctionsMark(api: SyncApi): Promise<string> {
     : `${newest.attributes.date_updated},${Number.MAX_SAFE_INTEGER}`;
 }
 
-/** Sync the collection; false when paused before its end (`pause`). */
+/** Sync `owner`'s collection; false when paused before its end (`pause`). */
 async function syncAll(
   db: CommandsnippetsDatabase,
   api: SyncApi,
-  username: string,
+  owner: string,
   pause: () => boolean
 ): Promise<boolean> {
-  const owner = await ownerOf(api, username);
+  const ownerId = await ownerOf(api, owner);
   const mark = await junctionsMark(api);
   await readAfter(
     db,
+    owner,
     'tags',
     after => api.getTagsAfter(after),
     page => {
-      checkOwner(owner, page.data);
-      return putTags(db, page.data);
+      checkOwner(ownerId, page.data);
+      return putTags(db, owner, page.data);
     }
   );
   const done = await readAfter(
     db,
+    owner,
     'entries',
     after => api.getEntriesAfter(after),
     page => {
-      checkOwner(owner, [...page.data, ...(page.included ?? [])]);
-      return putEntries(db, page.data, page.included);
+      checkOwner(ownerId, [...page.data, ...(page.included ?? [])]);
+      return putEntries(db, owner, page.data, page.included);
     },
     {pause}
   );
@@ -162,8 +172,9 @@ async function syncAll(
   }
   // Every change there was when the sync began is stored now.
   await db.transaction('rw', [db.tags, db.cursors], async () => {
-    for (const tag of await db.tags.toArray()) {
+    for (const tag of await db.tags.where('owner').equals(owner).toArray()) {
       await db.cursors.put({
+        owner,
         key: tagCursorKey(tag.id),
         after: mark,
         revision: tag.attributes.date_updated,
@@ -176,11 +187,11 @@ async function syncAll(
 async function syncTag(
   db: CommandsnippetsDatabase,
   api: SyncApi,
-  username: string,
+  owner: string,
   tagId: string
 ): Promise<void> {
-  const owner = await ownerOf(api, username);
-  const tag = await db.tags.get(tagId);
+  const ownerId = await ownerOf(api, owner);
+  const tag = await db.tags.get([owner, tagId]);
   if (tag === undefined) {
     return;
   }
@@ -188,17 +199,19 @@ async function syncTag(
   // it missed, so the tag syncs again then.
   const revision = tag.attributes.date_updated;
   const key = tagCursorKey(tagId);
-  const held = (await db.cursors.get(key))?.revision;
+  const held = (await db.cursors.get([owner, key]))?.revision;
   await readAfter(
     db,
+    owner,
     key,
     after => api.getTagJunctionsAfter(tagId, after),
     page => {
-      checkOwner(owner, [...page.data, ...(page.included ?? [])]);
-      return putJunctions(db, page.data, page.included);
+      checkOwner(ownerId, [...page.data, ...(page.included ?? [])]);
+      return putJunctions(db, owner, page.data, page.included);
     },
     {
       cursor: (after, done) => ({
+        owner,
         key,
         after,
         ...(done ? {revision} : held === undefined ? {} : {revision: held}),
@@ -207,14 +220,18 @@ async function syncTag(
   );
 }
 
-/** Whether tag `tagId` is synced through the revision the database holds. */
+/**
+ * Whether `owner`'s tag `tagId` is synced through the revision the database
+ * holds.
+ */
 export async function isTagSynced(
   db: CommandsnippetsDatabase,
+  owner: string,
   tagId: string
 ): Promise<boolean> {
   const [tag, cursor] = await Promise.all([
-    db.tags.get(tagId),
-    db.cursors.get(tagCursorKey(tagId)),
+    db.tags.get([owner, tagId]),
+    db.cursors.get([owner, tagCursorKey(tagId)]),
   ]);
   return (
     tag !== undefined &&
@@ -231,15 +248,15 @@ export interface SyncEngine {
 }
 
 /**
- * The syncs of `username`'s database `db` from `api`, run one at a time: in
- * this tab in the order they are asked for (a tag sync ahead of the rest of
- * a collection sync), and across tabs by the Web Lock `lockName`.
+ * The syncs of `owner`'s data in `db` from `api`, run one at a time: in this
+ * tab in the order they are asked for (a tag sync ahead of the rest of a
+ * collection sync), and across tabs by the Web Lock `lockName`.
  */
 export function createSyncEngine(
   db: CommandsnippetsDatabase,
   api: SyncApi,
   lockName: string,
-  username: string
+  owner: string
 ): SyncEngine {
   let queue: Promise<unknown> = Promise.resolve();
   let tagSyncsWaiting = 0;
@@ -252,7 +269,7 @@ export function createSyncEngine(
     return result;
   };
   const syncAllToTheEnd = (): Promise<void> =>
-    exclusive(() => syncAll(db, api, username, () => tagSyncsWaiting > 0)).then(
+    exclusive(() => syncAll(db, api, owner, () => tagSyncsWaiting > 0)).then(
       done => (done ? undefined : syncAllToTheEnd())
     );
   return {
@@ -261,7 +278,7 @@ export function createSyncEngine(
       tagSyncsWaiting += 1;
       return exclusive(() => {
         tagSyncsWaiting -= 1;
-        return syncTag(db, api, username, tagId);
+        return syncTag(db, api, owner, tagId);
       });
     },
   };

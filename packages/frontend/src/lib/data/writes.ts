@@ -6,6 +6,10 @@
  * the user's IndexedDB database (`putResources`), so every list shows it at
  * once. A write the API answers with no body (untagging, deleting an entry,
  * reordering) marks what it knows and syncs for the rest.
+ *
+ * Only the signed-in user's own data is written: a session of another
+ * user's (staff reading it) refuses every write before it is sent
+ * (`ReadOnlyError`), as the API would.
  */
 
 import type {TagReorderDocument} from '@commandsnippets/api-shared/requests';
@@ -21,14 +25,31 @@ import type {SyncSession} from '../sync/session';
 import {markDeleted, putResources} from '../sync/store';
 import {junctionOf} from './hooks';
 
+/** A write to another user's data (a read-only session), never sent. */
+export class ReadOnlyError extends Error {
+  constructor(owner: string) {
+    super(`${owner}'s data is read-only here: not written`);
+    this.name = 'ReadOnlyError';
+  }
+}
+
+/** Refuse any write in a read-only session, before it reads or sends. */
+function refuseReadOnly(session: SyncSession): void {
+  if (session.readOnly) {
+    throw new ReadOnlyError(session.owner);
+  }
+}
+
 /**
- * Send a write: when the API refuses it as another user's, `session`'s tab
- * leaves the session (`leaveForeignSession`), and the write still fails.
+ * Send a write: refused unsent in a read-only session (`ReadOnlyError`);
+ * when the API refuses it as another user's, `session`'s tab leaves the
+ * session (`leaveForeignSession`), and the write still fails.
  */
 async function send<T>(
   session: SyncSession,
   write: () => Promise<T>
 ): Promise<T> {
+  refuseReadOnly(session);
   try {
     return await write();
   } catch (error: unknown) {
@@ -47,7 +68,10 @@ async function store(
     included?: IncludedResource[] | undefined;
   }
 ): Promise<void> {
-  await putResources(session.db, [document.data, ...(document.included ?? [])]);
+  await putResources(session.db, session.owner, [
+    document.data,
+    ...(document.included ?? []),
+  ]);
 }
 
 /** A sync the write does not wait for: its failure is logged. */
@@ -127,7 +151,8 @@ export async function deleteEntry(
   session: SyncSession,
   entryId: string
 ): Promise<void> {
-  const entry = await session.db.entries.get(entryId);
+  refuseReadOnly(session);
+  const entry = await session.db.entries.get([session.owner, entryId]);
   await send(session, () => apiClient.deleteEntry(entryId));
   if (entry !== undefined) {
     await markDeleted(session.db.entries, entry);
@@ -153,7 +178,8 @@ export async function untagEntry(
   tagId: string,
   entryId: string
 ): Promise<void> {
-  const junction = await junctionOf(session.db, tagId, entryId);
+  refuseReadOnly(session);
+  const junction = await junctionOf(session, tagId, entryId);
   if (junction === undefined) {
     return;
   }
@@ -172,9 +198,10 @@ export async function reorderEntries(
   topEntryId: string,
   bottomEntryId: string
 ): Promise<void> {
+  refuseReadOnly(session);
   const [top, bottom] = await Promise.all([
-    junctionOf(session.db, tagId, topEntryId),
-    junctionOf(session.db, tagId, bottomEntryId),
+    junctionOf(session, tagId, topEntryId),
+    junctionOf(session, tagId, bottomEntryId),
   ]);
   if (top === undefined || bottom === undefined) {
     throw new Error('The entries to reorder are not in the tag');

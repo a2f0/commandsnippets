@@ -94,14 +94,29 @@ API; everything else the app keeps is a zustand store.
   happens (the menu, the cookie gone, a session the API ended, another
   sign-in; `endSyncSession`).
 - **The user's data**: `src/lib/db/database.ts`, a Dexie database per
-  environment and user (`commandsnippets-<environment>-<username>`) of
-  their tags, entries and junctions (deleted ones too) as api-shared's
-  resources, and the sync's `cursors`. `src/lib/sync/session.ts` opens it for
-  the signed-in user, with its sync; a session ends when another tab deletes
-  or upgrades the database, and the next opens it anew.
+  environment and signed-in user (`commandsnippets-<environment>-<username>`)
+  of tags, entries and junctions (deleted ones too) as api-shared's
+  resources, and the sync's `cursors`. Every row is keyed by its owner's
+  username (`[owner+id]`): the signed-in user's own data, and for staff the
+  data of other users they read, sit side by side, and every query names
+  whose. `src/lib/sync/session.ts` opens the database for the signed-in user,
+  with a session per owner (`syncSession(username, owner)`: its sync, and
+  `readOnly` for another user's); sessions end when another tab deletes or
+  upgrades the database, and the next opens it anew.
+- **Another user's data (staff)**: on another user's page (`/:user`), staff
+  read that user's data (`useOwner` in `src/lib/data/hooks.ts`; anyone else
+  is sent to their own page). It syncs through the admin API's read-only
+  routes (`adminSyncApi`, `GET /admin/users/:id/tags` ...) into the signed-in
+  user's database under that user's name, and signing out deletes it with
+  the rest. The page is read-only: a badge in the menu bar
+  (`ReadOnlyBadge`), no New Tag or New Entry, no tag or list context menus,
+  only Copy on an entry's, no drag and drop (`useReadOnly`), and a
+  read-only session's writes throw `ReadOnlyError` before anything is sent.
+  The admin users table opens it (View data).
 - **What the UI shows**: `src/lib/data/hooks.ts`, live queries of the
-  database (`dexie-react-hooks`: `useTags`, `useTagNamed`, `useTagEntries`,
-  `useEntries('all' | 'untagged')`), so a list shows each change the moment
+  owner's rows in the database (`dexie-react-hooks`: `useTags`,
+  `useTagNamed`, `useTagEntries`, `useEntries('all' | 'untagged')`, of the
+  session `useSession` gives), so a list shows each change the moment
   a sync or a write stores it, in any tab; `src/lib/data/sort.ts` sorts and
   searches them (case-insensitively in any script, as the API's search).
   Deleted tags and entries are left out; untagged entries are those in no
@@ -138,8 +153,9 @@ API; everything else the app keeps is a zustand store.
   it) after its cursor, from the start without one; a tag sync asked for
   while the collection syncs runs between two of its pages. A tag is synced
   while its cursor holds its revision (`isTagSynced`). Each sync first checks
-  the API's user (`GET /user/`) is the database's, and refuses a page with
-  another user's rows (a stale tab after someone else signed in).
+  the API reads the owner's data (`SyncApi.getOwner`: `GET /user/` for the
+  signed-in user's own, the admin API's user for another's), and refuses a
+  page with anyone else's rows (a stale tab after someone else signed in).
 - **What a sync stores**: `src/lib/sync/store.ts`: each resource unless the
   database holds a newer revision of it (revisions compare within a table);
   an entry stored decides its junctions (its `text_entry_to_tag` lists all
@@ -178,8 +194,9 @@ writing its type by hand.
   store (a sync parses every page before it stores any), and the user stays
   signed in (only the rule below signs out).
 - `src/lib/api/adminApi.ts` - the staff-only admin API, which handles its own
-  401/403 responses and parses with api-shared's admin schemas; a response
-  that breaks the contract is an `AdminApiError` with status 0.
+  401/403 responses and parses with api-shared's schemas; a response that
+  breaks the contract is an `AdminApiError` with status 0. `adminSyncApi`
+  reads another user's data (read-only) for the sync.
 - `src/lib/api/errorDocument.ts` - the first error's `code` and `detail` from
   an error response, each read on its own. Branch on `CODES`
   (`CODES.permissionDenied`), never on the detail.

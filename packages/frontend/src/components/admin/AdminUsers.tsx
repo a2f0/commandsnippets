@@ -25,6 +25,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import React, {useCallback, useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 
 import type {AdminKeys} from '../../i18n/hooks';
 import {useTypedTranslation} from '../../i18n/hooks';
@@ -47,6 +48,7 @@ import {leaveForeignSession} from '../../lib/state/appState';
 import {commonButtonSx} from '../../theme/sx';
 import {
   type AdminUserAction,
+  type AdminUserChange,
   AdminUserContextMenu,
 } from './AdminUserContextMenu';
 
@@ -77,7 +79,7 @@ interface ActionDialog {
   destructive: boolean;
 }
 
-const ACTION_DIALOGS: Record<AdminUserAction, ActionDialog> = {
+const ACTION_DIALOGS: Record<AdminUserChange, ActionDialog> = {
   deactivate: {
     title: 'deactivateTitle',
     body: 'deactivateBody',
@@ -101,7 +103,7 @@ const ACTION_DIALOGS: Record<AdminUserAction, ActionDialog> = {
 };
 
 /** Deactivating and marking for deletion both end the user's sessions. */
-function applyAction(user: AdminUser, action: AdminUserAction) {
+function applyAction(user: AdminUser, action: AdminUserChange) {
   switch (action) {
     case 'deactivate':
       return setUserActive(user.id, false);
@@ -137,8 +139,9 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
   const [loadFailed, setLoadFailed] = useState(false);
   const [pending, setPending] = useState<{
     user: AdminUser;
-    action: AdminUserAction;
+    action: AdminUserChange;
   } | null>(null);
+  const navigate = useNavigate();
   // The menu keeps its user while it closes; the position opens and closes it.
   const [menuUser, setMenuUser] = useState<AdminUser | null>(null);
   const [menuMouse, setMenuMouse] = useState<IMouse>(initialMouse);
@@ -212,9 +215,16 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
 
   const closeMenu = useCallback(() => setMenuMouse(initialMouse), []);
 
+  // Their data opens on their page, read-only; a change is confirmed first.
   const chooseAction = useCallback(
-    (user: AdminUser, action: AdminUserAction) => setPending({user, action}),
-    []
+    (user: AdminUser, action: AdminUserAction) => {
+      if (action === 'viewData') {
+        navigate(`/${encodeURIComponent(user.username)}`);
+      } else {
+        setPending({user, action});
+      }
+    },
+    [navigate]
   );
 
   const confirmChange = async () => {

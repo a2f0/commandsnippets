@@ -19,15 +19,18 @@ const tabSx: SxProps<Theme> = {
 
 interface IProps {
   username: string;
+  /** On another user's page (reading their data): neither tab is selected. */
+  readOnly: boolean;
 }
 
 /**
  * Staff switch here between using the app as any user does (their entries)
  * and the admin page. The route decides which tab is selected.
  */
-const ModeTabs = ({username}: IProps) => {
+const ModeTabs = ({username, readOnly}: IProps) => {
   const {t} = useTypedTranslation('admin');
-  const mode: Mode = useMatch(ADMIN_PATH) === null ? 'user' : 'admin';
+  const onAdmin = useMatch(ADMIN_PATH) !== null;
+  const mode: Mode | false = onAdmin ? 'admin' : readOnly ? false : 'user';
 
   // The selected tab's link would reload its page (and drop the tag shown).
   const stayOn = (tab: Mode) => (event: React.MouseEvent) => {

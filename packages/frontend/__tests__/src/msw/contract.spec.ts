@@ -162,6 +162,49 @@ const exchanges: Exchange[] = [
     schema: errorDocumentSchema,
   },
   {
+    handler: `GET ${API}/admin/users`,
+    method: 'GET',
+    url: `${API}/admin/users?filter%5Busername%5D=alice`,
+    status: 200,
+    schema: adminUserListDocumentSchema,
+  },
+  // Alice's data, read-only, as the sync reads it.
+  {
+    handler: `GET ${API}/admin/users/:id/tags`,
+    method: 'GET',
+    url: `${API}/admin/users/7/tags?page%5Bafter%5D=${CURSOR_START}`,
+    status: 200,
+    schema: tagCursorListDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/admin/users/:id/tags`,
+    method: 'GET',
+    url: `${API}/admin/users/99/tags?page%5Bafter%5D=${CURSOR_START}`,
+    status: 404,
+    schema: errorDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/admin/users/:id/entries`,
+    method: 'GET',
+    url: `${API}/admin/users/7/entries?page%5Bafter%5D=${CURSOR_START}&include=text_entry_to_tag`,
+    status: 200,
+    schema: textEntryCursorListDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/admin/users/:id/tags_entries`,
+    method: 'GET',
+    url: `${API}/admin/users/7/tags_entries?filter%5Btag.id%5D=70&page%5Bafter%5D=${CURSOR_START}&include=text_entry,text_entry.text_entry_to_tag`,
+    status: 200,
+    schema: tagTextEntryCursorListDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/admin/users/:id/tags_entries`,
+    method: 'GET',
+    url: `${API}/admin/users/1/tags_entries?sort=-date_updated&page%5Bsize%5D=1`,
+    status: 200,
+    schema: tagTextEntryListDocumentSchema,
+  },
+  {
     // Not empty: the PATCHes above logged a deactivation and a mark.
     handler: `GET ${API}/admin/audit_log`,
     method: 'GET',

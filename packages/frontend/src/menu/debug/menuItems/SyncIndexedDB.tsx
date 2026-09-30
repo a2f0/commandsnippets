@@ -20,9 +20,9 @@ const SyncIndexedDB = ({onClose}: IProps) => {
     const {db, sync} = syncSession(username);
     await sync.syncAll();
     const [tags, entries, junctions] = await Promise.all([
-      db.tags.count(),
-      db.entries.count(),
-      db.junctions.count(),
+      db.tags.where('owner').equals(username).count(),
+      db.entries.where('owner').equals(username).count(),
+      db.junctions.where('owner').equals(username).count(),
     ]);
     console.info(
       `OK: IndexedDB synced: ${tags} tags, ${entries} entries, ${junctions} junctions`

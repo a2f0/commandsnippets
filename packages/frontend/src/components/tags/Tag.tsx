@@ -7,7 +7,7 @@ import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useNavigate, useParams} from 'react-router-dom';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
-import {useSession} from '../../lib/data/hooks';
+import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {deleteTag as deleteStoredTag, reorderTags} from '../../lib/data/writes';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {
@@ -75,6 +75,9 @@ const Tag = ({
   const tagObject = object;
   const appConfig = useAppConfig();
   const session = useSession();
+  // Another user's tags (staff reading them): no reordering, editing or
+  // context menu.
+  const readOnly = useReadOnly();
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const originalIndex = findEntry(id).index;
@@ -117,6 +120,7 @@ const Tag = ({
         index,
       }),
       type: ItemTypes.TAG,
+      canDrag: () => !readOnly,
       collect: monitor => ({
         isDragging: monitor.isDragging(),
       }),
@@ -187,7 +191,7 @@ const Tag = ({
         }
       },
     },
-    [id, originalIndex, moveEntry]
+    [id, originalIndex, moveEntry, readOnly]
   );
 
   const [{canDrop, isOver}, drop] = useDrop<
@@ -263,7 +267,11 @@ const Tag = ({
   );
 
   const mouseEnter = () => {
-    if (appConfig.loggedInUser !== null && appConfig.tagSortOrder === 'order') {
+    if (
+      appConfig.loggedInUser !== null &&
+      !readOnly &&
+      appConfig.tagSortOrder === 'order'
+    ) {
       setShowDragHandle(true);
     }
   };
@@ -378,7 +386,7 @@ const Tag = ({
             <Box
               ref={dropBoxRef}
               style={{opacity}}
-              onContextMenu={handleContextClick}
+              onContextMenu={readOnly ? undefined : handleContextClick}
               onClick={() => {
                 handleTagClick(object);
               }}
@@ -421,8 +429,8 @@ const Tag = ({
           </ListItemButton>
         </ListItem>
       )}
-      {appConfig.loggedInUser && <>{contextMenu}</>}
-      {isEditing && (
+      {appConfig.loggedInUser && !readOnly && <>{contextMenu}</>}
+      {isEditing && !readOnly && (
         <TagEdit
           object={tagObject}
           handleSaveParent={handleSave}

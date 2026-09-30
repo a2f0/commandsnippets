@@ -89,12 +89,14 @@ const server = setupServer(
     listRequests.push(params);
     const search = params.get('filter[search]')?.toLowerCase();
     const active = params.get('filter[is_active]');
+    const username = params.get('filter[username]');
     const matching = users.filter(
       user =>
         (search === undefined ||
           user.username.includes(search) ||
           user.email.includes(search)) &&
-        (active === null || String(user.is_active) === active)
+        (active === null || String(user.is_active) === active) &&
+        (username === null || user.username === username)
     );
     const size = Number(params.get('page[size]') ?? '25');
     const number = Number(params.get('page[number]') ?? '1');
@@ -137,6 +139,15 @@ const server = setupServer(
       user.is_active = attributes.is_active;
     }
     return HttpResponse.json({data: resource(user)});
+  }),
+  // A user's data, read-only (alice has none here).
+  http.get(`${API}/admin/users/:id/:collection`, ({request}) => {
+    const url = new URL(request.url);
+    return HttpResponse.json(
+      url.searchParams.has('page[after]')
+        ? {links: {next: null}, data: []}
+        : {...onePage(request.url, 0), data: []}
+    );
   }),
   http.get(`${API}/admin/audit_log`, ({request}) =>
     HttpResponse.json({
@@ -342,7 +353,11 @@ describe('AdminPage', () => {
     await renderAt('/admin');
     await usersTable();
 
-    expect(await openMenu('7')).toEqual(['Deactivate', 'Mark for deletion']);
+    expect(await openMenu('7')).toEqual([
+      'View data',
+      'Deactivate',
+      'Mark for deletion',
+    ]);
     fireEvent.click(screen.getByRole('menuitem', {name: 'Deactivate'}));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('Deactivate alice?')).toBeInTheDocument();
@@ -355,7 +370,11 @@ describe('AdminPage', () => {
       {data: {type: 'AdminUser', id: '7', attributes: {is_active: false}}},
     ]);
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(await openMenu('7')).toEqual(['Reactivate', 'Mark for deletion']);
+    expect(await openMenu('7')).toEqual([
+      'View data',
+      'Reactivate',
+      'Mark for deletion',
+    ]);
   });
 
   it('opens the same menu on a right-click of the row', async () => {
@@ -366,6 +385,7 @@ describe('AdminPage', () => {
 
     const items = await screen.findAllByRole('menuitem');
     expect(items.map(item => item.textContent)).toEqual([
+      'View data',
       'Deactivate',
       'Mark for deletion',
     ]);
@@ -400,7 +420,7 @@ describe('AdminPage', () => {
     ]);
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     // A marked account stays deactivated: it can only be unmarked.
-    expect(await openMenu('7')).toEqual(['Unmark for deletion']);
+    expect(await openMenu('7')).toEqual(['View data', 'Unmark for deletion']);
   });
 
   it('unmarks a user, who stays deactivated', async () => {
@@ -636,6 +656,17 @@ describe('AdminPage', () => {
     await waitFor(() => {
       expect(history.location.pathname).toBe('/test');
     });
+  });
+
+  it("opens a user's data, read-only, on their page", async () => {
+    const history = await renderAt('/admin');
+    await usersTable();
+
+    await choose('7', 'View data');
+
+    await waitFor(() => expect(history.location.pathname).toMatch(/^\/alice/));
+    expect(await screen.findByText('Read-only: alice')).toBeInTheDocument();
+    expect(patches).toHaveLength(0);
   });
 
   it('shows the audit log', async () => {

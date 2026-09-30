@@ -51,6 +51,8 @@ export interface IEntryContextMenu {
   handleNewEntryParent: () => void;
   handleBeginEditParent: () => void;
   handleCopyParent: () => void;
+  /** Another user's entry (staff reading it): Copy is all it offers. */
+  readOnly: boolean;
 }
 
 const EntryContextMenu = ({
@@ -60,6 +62,7 @@ const EntryContextMenu = ({
   handleNewEntryParent,
   handleBeginEditParent,
   handleCopyParent,
+  readOnly,
 }: IEntryContextMenu) => {
   const initialMouse: IMouse = {
     mouseX: null,
@@ -121,27 +124,31 @@ const EntryContextMenu = ({
       >
         Copy
       </StyledMenuItem>
-      <StyledMenuItem
-        id={`tagsEntriesContextMenu${id}Edit`}
-        onClick={(event: React.MouseEvent<HTMLLIElement>) => {
-          event.preventDefault();
-          event.stopPropagation();
-          handleBeginEdit();
-        }}
-      >
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        id={`tags-entries-context-menu-${id}-new-entry`}
-        onClick={(event: React.MouseEvent<HTMLLIElement>) => {
-          event.preventDefault();
-          event.stopPropagation();
-          handleNewEntry();
-        }}
-      >
-        New Entry
-      </StyledMenuItem>
-      {user !== undefined && tag !== undefined && (
+      {!readOnly && (
+        <StyledMenuItem
+          id={`tagsEntriesContextMenu${id}Edit`}
+          onClick={(event: React.MouseEvent<HTMLLIElement>) => {
+            event.preventDefault();
+            event.stopPropagation();
+            handleBeginEdit();
+          }}
+        >
+          Edit
+        </StyledMenuItem>
+      )}
+      {!readOnly && (
+        <StyledMenuItem
+          id={`tags-entries-context-menu-${id}-new-entry`}
+          onClick={(event: React.MouseEvent<HTMLLIElement>) => {
+            event.preventDefault();
+            event.stopPropagation();
+            handleNewEntry();
+          }}
+        >
+          New Entry
+        </StyledMenuItem>
+      )}
+      {!readOnly && user !== undefined && tag !== undefined && (
         <StyledMenuItem
           id={`tagsEntriesContextMenu${id}Untag`}
           onClick={() => {
@@ -151,7 +158,7 @@ const EntryContextMenu = ({
           Untag
         </StyledMenuItem>
       )}
-      {entriesFilter === 'untagged' && (
+      {!readOnly && entriesFilter === 'untagged' && (
         <StyledMenuItem
           id={`tagsEntriesContextMenu${id}Delete`}
           onClick={() => {

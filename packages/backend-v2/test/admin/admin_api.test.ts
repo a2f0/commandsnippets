@@ -40,6 +40,9 @@ describe('AdminApi access', () => {
     ['GET', '/api/v1/admin/users/1'],
     ['PATCH', '/api/v1/admin/users/1'],
     ['GET', '/api/v1/admin/audit_log'],
+    ['GET', '/api/v1/admin/users/1/tags'],
+    ['GET', '/api/v1/admin/users/1/entries'],
+    ['GET', '/api/v1/admin/users/1/tags_entries'],
   ] as const;
 
   const call = (client: ApiClient, method: string, path: string) =>

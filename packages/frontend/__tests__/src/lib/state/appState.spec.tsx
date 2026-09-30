@@ -52,7 +52,7 @@ describe('the app state', () => {
     localStorage.setItem(renamed, 'not JSON');
     const name = databaseName('test', 'olduser');
     const old = new CommandsnippetsDatabase(name);
-    await old.tags.put(tag('1', {name: 'private'}));
+    await old.tags.put({...tag('1', {name: 'private'}), owner: 'olduser'});
     old.close();
 
     vi.resetModules();
@@ -83,7 +83,11 @@ describe('the app state', () => {
 describe('signing out', () => {
   const hasData = async (username: string) => {
     const {db} = syncSession(username);
-    await db.cursors.put({key: 'tags', after: '1970-01-01T00:00:00,0'});
+    await db.cursors.put({
+      owner: username,
+      key: 'tags',
+      after: '1970-01-01T00:00:00,0',
+    });
     return db.name;
   };
   const gone = (name: string) =>

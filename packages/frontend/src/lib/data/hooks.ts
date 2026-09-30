@@ -1,8 +1,11 @@
 /**
- * The signed-in user's data as the UI reads it: live queries of their
- * IndexedDB database (`dexie-react-hooks`), so a list shows each change the
- * moment a sync or a write stores it, whichever tab it came from. Each is
- * `undefined` until the database answers the first time.
+ * The data the UI shows, as it reads it: live queries of the signed-in
+ * user's IndexedDB database (`dexie-react-hooks`), so a list shows each
+ * change the moment a sync or a write stores it, whichever tab it came from.
+ * Each is `undefined` until the database answers the first time.
+ *
+ * The data is the signed-in user's own, or for staff on another user's page
+ * (`/:user`) that user's, read-only (`useOwner`). Every query names whose.
  */
 import type {
   Tag,
@@ -11,7 +14,8 @@ import type {
 } from '@commandsnippets/api-shared/responses';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useSyncExternalStore} from 'react';
-import type {CommandsnippetsDatabase} from '../db/database';
+import {useParams} from 'react-router-dom';
+import type {RowKey} from '../db/database';
 import {useAppState} from '../state/appState';
 import {
   type SyncSession,
@@ -21,54 +25,105 @@ import {
 } from '../sync/session';
 import type {TaggedEntry} from './sort';
 
+/** Whose data a query reads: a session's database and owner. */
+export type OwnedData = Pick<SyncSession, 'db' | 'owner'>;
+
+export interface Owner {
+  /** The username whose data the page shows. */
+  owner: string;
+  /** Another user's data, which the page only shows. */
+  readOnly: boolean;
+}
+
 /**
- * The signed-in user's database and sync, or null when signed out: another
- * when the session ends under the user (another tab signed out and in).
+ * Whose data the page shows, or null when signed out: the signed-in user's
+ * own, or for staff the user the route names (`/:user`), read-only. Anyone
+ * else on another user's page is shown their own (and the page sends them
+ * to it).
+ */
+export function useOwner(): Owner | null {
+  const username = useAppState(state => state.loggedInUser);
+  const isStaff = useAppState(state => state.isStaff);
+  const {user} = useParams();
+  if (username === null) {
+    return null;
+  }
+  if (user === undefined || user === username || !isStaff) {
+    return {owner: username, readOnly: false};
+  }
+  return {owner: user, readOnly: true};
+}
+
+/** Whether the page shows another user's data, which it only shows. */
+export function useReadOnly(): boolean {
+  return useOwner()?.readOnly ?? false;
+}
+
+/**
+ * The session of the data the page shows (`useOwner`), or null when signed
+ * out: another when the sessions end under the user (another tab signed out
+ * and in).
  */
 export function useSession(): SyncSession | null {
   const username = useAppState(state => state.loggedInUser);
+  const owner = useOwner()?.owner;
   useSyncExternalStore(subscribeSessions, sessionsEndedCount);
-  return username === null ? null : syncSession(username);
+  return username === null || owner === undefined
+    ? null
+    : syncSession(username, owner);
 }
 
-/** The user's tags, deleted ones too. */
+/** The tags, deleted ones too. */
 export function useTags(): Tag[] | undefined {
-  const db = useSession()?.db;
-  return useLiveQuery(() => db?.tags.toArray() ?? [], [db]);
+  const session = useSession();
+  return useLiveQuery(
+    () =>
+      session === null
+        ? []
+        : session.db.tags.where('owner').equals(session.owner).toArray(),
+    [session]
+  );
 }
 
-/** The user's tag named `name` (not deleted), null when there is none. */
+/** The tag named `name` (not deleted), null when there is none. */
 export function useTagNamed(name: string | undefined): Tag | null | undefined {
-  const db = useSession()?.db;
+  const session = useSession();
   return useLiveQuery(
     async () =>
-      name === undefined || db === undefined
+      name === undefined || session === null
         ? null
-        : ((await db.tags
+        : ((await session.db.tags
+            .where('owner')
+            .equals(session.owner)
             .filter(
               tag => tag.attributes.name === name && !tag.attributes.is_deleted
             )
             .first()) ?? null),
-    [db, name]
+    [session, name]
   );
 }
 
 /** Tag `tagId`'s junctions not deleted. */
-const tagJunctions = (db: CommandsnippetsDatabase, tagId: string) =>
+const tagJunctions = ({db, owner}: OwnedData, tagId: string) =>
   db.junctions
-    .where('relationships.tag.data.id')
-    .equals(tagId)
+    .where('[owner+relationships.tag.data.id]')
+    .equals([owner, tagId])
     .filter(junction => !junction.attributes.is_deleted)
     .toArray();
 
 /** Tag `tagId`'s entries (not deleted), each with its junction. */
 export async function entriesOfTag(
-  db: CommandsnippetsDatabase,
+  data: OwnedData,
   tagId: string
 ): Promise<TaggedEntry[]> {
-  const junctions = await tagJunctions(db, tagId);
-  const entries = await db.entries.bulkGet(
-    junctions.map(junction => junction.relationships.text_entry.data.id)
+  const junctions = await tagJunctions(data, tagId);
+  const entries = await data.db.entries.bulkGet(
+    junctions.map(
+      (junction): RowKey => [
+        data.owner,
+        junction.relationships.text_entry.data.id,
+      ]
+    )
   );
   return junctions.flatMap((junction, index) => {
     const entry = entries[index];
@@ -82,21 +137,32 @@ export async function entriesOfTag(
 export function useTagEntries(
   tagId: string | undefined
 ): TaggedEntry[] | undefined {
-  const db = useSession()?.db;
+  const session = useSession();
   return useLiveQuery(
     () =>
-      tagId === undefined || db === undefined ? [] : entriesOfTag(db, tagId),
-    [db, tagId]
+      tagId === undefined || session === null
+        ? []
+        : entriesOfTag(session, tagId),
+    [session, tagId]
   );
 }
 
-/** The user's entries not deleted, and whether each is in any tag. */
-async function liveEntries(
-  db: CommandsnippetsDatabase
-): Promise<Array<{entry: TextEntry; tagged: boolean}>> {
+/** The entries not deleted, and whether each is in any tag. */
+async function liveEntries({
+  db,
+  owner,
+}: OwnedData): Promise<Array<{entry: TextEntry; tagged: boolean}>> {
   const [entries, junctions] = await Promise.all([
-    db.entries.filter(entry => !entry.attributes.is_deleted).toArray(),
-    db.junctions.filter(junction => !junction.attributes.is_deleted).toArray(),
+    db.entries
+      .where('owner')
+      .equals(owner)
+      .filter(entry => !entry.attributes.is_deleted)
+      .toArray(),
+    db.junctions
+      .where('owner')
+      .equals(owner)
+      .filter(junction => !junction.attributes.is_deleted)
+      .toArray(),
   ]);
   const tagged = new Set(
     junctions.map(junction => junction.relationships.text_entry.data.id)
@@ -105,31 +171,31 @@ async function liveEntries(
 }
 
 /**
- * The user's entries (not deleted): all of them, or those in no tag; none
- * (`null`) for a list that shows neither, which reads nothing.
+ * The entries (not deleted): all of them, or those in no tag; none (`null`)
+ * for a list that shows neither, which reads nothing.
  */
 export function useEntries(
   which: 'all' | 'untagged' | null
 ): TextEntry[] | undefined {
-  const db = useSession()?.db;
+  const session = useSession();
   return useLiveQuery(
     async () =>
-      db === undefined || which === null
+      session === null || which === null
         ? []
-        : (await liveEntries(db))
+        : (await liveEntries(session))
             .filter(({tagged}) => which === 'all' || !tagged)
             .map(({entry}) => entry),
-    [db, which]
+    [session, which]
   );
 }
 
 /** The junction putting entry `entryId` in tag `tagId`, when there is one. */
 export async function junctionOf(
-  db: CommandsnippetsDatabase,
+  data: OwnedData,
   tagId: string,
   entryId: string
-): Promise<TagTextEntry | undefined> {
-  return (await tagJunctions(db, tagId)).find(
+): Promise<(TagTextEntry & {owner: string}) | undefined> {
+  return (await tagJunctions(data, tagId)).find(
     junction => junction.relationships.text_entry.data.id === entryId
   );
 }

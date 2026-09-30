@@ -4,10 +4,10 @@ import {
   tagUpdateAttributesSchema,
 } from '@commandsnippets/api-shared';
 import {and, eq, sql} from 'drizzle-orm';
-import {Hono} from 'hono';
+import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
 import {isUniqueViolation} from '../db/errors';
-import {type Tag, tags} from '../db/schema';
+import {type Tag, tags, type User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {uniqueTogether} from '../lib/errors';
@@ -30,10 +30,14 @@ export const tagOrdering: OrderedSpec = {
 
 export const tagRoutes = new Hono<AppEnv>();
 
-tagRoutes.get('/', c =>
+/**
+ * `owner`'s tags: the requester's own (`GET /tags`), or for staff another
+ * user's, read-only (`GET /admin/users/:id/tags`).
+ */
+export const listTags = (c: Context<AppEnv>, owner: User) =>
   listResponse(c, {
     ...tagResource,
-    user: requireUser(c),
+    user: owner,
     query: tagListQuerySchema,
     filters: {
       name: value => eq(tags.name, value),
@@ -49,8 +53,9 @@ tagRoutes.get('/', c =>
       order: sql`${tags.order}`,
     },
     defaultOrdering: [tags.date_updated, tags.id],
-  })
-);
+  });
+
+tagRoutes.get('/', c => listTags(c, requireUser(c)));
 
 tagRoutes.post('/reorder', c => reorder(c, {...tagResource, ...tagOrdering}));
 

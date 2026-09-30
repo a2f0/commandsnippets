@@ -1,6 +1,7 @@
 /**
  * The staff-only admin API (backend-v2 `src/resources/admin.ts`), whose
- * responses are parsed with api-shared's admin document schemas.
+ * responses are parsed with api-shared's document schemas: the accounts and
+ * the audit log, and other users' data, read-only (`adminSyncApi`).
  *
  * It calls `fetchApi` rather than `fetchWithAuth`, so the admin page can tell a
  * user who is not staff from one whose session is gone, but it signs out by
@@ -31,6 +32,9 @@ import type {
   AdminUserSortField,
   AdminUserUpdateAttributes,
   AdminUserUpdateDocument,
+  TagListParams,
+  TagTextEntryListParams,
+  TextEntryListParams,
 } from '@commandsnippets/api-shared/requests';
 import {
   type AdminAuditLogEntry,
@@ -38,10 +42,15 @@ import {
   adminAuditLogListDocumentSchema,
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
+  tagCursorListDocumentSchema,
+  tagTextEntryCursorListDocumentSchema,
+  tagTextEntryListDocumentSchema,
+  textEntryCursorListDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
 import {handleUnauthorized, signedInUser} from '../auth/authUtils';
+import type {SyncApi} from '../sync/sync';
 import {UserMismatchError} from './apiClient';
 import {fetchApi} from './apiVersion';
 import {baseURL} from './baseUrl';
@@ -283,6 +292,78 @@ export function setUserMarkedForDeletion(
   marked: boolean
 ): Promise<AdminUser> {
   return updateUser(id, {marked_for_deletion: marked});
+}
+
+/** The user named exactly `username`; AdminApiError 404 when there is none. */
+export async function findUser(username: string): Promise<AdminUser> {
+  const params: AdminUserListParams = {'filter[username]': username};
+  const body = await adminFetch(`/users?${toSearchParams(params)}`);
+  const [user] = parse(adminUserListDocumentSchema, body).data;
+  if (user === undefined) {
+    throw new AdminApiError(404, `No user named ${username}.`);
+  }
+  return toUser(user);
+}
+
+/**
+ * The reads a sync of `username`'s data makes (`lib/sync/`), through the
+ * admin API's read-only routes (`/admin/users/:id/tags`, ...): the same
+ * keyset pages as the user's own `apiClient` reads. Only staff can make them.
+ */
+export function adminSyncApi(username: string): SyncApi {
+  // Looked up by each sync first (`getOwner`), and by a read made before.
+  let id: string | null = null;
+  const base = async () => {
+    id ??= (await findUser(username)).id;
+    return `/users/${encodeURIComponent(id)}`;
+  };
+  return {
+    getOwner: async () => {
+      const user = await findUser(username);
+      id = user.id;
+      return {id: user.id, username: user.username};
+    },
+    getTagsAfter: async after => {
+      const params: TagListParams = {'page[after]': after, 'page[size]': 100};
+      const body = await adminFetch(
+        `${await base()}/tags?${toSearchParams(params)}`
+      );
+      return parse(tagCursorListDocumentSchema, body);
+    },
+    getEntriesAfter: async after => {
+      const params: TextEntryListParams = {
+        'page[after]': after,
+        'page[size]': 100,
+        include: 'text_entry_to_tag',
+      };
+      const body = await adminFetch(
+        `${await base()}/entries?${toSearchParams(params)}`
+      );
+      return parse(textEntryCursorListDocumentSchema, body);
+    },
+    getTagJunctionsAfter: async (tagId, after) => {
+      const params: TagTextEntryListParams = {
+        'filter[tag.id]': Number(tagId),
+        'page[after]': after,
+        'page[size]': 100,
+        include: 'text_entry,text_entry.text_entry_to_tag',
+      };
+      const body = await adminFetch(
+        `${await base()}/tags_entries?${toSearchParams(params)}`
+      );
+      return parse(tagTextEntryCursorListDocumentSchema, body);
+    },
+    getNewestJunction: async () => {
+      const params: TagTextEntryListParams = {
+        sort: '-date_updated',
+        'page[size]': 1,
+      };
+      const body = await adminFetch(
+        `${await base()}/tags_entries?${toSearchParams(params)}`
+      );
+      return parse(tagTextEntryListDocumentSchema, body);
+    },
+  };
 }
 
 export async function listAuditLog(

@@ -2,8 +2,9 @@
  * Storing what the syncs read: each resource replaces the database's copy
  * unless that copy is a newer revision (the app's own writes store theirs
  * as they happen, and a sync may read an older one). Revisions compare
- * within a table only: each table has its own sequence. Every resource
- * stored must be the database owner's (`checkOwner`).
+ * within a table only: each table has its own sequence. Every resource is
+ * stored under its owner (`owner`, a username), and must be that user's
+ * (`checkOwner`).
  */
 import {parseDateTime} from '@commandsnippets/api-shared/datetime';
 import type {
@@ -13,17 +14,17 @@ import type {
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
 import type {Table} from 'dexie';
-import type {CommandsnippetsDatabase} from '../db/database';
+import type {CommandsnippetsDatabase, RowKey, Stored} from '../db/database';
 
 interface Revised {
   id: string;
   attributes: {date_updated: string};
 }
 
-/** A resource from another account than the database's, which is refused. */
+/** A resource from another account than the one synced, which is refused. */
 export class ForeignDataError extends Error {
   constructor(type: string, id: string) {
-    super(`${type} ${id} is not the signed-in user's: not stored`);
+    super(`${type} ${id} is not the synced user's: not stored`);
     this.name = 'ForeignDataError';
   }
 }
@@ -63,11 +64,12 @@ function replaces<R extends Revised>(
 }
 
 /**
- * Store `resources` in `table`, except where it holds a newer revision (or
- * the same one, where `tie` keeps it). Returns the ones stored.
+ * Store `resources` in `table` under `owner`, except where it holds a newer
+ * revision (or the same one, where `tie` keeps it). Returns the ones stored.
  */
 export async function putNewer<R extends Revised>(
-  table: Table<R, string>,
+  table: Table<Stored<R>, RowKey>,
+  owner: string,
   resources: readonly R[],
   tie: (incoming: R, held: R) => boolean = () => true
 ): Promise<R[]> {
@@ -79,12 +81,14 @@ export async function putNewer<R extends Revised>(
     }
   }
   const candidates = [...newest.values()];
-  const stored = await table.bulkGet(candidates.map(({id}) => id));
+  const stored = await table.bulkGet(
+    candidates.map(({id}): RowKey => [owner, id])
+  );
   const newer = candidates.filter((resource, index) => {
     const held = stored[index];
     return held === undefined || replaces(resource, held, tie);
   });
-  await table.bulkPut(newer);
+  await table.bulkPut(newer.map(resource => ({...resource, owner})));
   return newer;
 }
 
@@ -101,8 +105,9 @@ const deletedStays = <R extends {attributes: {is_deleted: boolean}}>(
 
 const putJunctionsNewer = (
   db: CommandsnippetsDatabase,
+  owner: string,
   junctions: readonly TagTextEntry[]
-) => putNewer(db.junctions, junctions, deletedStays);
+) => putNewer(db.junctions, owner, junctions, deletedStays);
 
 const isJunction = (resource: IncludedResource): resource is TagTextEntry =>
   resource.type === 'TagTextEntryThroughModel';
@@ -118,13 +123,15 @@ const isEntry = (resource: IncludedResource): resource is TextEntry =>
  */
 export async function putEntries(
   db: CommandsnippetsDatabase,
+  owner: string,
   entries: readonly TextEntry[],
   included: readonly IncludedResource[] = []
 ): Promise<void> {
-  const stored = await putNewer(db.entries, entries, deletedStays);
+  const stored = await putNewer(db.entries, owner, entries, deletedStays);
   const storedIds = new Set(stored.map(({id}) => id));
   await putJunctionsNewer(
     db,
+    owner,
     included
       .filter(isJunction)
       .filter(junction =>
@@ -137,8 +144,8 @@ export async function putEntries(
     );
     const gone = (
       await db.junctions
-        .where('relationships.text_entry.data.id')
-        .equals(entry.id)
+        .where('[owner+relationships.text_entry.data.id]')
+        .equals([owner, entry.id])
         .toArray()
     ).filter(
       junction => !junction.attributes.is_deleted && !listed.has(junction.id)
@@ -152,12 +159,13 @@ export async function putEntries(
   }
 }
 
-/** Store `tags`. */
+/** Store `owner`'s `tags`. */
 export async function putTags(
   db: CommandsnippetsDatabase,
+  owner: string,
   tags: readonly Tag[]
 ): Promise<void> {
-  await putNewer(db.tags, tags);
+  await putNewer(db.tags, owner, tags);
 }
 
 /**
@@ -166,11 +174,12 @@ export async function putTags(
  */
 export async function putJunctions(
   db: CommandsnippetsDatabase,
+  owner: string,
   junctions: readonly TagTextEntry[],
   included: readonly IncludedResource[] = []
 ): Promise<void> {
-  await putJunctionsNewer(db, junctions);
-  await putEntries(db, included.filter(isEntry), included);
+  await putJunctionsNewer(db, owner, junctions);
+  await putEntries(db, owner, included.filter(isEntry), included);
 }
 
 const isTag = (resource: IncludedResource): resource is Tag =>
@@ -184,9 +193,9 @@ const isTag = (resource: IncludedResource): resource is Tag =>
  */
 export async function markDeleted<
   R extends Revised & {attributes: {is_deleted: boolean}},
->(table: Table<R, string>, row: R): Promise<void> {
+>(table: Table<Stored<R>, RowKey>, row: Stored<R>): Promise<void> {
   await table.db.transaction('rw', table, async () => {
-    const stored = await table.get(row.id);
+    const stored = await table.get([row.owner, row.id]);
     if (stored?.attributes.date_updated !== row.attributes.date_updated) {
       return;
     }
@@ -198,24 +207,27 @@ export async function markDeleted<
 }
 
 /**
- * Store a write's answer (its `data` and `included`): tags, entries with
- * their junctions, and junctions whose entries are not among them.
+ * Store a write's answer (its `data` and `included`) under `owner`: tags,
+ * entries with their junctions, and junctions whose entries are not among
+ * them.
  */
 export async function putResources(
   db: CommandsnippetsDatabase,
+  owner: string,
   resources: readonly IncludedResource[]
 ): Promise<void> {
   await db.transaction('rw', [db.tags, db.entries, db.junctions], async () => {
-    await putTags(db, resources.filter(isTag));
+    await putTags(db, owner, resources.filter(isTag));
     const entries = resources.filter(isEntry);
     const entryIds = new Set(entries.map(({id}) => id));
     const junctions = resources.filter(isJunction);
     await putJunctionsNewer(
       db,
+      owner,
       junctions.filter(
         junction => !entryIds.has(junction.relationships.text_entry.data.id)
       )
     );
-    await putEntries(db, entries, junctions);
+    await putEntries(db, owner, entries, junctions);
   });
 }

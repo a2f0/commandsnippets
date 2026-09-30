@@ -4,9 +4,9 @@ import {
   textEntryUpdateAttributesSchema,
 } from '@commandsnippets/api-shared';
 import {eq, or, sql} from 'drizzle-orm';
-import {Hono} from 'hono';
+import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
-import {type TextEntry, textEntries} from '../db/schema';
+import {type TextEntry, textEntries, type User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {parseResource} from '../lib/jsonapi';
@@ -36,16 +36,19 @@ const hasTag = (userId: number, condition: ReturnType<typeof sql>) =>
 
 export const entryRoutes = new Hono<AppEnv>();
 
-entryRoutes.get('/', c => {
-  const user = requireUser(c);
-  return listResponse(c, {
+/**
+ * `owner`'s entries: the requester's own (`GET /entries`), or for staff
+ * another user's, read-only (`GET /admin/users/:id/entries`).
+ */
+export const listEntries = (c: Context<AppEnv>, owner: User) =>
+  listResponse(c, {
     ...textEntryResource,
-    user,
+    user: owner,
     query: textEntryListQuerySchema,
     filters: {
       id: value => eq(textEntries.id, value),
-      tags__name: value => hasTag(user.id, sql`t.name = ${value}`),
-      tags__id: value => hasTag(user.id, sql`t.id = ${value}`),
+      tags__name: value => hasTag(owner.id, sql`t.name = ${value}`),
+      tags__id: value => hasTag(owner.id, sql`t.id = ${value}`),
       user__username: value => usernameIs(textEntries.user_id, value),
       tag_count: value => eq(textEntries.tag_count, value),
       is_deleted: value => eq(textEntries.is_deleted, value),
@@ -66,7 +69,8 @@ entryRoutes.get('/', c => {
         icontains(textEntries.subject_folded, fold(term))
       ) as ReturnType<typeof sql>,
   });
-});
+
+entryRoutes.get('/', c => listEntries(c, requireUser(c)));
 
 entryRoutes.get('/:id', async c => {
   const entry = await getOwned<TextEntry>(c, textEntryResource);
