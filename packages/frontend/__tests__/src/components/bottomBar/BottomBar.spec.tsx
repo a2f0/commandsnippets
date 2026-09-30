@@ -44,13 +44,13 @@ describe('BottomBar Component', () => {
     expect(screen.queryByText('[HUD]')).not.toBeInTheDocument();
   });
 
-  it('always renders version and mode components', () => {
+  it('always renders the mode, and no version (it is in Help > About)', () => {
     vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
 
     render(<BottomBarWithProviders />);
 
-    expect(screen.getByText(/\[version:/)).toBeInTheDocument();
     expect(screen.getByText(/\[mode:/)).toBeInTheDocument();
+    expect(screen.queryByText(/version/i)).not.toBeInTheDocument();
   });
 
   describe('Layout and alignment', () => {
@@ -75,18 +75,18 @@ describe('BottomBar Component', () => {
       expect(styles.gap).toBe('8px'); // MUI gap: 1 = 8px
     });
 
-    it('aligns version and HUD options at the bottom on the right side', () => {
+    it('aligns mode and HUD options at the bottom on the right side', () => {
       vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
       render(<BottomBarWithProviders />);
 
-      // Get the version and HUD button elements to verify they exist
-      const versionElement = screen.getByText(/\[version:/);
+      // Get the mode and HUD button elements to verify they exist
+      const modeElement = screen.getByText(/\[mode:/);
       const hudButton = screen.getByText('[HUD]');
 
       // Get the right container using data-testid
       const rightContainer = screen.getByTestId('bottom-bar-right-container');
       expect(rightContainer).toBeInTheDocument();
-      expect(rightContainer).toContainElement(versionElement);
+      expect(rightContainer).toContainElement(modeElement);
       expect(rightContainer).toContainElement(hudButton);
 
       // Check that the right container has bottom alignment

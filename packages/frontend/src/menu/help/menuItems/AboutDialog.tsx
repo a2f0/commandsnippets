@@ -10,6 +10,7 @@ import React from 'react';
 
 import packageJson from '../../../../package.json';
 import {useTypedTranslation} from '../../../i18n/hooks';
+import {useApiVersion} from '../../../lib/api/apiVersion';
 
 interface IProps {
   dialogOpen: boolean;
@@ -18,6 +19,8 @@ interface IProps {
 
 const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
   const {t} = useTypedTranslation('menu');
+  // The version the API's latest answer named: it follows a deploy.
+  const apiVersion = useApiVersion(state => state.version);
 
   return (
     <Dialog
@@ -31,8 +34,20 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
     >
       <DialogTitle>{t('aboutDialogTitle')}</DialogTitle>
       <DialogContent>
-        <DialogContentText sx={{color: theme => theme.palette.text.primary}}>
-          v{packageJson.version}
+        <DialogContentText
+          id="HelpAboutAppVersion"
+          sx={{color: theme => theme.palette.text.primary}}
+        >
+          {t('appVersion', {version: `v${packageJson.version}`})}
+        </DialogContentText>
+        <DialogContentText
+          id="HelpAboutApiVersion"
+          sx={{color: theme => theme.palette.text.primary}}
+        >
+          {t('apiVersion', {
+            version:
+              apiVersion === null ? t('versionUnknown') : `v${apiVersion}`,
+          })}
         </DialogContentText>
       </DialogContent>
       <DialogActions>

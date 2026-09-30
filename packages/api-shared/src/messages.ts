@@ -104,3 +104,11 @@ export const MESSAGES = {
  * another tab has replaced cannot write into the new user's account.
  */
 export const EXPECTED_USER_HEADER = 'X-Expected-User';
+
+/**
+ * The header every API response carries its version in (the API's
+ * `package.json` version), for clients to show which API they talk to. A
+ * cross-origin client can read it: the API lists it in
+ * `Access-Control-Expose-Headers`.
+ */
+export const API_VERSION_HEADER = 'API-Version';

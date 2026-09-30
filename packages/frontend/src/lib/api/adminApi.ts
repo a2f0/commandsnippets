@@ -2,7 +2,7 @@
  * The staff-only admin API (backend-v2 `src/resources/admin.ts`), whose
  * responses are parsed with api-shared's admin document schemas.
  *
- * It calls `fetch` rather than `fetchWithAuth`, so the admin page can tell a
+ * It calls `fetchApi` rather than `fetchWithAuth`, so the admin page can tell a
  * user who is not staff from one whose session is gone, but it signs out by
  * the same rule (`isSignedOutResponse`):
  * - 403 `permission_denied` (signed in, but not staff) keeps the session and
@@ -43,6 +43,7 @@ import {
 import type * as z from 'zod/mini';
 import {handleUnauthorized, signedInUser} from '../auth/authUtils';
 import {UserMismatchError} from './apiClient';
+import {fetchApi} from './apiVersion';
 import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {isSignedOutResponse} from './fetchWithAuth';
@@ -179,7 +180,7 @@ async function adminFetch(
   const user = signedInUser();
   // A write names the signed-in user, as every write does (`apiClient`).
   const named = (init.method ?? 'GET') !== 'GET' ? user : null;
-  const response = await fetch(`${baseURL}/admin${path}`, {
+  const response = await fetchApi(`${baseURL}/admin${path}`, {
     ...init,
     credentials: 'include',
     headers: {
@@ -214,7 +215,7 @@ async function adminFetch(
  * `fetchWithAuth` would sign out from under it.
  */
 export async function getStaffStatus(): Promise<boolean> {
-  const response = await fetch(`${baseURL}/user/`, {
+  const response = await fetchApi(`${baseURL}/user/`, {
     credentials: 'include',
     headers: {'Content-Type': 'application/vnd.api+json'},
   });

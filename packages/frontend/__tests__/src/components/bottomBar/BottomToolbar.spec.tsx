@@ -34,8 +34,7 @@ describe('BottomToolbar Holy Grail Layout', () => {
   it('should contain the BottomBar component', () => {
     render(<BottomToolbarWithProviders />);
 
-    // Check for version and mode components which are always present
-    expect(screen.getByText(/\[version:/)).toBeInTheDocument();
+    // The mode is always present
     expect(screen.getByText(/\[mode:/)).toBeInTheDocument();
   });
 

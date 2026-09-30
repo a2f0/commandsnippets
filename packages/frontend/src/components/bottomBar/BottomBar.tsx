@@ -10,7 +10,6 @@ import {TextEntrySearchField} from '../entries/TextEntrySearchField';
 import {LanguageSwitcher} from '../LanguageSwitcher';
 import {TagSearch} from '../tags/TagSearch';
 import {Mode} from './Mode';
-import {Version} from './Version';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -105,7 +104,6 @@ const BottomBar = () => {
       >
         {environment !== 'production' && <LanguageSwitcher />}
         <Mode />
-        <Version />
         {environment !== 'production' && (
           <>
             <Button

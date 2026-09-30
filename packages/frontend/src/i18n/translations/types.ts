@@ -31,6 +31,9 @@ export interface MenuTranslations {
   untaggedEntries: string;
   about: string;
   aboutDialogTitle: string;
+  appVersion: string;
+  apiVersion: string;
+  versionUnknown: string;
   debug: string;
   newTag: string;
   newEntry: string;
