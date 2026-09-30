@@ -45,6 +45,12 @@ for a review that changes nothing — the base sync included.
   effort.
 - `--report-only` (optional flag, position-independent): surface findings
   without changing the branch, including base synchronization and repairs.
+- `--bump-versions` (optional flag, position-independent): after each base
+  sync, patch-bump every versioned package the branch changes
+  (`packages/frontend`, `packages/backend-v2`) to one past its version on the
+  synced base, and let a base merge whose only conflicts are those version
+  fields finish on its own. `ship-pr` always passes it. Ignored under
+  `--report-only`, like the sync itself.
 
 `--passes` controls reviews of one unchanged commit. Repairs produce new
 commits to review and have no round limit.
@@ -175,30 +181,63 @@ checks. `--jq '… // ""'` yields an empty string only on a successful empty res
    ```
 
    Then **merge** the exact fetched OID rather than shared `FETCH_HEAD` or
-   `origin/$BASE_REF`; either can be changed independently of this review:
+   `origin/$BASE_REF`; either can be changed independently of this review.
+   Set `BUMP_VERSIONS=1` when `--bump-versions` was given (empty otherwise):
 
    ```bash
    PRE_SYNC_HEAD=$(git rev-parse HEAD)
-   git merge --no-edit "$BASE_OID" || {
-     git merge --abort
-     echo "Error: merging the latest $BASE_REF into $BRANCH conflicts — resolve it and re-run" >&2
-     exit 1
-   }
+   if ! git merge --no-edit "$BASE_OID"; then
+     if [ -n "$BUMP_VERSIONS" ] && bun "$AGENT_TOOL" resolveVersionConflicts && git commit --no-edit; then
+       echo "Resolved version-only conflicts with $BASE_REF"
+     else
+       git merge --abort
+       echo "Error: merging the latest $BASE_REF into $BRANCH conflicts — resolve it and re-run" >&2
+       exit 1
+     fi
+   fi
    ```
+
+   `resolveVersionConflicts` finishes the merge only when every conflict is the
+   `version` field of a versioned `package.json`: two branches that each
+   patch-bumped the same package collide there whenever the base moved by more
+   than one bump. It takes the base's version (the bump below replaces it) and
+   touches nothing — exiting non-zero — when any other line or file conflicts.
+
+   **With `--bump-versions`**, then bring the versions in line with the synced
+   base. Every versioned package the branch changes goes to exactly one patch
+   past its version at `$BASE_OID`; a deliberate major or minor bump on the
+   branch is kept; an unchanged package goes back to the base's version. The
+   tool prints the `package.json` paths it rewrote, and the bump is committed on
+   its own:
+
+   ```bash
+   if [ -n "$BUMP_VERSIONS" ]; then
+     BUMPED=$(bun "$AGENT_TOOL" bumpVersions "$BASE_OID") || exit 1
+     if [ -n "$BUMPED" ]; then
+       printf '%s\n' "$BUMPED" | xargs git commit -m 'chore: bump package versions' --
+     fi
+   fi
+   ```
+
+   The bump is recomputed from the base on every sync, so it is always one past
+   what the branch will merge onto — never a stale number taken when the branch
+   was cut. It lands before the snapshot below, so the review reads it like any
+   other change.
 
    **Merge, not rebase, and never force.** Every branch mutation in these skills
    pushes without force, and a rebase would need a force push; the squash-merge
    flattens the merge commit anyway, so it costs nothing in the final history. **On
-   a conflict, abort and stop** — never auto-resolve, and never review a conflicted
-   tree.
+   a conflict, abort and stop** — never auto-resolve anything beyond the
+   version-only conflicts above, and never review a conflicted tree.
 
-   The merge moves `HEAD` only when the base actually advanced; on a branch
-   already current, or a later repair round where nothing new landed, it is a
-   no-op. **When a PR is open**, push the updated head without force so the
-   pushed head still matches what is reviewed — but **only when the merge
-   actually moved `HEAD`**, so an already-current branch does not fire the
-   (expensive) pre-push hook for nothing; **with no PR**, the merge stays local
-   and `open-pr` pushes it later, so the flow's single push is preserved:
+   The merge moves `HEAD` only when the base actually advanced, and the bump
+   only when a version is off; on a branch already current, or a later repair
+   round where nothing new landed, both are no-ops. **When a PR is open**, push
+   the updated head without force so the pushed head still matches what is
+   reviewed — but **only when the merge or the bump actually moved `HEAD`**, so
+   an already-current branch does not fire the (expensive) pre-push hook for
+   nothing; **with no PR**, the merge and bump stay local and `open-pr` pushes
+   them later, so the flow's single push is preserved:
 
    ```bash
    if [ -n "$PR_NUMBER" ] && [ "$(git rev-parse HEAD)" != "$PRE_SYNC_HEAD" ]; then
@@ -387,6 +426,8 @@ checks. `--jq '… // ""'` yields an empty string only on a successful empty res
    - **The final verdict** — clean, non-blocking nits only, unresolved blocking
      findings, or review-could-not-run
    - **Repair rounds performed**, and what was fixed in them
+   - **Version bumps** made under `--bump-versions` (package, old → new), or
+     that none were needed
 
    Callers gate on the last three. `ship-pr` binds its merge to the reported SHA
    and refuses to merge on an unresolved-blocking or could-not-run verdict unless
@@ -428,6 +469,11 @@ checks. `--jq '… // ""'` yields an empty string only on a successful empty res
   the PR, using `gh`'s configured Git protocol rather than assuming `origin` is
   that repository; a conflict aborts and stops for the user.
   `--report-only` skips it, keeping report-only inert.
+- **`--bump-versions` keeps versions one patch past the base.** The bump is
+  redone after every sync against the exact base just merged, so a branch that
+  waited while other PRs merged still ends one past the latest base rather than
+  colliding with them. Only version-field conflicts in the versioned manifests
+  are resolved automatically; every other conflict still aborts and stops.
 - All reviewers get the prompt/diff via stdin (not argv) to avoid
   "Argument list too long" failures on large PRs.
 - The Claude reviewer runs with read-only tools (`--tools "Read,Grep,Glob"`) and

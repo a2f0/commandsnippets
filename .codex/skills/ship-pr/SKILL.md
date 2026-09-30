@@ -1,6 +1,6 @@
 ---
 name: ship-pr
-description: Ship current work end-to-end — commit on a feature branch, cross-agent review and repair it, open or resume its PR with a single push after the review, squash-merge the exact reviewed commit, then return to the base branch, delete the merged branch, and reset the checkout
+description: Ship current work end-to-end — commit on a feature branch, patch-bump the changed frontend/backend-v2 versions, cross-agent review and repair it, open or resume its PR with a single push after the review, squash-merge the exact reviewed commit, then return to the base branch, delete the merged branch, and reset the checkout
 ---
 
 # Ship PR
@@ -14,6 +14,11 @@ Delegate PR creation, the review-and-repair loop, and the final merge to the
 `open-pr`, `cross-agent-review`, `squash-merge`, and `reset` skills. This skill
 owns the ordering and the merge gate; it does not re-implement the wrapped
 skills.
+
+Every package the PR changes among `packages/frontend` and
+`packages/backend-v2` ships with a **patch version bump**: one past its version
+on the base it merges onto, recomputed each time the branch syncs with that
+base, so concurrent PRs never land the same or a backward version on the base.
 
 The review gates the merge. `cross-agent-review` addresses actionable blocking
 findings and re-reviews every head it changes, then reports the final reviewed
@@ -40,8 +45,10 @@ actually contains the merge commit; the final checkout reset belongs to `reset`.
   `cross-agent-review`. **Defaults to `1`** there. Passes inspect one unchanged
   head; they are distinct from repair rounds.
 - `--report-only` (optional flag, position-independent): forwarded verbatim to
-  `cross-agent-review`, which skips base synchronization and repairs. This flow
-  stops on any blocking finding. Without this flag, repairs have no round limit.
+  `cross-agent-review`, which skips base synchronization, version bumps, and
+  repairs. This flow stops on any blocking finding, and before merging a branch
+  that still needs a version bump. Without this flag, repairs have no round
+  limit.
 - `--merge-anyway` (optional flag, position-independent): override the merge gate.
   By default the flow stops when `cross-agent-review` reports unresolved blocking
   findings or could not review at all; with this flag it surfaces exactly what it
@@ -167,20 +174,23 @@ loop, subject-only squash, and `MERGED`-state verification.
    [ -n "$REVIEW_BASE_OID" ] || { echo "Error: review base commit is unavailable" >&2; exit 1; }
    ```
 
-2. **Review and repair** — invoke `cross-agent-review` with
-   `AGENT_TOOL_REVIEW_BASE_REF="$REVIEW_BASE_REF"` and
-   `AGENT_TOOL_REVIEW_BASE_OID="$REVIEW_BASE_OID"`, forwarding the review-agent
-   argument and `--passes <n>` / `--report-only` when given.
+2. **Bump, review, and repair** — invoke `cross-agent-review` with
+   `AGENT_TOOL_REVIEW_BASE_REF="$REVIEW_BASE_REF"`,
+   `AGENT_TOOL_REVIEW_BASE_OID="$REVIEW_BASE_OID"`, and **always**
+   `--bump-versions`, forwarding the review-agent argument and `--passes <n>` /
+   `--report-only` when given.
 
    That skill owns the review, the severity gate, and repairs without a round
    limit:
    for each candidate head it first brings the branch up to date with its base
    (a merge of the latest base — local while there is no PR, so this flow's
-   single push is preserved), snapshots the head — the pushed PR head when one
+   single push is preserved), commits the patch bump for each changed versioned
+   package against that base, snapshots the head — the pushed PR head when one
    is open, the local HEAD otherwise — reviews it, repairs blocking findings
    (committing locally when there is no PR, pushing when there is), and
    re-reviews every head it changes. It reports back a **head SHA**, a
-   **verdict**, and the **repair rounds** it performed. The SHA is a reviewed
+   **verdict**, the **repair rounds** it performed, and the **version bumps**
+   it made. The SHA is a reviewed
    head on every verdict except **review-could-not-run**, where it is the
    unreviewed candidate head — only reachable here via `--merge-anyway`.
 
@@ -364,23 +374,26 @@ loop, subject-only squash, and `MERGED`-state verification.
    git fetch "$BASE_REPO_URL" "$BASE_OID" || { echo "Error: could not fetch $BASE_REF at $BASE_OID from $BASE_REPO_URL" >&2; exit 1; }
    git cat-file -e "$BASE_OID^{commit}" || { echo "Error: fetched base does not contain commit $BASE_OID" >&2; exit 1; }
    [ "$BASE_OID" = "$REVIEW_BASE_OID" ] &&
-     git merge-base --is-ancestor "$BASE_OID" "$REVIEWED_SHA"
+     git merge-base --is-ancestor "$BASE_OID" "$REVIEWED_SHA" &&
+     bun "$AGENT_TOOL" checkVersions "$BASE_OID"
    ```
 
    Only exact OID equality proves this is the base the review used; ancestry is
-   also checked to prove the reviewed head contains it. A different OID requires
-   another review whether the base advanced or was force-rewound. When either
-   check fails, do not merge the base here and do not push an unreviewed commit.
-   If `--report-only` was given, stop with the PR open: report-only review
-   intentionally skips base synchronization, so it cannot produce a current
-   reviewed head. Otherwise, increment
+   also checked to prove the reviewed head contains it, and `checkVersions` that
+   every changed versioned package at `HEAD` — the reviewed head — sits exactly
+   one patch past that base. A different OID requires another review whether the
+   base advanced or was force-rewound. When any check fails, do not merge the
+   base or bump a version here, and do not push an unreviewed commit. If
+   `--report-only` was given, stop with the PR open: report-only review
+   intentionally skips base synchronization and version bumps, so it cannot
+   produce a current reviewed head. Otherwise, increment
    `BASE_REFRESH_ROUND`, set `REVIEW_BASE_OID="$BASE_OID"`, and invoke
    `cross-agent-review` again with
-   `AGENT_TOOL_REVIEW_BASE_REF="$REVIEW_BASE_REF"` and
-   `AGENT_TOOL_REVIEW_BASE_OID="$REVIEW_BASE_OID"`, plus the same agent, pass,
-   and report-only arguments. With the PR now open, that skill owns merging
-   this freshly pinned base, pushing the updated head without force, and
-   reviewing the integrated result. Apply the same verdict gate as step 2,
+   `AGENT_TOOL_REVIEW_BASE_REF="$REVIEW_BASE_REF"`,
+   `AGENT_TOOL_REVIEW_BASE_OID="$REVIEW_BASE_OID"`, and `--bump-versions`, plus
+   the same agent, pass, and report-only arguments. With the PR now open, that
+   skill owns merging this freshly pinned base, re-bumping the versions past it,
+   pushing the updated head without force, and reviewing the integrated result. Apply the same verdict gate as step 2,
    replace `REVIEWED_SHA` with the SHA it reports, verify it against local
    `HEAD` and the PR head, then repeat this freshness check. The refresh counter
    records work performed and never stops another required refresh.
@@ -457,8 +470,10 @@ loop, subject-only squash, and `MERGED`-state verification.
    continue to step 6.
 
 6. **Report results**: the PR URL, review agent and fallback status, repair rounds
-   performed, findings fixed or waived, and the final squash subject including
-   its `(#<pr>)` reference. Note that the branch was pushed once, at open time
+   performed, findings fixed or waived, the version each changed package shipped
+   at (for example `packages/frontend 0.7.101 → 0.7.102`, or that none of the
+   versioned packages changed), and the final squash subject including its
+   `(#<pr>)` reference. Note that the branch was pushed once, at open time
    (or, on the resume path, that it was already open). Confirm the merge reached
    `MERGED`, and state the branch returned to, that the merged branch was
    deleted, and that the hooks were reinstalled — or, when cleanup or the reset
@@ -483,8 +498,8 @@ loop, subject-only squash, and `MERGED`-state verification.
 
 ## Notes
 
-- **Order is enforced**: commit → review-and-repair → open/resume → merge →
-  cleanup → reset. A failure before the open step leaves committed local work and
+- **Order is enforced**: commit → sync-bump-review-and-repair → open/resume →
+  merge → cleanup → reset. A failure before the open step leaves committed local work and
   no PR; a failure after it leaves the PR in a safe, open state. Either way it is
   reported.
 - **One push, after the review** — on the fresh path the branch is pushed exactly
@@ -507,6 +522,14 @@ loop, subject-only squash, and `MERGED`-state verification.
   before the SHA-bound merge is retried. GitHub's effective rules must enforce
   strict base freshness, which atomically rejects any later race. Refresh and
   re-review as often as necessary; no round count stops this recovery.
+- **Version bumps are serialized by base freshness.** The strict status rule
+  lets only a head that contains the latest base merge, the review sync bumps
+  each changed package to one past exactly that base, and `checkVersions`
+  confirms it on the reviewed head just before the merge. Two PRs racing on the
+  same package therefore land consecutive patch versions in merge order: the
+  loser goes `BEHIND`, syncs (any version-only conflict is resolved), bumps one
+  past the winner, and is reviewed again. The Django `backend/` and the other
+  packages are not versioned by this flow.
 - **Base-ref validation is fail-fast, not an atomic API precondition.** GitHub's
   synchronous merge API exposes `expectedHeadOid` but no corresponding expected
   base-ref input. This flow preserves the base identity used for review and

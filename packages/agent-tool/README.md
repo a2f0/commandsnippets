@@ -1,6 +1,7 @@
 # @commandsnippets/agent-tool
 
-Minimal CLI for cross-agent code review and PR squash-merges.
+Minimal CLI for cross-agent code review, PR squash-merges, and the version
+bumps that ship with them.
 
 ## Cross-agent review
 
@@ -151,11 +152,43 @@ as does its `--keep-branch` flag, which the tool does not accept. Invoking the
 tool directly merges without any of that cleanup. Extra positionals are rejected
 before the merge mutation.
 
+## Version bumps
+
+Keeps each versioned package — `packages/frontend` and `packages/backend-v2` —
+one patch past its version on the base the branch merges onto.
+
+```bash
+# Rewrite the package.json versions that are off; prints the rewritten paths:
+bun packages/agent-tool/src/index.ts bumpVersions "$BASE_OID"
+# Exit non-zero when a versioned package at HEAD is not at its target:
+bun packages/agent-tool/src/index.ts checkVersions "$BASE_OID"
+# Mid-merge: finish a base merge whose only conflicts are those version fields:
+bun packages/agent-tool/src/index.ts resolveVersionConflicts
+```
+
+The target for each package is computed from committed `HEAD` and the full base
+OID: one patch past the base's version when the branch changes anything in the
+package (its `package.json` counts only for edits beyond `version`), the base's
+own version when it changes nothing, and the branch's version when that is a
+deliberate major or minor bump. Only the `version` line is rewritten, and
+`bumpVersions` refuses a manifest with uncommitted edits. It never commits;
+the caller commits the printed paths.
+
+`resolveVersionConflicts` re-runs the three-way merge of each conflicted
+manifest with every side's version set to the incoming base's. It stages the
+result only when that merges cleanly and every conflicted path is a versioned
+manifest; otherwise it changes nothing and exits non-zero. The following
+`bumpVersions` then moves the version one past the base.
+
+`cross-agent-review --bump-versions` runs these after each base sync, and
+`ship-pr` always passes that flag and gates its merge on `checkVersions`.
+
 ## Ship (commit → review → repair → open/resume → merge → reset)
 
 The `ship-pr` skill commits the work on a feature branch, hands it to
-`cross-agent-review` — which reviews the local commits (or the pushed head when
-a PR is already open), repairs blocking findings until none remain,
+`cross-agent-review` — which syncs the base, patch-bumps the changed versioned
+packages, reviews the local commits (or the pushed head when a PR is already
+open), repairs blocking findings until none remain,
 and re-reviews every head it changes — then opens or resumes the PR with a
 single push and squash-merges only the reviewed commit that review reports back.
 Opening the PR after the review is what keeps the branch to a single push

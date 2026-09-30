@@ -3,12 +3,17 @@ import { squashMerge } from "./pr/squashMerge";
 import { solicitClaudeCodeReview } from "./review/solicitClaudeCodeReview";
 import { solicitCodexReview } from "./review/solicitCodexReview";
 import { solicitOpencodeReview } from "./review/solicitOpencodeReview";
+import { bumpVersions, checkVersions } from "./version/bumpVersions";
+import { resolveVersionConflicts } from "./version/resolveVersionConflicts";
 
 const AGENT_TOOL_USAGE =
-  "Usage: agent-tool <solicitClaudeCodeReview|solicitCodexReview|solicitOpencodeReview|openPr|squashMerge> [args]\n";
+  "Usage: agent-tool <solicitClaudeCodeReview|solicitCodexReview|solicitOpencodeReview|openPr|squashMerge|bumpVersions|checkVersions|resolveVersionConflicts> [args]\n";
 
 export interface AgentToolActions {
+  readonly bumpVersions: (rootDir: string, baseOid?: string) => number;
+  readonly checkVersions: (rootDir: string, baseOid?: string) => number;
   readonly openPr: (rootDir: string, title?: string) => number;
+  readonly resolveVersionConflicts: (rootDir: string) => number;
   readonly solicitClaudeCodeReview: (
     rootDir: string,
     effort?: string,
@@ -24,7 +29,10 @@ export interface AgentToolActions {
 }
 
 const defaultActions: AgentToolActions = {
+  bumpVersions,
+  checkVersions,
   openPr,
+  resolveVersionConflicts,
   solicitClaudeCodeReview,
   solicitCodexReview,
   solicitOpencodeReview,
@@ -71,6 +79,18 @@ export function runAgentToolAction(
     case "squashMerge": {
       assertMaximumPositionals(action, positionals, 3);
       return actions.squashMerge(rootDir, first, second, third);
+    }
+    case "bumpVersions": {
+      assertMaximumPositionals(action, positionals, 1);
+      return actions.bumpVersions(rootDir, first);
+    }
+    case "checkVersions": {
+      assertMaximumPositionals(action, positionals, 1);
+      return actions.checkVersions(rootDir, first);
+    }
+    case "resolveVersionConflicts": {
+      assertMaximumPositionals(action, positionals, 0);
+      return actions.resolveVersionConflicts(rootDir);
     }
     default:
       process.stderr.write(`Unknown action: ${action ?? "(none)"}\n`);
