@@ -58,7 +58,7 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     const html = page('');
     expect(html).toContain('Solve, Curate, Retrieve.');
     expect(html).toContain('id="tagLine"');
-    expect(html).toContain(`id="loginLink" href="${appUrl(mode)}"`);
+    expect(html).toContain(`id="loginLink" href="${appUrl(mode)}">App</a>`);
     expect(html).toContain(`href="${appUrl(mode)}">Get started</a>`);
   });
 
