@@ -40,6 +40,9 @@ export const users = sqliteTable(
     date_joined: text('date_joined').notNull(),
     date_updated: text('date_updated').notNull(),
     login_count: integer('login_count').notNull().default(1),
+    // When staff marked the account for deletion through the admin API, which
+    // also deactivates it; NULL if it is not marked.
+    date_marked_for_deletion: text('date_marked_for_deletion'),
   },
   table => [
     check('users_user_username_length', sql`length(${table.username}) <= 150`),

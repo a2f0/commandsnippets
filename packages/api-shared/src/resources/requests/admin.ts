@@ -13,11 +13,14 @@ import {ADMIN_USER} from '../types';
 
 // Users
 
-const writableSchema = z.partial(z.object({is_active: booleanField()}));
+const writableSchema = z.partial(
+  z.object({is_active: booleanField(), marked_for_deletion: booleanField()})
+);
 
 /**
- * PATCH/PUT: only `is_active` can change. Any other attribute is refused
- * (the first one, as `read_only`) rather than ignored.
+ * PATCH/PUT: only `is_active` and `marked_for_deletion` can change. Any other
+ * attribute is refused (the first one, as `read_only`) rather than ignored.
+ * `marked_for_deletion: true` also deactivates the account.
  */
 export const adminUserUpdateAttributesSchema = z.pipe(
   z.pipe(

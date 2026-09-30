@@ -129,6 +129,19 @@ describe('response documents', () => {
             target_username: 'alice',
           },
         },
+        {
+          // An action added after the client was built still reads.
+          type: 'AdminAuditLogEntry',
+          id: '2',
+          attributes: {
+            created: ts,
+            action: 'a_future_action',
+            actor_id: '1',
+            actor_username: 'staff',
+            target_user_id: null,
+            target_username: 'bob',
+          },
+        },
       ],
     });
   });
@@ -244,10 +257,17 @@ describe('request fields', () => {
     expect(parsed(tagUpdateAttributesSchema, {})).toEqual({});
   });
 
-  test('admin: only is_active, the first other attribute refused', () => {
+  test('admin: only is_active and marked_for_deletion, the first other attribute refused', () => {
     expect(parsed(adminUserUpdateAttributesSchema, {is_active: 'no'})).toEqual({
       is_active: false,
     });
+    expect(
+      parsed(adminUserUpdateAttributesSchema, {marked_for_deletion: 'yes'})
+    ).toEqual({marked_for_deletion: true});
+    expect(
+      failures(adminUserUpdateAttributesSchema, {marked_for_deletion: null})[0]
+        ?.message
+    ).toBe('Must be a valid boolean.');
     expect(
       failures(adminUserUpdateAttributesSchema, {
         is_active: 'x',

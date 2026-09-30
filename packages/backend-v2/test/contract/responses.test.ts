@@ -367,15 +367,16 @@ describe('the admin API', () => {
       adminUserDocumentSchema,
       await client.get(`/api/v1/admin/users/${alice.id}`)
     );
-    for (const isActive of [false, true]) {
+    for (const attributes of [
+      {is_active: false},
+      {is_active: true},
+      {marked_for_deletion: true},
+      {marked_for_deletion: false},
+    ]) {
       await expectDocument(
         adminUserDocumentSchema,
         await client.patch(`/api/v1/admin/users/${alice.id}`, {
-          data: {
-            type: 'AdminUser',
-            id: String(alice.id),
-            attributes: {is_active: isActive},
-          },
+          data: {type: 'AdminUser', id: String(alice.id), attributes},
         })
       );
     }
@@ -383,7 +384,7 @@ describe('the admin API', () => {
       adminAuditLogListDocumentSchema,
       await client.get('/api/v1/admin/audit_log')
     );
-    expect(log.data.length).toBe(2);
+    expect(log.data.length).toBe(4);
     await expectDocument(
       adminAuditLogListDocumentSchema,
       await client.get(

@@ -2,6 +2,7 @@ import {
   type AdminAuditAction,
   type AdminAuditLogEntry,
   type AdminUser,
+  adminUserUpdateAttributesSchema,
   CODES,
   EXPECTED_USER_HEADER,
   type IncludedResource,
@@ -602,6 +603,7 @@ interface MockAdminUser {
   email: string;
   is_staff: boolean;
   is_active: boolean;
+  date_marked_for_deletion: string | null;
 }
 interface MockAuditEntry {
   id: string;
@@ -616,6 +618,7 @@ const originalAdminUsers: MockAdminUser[] = [
     email: 'test@example.com',
     is_staff: true,
     is_active: true,
+    date_marked_for_deletion: null,
   },
   {
     id: '7',
@@ -623,6 +626,7 @@ const originalAdminUsers: MockAdminUser[] = [
     email: 'alice@example.com',
     is_staff: false,
     is_active: true,
+    date_marked_for_deletion: null,
   },
 ];
 let adminUsers: MockAdminUser[] = structuredClone(originalAdminUsers);
@@ -643,6 +647,7 @@ const adminUserResource = (user: MockAdminUser): AdminUser => ({
     last_active: '2026-09-02T00:00:00.000000',
     login_count: 4,
     date_updated: '2026-09-01T00:00:00.000000',
+    date_marked_for_deletion: user.date_marked_for_deletion,
     entry_count: 12,
     tag_count: 3,
   },
@@ -744,29 +749,71 @@ const createHandlers = () => {
           listDocument(request.url, matching.map(adminUserResource))
         );
       }),
+      // Deactivate, reactivate, or (un)mark for deletion, as the API does
+      // (marking deactivates too); staff cannot do either to themselves.
       http.patch(`${baseUrl}/admin/users/:id`, async ({params, request}) => {
         recordRequest('PATCH', request.url);
-        const user = adminUsers.find(
-          candidate => candidate.id === params['id']
-        );
-        if (user === undefined) {
-          return HttpResponse.json(
-            errorDocument(
-              404,
-              CODES.notFound,
-              'No AdminUser matches the given query.'
-            ),
-            {status: 404}
+        try {
+          const user = findOr404(adminUsers, String(params['id']), 'AdminUser');
+          const {attributes} = await parseResource(request, {
+            type: 'AdminUser',
+            id: user.id,
+          });
+          const changes = validateFields(
+            adminUserUpdateAttributesSchema,
+            attributes
           );
+          const wasMarked = user.date_marked_for_deletion !== null;
+          const marked = changes.marked_for_deletion ?? wasMarked;
+          if (marked && changes.is_active === true) {
+            throw apiError(
+              400,
+              CODES.invalid,
+              'An account marked for deletion cannot be reactivated.',
+              '/data/attributes/is_active'
+            );
+          }
+          const active = marked ? false : (changes.is_active ?? user.is_active);
+          const marking = marked && !wasMarked;
+          if (user.username === SIGNED_IN_USER && marking) {
+            throw apiError(
+              400,
+              CODES.invalid,
+              'You cannot mark your own account for deletion.',
+              '/data/attributes/marked_for_deletion'
+            );
+          }
+          if (user.username === SIGNED_IN_USER && !active && user.is_active) {
+            throw apiError(
+              400,
+              CODES.invalid,
+              'You cannot deactivate your own account.',
+              '/data/attributes/is_active'
+            );
+          }
+          const record = (action: AdminAuditAction) =>
+            adminAuditLog.unshift({
+              id: String(adminAuditLog.length + 1),
+              created: '2026-09-28T12:00:00.000000',
+              action,
+              target: user.username,
+            });
+          if (marked !== wasMarked) {
+            record(
+              marked ? 'mark_user_for_deletion' : 'unmark_user_for_deletion'
+            );
+          }
+          if (active !== user.is_active && !marking) {
+            record(active ? 'activate_user' : 'deactivate_user');
+          }
+          user.is_active = active;
+          user.date_marked_for_deletion = marked
+            ? (user.date_marked_for_deletion ?? '2026-09-28T12:00:00.000000')
+            : null;
+          return HttpResponse.json({data: adminUserResource(user)});
+        } catch (error) {
+          return errorResponse(error);
         }
-        user.is_active = !user.is_active;
-        adminAuditLog.unshift({
-          id: String(adminAuditLog.length + 1),
-          created: '2026-09-28T12:00:00.000000',
-          action: user.is_active ? 'activate_user' : 'deactivate_user',
-          target: user.username,
-        });
-        return HttpResponse.json({data: adminUserResource(user)});
       }),
       http.get(`${baseUrl}/admin/audit_log`, ({request}) => {
         recordRequest('GET', request.url);

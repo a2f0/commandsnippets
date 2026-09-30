@@ -71,6 +71,10 @@ const AdminAuditLog = ({onForbidden}: IProps) => {
         return t('actionDeactivateUser');
       case 'activate_user':
         return t('actionActivateUser');
+      case 'mark_user_for_deletion':
+        return t('actionMarkUserForDeletion');
+      case 'unmark_user_for_deletion':
+        return t('actionUnmarkUserForDeletion');
       default:
         return action;
     }

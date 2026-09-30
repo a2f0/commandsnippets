@@ -129,6 +129,30 @@ const exchanges: Exchange[] = [
     url: `${API}/admin/users/7`,
     status: 200,
     schema: adminUserDocumentSchema,
+    body: {data: {type: 'AdminUser', id: '7', attributes: {is_active: false}}},
+  },
+  {
+    handler: `PATCH ${API}/admin/users/:id`,
+    method: 'PATCH',
+    url: `${API}/admin/users/7`,
+    status: 200,
+    schema: adminUserDocumentSchema,
+    body: {
+      data: {
+        type: 'AdminUser',
+        id: '7',
+        attributes: {marked_for_deletion: true},
+      },
+    },
+  },
+  {
+    // A marked account stays deactivated.
+    handler: `PATCH ${API}/admin/users/:id`,
+    method: 'PATCH',
+    url: `${API}/admin/users/7`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: {data: {type: 'AdminUser', id: '7', attributes: {is_active: true}}},
   },
   {
     handler: `PATCH ${API}/admin/users/:id`,
@@ -138,7 +162,7 @@ const exchanges: Exchange[] = [
     schema: errorDocumentSchema,
   },
   {
-    // Not empty: the PATCH above logged a deactivation.
+    // Not empty: the PATCHes above logged a deactivation and a mark.
     handler: `GET ${API}/admin/audit_log`,
     method: 'GET',
     url: `${API}/admin/audit_log?page%5Bnumber%5D=1`,

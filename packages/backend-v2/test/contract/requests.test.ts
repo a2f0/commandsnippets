@@ -309,6 +309,9 @@ describe('AdminUser documents', () => {
         document({is_active: 'x'}),
         document({email: 'x', is_active: 'x'}),
         document({is_active: false, username: 'x'}),
+        document({marked_for_deletion: 'x'}),
+        document({marked_for_deletion: false}),
+        document({marked_for_deletion: 'no', is_active: 'yes'}),
       ]
     );
   });
