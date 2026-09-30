@@ -234,9 +234,13 @@ only (403 for everyone else):
   (username or email). Sorts: `username`, `email`, `date_joined`,
   `last_login`, `last_active`, `login_count`, `entry_count`, `tag_count`.
 - `GET /users/:id` returns one account.
-- `PATCH /users/:id` changes `is_active`, the only writable attribute.
-  Deactivating also deletes the account's token, so its sessions end at
-  once. Staff cannot deactivate themselves.
+- `PATCH /users/:id` changes `is_active` or `marked_for_deletion`, the only
+  writable attributes. Deactivating also deletes the account's token, so its
+  sessions end at once. Marking for deletion (`date_marked_for_deletion`)
+  also deactivates the account and deletes its token; a marked account
+  cannot be reactivated until it is unmarked, and unmarking leaves it
+  deactivated. Nothing deletes a marked account yet. Staff cannot deactivate
+  or mark themselves.
 - `GET /audit_log` lists these changes, newest first
   (`filter[target_user_id]`).
 

@@ -29,6 +29,7 @@ import type {
   AdminAuditLogListParams,
   AdminUserListParams,
   AdminUserSortField,
+  AdminUserUpdateAttributes,
   AdminUserUpdateDocument,
 } from '@commandsnippets/api-shared/requests';
 import {
@@ -62,6 +63,8 @@ export interface AdminUser {
   lastLogin: string | null;
   lastActive: string | null;
   loginCount: number;
+  /** When staff marked the account for deletion; null if it is not marked. */
+  dateMarkedForDeletion: string | null;
   entryCount: number;
   tagCount: number;
 }
@@ -144,6 +147,7 @@ function toUser({id, attributes}: AdminUserResource): AdminUser {
     lastLogin: attributes.last_login,
     lastActive: attributes.last_active,
     loginCount: attributes.login_count,
+    dateMarkedForDeletion: attributes.date_marked_for_deletion,
     entryCount: attributes.entry_count,
     tagCount: attributes.tag_count,
   };
@@ -248,18 +252,37 @@ export async function listUsers(
   return toPage(parse(adminUserListDocumentSchema, body), toUser);
 }
 
-export async function setUserActive(
+async function updateUser(
   id: string,
-  isActive: boolean
+  attributes: AdminUserUpdateAttributes
 ): Promise<AdminUser> {
   const document: AdminUserUpdateDocument = {
-    data: {type: 'AdminUser', id, attributes: {is_active: isActive}},
+    data: {type: 'AdminUser', id, attributes},
   };
   const body = await adminFetch(`/users/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     body: JSON.stringify(document),
   });
   return toUser(parse(adminUserDocumentSchema, body).data);
+}
+
+/** Deactivating an account also ends all of its sessions. */
+export function setUserActive(
+  id: string,
+  isActive: boolean
+): Promise<AdminUser> {
+  return updateUser(id, {is_active: isActive});
+}
+
+/**
+ * Marking an account for deletion also deactivates it and ends all of its
+ * sessions; unmarking leaves it deactivated.
+ */
+export function setUserMarkedForDeletion(
+  id: string,
+  marked: boolean
+): Promise<AdminUser> {
+  return updateUser(id, {marked_for_deletion: marked});
 }
 
 export async function listAuditLog(

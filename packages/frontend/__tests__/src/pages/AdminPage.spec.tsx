@@ -1,4 +1,7 @@
-import {CODES} from '@commandsnippets/api-shared';
+import {
+  adminUserUpdateDocumentSchema,
+  CODES,
+} from '@commandsnippets/api-shared';
 import {
   act,
   fireEvent,
@@ -24,6 +27,7 @@ interface MockUser {
   email: string;
   is_staff: boolean;
   is_active: boolean;
+  date_marked_for_deletion?: string | null;
 }
 
 let viewerIsStaff = true;
@@ -47,6 +51,7 @@ const resource = (user: MockUser) => ({
     last_active: user.is_active ? '2026-09-02T00:00:00.000000' : null,
     login_count: 4,
     date_updated: '2026-09-01T00:00:00.000000',
+    date_marked_for_deletion: user.date_marked_for_deletion ?? null,
     entry_count: 12,
     tag_count: 3,
   },
@@ -119,7 +124,18 @@ const server = setupServer(
         {status: 404}
       );
     }
-    user.is_active = !user.is_active;
+    const {attributes = {}} = adminUserUpdateDocumentSchema.parse(body).data;
+    if (attributes.marked_for_deletion !== undefined) {
+      user.date_marked_for_deletion = attributes.marked_for_deletion
+        ? '2026-09-28T12:00:00.000000'
+        : null;
+      if (attributes.marked_for_deletion) {
+        user.is_active = false;
+      }
+    }
+    if (attributes.is_active !== undefined) {
+      user.is_active = attributes.is_active;
+    }
     return HttpResponse.json({data: resource(user)});
   }),
   http.get(`${API}/admin/audit_log`, ({request}) =>
@@ -136,6 +152,18 @@ const server = setupServer(
             actor_username: 'test',
             target_user_id: '7',
             target_username: 'alice',
+          },
+        },
+        {
+          type: 'AdminAuditLogEntry',
+          id: '10',
+          attributes: {
+            created: '2026-09-28T13:00:00.000000',
+            action: 'mark_user_for_deletion',
+            actor_id: '1',
+            actor_username: 'test',
+            target_user_id: '9',
+            target_username: 'bob',
           },
         },
       ],
@@ -191,6 +219,33 @@ function present<T>(value: T | null | undefined, what: string): T {
     throw new Error(`missing ${what}`);
   }
   return value;
+}
+
+const row = (id: string) =>
+  present(document.getElementById(`adminUserRow${id}`), `row ${id}`);
+
+/** The items of user `id`'s menu, opened with its ⋮ button. */
+async function openMenu(id: string): Promise<string[]> {
+  fireEvent.click(
+    present(
+      document.getElementById(`adminUserMenuButton${id}`),
+      `menu button ${id}`
+    )
+  );
+  const items = await screen.findAllByRole('menuitem');
+  return items.map(item => item.textContent ?? '');
+}
+
+/** Choose `item` from user `id`'s menu. */
+async function choose(id: string, item: string) {
+  await openMenu(id);
+  fireEvent.click(screen.getByRole('menuitem', {name: item}));
+}
+
+/** Confirm the dialog with its `button`. */
+async function confirm(button: string) {
+  const dialog = await screen.findByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('button', {name: button}));
 }
 
 describe('AdminPage', () => {
@@ -270,27 +325,102 @@ describe('AdminPage', () => {
     expect(store.loggedInUser).toBe('test');
   });
 
-  it('deactivates a user after confirmation', async () => {
+  it('deactivates a user from their menu, after confirmation', async () => {
     await renderAt('/admin');
     await usersTable();
 
-    fireEvent.click(
-      present(document.getElementById('adminUserToggle7'), 'toggle')
-    );
+    expect(await openMenu('7')).toEqual(['Deactivate', 'Mark for deletion']);
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Deactivate'}));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('Deactivate alice?')).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', {name: 'Deactivate'}));
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', {name: 'Reactivate'})
-      ).toBeInTheDocument();
+      expect(within(row('7')).getByText('Deactivated')).toBeInTheDocument();
     });
     expect(patches).toEqual([
       {data: {type: 'AdminUser', id: '7', attributes: {is_active: false}}},
     ]);
-    const row = present(document.getElementById('adminUserRow7'), 'row');
-    expect(within(row).getByText('Deactivated')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(await openMenu('7')).toEqual(['Reactivate', 'Mark for deletion']);
+  });
+
+  it('opens the same menu on a right-click of the row', async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    fireEvent.contextMenu(row('7'), {clientX: 200, clientY: 300});
+
+    const items = await screen.findAllByRole('menuitem');
+    expect(items.map(item => item.textContent)).toEqual([
+      'Deactivate',
+      'Mark for deletion',
+    ]);
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Mark for deletion'}));
+    expect(
+      within(await screen.findByRole('dialog')).getByText(
+        'Mark alice for deletion?'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('marks a user for deletion after confirmation', async () => {
+    await renderAt('/admin');
+    await usersTable();
+
+    await choose('7', 'Mark for deletion');
+    await confirm('Mark for deletion');
+
+    await waitFor(() => {
+      expect(
+        within(row('7')).getByText('Marked for deletion')
+      ).toBeInTheDocument();
+    });
+    expect(patches).toEqual([
+      {
+        data: {
+          type: 'AdminUser',
+          id: '7',
+          attributes: {marked_for_deletion: true},
+        },
+      },
+    ]);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    // A marked account stays deactivated: it can only be unmarked.
+    expect(await openMenu('7')).toEqual(['Unmark for deletion']);
+  });
+
+  it('unmarks a user, who stays deactivated', async () => {
+    users = users.map(user =>
+      user.id === '7'
+        ? {
+            ...user,
+            is_active: false,
+            date_marked_for_deletion: '2026-09-28T12:00:00.000000',
+          }
+        : user
+    );
+    await renderAt('/admin');
+    await usersTable();
+    expect(
+      within(row('7')).getByText('Marked for deletion')
+    ).toBeInTheDocument();
+
+    await choose('7', 'Unmark for deletion');
+    await confirm('Unmark for deletion');
+
+    await waitFor(() => {
+      expect(within(row('7')).getByText('Deactivated')).toBeInTheDocument();
+    });
+    expect(patches).toEqual([
+      {
+        data: {
+          type: 'AdminUser',
+          id: '7',
+          attributes: {marked_for_deletion: false},
+        },
+      },
+    ]);
   });
 
   it("leaves the session when it is another user's, deactivating no one", async () => {
@@ -306,11 +436,8 @@ describe('AdminPage', () => {
     await renderAt('/admin');
     await usersTable();
 
-    fireEvent.click(
-      present(document.getElementById('adminUserToggle7'), 'toggle')
-    );
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', {name: 'Deactivate'}));
+    await choose('7', 'Deactivate');
+    await confirm('Deactivate');
 
     await waitFor(() => expect(store.loggedInUser).toBeNull());
     expect(users.find(user => user.id === '7')?.is_active).toBe(true);
@@ -339,14 +466,8 @@ describe('AdminPage', () => {
       expect(listRequests.at(-1)?.get('filter[is_active]')).toBe('true');
     });
 
-    fireEvent.click(
-      present(document.getElementById('adminUserToggle7'), 'toggle')
-    );
-    fireEvent.click(
-      within(await screen.findByRole('dialog')).getByRole('button', {
-        name: 'Deactivate',
-      })
-    );
+    await choose('7', 'Deactivate');
+    await confirm('Deactivate');
 
     await waitFor(() => {
       expect(document.getElementById('adminUserRow7')).toBeNull();
@@ -374,17 +495,10 @@ describe('AdminPage', () => {
     // 26 active users: page 2 holds the 26th alone.
     fireEvent.click(await screen.findByRole('button', {name: /next page/i}));
     await waitFor(() => {
-      expect(listRequests.at(-1)?.get('page[number]')).toBe('2');
+      expect(document.getElementById('adminUserRow123')).not.toBeNull();
     });
-    const [lastRow] = await screen.findAllByRole('button', {
-      name: 'Deactivate',
-    });
-    fireEvent.click(present(lastRow, 'toggle'));
-    fireEvent.click(
-      within(await screen.findByRole('dialog')).getByRole('button', {
-        name: 'Deactivate',
-      })
-    );
+    await choose('123', 'Deactivate');
+    await confirm('Deactivate');
 
     await waitFor(() => {
       expect(listRequests.at(-1)?.get('page[number]')).toBe('1');
@@ -399,9 +513,7 @@ describe('AdminPage', () => {
     await renderAt('/admin');
     await usersTable();
 
-    fireEvent.click(
-      present(document.getElementById('adminUserToggle7'), 'toggle')
-    );
+    await choose('7', 'Mark for deletion');
     fireEvent.click(await screen.findByRole('button', {name: 'Cancel'}));
 
     await waitFor(() => {
@@ -410,12 +522,17 @@ describe('AdminPage', () => {
     expect(patches).toHaveLength(0);
   });
 
-  it("won't let staff deactivate their own account", async () => {
+  it("won't let staff deactivate or mark their own account", async () => {
     await renderAt('/admin');
     await usersTable();
 
-    expect(document.getElementById('adminUserToggle1')).toBeDisabled();
-    expect(document.getElementById('adminUserToggle7')).toBeEnabled();
+    expect(document.getElementById('adminUserMenuButton1')).toBeDisabled();
+    expect(document.getElementById('adminUserMenuButton7')).toBeEnabled();
+    expect(
+      screen.getByRole('button', {name: 'Actions for alice'})
+    ).toBeInTheDocument();
+    fireEvent.contextMenu(row('1'));
+    expect(screen.queryByRole('menuitem')).toBeNull();
   });
 
   it('searches and filters by status', async () => {
@@ -515,8 +632,15 @@ describe('AdminPage', () => {
     fireEvent.click(screen.getByRole('tab', {name: 'Audit log'}));
 
     const table = await screen.findByRole('table', {name: 'Audit log'});
-    const cell = await within(table).findByText('alice');
-    const row = present(cell.closest('tr'), 'audit row');
-    expect(within(row).getByText('Deactivated')).toBeInTheDocument();
+    const actionOf = async (username: string) => {
+      const cell = await within(table).findByText(username);
+      return present(cell.closest('tr'), 'audit row');
+    };
+    expect(
+      within(await actionOf('alice')).getByText('Deactivated')
+    ).toBeInTheDocument();
+    expect(
+      within(await actionOf('bob')).getByText('Marked for deletion')
+    ).toBeInTheDocument();
   });
 });

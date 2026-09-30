@@ -244,10 +244,17 @@ describe('request fields', () => {
     expect(parsed(tagUpdateAttributesSchema, {})).toEqual({});
   });
 
-  test('admin: only is_active, the first other attribute refused', () => {
+  test('admin: only is_active and marked_for_deletion, the first other attribute refused', () => {
     expect(parsed(adminUserUpdateAttributesSchema, {is_active: 'no'})).toEqual({
       is_active: false,
     });
+    expect(
+      parsed(adminUserUpdateAttributesSchema, {marked_for_deletion: 'yes'})
+    ).toEqual({marked_for_deletion: true});
+    expect(
+      failures(adminUserUpdateAttributesSchema, {marked_for_deletion: null})[0]
+        ?.message
+    ).toBe('Must be a valid boolean.');
     expect(
       failures(adminUserUpdateAttributesSchema, {
         is_active: 'x',

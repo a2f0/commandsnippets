@@ -19,8 +19,20 @@ export class Base {
   adminUserRow(id: string): ReturnType<WebdriverIO.Browser['$']> {
     return $(`#adminUserRow${id}`);
   }
-  adminUserToggle(id: string): ReturnType<WebdriverIO.Browser['$']> {
-    return $(`#adminUserToggle${id}`);
+  adminUserMenuButton(id: string): ReturnType<WebdriverIO.Browser['$']> {
+    return $(`#adminUserMenuButton${id}`);
+  }
+  get adminUserMenuDeactivate(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminUserMenuDeactivate');
+  }
+  get adminUserMenuReactivate(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminUserMenuReactivate');
+  }
+  get adminUserMenuMarkForDeletion(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminUserMenuMarkForDeletion');
+  }
+  get adminUserMenuUnmarkForDeletion(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminUserMenuUnmarkForDeletion');
   }
   get adminConfirmButton(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#adminConfirmButton');

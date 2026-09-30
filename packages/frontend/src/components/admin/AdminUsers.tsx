@@ -1,3 +1,4 @@
+import {MoreVert} from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -8,6 +9,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   LinearProgress,
   Table,
   TableBody,
@@ -22,7 +24,7 @@ import {
   ToggleButtonGroup,
   Tooltip,
 } from '@mui/material';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 
 import type {AdminKeys} from '../../i18n/hooks';
 import {useTypedTranslation} from '../../i18n/hooks';
@@ -36,11 +38,17 @@ import {
   type AdminUsersQuery,
   listUsers,
   setUserActive,
+  setUserMarkedForDeletion,
 } from '../../lib/api/adminApi';
 import {UserMismatchError} from '../../lib/api/apiClient';
 import {formatTimestamp} from '../../lib/formatTimestamp';
+import {type IMouse, initialMouse} from '../../lib/shared';
 import {leaveForeignSession} from '../../lib/state/appState';
 import {commonButtonSx} from '../../theme/sx';
+import {
+  type AdminUserAction,
+  AdminUserContextMenu,
+} from './AdminUserContextMenu';
 
 const PAGE_SIZES = [25, 50, 100];
 const SEARCH_DELAY_MS = 300;
@@ -63,6 +71,49 @@ const COLUMNS: Column[] = [
   {label: 'columnStatus', sort: null, numeric: false},
 ];
 
+interface ActionDialog {
+  title: AdminKeys;
+  body: AdminKeys;
+  destructive: boolean;
+}
+
+const ACTION_DIALOGS: Record<AdminUserAction, ActionDialog> = {
+  deactivate: {
+    title: 'deactivateTitle',
+    body: 'deactivateBody',
+    destructive: true,
+  },
+  reactivate: {
+    title: 'reactivateTitle',
+    body: 'reactivateBody',
+    destructive: false,
+  },
+  markForDeletion: {
+    title: 'markForDeletionTitle',
+    body: 'markForDeletionBody',
+    destructive: true,
+  },
+  unmarkForDeletion: {
+    title: 'unmarkForDeletionTitle',
+    body: 'unmarkForDeletionBody',
+    destructive: false,
+  },
+};
+
+/** Deactivating and marking for deletion both end the user's sessions. */
+function applyAction(user: AdminUser, action: AdminUserAction) {
+  switch (action) {
+    case 'deactivate':
+      return setUserActive(user.id, false);
+    case 'reactivate':
+      return setUserActive(user.id, true);
+    case 'markForDeletion':
+      return setUserMarkedForDeletion(user.id, true);
+    case 'unmarkForDeletion':
+      return setUserMarkedForDeletion(user.id, false);
+  }
+}
+
 interface IProps {
   currentUsername: string | null;
   /** The API said the viewer is not staff (revoked since the page loaded). */
@@ -84,7 +135,13 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
   const [users, setUsers] = useState<AdminPage<AdminUser> | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [pending, setPending] = useState<AdminUser | null>(null);
+  const [pending, setPending] = useState<{
+    user: AdminUser;
+    action: AdminUserAction;
+  } | null>(null);
+  // The menu keeps its user while it closes; the position opens and closes it.
+  const [menuUser, setMenuUser] = useState<AdminUser | null>(null);
+  const [menuMouse, setMenuMouse] = useState<IMouse>(initialMouse);
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
@@ -148,15 +205,27 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
     }));
   };
 
+  const openMenu = (user: AdminUser, mouse: IMouse) => {
+    setMenuUser(user);
+    setMenuMouse(mouse);
+  };
+
+  const closeMenu = useCallback(() => setMenuMouse(initialMouse), []);
+
+  const chooseAction = useCallback(
+    (user: AdminUser, action: AdminUserAction) => setPending({user, action}),
+    []
+  );
+
   const confirmChange = async () => {
     if (pending === null) {
       return;
     }
-    const target = pending;
+    const {user: target, action} = pending;
     setUpdating(true);
     setUpdateError(null);
     try {
-      await setUserActive(target.id, !target.isActive);
+      await applyAction(target, action);
       setPending(null);
       // Reload the page: the change can move the user out of the status
       // filter and changes the counts.
@@ -297,7 +366,21 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
             {users?.items.map(user => {
               const isSelf = user.username === currentUsername;
               return (
-                <TableRow key={user.id} id={`adminUserRow${user.id}`}>
+                <TableRow
+                  key={user.id}
+                  id={`adminUserRow${user.id}`}
+                  onContextMenu={
+                    isSelf
+                      ? undefined
+                      : event => {
+                          event.preventDefault();
+                          openMenu(user, {
+                            mouseX: event.clientX - 2,
+                            mouseY: event.clientY - 4,
+                          });
+                        }
+                  }
+                >
                   <TableCell>
                     {user.username}
                     {user.isStaff && (
@@ -317,29 +400,42 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
                   <TableCell align="right">{user.entryCount}</TableCell>
                   <TableCell align="right">{user.tagCount}</TableCell>
                   <TableCell>
-                    <Chip
-                      size="small"
-                      color={user.isActive ? 'success' : 'default'}
-                      label={user.isActive ? t('active') : t('inactive')}
-                    />
+                    {user.dateMarkedForDeletion === null ? (
+                      <Chip
+                        size="small"
+                        color={user.isActive ? 'success' : 'default'}
+                        label={user.isActive ? t('active') : t('inactive')}
+                      />
+                    ) : (
+                      <Chip
+                        size="small"
+                        color="error"
+                        label={t('markedForDeletion')}
+                      />
+                    )}
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip
-                      title={
-                        isSelf && user.isActive ? t('cannotDeactivateSelf') : ''
-                      }
-                    >
+                    <Tooltip title={isSelf ? t('cannotChangeSelf') : ''}>
                       <span>
-                        <Button
-                          id={`adminUserToggle${user.id}`}
+                        <IconButton
+                          id={`adminUserMenuButton${user.id}`}
                           size="small"
-                          variant="outlined"
-                          color={user.isActive ? 'error' : 'primary'}
-                          disabled={isSelf && user.isActive}
-                          onClick={() => setPending(user)}
+                          aria-label={t('userActions', {
+                            username: user.username,
+                          })}
+                          aria-haspopup="menu"
+                          disabled={isSelf}
+                          onClick={event => {
+                            const rect =
+                              event.currentTarget.getBoundingClientRect();
+                            openMenu(user, {
+                              mouseX: rect.left,
+                              mouseY: rect.bottom,
+                            });
+                          }}
                         >
-                          {user.isActive ? t('deactivate') : t('reactivate')}
-                        </Button>
+                          <MoreVert fontSize="small" />
+                        </IconButton>
                       </span>
                     </Tooltip>
                   </TableCell>
@@ -380,6 +476,13 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
         />
       )}
 
+      <AdminUserContextMenu
+        user={menuUser}
+        mouse={menuMouse}
+        onClose={closeMenu}
+        onAction={chooseAction}
+      />
+
       <Dialog
         open={pending !== null}
         onClose={() => {
@@ -392,13 +495,13 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
         {pending !== null && (
           <>
             <DialogTitle id="adminConfirmTitle">
-              {pending.isActive
-                ? t('deactivateTitle', {username: pending.username})
-                : t('reactivateTitle', {username: pending.username})}
+              {t(ACTION_DIALOGS[pending.action].title, {
+                username: pending.user.username,
+              })}
             </DialogTitle>
             <DialogContent>
               <DialogContentText>
-                {pending.isActive ? t('deactivateBody') : t('reactivateBody')}
+                {t(ACTION_DIALOGS[pending.action].body)}
               </DialogContentText>
             </DialogContent>
             <DialogActions>
@@ -414,12 +517,16 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
               <Button
                 id="adminConfirmButton"
                 variant="outlined"
-                color={pending.isActive ? 'error' : 'primary'}
+                color={
+                  ACTION_DIALOGS[pending.action].destructive
+                    ? 'error'
+                    : 'primary'
+                }
                 sx={commonButtonSx}
                 disabled={updating}
                 onClick={() => void confirmChange()}
               >
-                {pending.isActive ? t('deactivate') : t('reactivate')}
+                {t(pending.action)}
               </Button>
             </DialogActions>
           </>

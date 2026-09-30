@@ -27,6 +27,11 @@ export const adminUserAttributesSchema = z.object({
   last_active: z.nullable(timestampSchema),
   login_count: countSchema,
   date_updated: timestampSchema,
+  /**
+   * When staff marked the account for deletion (which also deactivated it);
+   * null if it is not marked.
+   */
+  date_marked_for_deletion: z.nullable(timestampSchema),
   /** Live (not deleted) entries and tags. */
   entry_count: countSchema,
   tag_count: countSchema,
@@ -45,6 +50,8 @@ export type AdminUser = z.output<typeof adminUserSchema>;
 export const ADMIN_AUDIT_ACTIONS = [
   'activate_user',
   'deactivate_user',
+  'mark_user_for_deletion',
+  'unmark_user_for_deletion',
 ] as const;
 
 export type AdminAuditAction = (typeof ADMIN_AUDIT_ACTIONS)[number];

@@ -9,6 +9,7 @@ import {
   listAuditLog,
   listUsers,
   setUserActive,
+  setUserMarkedForDeletion,
 } from '../../../../src/lib/api/adminApi';
 import {UserMismatchError} from '../../../../src/lib/api/apiClient';
 import {errorDocument, onePage} from '../../../../src/msw/documents';
@@ -31,6 +32,7 @@ const userResource = (overrides: Record<string, unknown> = {}) => ({
     last_active: '2026-01-02T00:00:00.000000',
     login_count: 3,
     date_updated: '2026-01-01T00:00:00.000000',
+    date_marked_for_deletion: null,
     entry_count: 5,
     tag_count: 2,
     ...overrides,
@@ -123,6 +125,7 @@ describe('adminApi', () => {
           lastLogin: null,
           lastActive: '2026-01-02T00:00:00.000000',
           loginCount: 3,
+          dateMarkedForDeletion: null,
           entryCount: 5,
           tagCount: 2,
         },
@@ -162,6 +165,30 @@ describe('adminApi', () => {
       data: {type: 'AdminUser', id: '7', attributes: {is_active: false}},
     });
     expect(user.isActive).toBe(false);
+  });
+
+  it('patches marked_for_deletion with a JSON:API document', async () => {
+    const fetchSpy = reply(200, {
+      data: userResource({
+        is_active: false,
+        date_marked_for_deletion: '2026-09-28T12:00:00.000000',
+      }),
+    });
+
+    const user = await setUserMarkedForDeletion('7', true);
+
+    const {url, init} = requestOf(fetchSpy);
+    expect(url).toBe(`${API}/users/7`);
+    expect(init?.method).toBe('PATCH');
+    expect(JSON.parse(String(init?.body))).toEqual({
+      data: {
+        type: 'AdminUser',
+        id: '7',
+        attributes: {marked_for_deletion: true},
+      },
+    });
+    expect(user.isActive).toBe(false);
+    expect(user.dateMarkedForDeletion).toBe('2026-09-28T12:00:00.000000');
   });
 
   it('names the signed-in user in a write, and not in a read', async () => {

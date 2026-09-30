@@ -120,6 +120,7 @@ describe('AdminApi users', () => {
       last_active: expect.any(String),
       login_count: 1,
       date_updated: expect.any(String),
+      date_marked_for_deletion: null,
       entry_count: 1,
       tag_count: 1,
     });
@@ -292,7 +293,7 @@ describe('AdminApi deactivation', () => {
     expect((await refreshUser(staff.id))?.is_active).toBe(true);
   });
 
-  it('rejects changes to anything but is_active', async () => {
+  it('rejects changes to anything but is_active and marked_for_deletion', async () => {
     for (const attributes of [
       {is_staff: true},
       {username: 'renamed'},
@@ -343,6 +344,195 @@ describe('AdminApi deactivation', () => {
       ).status
     ).toBe(404);
     expect((await refreshUser(target.id))?.is_active).toBe(true);
+  });
+});
+
+describe('AdminApi marking for deletion', () => {
+  let staff: User;
+  let client: ApiClient;
+  let target: User;
+  let path: string;
+
+  const patch = (attributes: Record<string, unknown>) =>
+    client.patch(path, userPatch(target.id, attributes));
+  const targetTokens = () =>
+    db().select().from(tokens).where(eq(tokens.user_id, target.id));
+
+  beforeEach(async () => {
+    ({staff, client} = await staffClient());
+    target = await userFactory({username: 'target'}, {examples: false});
+    path = `/api/v1/admin/users/${target.id}`;
+  });
+
+  it('marks an account, deactivating it, ending its sessions and recording it', async () => {
+    const targetClient = new ApiClient(await tokenFor(target.id));
+    expect((await targetClient.get('/api/v1/user/')).status).toBe(200);
+
+    const response = await patch({marked_for_deletion: true});
+
+    expect(response.status).toBe(200);
+    const {attributes} = (await json(response)).data;
+    expect(attributes.is_active).toBe(false);
+    expect(attributes.date_marked_for_deletion).toEqual(expect.any(String));
+    const after = await refreshUser(target.id);
+    expect(after?.is_active).toBe(false);
+    expect(after?.date_marked_for_deletion).not.toBeNull();
+    expect(after?.date_updated).not.toBe(target.date_updated);
+    expect(await targetTokens()).toEqual([]);
+    expect((await targetClient.get('/api/v1/user/')).status).toBe(401);
+    // Marking implies the deactivation; only the mark is recorded.
+    expect(await auditRows()).toEqual([
+      {
+        id: expect.any(Number),
+        created: expect.any(String),
+        action: 'mark_user_for_deletion',
+        actor_id: staff.id,
+        actor_username: 'staff',
+        target_user_id: target.id,
+        target_username: 'target',
+      },
+    ]);
+  });
+
+  it('ends the sessions of an account deactivated before it was marked', async () => {
+    await db()
+      .update(users)
+      .set({is_active: false})
+      .where(eq(users.id, target.id));
+    await tokenFor(target.id);
+
+    expect((await patch({marked_for_deletion: true})).status).toBe(200);
+
+    expect(await targetTokens()).toEqual([]);
+    expect((await auditRows()).map(row => row.action)).toEqual([
+      'mark_user_for_deletion',
+    ]);
+  });
+
+  it('lists marked accounts as deactivated', async () => {
+    await patch({marked_for_deletion: true});
+
+    const body = await json(
+      await client.get('/api/v1/admin/users?filter[is_active]=false')
+    );
+    expect(body.data.map((user: {id: string}) => user.id)).toEqual([
+      String(target.id),
+    ]);
+    expect(body.data[0].attributes.date_marked_for_deletion).toEqual(
+      expect.any(String)
+    );
+  });
+
+  it('unmarks an account, which stays deactivated until reactivated', async () => {
+    await patch({marked_for_deletion: true});
+
+    const response = await patch({marked_for_deletion: false});
+
+    expect(response.status).toBe(200);
+    const {attributes} = (await json(response)).data;
+    expect(attributes.date_marked_for_deletion).toBeNull();
+    expect(attributes.is_active).toBe(false);
+    expect((await patch({is_active: true})).status).toBe(200);
+    expect((await refreshUser(target.id))?.is_active).toBe(true);
+    expect((await auditRows()).map(row => row.action)).toEqual([
+      'mark_user_for_deletion',
+      'unmark_user_for_deletion',
+      'activate_user',
+    ]);
+  });
+
+  it('unmarks and reactivates in one request', async () => {
+    await patch({marked_for_deletion: true});
+
+    const response = await patch({
+      marked_for_deletion: false,
+      is_active: true,
+    });
+
+    expect(response.status).toBe(200);
+    const after = await refreshUser(target.id);
+    expect([after?.is_active, after?.date_marked_for_deletion]).toEqual([
+      true,
+      null,
+    ]);
+    expect((await auditRows()).map(row => row.action)).toEqual([
+      'mark_user_for_deletion',
+      'unmark_user_for_deletion',
+      'activate_user',
+    ]);
+  });
+
+  it('will not reactivate an account that is marked', async () => {
+    await patch({marked_for_deletion: true});
+
+    for (const attributes of [
+      {is_active: true},
+      {is_active: true, marked_for_deletion: true},
+    ]) {
+      const response = await patch(attributes);
+      expect(response.status).toBe(400);
+      const error = (await json(response)).errors[0];
+      expect(error.detail).toBe(
+        'An account marked for deletion cannot be reactivated.'
+      );
+      expect(error.source.pointer).toBe('/data/attributes/is_active');
+    }
+    expect((await refreshUser(target.id))?.is_active).toBe(false);
+    expect((await auditRows()).map(row => row.action)).toEqual([
+      'mark_user_for_deletion',
+    ]);
+  });
+
+  it('records nothing, and keeps the date, when the mark does not change', async () => {
+    await patch({marked_for_deletion: true});
+    const marked = (await refreshUser(target.id))?.date_marked_for_deletion;
+
+    for (const attributes of [
+      {marked_for_deletion: true},
+      {is_active: false},
+      {},
+    ]) {
+      expect((await patch(attributes)).status).toBe(200);
+    }
+    expect((await refreshUser(target.id))?.date_marked_for_deletion).toBe(
+      marked
+    );
+    expect((await auditRows()).map(row => row.action)).toEqual([
+      'mark_user_for_deletion',
+    ]);
+
+    const other = await userFactory({username: 'other'}, {examples: false});
+    const tokenBefore = await tokenFor(other.id);
+    const unmarked = await client.patch(
+      `/api/v1/admin/users/${other.id}`,
+      userPatch(other.id, {marked_for_deletion: false})
+    );
+    expect(unmarked.status).toBe(200);
+    expect(await tokenFor(other.id)).toBe(tokenBefore);
+    expect((await auditRows()).length).toBe(1);
+  });
+
+  it('will not let staff mark themselves', async () => {
+    const response = await client.patch(
+      `/api/v1/admin/users/${staff.id}`,
+      userPatch(staff.id, {marked_for_deletion: true})
+    );
+    expect(response.status).toBe(400);
+    const error = (await json(response)).errors[0];
+    expect(error.detail).toBe('You cannot mark your own account for deletion.');
+    expect(error.source.pointer).toBe('/data/attributes/marked_for_deletion');
+    const after = await refreshUser(staff.id);
+    expect([after?.is_active, after?.date_marked_for_deletion]).toEqual([
+      true,
+      null,
+    ]);
+    expect(await auditRows()).toEqual([]);
+  });
+
+  it('validates the value', async () => {
+    const response = await patch({marked_for_deletion: 'sometimes'});
+    expect(response.status).toBe(400);
+    expect((await refreshUser(target.id))?.date_marked_for_deletion).toBeNull();
   });
 });
 

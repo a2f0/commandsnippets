@@ -1,6 +1,7 @@
 /**
  * The admin API, for staff (`users.is_staff`) only: list and inspect users,
- * deactivate or reactivate accounts, and read the audit log of those changes.
+ * deactivate or reactivate accounts, mark them for deletion (or unmark them),
+ * and read the audit log of those changes.
  * Nothing here can grant staff; that stays a database change.
  */
 import {
@@ -87,6 +88,7 @@ function renderUser(row: AdminUserRow): ResourceObject {
       last_active: isoformat(row.last_active),
       login_count: row.login_count,
       date_updated: isoformat(row.date_updated),
+      date_marked_for_deletion: isoformat(row.date_marked_for_deletion),
       entry_count: row.entry_count,
       tag_count: row.tag_count,
     },
@@ -166,15 +168,34 @@ adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
     type: ADMIN_USER,
     id: String(target.id),
   });
-  // Only `is_active` can change; any other attribute is refused.
-  const {is_active: isActive} = validateFields(
-    adminUserUpdateAttributesSchema,
-    attributes
-  );
-  if (isActive === undefined || isActive === target.is_active) {
+  // Only `is_active` and `marked_for_deletion` can change; any other attribute
+  // is refused.
+  const {is_active: isActive, marked_for_deletion: markedForDeletion} =
+    validateFields(adminUserUpdateAttributesSchema, attributes);
+  const wasMarked = target.date_marked_for_deletion !== null;
+  const marked = markedForDeletion ?? wasMarked;
+  // An account marked for deletion is always deactivated.
+  if (marked && isActive === true) {
+    throw fieldError(
+      'is_active',
+      'An account marked for deletion cannot be reactivated.',
+      'invalid'
+    );
+  }
+  const active = marked ? false : (isActive ?? target.is_active);
+  const marking = marked && !wasMarked;
+  const deactivating = !active && target.is_active;
+  if (marked === wasMarked && active === target.is_active) {
     return jsonApi(c, document(renderUser(target)));
   }
-  if (!isActive && target.id === staff.id) {
+  if (target.id === staff.id && marking) {
+    throw fieldError(
+      'marked_for_deletion',
+      'You cannot mark your own account for deletion.',
+      'invalid'
+    );
+  }
+  if (target.id === staff.id && deactivating) {
     throw fieldError(
       'is_active',
       'You cannot deactivate your own account.',
@@ -182,29 +203,41 @@ adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
     );
   }
 
-  const audit = db.insert(adminAuditLog).values({
-    created: now(),
-    action: (isActive
-      ? 'activate_user'
-      : 'deactivate_user') satisfies AdminAuditAction,
-    actor_id: staff.id,
-    actor_username: staff.username,
-    target_user_id: target.id,
-    target_username: target.username,
-  });
+  const audit = (action: AdminAuditAction) =>
+    db.insert(adminAuditLog).values({
+      created: now(),
+      action,
+      actor_id: staff.id,
+      actor_username: staff.username,
+      target_user_id: target.id,
+      target_username: target.username,
+    });
   const update = db
     .update(users)
-    .set({is_active: isActive, date_updated: now()})
+    .set({
+      is_active: active,
+      date_marked_for_deletion: marked
+        ? (target.date_marked_for_deletion ?? now())
+        : null,
+      date_updated: now(),
+    })
     .where(eq(users.id, target.id));
-  // Deactivating deletes the account's token (one per user, shared by all of
-  // their browsers), so every open session ends now, not at cookie expiry.
-  await (isActive
-    ? db.batch([update, audit])
-    : db.batch([
-        update,
-        db.delete(tokens).where(eq(tokens.user_id, target.id)),
-        audit,
-      ]));
+  // Deactivating or marking for deletion deletes the account's token (one per
+  // user, shared by all of their browsers), so every open session ends now,
+  // not at cookie expiry.
+  await db.batch([
+    update,
+    ...(deactivating || marking
+      ? [db.delete(tokens).where(eq(tokens.user_id, target.id))]
+      : []),
+    // Marking records only the mark: it implies the deactivation.
+    ...(marked !== wasMarked
+      ? [audit(marking ? 'mark_user_for_deletion' : 'unmark_user_for_deletion')]
+      : []),
+    ...(active !== target.is_active && !marking
+      ? [audit(active ? 'activate_user' : 'deactivate_user')]
+      : []),
+  ]);
   return jsonApi(c, document(renderUser(await getUser(db, String(target.id)))));
 });
 
