@@ -62,18 +62,6 @@ function cookieOptions(c: Context<AppEnv>) {
   } as const;
 }
 
-// REMOVE AFTER 2026-10-25: DJANGO_COOKIES and expireLegacyHostOnly, with its
-// two calls below and their tests in test/authentication/environments.test.ts
-// ("legacy host-only cookies", and the Django half of "staging logout expires
-// only staging cookies (and Django leftovers)"). They expire the host-only
-// cookies Django staging set. Django shut down on 2026-09-27, and its cookies
-// lasted 28 days (AUTH_COOKIE_MAX_AGE), so after 2026-10-25 no browser holds
-// one, and this only adds two expired Set-Cookie headers to every login and
-// logout.
-
-/** Django's cookie names, used for cleaning up pre-migration cookies. */
-const DJANGO_COOKIES = ['Authorization', 'LoggedIn'] as const;
-
 function expire(c: Context<AppEnv>, name: string, domain: {domain?: string}) {
   setCookie(c, name, '', {
     path: '/',
@@ -83,23 +71,6 @@ function expire(c: Context<AppEnv>, name: string, domain: {domain?: string}) {
   });
 }
 
-/**
- * Expire host-only copies of the auth cookies when cookies are domain-scoped.
- * Django's staging ran with DEBUG on and set host-only cookies on the API
- * host; browsers keep those separately from the domain-scoped ones and send
- * the older one first, so left alone a pre-migration cookie would keep
- * authenticating (possibly as a different user) after logout or re-login.
- * Remove after 2026-10-25, when the last of them has expired (see
- * DJANGO_COOKIES).
- */
-function expireLegacyHostOnly(c: Context<AppEnv>): void {
-  if (cookieDomain(c).domain !== undefined) {
-    for (const name of DJANGO_COOKIES) {
-      expire(c, name, {});
-    }
-  }
-}
-
 /** Django's `_create_auth_response`: set the auth + LoggedIn cookies. */
 export async function setAuthCookies(
   c: Context<AppEnv>,
@@ -107,7 +78,6 @@ export async function setAuthCookies(
 ): Promise<void> {
   const key = await getOrCreateToken(c.get('db'), userId);
   const options = cookieOptions(c);
-  expireLegacyHostOnly(c);
   const names = cookieNames(c);
   setCookie(c, names.auth, key, {...options, httpOnly: true});
   setCookie(c, names.loggedIn, 'true', {...options, httpOnly: false});
@@ -116,11 +86,9 @@ export async function setAuthCookies(
 /**
  * Expire both cookies. Unlike Django's `delete_cookie`, this repeats the
  * domain the cookies were set with; without it browsers keep the
- * domain-scoped production cookies and logout doesn't stick. Legacy host-only
- * copies are expired too.
+ * domain-scoped production cookies and logout doesn't stick.
  */
 export function clearAuthCookies(c: Context<AppEnv>): void {
-  expireLegacyHostOnly(c);
   const names = cookieNames(c);
   for (const name of [names.auth, names.loggedIn]) {
     expire(c, name, cookieDomain(c));
