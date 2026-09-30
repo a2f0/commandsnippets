@@ -58,14 +58,13 @@ const setCookieHeaders = (response: Response) =>
 // sent to staging hosts. Staging uses its own cookie names and scope.
 describe('staging and production cookies', () => {
   it('staging sets its own cookie names on the shared domain', async () => {
-    const set = setCookieHeaders(await googleLogin(STAGING)).filter(
-      c => !c.expired
-    );
+    const set = setCookieHeaders(await googleLogin(STAGING));
     expect(set.map(c => c.name)).toEqual([
       'StagingAuthorization',
       'StagingLoggedIn',
     ]);
     for (const cookie of set) {
+      expect(cookie.expired).toBe(false);
       // Visible to app-staging (which reads StagingLoggedIn); production
       // ignores these names.
       expect(cookie.domain).toBe('.commandsnippets.com');
@@ -118,7 +117,7 @@ describe('staging and production cookies', () => {
     expect(productionOnly.status).toBe(401);
   });
 
-  it('staging logout expires only staging cookies (and Django leftovers)', async () => {
+  it('staging logout expires only staging cookies', async () => {
     const set = setCookieHeaders(
       await requestWithEnv(STAGING, 'POST', '/api-token-deauth/')
     );
@@ -131,19 +130,11 @@ describe('staging and production cookies', () => {
         })
       );
     }
-    // Production's cookies (same domain, other names) are never touched...
-    expect(
-      set
-        .filter(c => c.domain === '.commandsnippets.com')
-        .map(c => c.name)
-        .sort()
-    ).toEqual(['StagingAuthorization', 'StagingLoggedIn']);
-    // ...while Django staging's host-only cookies are cleaned up.
-    for (const name of ['Authorization', 'LoggedIn']) {
-      expect(set).toContainEqual(
-        expect.objectContaining({name, domain: undefined, expired: true})
-      );
-    }
+    // Production's cookies (same domain, other names) are never touched.
+    expect(set.map(c => c.name).sort()).toEqual([
+      'StagingAuthorization',
+      'StagingLoggedIn',
+    ]);
   });
 
   it('accepts the first valid token among duplicate cookies of its name', async () => {
@@ -179,30 +170,6 @@ describe('staging and production cookies', () => {
       }
     );
     expect(response.status).toBe(401);
-  });
-});
-
-// Django staging (DEBUG on) left host-only cookies under Django's names on the
-// API host; they are expired whenever cookies are domain-scoped.
-describe('legacy host-only cookies', () => {
-  it('staging login expires Django leftovers while setting its own', async () => {
-    const set = setCookieHeaders(await googleLogin(STAGING));
-    expect(set).toContainEqual(
-      expect.objectContaining({
-        name: 'Authorization',
-        domain: undefined,
-        expired: true,
-      })
-    );
-    const scoped = set.find(c => c.name === 'StagingAuthorization');
-    expect(scoped?.expired).toBe(false);
-    expect(scoped?.value).toMatch(/^[0-9a-f]{40}$/);
-  });
-
-  it('local development (host-only cookies) sends no extra expiries', async () => {
-    const set = setCookieHeaders(await googleLogin({DEBUG: 'true'}));
-    expect(set.map(c => c.name)).toEqual(['Authorization', 'LoggedIn']);
-    expect(set.every(c => !c.expired && c.domain === undefined)).toBe(true);
   });
 });
 
