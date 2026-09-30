@@ -4,6 +4,11 @@ import {CookiesProvider} from 'react-cookie';
 import {Router} from 'react-router-dom';
 import {App} from '../../src/App';
 
+// One cookie reader for the whole test, as AppRouter (rendered once) has: a
+// new options object each render would make CookiesProvider build a new
+// `Cookies`, which reads `document.cookie` afresh at every navigation.
+const COOKIE_OPTIONS = {path: '/'};
+
 export interface IProps {
   history: MemoryHistory;
 }
@@ -19,7 +24,7 @@ const TestAppRouter = ({history}: IProps) => {
   );
   return (
     <Router location={location} navigator={history}>
-      <CookiesProvider defaultSetOptions={{path: '/'}}>
+      <CookiesProvider defaultSetOptions={COOKIE_OPTIONS}>
         <App />
       </CookiesProvider>
     </Router>
