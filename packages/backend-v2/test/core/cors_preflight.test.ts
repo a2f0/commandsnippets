@@ -1,4 +1,6 @@
+import {API_VERSION_HEADER} from '@commandsnippets/api-shared';
 import {describe, expect, it} from 'vitest';
+import packageJson from '../../package.json';
 import {ApiClient} from '../helpers';
 
 function preflight(origin: string) {
@@ -116,5 +118,20 @@ describe('CORSAllowlist', () => {
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
       'https://commandsnippets.com'
     );
+  });
+
+  // v2: the web app is on another origin, and a browser hides every response
+  // header from it that CORS does not expose.
+  it('exposes the API version to the web app', async () => {
+    const response = await new ApiClient().get('/api/v1/user/', {
+      Origin: 'https://app.commandsnippets.com',
+    });
+    expect(response.headers.get(API_VERSION_HEADER)).toBe(packageJson.version);
+    expect(
+      response.headers
+        .get('Access-Control-Expose-Headers')
+        ?.split(',')
+        .map(name => name.trim().toLowerCase())
+    ).toContain(API_VERSION_HEADER.toLowerCase());
   });
 });

@@ -1,4 +1,8 @@
-import {CODES, EXPECTED_USER_HEADER} from '@commandsnippets/api-shared';
+import {
+  API_VERSION_HEADER,
+  CODES,
+  EXPECTED_USER_HEADER,
+} from '@commandsnippets/api-shared';
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
 import packageJson from '../package.json';
@@ -43,9 +47,10 @@ const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
 export const app = new Hono<AppEnv>({strict: false});
 
+// Every response names the API's version, errors and preflights included.
 app.use('*', async (c, next) => {
   await next();
-  c.header('API-Version', API_VERSION);
+  c.header(API_VERSION_HEADER, API_VERSION);
 });
 
 app.use(
@@ -64,6 +69,8 @@ app.use(
       EXPECTED_USER_HEADER.toLowerCase(),
       'x-requested-with',
     ],
+    // For the web app, on another origin, to read which API version answered.
+    exposeHeaders: [API_VERSION_HEADER],
     maxAge: 86_400,
   })
 );

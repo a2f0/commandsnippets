@@ -37,6 +37,7 @@ import {
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
 import {signedInUser} from '../auth/authUtils';
+import {fetchApi} from './apiVersion';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {fetchWithAuth} from './fetchWithAuth';
@@ -69,7 +70,7 @@ interface RequestOptions {
   /**
    * Whether an answer that means the session is gone signs the user out
    * (`fetchWithAuth`). The logins run before there is a session, so they
-   * call `fetch` directly.
+   * call `fetchApi` directly.
    */
   withAuth?: boolean;
 }
@@ -118,7 +119,7 @@ class ApiClient {
     };
     const resp = withAuth
       ? await fetchWithAuth(url, init)
-      : await fetch(url, init);
+      : await fetchApi(url, init);
     if (!resp.ok) {
       if (user !== null && resp.status === 409) {
         const body: unknown = await resp.json().catch(() => undefined);

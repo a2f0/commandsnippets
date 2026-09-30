@@ -1,5 +1,6 @@
 import {CODES} from '@commandsnippets/api-shared/messages';
 import {handleUnauthorized, signedInUser} from '../auth/authUtils';
+import {fetchApi} from './apiVersion';
 import {firstError} from './errorDocument';
 
 /**
@@ -62,7 +63,7 @@ export function isSignedOutResponse(
 }
 
 /**
- * `fetch`, but when the response means the session is gone, sign the user
+ * `fetchApi`, but when the response means the session is gone, sign the user
  * out of the app (`handleUnauthorized`). The response is returned as is,
  * with its body unread, either way.
  *
@@ -89,7 +90,7 @@ export async function fetchWithAuth(
   options: RequestInit = {}
 ): Promise<Response> {
   const user = signedInUser();
-  const response = await fetch(url, options);
+  const response = await fetchApi(url, options);
 
   if (await meansSignedOut(response)) {
     handleUnauthorized(user);

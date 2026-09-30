@@ -9,7 +9,9 @@ import {createMemoryHistory} from 'history';
 import {I18nextProvider} from 'react-i18next';
 import {describe, expect, it} from 'vitest';
 
+import packageJson from '../../../../../package.json';
 import {i18n} from '../../../../../src/i18n/i18n';
+import {useApiVersion} from '../../../../../src/lib/api/apiVersion';
 import {AboutDialog} from '../../../../../src/menu/help/menuItems/AboutDialog';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {server} from '../../../../util/msw';
@@ -43,7 +45,37 @@ describe('Help Menu', () => {
   });
 });
 
+const renderDialog = () =>
+  render(
+    <I18nextProvider i18n={i18n}>
+      <AboutDialog dialogOpen={true} closeDialog={() => {}} />
+    </I18nextProvider>
+  );
+
 describe('AboutDialog', () => {
+  beforeEach(() => useApiVersion.setState({version: null}));
+
+  it('shows the app and API versions', () => {
+    useApiVersion.setState({version: '0.2.2'});
+    renderDialog();
+    expect(
+      screen.getByText(`App version: v${packageJson.version}`)
+    ).toBeVisible();
+    expect(screen.getByText('API version: v0.2.2')).toBeVisible();
+  });
+
+  it('says the API version is unknown until the API answers', () => {
+    renderDialog();
+    expect(screen.getByText('API version: unknown')).toBeVisible();
+  });
+
+  it('follows the API to a new version while open', () => {
+    useApiVersion.setState({version: '0.2.1'});
+    renderDialog();
+    act(() => useApiVersion.setState({version: '0.2.2'}));
+    expect(screen.getByText('API version: v0.2.2')).toBeVisible();
+  });
+
   it('translates its title', async () => {
     await act(async () => {
       await i18n.changeLanguage('es');
