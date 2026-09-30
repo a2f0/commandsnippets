@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import {
+  isReleaseBump,
   isVersionedManifest,
   readVersion,
   withVersion,
@@ -25,19 +26,26 @@ function stage(rootDir: string, index: 1 | 2 | 3, file: string): string {
 }
 
 /**
- * Three-way merge a manifest with both sides' version set to the incoming
- * base's, so a version-only conflict merges cleanly. Null when anything
- * besides the version still conflicts.
+ * Three-way merge a manifest with every side's version set to one version, so
+ * a version-only conflict merges cleanly: the branch's when it is a deliberate
+ * major or minor release over the incoming base, which `bumpVersions` keeps,
+ * and the base's otherwise. Null when anything besides the version still
+ * conflicts.
  */
 function mergeIgnoringVersion(rootDir: string, file: string): string | null {
+  const ours = stage(rootDir, 2, file);
   const theirs = stage(rootDir, 3, file);
-  const version = readVersion(theirs);
+  const oursVersion = readVersion(ours);
+  const theirsVersion = readVersion(theirs);
+  const version = isReleaseBump(oursVersion, theirsVersion)
+    ? oursVersion
+    : theirsVersion;
   const scratch = mkdtempSync(path.join(tmpdir(), "agent-tool-version-merge-"));
   try {
     const inputs = {
-      ours: withVersion(stage(rootDir, 2, file), version),
+      ours: withVersion(ours, version),
       base: withVersion(stage(rootDir, 1, file), version),
-      theirs,
+      theirs: withVersion(theirs, version),
     };
     const paths = Object.entries(inputs).map(([name, source]) => {
       const scratchFile = path.join(scratch, name);
@@ -61,7 +69,8 @@ function mergeIgnoringVersion(rootDir: string, file: string): string | null {
 
 /**
  * Finish an in-progress base merge whose only conflicts are the version field
- * of versioned package.json files: take the base's version and stage the
+ * of versioned package.json files: take the base's version (or the branch's
+ * deliberate release) and stage the
  * result, leaving the bump itself to `bumpVersions`. Touches nothing and exits
  * non-zero when any conflict is something else.
  */

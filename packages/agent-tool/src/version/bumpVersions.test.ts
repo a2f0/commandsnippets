@@ -252,6 +252,28 @@ describe("resolveVersionConflicts", () => {
     );
   });
 
+  test("keeps the branch's deliberate minor release", () => {
+    const rootDir = repository();
+    write(rootDir, "packages/frontend/src/app.ts", "export const a = 1;\n");
+    write(rootDir, FRONTEND, manifest("frontend", "0.8.0"));
+    commitAll(rootDir, "feat: release frontend 0.8");
+    commitOnMain(rootDir, {
+      [FRONTEND]: manifest("frontend", "0.7.103", '\n  "license": "MIT",'),
+    });
+    const merge = spawnSync("git", ["merge", "--no-edit", "main"], {
+      cwd: rootDir,
+      stdio: "ignore",
+    });
+    expect(merge.status).not.toBe(0);
+
+    expect(resolveVersionConflicts(rootDir)).toBe(0);
+    expect(read(rootDir, FRONTEND)).toBe(
+      manifest("frontend", "0.8.0", '\n  "license": "MIT",'),
+    );
+    git(rootDir, ["commit", "-q", "--no-edit"]);
+    expect(checkVersions(rootDir, mainOid(rootDir))).toBe(0);
+  });
+
   test("touches nothing when another file conflicts", () => {
     const rootDir = repository();
     write(rootDir, "README.md", "branch\n");

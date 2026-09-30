@@ -57,11 +57,12 @@ export function readVersion(manifest: string): string {
  * other byte alone so the diff is the one line.
  */
 export function withVersion(manifest: string, version: string): string {
-  const current = readVersion(manifest);
-  const field = new RegExp(
-    `("version"\\s*:\\s*")${current.replaceAll(".", "\\.")}(")`,
+  const current = readVersion(manifest).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const field = new RegExp(`("version"\\s*:\\s*")${current}(")`);
+  const updated = manifest.replace(
+    field,
+    (_match, open: string, close: string) => `${open}${version}${close}`,
   );
-  const updated = manifest.replace(field, `$1${version}$2`);
   if (readVersion(updated) !== version) {
     throw new Error("could not rewrite the package.json version field.");
   }

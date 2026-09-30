@@ -201,7 +201,8 @@ checks. `--jq '… // ""'` yields an empty string only on a successful empty res
    `resolveVersionConflicts` finishes the merge only when every conflict is the
    `version` field of a versioned `package.json`: two branches that each
    patch-bumped the same package collide there whenever the base moved by more
-   than one bump. It takes the base's version (the bump below replaces it) and
+   than one bump. It takes the base's version (the bump below replaces it), or
+   the branch's own when that is a deliberate major or minor release, and
    touches nothing — exiting non-zero — when any other line or file conflicts.
 
    **With `--bump-versions`**, then bring the versions in line with the synced

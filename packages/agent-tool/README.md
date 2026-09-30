@@ -175,7 +175,9 @@ deliberate major or minor bump. Only the `version` line is rewritten, and
 the caller commits the printed paths.
 
 `resolveVersionConflicts` re-runs the three-way merge of each conflicted
-manifest with every side's version set to the incoming base's. It stages the
+manifest with every side's version set to one value: the branch's when it is a
+deliberate major or minor release over the incoming base, the base's otherwise.
+It stages the
 result only when that merges cleanly and every conflicted path is a versioned
 manifest; otherwise it changes nothing and exits non-zero. The following
 `bumpVersions` then moves the version one past the base.

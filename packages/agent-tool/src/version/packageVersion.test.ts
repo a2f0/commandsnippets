@@ -43,6 +43,15 @@ describe("packageVersion", () => {
     );
   });
 
+  test("matches a current version holding regex metacharacters literally", () => {
+    const build = `{"name": "demo", "version": "1.0.0+build"}`;
+    expect(readVersion(withVersion(build, "1.0.1"))).toBe("1.0.1");
+    const lookalike = `{"x": {"version": "1x0x0"}, "version": "1.0.0"}`;
+    expect(withVersion(lookalike, "$&")).toBe(
+      `{"x": {"version": "1x0x0"}, "version": "$&"}`,
+    );
+  });
+
   test("refuses to rewrite a nested version that comes first", () => {
     const nestedFirst = `{"overrides": {"version": "1.0.0"}, "version": "1.0.0"}`;
     expect(() => withVersion(nestedFirst, "1.0.1")).toThrow(
