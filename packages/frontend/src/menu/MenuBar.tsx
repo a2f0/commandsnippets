@@ -3,10 +3,12 @@ import {styled, useTheme} from '@mui/material/styles';
 import React from 'react';
 import {UserProfileCircle} from '../components/UserProfileCircle';
 import {useTypedTranslation} from '../i18n/hooks';
+import {useOwner} from '../lib/data/hooks';
 import {environment} from '../lib/environment';
 import {useAppConfig} from '../lib/state/appState';
 import {EntriesLinkButton} from './admin/EntriesLinkButton';
 import {ModeTabs} from './admin/ModeTabs';
+import {ReadOnlyBadge} from './admin/ReadOnlyBadge';
 import {DebugMenu} from './debug/DebugMenu';
 import {DebugMenuButton} from './debug/DebugMenuButton';
 import {EntriesMenu} from './entries/EntriesMenu';
@@ -37,6 +39,9 @@ interface IProps {
 const MenuBar = ({entriesPage = true}: IProps) => {
   const appConfig = useAppConfig();
   const {t} = useTypedTranslation('common');
+  // Another user's data (staff reading it): shown, never changed.
+  const owner = useOwner();
+  const readOnly = owner?.readOnly ?? false;
 
   const [fileMenuAnchorEl, setFileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -146,8 +151,9 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           mr: 1,
         }}
       >
+        {owner?.readOnly && <ReadOnlyBadge username={owner.owner} />}
         {appConfig.loggedInUser && appConfig.isStaff && (
-          <ModeTabs username={appConfig.loggedInUser} />
+          <ModeTabs username={appConfig.loggedInUser} readOnly={readOnly} />
         )}
         <Box sx={{display: 'flex', alignItems: 'center', alignSelf: 'center'}}>
           {appConfig.loggedInUser && <UserProfileCircle />}
@@ -157,6 +163,7 @@ const MenuBar = ({entriesPage = true}: IProps) => {
         onClose={handleFileMenuClose}
         anchorEl={fileMenuAnchorEl}
         entriesPage={entriesPage}
+        readOnly={readOnly}
       />
       <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
       <TagsMenu onClose={handleTagsMenuClose} anchorEl={tagsMenuAnchorEl} />

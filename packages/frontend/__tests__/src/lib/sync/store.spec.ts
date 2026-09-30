@@ -4,7 +4,10 @@ import type {
 } from '@commandsnippets/api-shared/responses';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 
-import {CommandsnippetsDatabase} from '../../../../src/lib/db/database';
+import {
+  CommandsnippetsDatabase,
+  type RowKey,
+} from '../../../../src/lib/db/database';
 import {
   checkOwner,
   ForeignDataError,
@@ -63,6 +66,11 @@ const junction = (
   },
 });
 
+/** Whose rows the database holds (the store keys every row by its owner). */
+const OWNER = 'test';
+const key = (id: string): RowKey => [OWNER, id];
+const own = <R>(resource: R) => ({...resource, owner: OWNER});
+
 let db: CommandsnippetsDatabase;
 let databases = 0;
 beforeEach(() => {
@@ -74,10 +82,10 @@ afterEach(() => db.delete());
 describe('putNewer', () => {
   it('stores each resource unless a newer revision is stored', async () => {
     await db.entries.bulkPut([
-      entry('1', '2024-01-01T00:00:00.5', []),
-      entry('2', '2024-01-01T00:00:00', []),
+      own(entry('1', '2024-01-01T00:00:00.5', [])),
+      own(entry('2', '2024-01-01T00:00:00', [])),
     ]);
-    const stored = await putNewer(db.entries, [
+    const stored = await putNewer(db.entries, OWNER, [
       // Older than the stored one: `.5` is past the whole second.
       entry('1', '2024-01-01T00:00:00', []),
       entry('2', '2024-01-01T00:00:01', []),
@@ -86,10 +94,10 @@ describe('putNewer', () => {
       entry('3', '2024-01-01T00:00:01', []),
     ]);
     expect(stored.map(({id}) => id)).toEqual(['2', '3']);
-    expect((await db.entries.get('1'))?.attributes.date_updated).toBe(
+    expect((await db.entries.get(key('1')))?.attributes.date_updated).toBe(
       '2024-01-01T00:00:00.5'
     );
-    expect((await db.entries.get('3'))?.attributes.date_updated).toBe(
+    expect((await db.entries.get(key('3')))?.attributes.date_updated).toBe(
       '2024-01-01T00:00:02'
     );
   });
@@ -97,47 +105,92 @@ describe('putNewer', () => {
 
 describe('putEntries', () => {
   it("deletes the junctions an entry's listing leaves out", async () => {
-    await db.junctions.bulkPut([junction('1', '1'), junction('2', '1')]);
-    await putEntries(db, [entry('1', '2024-01-01T00:00:00', ['2'])]);
-    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(true);
-    expect((await db.junctions.get('2'))?.attributes.is_deleted).toBe(false);
+    await db.junctions.bulkPut([
+      own(junction('1', '1')),
+      own(junction('2', '1')),
+    ]);
+    await putEntries(db, OWNER, [entry('1', '2024-01-01T00:00:00', ['2'])]);
+    expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
+      true
+    );
+    expect((await db.junctions.get(key('2')))?.attributes.is_deleted).toBe(
+      false
+    );
   });
 
   it("leaves the junctions alone when the entry's copy is older", async () => {
-    await db.entries.put(entry('1', '2024-01-02T00:00:00', ['1']));
-    await db.junctions.put(junction('1', '1'));
-    await putEntries(db, [entry('1', '2024-01-01T00:00:00', [])]);
-    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(false);
+    await db.entries.put(own(entry('1', '2024-01-02T00:00:00', ['1'])));
+    await db.junctions.put(own(junction('1', '1')));
+    await putEntries(db, OWNER, [entry('1', '2024-01-01T00:00:00', [])]);
+    expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
+      false
+    );
   });
 
   it('stores the junctions read with the entries', async () => {
     await putEntries(
       db,
+      OWNER,
       [entry('1', '2024-01-01T00:00:00', ['5'])],
       [junction('5', '1', '2024-01-01T00:00:00')]
     );
-    expect((await db.junctions.get('5'))?.attributes.is_deleted).toBe(false);
+    expect((await db.junctions.get(key('5')))?.attributes.is_deleted).toBe(
+      false
+    );
   });
 
   it('never brings back a junction with an older copy of its entry', async () => {
     // Entry 1's newer listing left junction 1 out: deleted here.
-    await db.junctions.put(junction('1', '1'));
-    await putEntries(db, [entry('1', '2024-01-02T00:00:00', [])]);
-    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(true);
+    await db.junctions.put(own(junction('1', '1')));
+    await putEntries(db, OWNER, [entry('1', '2024-01-02T00:00:00', [])]);
+    expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
+      true
+    );
 
     // An older response lists it, with the revision it had then.
     await putEntries(
       db,
+      OWNER,
       [entry('1', '2024-01-01T00:00:00', ['1'])],
       [junction('1', '1')]
     );
-    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(true);
+    expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
+      true
+    );
     // A tag's list with that revision, active, does not either.
-    await putJunctions(db, [junction('1', '1')]);
-    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(true);
+    await putJunctions(db, OWNER, [junction('1', '1')]);
+    expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
+      true
+    );
     // Restoring it gives it a newer revision, which is stored.
-    await putJunctions(db, [junction('1', '1', '2024-01-03T00:00:00')]);
-    expect((await db.junctions.get('1'))?.attributes.is_deleted).toBe(false);
+    await putJunctions(db, OWNER, [junction('1', '1', '2024-01-03T00:00:00')]);
+    expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
+      false
+    );
+  });
+});
+
+describe("each owner's rows", () => {
+  it('are kept apart, however their ids compare', async () => {
+    await putEntries(
+      db,
+      'alice',
+      [entry('1', '2024-01-01T00:00:00', ['1'])],
+      [junction('1', '1')]
+    );
+    await putEntries(db, OWNER, [entry('1', '2024-01-02T00:00:00', [])]);
+
+    // The owner's newer listing of entry 1 leaves alice's junction alone.
+    expect(
+      (await db.junctions.get(['alice', '1']))?.attributes.is_deleted
+    ).toBe(false);
+    expect(
+      (await db.entries.get(['alice', '1']))?.attributes.date_updated
+    ).toBe('2024-01-01T00:00:00');
+    expect((await db.entries.get(key('1')))?.attributes.date_updated).toBe(
+      '2024-01-02T00:00:00'
+    );
+    expect(await db.entries.where('owner').equals('alice').count()).toBe(1);
   });
 });
 

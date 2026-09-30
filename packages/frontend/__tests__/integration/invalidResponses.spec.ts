@@ -109,9 +109,11 @@ describe('A response that breaks the contract', () => {
     await expect(sync.syncAll()).rejects.toBeInstanceOf(InvalidResponseError);
     // The first page, with its cursor; no tag claims a sync.
     expect(await db.entries.count()).toBe(1);
-    const cursor = await db.cursors.get('entries');
+    const cursor = await db.cursors.get([TEST_USER, 'entries']);
     expect(cursor).toBeDefined();
-    expect(await db.cursors.where('key').startsWith('tag:').count()).toBe(0);
+    expect(
+      await db.cursors.filter(({key}) => key.startsWith('tag:')).count()
+    ).toBe(0);
     expect(store.loggedInUser).toBe(TEST_USER);
 
     // The next sync goes on from the first page.

@@ -1,8 +1,10 @@
 /**
  * The admin API, for staff (`users.is_staff`) only: list and inspect users,
- * deactivate or reactivate accounts, mark them for deletion (or unmark them),
- * and read the audit log of those changes.
- * Nothing here can grant staff; that stays a database change.
+ * read their data (read-only), deactivate or reactivate accounts, mark them
+ * for deletion (or unmark them), and read the audit log of those changes.
+ * Nothing here can grant staff; that stays a database change, and nothing
+ * here writes a user's data: staff change only their own, through the same
+ * owner-only routes as everyone.
  */
 import {
   adminAuditLogListQuerySchema,
@@ -31,9 +33,12 @@ import {
 } from '../lib/jsonapi';
 import {validateFields} from '../lib/validate';
 import {changeAccountStatus} from '../services/accounts';
+import {listEntries} from './entries';
 import {icontains} from './filters';
 import {ADMIN_AUDIT_LOG_ENTRY, ADMIN_USER} from './resourceTypes';
 import {jsonApi} from './responses';
+import {listTags} from './tags';
+import {listTagEntries} from './tagsEntries';
 import {listPage, pageOrder, parseId} from './viewset';
 
 export const adminRoutes = new Hono<AppEnv>();
@@ -107,6 +112,7 @@ adminRoutes.get('/users', async c => {
     filters: {
       is_active: value => eq(users.is_active, value),
       is_staff: value => eq(users.is_staff, value),
+      username: value => eq(users.username, value),
     },
     ordering: {
       username: sql`${users.username} COLLATE NOCASE`,
@@ -212,6 +218,24 @@ adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
   }
   return jsonApi(c, document(renderUser(await getUser(db, String(target.id)))));
 });
+
+// ---------------------------------------------------------------------------
+// A user's data, read-only
+// ---------------------------------------------------------------------------
+
+// The same lists (queries, keyset pages, includes) as the user's own
+// `/tags`, `/entries` and `/tags_entries`, scoped to them. Only GET is
+// routed: any other method is a 404, and the owner-only routes refuse staff
+// a write to anyone's data but their own.
+adminRoutes.get('/users/:id/tags', async c =>
+  listTags(c, await getUser(c.get('db'), c.req.param('id')))
+);
+adminRoutes.get('/users/:id/entries', async c =>
+  listEntries(c, await getUser(c.get('db'), c.req.param('id')))
+);
+adminRoutes.get('/users/:id/tags_entries', async c =>
+  listTagEntries(c, await getUser(c.get('db'), c.req.param('id')))
+);
 
 // ---------------------------------------------------------------------------
 // Audit log

@@ -1,5 +1,6 @@
 /**
- * When the signed-in user's data syncs (`lib/sync/`): the whole collection
+ * When the data the page shows syncs (`lib/sync/`; the signed-in user's own,
+ * or another user's for staff): the whole collection
  * when the entries page opens, and again when it comes back into view and
  * every half minute while in view; and the tag shown, whenever it is not
  * synced through the revision the database holds (on a first sign-in, before
@@ -18,11 +19,14 @@ export const SYNC_INTERVAL_MS = 30_000;
 
 /**
  * A sync that failed: logged, and when the API answers for another user
- * (another tab signed in as someone else), this tab leaves the session
- * (`leaveForeignSession`).
+ * than the signed-in one's own data (another tab signed in as someone
+ * else), this tab leaves the session (`leaveForeignSession`).
  */
 function syncFailed(session: SyncSession, error: unknown): void {
-  if (error instanceof SyncUserError || error instanceof ForeignDataError) {
+  if (
+    !session.readOnly &&
+    (error instanceof SyncUserError || error instanceof ForeignDataError)
+  ) {
     console.error('ERROR: the API answers for another user:', error);
     void leaveForeignSession(session.username);
     return;
@@ -91,7 +95,7 @@ export function useTagSync(tag: Tag | null | undefined): void {
         return;
       }
       running = true;
-      isTagSynced(session.db, tagId)
+      isTagSynced(session.db, session.owner, tagId)
         .then(synced => (synced ? undefined : session.sync.syncTag(tagId)))
         .catch((error: unknown) => syncFailed(session, error))
         .finally(() => {

@@ -95,16 +95,21 @@ export function junction(
   };
 }
 
-/** Store `resources` in the signed-in user's IndexedDB database. */
+/**
+ * Store `resources` in the signed-in user's IndexedDB database, as `owner`'s
+ * (the signed-in user's own by default).
+ */
 export async function seed(
   resources: ReadonlyArray<
     ITagJsonApi | ITextEntryJsonApi | ITagTextEntryThroughModelJsonApi
-  >
+  >,
+  owner: string = testUser.attributes.username
 ): Promise<void> {
   const {db} = syncSession(testUser.attributes.username);
-  await db.tags.bulkPut(resources.filter(isTag));
-  await db.entries.bulkPut(resources.filter(isEntry));
-  await db.junctions.bulkPut(resources.filter(isJunction));
+  const owned = <R>(rows: R[]) => rows.map(row => ({...row, owner}));
+  await db.tags.bulkPut(owned(resources.filter(isTag)));
+  await db.entries.bulkPut(owned(resources.filter(isEntry)));
+  await db.junctions.bulkPut(owned(resources.filter(isJunction)));
 }
 
 type Resource =

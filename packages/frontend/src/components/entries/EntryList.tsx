@@ -6,7 +6,12 @@ import invariant from 'invariant';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
-import {useEntries, useTagEntries, useTagNamed} from '../../lib/data/hooks';
+import {
+  useEntries,
+  useReadOnly,
+  useTagEntries,
+  useTagNamed,
+} from '../../lib/data/hooks';
 import {sortEntries, sortTagEntries} from '../../lib/data/sort';
 import {useTagSync} from '../../lib/data/useSync';
 import {needsScrollingIntoView} from '../../lib/scroll';
@@ -30,6 +35,8 @@ export interface IParamTypes {
  */
 const EntryList = () => {
   const appConfig = useAppConfig();
+  // Another user's entries (staff reading them): no New Entry.
+  const readOnly = useReadOnly();
   const {tag} = useParams();
   const theme: Theme = useTheme();
   const [searchParams] = useSearchParams();
@@ -225,7 +232,7 @@ const EntryList = () => {
         flexDirection: 'column',
       }}
     >
-      {appConfig.entryNew === 'textEntry-top' && (
+      {appConfig.entryNew === 'textEntry-top' && !readOnly && (
         <EntryNew id="textEntryNewTop" tagId={currentTag?.id} />
       )}
       {entries.map((element, i) => {
@@ -245,16 +252,16 @@ const EntryList = () => {
           </div>
         );
       })}
-      {appConfig.entryNew === 'textEntry-bottom' && (
+      {appConfig.entryNew === 'textEntry-bottom' && !readOnly && (
         <EntryNew id="textEntryNewBottom" tagId={currentTag?.id} />
       )}
       <Box
-        onContextMenu={handleContextClick}
+        onContextMenu={readOnly ? undefined : handleContextClick}
         sx={{
           flexGrow: '1',
         }}
       />
-      {appConfig.loggedInUser && <>{contextMenu}</>}
+      {appConfig.loggedInUser && !readOnly && <>{contextMenu}</>}
     </Box>
   );
 };

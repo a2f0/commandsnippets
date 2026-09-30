@@ -124,7 +124,10 @@ usernames in the API (backend-v2 `src/services/reserved-usernames.json`).
 new top-level route to both.
 
 `/admin` is for staff (`users.is_staff`): it lists accounts, deactivates and
-reactivates them, and shows the audit log, through the API's `/api/v1/admin`.
+reactivates them, marks them for deletion, opens their data (View data), and
+shows the audit log, through the API's `/api/v1/admin`. A user's data opens
+on their page (`/<username>`), read-only: a badge in the menu bar says so,
+and nothing on the page creates, edits or reorders.
 The page checks access with the API on every visit. Once their login or a
 visit to the page has recorded it, staff get two tabs at the right of the menu
 bar, User and Admin, to switch between their entries (the app as any user sees

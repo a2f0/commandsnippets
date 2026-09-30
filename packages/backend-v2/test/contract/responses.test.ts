@@ -391,6 +391,39 @@ describe('the admin API', () => {
         `/api/v1/admin/audit_log?filter[target_user_id]=${alice.id}`
       )
     );
+    await expectDocument(
+      adminUserListDocumentSchema,
+      await client.get(`/api/v1/admin/users?filter[username]=${alice.username}`)
+    );
+  });
+
+  it("reads a user's data as the sync does", async () => {
+    await db()
+      .update(users)
+      .set({is_staff: true})
+      .where(eq(users.id, base.user1.id));
+    const base2 = `/api/v1/admin/users/${base.user2.id}`;
+    await expectDocument(
+      tagCursorListDocumentSchema,
+      await client.get(`${base2}/tags?page[after]=${CURSOR_START}`)
+    );
+    await expectDocument(
+      textEntryCursorListDocumentSchema,
+      await client.get(
+        `${base2}/entries?page[after]=${CURSOR_START}&include=text_entry_to_tag`
+      )
+    );
+    const [tag] = await tagsOf(base.user2);
+    await expectDocument(
+      tagTextEntryCursorListDocumentSchema,
+      await client.get(
+        `${base2}/tags_entries?filter[tag.id]=${tag?.id}&page[after]=${CURSOR_START}&include=text_entry,text_entry.text_entry_to_tag`
+      )
+    );
+    await expectDocument(
+      tagTextEntryListDocumentSchema,
+      await client.get(`${base2}/tags_entries?sort=-date_updated&page[size]=1`)
+    );
   });
 });
 

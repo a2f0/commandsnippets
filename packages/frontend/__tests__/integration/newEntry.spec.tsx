@@ -59,8 +59,8 @@ async function storedEntry(subject: string) {
     .first();
   invariant(entry, `${subject} is stored`);
   const junctions = await db.junctions
-    .where('relationships.text_entry.data.id')
-    .equals(entry.id)
+    .where('[owner+relationships.text_entry.data.id]')
+    .equals([TEST_USER, entry.id])
     .toArray();
   return {
     entry,

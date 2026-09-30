@@ -230,10 +230,16 @@ An admin API replaces Django admin. `/api/v1/admin` is for `is_staff` users
 only (403 for everyone else):
 
 - `GET /users` lists every account, with live entry and tag counts.
-  Filters: `filter[is_active]`, `filter[is_staff]`, and `filter[search]`
-  (username or email). Sorts: `username`, `email`, `date_joined`,
-  `last_login`, `last_active`, `login_count`, `entry_count`, `tag_count`.
+  Filters: `filter[is_active]`, `filter[is_staff]`, `filter[username]`
+  (exactly), and `filter[search]` (username or email). Sorts: `username`,
+  `email`, `date_joined`, `last_login`, `last_active`, `login_count`,
+  `entry_count`, `tag_count`.
 - `GET /users/:id` returns one account.
+- `GET /users/:id/tags`, `/users/:id/entries` and `/users/:id/tags_entries`
+  read the user's data: the same lists (queries, keyset pages, includes) as
+  their own `/tags`, `/entries` and `/tags_entries`, scoped to them. Only GET
+  is routed. Staff write no one's data but their own: the owner-only routes
+  refuse them anyone else's, as they refuse everyone.
 - `PATCH /users/:id` changes `is_active` or `marked_for_deletion`, the only
   writable attributes. Deactivating also deletes the account's token, so its
   sessions end at once. Marking for deletion (`date_marked_for_deletion`)

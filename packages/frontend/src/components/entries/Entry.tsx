@@ -4,7 +4,7 @@ import {styled} from '@mui/material/styles';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {useSearchParams} from 'react-router-dom';
-import {useSession} from '../../lib/data/hooks';
+import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {
   deleteEntry,
   reorderEntries,
@@ -81,6 +81,9 @@ const Entry = ({
 }: IEntryProps) => {
   const appConfig = useAppConfig();
   const session = useSession();
+  // Another user's entry (staff reading it): copied, never reordered,
+  // tagged, edited or removed.
+  const readOnly = useReadOnly();
   const textEntryObject = object;
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -108,6 +111,7 @@ const Entry = ({
         index,
       }),
       type: ItemTypes.ENTRY,
+      canDrag: () => !readOnly,
       collect: monitor => ({
         isDragging: monitor.isDragging(),
       }),
@@ -185,7 +189,7 @@ const Entry = ({
         }
       },
     },
-    [id, originalIndex, moveEntry]
+    [id, originalIndex, moveEntry, readOnly]
   );
   // Make sure opacity is above the useDrag call above
   const opacity = isDragging ? 0 : 1;
@@ -249,10 +253,10 @@ const Entry = ({
 
   const mouseEnter = useCallback(() => {
     setHoverState({
-      showDragHandle: appConfig.loggedInUser !== null,
+      showDragHandle: appConfig.loggedInUser !== null && !readOnly,
       showCopyIcon: true,
     });
-  }, [appConfig.loggedInUser]);
+  }, [appConfig.loggedInUser, readOnly]);
 
   const mouseLeave = useCallback(() => {
     setHoverState({
@@ -337,9 +341,11 @@ const Entry = ({
         handleNewEntryParent={handleNewEntry}
         handleBeginEditParent={handleBeginEdit}
         handleCopyParent={handleCopyClick}
+        readOnly={readOnly}
       />
     ),
     [
+      readOnly,
       mouse,
       id,
       textEntryObject,
@@ -378,7 +384,7 @@ const Entry = ({
 
   return (
     <>
-      {appConfig.entryNew === `textEntry-${object.id}-top` && (
+      {appConfig.entryNew === `textEntry-${object.id}-top` && !readOnly && (
         <EntryNew id={`textEntryNew-${object.id}-top`} tagId={tagId} />
       )}
       {!isEditing && (
@@ -455,13 +461,13 @@ const Entry = ({
           </EntryContainer>
         </div>
       )}
-      {appConfig.entryNew === `textEntry-${object.id}-bottom` && (
+      {appConfig.entryNew === `textEntry-${object.id}-bottom` && !readOnly && (
         <EntryNew id={`textEntryNew-${object.id}-bottom`} tagId={tagId} />
       )}
 
       {appConfig.loggedInUser && <>{contextMenu}</>}
 
-      {isEditing && (
+      {isEditing && !readOnly && (
         <EntryEdit
           id={`textEntryEdit${object.id}`}
           object={textEntryObject}

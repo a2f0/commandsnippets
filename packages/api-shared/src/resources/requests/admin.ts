@@ -4,7 +4,7 @@
  */
 import * as z from 'zod/mini';
 import {booleanField} from '../../fields';
-import {booleanFieldFilter, pkFilter} from '../../filters';
+import {booleanFieldFilter, pkFilter, textFilter} from '../../filters';
 import {fail} from '../../issues';
 import {noFieldsSchema, updateDocumentSchema} from '../../jsonapi/request';
 import {CODES, MESSAGES} from '../../messages';
@@ -69,10 +69,15 @@ export const ADMIN_USER_SORT_FIELDS = [
 /**
  * The collection's query, which `adminUserListQuerySchema` validates and
  * `AdminUserListParams` types. `filter[search]`: a case-insensitive
- * substring of the username or email.
+ * substring of the username or email; `filter[username]`: exactly one
+ * username (how the web app finds the user whose data it shows).
  */
 const adminUserListQuery = {
-  filters: {is_active: booleanFieldFilter, is_staff: booleanFieldFilter},
+  filters: {
+    is_active: booleanFieldFilter,
+    is_staff: booleanFieldFilter,
+    username: textFilter,
+  },
   sort: ADMIN_USER_SORT_FIELDS,
   search: 'supported',
   include: 'refused',

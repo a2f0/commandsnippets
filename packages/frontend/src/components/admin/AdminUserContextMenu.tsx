@@ -6,13 +6,18 @@ import type {AdminUser} from '../../lib/api/adminApi';
 import type {IMouse} from '../../lib/shared';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 
-export type AdminUserAction =
+/** A change to the account, which staff confirm first. */
+export type AdminUserChange =
   | 'deactivate'
   | 'reactivate'
   | 'markForDeletion'
   | 'unmarkForDeletion';
 
+/** A change, or reading the user's data (read-only, on their page). */
+export type AdminUserAction = 'viewData' | AdminUserChange;
+
 const MENU_ITEM_IDS: Record<AdminUserAction, string> = {
+  viewData: 'adminUserMenuViewData',
   deactivate: 'adminUserMenuDeactivate',
   reactivate: 'adminUserMenuReactivate',
   markForDeletion: 'adminUserMenuMarkForDeletion',
@@ -20,14 +25,19 @@ const MENU_ITEM_IDS: Record<AdminUserAction, string> = {
 };
 
 /**
- * What staff can do to `user`. An account marked for deletion stays
- * deactivated, so it can only be unmarked.
+ * What staff can do with `user`: read their data, and change the account.
+ * An account marked for deletion stays deactivated, so it can only be
+ * unmarked.
  */
 function actionsFor(user: AdminUser): AdminUserAction[] {
   if (user.dateMarkedForDeletion !== null) {
-    return ['unmarkForDeletion'];
+    return ['viewData', 'unmarkForDeletion'];
   }
-  return [user.isActive ? 'deactivate' : 'reactivate', 'markForDeletion'];
+  return [
+    'viewData',
+    user.isActive ? 'deactivate' : 'reactivate',
+    'markForDeletion',
+  ];
 }
 
 interface IProps {

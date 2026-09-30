@@ -4,11 +4,16 @@ import {
   tagTextEntryListQuerySchema,
 } from '@commandsnippets/api-shared';
 import {and, eq, sql} from 'drizzle-orm';
-import {Hono} from 'hono';
+import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
 import type {Db} from '../db/client';
 import {isUniqueViolation} from '../db/errors';
-import {type TagTextEntry, tagsEntries, textEntries} from '../db/schema';
+import {
+  type TagTextEntry,
+  tagsEntries,
+  textEntries,
+  type User,
+} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {ApiError, methodNotAllowed, notFound} from '../lib/errors';
@@ -85,14 +90,15 @@ const touchEntry = (db: Db, entryId: number, userId: number) =>
 export const tagEntryRoutes = new Hono<AppEnv>();
 
 /**
- * The requester's junctions, deleted ones too, by default in revision order:
- * after a cursor (`page[after]`), a tag's (`filter[tag.id]`) are what changed
- * in it since.
+ * `owner`'s junctions, deleted ones too, by default in revision order: after
+ * a cursor (`page[after]`), a tag's (`filter[tag.id]`) are what changed in
+ * it since. The requester's own (`GET /tags_entries`), or for staff another
+ * user's, read-only (`GET /admin/users/:id/tags_entries`).
  */
-tagEntryRoutes.get('/', c =>
+export const listTagEntries = (c: Context<AppEnv>, owner: User) =>
   listResponse(c, {
     ...tagTextEntryResource,
-    user: requireUser(c),
+    user: owner,
     query: tagTextEntryListQuerySchema,
     filters: {
       tag__id: value => eq(tagsEntries.tag_id, value),
@@ -102,8 +108,9 @@ tagEntryRoutes.get('/', c =>
     },
     ordering: {date_updated: sql`${tagsEntries.date_updated}`},
     defaultOrdering: [tagsEntries.date_updated, tagsEntries.id],
-  })
-);
+  });
+
+tagEntryRoutes.get('/', c => listTagEntries(c, requireUser(c)));
 
 tagEntryRoutes.post('/reorder', c =>
   reorder(c, {...tagTextEntryResource, ...tagEntryOrdering})

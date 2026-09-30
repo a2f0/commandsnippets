@@ -34,6 +34,12 @@ export class Base {
   get adminUserMenuUnmarkForDeletion(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#adminUserMenuUnmarkForDeletion');
   }
+  get adminUserMenuViewData(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#adminUserMenuViewData');
+  }
+  get readOnlyBadge(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#readOnlyBadge');
+  }
   get adminConfirmButton(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#adminConfirmButton');
   }

@@ -66,8 +66,9 @@ describe('The entries page', () => {
     ]);
     // Synced through its revision: nothing to ask for it.
     const {db} = syncSession(TEST_USER);
-    const held = await db.tags.get('7');
+    const held = await db.tags.get([TEST_USER, '7']);
     await db.cursors.put({
+      owner: TEST_USER,
       key: tagCursorKey('7'),
       after: '2020-01-01T00:00:00,700',
       revision: held?.attributes.date_updated ?? '',

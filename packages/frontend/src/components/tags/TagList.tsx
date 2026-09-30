@@ -5,6 +5,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
+import {useReadOnly} from '../../lib/data/hooks';
 import {
   activeSearch,
   appMode,
@@ -37,6 +38,8 @@ interface IProps {
 const TagList = ({tagsFromWrapper, username}: IProps) => {
   const appConfig = useAppConfig();
   const navigate = useNavigate();
+  // Another user's tags (staff reading them): no New Tag.
+  const readOnly = useReadOnly();
 
   const [selectedTag, setSelectedTag] = useState<string>();
   const [movedSelectedUp, setMovedSelectedUp] = useState<boolean>(false);
@@ -174,7 +177,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
   return (
     <>
-      {appConfig.tagNew === 'top' && <TagNew id="tagNewTop" />}
+      {appConfig.tagNew === 'top' && !readOnly && <TagNew id="tagNewTop" />}
       <List
         ref={dropBoxRef}
         dense={true}
@@ -189,7 +192,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           height: theme =>
             `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
         }}
-        onContextMenu={handleContextClick}
+        onContextMenu={readOnly ? undefined : handleContextClick}
       >
         <LeftToRight>
           {tags.map((object: ITagJsonApi, i) => {
@@ -211,12 +214,12 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
             );
           })}
         </LeftToRight>
-        {appConfig.tagNew === 'bottom' && (
+        {appConfig.tagNew === 'bottom' && !readOnly && (
           <LeftToRight>
             <TagNew id="tagNewBottom" />
           </LeftToRight>
         )}
-        {appConfig.loggedInUser && <>{contextMenu}</>}
+        {appConfig.loggedInUser && !readOnly && <>{contextMenu}</>}
       </List>
     </>
   );
