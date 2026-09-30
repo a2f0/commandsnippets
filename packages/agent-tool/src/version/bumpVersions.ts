@@ -141,7 +141,15 @@ export function bumpVersions(rootDir: string, baseOid?: string): number {
   const rewrites = pending.map((plan) => {
     const file = path.join(rootDir, plan.manifest);
     const committed = showFile(rootDir, "HEAD", plan.manifest) ?? "";
-    if (readFileSync(file, "utf8") !== committed) {
+    // Staged edits count too: the caller's path-limited commit would drop them.
+    const status = git(rootDir, [
+      "status",
+      "--porcelain",
+      "--untracked-files=no",
+      "--",
+      plan.manifest,
+    ]);
+    if (status !== "" || readFileSync(file, "utf8") !== committed) {
       throw new Error(
         `${plan.manifest} has uncommitted changes; commit or discard them first.`,
       );

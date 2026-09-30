@@ -209,6 +209,19 @@ describe("bumpVersions", () => {
     );
   });
 
+  test("refuses to drop staged manifest edits", () => {
+    const rootDir = repository();
+    write(rootDir, "packages/frontend/src/app.ts", "export const a = 1;\n");
+    commitAll(rootDir, "feat: change frontend");
+    write(rootDir, FRONTEND, manifest("frontend", "0.7.101", '\n  "x": 1,'));
+    git(rootDir, ["add", FRONTEND]);
+    write(rootDir, FRONTEND, manifest("frontend", "0.7.101"));
+
+    expect(() => bumpVersions(rootDir, mainOid(rootDir))).toThrow(
+      "uncommitted changes",
+    );
+  });
+
   test("requires a full base OID", () => {
     const rootDir = repository();
     expect(() => bumpVersions(rootDir, "main")).toThrow("full Git OID");
