@@ -24,22 +24,33 @@ import { resolveVersionConflicts } from "./resolveVersionConflicts";
 const repositories: string[] = [];
 let stdout: string[] = [];
 
+// Explicit identity: CI runners have none, and git merge refuses to start
+// without one.
+const GIT_CONFIG = [
+  "-c",
+  "commit.gpgsign=false",
+  "-c",
+  "core.hooksPath=/dev/null",
+  "-c",
+  "user.name=Test",
+  "-c",
+  "user.email=test@example.com",
+];
+
 function git(rootDir: string, args: string[]): string {
-  return execFileSync(
-    "git",
-    [
-      "-c",
-      "commit.gpgsign=false",
-      "-c",
-      "core.hooksPath=/dev/null",
-      "-c",
-      "user.name=Test",
-      "-c",
-      "user.email=test@example.com",
-      ...args,
-    ],
-    { cwd: rootDir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-  ).trim();
+  return execFileSync("git", [...GIT_CONFIG, ...args], {
+    cwd: rootDir,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
+}
+
+/** Merge `main` into the checkout, returning git's exit status. */
+function mergeMain(rootDir: string): number | null {
+  return spawnSync("git", [...GIT_CONFIG, "merge", "--no-edit", "main"], {
+    cwd: rootDir,
+    stdio: "ignore",
+  }).status;
 }
 
 function manifest(name: string, version: string, extra = ""): string {
@@ -241,11 +252,7 @@ describe("resolveVersionConflicts", () => {
       [FRONTEND]: manifest("frontend", "0.7.103", '\n  "license": "MIT",'),
       ...extraMainFiles,
     });
-    const merge = spawnSync("git", ["merge", "--no-edit", "main"], {
-      cwd: rootDir,
-      stdio: "ignore",
-    });
-    expect(merge.status).not.toBe(0);
+    expect(mergeMain(rootDir)).not.toBe(0);
     return rootDir;
   }
 
@@ -273,11 +280,7 @@ describe("resolveVersionConflicts", () => {
     commitOnMain(rootDir, {
       [FRONTEND]: manifest("frontend", "0.7.103", '\n  "license": "MIT",'),
     });
-    const merge = spawnSync("git", ["merge", "--no-edit", "main"], {
-      cwd: rootDir,
-      stdio: "ignore",
-    });
-    expect(merge.status).not.toBe(0);
+    expect(mergeMain(rootDir)).not.toBe(0);
 
     expect(resolveVersionConflicts(rootDir)).toBe(0);
     expect(read(rootDir, FRONTEND)).toBe(
@@ -296,10 +299,7 @@ describe("resolveVersionConflicts", () => {
       "README.md": "main\n",
       [FRONTEND]: manifest("frontend", "0.7.103"),
     });
-    spawnSync("git", ["merge", "--no-edit", "main"], {
-      cwd: rootDir,
-      stdio: "ignore",
-    });
+    expect(mergeMain(rootDir)).not.toBe(0);
     const before = read(rootDir, FRONTEND);
 
     expect(resolveVersionConflicts(rootDir)).toBe(1);
@@ -320,10 +320,7 @@ describe("resolveVersionConflicts", () => {
     commitOnMain(rootDir, {
       [FRONTEND]: manifest("frontend", "0.7.103", '\n  "license": "MIT",'),
     });
-    spawnSync("git", ["merge", "--no-edit", "main"], {
-      cwd: rootDir,
-      stdio: "ignore",
-    });
+    expect(mergeMain(rootDir)).not.toBe(0);
 
     expect(resolveVersionConflicts(rootDir)).toBe(1);
   });
