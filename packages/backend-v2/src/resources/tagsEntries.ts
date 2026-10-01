@@ -192,12 +192,15 @@ tagEntryRoutes.post('/', async c => {
     if (junction === undefined) {
       break;
     }
-    // Untagged (or tagged) after this tagging was made: that stands.
-    if (!appliesAfter(junction.client_updated, at)) {
+    const {id, user_id, is_deleted} = junction;
+    const own = user_id === user.id;
+    // Untagged (or tagged) after this tagging was made: that stands. (Only
+    // for the user's own junction: another's is always taken over below, so
+    // it is never answered with.)
+    if (own && !appliesAfter(junction.client_updated, at)) {
       return resourceResponse(c, TAG_TEXT_ENTRY, junction, 201);
     }
-    const {id, user_id, is_deleted} = junction;
-    if (user_id === user.id && !is_deleted) {
+    if (own && !is_deleted) {
       // Already tagged: still a write made at `at`, which an older untag must
       // not undo. Nothing a client syncs changes, so no revision advances.
       const [stamped] = await db
@@ -242,7 +245,8 @@ tagEntryRoutes.post('/', async c => {
               eq(tagsEntries.id, id),
               eq(tagsEntries.user_id, user_id),
               eq(tagsEntries.is_deleted, is_deleted),
-              writtenBefore(tagsEntries.client_updated, at)
+              // Another user's (legacy) writes do not count against this one.
+              own ? writtenBefore(tagsEntries.client_updated, at) : undefined
             )
           )
           .returning(),

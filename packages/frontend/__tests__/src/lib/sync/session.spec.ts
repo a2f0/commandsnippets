@@ -5,7 +5,11 @@ import {
   CommandsnippetsDatabase,
   databaseName,
 } from '../../../../src/lib/db/database';
-import {endSyncSession, syncSession} from '../../../../src/lib/sync/session';
+import {
+  endSyncSession,
+  hasQueuedWrites,
+  syncSession,
+} from '../../../../src/lib/sync/session';
 
 afterEach(() => endSyncSession(null));
 
@@ -44,6 +48,25 @@ describe('syncSession', () => {
 
     await endSyncSession('gina');
     expect(await Dexie.exists(other.db.name)).toBe(false);
+  });
+
+  it('keeps the data while writes are queued in it, unless told to discard them', async () => {
+    const {db} = syncSession('hana');
+    await db.outbox.add({
+      owner: 'hana',
+      made: '2026-01-01T00:00:00.000000',
+      write: {kind: 'deleteTag', tagId: '1'},
+      rows: ['hana|Tag|1'],
+    });
+
+    await endSyncSession('hana');
+    expect(await Dexie.exists(db.name)).toBe(true);
+    expect(await hasQueuedWrites(db.name)).toBe(true);
+    // The next sign-in opens it, queue and all.
+    expect(await syncSession('hana').db.outbox.count()).toBe(1);
+
+    await endSyncSession('hana', {discardQueued: true});
+    expect(await Dexie.exists(db.name)).toBe(false);
   });
 
   it('deletes the data when the session ends', async () => {

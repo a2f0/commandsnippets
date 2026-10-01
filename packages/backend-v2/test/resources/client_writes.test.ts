@@ -303,6 +303,43 @@ describe('writes arriving out of order', () => {
   });
 });
 
+describe("another user's legacy junction between the user's tag and entry", () => {
+  it('is taken over by a tagging, whatever its time, and never answered with', async () => {
+    const tag = await tagFactory({user});
+    const entry = await textEntryFactory({user});
+    const legacy = await tagTextEntryFactory({
+      tag,
+      text_entry: entry,
+      user: other,
+      is_deleted: true,
+    });
+    await db()
+      .update(tagsEntries)
+      .set({client_updated: LATEST})
+      .where(eq(tagsEntries.id, legacy.id));
+
+    const response = await send('POST', '/tags_entries', EARLY, {
+      data: {
+        type: 'TagTextEntryThroughModel',
+        relationships: {
+          tag: {data: {type: 'Tag', id: String(tag.id)}},
+          text_entry: {data: {type: 'TextEntry', id: String(entry.id)}},
+        },
+      },
+    });
+
+    expect(response.status).toBe(201);
+    const body = await json(response);
+    expect(body.data.relationships.user.data.id).toBe(String(user.id));
+    expect(body.data.attributes.is_deleted).toBe(false);
+    expect(JSON.stringify(body)).not.toContain(other.username);
+    expect(await refreshJunction(legacy.id)).toMatchObject({
+      user_id: user.id,
+      is_deleted: false,
+    });
+  });
+});
+
 describe('the client time', () => {
   it('counts a write without one as made now', async () => {
     const tag = await tagFactory({user, name: 'start'});

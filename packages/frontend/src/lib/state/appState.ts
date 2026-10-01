@@ -377,12 +377,21 @@ export async function signOut(): Promise<void> {
   }
 }
 
+let cleanedUp: Promise<void> = Promise.resolve();
+
+/**
+ * Settles once the IndexedDB data of the user who last left is deleted (or
+ * kept, holding queued writes).
+ */
+export const signedOutDataCleanedUp = (): Promise<void> => cleanedUp;
+
 // A user's IndexedDB data goes with them, however they leave: the menu, the
-// cookie gone, a session the API ended, another sign-in.
+// cookie gone, a session the API ended, another sign-in. (Unless writes are
+// still queued in it: those stay for the user's next sign-in here.)
 useAppState.subscribe((state, previous) => {
   const {loggedInUser: leaving} = previous;
   if (leaving !== null && state.loggedInUser !== leaving) {
-    endSyncSession(leaving).catch((error: unknown) => {
+    cleanedUp = endSyncSession(leaving).catch((error: unknown) => {
       console.error('ERROR: could not delete the IndexedDB data:', error);
     });
   }

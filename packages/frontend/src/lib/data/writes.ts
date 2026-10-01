@@ -171,7 +171,12 @@ export async function createTag(
     const tags = await db.tags.where('owner').equals(owner).toArray();
     const named = tags.find(tag => tag.attributes.name === name);
     if (named !== undefined && !named.attributes.is_deleted) {
-      return {writes: [], result: named};
+      // Nothing changes here, but the API records when the tag was asked
+      // for: an older delete (another device's, sent later) must not win.
+      return {
+        writes: [{kind: 'createTag', tagId: named.id, name}],
+        result: named,
+      };
     }
     if (named !== undefined) {
       // The user's deleted tag of that name comes back, as on the API.
@@ -437,7 +442,12 @@ export async function tagEntry(
       .filter(junction => junction.relationships.text_entry.data.id === entryId)
       .first();
     if (pair !== undefined && !pair.attributes.is_deleted) {
-      return {writes: [], result: pair};
+      // Nothing changes here, but the API records when the entry was tagged:
+      // an older untag (another device's, sent later) must not win.
+      return {
+        writes: [{kind: 'tagEntry', junctionId: pair.id, tagId, entryId}],
+        result: pair,
+      };
     }
     const made = madeNow();
     let junction: Stored<TagTextEntry>;

@@ -92,7 +92,10 @@ API; everything else the app keeps is a zustand store.
 - **Signing out deletes the user's data**: the store deletes a user's
   IndexedDB database whenever `loggedInUser` leaves them, however it
   happens (the menu, the cookie gone, a session the API ended, another
-  sign-in; `endSyncSession`).
+  sign-in; `endSyncSession`), unless writes are still queued in it (the
+  session expired offline, say): it is kept, queue and all, and the user's
+  next sign-in here sends them (`discardQueued` deletes it all the same).
+  `signedOutDataCleanedUp()` settles once that is done.
 - **The user's data**: `src/lib/db/database.ts`, a Dexie database per
   environment and signed-in user (`commandsnippets-<environment>-<username>`)
   of tags, entries and junctions (deleted ones too) as api-shared's

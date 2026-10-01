@@ -421,6 +421,18 @@ describe('the writes', () => {
     expect((await tagRow('3'))?.attributes.is_deleted).toBe(true);
   });
 
+  it('send a create of a tag the user has, and a tagging of an entry tagged already', async () => {
+    await session().sync.syncAll();
+    const writes = sent();
+
+    expect((await createTag(session(), 'test-tag-1')).id).toBe('1');
+    await tagEntry(session(), '1', '1');
+    await session().sync.flush();
+
+    // Nothing changes, but the API records when each was asked for.
+    expect(writes).toEqual(['POST /api/v1/tags', 'POST /api/v1/tags_entries']);
+  });
+
   it('tag an entry at the bottom of a tag, and untag it', async () => {
     await session().sync.syncAll();
 
@@ -503,11 +515,10 @@ describe('the writes', () => {
 
     await createTag(alice, 'theirs');
 
-    // Signed out here, alice's database (and its queue) with it.
+    // Signed out here; alice's queued write stays, for her next sign-in.
     await vi.waitFor(() => expect(store.loggedInUser).toBeNull());
     expect(named).toEqual(['alice']);
-    await vi.waitFor(async () =>
-      expect(await Dexie.exists(alice.db.name)).toBe(false)
-    );
+    expect(await Dexie.exists(alice.db.name)).toBe(true);
+    expect(await syncSession('alice').db.outbox.count()).toBe(1);
   });
 });

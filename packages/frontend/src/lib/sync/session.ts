@@ -125,12 +125,30 @@ export function syncSession(
   return session;
 }
 
+/** Whether the database `name` holds writes not sent to the API yet. */
+export async function hasQueuedWrites(name: string): Promise<boolean> {
+  if (!(await Dexie.exists(name))) {
+    return false;
+  }
+  const db = new CommandsnippetsDatabase(name);
+  try {
+    return (await db.outbox.count()) > 0;
+  } finally {
+    db.close();
+  }
+}
+
 /**
  * Sign `username` out: close the open database, and delete their data (and
  * any other user's it holds) whether or not this page opened it (they may
- * have synced before a reload).
+ * have synced before a reload). A database still holding queued writes is
+ * kept, so they are not lost (the session expired offline, say): the user's
+ * next sign-in here sends them. `discardQueued` deletes it all the same.
  */
-export async function endSyncSession(username: string | null): Promise<void> {
+export async function endSyncSession(
+  username: string | null,
+  {discardQueued = false}: {discardQueued?: boolean} = {}
+): Promise<void> {
   const ending = open;
   open = null;
   ending?.db.close();
@@ -144,5 +162,16 @@ export async function endSyncSession(username: string | null): Promise<void> {
   if (username !== null) {
     names.add(databaseName(environment, username));
   }
-  await Promise.all([...names].map(name => Dexie.delete(name)));
+  await Promise.all(
+    [...names].map(async name => {
+      if (!discardQueued && (await hasQueuedWrites(name))) {
+        return;
+      }
+      // Opened again meanwhile (the user signed in again): it stays.
+      if (open?.db.name === name) {
+        return;
+      }
+      await Dexie.delete(name);
+    })
+  );
 }
