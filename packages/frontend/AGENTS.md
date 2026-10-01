@@ -95,7 +95,10 @@ API; everything else the app keeps is a zustand store.
   sign-in; `endSyncSession`), unless writes are still queued in it (the
   session expired offline, say): it is kept, queue and all, and the user's
   next sign-in here sends them (`discardQueued` deletes it all the same).
-  `signedOutDataCleanedUp()` settles once that is done. Writes hold the
+  `signedOutDataCleanedUp()` settles once that is done. Kept data is bound
+  to the account's id (`bindOwner`, before any flush or sync; `claimData`
+  at sign-in): another account that takes a deleted account's name never
+  sees its data nor sends its queue. Writes hold the
   database's Web Lock shared and the cleanup holds it exclusively
   (`withDataLock`), so a write another tab makes meanwhile is never
   deleted unsent.

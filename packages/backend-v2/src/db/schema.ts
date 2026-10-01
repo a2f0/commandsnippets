@@ -199,6 +199,20 @@ export const tagClientIds = sqliteTable(
 );
 
 /**
+ * The clock client writes are timed by (`resources/lww.ts`), in
+ * microseconds: the database's, advanced by at least a microsecond at each
+ * write, so no two writes share a time (one row).
+ */
+export const syncClock = sqliteTable(
+  'sync_clock',
+  {
+    id: integer('id').primaryKey(),
+    micros: integer('micros').notNull(),
+  },
+  table => [check('sync_clock_one_row', sql`${table.id} = 1`)]
+);
+
+/**
  * The writes clients named (`Client-Write-Id`), by that id: the time the
  * API counted the first attempt as made at (its own, or now: naming no
  * time, or one ahead of the API's clock), which every retry counts too,

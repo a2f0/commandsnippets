@@ -46,6 +46,7 @@ import {
 } from '../../../../src/lib/data/writes';
 import {isLocalId, LAST_MADE_KEY} from '../../../../src/lib/sync/outbox';
 import {syncSession} from '../../../../src/lib/sync/session';
+import {OWNER_ID_KEY} from '../../../../src/lib/sync/sync';
 import {errorDocument} from '../../../../src/msw/documents';
 import {apiClientMethods} from '../../../util/apiClientMethods';
 import {server} from '../../../util/msw';
@@ -949,21 +950,43 @@ describe('the writes', () => {
     expect(await tagRow('99')).toBeUndefined();
   });
 
-  it("are sent as the signed-in user's; refused as another's, the tab leaves", async () => {
+  it("are never sent, nor shown, as another account's of the same name", async () => {
+    // A queue and data kept here for another account of this name (deleted
+    // since, its name taken again by the mock API's user), made while the
+    // API could not be reached at all.
+    server.use(http.all(`${API}/*`, () => HttpResponse.error()));
+    await createTag(session(), 'theirs');
+    await expect(session().sync.flush()).rejects.toThrow();
+    await db().cursors.put({owner: TEST_USER, key: OWNER_ID_KEY, after: '99'});
+    server.resetHandlers();
+    const writes = sent();
+
+    await session().sync.flush();
+    expect(writes).toEqual([]);
+    expect(await queued()).toBe(0);
+    expect(
+      (await db().tags.where('owner').equals(TEST_USER).toArray()).map(
+        tag => tag.attributes.name
+      )
+    ).not.toContain('theirs');
+    expect((await db().cursors.get([TEST_USER, OWNER_ID_KEY]))?.after).toBe(
+      '1'
+    );
+  });
+
+  it("are never sent as another's: the tab leaves, the queue stays", async () => {
     // This tab signed in as alice; another has signed in as the mock API's
     // user since, and the cookie is theirs.
     act(() => store.setLoggedInUser('alice'));
     const alice = syncSession('alice');
-    const named: Array<string | null> = [];
-    server.events.on('request:start', ({request}) => {
-      named.push(request.headers.get(EXPECTED_USER_HEADER));
-    });
+    const writes = sent();
 
     await createTag(alice, 'theirs');
 
-    // Signed out here; alice's queued write stays, for her next sign-in.
+    // The API reads another user: nothing is sent, and the tab signs out;
+    // alice's queued write stays, for her next sign-in.
     await vi.waitFor(() => expect(store.loggedInUser).toBeNull());
-    expect(named).toEqual(['alice']);
+    expect(writes).toEqual([]);
     expect(await Dexie.exists(alice.db.name)).toBe(true);
     expect(await syncSession('alice').db.outbox.count()).toBe(1);
   });

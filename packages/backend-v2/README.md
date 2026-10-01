@@ -238,9 +238,10 @@ between. Tags, entries and
 junctions keep the time of the last client write to them
 (`client_updated`), and a write to one applies only when it is no older
 (`src/resources/lww.ts`): the latest edit wins, whatever order the writes
-arrive in. Now is the database's clock (D1's `strftime('now')`), which
-every isolate shares: a time ahead of it counts as it, and no isolate's
-clock running ahead of another's makes a later write older. An older write
+arrive in. Now is the API's write clock (`sync_clock`): the database's,
+which every isolate shares, advanced by at least a microsecond at each
+write. A time ahead of it counts as it, no isolate's clock running ahead of
+another's makes a later write older, and no two writes share a time. An older write
 changes nothing, and is answered with the row as it stands, which the
 client stores. Creating a tag of a name the user has, or tagging an entry
 already in the tag, still records the time (no revision advances), so an

@@ -3,6 +3,7 @@ import {describe, expect, it} from 'vitest';
 import {
   adminAuditLog,
   entryReuses,
+  syncClock,
   tagClientIds,
   tags,
   tagsEntries,
@@ -90,6 +91,10 @@ describe('schema', () => {
       unique: ['One tag of same name per user'],
       references: ['user_id->users_user cascade'],
     });
+  });
+
+  it('sync_clock', () => {
+    expect(config(syncClock)).toMatchObject({checks: ['sync_clock_one_row']});
   });
 
   it('tags_tagclientid', () => {

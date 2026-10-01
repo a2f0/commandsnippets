@@ -37,6 +37,7 @@ import type {
   TagTextEntryListDocument,
   TextEntryCursorListDocument,
 } from '@commandsnippets/api-shared/responses';
+import {Dexie} from 'dexie';
 import {
   type CommandsnippetsDatabase,
   type SyncCursor,
@@ -137,6 +138,42 @@ async function ownerOf(api: SyncApi, owner: string): Promise<string> {
   return id;
 }
 
+/** The key (in `cursors`) of the id of the account whose data `owner`'s is. */
+export const OWNER_ID_KEY = 'user';
+
+/**
+ * Bind `owner`'s data to the account the API reads under that name
+ * (`ownerId`): data another account of the name left here (deleted since,
+ * its name taken again) goes, queued writes and all, before any of it is
+ * shown again or sent as this account's.
+ */
+export async function bindOwner(
+  db: CommandsnippetsDatabase,
+  owner: string,
+  ownerId: string
+): Promise<void> {
+  await db.transaction(
+    'rw',
+    [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
+    async () => {
+      const held = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+      if (held === ownerId) {
+        return;
+      }
+      if (held !== undefined) {
+        for (const table of [db.tags, db.entries, db.junctions, db.outbox]) {
+          await table.where('owner').equals(owner).delete();
+        }
+        await db.cursors
+          .where('[owner+key]')
+          .between([owner, Dexie.minKey], [owner, Dexie.maxKey])
+          .delete();
+      }
+      await db.cursors.put({owner, key: OWNER_ID_KEY, after: ownerId});
+    }
+  );
+}
+
 /**
  * The cursor past every junction revision there is now: the newest one's,
  * past any id (one write stamps many junctions alike).
@@ -156,6 +193,7 @@ async function syncAll(
   pause: () => boolean
 ): Promise<boolean> {
   const ownerId = await ownerOf(api, owner);
+  await bindOwner(db, owner, ownerId);
   const mark = await junctionsMark(api);
   await readAfter(
     db,
@@ -213,6 +251,7 @@ async function syncTag(
     return;
   }
   const ownerId = await ownerOf(api, owner);
+  await bindOwner(db, owner, ownerId);
   const tag = await db.tags.get([owner, tagId]);
   if (tag === undefined) {
     return;
@@ -314,6 +353,7 @@ export function createSyncEngine(
   // One flush at a time; one asked for while it runs runs again after it, so
   // a write queued meanwhile is sent.
   let flushing: Promise<void> | null = null;
+  let bound = false;
   let flushAgain = false;
   const flush = (): Promise<void> => {
     if (writes === null) {
@@ -326,7 +366,14 @@ export function createSyncEngine(
     const run = async () => {
       do {
         flushAgain = false;
-        await exclusive(() => flushOutbox(db, writes, owner));
+        await exclusive(async () => {
+          // Never another account's writes, queued under the same name.
+          if (!bound) {
+            await bindOwner(db, owner, await ownerOf(api, owner));
+            bound = true;
+          }
+          await flushOutbox(db, writes, owner);
+        });
       } while (flushAgain);
     };
     flushing = run().finally(() => {

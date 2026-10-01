@@ -7,11 +7,13 @@ import {
   databaseName,
 } from '../../../../src/lib/db/database';
 import {
+  claimData,
   endSyncSession,
   hasQueuedWrites,
   syncSession,
   withDataLock,
 } from '../../../../src/lib/sync/session';
+import {OWNER_ID_KEY} from '../../../../src/lib/sync/sync';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -116,6 +118,27 @@ describe('syncSession', () => {
     await ending;
 
     expect(await hasQueuedWrites(db.name)).toBe(true);
+  });
+
+  it('deletes data kept under a name for another account of it, at sign-in', async () => {
+    const {db} = syncSession('jo');
+    await db.cursors.put({owner: 'jo', key: OWNER_ID_KEY, after: '7'});
+    await db.outbox.add({
+      owner: 'jo',
+      made: '2026-01-01T00:00:00.000000',
+      writeId: 'write-1',
+      write: {kind: 'deleteTag', tagId: '1'},
+      rows: ['jo|Tag|1'],
+    });
+    await endSyncSession('jo');
+    expect(await Dexie.exists(db.name)).toBe(true);
+
+    // The same account: kept, queue and all.
+    await claimData('jo', '7');
+    expect(await hasQueuedWrites(db.name)).toBe(true);
+    // Another account of the name (the first deleted, its name taken again).
+    await claimData('jo', '8');
+    expect(await Dexie.exists(db.name)).toBe(false);
   });
 
   it('deletes the data when the session ends', async () => {

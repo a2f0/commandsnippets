@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {v4 as uuidv4} from 'uuid';
 import {apiClient} from '../lib/api/apiClient';
 import {useAppConfig} from '../lib/state/appState';
+import {claimData} from '../lib/sync/session';
 
 interface OAuthConfig {
   provider: 'github' | 'google';
@@ -53,6 +54,8 @@ export const useOAuth = (config: OAuthConfig) => {
       }
       const response = await apiClient.getCurrentUser();
       const username = response.data.attributes.username;
+      // Never another account's data kept here under the same name.
+      await claimData(username, response.data.id);
 
       appConfig.setLoggedInUser(username);
       appConfig.setIsStaff(response.data.attributes.is_staff);

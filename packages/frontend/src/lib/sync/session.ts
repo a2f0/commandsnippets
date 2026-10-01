@@ -9,7 +9,12 @@ import {adminSyncApi} from '../api/adminApi';
 import {apiClient} from '../api/apiClient';
 import {CommandsnippetsDatabase, databaseName} from '../db/database';
 import {environment} from '../environment';
-import {createSyncEngine, type SyncApi, type SyncEngine} from './sync';
+import {
+  createSyncEngine,
+  OWNER_ID_KEY,
+  type SyncApi,
+  type SyncEngine,
+} from './sync';
 
 export interface SyncSession {
   /** The signed-in user, whose database it is. */
@@ -143,6 +148,34 @@ export function withDataLock<T>(
   return locks === undefined
     ? task()
     : locks.request(`commandsnippets-data:${name}`, {mode}, task);
+}
+
+/**
+ * Before user `userId` signs in as `username`: data kept here under that
+ * name for another account of it (deleted since, its name taken again) is
+ * deleted, queued writes and all, never shown or sent as theirs. (A
+ * session binds the data it opens too: `bindOwner`.)
+ */
+export async function claimData(
+  username: string,
+  userId: string
+): Promise<void> {
+  const name = databaseName(environment, username);
+  if (!(await Dexie.exists(name))) {
+    return;
+  }
+  await withDataLock(name, 'exclusive', async () => {
+    const db = new CommandsnippetsDatabase(name);
+    let held: string | undefined;
+    try {
+      held = (await db.cursors.get([username, OWNER_ID_KEY]))?.after;
+    } finally {
+      db.close();
+    }
+    if (held !== undefined && held !== userId && open?.db.name !== name) {
+      await Dexie.delete(name);
+    }
+  });
 }
 
 /** Whether the database `name` holds writes not sent to the API yet. */

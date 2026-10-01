@@ -245,6 +245,35 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "sync_clock": {
+      "name": "sync_clock",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "micros": {
+          "name": "micros",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "sync_clock_one_row": {
+          "name": "sync_clock_one_row",
+          "value": "\"sync_clock\".\"id\" = 1"
+        }
+      }
+    },
     "tags_tagclientid": {
       "name": "tags_tagclientid",
       "columns": {

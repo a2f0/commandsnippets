@@ -6,6 +6,7 @@ import {eq, sql} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
   clientWrites,
+  syncClock,
   tagClientIds,
   tags,
   tagsEntries,
@@ -671,6 +672,38 @@ describe('a write made ahead of the clock', () => {
     );
     expect((await json(retried)).data.attributes.name).toBe('between');
     expect((await refreshTag(tag.id))?.name).toBe('between');
+  });
+
+  it('never shares a time with another write: an old retry never ties an edit made in between', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    // The write clock an hour ahead of the database's: each write is timed
+    // a microsecond after the last, within the same millisecond too.
+    const ahead = nowMicros() + 3_600_000_000;
+    await db()
+      .insert(syncClock)
+      .values({id: 1, micros: ahead})
+      .onConflictDoUpdate({target: syncClock.id, set: {micros: ahead}});
+    await sendOnce(
+      'tied-1',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'first')
+    );
+    expect((await refreshTag(tag.id))?.client_updated).toBe(
+      formatMicros(ahead + 1)
+    );
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'between'));
+    expect((await refreshTag(tag.id))?.client_updated).toBe(
+      formatMicros(ahead + 2)
+    );
+
+    const retried = await sendOnce(
+      'tied-1',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'first')
+    );
+    expect((await json(retried)).data.attributes.name).toBe('between');
   });
 
   it("counts each user's write ids apart", async () => {

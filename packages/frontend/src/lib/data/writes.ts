@@ -34,6 +34,7 @@ import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {leaveForeignSession} from '../state/appState';
 import {enqueue, isLocalId, localId, madeNow, nextMade} from '../sync/outbox';
 import {type SyncSession, withDataLock} from '../sync/session';
+import {SyncUserError} from '../sync/sync';
 import {junctionOf} from './hooks';
 
 /**
@@ -86,7 +87,7 @@ function refuseReadOnly(session: SyncSession): void {
  * signed out meanwhile, there is nothing left to send.
  */
 export function flushFailed(session: SyncSession, error: unknown): void {
-  if (error instanceof UserMismatchError) {
+  if (error instanceof UserMismatchError || error instanceof SyncUserError) {
     void leaveForeignSession(session.username);
     return;
   }

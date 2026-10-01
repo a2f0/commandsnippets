@@ -6,8 +6,9 @@
  * applies only when it is no older than the row's last client write
  * (`client_updated`); an older one changes nothing, and its response is the
  * row as it stands, which the client then keeps. Times are the clients'
- * (never later than now), or now, by the database's clock. Reorders are not
- * guarded: they apply in the order they arrive.
+ * (never later than now), or now, by the API's write clock (`tick`), on
+ * which no two writes share a time. Reorders are not guarded: they apply in
+ * the order they arrive.
  */
 import {
   CLIENT_UPDATED_HEADER,
@@ -19,27 +20,38 @@ import {and, eq, type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
+import type {Db} from '../db/client';
 import {clientWrites} from '../db/schema';
 import type {AppEnv} from '../env';
-import {now, parseDateTime} from '../lib/clock';
+import {formatMicros, now, parseDateTime} from '../lib/clock';
 import {ApiError, validationError} from '../lib/errors';
 
 /**
- * Now by the database's clock, in the API's fixed-width form (its
- * milliseconds, padded): the one clock every isolate shares, so no isolate's
- * clock (one may run a little ahead of another) makes a later write older.
+ * Now by the API's write clock (`sync_clock`): the database's clock, which
+ * every isolate shares (so none whose clock runs a little ahead of another's
+ * makes a later write older), advanced by at least a microsecond at each
+ * call, so no two writes share a time (D1 runs one statement at a time).
  */
-const databaseNow = sql<string>`strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000'`;
+async function tick(db: Db): Promise<string> {
+  const row = await db.get<{micros: number}>(
+    sql`INSERT INTO sync_clock (id, micros)
+      VALUES (1, CAST((julianday('now') - 2440587.5) * 86400000000 AS INTEGER))
+      ON CONFLICT (id) DO UPDATE
+      SET micros = MAX(excluded.micros, sync_clock.micros + 1)
+      RETURNING micros`
+  );
+  return formatMicros(row.micros);
+}
 
 /**
  * When the request's write was made: the header's time, but never later than
- * now by the database's clock (a device whose clock runs ahead cannot win
- * every later write), or that now when the request names none. A write named
- * by `CLIENT_WRITE_ID_HEADER` counts as its first attempt was counted on
- * every later one (the API keeps that time as long as the user): a retry
- * after a lost answer, or after a failure, counts as the write did, never
- * beating a write made in between nor losing to one made before. A malformed
- * time or write id is a 400.
+ * now by the API's write clock (`tick`: a device whose clock runs ahead
+ * cannot win every later write), or that now when the request names none.
+ * A write named by `CLIENT_WRITE_ID_HEADER` counts as its first attempt was
+ * counted on every later one (the API keeps that time as long as the user):
+ * a retry after a lost answer, or after a failure, counts as the write did,
+ * never beating a write made in between nor losing to one made before. A
+ * malformed time or write id is a 400.
  */
 export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   const header = c.req.header(CLIENT_UPDATED_HEADER);
@@ -47,18 +59,20 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   if (header !== undefined && at === null) {
     throw validationError(`${CLIENT_UPDATED_HEADER} is not a datetime.`);
   }
-  const counted =
-    at === null ? databaseNow : sql<string>`MIN(${at}, ${databaseNow})`;
-  const db = c.get('db');
   const writeId = c.req.header(CLIENT_WRITE_ID_HEADER);
-  if (writeId === undefined) {
-    const row = await db.get<{made: string}>(sql`SELECT ${counted} AS made`);
-    return row.made;
-  }
-  if (writeId === '' || writeId.length > CLIENT_WRITE_ID_MAX_LENGTH) {
+  if (
+    writeId !== undefined &&
+    (writeId === '' || writeId.length > CLIENT_WRITE_ID_MAX_LENGTH)
+  ) {
     throw validationError(
       `${CLIENT_WRITE_ID_HEADER} must have 1 to ${CLIENT_WRITE_ID_MAX_LENGTH} characters.`
     );
+  }
+  const db = c.get('db');
+  const current = await tick(db);
+  const counted = at !== null && at < current ? at : current;
+  if (writeId === undefined) {
+    return counted;
   }
   const user = requireUser(c);
   // The time its first attempt was counted at: this attempt's, when it is
