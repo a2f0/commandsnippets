@@ -255,19 +255,27 @@ export interface Remap {
 
 const remapListeners = new Set<(remap: Remap) => void>();
 
-// The local id each API id replaced, for the rows the UI shows.
-const replaced = new Map<string, string>();
+// Every tab hears of a remap (each keeps its own selection), the flushing
+// one directly and the others over this channel.
+const remapChannel =
+  typeof BroadcastChannel === 'undefined'
+    ? null
+    : new BroadcastChannel('commandsnippets-remaps');
+
+function notifyRemap(remap: Remap): void {
+  for (const listener of remapListeners) {
+    listener(remap);
+  }
+}
+
+if (remapChannel !== null) {
+  remapChannel.onmessage = ({data}: MessageEvent<Remap>) => notifyRemap(data);
+}
 
 /**
- * A key for the row `id` that stays the same when the API's id replaces its
- * local one: the UI keys its rows with it, so a row (and an editor open on
- * it, with its unsaved text) is the same component before and after.
- */
-export const stableKeyOf = (id: string): string => replaced.get(id) ?? id;
-
-/**
- * Call `listener` whenever a local id is replaced by the API's (for state
- * that holds ids, like the UI's selection). Returns the unsubscribe.
+ * Call `listener` whenever a local id is replaced by the API's, in this tab
+ * or another (for state that holds ids, like the UI's selection). Returns
+ * the unsubscribe.
  */
 export function subscribeRemaps(listener: (remap: Remap) => void): () => void {
   remapListeners.add(listener);
@@ -416,7 +424,8 @@ async function rekey<R extends {id: string}>(
   }
   await table.delete([owner, from]);
   if ((await table.get([owner, to])) === undefined) {
-    await table.put({...local, id: to});
+    // It keeps its local id: the UI keys it the same (an open editor stays).
+    await table.put({...local, id: to, localId: local.localId ?? from});
   }
 }
 
@@ -490,10 +499,15 @@ async function acknowledge(
     created.from !== created.to
       ? {owner, ...created}
       : null;
-  // Before the row has its new id: the UI keys it the same at once.
-  if (remapped !== null) {
-    replaced.set(remapped.to, stableKeyOf(remapped.from));
-  }
+  // A create naming a row the API has, answered with another: that row is
+  // put back as the API holds it (renamed meanwhile, say), which a sync
+  // skipped while the create was queued.
+  const kept =
+    created !== undefined &&
+    !isLocalId(created.from) &&
+    created.from !== created.to
+      ? await restoreOf(db, owner, [created.type, created.from])
+      : null;
   await db.transaction(
     'rw',
     [db.outbox, db.tags, db.entries, db.junctions],
@@ -507,6 +521,9 @@ async function acknowledge(
       if (sent.gone !== undefined) {
         const [type, id] = sent.gone;
         await tableOf(db, type).delete([owner, id]);
+      }
+      if (kept !== null) {
+        await enqueue(db, owner, kept, madeNow());
       }
       await putResources(db, owner, sent.resources, true);
     }
@@ -651,9 +668,8 @@ export async function flushOutbox(
     }
     const remapped = await acknowledge(db, queued, sent);
     if (remapped !== null) {
-      for (const listener of remapListeners) {
-        listener(remapped);
-      }
+      notifyRemap(remapped);
+      remapChannel?.postMessage(remapped);
     }
   }
 }

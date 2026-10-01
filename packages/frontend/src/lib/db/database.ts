@@ -16,8 +16,16 @@ import type {
 } from '@commandsnippets/api-shared/responses';
 import {Dexie, type Table} from 'dexie';
 
-/** A resource as stored: keyed by the username of the user whose it is. */
-export type Stored<R> = R & {owner: string};
+/**
+ * A resource as stored: keyed by the username of the user whose it is. A
+ * row made here keeps its local id (`localId`) once the API's replaces it,
+ * so the UI keys it the same throughout (an editor open on it stays open).
+ */
+export type Stored<R> = R & {owner: string; localId?: string | undefined};
+
+/** The key the UI gives a stored row: its local id, if it had one. */
+export const keyOfRow = (row: {id: string; localId?: string | undefined}) =>
+  row.localId ?? row.id;
 
 /** A row's primary key: its owner's username, then its id (or cursor key). */
 export type RowKey = [owner: string, id: string];
@@ -90,7 +98,8 @@ export class CommandsnippetsDatabase extends Dexie {
 
   constructor(name: string) {
     super(name);
-    this.version(1).stores({
+    // Version 2 added the outbox (a version 1 database gets it in place).
+    this.version(2).stores({
       tags: '[owner+id], owner',
       entries: '[owner+id], owner',
       junctions:

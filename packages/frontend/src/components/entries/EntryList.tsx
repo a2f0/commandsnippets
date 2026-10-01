@@ -14,10 +14,10 @@ import {
 } from '../../lib/data/hooks';
 import {sortEntries, sortTagEntries} from '../../lib/data/sort';
 import {useTagSync} from '../../lib/data/useSync';
+import {keyOfRow} from '../../lib/db/database';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
-import {stableKeyOf} from '../../lib/sync/outbox';
 import {ItemTypes} from '../dnd/itemTypes';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
@@ -241,7 +241,7 @@ const EntryList = () => {
         return (
           // Keyed so a row made here stays the same component (an open
           // editor and its text too) when the API's id replaces its own.
-          <div key={stableKeyOf(element.id)} ref={elRefs[index]}>
+          <div key={keyOfRow(element)} ref={elRefs[index]}>
             <Entry
               id={element.id}
               index={index}

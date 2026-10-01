@@ -188,6 +188,34 @@ describe('a write', () => {
   });
 });
 
+describe('a remap', () => {
+  it('reaches the other tabs, and theirs this one', async () => {
+    const otherTab = new BroadcastChannel('commandsnippets-remaps');
+    const heard: unknown[] = [];
+    otherTab.onmessage = ({data}) => heard.push(data);
+
+    const tag = await createTag(session(), 'shared');
+    await session().sync.flush();
+    await vi.waitFor(() => expect(heard).toHaveLength(1));
+    expect(heard[0]).toMatchObject({
+      owner: TEST_USER,
+      type: 'Tag',
+      from: tag.id,
+    });
+
+    // Another tab's remap moves this tab's selection.
+    act(() => store.setTagSelectedID('local-elsewhere'));
+    otherTab.postMessage({
+      owner: TEST_USER,
+      type: 'Tag',
+      from: 'local-elsewhere',
+      to: '42',
+    });
+    await vi.waitFor(() => expect(store.tagSelectedID).toBe('42'));
+    otherTab.close();
+  });
+});
+
 describe('offline', () => {
   it('keeps every write, and sends them all once back online', async () => {
     await session().sync.syncAll();
@@ -434,8 +462,11 @@ describe('the writes', () => {
 
     await session().sync.flush();
 
+    // Tag 1 keeps its entries, and is put back as the API holds it (a sync
+    // skipped its rename while the create was queued).
     expect(await inTag('1')).toEqual(before);
-    expect((await tagRow('1'))?.attributes.name).toBe('test-tag-1');
+    expect((await tagRow('1'))?.attributes.name).toBe('renamed-elsewhere');
+    expect(await queued()).toBe(0);
     const made = await db()
       .tags.where('owner')
       .equals(TEST_USER)

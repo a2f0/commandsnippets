@@ -7,7 +7,8 @@ import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
-import {createEntry} from '../../src/lib/data/writes';
+import {apiClient} from '../../src/lib/api/apiClient';
+import {createEntry, createTag} from '../../src/lib/data/writes';
 import {isLocalId} from '../../src/lib/sync/outbox';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
@@ -151,4 +152,31 @@ it("keeps an editor open on an entry made offline, with its text, when the API's
     ).not.toBeNull()
   );
   expect(screen.getByPlaceholderText('subject')).toHaveValue('unsaved text');
+});
+
+it("keeps an editor open on an entry when a tag made offline gets the entry's id", async () => {
+  // Entry 5 and, once sent, tag 5: ids of different types can be alike.
+  const {data: entry} = await apiClient.createEntry('five', 'body');
+  const history = createMemoryHistory();
+  history.push('/test?entries=untagged');
+  render(<TestAppRouter history={history} />);
+  const session = syncSession(TEST_USER);
+  fireEvent.contextMenu(await screen.findByText('five'));
+  fireEvent.click(await screen.findByRole('menuitem', {name: 'Edit'}));
+  fireEvent.change(await screen.findByPlaceholderText('subject'), {
+    target: {value: 'unsaved five'},
+  });
+
+  const tag = await createTag(session, 'made-here');
+  await session.sync.flush();
+  const sent = await session.db.tags
+    .where('owner')
+    .equals(TEST_USER)
+    .filter(row => row.attributes.name === 'made-here')
+    .first();
+  expect(isLocalId(tag.id)).toBe(true);
+  expect(sent?.id).toBe(entry.id);
+
+  expect(screen.getByPlaceholderText('subject')).toHaveValue('unsaved five');
+  expect(document.getElementById(`textEntryEdit${entry.id}`)).not.toBeNull();
 });

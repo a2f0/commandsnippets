@@ -99,7 +99,8 @@ API; everything else the app keeps is a zustand store.
 - **The user's data**: `src/lib/db/database.ts`, a Dexie database per
   environment and signed-in user (`commandsnippets-<environment>-<username>`)
   of tags, entries and junctions (deleted ones too) as api-shared's
-  resources, and the sync's `cursors`. Every row is keyed by its owner's
+  resources, the sync's `cursors`, and the queued writes (`outbox`; schema
+  version 2). Every row is keyed by its owner's
   username (`[owner+id]`): the signed-in user's own data, and for staff the
   data of other users they read, sit side by side, and every query names
   whose. `src/lib/sync/session.ts` opens the database for the signed-in user,
@@ -129,9 +130,13 @@ API; everything else the app keeps is a zustand store.
   `src/lib/sync/outbox.ts`), so the app works offline and no write waits on
   the network; then the queue is flushed, not waited for. Rows made here
   have local ids (`local-...`) until their create reaches the API, whose id
-  then replaces it everywhere (rows, queued writes, the selection:
-  `subscribeRemaps`); a queued entry create sends its local id as
-  `client_id`, so a retry makes it once.
+  then replaces it everywhere (rows, queued writes, the selection in every
+  tab: `subscribeRemaps`, over a `BroadcastChannel`). The row keeps its
+  local id (`localId`), and the lists key rows by it (`keyOfRow`), so a row,
+  and an editor open on it, stays the same component. A queued entry create
+  sends its local id as `client_id`, so a retry makes it once. Writes are
+  checked against api-shared's request schemas first (`InvalidWriteError`):
+  one the API would refuse is never queued, and its editor keeps it.
 - **The queue** (`flushOutbox`, run by the sync engine's `flush`, under the
   same lock as the syncs): writes go in order, each naming when it was made
   (`Client-Updated`, api-shared's `CLIENT_UPDATED_HEADER`: the API keeps the

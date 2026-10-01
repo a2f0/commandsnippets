@@ -127,15 +127,24 @@ export async function putNewer<R extends Revised>(
   const candidates = [...newest.values()].filter(
     resource => !queued.has(rowKey(owner, resource.type, resource.id))
   );
-  const stored = force
-    ? []
-    : await table.bulkGet(candidates.map(({id}): RowKey => [owner, id]));
-  const newer = candidates.filter((resource, index) => {
+  const stored = await table.bulkGet(
+    candidates.map(({id}): RowKey => [owner, id])
+  );
+  const newer = candidates.flatMap((resource, index) => {
     const held = stored[index];
-    return force || held === undefined || replaces(resource, held, tie);
+    return force || held === undefined || replaces(resource, held, tie)
+      ? [{resource, held}]
+      : [];
   });
-  await table.bulkPut(newer.map(resource => ({...resource, owner})));
-  return newer;
+  // A row made here keeps its local id: the UI keys it with it.
+  await table.bulkPut(
+    newer.map(({resource, held}) => ({
+      ...resource,
+      owner,
+      ...(held?.localId === undefined ? {} : {localId: held.localId}),
+    }))
+  );
+  return newer.map(({resource}) => resource);
 }
 
 /**
