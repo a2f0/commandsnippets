@@ -809,6 +809,22 @@ describe('a reorder named by the client', () => {
     await reorder(four.id, two.id, 'move-2');
     expect(await ranked()).toEqual(['one', 'four', 'two', 'three']);
   });
+
+  it('is made once when in place already: its retry never moves the row over a move made since', async () => {
+    await tagFactory({user, name: 'one', order: 10});
+    const two = await tagFactory({user, name: 'two', order: 11});
+    const three = await tagFactory({user, name: 'three', order: 12});
+    await tagFactory({user, name: 'four', order: 13});
+    // Two is directly above three: made as it is (its answer is lost).
+    expect((await reorder(two.id, three.id, 'still-1')).status).toBe(200);
+    expect(
+      (await db().select().from(clientWrites)).map(row => row.write_id)
+    ).toContain('still-1');
+    await reorder(three.id, two.id);
+
+    await reorder(two.id, three.id, 'still-1');
+    expect(await ranked()).toEqual(['one', 'three', 'two', 'four']);
+  });
 });
 
 describe('an entry created with a client id', () => {

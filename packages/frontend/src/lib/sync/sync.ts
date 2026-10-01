@@ -99,6 +99,8 @@ type Page = {
 async function readAfter<P extends Page>(
   db: CommandsnippetsDatabase,
   owner: string,
+  /** The account the sync bound the data to (`bindToApi`). */
+  account: string,
   key: string,
   read: (after: string) => Promise<P>,
   store: (page: P) => Promise<Remap[]>,
@@ -112,7 +114,6 @@ async function readAfter<P extends Page>(
     pause = () => false,
   } = options;
   let after = (await db.cursors.get([owner, key]))?.after ?? CURSOR_START;
-  const account = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
   for (;;) {
     const page = await read(after);
     const last = page.data.at(-1);
@@ -277,6 +278,7 @@ async function syncAll(
   await readAfter(
     db,
     owner,
+    ownerId,
     'tags',
     after => api.getTagsAfter(after),
     async page => {
@@ -289,6 +291,7 @@ async function syncAll(
   const done = await readAfter(
     db,
     owner,
+    ownerId,
     'entries',
     after => api.getEntriesAfter(after),
     async page => {
@@ -342,6 +345,7 @@ async function syncTag(
   await readAfter(
     db,
     owner,
+    ownerId,
     key,
     after => api.getTagJunctionsAfter(tagId, after),
     async page => {

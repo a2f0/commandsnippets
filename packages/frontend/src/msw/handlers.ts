@@ -1426,9 +1426,14 @@ const createHandlers = () => {
                   candidate => candidate.attributes.client_id === clientId
                 );
           if (existing !== undefined) {
+            // As the API answers: with the entry's junctions and tags.
             const again: TextEntryDocument = {
               data: existing,
-              included: [testUser],
+              ...includedFor(
+                state,
+                [existing],
+                ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user']
+              ),
             };
             return HttpResponse.json(again, {status: 201});
           }

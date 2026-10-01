@@ -251,6 +251,16 @@ export class OrderedModel {
     return sql`(SELECT ${order} FROM ${table} WHERE ${id} = ${row.id} ${live})`;
   }
 
+  /**
+   * Whether `self` is directly above `ref` now, as SQL: where `above` leaves
+   * them (and leaves them be, tied).
+   */
+  directlyAbove(self: OrderedRow, ref: OrderedRow): SQL {
+    const {table, order, scope} = this.spec;
+    const [mine, theirs] = [this.rankOf(self), this.rankOf(ref)];
+    return sql`(${mine} = ${theirs} OR (${mine} < ${theirs} AND NOT EXISTS (SELECT 1 FROM ${table} WHERE ${scope} = ${ref.scope} ${this.ownedBy(ref)} AND ${order} > ${mine} AND ${order} < ${theirs})))`;
+  }
+
   /** The rank just before or after `ref` among the mover's rows, as SQL. */
   private neighborRank(ref: OrderedRow, side: 'before' | 'after'): SQL {
     const {table, order, scope} = this.spec;

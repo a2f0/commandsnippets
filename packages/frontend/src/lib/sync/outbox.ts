@@ -662,7 +662,7 @@ async function acknowledge(
   queued: OutboxRow,
   sent: Sent,
   accountId: string | undefined
-): Promise<Remap | null> {
+): Promise<Remap[]> {
   const {owner} = queued;
   const created = sent.created;
   // Only a local id is replaced (creates are queued for rows made here).
@@ -672,6 +672,7 @@ async function acknowledge(
     created.from !== created.to
       ? {owner, ...created}
       : null;
+  let adopted: Remap[] = [];
   await db.transaction(
     'rw',
     [db.outbox, db.tags, db.entries, db.junctions, db.cursors],
@@ -694,10 +695,14 @@ async function acknowledge(
         const [type, id] = sent.gone;
         await tableOf(db, type).delete([owner, id]);
       }
+      // What the answer shows the API has of other queued creates and
+      // taggings (a retried create's entry, tagged by another device
+      // meanwhile): adopted, as a sync's page is, never stored twice.
+      adopted = await adoptCreates(db, owner, sent.resources);
       await putResources(db, owner, sent.resources, true);
     }
   );
-  return remapped;
+  return [...(remapped === null ? [] : [remapped]), ...adopted];
 }
 
 /** The restore that puts `owner`'s row back as the API holds it, if any. */
@@ -856,8 +861,7 @@ export async function flushOutbox(
       await drop(db, queued, accountId);
       continue;
     }
-    const remapped = await acknowledge(db, queued, sent, accountId);
-    announceRemaps(remapped === null ? [] : [remapped]);
+    announceRemaps(await acknowledge(db, queued, sent, accountId));
   }
 }
 

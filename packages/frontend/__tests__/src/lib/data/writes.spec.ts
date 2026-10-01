@@ -603,6 +603,37 @@ describe('the writes', () => {
     ]);
   });
 
+  it("show an entry made offline in a tag once, when its retried create brings another device's tagging of it", async () => {
+    await session().sync.syncAll();
+    server.use(
+      http.post(
+        `${API}/entries`,
+        async ({request}) => {
+          await fetch(request.url, {
+            method: 'POST',
+            headers: request.headers,
+            body: await request.text(),
+          });
+          return HttpResponse.error();
+        },
+        {once: true}
+      )
+    );
+    const local = await createEntry(session(), 'retried', 'body', '2');
+    await expect(session().sync.flush()).rejects.toThrow();
+    const made = (await apiClient.getEntriesAfter(CURSOR_START)).data.find(
+      entry => entry.attributes.client_id === local.id
+    );
+    invariant(made, 'the API should have made the entry');
+    await apiClient.tagEntry('2', made.id);
+    // The retried create answers with the entry and that junction; this
+    // device's own tagging then fails to be sent.
+    server.use(http.post(`${API}/tags_entries`, () => HttpResponse.error()));
+
+    await expect(session().sync.flush()).rejects.toThrow();
+    expect((await inTag('2')).filter(id => id === made.id)).toHaveLength(1);
+  });
+
   it('show a tagging whose answer was lost once, when a sync brings its junction', async () => {
     await session().sync.syncAll();
     // The API tags the entry, but its answer never arrives.
@@ -1032,6 +1063,40 @@ describe('the writes', () => {
     expect((await db().cursors.get([TEST_USER, OWNER_ID_KEY]))?.after).toBe(
       '2'
     );
+  });
+
+  it("store nothing of a sync's pages once the data is bound to another, whenever that is", async () => {
+    // The sync binds the data, then asks for the newest junction: held back
+    // while another account of the name signs in here.
+    let answered!: () => void;
+    const held = new Promise<void>(resolve => {
+      answered = resolve;
+    });
+    let asking!: () => void;
+    const asked = new Promise<void>(resolve => {
+      asking = resolve;
+    });
+    server.use(
+      http.get(
+        `${API}/tags_entries`,
+        async ({request}) => {
+          const page = await (await fetch(request.url)).json();
+          asking();
+          await held;
+          return HttpResponse.json(page);
+        },
+        {once: true}
+      )
+    );
+    const syncing = session()
+      .sync.syncAll()
+      .catch((error: unknown) => error);
+    await asked;
+    await claimData(TEST_USER, '2');
+    answered();
+
+    expect(await syncing).toBeInstanceOf(AccountChangedError);
+    expect(await db().tags.where('owner').equals(TEST_USER).count()).toBe(0);
   });
 
   it("store nothing of a sync's page arriving after the data was bound to another", async () => {
