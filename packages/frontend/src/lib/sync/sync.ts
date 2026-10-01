@@ -37,11 +37,27 @@ import type {
   TagTextEntryListDocument,
   TextEntryCursorListDocument,
 } from '@commandsnippets/api-shared/responses';
+import {Dexie, type Table} from 'dexie';
 import {
   type CommandsnippetsDatabase,
+  databaseName,
+  OWNER_ID_KEY,
+  type RowKey,
+  type Stored,
   type SyncCursor,
   tagCursorKey,
 } from '../db/database';
+import {environment} from '../environment';
+import {
+  AccountChangedError,
+  adoptCreates,
+  announceRemaps,
+  assertBound,
+  flushOutbox,
+  isLocalId,
+  type OutboxApi,
+  type Remap,
+} from './outbox';
 import {checkOwner, putEntries, putJunctions, putTags} from './store';
 
 /**
@@ -77,14 +93,17 @@ type Page = {
  * Read the pages after `owner`'s stored cursor `key` (from the start without
  * one), storing each (`store`) with the cursor past it in one transaction,
  * until the last, or until `pause` (checked between pages) asks to stop.
- * Returns whether it read to the end.
+ * The local ids a page's store replaced (`adoptCreates`) are announced once
+ * it commits. Returns whether it read to the end.
  */
 async function readAfter<P extends Page>(
   db: CommandsnippetsDatabase,
   owner: string,
+  /** The account the sync bound the data to (`bindToApi`). */
+  account: string,
   key: string,
   read: (after: string) => Promise<P>,
-  store: (page: P) => Promise<void>,
+  store: (page: P) => Promise<Remap[]>,
   options: {
     cursor?: (after: string, done: boolean) => SyncCursor;
     pause?: () => boolean;
@@ -100,14 +119,18 @@ async function readAfter<P extends Page>(
     const last = page.data.at(-1);
     after = last === undefined ? after : cursorOf(last);
     const done = page.links.next === null;
-    await db.transaction(
+    const remaps = await db.transaction(
       'rw',
-      [db.tags, db.entries, db.junctions, db.cursors],
+      [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
       async () => {
-        await store(page);
+        // Bound to another account since the sync began: not stored.
+        await assertBound(db, owner, account);
+        const stored = await store(page);
         await db.cursors.put(cursor(after, done));
+        return stored;
       }
     );
+    announceRemaps(remaps);
     if (done) {
       return true;
     }
@@ -124,6 +147,112 @@ async function ownerOf(api: SyncApi, owner: string): Promise<string> {
     throw new SyncUserError(owner, username);
   }
   return id;
+}
+
+/** The account a stored row of `owner`'s in `table` names, if any does. */
+const accountIn = async <
+  R extends {relationships: {user: {data: {id: string}}}},
+>(
+  table: Table<Stored<R>, RowKey>,
+  owner: string
+): Promise<string | undefined> =>
+  (
+    await table
+      .where('owner')
+      .equals(owner)
+      .filter(row => row.relationships.user.data.id !== '')
+      .first()
+  )?.relationships.user.data.id;
+
+/** The account `owner`'s stored rows name, if any does. */
+async function accountOfRows(
+  db: CommandsnippetsDatabase,
+  owner: string
+): Promise<string | undefined> {
+  return (
+    (await accountIn(db.tags, owner)) ??
+    (await accountIn(db.entries, owner)) ??
+    (await accountIn(db.junctions, owner))
+  );
+}
+
+/** The account `owner`'s data is bound to (`bindOwner`), if it is. */
+export const boundAccount = async (
+  db: CommandsnippetsDatabase,
+  owner: string
+): Promise<string | undefined> =>
+  (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+
+/**
+ * Bind `owner`'s data to the account the API reads under that name
+ * (`ownerId`): data another account of the name left here (deleted since,
+ * its name taken again) goes, queued writes and all, before any of it is
+ * shown again or sent as this account's; for the signed-in user's own (the
+ * database is theirs), so does every other user's data it holds (staff
+ * read it). With `asRead` (the binding read before asking the API which
+ * account it is), a binding made since (a sign-in here) stands: refused
+ * (`AccountChangedError`) rather than undone.
+ */
+export async function bindOwner(
+  db: CommandsnippetsDatabase,
+  owner: string,
+  ownerId: string,
+  asRead?: {held: string | undefined}
+): Promise<void> {
+  await db.transaction(
+    'rw',
+    [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
+    async () => {
+      const bound = await boundAccount(db, owner);
+      if (asRead !== undefined && bound !== asRead.held) {
+        throw new AccountChangedError(owner);
+      }
+      // Data kept from before accounts were bound (an older version's): its
+      // rows name their account.
+      const held = bound ?? (await accountOfRows(db, owner));
+      if (held === ownerId) {
+        await db.cursors.put({owner, key: OWNER_ID_KEY, after: ownerId});
+        return;
+      }
+      if (held !== undefined) {
+        if (db.name === databaseName(environment, owner)) {
+          for (const table of [
+            db.tags,
+            db.entries,
+            db.junctions,
+            db.cursors,
+            db.outbox,
+          ]) {
+            await table.clear();
+          }
+        } else {
+          for (const table of [db.tags, db.entries, db.junctions, db.outbox]) {
+            await table.where('owner').equals(owner).delete();
+          }
+          await db.cursors
+            .where('[owner+key]')
+            .between([owner, Dexie.minKey], [owner, Dexie.maxKey])
+            .delete();
+        }
+      }
+      await db.cursors.put({owner, key: OWNER_ID_KEY, after: ownerId});
+    }
+  );
+}
+
+/**
+ * Bind `owner`'s data to the account the API reads under that name, read
+ * now (see `bindOwner`); returns its id.
+ */
+async function bindToApi(
+  db: CommandsnippetsDatabase,
+  api: SyncApi,
+  owner: string
+): Promise<string> {
+  const held = await boundAccount(db, owner);
+  const ownerId = await ownerOf(api, owner);
+  await bindOwner(db, owner, ownerId, {held});
+  return ownerId;
 }
 
 /**
@@ -144,26 +273,35 @@ async function syncAll(
   owner: string,
   pause: () => boolean
 ): Promise<boolean> {
-  const ownerId = await ownerOf(api, owner);
+  const ownerId = await bindToApi(db, api, owner);
   const mark = await junctionsMark(api);
   await readAfter(
     db,
     owner,
+    ownerId,
     'tags',
     after => api.getTagsAfter(after),
-    page => {
+    async page => {
       checkOwner(ownerId, page.data);
-      return putTags(db, owner, page.data);
+      const remaps = await adoptCreates(db, owner, page.data);
+      await putTags(db, owner, page.data);
+      return remaps;
     }
   );
   const done = await readAfter(
     db,
     owner,
+    ownerId,
     'entries',
     after => api.getEntriesAfter(after),
-    page => {
+    async page => {
       checkOwner(ownerId, [...page.data, ...(page.included ?? [])]);
-      return putEntries(db, owner, page.data, page.included);
+      const remaps = await adoptCreates(db, owner, [
+        ...page.data,
+        ...(page.included ?? []),
+      ]);
+      await putEntries(db, owner, page.data, page.included);
+      return remaps;
     },
     {pause}
   );
@@ -190,7 +328,11 @@ async function syncTag(
   owner: string,
   tagId: string
 ): Promise<void> {
-  const ownerId = await ownerOf(api, owner);
+  // A tag created here and not on the API yet has nothing there to read.
+  if (isLocalId(tagId)) {
+    return;
+  }
+  const ownerId = await bindToApi(db, api, owner);
   const tag = await db.tags.get([owner, tagId]);
   if (tag === undefined) {
     return;
@@ -203,11 +345,17 @@ async function syncTag(
   await readAfter(
     db,
     owner,
+    ownerId,
     key,
     after => api.getTagJunctionsAfter(tagId, after),
-    page => {
+    async page => {
       checkOwner(ownerId, [...page.data, ...(page.included ?? [])]);
-      return putJunctions(db, owner, page.data, page.included);
+      const remaps = await adoptCreates(db, owner, [
+        ...page.data,
+        ...(page.included ?? []),
+      ]);
+      await putJunctions(db, owner, page.data, page.included);
+      return remaps;
     },
     {
       cursor: (after, done) => ({
@@ -222,13 +370,16 @@ async function syncTag(
 
 /**
  * Whether `owner`'s tag `tagId` is synced through the revision the database
- * holds.
+ * holds (one created here, not on the API yet, has nothing to sync).
  */
 export async function isTagSynced(
   db: CommandsnippetsDatabase,
   owner: string,
   tagId: string
 ): Promise<boolean> {
+  if (isLocalId(tagId)) {
+    return true;
+  }
   const [tag, cursor] = await Promise.all([
     db.tags.get([owner, tagId]),
     db.cursors.get([owner, tagCursorKey(tagId)]),
@@ -245,18 +396,27 @@ export interface SyncEngine {
   syncAll(): Promise<void>;
   /** Sync one tag (see the module comment). */
   syncTag(tagId: string): Promise<void>;
+  /**
+   * Send the queued writes (`outbox.ts`), until none are left or one fails
+   * for a reason that can pass (which this throws). Nothing to send where
+   * the data is read-only.
+   */
+  flush(): Promise<void>;
 }
 
 /**
- * The syncs of `owner`'s data in `db` from `api`, run one at a time: in this
- * tab in the order they are asked for (a tag sync ahead of the rest of a
- * collection sync), and across tabs by the Web Lock `lockName`.
+ * The syncs of `owner`'s data in `db` from `api`, and the flushes of their
+ * queued writes to `writes` (none for read-only data), run one at a time: in
+ * this tab in the order they are asked for (a tag sync ahead of the rest of
+ * a collection sync), and across tabs by the Web Lock `lockName`, so the
+ * answers and pages are stored in the order they were read.
  */
 export function createSyncEngine(
   db: CommandsnippetsDatabase,
   api: SyncApi,
   lockName: string,
-  owner: string
+  owner: string,
+  writes: OutboxApi | null = null
 ): SyncEngine {
   let queue: Promise<unknown> = Promise.resolve();
   let tagSyncsWaiting = 0;
@@ -272,7 +432,39 @@ export function createSyncEngine(
     exclusive(() => syncAll(db, api, owner, () => tagSyncsWaiting > 0)).then(
       done => (done ? undefined : syncAllToTheEnd())
     );
+  // One flush at a time; one asked for while it runs runs again after it, so
+  // a write queued meanwhile is sent.
+  let flushing: Promise<void> | null = null;
+  let bound = false;
+  let flushAgain = false;
+  const flush = (): Promise<void> => {
+    if (writes === null) {
+      return Promise.resolve();
+    }
+    if (flushing !== null) {
+      flushAgain = true;
+      return flushing;
+    }
+    const run = async () => {
+      do {
+        flushAgain = false;
+        await exclusive(async () => {
+          // Never another account's writes, queued under the same name.
+          if (!bound) {
+            await bindToApi(db, api, owner);
+            bound = true;
+          }
+          await flushOutbox(db, writes, owner);
+        });
+      } while (flushAgain);
+    };
+    flushing = run().finally(() => {
+      flushing = null;
+    });
+    return flushing;
+  };
   return {
+    flush,
     syncAll: syncAllToTheEnd,
     syncTag: tagId => {
       tagSyncsWaiting += 1;

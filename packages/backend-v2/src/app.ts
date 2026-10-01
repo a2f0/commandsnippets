@@ -1,7 +1,10 @@
 import {
   API_VERSION_HEADER,
+  CLIENT_UPDATED_HEADER,
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
+  EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared';
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
@@ -67,6 +70,9 @@ app.use(
       'user-agent',
       'x-csrftoken',
       EXPECTED_USER_HEADER.toLowerCase(),
+      EXPECTED_USER_ID_HEADER.toLowerCase(),
+      CLIENT_UPDATED_HEADER.toLowerCase(),
+      CLIENT_WRITE_ID_HEADER.toLowerCase(),
       'x-requested-with',
     ],
     // For the web app, on another origin, to read which API version answered.
@@ -114,22 +120,23 @@ app.use('*', async (c, next) => {
 });
 
 /**
- * A state-changing request that names the user it acts for
- * (`EXPECTED_USER_HEADER`) is refused when signed in as anyone else: a
- * browser tab whose session another tab replaced cannot write into the new
- * user's account (409 `user_mismatch`). Checked with the request's own
- * session, so no switch can come between the check and the write. Anonymous
- * requests are left to the routes (403 `not_authenticated`), and requests
- * that name no user are unaffected.
+ * A request that names the user it acts for (`EXPECTED_USER_HEADER`, or
+ * their id: `EXPECTED_USER_ID_HEADER`) is refused when signed in as anyone
+ * else (409 `user_mismatch`): a browser tab
+ * whose session another tab replaced can neither write into the new user's
+ * account nor read the new user's data as its own user's. Checked with the
+ * request's own session, so no switch can come between the check and the
+ * request. Anonymous requests are left to the routes (403
+ * `not_authenticated`), and requests that name no user are unaffected.
  */
 app.use('*', async (c, next) => {
   const expected = c.req.header(EXPECTED_USER_HEADER);
+  const expectedId = c.req.header(EXPECTED_USER_ID_HEADER);
   const user = c.get('user');
   if (
-    expected !== undefined &&
     user !== null &&
-    !SAFE_METHODS.includes(c.req.method) &&
-    decodedUsername(expected) !== user.username
+    ((expected !== undefined && decodedUsername(expected) !== user.username) ||
+      (expectedId !== undefined && expectedId !== String(user.id)))
   ) {
     throw userMismatch();
   }

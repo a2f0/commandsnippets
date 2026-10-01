@@ -1,6 +1,9 @@
 import {
+  CLIENT_UPDATED_HEADER,
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
+  EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
 import type {
   GithubLoginDocument,
@@ -47,6 +50,23 @@ import {urlWithQuery} from './searchParams';
 type LogoutResponse = z.output<typeof emptyObjectSchema>;
 
 /**
+ * A request the API answered with an error status (`${failure}:
+ * ${statusText}`), which says whether trying it again can help: a queued
+ * write (`lib/sync/outbox.ts`) is retried after a network failure or a 5xx,
+ * and dropped after a 4xx.
+ */
+export class ApiRequestError extends Error {
+  constructor(
+    failure: string,
+    readonly status: number,
+    statusText: string
+  ) {
+    super(`${failure}: ${statusText}`);
+    this.name = 'ApiRequestError';
+  }
+}
+
+/**
  * A write the API refused because the request is signed in as another user
  * than the one it named (`EXPECTED_USER_HEADER`): another tab has signed in
  * as someone else since this one did.
@@ -73,6 +93,11 @@ interface RequestOptions {
    * call `fetchApi` directly.
    */
   withAuth?: boolean;
+  /**
+   * When a queued write was made (`CLIENT_UPDATED_HEADER`): the API applies
+   * it only when no newer write to the row has (last writer wins).
+   */
+  made?: string | undefined;
 }
 
 /**
@@ -84,6 +109,60 @@ interface RequestOptions {
  * that return nothing (the logins, deletes and reorders) do not read it.
  */
 class ApiClient {
+  /**
+   * The user every write names: the signed-in user, read at each request
+   * (`authUtils.signedInUser`), or for a client bound to one (`writesAs`)
+   * always that user.
+   */
+  constructor(
+    private readonly actingUser: () => string | null = signedInUser,
+    private readonly writeId: string | null = null,
+    /** Whether reads name the acting user too (`writesAs`'s). */
+    private readonly readsAsUser = false,
+    /** The account (user id) every request names (`forAccount`'s). */
+    private readonly accountId: string | null = null
+  ) {}
+
+  /**
+   * A client whose requests always name `username`, whoever is signed in
+   * when they are sent: a queue of `username`'s writes
+   * (`lib/sync/outbox.ts`) is refused (`UserMismatchError`) rather than
+   * written into another user's account when this tab has switched accounts
+   * meanwhile, and so are the reads it makes (restores, a reorder's rows),
+   * rather than storing the other user's rows as `username`'s.
+   */
+  public writesAs(username: string): ApiClient {
+    return new ApiClient(() => username, this.writeId, true, this.accountId);
+  }
+
+  /**
+   * A client whose writes name the queued write `writeId`
+   * (`CLIENT_WRITE_ID_HEADER`), the same on every attempt to send it.
+   */
+  public forWrite(writeId: string): ApiClient {
+    return new ApiClient(
+      this.actingUser,
+      writeId,
+      this.readsAsUser,
+      this.accountId
+    );
+  }
+
+  /**
+   * A client whose requests name the account `userId` too
+   * (`EXPECTED_USER_ID_HEADER`): refused (`UserMismatchError`) when signed
+   * in as another account, though of the same username (the first deleted,
+   * its name taken again).
+   */
+  public forAccount(userId: string): ApiClient {
+    return new ApiClient(
+      this.actingUser,
+      this.writeId,
+      this.readsAsUser,
+      userId
+    );
+  }
+
   /**
    * Send a request with the auth cookie, which every route needs (reads
    * included, since they are owner-only and cross-origin), naming the acting
@@ -99,12 +178,16 @@ class ApiClient {
       signal,
       contentType = 'application/vnd.api+json',
       withAuth = true,
+      made,
     }: RequestOptions,
     failure: string
   ): Promise<Response> {
     // Writes name the signed-in user: the API refuses one signed in as
     // anyone else (`UserMismatchError`).
-    const user = withAuth && method !== 'GET' ? signedInUser() : null;
+    const user =
+      withAuth && (method !== 'GET' || this.readsAsUser)
+        ? this.actingUser()
+        : null;
     const init: RequestInit = {
       method,
       credentials: 'include',
@@ -114,6 +197,13 @@ class ApiClient {
         ...(user === null
           ? {}
           : {[EXPECTED_USER_HEADER]: encodeURIComponent(user)}),
+        ...(user === null || this.accountId === null
+          ? {}
+          : {[EXPECTED_USER_ID_HEADER]: this.accountId}),
+        ...(made === undefined ? {} : {[CLIENT_UPDATED_HEADER]: made}),
+        ...(this.writeId === null || method === 'GET'
+          ? {}
+          : {[CLIENT_WRITE_ID_HEADER]: this.writeId}),
       },
       ...(body === undefined ? {} : {body: JSON.stringify(body)}),
     };
@@ -127,7 +217,7 @@ class ApiClient {
           throw new UserMismatchError(failure, user);
         }
       }
-      throw new Error(`${failure}: ${resp.statusText}`);
+      throw new ApiRequestError(failure, resp.status, resp.statusText);
     }
     return resp;
   }
@@ -199,33 +289,57 @@ class ApiClient {
   }
 
   // Tag methods
-  public async createTag(name: string): Promise<TagDocument> {
+  // Writes: `made` is when a queued write was made (see RequestOptions).
+
+  public async createTag(
+    name: string,
+    clientId?: string,
+    made?: string
+  ): Promise<TagDocument> {
     const payload: TagCreateDocument = {
       data: {
         type: 'Tag',
         attributes: {
           name,
+          ...(clientId === undefined ? {} : {client_id: clientId}),
         },
       },
     };
     return this.requestDocument(
       `${baseURL}/tags`,
-      {method: 'POST', body: payload},
+      {method: 'POST', body: payload, made},
       'Failed to create tag',
       tagDocumentSchema
     );
   }
 
-  public async deleteTag(tagId: string): Promise<TagDocument> {
+  public async deleteTag(tagId: string, made?: string): Promise<TagDocument> {
     return this.requestDocument(
       `${baseURL}/tags/${tagId}`,
-      {method: 'DELETE'},
+      {method: 'DELETE', made},
       'Failed to delete tag',
       tagDocumentSchema
     );
   }
 
-  public async updateTag(tagId: string, name: string): Promise<TagDocument> {
+  /** Keep tag `tagId`, bringing it back if deleted (unless a newer write). */
+  public async keepTag(tagId: string, made?: string): Promise<TagDocument> {
+    const payload: TagUpdateDocument = {
+      data: {id: tagId, type: 'Tag', attributes: {is_deleted: false}},
+    };
+    return this.requestDocument(
+      `${baseURL}/tags/${tagId}`,
+      {method: 'PATCH', body: payload, made},
+      'Failed to keep tag',
+      tagDocumentSchema
+    );
+  }
+
+  public async updateTag(
+    tagId: string,
+    name: string,
+    made?: string
+  ): Promise<TagDocument> {
     const payload: TagUpdateDocument = {
       data: {
         id: tagId,
@@ -235,16 +349,22 @@ class ApiClient {
     };
     return this.requestDocument(
       `${baseURL}/tags/${tagId}`,
-      {method: 'PATCH', body: payload},
+      {method: 'PATCH', body: payload, made},
       'Failed to update tag',
       tagDocumentSchema
     );
   }
 
   // Entry methods
+  /**
+   * Create an entry. `clientId` makes a retried create find the entry the
+   * first one made (`client_id`).
+   */
   public async createEntry(
     subject: string,
-    body: string
+    body: string,
+    clientId?: string,
+    made?: string
   ): Promise<TextEntryDocument> {
     // The entry is the requester's: the API takes no `user` relationship.
     const payload: TextEntryCreateDocument = {
@@ -253,12 +373,13 @@ class ApiClient {
         attributes: {
           subject,
           body,
+          ...(clientId === undefined ? {} : {client_id: clientId}),
         },
       },
     };
     return this.requestDocument(
       `${baseURL}/entries`,
-      {method: 'POST', body: payload},
+      {method: 'POST', body: payload, made},
       'Failed to create entry',
       textEntryDocumentSchema
     );
@@ -267,7 +388,8 @@ class ApiClient {
   public async updateEntry(
     entryId: string,
     subject: string,
-    body: string
+    body: string,
+    made?: string
   ): Promise<TextEntryDocument> {
     const payload: TextEntryUpdateDocument = {
       data: {
@@ -281,7 +403,7 @@ class ApiClient {
     };
     return this.requestDocument(
       `${baseURL}/entries/${entryId}`,
-      {method: 'PATCH', body: payload},
+      {method: 'PATCH', body: payload, made},
       'Failed to update entry',
       textEntryDocumentSchema
     );
@@ -355,7 +477,8 @@ class ApiClient {
 
   public async tagEntry(
     tagId: string,
-    entryId: string
+    entryId: string,
+    made?: string
   ): Promise<TagTextEntryDocument> {
     const payload: TagTextEntryCreateDocument = {
       data: {
@@ -379,37 +502,54 @@ class ApiClient {
     };
     return this.requestDocument(
       `${baseURL}/tags_entries`,
-      {method: 'POST', body: payload},
+      {method: 'POST', body: payload, made},
       'Failed to tag entry',
       tagTextEntryDocumentSchema
     );
   }
 
-  public async untagEntry(tagEntryId: string): Promise<void> {
-    await this.request(
+  /** Untag: the junction, deleted (or as it stands, after a newer write). */
+  public async untagEntry(
+    tagEntryId: string,
+    made?: string
+  ): Promise<TagTextEntryDocument> {
+    return this.requestDocument(
       `${baseURL}/tags_entries/${tagEntryId}`,
-      {method: 'DELETE'},
-      'Failed to untag entry'
+      {method: 'DELETE', made},
+      'Failed to untag entry',
+      tagTextEntryDocumentSchema
     );
   }
 
-  public async deleteEntry(entryId: string): Promise<void> {
-    await this.request(
+  /** Delete: the entry, deleted (or as it stands, after a newer write). */
+  public async deleteEntry(
+    entryId: string,
+    made?: string
+  ): Promise<TextEntryDocument> {
+    return this.requestDocument(
       `${baseURL}/entries/${entryId}`,
-      {method: 'DELETE'},
-      'Failed to delete entry'
+      {method: 'DELETE', made},
+      'Failed to delete entry',
+      textEntryDocumentSchema
     );
   }
 
-  public async reorderTag(payload: TagReorderDocument): Promise<void> {
+  public async reorderTag(
+    payload: TagReorderDocument,
+    made?: string
+  ): Promise<void> {
     await this.request(
       `${baseURL}/tags/reorder`,
-      {method: 'POST', body: payload},
+      {method: 'POST', body: payload, made},
       'Failed to reorder tag'
     );
   }
 
-  public async reorderEntry(top: string, bottom: string): Promise<void> {
+  public async reorderEntry(
+    top: string,
+    bottom: string,
+    made?: string
+  ): Promise<void> {
     const payload: TagTextEntryReorderDocument = {
       data: {
         type: 'TagTextEntryThroughModel',
@@ -422,8 +562,45 @@ class ApiClient {
     };
     await this.request(
       `${baseURL}/tags_entries/reorder`,
-      {method: 'POST', body: payload},
+      {method: 'POST', body: payload, made},
       'Failed to reorder entry'
+    );
+  }
+
+  // Single rows, to put back what a refused queued write changed locally.
+
+  public async getTag(tagId: string): Promise<TagDocument> {
+    return this.requestDocument(
+      `${baseURL}/tags/${tagId}`,
+      {method: 'GET'},
+      'Failed to fetch tag',
+      tagDocumentSchema
+    );
+  }
+
+  public async getEntry(entryId: string): Promise<TextEntryDocument> {
+    return this.requestDocument(
+      `${baseURL}/entries/${entryId}`,
+      {method: 'GET'},
+      'Failed to fetch entry',
+      textEntryDocumentSchema
+    );
+  }
+
+  /** The junction (deleted too) putting entry `entryId` in tag `tagId`. */
+  public async getJunction(
+    tagId: string,
+    entryId: string
+  ): Promise<TagTextEntryListDocument> {
+    const params: TagTextEntryListParams = {
+      'filter[tag.id]': Number(tagId),
+      'filter[text_entry.id]': Number(entryId),
+    };
+    return this.requestDocument(
+      urlWithQuery(`${baseURL}/tags_entries`, params),
+      {method: 'GET'},
+      'Failed to fetch junction',
+      tagTextEntryListDocumentSchema
     );
   }
 }

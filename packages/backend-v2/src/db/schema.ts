@@ -14,6 +14,7 @@ import {
   check,
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
   unique,
@@ -115,6 +116,12 @@ export const textEntries = sqliteTable(
     // Folded copies of subject/body for Unicode-aware search (lib/search.ts).
     subject_folded: text('subject_folded').notNull().default(''),
     body_folded: text('body_folded').notNull().default(''),
+    // When the last write a client made to the row was made (api-shared's
+    // CLIENT_UPDATED_HEADER): a write older than it changes nothing (last
+    // writer wins by edit time, resources/lww.ts). NULL counts as oldest.
+    client_updated: text('client_updated'),
+    // A queued create's client id: a retried create finds the entry it made.
+    client_id: text('client_id'),
   },
   table => [
     check(
@@ -129,6 +136,9 @@ export const textEntries = sqliteTable(
       table.user_id,
       table.date_updated
     ),
+    uniqueIndex('text_entries_textentry_client_id_unique')
+      .on(table.user_id, table.client_id)
+      .where(sql`${table.client_id} IS NOT NULL`),
   ]
 );
 
@@ -148,6 +158,13 @@ export const tags = sqliteTable(
     is_deleted: integer('is_deleted', {mode: 'boolean'})
       .notNull()
       .default(false),
+    // A client's last write (see text_entries_textentry.client_updated).
+    client_updated: text('client_updated'),
+    // The client id of the queued create that made the tag, which the API
+    // renders: a client that syncs the tag before the create's answer arrives
+    // knows it. (Retries find tags by `tags_tagclientid`, which holds every
+    // create's.)
+    client_id: text('client_id'),
   },
   table => [
     unique('One tag of same name per user').on(table.name, table.user_id),
@@ -156,6 +173,62 @@ export const tags = sqliteTable(
     index('tags_tag_user_order_idx').on(table.user_id, table.order),
     index('tags_tag_user_updated_idx').on(table.user_id, table.date_updated),
   ]
+);
+
+/**
+ * The client id of every queued tag create, and the tag it was answered with
+ * (the tag it made, or the user's of the name): a retried create finds that
+ * tag by it, however it is named by then. Reserved in the batch of the write
+ * the create is answered with, so a client id names one tag.
+ */
+export const tagClientIds = sqliteTable(
+  'tags_tagclientid',
+  {
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+    client_id: text('client_id').notNull(),
+    tag_id: integer('tag_id')
+      .notNull()
+      .references(() => tags.id, {onDelete: 'cascade'}),
+  },
+  table => [
+    primaryKey({columns: [table.user_id, table.client_id]}),
+    index('tags_tagclientid_tag_id_idx').on(table.tag_id),
+  ]
+);
+
+/**
+ * The clock client writes are timed by (`resources/lww.ts`), in
+ * microseconds: the database's, advanced by at least a microsecond at each
+ * write, so no two writes share a time (one row).
+ */
+export const syncClock = sqliteTable(
+  'sync_clock',
+  {
+    id: integer('id').primaryKey(),
+    micros: integer('micros').notNull(),
+  },
+  table => [check('sync_clock_one_row', sql`${table.id} = 1`)]
+);
+
+/**
+ * The writes clients named (`Client-Write-Id`), by that id: the time the
+ * API counted the first attempt as made at (its own, or now: naming no
+ * time, or one ahead of the API's clock), which every retry counts too,
+ * however late and on whatever isolate. Kept as long as the user.
+ */
+export const clientWrites = sqliteTable(
+  'sync_clientwrite',
+  {
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+    write_id: text('write_id').notNull(),
+    made: text('made').notNull(),
+    date_created: text('date_created').notNull(),
+  },
+  table => [primaryKey({columns: [table.user_id, table.write_id]})]
 );
 
 export const tagsEntries = sqliteTable(
@@ -179,6 +252,8 @@ export const tagsEntries = sqliteTable(
     is_deleted: integer('is_deleted', {mode: 'boolean'})
       .notNull()
       .default(false),
+    // A client's last write (see text_entries_textentry.client_updated).
+    client_updated: text('client_updated'),
   },
   table => [
     unique('tags_tagtextentrythroughmodel_tag_id_text_entry_id_uniq').on(
@@ -231,6 +306,8 @@ export const entryReuses = sqliteTable(
 export type User = typeof users.$inferSelect;
 export type Token = typeof tokens.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
+export type TagClientId = typeof tagClientIds.$inferSelect;
+export type ClientWrite = typeof clientWrites.$inferSelect;
 export type TextEntry = typeof textEntries.$inferSelect;
 export type TagTextEntry = typeof tagsEntries.$inferSelect;
 export type TextEntryReused = typeof entryReuses.$inferSelect;

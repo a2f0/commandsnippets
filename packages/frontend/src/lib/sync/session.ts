@@ -7,9 +7,18 @@
 import {Dexie} from 'dexie';
 import {adminSyncApi} from '../api/adminApi';
 import {apiClient} from '../api/apiClient';
-import {CommandsnippetsDatabase, databaseName} from '../db/database';
+import {
+  CommandsnippetsDatabase,
+  databaseName,
+  OWNER_ID_KEY,
+} from '../db/database';
 import {environment} from '../environment';
-import {createSyncEngine, type SyncApi, type SyncEngine} from './sync';
+import {
+  bindOwner,
+  createSyncEngine,
+  type SyncApi,
+  type SyncEngine,
+} from './sync';
 
 export interface SyncSession {
   /** The signed-in user, whose database it is. */
@@ -105,12 +114,22 @@ export function syncSession(
       owner,
       readOnly,
       db,
-      sync: createSyncEngine(
-        db,
-        readOnly ? adminSyncApi(owner) : ownSyncApi,
-        `${db.name}:${owner}`,
-        owner
-      ),
+      sync: readOnly
+        ? createSyncEngine(
+            db,
+            adminSyncApi(owner),
+            `${db.name}:${owner}`,
+            owner
+          )
+        : createSyncEngine(
+            db,
+            ownSyncApi,
+            `${db.name}:${owner}`,
+            owner,
+            // Every queued write names its owner, whoever is signed in when
+            // it is sent.
+            apiClient.writesAs(username)
+          ),
     };
     sessions.set(owner, session);
   }
@@ -118,11 +137,87 @@ export function syncSession(
 }
 
 /**
+ * Run `task` holding the Web Lock of the database `name`'s data, across
+ * tabs: each write holds it shared (`lib/data/writes.ts`), a sign-out's
+ * cleanup exclusively (`endSyncSession`), so the cleanup sees every write
+ * committed before it, and none is made while it decides whether to delete
+ * the database (one waiting finds the database closed, or opens it anew).
+ */
+export function withDataLock<T>(
+  name: string,
+  mode: LockMode,
+  task: () => Promise<T>
+): Promise<T> {
+  const locks = globalThis.navigator?.locks;
+  return locks === undefined
+    ? task()
+    : locks.request(`commandsnippets-data:${name}`, {mode}, task);
+}
+
+/**
+ * Before user `userId` signs in as `username`: data kept here under that
+ * name for another account of it (deleted since, its name taken again) is
+ * deleted, queued writes and all, never shown or sent as theirs; and the
+ * data is bound to this account from the start, so writes queued before
+ * any sync are never taken for another's either. (A session binds the data
+ * it opens too: `bindOwner`.)
+ */
+export async function claimData(
+  username: string,
+  userId: string
+): Promise<void> {
+  const name = databaseName(environment, username);
+  await withDataLock(name, 'exclusive', async () => {
+    if (await Dexie.exists(name)) {
+      const kept = new CommandsnippetsDatabase(name);
+      let held: string | undefined;
+      try {
+        held = (await kept.cursors.get([username, OWNER_ID_KEY]))?.after;
+      } finally {
+        kept.close();
+      }
+      if (held !== undefined && held !== userId) {
+        if (open?.db.name === name) {
+          // Open here: bound (and so wiped) in place.
+          await bindOwner(open.db, username, userId);
+          return;
+        }
+        await Dexie.delete(name);
+      }
+    }
+    const db = new CommandsnippetsDatabase(name);
+    try {
+      await bindOwner(db, username, userId);
+    } finally {
+      db.close();
+    }
+  });
+}
+
+/** Whether the database `name` holds writes not sent to the API yet. */
+export async function hasQueuedWrites(name: string): Promise<boolean> {
+  if (!(await Dexie.exists(name))) {
+    return false;
+  }
+  const db = new CommandsnippetsDatabase(name);
+  try {
+    return (await db.outbox.count()) > 0;
+  } finally {
+    db.close();
+  }
+}
+
+/**
  * Sign `username` out: close the open database, and delete their data (and
  * any other user's it holds) whether or not this page opened it (they may
- * have synced before a reload).
+ * have synced before a reload). A database still holding queued writes is
+ * kept, so they are not lost (the session expired offline, say): the user's
+ * next sign-in here sends them. `discardQueued` deletes it all the same.
  */
-export async function endSyncSession(username: string | null): Promise<void> {
+export async function endSyncSession(
+  username: string | null,
+  {discardQueued = false}: {discardQueued?: boolean} = {}
+): Promise<void> {
   const ending = open;
   open = null;
   ending?.db.close();
@@ -136,5 +231,18 @@ export async function endSyncSession(username: string | null): Promise<void> {
   if (username !== null) {
     names.add(databaseName(environment, username));
   }
-  await Promise.all([...names].map(name => Dexie.delete(name)));
+  await Promise.all(
+    [...names].map(name =>
+      withDataLock(name, 'exclusive', async () => {
+        if (!discardQueued && (await hasQueuedWrites(name))) {
+          return;
+        }
+        // Opened again meanwhile (the user signed in again): it stays.
+        if (open?.db.name === name) {
+          return;
+        }
+        await Dexie.delete(name);
+      })
+    )
+  );
 }

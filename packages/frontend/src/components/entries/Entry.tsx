@@ -65,6 +65,12 @@ interface IEntryProps {
   moveEntry: (id: string, to: number) => void;
   findEntry: (id: string) => {entry: TextEntry; index: number};
   object: TextEntry;
+  /**
+   * The row's key (`keyOfRow`): its local id, when it was made here, which
+   * stays when the API's id replaces it. A new entry's form opened next to
+   * it is anchored to it, so it stays open, text and all.
+   */
+  rowKey: string;
   /** The tag the list shows, when it shows one. */
   tagId: string | undefined;
   findEntryByIndex: (id: number) => TextEntry | null;
@@ -76,6 +82,7 @@ const Entry = ({
   moveEntry,
   findEntry,
   object,
+  rowKey,
   tagId,
   findEntryByIndex,
 }: IEntryProps) => {
@@ -291,8 +298,8 @@ const Entry = ({
   );
 
   const handleNewEntry = useCallback(() => {
-    appConfig.setEntryNew(`textEntry-${object.id}-top`);
-  }, [appConfig, object.id]);
+    appConfig.setEntryNew(`textEntry-${rowKey}-top`);
+  }, [appConfig, rowKey]);
 
   /** Delete an untagged entry; take a tag's entry out of the tag. */
   const handleRemoveFromList = useCallback(async () => {
@@ -384,7 +391,7 @@ const Entry = ({
 
   return (
     <>
-      {appConfig.entryNew === `textEntry-${object.id}-top` && !readOnly && (
+      {appConfig.entryNew === `textEntry-${rowKey}-top` && !readOnly && (
         <EntryNew id={`textEntryNew-${object.id}-top`} tagId={tagId} />
       )}
       {!isEditing && (
@@ -461,7 +468,7 @@ const Entry = ({
           </EntryContainer>
         </div>
       )}
-      {appConfig.entryNew === `textEntry-${object.id}-bottom` && !readOnly && (
+      {appConfig.entryNew === `textEntry-${rowKey}-bottom` && !readOnly && (
         <EntryNew id={`textEntryNew-${object.id}-bottom`} tagId={tagId} />
       )}
 

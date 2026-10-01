@@ -91,7 +91,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
         date_last_used: '2020-04-15T18:20:00',
         date_updated: '2020-12-28T17:36:18.397537',
         entry_count: 15,
-        order: 1,
+        order: 0,
         is_deleted: false,
       },
       relationships: {user},
@@ -100,7 +100,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
       type: 'TagTextEntryThroughModel',
       id: '1',
       attributes: {
-        order: 1,
+        order: 0,
         date_updated: '2020-04-13T18:20:00',
         date_created: '2020-04-13T18:20:00',
         is_deleted: false,
@@ -130,7 +130,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
       type: 'TagTextEntryThroughModel',
       id: '3',
       attributes: {
-        order: 1,
+        order: 2,
         date_updated: '2020-04-14T18:20:00',
         date_created: '2020-04-14T18:20:00',
         is_deleted: false,
@@ -145,7 +145,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
       type: 'TagTextEntryThroughModel',
       id: '4',
       attributes: {
-        order: 1,
+        order: 3,
         date_updated: '2020-04-15T18:20:00',
         date_created: '2020-04-15T18:20:00',
         is_deleted: false,

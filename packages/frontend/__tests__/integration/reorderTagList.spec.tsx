@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {type MockInstance, vi} from 'vitest';
-import {apiClient} from '../../src/lib/api/apiClient';
+import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
 import {signIn} from '../util/signIn';
@@ -21,7 +21,7 @@ describe('TagList', () => {
   let reorderTagSpy: MockInstance;
   let consoleMock: MockInstance;
   beforeEach(() => {
-    reorderTagSpy = vi.spyOn(apiClient, 'reorderTag');
+    reorderTagSpy = vi.spyOn(apiClientMethods, 'reorderTag');
     consoleMock = vi
       .spyOn(global.console, 'debug')
       .mockImplementation(() => undefined);
@@ -177,16 +177,21 @@ describe('TagList', () => {
       fireEvent.drop(tags[1]);
     });
 
-    expect(reorderTagSpy).toBeCalledWith({
-      data: {
-        attributes: {
-          top: '1',
-          bottom: '3',
+    await waitFor(() =>
+      expect(reorderTagSpy).toBeCalledWith(
+        {
+          data: {
+            attributes: {
+              top: '1',
+              bottom: '3',
+            },
+            relationships: {},
+            type: 'Tag',
+          },
         },
-        relationships: {},
-        type: 'Tag',
-      },
-    });
+        expect.any(String)
+      )
+    );
   });
 
   it('Reorders 0 -> 2', async () => {
@@ -251,16 +256,21 @@ describe('TagList', () => {
     expect(tags[2]).toHaveTextContent('test-tag-3');
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
-    expect(reorderTagSpy).toBeCalledWith({
-      data: {
-        attributes: {
-          top: '1',
-          bottom: '4',
+    await waitFor(() =>
+      expect(reorderTagSpy).toBeCalledWith(
+        {
+          data: {
+            attributes: {
+              top: '1',
+              bottom: '4',
+            },
+            relationships: {},
+            type: 'Tag',
+          },
         },
-        relationships: {},
-        type: 'Tag',
-      },
-    });
+        expect.any(String)
+      )
+    );
   });
   it('Reorders 0 -> 3', async () => {
     const user = userEvent.setup();
@@ -349,16 +359,21 @@ describe('TagList', () => {
     expect(tags[2]).toHaveTextContent('test-tag-4');
     expect(tags[3]).toHaveTextContent('test-tag-1');
 
-    expect(reorderTagSpy).toBeCalledWith({
-      data: {
-        attributes: {
-          top: '4',
-          bottom: '1',
+    await waitFor(() =>
+      expect(reorderTagSpy).toBeCalledWith(
+        {
+          data: {
+            attributes: {
+              top: '4',
+              bottom: '1',
+            },
+            relationships: {},
+            type: 'Tag',
+          },
         },
-        relationships: {},
-        type: 'Tag',
-      },
-    });
+        expect.any(String)
+      )
+    );
   });
   it('Reorders 1 -> 2', async () => {
     const user = userEvent.setup();
@@ -419,16 +434,21 @@ describe('TagList', () => {
     expect(tags[2]).toHaveTextContent('test-tag-2');
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
-    expect(reorderTagSpy).toBeCalledWith({
-      data: {
-        attributes: {
-          top: '2',
-          bottom: '4',
+    await waitFor(() =>
+      expect(reorderTagSpy).toBeCalledWith(
+        {
+          data: {
+            attributes: {
+              top: '2',
+              bottom: '4',
+            },
+            relationships: {},
+            type: 'Tag',
+          },
         },
-        relationships: {},
-        type: 'Tag',
-      },
-    });
+        expect.any(String)
+      )
+    );
   });
   it('Reorders 2 -> 1', async () => {
     const user = userEvent.setup();
@@ -488,15 +508,20 @@ describe('TagList', () => {
     expect(tags[2]).toHaveTextContent('test-tag-2');
     expect(tags[3]).toHaveTextContent('test-tag-4');
 
-    expect(reorderTagSpy).toBeCalledWith({
-      data: {
-        attributes: {
-          top: '3',
-          bottom: '2',
+    await waitFor(() =>
+      expect(reorderTagSpy).toBeCalledWith(
+        {
+          data: {
+            attributes: {
+              top: '3',
+              bottom: '2',
+            },
+            relationships: {},
+            type: 'Tag',
+          },
         },
-        relationships: {},
-        type: 'Tag',
-      },
-    });
+        expect.any(String)
+      )
+    );
   });
 });

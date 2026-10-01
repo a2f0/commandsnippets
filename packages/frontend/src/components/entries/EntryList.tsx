@@ -14,6 +14,7 @@ import {
 } from '../../lib/data/hooks';
 import {sortEntries, sortTagEntries} from '../../lib/data/sort';
 import {useTagSync} from '../../lib/data/useSync';
+import {keyOfRow} from '../../lib/db/database';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
@@ -238,14 +239,16 @@ const EntryList = () => {
       {entries.map((element, i) => {
         const index = i;
         return (
-          <div key={element.id} ref={elRefs[index]}>
+          // Keyed so a row made here stays the same component (an open
+          // editor and its text too) when the API's id replaces its own.
+          <div key={keyOfRow(element)} ref={elRefs[index]}>
             <Entry
-              key={element.id}
               id={element.id}
               index={index}
               moveEntry={moveEntry}
               findEntry={findEntry}
               object={element}
+              rowKey={keyOfRow(element)}
               tagId={currentTag?.id}
               findEntryByIndex={findEntryByIndex}
             />

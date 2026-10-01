@@ -160,7 +160,7 @@ describe('The entries page', () => {
     await waitFor(() => expect(listed()).toHaveLength(4));
 
     const untagged = await fetch(`${API}/tags_entries/2`, {method: 'DELETE'});
-    expect(untagged.status).toBe(204);
+    expect(untagged.status).toBe(200);
     comeBackIntoView();
 
     await waitFor(() => expect(listed()).toHaveLength(3));

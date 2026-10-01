@@ -16,6 +16,8 @@ export const textEntryAttributesSchema = z.object({
   reused_count: countSchema,
   is_deleted: z.boolean(),
   tag_count: countSchema,
+  /** The id the client that made the entry gave it (`client_id`), if any. */
+  client_id: z.optional(z.nullable(z.string())),
 });
 
 export const textEntrySchema = relatedResourceSchema(

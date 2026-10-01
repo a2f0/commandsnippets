@@ -92,10 +92,12 @@ describe('Tag List Context Menu Behavior', () => {
     // Confirm existing tag-3 is still present
     await expect($('#tag-3')).toBeDisplayed();
 
-    // Confirm new tag is present (MSW returns id '5' and name 'new-tag')
+    // Confirm new tag is present, with the API's id once its create is sent
+    // (the mock gives it the next id, 5)
     await expect($('#tag-5')).toBeDisplayed();
-    const newTagLabelText = await $('#tagLabelWrapper-5').getText();
-    expect(newTagLabelText).toContain('new-tag');
+    await expect($('#tagLabelWrapper-5')).toHaveText(
+      expect.stringContaining('test-3')
+    );
 
     // Verify the tag creation form is hidden
     await expect(BasePage.tagNewBottom).not.toBeDisplayed();

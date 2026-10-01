@@ -4,11 +4,13 @@
  * reads show it. contract.spec.ts checks the documents' shapes.
  */
 import {
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   CURSOR_START,
   cursorOf,
   type IncludedResource,
   type TagListDocument,
+  type TagTextEntry,
   type TagTextEntryCreateDocument,
   type TagUpdateDocument,
   type TextEntryListDocument,
@@ -286,6 +288,7 @@ describe('POST /entries', () => {
         reused_count: 0,
         is_deleted: false,
         tag_count: 0,
+        client_id: null,
       },
       relationships: {
         user: {data: {type: 'User', id: '1'}},
@@ -325,6 +328,147 @@ describe('POST /entries', () => {
       )
     );
     expect((await getEntries()).data).toHaveLength(3);
+  });
+
+  it('makes an entry once per client id, as the API does', async () => {
+    const create = async () =>
+      textEntryDocumentSchema.parse(
+        (
+          await send('POST', '/entries', {
+            data: {
+              type: 'TextEntry',
+              attributes: {subject: 'once', body: 'b', client_id: 'local-e'},
+            },
+          })
+        ).json
+      ).data;
+    const made = await create();
+    expect(made.attributes.client_id).toBe('local-e');
+    expect((await create()).id).toBe(made.id);
+    expect((await getEntries()).data).toHaveLength(4);
+  });
+});
+
+describe('POST /tags', () => {
+  const create = async (name: string, clientId?: string) =>
+    tagDocumentSchema.parse(
+      (
+        await send('POST', '/tags', {
+          data: {
+            type: 'Tag',
+            attributes: {
+              name,
+              ...(clientId === undefined ? {} : {client_id: clientId}),
+            },
+          },
+        })
+      ).json
+    ).data;
+
+  it('makes a tag once per client id, whatever it is called by the retry', async () => {
+    const made = await create('first', 'local-t');
+    expect(made.attributes.client_id).toBe('local-t');
+    await send('PATCH', `/tags/${made.id}`, renameTag(made.id, 'second'));
+    const again = await create('first', 'local-t');
+    expect(again.id).toBe(made.id);
+    expect(again.attributes.name).toBe('second');
+    expect((await getTags()).data).toHaveLength(5);
+  });
+
+  it('answers a retry with the tag of the name it answered with, renamed since', async () => {
+    const tag = await create('test-tag-1', 'local-mine');
+    expect(tag.id).toBe('1');
+    await send('PATCH', '/tags/1', renameTag('1', 'moved'));
+    const again = await create('test-tag-1', 'local-mine');
+    expect(again.id).toBe('1');
+    expect(again.attributes.name).toBe('moved');
+    expect((await getTags()).data).toHaveLength(4);
+  });
+});
+
+describe('POST /tags/reorder and /tags_entries/reorder', () => {
+  const reorder = (
+    path: string,
+    type: 'Tag' | 'TagTextEntryThroughModel',
+    top: string,
+    bottom: string
+  ) => send('POST', path, {data: {type, attributes: {top, bottom}}});
+  const ranks = (rows: Array<{id: string; attributes: {order: number}}>) =>
+    [...rows]
+      .sort((a, b) => a.attributes.order - b.attributes.order)
+      .map(({id}) => id);
+
+  it('move a tag directly above another, the tags between shifting, each with a new revision', async () => {
+    const before = await getTags();
+    expect(ranks(before.data)).toEqual(['1', '2', '3', '4']);
+    expect((await reorder('/tags/reorder', 'Tag', '4', '2')).status).toBe(200);
+    const after = await getTags();
+    expect(ranks(after.data)).toEqual(['1', '4', '2', '3']);
+    // The rows whose rank changed get a new revision; the others keep theirs.
+    const newest = latest(before.data.map(tag => tag.attributes.date_updated));
+    for (const id of ['2', '3', '4']) {
+      expect(tagOf(after, id).attributes.date_updated > newest).toBe(true);
+    }
+    expect(tagOf(after, '1')).toEqual(tagOf(before, '1'));
+
+    // Downward too: 4 above 3.
+    await reorder('/tags/reorder', 'Tag', '4', '3');
+    expect(ranks((await getTags()).data)).toEqual(['1', '2', '4', '3']);
+  });
+
+  it('move an entry directly above another in a tag', async () => {
+    const junctions = async () =>
+      ((await getEntries()).included ?? []).filter(
+        (resource): resource is TagTextEntry =>
+          resource.type === 'TagTextEntryThroughModel'
+      );
+    // Entries 1 and 2 are in tag 1.
+    expect(ranks(await junctions())).toEqual(['1', '2']);
+    const response = await reorder(
+      '/tags_entries/reorder',
+      'TagTextEntryThroughModel',
+      '2',
+      '1'
+    );
+    expect(response.status).toBe(200);
+    expect(ranks(await junctions())).toEqual(['2', '1']);
+  });
+
+  it('make a reorder the client names once, as the API does', async () => {
+    const named = (top: string, bottom: string, writeId: string) =>
+      send(
+        'POST',
+        '/tags/reorder',
+        {data: {type: 'Tag', attributes: {top, bottom}}},
+        {...JSON_API, [CLIENT_WRITE_ID_HEADER]: writeId}
+      );
+    await named('4', '2', 'move-1');
+    await reorder('/tags/reorder', 'Tag', '2', '4');
+    expect(ranks((await getTags()).data)).toEqual(['1', '2', '4', '3']);
+    // Its retry: nothing moves.
+    expect((await named('4', '2', 'move-1')).status).toBe(200);
+    expect(ranks((await getTags()).data)).toEqual(['1', '2', '4', '3']);
+  });
+
+  it('refuses a row that does not exist (or a deleted junction)', async () => {
+    const tagged = await reorder('/tags/reorder', 'Tag', '99', '1');
+    expect(tagged.status).toBe(400);
+    expect(tagged.json).toEqual(
+      oneError(
+        400,
+        CODES.doesNotExist,
+        'Invalid pk "99" - object does not exist.',
+        '/data/attributes/top'
+      )
+    );
+    expect((await send('DELETE', '/tags_entries/2')).status).toBe(200);
+    const untagged = await reorder(
+      '/tags_entries/reorder',
+      'TagTextEntryThroughModel',
+      '2',
+      '1'
+    );
+    expect(untagged.status).toBe(400);
   });
 });
 
@@ -567,7 +711,7 @@ describe('DELETE /tags_entries/:id', () => {
     for (const junction of tagOne.slice(0, 3)) {
       expect(
         (await send('DELETE', `/tags_entries/${junction.id}`)).status
-      ).toBe(204);
+      ).toBe(200);
     }
     // getTags parses with the schema, which refuses a negative count.
     expect(tagOf(await getTags(), '1')?.attributes.entry_count).toBe(
@@ -581,7 +725,7 @@ describe('DELETE /tags_entries/:id', () => {
     const [tagsBefore, entriesBefore] = [await getTags(), await getEntries()];
 
     const {status} = await send('DELETE', `/tags_entries/${junction.id}`);
-    expect(status).toBe(204);
+    expect(status).toBe(200);
 
     const tags = await getTags();
     const entries = await getEntries();
@@ -615,7 +759,7 @@ describe('DELETE /tags_entries/:id', () => {
 
   it('dates the tag last used by its newest remaining junction', async () => {
     const {status} = await send('DELETE', '/tags_entries/1');
-    expect(status).toBe(204);
+    expect(status).toBe(200);
     const tag = tagOf(await getTags(), '1');
     expect(tag.attributes.entry_count).toBe(1);
     // Junction 2's.
@@ -626,7 +770,7 @@ describe('DELETE /tags_entries/:id', () => {
     const tagged = await send('POST', '/tags_entries', tagEntry('3', '2'));
     const first = tagTextEntryDocumentSchema.parse(tagged.json).data;
     expect((await send('DELETE', `/tags_entries/${first.id}`)).status).toBe(
-      204
+      200
     );
     const listed = tagTextEntryListDocumentSchema.parse(
       (await send('GET', '/tags_entries?filter[tag.id]=3')).json

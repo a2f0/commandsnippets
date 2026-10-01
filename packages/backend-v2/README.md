@@ -224,6 +224,39 @@ Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing
 sessions keep working), and ids continue from the Postgres sequences.
 
+## Queued writes (last writer wins)
+
+The web app makes its writes locally and sends them later, offline too, in
+order. Each names when it was made in the `Client-Updated` header
+(api-shared's `CLIENT_UPDATED_HEADER`; a time ahead of the API's clock counts
+as now, and a write without one as made now), and itself in
+`Client-Write-Id` (`CLIENT_WRITE_ID_HEADER`), the same on every attempt:
+every retry counts as the first attempt was counted (`sync_clientwrite`
+keeps that time as long as the user), whatever the clock of the isolate it
+reaches, so a retry after a lost answer never beats a write made in
+between. Tags, entries and
+junctions keep the time of the last client write to them
+(`client_updated`), and a write to one applies only when it is no older
+(`src/resources/lww.ts`): the latest edit wins, whatever order the writes
+arrive in. Now is the API's write clock (`sync_clock`): the database's,
+which every isolate shares, advanced by at least a microsecond at each
+write. A time ahead of it counts as it, no isolate's clock running ahead of
+another's makes a later write older, and no two writes share a time. An older write
+changes nothing, and is answered with the row as it stands, which the
+client stores. Creating a tag of a name the user has, or tagging an entry
+already in the tag, still records the time (no revision advances), so an
+older delete or untag does not undo it. Reorders apply in arrival order.
+
+A queued tag or entry create carries a `client_id` (the client's local id):
+a create naming one the user's tags (or entries) already have answers with
+that row, whatever it is called by then, so one retried after a lost answer
+is made once (junctions are found by their pair already): a tag keeps the
+`client_id` of the create that made it, and `tags_tagclientid` those of the
+creates answered with it (of a name the user had). Tags and entries render
+the `client_id` of the create that made them, so a client whose create's
+answer was lost recognizes the row when it syncs it. Untagging answers with the junction, and untagging one already untagged
+changes nothing, so a retried untag is answered as the first was.
+
 ## Admin API
 
 An admin API replaces Django admin. `/api/v1/admin` is for `is_staff` users

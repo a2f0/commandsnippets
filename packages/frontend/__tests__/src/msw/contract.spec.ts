@@ -94,6 +94,12 @@ async function check({method, url, status, schema, body, headers}: Exchange) {
 }
 
 /** A `POST /tags_entries` document: tag `entryId` with `tagId`. */
+const reorderDocument = (
+  type: 'Tag' | 'TagTextEntryThroughModel',
+  top: string,
+  bottom: string
+) => ({data: {type, attributes: {top, bottom}}});
+
 const tagEntryDocument = (
   tagId: string,
   entryId: string
@@ -225,6 +231,53 @@ const exchanges: Exchange[] = [
     url: `${API}/tags`,
     status: 201,
     schema: tagDocumentSchema,
+    body: {data: {type: 'Tag', attributes: {name: 'new-tag'}}},
+  },
+  {
+    // A tag of a name the user has is that tag.
+    handler: `POST ${API}/tags`,
+    method: 'POST',
+    url: `${API}/tags`,
+    status: 201,
+    schema: tagDocumentSchema,
+    body: {data: {type: 'Tag', attributes: {name: 'test-tag-1'}}},
+  },
+  {
+    handler: `POST ${API}/tags`,
+    method: 'POST',
+    url: `${API}/tags`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: {data: {type: 'Tag', attributes: {name: ''}}},
+  },
+  // One tag or entry (to put back what a refused write changed).
+  {
+    handler: `GET ${API}/tags/:id`,
+    method: 'GET',
+    url: `${API}/tags/1`,
+    status: 200,
+    schema: tagDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/tags/:id`,
+    method: 'GET',
+    url: `${API}/tags/99`,
+    status: 404,
+    schema: errorDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/entries/:id`,
+    method: 'GET',
+    url: `${API}/entries/1`,
+    status: 200,
+    schema: textEntryDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/entries/:id`,
+    method: 'GET',
+    url: `${API}/entries/99`,
+    status: 404,
+    schema: errorDocumentSchema,
   },
   {
     handler: `PATCH ${API}/tags/:id`,
@@ -336,12 +389,22 @@ const exchanges: Exchange[] = [
     method: 'POST',
     url: `${API}/tags_entries/reorder`,
     status: 200,
+    body: reorderDocument('TagTextEntryThroughModel', '2', '1'),
+  },
+  {
+    handler: `POST ${API}/tags_entries/reorder`,
+    method: 'POST',
+    url: `${API}/tags_entries/reorder`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: reorderDocument('TagTextEntryThroughModel', '99', '1'),
   },
   {
     handler: `POST ${API}/tags/reorder`,
     method: 'POST',
     url: `${API}/tags/reorder`,
     status: 200,
+    body: reorderDocument('Tag', '4', '2'),
   },
   {
     handler: `DELETE ${API}/tags/:id`,
@@ -381,16 +444,25 @@ const exchanges: Exchange[] = [
     schema: errorDocumentSchema,
   },
   {
+    // The junction, deleted.
     handler: `DELETE ${API}/tags_entries/:id`,
     method: 'DELETE',
     url: `${API}/tags_entries/1`,
-    status: 204,
+    status: 200,
+    schema: tagTextEntryDocumentSchema,
   },
   {
-    // Junction 1 is gone now.
+    // Junction 1 is untagged already: answered alike (a retried untag).
     handler: `DELETE ${API}/tags_entries/:id`,
     method: 'DELETE',
     url: `${API}/tags_entries/1`,
+    status: 200,
+    schema: tagTextEntryDocumentSchema,
+  },
+  {
+    handler: `DELETE ${API}/tags_entries/:id`,
+    method: 'DELETE',
+    url: `${API}/tags_entries/999`,
     status: 404,
     schema: errorDocumentSchema,
   },
@@ -545,12 +617,19 @@ describe("the unit tests' server (__tests__/util/msw.ts)", () => {
       status: 200,
       schema: textEntryListDocumentSchema,
     });
-    for (const path of ['/tags/reorder', '/tags_entries/reorder']) {
+    for (const [path, body] of [
+      ['/tags/reorder', reorderDocument('Tag', '4', '2')],
+      [
+        '/tags_entries/reorder',
+        reorderDocument('TagTextEntryThroughModel', '2', '1'),
+      ],
+    ] as const) {
       await check({
         handler: '',
         method: 'POST',
         url: `${API}${path}`,
         status: 200,
+        body,
       });
     }
     await check({

@@ -1,3 +1,4 @@
+import {Dexie} from 'dexie';
 /**
  * The app's state for a test: signed in as the mock API's user, or back to
  * the defaults (signed out, which deletes the user's IndexedDB data).
@@ -8,6 +9,7 @@ import {
   defaultSavedState,
   defaultUiState,
   STORAGE_KEY,
+  signedOutDataCleanedUp,
   useAppState,
 } from '../../src/lib/state/appState';
 import {endSyncSession} from '../../src/lib/sync/session';
@@ -28,7 +30,15 @@ export async function resetApp(): Promise<void> {
   localStorage.removeItem(STORAGE_KEY);
   await useAppState.persist.rehydrate();
   useAppState.setState({...defaultSavedState, ...defaultUiState});
-  await endSyncSession(TEST_USER);
+  await signedOutDataCleanedUp();
+  await endSyncSession(TEST_USER, {discardQueued: true});
+  // Signing out keeps a database with queued writes: none outlives a test.
+  const names = await Dexie.getDatabaseNames();
+  await Promise.all(
+    names
+      .filter(name => name.startsWith('commandsnippets-'))
+      .map(name => Dexie.delete(name))
+  );
 }
 
 const isField = (

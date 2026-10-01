@@ -246,7 +246,7 @@ describe('TestTagsEntriesApi', () => {
     const response = await base.user1Client.delete(
       `/api/v1/tags_entries/${tagTextEntry.id}`
     );
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
 
     // Verify the relationship was deleted: kept, flagged, for the tag's sync.
     expect(await refreshJunction(tagTextEntry.id)).toMatchObject({
@@ -527,7 +527,7 @@ describe('TestTagsEntriesApi v2', () => {
     const response = await base.user1Client.delete(
       `/api/v1/tags_entries/${first?.id}`
     );
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
     const lastAfter = await refreshJunction(last?.id as number);
     expect(lastAfter?.order).toBe(2);
     expect(lastAfter?.date_updated).toBe(last?.date_updated);

@@ -2,6 +2,7 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {beforeEach, describe, expect, it, type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
+import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
 import {signIn} from '../util/signIn';
@@ -34,8 +35,8 @@ describe('Delete Untagged Entry', () => {
   beforeEach(async () => {
     // The mock API's fixtures are all in tag 1: one in no tag.
     await apiClient.createEntry('untagged-subject', 'untagged body');
-    deleteEntrySpy = vi.spyOn(apiClient, 'deleteEntry');
-    untagEntrySpy = vi.spyOn(apiClient, 'untagEntry');
+    deleteEntrySpy = vi.spyOn(apiClientMethods, 'deleteEntry');
+    untagEntrySpy = vi.spyOn(apiClientMethods, 'untagEntry');
   });
 
   afterEach(() => {
@@ -63,7 +64,10 @@ describe('Delete Untagged Entry', () => {
     await waitFor(() => {
       expect(screen.queryByText('entry-1-subject')).not.toBeInTheDocument();
     });
-    expect(untagEntrySpy).toHaveBeenCalledWith('1');
+    // Sent from the queue, naming when it was made.
+    await waitFor(() =>
+      expect(untagEntrySpy).toHaveBeenCalledWith('1', expect.any(String))
+    );
     expect(deleteEntrySpy).not.toHaveBeenCalled();
     expect(screen.getByText('entry-2-subject')).toBeInTheDocument();
   });

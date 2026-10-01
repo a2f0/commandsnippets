@@ -195,13 +195,52 @@ const calls: Call[] = [
   {
     name: 'untagEntry',
     call: () => apiClient.untagEntry('1'),
-    status: 204,
+    status: 200,
+    body: junctionDocument,
+    malformed: {
+      body: {data: {...junction, type: 'Tag'}},
+      failure: 'Failed to untag entry',
+    },
   },
   {
     name: 'deleteEntry',
     call: () => apiClient.deleteEntry('1'),
     status: 200,
     body: entryDocument,
+    malformed: {
+      body: {data: {...entry, id: 1}},
+      failure: 'Failed to delete entry',
+    },
+  },
+  {
+    name: 'getTag',
+    call: () => apiClient.getTag('1'),
+    status: 200,
+    body: tagDocument,
+    malformed: {
+      body: {data: {...tag, type: 'TextEntry'}},
+      failure: 'Failed to fetch tag',
+    },
+  },
+  {
+    name: 'getEntry',
+    call: () => apiClient.getEntry('1'),
+    status: 200,
+    body: entryDocument,
+    malformed: {
+      body: {data: {...entry, type: 'Tag'}},
+      failure: 'Failed to fetch entry',
+    },
+  },
+  {
+    name: 'getJunction',
+    call: () => apiClient.getJunction('1', '2'),
+    status: 200,
+    body: {...tagsResponse, data: [junction], included: [user]},
+    malformed: {
+      body: {links: {next: null}, data: [junction]},
+      failure: 'Failed to fetch junction',
+    },
   },
   {
     name: 'reorderTag',

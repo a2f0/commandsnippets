@@ -125,6 +125,7 @@ export async function tagFactory(fields: {
   name?: string;
   order?: number;
   is_deleted?: boolean;
+  client_id?: string;
 }): Promise<Tag> {
   const timestamp = now();
   const [tag] = await db()
@@ -136,6 +137,7 @@ export async function tagFactory(fields: {
         fields.order ??
         (await new OrderedModel(db(), tagOrdering).nextOrder(fields.user.id)),
       is_deleted: fields.is_deleted ?? false,
+      client_id: fields.client_id ?? null,
       date_created: timestamp,
       date_updated: timestamp,
       date_last_used: timestamp,

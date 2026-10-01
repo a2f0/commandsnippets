@@ -6,6 +6,7 @@ import {useDrop} from 'react-dnd';
 import {useNavigate} from 'react-router-dom';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly} from '../../lib/data/hooks';
+import {keyOfRow} from '../../lib/db/database';
 import {
   activeSearch,
   appMode,
@@ -199,7 +200,8 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
             return (
               <Tag
                 object={object}
-                key={object.id}
+                // The same component when the API's id replaces a local one.
+                key={keyOfRow(object)}
                 id={object.id}
                 moveEntry={moveEntry}
                 findEntry={findEntry}

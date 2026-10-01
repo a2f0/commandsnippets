@@ -3,6 +3,8 @@ import {describe, expect, it} from 'vitest';
 import {
   adminAuditLog,
   entryReuses,
+  syncClock,
+  tagClientIds,
   tags,
   tagsEntries,
   textEntries,
@@ -74,7 +76,10 @@ describe('schema', () => {
         'text_entries_textentry_body_length',
         'text_entries_textentry_subject_length',
       ],
-      indexes: ['text_entries_textentry_user_id_idx'],
+      indexes: [
+        'text_entries_textentry_client_id_unique',
+        'text_entries_textentry_user_id_idx',
+      ],
       references: ['user_id->users_user cascade'],
     });
   });
@@ -85,6 +90,17 @@ describe('schema', () => {
       indexes: ['tags_tag_user_order_idx', 'tags_tag_user_updated_idx'],
       unique: ['One tag of same name per user'],
       references: ['user_id->users_user cascade'],
+    });
+  });
+
+  it('sync_clock', () => {
+    expect(config(syncClock)).toMatchObject({checks: ['sync_clock_one_row']});
+  });
+
+  it('tags_tagclientid', () => {
+    expect(config(tagClientIds)).toMatchObject({
+      indexes: ['tags_tagclientid_tag_id_idx'],
+      references: ['tag_id->tags_tag cascade', 'user_id->users_user cascade'],
     });
   });
 

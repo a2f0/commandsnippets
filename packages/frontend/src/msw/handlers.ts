@@ -3,10 +3,14 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   adminUserUpdateAttributesSchema,
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
+  EXPECTED_USER_ID_HEADER,
   type IncludedResource,
+  MESSAGES,
   parseDateTime,
+  reorderAttributesSchema,
   type Tag,
   type TagCursorListDocument,
   type TagDocument,
@@ -19,6 +23,7 @@ import {
   type TextEntryCursorListDocument,
   type TextEntryDocument,
   type TextEntryListDocument,
+  tagCreateAttributesSchema,
   tagTextEntryCreateRelationshipsSchema,
   tagUpdateAttributesSchema,
   textEntryCreateAttributesSchema,
@@ -70,7 +75,7 @@ const originalTags: TagListDocument['data'] = [
     attributes: {
       name: 'test-tag-1',
       entry_count: 2,
-      order: 1,
+      order: 0,
       date_updated: '2020-05-07T18:20:00',
       date_created: '2020-05-07T18:20:00',
       date_last_used: '2020-05-07T18:20:00',
@@ -84,7 +89,7 @@ const originalTags: TagListDocument['data'] = [
     attributes: {
       name: 'test-tag-2',
       entry_count: 0,
-      order: 2,
+      order: 1,
       date_updated: '2021-05-07T18:20:00',
       date_created: '2021-05-07T18:20:00',
       date_last_used: '2021-05-07T18:20:00',
@@ -112,7 +117,7 @@ const originalTags: TagListDocument['data'] = [
     attributes: {
       name: 'test-tag-4',
       entry_count: 0,
-      order: 2,
+      order: 3,
       date_updated: '2022-05-08T18:20:00',
       date_created: '2022-05-08T18:20:00',
       date_last_used: '2022-05-08T18:20:00',
@@ -297,6 +302,73 @@ function linkJunctions(state: EntriesState, entry: TextEntry) {
     ...entry.relationships,
     text_entry_to_tag: {data, meta: {count: data.length}},
   };
+}
+
+/**
+ * A reorder's `top` and `bottom` among `rows`, as the API reads them: a pk
+ * none of `rows` has is a 400 (`does_not_exist`).
+ */
+async function reorderPair<R extends {id: string}>(
+  request: Request,
+  type: 'Tag' | 'TagTextEntryThroughModel',
+  rows: readonly R[]
+): Promise<[R, R]> {
+  const {attributes} = await parseResource(request, {type});
+  const ids = validateFields(reorderAttributesSchema, attributes);
+  const errors: ErrorObject[] = [];
+  const [top, bottom] = (['top', 'bottom'] as const).map(name => {
+    const id = String(ids[name]);
+    const row = rows.find(candidate => candidate.id === id);
+    if (row === undefined) {
+      errors.push({
+        detail: MESSAGES.pkDoesNotExist(id),
+        status: '400',
+        source: {pointer: `/data/attributes/${name}`},
+        code: CODES.doesNotExist,
+      });
+    }
+    return row;
+  });
+  if (top === undefined || bottom === undefined) {
+    throw new MockApiError(400, errors);
+  }
+  return [top, bottom];
+}
+
+/**
+ * Move `top` directly above `bottom` among `scope` (the rows ranked with
+ * them), as the API does (django-ordered-model's `above`): the rows between
+ * shift by one rank, and every row whose rank changes gets `revision`.
+ */
+function moveAbove<
+  R extends {attributes: {order: number; date_updated: string}},
+>(scope: readonly R[], top: R, bottom: R, revision: string): void {
+  const from = top.attributes.order;
+  const ranks = scope.map(row => row.attributes.order);
+  const before = ranks.filter(rank => rank < bottom.attributes.order);
+  const to =
+    from < bottom.attributes.order
+      ? before.length > 0
+        ? Math.max(...before)
+        : 0
+      : bottom.attributes.order;
+  if (from === bottom.attributes.order || from === to) {
+    return;
+  }
+  for (const row of scope) {
+    const rank = row.attributes.order;
+    const order =
+      row === top
+        ? to
+        : from < to && rank > from && rank <= to
+          ? rank - 1
+          : from > to && rank >= to && rank < from
+            ? rank + 1
+            : rank;
+    if (order !== rank) {
+      row.attributes = {...row.attributes, order, date_updated: revision};
+    }
+  }
 }
 
 /** The next revision of the tags. */
@@ -698,6 +770,22 @@ function adminDataOf(id: string): MockOwner {
   throw apiError(404, CODES.notFound, 'No AdminUser matches the given query.');
 }
 
+// The reorders made, by the id the client named each by: a retry is made
+// once, as the API makes it.
+const madeReorders = new Set<string>();
+const madeAlready = (request: Request) =>
+  madeReorders.has(request.headers.get(CLIENT_WRITE_ID_HEADER) ?? '');
+const recordMade = (request: Request) => {
+  const writeId = request.headers.get(CLIENT_WRITE_ID_HEADER);
+  if (writeId !== null) {
+    madeReorders.add(writeId);
+  }
+};
+
+// The client ids of tag creates answered with a tag of the name the user had,
+// by that id: a retry answers with that tag, as the API does.
+const tagsByClientId = new Map<string, string>();
+
 // Admin page data: the signed-in test user (id 1, staff) and one other.
 interface MockAdminUser {
   id: string;
@@ -784,15 +872,15 @@ const apiBaseUrls = [
 const SIGNED_IN_USER = 'test';
 
 /**
- * A write naming another user than the signed-in one, refused as the API
+ * A request naming another user than the signed-in one, refused as the API
  * refuses it (409 `user_mismatch`); anything else goes on to the handlers.
  */
-function refuseAnotherUsersWrite(request: Request) {
+function refuseAnotherUsersRequest(request: Request) {
   const expected = request.headers.get(EXPECTED_USER_HEADER);
+  const expectedId = request.headers.get(EXPECTED_USER_ID_HEADER);
   if (
-    expected === null ||
-    request.method === 'GET' ||
-    decodeURIComponent(expected) === SIGNED_IN_USER
+    (expected === null || decodeURIComponent(expected) === SIGNED_IN_USER) &&
+    (expectedId === null || expectedId === testUser.id)
   ) {
     return undefined;
   }
@@ -817,7 +905,9 @@ const createHandlers = () => {
 
   for (const baseUrl of apiBaseUrls) {
     handlers.push(
-      http.all(`${baseUrl}/*`, ({request}) => refuseAnotherUsersWrite(request)),
+      http.all(`${baseUrl}/*`, ({request}) =>
+        refuseAnotherUsersRequest(request)
+      ),
       // The signed-in user (read by the admin page)
       http.get(`${baseUrl}/user/`, ({request}) => {
         recordRequest('GET', request.url);
@@ -1085,33 +1175,102 @@ const createHandlers = () => {
         });
       }),
 
-      // Create new tag endpoint
+      // Create a tag, or answer with the user's of that name (bringing back
+      // a deleted one), always 201, as the API does; a create naming a
+      // client id a tag has answers with that tag, whatever it is called now
       http.post(`${baseUrl}/tags`, async ({request}) => {
         recordRequest('POST', request.url);
         console.log('OK: MSW intercepted tags POST request');
-
-        // Return a new tag response
-        const newTag: TagDocument = {
-          data: {
-            type: 'Tag',
-            id: '5', // Use a new ID
-            attributes: {
-              name: 'new-tag',
-              date_updated: now(),
-              date_created: now(),
-              date_last_used: now(),
+        try {
+          const {attributes} = await parseResource(request, {type: 'Tag'});
+          const {name, client_id: clientId} = validateFields(
+            tagCreateAttributesSchema,
+            attributes
+          );
+          const answered =
+            clientId === undefined ? undefined : tagsByClientId.get(clientId);
+          const made =
+            clientId === undefined
+              ? undefined
+              : tags.find(
+                  candidate =>
+                    candidate.attributes.client_id === clientId ||
+                    candidate.id === answered
+                );
+          if (made !== undefined) {
+            const again: TagDocument = {data: made, included: [testUser]};
+            return HttpResponse.json(again, {status: 201});
+          }
+          let tag = tags.find(candidate => candidate.attributes.name === name);
+          if (tag !== undefined && clientId !== undefined) {
+            tagsByClientId.set(clientId, tag.id);
+          }
+          if (tag === undefined) {
+            const created = now();
+            tag = {
+              type: 'Tag',
+              id: nextId('Tag', tags),
+              attributes: {
+                name,
+                date_updated: nextTagRevision(),
+                date_created: created,
+                date_last_used: created,
+                is_deleted: false,
+                entry_count: 0,
+                order:
+                  Math.max(-1, ...tags.map(other => other.attributes.order)) +
+                  1,
+                client_id: clientId ?? null,
+              },
+              relationships: ownedByTestUser,
+            };
+            tags = [...tags, tag];
+          } else if (tag.attributes.is_deleted) {
+            tag.attributes = {
+              ...tag.attributes,
               is_deleted: false,
-              entry_count: 0,
-              order: 5,
-            },
-            relationships: ownedByTestUser,
-          },
-          included: [testUser],
-        };
+              date_updated: nextTagRevision(),
+            };
+          }
+          const body: TagDocument = {data: tag, included: [testUser]};
+          return HttpResponse.json(body, {status: 201});
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
 
-        return HttpResponse.json(newTag, {
-          status: 201,
-        });
+      // One tag, or one entry (deleted ones too)
+      http.get(`${baseUrl}/tags/:id`, ({params, request}) => {
+        recordRequest('GET', request.url);
+        try {
+          const tag = findOr404(tags, String(params['id']), 'Tag');
+          const body: TagDocument = {data: tag, included: [testUser]};
+          return HttpResponse.json(body);
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
+      http.get(`${baseUrl}/entries/:id`, ({params, request}) => {
+        recordRequest('GET', request.url);
+        try {
+          const state = activeEntries();
+          const entry = findOr404(
+            state.data,
+            String(params['id']),
+            'TextEntry'
+          );
+          const body: TextEntryDocument = {
+            data: entry,
+            ...includedFor(
+              state,
+              [entry],
+              ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user']
+            ),
+          };
+          return HttpResponse.json(body);
+        } catch (error) {
+          return errorResponse(error);
+        }
       }),
 
       // Rename or (un)delete a tag: the attributes sent, and a new revision
@@ -1255,10 +1414,29 @@ const createHandlers = () => {
           const {attributes} = await parseResource(request, {
             type: 'TextEntry',
           });
-          const {subject, body} = validateFields(
-            textEntryCreateAttributesSchema,
-            attributes
-          );
+          const {
+            subject,
+            body,
+            client_id: clientId,
+          } = validateFields(textEntryCreateAttributesSchema, attributes);
+          const existing =
+            clientId === undefined
+              ? undefined
+              : state.data.find(
+                  candidate => candidate.attributes.client_id === clientId
+                );
+          if (existing !== undefined) {
+            // As the API answers: with the entry's junctions and tags.
+            const again: TextEntryDocument = {
+              data: existing,
+              ...includedFor(
+                state,
+                [existing],
+                ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user']
+              ),
+            };
+            return HttpResponse.json(again, {status: 201});
+          }
           const entry: TextEntry = {
             type: 'TextEntry',
             id: nextId('TextEntry', state.data),
@@ -1272,6 +1450,7 @@ const createHandlers = () => {
               reused_count: 0,
               is_deleted: false,
               tag_count: 0,
+              client_id: clientId ?? null,
             },
             relationships: {
               ...ownedByTestUser,
@@ -1438,15 +1617,56 @@ const createHandlers = () => {
         }
       }),
 
-      // Reorder endpoints: 200 with no body
-      http.post(`${baseUrl}/tags_entries/reorder`, ({request}) => {
+      // Reorder: move `top` directly above `bottom`, 200 with no body
+      http.post(`${baseUrl}/tags_entries/reorder`, async ({request}) => {
         recordRequest('POST', request.url);
-        return new HttpResponse(null, {status: 200});
+        try {
+          if (madeAlready(request)) {
+            return new HttpResponse(null, {status: 200});
+          }
+          const state = activeEntries();
+          // A deleted junction is out of the order.
+          const [top, bottom] = await reorderPair(
+            request,
+            'TagTextEntryThroughModel',
+            junctionsOf(state)
+          );
+          const scope = top.relationships.tag.data.id;
+          if (bottom.relationships.tag.data.id !== scope) {
+            throw apiError(
+              400,
+              CODES.invalid,
+              'top and bottom must share the same ordering scope.'
+            );
+          }
+          moveAbove(
+            junctionsOf(state).filter(
+              junction => junction.relationships.tag.data.id === scope
+            ),
+            top,
+            bottom,
+            nextJunctionRevision(state)
+          );
+          recordMade(request);
+          return new HttpResponse(null, {status: 200});
+        } catch (error) {
+          return errorResponse(error);
+        }
       }),
 
-      http.post(`${baseUrl}/tags/reorder`, ({request}) => {
+      http.post(`${baseUrl}/tags/reorder`, async ({request}) => {
         recordRequest('POST', request.url);
-        return new HttpResponse(null, {status: 200});
+        try {
+          if (madeAlready(request)) {
+            return new HttpResponse(null, {status: 200});
+          }
+          const [top, bottom] = await reorderPair(request, 'Tag', tags);
+          moveAbove(tags, top, bottom, nextTagRevision());
+          recordMade(request);
+          return new HttpResponse(null, {status: 200});
+        } catch (error) {
+          return errorResponse(error);
+        }
       }),
 
       // Delete tag endpoint with stateful behavior
@@ -1528,20 +1748,27 @@ const createHandlers = () => {
         );
         try {
           const state = activeEntries();
-          deleteJunction(
-            state,
-            findOr404(
-              junctionsOf(state),
-              tagEntryId,
-              'TagTextEntryThroughModel'
-            )
+          const active = junctionsOf(state).find(
+            junction => junction.id === tagEntryId
           );
+          if (active !== undefined) {
+            deleteJunction(state, active);
+          }
+          // The junction, deleted: untagging one already untagged changes
+          // nothing, and is answered alike (a retried untag).
+          const junction = findOr404(
+            [...deletedJunctions].reverse(),
+            tagEntryId,
+            'TagTextEntryThroughModel'
+          );
+          const body: TagTextEntryDocument = {
+            data: junction,
+            ...includedFor(state, [junction], ['user', 'tag', 'text_entry']),
+          };
+          return HttpResponse.json(body, {status: 200});
         } catch (error) {
           return errorResponse(error);
         }
-
-        // Return 204 No Content for successful untag
-        return new HttpResponse(null, {status: 204});
       })
     );
   }
@@ -1551,7 +1778,8 @@ const createHandlers = () => {
     http.post('http://localhost:9001/api-token-deauth/', ({request}) => {
       recordRequest('POST', request.url);
       return (
-        refuseAnotherUsersWrite(request) ?? HttpResponse.json({}, {status: 200})
+        refuseAnotherUsersRequest(request) ??
+        HttpResponse.json({}, {status: 200})
       );
     }),
     http.post(
@@ -1559,7 +1787,7 @@ const createHandlers = () => {
       ({request}) => {
         recordRequest('POST', request.url);
         return (
-          refuseAnotherUsersWrite(request) ??
+          refuseAnotherUsersRequest(request) ??
           HttpResponse.json({}, {status: 200})
         );
       }
@@ -1569,7 +1797,7 @@ const createHandlers = () => {
       ({request}) => {
         recordRequest('POST', request.url);
         return (
-          refuseAnotherUsersWrite(request) ??
+          refuseAnotherUsersRequest(request) ??
           HttpResponse.json({}, {status: 200})
         );
       }
@@ -1603,6 +1831,8 @@ function nextId(kind: string, existing: ReadonlyArray<{id: string}>): string {
 
 export const resetMSWState = () => {
   lastIds.clear();
+  tagsByClientId.clear();
+  madeReorders.clear();
   tags = structuredClone(originalTags);
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;

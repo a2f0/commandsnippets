@@ -90,6 +90,7 @@ export function createRegistry(db: Db, userId: number): Registry {
       entry_count: row.entry_count,
       order: row.order,
       is_deleted: row.is_deleted,
+      client_id: row.client_id,
     }),
     relationships: {
       user: {type: USER, key: row => row.user_id},
@@ -114,6 +115,7 @@ export function createRegistry(db: Db, userId: number): Registry {
       reused_count: row.reused_count,
       is_deleted: row.is_deleted,
       tag_count: row.tag_count,
+      client_id: row.client_id,
     }),
     relationships: {
       user: {type: USER, key: row => row.user_id},

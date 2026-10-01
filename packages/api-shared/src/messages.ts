@@ -101,12 +101,46 @@ export const MESSAGES = {
 } as const;
 
 /**
- * The header a client's writes name the user they act for with (their
- * username, URI-encoded): the API refuses a state-changing request signed in
- * as anyone else (409 `user_mismatch`), so a browser tab whose session
- * another tab has replaced cannot write into the new user's account.
+ * The header a client's requests name the user they act for with (their
+ * username, URI-encoded): the API refuses a request naming it signed in as
+ * anyone else (409 `user_mismatch`), so a browser tab whose session another
+ * tab has replaced can neither write into the new user's account nor read
+ * the new user's data as its own user's. Requests that name no user are
+ * unaffected.
  */
 export const EXPECTED_USER_HEADER = 'X-Expected-User';
+
+/**
+ * The header a client's requests name the account they act for with (its
+ * user id): the API refuses a request naming it signed in as any other
+ * account (409 `user_mismatch`), so a client holding one account's data
+ * never writes it into, nor reads, another account that took the same
+ * username since (the first deleted). Requests that name none are
+ * unaffected.
+ */
+export const EXPECTED_USER_ID_HEADER = 'X-Expected-User-Id';
+
+/**
+ * The header a write names when it was made in (a datetime, as
+ * `parseDateTime` reads it). Clients queue writes and send them later, so
+ * the API resolves conflicts by edit time, last writer wins: a write to a
+ * tag, entry or junction applies only when it is no older than the row's
+ * last one, and otherwise changes nothing (the response is the row as it
+ * stands). A time ahead of the API's clock counts as now; a write without
+ * the header counts as made now (a retry of one named by
+ * `CLIENT_WRITE_ID_HEADER`, as made when it first arrived).
+ */
+export const CLIENT_UPDATED_HEADER = 'Client-Updated';
+
+/**
+ * The header naming a queued write: an id the client gives it (at most
+ * `CLIENT_WRITE_ID_MAX_LENGTH` characters), the same on every attempt to
+ * send it. A write made ahead of the API's clock counts as made when it
+ * first arrived, and so does every retry of it: a retry after a lost answer
+ * never beats a write made between its attempts.
+ */
+export const CLIENT_WRITE_ID_HEADER = 'Client-Write-Id';
+export const CLIENT_WRITE_ID_MAX_LENGTH = 64;
 
 /**
  * The header every API response carries its version in (the API's

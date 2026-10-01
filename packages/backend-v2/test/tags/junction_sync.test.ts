@@ -281,7 +281,7 @@ describe('untagging soft-deletes the junction', () => {
     expect(before.entry?.tag_count).toBe(1);
 
     const response = await client.delete(`/api/v1/tags_entries/${junction.id}`);
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
 
     const deleted = await refreshJunction(junction.id);
     const after = {
@@ -315,10 +315,16 @@ describe('untagging soft-deletes the junction', () => {
       await client.get(`/api/v1/entries?filter[tags.id]=${tag.id}`)
     );
     expect(inTag.data).toEqual([]);
-    // Already gone.
-    expect(
-      (await client.delete(`/api/v1/tags_entries/${junction.id}`)).status
-    ).toBe(404);
+    // Untagging again (a retried untag) changes nothing a client syncs (only
+    // the time of the last write): answered alike.
+    const again = await client.delete(`/api/v1/tags_entries/${junction.id}`);
+    expect(again.status).toBe(200);
+    expect((await json(again)).data.attributes.is_deleted).toBe(true);
+    expect(await refreshJunction(junction.id)).toEqual({
+      ...deleted,
+      client_updated: expect.any(String),
+    });
+    expect((await refreshTag(tag.id))?.entry_count).toBe(0);
   });
 
   it('never counts a deleted junction, inserted or removed', async () => {

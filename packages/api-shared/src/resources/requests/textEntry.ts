@@ -21,11 +21,20 @@ import {type RELATIONSHIPS, TEXT_ENTRY} from '../types';
 
 export const TEXT_ENTRY_SUBJECT_MAX_LENGTH = 255;
 export const TEXT_ENTRY_BODY_MAX_LENGTH = 1024;
+export const TEXT_ENTRY_CLIENT_ID_MAX_LENGTH = 64;
 
 /** POST. The entry is the requester's; a `user` relationship is ignored. */
 export const textEntryCreateAttributesSchema = z.object({
   body: charField({maxLength: TEXT_ENTRY_BODY_MAX_LENGTH}),
   subject: charField({maxLength: TEXT_ENTRY_SUBJECT_MAX_LENGTH}),
+  /**
+   * The client's id for the entry (a queued create's): a create naming one
+   * the user already has answers with that entry instead of another, so a
+   * create retried after a lost answer is made once.
+   */
+  client_id: z.optional(
+    charField({maxLength: TEXT_ENTRY_CLIENT_ID_MAX_LENGTH})
+  ),
 });
 
 /** PATCH/PUT: edit, or (un)delete. */

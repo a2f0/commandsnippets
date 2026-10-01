@@ -43,7 +43,11 @@ const TagEdit = ({
       return;
     }
     renameTag(session, object.id, tagName)
-      .then(renamed => handleSaveParent(renamed))
+      .then(renamed => {
+        if (renamed !== null) {
+          handleSaveParent(renamed);
+        }
+      })
       .catch((error: unknown) => {
         console.error('Unexpected error updating tag:', error);
       });
