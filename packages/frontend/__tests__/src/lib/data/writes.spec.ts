@@ -546,6 +546,51 @@ describe('the writes', () => {
     ]);
   });
 
+  it('show a tagging whose answer was lost once, when a sync brings its junction', async () => {
+    await session().sync.syncAll();
+    // The API tags the entry, but its answer never arrives.
+    server.use(
+      http.post(
+        `${API}/tags_entries`,
+        async ({request}) => {
+          await fetch(request.url, {
+            method: 'POST',
+            headers: request.headers,
+            body: await request.text(),
+          });
+          return HttpResponse.error();
+        },
+        {once: true}
+      )
+    );
+    const local = await tagEntry(session(), '2', '3');
+    await expect(session().sync.flush()).rejects.toThrow();
+
+    await session().sync.syncAll();
+    await session().sync.syncTag('2');
+    const pair = async () =>
+      (await db().junctions.where('owner').equals(TEST_USER).toArray()).filter(
+        junction =>
+          junction.relationships.tag.data.id === '2' &&
+          junction.relationships.text_entry.data.id === '3'
+      );
+    // The API's junction, in place of the local one: shown once.
+    expect(await inTag('2')).toEqual(['3']);
+    const [junction] = await pair();
+    expect(await pair()).toHaveLength(1);
+    expect(junction?.localId).toBe(local.id);
+    expect(isLocalId(junction?.id ?? 'local-')).toBe(false);
+    // Still queued (the API records when it was made), now naming it.
+    expect((await db().outbox.toArray()).map(row => row.write)).toEqual([
+      expect.objectContaining({kind: 'tagEntry', junctionId: junction?.id}),
+    ]);
+
+    await session().sync.flush();
+    expect(await queued()).toBe(0);
+    expect(await pair()).toHaveLength(1);
+    expect(await inTag('2')).toEqual(['3']);
+  });
+
   it('tag an entry at the bottom of a tag, and untag it', async () => {
     await session().sync.syncAll();
 

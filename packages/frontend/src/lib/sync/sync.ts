@@ -176,7 +176,10 @@ async function syncAll(
     after => api.getEntriesAfter(after),
     async page => {
       checkOwner(ownerId, [...page.data, ...(page.included ?? [])]);
-      const remaps = await adoptCreates(db, owner, page.data);
+      const remaps = await adoptCreates(db, owner, [
+        ...page.data,
+        ...(page.included ?? []),
+      ]);
       await putEntries(db, owner, page.data, page.included);
       return remaps;
     },
@@ -226,7 +229,10 @@ async function syncTag(
     after => api.getTagJunctionsAfter(tagId, after),
     async page => {
       checkOwner(ownerId, [...page.data, ...(page.included ?? [])]);
-      const remaps = await adoptCreates(db, owner, page.included ?? []);
+      const remaps = await adoptCreates(db, owner, [
+        ...page.data,
+        ...(page.included ?? []),
+      ]);
       await putJunctions(db, owner, page.data, page.included);
       return remaps;
     },

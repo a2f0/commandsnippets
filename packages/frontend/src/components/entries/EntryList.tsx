@@ -248,6 +248,7 @@ const EntryList = () => {
               moveEntry={moveEntry}
               findEntry={findEntry}
               object={element}
+              rowKey={keyOfRow(element)}
               tagId={currentTag?.id}
               findEntryByIndex={findEntryByIndex}
             />

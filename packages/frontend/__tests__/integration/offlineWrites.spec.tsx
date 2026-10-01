@@ -156,6 +156,45 @@ it("keeps an editor open on an entry made offline, with its text, when the API's
   expect(screen.getByPlaceholderText('subject')).toHaveValue('unsaved text');
 });
 
+it("keeps a new entry's form opened next to an entry made offline, with its text, when the API's id replaces its own", async () => {
+  const history = createMemoryHistory();
+  history.push('/test?entries=untagged');
+  render(<TestAppRouter history={history} />);
+  await screen.findByText('test-tag-1');
+  const session = syncSession(TEST_USER);
+  server.use(
+    http.all(`${API}/*`, ({request}) =>
+      request.method === 'GET' ? undefined : HttpResponse.error()
+    )
+  );
+  await createEntry(session, 'anchor', 'body');
+  await expect(session.sync.flush()).rejects.toThrow();
+
+  // A new entry's form, above it, not saved yet.
+  fireEvent.contextMenu(await screen.findByText('anchor'));
+  fireEvent.click(await screen.findByRole('menuitem', {name: 'New Entry'}));
+  fireEvent.change(await screen.findByPlaceholderText('subject'), {
+    target: {value: 'unsaved new'},
+  });
+
+  server.resetHandlers();
+  await session.sync.flush();
+  const stored = await session.db.entries
+    .where('owner')
+    .equals(TEST_USER)
+    .filter(row => row.attributes.subject === 'anchor')
+    .first();
+  invariant(stored && !isLocalId(stored.id), 'the API id should replace it');
+
+  // The same form, above the API's entry, its text kept.
+  await waitFor(() =>
+    expect(
+      document.getElementById(`textEntryNew-${stored.id}-top`)
+    ).not.toBeNull()
+  );
+  expect(screen.getByPlaceholderText('subject')).toHaveValue('unsaved new');
+});
+
 it("keeps an editor open on an entry when a tag made offline gets the entry's id", async () => {
   // Entry 5 and, once sent, tag 5: ids of different types can be alike.
   const {data: entry} = await apiClient.createEntry('five', 'body');

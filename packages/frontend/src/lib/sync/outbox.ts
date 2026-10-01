@@ -699,7 +699,10 @@ export async function flushOutbox(
  * was lost). Each is unqueued, and its row takes the API's id and copy, as
  * the answer would have done, before the page is stored: so the sync never
  * shows the row twice (local and the API's), and a later write to it goes
- * to the API's. Call inside the page's transaction; announce the remaps it
+ * to the API's. A queued tagging whose pair (tag and entry) the page has a
+ * junction of (its answer was lost, or another device tagged it) takes
+ * that junction's id the same way, but stays queued: the API records when
+ * it was made. Call inside the page's transaction; announce the remaps it
  * returns (`announceRemaps`) once it commits.
  */
 export async function adoptCreates(
@@ -708,7 +711,19 @@ export async function adoptCreates(
   resources: readonly IncludedResource[]
 ): Promise<Remap[]> {
   const made = new Map<string, IncludedResource>();
+  const paired = new Map<string, string>();
+  const pairOf = (tagId: string, entryId: string) => `${tagId}:${entryId}`;
   for (const resource of resources) {
+    if (resource.type === JUNCTION) {
+      paired.set(
+        pairOf(
+          resource.relationships.tag.data.id,
+          resource.relationships.text_entry.data.id
+        ),
+        resource.id
+      );
+      continue;
+    }
     const clientId =
       resource.type === TAG || resource.type === TEXT_ENTRY
         ? resource.attributes.client_id
@@ -721,12 +736,28 @@ export async function adoptCreates(
       made.set(`${resource.type}:${clientId}`, resource);
     }
   }
-  if (made.size === 0) {
+  if (made.size === 0 && paired.size === 0) {
     return [];
   }
   const remaps: Remap[] = [];
+  const remapped = new Set<string>();
   for (const queued of await db.outbox.where('owner').equals(owner).toArray()) {
-    const created = createdBy(queued.write);
+    const {write} = queued;
+    if (write.kind === 'tagEntry') {
+      const to = paired.get(pairOf(write.tagId, write.entryId));
+      if (
+        to !== undefined &&
+        isLocalId(write.junctionId) &&
+        !remapped.has(write.junctionId)
+      ) {
+        const taken = {owner, type: JUNCTION, from: write.junctionId, to};
+        await remap(db, taken);
+        remapped.add(write.junctionId);
+        remaps.push(taken);
+      }
+      continue;
+    }
+    const created = createdBy(write);
     const resource = created === null ? undefined : made.get(created.join(':'));
     if (created === null || resource === undefined) {
       continue;
@@ -734,15 +765,15 @@ export async function adoptCreates(
     if (queued.seq !== undefined) {
       await db.outbox.delete(queued.seq);
     }
-    const remapped = {
+    const adopted = {
       owner,
       type: created[0],
       from: created[1],
       to: resource.id,
     };
-    await remap(db, remapped);
+    await remap(db, adopted);
     await putResources(db, owner, [resource], true);
-    remaps.push(remapped);
+    remaps.push(adopted);
   }
   return remaps;
 }
