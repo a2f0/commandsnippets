@@ -1066,6 +1066,50 @@ describe('the writes', () => {
     expect(await db().tags.where('owner').equals(TEST_USER).count()).toBe(0);
   });
 
+  it("never undo a sign-in's binding with an older account's answer", async () => {
+    // A sync asks the API which account it reads; the answer is held back...
+    let answered!: () => void;
+    const held = new Promise<void>(resolve => {
+      answered = resolve;
+    });
+    let asking!: () => void;
+    const asked = new Promise<void>(resolve => {
+      asking = resolve;
+    });
+    server.use(
+      http.get(
+        `${API}/user/`,
+        async ({request}) => {
+          const user = await (await fetch(request.url)).json();
+          asking();
+          await held;
+          return HttpResponse.json(user);
+        },
+        {once: true}
+      )
+    );
+    const syncing = session()
+      .sync.syncAll()
+      .catch((error: unknown) => error);
+    await asked;
+    // ...while another account of the name signs in here, and queues a write.
+    await claimData(TEST_USER, '2');
+    await db().outbox.add({
+      owner: TEST_USER,
+      made: '2026-01-01T00:00:00.000000',
+      writeId: 'write-2',
+      write: {kind: 'deleteTag', tagId: '1'},
+      rows: [`${TEST_USER}|Tag|1`],
+    });
+    answered();
+
+    expect(await syncing).toBeInstanceOf(AccountChangedError);
+    expect((await db().cursors.get([TEST_USER, OWNER_ID_KEY]))?.after).toBe(
+      '2'
+    );
+    expect(await queued()).toBe(1);
+  });
+
   it('are never sent from data an older version kept for another account of the name', async () => {
     // Synced before accounts were bound (no account recorded): its rows
     // name account 99. A write is queued while the API is unreachable.

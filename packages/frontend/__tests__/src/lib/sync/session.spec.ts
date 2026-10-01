@@ -161,6 +161,23 @@ describe('syncSession', () => {
     expect((await db.cursors.get(['lee', OWNER_ID_KEY]))?.after).toBe('8');
   });
 
+  it("wipes the other users' data the database holds too, when another account takes it", async () => {
+    await claimData('max', '7');
+    // A staff account: it read alice's data too.
+    const theirs = syncSession('max', 'alice');
+    await theirs.db.cursors.put({
+      owner: 'alice',
+      key: 'tags',
+      after: '1970-01-01T00:00:00,0',
+    });
+
+    await claimData('max', '8');
+    expect(await theirs.db.cursors.get(['alice', 'tags'])).toBeUndefined();
+    expect((await theirs.db.cursors.get(['max', OWNER_ID_KEY]))?.after).toBe(
+      '8'
+    );
+  });
+
   it('deletes the data when the session ends', async () => {
     const {db} = syncSession('carol');
     await db.cursors.put({
