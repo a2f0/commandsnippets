@@ -20,6 +20,7 @@ import {
   appliesAfter,
   changedMeanwhile,
   clientUpdated,
+  FirstReads,
   stamped,
   stampedAfter,
   WRITE_ATTEMPTS,
@@ -146,12 +147,14 @@ tagRoutes.post('/', async c => {
   // The user's tag of the name, as read, written only while still so (named
   // so, deleted or not as read): a write landing between the read and this
   // one (a rename, a delete, a concurrent create) makes it read again.
+  const firstReads = new FirstReads();
   for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
     const made = await findMade();
     if (made !== undefined) {
       return resourceResponse(c, TAG, made, 201);
     }
     const existing = named === undefined ? undefined : await findByName(named);
+    const read = existing === undefined ? null : firstReads.of(existing);
     const asRead =
       existing === undefined
         ? undefined
@@ -163,7 +166,7 @@ tagRoutes.post('/', async c => {
     try {
       if (existing !== undefined && asRead !== undefined) {
         // Deleted (or created) after this create was made: that stands.
-        if (!appliesAfter(existing.client_updated, when)) {
+        if (!appliesAfter(existing.client_updated, when, read)) {
           if (clientId !== undefined) {
             await reserve(asRead);
           }
@@ -175,20 +178,15 @@ tagRoutes.post('/', async c => {
             existing.is_deleted
               ? {
                   is_deleted: false,
-                  client_updated: stamped(tags.client_updated, when),
+                  client_updated: stamped(tags.client_updated, when, read),
                   date_updated: nextRevision(tagResource, user.id),
                 }
               : // Still a write made when it was, which an older delete must
                 // not undo. Nothing a client syncs changes: no revision
                 // advances.
-                {client_updated: stamped(tags.client_updated, when)}
+                {client_updated: stamped(tags.client_updated, when, read)}
           )
-          .where(
-            and(
-              asRead,
-              writtenBefore(tags.client_updated, when, existing.client_updated)
-            )
-          )
+          .where(and(asRead, writtenBefore(tags.client_updated, when, read)))
           .returning();
         const [written] =
           clientId === undefined
@@ -202,10 +200,7 @@ tagRoutes.post('/', async c => {
                       eq(tags.id, existing.id),
                       eq(tags.name, existing.name),
                       eq(tags.is_deleted, false),
-                      eq(
-                        tags.client_updated,
-                        stampedAfter(existing.client_updated, when)
-                      )
+                      eq(tags.client_updated, stampedAfter(read, when))
                     ) ?? sql`0`
                   ),
                 ])
@@ -268,7 +263,7 @@ tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
       .update(tags)
       .set({
         ...changes,
-        client_updated: stamped(tags.client_updated, when),
+        client_updated: stamped(tags.client_updated, when, tag.client_updated),
         date_updated: nextRevision(tagResource, tag.user_id),
       })
       .where(

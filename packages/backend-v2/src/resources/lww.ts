@@ -20,7 +20,7 @@ import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
 import {clientWrites} from '../db/schema';
 import type {AppEnv} from '../env';
-import {now, parseDateTime} from '../lib/clock';
+import {formatMicros, now, parseDateTime} from '../lib/clock';
 import {ApiError, validationError} from '../lib/errors';
 
 /** When a write was made, as the API counts it. */
@@ -105,12 +105,28 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<Made> {
 }
 
 /**
+ * The time a row's last client write had when this request first read the
+ * row: a latest write applies over that one only (see `writtenBefore`).
+ * Retries read the row again; the time a write committed since gave it does
+ * not count.
+ */
+export class FirstReads {
+  private readonly times = new Map<number, string | null>();
+
+  of(row: {id: number; client_updated: string | null}): string | null {
+    if (!this.times.has(row.id)) {
+      this.times.set(row.id, row.client_updated);
+    }
+    return this.times.get(row.id) ?? null;
+  }
+}
+
+/**
  * A write made at `made` applies: the row's last client write is no newer,
- * or, for the latest write, is still the one read (`read`, the row's
- * `client_updated` when this request read it). A write committed since the
- * read changes it, and then its time decides as for any write: one made
- * after this write arrived (while it was on its way to the database)
- * stands.
+ * or, for the latest write, is still the one it first read (`read`). A
+ * write committed since changes it (`stamped`), and then its time decides
+ * as for any write: one made after this write arrived (while it was on its
+ * way to the database) stands.
  */
 export const writtenBefore = (
   column: SQLiteColumn,
@@ -126,24 +142,40 @@ export const writtenBefore = (
     : sql`(${noNewer} OR ${column} = ${read})`;
 };
 
-/**
- * Whether a write made at `made` applies to a row last written at `last`
- * (the latest write: to any row as read, its guarded write deciding).
- */
-export const appliesAfter = (last: string | null, made: Made): boolean =>
-  made.latest || last === null || last <= made.at;
+/** Whether a write made at `made` applies to a row last written at `last`. */
+export const appliesAfter = (
+  last: string | null,
+  made: Made,
+  read: string | null
+): boolean =>
+  last === null || last <= made.at || (made.latest && last === read);
+
+/** A microsecond after `time`. */
+function justAfter(time: string): string {
+  const fixed = parseDateTime(time) ?? time;
+  const seconds = Date.parse(`${fixed.slice(0, 19)}Z`);
+  return formatMicros(seconds * 1000 + Number(fixed.slice(20, 26)) + 1);
+}
 
 /**
  * The last client write time a write made at `made` leaves on the row it
- * changes (`column`): its own, or the row's when later (the latest write
- * never moves it back).
+ * changes: its own, or, for the latest write over a row it read stamped
+ * later (by a clock ahead of this one's), a microsecond after that, so the
+ * time never moves back and every write changes it (a concurrent latest
+ * write that read the row before then no longer applies).
  */
-export const stamped = (column: SQLiteColumn, made: Made): string | SQL =>
-  made.latest ? sql`MAX(${made.at}, COALESCE(${column}, ${made.at}))` : made.at;
+export const stamped = (
+  column: SQLiteColumn,
+  made: Made,
+  read: string | null
+): string | SQL =>
+  made.latest && read !== null && read > made.at
+    ? sql`CASE WHEN ${column} IS NULL OR ${column} <= ${made.at} THEN ${made.at} ELSE ${justAfter(read)} END`
+    : made.at;
 
-/** `stamped`'s value on a row last written at `last`. */
-export const stampedAfter = (last: string | null, made: Made): string =>
-  made.latest && last !== null && last > made.at ? last : made.at;
+/** `stamped`'s value on a row last written at `read`, as read. */
+export const stampedAfter = (read: string | null, made: Made): string =>
+  made.latest && read !== null && read > made.at ? justAfter(read) : made.at;
 
 /**
  * How many times a write to a row it read reads it again, when another write

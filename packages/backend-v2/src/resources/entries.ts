@@ -151,7 +151,11 @@ entryRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     .update(textEntries)
     .set({
       ...changes,
-      client_updated: stamped(textEntries.client_updated, when),
+      client_updated: stamped(
+        textEntries.client_updated,
+        when,
+        entry.client_updated
+      ),
       // Only the submitted fields' folds: recomputing an untouched field from
       // this request's earlier read could clobber a concurrent edit's fold.
       ...(changes.subject === undefined

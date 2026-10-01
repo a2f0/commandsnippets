@@ -470,11 +470,10 @@ describe('a write made ahead of the clock', () => {
       .where(eq(tags.id, tag.id));
 
     await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'latest'));
-    expect(await refreshTag(tag.id)).toMatchObject({
-      name: 'latest',
-      // Never moved back.
-      client_updated: ahead,
-    });
+    const stored = await refreshTag(tag.id);
+    expect(stored?.name).toBe('latest');
+    // Never moved back: just after it.
+    expect((stored?.client_updated ?? '') > ahead).toBe(true);
     // As is one made ahead of the clock, on its first arrival.
     await sendOnce(
       'ahead-1',
@@ -502,6 +501,54 @@ describe('a write made ahead of the clock', () => {
     expect(delayed.status).toBe(200);
     expect((await json(delayed)).data.attributes.name).toBe('committed');
     expect((await refreshTag(tag.id))?.name).toBe('committed');
+  });
+
+  it('as the latest write, never overwrites one committed while it was on its way, though it reads again', async () => {
+    const tag = await tagFactory({user});
+    const entry = await textEntryFactory({user});
+    const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
+    // Just before this untag (naming no time) writes, a tagging of the pair,
+    // which arrived after it, records its time.
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeStatement(/^\s*update "tags_tagtextentrythroughmodel"/i, () =>
+        client.post('/api/v1/tags_entries', {
+          data: {
+            type: 'TagTextEntryThroughModel',
+            relationships: {
+              tag: {data: {type: 'Tag', id: String(tag.id)}},
+              text_entry: {data: {type: 'TextEntry', id: String(entry.id)}},
+            },
+          },
+        })
+      )
+    );
+    const untag = await racing.delete(`/api/v1/tags_entries/${junction.id}`);
+    expect(untag.status).toBe(200);
+    expect((await json(untag)).data.attributes.is_deleted).toBe(false);
+    expect((await refreshJunction(junction.id))?.is_deleted).toBe(false);
+  });
+
+  it('as the latest write, never overwrites another over a row stamped ahead by another clock', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    const ahead = formatMicros(nowMicros() + 1_000_000);
+    await db()
+      .update(tags)
+      .set({client_updated: ahead})
+      .where(eq(tags.id, tag.id));
+    // Both name no time; the other arrived after this one, and updates the
+    // tag just before it.
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeStatement(/^\s*update "tags_tag"/i, () =>
+        client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'committed'))
+      )
+    );
+    await racing.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'delayed'));
+    const stored = await refreshTag(tag.id);
+    expect(stored?.name).toBe('committed');
+    // Later than it was: never moved back.
+    expect((stored?.client_updated ?? '') > ahead).toBe(true);
   });
 
   it('counts as made when it first arrived however late its retry, though other writes were made since', async () => {

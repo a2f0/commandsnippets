@@ -312,7 +312,7 @@ export async function softDelete(
     .update(resource.table)
     .set({
       is_deleted: true,
-      client_updated: stamped(resource.clientUpdated, when),
+      client_updated: stamped(resource.clientUpdated, when, row.client_updated),
       date_updated: nextRevision(resource, row.user_id),
     })
     .where(

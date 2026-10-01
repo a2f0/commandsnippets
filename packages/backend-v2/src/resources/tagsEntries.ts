@@ -22,6 +22,7 @@ import {
   appliesAfter,
   changedMeanwhile,
   clientUpdated,
+  FirstReads,
   stamped,
   WRITE_ATTEMPTS,
   writtenBefore,
@@ -189,16 +190,18 @@ tagEntryRoutes.post('/', async c => {
   }
   // The pair's junction, as read: written only while still so (a write
   // landing between the read and this one makes it read again).
+  const firstReads = new FirstReads();
   for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
     if (junction === undefined) {
       break;
     }
     const {id, user_id, is_deleted} = junction;
+    const read = firstReads.of(junction);
     const own = user_id === user.id;
     // Untagged (or tagged) after this tagging was made: that stands. (Only
     // for the user's own junction: another's is always taken over below, so
     // it is never answered with.)
-    if (own && !appliesAfter(junction.client_updated, when)) {
+    if (own && !appliesAfter(junction.client_updated, when, read)) {
       return resourceResponse(c, TAG_TEXT_ENTRY, junction, 201);
     }
     if (own && !is_deleted) {
@@ -207,17 +210,13 @@ tagEntryRoutes.post('/', async c => {
       // advances.
       const [kept] = await db
         .update(tagsEntries)
-        .set({client_updated: stamped(tagsEntries.client_updated, when)})
+        .set({client_updated: stamped(tagsEntries.client_updated, when, read)})
         .where(
           and(
             eq(tagsEntries.id, id),
             eq(tagsEntries.user_id, user.id),
             eq(tagsEntries.is_deleted, false),
-            writtenBefore(
-              tagsEntries.client_updated,
-              when,
-              junction.client_updated
-            )
+            writtenBefore(tagsEntries.client_updated, when, read)
           )
         )
         .returning();
@@ -245,7 +244,7 @@ tagEntryRoutes.post('/', async c => {
             date_updated: nextRevision(tagTextEntryResource, user.id),
             // Another user's (legacy) write times do not count.
             client_updated: own
-              ? stamped(tagsEntries.client_updated, when)
+              ? stamped(tagsEntries.client_updated, when, read)
               : when.at,
             ...restore,
           })
@@ -256,11 +255,7 @@ tagEntryRoutes.post('/', async c => {
               eq(tagsEntries.is_deleted, is_deleted),
               // Another user's (legacy) writes do not count against this one.
               own
-                ? writtenBefore(
-                    tagsEntries.client_updated,
-                    when,
-                    junction.client_updated
-                  )
+                ? writtenBefore(tagsEntries.client_updated, when, read)
                 : undefined
             )
           )
@@ -289,24 +284,22 @@ tagEntryRoutes.delete('/:id', async c => {
   const when = await clientUpdated(c);
   const db = c.get('db');
   // Written only while still as read (see the tagging above).
+  const firstReads = new FirstReads();
   for (let attempt = 0; ; attempt += 1) {
-    if (!appliesAfter(junction.client_updated, when)) {
+    const read = firstReads.of(junction);
+    if (!appliesAfter(junction.client_updated, when, read)) {
       break;
     }
     let written: TagTextEntry | undefined;
     if (junction.is_deleted) {
       [written] = await db
         .update(tagsEntries)
-        .set({client_updated: stamped(tagsEntries.client_updated, when)})
+        .set({client_updated: stamped(tagsEntries.client_updated, when, read)})
         .where(
           and(
             eq(tagsEntries.id, junction.id),
             eq(tagsEntries.is_deleted, true),
-            writtenBefore(
-              tagsEntries.client_updated,
-              when,
-              junction.client_updated
-            )
+            writtenBefore(tagsEntries.client_updated, when, read)
           )
         )
         .returning();
@@ -316,18 +309,14 @@ tagEntryRoutes.delete('/:id', async c => {
           .update(tagsEntries)
           .set({
             is_deleted: true,
-            client_updated: stamped(tagsEntries.client_updated, when),
+            client_updated: stamped(tagsEntries.client_updated, when, read),
             date_updated: nextRevision(tagTextEntryResource, junction.user_id),
           })
           .where(
             and(
               eq(tagsEntries.id, junction.id),
               eq(tagsEntries.is_deleted, false),
-              writtenBefore(
-                tagsEntries.client_updated,
-                when,
-                junction.client_updated
-              )
+              writtenBefore(tagsEntries.client_updated, when, read)
             )
           )
           .returning(),
