@@ -30,7 +30,7 @@ import {
   parseListQuery,
   serialize,
 } from '../lib/jsonapi';
-import {clientUpdated, stamped, writtenBefore} from './lww';
+import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, type OwnedResource, type RevisedResource} from './owned';
 import {jsonApi} from './responses';
 import {createRegistry} from './serializers';
@@ -301,25 +301,18 @@ export async function softDelete(
   c: Context<AppEnv>,
   resource: SoftDeletedResource
 ): Promise<Response> {
-  const row = await getOwned<{
-    id: number;
-    user_id: number;
-    client_updated: string | null;
-  }>(c, resource);
-  const when = await clientUpdated(c);
+  const row = await getOwned<{id: number; user_id: number}>(c, resource);
+  const at = await clientUpdated(c);
   const [deleted] = await c
     .get('db')
     .update(resource.table)
     .set({
       is_deleted: true,
-      client_updated: stamped(resource.clientUpdated, when, row.client_updated),
+      client_updated: at,
       date_updated: nextRevision(resource, row.user_id),
     })
     .where(
-      and(
-        eq(resource.id, row.id),
-        writtenBefore(resource.clientUpdated, when, row.client_updated)
-      )
+      and(eq(resource.id, row.id), writtenBefore(resource.clientUpdated, at))
     )
     .returning();
   return resourceResponse(

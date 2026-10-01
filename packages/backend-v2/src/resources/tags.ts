@@ -20,9 +20,6 @@ import {
   appliesAfter,
   changedMeanwhile,
   clientUpdated,
-  FirstReads,
-  stamped,
-  stampedAfter,
   WRITE_ATTEMPTS,
   writtenBefore,
 } from './lww';
@@ -90,6 +87,7 @@ tagRoutes.post('/', async c => {
     z.pick(tagCreateAttributesSchema, {client_id: true}),
     attributes
   );
+  const at = await clientUpdated(c);
 
   // The tag this create made, or was answered with, before (its answer was
   // lost): by its client id, whatever the tag is named by then.
@@ -143,16 +141,6 @@ tagRoutes.post('/', async c => {
     typeof attributes['name'] === 'string'
       ? attributes['name'].trim()
       : undefined;
-  // The tag of the name as it stood when the write arrived, read before the
-  // write is timed: the latest write applies over that, never over a write
-  // made after it.
-  const firstReads = new FirstReads();
-  const initial = named === undefined ? undefined : await findByName(named);
-  if (initial !== undefined) {
-    firstReads.of(initial);
-  }
-  const when = await clientUpdated(c);
-  firstReads.freeze();
   // The user's tag of the name, as read, written only while still so (named
   // so, deleted or not as read): a write landing between the read and this
   // one (a rename, a delete, a concurrent create) makes it read again.
@@ -162,7 +150,6 @@ tagRoutes.post('/', async c => {
       return resourceResponse(c, TAG, made, 201);
     }
     const existing = named === undefined ? undefined : await findByName(named);
-    const read = existing === undefined ? null : firstReads.of(existing);
     const asRead =
       existing === undefined
         ? undefined
@@ -174,7 +161,7 @@ tagRoutes.post('/', async c => {
     try {
       if (existing !== undefined && asRead !== undefined) {
         // Deleted (or created) after this create was made: that stands.
-        if (!appliesAfter(existing.client_updated, when, read)) {
+        if (!appliesAfter(existing.client_updated, at)) {
           if (clientId !== undefined) {
             await reserve(asRead);
           }
@@ -186,15 +173,14 @@ tagRoutes.post('/', async c => {
             existing.is_deleted
               ? {
                   is_deleted: false,
-                  client_updated: stamped(tags.client_updated, when, read),
+                  client_updated: at,
                   date_updated: nextRevision(tagResource, user.id),
                 }
-              : // Still a write made when it was, which an older delete must
-                // not undo. Nothing a client syncs changes: no revision
-                // advances.
-                {client_updated: stamped(tags.client_updated, when, read)}
+              : // Still a write made at `at`, which an older delete must not
+                // undo. Nothing a client syncs changes: no revision advances.
+                {client_updated: at}
           )
-          .where(and(asRead, writtenBefore(tags.client_updated, when, read)))
+          .where(and(asRead, writtenBefore(tags.client_updated, at)))
           .returning();
         const [written] =
           clientId === undefined
@@ -208,7 +194,7 @@ tagRoutes.post('/', async c => {
                       eq(tags.id, existing.id),
                       eq(tags.name, existing.name),
                       eq(tags.is_deleted, false),
-                      eq(tags.client_updated, stampedAfter(read, when))
+                      eq(tags.client_updated, at)
                     ) ?? sql`0`
                   ),
                 ])
@@ -230,7 +216,7 @@ tagRoutes.post('/', async c => {
           date_updated: nextRevision(tagResource, user.id),
           date_last_used: timestamp,
           client_id: clientId ?? null,
-          client_updated: when.at,
+          client_updated: at,
         })
         .returning();
       const [created] =
@@ -264,22 +250,17 @@ tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     id: String(tag.id),
   });
   const changes = validateFields(tagUpdateAttributesSchema, attributes);
-  const when = await clientUpdated(c);
+  const at = await clientUpdated(c);
   try {
     // Unless a newer client write stands: then the tag as it is.
     const [updated] = await db
       .update(tags)
       .set({
         ...changes,
-        client_updated: stamped(tags.client_updated, when, tag.client_updated),
+        client_updated: at,
         date_updated: nextRevision(tagResource, tag.user_id),
       })
-      .where(
-        and(
-          eq(tags.id, tag.id),
-          writtenBefore(tags.client_updated, when, tag.client_updated)
-        )
-      )
+      .where(and(eq(tags.id, tag.id), writtenBefore(tags.client_updated, at)))
       .returning();
     return resourceResponse(
       c,

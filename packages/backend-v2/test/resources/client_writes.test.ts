@@ -2,7 +2,7 @@ import {
   CLIENT_UPDATED_HEADER,
   CLIENT_WRITE_ID_HEADER,
 } from '@commandsnippets/api-shared';
-import {eq} from 'drizzle-orm';
+import {eq, sql} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
   clientWrites,
@@ -460,31 +460,28 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshTag(tag.id))?.name).toBe('between');
   });
 
-  it('as one naming no time, is the latest write: another isolate may have stamped the row a little ahead', async () => {
+  it('as one naming no time or a time ahead, counts as now by the database clock, which every isolate shares', async () => {
     const tag = await tagFactory({user, name: 'start'});
-    // Another isolate's clock, a second ahead of this one's, stamped it.
-    const ahead = formatMicros(nowMicros() + 1_000_000);
-    await db()
-      .update(tags)
-      .set({client_updated: ahead})
-      .where(eq(tags.id, tag.id));
-
-    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'latest'));
-    const stored = await refreshTag(tag.id);
-    expect(stored?.name).toBe('latest');
-    // Never moved back: just after it.
-    expect((stored?.client_updated ?? '') > ahead).toBe(true);
-    // As is one made ahead of the clock, on its first arrival.
     await sendOnce(
       'ahead-1',
       'PATCH',
       `/tags/${tag.id}`,
       tagRename(tag.id, 'ahead')
     );
-    expect((await refreshTag(tag.id))?.name).toBe('ahead');
+    const databaseNow = async () =>
+      (
+        await db().get<{now: string}>(
+          sql`SELECT strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000' AS now`
+        )
+      ).now;
+    const stamped = (await refreshTag(tag.id))?.client_updated ?? '';
+    expect(stamped <= (await databaseNow())).toBe(true);
+    // So a write naming no time, made after it, applies.
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'untimed'));
+    expect((await refreshTag(tag.id))?.name).toBe('untimed');
   });
 
-  it('as the latest write, never overwrites one committed while it was on its way', async () => {
+  it('never overwrites a write committed while it was on its way', async () => {
     const tag = await tagFactory({user, name: 'start'});
     // Just before this write (naming no time) updates the tag, another,
     // which arrived after it, does.
@@ -503,7 +500,7 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshTag(tag.id))?.name).toBe('committed');
   });
 
-  it('as the latest write, never overwrites one committed while it was on its way, though it reads again', async () => {
+  it('never overwrites a write committed while it was on its way, though it reads again', async () => {
     const tag = await tagFactory({user});
     const entry = await textEntryFactory({user});
     const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
@@ -529,26 +526,39 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshJunction(junction.id))?.is_deleted).toBe(false);
   });
 
-  it('as the latest write, never overwrites another over a row stamped ahead by another clock', async () => {
+  it('counts a retry after a failure as the write did, and applies it', async () => {
     const tag = await tagFactory({user, name: 'start'});
-    const ahead = formatMicros(nowMicros() + 1_000_000);
-    await db()
-      .update(tags)
-      .set({client_updated: ahead})
-      .where(eq(tags.id, tag.id));
-    // Both name no time; the other arrived after this one, and updates the
-    // tag just before it.
-    const racing = new ApiClient(
+    // Another device's write, made just before.
+    await send(
+      'PATCH',
+      `/tags/${tag.id}`,
+      formatMicros(nowMicros() - 1_000_000),
+      tagRename(tag.id, 'before')
+    );
+    // The first attempt is timed, then fails before it writes.
+    const failing = new ApiClient(
       await tokenFor(user.id),
       raceBeforeStatement(/^\s*update "tags_tag"/i, () =>
-        client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'committed'))
+        Promise.reject(new Error('D1 is unavailable'))
       )
     );
-    await racing.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'delayed'));
-    const stored = await refreshTag(tag.id);
-    expect(stored?.name).toBe('committed');
-    // Later than it was: never moved back.
-    expect((stored?.client_updated ?? '') > ahead).toBe(true);
+    const failed = await failing.request(
+      'PATCH',
+      `/api/v1/tags/${tag.id}`,
+      tagRename(tag.id, 'retried'),
+      {[CLIENT_WRITE_ID_HEADER]: 'failed-1'}
+    );
+    expect(failed.status).toBe(500);
+    expect((await refreshTag(tag.id))?.name).toBe('before');
+
+    const retried = await client.request(
+      'PATCH',
+      `/api/v1/tags/${tag.id}`,
+      tagRename(tag.id, 'retried'),
+      {[CLIENT_WRITE_ID_HEADER]: 'failed-1'}
+    );
+    expect((await json(retried)).data.attributes.name).toBe('retried');
+    expect((await refreshTag(tag.id))?.name).toBe('retried');
   });
 
   it('counts as made when it first arrived however late its retry, though other writes were made since', async () => {
@@ -583,13 +593,13 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshTag(tag.id))?.name).toBe('between-2');
   });
 
-  it('as the latest write, never brings back a tag deleted by a request after it', async () => {
+  it('never brings back a tag deleted by a request after it', async () => {
     const tag = await tagFactory({user, name: 'kept'});
-    // While this create (naming no time) is timed, a delete that arrived
-    // after it is made.
+    // Once this create (naming no time) is timed, before it reads the tag,
+    // a delete that arrived after it is made.
     const racing = new ApiClient(
       await tokenFor(user.id),
-      raceBeforeInsert('sync_clientwrite', () =>
+      raceBeforeStatement(/^\s*select\b.*\bfrom "tags_tag"\s/i, () =>
         client.delete(`/api/v1/tags/${tag.id}`)
       )
     );
@@ -604,14 +614,16 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshTag(tag.id))?.is_deleted).toBe(true);
   });
 
-  it('as the latest write, never tags again an entry untagged by a request after it', async () => {
+  it('never tags again an entry untagged by a request after it', async () => {
     const tag = await tagFactory({user});
     const entry = await textEntryFactory({user});
     const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
+    // Likewise an untag, before this tagging reads the junction.
     const racing = new ApiClient(
       await tokenFor(user.id),
-      raceBeforeInsert('sync_clientwrite', () =>
-        client.delete(`/api/v1/tags_entries/${junction.id}`)
+      raceBeforeStatement(
+        /^\s*select\b.*\bfrom "tags_tagtextentrythroughmodel"\s/i,
+        () => client.delete(`/api/v1/tags_entries/${junction.id}`)
       )
     );
     const tagging = await racing.request(

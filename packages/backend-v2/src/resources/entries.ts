@@ -14,7 +14,7 @@ import {parseResource} from '../lib/jsonapi';
 import {fold, searchColumns} from '../lib/search';
 import {validateFields} from '../lib/validate';
 import {icontains, usernameIs} from './filters';
-import {clientUpdated, stamped, writtenBefore} from './lww';
+import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, textEntryResource} from './owned';
 import {TEXT_ENTRY} from './resourceTypes';
 import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
@@ -92,7 +92,7 @@ entryRoutes.post('/', async c => {
     textEntryCreateAttributesSchema,
     attributes
   );
-  const when = await clientUpdated(c);
+  const at = await clientUpdated(c);
   const made = async () =>
     clientId === undefined
       ? undefined
@@ -121,7 +121,7 @@ entryRoutes.post('/', async c => {
         ...searchColumns(fields),
         user_id: user.id,
         client_id: clientId ?? null,
-        client_updated: when.at,
+        client_updated: at,
         date_created: timestamp,
         date_updated: nextRevision(textEntryResource, user.id),
       })
@@ -144,18 +144,14 @@ entryRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     id: String(entry.id),
   });
   const changes = validateFields(textEntryUpdateAttributesSchema, attributes);
-  const when = await clientUpdated(c);
+  const at = await clientUpdated(c);
   // Unless a newer client write stands: then the entry as it is.
   const [updated] = await c
     .get('db')
     .update(textEntries)
     .set({
       ...changes,
-      client_updated: stamped(
-        textEntries.client_updated,
-        when,
-        entry.client_updated
-      ),
+      client_updated: at,
       // Only the submitted fields' folds: recomputing an untouched field from
       // this request's earlier read could clobber a concurrent edit's fold.
       ...(changes.subject === undefined
@@ -167,7 +163,7 @@ entryRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     .where(
       and(
         eq(textEntries.id, entry.id),
-        writtenBefore(textEntries.client_updated, when, entry.client_updated)
+        writtenBefore(textEntries.client_updated, at)
       )
     )
     .returning();

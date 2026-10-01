@@ -22,8 +22,6 @@ import {
   appliesAfter,
   changedMeanwhile,
   clientUpdated,
-  FirstReads,
-  stamped,
   WRITE_ATTEMPTS,
   writtenBefore,
 } from './lww';
@@ -142,6 +140,8 @@ tagEntryRoutes.post('/', async c => {
     tagTextEntryCreateRelationshipsSchema,
     {tag: tagResource, text_entry: textEntryResource}
   );
+  const at = await clientUpdated(c);
+
   const find = async () =>
     (
       await db
@@ -156,16 +156,7 @@ tagEntryRoutes.post('/', async c => {
         .limit(1)
     )[0];
 
-  // The pair's junction as it stood when the write arrived, read before the
-  // write is timed: the latest write applies over that, never over a write
-  // made after it.
-  const firstReads = new FirstReads();
   let junction = await find();
-  if (junction !== undefined) {
-    firstReads.of(junction);
-  }
-  const when = await clientUpdated(c);
-  firstReads.freeze();
   if (junction === undefined) {
     const timestamp = now();
     try {
@@ -179,7 +170,7 @@ tagEntryRoutes.post('/', async c => {
             order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
             date_created: timestamp,
             date_updated: nextRevision(tagTextEntryResource, user.id),
-            client_updated: when.at,
+            client_updated: at,
           })
           .returning(),
         touchEntry(db, textEntryId, user.id),
@@ -202,32 +193,30 @@ tagEntryRoutes.post('/', async c => {
       break;
     }
     const {id, user_id, is_deleted} = junction;
-    const read = firstReads.of(junction);
     const own = user_id === user.id;
     // Untagged (or tagged) after this tagging was made: that stands. (Only
     // for the user's own junction: another's is always taken over below, so
     // it is never answered with.)
-    if (own && !appliesAfter(junction.client_updated, when, read)) {
+    if (own && !appliesAfter(junction.client_updated, at)) {
       return resourceResponse(c, TAG_TEXT_ENTRY, junction, 201);
     }
     if (own && !is_deleted) {
-      // Already tagged: still a write made when it was, which an older
-      // untag must not undo. Nothing a client syncs changes, so no revision
-      // advances.
-      const [kept] = await db
+      // Already tagged: still a write made at `at`, which an older untag must
+      // not undo. Nothing a client syncs changes, so no revision advances.
+      const [stamped] = await db
         .update(tagsEntries)
-        .set({client_updated: stamped(tagsEntries.client_updated, when, read)})
+        .set({client_updated: at})
         .where(
           and(
             eq(tagsEntries.id, id),
             eq(tagsEntries.user_id, user.id),
             eq(tagsEntries.is_deleted, false),
-            writtenBefore(tagsEntries.client_updated, when, read)
+            writtenBefore(tagsEntries.client_updated, at)
           )
         )
         .returning();
-      if (kept !== undefined) {
-        return resourceResponse(c, TAG_TEXT_ENTRY, kept, 201);
+      if (stamped !== undefined) {
+        return resourceResponse(c, TAG_TEXT_ENTRY, stamped, 201);
       }
     } else {
       // Imported Django data can hold a junction owned by another user
@@ -248,10 +237,7 @@ tagEntryRoutes.post('/', async c => {
           .set({
             user_id: user.id,
             date_updated: nextRevision(tagTextEntryResource, user.id),
-            // Another user's (legacy) write times do not count.
-            client_updated: own
-              ? stamped(tagsEntries.client_updated, when, read)
-              : when.at,
+            client_updated: at,
             ...restore,
           })
           .where(
@@ -260,9 +246,7 @@ tagEntryRoutes.post('/', async c => {
               eq(tagsEntries.user_id, user_id),
               eq(tagsEntries.is_deleted, is_deleted),
               // Another user's (legacy) writes do not count against this one.
-              own
-                ? writtenBefore(tagsEntries.client_updated, when, read)
-                : undefined
+              own ? writtenBefore(tagsEntries.client_updated, at) : undefined
             )
           )
           .returning(),
@@ -287,27 +271,23 @@ tagEntryRoutes.post('/', async c => {
  */
 tagEntryRoutes.delete('/:id', async c => {
   let junction = await getOwned<TagTextEntry>(c, tagTextEntryResource);
-  const firstReads = new FirstReads();
-  firstReads.of(junction);
-  const when = await clientUpdated(c);
-  firstReads.freeze();
+  const at = await clientUpdated(c);
   const db = c.get('db');
   // Written only while still as read (see the tagging above).
   for (let attempt = 0; ; attempt += 1) {
-    const read = firstReads.of(junction);
-    if (!appliesAfter(junction.client_updated, when, read)) {
+    if (!appliesAfter(junction.client_updated, at)) {
       break;
     }
     let written: TagTextEntry | undefined;
     if (junction.is_deleted) {
       [written] = await db
         .update(tagsEntries)
-        .set({client_updated: stamped(tagsEntries.client_updated, when, read)})
+        .set({client_updated: at})
         .where(
           and(
             eq(tagsEntries.id, junction.id),
             eq(tagsEntries.is_deleted, true),
-            writtenBefore(tagsEntries.client_updated, when, read)
+            writtenBefore(tagsEntries.client_updated, at)
           )
         )
         .returning();
@@ -317,14 +297,14 @@ tagEntryRoutes.delete('/:id', async c => {
           .update(tagsEntries)
           .set({
             is_deleted: true,
-            client_updated: stamped(tagsEntries.client_updated, when, read),
+            client_updated: at,
             date_updated: nextRevision(tagTextEntryResource, junction.user_id),
           })
           .where(
             and(
               eq(tagsEntries.id, junction.id),
               eq(tagsEntries.is_deleted, false),
-              writtenBefore(tagsEntries.client_updated, when, read)
+              writtenBefore(tagsEntries.client_updated, at)
             )
           )
           .returning(),
