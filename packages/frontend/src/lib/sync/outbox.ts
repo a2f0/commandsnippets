@@ -74,6 +74,8 @@ export const madeNow = (): string => formatMicros(Date.now() * 1000);
 
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
+  /** These calls, naming the queued write `writeId` (`Client-Write-Id`). */
+  forWrite(writeId: string): OutboxApi;
   createTag(
     name: string,
     clientId?: string,
@@ -253,7 +255,13 @@ export async function enqueue(
   write: QueuedWrite,
   made: string
 ): Promise<void> {
-  await db.outbox.add({owner, made, write, rows: rowsOf(owner, write)});
+  await db.outbox.add({
+    owner,
+    made,
+    writeId: globalThis.crypto.randomUUID(),
+    write,
+    rows: rowsOf(owner, write),
+  });
 }
 
 /** A local id replaced by the API's, once its create reached the API. */
@@ -665,7 +673,11 @@ export async function flushOutbox(
           'its row was never made'
         );
       }
-      sent = await send(api, queued.write, queued.made);
+      sent = await send(
+        api.forWrite(queued.writeId),
+        queued.write,
+        queued.made
+      );
     } catch (error: unknown) {
       if (!refused(error)) {
         throw error;

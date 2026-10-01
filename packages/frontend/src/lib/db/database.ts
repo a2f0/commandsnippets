@@ -79,6 +79,11 @@ export interface OutboxRow {
   owner: string;
   /** When the user made it (the API's datetime form): last writer wins. */
   made: string;
+  /**
+   * Its id, sent with every attempt (`Client-Write-Id`): the API counts a
+   * retry as made when the write first arrived.
+   */
+  writeId: string;
   write: QueuedWrite;
   /**
    * The rows it changed locally (`rowKey`): a sync leaves them as they are

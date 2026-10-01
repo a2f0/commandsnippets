@@ -160,9 +160,10 @@ export const tags = sqliteTable(
       .default(false),
     // A client's last write (see text_entries_textentry.client_updated).
     client_updated: text('client_updated'),
-    // The client id of the queued create that made the tag: a retried create
-    // finds the tag it made, whatever it is named by then (and a client that
-    // syncs it before the create's answer arrives, which the API renders).
+    // The client id of the queued create that made the tag, which the API
+    // renders: a client that syncs the tag before the create's answer arrives
+    // knows it. (Retries find tags by `tags_tagclientid`, which holds every
+    // create's.)
     client_id: text('client_id'),
   },
   table => [
@@ -171,16 +172,14 @@ export const tags = sqliteTable(
     check('tags_tag_order_check', sql`${table.order} >= 0`),
     index('tags_tag_user_order_idx').on(table.user_id, table.order),
     index('tags_tag_user_updated_idx').on(table.user_id, table.date_updated),
-    uniqueIndex('tags_tag_client_id_unique')
-      .on(table.user_id, table.client_id)
-      .where(sql`${table.client_id} IS NOT NULL`),
   ]
 );
 
 /**
- * The client ids of queued tag creates answered with a tag the user had
- * already (of the name): a retried create finds that tag by its id, however
- * it is named by then, as one that made its tag does (`tags_tag.client_id`).
+ * The client id of every queued tag create, and the tag it was answered with
+ * (the tag it made, or the user's of the name): a retried create finds that
+ * tag by it, however it is named by then. Reserved in the batch of the write
+ * the create is answered with, so a client id names one tag.
  */
 export const tagClientIds = sqliteTable(
   'tags_tagclientid',
@@ -196,6 +195,28 @@ export const tagClientIds = sqliteTable(
   table => [
     primaryKey({columns: [table.user_id, table.client_id]}),
     index('tags_tagclientid_tag_id_idx').on(table.tag_id),
+  ]
+);
+
+/**
+ * The writes a client made ahead of the API's clock (`Client-Updated` in its
+ * future), by the id the client gave each (`Client-Write-Id`): when the API
+ * counted it as made (its first attempt's now), which every retry counts
+ * too. Kept 30 days.
+ */
+export const clientWrites = sqliteTable(
+  'sync_clientwrite',
+  {
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+    write_id: text('write_id').notNull(),
+    made: text('made').notNull(),
+    date_created: text('date_created').notNull(),
+  },
+  table => [
+    primaryKey({columns: [table.user_id, table.write_id]}),
+    index('sync_clientwrite_date_created_idx').on(table.date_created),
   ]
 );
 
@@ -275,6 +296,7 @@ export type User = typeof users.$inferSelect;
 export type Token = typeof tokens.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
 export type TagClientId = typeof tagClientIds.$inferSelect;
+export type ClientWrite = typeof clientWrites.$inferSelect;
 export type TextEntry = typeof textEntries.$inferSelect;
 export type TagTextEntry = typeof tagsEntries.$inferSelect;
 export type TextEntryReused = typeof entryReuses.$inferSelect;

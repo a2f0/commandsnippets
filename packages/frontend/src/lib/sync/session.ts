@@ -127,6 +127,24 @@ export function syncSession(
   return session;
 }
 
+/**
+ * Run `task` holding the Web Lock of the database `name`'s data, across
+ * tabs: each write holds it shared (`lib/data/writes.ts`), a sign-out's
+ * cleanup exclusively (`endSyncSession`), so the cleanup sees every write
+ * committed before it, and none is made while it decides whether to delete
+ * the database (one waiting finds the database closed, or opens it anew).
+ */
+export function withDataLock<T>(
+  name: string,
+  mode: LockMode,
+  task: () => Promise<T>
+): Promise<T> {
+  const locks = globalThis.navigator?.locks;
+  return locks === undefined
+    ? task()
+    : locks.request(`commandsnippets-data:${name}`, {mode}, task);
+}
+
 /** Whether the database `name` holds writes not sent to the API yet. */
 export async function hasQueuedWrites(name: string): Promise<boolean> {
   if (!(await Dexie.exists(name))) {
@@ -165,15 +183,17 @@ export async function endSyncSession(
     names.add(databaseName(environment, username));
   }
   await Promise.all(
-    [...names].map(async name => {
-      if (!discardQueued && (await hasQueuedWrites(name))) {
-        return;
-      }
-      // Opened again meanwhile (the user signed in again): it stays.
-      if (open?.db.name === name) {
-        return;
-      }
-      await Dexie.delete(name);
-    })
+    [...names].map(name =>
+      withDataLock(name, 'exclusive', async () => {
+        if (!discardQueued && (await hasQueuedWrites(name))) {
+          return;
+        }
+        // Opened again meanwhile (the user signed in again): it stays.
+        if (open?.db.name === name) {
+          return;
+        }
+        await Dexie.delete(name);
+      })
+    )
   );
 }

@@ -175,6 +175,7 @@ describe('a row with a write queued', () => {
     db.outbox.add({
       owner: OWNER,
       made: '2024-01-01T00:00:00.000000',
+      writeId: 'write-1',
       write: {kind: 'deleteEntry', entryId: '1'},
       rows,
     });

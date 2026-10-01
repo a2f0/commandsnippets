@@ -17,3 +17,10 @@ export function isEmailViolation(error: unknown): boolean {
   }`;
   return /UNIQUE constraint failed: users_user\.email/.test(message);
 }
+
+/** A NOT NULL failure on `column` (`table.column`). */
+export function isNotNullViolation(error: unknown, column: string): boolean {
+  const message = String((error as Error)?.message ?? error);
+  const cause = String((error as {cause?: Error})?.cause?.message ?? '');
+  return (message + cause).includes(`NOT NULL constraint failed: ${column}`);
+}

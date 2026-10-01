@@ -95,7 +95,10 @@ API; everything else the app keeps is a zustand store.
   sign-in; `endSyncSession`), unless writes are still queued in it (the
   session expired offline, say): it is kept, queue and all, and the user's
   next sign-in here sends them (`discardQueued` deletes it all the same).
-  `signedOutDataCleanedUp()` settles once that is done.
+  `signedOutDataCleanedUp()` settles once that is done. Writes hold the
+  database's Web Lock shared and the cleanup holds it exclusively
+  (`withDataLock`), so a write another tab makes meanwhile is never
+  deleted unsent.
 - **The user's data**: `src/lib/db/database.ts`, a Dexie database per
   environment and signed-in user (`commandsnippets-<environment>-<username>`)
   of tags, entries and junctions (deleted ones too) as api-shared's
@@ -143,7 +146,9 @@ API; everything else the app keeps is a zustand store.
 - **The queue** (`flushOutbox`, run by the sync engine's `flush`, under the
   same lock as the syncs): writes go in order, each naming when it was made
   (`Client-Updated`, api-shared's `CLIENT_UPDATED_HEADER`: the API keeps the
-  newer of two writes to a row, last writer wins by edit time) and the
+  newer of two writes to a row, last writer wins by edit time), itself
+  (`Client-Write-Id`, the same on every attempt: a retry of a write made
+  ahead of the API's clock counts as made when it first arrived) and the
   signed-in user (`X-Expected-User`, `EXPECTED_USER_HEADER`; the API refuses
   it when the cookie is another user's: 409 `user_mismatch`,
   `UserMismatchError`, and the tab leaves the session). Each answer is the

@@ -1,7 +1,16 @@
-import {CLIENT_UPDATED_HEADER} from '@commandsnippets/api-shared';
+import {
+  CLIENT_UPDATED_HEADER,
+  CLIENT_WRITE_ID_HEADER,
+} from '@commandsnippets/api-shared';
 import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {tags, tagsEntries, textEntries, type User} from '../../src/db/schema';
+import {
+  tagClientIds,
+  tags,
+  tagsEntries,
+  textEntries,
+  type User,
+} from '../../src/db/schema';
 import {
   ApiClient,
   db,
@@ -387,6 +396,90 @@ describe('the client time', () => {
   });
 });
 
+describe('a write made ahead of the clock', () => {
+  const AHEAD = '2999-01-01T00:00:00.000000';
+  const sendOnce = (
+    writeId: string,
+    method: string,
+    path: string,
+    body?: unknown
+  ) =>
+    client.request(method, `/api/v1${path}`, body, {
+      ...made(AHEAD),
+      [CLIENT_WRITE_ID_HEADER]: writeId,
+    });
+
+  it('counts as made when it first arrived on every retry: a write made in between stands', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    // Its answer is lost.
+    await sendOnce(
+      'write-1',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'ahead')
+    );
+    expect((await refreshTag(tag.id))?.name).toBe('ahead');
+    // Another device's write, after it.
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'between'));
+
+    const retried = await sendOnce(
+      'write-1',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'ahead')
+    );
+    expect(retried.status).toBe(200);
+    expect((await json(retried)).data.attributes.name).toBe('between');
+    expect((await refreshTag(tag.id))?.name).toBe('between');
+
+    // A new write (another id) counts as now: it applies.
+    await sendOnce(
+      'write-2',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'newest')
+    );
+    expect((await refreshTag(tag.id))?.name).toBe('newest');
+  });
+
+  it("counts each user's write ids apart", async () => {
+    const tag = await tagFactory({user, name: 'mine'});
+    const theirs = await tagFactory({user: other, name: 'theirs'});
+    await sendOnce(
+      'shared-id',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'mine-2')
+    );
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'mine-3'));
+    const otherClient = new ApiClient(await tokenFor(other.id));
+    // Their own write after the first counted, which theirs must beat.
+    await otherClient.patch(
+      `/api/v1/tags/${theirs.id}`,
+      tagRename(theirs.id, 'theirs-1')
+    );
+    await otherClient.request(
+      'PATCH',
+      `/api/v1/tags/${theirs.id}`,
+      tagRename(theirs.id, 'theirs-2'),
+      {...made(AHEAD), [CLIENT_WRITE_ID_HEADER]: 'shared-id'}
+    );
+    expect((await refreshTag(theirs.id))?.name).toBe('theirs-2');
+  });
+
+  it('refuses a write id longer than 64 characters', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    const response = await sendOnce(
+      'x'.repeat(65),
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'long')
+    );
+    expect(response.status).toBe(400);
+    expect((await refreshTag(tag.id))?.name).toBe('start');
+  });
+});
+
 describe('an entry created with a client id', () => {
   const create = (clientId: string, subject: string, by = client) =>
     by.post('/api/v1/entries', {
@@ -522,14 +615,46 @@ describe('a tag created with a client id', () => {
     // lost) makes the tag, under another name by now.
     const racing = new ApiClient(
       await tokenFor(user.id),
-      raceBeforeInsert('tags_tag', async () => {
-        await tagFactory({user, name: 'renamed', client_id: 'local-raced'});
-      })
+      raceBeforeInsert('tags_tag', () =>
+        create('local-raced', 'raced').then(async made => {
+          const {data} = await json(made);
+          await client.patch(
+            `/api/v1/tags/${data.id}`,
+            tagRename(Number(data.id), 'renamed')
+          );
+        })
+      )
     );
     const response = await create('local-raced', 'raced', racing);
     expect(response.status).toBe(201);
     expect((await json(response)).data.attributes.name).toBe('renamed');
     expect((await userTags()).map(row => row.name)).not.toContain('raced');
+  });
+
+  it('answers a retry racing an answer with the tag of the name with that tag', async () => {
+    // Just before this create (of a name no tag has) inserts, its earlier
+    // attempt is answered with the user's tag of another name it had then,
+    // renamed since: the client id names that tag, and no other is made.
+    const tag = await tagFactory({user, name: 'had'});
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeInsert('tags_tag', async () => {
+        await create('local-alias', 'had');
+        await client.patch(
+          `/api/v1/tags/${tag.id}`,
+          tagRename(tag.id, 'elsewhere')
+        );
+      })
+    );
+    const response = await create('local-alias', 'fresh', racing);
+    expect(response.status).toBe(201);
+    expect((await json(response)).data.id).toBe(String(tag.id));
+    expect((await userTags()).map(row => row.name)).not.toContain('fresh');
+    expect(
+      (await db().select().from(tagClientIds)).filter(
+        row => row.client_id === 'local-alias'
+      )
+    ).toEqual([expect.objectContaining({tag_id: tag.id, user_id: user.id})]);
   });
 
   it('refuses a client id longer than 64 characters', async () => {

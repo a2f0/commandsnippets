@@ -140,7 +140,7 @@ tagEntryRoutes.post('/', async c => {
     tagTextEntryCreateRelationshipsSchema,
     {tag: tagResource, text_entry: textEntryResource}
   );
-  const at = clientUpdated(c);
+  const at = await clientUpdated(c);
 
   const find = async () =>
     (
@@ -271,7 +271,7 @@ tagEntryRoutes.post('/', async c => {
  */
 tagEntryRoutes.delete('/:id', async c => {
   let junction = await getOwned<TagTextEntry>(c, tagTextEntryResource);
-  const at = clientUpdated(c);
+  const at = await clientUpdated(c);
   const db = c.get('db');
   // Written only while still as read (see the tagging above).
   for (let attempt = 0; ; attempt += 1) {

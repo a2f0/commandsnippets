@@ -33,7 +33,7 @@ import {UserMismatchError} from '../api/apiClient';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {leaveForeignSession} from '../state/appState';
 import {enqueue, isLocalId, localId, madeNow} from '../sync/outbox';
-import type {SyncSession} from '../sync/session';
+import {type SyncSession, withDataLock} from '../sync/session';
 import {junctionOf} from './hooks';
 
 /**
@@ -114,16 +114,19 @@ async function write<T>(
   refuseReadOnly(session);
   const {db, owner} = session;
   const made = madeNow();
-  const result = await db.transaction(
-    'rw',
-    [db.tags, db.entries, db.junctions, db.outbox],
-    async () => {
-      const {writes, result} = await change();
-      for (const queued of writes) {
-        await enqueue(db, owner, queued, made);
+  // Never while a sign-out (in any tab) decides whether to delete the data.
+  const result = await withDataLock(db.name, 'shared', () =>
+    db.transaction(
+      'rw',
+      [db.tags, db.entries, db.junctions, db.outbox],
+      async () => {
+        const {writes, result} = await change();
+        for (const queued of writes) {
+          await enqueue(db, owner, queued, made);
+        }
+        return result;
       }
-      return result;
-    }
+    )
   );
   flushSoon(session);
   return result;

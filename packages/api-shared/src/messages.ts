@@ -115,9 +115,20 @@ export const EXPECTED_USER_HEADER = 'X-Expected-User';
  * tag, entry or junction applies only when it is no older than the row's
  * last one, and otherwise changes nothing (the response is the row as it
  * stands). A time ahead of the API's clock counts as now; a write without
- * the header counts as made now.
+ * the header counts as made now (a retry of one named by
+ * `CLIENT_WRITE_ID_HEADER`, as made when it first arrived).
  */
 export const CLIENT_UPDATED_HEADER = 'Client-Updated';
+
+/**
+ * The header naming a queued write: an id the client gives it (at most
+ * `CLIENT_WRITE_ID_MAX_LENGTH` characters), the same on every attempt to
+ * send it. A write made ahead of the API's clock counts as made when it
+ * first arrived, and so does every retry of it: a retry after a lost answer
+ * never beats a write made between its attempts.
+ */
+export const CLIENT_WRITE_ID_HEADER = 'Client-Write-Id';
+export const CLIENT_WRITE_ID_MAX_LENGTH = 64;
 
 /**
  * The header every API response carries its version in (the API's

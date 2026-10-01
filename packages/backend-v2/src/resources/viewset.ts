@@ -302,7 +302,7 @@ export async function softDelete(
   resource: SoftDeletedResource
 ): Promise<Response> {
   const row = await getOwned<{id: number; user_id: number}>(c, resource);
-  const at = clientUpdated(c);
+  const at = await clientUpdated(c);
   const [deleted] = await c
     .get('db')
     .update(resource.table)

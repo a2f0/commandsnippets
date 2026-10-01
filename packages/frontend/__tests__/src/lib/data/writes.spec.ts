@@ -7,6 +7,7 @@
 
 import {
   CLIENT_UPDATED_HEADER,
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
 } from '@commandsnippets/api-shared/messages';
@@ -152,27 +153,41 @@ describe('a write', () => {
     );
   });
 
-  it('names when it was made, and the signed-in user', async () => {
+  it('names when it was made, the signed-in user, and itself on every attempt', async () => {
     await session().sync.syncAll();
-    const headers: Array<[string | null, string | null]> = [];
+    const headers: Array<Array<string | null>> = [];
     server.events.on('request:start', ({request}) => {
       if (request.method !== 'GET') {
         headers.push([
           request.headers.get(CLIENT_UPDATED_HEADER),
           request.headers.get(EXPECTED_USER_HEADER),
+          request.headers.get(CLIENT_WRITE_ID_HEADER),
         ]);
       }
     });
     offline();
     await renameTag(session(), '2', 'renamed');
-    const {made} = (await db().outbox.toArray())[0] ?? {made: ''};
+    await renameTag(session(), '3', 'renamed-too');
+    const [first, second] = await db().outbox.toArray();
+    invariant(first && second, 'both writes should be queued');
+    await expect(session().sync.flush()).rejects.toThrow();
     server.resetHandlers();
 
     await session().sync.flush();
 
-    // When it was made (not when it was sent), and by whom.
-    expect(headers.at(-1)).toEqual([made, TEST_USER]);
-    expect(made).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}$/);
+    // When it was made (not when it was sent), by whom, and which write:
+    // the same id on the failed attempt and the retry, another's apart.
+    const attempts = headers.filter(([, , id]) => id === first.writeId);
+    expect(attempts.length).toBeGreaterThan(1);
+    for (const attempt of attempts) {
+      expect(attempt).toEqual([first.made, TEST_USER, first.writeId]);
+    }
+    expect(headers.at(-1)).toEqual([second.made, TEST_USER, second.writeId]);
+    expect(
+      headers.every(([, , id]) => id === first.writeId || id === second.writeId)
+    ).toBe(true);
+    expect(first.writeId).not.toBe(second.writeId);
+    expect(first.made).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}$/);
     expect(await queued()).toBe(0);
   });
 

@@ -86,11 +86,7 @@ describe('schema', () => {
   it('tags_tag', () => {
     expect(config(tags)).toMatchObject({
       checks: ['tags_tag_name_length', 'tags_tag_order_check'],
-      indexes: [
-        'tags_tag_client_id_unique',
-        'tags_tag_user_order_idx',
-        'tags_tag_user_updated_idx',
-      ],
+      indexes: ['tags_tag_user_order_idx', 'tags_tag_user_updated_idx'],
       unique: ['One tag of same name per user'],
       references: ['user_id->users_user cascade'],
     });

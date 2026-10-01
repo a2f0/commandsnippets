@@ -1,5 +1,6 @@
 import {
   CLIENT_UPDATED_HEADER,
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
 } from '@commandsnippets/api-shared/messages';
@@ -113,7 +114,8 @@ class ApiClient {
    * always that user.
    */
   constructor(
-    private readonly actingUser: () => string | null = signedInUser
+    private readonly actingUser: () => string | null = signedInUser,
+    private readonly writeId: string | null = null
   ) {}
 
   /**
@@ -123,7 +125,15 @@ class ApiClient {
    * account when this tab has switched accounts meanwhile.
    */
   public writesAs(username: string): ApiClient {
-    return new ApiClient(() => username);
+    return new ApiClient(() => username, this.writeId);
+  }
+
+  /**
+   * A client whose writes name the queued write `writeId`
+   * (`CLIENT_WRITE_ID_HEADER`), the same on every attempt to send it.
+   */
+  public forWrite(writeId: string): ApiClient {
+    return new ApiClient(this.actingUser, writeId);
   }
 
   /**
@@ -158,6 +168,9 @@ class ApiClient {
           ? {}
           : {[EXPECTED_USER_HEADER]: encodeURIComponent(user)}),
         ...(made === undefined ? {} : {[CLIENT_UPDATED_HEADER]: made}),
+        ...(this.writeId === null || method === 'GET'
+          ? {}
+          : {[CLIENT_WRITE_ID_HEADER]: this.writeId}),
       },
       ...(body === undefined ? {} : {body: JSON.stringify(body)}),
     };

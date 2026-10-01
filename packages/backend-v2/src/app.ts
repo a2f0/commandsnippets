@@ -1,6 +1,7 @@
 import {
   API_VERSION_HEADER,
   CLIENT_UPDATED_HEADER,
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
 } from '@commandsnippets/api-shared';
@@ -69,6 +70,7 @@ app.use(
       'x-csrftoken',
       EXPECTED_USER_HEADER.toLowerCase(),
       CLIENT_UPDATED_HEADER.toLowerCase(),
+      CLIENT_WRITE_ID_HEADER.toLowerCase(),
       'x-requested-with',
     ],
     // For the web app, on another origin, to read which API version answered.

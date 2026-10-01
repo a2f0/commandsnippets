@@ -29,6 +29,7 @@ describe('the database', () => {
     await db.outbox.add({
       owner: 'test',
       made: '2026-01-01T00:00:00.000000',
+      writeId: 'write-1',
       write: {kind: 'deleteTag', tagId: '1'},
       rows: ['test|Tag|1'],
     });

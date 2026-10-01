@@ -105,6 +105,74 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "sync_clientwrite": {
+      "name": "sync_clientwrite",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "write_id": {
+          "name": "write_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "made": {
+          "name": "made",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date_created": {
+          "name": "date_created",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "sync_clientwrite_date_created_idx": {
+          "name": "sync_clientwrite_date_created_idx",
+          "columns": [
+            "date_created"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "sync_clientwrite_user_id_users_user_id_fk": {
+          "name": "sync_clientwrite_user_id_users_user_id_fk",
+          "tableFrom": "sync_clientwrite",
+          "tableTo": "users_user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "sync_clientwrite_user_id_write_id_pk": {
+          "columns": [
+            "user_id",
+            "write_id"
+          ],
+          "name": "sync_clientwrite_user_id_write_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "text_entries_textentryreused": {
       "name": "text_entries_textentryreused",
       "columns": {
@@ -358,15 +426,6 @@
             "date_updated"
           ],
           "isUnique": false
-        },
-        "tags_tag_client_id_unique": {
-          "name": "tags_tag_client_id_unique",
-          "columns": [
-            "user_id",
-            "client_id"
-          ],
-          "isUnique": true,
-          "where": "\"tags_tag\".\"client_id\" IS NOT NULL"
         },
         "One tag of same name per user": {
           "name": "One tag of same name per user",

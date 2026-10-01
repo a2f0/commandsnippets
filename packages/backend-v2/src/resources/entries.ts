@@ -92,7 +92,7 @@ entryRoutes.post('/', async c => {
     textEntryCreateAttributesSchema,
     attributes
   );
-  const at = clientUpdated(c);
+  const at = await clientUpdated(c);
   const made = async () =>
     clientId === undefined
       ? undefined
@@ -144,7 +144,7 @@ entryRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     id: String(entry.id),
   });
   const changes = validateFields(textEntryUpdateAttributesSchema, attributes);
-  const at = clientUpdated(c);
+  const at = await clientUpdated(c);
   // Unless a newer client write stands: then the entry as it is.
   const [updated] = await c
     .get('db')

@@ -3,11 +3,11 @@ import {
   tagListQuerySchema,
   tagUpdateAttributesSchema,
 } from '@commandsnippets/api-shared';
-import {and, eq, inArray, or, sql} from 'drizzle-orm';
+import {and, eq, inArray, type SQL, sql} from 'drizzle-orm';
 import {type Context, Hono} from 'hono';
 import * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
-import {isUniqueViolation} from '../db/errors';
+import {isNotNullViolation, isUniqueViolation} from '../db/errors';
 import {type Tag, tagClientIds, tags, type User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
@@ -87,7 +87,7 @@ tagRoutes.post('/', async c => {
     z.pick(tagCreateAttributesSchema, {client_id: true}),
     attributes
   );
-  const at = clientUpdated(c);
+  const at = await clientUpdated(c);
 
   // The tag this create made, or was answered with, before (its answer was
   // lost): by its client id, whatever the tag is named by then.
@@ -99,38 +99,35 @@ tagRoutes.post('/', async c => {
             .select()
             .from(tags)
             .where(
-              and(
-                eq(tags.user_id, user.id),
-                or(
-                  eq(tags.client_id, clientId),
-                  inArray(
-                    tags.id,
-                    db
-                      .select({id: tagClientIds.tag_id})
-                      .from(tagClientIds)
-                      .where(
-                        and(
-                          eq(tagClientIds.user_id, user.id),
-                          eq(tagClientIds.client_id, clientId)
-                        )
-                      )
+              inArray(
+                tags.id,
+                db
+                  .select({id: tagClientIds.tag_id})
+                  .from(tagClientIds)
+                  .where(
+                    and(
+                      eq(tagClientIds.user_id, user.id),
+                      eq(tagClientIds.client_id, clientId)
+                    )
                   )
-                )
               )
             )
             .limit(1)
         )[0];
-  // This create is answered with the user's tag of the name: a retry finds
-  // it by the create's client id.
-  const answeredWith = async (tag: Tag) => {
-    if (clientId !== undefined) {
-      await db
-        .insert(tagClientIds)
-        .values({user_id: user.id, client_id: clientId, tag_id: tag.id})
-        .onConflictDoNothing();
-    }
-    return resourceResponse(c, TAG, tag, 201);
-  };
+  // The statement reserving this create's client id for the tag `which`
+  // finds when it runs, ending the batch of the write it answers with: so
+  // the client id names one tag, the one the create was answered with. A
+  // clash (another attempt of this create reserved it first) or no such tag
+  // any more fails the batch, which is undone, and the create reads again.
+  const reserve = (which: SQL) =>
+    db.insert(tagClientIds).values({
+      user_id: user.id,
+      client_id: clientId ?? '',
+      tag_id: sql`(SELECT ${tags.id} FROM ${tags} WHERE ${which})`,
+    });
+  const lostRace = (error: unknown) =>
+    isUniqueViolation(error) ||
+    isNotNullViolation(error, 'tags_tagclientid.tag_id');
   const findByName = async (name: string) =>
     (
       await db
@@ -153,42 +150,63 @@ tagRoutes.post('/', async c => {
       return resourceResponse(c, TAG, made, 201);
     }
     const existing = named === undefined ? undefined : await findByName(named);
-    if (existing !== undefined) {
-      // Deleted (or created) after this create was made: that stands.
-      if (!appliesAfter(existing.client_updated, at)) {
-        return answeredWith(existing);
-      }
-      const [written] = await db
-        .update(tags)
-        .set(
-          existing.is_deleted
-            ? {
-                is_deleted: false,
-                client_updated: at,
-                date_updated: nextRevision(tagResource, user.id),
-              }
-            : // Still a write made at `at`, which an older delete must not
-              // undo. Nothing a client syncs changes: no revision advances.
-              {client_updated: at}
-        )
-        .where(
-          and(
+    const asRead =
+      existing === undefined
+        ? undefined
+        : and(
             eq(tags.id, existing.id),
             eq(tags.name, existing.name),
-            eq(tags.is_deleted, existing.is_deleted),
-            writtenBefore(tags.client_updated, at)
-          )
-        )
-        .returning();
-      if (written !== undefined) {
-        return answeredWith(written);
-      }
-      continue;
-    }
-    const {name} = validateFields(tagCreateAttributesSchema, attributes);
-    const timestamp = now();
+            eq(tags.is_deleted, existing.is_deleted)
+          );
     try {
-      const [created] = await db
+      if (existing !== undefined && asRead !== undefined) {
+        // Deleted (or created) after this create was made: that stands.
+        if (!appliesAfter(existing.client_updated, at)) {
+          if (clientId !== undefined) {
+            await reserve(asRead);
+          }
+          return resourceResponse(c, TAG, existing, 201);
+        }
+        const update = db
+          .update(tags)
+          .set(
+            existing.is_deleted
+              ? {
+                  is_deleted: false,
+                  client_updated: at,
+                  date_updated: nextRevision(tagResource, user.id),
+                }
+              : // Still a write made at `at`, which an older delete must not
+                // undo. Nothing a client syncs changes: no revision advances.
+                {client_updated: at}
+          )
+          .where(and(asRead, writtenBefore(tags.client_updated, at)))
+          .returning();
+        const [written] =
+          clientId === undefined
+            ? await update
+            : (
+                await db.batch([
+                  update,
+                  // The tag as this update left it.
+                  reserve(
+                    and(
+                      eq(tags.id, existing.id),
+                      eq(tags.name, existing.name),
+                      eq(tags.is_deleted, false),
+                      eq(tags.client_updated, at)
+                    ) ?? sql`0`
+                  ),
+                ])
+              )[0];
+        if (written !== undefined) {
+          return resourceResponse(c, TAG, written, 201);
+        }
+        continue;
+      }
+      const {name} = validateFields(tagCreateAttributesSchema, attributes);
+      const timestamp = now();
+      const insert = db
         .insert(tags)
         .values({
           name,
@@ -201,11 +219,22 @@ tagRoutes.post('/', async c => {
           client_updated: at,
         })
         .returning();
+      const [created] =
+        clientId === undefined
+          ? await insert
+          : (
+              await db.batch([
+                insert,
+                reserve(
+                  and(eq(tags.user_id, user.id), eq(tags.name, name)) ?? sql`0`
+                ),
+              ])
+            )[0];
       return resourceResponse(c, TAG, created as Tag, 201);
     } catch (error) {
-      // Lost a race with a concurrent create of the name, or this one's
-      // retry: answer with the tag it made (the next attempt).
-      if (!isUniqueViolation(error)) {
+      // Lost a race: with a concurrent create of the name, or with another
+      // attempt of this create (the next attempt answers with its tag).
+      if (!lostRace(error)) {
         throw error;
       }
     }
@@ -221,7 +250,7 @@ tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     id: String(tag.id),
   });
   const changes = validateFields(tagUpdateAttributesSchema, attributes);
-  const at = clientUpdated(c);
+  const at = await clientUpdated(c);
   try {
     // Unless a newer client write stands: then the tag as it is.
     const [updated] = await db

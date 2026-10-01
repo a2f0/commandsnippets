@@ -1,3 +1,4 @@
+import {locks} from 'node:worker_threads';
 import Dexie from 'dexie';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 
@@ -9,9 +10,13 @@ import {
   endSyncSession,
   hasQueuedWrites,
   syncSession,
+  withDataLock,
 } from '../../../../src/lib/sync/session';
 
-afterEach(() => endSyncSession(null));
+afterEach(() => {
+  vi.unstubAllGlobals();
+  return endSyncSession(null);
+});
 
 describe('syncSession', () => {
   it("opens the user's own database, one at a time", async () => {
@@ -55,6 +60,7 @@ describe('syncSession', () => {
     await db.outbox.add({
       owner: 'hana',
       made: '2026-01-01T00:00:00.000000',
+      writeId: 'write-1',
       write: {kind: 'deleteTag', tagId: '1'},
       rows: ['hana|Tag|1'],
     });
@@ -67,6 +73,49 @@ describe('syncSession', () => {
 
     await endSyncSession('hana', {discardQueued: true});
     expect(await Dexie.exists(db.name)).toBe(false);
+  });
+
+  it("waits for another tab's write before deciding, and keeps the data when it queued one", async () => {
+    // Web Locks across tabs (jsdom has none; Node's work alike).
+    vi.stubGlobal('navigator', {...globalThis.navigator, locks});
+    const {db} = syncSession('ivan');
+    await db.cursors.put({owner: 'ivan', key: 'tags', after: '0,0'});
+    // Another tab is making a write.
+    let granted!: () => void;
+    const holding = new Promise<void>(resolve => {
+      granted = resolve;
+    });
+    let release!: () => void;
+    const released = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    const writing = withDataLock(db.name, 'shared', async () => {
+      granted();
+      await released;
+    });
+    await holding;
+
+    const ending = endSyncSession('ivan');
+    // The cleanup waits for it.
+    await vi.waitFor(async () => {
+      const {pending = []} = await locks.query();
+      expect(pending.map(lock => lock.mode)).toContain('exclusive');
+    });
+    // The write is queued, in the database the other tab has open.
+    const other = new CommandsnippetsDatabase(db.name);
+    await other.outbox.add({
+      owner: 'ivan',
+      made: '2026-01-01T00:00:00.000000',
+      writeId: 'write-1',
+      write: {kind: 'deleteTag', tagId: '1'},
+      rows: ['ivan|Tag|1'],
+    });
+    other.close();
+    release();
+    await writing;
+    await ending;
+
+    expect(await hasQueuedWrites(db.name)).toBe(true);
   });
 
   it('deletes the data when the session ends', async () => {
