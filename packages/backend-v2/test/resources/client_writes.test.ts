@@ -583,6 +583,55 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshTag(tag.id))?.name).toBe('between-2');
   });
 
+  it('as the latest write, never brings back a tag deleted by a request after it', async () => {
+    const tag = await tagFactory({user, name: 'kept'});
+    // While this create (naming no time) is timed, a delete that arrived
+    // after it is made.
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeInsert('sync_clientwrite', () =>
+        client.delete(`/api/v1/tags/${tag.id}`)
+      )
+    );
+    const create = await racing.request(
+      'POST',
+      '/api/v1/tags',
+      {data: {type: 'Tag', attributes: {name: 'kept'}}},
+      {[CLIENT_WRITE_ID_HEADER]: 'create-1'}
+    );
+    expect(create.status).toBe(201);
+    expect((await json(create)).data.attributes.is_deleted).toBe(true);
+    expect((await refreshTag(tag.id))?.is_deleted).toBe(true);
+  });
+
+  it('as the latest write, never tags again an entry untagged by a request after it', async () => {
+    const tag = await tagFactory({user});
+    const entry = await textEntryFactory({user});
+    const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeInsert('sync_clientwrite', () =>
+        client.delete(`/api/v1/tags_entries/${junction.id}`)
+      )
+    );
+    const tagging = await racing.request(
+      'POST',
+      '/api/v1/tags_entries',
+      {
+        data: {
+          type: 'TagTextEntryThroughModel',
+          relationships: {
+            tag: {data: {type: 'Tag', id: String(tag.id)}},
+            text_entry: {data: {type: 'TextEntry', id: String(entry.id)}},
+          },
+        },
+      },
+      {[CLIENT_WRITE_ID_HEADER]: 'tagging-1'}
+    );
+    expect(tagging.status).toBe(201);
+    expect((await refreshJunction(junction.id))?.is_deleted).toBe(true);
+  });
+
   it('counts a retry as its first attempt was counted, whatever the clock of the isolate it reaches', async () => {
     const tag = await tagFactory({user, name: 'start'});
     const named = (at: string) => ({

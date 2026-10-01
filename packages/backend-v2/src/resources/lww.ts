@@ -100,18 +100,32 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<Made> {
 
 /**
  * The time a row's last client write had when this request first read the
- * row: a latest write applies over that one only (see `writtenBefore`).
- * Retries read the row again; the time a write committed since gave it does
- * not count.
+ * row, before its write was timed (`freeze`): a latest write applies over
+ * that one only (see `writtenBefore`), the state the row was in when the
+ * write arrived. Retries read the row again; the time a write committed
+ * since gave it does not count, and a row first read after the write was
+ * timed has none (`undefined`): its time decides.
  */
 export class FirstReads {
   private readonly times = new Map<number, string | null>();
+  private frozen = false;
 
-  of(row: {id: number; client_updated: string | null}): string | null {
+  of(row: {
+    id: number;
+    client_updated: string | null;
+  }): string | null | undefined {
     if (!this.times.has(row.id)) {
+      if (this.frozen) {
+        return undefined;
+      }
       this.times.set(row.id, row.client_updated);
     }
-    return this.times.get(row.id) ?? null;
+    return this.times.get(row.id);
+  }
+
+  /** The write is timed: rows read from now on were not read before it. */
+  freeze(): void {
+    this.frozen = true;
   }
 }
 
@@ -125,10 +139,10 @@ export class FirstReads {
 export const writtenBefore = (
   column: SQLiteColumn,
   made: Made,
-  read: string | null
+  read: string | null | undefined
 ): SQL => {
   const noNewer = sql`(${column} IS NULL OR ${column} <= ${made.at})`;
-  if (!made.latest) {
+  if (!made.latest || read === undefined) {
     return noNewer;
   }
   return read === null
@@ -140,9 +154,11 @@ export const writtenBefore = (
 export const appliesAfter = (
   last: string | null,
   made: Made,
-  read: string | null
+  read: string | null | undefined
 ): boolean =>
-  last === null || last <= made.at || (made.latest && last === read);
+  last === null ||
+  last <= made.at ||
+  (made.latest && read !== undefined && last === read);
 
 /** A microsecond after `time`. */
 function justAfter(time: string): string {
@@ -161,15 +177,20 @@ function justAfter(time: string): string {
 export const stamped = (
   column: SQLiteColumn,
   made: Made,
-  read: string | null
+  read: string | null | undefined
 ): string | SQL =>
-  made.latest && read !== null && read > made.at
+  made.latest && read !== null && read !== undefined && read > made.at
     ? sql`CASE WHEN ${column} IS NULL OR ${column} <= ${made.at} THEN ${made.at} ELSE ${justAfter(read)} END`
     : made.at;
 
 /** `stamped`'s value on a row last written at `read`, as read. */
-export const stampedAfter = (read: string | null, made: Made): string =>
-  made.latest && read !== null && read > made.at ? justAfter(read) : made.at;
+export const stampedAfter = (
+  read: string | null | undefined,
+  made: Made
+): string =>
+  made.latest && read !== null && read !== undefined && read > made.at
+    ? justAfter(read)
+    : made.at;
 
 /**
  * How many times a write to a row it read reads it again, when another write

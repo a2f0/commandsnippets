@@ -32,7 +32,7 @@ import type * as z from 'zod/mini';
 import {UserMismatchError} from '../api/apiClient';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {leaveForeignSession} from '../state/appState';
-import {enqueue, isLocalId, localId, madeNow} from '../sync/outbox';
+import {enqueue, isLocalId, localId, madeNow, nextMade} from '../sync/outbox';
 import {type SyncSession, withDataLock} from '../sync/session';
 import {junctionOf} from './hooks';
 
@@ -104,8 +104,9 @@ function flushSoon(session: SyncSession): void {
 
 /**
  * Make a write: `change` changes the database and returns the writes to
- * queue (made now) with its result, all in one transaction; then the queue
- * is flushed.
+ * queue with its result, all in one transaction, which also gives them
+ * their time (`nextMade`: after every write queued before, in any tab);
+ * then the queue is flushed.
  */
 async function write<T>(
   session: SyncSession,
@@ -113,14 +114,14 @@ async function write<T>(
 ): Promise<T> {
   refuseReadOnly(session);
   const {db, owner} = session;
-  const made = madeNow();
   // Never while a sign-out (in any tab) decides whether to delete the data.
   const result = await withDataLock(db.name, 'shared', () =>
     db.transaction(
       'rw',
-      [db.tags, db.entries, db.junctions, db.outbox],
+      [db.tags, db.entries, db.junctions, db.outbox, db.cursors],
       async () => {
         const {writes, result} = await change();
+        const made = await nextMade(db, owner);
         for (const queued of writes) {
           await enqueue(db, owner, queued, made);
         }

@@ -142,8 +142,6 @@ tagEntryRoutes.post('/', async c => {
     tagTextEntryCreateRelationshipsSchema,
     {tag: tagResource, text_entry: textEntryResource}
   );
-  const when = await clientUpdated(c);
-
   const find = async () =>
     (
       await db
@@ -158,7 +156,16 @@ tagEntryRoutes.post('/', async c => {
         .limit(1)
     )[0];
 
+  // The pair's junction as it stood when the write arrived, read before the
+  // write is timed: the latest write applies over that, never over a write
+  // made after it.
+  const firstReads = new FirstReads();
   let junction = await find();
+  if (junction !== undefined) {
+    firstReads.of(junction);
+  }
+  const when = await clientUpdated(c);
+  firstReads.freeze();
   if (junction === undefined) {
     const timestamp = now();
     try {
@@ -190,7 +197,6 @@ tagEntryRoutes.post('/', async c => {
   }
   // The pair's junction, as read: written only while still so (a write
   // landing between the read and this one makes it read again).
-  const firstReads = new FirstReads();
   for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
     if (junction === undefined) {
       break;
@@ -281,10 +287,12 @@ tagEntryRoutes.post('/', async c => {
  */
 tagEntryRoutes.delete('/:id', async c => {
   let junction = await getOwned<TagTextEntry>(c, tagTextEntryResource);
+  const firstReads = new FirstReads();
+  firstReads.of(junction);
   const when = await clientUpdated(c);
+  firstReads.freeze();
   const db = c.get('db');
   // Written only while still as read (see the tagging above).
-  const firstReads = new FirstReads();
   for (let attempt = 0; ; attempt += 1) {
     const read = firstReads.of(junction);
     if (!appliesAfter(junction.client_updated, when, read)) {

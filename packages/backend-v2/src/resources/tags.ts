@@ -90,7 +90,6 @@ tagRoutes.post('/', async c => {
     z.pick(tagCreateAttributesSchema, {client_id: true}),
     attributes
   );
-  const when = await clientUpdated(c);
 
   // The tag this create made, or was answered with, before (its answer was
   // lost): by its client id, whatever the tag is named by then.
@@ -144,10 +143,19 @@ tagRoutes.post('/', async c => {
     typeof attributes['name'] === 'string'
       ? attributes['name'].trim()
       : undefined;
+  // The tag of the name as it stood when the write arrived, read before the
+  // write is timed: the latest write applies over that, never over a write
+  // made after it.
+  const firstReads = new FirstReads();
+  const initial = named === undefined ? undefined : await findByName(named);
+  if (initial !== undefined) {
+    firstReads.of(initial);
+  }
+  const when = await clientUpdated(c);
+  firstReads.freeze();
   // The user's tag of the name, as read, written only while still so (named
   // so, deleted or not as read): a write landing between the read and this
   // one (a rename, a delete, a concurrent create) makes it read again.
-  const firstReads = new FirstReads();
   for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
     const made = await findMade();
     if (made !== undefined) {

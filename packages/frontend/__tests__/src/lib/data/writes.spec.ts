@@ -216,6 +216,31 @@ describe('a write', () => {
     localStorage.removeItem(LAST_MADE_KEY);
   });
 
+  it('is made after every write queued before it, by any tab at once', async () => {
+    await session().sync.syncAll();
+    offline();
+    // Two tabs read the same clock, and neither sees the other's last time
+    // in the browser's storage yet.
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 86_400_000);
+    vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+    vi.resetModules();
+    const otherTab = await import('../../../../src/lib/sync/outbox');
+    await db().transaction('rw', [db().outbox, db().cursors], async () => {
+      const made = await otherTab.nextMade(db(), TEST_USER);
+      await otherTab.enqueue(
+        db(),
+        TEST_USER,
+        {kind: 'deleteTag', tagId: '3'},
+        made
+      );
+    });
+
+    await renameTag(session(), '2', 'here');
+    const [theirs, ours] = (await db().outbox.toArray()).map(row => row.made);
+    invariant(theirs && ours, 'both writes should be queued');
+    expect(ours > theirs).toBe(true);
+  });
+
   it('sends its local id with a create, so a retry makes the entry once', async () => {
     const create = vi.spyOn(apiClientMethods, 'createEntry');
 

@@ -106,6 +106,33 @@ export function madeNow(): string {
   return formatMicros(micros);
 }
 
+/** The key (in `cursors`) of the time the last write queued here was made. */
+export const MADE_KEY = 'made';
+
+/** A microsecond after `time` (the API's fixed-width datetime form). */
+function justAfter(time: string): string {
+  const seconds = Date.parse(`${time.slice(0, 19)}Z`);
+  return formatMicros(seconds * 1000 + Number(time.slice(20, 26)) + 1);
+}
+
+/**
+ * When a write is made, in the transaction that queues it (one including
+ * `cursors`): after the last write queued in `owner`'s data, by any tab
+ * (IndexedDB runs the transactions one at a time), and no earlier than this
+ * browser's last (`madeNow`). No two writes share a time, and none is made
+ * before one queued ahead of it.
+ */
+export async function nextMade(
+  db: CommandsnippetsDatabase,
+  owner: string
+): Promise<string> {
+  const now = madeNow();
+  const last = (await db.cursors.get([owner, MADE_KEY]))?.after;
+  const made = last !== undefined && last >= now ? justAfter(last) : now;
+  await db.cursors.put({owner, key: MADE_KEY, after: made});
+  return made;
+}
+
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
   /** These calls, naming the queued write `writeId` (`Client-Write-Id`). */
