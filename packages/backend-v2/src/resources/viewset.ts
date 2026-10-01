@@ -301,7 +301,11 @@ export async function softDelete(
   c: Context<AppEnv>,
   resource: SoftDeletedResource
 ): Promise<Response> {
-  const row = await getOwned<{id: number; user_id: number}>(c, resource);
+  const row = await getOwned<{
+    id: number;
+    user_id: number;
+    client_updated: string | null;
+  }>(c, resource);
   const when = await clientUpdated(c);
   const [deleted] = await c
     .get('db')
@@ -312,7 +316,10 @@ export async function softDelete(
       date_updated: nextRevision(resource, row.user_id),
     })
     .where(
-      and(eq(resource.id, row.id), writtenBefore(resource.clientUpdated, when))
+      and(
+        eq(resource.id, row.id),
+        writtenBefore(resource.clientUpdated, when, row.client_updated)
+      )
     )
     .returning();
   return resourceResponse(

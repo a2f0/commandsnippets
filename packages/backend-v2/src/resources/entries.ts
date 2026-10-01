@@ -163,7 +163,7 @@ entryRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     .where(
       and(
         eq(textEntries.id, entry.id),
-        writtenBefore(textEntries.client_updated, when)
+        writtenBefore(textEntries.client_updated, when, entry.client_updated)
       )
     )
     .returning();

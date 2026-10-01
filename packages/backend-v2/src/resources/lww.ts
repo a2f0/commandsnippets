@@ -29,10 +29,10 @@ export interface Made {
   at: string;
   /**
    * Counted as made now, on its first arrival (it named no time, or one
-   * ahead of the API's clock): it is the latest write there is, whatever
-   * time another isolate's clock (which may run a little ahead) gave the
-   * writes before it. It applies whatever the row's last write time, and
-   * leaves the later of the two on the row.
+   * ahead of the API's clock): later than every write to the row before it,
+   * whatever time another isolate's clock (which may run a little ahead)
+   * gave theirs. So it applies to the row as it was read, whatever its time
+   * (see `writtenBefore`), and leaves the later of the two times on it.
    */
   latest: boolean;
 }
@@ -105,13 +105,31 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<Made> {
 }
 
 /**
- * A write made at `made` applies: the row's last client write is no newer
- * (or it is the latest write there is).
+ * A write made at `made` applies: the row's last client write is no newer,
+ * or, for the latest write, is still the one read (`read`, the row's
+ * `client_updated` when this request read it). A write committed since the
+ * read changes it, and then its time decides as for any write: one made
+ * after this write arrived (while it was on its way to the database)
+ * stands.
  */
-export const writtenBefore = (column: SQLiteColumn, made: Made): SQL =>
-  made.latest ? sql`1` : sql`(${column} IS NULL OR ${column} <= ${made.at})`;
+export const writtenBefore = (
+  column: SQLiteColumn,
+  made: Made,
+  read: string | null
+): SQL => {
+  const noNewer = sql`(${column} IS NULL OR ${column} <= ${made.at})`;
+  if (!made.latest) {
+    return noNewer;
+  }
+  return read === null
+    ? sql`(${noNewer} OR ${column} IS NULL)`
+    : sql`(${noNewer} OR ${column} = ${read})`;
+};
 
-/** Whether a write made at `made` applies to a row last written at `last`. */
+/**
+ * Whether a write made at `made` applies to a row last written at `last`
+ * (the latest write: to any row as read, its guarded write deciding).
+ */
 export const appliesAfter = (last: string | null, made: Made): boolean =>
   made.latest || last === null || last <= made.at;
 

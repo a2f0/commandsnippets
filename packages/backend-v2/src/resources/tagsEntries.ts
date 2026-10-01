@@ -213,7 +213,11 @@ tagEntryRoutes.post('/', async c => {
             eq(tagsEntries.id, id),
             eq(tagsEntries.user_id, user.id),
             eq(tagsEntries.is_deleted, false),
-            writtenBefore(tagsEntries.client_updated, when)
+            writtenBefore(
+              tagsEntries.client_updated,
+              when,
+              junction.client_updated
+            )
           )
         )
         .returning();
@@ -251,7 +255,13 @@ tagEntryRoutes.post('/', async c => {
               eq(tagsEntries.user_id, user_id),
               eq(tagsEntries.is_deleted, is_deleted),
               // Another user's (legacy) writes do not count against this one.
-              own ? writtenBefore(tagsEntries.client_updated, when) : undefined
+              own
+                ? writtenBefore(
+                    tagsEntries.client_updated,
+                    when,
+                    junction.client_updated
+                  )
+                : undefined
             )
           )
           .returning(),
@@ -292,7 +302,11 @@ tagEntryRoutes.delete('/:id', async c => {
           and(
             eq(tagsEntries.id, junction.id),
             eq(tagsEntries.is_deleted, true),
-            writtenBefore(tagsEntries.client_updated, when)
+            writtenBefore(
+              tagsEntries.client_updated,
+              when,
+              junction.client_updated
+            )
           )
         )
         .returning();
@@ -309,7 +323,11 @@ tagEntryRoutes.delete('/:id', async c => {
             and(
               eq(tagsEntries.id, junction.id),
               eq(tagsEntries.is_deleted, false),
-              writtenBefore(tagsEntries.client_updated, when)
+              writtenBefore(
+                tagsEntries.client_updated,
+                when,
+                junction.client_updated
+              )
             )
           )
           .returning(),

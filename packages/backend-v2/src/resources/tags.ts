@@ -183,7 +183,12 @@ tagRoutes.post('/', async c => {
                 // advances.
                 {client_updated: stamped(tags.client_updated, when)}
           )
-          .where(and(asRead, writtenBefore(tags.client_updated, when)))
+          .where(
+            and(
+              asRead,
+              writtenBefore(tags.client_updated, when, existing.client_updated)
+            )
+          )
           .returning();
         const [written] =
           clientId === undefined
@@ -266,7 +271,12 @@ tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
         client_updated: stamped(tags.client_updated, when),
         date_updated: nextRevision(tagResource, tag.user_id),
       })
-      .where(and(eq(tags.id, tag.id), writtenBefore(tags.client_updated, when)))
+      .where(
+        and(
+          eq(tags.id, tag.id),
+          writtenBefore(tags.client_updated, when, tag.client_updated)
+        )
+      )
       .returning();
     return resourceResponse(
       c,

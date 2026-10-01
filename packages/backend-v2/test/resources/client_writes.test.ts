@@ -485,6 +485,25 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshTag(tag.id))?.name).toBe('ahead');
   });
 
+  it('as the latest write, never overwrites one committed while it was on its way', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    // Just before this write (naming no time) updates the tag, another,
+    // which arrived after it, does.
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeStatement(/^\s*update "tags_tag"/i, () =>
+        client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'committed'))
+      )
+    );
+    const delayed = await racing.patch(
+      `/api/v1/tags/${tag.id}`,
+      tagRename(tag.id, 'delayed')
+    );
+    expect(delayed.status).toBe(200);
+    expect((await json(delayed)).data.attributes.name).toBe('committed');
+    expect((await refreshTag(tag.id))?.name).toBe('committed');
+  });
+
   it('counts as made when it first arrived however late its retry, though other writes were made since', async () => {
     const tag = await tagFactory({user, name: 'start'});
     await sendOnce(
