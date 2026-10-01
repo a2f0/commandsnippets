@@ -286,6 +286,7 @@ describe('POST /entries', () => {
         reused_count: 0,
         is_deleted: false,
         tag_count: 0,
+        client_id: null,
       },
       relationships: {
         user: {data: {type: 'User', id: '1'}},
@@ -325,6 +326,60 @@ describe('POST /entries', () => {
       )
     );
     expect((await getEntries()).data).toHaveLength(3);
+  });
+
+  it('makes an entry once per client id, as the API does', async () => {
+    const create = async () =>
+      textEntryDocumentSchema.parse(
+        (
+          await send('POST', '/entries', {
+            data: {
+              type: 'TextEntry',
+              attributes: {subject: 'once', body: 'b', client_id: 'local-e'},
+            },
+          })
+        ).json
+      ).data;
+    const made = await create();
+    expect(made.attributes.client_id).toBe('local-e');
+    expect((await create()).id).toBe(made.id);
+    expect((await getEntries()).data).toHaveLength(4);
+  });
+});
+
+describe('POST /tags', () => {
+  const create = async (name: string, clientId?: string) =>
+    tagDocumentSchema.parse(
+      (
+        await send('POST', '/tags', {
+          data: {
+            type: 'Tag',
+            attributes: {
+              name,
+              ...(clientId === undefined ? {} : {client_id: clientId}),
+            },
+          },
+        })
+      ).json
+    ).data;
+
+  it('makes a tag once per client id, whatever it is called by the retry', async () => {
+    const made = await create('first', 'local-t');
+    expect(made.attributes.client_id).toBe('local-t');
+    await send('PATCH', `/tags/${made.id}`, renameTag(made.id, 'second'));
+    const again = await create('first', 'local-t');
+    expect(again.id).toBe(made.id);
+    expect(again.attributes.name).toBe('second');
+    expect((await getTags()).data).toHaveLength(5);
+  });
+
+  it('gives the tag of the name the client id, when no client named it', async () => {
+    const tag = await create('test-tag-1', 'local-mine');
+    expect(tag.id).toBe('1');
+    expect(tag.attributes.client_id).toBe('local-mine');
+    expect((await create('test-tag-1', 'local-other')).attributes).toEqual(
+      expect.objectContaining({client_id: 'local-mine'})
+    );
   });
 });
 

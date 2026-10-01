@@ -133,8 +133,11 @@ API; everything else the app keeps is a zustand store.
   then replaces it everywhere (rows, queued writes, the selection in every
   tab: `subscribeRemaps`, over a `BroadcastChannel`). The row keeps its
   local id (`localId`), and the lists key rows by it (`keyOfRow`), so a row,
-  and an editor open on it, stays the same component. A queued entry create
-  sends its local id as `client_id`, so a retry makes it once. Writes are
+  and an editor open on it, stays the same component. A queued tag or entry
+  create sends its local id as `client_id`, so a retry makes it once, and a
+  sync that reads the row it made before its answer came (a lost answer)
+  adopts it (`adoptCreates`): the create is unqueued and the API's id
+  replaces the local one, so the row is never shown twice. Writes are
   checked against api-shared's request schemas first (`InvalidWriteError`):
   one the API would refuse is never queued, and its editor keeps it.
 - **The queue** (`flushOutbox`, run by the sync engine's `flush`, under the

@@ -159,6 +159,9 @@ export const tags = sqliteTable(
       .default(false),
     // A client's last write (see text_entries_textentry.client_updated).
     client_updated: text('client_updated'),
+    // A queued create's client id: a retried create finds the tag it made,
+    // whatever it is named by then.
+    client_id: text('client_id'),
   },
   table => [
     unique('One tag of same name per user').on(table.name, table.user_id),
@@ -166,6 +169,9 @@ export const tags = sqliteTable(
     check('tags_tag_order_check', sql`${table.order} >= 0`),
     index('tags_tag_user_order_idx').on(table.user_id, table.order),
     index('tags_tag_user_updated_idx').on(table.user_id, table.date_updated),
+    uniqueIndex('tags_tag_client_id_unique')
+      .on(table.user_id, table.client_id)
+      .where(sql`${table.client_id} IS NOT NULL`),
   ]
 );
 

@@ -13,6 +13,7 @@ import {type RELATIONSHIPS, TAG} from '../types';
 import {reorderAttributesSchema} from './reorder';
 
 export const TAG_NAME_MAX_LENGTH = 24;
+export const TAG_CLIENT_ID_MAX_LENGTH = 64;
 
 /**
  * POST: creates the tag, or returns the requester's tag of that (trimmed)
@@ -20,6 +21,12 @@ export const TAG_NAME_MAX_LENGTH = 24;
  */
 export const tagCreateAttributesSchema = z.object({
   name: charField({maxLength: TAG_NAME_MAX_LENGTH}),
+  /**
+   * The client's id for the tag (a queued create's): a create naming one the
+   * user already has answers with that tag, whatever it is called now, so a
+   * create retried after a lost answer is made once.
+   */
+  client_id: z.optional(charField({maxLength: TAG_CLIENT_ID_MAX_LENGTH})),
 });
 
 /** PATCH/PUT: rename, or (un)delete. */

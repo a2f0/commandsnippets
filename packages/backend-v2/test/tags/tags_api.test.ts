@@ -55,7 +55,7 @@ describe('TestTagsApi', () => {
     expect(data[0].id).toBe(String(tag.id));
 
     const attributes = data[0].attributes;
-    expect(Object.keys(attributes)).toHaveLength(7);
+    expect(Object.keys(attributes)).toHaveLength(8);
     expect(attributes.name).toBe(tag.name);
     expect(attributes.date_created).toBe(isoformat(tag.date_created));
     expect(attributes.date_updated).toBe(isoformat(tag.date_updated));
@@ -63,6 +63,7 @@ describe('TestTagsApi', () => {
     expect(attributes.is_deleted).toBe(false);
     expect(attributes.entry_count).toBe(tag.entry_count);
     expect(attributes.order).toBe(tag.order);
+    expect(attributes.client_id).toBeNull();
 
     expectIncludedUser1(body);
   });

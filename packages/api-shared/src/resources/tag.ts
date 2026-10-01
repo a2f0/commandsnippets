@@ -21,6 +21,8 @@ export const tagAttributesSchema = z.object({
   entry_count: countSchema,
   order: countSchema,
   is_deleted: z.boolean(),
+  /** The id the client that made the tag gave it (`client_id`), if any. */
+  client_id: z.optional(z.nullable(z.string())),
 });
 
 export const tagSchema = relatedResourceSchema(

@@ -42,7 +42,14 @@ import {
   type SyncCursor,
   tagCursorKey,
 } from '../db/database';
-import {flushOutbox, isLocalId, type OutboxApi} from './outbox';
+import {
+  adoptCreates,
+  announceRemaps,
+  flushOutbox,
+  isLocalId,
+  type OutboxApi,
+  type Remap,
+} from './outbox';
 import {checkOwner, putEntries, putJunctions, putTags} from './store';
 
 /**
@@ -78,14 +85,15 @@ type Page = {
  * Read the pages after `owner`'s stored cursor `key` (from the start without
  * one), storing each (`store`) with the cursor past it in one transaction,
  * until the last, or until `pause` (checked between pages) asks to stop.
- * Returns whether it read to the end.
+ * The local ids a page's store replaced (`adoptCreates`) are announced once
+ * it commits. Returns whether it read to the end.
  */
 async function readAfter<P extends Page>(
   db: CommandsnippetsDatabase,
   owner: string,
   key: string,
   read: (after: string) => Promise<P>,
-  store: (page: P) => Promise<void>,
+  store: (page: P) => Promise<Remap[]>,
   options: {
     cursor?: (after: string, done: boolean) => SyncCursor;
     pause?: () => boolean;
@@ -101,14 +109,16 @@ async function readAfter<P extends Page>(
     const last = page.data.at(-1);
     after = last === undefined ? after : cursorOf(last);
     const done = page.links.next === null;
-    await db.transaction(
+    const remaps = await db.transaction(
       'rw',
       [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
       async () => {
-        await store(page);
+        const stored = await store(page);
         await db.cursors.put(cursor(after, done));
+        return stored;
       }
     );
+    announceRemaps(remaps);
     if (done) {
       return true;
     }
@@ -152,9 +162,11 @@ async function syncAll(
     owner,
     'tags',
     after => api.getTagsAfter(after),
-    page => {
+    async page => {
       checkOwner(ownerId, page.data);
-      return putTags(db, owner, page.data);
+      const remaps = await adoptCreates(db, owner, page.data);
+      await putTags(db, owner, page.data);
+      return remaps;
     }
   );
   const done = await readAfter(
@@ -162,9 +174,11 @@ async function syncAll(
     owner,
     'entries',
     after => api.getEntriesAfter(after),
-    page => {
+    async page => {
       checkOwner(ownerId, [...page.data, ...(page.included ?? [])]);
-      return putEntries(db, owner, page.data, page.included);
+      const remaps = await adoptCreates(db, owner, page.data);
+      await putEntries(db, owner, page.data, page.included);
+      return remaps;
     },
     {pause}
   );
@@ -210,9 +224,11 @@ async function syncTag(
     owner,
     key,
     after => api.getTagJunctionsAfter(tagId, after),
-    page => {
+    async page => {
       checkOwner(ownerId, [...page.data, ...(page.included ?? [])]);
-      return putJunctions(db, owner, page.data, page.included);
+      const remaps = await adoptCreates(db, owner, page.included ?? []);
+      await putJunctions(db, owner, page.data, page.included);
+      return remaps;
     },
     {
       cursor: (after, done) => ({

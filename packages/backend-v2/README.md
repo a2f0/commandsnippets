@@ -238,12 +238,15 @@ client stores. Creating a tag of a name the user has, or tagging an entry
 already in the tag, still records the time (no revision advances), so an
 older delete or untag does not undo it. Reorders apply in arrival order.
 
-A queued entry create carries a `client_id` (the client's local id): a
-create naming one the user's entries already have answers with that entry,
-so one retried after a lost answer is made once (tags are found by name,
-and junctions by their pair, already). Untagging answers with the junction,
-and untagging one already untagged changes nothing, so a retried untag is
-answered as the first was.
+A queued tag or entry create carries a `client_id` (the client's local id):
+a create naming one the user's tags (or entries) already have answers with
+that row, whatever it is called by then, so one retried after a lost answer
+is made once (junctions are found by their pair already). A tag create
+answered with the user's tag of the name gives it the create's `client_id`
+when no create named it yet. Tags and entries render their `client_id`, so
+a client whose create's answer was lost recognizes the row when it syncs
+it. Untagging answers with the junction, and untagging one already untagged
+changes nothing, so a retried untag is answered as the first was.
 
 ## Admin API
 

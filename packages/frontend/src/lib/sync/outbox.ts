@@ -21,8 +21,11 @@
  * - **Local ids.** A row created offline has a local id (`local-...`) until
  *   its create reaches the API; the API's id then replaces it everywhere: in
  *   the rows, the queued writes, and the UI's selection (`subscribeRemaps`).
- *   A queued entry create sends its local id as `client_id`, so one retried
- *   after a lost answer is made once.
+ *   A queued create sends its local id as `client_id`, so one retried after
+ *   a lost answer is made once, and a sync that reads the row it made first
+ *   (the API renders `client_id`) adopts it: the create is unqueued and the
+ *   API's id replaces the local one, as the answer would have
+ *   (`adoptCreates`), so the row is never shown twice.
  * - **Failures.** A write that fails for a reason that can pass (offline, a
  *   5xx) stops the flush: it is tried again on the next. One the API refuses
  *   (a 400 or 404) is dropped, with the writes that needed it, and the rows
@@ -71,7 +74,11 @@ export const madeNow = (): string => formatMicros(Date.now() * 1000);
 
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
-  createTag(name: string, made?: string): Promise<TagDocument>;
+  createTag(
+    name: string,
+    clientId?: string,
+    made?: string
+  ): Promise<TagDocument>;
   keepTag(tagId: string, made?: string): Promise<TagDocument>;
   updateTag(tagId: string, name: string, made?: string): Promise<TagDocument>;
   deleteTag(tagId: string, made?: string): Promise<TagDocument>;
@@ -276,6 +283,14 @@ if (remapChannel !== null) {
   remapChannel.onmessage = ({data}: MessageEvent<Remap>) => notifyRemap(data);
 }
 
+/** Tell this tab and the others of `remaps`, once they are stored. */
+export function announceRemaps(remaps: readonly Remap[]): void {
+  for (const remap of remaps) {
+    notifyRemap(remap);
+    remapChannel?.postMessage(remap);
+  }
+}
+
 /**
  * Call `listener` whenever a local id is replaced by the API's, in this tab
  * or another (for state that holds ids, like the UI's selection). Returns
@@ -311,7 +326,7 @@ async function send(
 ): Promise<Sent> {
   switch (write.kind) {
     case 'createTag': {
-      const document = await api.createTag(write.name, made);
+      const document = await api.createTag(write.name, write.tagId, made);
       return {
         resources: answer(document),
         created: {type: TAG, from: write.tagId, to: document.data.id},
@@ -660,11 +675,62 @@ export async function flushOutbox(
       continue;
     }
     const remapped = await acknowledge(db, queued, sent);
-    if (remapped !== null) {
-      notifyRemap(remapped);
-      remapChannel?.postMessage(remapped);
+    announceRemaps(remapped === null ? [] : [remapped]);
+  }
+}
+
+/**
+ * The creates still queued that `resources` (a sync's page) show the API
+ * made already: a row whose `client_id` is the local id of one (its answer
+ * was lost). Each is unqueued, and its row takes the API's id and copy, as
+ * the answer would have done, before the page is stored: so the sync never
+ * shows the row twice (local and the API's), and a later write to it goes
+ * to the API's. Call inside the page's transaction; announce the remaps it
+ * returns (`announceRemaps`) once it commits.
+ */
+export async function adoptCreates(
+  db: CommandsnippetsDatabase,
+  owner: string,
+  resources: readonly IncludedResource[]
+): Promise<Remap[]> {
+  const made = new Map<string, IncludedResource>();
+  for (const resource of resources) {
+    const clientId =
+      resource.type === TAG || resource.type === TEXT_ENTRY
+        ? resource.attributes.client_id
+        : undefined;
+    if (
+      typeof clientId === 'string' &&
+      isLocalId(clientId) &&
+      clientId !== resource.id
+    ) {
+      made.set(`${resource.type}:${clientId}`, resource);
     }
   }
+  if (made.size === 0) {
+    return [];
+  }
+  const remaps: Remap[] = [];
+  for (const queued of await db.outbox.where('owner').equals(owner).toArray()) {
+    const created = createdBy(queued.write);
+    const resource = created === null ? undefined : made.get(created.join(':'));
+    if (created === null || resource === undefined) {
+      continue;
+    }
+    if (queued.seq !== undefined) {
+      await db.outbox.delete(queued.seq);
+    }
+    const remapped = {
+      owner,
+      type: created[0],
+      from: created[1],
+      to: resource.id,
+    };
+    await remap(db, remapped);
+    await putResources(db, owner, [resource], true);
+    remaps.push(remapped);
+  }
+  return remaps;
 }
 
 /** How many writes `owner` has queued. */

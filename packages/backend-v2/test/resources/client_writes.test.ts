@@ -399,9 +399,11 @@ describe('an entry created with a client id', () => {
   it('is made once, however often the create is retried', async () => {
     const first = await create('local-abc', 'once');
     expect(first.status).toBe(201);
+    const made = await json(first);
+    expect(made.data.attributes.client_id).toBe('local-abc');
     const retried = await create('local-abc', 'once');
     expect(retried.status).toBe(201);
-    expect((await json(retried)).data.id).toBe((await json(first)).data.id);
+    expect((await json(retried)).data.id).toBe(made.data.id);
     const rows = await db()
       .select()
       .from(textEntries)
@@ -420,5 +422,93 @@ describe('an entry created with a client id', () => {
     );
     expect(theirs.data.id).not.toBe(mine.data.id);
     expect(theirs.data.attributes.subject).toBe('theirs');
+  });
+});
+
+describe('a tag created with a client id', () => {
+  const create = (clientId: string, name: string, by = client) =>
+    by.post('/api/v1/tags', {
+      data: {type: 'Tag', attributes: {name, client_id: clientId}},
+    });
+  const userTags = () =>
+    db().select().from(tags).where(eq(tags.user_id, user.id));
+
+  it('is made once, whatever it is called by the time the create is retried', async () => {
+    const first = await json(await create('local-tag', 'first-name'));
+    expect(first.data.attributes.client_id).toBe('local-tag');
+    await client.patch(
+      `/api/v1/tags/${first.data.id}`,
+      tagRename(Number(first.data.id), 'renamed')
+    );
+
+    const retried = await create('local-tag', 'first-name');
+    expect(retried.status).toBe(201);
+    const answer = await json(retried);
+    expect(answer.data.id).toBe(first.data.id);
+    expect(answer.data.attributes.name).toBe('renamed');
+    const names = (await userTags()).map(row => row.name);
+    expect(names).toContain('renamed');
+    expect(names).not.toContain('first-name');
+  });
+
+  it('is not brought back by its retried create once deleted', async () => {
+    const first = await json(await create('local-gone', 'gone'));
+    await client.delete(`/api/v1/tags/${first.data.id}`);
+
+    const retried = await json(await create('local-gone', 'gone'));
+    expect(retried.data.id).toBe(first.data.id);
+    expect(retried.data.attributes.is_deleted).toBe(true);
+  });
+
+  it("is each user's own", async () => {
+    const mine = await json(await create('local-same', 'mine'));
+    const theirs = await json(
+      await create(
+        'local-same',
+        'theirs',
+        new ApiClient(await tokenFor(other.id))
+      )
+    );
+    expect(theirs.data.id).not.toBe(mine.data.id);
+    expect(theirs.data.attributes.name).toBe('theirs');
+  });
+
+  it('names the tag of the name that it answers with, when no client named it', async () => {
+    const tag = await tagFactory({user, name: 'there'});
+    const answer = await json(await create('local-there', 'there'));
+    expect(answer.data.id).toBe(String(tag.id));
+    expect(answer.data.attributes.client_id).toBe('local-there');
+
+    // So its retry finds it, renamed or not; another client's create of the
+    // name gets the tag, and leaves its id.
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'moved'));
+    expect((await json(await create('local-there', 'there'))).data.id).toBe(
+      String(tag.id)
+    );
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'there'));
+    const other = await json(await create('local-other', 'there'));
+    expect(other.data.id).toBe(String(tag.id));
+    expect(other.data.attributes.client_id).toBe('local-there');
+  });
+
+  it('answers a retry racing the create with the tag the create made', async () => {
+    // Just before this create inserts, its earlier attempt (whose answer was
+    // lost) makes the tag, under another name by now.
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeInsert('tags_tag', async () => {
+        await tagFactory({user, name: 'renamed', client_id: 'local-raced'});
+      })
+    );
+    const response = await create('local-raced', 'raced', racing);
+    expect(response.status).toBe(201);
+    expect((await json(response)).data.attributes.name).toBe('renamed');
+    expect((await userTags()).map(row => row.name)).not.toContain('raced');
+  });
+
+  it('refuses a client id longer than 64 characters', async () => {
+    const response = await create('x'.repeat(65), 'long');
+    expect(response.status).toBe(400);
+    expect((await userTags()).map(row => row.name)).not.toContain('long');
   });
 });

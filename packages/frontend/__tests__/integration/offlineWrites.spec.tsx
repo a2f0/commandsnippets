@@ -3,8 +3,10 @@
  * online (the entries page flushes the queue on the `online` event, and
  * before every sync).
  */
+import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
+import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
@@ -181,7 +183,7 @@ it("keeps an editor open on an entry when a tag made offline gets the entry's id
   expect(document.getElementById(`textEntryEdit${entry.id}`)).not.toBeNull();
 });
 
-it('keeps an editor open when a create whose answer was lost is retried after a sync', async () => {
+it('adopts the entry a create whose answer was lost made, when a sync brings it', async () => {
   const history = createMemoryHistory();
   history.push('/test?entries=untagged');
   render(<TestAppRouter history={history} />);
@@ -204,19 +206,18 @@ it('keeps an editor open when a create whose answer was lost is retried after a 
   );
   const entry = await createEntry(session, 'lost-answer', 'body');
   await expect(session.sync.flush()).rejects.toThrow();
-  // A sync brings the API's entry meanwhile.
-  await session.sync.syncAll();
 
-  const [shown] = await screen.findAllByText('lost-answer');
-  fireEvent.contextMenu(shown ?? document.body);
+  // Editing it, not saved yet.
+  fireEvent.contextMenu(await screen.findByText('lost-answer'));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'Edit'}));
   fireEvent.change(await screen.findByPlaceholderText('subject'), {
     target: {value: 'still unsaved'},
   });
 
-  // The retried create answers with the entry it made: one entry, the same
-  // editor, its text kept.
-  await session.sync.flush();
+  // A sync brings the API's entry: it is the one shown (once), the create is
+  // not queued any more, and the same editor is open on it, its text kept.
+  await session.sync.syncAll();
+  expect(await session.db.outbox.count()).toBe(0);
   const made = await session.db.entries
     .where('owner')
     .equals(TEST_USER)
@@ -224,10 +225,71 @@ it('keeps an editor open when a create whose answer was lost is retried after a 
     .toArray();
   expect(made).toHaveLength(1);
   expect(made[0]?.localId).toBe(entry.id);
+  expect(isLocalId(made[0]?.id ?? 'local-')).toBe(false);
   await waitFor(() =>
     expect(
       document.getElementById(`textEntryEdit${made[0]?.id ?? ''}`)
     ).not.toBeNull()
   );
   expect(screen.getByPlaceholderText('subject')).toHaveValue('still unsaved');
+});
+
+it('adopts the tag a create whose answer was lost made, renamed since', async () => {
+  const history = createMemoryHistory();
+  history.push('/test?entries=untagged');
+  render(<TestAppRouter history={history} />);
+  await screen.findByText('test-tag-1');
+  const session = syncSession(TEST_USER);
+  server.use(
+    http.post(
+      `${API}/tags`,
+      async ({request}) => {
+        await fetch(request.url, {
+          method: 'POST',
+          headers: request.headers,
+          body: await request.text(),
+        });
+        return HttpResponse.error();
+      },
+      {once: true}
+    )
+  );
+  const tag = await createTag(session, 'lost-tag');
+  await expect(session.sync.flush()).rejects.toThrow();
+  // Another device renames the tag the API made.
+  const listed = await apiClient.getTagsAfter(CURSOR_START);
+  const made = listed.data.find(row => row.attributes.client_id === tag.id);
+  invariant(made, 'the API should have made the tag');
+  await apiClient.updateTag(made.id, 'renamed-tag');
+  // This device's clock runs ahead: its copy reads as newer than the API's.
+  await session.db.tags.update([TEST_USER, tag.id], {
+    'attributes.date_updated': '2999-01-01T00:00:00.000000',
+  });
+
+  await session.sync.syncAll();
+  expect(await session.db.outbox.count()).toBe(0);
+  const stored = await session.db.tags
+    .where('owner')
+    .equals(TEST_USER)
+    .filter(row => row.localId === tag.id || row.id === tag.id)
+    .toArray();
+  expect(stored).toEqual([
+    expect.objectContaining({
+      id: made.id,
+      attributes: expect.objectContaining({name: 'renamed-tag'}),
+    }),
+  ]);
+  expect(await screen.findByText('renamed-tag')).toBeInTheDocument();
+  expect(screen.queryByText('lost-tag')).toBeNull();
+
+  // Sending the queue again makes nothing more.
+  const posted: string[] = [];
+  server.events.on('request:start', ({request}) => {
+    if (request.method === 'POST') {
+      posted.push(new URL(request.url).pathname);
+    }
+  });
+  await session.sync.flush();
+  expect(posted).toEqual([]);
+  server.events.removeAllListeners();
 });

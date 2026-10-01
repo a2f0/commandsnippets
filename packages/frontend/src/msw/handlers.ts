@@ -699,10 +699,6 @@ function adminDataOf(id: string): MockOwner {
   throw apiError(404, CODES.notFound, 'No AdminUser matches the given query.');
 }
 
-// Entries created with a client id (a queued create's), by that id: a
-// create retried with it answers with the entry it made, as the API does.
-const entriesByClientId = new Map<string, string>();
-
 // Admin page data: the signed-in test user (id 1, staff) and one other.
 interface MockAdminUser {
   id: string;
@@ -1090,16 +1086,36 @@ const createHandlers = () => {
         });
       }),
 
-      // Create new tag endpoint
       // Create a tag, or answer with the user's of that name (bringing back
-      // a deleted one), always 201, as the API does
+      // a deleted one), always 201, as the API does; a create naming a
+      // client id a tag has answers with that tag, whatever it is called now
       http.post(`${baseUrl}/tags`, async ({request}) => {
         recordRequest('POST', request.url);
         console.log('OK: MSW intercepted tags POST request');
         try {
           const {attributes} = await parseResource(request, {type: 'Tag'});
-          const {name} = validateFields(tagCreateAttributesSchema, attributes);
+          const {name, client_id: clientId} = validateFields(
+            tagCreateAttributesSchema,
+            attributes
+          );
+          const made =
+            clientId === undefined
+              ? undefined
+              : tags.find(
+                  candidate => candidate.attributes.client_id === clientId
+                );
+          if (made !== undefined) {
+            const again: TagDocument = {data: made, included: [testUser]};
+            return HttpResponse.json(again, {status: 201});
+          }
           let tag = tags.find(candidate => candidate.attributes.name === name);
+          // A tag no client named takes this create's id.
+          if (tag !== undefined && clientId !== undefined) {
+            tag.attributes = {
+              ...tag.attributes,
+              client_id: tag.attributes.client_id ?? clientId,
+            };
+          }
           if (tag === undefined) {
             const created = now();
             tag = {
@@ -1115,6 +1131,7 @@ const createHandlers = () => {
                 order:
                   Math.max(-1, ...tags.map(other => other.attributes.order)) +
                   1,
+                client_id: clientId ?? null,
               },
               relationships: ownedByTestUser,
             };
@@ -1313,11 +1330,12 @@ const createHandlers = () => {
             body,
             client_id: clientId,
           } = validateFields(textEntryCreateAttributesSchema, attributes);
-          const made =
+          const existing =
             clientId === undefined
               ? undefined
-              : entriesByClientId.get(clientId);
-          const existing = state.data.find(candidate => candidate.id === made);
+              : state.data.find(
+                  candidate => candidate.attributes.client_id === clientId
+                );
           if (existing !== undefined) {
             const again: TextEntryDocument = {
               data: existing,
@@ -1338,6 +1356,7 @@ const createHandlers = () => {
               reused_count: 0,
               is_deleted: false,
               tag_count: 0,
+              client_id: clientId ?? null,
             },
             relationships: {
               ...ownedByTestUser,
@@ -1345,9 +1364,6 @@ const createHandlers = () => {
             },
           };
           state.data = [...state.data, entry];
-          if (clientId !== undefined) {
-            entriesByClientId.set(clientId, entry.id);
-          }
           const newEntry: TextEntryDocument = {
             data: entry,
             included: [testUser],
@@ -1679,7 +1695,6 @@ function nextId(kind: string, existing: ReadonlyArray<{id: string}>): string {
 
 export const resetMSWState = () => {
   lastIds.clear();
-  entriesByClientId.clear();
   tags = structuredClone(originalTags);
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;

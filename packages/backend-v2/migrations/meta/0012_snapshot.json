@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "32a1a965-d439-449c-8ea1-be89c24c9d5c",
+  "id": "267470a4-5270-4505-8fae-ca55990a48fc",
   "prevId": "3088847d-fd8b-491c-9b6d-8da473370ce8",
   "tables": {
     "admin_audit_log": {
@@ -259,6 +259,13 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
@@ -277,6 +284,15 @@
             "date_updated"
           ],
           "isUnique": false
+        },
+        "tags_tag_client_id_unique": {
+          "name": "tags_tag_client_id_unique",
+          "columns": [
+            "user_id",
+            "client_id"
+          ],
+          "isUnique": true,
+          "where": "\"tags_tag\".\"client_id\" IS NOT NULL"
         },
         "One tag of same name per user": {
           "name": "One tag of same name per user",

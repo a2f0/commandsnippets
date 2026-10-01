@@ -13,7 +13,7 @@ const user = {data: {type: 'User', id: '1'}} as const;
 const generateManyEntries = (
   count: number
 ): TextEntryListDocument & JsonObject => {
-  const entries: TextEntry[] = [];
+  const entries: Array<TextEntry & JsonObject> = [];
   const throughModels: TagTextEntry[] = [];
 
   for (let i = 1; i <= count; i++) {

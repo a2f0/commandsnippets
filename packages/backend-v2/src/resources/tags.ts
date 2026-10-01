@@ -5,6 +5,7 @@ import {
 } from '@commandsnippets/api-shared';
 import {and, eq, sql} from 'drizzle-orm';
 import {type Context, Hono} from 'hono';
+import * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
 import {isUniqueViolation} from '../db/errors';
 import {type Tag, tags, type User} from '../db/schema';
@@ -73,14 +74,31 @@ tagRoutes.get('/:id', async c => {
 
 /**
  * Create a tag, or return the user's existing tag of the same name
- * (resurrecting it if it was soft-deleted). Always 201, as in Django.
+ * (resurrecting it if it was soft-deleted). Always 201, as in Django. One
+ * naming a `client_id` the user's tags already have answers with that tag,
+ * whatever it is called now: a queued create retried after a lost answer is
+ * made once.
  */
 tagRoutes.post('/', async c => {
   const user = requireUser(c);
   const db = c.get('db');
   const {attributes} = await parseResource(c.req.raw, {type: TAG});
+  const {client_id: clientId} = validateFields(
+    z.pick(tagCreateAttributesSchema, {client_id: true}),
+    attributes
+  );
   const at = clientUpdated(c);
 
+  const findMade = async () =>
+    clientId === undefined
+      ? undefined
+      : (
+          await db
+            .select()
+            .from(tags)
+            .where(and(eq(tags.user_id, user.id), eq(tags.client_id, clientId)))
+            .limit(1)
+        )[0];
   const findByName = async (name: string) =>
     (
       await db
@@ -98,24 +116,35 @@ tagRoutes.post('/', async c => {
   // so, deleted or not as read): a write landing between the read and this
   // one (a rename, a delete, a concurrent create) makes it read again.
   for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
+    const made = await findMade();
+    if (made !== undefined) {
+      return resourceResponse(c, TAG, made, 201);
+    }
     const existing = named === undefined ? undefined : await findByName(named);
     if (existing !== undefined) {
       // Deleted (or created) after this create was made: that stands.
       if (!appliesAfter(existing.client_updated, at)) {
         return resourceResponse(c, TAG, existing, 201);
       }
+      // A tag no client named takes this create's id, so a retry finds it
+      // whatever it is called by then.
+      const claim =
+        existing.client_id === null && clientId !== undefined
+          ? {client_id: clientId}
+          : {};
       const [written] = await db
         .update(tags)
         .set(
           existing.is_deleted
             ? {
+                ...claim,
                 is_deleted: false,
                 client_updated: at,
                 date_updated: nextRevision(tagResource, user.id),
               }
             : // Still a write made at `at`, which an older delete must not
               // undo. Nothing a client syncs changes: no revision advances.
-              {client_updated: at}
+              {...claim, client_updated: at}
         )
         .where(
           and(
@@ -143,13 +172,14 @@ tagRoutes.post('/', async c => {
           date_created: timestamp,
           date_updated: nextRevision(tagResource, user.id),
           date_last_used: timestamp,
+          client_id: clientId ?? null,
           client_updated: at,
         })
         .returning();
       return resourceResponse(c, TAG, created as Tag, 201);
     } catch (error) {
-      // Lost a race with a concurrent create of the name: write the tag it
-      // made, as read (the next attempt).
+      // Lost a race with a concurrent create of the name, or this one's
+      // retry: answer with the tag it made (the next attempt).
       if (!isUniqueViolation(error)) {
         throw error;
       }

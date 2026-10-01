@@ -245,12 +245,17 @@ class ApiClient {
   // Tag methods
   // Writes: `made` is when a queued write was made (see RequestOptions).
 
-  public async createTag(name: string, made?: string): Promise<TagDocument> {
+  public async createTag(
+    name: string,
+    clientId?: string,
+    made?: string
+  ): Promise<TagDocument> {
     const payload: TagCreateDocument = {
       data: {
         type: 'Tag',
         attributes: {
           name,
+          ...(clientId === undefined ? {} : {client_id: clientId}),
         },
       },
     };
