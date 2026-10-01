@@ -6,6 +6,7 @@
  */
 
 import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
+import {formatMicros} from '@commandsnippets/api-shared/datetime';
 import {
   CLIENT_UPDATED_HEADER,
   CLIENT_WRITE_ID_HEADER,
@@ -43,7 +44,7 @@ import {
   untagEntry,
   updateEntry,
 } from '../../../../src/lib/data/writes';
-import {isLocalId} from '../../../../src/lib/sync/outbox';
+import {isLocalId, LAST_MADE_KEY} from '../../../../src/lib/sync/outbox';
 import {syncSession} from '../../../../src/lib/sync/session';
 import {errorDocument} from '../../../../src/msw/documents';
 import {apiClientMethods} from '../../../util/apiClientMethods';
@@ -190,6 +191,29 @@ describe('a write', () => {
     expect(first.writeId).not.toBe(second.writeId);
     expect(first.made).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}$/);
     expect(await queued()).toBe(0);
+  });
+
+  it('is made after every write made before it here, though the clock is set back', async () => {
+    await session().sync.syncAll();
+    offline();
+    const now = Date.now();
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 60_000);
+    await renameTag(session(), '2', 'first');
+    // The clock is set back a minute.
+    clock.mockReturnValue(now);
+    await renameTag(session(), '2', 'second');
+    // Another tab (or this page before a reload) made one later still.
+    const later = formatMicros((now + 120_000) * 1000);
+    localStorage.setItem(LAST_MADE_KEY, String((now + 120_000) * 1000));
+    await renameTag(session(), '2', 'third');
+
+    const [first, second, third] = (await db().outbox.toArray()).map(
+      row => row.made
+    );
+    invariant(first && second && third, 'the three writes should be queued');
+    expect(second > first).toBe(true);
+    expect(third > later).toBe(true);
+    localStorage.removeItem(LAST_MADE_KEY);
   });
 
   it('sends its local id with a create, so a retry makes the entry once', async () => {

@@ -78,8 +78,33 @@ export const localId = (): string =>
 export const isLocalId = (id: string): boolean =>
   id.startsWith(LOCAL_ID_PREFIX);
 
-/** Now, in the API's datetime form: when a write is made. */
-export const madeNow = (): string => formatMicros(Date.now() * 1000);
+/** Where this browser keeps the last time a write was made here. */
+export const LAST_MADE_KEY = 'commandsnippets-last-made';
+
+let lastMade = 0;
+
+/**
+ * Now, in the API's datetime form: when a write is made. Always later than
+ * the last write made in this browser (in any tab, before any reload), so a
+ * clock set back never makes a later write older than one queued before it,
+ * which the API would then discard (last writer wins).
+ */
+export function madeNow(): string {
+  let stored = 0;
+  try {
+    stored = Number(globalThis.localStorage?.getItem(LAST_MADE_KEY) ?? 0) || 0;
+  } catch {
+    // Storage unavailable: this page's own writes still stay in order.
+  }
+  const micros = Math.max(Date.now() * 1000, Math.max(lastMade, stored) + 1);
+  lastMade = micros;
+  try {
+    globalThis.localStorage?.setItem(LAST_MADE_KEY, String(micros));
+  } catch {
+    // As above.
+  }
+  return formatMicros(micros);
+}
 
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
