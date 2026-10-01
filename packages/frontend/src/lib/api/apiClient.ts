@@ -108,6 +108,25 @@ interface RequestOptions {
  */
 class ApiClient {
   /**
+   * The user every write names: the signed-in user, read at each request
+   * (`authUtils.signedInUser`), or for a client bound to one (`writesAs`)
+   * always that user.
+   */
+  constructor(
+    private readonly actingUser: () => string | null = signedInUser
+  ) {}
+
+  /**
+   * A client whose writes always name `username`, whoever is signed in when
+   * they are sent: a queue of `username`'s writes (`lib/sync/outbox.ts`) is
+   * refused (`UserMismatchError`) rather than written into another user's
+   * account when this tab has switched accounts meanwhile.
+   */
+  public writesAs(username: string): ApiClient {
+    return new ApiClient(() => username);
+  }
+
+  /**
    * Send a request with the auth cookie, which every route needs (reads
    * included, since they are owner-only and cross-origin), naming the acting
    * user in a write. Throws `UserMismatchError` when the API refuses a write
@@ -128,7 +147,7 @@ class ApiClient {
   ): Promise<Response> {
     // Writes name the signed-in user: the API refuses one signed in as
     // anyone else (`UserMismatchError`).
-    const user = withAuth && method !== 'GET' ? signedInUser() : null;
+    const user = withAuth && method !== 'GET' ? this.actingUser() : null;
     const init: RequestInit = {
       method,
       credentials: 'include',

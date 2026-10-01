@@ -225,6 +225,27 @@ describe('a row with a write queued', () => {
   });
 });
 
+describe('an older copy of an entry', () => {
+  it('never brings back a junction a newer listing left out', async () => {
+    // Entry 1's newer listing left junction 7 out: deleted here, at the
+    // revision it had.
+    await db.junctions.put(own(junction('7', '1', '2024-01-01T00:00:00')));
+    await putEntries(db, OWNER, [entry('1', '2024-01-05T00:00:00', [])]);
+
+    // An older page lists it, at a later revision of the junction's own.
+    await putEntries(
+      db,
+      OWNER,
+      [entry('1', '2024-01-03T00:00:00', ['7'])],
+      [junction('7', '1', '2024-01-02T00:00:00')]
+    );
+
+    expect((await db.junctions.get(key('7')))?.attributes.is_deleted).toBe(
+      true
+    );
+  });
+});
+
 describe("a write's answer (force)", () => {
   it('replaces the row whatever its revision', async () => {
     await db.entries.put(own(entry('1', '2099-01-01T00:00:00', [])));

@@ -117,7 +117,9 @@ export function syncSession(
             ownSyncApi,
             `${db.name}:${owner}`,
             owner,
-            apiClient
+            // Every queued write names its owner, whoever is signed in when
+            // it is sent.
+            apiClient.writesAs(username)
           ),
     };
     sessions.set(owner, session);

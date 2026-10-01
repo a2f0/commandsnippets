@@ -24,6 +24,7 @@ import {
   vi,
 } from 'vitest';
 import {apiClient} from '../../../../src/lib/api/apiClient';
+import {setSignedInUser} from '../../../../src/lib/auth/authUtils';
 import {entriesOfTag} from '../../../../src/lib/data/hooks';
 import {
   createEntry,
@@ -42,6 +43,7 @@ import {
 import {isLocalId} from '../../../../src/lib/sync/outbox';
 import {syncSession} from '../../../../src/lib/sync/session';
 import {errorDocument} from '../../../../src/msw/documents';
+import {apiClientMethods} from '../../../util/apiClientMethods';
 import {server} from '../../../util/msw';
 import {signIn, store, TEST_USER} from '../../../util/signIn';
 
@@ -174,7 +176,7 @@ describe('a write', () => {
   });
 
   it('sends its local id with a create, so a retry makes the entry once', async () => {
-    const create = vi.spyOn(apiClient, 'createEntry');
+    const create = vi.spyOn(apiClientMethods, 'createEntry');
 
     const entry = await createEntry(session(), 'once', 'body');
     await session().sync.flush();
@@ -213,6 +215,46 @@ describe('a remap', () => {
     });
     await vi.waitFor(() => expect(store.tagSelectedID).toBe('42'));
     otherTab.close();
+  });
+});
+
+describe('a write naming a local id', () => {
+  it("reaches the row once the API's id has replaced it (an editor opened before)", async () => {
+    const entry = await createEntry(session(), 'first', 'body');
+    await session().sync.flush();
+    expect(await entryRow(entry.id)).toBeUndefined();
+    const writes = sent();
+
+    // Saved from an editor that still holds the local id.
+    const edited = await updateEntry(session(), entry.id, 'second', 'body');
+    await session().sync.flush();
+
+    expect(edited?.attributes.subject).toBe('second');
+    expect(isLocalId(edited?.id ?? 'local-')).toBe(false);
+    expect(writes).toEqual([`PATCH /api/v1/entries/${edited?.id}`]);
+  });
+
+  it("names the queue's owner, whoever this tab is signed in as when it is sent", async () => {
+    const named: Array<string | null> = [];
+    server.events.on('request:start', ({request}) => {
+      if (request.method !== 'GET') {
+        named.push(request.headers.get(EXPECTED_USER_HEADER));
+      }
+    });
+    offline();
+    await createTag(session(), 'mine');
+    await expect(session().sync.flush()).rejects.toThrow();
+    server.resetHandlers();
+
+    // The tab reads another sign-in by the time the write is sent.
+    setSignedInUser(() => 'someone-else');
+    try {
+      await session().sync.flush();
+    } finally {
+      setSignedInUser(() => store.loggedInUser);
+    }
+
+    expect(named.at(-1)).toBe(TEST_USER);
   });
 });
 

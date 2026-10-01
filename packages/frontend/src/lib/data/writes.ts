@@ -27,11 +27,12 @@ import type {
   TagTextEntry,
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
+import type {Table} from 'dexie';
 import type * as z from 'zod/mini';
 import {UserMismatchError} from '../api/apiClient';
-import type {QueuedWrite, Stored} from '../db/database';
+import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {leaveForeignSession} from '../state/appState';
-import {enqueue, localId, madeNow} from '../sync/outbox';
+import {enqueue, isLocalId, localId, madeNow} from '../sync/outbox';
 import type {SyncSession} from '../sync/session';
 import {junctionOf} from './hooks';
 
@@ -126,6 +127,36 @@ async function write<T>(
   );
   flushSoon(session);
   return result;
+}
+
+/**
+ * The row `id` names: the row of that id, or for a local id the API's id has
+ * replaced meanwhile (an editor opened before its create was sent), the row
+ * holding it (`localId`).
+ */
+async function rowNamed<R>(
+  table: Table<Stored<R>, RowKey>,
+  owner: string,
+  id: string
+): Promise<Stored<R> | undefined> {
+  const row = await table.get([owner, id]);
+  if (row !== undefined || !isLocalId(id)) {
+    return row;
+  }
+  return table
+    .where('owner')
+    .equals(owner)
+    .filter(candidate => candidate.localId === id)
+    .first();
+}
+
+/** The id the row `id` names has now (see `rowNamed`). */
+async function idNow<R extends {id: string}>(
+  table: Table<Stored<R>, RowKey>,
+  owner: string,
+  id: string
+): Promise<string> {
+  return (await rowNamed(table, owner, id))?.id ?? id;
 }
 
 /** The owner's user id, for a row made here (a stored row's, if any). */
@@ -223,7 +254,7 @@ export async function renameTag(
   refuseReadOnly(session);
   const {name = ''} = checked(tagUpdateAttributesSchema, {name: rawName});
   return write(session, async () => {
-    const tag = await db.tags.get([owner, tagId]);
+    const tag = await rowNamed(db.tags, owner, tagId);
     if (tag === undefined) {
       return {writes: [], result: null};
     }
@@ -231,14 +262,17 @@ export async function renameTag(
     const taken = await db.tags
       .where('owner')
       .equals(owner)
-      .filter(other => other.id !== tagId && other.attributes.name === name)
+      .filter(other => other.id !== tag.id && other.attributes.name === name)
       .count();
     if (taken > 0) {
       throw new InvalidWriteError(`name: ${name} is taken`);
     }
     const renamed = {...tag, attributes: {...tag.attributes, name}};
     await db.tags.put(renamed);
-    return {writes: [{kind: 'renameTag', tagId, name}], result: renamed};
+    return {
+      writes: [{kind: 'renameTag', tagId: tag.id, name}],
+      result: renamed,
+    };
   });
 }
 
@@ -248,7 +282,7 @@ export async function deleteTag(
 ): Promise<void> {
   const {db, owner} = session;
   await write(session, async () => {
-    const tag = await db.tags.get([owner, tagId]);
+    const tag = await rowNamed(db.tags, owner, tagId);
     if (tag === undefined) {
       return {writes: [], result: undefined};
     }
@@ -256,18 +290,20 @@ export async function deleteTag(
       ...tag,
       attributes: {...tag.attributes, is_deleted: true},
     });
-    return {writes: [{kind: 'deleteTag', tagId}], result: undefined};
+    return {writes: [{kind: 'deleteTag', tagId: tag.id}], result: undefined};
   });
 }
 
 /** Move tag `top` directly above tag `bottom`. */
 export async function reorderTags(
   session: SyncSession,
-  top: string,
-  bottom: string
+  topId: string,
+  bottomId: string
 ): Promise<void> {
   const {db, owner} = session;
   await write(session, async () => {
+    const top = await idNow(db.tags, owner, topId);
+    const bottom = await idNow(db.tags, owner, bottomId);
     const tags = (await db.tags.where('owner').equals(owner).toArray())
       .filter(tag => !tag.attributes.is_deleted)
       .sort(byOrder);
@@ -354,6 +390,8 @@ export async function createEntry(
       },
     };
     await db.entries.put(entry);
+    const tagNow =
+      tagId === undefined ? undefined : await idNow(db.tags, owner, tagId);
     const writes: QueuedWrite[] = [
       {
         kind: 'createEntry',
@@ -362,12 +400,12 @@ export async function createEntry(
         body: entry.attributes.body,
       },
     ];
-    if (tagId !== undefined) {
-      const junction = await newJunction(session, tagId, entry.id, made);
+    if (tagNow !== undefined) {
+      const junction = await newJunction(session, tagNow, entry.id, made);
       writes.push({
         kind: 'tagEntry',
         junctionId: junction.id,
-        tagId,
+        tagId: tagNow,
         entryId: entry.id,
       });
     }
@@ -389,7 +427,7 @@ export async function updateEntry(
     body: rawBody,
   });
   return write(session, async () => {
-    const entry = await db.entries.get([owner, entryId]);
+    const entry = await rowNamed(db.entries, owner, entryId);
     if (entry === undefined) {
       return {writes: [], result: null};
     }
@@ -399,7 +437,7 @@ export async function updateEntry(
     };
     await db.entries.put(edited);
     return {
-      writes: [{kind: 'updateEntry', entryId, subject, body}],
+      writes: [{kind: 'updateEntry', entryId: entry.id, subject, body}],
       result: edited,
     };
   });
@@ -412,7 +450,7 @@ export async function deleteEntry(
 ): Promise<void> {
   const {db, owner} = session;
   await write(session, async () => {
-    const entry = await db.entries.get([owner, entryId]);
+    const entry = await rowNamed(db.entries, owner, entryId);
     if (entry === undefined) {
       return {writes: [], result: undefined};
     }
@@ -424,18 +462,23 @@ export async function deleteEntry(
         date_updated: madeNow(),
       },
     });
-    return {writes: [{kind: 'deleteEntry', entryId}], result: undefined};
+    return {
+      writes: [{kind: 'deleteEntry', entryId: entry.id}],
+      result: undefined,
+    };
   });
 }
 
 /** Put entry `entryId` in tag `tagId` (at the bottom), unless it is there. */
 export async function tagEntry(
   session: SyncSession,
-  tagId: string,
-  entryId: string
+  tagIdGiven: string,
+  entryIdGiven: string
 ): Promise<TagTextEntry> {
   const {db, owner} = session;
   return write(session, async () => {
+    const tagId = await idNow(db.tags, owner, tagIdGiven);
+    const entryId = await idNow(db.entries, owner, entryIdGiven);
     const pair = await db.junctions
       .where('[owner+relationships.tag.data.id]')
       .equals([owner, tagId])
@@ -481,11 +524,14 @@ export async function tagEntry(
 /** Take entry `entryId` out of tag `tagId`. */
 export async function untagEntry(
   session: SyncSession,
-  tagId: string,
-  entryId: string
+  tagIdGiven: string,
+  entryIdGiven: string
 ): Promise<void> {
   refuseReadOnly(session);
+  const {db, owner} = session;
   await write(session, async () => {
+    const tagId = await idNow(db.tags, owner, tagIdGiven);
+    const entryId = await idNow(db.entries, owner, entryIdGiven);
     const junction = await junctionOf(session, tagId, entryId);
     if (junction === undefined) {
       return {writes: [], result: undefined};
@@ -504,12 +550,16 @@ export async function untagEntry(
 /** Move entry `topEntryId` directly above entry `bottomEntryId` in tag `tagId`. */
 export async function reorderEntries(
   session: SyncSession,
-  tagId: string,
-  topEntryId: string,
-  bottomEntryId: string
+  tagIdGiven: string,
+  topEntryIdGiven: string,
+  bottomEntryIdGiven: string
 ): Promise<void> {
   refuseReadOnly(session);
+  const {db, owner} = session;
   await write(session, async () => {
+    const tagId = await idNow(db.tags, owner, tagIdGiven);
+    const topEntryId = await idNow(db.entries, owner, topEntryIdGiven);
+    const bottomEntryId = await idNow(db.entries, owner, bottomEntryIdGiven);
     const inTag = (
       await session.db.junctions
         .where('[owner+relationships.tag.data.id]')

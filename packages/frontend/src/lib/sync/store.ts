@@ -172,14 +172,14 @@ const isEntry = (resource: IncludedResource): resource is TextEntry =>
 
 /**
  * Store `entries` and their junctions read with them (`included`). The
- * junctions are stored on their own merits (each unless a write to it is
- * queued, or a newer revision is held), so an entry left as it is (one with
- * a write queued) still gets the taggings other devices made: the sync's
- * cursors move past them. An entry's `text_entry_to_tag` lists all of its
- * junctions not deleted, so an entry stored also decides its junctions:
- * those it leaves out are deleted (but for one a write is queued for: a
- * tagging not on the API yet). An entry not stored (an older copy, or one
- * with a write queued) deletes none.
+ * junctions of an entry stored, or of one left as it is because a write to
+ * it is queued, are stored (each unless a write to it is queued, or a newer
+ * revision is held): such an entry still gets the taggings other devices
+ * made, which the sync's cursors move past. An older copy's junctions are
+ * not (they could bring back one a newer listing left out). An entry's
+ * `text_entry_to_tag` lists all of its junctions not deleted, so an entry
+ * stored also decides its junctions: those it leaves out are deleted (but
+ * for one a write is queued for: a tagging not on the API yet).
  */
 export async function putEntries(
   db: CommandsnippetsDatabase,
@@ -188,11 +188,24 @@ export async function putEntries(
   included: readonly IncludedResource[] = [],
   force = false
 ): Promise<void> {
+  const queuedEntries = await queuedFor(db, owner, entries);
   const stored = await putNewer(db, db.entries, owner, entries, {
     tie: deletedStays,
     force,
   });
-  await putJunctionsNewer(db, owner, included.filter(isJunction), force);
+  const storedIds = new Set(stored.map(({id}) => id));
+  await putJunctionsNewer(
+    db,
+    owner,
+    included.filter(isJunction).filter(junction => {
+      const entryId = junction.relationships.text_entry.data.id;
+      return (
+        storedIds.has(entryId) ||
+        queuedEntries.has(rowKey(owner, 'TextEntry', entryId))
+      );
+    }),
+    force
+  );
   for (const entry of stored) {
     const listed = new Set(
       entry.relationships.text_entry_to_tag.data.map(({id}) => id)

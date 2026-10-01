@@ -6,8 +6,8 @@ import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {vi} from 'vitest';
-import {apiClient} from '../../src/lib/api/apiClient';
 import {syncSession} from '../../src/lib/sync/session';
+import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
@@ -73,7 +73,7 @@ describe('A new entry', () => {
     renderAt('/test?entries=untagged');
     // (The mock API's entries are all in tag 1: the list starts empty.)
     await screen.findByText('test-tag-1');
-    const tagEntry = vi.spyOn(apiClient, 'tagEntry');
+    const tagEntry = vi.spyOn(apiClientMethods, 'tagEntry');
 
     await saveNewEntry('fresh-subject');
 
@@ -86,7 +86,7 @@ describe('A new entry', () => {
   it("saved from a tag's entries is stored in it, and listed there", async () => {
     renderAt('/test/test-tag-1');
     await screen.findByText('entry-1-subject');
-    const tagEntry = vi.spyOn(apiClient, 'tagEntry');
+    const tagEntry = vi.spyOn(apiClientMethods, 'tagEntry');
 
     await saveNewEntry('tagged-subject');
 
