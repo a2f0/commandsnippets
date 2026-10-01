@@ -10,6 +10,7 @@ import {apiClient} from '../api/apiClient';
 import {CommandsnippetsDatabase, databaseName} from '../db/database';
 import {environment} from '../environment';
 import {
+  bindOwner,
   createSyncEngine,
   OWNER_ID_KEY,
   type SyncApi,
@@ -153,27 +154,38 @@ export function withDataLock<T>(
 /**
  * Before user `userId` signs in as `username`: data kept here under that
  * name for another account of it (deleted since, its name taken again) is
- * deleted, queued writes and all, never shown or sent as theirs. (A
- * session binds the data it opens too: `bindOwner`.)
+ * deleted, queued writes and all, never shown or sent as theirs; and the
+ * data is bound to this account from the start, so writes queued before
+ * any sync are never taken for another's either. (A session binds the data
+ * it opens too: `bindOwner`.)
  */
 export async function claimData(
   username: string,
   userId: string
 ): Promise<void> {
   const name = databaseName(environment, username);
-  if (!(await Dexie.exists(name))) {
-    return;
-  }
   await withDataLock(name, 'exclusive', async () => {
+    if (await Dexie.exists(name)) {
+      const kept = new CommandsnippetsDatabase(name);
+      let held: string | undefined;
+      try {
+        held = (await kept.cursors.get([username, OWNER_ID_KEY]))?.after;
+      } finally {
+        kept.close();
+      }
+      if (held !== undefined && held !== userId) {
+        if (open?.db.name === name) {
+          // Open here: its session binds it (`bindOwner`), wiping it.
+          return;
+        }
+        await Dexie.delete(name);
+      }
+    }
     const db = new CommandsnippetsDatabase(name);
-    let held: string | undefined;
     try {
-      held = (await db.cursors.get([username, OWNER_ID_KEY]))?.after;
+      await bindOwner(db, username, userId);
     } finally {
       db.close();
-    }
-    if (held !== undefined && held !== userId && open?.db.name !== name) {
-      await Dexie.delete(name);
     }
   });
 }

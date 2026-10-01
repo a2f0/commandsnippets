@@ -121,8 +121,9 @@ describe('syncSession', () => {
   });
 
   it('deletes data kept under a name for another account of it, at sign-in', async () => {
+    // Account 7 signs in, and queues a write before any sync.
+    await claimData('jo', '7');
     const {db} = syncSession('jo');
-    await db.cursors.put({owner: 'jo', key: OWNER_ID_KEY, after: '7'});
     await db.outbox.add({
       owner: 'jo',
       made: '2026-01-01T00:00:00.000000',
@@ -136,9 +137,12 @@ describe('syncSession', () => {
     // The same account: kept, queue and all.
     await claimData('jo', '7');
     expect(await hasQueuedWrites(db.name)).toBe(true);
-    // Another account of the name (the first deleted, its name taken again).
+    // Another account of the name (the first deleted, its name taken again):
+    // none of the first's data, bound to the second.
     await claimData('jo', '8');
-    expect(await Dexie.exists(db.name)).toBe(false);
+    expect(await hasQueuedWrites(db.name)).toBe(false);
+    const again = syncSession('jo');
+    expect((await again.db.cursors.get(['jo', OWNER_ID_KEY]))?.after).toBe('8');
   });
 
   it('deletes the data when the session ends', async () => {

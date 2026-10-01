@@ -50,8 +50,9 @@ async function tick(db: Db): Promise<string> {
  * A write named by `CLIENT_WRITE_ID_HEADER` counts as its first attempt was
  * counted on every later one (the API keeps that time as long as the user):
  * a retry after a lost answer, or after a failure, counts as the write did,
- * never beating a write made in between nor losing to one made before. A
- * malformed time or write id is a 400.
+ * never beating a write made in between nor losing to one made before. Its
+ * time is followed by its id (`<time>|<id>`), which orders two writes of the
+ * same time. A malformed time or write id is a 400.
  */
 export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   const header = c.req.header(CLIENT_UPDATED_HEADER);
@@ -101,7 +102,10 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   if (recorded === undefined) {
     throw new Error(`write ${writeId} was not recorded`);
   }
-  return recorded.made;
+  // Two writes of the same time (from two devices) are ordered by their ids,
+  // whichever arrives first: the time is fixed-width, so the two compare as
+  // strings in that order, and a retry never wins a tie its write lost.
+  return `${recorded.made}|${writeId}`;
 }
 
 /** A write made at `at` applies: the row's last client write is no newer. */

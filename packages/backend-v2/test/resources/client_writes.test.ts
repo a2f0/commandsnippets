@@ -690,7 +690,7 @@ describe('a write made ahead of the clock', () => {
       tagRename(tag.id, 'first')
     );
     expect((await refreshTag(tag.id))?.client_updated).toBe(
-      formatMicros(ahead + 1)
+      `${formatMicros(ahead + 1)}|tied-1`
     );
     await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'between'));
     expect((await refreshTag(tag.id))?.client_updated).toBe(
@@ -704,6 +704,32 @@ describe('a write made ahead of the clock', () => {
       tagRename(tag.id, 'first')
     );
     expect((await json(retried)).data.attributes.name).toBe('between');
+  });
+
+  it('orders two writes of the same time from two devices by their ids, whichever arrives first', async () => {
+    const write = (id: string, writeId: string, name: string) =>
+      client.request(
+        'PATCH',
+        `/api/v1/tags/${id}`,
+        tagRename(Number(id), name),
+        {
+          ...made(LATER),
+          [CLIENT_WRITE_ID_HEADER]: writeId,
+        }
+      );
+    for (const [round, order] of [
+      ['1', ['a-1', 'b-1']],
+      ['2', ['b-1', 'a-1']],
+    ] as const) {
+      const tag = await tagFactory({user});
+      const id = String(tag.id);
+      for (const writeId of order) {
+        await write(id, writeId, `${writeId}.${round}`);
+      }
+      // A's answer was lost: its retry loses the tie again.
+      await write(id, 'a-1', `a-1.${round}`);
+      expect((await refreshTag(tag.id))?.name).toBe(`b-1.${round}`);
+    }
   });
 
   it("counts each user's write ids apart", async () => {
