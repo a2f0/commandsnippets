@@ -442,6 +442,22 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshTag(tag.id))?.name).toBe('newest');
   });
 
+  it('as one naming no time: counts as made when it first arrived on every retry', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    const untimed = () =>
+      client.request(
+        'PATCH',
+        `/api/v1/tags/${tag.id}`,
+        tagRename(tag.id, 'untimed'),
+        {[CLIENT_WRITE_ID_HEADER]: 'untimed-1'}
+      );
+    await untimed();
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'between'));
+
+    expect((await json(await untimed())).data.attributes.name).toBe('between');
+    expect((await refreshTag(tag.id))?.name).toBe('between');
+  });
+
   it("counts each user's write ids apart", async () => {
     const tag = await tagFactory({user, name: 'mine'});
     const theirs = await tagFactory({user: other, name: 'theirs'});

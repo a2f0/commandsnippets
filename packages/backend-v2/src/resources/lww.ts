@@ -23,30 +23,28 @@ import type {AppEnv} from '../env';
 import {formatMicros, now, nowMicros, parseDateTime} from '../lib/clock';
 import {ApiError, validationError} from '../lib/errors';
 
-/** How long the API remembers when a write made ahead of its clock counted. */
+/** How long the API remembers when a write it counted as now was made. */
 const CLIENT_WRITES_KEPT_MICROS = 30 * 24 * 60 * 60 * 1_000_000;
 
 /**
  * When the request's write was made: the header's time, but never later than
  * now (a device whose clock runs ahead cannot win every later write), or now
  * when the request names none. A write named by `CLIENT_WRITE_ID_HEADER`
- * that was counted as now on an earlier attempt counts that time again, so
- * a retry after a lost answer never beats a write made in between. A
- * malformed time or write id is a 400.
+ * that counted as now (named no time, or one ahead of the clock) counts as
+ * made when it first arrived on every attempt, so a retry after a lost
+ * answer never beats a write made in between. A malformed time or write id
+ * is a 400.
  */
 export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   const current = now();
   const header = c.req.header(CLIENT_UPDATED_HEADER);
-  if (header === undefined) {
-    return current;
-  }
-  const at = parseDateTime(header);
-  if (at === null) {
+  const at = header === undefined ? null : parseDateTime(header);
+  if (header !== undefined && at === null) {
     throw validationError(`${CLIENT_UPDATED_HEADER} is not a datetime.`);
   }
   const writeId = c.req.header(CLIENT_WRITE_ID_HEADER);
   if (writeId === undefined) {
-    return at < current ? at : current;
+    return at !== null && at < current ? at : current;
   }
   if (writeId === '' || writeId.length > CLIENT_WRITE_ID_MAX_LENGTH) {
     throw validationError(
@@ -72,10 +70,11 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   if (earlier !== undefined) {
     return earlier;
   }
-  if (at <= current) {
+  // Made in the past: the same time on every attempt.
+  if (at !== null && at <= current) {
     return at;
   }
-  // Ahead of the clock: counted as now, which its retries count too.
+  // Counted as now, which its retries count too.
   await db.batch([
     db
       .delete(clientWrites)

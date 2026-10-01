@@ -127,10 +127,12 @@ export function rowsOf(owner: string, write: QueuedWrite): string[] {
     case 'updateEntry':
     case 'deleteEntry':
       return [rowKey(owner, TEXT_ENTRY, write.entryId)];
+    // The tag and the entry too: their counts changed.
     case 'tagEntry':
     case 'untagEntry':
       return [
         rowKey(owner, JUNCTION, write.junctionId),
+        rowKey(owner, TAG, write.tagId),
         rowKey(owner, TEXT_ENTRY, write.entryId),
       ];
     case 'reorderEntries':

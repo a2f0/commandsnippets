@@ -594,6 +594,33 @@ describe('the writes', () => {
     expect(await counts()).toEqual(before);
   });
 
+  it('keep the counts of a tagging not sent yet through a sync', async () => {
+    await session().sync.syncAll();
+    const tag = async () => {
+      const row = await tagRow('2');
+      invariant(row, 'tag 2 should be stored');
+      return row.attributes;
+    };
+    const before = (await tag()).entry_count;
+    // Another device renames the tag.
+    await apiClient.updateTag('2', 'renamed-elsewhere');
+    offline();
+    await tagEntry(session(), '2', '1');
+
+    // Reads still reach the API: the tag it reads is counted without the
+    // tagging, and is left as it is until the tagging is sent.
+    await session().sync.syncAll();
+    expect((await tag()).entry_count).toBe(before + 1);
+
+    // Its answer brings the tag as the API holds it then.
+    server.resetHandlers();
+    await session().sync.flush();
+    expect(await tag()).toMatchObject({
+      name: 'renamed-elsewhere',
+      entry_count: before + 1,
+    });
+  });
+
   it('move a tag directly above another at once, and the API ranks it so', async () => {
     await session().sync.syncAll();
     const ranked = async () =>

@@ -199,10 +199,9 @@ export const tagClientIds = sqliteTable(
 );
 
 /**
- * The writes a client made ahead of the API's clock (`Client-Updated` in its
- * future), by the id the client gave each (`Client-Write-Id`): when the API
- * counted it as made (its first attempt's now), which every retry counts
- * too. Kept 30 days.
+ * The writes the API counted as made now (naming no time, or one ahead of
+ * its clock), by the id the client gave each (`Client-Write-Id`): when the
+ * first attempt arrived, which every retry counts too. Kept 30 days.
  */
 export const clientWrites = sqliteTable(
   'sync_clientwrite',
