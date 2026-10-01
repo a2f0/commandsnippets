@@ -63,6 +63,12 @@ export type QueuedWrite =
   | {kind: 'tagEntry'; junctionId: string; tagId: string; entryId: string}
   | {kind: 'untagEntry'; junctionId: string; tagId: string; entryId: string}
   | {kind: 'reorderEntries'; tagId: string; top: string; bottom: string}
+  // A reorder the API has made, in its place in the queue: the rows it
+  // ranks (the tags, or a tag's junctions) are read again, which a sync left
+  // as they were while it was queued. Retried alone, so a reorder is sent
+  // once.
+  | {kind: 'refreshTags'}
+  | {kind: 'refreshJunctions'; tagId: string}
   // Put a row back as the API holds it, after a write to it was refused.
   | {kind: 'restoreTag'; tagId: string}
   | {kind: 'restoreEntry'; entryId: string}

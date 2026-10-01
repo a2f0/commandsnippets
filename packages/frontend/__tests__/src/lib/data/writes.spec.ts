@@ -815,6 +815,52 @@ describe('the writes', () => {
     expect(store.loggedInUser).toBe(TEST_USER);
   });
 
+  it('send a reorder once, retrying only the read of its rows when that fails', async () => {
+    await session().sync.syncAll();
+    const firstOf = async () =>
+      (await entriesOfTag(session(), '1')).sort(
+        (a, b) => a.junction.attributes.order - b.junction.attributes.order
+      )[0]?.entry.id;
+    const lastOf = async () =>
+      (await entriesOfTag(session(), '1')).sort(
+        (a, b) => b.junction.attributes.order - a.junction.attributes.order
+      )[0]?.entry.id;
+    const [top, bottom] = [await lastOf(), await firstOf()];
+    invariant(top && bottom, 'tag 1 should hold entries');
+    offline();
+    await reorderTags(session(), '4', '2');
+    await reorderEntries(session(), '1', top, bottom);
+    await expect(session().sync.flush()).rejects.toThrow();
+    server.resetHandlers();
+    // The reorders reach the API; the reads of their rows fail, once each.
+    server.use(
+      http.get(`${API}/tags`, () => HttpResponse.error(), {once: true}),
+      http.get(`${API}/tags_entries`, () => HttpResponse.error(), {
+        once: true,
+      })
+    );
+    const writes = sent();
+
+    await expect(session().sync.flush()).rejects.toThrow();
+    expect((await db().outbox.toArray()).map(row => row.write)).toEqual([
+      {kind: 'refreshTags'},
+      expect.objectContaining({kind: 'reorderEntries'}),
+    ]);
+    await expect(session().sync.flush()).rejects.toThrow();
+    expect((await db().outbox.toArray()).map(row => row.write)).toEqual([
+      {kind: 'refreshJunctions', tagId: '1'},
+    ]);
+    await session().sync.flush();
+
+    // Each reorder sent once, its rows read again.
+    expect(writes).toEqual([
+      'POST /api/v1/tags/reorder',
+      'POST /api/v1/tags_entries/reorder',
+    ]);
+    expect(await queued()).toBe(0);
+    expect(await firstOf()).toBe(top);
+  });
+
   it("store no other user's rows that the queue reads after an account switch", async () => {
     await session().sync.syncAll();
     const listed = await apiClient.getTagsAfter(CURSOR_START);

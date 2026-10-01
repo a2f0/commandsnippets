@@ -10,9 +10,12 @@
  * - **The answer.** Each write's answer is the row as the API holds it after
  *   the write, with its new revision: stored in place of the local row
  *   (unless another write to it is still queued). A reorder answers
- *   nothing, so the rows it ranks (the tags, or the tag's junctions) are
- *   read again: the one it moved, which a sync left as it was while the
- *   reorder was queued (and may not read again), and those it shifted. When a sync later reads
+ *   nothing, so once the API has made it, a read of the rows it ranks (the
+ *   tags, or the tag's junctions) takes its place in the queue
+ *   (`refreshTags`, `refreshJunctions`): the one it moved, which a sync
+ *   left as it was while the reorder was queued (and may not read again),
+ *   and those it shifted. A failed read is retried alone: a reorder is sent
+ *   once. When a sync later reads
  *   that row, it holds the same revision and changes nothing: a device's own
  *   write costs it no re-sync. The cursors are never moved by an answer (a
  *   write's revision can be past another device's change the sync has not
@@ -148,7 +151,9 @@ export function rowsOf(owner: string, write: QueuedWrite): string[] {
       ];
     case 'reorderEntries':
       return [rowKey(owner, JUNCTION, write.top)];
-    // A restore holds no row: what a sync stores meanwhile stands too.
+    // A read holds no row: what a sync stores meanwhile stands too.
+    case 'refreshTags':
+    case 'refreshJunctions':
     case 'restoreTag':
     case 'restoreEntry':
     case 'restoreJunction':
@@ -186,6 +191,9 @@ function idsOf(write: QueuedWrite): Array<[string, string]> {
         [JUNCTION, write.top],
         [JUNCTION, write.bottom],
       ];
+    case 'refreshTags':
+      return [];
+    case 'refreshJunctions':
     case 'restoreTag':
       return [[TAG, write.tagId]];
     case 'restoreEntry':
@@ -253,7 +261,9 @@ function renamed(
         top: type === JUNCTION ? swap(write.top) : write.top,
         bottom: type === JUNCTION ? swap(write.bottom) : write.bottom,
       };
-    // Restores name the API's ids only: nothing to rename.
+    // Reads name the API's ids only: nothing to rename.
+    case 'refreshTags':
+    case 'refreshJunctions':
     case 'restoreTag':
     case 'restoreEntry':
     case 'restoreJunction':
@@ -325,13 +335,15 @@ export function subscribeRemaps(listener: (remap: Remap) => void): () => void {
 }
 
 /**
- * What a sent write brought back: rows to store, a create's new id, and a
- * row the API no longer has (a restore's), which goes.
+ * What a sent write brought back: rows to store, a create's new id, a row
+ * the API no longer has (a restore's), which goes, and what is left to do.
  */
 interface Sent {
   resources: IncludedResource[];
   created?: {type: string; from: string; to: string};
   gone?: [string, string];
+  /** The write that takes this one's place in the queue (a reorder's read). */
+  next?: QueuedWrite;
 }
 
 const answer = (document: {
@@ -372,9 +384,12 @@ async function send(
         },
         made
       );
-      // The answer is empty: the tags are read again, the one moved (which
-      // a sync left as it was meanwhile, and may not read again) and those
-      // it shifted, so their ranks are the API's together.
+      // The answer is empty: the tags are read next (`refreshTags`).
+      return {resources: [], next: {kind: 'refreshTags'}};
+    case 'refreshTags':
+      // The tags the reorder ranked: the one moved (which a sync left as it
+      // was while it was queued, and may not read again) and those it
+      // shifted, so their ranks are the API's together.
       return {resources: await everyPage(after => api.getTagsAfter(after))};
     case 'createEntry': {
       const document = await api.createEntry(
@@ -409,6 +424,11 @@ async function send(
       };
     case 'reorderEntries':
       await api.reorderEntry(write.top, write.bottom, made);
+      return {
+        resources: [],
+        next: {kind: 'refreshJunctions', tagId: write.tagId},
+      };
+    case 'refreshJunctions':
       // Likewise the tag's junctions.
       return {
         resources: await everyPage(after =>
@@ -551,8 +571,8 @@ async function remap(
 }
 
 /**
- * The write reached the API: unqueue it, give a row it created the API's
- * id, and store the answer.
+ * The write reached the API: unqueue it (or put what is left to do in its
+ * place), give a row it created the API's id, and store the answer.
  */
 async function acknowledge(
   db: CommandsnippetsDatabase,
@@ -573,7 +593,14 @@ async function acknowledge(
     [db.outbox, db.tags, db.entries, db.junctions],
     async () => {
       if (queued.seq !== undefined) {
-        await db.outbox.delete(queued.seq);
+        if (sent.next === undefined) {
+          await db.outbox.delete(queued.seq);
+        } else {
+          await db.outbox.update(queued.seq, {
+            write: sent.next,
+            rows: rowsOf(owner, sent.next),
+          });
+        }
       }
       if (remapped !== null) {
         await remap(db, remapped);
@@ -611,7 +638,10 @@ async function restoreOf(
       };
 }
 
-const isRestore = (write: QueuedWrite) =>
+/** Whether `write` only reads (a restore, or a reorder's refresh). */
+const isRead = (write: QueuedWrite) =>
+  write.kind === 'refreshTags' ||
+  write.kind === 'refreshJunctions' ||
   write.kind === 'restoreTag' ||
   write.kind === 'restoreEntry' ||
   write.kind === 'restoreJunction';
@@ -655,8 +685,8 @@ async function drop(
   }
   const held = new Map<string, [string, string]>();
   for (const write of dropped.values()) {
-    // (A refused restore is not queued again.)
-    if (isRestore(write.write)) {
+    // (A refused read is not queued again.)
+    if (isRead(write.write)) {
       continue;
     }
     for (const [type, id] of idsOf(write.write)) {
