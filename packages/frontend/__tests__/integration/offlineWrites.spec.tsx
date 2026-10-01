@@ -180,3 +180,54 @@ it("keeps an editor open on an entry when a tag made offline gets the entry's id
   expect(screen.getByPlaceholderText('subject')).toHaveValue('unsaved five');
   expect(document.getElementById(`textEntryEdit${entry.id}`)).not.toBeNull();
 });
+
+it('keeps an editor open when a create whose answer was lost is retried after a sync', async () => {
+  const history = createMemoryHistory();
+  history.push('/test?entries=untagged');
+  render(<TestAppRouter history={history} />);
+  await screen.findByText('test-tag-1');
+  const session = syncSession(TEST_USER);
+  // The API makes the entry, but its answer never arrives.
+  server.use(
+    http.post(
+      `${API}/entries`,
+      async ({request}) => {
+        await fetch(request.url, {
+          method: 'POST',
+          headers: request.headers,
+          body: await request.text(),
+        });
+        return HttpResponse.error();
+      },
+      {once: true}
+    )
+  );
+  const entry = await createEntry(session, 'lost-answer', 'body');
+  await expect(session.sync.flush()).rejects.toThrow();
+  // A sync brings the API's entry meanwhile.
+  await session.sync.syncAll();
+
+  const [shown] = await screen.findAllByText('lost-answer');
+  fireEvent.contextMenu(shown ?? document.body);
+  fireEvent.click(await screen.findByRole('menuitem', {name: 'Edit'}));
+  fireEvent.change(await screen.findByPlaceholderText('subject'), {
+    target: {value: 'still unsaved'},
+  });
+
+  // The retried create answers with the entry it made: one entry, the same
+  // editor, its text kept.
+  await session.sync.flush();
+  const made = await session.db.entries
+    .where('owner')
+    .equals(TEST_USER)
+    .filter(row => row.attributes.subject === 'lost-answer')
+    .toArray();
+  expect(made).toHaveLength(1);
+  expect(made[0]?.localId).toBe(entry.id);
+  await waitFor(() =>
+    expect(
+      document.getElementById(`textEntryEdit${made[0]?.id ?? ''}`)
+    ).not.toBeNull()
+  );
+  expect(screen.getByPlaceholderText('subject')).toHaveValue('still unsaved');
+});

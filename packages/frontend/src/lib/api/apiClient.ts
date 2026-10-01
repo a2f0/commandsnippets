@@ -271,6 +271,19 @@ class ApiClient {
     );
   }
 
+  /** Keep tag `tagId`, bringing it back if deleted (unless a newer write). */
+  public async keepTag(tagId: string, made?: string): Promise<TagDocument> {
+    const payload: TagUpdateDocument = {
+      data: {id: tagId, type: 'Tag', attributes: {is_deleted: false}},
+    };
+    return this.requestDocument(
+      `${baseURL}/tags/${tagId}`,
+      {method: 'PATCH', body: payload, made},
+      'Failed to keep tag',
+      tagDocumentSchema
+    );
+  }
+
   public async updateTag(
     tagId: string,
     name: string,

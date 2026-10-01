@@ -201,25 +201,16 @@ export async function createTag(
   return write(session, async () => {
     const tags = await db.tags.where('owner').equals(owner).toArray();
     const named = tags.find(tag => tag.attributes.name === name);
-    if (named !== undefined && !named.attributes.is_deleted) {
-      // Nothing changes here, but the API records when the tag was asked
-      // for: an older delete (another device's, sent later) must not win.
-      return {
-        writes: [{kind: 'createTag', tagId: named.id, name}],
-        result: named,
-      };
-    }
     if (named !== undefined) {
-      // The user's deleted tag of that name comes back, as on the API.
-      const restored = {
-        ...named,
-        attributes: {...named.attributes, is_deleted: false},
-      };
-      await db.tags.put(restored);
-      return {
-        writes: [{kind: 'createTag', tagId: named.id, name}],
-        result: restored,
-      };
+      // The user's tag of the name: kept by id (brought back if deleted),
+      // and the API records when it was asked for, so an older delete
+      // (another device's, sent later) does not win. Never a new tag of the
+      // name, should it be renamed elsewhere meanwhile.
+      const kept = named.attributes.is_deleted
+        ? {...named, attributes: {...named.attributes, is_deleted: false}}
+        : named;
+      await db.tags.put(kept);
+      return {writes: [{kind: 'keepTag', tagId: named.id}], result: kept};
     }
     const made = madeNow();
     const tag: Stored<Tag> = {

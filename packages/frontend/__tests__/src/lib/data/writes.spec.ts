@@ -491,30 +491,28 @@ describe('the writes', () => {
     expect((await tagRow('3'))?.attributes.is_deleted).toBe(true);
   });
 
-  it('leave a tag as it is when the create asking for it again makes another', async () => {
+  it('keep a tag asked for again by id, never making another of the name', async () => {
     await session().sync.syncAll();
     const before = await inTag('1');
     offline();
     await createTag(session(), 'test-tag-1');
     await expect(session().sync.flush()).rejects.toThrow();
     server.resetHandlers();
-    // Renamed on the API (another device) before the create is sent: the API
-    // makes a new tag of the name.
+    // Renamed on the API (another device) after it was asked for here.
     await apiClient.updateTag('1', 'renamed-elsewhere');
 
     await session().sync.flush();
 
-    // Tag 1 keeps its entries, and is put back as the API holds it (a sync
-    // skipped its rename while the create was queued).
+    // The rename is newer: it stands. No tag of the old name is made.
     expect(await inTag('1')).toEqual(before);
     expect((await tagRow('1'))?.attributes.name).toBe('renamed-elsewhere');
-    expect(await queued()).toBe(0);
-    const made = await db()
+    const named = await db()
       .tags.where('owner')
       .equals(TEST_USER)
-      .filter(tag => tag.id !== '1' && tag.attributes.name === 'test-tag-1')
-      .first();
-    expect(isLocalId(made?.id ?? 'local-')).toBe(false);
+      .filter(tag => tag.attributes.name === 'test-tag-1')
+      .count();
+    expect(named).toBe(0);
+    expect(await queued()).toBe(0);
   });
 
   it('send a create of a tag the user has, and a tagging of an entry tagged already', async () => {
@@ -526,7 +524,10 @@ describe('the writes', () => {
     await session().sync.flush();
 
     // Nothing changes, but the API records when each was asked for.
-    expect(writes).toEqual(['POST /api/v1/tags', 'POST /api/v1/tags_entries']);
+    expect(writes).toEqual([
+      'PATCH /api/v1/tags/1',
+      'POST /api/v1/tags_entries',
+    ]);
   });
 
   it('tag an entry at the bottom of a tag, and untag it', async () => {

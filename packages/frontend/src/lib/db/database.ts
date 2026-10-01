@@ -51,6 +51,9 @@ export interface SyncCursor {
  */
 export type QueuedWrite =
   | {kind: 'createTag'; tagId: string; name: string}
+  // A tag the user has, asked for again (a create of its name): kept, and
+  // brought back if deleted, by id (never a new tag of the name).
+  | {kind: 'keepTag'; tagId: string}
   | {kind: 'renameTag'; tagId: string; name: string}
   | {kind: 'deleteTag'; tagId: string}
   | {kind: 'reorderTags'; top: string; bottom: string}

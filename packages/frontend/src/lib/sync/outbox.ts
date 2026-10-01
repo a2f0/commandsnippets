@@ -72,6 +72,7 @@ export const madeNow = (): string => formatMicros(Date.now() * 1000);
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
   createTag(name: string, made?: string): Promise<TagDocument>;
+  keepTag(tagId: string, made?: string): Promise<TagDocument>;
   updateTag(tagId: string, name: string, made?: string): Promise<TagDocument>;
   deleteTag(tagId: string, made?: string): Promise<TagDocument>;
   reorderTag(payload: TagReorderDocument, made?: string): Promise<void>;
@@ -107,6 +108,7 @@ export interface OutboxApi {
 export function rowsOf(owner: string, write: QueuedWrite): string[] {
   switch (write.kind) {
     case 'createTag':
+    case 'keepTag':
     case 'renameTag':
     case 'deleteTag':
       return [rowKey(owner, TAG, write.tagId)];
@@ -136,6 +138,7 @@ export function rowsOf(owner: string, write: QueuedWrite): string[] {
 function idsOf(write: QueuedWrite): Array<[string, string]> {
   switch (write.kind) {
     case 'createTag':
+    case 'keepTag':
     case 'renameTag':
     case 'deleteTag':
       return [[TAG, write.tagId]];
@@ -198,6 +201,7 @@ function renamed(
   const swap = (id: string) => (id === from ? to : id);
   switch (write.kind) {
     case 'createTag':
+    case 'keepTag':
     case 'renameTag':
     case 'deleteTag':
       return type === TAG ? {...write, tagId: swap(write.tagId)} : write;
@@ -313,6 +317,8 @@ async function send(
         created: {type: TAG, from: write.tagId, to: document.data.id},
       };
     }
+    case 'keepTag':
+      return {resources: answer(await api.keepTag(write.tagId, made))};
     case 'renameTag':
       return {
         resources: answer(await api.updateTag(write.tagId, write.name, made)),
@@ -409,8 +415,12 @@ const refused = (error: unknown): boolean =>
   (error.status === 400 || error.status === 404);
 
 /**
- * Move `owner`'s row `from` to the id `to`, unless the table has a row `to`
- * already (a create the API answered with a row it had: a tag of the name).
+ * Move `owner`'s row `from` to the id `to`. It keeps its local id, so the UI
+ * keys it the same (an editor open on it stays open). A row `to` the table
+ * has already (the API's answer to this create, synced before a lost answer
+ * was retried; a tag of the name another device made) is taken over: the
+ * local row is the user's latest, until the API's answer (stored next) or
+ * a later write's replaces it.
  */
 async function rekey<R extends {id: string}>(
   table: Table<Stored<R>, RowKey>,
@@ -423,10 +433,7 @@ async function rekey<R extends {id: string}>(
     return;
   }
   await table.delete([owner, from]);
-  if ((await table.get([owner, to])) === undefined) {
-    // It keeps its local id: the UI keys it the same (an open editor stays).
-    await table.put({...local, id: to, localId: local.localId ?? from});
-  }
+  await table.put({...local, id: to, localId: local.localId ?? from});
 }
 
 /** The table holding rows of `type`. */
@@ -490,23 +497,12 @@ async function acknowledge(
 ): Promise<Remap | null> {
   const {owner} = queued;
   const created = sent.created;
-  // Only a local id is replaced: a create naming a row the API has (a tag
-  // asked for again) answered with another (renamed meanwhile, the API made
-  // a new tag of the name) leaves that row as it is.
+  // Only a local id is replaced (creates are queued for rows made here).
   const remapped =
     created !== undefined &&
     isLocalId(created.from) &&
     created.from !== created.to
       ? {owner, ...created}
-      : null;
-  // A create naming a row the API has, answered with another: that row is
-  // put back as the API holds it (renamed meanwhile, say), which a sync
-  // skipped while the create was queued.
-  const kept =
-    created !== undefined &&
-    !isLocalId(created.from) &&
-    created.from !== created.to
-      ? await restoreOf(db, owner, [created.type, created.from])
       : null;
   await db.transaction(
     'rw',
@@ -521,9 +517,6 @@ async function acknowledge(
       if (sent.gone !== undefined) {
         const [type, id] = sent.gone;
         await tableOf(db, type).delete([owner, id]);
-      }
-      if (kept !== null) {
-        await enqueue(db, owner, kept, madeNow());
       }
       await putResources(db, owner, sent.resources, true);
     }
