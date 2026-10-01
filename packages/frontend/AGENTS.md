@@ -299,7 +299,9 @@ writing its type by hand.
   The handlers of `POST /entries`, the `PATCH`es and `/tags_entries` parse the
   request document as the API does (`src/msw/requests.ts`) and keep the mock
   state as its database would (revisions, counters, junctions: deletes are
-  soft, and untagging keeps the junction for the junction list);
+  soft, and untagging keeps the junction for the junction list; reorders
+  move rows as django-ordered-model does, so the fixtures' ranks are
+  distinct);
   `__tests__/src/msw/handlers.spec.ts` checks them. Keyset pages
   (`page[after]`, `src/msw/keyset.ts`) of `/tags`, `/entries` and
   `/tags_entries` answer as the API does. The mock's data: four tags, entries

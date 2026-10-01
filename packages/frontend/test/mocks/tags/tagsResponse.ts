@@ -17,7 +17,7 @@ export const tagsResponse: TagListDocument & JsonObject = {
         date_last_used: '2020-05-07T18:20:00',
         // The four junctions of test/mocks/entries/entriesResponse.ts.
         entry_count: 4,
-        order: 1,
+        order: 0,
         is_deleted: false,
       },
       relationships: {
@@ -38,7 +38,7 @@ export const tagsResponse: TagListDocument & JsonObject = {
         date_updated: '2021-05-07T18:20:00',
         date_last_used: '2021-05-07T18:20:00',
         entry_count: 0,
-        order: 2,
+        order: 1,
         is_deleted: false,
       },
       relationships: {
@@ -80,7 +80,7 @@ export const tagsResponse: TagListDocument & JsonObject = {
         date_updated: '2022-05-08T18:20:00',
         date_last_used: '2021-05-08T18:20:00',
         entry_count: 0,
-        order: 2,
+        order: 3,
         is_deleted: false,
       },
       relationships: {

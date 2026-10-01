@@ -701,6 +701,42 @@ describe('the writes', () => {
     expect(await ranked()).toEqual(moved);
   });
 
+  it('store a moved tag as the API holds it once sent, though a sync left it as it was', async () => {
+    await session().sync.syncAll();
+    // Another device renames the tag, which this one moves meanwhile.
+    await apiClient.updateTag('3', 'renamed-elsewhere');
+    offline();
+    await reorderTags(session(), '3', '1');
+    await session().sync.syncAll();
+    expect((await tagRow('3'))?.attributes.name).toBe('test-tag-3');
+
+    server.resetHandlers();
+    await session().sync.flush();
+    // Read again, without another sync: the reorder answers nothing.
+    const {data: held} = await apiClient.getTag('3');
+    expect((await tagRow('3'))?.attributes).toEqual(held.attributes);
+    expect(held.attributes.name).toBe('renamed-elsewhere');
+  });
+
+  it('store a moved junction as the API holds it once sent', async () => {
+    await session().sync.syncAll();
+    const [first, , third] = (await entriesOfTag(session(), '1'))
+      .sort((a, b) => a.junction.attributes.order - b.junction.attributes.order)
+      .map(({entry}) => entry.id);
+    invariant(first && third, 'tag 1 should hold three entries');
+    offline();
+    await reorderEntries(session(), '1', third, first);
+    await session().sync.syncAll();
+
+    server.resetHandlers();
+    await session().sync.flush();
+    const {
+      data: [held],
+    } = await apiClient.getJunction('1', third);
+    invariant(held, 'the API should hold the junction');
+    expect((await junctionRow(held.id))?.attributes).toEqual(held.attributes);
+  });
+
   it("are refused unsent in another user's (read-only) data", async () => {
     const theirs = syncSession(TEST_USER, 'alice');
     const writes = sent();

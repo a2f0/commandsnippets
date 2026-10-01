@@ -94,6 +94,12 @@ async function check({method, url, status, schema, body, headers}: Exchange) {
 }
 
 /** A `POST /tags_entries` document: tag `entryId` with `tagId`. */
+const reorderDocument = (
+  type: 'Tag' | 'TagTextEntryThroughModel',
+  top: string,
+  bottom: string
+) => ({data: {type, attributes: {top, bottom}}});
+
 const tagEntryDocument = (
   tagId: string,
   entryId: string
@@ -383,12 +389,22 @@ const exchanges: Exchange[] = [
     method: 'POST',
     url: `${API}/tags_entries/reorder`,
     status: 200,
+    body: reorderDocument('TagTextEntryThroughModel', '2', '1'),
+  },
+  {
+    handler: `POST ${API}/tags_entries/reorder`,
+    method: 'POST',
+    url: `${API}/tags_entries/reorder`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: reorderDocument('TagTextEntryThroughModel', '99', '1'),
   },
   {
     handler: `POST ${API}/tags/reorder`,
     method: 'POST',
     url: `${API}/tags/reorder`,
     status: 200,
+    body: reorderDocument('Tag', '4', '2'),
   },
   {
     handler: `DELETE ${API}/tags/:id`,
@@ -601,12 +617,19 @@ describe("the unit tests' server (__tests__/util/msw.ts)", () => {
       status: 200,
       schema: textEntryListDocumentSchema,
     });
-    for (const path of ['/tags/reorder', '/tags_entries/reorder']) {
+    for (const [path, body] of [
+      ['/tags/reorder', reorderDocument('Tag', '4', '2')],
+      [
+        '/tags_entries/reorder',
+        reorderDocument('TagTextEntryThroughModel', '2', '1'),
+      ],
+    ] as const) {
       await check({
         handler: '',
         method: 'POST',
         url: `${API}${path}`,
         status: 200,
+        body,
       });
     }
     await check({

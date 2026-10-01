@@ -9,7 +9,9 @@
  *   (`store.ts`), so it never undoes the user's write with an older copy.
  * - **The answer.** Each write's answer is the row as the API holds it after
  *   the write, with its new revision: stored in place of the local row
- *   (unless another write to it is still queued). When a sync later reads
+ *   (unless another write to it is still queued). A reorder answers
+ *   nothing, so the row it moved is read again: a sync left it as it was
+ *   while the reorder was queued, and may not read it again. When a sync later reads
  *   that row, it holds the same revision and changes nothing: a device's own
  *   write costs it no re-sync. The cursors are never moved by an answer (a
  *   write's revision can be past another device's change the sync has not
@@ -174,6 +176,7 @@ function idsOf(write: QueuedWrite): Array<[string, string]> {
         [TAG, write.tagId],
         [JUNCTION, write.top],
         [JUNCTION, write.bottom],
+        [TEXT_ENTRY, write.entryId],
       ];
     case 'restoreTag':
       return [[TAG, write.tagId]];
@@ -241,6 +244,7 @@ function renamed(
         tagId: type === TAG ? swap(write.tagId) : write.tagId,
         top: type === JUNCTION ? swap(write.top) : write.top,
         bottom: type === JUNCTION ? swap(write.bottom) : write.bottom,
+        entryId: type === TEXT_ENTRY ? swap(write.entryId) : write.entryId,
       };
     // Restores name the API's ids only: nothing to rename.
     case 'restoreTag':
@@ -361,7 +365,9 @@ async function send(
         },
         made
       );
-      return {resources: []};
+      // The answer is empty: the tag moved is read again, which a sync left
+      // as it was meanwhile (and may not read again).
+      return {resources: answer(await api.getTag(write.top))};
     case 'createEntry': {
       const document = await api.createEntry(
         write.subject,
@@ -393,9 +399,15 @@ async function send(
       return {
         resources: answer(await api.untagEntry(write.junctionId, made)),
       };
-    case 'reorderEntries':
+    case 'reorderEntries': {
       await api.reorderEntry(write.top, write.bottom, made);
-      return {resources: []};
+      // Likewise the junction moved.
+      const {data, included} = await api.getJunction(
+        write.tagId,
+        write.entryId
+      );
+      return {resources: [...data, ...(included ?? [])]};
+    }
     case 'restoreTag':
       return restoring(TAG, write.tagId, async () =>
         answer(await api.getTag(write.tagId))

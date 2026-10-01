@@ -9,6 +9,7 @@ import {
   cursorOf,
   type IncludedResource,
   type TagListDocument,
+  type TagTextEntry,
   type TagTextEntryCreateDocument,
   type TagUpdateDocument,
   type TextEntryListDocument,
@@ -381,6 +382,76 @@ describe('POST /tags', () => {
     expect(again.id).toBe('1');
     expect(again.attributes.name).toBe('moved');
     expect((await getTags()).data).toHaveLength(4);
+  });
+});
+
+describe('POST /tags/reorder and /tags_entries/reorder', () => {
+  const reorder = (
+    path: string,
+    type: 'Tag' | 'TagTextEntryThroughModel',
+    top: string,
+    bottom: string
+  ) => send('POST', path, {data: {type, attributes: {top, bottom}}});
+  const ranks = (rows: Array<{id: string; attributes: {order: number}}>) =>
+    [...rows]
+      .sort((a, b) => a.attributes.order - b.attributes.order)
+      .map(({id}) => id);
+
+  it('move a tag directly above another, the tags between shifting, each with a new revision', async () => {
+    const before = await getTags();
+    expect(ranks(before.data)).toEqual(['1', '2', '3', '4']);
+    expect((await reorder('/tags/reorder', 'Tag', '4', '2')).status).toBe(200);
+    const after = await getTags();
+    expect(ranks(after.data)).toEqual(['1', '4', '2', '3']);
+    // The rows whose rank changed get a new revision; the others keep theirs.
+    const newest = latest(before.data.map(tag => tag.attributes.date_updated));
+    for (const id of ['2', '3', '4']) {
+      expect(tagOf(after, id).attributes.date_updated > newest).toBe(true);
+    }
+    expect(tagOf(after, '1')).toEqual(tagOf(before, '1'));
+
+    // Downward too: 4 above 3.
+    await reorder('/tags/reorder', 'Tag', '4', '3');
+    expect(ranks((await getTags()).data)).toEqual(['1', '2', '4', '3']);
+  });
+
+  it('move an entry directly above another in a tag', async () => {
+    const junctions = async () =>
+      ((await getEntries()).included ?? []).filter(
+        (resource): resource is TagTextEntry =>
+          resource.type === 'TagTextEntryThroughModel'
+      );
+    // Entries 1 and 2 are in tag 1.
+    expect(ranks(await junctions())).toEqual(['1', '2']);
+    const response = await reorder(
+      '/tags_entries/reorder',
+      'TagTextEntryThroughModel',
+      '2',
+      '1'
+    );
+    expect(response.status).toBe(200);
+    expect(ranks(await junctions())).toEqual(['2', '1']);
+  });
+
+  it('refuses a row that does not exist (or a deleted junction)', async () => {
+    const tagged = await reorder('/tags/reorder', 'Tag', '99', '1');
+    expect(tagged.status).toBe(400);
+    expect(tagged.json).toEqual(
+      oneError(
+        400,
+        CODES.doesNotExist,
+        'Invalid pk "99" - object does not exist.',
+        '/data/attributes/top'
+      )
+    );
+    expect((await send('DELETE', '/tags_entries/2')).status).toBe(200);
+    const untagged = await reorder(
+      '/tags_entries/reorder',
+      'TagTextEntryThroughModel',
+      '2',
+      '1'
+    );
+    expect(untagged.status).toBe(400);
   });
 });
 

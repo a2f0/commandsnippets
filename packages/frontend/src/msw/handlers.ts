@@ -6,7 +6,9 @@ import {
   CODES,
   EXPECTED_USER_HEADER,
   type IncludedResource,
+  MESSAGES,
   parseDateTime,
+  reorderAttributesSchema,
   type Tag,
   type TagCursorListDocument,
   type TagDocument,
@@ -71,7 +73,7 @@ const originalTags: TagListDocument['data'] = [
     attributes: {
       name: 'test-tag-1',
       entry_count: 2,
-      order: 1,
+      order: 0,
       date_updated: '2020-05-07T18:20:00',
       date_created: '2020-05-07T18:20:00',
       date_last_used: '2020-05-07T18:20:00',
@@ -85,7 +87,7 @@ const originalTags: TagListDocument['data'] = [
     attributes: {
       name: 'test-tag-2',
       entry_count: 0,
-      order: 2,
+      order: 1,
       date_updated: '2021-05-07T18:20:00',
       date_created: '2021-05-07T18:20:00',
       date_last_used: '2021-05-07T18:20:00',
@@ -113,7 +115,7 @@ const originalTags: TagListDocument['data'] = [
     attributes: {
       name: 'test-tag-4',
       entry_count: 0,
-      order: 2,
+      order: 3,
       date_updated: '2022-05-08T18:20:00',
       date_created: '2022-05-08T18:20:00',
       date_last_used: '2022-05-08T18:20:00',
@@ -298,6 +300,73 @@ function linkJunctions(state: EntriesState, entry: TextEntry) {
     ...entry.relationships,
     text_entry_to_tag: {data, meta: {count: data.length}},
   };
+}
+
+/**
+ * A reorder's `top` and `bottom` among `rows`, as the API reads them: a pk
+ * none of `rows` has is a 400 (`does_not_exist`).
+ */
+async function reorderPair<R extends {id: string}>(
+  request: Request,
+  type: 'Tag' | 'TagTextEntryThroughModel',
+  rows: readonly R[]
+): Promise<[R, R]> {
+  const {attributes} = await parseResource(request, {type});
+  const ids = validateFields(reorderAttributesSchema, attributes);
+  const errors: ErrorObject[] = [];
+  const [top, bottom] = (['top', 'bottom'] as const).map(name => {
+    const id = String(ids[name]);
+    const row = rows.find(candidate => candidate.id === id);
+    if (row === undefined) {
+      errors.push({
+        detail: MESSAGES.pkDoesNotExist(id),
+        status: '400',
+        source: {pointer: `/data/attributes/${name}`},
+        code: CODES.doesNotExist,
+      });
+    }
+    return row;
+  });
+  if (top === undefined || bottom === undefined) {
+    throw new MockApiError(400, errors);
+  }
+  return [top, bottom];
+}
+
+/**
+ * Move `top` directly above `bottom` among `scope` (the rows ranked with
+ * them), as the API does (django-ordered-model's `above`): the rows between
+ * shift by one rank, and every row whose rank changes gets `revision`.
+ */
+function moveAbove<
+  R extends {attributes: {order: number; date_updated: string}},
+>(scope: readonly R[], top: R, bottom: R, revision: string): void {
+  const from = top.attributes.order;
+  const ranks = scope.map(row => row.attributes.order);
+  const before = ranks.filter(rank => rank < bottom.attributes.order);
+  const to =
+    from < bottom.attributes.order
+      ? before.length > 0
+        ? Math.max(...before)
+        : 0
+      : bottom.attributes.order;
+  if (from === bottom.attributes.order || from === to) {
+    return;
+  }
+  for (const row of scope) {
+    const rank = row.attributes.order;
+    const order =
+      row === top
+        ? to
+        : from < to && rank > from && rank <= to
+          ? rank - 1
+          : from > to && rank >= to && rank < from
+            ? rank + 1
+            : rank;
+    if (order !== rank) {
+      row.attributes = {...row.attributes, order, date_updated: revision};
+    }
+  }
 }
 
 /** The next revision of the tags. */
@@ -1527,15 +1596,48 @@ const createHandlers = () => {
         }
       }),
 
-      // Reorder endpoints: 200 with no body
-      http.post(`${baseUrl}/tags_entries/reorder`, ({request}) => {
+      // Reorder: move `top` directly above `bottom`, 200 with no body
+      http.post(`${baseUrl}/tags_entries/reorder`, async ({request}) => {
         recordRequest('POST', request.url);
-        return new HttpResponse(null, {status: 200});
+        try {
+          const state = activeEntries();
+          // A deleted junction is out of the order.
+          const [top, bottom] = await reorderPair(
+            request,
+            'TagTextEntryThroughModel',
+            junctionsOf(state)
+          );
+          const scope = top.relationships.tag.data.id;
+          if (bottom.relationships.tag.data.id !== scope) {
+            throw apiError(
+              400,
+              CODES.invalid,
+              'top and bottom must share the same ordering scope.'
+            );
+          }
+          moveAbove(
+            junctionsOf(state).filter(
+              junction => junction.relationships.tag.data.id === scope
+            ),
+            top,
+            bottom,
+            nextJunctionRevision(state)
+          );
+          return new HttpResponse(null, {status: 200});
+        } catch (error) {
+          return errorResponse(error);
+        }
       }),
 
-      http.post(`${baseUrl}/tags/reorder`, ({request}) => {
+      http.post(`${baseUrl}/tags/reorder`, async ({request}) => {
         recordRequest('POST', request.url);
-        return new HttpResponse(null, {status: 200});
+        try {
+          const [top, bottom] = await reorderPair(request, 'Tag', tags);
+          moveAbove(tags, top, bottom, nextTagRevision());
+          return new HttpResponse(null, {status: 200});
+        } catch (error) {
+          return errorResponse(error);
+        }
       }),
 
       // Delete tag endpoint with stateful behavior

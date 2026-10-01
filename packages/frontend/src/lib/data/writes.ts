@@ -621,7 +621,15 @@ export async function reorderEntries(
       },
     });
     return {
-      writes: [{kind: 'reorderEntries', tagId, top: top.id, bottom: bottom.id}],
+      writes: [
+        {
+          kind: 'reorderEntries',
+          tagId,
+          top: top.id,
+          bottom: bottom.id,
+          entryId: topEntryId,
+        },
+      ],
       result: undefined,
     };
   });
