@@ -185,6 +185,80 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "tags_tagclientid": {
+      "name": "tags_tagclientid",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "tags_tagclientid_tag_id_idx": {
+          "name": "tags_tagclientid_tag_id_idx",
+          "columns": [
+            "tag_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "tags_tagclientid_user_id_users_user_id_fk": {
+          "name": "tags_tagclientid_user_id_users_user_id_fk",
+          "tableFrom": "tags_tagclientid",
+          "tableTo": "users_user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tags_tagclientid_tag_id_tags_tag_id_fk": {
+          "name": "tags_tagclientid_tag_id_tags_tag_id_fk",
+          "tableFrom": "tags_tagclientid",
+          "tableTo": "tags_tag",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "tags_tagclientid_user_id_client_id_pk": {
+          "columns": [
+            "user_id",
+            "client_id"
+          ],
+          "name": "tags_tagclientid_user_id_client_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "tags_tag": {
       "name": "tags_tag",
       "columns": {

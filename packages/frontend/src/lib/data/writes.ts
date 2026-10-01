@@ -317,6 +317,40 @@ export async function reorderTags(
   });
 }
 
+/**
+ * Count entry `entryId` into tag `tagId` (`delta` 1) or out of it (-1): the
+ * tag's `entry_count` and the entry's `tag_count`, as the API's counters do,
+ * so counts (and sorting by them) are right before the write is sent.
+ */
+async function recount(
+  session: SyncSession,
+  tagId: string,
+  entryId: string,
+  delta: 1 | -1
+): Promise<void> {
+  const {db, owner} = session;
+  const tag = await db.tags.get([owner, tagId]);
+  if (tag !== undefined) {
+    await db.tags.put({
+      ...tag,
+      attributes: {
+        ...tag.attributes,
+        entry_count: Math.max(0, tag.attributes.entry_count + delta),
+      },
+    });
+  }
+  const entry = await db.entries.get([owner, entryId]);
+  if (entry !== undefined) {
+    await db.entries.put({
+      ...entry,
+      attributes: {
+        ...entry.attributes,
+        tag_count: Math.max(0, entry.attributes.tag_count + delta),
+      },
+    });
+  }
+}
+
 /** Store a new junction putting entry `entryId` at the bottom of `tagId`. */
 async function newJunction(
   session: SyncSession,
@@ -373,7 +407,7 @@ export async function createEntry(
         date_updated: made,
         reused_count: 0,
         is_deleted: false,
-        tag_count: tagId === undefined ? 0 : 1,
+        tag_count: 0,
       },
       relationships: {
         user: {data: {type: 'User', id: await ownerIdOf(session)}},
@@ -393,6 +427,7 @@ export async function createEntry(
     ];
     if (tagNow !== undefined) {
       const junction = await newJunction(session, tagNow, entry.id, made);
+      await recount(session, tagNow, entry.id, 1);
       writes.push({
         kind: 'tagEntry',
         junctionId: junction.id,
@@ -505,6 +540,7 @@ export async function tagEntry(
       };
       await db.junctions.put(junction);
     }
+    await recount(session, tagId, entryId, 1);
     return {
       writes: [{kind: 'tagEntry', junctionId: junction.id, tagId, entryId}],
       result: junction,
@@ -531,6 +567,7 @@ export async function untagEntry(
       ...junction,
       attributes: {...junction.attributes, is_deleted: true},
     });
+    await recount(session, tagId, entryId, -1);
     return {
       writes: [{kind: 'untagEntry', junctionId: junction.id, tagId, entryId}],
       result: undefined,

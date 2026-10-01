@@ -473,22 +473,48 @@ describe('a tag created with a client id', () => {
     expect(theirs.data.attributes.name).toBe('theirs');
   });
 
-  it('names the tag of the name that it answers with, when no client named it', async () => {
-    const tag = await tagFactory({user, name: 'there'});
-    const answer = await json(await create('local-there', 'there'));
-    expect(answer.data.id).toBe(String(tag.id));
-    expect(answer.data.attributes.client_id).toBe('local-there');
+  it('is found by a retry after it answered with the tag of the name', async () => {
+    // Made by another create, and by none.
+    const first = await json(await create('local-first', 'shared'));
+    const plain = await tagFactory({user, name: 'plain'});
+    for (const [id, name, clientId] of [
+      [first.data.id, 'shared', 'local-second'],
+      [String(plain.id), 'plain', 'local-plain'],
+    ]) {
+      const answer = await json(await create(clientId, name));
+      expect(answer.data.id).toBe(id);
+      await client.patch(
+        `/api/v1/tags/${id}`,
+        tagRename(Number(id), `${name}-moved`)
+      );
 
-    // So its retry finds it, renamed or not; another client's create of the
-    // name gets the tag, and leaves its id.
-    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'moved'));
-    expect((await json(await create('local-there', 'there'))).data.id).toBe(
-      String(tag.id)
-    );
-    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'there'));
-    const other = await json(await create('local-other', 'there'));
-    expect(other.data.id).toBe(String(tag.id));
-    expect(other.data.attributes.client_id).toBe('local-there');
+      const retried = await json(await create(clientId, name));
+      expect(retried.data.id).toBe(id);
+      expect(retried.data.attributes.name).toBe(`${name}-moved`);
+    }
+    const names = (await userTags()).map(row => row.name);
+    expect(names).not.toContain('shared');
+    expect(names).not.toContain('plain');
+    // The tag renders the id of the create that made it.
+    expect(first.data.attributes.client_id).toBe('local-first');
+    expect((await refreshTag(plain.id))?.client_id).toBeNull();
+  });
+
+  it('is found by a retry after a newer write to the tag of the name won', async () => {
+    const tag = await tagFactory({user, name: 'newer'});
+    await send('PATCH', `/tags/${tag.id}`, LATER, tagRename(tag.id, 'newer'));
+    const createEarly = () =>
+      send('POST', '/tags', EARLY, {
+        data: {
+          type: 'Tag',
+          attributes: {name: 'newer', client_id: 'local-old'},
+        },
+      });
+    expect((await json(await createEarly())).data.id).toBe(String(tag.id));
+    await send('PATCH', `/tags/${tag.id}`, LATEST, tagRename(tag.id, 'gone'));
+
+    expect((await json(await createEarly())).data.id).toBe(String(tag.id));
+    expect((await userTags()).map(row => row.name)).not.toContain('newer');
   });
 
   it('answers a retry racing the create with the tag the create made', async () => {

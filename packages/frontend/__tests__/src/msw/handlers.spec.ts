@@ -373,13 +373,14 @@ describe('POST /tags', () => {
     expect((await getTags()).data).toHaveLength(5);
   });
 
-  it('gives the tag of the name the client id, when no client named it', async () => {
+  it('answers a retry with the tag of the name it answered with, renamed since', async () => {
     const tag = await create('test-tag-1', 'local-mine');
     expect(tag.id).toBe('1');
-    expect(tag.attributes.client_id).toBe('local-mine');
-    expect((await create('test-tag-1', 'local-other')).attributes).toEqual(
-      expect.objectContaining({client_id: 'local-mine'})
-    );
+    await send('PATCH', '/tags/1', renameTag('1', 'moved'));
+    const again = await create('test-tag-1', 'local-mine');
+    expect(again.id).toBe('1');
+    expect(again.attributes.name).toBe('moved');
+    expect((await getTags()).data).toHaveLength(4);
   });
 });
 

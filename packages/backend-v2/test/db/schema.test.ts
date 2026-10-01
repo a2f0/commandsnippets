@@ -3,6 +3,7 @@ import {describe, expect, it} from 'vitest';
 import {
   adminAuditLog,
   entryReuses,
+  tagClientIds,
   tags,
   tagsEntries,
   textEntries,
@@ -92,6 +93,13 @@ describe('schema', () => {
       ],
       unique: ['One tag of same name per user'],
       references: ['user_id->users_user cascade'],
+    });
+  });
+
+  it('tags_tagclientid', () => {
+    expect(config(tagClientIds)).toMatchObject({
+      indexes: ['tags_tagclientid_tag_id_idx'],
+      references: ['tag_id->tags_tag cascade', 'user_id->users_user cascade'],
     });
   });
 

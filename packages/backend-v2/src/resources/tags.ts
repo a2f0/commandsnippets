@@ -3,12 +3,12 @@ import {
   tagListQuerySchema,
   tagUpdateAttributesSchema,
 } from '@commandsnippets/api-shared';
-import {and, eq, sql} from 'drizzle-orm';
+import {and, eq, inArray, or, sql} from 'drizzle-orm';
 import {type Context, Hono} from 'hono';
 import * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
 import {isUniqueViolation} from '../db/errors';
-import {type Tag, tags, type User} from '../db/schema';
+import {type Tag, tagClientIds, tags, type User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {uniqueTogether} from '../lib/errors';
@@ -89,6 +89,8 @@ tagRoutes.post('/', async c => {
   );
   const at = clientUpdated(c);
 
+  // The tag this create made, or was answered with, before (its answer was
+  // lost): by its client id, whatever the tag is named by then.
   const findMade = async () =>
     clientId === undefined
       ? undefined
@@ -96,9 +98,39 @@ tagRoutes.post('/', async c => {
           await db
             .select()
             .from(tags)
-            .where(and(eq(tags.user_id, user.id), eq(tags.client_id, clientId)))
+            .where(
+              and(
+                eq(tags.user_id, user.id),
+                or(
+                  eq(tags.client_id, clientId),
+                  inArray(
+                    tags.id,
+                    db
+                      .select({id: tagClientIds.tag_id})
+                      .from(tagClientIds)
+                      .where(
+                        and(
+                          eq(tagClientIds.user_id, user.id),
+                          eq(tagClientIds.client_id, clientId)
+                        )
+                      )
+                  )
+                )
+              )
+            )
             .limit(1)
         )[0];
+  // This create is answered with the user's tag of the name: a retry finds
+  // it by the create's client id.
+  const answeredWith = async (tag: Tag) => {
+    if (clientId !== undefined) {
+      await db
+        .insert(tagClientIds)
+        .values({user_id: user.id, client_id: clientId, tag_id: tag.id})
+        .onConflictDoNothing();
+    }
+    return resourceResponse(c, TAG, tag, 201);
+  };
   const findByName = async (name: string) =>
     (
       await db
@@ -124,27 +156,20 @@ tagRoutes.post('/', async c => {
     if (existing !== undefined) {
       // Deleted (or created) after this create was made: that stands.
       if (!appliesAfter(existing.client_updated, at)) {
-        return resourceResponse(c, TAG, existing, 201);
+        return answeredWith(existing);
       }
-      // A tag no client named takes this create's id, so a retry finds it
-      // whatever it is called by then.
-      const claim =
-        existing.client_id === null && clientId !== undefined
-          ? {client_id: clientId}
-          : {};
       const [written] = await db
         .update(tags)
         .set(
           existing.is_deleted
             ? {
-                ...claim,
                 is_deleted: false,
                 client_updated: at,
                 date_updated: nextRevision(tagResource, user.id),
               }
             : // Still a write made at `at`, which an older delete must not
               // undo. Nothing a client syncs changes: no revision advances.
-              {...claim, client_updated: at}
+              {client_updated: at}
         )
         .where(
           and(
@@ -156,7 +181,7 @@ tagRoutes.post('/', async c => {
         )
         .returning();
       if (written !== undefined) {
-        return resourceResponse(c, TAG, written, 201);
+        return answeredWith(written);
       }
       continue;
     }

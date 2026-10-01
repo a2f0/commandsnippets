@@ -699,6 +699,10 @@ function adminDataOf(id: string): MockOwner {
   throw apiError(404, CODES.notFound, 'No AdminUser matches the given query.');
 }
 
+// The client ids of tag creates answered with a tag of the name the user had,
+// by that id: a retry answers with that tag, as the API does.
+const tagsByClientId = new Map<string, string>();
+
 // Admin page data: the signed-in test user (id 1, staff) and one other.
 interface MockAdminUser {
   id: string;
@@ -1098,23 +1102,23 @@ const createHandlers = () => {
             tagCreateAttributesSchema,
             attributes
           );
+          const answered =
+            clientId === undefined ? undefined : tagsByClientId.get(clientId);
           const made =
             clientId === undefined
               ? undefined
               : tags.find(
-                  candidate => candidate.attributes.client_id === clientId
+                  candidate =>
+                    candidate.attributes.client_id === clientId ||
+                    candidate.id === answered
                 );
           if (made !== undefined) {
             const again: TagDocument = {data: made, included: [testUser]};
             return HttpResponse.json(again, {status: 201});
           }
           let tag = tags.find(candidate => candidate.attributes.name === name);
-          // A tag no client named takes this create's id.
           if (tag !== undefined && clientId !== undefined) {
-            tag.attributes = {
-              ...tag.attributes,
-              client_id: tag.attributes.client_id ?? clientId,
-            };
+            tagsByClientId.set(clientId, tag.id);
           }
           if (tag === undefined) {
             const created = now();
@@ -1695,6 +1699,7 @@ function nextId(kind: string, existing: ReadonlyArray<{id: string}>): string {
 
 export const resetMSWState = () => {
   lastIds.clear();
+  tagsByClientId.clear();
   tags = structuredClone(originalTags);
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;

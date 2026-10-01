@@ -12,6 +12,7 @@ import {
 } from '@commandsnippets/api-shared/messages';
 import {act} from '@testing-library/react';
 import {Dexie} from 'dexie';
+import invariant from 'invariant';
 import {delay, HttpResponse, http} from 'msw';
 import {
   afterAll,
@@ -543,6 +544,39 @@ describe('the writes', () => {
     expect(await inTag('2')).not.toContain('1');
     await session().sync.flush();
     expect(await inTag('2')).not.toContain('1');
+  });
+
+  it('count a tagging and an untagging at once, as the API does', async () => {
+    await session().sync.syncAll();
+    const counts = async () => {
+      const tag = await tagRow('2');
+      const entry = await entryRow('1');
+      invariant(tag && entry, 'tag 2 and entry 1 should be stored');
+      return {
+        tag: tag.attributes.entry_count,
+        entry: entry.attributes.tag_count,
+      };
+    };
+    const before = await counts();
+    offline();
+
+    await tagEntry(session(), '2', '1');
+    const tagged = {tag: before.tag + 1, entry: before.entry + 1};
+    expect(await counts()).toEqual(tagged);
+    // Tagged already: no count changes.
+    await tagEntry(session(), '2', '1');
+    expect(await counts()).toEqual(tagged);
+    const made = await createEntry(session(), 'counted', 'body', '2');
+    expect((await entryRow(made.id))?.attributes.tag_count).toBe(1);
+    expect((await tagRow('2'))?.attributes.entry_count).toBe(before.tag + 2);
+    await untagEntry(session(), '2', made.id);
+    await untagEntry(session(), '2', '1');
+    expect(await counts()).toEqual(before);
+
+    // The API counts alike.
+    server.resetHandlers();
+    await session().sync.flush();
+    expect(await counts()).toEqual(before);
   });
 
   it('move a tag directly above another at once, and the API ranks it so', async () => {

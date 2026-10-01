@@ -14,6 +14,7 @@ import {
   check,
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
   unique,
@@ -159,8 +160,9 @@ export const tags = sqliteTable(
       .default(false),
     // A client's last write (see text_entries_textentry.client_updated).
     client_updated: text('client_updated'),
-    // A queued create's client id: a retried create finds the tag it made,
-    // whatever it is named by then.
+    // The client id of the queued create that made the tag: a retried create
+    // finds the tag it made, whatever it is named by then (and a client that
+    // syncs it before the create's answer arrives, which the API renders).
     client_id: text('client_id'),
   },
   table => [
@@ -172,6 +174,28 @@ export const tags = sqliteTable(
     uniqueIndex('tags_tag_client_id_unique')
       .on(table.user_id, table.client_id)
       .where(sql`${table.client_id} IS NOT NULL`),
+  ]
+);
+
+/**
+ * The client ids of queued tag creates answered with a tag the user had
+ * already (of the name): a retried create finds that tag by its id, however
+ * it is named by then, as one that made its tag does (`tags_tag.client_id`).
+ */
+export const tagClientIds = sqliteTable(
+  'tags_tagclientid',
+  {
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+    client_id: text('client_id').notNull(),
+    tag_id: integer('tag_id')
+      .notNull()
+      .references(() => tags.id, {onDelete: 'cascade'}),
+  },
+  table => [
+    primaryKey({columns: [table.user_id, table.client_id]}),
+    index('tags_tagclientid_tag_id_idx').on(table.tag_id),
   ]
 );
 
@@ -250,6 +274,7 @@ export const entryReuses = sqliteTable(
 export type User = typeof users.$inferSelect;
 export type Token = typeof tokens.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
+export type TagClientId = typeof tagClientIds.$inferSelect;
 export type TextEntry = typeof textEntries.$inferSelect;
 export type TagTextEntry = typeof tagsEntries.$inferSelect;
 export type TextEntryReused = typeof entryReuses.$inferSelect;
