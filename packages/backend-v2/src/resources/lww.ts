@@ -7,13 +7,13 @@
  * row as it stands, which the client then keeps. Reorders are not guarded:
  * they apply in the order they arrive.
  */
-import {CLIENT_UPDATED_HEADER} from '@commandsnippets/api-shared';
+import {CLIENT_UPDATED_HEADER, CODES} from '@commandsnippets/api-shared';
 import {type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {AppEnv} from '../env';
 import {now, parseDateTime} from '../lib/clock';
-import {validationError} from '../lib/errors';
+import {ApiError, validationError} from '../lib/errors';
 
 /**
  * When the request's write was made: the header's time, but never later than
@@ -40,3 +40,18 @@ export const writtenBefore = (column: SQLiteColumn, at: string): SQL =>
 /** Whether a write made at `at` applies to a row last written at `last`. */
 export const appliesAfter = (last: string | null, at: string): boolean =>
   last === null || last <= at;
+
+/**
+ * How many times a write to a row it read reads it again, when another write
+ * changed it in between (a compare and set: each write applies only to the
+ * row as read).
+ */
+export const WRITE_ATTEMPTS = 3;
+
+/** A 409 to retry: the row kept changing while the write was made. */
+export const changedMeanwhile = (what: string): ApiError =>
+  ApiError.of(
+    409,
+    `The ${what} changed while it was being written. Please retry.`,
+    CODES.orderingConflict
+  );

@@ -15,7 +15,13 @@ import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {validateFields} from '../lib/validate';
 import {usernameIs} from './filters';
-import {clientUpdated, writtenBefore} from './lww';
+import {
+  appliesAfter,
+  changedMeanwhile,
+  clientUpdated,
+  WRITE_ATTEMPTS,
+  writtenBefore,
+} from './lww';
 import {nextRevision, tagResource} from './owned';
 import {reorder} from './reorder';
 import {TAG} from './resourceTypes';
@@ -85,35 +91,45 @@ tagRoutes.post('/', async c => {
     )[0];
 
   if (typeof attributes['name'] === 'string') {
-    const existing = await findByName(attributes['name'].trim());
-    if (existing !== undefined) {
-      if (!existing.is_deleted) {
-        // Still a write made at `at`, which an older delete must not undo.
-        // Nothing a client syncs changes, so no revision advances.
-        await db
-          .update(tags)
-          .set({client_updated: at})
-          .where(
-            and(
-              eq(tags.id, existing.id),
-              writtenBefore(tags.client_updated, at)
-            )
-          );
+    const name = attributes['name'].trim();
+    // The user's tag of the name, as read: written only while still so (a
+    // write landing between the read and this one makes it read again).
+    for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
+      const existing = await findByName(name);
+      if (existing === undefined) {
+        break;
+      }
+      // Deleted (or created) after this create was made: that stands.
+      if (!appliesAfter(existing.client_updated, at)) {
         return resourceResponse(c, TAG, existing, 201);
       }
-      // Unless deleted after this create was made: the delete stands.
-      const [resurrected] = await db
+      const [written] = await db
         .update(tags)
-        .set({
-          is_deleted: false,
-          client_updated: at,
-          date_updated: nextRevision(tagResource, user.id),
-        })
+        .set(
+          existing.is_deleted
+            ? {
+                is_deleted: false,
+                client_updated: at,
+                date_updated: nextRevision(tagResource, user.id),
+              }
+            : // Still a write made at `at`, which an older delete must not
+              // undo. Nothing a client syncs changes: no revision advances.
+              {client_updated: at}
+        )
         .where(
-          and(eq(tags.id, existing.id), writtenBefore(tags.client_updated, at))
+          and(
+            eq(tags.id, existing.id),
+            eq(tags.is_deleted, existing.is_deleted),
+            writtenBefore(tags.client_updated, at)
+          )
         )
         .returning();
-      return resourceResponse(c, TAG, resurrected ?? existing, 201);
+      if (written !== undefined) {
+        return resourceResponse(c, TAG, written, 201);
+      }
+    }
+    if ((await findByName(name)) !== undefined) {
+      throw changedMeanwhile('tag');
     }
   }
 

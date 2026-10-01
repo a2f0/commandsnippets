@@ -26,7 +26,10 @@
  * - **Failures.** A write that fails for a reason that can pass (offline, a
  *   5xx) stops the flush: it is tried again on the next. One the API refuses
  *   (a 400 or 404) is dropped, with the writes that needed it, and the rows
- *   they changed are put back as the API holds them.
+ *   they changed are put back as the API holds them: by restores queued in
+ *   their place (`restoreTag`, ...), which are retried like any write, so a
+ *   refused write never stays shown (a sync would not bring back a row the
+ *   API never changed).
  */
 import {formatMicros} from '@commandsnippets/api-shared/datetime';
 import type {TagReorderDocument} from '@commandsnippets/api-shared/requests';
@@ -121,6 +124,11 @@ export function rowsOf(owner: string, write: QueuedWrite): string[] {
       ];
     case 'reorderEntries':
       return [rowKey(owner, JUNCTION, write.top)];
+    // A restore holds no row: what a sync stores meanwhile stands too.
+    case 'restoreTag':
+    case 'restoreEntry':
+    case 'restoreJunction':
+      return [];
   }
 }
 
@@ -152,6 +160,16 @@ function idsOf(write: QueuedWrite): Array<[string, string]> {
         [TAG, write.tagId],
         [JUNCTION, write.top],
         [JUNCTION, write.bottom],
+      ];
+    case 'restoreTag':
+      return [[TAG, write.tagId]];
+    case 'restoreEntry':
+      return [[TEXT_ENTRY, write.entryId]];
+    case 'restoreJunction':
+      return [
+        [JUNCTION, write.junctionId],
+        [TAG, write.tagId],
+        [TEXT_ENTRY, write.entryId],
       ];
   }
 }
@@ -209,6 +227,11 @@ function renamed(
         top: type === JUNCTION ? swap(write.top) : write.top,
         bottom: type === JUNCTION ? swap(write.bottom) : write.bottom,
       };
+    // Restores name the API's ids only: nothing to rename.
+    case 'restoreTag':
+    case 'restoreEntry':
+    case 'restoreJunction':
+      return write;
   }
 }
 
@@ -243,10 +266,14 @@ export function subscribeRemaps(listener: (remap: Remap) => void): () => void {
   };
 }
 
-/** What a sent write brought back: rows to store, and a create's new id. */
+/**
+ * What a sent write brought back: rows to store, a create's new id, and a
+ * row the API no longer has (a restore's), which goes.
+ */
 interface Sent {
   resources: IncludedResource[];
   created?: {type: string; from: string; to: string};
+  gone?: [string, string];
 }
 
 const answer = (document: {
@@ -320,6 +347,38 @@ async function send(
     case 'reorderEntries':
       await api.reorderEntry(write.top, write.bottom, made);
       return {resources: []};
+    case 'restoreTag':
+      return restoring(TAG, write.tagId, async () =>
+        answer(await api.getTag(write.tagId))
+      );
+    case 'restoreEntry':
+      return restoring(TEXT_ENTRY, write.entryId, async () =>
+        answer(await api.getEntry(write.entryId))
+      );
+    case 'restoreJunction':
+      return restoring(JUNCTION, write.junctionId, async () => {
+        const {data, included} = await api.getJunction(
+          write.tagId,
+          write.entryId
+        );
+        return [...data, ...(included ?? [])];
+      });
+  }
+}
+
+/** A restore's read: the row as the API holds it, or gone (a 404). */
+async function restoring(
+  type: string,
+  id: string,
+  read: () => Promise<IncludedResource[]>
+): Promise<Sent> {
+  try {
+    return {resources: await read()};
+  } catch (error: unknown) {
+    if (error instanceof ApiRequestError && error.status === 404) {
+      return {resources: [], gone: [type, id]};
+    }
+    throw error;
   }
 }
 
@@ -426,57 +485,52 @@ async function acknowledge(
       if (remapped !== null) {
         await remap(db, remapped);
       }
+      if (sent.gone !== undefined) {
+        const [type, id] = sent.gone;
+        await tableOf(db, type).delete([owner, id]);
+      }
       await putResources(db, owner, sent.resources, true);
     }
   );
   return remapped;
 }
 
-/**
- * Put back, as the API holds them, the rows the API-held ids name: the
- * writes that changed them were dropped. A row it no longer has goes.
- */
-async function restore(
+/** The restore that puts `owner`'s row back as the API holds it, if any. */
+async function restoreOf(
   db: CommandsnippetsDatabase,
-  api: OutboxApi,
   owner: string,
-  ids: ReadonlyArray<[string, string]>
-): Promise<void> {
-  for (const [type, id] of ids) {
-    try {
-      if (type === TAG) {
-        await putResources(db, owner, answer(await api.getTag(id)), true);
-      } else if (type === TEXT_ENTRY) {
-        await putResources(db, owner, answer(await api.getEntry(id)), true);
-      } else {
-        const junction = await db.junctions.get([owner, id]);
-        if (junction !== undefined) {
-          const {data, included} = await api.getJunction(
-            junction.relationships.tag.data.id,
-            junction.relationships.text_entry.data.id
-          );
-          await putResources(db, owner, [...data, ...(included ?? [])], true);
-        }
-      }
-    } catch (error: unknown) {
-      if (error instanceof ApiRequestError && error.status === 404) {
-        await tableOf(db, type).delete([owner, id]);
-      } else {
-        console.error(`ERROR: could not restore ${type} ${id}:`, error);
-      }
-    }
+  [type, id]: [string, string]
+): Promise<QueuedWrite | null> {
+  if (type === TAG) {
+    return {kind: 'restoreTag', tagId: id};
   }
+  if (type === TEXT_ENTRY) {
+    return {kind: 'restoreEntry', entryId: id};
+  }
+  const junction = await db.junctions.get([owner, id]);
+  return junction === undefined
+    ? null
+    : {
+        kind: 'restoreJunction',
+        junctionId: id,
+        tagId: junction.relationships.tag.data.id,
+        entryId: junction.relationships.text_entry.data.id,
+      };
 }
+
+const isRestore = (write: QueuedWrite) =>
+  write.kind === 'restoreTag' ||
+  write.kind === 'restoreEntry' ||
+  write.kind === 'restoreJunction';
 
 /**
  * The API refused `queued` for good: drop it, and every queued write that
  * names a row it would have created (they cannot reach the API either). The
  * rows those creates made locally go; the API's rows they changed are put
- * back as the API holds them.
+ * back as the API holds them, by restores queued in their place.
  */
 async function drop(
   db: CommandsnippetsDatabase,
-  api: OutboxApi,
   queued: OutboxRow
 ): Promise<void> {
   const {owner} = queued;
@@ -508,6 +562,10 @@ async function drop(
   }
   const held = new Map<string, [string, string]>();
   for (const write of dropped.values()) {
+    // (A refused restore is not queued again.)
+    if (isRestore(write.write)) {
+      continue;
+    }
     for (const [type, id] of idsOf(write.write)) {
       if (!isLocalId(id)) {
         held.set(`${type}:${id}`, [type, id]);
@@ -524,9 +582,14 @@ async function drop(
       for (const [type, id] of lost.values()) {
         await tableOf(db, type).delete([owner, id]);
       }
+      for (const id of held.values()) {
+        const restore = await restoreOf(db, owner, id);
+        if (restore !== null) {
+          await enqueue(db, owner, restore, madeNow());
+        }
+      }
     }
   );
-  await restore(db, api, owner, [...held.values()]);
 }
 
 /**
@@ -564,7 +627,7 @@ export async function flushOutbox(
         throw error;
       }
       console.error('ERROR: the API refused a queued write:', error);
-      await drop(db, api, queued);
+      await drop(db, queued);
       continue;
     }
     const remapped = await acknowledge(db, queued, sent);

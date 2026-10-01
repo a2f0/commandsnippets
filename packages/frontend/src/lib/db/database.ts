@@ -51,7 +51,16 @@ export type QueuedWrite =
   | {kind: 'deleteEntry'; entryId: string}
   | {kind: 'tagEntry'; junctionId: string; tagId: string; entryId: string}
   | {kind: 'untagEntry'; junctionId: string; tagId: string; entryId: string}
-  | {kind: 'reorderEntries'; tagId: string; top: string; bottom: string};
+  | {kind: 'reorderEntries'; tagId: string; top: string; bottom: string}
+  // Put a row back as the API holds it, after a write to it was refused.
+  | {kind: 'restoreTag'; tagId: string}
+  | {kind: 'restoreEntry'; entryId: string}
+  | {
+      kind: 'restoreJunction';
+      junctionId: string;
+      tagId: string;
+      entryId: string;
+    };
 
 export interface OutboxRow {
   /** Its place in the queue. */

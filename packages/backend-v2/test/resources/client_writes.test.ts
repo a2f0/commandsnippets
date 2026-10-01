@@ -1,9 +1,9 @@
 import {CLIENT_UPDATED_HEADER} from '@commandsnippets/api-shared';
 import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {textEntries, type User} from '../../src/db/schema';
+import {tags, tagsEntries, textEntries, type User} from '../../src/db/schema';
 import {
-  type ApiClient,
+  ApiClient,
   db,
   json,
   refreshEntry,
@@ -13,7 +13,9 @@ import {
   tagFactory,
   tagTextEntryFactory,
   textEntryFactory,
+  tokenFor,
 } from '../helpers';
+import {raceBeforeStatement} from '../support/races';
 
 // v2: queued (offline) writes name when they were made, and the latest edit
 // wins whatever order they arrive in (resources/lww.ts).
@@ -155,6 +157,101 @@ describe('a write older than the last one', () => {
   });
 });
 
+describe('writes arriving out of order', () => {
+  const tagging = (tagId: number, entryId: number) => ({
+    data: {
+      type: 'TagTextEntryThroughModel',
+      relationships: {
+        tag: {data: {type: 'Tag', id: String(tagId)}},
+        text_entry: {data: {type: 'TextEntry', id: String(entryId)}},
+      },
+    },
+  });
+
+  it('keep the latest untag, even of a junction untagged already', async () => {
+    const tag = await tagFactory({user});
+    const entry = await textEntryFactory({user});
+    const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
+
+    // Untagged at EARLY and at LATEST; a tagging made at LATER arrives last.
+    await send('DELETE', `/tags_entries/${junction.id}`, EARLY);
+    await send('DELETE', `/tags_entries/${junction.id}`, LATEST);
+    const tagged = await send(
+      'POST',
+      '/tags_entries',
+      LATER,
+      tagging(tag.id, entry.id)
+    );
+
+    expect((await json(tagged)).data.attributes.is_deleted).toBe(true);
+    expect(await refreshJunction(junction.id)).toMatchObject({
+      is_deleted: true,
+      client_updated: LATEST,
+    });
+  });
+
+  it('never let an older delete landing mid-create win over the create', async () => {
+    const tag = await tagFactory({user, name: 'kept'});
+    // Just before the create (made LATER) writes the tag, a delete made
+    // EARLY lands.
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeStatement(/^\s*update "tags_tag"/i, async () => {
+        await db()
+          .update(tags)
+          .set({is_deleted: true, client_updated: EARLY})
+          .where(eq(tags.id, tag.id));
+      })
+    );
+
+    const response = await racing.request(
+      'POST',
+      '/api/v1/tags',
+      {data: {type: 'Tag', attributes: {name: 'kept'}}},
+      made(LATER)
+    );
+
+    expect(response.status).toBe(201);
+    expect((await json(response)).data.attributes.is_deleted).toBe(false);
+    expect(await refreshTag(tag.id)).toMatchObject({
+      is_deleted: false,
+      client_updated: LATER,
+    });
+  });
+
+  it('never let an older untag landing mid-tagging win over the tagging', async () => {
+    const tag = await tagFactory({user});
+    const entry = await textEntryFactory({user});
+    const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeStatement(
+        /^\s*update "tags_tagtextentrythroughmodel"/i,
+        async () => {
+          await db()
+            .update(tagsEntries)
+            .set({is_deleted: true, client_updated: EARLY})
+            .where(eq(tagsEntries.id, junction.id));
+        }
+      )
+    );
+
+    const response = await racing.request(
+      'POST',
+      '/api/v1/tags_entries',
+      tagging(tag.id, entry.id),
+      made(LATER)
+    );
+
+    expect(response.status).toBe(201);
+    expect((await json(response)).data.attributes.is_deleted).toBe(false);
+    expect(await refreshJunction(junction.id)).toMatchObject({
+      is_deleted: false,
+      client_updated: LATER,
+    });
+  });
+});
+
 describe('the client time', () => {
   it('counts a write without one as made now', async () => {
     const tag = await tagFactory({user, name: 'start'});
@@ -226,9 +323,12 @@ describe('an entry created with a client id', () => {
 
   it("is each user's own", async () => {
     const mine = await json(await create('local-same', 'mine'));
-    const {ApiClient: Client, tokenFor} = await import('../helpers');
     const theirs = await json(
-      await create('local-same', 'theirs', new Client(await tokenFor(other.id)))
+      await create(
+        'local-same',
+        'theirs',
+        new ApiClient(await tokenFor(other.id))
+      )
     );
     expect(theirs.data.id).not.toBe(mine.data.id);
     expect(theirs.data.attributes.subject).toBe('theirs');

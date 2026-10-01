@@ -30,12 +30,14 @@ import {
   createTag,
   deleteEntry,
   deleteTag,
+  InvalidWriteError,
   ReadOnlyError,
   renameTag,
   reorderEntries,
   reorderTags,
   tagEntry,
   untagEntry,
+  updateEntry,
 } from '../../../../src/lib/data/writes';
 import {isLocalId} from '../../../../src/lib/sync/outbox';
 import {syncSession} from '../../../../src/lib/sync/session';
@@ -300,6 +302,35 @@ describe('a write a newer one beat (last writer wins)', () => {
   });
 });
 
+describe('a write the API would refuse', () => {
+  it('is never made: nothing stored or queued, and the editor keeps it', async () => {
+    await session().sync.syncAll();
+    const writes = sent();
+    const entries = await db().entries.count();
+
+    await expect(
+      createEntry(session(), 'subject', 'x'.repeat(1025))
+    ).rejects.toBeInstanceOf(InvalidWriteError);
+    await expect(
+      updateEntry(session(), '1', '', 'body')
+    ).rejects.toBeInstanceOf(InvalidWriteError);
+    await expect(createTag(session(), '   ')).rejects.toBeInstanceOf(
+      InvalidWriteError
+    );
+    // A user's tags have unique names, deleted ones' included.
+    await deleteTag(session(), '3');
+    await expect(
+      renameTag(session(), '2', 'test-tag-3')
+    ).rejects.toBeInstanceOf(InvalidWriteError);
+    await session().sync.flush();
+
+    expect(await db().entries.count()).toBe(entries);
+    expect((await entryRow('1'))?.attributes.subject).not.toBe('');
+    expect((await tagRow('2'))?.attributes.name).toBe('test-tag-2');
+    expect(writes).toEqual(['DELETE /api/v1/tags/3']);
+  });
+});
+
 describe('a write the API refuses', () => {
   it('is dropped, and its row put back as the API holds it', async () => {
     await session().sync.syncAll();
@@ -324,6 +355,34 @@ describe('a write the API refuses', () => {
 
     expect(await queued()).toBe(0);
     expect((await tagRow('2'))?.attributes.name).toBe(name);
+  });
+
+  it('has its row put back once the API can be reached', async () => {
+    await session().sync.syncAll();
+    server.use(
+      http.patch(`${API}/tags/:id`, () =>
+        HttpResponse.json(errorDocument(400, CODES.invalid, 'No.'), {
+          status: 400,
+        })
+      ),
+      http.get(`${API}/tags/:id`, () => HttpResponse.error())
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await renameTag(session(), '2', 'refused');
+    await expect(session().sync.flush()).rejects.toThrow();
+    // The refused write is gone; putting its row back waits in the queue.
+    expect((await db().outbox.toArray()).map(row => row.write.kind)).toEqual([
+      'restoreTag',
+    ]);
+    // A sync does not bring the row back (the API never changed it).
+    await session().sync.syncAll();
+    expect((await tagRow('2'))?.attributes.name).toBe('refused');
+
+    server.resetHandlers();
+    await session().sync.flush();
+    expect(await queued()).toBe(0);
+    expect((await tagRow('2'))?.attributes.name).toBe('test-tag-2');
   });
 
   it('takes the writes that needed the row it would have made with it', async () => {

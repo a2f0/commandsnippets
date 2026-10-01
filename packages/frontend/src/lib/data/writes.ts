@@ -16,17 +16,52 @@
  * would.
  */
 
+import {
+  tagCreateAttributesSchema,
+  tagUpdateAttributesSchema,
+  textEntryCreateAttributesSchema,
+  textEntryUpdateAttributesSchema,
+} from '@commandsnippets/api-shared/requests';
 import type {
   Tag,
   TagTextEntry,
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
+import type * as z from 'zod/mini';
 import {UserMismatchError} from '../api/apiClient';
 import type {QueuedWrite, Stored} from '../db/database';
 import {leaveForeignSession} from '../state/appState';
 import {enqueue, localId, madeNow} from '../sync/outbox';
 import type {SyncSession} from '../sync/session';
 import {junctionOf} from './hooks';
+
+/**
+ * A write the API would refuse (a blank or too long field, a tag name the
+ * user has), never made: nothing is stored or queued, and the editor that
+ * made it keeps it, to be fixed. Writes are checked here, as the API checks
+ * them, because a queued write the API refuses is dropped.
+ */
+export class InvalidWriteError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidWriteError';
+  }
+}
+
+/** `fields` as the API's schema reads them, or InvalidWriteError. */
+function checked<S extends z.ZodMiniType>(
+  schema: S,
+  fields: Record<string, unknown>
+): z.output<S> {
+  const result = schema.safeParse(fields);
+  if (!result.success) {
+    const [issue] = result.error.issues;
+    throw new InvalidWriteError(
+      `${issue?.path.join('.') ?? 'fields'}: ${issue?.message ?? 'invalid'}`
+    );
+  }
+  return result.data;
+}
 
 /** A write to another user's data (a read-only session), never made. */
 export class ReadOnlyError extends Error {
@@ -130,7 +165,8 @@ export async function createTag(
   rawName: string
 ): Promise<Tag> {
   const {db, owner} = session;
-  const name = rawName.trim();
+  refuseReadOnly(session);
+  const {name} = checked(tagCreateAttributesSchema, {name: rawName});
   return write(session, async () => {
     const tags = await db.tags.where('owner').equals(owner).toArray();
     const named = tags.find(tag => tag.attributes.name === name);
@@ -179,11 +215,21 @@ export async function renameTag(
   rawName: string
 ): Promise<Tag | null> {
   const {db, owner} = session;
-  const name = rawName.trim();
+  refuseReadOnly(session);
+  const {name = ''} = checked(tagUpdateAttributesSchema, {name: rawName});
   return write(session, async () => {
     const tag = await db.tags.get([owner, tagId]);
     if (tag === undefined) {
       return {writes: [], result: null};
+    }
+    // A user's tags have unique names, deleted ones' included.
+    const taken = await db.tags
+      .where('owner')
+      .equals(owner)
+      .filter(other => other.id !== tagId && other.attributes.name === name)
+      .count();
+    if (taken > 0) {
+      throw new InvalidWriteError(`name: ${name} is taken`);
     }
     const renamed = {...tag, attributes: {...tag.attributes, name}};
     await db.tags.put(renamed);
@@ -280,6 +326,8 @@ export async function createEntry(
   tagId?: string
 ): Promise<TextEntry> {
   const {db, owner} = session;
+  refuseReadOnly(session);
+  const fields = checked(textEntryCreateAttributesSchema, {subject, body});
   return write(session, async () => {
     const made = madeNow();
     const entry: Stored<TextEntry> = {
@@ -287,8 +335,8 @@ export async function createEntry(
       id: localId(),
       owner,
       attributes: {
-        subject: subject.trim(),
-        body: body.trim(),
+        subject: fields.subject,
+        body: fields.body,
         date_created: made,
         date_updated: made,
         reused_count: 0,
@@ -330,8 +378,11 @@ export async function updateEntry(
   rawBody: string
 ): Promise<TextEntry | null> {
   const {db, owner} = session;
-  const subject = rawSubject.trim();
-  const body = rawBody.trim();
+  refuseReadOnly(session);
+  const {subject = '', body = ''} = checked(textEntryUpdateAttributesSchema, {
+    subject: rawSubject,
+    body: rawBody,
+  });
   return write(session, async () => {
     const entry = await db.entries.get([owner, entryId]);
     if (entry === undefined) {
