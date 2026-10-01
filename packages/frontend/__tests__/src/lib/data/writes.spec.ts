@@ -1066,6 +1066,50 @@ describe('the writes', () => {
     expect(await db().tags.where('owner').equals(TEST_USER).count()).toBe(0);
   });
 
+  it("never sign out an account that took the data while an older account's flush sent its queue", async () => {
+    await session().sync.syncAll();
+    offline();
+    await createTag(session(), 'one');
+    await createTag(session(), 'two');
+    await expect(session().sync.flush()).rejects.toThrow();
+    server.resetHandlers();
+    // The first write is sent; the second is held back while another
+    // account of the name signs in here, which then refuses it as the first
+    // account's.
+    let answer!: () => void;
+    const held = new Promise<void>(resolve => {
+      answer = resolve;
+    });
+    let sending!: () => void;
+    const sent_ = new Promise<void>(resolve => {
+      sending = resolve;
+    });
+    let posts = 0;
+    server.use(
+      http.post(`${API}/tags`, async () => {
+        posts += 1;
+        if (posts === 1) {
+          return undefined;
+        }
+        sending();
+        await held;
+        return HttpResponse.json(
+          errorDocument(409, CODES.userMismatch, 'Another account.'),
+          {status: 409}
+        );
+      })
+    );
+    const flushing = session()
+      .sync.flush()
+      .catch((error: unknown) => error);
+    await sent_;
+    await claimData(TEST_USER, '2');
+    answer();
+
+    expect(await flushing).toBeInstanceOf(AccountChangedError);
+    expect(store.loggedInUser).toBe(TEST_USER);
+  });
+
   it("never undo a sign-in's binding with an older account's answer", async () => {
     // A sync asks the API which account it reads; the answer is held back...
     let answered!: () => void;

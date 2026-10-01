@@ -53,7 +53,7 @@ import type {
   TextEntryDocument,
 } from '@commandsnippets/api-shared/responses';
 import type {Table} from 'dexie';
-import {ApiRequestError} from '../api/apiClient';
+import {ApiRequestError, UserMismatchError} from '../api/apiClient';
 import {
   type CommandsnippetsDatabase,
   type OutboxRow,
@@ -817,6 +817,9 @@ export async function flushOutbox(
   const accountId = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
   const account = accountId === undefined ? api : api.forAccount(accountId);
   for (;;) {
+    // Bound to another account since (a sign-in here): its queue is not
+    // this flush's to send.
+    await assertBound(db, owner, accountId);
     const queued = await db.outbox.where('owner').equals(owner).first();
     if (queued === undefined) {
       return;
@@ -841,6 +844,11 @@ export async function flushOutbox(
         queued.made
       );
     } catch (error: unknown) {
+      // Refused as another account's because the data was bound to it while
+      // the request was on its way: no reason to leave its session.
+      if (error instanceof UserMismatchError) {
+        await assertBound(db, owner, accountId);
+      }
       if (!refused(error)) {
         throw error;
       }
