@@ -40,6 +40,20 @@ const tick = sql`INSERT INTO sync_clock (id, micros)
 /** The write clock's time, in the API's fixed-width form. */
 const clockTime = sql<string>`(SELECT strftime('%Y-%m-%dT%H:%M:%S', micros / 1000000, 'unixepoch') || '.' || printf('%06d', micros % 1000000) FROM sync_clock WHERE id = 1)`;
 
+/** The id the request names its write by (`CLIENT_WRITE_ID_HEADER`), if any. */
+export function clientWriteId(c: Context<AppEnv>): string | undefined {
+  const writeId = c.req.header(CLIENT_WRITE_ID_HEADER);
+  if (
+    writeId !== undefined &&
+    (writeId === '' || writeId.length > CLIENT_WRITE_ID_MAX_LENGTH)
+  ) {
+    throw validationError(
+      `${CLIENT_WRITE_ID_HEADER} must have 1 to ${CLIENT_WRITE_ID_MAX_LENGTH} characters.`
+    );
+  }
+  return writeId;
+}
+
 /**
  * When the request's write was made: the header's time, but never later than
  * now by the API's write clock (`tick`: a device whose clock runs ahead
@@ -58,15 +72,7 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   if (header !== undefined && at === null) {
     throw validationError(`${CLIENT_UPDATED_HEADER} is not a datetime.`);
   }
-  const writeId = c.req.header(CLIENT_WRITE_ID_HEADER);
-  if (
-    writeId !== undefined &&
-    (writeId === '' || writeId.length > CLIENT_WRITE_ID_MAX_LENGTH)
-  ) {
-    throw validationError(
-      `${CLIENT_WRITE_ID_HEADER} must have 1 to ${CLIENT_WRITE_ID_MAX_LENGTH} characters.`
-    );
-  }
+  const writeId = clientWriteId(c);
   const db = c.get('db');
   if (writeId === undefined) {
     const {micros} = await db.get<{micros: number}>(tick);

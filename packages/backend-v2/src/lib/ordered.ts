@@ -98,21 +98,36 @@ export class OrderedModel {
     return sql`(SELECT COALESCE(MAX(${order}), -1) + 1 FROM ${table} WHERE ${this.spec.scope} = ${scope})`;
   }
 
-  /** Move `self` directly above (before) `ref`. */
-  above(self: OrderedRow, ref: OrderedRow, now: string | SQL): Promise<void> {
-    return this.move(self, ref, now, 'above');
+  /**
+   * Move `self` directly above (before) `ref`. `record`, when given, runs in
+   * the move's transaction, right after the statement that moves the rows
+   * (`changes()` is that statement's): a failure of it undoes the move.
+   */
+  above(
+    self: OrderedRow,
+    ref: OrderedRow,
+    now: string | SQL,
+    record?: SQL
+  ): Promise<void> {
+    return this.move(self, ref, now, 'above', record);
   }
 
-  /** Move `self` directly below (after) `ref`. */
-  below(self: OrderedRow, ref: OrderedRow, now: string | SQL): Promise<void> {
-    return this.move(self, ref, now, 'below');
+  /** Move `self` directly below (after) `ref` (see `above`). */
+  below(
+    self: OrderedRow,
+    ref: OrderedRow,
+    now: string | SQL,
+    record?: SQL
+  ): Promise<void> {
+    return this.move(self, ref, now, 'below', record);
   }
 
   private async move(
     initialSelf: OrderedRow,
     initialRef: OrderedRow,
     now: string | SQL,
-    direction: 'above' | 'below'
+    direction: 'above' | 'below',
+    record?: SQL
   ): Promise<void> {
     if (initialSelf.scope !== initialRef.scope) {
       throw new Error('Cannot order rows from different scopes');
@@ -136,7 +151,7 @@ export class OrderedModel {
       } else {
         target = ref.order;
       }
-      if (await this.to(self, target, now, ref, neighbor)) {
+      if (await this.to(self, target, now, ref, neighbor, record)) {
         return;
       }
       // Someone else moved `self`, `ref`, or the neighbor between our read
@@ -160,7 +175,8 @@ export class OrderedModel {
     target: number,
     now: string | SQL,
     ref?: OrderedRow,
-    neighbor?: Neighbor
+    neighbor?: Neighbor,
+    record?: SQL
   ): Promise<boolean> {
     if (self.order === target) {
       return true;
@@ -194,17 +210,19 @@ export class OrderedModel {
         ${neighborGuard}
     `;
     const touch = this.spec.touch?.(self);
-    if (touch === undefined) {
+    if (touch === undefined && record === undefined) {
       return (await this.db.run(move)).meta.changes > 0;
     }
-    // Drizzle (0.45) cannot batch raw statements with parameters, so both are
+    // Drizzle (0.45) cannot batch raw statements with parameters, so they are
     // prepared on the D1 binding.
     const d1 = this.db.$client;
     const [moved] = await d1.batch(
-      [move, touch].map(statement => {
-        const query = dialect.sqlToQuery(statement);
-        return d1.prepare(query.sql).bind(...query.params);
-      })
+      [move, record, touch]
+        .filter(statement => statement !== undefined)
+        .map(statement => {
+          const query = dialect.sqlToQuery(statement);
+          return d1.prepare(query.sql).bind(...query.params);
+        })
     );
     return (moved?.meta.changes ?? 0) > 0;
   }

@@ -3,10 +3,13 @@ import {
   MESSAGES,
   reorderAttributesSchema,
 } from '@commandsnippets/api-shared';
-import {and, eq} from 'drizzle-orm';
+import {and, eq, sql} from 'drizzle-orm';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
+import {isUniqueViolation} from '../db/errors';
+import {clientWrites} from '../db/schema';
 import type {AppEnv} from '../env';
+import {now} from '../lib/clock';
 import {
   ApiError,
   type ErrorObject,
@@ -16,6 +19,7 @@ import {
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {eachField} from '../lib/validate';
+import {clientWriteId} from './lww';
 import {nextRevision, type RevisedResource} from './owned';
 
 /** The resource and its ordering (whose owner/touch the move honors). */
@@ -86,11 +90,61 @@ export async function reorder(
     throw validationError('top and bottom must share the same ordering scope.');
   }
 
-  // Every row the move touches gets the requester's next revision (lib/revision).
-  await new OrderedModel(db, options).above(
-    top,
-    bottom,
-    nextRevision(options, user.id)
-  );
+  // A reorder the client names is made once: a retry after a lost answer
+  // never moves the row again, over a move made since (another device's).
+  const writeId = clientWriteId(c);
+  const applied = async () =>
+    writeId !== undefined &&
+    (
+      await db
+        .select({id: clientWrites.write_id})
+        .from(clientWrites)
+        .where(
+          and(
+            eq(clientWrites.user_id, user.id),
+            eq(clientWrites.write_id, writeId)
+          )
+        )
+        .limit(1)
+    ).length > 0;
+  if (await applied()) {
+    return c.body(null, 200);
+  }
+  const timestamp = now();
+  // Recorded in the move's transaction, once it moved rows: a concurrent
+  // attempt's record fails it, undoing that move.
+  const record =
+    writeId === undefined
+      ? undefined
+      : sql`INSERT INTO sync_clientwrite (user_id, write_id, made, date_created)
+          SELECT ${user.id}, ${writeId}, ${timestamp}, ${timestamp}
+          WHERE changes() > 0`;
+  try {
+    // Every row the move touches gets the requester's next revision
+    // (lib/revision).
+    await new OrderedModel(db, options).above(
+      top,
+      bottom,
+      nextRevision(options, user.id),
+      record
+    );
+  } catch (error) {
+    if (writeId !== undefined && isUniqueViolation(error)) {
+      return c.body(null, 200);
+    }
+    throw error;
+  }
+  // In place already (nothing moved): made, as much as it will be.
+  if (writeId !== undefined) {
+    await db
+      .insert(clientWrites)
+      .values({
+        user_id: user.id,
+        write_id: writeId,
+        made: timestamp,
+        date_created: timestamp,
+      })
+      .onConflictDoNothing();
+  }
   return c.body(null, 200);
 }

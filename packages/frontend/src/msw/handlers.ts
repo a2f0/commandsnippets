@@ -3,6 +3,7 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   adminUserUpdateAttributesSchema,
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
   EXPECTED_USER_ID_HEADER,
@@ -768,6 +769,18 @@ function adminDataOf(id: string): MockOwner {
   }
   throw apiError(404, CODES.notFound, 'No AdminUser matches the given query.');
 }
+
+// The reorders made, by the id the client named each by: a retry is made
+// once, as the API makes it.
+const madeReorders = new Set<string>();
+const madeAlready = (request: Request) =>
+  madeReorders.has(request.headers.get(CLIENT_WRITE_ID_HEADER) ?? '');
+const recordMade = (request: Request) => {
+  const writeId = request.headers.get(CLIENT_WRITE_ID_HEADER);
+  if (writeId !== null) {
+    madeReorders.add(writeId);
+  }
+};
 
 // The client ids of tag creates answered with a tag of the name the user had,
 // by that id: a retry answers with that tag, as the API does.
@@ -1603,6 +1616,9 @@ const createHandlers = () => {
       http.post(`${baseUrl}/tags_entries/reorder`, async ({request}) => {
         recordRequest('POST', request.url);
         try {
+          if (madeAlready(request)) {
+            return new HttpResponse(null, {status: 200});
+          }
           const state = activeEntries();
           // A deleted junction is out of the order.
           const [top, bottom] = await reorderPair(
@@ -1626,6 +1642,7 @@ const createHandlers = () => {
             bottom,
             nextJunctionRevision(state)
           );
+          recordMade(request);
           return new HttpResponse(null, {status: 200});
         } catch (error) {
           return errorResponse(error);
@@ -1635,8 +1652,12 @@ const createHandlers = () => {
       http.post(`${baseUrl}/tags/reorder`, async ({request}) => {
         recordRequest('POST', request.url);
         try {
+          if (madeAlready(request)) {
+            return new HttpResponse(null, {status: 200});
+          }
           const [top, bottom] = await reorderPair(request, 'Tag', tags);
           moveAbove(tags, top, bottom, nextTagRevision());
+          recordMade(request);
           return new HttpResponse(null, {status: 200});
         } catch (error) {
           return errorResponse(error);
@@ -1806,6 +1827,7 @@ function nextId(kind: string, existing: ReadonlyArray<{id: string}>): string {
 export const resetMSWState = () => {
   lastIds.clear();
   tagsByClientId.clear();
+  madeReorders.clear();
   tags = structuredClone(originalTags);
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;

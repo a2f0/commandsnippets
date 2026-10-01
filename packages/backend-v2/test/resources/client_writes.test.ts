@@ -770,6 +770,47 @@ describe('a write made ahead of the clock', () => {
   });
 });
 
+describe('a reorder named by the client', () => {
+  const reorder = (top: number, bottom: number, writeId?: string) =>
+    client.request(
+      'POST',
+      '/api/v1/tags/reorder',
+      {
+        data: {
+          type: 'Tag',
+          attributes: {top: String(top), bottom: String(bottom)},
+        },
+      },
+      writeId === undefined ? {} : {[CLIENT_WRITE_ID_HEADER]: writeId}
+    );
+  const mine = ['one', 'two', 'three', 'four'];
+  const ranked = async () =>
+    (await db().select().from(tags).where(eq(tags.user_id, user.id)))
+      .filter(tag => mine.includes(tag.name))
+      .sort((a, b) => a.order - b.order)
+      .map(tag => tag.name);
+
+  it('is made once: its retry never undoes a move made since', async () => {
+    // After the user's other tags.
+    await tagFactory({user, name: 'one', order: 10});
+    const two = await tagFactory({user, name: 'two', order: 11});
+    await tagFactory({user, name: 'three', order: 12});
+    const four = await tagFactory({user, name: 'four', order: 13});
+    // Its answer is lost.
+    expect((await reorder(four.id, two.id, 'move-1')).status).toBe(200);
+    expect(await ranked()).toEqual(['one', 'four', 'two', 'three']);
+    // Another device's move, since.
+    await reorder(two.id, four.id);
+    expect(await ranked()).toEqual(['one', 'two', 'four', 'three']);
+
+    expect((await reorder(four.id, two.id, 'move-1')).status).toBe(200);
+    expect(await ranked()).toEqual(['one', 'two', 'four', 'three']);
+    // Another reorder (another id) moves.
+    await reorder(four.id, two.id, 'move-2');
+    expect(await ranked()).toEqual(['one', 'four', 'two', 'three']);
+  });
+});
+
 describe('an entry created with a client id', () => {
   const create = (clientId: string, subject: string, by = client) =>
     by.post('/api/v1/entries', {

@@ -4,6 +4,7 @@
  * reads show it. contract.spec.ts checks the documents' shapes.
  */
 import {
+  CLIENT_WRITE_ID_HEADER,
   CODES,
   CURSOR_START,
   cursorOf,
@@ -431,6 +432,22 @@ describe('POST /tags/reorder and /tags_entries/reorder', () => {
     );
     expect(response.status).toBe(200);
     expect(ranks(await junctions())).toEqual(['2', '1']);
+  });
+
+  it('make a reorder the client names once, as the API does', async () => {
+    const named = (top: string, bottom: string, writeId: string) =>
+      send(
+        'POST',
+        '/tags/reorder',
+        {data: {type: 'Tag', attributes: {top, bottom}}},
+        {...JSON_API, [CLIENT_WRITE_ID_HEADER]: writeId}
+      );
+    await named('4', '2', 'move-1');
+    await reorder('/tags/reorder', 'Tag', '2', '4');
+    expect(ranks((await getTags()).data)).toEqual(['1', '2', '4', '3']);
+    // Its retry: nothing moves.
+    expect((await named('4', '2', 'move-1')).status).toBe(200);
+    expect(ranks((await getTags()).data)).toEqual(['1', '2', '4', '3']);
   });
 
   it('refuses a row that does not exist (or a deleted junction)', async () => {
