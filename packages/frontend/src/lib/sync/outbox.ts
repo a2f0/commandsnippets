@@ -10,8 +10,9 @@
  * - **The answer.** Each write's answer is the row as the API holds it after
  *   the write, with its new revision: stored in place of the local row
  *   (unless another write to it is still queued). A reorder answers
- *   nothing, so the row it moved is read again: a sync left it as it was
- *   while the reorder was queued, and may not read it again. When a sync later reads
+ *   nothing, so the rows it ranks (the tags, or the tag's junctions) are
+ *   read again: the one it moved, which a sync left as it was while the
+ *   reorder was queued (and may not read again), and those it shifted. When a sync later reads
  *   that row, it holds the same revision and changes nothing: a device's own
  *   write costs it no re-sync. The cursors are never moved by an answer (a
  *   write's revision can be past another device's change the sync has not
@@ -36,11 +37,14 @@
  *   refused write never stays shown (a sync would not bring back a row the
  *   API never changed).
  */
+import {CURSOR_START, cursorOf} from '@commandsnippets/api-shared/cursor';
 import {formatMicros} from '@commandsnippets/api-shared/datetime';
 import type {TagReorderDocument} from '@commandsnippets/api-shared/requests';
 import type {
   IncludedResource,
+  TagCursorListDocument,
   TagDocument,
+  TagTextEntryCursorListDocument,
   TagTextEntryDocument,
   TagTextEntryListDocument,
   TextEntryDocument,
@@ -108,6 +112,11 @@ export interface OutboxApi {
   untagEntry(junctionId: string, made?: string): Promise<TagTextEntryDocument>;
   reorderEntry(top: string, bottom: string, made?: string): Promise<void>;
   getTag(tagId: string): Promise<TagDocument>;
+  getTagsAfter(after: string): Promise<TagCursorListDocument>;
+  getTagJunctionsAfter(
+    tagId: string,
+    after: string
+  ): Promise<TagTextEntryCursorListDocument>;
   getEntry(entryId: string): Promise<TextEntryDocument>;
   getJunction(
     tagId: string,
@@ -176,7 +185,6 @@ function idsOf(write: QueuedWrite): Array<[string, string]> {
         [TAG, write.tagId],
         [JUNCTION, write.top],
         [JUNCTION, write.bottom],
-        [TEXT_ENTRY, write.entryId],
       ];
     case 'restoreTag':
       return [[TAG, write.tagId]];
@@ -244,7 +252,6 @@ function renamed(
         tagId: type === TAG ? swap(write.tagId) : write.tagId,
         top: type === JUNCTION ? swap(write.top) : write.top,
         bottom: type === JUNCTION ? swap(write.bottom) : write.bottom,
-        entryId: type === TEXT_ENTRY ? swap(write.entryId) : write.entryId,
       };
     // Restores name the API's ids only: nothing to rename.
     case 'restoreTag':
@@ -365,9 +372,10 @@ async function send(
         },
         made
       );
-      // The answer is empty: the tag moved is read again, which a sync left
-      // as it was meanwhile (and may not read again).
-      return {resources: answer(await api.getTag(write.top))};
+      // The answer is empty: the tags are read again, the one moved (which
+      // a sync left as it was meanwhile, and may not read again) and those
+      // it shifted, so their ranks are the API's together.
+      return {resources: await everyPage(after => api.getTagsAfter(after))};
     case 'createEntry': {
       const document = await api.createEntry(
         write.subject,
@@ -399,15 +407,14 @@ async function send(
       return {
         resources: answer(await api.untagEntry(write.junctionId, made)),
       };
-    case 'reorderEntries': {
+    case 'reorderEntries':
       await api.reorderEntry(write.top, write.bottom, made);
-      // Likewise the junction moved.
-      const {data, included} = await api.getJunction(
-        write.tagId,
-        write.entryId
-      );
-      return {resources: [...data, ...(included ?? [])]};
-    }
+      // Likewise the tag's junctions.
+      return {
+        resources: await everyPage(after =>
+          api.getTagJunctionsAfter(write.tagId, after)
+        ),
+      };
     case 'restoreTag':
       return restoring(TAG, write.tagId, async () =>
         answer(await api.getTag(write.tagId))
@@ -424,6 +431,26 @@ async function send(
         );
         return [...data, ...(included ?? [])];
       });
+  }
+}
+
+/** Every page of a keyset listing (`read` after a cursor), with `included`. */
+async function everyPage(
+  read: (after: string) => Promise<{
+    data: Array<IncludedResource & {attributes: {date_updated: string}}>;
+    included?: IncludedResource[] | undefined;
+    links: {next: string | null};
+  }>
+): Promise<IncludedResource[]> {
+  const resources: IncludedResource[] = [];
+  for (let after = CURSOR_START; ; ) {
+    const page = await read(after);
+    resources.push(...page.data, ...(page.included ?? []));
+    const last = page.data.at(-1);
+    if (page.links.next === null || last === undefined) {
+      return resources;
+    }
+    after = cursorOf(last);
   }
 }
 
@@ -752,24 +779,9 @@ export async function adoptCreates(
     return [];
   }
   const remaps: Remap[] = [];
-  const remapped = new Set<string>();
-  for (const queued of await db.outbox.where('owner').equals(owner).toArray()) {
-    const {write} = queued;
-    if (write.kind === 'tagEntry') {
-      const to = paired.get(pairOf(write.tagId, write.entryId));
-      if (
-        to !== undefined &&
-        isLocalId(write.junctionId) &&
-        !remapped.has(write.junctionId)
-      ) {
-        const taken = {owner, type: JUNCTION, from: write.junctionId, to};
-        await remap(db, taken);
-        remapped.add(write.junctionId);
-        remaps.push(taken);
-      }
-      continue;
-    }
-    const created = createdBy(write);
+  const queuedWrites = () => db.outbox.where('owner').equals(owner).toArray();
+  for (const queued of await queuedWrites()) {
+    const created = createdBy(queued.write);
     const resource = created === null ? undefined : made.get(created.join(':'));
     if (created === null || resource === undefined) {
       continue;
@@ -786,6 +798,22 @@ export async function adoptCreates(
     await remap(db, adopted);
     await putResources(db, owner, [resource], true);
     remaps.push(adopted);
+  }
+  // Then the taggings, as queued now: naming the API's ids of the tags and
+  // entries just adopted.
+  const taken = new Set<string>();
+  for (const {write} of await queuedWrites()) {
+    if (write.kind !== 'tagEntry' || !isLocalId(write.junctionId)) {
+      continue;
+    }
+    const to = paired.get(pairOf(write.tagId, write.entryId));
+    if (to === undefined || taken.has(write.junctionId)) {
+      continue;
+    }
+    const junction = {owner, type: JUNCTION, from: write.junctionId, to};
+    await remap(db, junction);
+    taken.add(write.junctionId);
+    remaps.push(junction);
   }
   return remaps;
 }

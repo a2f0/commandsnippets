@@ -5,6 +5,7 @@
  * sends the queue in order, storing what the API answered.
  */
 
+import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import {
   CLIENT_UPDATED_HEADER,
   CLIENT_WRITE_ID_HEADER,
@@ -591,6 +592,53 @@ describe('the writes', () => {
     expect(await inTag('2')).toEqual(['3']);
   });
 
+  it("show an entry made offline in a tag once, when a sync brings it and another device's tagging of it", async () => {
+    await session().sync.syncAll();
+    // The API makes the entry, but its answer never arrives.
+    server.use(
+      http.post(
+        `${API}/entries`,
+        async ({request}) => {
+          await fetch(request.url, {
+            method: 'POST',
+            headers: request.headers,
+            body: await request.text(),
+          });
+          return HttpResponse.error();
+        },
+        {once: true}
+      )
+    );
+    const local = await createEntry(session(), 'both', 'body', '2');
+    await expect(session().sync.flush()).rejects.toThrow();
+    // Another device puts the API's entry in the same tag.
+    const listed = await apiClient.getEntriesAfter(CURSOR_START);
+    const made = listed.data.find(
+      entry => entry.attributes.client_id === local.id
+    );
+    invariant(made, 'the API should have made the entry');
+    await apiClient.tagEntry('2', made.id);
+
+    await session().sync.syncAll();
+    const pair = (
+      await db().junctions.where('owner').equals(TEST_USER).toArray()
+    ).filter(
+      junction =>
+        junction.relationships.tag.data.id === '2' &&
+        junction.relationships.text_entry.data.id === made.id
+    );
+    expect(pair).toHaveLength(1);
+    expect((await inTag('2')).filter(id => id === made.id)).toHaveLength(1);
+    // The create is adopted; the tagging stays queued, naming the API's ids.
+    expect((await db().outbox.toArray()).map(row => row.write)).toEqual([
+      expect.objectContaining({
+        kind: 'tagEntry',
+        junctionId: pair[0]?.id,
+        entryId: made.id,
+      }),
+    ]);
+  });
+
   it('tag an entry at the bottom of a tag, and untag it', async () => {
     await session().sync.syncAll();
 
@@ -679,6 +727,10 @@ describe('the writes', () => {
     const moved = [first, fourth, second, third];
     expect(await ranked()).toEqual(moved);
     await session().sync.flush();
+    // At once, with the API's ranks (the tags shifted too), before a sync.
+    expect(await ranked()).toEqual(moved);
+    const orders = (await db().tags.toArray()).map(tag => tag.attributes.order);
+    expect(new Set(orders).size).toBe(orders.length);
     await session().sync.syncAll();
     expect(await ranked()).toEqual(moved);
   });
@@ -697,6 +749,12 @@ describe('the writes', () => {
     const moved = await ranked();
     expect(moved.slice(0, 2)).toEqual([third, first]);
     await session().sync.flush();
+    // At once, with the API's ranks, before a sync.
+    expect(await ranked()).toEqual(moved);
+    const orders = (await entriesOfTag(session(), '1')).map(
+      ({junction}) => junction.attributes.order
+    );
+    expect(new Set(orders).size).toBe(orders.length);
     await session().sync.syncTag('1');
     expect(await ranked()).toEqual(moved);
   });
