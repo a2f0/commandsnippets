@@ -858,16 +858,12 @@ const apiBaseUrls = [
 const SIGNED_IN_USER = 'test';
 
 /**
- * A write naming another user than the signed-in one, refused as the API
+ * A request naming another user than the signed-in one, refused as the API
  * refuses it (409 `user_mismatch`); anything else goes on to the handlers.
  */
-function refuseAnotherUsersWrite(request: Request) {
+function refuseAnotherUsersRequest(request: Request) {
   const expected = request.headers.get(EXPECTED_USER_HEADER);
-  if (
-    expected === null ||
-    request.method === 'GET' ||
-    decodeURIComponent(expected) === SIGNED_IN_USER
-  ) {
+  if (expected === null || decodeURIComponent(expected) === SIGNED_IN_USER) {
     return undefined;
   }
   return HttpResponse.json(
@@ -891,7 +887,9 @@ const createHandlers = () => {
 
   for (const baseUrl of apiBaseUrls) {
     handlers.push(
-      http.all(`${baseUrl}/*`, ({request}) => refuseAnotherUsersWrite(request)),
+      http.all(`${baseUrl}/*`, ({request}) =>
+        refuseAnotherUsersRequest(request)
+      ),
       // The signed-in user (read by the admin page)
       http.get(`${baseUrl}/user/`, ({request}) => {
         recordRequest('GET', request.url);
@@ -1749,7 +1747,8 @@ const createHandlers = () => {
     http.post('http://localhost:9001/api-token-deauth/', ({request}) => {
       recordRequest('POST', request.url);
       return (
-        refuseAnotherUsersWrite(request) ?? HttpResponse.json({}, {status: 200})
+        refuseAnotherUsersRequest(request) ??
+        HttpResponse.json({}, {status: 200})
       );
     }),
     http.post(
@@ -1757,7 +1756,7 @@ const createHandlers = () => {
       ({request}) => {
         recordRequest('POST', request.url);
         return (
-          refuseAnotherUsersWrite(request) ??
+          refuseAnotherUsersRequest(request) ??
           HttpResponse.json({}, {status: 200})
         );
       }
@@ -1767,7 +1766,7 @@ const createHandlers = () => {
       ({request}) => {
         recordRequest('POST', request.url);
         return (
-          refuseAnotherUsersWrite(request) ??
+          refuseAnotherUsersRequest(request) ??
           HttpResponse.json({}, {status: 200})
         );
       }

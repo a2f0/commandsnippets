@@ -115,17 +115,21 @@ class ApiClient {
    */
   constructor(
     private readonly actingUser: () => string | null = signedInUser,
-    private readonly writeId: string | null = null
+    private readonly writeId: string | null = null,
+    /** Whether reads name the acting user too (`writesAs`'s). */
+    private readonly readsAsUser = false
   ) {}
 
   /**
-   * A client whose writes always name `username`, whoever is signed in when
-   * they are sent: a queue of `username`'s writes (`lib/sync/outbox.ts`) is
-   * refused (`UserMismatchError`) rather than written into another user's
-   * account when this tab has switched accounts meanwhile.
+   * A client whose requests always name `username`, whoever is signed in
+   * when they are sent: a queue of `username`'s writes
+   * (`lib/sync/outbox.ts`) is refused (`UserMismatchError`) rather than
+   * written into another user's account when this tab has switched accounts
+   * meanwhile, and so are the reads it makes (restores, a reorder's rows),
+   * rather than storing the other user's rows as `username`'s.
    */
   public writesAs(username: string): ApiClient {
-    return new ApiClient(() => username, this.writeId);
+    return new ApiClient(() => username, this.writeId, true);
   }
 
   /**
@@ -133,7 +137,7 @@ class ApiClient {
    * (`CLIENT_WRITE_ID_HEADER`), the same on every attempt to send it.
    */
   public forWrite(writeId: string): ApiClient {
-    return new ApiClient(this.actingUser, writeId);
+    return new ApiClient(this.actingUser, writeId, this.readsAsUser);
   }
 
   /**
@@ -157,7 +161,10 @@ class ApiClient {
   ): Promise<Response> {
     // Writes name the signed-in user: the API refuses one signed in as
     // anyone else (`UserMismatchError`).
-    const user = withAuth && method !== 'GET' ? this.actingUser() : null;
+    const user =
+      withAuth && (method !== 'GET' || this.readsAsUser)
+        ? this.actingUser()
+        : null;
     const init: RequestInit = {
       method,
       credentials: 'include',

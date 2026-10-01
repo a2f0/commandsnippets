@@ -26,7 +26,7 @@ import {
   it,
   vi,
 } from 'vitest';
-import {apiClient} from '../../../../src/lib/api/apiClient';
+import {apiClient, UserMismatchError} from '../../../../src/lib/api/apiClient';
 import {setSignedInUser} from '../../../../src/lib/auth/authUtils';
 import {entriesOfTag} from '../../../../src/lib/data/hooks';
 import {
@@ -813,6 +813,45 @@ describe('the writes', () => {
     expect(writes).toEqual([]);
     expect(await theirs.db.outbox.count()).toBe(0);
     expect(store.loggedInUser).toBe(TEST_USER);
+  });
+
+  it("store no other user's rows that the queue reads after an account switch", async () => {
+    await session().sync.syncAll();
+    const listed = await apiClient.getTagsAfter(CURSOR_START);
+    const [first] = listed.data;
+    invariant(first, 'the API should list a tag');
+    offline();
+    await reorderTags(session(), '4', '2');
+    // The reorder reaches the API; then another tab signs in as someone
+    // else, whose cookie it is: a read naming this tab's user is refused, as
+    // the API refuses it, and one naming none answers with their tags.
+    server.resetHandlers();
+    const named: Array<string | null> = [];
+    server.use(
+      http.get(`${API}/tags`, ({request}) => {
+        named.push(request.headers.get(EXPECTED_USER_HEADER));
+        return request.headers.get(EXPECTED_USER_HEADER) === null
+          ? HttpResponse.json({
+              ...listed,
+              data: [
+                {
+                  ...first,
+                  id: '99',
+                  attributes: {...first.attributes, name: 'theirs'},
+                  relationships: {user: {data: {type: 'User', id: '2'}}},
+                },
+              ],
+            })
+          : HttpResponse.json(
+              errorDocument(409, CODES.userMismatch, 'Another user.'),
+              {status: 409}
+            );
+      })
+    );
+
+    await expect(session().sync.flush()).rejects.toThrow(UserMismatchError);
+    expect(named).toEqual([TEST_USER]);
+    expect(await tagRow('99')).toBeUndefined();
   });
 
   it("are sent as the signed-in user's; refused as another's, the tab leaves", async () => {

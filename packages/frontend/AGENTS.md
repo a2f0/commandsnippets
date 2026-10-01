@@ -149,9 +149,10 @@ API; everything else the app keeps is a zustand store.
   newer of two writes to a row, last writer wins by edit time), itself
   (`Client-Write-Id`, the same on every attempt: a retry of a write made
   ahead of the API's clock counts as made when it first arrived) and the
-  signed-in user (`X-Expected-User`, `EXPECTED_USER_HEADER`; the API refuses
-  it when the cookie is another user's: 409 `user_mismatch`,
-  `UserMismatchError`, and the tab leaves the session). Each answer is the
+  signed-in user (`X-Expected-User`, `EXPECTED_USER_HEADER`, on the reads
+  the queue makes too; the API refuses it when the cookie is another
+  user's: 409 `user_mismatch`, `UserMismatchError`, and the tab leaves the
+  session). Each answer is the
   row as the API holds it, stored in place of the local one (`force`). A
   write that fails for a reason that can pass (offline, a 5xx) stops the
   flush and is retried; one the API refuses (a 400 or 404) is dropped, with

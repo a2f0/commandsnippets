@@ -25,7 +25,7 @@ const as = (
   });
 
 // A browser tab signed in as one user whose cookie another tab replaced
-// names the first user; the API refuses its writes.
+// names the first user; the API refuses its writes, and its reads.
 describe('a request naming the user it acts for', () => {
   it('writes when it is the signed-in user', async () => {
     const {user1, user1Client} = await setUpBase();
@@ -85,10 +85,24 @@ describe('a request naming the user it acts for', () => {
     expect(response.status).toBe(409);
   });
 
-  it('reads as it would without the name', async () => {
+  it('reads when it is the signed-in user', async () => {
+    const {user1, user1Client} = await setUpBase();
+    const response = await as(
+      user1Client,
+      'GET',
+      '/api/v1/tags',
+      user1.username
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it("is refused a read as anyone else: no other user's data", async () => {
     const {user1Client} = await setUpBase();
     const response = await as(user1Client, 'GET', '/api/v1/tags', 'someone');
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(409);
+    const body = await json(response);
+    expect(body.errors[0].code).toBe(CODES.userMismatch);
+    expect(body.data).toBeUndefined();
   });
 
   it('leaves an anonymous write to the routes', async () => {

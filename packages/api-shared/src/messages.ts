@@ -101,10 +101,12 @@ export const MESSAGES = {
 } as const;
 
 /**
- * The header a client's writes name the user they act for with (their
- * username, URI-encoded): the API refuses a state-changing request signed in
- * as anyone else (409 `user_mismatch`), so a browser tab whose session
- * another tab has replaced cannot write into the new user's account.
+ * The header a client's requests name the user they act for with (their
+ * username, URI-encoded): the API refuses a request naming it signed in as
+ * anyone else (409 `user_mismatch`), so a browser tab whose session another
+ * tab has replaced can neither write into the new user's account nor read
+ * the new user's data as its own user's. Requests that name no user are
+ * unaffected.
  */
 export const EXPECTED_USER_HEADER = 'X-Expected-User';
 
