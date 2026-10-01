@@ -32,7 +32,14 @@ import type * as z from 'zod/mini';
 import {UserMismatchError} from '../api/apiClient';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {leaveForeignSession} from '../state/appState';
-import {enqueue, isLocalId, localId, madeNow, nextMade} from '../sync/outbox';
+import {
+  AccountChangedError,
+  enqueue,
+  isLocalId,
+  localId,
+  madeNow,
+  nextMade,
+} from '../sync/outbox';
 import {type SyncSession, withDataLock} from '../sync/session';
 import {SyncUserError} from '../sync/sync';
 import {junctionOf} from './hooks';
@@ -91,8 +98,12 @@ export function flushFailed(session: SyncSession, error: unknown): void {
     void leaveForeignSession(session.username);
     return;
   }
-  // Signed out meanwhile: the database (and its queue) is gone.
-  if (error instanceof Error && error.name === 'DatabaseClosedError') {
+  // Signed out meanwhile: the database (and its queue) is gone; or bound to
+  // another account, whose queue it is now.
+  if (
+    error instanceof AccountChangedError ||
+    (error instanceof Error && error.name === 'DatabaseClosedError')
+  ) {
     return;
   }
   console.warn('WARNING: queued writes not sent yet:', error);

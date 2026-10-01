@@ -626,13 +626,42 @@ async function remap(
 }
 
 /**
+ * The data was bound to another account (`bindOwner`: a sign-in here of
+ * another account of the same name) while a flush or a sync was on its
+ * way: what it brought is the first account's, and is not stored.
+ */
+export class AccountChangedError extends Error {
+  constructor(owner: string) {
+    super(`${owner}'s data was bound to another account meanwhile`);
+    this.name = 'AccountChangedError';
+  }
+}
+
+/**
+ * Refuse (`AccountChangedError`) unless `owner`'s data is still bound to
+ * `accountId` (in a transaction including `cursors`, before storing).
+ */
+export async function assertBound(
+  db: CommandsnippetsDatabase,
+  owner: string,
+  accountId: string | undefined
+): Promise<void> {
+  const held = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+  if (held !== accountId) {
+    throw new AccountChangedError(owner);
+  }
+}
+
+/**
  * The write reached the API: unqueue it (or put what is left to do in its
- * place), give a row it created the API's id, and store the answer.
+ * place), give a row it created the API's id, and store the answer, unless
+ * the data was bound to another account meanwhile (`assertBound`).
  */
 async function acknowledge(
   db: CommandsnippetsDatabase,
   queued: OutboxRow,
-  sent: Sent
+  sent: Sent,
+  accountId: string | undefined
 ): Promise<Remap | null> {
   const {owner} = queued;
   const created = sent.created;
@@ -645,8 +674,9 @@ async function acknowledge(
       : null;
   await db.transaction(
     'rw',
-    [db.outbox, db.tags, db.entries, db.junctions],
+    [db.outbox, db.tags, db.entries, db.junctions, db.cursors],
     async () => {
+      await assertBound(db, owner, accountId);
       if (queued.seq !== undefined) {
         if (sent.next === undefined) {
           await db.outbox.delete(queued.seq);
@@ -709,7 +739,8 @@ const isRead = (write: QueuedWrite) =>
  */
 async function drop(
   db: CommandsnippetsDatabase,
-  queued: OutboxRow
+  queued: OutboxRow,
+  accountId: string | undefined
 ): Promise<void> {
   const {owner} = queued;
   const all = await db.outbox.where('owner').equals(owner).toArray();
@@ -752,8 +783,9 @@ async function drop(
   }
   await db.transaction(
     'rw',
-    [db.outbox, db.tags, db.entries, db.junctions],
+    [db.outbox, db.tags, db.entries, db.junctions, db.cursors],
     async () => {
+      await assertBound(db, owner, accountId);
       await db.outbox.bulkDelete(
         [...dropped.keys()].filter(seq => seq !== undefined)
       );
@@ -813,10 +845,10 @@ export async function flushOutbox(
         throw error;
       }
       console.error('ERROR: the API refused a queued write:', error);
-      await drop(db, queued);
+      await drop(db, queued, accountId);
       continue;
     }
-    const remapped = await acknowledge(db, queued, sent);
+    const remapped = await acknowledge(db, queued, sent, accountId);
     announceRemaps(remapped === null ? [] : [remapped]);
   }
 }

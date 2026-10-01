@@ -20,39 +20,37 @@ import {and, eq, type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
-import type {Db} from '../db/client';
 import {clientWrites} from '../db/schema';
 import type {AppEnv} from '../env';
 import {formatMicros, now, parseDateTime} from '../lib/clock';
 import {ApiError, validationError} from '../lib/errors';
 
 /**
- * Now by the API's write clock (`sync_clock`): the database's clock, which
+ * Advance the API's write clock (`sync_clock`): the database's clock, which
  * every isolate shares (so none whose clock runs a little ahead of another's
  * makes a later write older), advanced by at least a microsecond at each
- * call, so no two writes share a time (D1 runs one statement at a time).
+ * write, so no two writes share a time (D1 runs one statement at a time).
  */
-async function tick(db: Db): Promise<string> {
-  const row = await db.get<{micros: number}>(
-    sql`INSERT INTO sync_clock (id, micros)
-      VALUES (1, CAST((julianday('now') - 2440587.5) * 86400000000 AS INTEGER))
-      ON CONFLICT (id) DO UPDATE
-      SET micros = MAX(excluded.micros, sync_clock.micros + 1)
-      RETURNING micros`
-  );
-  return formatMicros(row.micros);
-}
+const tick = sql`INSERT INTO sync_clock (id, micros)
+  VALUES (1, CAST((julianday('now') - 2440587.5) * 86400000000 AS INTEGER))
+  ON CONFLICT (id) DO UPDATE
+  SET micros = MAX(excluded.micros, sync_clock.micros + 1)
+  RETURNING micros`;
+
+/** The write clock's time, in the API's fixed-width form. */
+const clockTime = sql<string>`(SELECT strftime('%Y-%m-%dT%H:%M:%S', micros / 1000000, 'unixepoch') || '.' || printf('%06d', micros % 1000000) FROM sync_clock WHERE id = 1)`;
 
 /**
  * When the request's write was made: the header's time, but never later than
  * now by the API's write clock (`tick`: a device whose clock runs ahead
  * cannot win every later write), or that now when the request names none.
  * A write named by `CLIENT_WRITE_ID_HEADER` counts as its first attempt was
- * counted on every later one (the API keeps that time as long as the user):
- * a retry after a lost answer, or after a failure, counts as the write did,
- * never beating a write made in between nor losing to one made before. Its
- * time is followed by its id (`<time>|<id>`), which orders two writes of the
- * same time. A malformed time or write id is a 400.
+ * counted on every later one (the API keeps that time as long as the user),
+ * which is recorded with the clock's tick, in one transaction: a retry after
+ * a lost answer, or after a failure, or alongside the first attempt, counts
+ * as the write did, never beating a write made in between nor losing to one
+ * made before. Its time is followed by its id (`<time>|<id>`), which orders
+ * two writes of the same time. A malformed time or write id is a 400.
  */
 export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   const header = c.req.header(CLIENT_UPDATED_HEADER);
@@ -70,15 +68,18 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
     );
   }
   const db = c.get('db');
-  const current = await tick(db);
-  const counted = at !== null && at < current ? at : current;
   if (writeId === undefined) {
-    return counted;
+    const {micros} = await db.get<{micros: number}>(tick);
+    const current = formatMicros(micros);
+    return at !== null && at < current ? at : current;
   }
   const user = requireUser(c);
+  const counted =
+    at === null ? clockTime : sql<string>`MIN(${at}, ${clockTime})`;
   // The time its first attempt was counted at: this attempt's, when it is
   // the first.
-  const [, [recorded]] = await db.batch([
+  const [, , [recorded]] = await db.batch([
+    db.run(tick),
     db
       .insert(clientWrites)
       .values({

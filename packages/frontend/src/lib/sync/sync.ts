@@ -49,6 +49,7 @@ import {
 import {
   adoptCreates,
   announceRemaps,
+  assertBound,
   flushOutbox,
   isLocalId,
   type OutboxApi,
@@ -108,6 +109,7 @@ async function readAfter<P extends Page>(
     pause = () => false,
   } = options;
   let after = (await db.cursors.get([owner, key]))?.after ?? CURSOR_START;
+  const account = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
   for (;;) {
     const page = await read(after);
     const last = page.data.at(-1);
@@ -117,6 +119,8 @@ async function readAfter<P extends Page>(
       'rw',
       [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
       async () => {
+        // Bound to another account since the sync began: not stored.
+        await assertBound(db, owner, account);
         const stored = await store(page);
         await db.cursors.put(cursor(after, done));
         return stored;

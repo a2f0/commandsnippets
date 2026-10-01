@@ -46,8 +46,12 @@ import {
   updateEntry,
 } from '../../../../src/lib/data/writes';
 import {OWNER_ID_KEY} from '../../../../src/lib/db/database';
-import {isLocalId, LAST_MADE_KEY} from '../../../../src/lib/sync/outbox';
-import {syncSession} from '../../../../src/lib/sync/session';
+import {
+  AccountChangedError,
+  isLocalId,
+  LAST_MADE_KEY,
+} from '../../../../src/lib/sync/outbox';
+import {claimData, syncSession} from '../../../../src/lib/sync/session';
 import {errorDocument} from '../../../../src/msw/documents';
 import {apiClientMethods} from '../../../util/apiClientMethods';
 import {server} from '../../../util/msw';
@@ -980,6 +984,86 @@ describe('the writes', () => {
     server.resetHandlers();
     const listed = await apiClient.getTagsAfter(CURSOR_START);
     expect(listed.data.map(tag => tag.attributes.name)).not.toContain('second');
+  });
+
+  it("store nothing of an account's answer arriving after the data was bound to another", async () => {
+    await session().sync.syncAll();
+    // The create reaches the API, but its answer is held back...
+    let answered!: () => void;
+    const held = new Promise<void>(resolve => {
+      answered = resolve;
+    });
+    let sending!: () => void;
+    const sent_ = new Promise<void>(resolve => {
+      sending = resolve;
+    });
+    server.use(
+      http.post(
+        `${API}/tags`,
+        async ({request}) => {
+          const answer = await fetch(request.url, {
+            method: 'POST',
+            headers: request.headers,
+            body: await request.text(),
+          });
+          sending();
+          await held;
+          return HttpResponse.json(await answer.json(), {status: 201});
+        },
+        {once: true}
+      )
+    );
+    const flushing = (async () => {
+      await createTag(session(), 'first-account');
+      await session()
+        .sync.flush()
+        .catch(() => undefined);
+    })();
+    await sent_;
+    // ...while another account of the name signs in here.
+    await claimData(TEST_USER, '2');
+    answered();
+    await flushing;
+
+    const names = (
+      await db().tags.where('owner').equals(TEST_USER).toArray()
+    ).map(tag => tag.attributes.name);
+    expect(names).not.toContain('first-account');
+    expect((await db().cursors.get([TEST_USER, OWNER_ID_KEY]))?.after).toBe(
+      '2'
+    );
+  });
+
+  it("store nothing of a sync's page arriving after the data was bound to another", async () => {
+    let answered!: () => void;
+    const held = new Promise<void>(resolve => {
+      answered = resolve;
+    });
+    let reading!: () => void;
+    const read = new Promise<void>(resolve => {
+      reading = resolve;
+    });
+    server.use(
+      http.get(
+        `${API}/tags`,
+        async ({request}) => {
+          const page = await (await fetch(request.url)).json();
+          reading();
+          await held;
+          return HttpResponse.json(page);
+        },
+        {once: true}
+      )
+    );
+    const syncing = session()
+      .sync.syncAll()
+      .catch((error: unknown) => error);
+    await read;
+    await claimData(TEST_USER, '2');
+    answered();
+
+    expect(await syncing).toBeInstanceOf(AccountChangedError);
+    expect(await db().tags.where('owner').equals(TEST_USER).count()).toBe(0);
   });
 
   it('are never sent from data an older version kept for another account of the name', async () => {
