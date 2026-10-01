@@ -5,12 +5,14 @@ import {
 import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
+  clientWrites,
   tagClientIds,
   tags,
   tagsEntries,
   textEntries,
   type User,
 } from '../../src/db/schema';
+import {formatMicros, nowMicros} from '../../src/lib/clock';
 import {
   ApiClient,
   db,
@@ -456,6 +458,63 @@ describe('a write made ahead of the clock', () => {
 
     expect((await json(await untimed())).data.attributes.name).toBe('between');
     expect((await refreshTag(tag.id))?.name).toBe('between');
+  });
+
+  it('as one naming no time, is the latest write: another isolate may have stamped the row a little ahead', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    // Another isolate's clock, a second ahead of this one's, stamped it.
+    const ahead = formatMicros(nowMicros() + 1_000_000);
+    await db()
+      .update(tags)
+      .set({client_updated: ahead})
+      .where(eq(tags.id, tag.id));
+
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'latest'));
+    expect(await refreshTag(tag.id)).toMatchObject({
+      name: 'latest',
+      // Never moved back.
+      client_updated: ahead,
+    });
+    // As is one made ahead of the clock, on its first arrival.
+    await sendOnce(
+      'ahead-1',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'ahead')
+    );
+    expect((await refreshTag(tag.id))?.name).toBe('ahead');
+  });
+
+  it('counts as made when it first arrived however late its retry, though other writes were made since', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    await sendOnce(
+      'old-1',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'old')
+    );
+    // Its answer is lost; a year passes, with other writes counted as now.
+    const yearAgo = formatMicros(nowMicros() - 365 * 24 * 60 * 60 * 1_000_000);
+    await db()
+      .update(clientWrites)
+      .set({date_created: yearAgo})
+      .where(eq(clientWrites.write_id, 'old-1'));
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'between'));
+    await sendOnce(
+      'other-1',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'between-2')
+    );
+
+    const retried = await sendOnce(
+      'old-1',
+      'PATCH',
+      `/tags/${tag.id}`,
+      tagRename(tag.id, 'old')
+    );
+    expect((await json(retried)).data.attributes.name).toBe('between-2');
+    expect((await refreshTag(tag.id))?.name).toBe('between-2');
   });
 
   it("counts each user's write ids apart", async () => {

@@ -232,11 +232,14 @@ order. Each names when it was made in the `Client-Updated` header
 as now, and a write without one as made now), and itself in
 `Client-Write-Id` (`CLIENT_WRITE_ID_HEADER`), the same on every attempt: a
 write made ahead of the clock counts as made when it first arrived on every
-retry (`sync_clientwrite` keeps that time 30 days), so a retry after a lost
-answer never beats a write made in between. Tags, entries and junctions
-keep the time of the last client write to them (`client_updated`), and a
-write to one applies only when it is no older (`src/resources/lww.ts`):
-the latest edit wins, whatever order the writes arrive in. An older write
+retry (`sync_clientwrite` keeps that time as long as the user), so a retry
+after a lost answer never beats a write made in between. Tags, entries and
+junctions keep the time of the last client write to them
+(`client_updated`), and a write to one applies only when it is no older
+(`src/resources/lww.ts`): the latest edit wins, whatever order the writes
+arrive in. A write counted as now on its first arrival is the latest there
+is: it applies whatever the row's time (another isolate's clock may run a
+little ahead of this one's), and never moves that time back. An older write
 changes nothing, and is answered with the row as it stands, which the
 client stores. Creating a tag of a name the user has, or tagging an entry
 already in the tag, still records the time (no revision advances), so an

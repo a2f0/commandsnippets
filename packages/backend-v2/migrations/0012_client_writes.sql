@@ -10,7 +10,8 @@
 -- answered with, so a retried create finds that row whatever it is called
 -- by then. A tag renders the client id of the create that made it. A write
 -- made ahead of the API's clock counts as now; sync_clientwrite keeps that
--- time by the client's id for the write, so its retries count it too.
+-- time by the client's id for the write (as long as the user), so its
+-- retries count it too.
 ALTER TABLE `tags_tag` ADD `client_updated` text;--> statement-breakpoint
 ALTER TABLE `tags_tagtextentrythroughmodel` ADD `client_updated` text;--> statement-breakpoint
 ALTER TABLE `text_entries_textentry` ADD `client_updated` text;--> statement-breakpoint
@@ -38,5 +39,3 @@ CREATE TABLE `sync_clientwrite` (
 	PRIMARY KEY(`user_id`, `write_id`),
 	FOREIGN KEY (`user_id`) REFERENCES `users_user`(`id`) ON UPDATE no action ON DELETE cascade
 );
---> statement-breakpoint
-CREATE INDEX `sync_clientwrite_date_created_idx` ON `sync_clientwrite` (`date_created`);

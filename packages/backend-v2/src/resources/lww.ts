@@ -14,28 +14,39 @@ import {
   CLIENT_WRITE_ID_MAX_LENGTH,
   CODES,
 } from '@commandsnippets/api-shared';
-import {and, eq, lt, type SQL, sql} from 'drizzle-orm';
+import {and, eq, type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
 import {clientWrites} from '../db/schema';
 import type {AppEnv} from '../env';
-import {formatMicros, now, nowMicros, parseDateTime} from '../lib/clock';
+import {now, parseDateTime} from '../lib/clock';
 import {ApiError, validationError} from '../lib/errors';
 
-/** How long the API remembers when a write it counted as now was made. */
-const CLIENT_WRITES_KEPT_MICROS = 30 * 24 * 60 * 60 * 1_000_000;
+/** When a write was made, as the API counts it. */
+export interface Made {
+  /** Its time. */
+  at: string;
+  /**
+   * Counted as made now, on its first arrival (it named no time, or one
+   * ahead of the API's clock): it is the latest write there is, whatever
+   * time another isolate's clock (which may run a little ahead) gave the
+   * writes before it. It applies whatever the row's last write time, and
+   * leaves the later of the two on the row.
+   */
+  latest: boolean;
+}
 
 /**
  * When the request's write was made: the header's time, but never later than
  * now (a device whose clock runs ahead cannot win every later write), or now
  * when the request names none. A write named by `CLIENT_WRITE_ID_HEADER`
  * that counted as now (named no time, or one ahead of the clock) counts as
- * made when it first arrived on every attempt, so a retry after a lost
- * answer never beats a write made in between. A malformed time or write id
- * is a 400.
+ * made when it first arrived on every later attempt, so a retry after a lost
+ * answer never beats a write made in between: the API keeps that time for
+ * as long as it keeps the user. A malformed time or write id is a 400.
  */
-export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
+export async function clientUpdated(c: Context<AppEnv>): Promise<Made> {
   const current = now();
   const header = c.req.header(CLIENT_UPDATED_HEADER);
   const at = header === undefined ? null : parseDateTime(header);
@@ -44,7 +55,9 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   }
   const writeId = c.req.header(CLIENT_WRITE_ID_HEADER);
   if (writeId === undefined) {
-    return at !== null && at < current ? at : current;
+    return at !== null && at < current
+      ? {at, latest: false}
+      : {at: current, latest: true};
   }
   if (writeId === '' || writeId.length > CLIENT_WRITE_ID_MAX_LENGTH) {
     throw validationError(
@@ -68,42 +81,51 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
     )[0]?.made;
   const earlier = await counted();
   if (earlier !== undefined) {
-    return earlier;
+    return {at: earlier, latest: false};
   }
   // Made in the past: the same time on every attempt.
   if (at !== null && at <= current) {
-    return at;
+    return {at, latest: false};
   }
   // Counted as now, which its retries count too.
-  await db.batch([
-    db
-      .delete(clientWrites)
-      .where(
-        lt(
-          clientWrites.date_created,
-          formatMicros(nowMicros() - CLIENT_WRITES_KEPT_MICROS)
-        )
-      ),
-    db
-      .insert(clientWrites)
-      .values({
-        user_id: user.id,
-        write_id: writeId,
-        made: current,
-        date_created: current,
-      })
-      .onConflictDoNothing(),
-  ]);
-  return (await counted()) ?? current;
+  await db
+    .insert(clientWrites)
+    .values({
+      user_id: user.id,
+      write_id: writeId,
+      made: current,
+      date_created: current,
+    })
+    .onConflictDoNothing();
+  const first = await counted();
+  // Another attempt of the write arrived first: this one is its retry.
+  return first === undefined || first === current
+    ? {at: current, latest: true}
+    : {at: first, latest: false};
 }
 
-/** A write made at `at` applies: the row's last client write is no newer. */
-export const writtenBefore = (column: SQLiteColumn, at: string): SQL =>
-  sql`(${column} IS NULL OR ${column} <= ${at})`;
+/**
+ * A write made at `made` applies: the row's last client write is no newer
+ * (or it is the latest write there is).
+ */
+export const writtenBefore = (column: SQLiteColumn, made: Made): SQL =>
+  made.latest ? sql`1` : sql`(${column} IS NULL OR ${column} <= ${made.at})`;
 
-/** Whether a write made at `at` applies to a row last written at `last`. */
-export const appliesAfter = (last: string | null, at: string): boolean =>
-  last === null || last <= at;
+/** Whether a write made at `made` applies to a row last written at `last`. */
+export const appliesAfter = (last: string | null, made: Made): boolean =>
+  made.latest || last === null || last <= made.at;
+
+/**
+ * The last client write time a write made at `made` leaves on the row it
+ * changes (`column`): its own, or the row's when later (the latest write
+ * never moves it back).
+ */
+export const stamped = (column: SQLiteColumn, made: Made): string | SQL =>
+  made.latest ? sql`MAX(${made.at}, COALESCE(${column}, ${made.at}))` : made.at;
+
+/** `stamped`'s value on a row last written at `last`. */
+export const stampedAfter = (last: string | null, made: Made): string =>
+  made.latest && last !== null && last > made.at ? last : made.at;
 
 /**
  * How many times a write to a row it read reads it again, when another write

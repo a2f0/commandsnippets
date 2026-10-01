@@ -137,15 +137,7 @@
           "autoincrement": false
         }
       },
-      "indexes": {
-        "sync_clientwrite_date_created_idx": {
-          "name": "sync_clientwrite_date_created_idx",
-          "columns": [
-            "date_created"
-          ],
-          "isUnique": false
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "sync_clientwrite_user_id_users_user_id_fk": {
           "name": "sync_clientwrite_user_id_users_user_id_fk",

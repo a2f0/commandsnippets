@@ -201,7 +201,8 @@ export const tagClientIds = sqliteTable(
 /**
  * The writes the API counted as made now (naming no time, or one ahead of
  * its clock), by the id the client gave each (`Client-Write-Id`): when the
- * first attempt arrived, which every retry counts too. Kept 30 days.
+ * first attempt arrived, which every retry counts too, however late. Kept
+ * as long as the user.
  */
 export const clientWrites = sqliteTable(
   'sync_clientwrite',
@@ -213,10 +214,7 @@ export const clientWrites = sqliteTable(
     made: text('made').notNull(),
     date_created: text('date_created').notNull(),
   },
-  table => [
-    primaryKey({columns: [table.user_id, table.write_id]}),
-    index('sync_clientwrite_date_created_idx').on(table.date_created),
-  ]
+  table => [primaryKey({columns: [table.user_id, table.write_id]})]
 );
 
 export const tagsEntries = sqliteTable(
