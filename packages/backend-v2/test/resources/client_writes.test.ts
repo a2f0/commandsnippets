@@ -15,7 +15,7 @@ import {
   textEntryFactory,
   tokenFor,
 } from '../helpers';
-import {raceBeforeStatement} from '../support/races';
+import {raceBeforeInsert, raceBeforeStatement} from '../support/races';
 
 // v2: queued (offline) writes name when they were made, and the latest edit
 // wins whatever order they arrive in (resources/lww.ts).
@@ -217,6 +217,57 @@ describe('writes arriving out of order', () => {
       is_deleted: false,
       client_updated: LATER,
     });
+  });
+
+  it('record a create that lost the race to a concurrent one of the name', async () => {
+    // Just before this create (made LATER) inserts, another (made EARLY)
+    // creates the tag.
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeInsert('tags_tag', async () => {
+        const raced = await tagFactory({user, name: 'raced'});
+        await db()
+          .update(tags)
+          .set({client_updated: EARLY})
+          .where(eq(tags.id, raced.id));
+      })
+    );
+    const created = await racing.request(
+      'POST',
+      '/api/v1/tags',
+      {data: {type: 'Tag', attributes: {name: 'raced'}}},
+      made(LATER)
+    );
+    expect(created.status).toBe(201);
+    const id = (await json(created)).data.id;
+
+    // So a delete made in between (older than this create) loses to it.
+    const deleted = await send('DELETE', `/tags/${id}`, '2026-01-01T12:00:00');
+    expect((await json(deleted)).data.attributes.is_deleted).toBe(false);
+    expect((await refreshTag(Number(id)))?.client_updated).toBe(LATER);
+  });
+
+  it('create the name asked for when the tag of it is renamed meanwhile', async () => {
+    const tag = await tagFactory({user, name: 'alpha'});
+    const racing = new ApiClient(
+      await tokenFor(user.id),
+      raceBeforeStatement(/^\s*update "tags_tag"/i, async () => {
+        await db().update(tags).set({name: 'beta'}).where(eq(tags.id, tag.id));
+      })
+    );
+
+    const response = await racing.request(
+      'POST',
+      '/api/v1/tags',
+      {data: {type: 'Tag', attributes: {name: 'alpha'}}},
+      made(LATER)
+    );
+
+    expect(response.status).toBe(201);
+    const body = await json(response);
+    expect(body.data.attributes.name).toBe('alpha');
+    expect(body.data.id).not.toBe(String(tag.id));
+    expect((await refreshTag(tag.id))?.name).toBe('beta');
   });
 
   it('never let an older untag landing mid-tagging win over the tagging', async () => {

@@ -90,15 +90,16 @@ tagRoutes.post('/', async c => {
         .limit(1)
     )[0];
 
-  if (typeof attributes['name'] === 'string') {
-    const name = attributes['name'].trim();
-    // The user's tag of the name, as read: written only while still so (a
-    // write landing between the read and this one makes it read again).
-    for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
-      const existing = await findByName(name);
-      if (existing === undefined) {
-        break;
-      }
+  const named =
+    typeof attributes['name'] === 'string'
+      ? attributes['name'].trim()
+      : undefined;
+  // The user's tag of the name, as read, written only while still so (named
+  // so, deleted or not as read): a write landing between the read and this
+  // one (a rename, a delete, a concurrent create) makes it read again.
+  for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
+    const existing = named === undefined ? undefined : await findByName(named);
+    if (existing !== undefined) {
       // Deleted (or created) after this create was made: that stands.
       if (!appliesAfter(existing.client_updated, at)) {
         return resourceResponse(c, TAG, existing, 201);
@@ -119,6 +120,7 @@ tagRoutes.post('/', async c => {
         .where(
           and(
             eq(tags.id, existing.id),
+            eq(tags.name, existing.name),
             eq(tags.is_deleted, existing.is_deleted),
             writtenBefore(tags.client_updated, at)
           )
@@ -127,38 +129,33 @@ tagRoutes.post('/', async c => {
       if (written !== undefined) {
         return resourceResponse(c, TAG, written, 201);
       }
+      continue;
     }
-    if ((await findByName(name)) !== undefined) {
-      throw changedMeanwhile('tag');
+    const {name} = validateFields(tagCreateAttributesSchema, attributes);
+    const timestamp = now();
+    try {
+      const [created] = await db
+        .insert(tags)
+        .values({
+          name,
+          user_id: user.id,
+          order: new OrderedModel(db, tagOrdering).nextOrderSql(user.id),
+          date_created: timestamp,
+          date_updated: nextRevision(tagResource, user.id),
+          date_last_used: timestamp,
+          client_updated: at,
+        })
+        .returning();
+      return resourceResponse(c, TAG, created as Tag, 201);
+    } catch (error) {
+      // Lost a race with a concurrent create of the name: write the tag it
+      // made, as read (the next attempt).
+      if (!isUniqueViolation(error)) {
+        throw error;
+      }
     }
   }
-
-  const {name} = validateFields(tagCreateAttributesSchema, attributes);
-  const timestamp = now();
-  try {
-    const [created] = await db
-      .insert(tags)
-      .values({
-        name,
-        user_id: user.id,
-        order: new OrderedModel(db, tagOrdering).nextOrderSql(user.id),
-        date_created: timestamp,
-        date_updated: nextRevision(tagResource, user.id),
-        date_last_used: timestamp,
-        client_updated: at,
-      })
-      .returning();
-    return resourceResponse(c, TAG, created as Tag, 201);
-  } catch (error) {
-    // Lost a race with a concurrent create of the same name.
-    const existing = isUniqueViolation(error)
-      ? await findByName(name)
-      : undefined;
-    if (existing === undefined) {
-      throw error;
-    }
-    return resourceResponse(c, TAG, existing, 201);
-  }
+  throw changedMeanwhile('tag');
 });
 
 tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {

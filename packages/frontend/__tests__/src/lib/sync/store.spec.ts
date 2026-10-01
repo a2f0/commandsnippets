@@ -195,6 +195,25 @@ describe('a row with a write queued', () => {
     );
   });
 
+  it("still gets the junctions read with it (other devices' taggings)", async () => {
+    await db.entries.put(own(entry('1', '2024-01-01T00:00:00', [])));
+    await queue([`${OWNER}|TextEntry|1`]);
+
+    await putEntries(
+      db,
+      OWNER,
+      [entry('1', '2024-01-05T00:00:00', ['7'])],
+      [junction('7', '1', '2024-01-05T00:00:00')]
+    );
+
+    expect((await db.entries.get(key('1')))?.attributes.date_updated).toBe(
+      '2024-01-01T00:00:00'
+    );
+    expect((await db.junctions.get(key('7')))?.attributes.is_deleted).toBe(
+      false
+    );
+  });
+
   it("keeps a junction an entry's listing leaves out while its tagging is queued", async () => {
     await db.junctions.put(own(junction('local-1', '1')));
     await queue([`${OWNER}|TagTextEntryThroughModel|local-1`]);

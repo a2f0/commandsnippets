@@ -162,12 +162,15 @@ const isEntry = (resource: IncludedResource): resource is TextEntry =>
   resource.type === 'TextEntry';
 
 /**
- * Store `entries` and their junctions read with them (`included`). An
- * entry's `text_entry_to_tag` lists all of its junctions not deleted, so an
- * entry stored decides its junctions: the ones listed are stored, and those
- * it leaves out are deleted (but for one a write is queued for: a tagging
- * not on the API yet). An entry not stored (an older copy, or one with a
- * write queued) leaves its junctions as they are.
+ * Store `entries` and their junctions read with them (`included`). The
+ * junctions are stored on their own merits (each unless a write to it is
+ * queued, or a newer revision is held), so an entry left as it is (one with
+ * a write queued) still gets the taggings other devices made: the sync's
+ * cursors move past them. An entry's `text_entry_to_tag` lists all of its
+ * junctions not deleted, so an entry stored also decides its junctions:
+ * those it leaves out are deleted (but for one a write is queued for: a
+ * tagging not on the API yet). An entry not stored (an older copy, or one
+ * with a write queued) deletes none.
  */
 export async function putEntries(
   db: CommandsnippetsDatabase,
@@ -180,17 +183,7 @@ export async function putEntries(
     tie: deletedStays,
     force,
   });
-  const storedIds = new Set(stored.map(({id}) => id));
-  await putJunctionsNewer(
-    db,
-    owner,
-    included
-      .filter(isJunction)
-      .filter(junction =>
-        storedIds.has(junction.relationships.text_entry.data.id)
-      ),
-    force
-  );
+  await putJunctionsNewer(db, owner, included.filter(isJunction), force);
   for (const entry of stored) {
     const listed = new Set(
       entry.relationships.text_entry_to_tag.data.map(({id}) => id)
