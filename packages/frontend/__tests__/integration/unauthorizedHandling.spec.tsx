@@ -172,7 +172,7 @@ describe('Signing out when the API says the session is gone', () => {
         // The caller still reads the body.
         await expect(result).resolves.toEqual(tag);
       } else {
-        await expect(result).rejects.toThrow(new Error(error));
+        await expect(result).rejects.toThrow(error);
       }
 
       if (signsOut) {

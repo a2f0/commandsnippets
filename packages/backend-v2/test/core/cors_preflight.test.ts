@@ -1,4 +1,8 @@
-import {API_VERSION_HEADER} from '@commandsnippets/api-shared';
+import {
+  API_VERSION_HEADER,
+  CLIENT_UPDATED_HEADER,
+  EXPECTED_USER_HEADER,
+} from '@commandsnippets/api-shared';
 import {describe, expect, it} from 'vitest';
 import packageJson from '../../package.json';
 import {ApiClient} from '../helpers';
@@ -10,6 +14,26 @@ function preflight(origin: string) {
     'Access-Control-Request-Headers': 'content-type',
   });
 }
+
+describe("the web app's write headers", () => {
+  it('are allowed across origins', async () => {
+    const response = await new ApiClient().options('/api/v1/entries/1', {
+      Origin: 'https://app.commandsnippets.com',
+      'Access-Control-Request-Method': 'PATCH',
+      'Access-Control-Request-Headers': `content-type,${EXPECTED_USER_HEADER},${CLIENT_UPDATED_HEADER}`,
+    });
+    const allowed = (response.headers.get('Access-Control-Allow-Headers') ?? '')
+      .toLowerCase()
+      .split(',')
+      .map(header => header.trim());
+    expect(allowed).toEqual(
+      expect.arrayContaining([
+        EXPECTED_USER_HEADER.toLowerCase(),
+        CLIENT_UPDATED_HEADER.toLowerCase(),
+      ])
+    );
+  });
+});
 
 // Django ran these two classes under the production and staging settings
 // modules; v2 has a single CORS allowlist, so both run against the same app.

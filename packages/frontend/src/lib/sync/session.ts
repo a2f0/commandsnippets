@@ -105,12 +105,20 @@ export function syncSession(
       owner,
       readOnly,
       db,
-      sync: createSyncEngine(
-        db,
-        readOnly ? adminSyncApi(owner) : ownSyncApi,
-        `${db.name}:${owner}`,
-        owner
-      ),
+      sync: readOnly
+        ? createSyncEngine(
+            db,
+            adminSyncApi(owner),
+            `${db.name}:${owner}`,
+            owner
+          )
+        : createSyncEngine(
+            db,
+            ownSyncApi,
+            `${db.name}:${owner}`,
+            owner,
+            apiClient
+          ),
     };
     sessions.set(owner, session);
   }

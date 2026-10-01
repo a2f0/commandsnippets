@@ -30,6 +30,7 @@ import {
   parseListQuery,
   serialize,
 } from '../lib/jsonapi';
+import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, type OwnedResource, type RevisedResource} from './owned';
 import {jsonApi} from './responses';
 import {createRegistry} from './serializers';
@@ -291,20 +292,33 @@ interface SoftDeletedResource extends RevisedResource {
   table: typeof tags | typeof textEntries;
 }
 
-/** DELETE that flags the row `is_deleted` and advances its revision. */
+/**
+ * DELETE that flags the row `is_deleted` and advances its revision, unless a
+ * newer client write stands (resources/lww.ts): the response is the row
+ * either way.
+ */
 export async function softDelete(
   c: Context<AppEnv>,
   resource: SoftDeletedResource
 ): Promise<Response> {
   const row = await getOwned<{id: number; user_id: number}>(c, resource);
+  const at = clientUpdated(c);
   const [deleted] = await c
     .get('db')
     .update(resource.table)
     .set({
       is_deleted: true,
+      client_updated: at,
       date_updated: nextRevision(resource, row.user_id),
     })
-    .where(eq(resource.id, row.id))
+    .where(
+      and(eq(resource.id, row.id), writtenBefore(resource.clientUpdated, at))
+    )
     .returning();
-  return resourceResponse(c, resource.type, deleted as {id: number});
+  return resourceResponse(
+    c,
+    resource.type,
+    (deleted as {id: number} | undefined) ??
+      (await getOwned<{id: number; user_id: number}>(c, resource))
+  );
 }

@@ -109,6 +109,17 @@ export const MESSAGES = {
 export const EXPECTED_USER_HEADER = 'X-Expected-User';
 
 /**
+ * The header a write names when it was made in (a datetime, as
+ * `parseDateTime` reads it). Clients queue writes and send them later, so
+ * the API resolves conflicts by edit time, last writer wins: a write to a
+ * tag, entry or junction applies only when it is no older than the row's
+ * last one, and otherwise changes nothing (the response is the row as it
+ * stands). A time ahead of the API's clock counts as now; a write without
+ * the header counts as made now.
+ */
+export const CLIENT_UPDATED_HEADER = 'Client-Updated';
+
+/**
  * The header every API response carries its version in (the API's
  * `package.json` version), for clients to show which API they talk to. A
  * cross-origin client can read it: the API lists it in

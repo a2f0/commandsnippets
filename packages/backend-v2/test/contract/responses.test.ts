@@ -254,11 +254,12 @@ describe('TagTextEntryThroughModel', () => {
     });
     expect(reorder.status).toBe(200);
 
-    const deleted = await client.delete(
-      `/api/v1/tags_entries/${created.data.id}`
+    // Untagging answers with the junction, deleted.
+    const deleted = await expectDocument(
+      tagTextEntryDocumentSchema,
+      await client.delete(`/api/v1/tags_entries/${created.data.id}`)
     );
-    expect(deleted.status).toBe(204);
-    expect(await deleted.text()).toBe('');
+    expect(deleted.data.attributes.is_deleted).toBe(true);
   });
 
   it('lists, deleted ones too, numbered or after a cursor', async () => {

@@ -16,9 +16,10 @@ import {
 } from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
-import {ApiError, methodNotAllowed, notFound} from '../lib/errors';
+import {ApiError, methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
+import {appliesAfter, clientUpdated, writtenBefore} from './lww';
 import {
   nextRevision,
   tagResource,
@@ -134,6 +135,7 @@ tagEntryRoutes.post('/', async c => {
     tagTextEntryCreateRelationshipsSchema,
     {tag: tagResource, text_entry: textEntryResource}
   );
+  const at = clientUpdated(c);
 
   const find = async () =>
     (
@@ -163,6 +165,7 @@ tagEntryRoutes.post('/', async c => {
             order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
             date_created: timestamp,
             date_updated: nextRevision(tagTextEntryResource, user.id),
+            client_updated: at,
           })
           .returning(),
         touchEntry(db, textEntryId, user.id),
@@ -174,6 +177,29 @@ tagEntryRoutes.post('/', async c => {
       }
       junction = await find();
     }
+  }
+  // Untagged after this tagging was made: the untag stands.
+  const untaggedSince = (row: TagTextEntry | undefined) =>
+    row?.is_deleted === true && !appliesAfter(row.client_updated, at);
+  if (untaggedSince(junction)) {
+    return resourceResponse(c, TAG_TEXT_ENTRY, junction as TagTextEntry, 201);
+  }
+  if (
+    junction !== undefined &&
+    junction.user_id === user.id &&
+    !junction.is_deleted
+  ) {
+    // Already tagged: still a write made at `at`, which an older untag must
+    // not undo. Nothing a client syncs changes, so no revision advances.
+    await db
+      .update(tagsEntries)
+      .set({client_updated: at})
+      .where(
+        and(
+          eq(tagsEntries.id, junction.id),
+          writtenBefore(tagsEntries.client_updated, at)
+        )
+      );
   }
   if (
     junction !== undefined &&
@@ -197,20 +223,28 @@ tagEntryRoutes.post('/', async c => {
         .set({
           user_id: user.id,
           date_updated: nextRevision(tagTextEntryResource, user.id),
+          client_updated: at,
           ...restore,
         })
-        // Only as read: a concurrent request may have restored it already.
+        // Only as read: a concurrent request may have restored it already,
+        // or untagged it with a newer write.
         .where(
           and(
             eq(tagsEntries.id, id),
             eq(tagsEntries.user_id, user_id),
-            eq(tagsEntries.is_deleted, is_deleted)
+            eq(tagsEntries.is_deleted, is_deleted),
+            is_deleted
+              ? writtenBefore(tagsEntries.client_updated, at)
+              : undefined
           )
         )
         .returning(),
       touchEntry(db, textEntryId, user.id),
     ]);
     [junction] = updated.length > 0 ? updated : [await find()];
+    if (untaggedSince(junction)) {
+      return resourceResponse(c, TAG_TEXT_ENTRY, junction as TagTextEntry, 201);
+    }
     // A concurrent request restored it (fine), or deleted or removed it.
     if (
       junction === undefined ||
@@ -227,26 +261,40 @@ tagEntryRoutes.post('/', async c => {
   return resourceResponse(c, TAG_TEXT_ENTRY, junction as TagTextEntry, 201);
 });
 
-/** Untag: soft-delete the junction (a deleted one is gone: 404). */
+/**
+ * Untag: soft-delete the junction, unless a newer client write stands (a
+ * tagging made after this untag). The response is the junction either way:
+ * untagging one already untagged changes nothing, so a retried untag is
+ * answered as the first was.
+ */
 tagEntryRoutes.delete('/:id', async c => {
   const junction = await getOwned<TagTextEntry>(c, tagTextEntryResource);
-  if (junction.is_deleted) {
-    throw notFound(`No ${TAG_TEXT_ENTRY} matches the given query.`);
-  }
+  const at = clientUpdated(c);
   const db = c.get('db');
-  await db.batch([
-    db
-      .update(tagsEntries)
-      .set({
-        is_deleted: true,
-        date_updated: nextRevision(tagTextEntryResource, junction.user_id),
-      })
-      .where(
-        and(eq(tagsEntries.id, junction.id), eq(tagsEntries.is_deleted, false))
-      ),
-    touchEntry(db, junction.text_entry_id, junction.user_id),
-  ]);
-  return c.body(null, 204);
+  if (!junction.is_deleted) {
+    await db.batch([
+      db
+        .update(tagsEntries)
+        .set({
+          is_deleted: true,
+          client_updated: at,
+          date_updated: nextRevision(tagTextEntryResource, junction.user_id),
+        })
+        .where(
+          and(
+            eq(tagsEntries.id, junction.id),
+            eq(tagsEntries.is_deleted, false),
+            writtenBefore(tagsEntries.client_updated, at)
+          )
+        ),
+      touchEntry(db, junction.text_entry_id, junction.user_id),
+    ]);
+  }
+  return resourceResponse(
+    c,
+    TAG_TEXT_ENTRY,
+    await getOwned<TagTextEntry>(c, tagTextEntryResource)
+  );
 });
 
 tagEntryRoutes.on(['PATCH', 'PUT'], ['/', '/:id'], c => {

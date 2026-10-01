@@ -1,4 +1,3 @@
-import type {TagReorderDocument} from '@commandsnippets/api-shared';
 import type {StyledComponent} from '@emotion/styled';
 import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
@@ -167,21 +166,13 @@ const Tag = ({
                   orderedBottom !== null &&
                   session !== null
                 ) {
-                  const payload: TagReorderDocument = {
-                    data: {
-                      type: 'Tag',
-                      attributes: {
-                        top: orderedTop.id,
-                        bottom: orderedBottom.id,
-                      },
-                      relationships: {},
-                    },
-                  };
-                  await reorderTags(session, payload).catch(
-                    (error: unknown) => {
-                      console.error('Failed to reorder tags:', error);
-                    }
-                  );
+                  await reorderTags(
+                    session,
+                    orderedTop.id,
+                    orderedBottom.id
+                  ).catch((error: unknown) => {
+                    console.error('Failed to reorder tags:', error);
+                  });
                 }
               } else {
                 console.debug('useDrag end: it was not moved within the list.');

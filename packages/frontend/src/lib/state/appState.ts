@@ -25,6 +25,7 @@ import {
   activeTagEditField,
   appMode,
 } from '../shared';
+import {subscribeRemaps} from '../sync/outbox';
 import {endSyncSession} from '../sync/session';
 
 /** What is saved to localStorage. */
@@ -385,6 +386,18 @@ useAppState.subscribe((state, previous) => {
       console.error('ERROR: could not delete the IndexedDB data:', error);
     });
   }
+});
+
+// A row made here gets the API's id once its create reaches the API: the
+// selection follows it.
+subscribeRemaps(({from, to}) => {
+  const {tagSelectedID, entrySelectedID, mostRecentCopyID} =
+    useAppState.getState();
+  useAppState.setState({
+    ...(tagSelectedID === from ? {tagSelectedID: to} : {}),
+    ...(entrySelectedID === from ? {entrySelectedID: to} : {}),
+    ...(mostRecentCopyID === from ? {mostRecentCopyID: to} : {}),
+  });
 });
 
 setSignedInUser(() => useAppState.getState().loggedInUser);

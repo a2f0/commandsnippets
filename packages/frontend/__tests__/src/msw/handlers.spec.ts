@@ -567,7 +567,7 @@ describe('DELETE /tags_entries/:id', () => {
     for (const junction of tagOne.slice(0, 3)) {
       expect(
         (await send('DELETE', `/tags_entries/${junction.id}`)).status
-      ).toBe(204);
+      ).toBe(200);
     }
     // getTags parses with the schema, which refuses a negative count.
     expect(tagOf(await getTags(), '1')?.attributes.entry_count).toBe(
@@ -581,7 +581,7 @@ describe('DELETE /tags_entries/:id', () => {
     const [tagsBefore, entriesBefore] = [await getTags(), await getEntries()];
 
     const {status} = await send('DELETE', `/tags_entries/${junction.id}`);
-    expect(status).toBe(204);
+    expect(status).toBe(200);
 
     const tags = await getTags();
     const entries = await getEntries();
@@ -615,7 +615,7 @@ describe('DELETE /tags_entries/:id', () => {
 
   it('dates the tag last used by its newest remaining junction', async () => {
     const {status} = await send('DELETE', '/tags_entries/1');
-    expect(status).toBe(204);
+    expect(status).toBe(200);
     const tag = tagOf(await getTags(), '1');
     expect(tag.attributes.entry_count).toBe(1);
     // Junction 2's.
@@ -626,7 +626,7 @@ describe('DELETE /tags_entries/:id', () => {
     const tagged = await send('POST', '/tags_entries', tagEntry('3', '2'));
     const first = tagTextEntryDocumentSchema.parse(tagged.json).data;
     expect((await send('DELETE', `/tags_entries/${first.id}`)).status).toBe(
-      204
+      200
     );
     const listed = tagTextEntryListDocumentSchema.parse(
       (await send('GET', '/tags_entries?filter[tag.id]=3')).json

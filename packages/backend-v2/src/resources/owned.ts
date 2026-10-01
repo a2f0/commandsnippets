@@ -22,9 +22,13 @@ export interface OwnedResource {
   userId: SQLiteColumn;
 }
 
-/** An owned resource whose rows carry a `date_updated` revision. */
+/**
+ * An owned resource whose rows carry a `date_updated` revision, and when a
+ * client last wrote them (`client_updated`, resources/lww.ts).
+ */
 export interface RevisedResource extends OwnedResource {
   dateUpdated: SQLiteColumn;
+  clientUpdated: SQLiteColumn;
 }
 
 export const tagResource = {
@@ -33,6 +37,7 @@ export const tagResource = {
   id: tags.id,
   userId: tags.user_id,
   dateUpdated: tags.date_updated,
+  clientUpdated: tags.client_updated,
 } satisfies RevisedResource;
 
 export const textEntryResource = {
@@ -41,6 +46,7 @@ export const textEntryResource = {
   id: textEntries.id,
   userId: textEntries.user_id,
   dateUpdated: textEntries.date_updated,
+  clientUpdated: textEntries.client_updated,
 } satisfies RevisedResource;
 
 export const tagTextEntryResource = {
@@ -49,6 +55,7 @@ export const tagTextEntryResource = {
   id: tagsEntries.id,
   userId: tagsEntries.user_id,
   dateUpdated: tagsEntries.date_updated,
+  clientUpdated: tagsEntries.client_updated,
 } satisfies RevisedResource;
 
 export const textEntryReusedResource = {

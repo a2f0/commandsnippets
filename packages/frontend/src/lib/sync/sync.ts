@@ -42,6 +42,7 @@ import {
   type SyncCursor,
   tagCursorKey,
 } from '../db/database';
+import {flushOutbox, isLocalId, type OutboxApi} from './outbox';
 import {checkOwner, putEntries, putJunctions, putTags} from './store';
 
 /**
@@ -102,7 +103,7 @@ async function readAfter<P extends Page>(
     const done = page.links.next === null;
     await db.transaction(
       'rw',
-      [db.tags, db.entries, db.junctions, db.cursors],
+      [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
       async () => {
         await store(page);
         await db.cursors.put(cursor(after, done));
@@ -190,6 +191,10 @@ async function syncTag(
   owner: string,
   tagId: string
 ): Promise<void> {
+  // A tag created here and not on the API yet has nothing there to read.
+  if (isLocalId(tagId)) {
+    return;
+  }
   const ownerId = await ownerOf(api, owner);
   const tag = await db.tags.get([owner, tagId]);
   if (tag === undefined) {
@@ -222,13 +227,16 @@ async function syncTag(
 
 /**
  * Whether `owner`'s tag `tagId` is synced through the revision the database
- * holds.
+ * holds (one created here, not on the API yet, has nothing to sync).
  */
 export async function isTagSynced(
   db: CommandsnippetsDatabase,
   owner: string,
   tagId: string
 ): Promise<boolean> {
+  if (isLocalId(tagId)) {
+    return true;
+  }
   const [tag, cursor] = await Promise.all([
     db.tags.get([owner, tagId]),
     db.cursors.get([owner, tagCursorKey(tagId)]),
@@ -245,18 +253,27 @@ export interface SyncEngine {
   syncAll(): Promise<void>;
   /** Sync one tag (see the module comment). */
   syncTag(tagId: string): Promise<void>;
+  /**
+   * Send the queued writes (`outbox.ts`), until none are left or one fails
+   * for a reason that can pass (which this throws). Nothing to send where
+   * the data is read-only.
+   */
+  flush(): Promise<void>;
 }
 
 /**
- * The syncs of `owner`'s data in `db` from `api`, run one at a time: in this
- * tab in the order they are asked for (a tag sync ahead of the rest of a
- * collection sync), and across tabs by the Web Lock `lockName`.
+ * The syncs of `owner`'s data in `db` from `api`, and the flushes of their
+ * queued writes to `writes` (none for read-only data), run one at a time: in
+ * this tab in the order they are asked for (a tag sync ahead of the rest of
+ * a collection sync), and across tabs by the Web Lock `lockName`, so the
+ * answers and pages are stored in the order they were read.
  */
 export function createSyncEngine(
   db: CommandsnippetsDatabase,
   api: SyncApi,
   lockName: string,
-  owner: string
+  owner: string,
+  writes: OutboxApi | null = null
 ): SyncEngine {
   let queue: Promise<unknown> = Promise.resolve();
   let tagSyncsWaiting = 0;
@@ -272,7 +289,31 @@ export function createSyncEngine(
     exclusive(() => syncAll(db, api, owner, () => tagSyncsWaiting > 0)).then(
       done => (done ? undefined : syncAllToTheEnd())
     );
+  // One flush at a time; one asked for while it runs runs again after it, so
+  // a write queued meanwhile is sent.
+  let flushing: Promise<void> | null = null;
+  let flushAgain = false;
+  const flush = (): Promise<void> => {
+    if (writes === null) {
+      return Promise.resolve();
+    }
+    if (flushing !== null) {
+      flushAgain = true;
+      return flushing;
+    }
+    const run = async () => {
+      do {
+        flushAgain = false;
+        await exclusive(() => flushOutbox(db, writes, owner));
+      } while (flushAgain);
+    };
+    flushing = run().finally(() => {
+      flushing = null;
+    });
+    return flushing;
+  };
   return {
+    flush,
     syncAll: syncAllToTheEnd,
     syncTag: tagId => {
       tagSyncsWaiting += 1;

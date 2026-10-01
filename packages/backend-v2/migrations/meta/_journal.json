@@ -85,6 +85,13 @@
       "when": 1790792125035,
       "tag": "0011_user_marked_for_deletion",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1790876301344,
+      "tag": "0012_client_writes",
+      "breakpoints": true
     }
   ]
 }

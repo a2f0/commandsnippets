@@ -63,7 +63,10 @@ describe('Delete Untagged Entry', () => {
     await waitFor(() => {
       expect(screen.queryByText('entry-1-subject')).not.toBeInTheDocument();
     });
-    expect(untagEntrySpy).toHaveBeenCalledWith('1');
+    // Sent from the queue, naming when it was made.
+    await waitFor(() =>
+      expect(untagEntrySpy).toHaveBeenCalledWith('1', expect.any(String))
+    );
     expect(deleteEntrySpy).not.toHaveBeenCalled();
     expect(screen.getByText('entry-2-subject')).toBeInTheDocument();
   });

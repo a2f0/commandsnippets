@@ -198,7 +198,9 @@ describe('Entries List', () => {
 
     // The reorder reads the junctions from IndexedDB first.
 
-    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('1', '3'));
+    await waitFor(() =>
+      expect(reorderEntrySpy).toBeCalledWith('1', '3', expect.any(String))
+    );
   });
   it('Reorders 0 -> 2', async () => {
     const user = userEvent.setup();
@@ -275,7 +277,9 @@ describe('Entries List', () => {
 
     // The reorder reads the junctions from IndexedDB first.
 
-    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('1', '4'));
+    await waitFor(() =>
+      expect(reorderEntrySpy).toBeCalledWith('1', '4', expect.any(String))
+    );
   });
   it('Reorders 0 -> 3', async () => {
     const user = userEvent.setup();
@@ -368,7 +372,9 @@ describe('Entries List', () => {
 
     // The reorder reads the junctions from IndexedDB first.
 
-    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('4', '1'));
+    await waitFor(() =>
+      expect(reorderEntrySpy).toBeCalledWith('4', '1', expect.any(String))
+    );
   });
   it('Reorders 1 -> 2', async () => {
     const user = userEvent.setup();
@@ -429,7 +435,9 @@ describe('Entries List', () => {
 
     // The reorder reads the junctions from IndexedDB first.
 
-    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('2', '4'));
+    await waitFor(() =>
+      expect(reorderEntrySpy).toBeCalledWith('2', '4', expect.any(String))
+    );
   });
 
   it('Reorders 2 -> 1', async () => {
@@ -491,6 +499,8 @@ describe('Entries List', () => {
 
     // The reorder reads the junctions from IndexedDB first.
 
-    await waitFor(() => expect(reorderEntrySpy).toBeCalledWith('3', '2'));
+    await waitFor(() =>
+      expect(reorderEntrySpy).toBeCalledWith('3', '2', expect.any(String))
+    );
   });
 });

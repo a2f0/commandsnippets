@@ -15,6 +15,7 @@ import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {validateFields} from '../lib/validate';
 import {usernameIs} from './filters';
+import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, tagResource} from './owned';
 import {reorder} from './reorder';
 import {TAG} from './resourceTypes';
@@ -72,6 +73,7 @@ tagRoutes.post('/', async c => {
   const user = requireUser(c);
   const db = c.get('db');
   const {attributes} = await parseResource(c.req.raw, {type: TAG});
+  const at = clientUpdated(c);
 
   const findByName = async (name: string) =>
     (
@@ -86,17 +88,32 @@ tagRoutes.post('/', async c => {
     const existing = await findByName(attributes['name'].trim());
     if (existing !== undefined) {
       if (!existing.is_deleted) {
+        // Still a write made at `at`, which an older delete must not undo.
+        // Nothing a client syncs changes, so no revision advances.
+        await db
+          .update(tags)
+          .set({client_updated: at})
+          .where(
+            and(
+              eq(tags.id, existing.id),
+              writtenBefore(tags.client_updated, at)
+            )
+          );
         return resourceResponse(c, TAG, existing, 201);
       }
+      // Unless deleted after this create was made: the delete stands.
       const [resurrected] = await db
         .update(tags)
         .set({
           is_deleted: false,
+          client_updated: at,
           date_updated: nextRevision(tagResource, user.id),
         })
-        .where(eq(tags.id, existing.id))
+        .where(
+          and(eq(tags.id, existing.id), writtenBefore(tags.client_updated, at))
+        )
         .returning();
-      return resourceResponse(c, TAG, resurrected as Tag, 201);
+      return resourceResponse(c, TAG, resurrected ?? existing, 201);
     }
   }
 
@@ -112,6 +129,7 @@ tagRoutes.post('/', async c => {
         date_created: timestamp,
         date_updated: nextRevision(tagResource, user.id),
         date_last_used: timestamp,
+        client_updated: at,
       })
       .returning();
     return resourceResponse(c, TAG, created as Tag, 201);
@@ -135,16 +153,23 @@ tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     id: String(tag.id),
   });
   const changes = validateFields(tagUpdateAttributesSchema, attributes);
+  const at = clientUpdated(c);
   try {
+    // Unless a newer client write stands: then the tag as it is.
     const [updated] = await db
       .update(tags)
       .set({
         ...changes,
+        client_updated: at,
         date_updated: nextRevision(tagResource, tag.user_id),
       })
-      .where(eq(tags.id, tag.id))
+      .where(and(eq(tags.id, tag.id), writtenBefore(tags.client_updated, at)))
       .returning();
-    return resourceResponse(c, TAG, updated as Tag);
+    return resourceResponse(
+      c,
+      TAG,
+      updated ?? (await getOwned<Tag>(c, tagResource))
+    );
   } catch (error) {
     if (isUniqueViolation(error)) {
       throw uniqueTogether('name', 'user');

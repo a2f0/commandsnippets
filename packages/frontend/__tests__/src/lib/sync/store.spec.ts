@@ -85,7 +85,7 @@ describe('putNewer', () => {
       own(entry('1', '2024-01-01T00:00:00.5', [])),
       own(entry('2', '2024-01-01T00:00:00', [])),
     ]);
-    const stored = await putNewer(db.entries, OWNER, [
+    const stored = await putNewer(db, db.entries, OWNER, [
       // Older than the stored one: `.5` is past the whole second.
       entry('1', '2024-01-01T00:00:00', []),
       entry('2', '2024-01-01T00:00:01', []),
@@ -166,6 +166,60 @@ describe('putEntries', () => {
     await putJunctions(db, OWNER, [junction('1', '1', '2024-01-03T00:00:00')]);
     expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
       false
+    );
+  });
+});
+
+describe('a row with a write queued', () => {
+  const queue = (rows: string[]) =>
+    db.outbox.add({
+      owner: OWNER,
+      made: '2024-01-01T00:00:00.000000',
+      write: {kind: 'deleteEntry', entryId: '1'},
+      rows,
+    });
+
+  it('is left as it is by a newer copy, until the write is sent', async () => {
+    await db.entries.put(own(entry('1', '2024-01-01T00:00:00', [])));
+    await queue([`${OWNER}|TextEntry|1`]);
+
+    await putEntries(db, OWNER, [entry('1', '2024-01-05T00:00:00', [])]);
+    expect((await db.entries.get(key('1')))?.attributes.date_updated).toBe(
+      '2024-01-01T00:00:00'
+    );
+
+    await db.outbox.clear();
+    await putEntries(db, OWNER, [entry('1', '2024-01-05T00:00:00', [])]);
+    expect((await db.entries.get(key('1')))?.attributes.date_updated).toBe(
+      '2024-01-05T00:00:00'
+    );
+  });
+
+  it("keeps a junction an entry's listing leaves out while its tagging is queued", async () => {
+    await db.junctions.put(own(junction('local-1', '1')));
+    await queue([`${OWNER}|TagTextEntryThroughModel|local-1`]);
+
+    await putEntries(db, OWNER, [entry('1', '2024-01-01T00:00:00', [])]);
+    expect(
+      (await db.junctions.get(key('local-1')))?.attributes.is_deleted
+    ).toBe(false);
+  });
+});
+
+describe("a write's answer (force)", () => {
+  it('replaces the row whatever its revision', async () => {
+    await db.entries.put(own(entry('1', '2099-01-01T00:00:00', [])));
+
+    await putEntries(
+      db,
+      OWNER,
+      [entry('1', '2024-01-01T00:00:00', [])],
+      [],
+      true
+    );
+
+    expect((await db.entries.get(key('1')))?.attributes.date_updated).toBe(
+      '2024-01-01T00:00:00'
     );
   });
 });

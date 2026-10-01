@@ -1,8 +1,9 @@
 /**
  * When the data the page shows syncs (`lib/sync/`; the signed-in user's own,
- * or another user's for staff): the whole collection
- * when the entries page opens, and again when it comes back into view and
- * every half minute while in view; and the tag shown, whenever it is not
+ * or another user's for staff), the writes queued for it sent first: the
+ * whole collection when the entries page opens, and again when it comes back
+ * into view or online and every half minute while in view; and the tag
+ * shown, whenever it is not
  * synced through the revision the database holds (on a first sign-in, before
  * the collection is whole; when a sync brings it a newer revision; and
  * every half minute, after a sync of it failed).
@@ -14,6 +15,7 @@ import type {SyncSession} from '../sync/session';
 import {ForeignDataError} from '../sync/store';
 import {isTagSynced, SyncUserError} from '../sync/sync';
 import {useSession} from './hooks';
+import {flushFailed} from './writes';
 
 export const SYNC_INTERVAL_MS = 30_000;
 
@@ -34,7 +36,10 @@ function syncFailed(session: SyncSession, error: unknown): void {
   console.error('ERROR: sync failed:', error);
 }
 
-/** Sync the collection now, on coming into view, and every half minute. */
+/**
+ * Send the queued writes, then sync the collection: now, on coming into view
+ * or back online, and every half minute.
+ */
 export function useCollectionSync(): void {
   const session = useSession();
   useEffect(() => {
@@ -50,7 +55,9 @@ export function useCollectionSync(): void {
       running = true;
       startedAt = Date.now();
       session.sync
-        .syncAll()
+        .flush()
+        .catch((error: unknown) => flushFailed(session, error))
+        .then(() => session.sync.syncAll())
         .catch((error: unknown) => syncFailed(session, error))
         .finally(() => {
           running = false;
@@ -64,6 +71,8 @@ export function useCollectionSync(): void {
     };
     run();
     document.addEventListener('visibilitychange', onVisibility);
+    // Back online: what was queued meanwhile goes now.
+    window.addEventListener('online', run);
     const timer = setInterval(() => {
       if (inView()) {
         run();
@@ -71,6 +80,7 @@ export function useCollectionSync(): void {
     }, SYNC_INTERVAL_MS);
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('online', run);
       clearInterval(timer);
     };
   }, [session]);

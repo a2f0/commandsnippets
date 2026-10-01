@@ -145,7 +145,7 @@ describe('tag revisions follow their entries', () => {
     const response = await user1Client.delete(
       `/api/v1/tags_entries/${junction?.id}`
     );
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
     expect(await syncFrom(user1Client, before)).toEqual(ids(a, b));
     const left = await refreshTag(a.id);
     expect(left?.entry_count).toBe(0);

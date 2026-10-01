@@ -225,6 +225,53 @@ const exchanges: Exchange[] = [
     url: `${API}/tags`,
     status: 201,
     schema: tagDocumentSchema,
+    body: {data: {type: 'Tag', attributes: {name: 'new-tag'}}},
+  },
+  {
+    // A tag of a name the user has is that tag.
+    handler: `POST ${API}/tags`,
+    method: 'POST',
+    url: `${API}/tags`,
+    status: 201,
+    schema: tagDocumentSchema,
+    body: {data: {type: 'Tag', attributes: {name: 'test-tag-1'}}},
+  },
+  {
+    handler: `POST ${API}/tags`,
+    method: 'POST',
+    url: `${API}/tags`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: {data: {type: 'Tag', attributes: {name: ''}}},
+  },
+  // One tag or entry (to put back what a refused write changed).
+  {
+    handler: `GET ${API}/tags/:id`,
+    method: 'GET',
+    url: `${API}/tags/1`,
+    status: 200,
+    schema: tagDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/tags/:id`,
+    method: 'GET',
+    url: `${API}/tags/99`,
+    status: 404,
+    schema: errorDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/entries/:id`,
+    method: 'GET',
+    url: `${API}/entries/1`,
+    status: 200,
+    schema: textEntryDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/entries/:id`,
+    method: 'GET',
+    url: `${API}/entries/99`,
+    status: 404,
+    schema: errorDocumentSchema,
   },
   {
     handler: `PATCH ${API}/tags/:id`,
@@ -381,16 +428,25 @@ const exchanges: Exchange[] = [
     schema: errorDocumentSchema,
   },
   {
+    // The junction, deleted.
     handler: `DELETE ${API}/tags_entries/:id`,
     method: 'DELETE',
     url: `${API}/tags_entries/1`,
-    status: 204,
+    status: 200,
+    schema: tagTextEntryDocumentSchema,
   },
   {
-    // Junction 1 is gone now.
+    // Junction 1 is untagged already: answered alike (a retried untag).
     handler: `DELETE ${API}/tags_entries/:id`,
     method: 'DELETE',
     url: `${API}/tags_entries/1`,
+    status: 200,
+    schema: tagTextEntryDocumentSchema,
+  },
+  {
+    handler: `DELETE ${API}/tags_entries/:id`,
+    method: 'DELETE',
+    url: `${API}/tags_entries/999`,
     status: 404,
     schema: errorDocumentSchema,
   },

@@ -172,6 +172,25 @@ describe('TextEntry documents', () => {
             attributes: {subject: 'x'.repeat(256), body: 'x'.repeat(1025)},
           },
         },
+        // A queued create's client id: one, blank, or too long.
+        {
+          data: {
+            type: 'TextEntry',
+            attributes: {subject: 's', body: 'b', client_id: 'local-1'},
+          },
+        },
+        {
+          data: {
+            type: 'TextEntry',
+            attributes: {subject: 's', body: 'b', client_id: ''},
+          },
+        },
+        {
+          data: {
+            type: 'TextEntry',
+            attributes: {subject: 's', body: 'b', client_id: 'x'.repeat(65)},
+          },
+        },
       ]
     );
   });

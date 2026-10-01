@@ -121,18 +121,30 @@ API; everything else the app keeps is a zustand store.
   searches them (case-insensitively in any script, as the API's search).
   Deleted tags and entries are left out; untagged entries are those in no
   tag.
-- **Writes**: `src/lib/data/writes.ts` calls the API, then stores what it
-  answered (`putResources`). Every write names the signed-in user
-  (`X-Expected-User`, api-shared's `EXPECTED_USER_HEADER`; set by
-  `authUtils.signedInUser`), and the API refuses it when the cookie is
-  another user's (409 `user_mismatch`: `UserMismatchError`, and the tab
-  leaves the session). A write answered with no body
-  (untagging, deleting an entry, reordering) marks the row deleted unless a
-  sync stored a newer revision meanwhile (`markDeleted`), and syncs the
-  rest.
-- **When the data syncs**: `src/lib/data/useSync.ts`. The entries page syncs
-  the collection when it opens, when it comes back into view, and every half
-  minute while in view (`useCollectionSync`); the tag shown syncs on its own
+- **Writes, local first**: `src/lib/data/writes.ts` changes the database at
+  once and queues the write in the same transaction (the `outbox` table,
+  `src/lib/sync/outbox.ts`), so the app works offline and no write waits on
+  the network; then the queue is flushed, not waited for. Rows made here
+  have local ids (`local-...`) until their create reaches the API, whose id
+  then replaces it everywhere (rows, queued writes, the selection:
+  `subscribeRemaps`); a queued entry create sends its local id as
+  `client_id`, so a retry makes it once.
+- **The queue** (`flushOutbox`, run by the sync engine's `flush`, under the
+  same lock as the syncs): writes go in order, each naming when it was made
+  (`Client-Updated`, api-shared's `CLIENT_UPDATED_HEADER`: the API keeps the
+  newer of two writes to a row, last writer wins by edit time) and the
+  signed-in user (`X-Expected-User`, `EXPECTED_USER_HEADER`; the API refuses
+  it when the cookie is another user's: 409 `user_mismatch`,
+  `UserMismatchError`, and the tab leaves the session). Each answer is the
+  row as the API holds it, stored in place of the local one (`force`). A
+  write that fails for a reason that can pass (offline, a 5xx) stops the
+  flush and is retried; one the API refuses (a 400 or 404) is dropped, with
+  the writes that needed a row it would have made, and the rows are put
+  back as the API holds them (`getTag`, `getEntry`, `getJunction`).
+- **When the data syncs**: `src/lib/data/useSync.ts`. The entries page
+  flushes the queue, then syncs the collection, when it opens, when it comes
+  back into view or online, and every half minute while in view
+  (`useCollectionSync`); the tag shown syncs on its own
   whenever it is not synced through the revision the database holds, and
   every half minute while not (`useTagSync`). A sync that finds the API
   answering for another user leaves the session (`leaveForeignSession`):
@@ -156,12 +168,16 @@ API; everything else the app keeps is a zustand store.
   the API reads the owner's data (`SyncApi.getOwner`: `GET /user/` for the
   signed-in user's own, the admin API's user for another's), and refuses a
   page with anyone else's rows (a stale tab after someone else signed in).
-- **What a sync stores**: `src/lib/sync/store.ts`: each resource unless the
-  database holds a newer revision of it (revisions compare within a table);
-  an entry stored decides its junctions (its `text_entry_to_tag` lists all
-  of them not deleted, so the ones it leaves out are deleted), and an older
-  copy of an entry leaves them alone; at the same revision, a deleted copy
-  stays deleted (a delete stored without the API's revision).
+- **What a sync stores**: `src/lib/sync/store.ts`: each resource unless a
+  write to it is still queued (the user's write stands until it reaches the
+  API), or the database holds a newer revision of it (revisions compare
+  within a table); an entry stored decides its junctions (its
+  `text_entry_to_tag` lists all of them not deleted, so the ones it leaves
+  out are deleted, but for a tagging still queued), and an older copy of an
+  entry leaves them alone; at the same revision, a deleted copy stays
+  deleted (a delete worked out from an entry's listing). A device's own
+  write comes back from a sync at the revision its answer stored, and
+  changes nothing: no cursor ever moves on a write's answer.
 - **Signing out when the session is gone**: `fetchWithAuth`
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API
@@ -326,6 +342,7 @@ writing its type by hand.
 - When removing dependencies, use `bun remove <package>` to update both package.json and bun.lock
 - A new dependency with an install script it needs must be added to `trustedDependencies`; see the README's Dependencies section
 - `@commandsnippets/api-shared` is `file:../api-shared`: run `bun install` here after adding, moving or removing a file there or changing its `package.json`, or after editing one with an editor that saves by replacing the file (see the README's "The API contract")
+- Vite pre-bundles api-shared into `node_modules/.vite` and does not notice when it changes: if the dev or test server (and so the E2E suite, as "MSW not ready") fails with `does not provide an export named ...` from `.vite/deps/@commandsnippets_api-shared_...`, delete `node_modules/.vite`
 
 ### TypeScript
 - Always run `bun run compile` after making changes to ensure TypeScript compiles (not a bare `tsc -b`, which can reuse stale output; see Code Quality)

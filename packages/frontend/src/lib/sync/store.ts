@@ -1,10 +1,17 @@
 /**
- * Storing what the syncs read: each resource replaces the database's copy
- * unless that copy is a newer revision (the app's own writes store theirs
- * as they happen, and a sync may read an older one). Revisions compare
- * within a table only: each table has its own sequence. Every resource is
- * stored under its owner (`owner`, a username), and must be that user's
- * (`checkOwner`).
+ * Storing what the API answers: a sync's pages, and the answers to queued
+ * writes (`outbox.ts`). Each resource is stored under its owner (`owner`, a
+ * username), and must be that user's (`checkOwner`).
+ *
+ * - A row with a write still queued is left as it is: the user's write
+ *   stands until it reaches the API, whose answer then replaces it.
+ * - Otherwise a sync's copy replaces the database's unless that copy is a
+ *   newer revision (a sync may read an older one than a write's answer
+ *   stored). Revisions compare within a table only: each table has its own
+ *   sequence.
+ * - A write's answer (`force`) replaces the database's copy whatever its
+ *   revision: it is the row as the API holds it now, after the write (or as
+ *   it stands, when a newer write won).
  */
 import {parseDateTime} from '@commandsnippets/api-shared/datetime';
 import type {
@@ -14,9 +21,15 @@ import type {
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
 import type {Table} from 'dexie';
-import type {CommandsnippetsDatabase, RowKey, Stored} from '../db/database';
+import {
+  type CommandsnippetsDatabase,
+  type RowKey,
+  rowKey,
+  type Stored,
+} from '../db/database';
 
 interface Revised {
+  type: string;
   id: string;
   attributes: {date_updated: string};
 }
@@ -45,6 +58,27 @@ export function checkOwner(
   }
 }
 
+/** The keys (`rowKey`) of `owner`'s `resources` that writes are queued for. */
+export async function queuedFor(
+  db: CommandsnippetsDatabase,
+  owner: string,
+  resources: ReadonlyArray<{type: string; id: string}>
+): Promise<Set<string>> {
+  if (resources.length === 0) {
+    return new Set();
+  }
+  const keys = new Set(
+    resources.map(resource => rowKey(owner, resource.type, resource.id))
+  );
+  const queued = await db.outbox
+    .where('rows')
+    .anyOf([...keys])
+    .toArray();
+  return new Set(
+    queued.flatMap(write => write.rows).filter(key => keys.has(key))
+  );
+}
+
 /** A rendered revision in the fixed-width form, which compares as a string. */
 const revisionOf = (resource: Revised) =>
   parseDateTime(resource.attributes.date_updated) ??
@@ -63,15 +97,24 @@ function replaces<R extends Revised>(
   return a > b || (a === b && tie(incoming, held));
 }
 
+interface PutOptions<R> {
+  /** At the same revision, whether the incoming copy replaces the held one. */
+  tie?: (incoming: R, held: R) => boolean;
+  /** A write's answer: replaces the held copy whatever its revision. */
+  force?: boolean;
+}
+
 /**
- * Store `resources` in `table` under `owner`, except where it holds a newer
- * revision (or the same one, where `tie` keeps it). Returns the ones stored.
+ * Store `resources` in `table` under `owner`: none with a write queued, and
+ * (unless `force`) none where the table holds a newer revision (or the same
+ * one, where `tie` keeps it). Returns the ones stored.
  */
 export async function putNewer<R extends Revised>(
+  db: CommandsnippetsDatabase,
   table: Table<Stored<R>, RowKey>,
   owner: string,
   resources: readonly R[],
-  tie: (incoming: R, held: R) => boolean = () => true
+  {tie = () => true, force = false}: PutOptions<R> = {}
 ): Promise<R[]> {
   const newest = new Map<string, R>();
   for (const resource of resources) {
@@ -80,13 +123,16 @@ export async function putNewer<R extends Revised>(
       newest.set(resource.id, resource);
     }
   }
-  const candidates = [...newest.values()];
-  const stored = await table.bulkGet(
-    candidates.map(({id}): RowKey => [owner, id])
+  const queued = await queuedFor(db, owner, [...newest.values()]);
+  const candidates = [...newest.values()].filter(
+    resource => !queued.has(rowKey(owner, resource.type, resource.id))
   );
+  const stored = force
+    ? []
+    : await table.bulkGet(candidates.map(({id}): RowKey => [owner, id]));
   const newer = candidates.filter((resource, index) => {
     const held = stored[index];
-    return held === undefined || replaces(resource, held, tie);
+    return force || held === undefined || replaces(resource, held, tie);
   });
   await table.bulkPut(newer.map(resource => ({...resource, owner})));
   return newer;
@@ -94,9 +140,9 @@ export async function putNewer<R extends Revised>(
 
 /**
  * At the same revision, a deleted copy stays. A deletion this database
- * stored without the API's revision (worked out from an entry's listing, or
- * a delete the API answered with no body) keeps the last one, and an active
- * copy of that revision is older news: restoring gives a new revision.
+ * stored without the API's revision (worked out from an entry's listing)
+ * keeps the last one, and an active copy of that revision is older news:
+ * restoring gives a new revision.
  */
 const deletedStays = <R extends {attributes: {is_deleted: boolean}}>(
   incoming: R,
@@ -106,8 +152,9 @@ const deletedStays = <R extends {attributes: {is_deleted: boolean}}>(
 const putJunctionsNewer = (
   db: CommandsnippetsDatabase,
   owner: string,
-  junctions: readonly TagTextEntry[]
-) => putNewer(db.junctions, owner, junctions, deletedStays);
+  junctions: readonly TagTextEntry[],
+  force = false
+) => putNewer(db, db.junctions, owner, junctions, {tie: deletedStays, force});
 
 const isJunction = (resource: IncludedResource): resource is TagTextEntry =>
   resource.type === 'TagTextEntryThroughModel';
@@ -117,17 +164,22 @@ const isEntry = (resource: IncludedResource): resource is TextEntry =>
 /**
  * Store `entries` and their junctions read with them (`included`). An
  * entry's `text_entry_to_tag` lists all of its junctions not deleted, so an
- * entry stored (its copy no older than the database's) decides its
- * junctions: the ones listed are stored, and those it leaves out are deleted.
- * An entry not stored (an older copy) leaves its junctions as they are.
+ * entry stored decides its junctions: the ones listed are stored, and those
+ * it leaves out are deleted (but for one a write is queued for: a tagging
+ * not on the API yet). An entry not stored (an older copy, or one with a
+ * write queued) leaves its junctions as they are.
  */
 export async function putEntries(
   db: CommandsnippetsDatabase,
   owner: string,
   entries: readonly TextEntry[],
-  included: readonly IncludedResource[] = []
+  included: readonly IncludedResource[] = [],
+  force = false
 ): Promise<void> {
-  const stored = await putNewer(db.entries, owner, entries, deletedStays);
+  const stored = await putNewer(db, db.entries, owner, entries, {
+    tie: deletedStays,
+    force,
+  });
   const storedIds = new Set(stored.map(({id}) => id));
   await putJunctionsNewer(
     db,
@@ -136,13 +188,14 @@ export async function putEntries(
       .filter(isJunction)
       .filter(junction =>
         storedIds.has(junction.relationships.text_entry.data.id)
-      )
+      ),
+    force
   );
   for (const entry of stored) {
     const listed = new Set(
       entry.relationships.text_entry_to_tag.data.map(({id}) => id)
     );
-    const gone = (
+    const left = (
       await db.junctions
         .where('[owner+relationships.text_entry.data.id]')
         .equals([owner, entry.id])
@@ -150,11 +203,16 @@ export async function putEntries(
     ).filter(
       junction => !junction.attributes.is_deleted && !listed.has(junction.id)
     );
+    const queued = await queuedFor(db, owner, left);
     await db.junctions.bulkPut(
-      gone.map(junction => ({
-        ...junction,
-        attributes: {...junction.attributes, is_deleted: true},
-      }))
+      left
+        .filter(
+          junction => !queued.has(rowKey(owner, junction.type, junction.id))
+        )
+        .map(junction => ({
+          ...junction,
+          attributes: {...junction.attributes, is_deleted: true},
+        }))
     );
   }
 }
@@ -163,9 +221,10 @@ export async function putEntries(
 export async function putTags(
   db: CommandsnippetsDatabase,
   owner: string,
-  tags: readonly Tag[]
+  tags: readonly Tag[],
+  force = false
 ): Promise<void> {
-  await putNewer(db.tags, owner, tags);
+  await putNewer(db, db.tags, owner, tags, {force});
 }
 
 /**
@@ -186,48 +245,33 @@ const isTag = (resource: IncludedResource): resource is Tag =>
   resource.type === 'Tag';
 
 /**
- * Mark `row` deleted, as a write the API answered with no body did, keeping
- * its revision (the sync stores the API's newer one) — unless the database
- * holds another revision of it by now: one a sync stored while the write
- * ran, newer than what the write knew, which stays.
- */
-export async function markDeleted<
-  R extends Revised & {attributes: {is_deleted: boolean}},
->(table: Table<Stored<R>, RowKey>, row: Stored<R>): Promise<void> {
-  await table.db.transaction('rw', table, async () => {
-    const stored = await table.get([row.owner, row.id]);
-    if (stored?.attributes.date_updated !== row.attributes.date_updated) {
-      return;
-    }
-    await table.put({
-      ...stored,
-      attributes: {...stored.attributes, is_deleted: true},
-    });
-  });
-}
-
-/**
- * Store a write's answer (its `data` and `included`) under `owner`: tags,
- * entries with their junctions, and junctions whose entries are not among
- * them.
+ * Store an answer from the API (its `data` and `included`) under `owner`:
+ * tags, entries with their junctions, and junctions whose entries are not
+ * among them. A write's answer is stored with `force`.
  */
 export async function putResources(
   db: CommandsnippetsDatabase,
   owner: string,
-  resources: readonly IncludedResource[]
+  resources: readonly IncludedResource[],
+  force = false
 ): Promise<void> {
-  await db.transaction('rw', [db.tags, db.entries, db.junctions], async () => {
-    await putTags(db, owner, resources.filter(isTag));
-    const entries = resources.filter(isEntry);
-    const entryIds = new Set(entries.map(({id}) => id));
-    const junctions = resources.filter(isJunction);
-    await putJunctionsNewer(
-      db,
-      owner,
-      junctions.filter(
-        junction => !entryIds.has(junction.relationships.text_entry.data.id)
-      )
-    );
-    await putEntries(db, owner, entries, junctions);
-  });
+  await db.transaction(
+    'rw',
+    [db.tags, db.entries, db.junctions, db.outbox],
+    async () => {
+      await putTags(db, owner, resources.filter(isTag), force);
+      const entries = resources.filter(isEntry);
+      const entryIds = new Set(entries.map(({id}) => id));
+      const junctions = resources.filter(isJunction);
+      await putJunctionsNewer(
+        db,
+        owner,
+        junctions.filter(
+          junction => !entryIds.has(junction.relationships.text_entry.data.id)
+        ),
+        force
+      );
+      await putEntries(db, owner, entries, junctions, force);
+    }
+  );
 }

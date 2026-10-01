@@ -74,7 +74,10 @@ describe('schema', () => {
         'text_entries_textentry_body_length',
         'text_entries_textentry_subject_length',
       ],
-      indexes: ['text_entries_textentry_user_id_idx'],
+      indexes: [
+        'text_entries_textentry_client_id_unique',
+        'text_entries_textentry_user_id_idx',
+      ],
       references: ['user_id->users_user cascade'],
     });
   });

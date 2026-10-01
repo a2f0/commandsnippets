@@ -115,6 +115,12 @@ export const textEntries = sqliteTable(
     // Folded copies of subject/body for Unicode-aware search (lib/search.ts).
     subject_folded: text('subject_folded').notNull().default(''),
     body_folded: text('body_folded').notNull().default(''),
+    // When the last write a client made to the row was made (api-shared's
+    // CLIENT_UPDATED_HEADER): a write older than it changes nothing (last
+    // writer wins by edit time, resources/lww.ts). NULL counts as oldest.
+    client_updated: text('client_updated'),
+    // A queued create's client id: a retried create finds the entry it made.
+    client_id: text('client_id'),
   },
   table => [
     check(
@@ -129,6 +135,9 @@ export const textEntries = sqliteTable(
       table.user_id,
       table.date_updated
     ),
+    uniqueIndex('text_entries_textentry_client_id_unique')
+      .on(table.user_id, table.client_id)
+      .where(sql`${table.client_id} IS NOT NULL`),
   ]
 );
 
@@ -148,6 +157,8 @@ export const tags = sqliteTable(
     is_deleted: integer('is_deleted', {mode: 'boolean'})
       .notNull()
       .default(false),
+    // A client's last write (see text_entries_textentry.client_updated).
+    client_updated: text('client_updated'),
   },
   table => [
     unique('One tag of same name per user').on(table.name, table.user_id),
@@ -179,6 +190,8 @@ export const tagsEntries = sqliteTable(
     is_deleted: integer('is_deleted', {mode: 'boolean'})
       .notNull()
       .default(false),
+    // A client's last write (see text_entries_textentry.client_updated).
+    client_updated: text('client_updated'),
   },
   table => [
     unique('tags_tagtextentrythroughmodel_tag_id_text_entry_id_uniq').on(

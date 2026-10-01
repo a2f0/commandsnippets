@@ -19,6 +19,7 @@ import {
   type TextEntryCursorListDocument,
   type TextEntryDocument,
   type TextEntryListDocument,
+  tagCreateAttributesSchema,
   tagTextEntryCreateRelationshipsSchema,
   tagUpdateAttributesSchema,
   textEntryCreateAttributesSchema,
@@ -698,6 +699,10 @@ function adminDataOf(id: string): MockOwner {
   throw apiError(404, CODES.notFound, 'No AdminUser matches the given query.');
 }
 
+// Entries created with a client id (a queued create's), by that id: a
+// create retried with it answers with the entry it made, as the API does.
+const entriesByClientId = new Map<string, string>();
+
 // Admin page data: the signed-in test user (id 1, staff) and one other.
 interface MockAdminUser {
   id: string;
@@ -1086,32 +1091,80 @@ const createHandlers = () => {
       }),
 
       // Create new tag endpoint
+      // Create a tag, or answer with the user's of that name (bringing back
+      // a deleted one), always 201, as the API does
       http.post(`${baseUrl}/tags`, async ({request}) => {
         recordRequest('POST', request.url);
         console.log('OK: MSW intercepted tags POST request');
-
-        // Return a new tag response
-        const newTag: TagDocument = {
-          data: {
-            type: 'Tag',
-            id: '5', // Use a new ID
-            attributes: {
-              name: 'new-tag',
-              date_updated: now(),
-              date_created: now(),
-              date_last_used: now(),
+        try {
+          const {attributes} = await parseResource(request, {type: 'Tag'});
+          const {name} = validateFields(tagCreateAttributesSchema, attributes);
+          let tag = tags.find(candidate => candidate.attributes.name === name);
+          if (tag === undefined) {
+            const created = now();
+            tag = {
+              type: 'Tag',
+              id: nextId('Tag', tags),
+              attributes: {
+                name,
+                date_updated: nextTagRevision(),
+                date_created: created,
+                date_last_used: created,
+                is_deleted: false,
+                entry_count: 0,
+                order:
+                  Math.max(-1, ...tags.map(other => other.attributes.order)) +
+                  1,
+              },
+              relationships: ownedByTestUser,
+            };
+            tags = [...tags, tag];
+          } else if (tag.attributes.is_deleted) {
+            tag.attributes = {
+              ...tag.attributes,
               is_deleted: false,
-              entry_count: 0,
-              order: 5,
-            },
-            relationships: ownedByTestUser,
-          },
-          included: [testUser],
-        };
+              date_updated: nextTagRevision(),
+            };
+          }
+          const body: TagDocument = {data: tag, included: [testUser]};
+          return HttpResponse.json(body, {status: 201});
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
 
-        return HttpResponse.json(newTag, {
-          status: 201,
-        });
+      // One tag, or one entry (deleted ones too)
+      http.get(`${baseUrl}/tags/:id`, ({params, request}) => {
+        recordRequest('GET', request.url);
+        try {
+          const tag = findOr404(tags, String(params['id']), 'Tag');
+          const body: TagDocument = {data: tag, included: [testUser]};
+          return HttpResponse.json(body);
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
+      http.get(`${baseUrl}/entries/:id`, ({params, request}) => {
+        recordRequest('GET', request.url);
+        try {
+          const state = activeEntries();
+          const entry = findOr404(
+            state.data,
+            String(params['id']),
+            'TextEntry'
+          );
+          const body: TextEntryDocument = {
+            data: entry,
+            ...includedFor(
+              state,
+              [entry],
+              ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user']
+            ),
+          };
+          return HttpResponse.json(body);
+        } catch (error) {
+          return errorResponse(error);
+        }
       }),
 
       // Rename or (un)delete a tag: the attributes sent, and a new revision
@@ -1255,10 +1308,23 @@ const createHandlers = () => {
           const {attributes} = await parseResource(request, {
             type: 'TextEntry',
           });
-          const {subject, body} = validateFields(
-            textEntryCreateAttributesSchema,
-            attributes
-          );
+          const {
+            subject,
+            body,
+            client_id: clientId,
+          } = validateFields(textEntryCreateAttributesSchema, attributes);
+          const made =
+            clientId === undefined
+              ? undefined
+              : entriesByClientId.get(clientId);
+          const existing = state.data.find(candidate => candidate.id === made);
+          if (existing !== undefined) {
+            const again: TextEntryDocument = {
+              data: existing,
+              included: [testUser],
+            };
+            return HttpResponse.json(again, {status: 201});
+          }
           const entry: TextEntry = {
             type: 'TextEntry',
             id: nextId('TextEntry', state.data),
@@ -1279,6 +1345,9 @@ const createHandlers = () => {
             },
           };
           state.data = [...state.data, entry];
+          if (clientId !== undefined) {
+            entriesByClientId.set(clientId, entry.id);
+          }
           const newEntry: TextEntryDocument = {
             data: entry,
             included: [testUser],
@@ -1528,20 +1597,27 @@ const createHandlers = () => {
         );
         try {
           const state = activeEntries();
-          deleteJunction(
-            state,
-            findOr404(
-              junctionsOf(state),
-              tagEntryId,
-              'TagTextEntryThroughModel'
-            )
+          const active = junctionsOf(state).find(
+            junction => junction.id === tagEntryId
           );
+          if (active !== undefined) {
+            deleteJunction(state, active);
+          }
+          // The junction, deleted: untagging one already untagged changes
+          // nothing, and is answered alike (a retried untag).
+          const junction = findOr404(
+            [...deletedJunctions].reverse(),
+            tagEntryId,
+            'TagTextEntryThroughModel'
+          );
+          const body: TagTextEntryDocument = {
+            data: junction,
+            ...includedFor(state, [junction], ['user', 'tag', 'text_entry']),
+          };
+          return HttpResponse.json(body, {status: 200});
         } catch (error) {
           return errorResponse(error);
         }
-
-        // Return 204 No Content for successful untag
-        return new HttpResponse(null, {status: 204});
       })
     );
   }
@@ -1603,6 +1679,7 @@ function nextId(kind: string, existing: ReadonlyArray<{id: string}>): string {
 
 export const resetMSWState = () => {
   lastIds.clear();
+  entriesByClientId.clear();
   tags = structuredClone(originalTags);
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;

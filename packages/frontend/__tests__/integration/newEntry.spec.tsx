@@ -92,8 +92,13 @@ describe('A new entry', () => {
 
     expect(await screen.findByText('tagged-subject')).toBeInTheDocument();
     expect(store.entryNew).toBeNull();
-    const {entry, tags} = await storedEntry('tagged-subject');
-    expect(tagEntry).toHaveBeenCalledWith('1', entry.id);
-    expect(tags).toEqual(['1']);
+    // The queue sends the entry, then tags it with the API's id for it.
+    await waitFor(() => expect(tagEntry).toHaveBeenCalled());
+    const [, entryId] = tagEntry.mock.calls[0] ?? [];
+    expect(tagEntry).toHaveBeenCalledWith('1', entryId, expect.any(String));
+    await waitFor(async () =>
+      expect((await storedEntry('tagged-subject')).entry.id).toBe(entryId)
+    );
+    expect((await storedEntry('tagged-subject')).tags).toEqual(['1']);
   });
 });

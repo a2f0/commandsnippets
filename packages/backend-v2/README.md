@@ -224,6 +224,27 @@ Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing
 sessions keep working), and ids continue from the Postgres sequences.
 
+## Queued writes (last writer wins)
+
+The web app makes its writes locally and sends them later, offline too, in
+order. Each names when it was made in the `Client-Updated` header
+(api-shared's `CLIENT_UPDATED_HEADER`; a time ahead of the API's clock counts
+as now, and a write without one as made now). Tags, entries and junctions
+keep the time of the last client write to them (`client_updated`), and a
+write to one applies only when it is no older (`src/resources/lww.ts`):
+the latest edit wins, whatever order the writes arrive in. An older write
+changes nothing, and is answered with the row as it stands, which the
+client stores. Creating a tag of a name the user has, or tagging an entry
+already in the tag, still records the time (no revision advances), so an
+older delete or untag does not undo it. Reorders apply in arrival order.
+
+A queued entry create carries a `client_id` (the client's local id): a
+create naming one the user's entries already have answers with that entry,
+so one retried after a lost answer is made once (tags are found by name,
+and junctions by their pair, already). Untagging answers with the junction,
+and untagging one already untagged changes nothing, so a retried untag is
+answered as the first was.
+
 ## Admin API
 
 An admin API replaces Django admin. `/api/v1/admin` is for `is_staff` users
