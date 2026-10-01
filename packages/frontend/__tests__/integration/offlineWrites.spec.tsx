@@ -3,7 +3,7 @@
  * online (the entries page flushes the queue on the `online` event, and
  * before every sync).
  */
-import {act, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
@@ -112,4 +112,43 @@ it('keeps writes queued when the session expires, and sends them at the next sig
     .filter(row => row.attributes.subject === 'kept-subject')
     .first();
   expect(isLocalId(stored?.id ?? 'local-')).toBe(false);
+});
+
+it("keeps an editor open on an entry made offline, with its text, when the API's id replaces its own", async () => {
+  const history = createMemoryHistory();
+  history.push('/test?entries=untagged');
+  render(<TestAppRouter history={history} />);
+  await screen.findByText('test-tag-1');
+  const session = syncSession(TEST_USER);
+  server.use(
+    http.all(`${API}/*`, ({request}) =>
+      request.method === 'GET' ? undefined : HttpResponse.error()
+    )
+  );
+  await createEntry(session, 'draft-subject', 'body');
+  await expect(session.sync.flush()).rejects.toThrow();
+
+  // Editing it, not saved yet.
+  fireEvent.contextMenu(await screen.findByText('draft-subject'));
+  fireEvent.click(await screen.findByRole('menuitem', {name: 'Edit'}));
+  const subject = await screen.findByPlaceholderText('subject');
+  fireEvent.change(subject, {target: {value: 'unsaved text'}});
+
+  // Back online: the create is sent, and the entry gets the API's id.
+  server.resetHandlers();
+  await session.sync.flush();
+  const stored = await session.db.entries
+    .where('owner')
+    .equals(TEST_USER)
+    .filter(row => row.attributes.subject === 'draft-subject')
+    .first();
+  expect(isLocalId(stored?.id ?? 'local-')).toBe(false);
+
+  // The same editor, now of the API's entry, its text kept.
+  await waitFor(() =>
+    expect(
+      document.getElementById(`textEntryEdit${stored?.id ?? ''}`)
+    ).not.toBeNull()
+  );
+  expect(screen.getByPlaceholderText('subject')).toHaveValue('unsaved text');
 });

@@ -13,6 +13,7 @@ import {
   initialMouse,
 } from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
+import {stableKeyOf} from '../../lib/sync/outbox';
 import {ItemTypes} from '../dnd/itemTypes';
 import {Tag} from './Tag';
 import {TagListContextMenu} from './TagListContextMenu';
@@ -199,7 +200,8 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
             return (
               <Tag
                 object={object}
-                key={object.id}
+                // The same component when the API's id replaces a local one.
+                key={stableKeyOf(object.id)}
                 id={object.id}
                 moveEntry={moveEntry}
                 findEntry={findEntry}

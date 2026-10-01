@@ -17,6 +17,7 @@ import {useTagSync} from '../../lib/data/useSync';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
+import {stableKeyOf} from '../../lib/sync/outbox';
 import {ItemTypes} from '../dnd/itemTypes';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
@@ -238,9 +239,10 @@ const EntryList = () => {
       {entries.map((element, i) => {
         const index = i;
         return (
-          <div key={element.id} ref={elRefs[index]}>
+          // Keyed so a row made here stays the same component (an open
+          // editor and its text too) when the API's id replaces its own.
+          <div key={stableKeyOf(element.id)} ref={elRefs[index]}>
             <Entry
-              key={element.id}
               id={element.id}
               index={index}
               moveEntry={moveEntry}

@@ -255,6 +255,16 @@ export interface Remap {
 
 const remapListeners = new Set<(remap: Remap) => void>();
 
+// The local id each API id replaced, for the rows the UI shows.
+const replaced = new Map<string, string>();
+
+/**
+ * A key for the row `id` that stays the same when the API's id replaces its
+ * local one: the UI keys its rows with it, so a row (and an editor open on
+ * it, with its unsaved text) is the same component before and after.
+ */
+export const stableKeyOf = (id: string): string => replaced.get(id) ?? id;
+
 /**
  * Call `listener` whenever a local id is replaced by the API's (for state
  * that holds ids, like the UI's selection). Returns the unsubscribe.
@@ -471,10 +481,19 @@ async function acknowledge(
 ): Promise<Remap | null> {
   const {owner} = queued;
   const created = sent.created;
+  // Only a local id is replaced: a create naming a row the API has (a tag
+  // asked for again) answered with another (renamed meanwhile, the API made
+  // a new tag of the name) leaves that row as it is.
   const remapped =
-    created !== undefined && created.from !== created.to
+    created !== undefined &&
+    isLocalId(created.from) &&
+    created.from !== created.to
       ? {owner, ...created}
       : null;
+  // Before the row has its new id: the UI keys it the same at once.
+  if (remapped !== null) {
+    replaced.set(remapped.to, stableKeyOf(remapped.from));
+  }
   await db.transaction(
     'rw',
     [db.outbox, db.tags, db.entries, db.junctions],

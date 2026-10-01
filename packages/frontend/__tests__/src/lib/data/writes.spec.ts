@@ -421,6 +421,29 @@ describe('the writes', () => {
     expect((await tagRow('3'))?.attributes.is_deleted).toBe(true);
   });
 
+  it('leave a tag as it is when the create asking for it again makes another', async () => {
+    await session().sync.syncAll();
+    const before = await inTag('1');
+    offline();
+    await createTag(session(), 'test-tag-1');
+    await expect(session().sync.flush()).rejects.toThrow();
+    server.resetHandlers();
+    // Renamed on the API (another device) before the create is sent: the API
+    // makes a new tag of the name.
+    await apiClient.updateTag('1', 'renamed-elsewhere');
+
+    await session().sync.flush();
+
+    expect(await inTag('1')).toEqual(before);
+    expect((await tagRow('1'))?.attributes.name).toBe('test-tag-1');
+    const made = await db()
+      .tags.where('owner')
+      .equals(TEST_USER)
+      .filter(tag => tag.id !== '1' && tag.attributes.name === 'test-tag-1')
+      .first();
+    expect(isLocalId(made?.id ?? 'local-')).toBe(false);
+  });
+
   it('send a create of a tag the user has, and a tagging of an entry tagged already', async () => {
     await session().sync.syncAll();
     const writes = sent();
