@@ -1,10 +1,10 @@
 import {locks} from 'node:worker_threads';
 import Dexie from 'dexie';
 import {afterEach, describe, expect, it, vi} from 'vitest';
-
 import {
   CommandsnippetsDatabase,
   databaseName,
+  OWNER_ID_KEY,
 } from '../../../../src/lib/db/database';
 import {
   claimData,
@@ -13,7 +13,6 @@ import {
   syncSession,
   withDataLock,
 } from '../../../../src/lib/sync/session';
-import {OWNER_ID_KEY} from '../../../../src/lib/sync/sync';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -143,6 +142,23 @@ describe('syncSession', () => {
     expect(await hasQueuedWrites(db.name)).toBe(false);
     const again = syncSession('jo');
     expect((await again.db.cursors.get(['jo', OWNER_ID_KEY]))?.after).toBe('8');
+  });
+
+  it("binds a database open here to the account signing in, wiping another's at once", async () => {
+    await claimData('lee', '7');
+    const {db} = syncSession('lee');
+    await db.outbox.add({
+      owner: 'lee',
+      made: '2026-01-01T00:00:00.000000',
+      writeId: 'write-1',
+      write: {kind: 'deleteTag', tagId: '1'},
+      rows: ['lee|Tag|1'],
+    });
+
+    await claimData('lee', '8');
+    expect(db.isOpen()).toBe(true);
+    expect(await db.outbox.count()).toBe(0);
+    expect((await db.cursors.get(['lee', OWNER_ID_KEY]))?.after).toBe('8');
   });
 
   it('deletes the data when the session ends', async () => {

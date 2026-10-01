@@ -5,6 +5,7 @@ import {
   adminUserUpdateAttributesSchema,
   CODES,
   EXPECTED_USER_HEADER,
+  EXPECTED_USER_ID_HEADER,
   type IncludedResource,
   MESSAGES,
   parseDateTime,
@@ -863,7 +864,11 @@ const SIGNED_IN_USER = 'test';
  */
 function refuseAnotherUsersRequest(request: Request) {
   const expected = request.headers.get(EXPECTED_USER_HEADER);
-  if (expected === null || decodeURIComponent(expected) === SIGNED_IN_USER) {
+  const expectedId = request.headers.get(EXPECTED_USER_ID_HEADER);
+  if (
+    (expected === null || decodeURIComponent(expected) === SIGNED_IN_USER) &&
+    (expectedId === null || expectedId === testUser.id)
+  ) {
     return undefined;
   }
   return HttpResponse.json(

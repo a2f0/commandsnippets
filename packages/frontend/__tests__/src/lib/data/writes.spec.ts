@@ -12,6 +12,7 @@ import {
   CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
+  EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
 import {act} from '@testing-library/react';
 import {Dexie} from 'dexie';
@@ -44,13 +45,14 @@ import {
   untagEntry,
   updateEntry,
 } from '../../../../src/lib/data/writes';
+import {OWNER_ID_KEY} from '../../../../src/lib/db/database';
 import {isLocalId, LAST_MADE_KEY} from '../../../../src/lib/sync/outbox';
 import {syncSession} from '../../../../src/lib/sync/session';
-import {OWNER_ID_KEY} from '../../../../src/lib/sync/sync';
 import {errorDocument} from '../../../../src/msw/documents';
 import {apiClientMethods} from '../../../util/apiClientMethods';
 import {server} from '../../../util/msw';
 import {signIn, store, TEST_USER} from '../../../util/signIn';
+import {tag} from '../../../util/storeFixtures';
 
 const API = 'http://localhost:9001/api/v1';
 
@@ -948,6 +950,57 @@ describe('the writes', () => {
     await expect(session().sync.flush()).rejects.toThrow(UserMismatchError);
     expect(named).toEqual([TEST_USER]);
     expect(await tagRow('99')).toBeUndefined();
+  });
+
+  it("are refused by another account that took this one's name since, never written into it", async () => {
+    // Bound to the mock API's account (1) by a first write.
+    await createTag(session(), 'first');
+    await session().sync.flush();
+    // The account behind the cookie is now another of the same name (2):
+    // the API refuses a request naming any other account.
+    const named: Array<string | null> = [];
+    server.use(
+      http.all(`${API}/*`, ({request}) => {
+        const id = request.headers.get(EXPECTED_USER_ID_HEADER);
+        if (request.method !== 'GET') {
+          named.push(id);
+        }
+        return id !== null && id !== '2'
+          ? HttpResponse.json(
+              errorDocument(409, CODES.userMismatch, 'Another account.'),
+              {status: 409}
+            )
+          : undefined;
+      })
+    );
+
+    await createTag(session(), 'second');
+    await vi.waitFor(() => expect(store.loggedInUser).toBeNull());
+    expect(named).toEqual(['1']);
+    server.resetHandlers();
+    const listed = await apiClient.getTagsAfter(CURSOR_START);
+    expect(listed.data.map(tag => tag.attributes.name)).not.toContain('second');
+  });
+
+  it('are never sent from data an older version kept for another account of the name', async () => {
+    // Synced before accounts were bound (no account recorded): its rows
+    // name account 99. A write is queued while the API is unreachable.
+    server.use(http.all(`${API}/*`, () => HttpResponse.error()));
+    await db().tags.put({
+      ...tag('old', {name: 'old-account'}),
+      relationships: {user: {data: {type: 'User', id: '99'}}},
+      owner: TEST_USER,
+    });
+    await createTag(session(), 'theirs');
+    await expect(session().sync.flush()).rejects.toThrow();
+    expect(await db().cursors.get([TEST_USER, OWNER_ID_KEY])).toBeUndefined();
+    server.resetHandlers();
+    const writes = sent();
+
+    await session().sync.flush();
+    expect(writes).toEqual([]);
+    expect(await queued()).toBe(0);
+    expect(await tagRow('old')).toBeUndefined();
   });
 
   it("are never sent, nor shown, as another account's of the same name", async () => {

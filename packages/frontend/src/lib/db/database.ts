@@ -128,5 +128,11 @@ export class CommandsnippetsDatabase extends Dexie {
 export const databaseName = (environment: string, username: string) =>
   `commandsnippets-${environment}-${username}`;
 
+/**
+ * The key (in `cursors`) of the id of the account whose data an owner's is
+ * (`bindOwner`).
+ */
+export const OWNER_ID_KEY = 'user';
+
 /** The key of tag `tagId`'s cursor. */
 export const tagCursorKey = (tagId: string) => `tag:${tagId}`;

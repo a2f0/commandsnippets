@@ -3,6 +3,7 @@ import {
   CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
+  EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
 import type {
   GithubLoginDocument,
@@ -117,7 +118,9 @@ class ApiClient {
     private readonly actingUser: () => string | null = signedInUser,
     private readonly writeId: string | null = null,
     /** Whether reads name the acting user too (`writesAs`'s). */
-    private readonly readsAsUser = false
+    private readonly readsAsUser = false,
+    /** The account (user id) every request names (`forAccount`'s). */
+    private readonly accountId: string | null = null
   ) {}
 
   /**
@@ -129,7 +132,7 @@ class ApiClient {
    * rather than storing the other user's rows as `username`'s.
    */
   public writesAs(username: string): ApiClient {
-    return new ApiClient(() => username, this.writeId, true);
+    return new ApiClient(() => username, this.writeId, true, this.accountId);
   }
 
   /**
@@ -137,7 +140,27 @@ class ApiClient {
    * (`CLIENT_WRITE_ID_HEADER`), the same on every attempt to send it.
    */
   public forWrite(writeId: string): ApiClient {
-    return new ApiClient(this.actingUser, writeId, this.readsAsUser);
+    return new ApiClient(
+      this.actingUser,
+      writeId,
+      this.readsAsUser,
+      this.accountId
+    );
+  }
+
+  /**
+   * A client whose requests name the account `userId` too
+   * (`EXPECTED_USER_ID_HEADER`): refused (`UserMismatchError`) when signed
+   * in as another account, though of the same username (the first deleted,
+   * its name taken again).
+   */
+  public forAccount(userId: string): ApiClient {
+    return new ApiClient(
+      this.actingUser,
+      this.writeId,
+      this.readsAsUser,
+      userId
+    );
   }
 
   /**
@@ -174,6 +197,9 @@ class ApiClient {
         ...(user === null
           ? {}
           : {[EXPECTED_USER_HEADER]: encodeURIComponent(user)}),
+        ...(user === null || this.accountId === null
+          ? {}
+          : {[EXPECTED_USER_ID_HEADER]: this.accountId}),
         ...(made === undefined ? {} : {[CLIENT_UPDATED_HEADER]: made}),
         ...(this.writeId === null || method === 'GET'
           ? {}

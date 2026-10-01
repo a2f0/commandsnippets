@@ -37,9 +37,12 @@ import type {
   TagTextEntryListDocument,
   TextEntryCursorListDocument,
 } from '@commandsnippets/api-shared/responses';
-import {Dexie} from 'dexie';
+import {Dexie, type Table} from 'dexie';
 import {
   type CommandsnippetsDatabase,
+  OWNER_ID_KEY,
+  type RowKey,
+  type Stored,
   type SyncCursor,
   tagCursorKey,
 } from '../db/database';
@@ -138,8 +141,32 @@ async function ownerOf(api: SyncApi, owner: string): Promise<string> {
   return id;
 }
 
-/** The key (in `cursors`) of the id of the account whose data `owner`'s is. */
-export const OWNER_ID_KEY = 'user';
+/** The account a stored row of `owner`'s in `table` names, if any does. */
+const accountIn = async <
+  R extends {relationships: {user: {data: {id: string}}}},
+>(
+  table: Table<Stored<R>, RowKey>,
+  owner: string
+): Promise<string | undefined> =>
+  (
+    await table
+      .where('owner')
+      .equals(owner)
+      .filter(row => row.relationships.user.data.id !== '')
+      .first()
+  )?.relationships.user.data.id;
+
+/** The account `owner`'s stored rows name, if any does. */
+async function accountOfRows(
+  db: CommandsnippetsDatabase,
+  owner: string
+): Promise<string | undefined> {
+  return (
+    (await accountIn(db.tags, owner)) ??
+    (await accountIn(db.entries, owner)) ??
+    (await accountIn(db.junctions, owner))
+  );
+}
 
 /**
  * Bind `owner`'s data to the account the API reads under that name
@@ -156,8 +183,13 @@ export async function bindOwner(
     'rw',
     [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
     async () => {
-      const held = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+      // Data kept from before accounts were bound (an older version's): its
+      // rows name their account.
+      const held =
+        (await db.cursors.get([owner, OWNER_ID_KEY]))?.after ??
+        (await accountOfRows(db, owner));
       if (held === ownerId) {
+        await db.cursors.put({owner, key: OWNER_ID_KEY, after: ownerId});
         return;
       }
       if (held !== undefined) {

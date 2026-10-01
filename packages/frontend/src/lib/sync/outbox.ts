@@ -57,6 +57,7 @@ import {ApiRequestError} from '../api/apiClient';
 import {
   type CommandsnippetsDatabase,
   type OutboxRow,
+  OWNER_ID_KEY,
   type QueuedWrite,
   type RowKey,
   rowKey,
@@ -137,6 +138,8 @@ export async function nextMade(
 export interface OutboxApi {
   /** These calls, naming the queued write `writeId` (`Client-Write-Id`). */
   forWrite(writeId: string): OutboxApi;
+  /** These calls, naming the account `userId` (`X-Expected-User-Id`). */
+  forAccount(userId: string): OutboxApi;
   createTag(
     name: string,
     clientId?: string,
@@ -777,6 +780,10 @@ export async function flushOutbox(
   api: OutboxApi,
   owner: string
 ): Promise<void> {
+  // Each request names the account the data is bound to: refused when
+  // signed in as another account, though of the same username.
+  const accountId = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+  const account = accountId === undefined ? api : api.forAccount(accountId);
   for (;;) {
     const queued = await db.outbox.where('owner').equals(owner).first();
     if (queued === undefined) {
@@ -797,7 +804,7 @@ export async function flushOutbox(
         );
       }
       sent = await send(
-        api.forWrite(queued.writeId),
+        account.forWrite(queued.writeId),
         queued.write,
         queued.made
       );

@@ -7,12 +7,15 @@
 import {Dexie} from 'dexie';
 import {adminSyncApi} from '../api/adminApi';
 import {apiClient} from '../api/apiClient';
-import {CommandsnippetsDatabase, databaseName} from '../db/database';
+import {
+  CommandsnippetsDatabase,
+  databaseName,
+  OWNER_ID_KEY,
+} from '../db/database';
 import {environment} from '../environment';
 import {
   bindOwner,
   createSyncEngine,
-  OWNER_ID_KEY,
   type SyncApi,
   type SyncEngine,
 } from './sync';
@@ -175,7 +178,8 @@ export async function claimData(
       }
       if (held !== undefined && held !== userId) {
         if (open?.db.name === name) {
-          // Open here: its session binds it (`bindOwner`), wiping it.
+          // Open here: bound (and so wiped) in place.
+          await bindOwner(open.db, username, userId);
           return;
         }
         await Dexie.delete(name);

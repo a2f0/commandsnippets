@@ -1,4 +1,8 @@
-import {CODES, EXPECTED_USER_HEADER} from '@commandsnippets/api-shared';
+import {
+  CODES,
+  EXPECTED_USER_HEADER,
+  EXPECTED_USER_ID_HEADER,
+} from '@commandsnippets/api-shared';
 import {describe, expect, it} from 'vitest';
 import {
   ApiClient,
@@ -103,6 +107,19 @@ describe('a request naming the user it acts for', () => {
     const body = await json(response);
     expect(body.errors[0].code).toBe(CODES.userMismatch);
     expect(body.data).toBeUndefined();
+  });
+
+  it('is refused as another account of the same name (by its id)', async () => {
+    const {user1, user1Client} = await setUpBase();
+    const named = (id: number) =>
+      user1Client.request('POST', '/api/v1/tags', newTag, {
+        [EXPECTED_USER_HEADER]: encodeURIComponent(user1.username),
+        [EXPECTED_USER_ID_HEADER]: String(id),
+      });
+    const refused = await named(user1.id + 1000);
+    expect(refused.status).toBe(409);
+    expect((await json(refused)).errors[0].code).toBe(CODES.userMismatch);
+    expect((await named(user1.id)).status).toBe(201);
   });
 
   it('leaves an anonymous write to the routes', async () => {

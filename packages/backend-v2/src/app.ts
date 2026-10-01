@@ -4,6 +4,7 @@ import {
   CLIENT_WRITE_ID_HEADER,
   CODES,
   EXPECTED_USER_HEADER,
+  EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared';
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
@@ -69,6 +70,7 @@ app.use(
       'user-agent',
       'x-csrftoken',
       EXPECTED_USER_HEADER.toLowerCase(),
+      EXPECTED_USER_ID_HEADER.toLowerCase(),
       CLIENT_UPDATED_HEADER.toLowerCase(),
       CLIENT_WRITE_ID_HEADER.toLowerCase(),
       'x-requested-with',
@@ -118,8 +120,9 @@ app.use('*', async (c, next) => {
 });
 
 /**
- * A request that names the user it acts for (`EXPECTED_USER_HEADER`) is
- * refused when signed in as anyone else (409 `user_mismatch`): a browser tab
+ * A request that names the user it acts for (`EXPECTED_USER_HEADER`, or
+ * their id: `EXPECTED_USER_ID_HEADER`) is refused when signed in as anyone
+ * else (409 `user_mismatch`): a browser tab
  * whose session another tab replaced can neither write into the new user's
  * account nor read the new user's data as its own user's. Checked with the
  * request's own session, so no switch can come between the check and the
@@ -128,11 +131,12 @@ app.use('*', async (c, next) => {
  */
 app.use('*', async (c, next) => {
   const expected = c.req.header(EXPECTED_USER_HEADER);
+  const expectedId = c.req.header(EXPECTED_USER_ID_HEADER);
   const user = c.get('user');
   if (
-    expected !== undefined &&
     user !== null &&
-    decodedUsername(expected) !== user.username
+    ((expected !== undefined && decodedUsername(expected) !== user.username) ||
+      (expectedId !== undefined && expectedId !== String(user.id)))
   ) {
     throw userMismatch();
   }

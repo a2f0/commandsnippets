@@ -111,6 +111,16 @@ export const MESSAGES = {
 export const EXPECTED_USER_HEADER = 'X-Expected-User';
 
 /**
+ * The header a client's requests name the account they act for with (its
+ * user id): the API refuses a request naming it signed in as any other
+ * account (409 `user_mismatch`), so a client holding one account's data
+ * never writes it into, nor reads, another account that took the same
+ * username since (the first deleted). Requests that name none are
+ * unaffected.
+ */
+export const EXPECTED_USER_ID_HEADER = 'X-Expected-User-Id';
+
+/**
  * The header a write names when it was made in (a datetime, as
  * `parseDateTime` reads it). Clients queue writes and send them later, so
  * the API resolves conflicts by edit time, last writer wins: a write to a
