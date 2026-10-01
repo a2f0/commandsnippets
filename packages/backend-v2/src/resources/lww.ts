@@ -41,10 +41,10 @@ export interface Made {
  * When the request's write was made: the header's time, but never later than
  * now (a device whose clock runs ahead cannot win every later write), or now
  * when the request names none. A write named by `CLIENT_WRITE_ID_HEADER`
- * that counted as now (named no time, or one ahead of the clock) counts as
- * made when it first arrived on every later attempt, so a retry after a lost
- * answer never beats a write made in between: the API keeps that time for
- * as long as it keeps the user. A malformed time or write id is a 400.
+ * counts as its first attempt was counted on every later one (the API keeps
+ * that time as long as the user): a retry after a lost answer never beats a
+ * write made in between, whatever the clock of the isolate it reaches says
+ * of its time. A malformed time or write id is a 400.
  */
 export async function clientUpdated(c: Context<AppEnv>): Promise<Made> {
   const current = now();
@@ -66,42 +66,36 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<Made> {
   }
   const user = requireUser(c);
   const db = c.get('db');
-  const counted = async () =>
-    (
-      await db
-        .select({made: clientWrites.made})
-        .from(clientWrites)
-        .where(
-          and(
-            eq(clientWrites.user_id, user.id),
-            eq(clientWrites.write_id, writeId)
-          )
+  // Made in the past: its own time; else counted as now (this attempt's).
+  const own = at !== null && at <= current ? at : current;
+  // The time its first attempt was counted at, kept for every later one
+  // (whatever this isolate's clock says of its time): this attempt's, when
+  // it is the first.
+  const [, [recorded]] = await db.batch([
+    db
+      .insert(clientWrites)
+      .values({
+        user_id: user.id,
+        write_id: writeId,
+        made: own,
+        date_created: current,
+      })
+      .onConflictDoNothing(),
+    db
+      .select({made: clientWrites.made})
+      .from(clientWrites)
+      .where(
+        and(
+          eq(clientWrites.user_id, user.id),
+          eq(clientWrites.write_id, writeId)
         )
-        .limit(1)
-    )[0]?.made;
-  const earlier = await counted();
-  if (earlier !== undefined) {
-    return {at: earlier, latest: false};
-  }
-  // Made in the past: the same time on every attempt.
-  if (at !== null && at <= current) {
-    return {at, latest: false};
-  }
-  // Counted as now, which its retries count too.
-  await db
-    .insert(clientWrites)
-    .values({
-      user_id: user.id,
-      write_id: writeId,
-      made: current,
-      date_created: current,
-    })
-    .onConflictDoNothing();
-  const first = await counted();
-  // Another attempt of the write arrived first: this one is its retry.
-  return first === undefined || first === current
+      )
+      .limit(1),
+  ]);
+  const made = recorded?.made ?? own;
+  return own === current && made === current
     ? {at: current, latest: true}
-    : {at: first, latest: false};
+    : {at: made, latest: false};
 }
 
 /**

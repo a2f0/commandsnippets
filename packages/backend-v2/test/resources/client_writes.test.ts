@@ -583,6 +583,35 @@ describe('a write made ahead of the clock', () => {
     expect((await refreshTag(tag.id))?.name).toBe('between-2');
   });
 
+  it('counts a retry as its first attempt was counted, whatever the clock of the isolate it reaches', async () => {
+    const tag = await tagFactory({user, name: 'start'});
+    const named = (at: string) => ({
+      ...made(at),
+      [CLIENT_WRITE_ID_HEADER]: 'past-1',
+    });
+    // Made just before it arrived: counted at its own time. Its answer is
+    // lost.
+    const madeAt = formatMicros(nowMicros() - 1000);
+    await client.request(
+      'PATCH',
+      `/api/v1/tags/${tag.id}`,
+      tagRename(tag.id, 'first'),
+      named(madeAt)
+    );
+    await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'between'));
+
+    // The retry reaches an isolate whose clock trails the first one's: to
+    // it, the write's time is ahead (as the time sent here is to this one).
+    const retried = await client.request(
+      'PATCH',
+      `/api/v1/tags/${tag.id}`,
+      tagRename(tag.id, 'first'),
+      named(AHEAD)
+    );
+    expect((await json(retried)).data.attributes.name).toBe('between');
+    expect((await refreshTag(tag.id))?.name).toBe('between');
+  });
+
   it("counts each user's write ids apart", async () => {
     const tag = await tagFactory({user, name: 'mine'});
     const theirs = await tagFactory({user: other, name: 'theirs'});

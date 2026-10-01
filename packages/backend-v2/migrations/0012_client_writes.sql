@@ -9,9 +9,9 @@
 -- and every tag create's is kept in tags_tagclientid with the tag it was
 -- answered with, so a retried create finds that row whatever it is called
 -- by then. A tag renders the client id of the create that made it. A write
--- made ahead of the API's clock counts as now; sync_clientwrite keeps that
--- time by the client's id for the write (as long as the user), so its
--- retries count it too.
+-- made ahead of the API's clock counts as now; sync_clientwrite keeps the
+-- time each write the client named (Client-Write-Id) was counted at (as
+-- long as the user), so its retries count it too.
 ALTER TABLE `tags_tag` ADD `client_updated` text;--> statement-breakpoint
 ALTER TABLE `tags_tagtextentrythroughmodel` ADD `client_updated` text;--> statement-breakpoint
 ALTER TABLE `text_entries_textentry` ADD `client_updated` text;--> statement-breakpoint

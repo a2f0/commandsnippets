@@ -230,10 +230,11 @@ The web app makes its writes locally and sends them later, offline too, in
 order. Each names when it was made in the `Client-Updated` header
 (api-shared's `CLIENT_UPDATED_HEADER`; a time ahead of the API's clock counts
 as now, and a write without one as made now), and itself in
-`Client-Write-Id` (`CLIENT_WRITE_ID_HEADER`), the same on every attempt: a
-write made ahead of the clock counts as made when it first arrived on every
-retry (`sync_clientwrite` keeps that time as long as the user), so a retry
-after a lost answer never beats a write made in between. Tags, entries and
+`Client-Write-Id` (`CLIENT_WRITE_ID_HEADER`), the same on every attempt:
+every retry counts as the first attempt was counted (`sync_clientwrite`
+keeps that time as long as the user), whatever the clock of the isolate it
+reaches, so a retry after a lost answer never beats a write made in
+between. Tags, entries and
 junctions keep the time of the last client write to them
 (`client_updated`), and a write to one applies only when it is no older
 (`src/resources/lww.ts`): the latest edit wins, whatever order the writes
