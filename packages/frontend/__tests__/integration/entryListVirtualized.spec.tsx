@@ -8,10 +8,11 @@ import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
 import {VIRTUALIZE_FROM} from '../../src/components/entries/EntryList';
+import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {entry, seed} from '../util/storeFixtures';
+import {entry, seed, testUser} from '../util/storeFixtures';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 const API = 'http://localhost:9001/api/v1';
@@ -104,4 +105,116 @@ it('scrolls the window to the entry the arrow keys select', async () => {
       : 0
   );
   expect(Math.max(...tops)).toBeGreaterThan(30 * ROW_HEIGHT);
+});
+
+/**
+ * The window scrolled to `y`. jsdom lays nothing out, so each element is at
+ * the top of the page: in the window, `y` above it.
+ */
+function scrollable() {
+  let y = 0;
+  vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => y);
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+    () => ({
+      x: 0,
+      y: -y,
+      top: -y,
+      left: 0,
+      bottom: -y,
+      right: 0,
+      width: 0,
+      height: 0,
+      toJSON: () => ({}),
+    })
+  );
+  return async (to: number) => {
+    y = to;
+    await act(async () => {
+      window.dispatchEvent(new Event('scroll'));
+    });
+  };
+}
+
+/** Open the editor on `subject`'s entry, and change its subject to `to`. */
+async function edit(subject: string, to: string) {
+  fireEvent.contextMenu(await screen.findByText(subject));
+  fireEvent.click(await screen.findByRole('menuitem', {name: 'Edit'}));
+  fireEvent.change(await screen.findByDisplayValue(subject), {
+    target: {value: to},
+  });
+}
+
+/** The indexes of the rows rendered, apart from the one holding `form`. */
+const otherRows = (form: HTMLElement) => {
+  const held = form.closest('[data-index]');
+  return Array.from(document.querySelectorAll<HTMLElement>('[data-index]'))
+    .filter(row => row !== held)
+    .map(row => Number(row.dataset['index']));
+};
+
+/** The index of the row holding `form`. */
+const rowOf = (form: HTMLElement) =>
+  Number(form.closest<HTMLElement>('[data-index]')?.dataset['index']);
+
+it('keeps an editor open, its text and all, while the window scrolls away and back', async () => {
+  const scrollTo = scrollable();
+  await openWith(500);
+  await edit('subject 1', 'draft');
+  const row = rowOf(screen.getByDisplayValue('draft'));
+  expect(row).toBeLessThan(10);
+
+  // Far below it: its row stays rendered, out of view, as the rows around
+  // it do not.
+  await scrollTo(400 * ROW_HEIGHT);
+  await waitFor(() =>
+    expect(
+      Math.min(...otherRows(screen.getByDisplayValue('draft')))
+    ).toBeGreaterThan(300)
+  );
+  expect(rowOf(screen.getByDisplayValue('draft'))).toBe(row);
+
+  await scrollTo(0);
+  await waitFor(() =>
+    expect(otherRows(screen.getByDisplayValue('draft'))).toContain(row + 1)
+  );
+  expect(rowOf(screen.getByDisplayValue('draft'))).toBe(row);
+});
+
+it("keeps a new entry's form open, its text and all, while the window scrolls away", async () => {
+  const scrollTo = scrollable();
+  await openWith(500);
+  fireEvent.contextMenu(await screen.findByText('subject 1'));
+  fireEvent.click(await screen.findByRole('menuitem', {name: 'New Entry'}));
+  fireEvent.change(await screen.findByPlaceholderText('subject'), {
+    target: {value: 'unsaved new'},
+  });
+
+  await scrollTo(400 * ROW_HEIGHT);
+  await waitFor(() =>
+    expect(
+      Math.min(...otherRows(screen.getByPlaceholderText('subject')))
+    ).toBeGreaterThan(300)
+  );
+  expect(screen.getByPlaceholderText('subject')).toHaveValue('unsaved new');
+});
+
+it('keeps an editor open, its text and all, when the list gets too short to virtualize', async () => {
+  await openWith(VIRTUALIZE_FROM);
+  await edit('subject 1', 'draft');
+
+  // One entry fewer (as a sync removes it): every row rendered (the one
+  // edited as its editor), its editor the same.
+  const {db} = syncSession(testUser.attributes.username);
+  await act(async () => {
+    await db.entries.delete([
+      testUser.attributes.username,
+      String(VIRTUALIZE_FROM),
+    ]);
+  });
+  await waitFor(() =>
+    expect(document.querySelectorAll('[data-index]')).toHaveLength(
+      VIRTUALIZE_FROM - 1
+    )
+  );
+  expect(screen.getByDisplayValue('draft')).toBeInTheDocument();
 });

@@ -2,7 +2,11 @@ import type {TextEntry} from '@commandsnippets/api-shared';
 import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import {useWindowVirtualizer} from '@tanstack/react-virtual';
+import {
+  defaultRangeExtractor,
+  type Range,
+  useWindowVirtualizer,
+} from '@tanstack/react-virtual';
 import invariant from 'invariant';
 import React, {
   useCallback,
@@ -120,17 +124,49 @@ const EntryList = () => {
   const [listTop, setListTop] = useState(0);
   useLayoutEffect(() => {
     const top =
-      list.current === null
+      !virtualized || list.current === null
         ? 0
         : list.current.getBoundingClientRect().top + window.scrollY;
     if (top !== listTop) {
       setListTop(top);
     }
   });
+  // The rows rendered out of view too, by key: those with a form open, whose
+  // text the row holds.
+  const [held, setHeld] = useState<ReadonlySet<string>>(new Set());
+  const keepRendered = useCallback((rowKey: string) => {
+    setHeld(keys => new Set(keys).add(rowKey));
+    return () =>
+      setHeld(keys => {
+        const rest = new Set(keys);
+        rest.delete(rowKey);
+        return rest;
+      });
+  }, []);
+  const heldIndexes = useMemo(
+    () =>
+      held.size === 0
+        ? []
+        : entries.flatMap((entry, index) =>
+            held.has(keyOfRow(entry)) ? [index] : []
+          ),
+    [entries, held]
+  );
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const indexes = defaultRangeExtractor(range);
+      const outOfView = heldIndexes.filter(index => !indexes.includes(index));
+      return outOfView.length === 0
+        ? indexes
+        : [...indexes, ...outOfView].sort((a, b) => a - b);
+    },
+    [heldIndexes]
+  );
   const virtualizer = useWindowVirtualizer({
     count: virtualized ? entries.length : 0,
     estimateSize: () => ROW_ESTIMATE,
     overscan: 10,
+    rangeExtractor,
     scrollMargin: listTop,
     // The app bar and the bottom bar cover the window's edges.
     scrollPaddingStart: theme.appBar.height,
@@ -304,6 +340,7 @@ const EntryList = () => {
         rowKey={keyOfRow(element)}
         tagId={currentTag?.id}
         findEntryByIndex={findEntryByIndex}
+        keepRendered={keepRendered}
       />
     </div>
   );
@@ -322,34 +359,39 @@ const EntryList = () => {
       {appConfig.entryNew === 'textEntry-top' && !readOnly && (
         <EntryNew id="textEntryNewTop" tagId={currentTag?.id} />
       )}
-      {virtualized ? (
-        <div
-          ref={list}
-          style={{
-            height: virtualizer.getTotalSize(),
-            position: 'relative',
-            width: '100%',
-          }}
-        >
-          {virtualizer.getVirtualItems().map(item => {
-            const element = entries[item.index];
-            return element === undefined
-              ? null
-              : renderRow(element, item.index, {
-                  measure: virtualizer.measureElement,
-                  style: {
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${item.start - virtualizer.options.scrollMargin}px)`,
-                  },
-                });
-          })}
-        </div>
-      ) : (
-        entries.map((element, index) => renderRow(element, index))
-      )}
+      {/* One parent for the rows, however many there are: a list that
+          grows or shrinks past `VIRTUALIZE_FROM` keeps its rows (and their
+          forms) rendered as they were. */}
+      <div
+        ref={list}
+        style={
+          virtualized
+            ? {
+                height: virtualizer.getTotalSize(),
+                position: 'relative',
+                width: '100%',
+              }
+            : undefined
+        }
+      >
+        {virtualized
+          ? virtualizer.getVirtualItems().map(item => {
+              const element = entries[item.index];
+              return element === undefined
+                ? null
+                : renderRow(element, item.index, {
+                    measure: virtualizer.measureElement,
+                    style: {
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${item.start - virtualizer.options.scrollMargin}px)`,
+                    },
+                  });
+            })
+          : entries.map((element, index) => renderRow(element, index))}
+      </div>
       {appConfig.entryNew === 'textEntry-bottom' && !readOnly && (
         <EntryNew id="textEntryNewBottom" tagId={currentTag?.id} />
       )}

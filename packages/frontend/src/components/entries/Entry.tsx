@@ -74,6 +74,11 @@ interface IEntryProps {
   /** The tag the list shows, when it shows one. */
   tagId: string | undefined;
   findEntryByIndex: (id: number) => TextEntry | null;
+  /**
+   * Keep the row rendered, out of view too (a long list renders only the
+   * rows in view), until the function it returns is called.
+   */
+  keepRendered: (rowKey: string) => () => void;
 }
 
 const Entry = ({
@@ -85,6 +90,7 @@ const Entry = ({
   rowKey,
   tagId,
   findEntryByIndex,
+  keepRendered,
 }: IEntryProps) => {
   const appConfig = useAppConfig();
   const session = useSession();
@@ -293,6 +299,17 @@ const Entry = ({
   const handleSave = useCallback(() => {
     setIsEditing(false);
   }, []);
+
+  // A form open in the row (its editor, or a new entry's) keeps the row
+  // rendered wherever the list scrolls: unrendered, its text would be lost.
+  const newEntryHere =
+    appConfig.entryNew === `textEntry-${rowKey}-top` ||
+    appConfig.entryNew === `textEntry-${rowKey}-bottom`;
+  const holdsForm = !readOnly && (isEditing || newEntryHere);
+  useEffect(
+    () => (holdsForm ? keepRendered(rowKey) : undefined),
+    [holdsForm, keepRendered, rowKey]
+  );
 
   const handleContextClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {

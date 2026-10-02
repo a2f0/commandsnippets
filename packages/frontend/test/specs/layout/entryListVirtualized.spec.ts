@@ -7,7 +7,8 @@ import {BasePage} from '../../pageobjects/base';
  * A list long enough to render only the rows in view (`VIRTUALIZE_FROM`),
  * in the browser: rows of different heights, measured as they render. It
  * scrolls to its last row, and moving the selection with the arrow keys
- * keeps it in view, rendering rows as they come into view.
+ * keeps it in view, rendering rows as they come into view. A row with its
+ * editor open stays rendered, out of view too, so its text is kept.
  */
 const COUNT = 300;
 // Bodies of 1, 4 and 12 lines: rows of different heights.
@@ -90,5 +91,28 @@ describe('A long, virtualized entry list', () => {
     await browser.waitUntil(() => inView(selected), {
       timeoutMsg: `Expected entry ${selected}, selected, scrolled into view`,
     });
+  });
+
+  it('keeps an editor open, its text and all, while the window scrolls away and back', async () => {
+    await BasePage.tagsEntries1.waitAndRightClick();
+    await BasePage.tagsEntriesContextMenu1Edit.waitAndLeftClick();
+    await expect(BasePage.textEntryEdit1Subject).toBeFocused();
+    await browser.keys('-draft');
+
+    await browser.waitUntil(
+      async () => {
+        await browser.execute(() =>
+          window.scrollTo(0, document.documentElement.scrollHeight)
+        );
+        return inView(String(COUNT));
+      },
+      {timeoutMsg: 'Expected the last entry scrolled into view'}
+    );
+    await browser.execute(() => window.scrollTo(0, 0));
+
+    await expect(BasePage.textEntryEdit1Subject).toBeDisplayed();
+    await expect(BasePage.textEntryEdit1Subject).toHaveValue(
+      'Holy Grail Test Entry 1-draft'
+    );
   });
 });
