@@ -254,6 +254,13 @@ const Entry = ({
   drop(dropRef);
 
   const mostRecentCopyID = useAppState(state => state.mostRecentCopyID);
+  // Whether this entry is the one selected in the list: watched alone, so
+  // selecting another entry renders only the rows it changes.
+  const selected = useAppState(
+    state =>
+      state.entrySelectedID === object.id &&
+      state.appMode === appMode.entriesList
+  );
   useEffect(() => {
     setShowCheckIcon(mostRecentCopyID === object.id);
   }, [mostRecentCopyID, object.id]);
@@ -462,6 +469,7 @@ const Entry = ({
                 <MemoizedEntryBody
                   handleClick={handleBodyClick}
                   object={textEntryObject}
+                  selected={selected}
                 />
               </EntryText>
             </div>
