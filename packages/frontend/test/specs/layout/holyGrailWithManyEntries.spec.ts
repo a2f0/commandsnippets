@@ -12,7 +12,10 @@ describe('Holy Grail Layout with Many Entries', () => {
     // Override MSW handlers to use manyEntriesResponse mock, before the
     // signed-in page loads: its first sync reads them (the override holds
     // across the load).
-    const mswResult = await browser.execute(mockData => {
+    // As one JSON string: WebDriver serializes an object argument node by
+    // node, which takes seconds for this many entries.
+    const mswResult = await browser.execute(json => {
+      const mockData = JSON.parse(json);
       if (!window.setRuntimeEntriesOverride) {
         return {
           success: false,
@@ -28,7 +31,7 @@ describe('Holy Grail Layout with Many Entries', () => {
           error instanceof Error ? error.message : 'Unknown error';
         return {success: false, error: errorMessage};
       }
-    }, manyEntriesResponse);
+    }, JSON.stringify(manyEntriesResponse));
 
     if (!mswResult.success) {
       throw new Error(`Failed to override MSW handlers: ${mswResult.error}`);

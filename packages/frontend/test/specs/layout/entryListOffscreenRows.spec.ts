@@ -33,13 +33,15 @@ describe('A long entry list', () => {
   beforeEach(async () => {
     await BasePage.open('');
     await browser.login();
-    const result = await browser.execute(mockData => {
+    // As one JSON string: WebDriver serializes an object argument node by
+    // node, which takes tens of seconds for this many entries.
+    const result = await browser.execute(json => {
       if (!window.setRuntimeEntriesOverride) {
         return false;
       }
-      window.setRuntimeEntriesOverride(mockData);
+      window.setRuntimeEntriesOverride(JSON.parse(json));
       return true;
-    }, entries);
+    }, JSON.stringify(entries));
     if (!result) {
       throw new Error('setRuntimeEntriesOverride not available');
     }
