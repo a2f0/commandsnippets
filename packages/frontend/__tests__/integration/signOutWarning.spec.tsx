@@ -12,7 +12,9 @@ import {vi} from 'vitest';
 import {createTag} from '../../src/lib/data/writes';
 import {signedOutDataCleanedUp} from '../../src/lib/state/appState';
 import {
+  cancelSignOut,
   confirmSignOut,
+  requestSignOut,
   signOutTiming,
 } from '../../src/lib/state/signOutWarning';
 import {hasQueuedWrites, syncSession} from '../../src/lib/sync/session';
@@ -229,6 +231,27 @@ describe('a queue that takes longer to send than sign-out waits', () => {
     expect(await hasQueuedWrites(name)).toBe(true);
   });
 
+  it('warns once, however often the user asks, and not again after Cancel', async () => {
+    await logOut();
+    await queueHanging();
+    const first = requestSignOut();
+    await new Promise(resolve => setTimeout(resolve, 25));
+    const second = requestSignOut();
+    expect(
+      await screen.findByText('Changes not saved yet')
+    ).toBeInTheDocument();
+    act(() => cancelSignOut());
+    await waitFor(() =>
+      expect(screen.queryByText('Changes not saved yet')).toBeNull()
+    );
+    await Promise.all([first, second]);
+    // Past the second request's wait too: it never comes back.
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    expect(screen.queryByText('Changes not saved yet')).toBeNull();
+    expect(store.loggedInUser).toBe(TEST_USER);
+  });
+
   it('warns while it is still being sent, and signs out discarding it', async () => {
     const {history, click} = await logOut();
     const name = await queueHanging();
@@ -244,4 +267,16 @@ describe('a queue that takes longer to send than sign-out waits', () => {
     await signedOutDataCleanedUp();
     expect(await Dexie.exists(name)).toBe(false);
   });
+});
+
+it('signs out all the same when the queued writes cannot be read', async () => {
+  const {history, click} = await logOut();
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(syncSession(TEST_USER).db.outbox, 'where').mockImplementation(() => {
+    throw new Error('IndexedDB is unavailable');
+  });
+  await click();
+
+  await waitFor(() => expect(history.location.pathname).toBe('/'));
+  expect(store.loggedInUser).toBeNull();
 });

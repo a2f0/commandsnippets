@@ -34,22 +34,39 @@ useAppState.subscribe((state, previous) => {
   }
 });
 
+// The sign-out the user asked for, while it decides: asking again (another
+// click) joins it, never warning a second time after a Cancel.
+let requested: Promise<void> | null = null;
+
 /**
  * The user asked to sign out: send the queue (waiting
  * `signOutTiming.flushWaitMs` at most), then sign out, or warn when writes
- * are still unsent.
+ * are still unsent. When the queue cannot be read, they are signed out all
+ * the same, any queued writes kept on this device (`endSyncSession`).
  */
-export async function requestSignOut(): Promise<void> {
+export function requestSignOut(): Promise<void> {
+  requested ??= decideSignOut().finally(() => {
+    requested = null;
+  });
+  return requested;
+}
+
+async function decideSignOut(): Promise<void> {
   const username = useAppState.getState().loggedInUser;
   if (username === null) {
     return;
   }
-  const {db, sync} = syncSession(username);
-  await Promise.race([
-    sync.flush().catch(() => undefined),
-    new Promise(resolve => setTimeout(resolve, signOutTiming.flushWaitMs)),
-  ]);
-  const unsent = await queuedCount(db, username);
+  let unsent = 0;
+  try {
+    const {db, sync} = syncSession(username);
+    await Promise.race([
+      sync.flush().catch(() => undefined),
+      new Promise(resolve => setTimeout(resolve, signOutTiming.flushWaitMs)),
+    ]);
+    unsent = await queuedCount(db, username);
+  } catch (error: unknown) {
+    console.error('ERROR: could not read the queued writes:', error);
+  }
   // Signed out, or in as another, meanwhile: nothing to do.
   if (useAppState.getState().loggedInUser !== username) {
     return;
