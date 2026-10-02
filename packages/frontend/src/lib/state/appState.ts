@@ -353,13 +353,23 @@ export async function leaveForeignSession(username: string): Promise<void> {
   }
 }
 
+// Set while a sign-out the user chose to make without their queued writes
+// resets the state: their data goes, queue and all.
+let discardingQueued = false;
+
 /**
  * Sign out through the API (it ends the session), then here
- * (`resetApplicationState`) while the same user is signed in. When the API refuses as another user's (another
- * tab has signed in as someone else since), this tab leaves the session
- * instead (`leaveForeignSession`), and the other sign-in stands.
+ * (`resetApplicationState`) while the same user is signed in. Writes still
+ * queued stay on this device for the user's next sign-in here, unless
+ * `discardQueued`. When the API refuses as another user's (another tab has
+ * signed in as someone else since), this tab leaves the session instead
+ * (`leaveForeignSession`), and the other sign-in stands.
  */
-export async function signOut(): Promise<void> {
+export async function signOut({
+  discardQueued = false,
+}: {
+  discardQueued?: boolean;
+} = {}): Promise<void> {
   const username = useAppState.getState().loggedInUser;
   try {
     await apiClient.logout();
@@ -373,7 +383,12 @@ export async function signOut(): Promise<void> {
   // Unless this tab has left that session meanwhile (another tab's sign-in
   // taken up), which stands.
   if (useAppState.getState().loggedInUser === username) {
-    resetApplicationState();
+    discardingQueued = discardQueued;
+    try {
+      resetApplicationState();
+    } finally {
+      discardingQueued = false;
+    }
   }
 }
 
@@ -391,7 +406,9 @@ export const signedOutDataCleanedUp = (): Promise<void> => cleanedUp;
 useAppState.subscribe((state, previous) => {
   const {loggedInUser: leaving} = previous;
   if (leaving !== null && state.loggedInUser !== leaving) {
-    cleanedUp = endSyncSession(leaving).catch((error: unknown) => {
+    cleanedUp = endSyncSession(leaving, {
+      discardQueued: discardingQueued,
+    }).catch((error: unknown) => {
       console.error('ERROR: could not delete the IndexedDB data:', error);
     });
   }

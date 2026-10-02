@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {signOut} from '../../../lib/state/appState';
+import {requestSignOut} from '../../../lib/state/signOutWarning';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
 interface IProps {
@@ -12,8 +12,8 @@ const Logout = ({onClose}: IProps) => {
   const {t} = useTypedTranslation('common');
 
   const handleLogout = async () => {
-    await signOut();
     onClose();
+    await requestSignOut();
   };
 
   return (

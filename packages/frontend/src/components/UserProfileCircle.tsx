@@ -4,7 +4,8 @@ import {styled} from '@mui/material/styles';
 import type React from 'react';
 import {useState} from 'react';
 import {environment} from '../lib/environment';
-import {signOut, useAppConfig} from '../lib/state/appState';
+import {useAppConfig} from '../lib/state/appState';
+import {requestSignOut} from '../lib/state/signOutWarning';
 
 const StyledButton = styled(Button)(({theme}) => ({
   alignSelf: 'flex-end',
@@ -55,8 +56,8 @@ const UserProfileCircle: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await signOut();
     handleClose();
+    await requestSignOut();
   };
 
   const handleProfile = () => {

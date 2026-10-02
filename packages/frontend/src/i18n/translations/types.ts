@@ -19,6 +19,12 @@ export interface CommonTranslations {
   selectLanguage: string;
   settings: string;
   logoAlt: string;
+  unsentWritesTitle: string;
+  unsentWrites_one: string;
+  unsentWrites_other: string;
+  unsentWritesKept: string;
+  signOutKeepingWrites: string;
+  discardAndSignOut: string;
 }
 
 export interface MenuTranslations {
