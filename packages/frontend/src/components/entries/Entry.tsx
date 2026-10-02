@@ -300,15 +300,16 @@ const Entry = ({
     setIsEditing(false);
   }, []);
 
-  // A form open in the row (its editor, or a new entry's) keeps the row
-  // rendered wherever the list scrolls: unrendered, its text would be lost.
+  // A form open in the row (its editor, or a new entry's), or a drag of it,
+  // keeps the row rendered wherever the list scrolls: unrendered, its text
+  // would be lost, or the drag would lose its source.
   const newEntryHere =
     appConfig.entryNew === `textEntry-${rowKey}-top` ||
     appConfig.entryNew === `textEntry-${rowKey}-bottom`;
-  const holdsForm = !readOnly && (isEditing || newEntryHere);
+  const held = isDragging || (!readOnly && (isEditing || newEntryHere));
   useEffect(
-    () => (holdsForm ? keepRendered(rowKey) : undefined),
-    [holdsForm, keepRendered, rowKey]
+    () => (held ? keepRendered(rowKey) : undefined),
+    [held, keepRendered, rowKey]
   );
 
   const handleContextClick = useCallback(

@@ -132,7 +132,7 @@ const EntryList = () => {
     }
   });
   // The rows rendered out of view too, by key: those with a form open, whose
-  // text the row holds.
+  // text the row holds, and the one dragged, the drag's source.
   const [held, setHeld] = useState<ReadonlySet<string>>(new Set());
   const keepRendered = useCallback((rowKey: string) => {
     setHeld(keys => new Set(keys).add(rowKey));
