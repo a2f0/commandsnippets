@@ -353,27 +353,43 @@ export async function leaveForeignSession(username: string): Promise<void> {
   }
 }
 
+// The user signing out by choice without their queued writes, while they
+// do: however their sign-out happens (the API's answer, or a 401 ending the
+// session first), their data goes, queue and all.
+let discardingFor: string | null = null;
+
 /**
  * Sign out through the API (it ends the session), then here
- * (`resetApplicationState`) while the same user is signed in. When the API refuses as another user's (another
- * tab has signed in as someone else since), this tab leaves the session
- * instead (`leaveForeignSession`), and the other sign-in stands.
+ * (`resetApplicationState`) while the same user is signed in. Writes still
+ * queued stay on this device for the user's next sign-in here, unless
+ * `discardQueued`. When the API refuses as another user's (another tab has
+ * signed in as someone else since), this tab leaves the session instead
+ * (`leaveForeignSession`), and the other sign-in stands.
  */
-export async function signOut(): Promise<void> {
+export async function signOut({
+  discardQueued = false,
+}: {
+  discardQueued?: boolean;
+} = {}): Promise<void> {
   const username = useAppState.getState().loggedInUser;
+  discardingFor = discardQueued ? username : null;
   try {
-    await apiClient.logout();
-  } catch (error: unknown) {
-    if (error instanceof UserMismatchError && username !== null) {
-      await leaveForeignSession(username);
-      return;
+    try {
+      await apiClient.logout();
+    } catch (error: unknown) {
+      if (error instanceof UserMismatchError && username !== null) {
+        await leaveForeignSession(username);
+        return;
+      }
+      console.error('Logout error:', error);
     }
-    console.error('Logout error:', error);
-  }
-  // Unless this tab has left that session meanwhile (another tab's sign-in
-  // taken up), which stands.
-  if (useAppState.getState().loggedInUser === username) {
-    resetApplicationState();
+    // Unless this tab has left that session meanwhile (another tab's sign-in
+    // taken up), which stands.
+    if (useAppState.getState().loggedInUser === username) {
+      resetApplicationState();
+    }
+  } finally {
+    discardingFor = null;
   }
 }
 
@@ -391,7 +407,9 @@ export const signedOutDataCleanedUp = (): Promise<void> => cleanedUp;
 useAppState.subscribe((state, previous) => {
   const {loggedInUser: leaving} = previous;
   if (leaving !== null && state.loggedInUser !== leaving) {
-    cleanedUp = endSyncSession(leaving).catch((error: unknown) => {
+    cleanedUp = endSyncSession(leaving, {
+      discardQueued: discardingFor === leaving,
+    }).catch((error: unknown) => {
       console.error('ERROR: could not delete the IndexedDB data:', error);
     });
   }

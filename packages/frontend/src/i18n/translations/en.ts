@@ -21,6 +21,15 @@ export const en: I18NextTranslations = {
     selectLanguage: 'Select language',
     settings: 'Settings',
     logoAlt: 'Commandsnippets Logo',
+    unsentWritesTitle: 'Changes not saved yet',
+    unsentWrites_one:
+      '{{count}} change on this device has not reached the server yet.',
+    unsentWrites_other:
+      '{{count}} changes on this device have not reached the server yet.',
+    unsentWritesKept:
+      'Signing out keeps them on this device, and sends them the next time you sign in here. Discard them to sign out without them.',
+    signOutKeepingWrites: 'Sign out',
+    discardAndSignOut: 'Discard and sign out',
   },
   menu: {
     file: 'File',

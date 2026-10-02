@@ -21,6 +21,15 @@ export const es: I18NextTranslations = {
     selectLanguage: 'Seleccionar idioma',
     settings: 'Configuración',
     logoAlt: 'Logo de Commandsnippets',
+    unsentWritesTitle: 'Cambios aún no guardados',
+    unsentWrites_one:
+      '{{count}} cambio en este dispositivo aún no ha llegado al servidor.',
+    unsentWrites_other:
+      '{{count}} cambios en este dispositivo aún no han llegado al servidor.',
+    unsentWritesKept:
+      'Al cerrar sesión se guardan en este dispositivo y se envían la próxima vez que inicies sesión aquí. Descártalos para cerrar sesión sin ellos.',
+    signOutKeepingWrites: 'Cerrar sesión',
+    discardAndSignOut: 'Descartar y cerrar sesión',
   },
   menu: {
     file: 'Archivo',
