@@ -2,8 +2,20 @@ import type {TextEntry} from '@commandsnippets/api-shared';
 import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
+import {
+  defaultRangeExtractor,
+  type Range,
+  useWindowVirtualizer,
+} from '@tanstack/react-virtual';
 import invariant from 'invariant';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {
@@ -29,10 +41,21 @@ export interface IParamTypes {
 }
 
 /**
+ * How many rows a list has before only those in view (and a few around
+ * them) are rendered: rendering hundreds of rows at once makes a list slow
+ * to open. A shorter list renders all of its rows.
+ */
+export const VIRTUALIZE_FROM = 100;
+
+/** A row's height until it is measured. */
+const ROW_ESTIMATE = 72;
+
+/**
  * The entries shown: a tag's (`/:user/:tag`), or all or the untagged ones
  * (`?entries=all`, `?entries=untagged`), from IndexedDB as syncs and writes
  * store them, sorted and searched. The tag shown syncs whenever it is not
- * synced through its revision.
+ * synced through its revision. A long list renders only the rows in view
+ * (`VIRTUALIZE_FROM`), as the window scrolls.
  */
 const EntryList = () => {
   const appConfig = useAppConfig();
@@ -93,9 +116,81 @@ const EntryList = () => {
 
   // Each row's element, by entry id (for scrolling the selection into view).
   const rows = useRef(new Map<string, HTMLDivElement>());
-  const rowOf = (entryId: string | undefined) => ({
-    current: entryId === undefined ? null : (rows.current.get(entryId) ?? null),
+
+  // A long list: only the rows in view are rendered, each measured, below
+  // where the list starts on the page (`listTop`).
+  const virtualized = entries.length >= VIRTUALIZE_FROM;
+  const list = useRef<HTMLDivElement | null>(null);
+  const [listTop, setListTop] = useState(0);
+  useLayoutEffect(() => {
+    const top =
+      !virtualized || list.current === null
+        ? 0
+        : list.current.getBoundingClientRect().top + window.scrollY;
+    if (top !== listTop) {
+      setListTop(top);
+    }
   });
+  // The rows rendered out of view too, by key: those with a form open, whose
+  // text the row holds, and the one dragged, the drag's source.
+  const [held, setHeld] = useState<ReadonlySet<string>>(new Set());
+  const keepRendered = useCallback((rowKey: string) => {
+    setHeld(keys => new Set(keys).add(rowKey));
+    return () =>
+      setHeld(keys => {
+        const rest = new Set(keys);
+        rest.delete(rowKey);
+        return rest;
+      });
+  }, []);
+  const heldIndexes = useMemo(
+    () =>
+      held.size === 0
+        ? []
+        : entries.flatMap((entry, index) =>
+            held.has(keyOfRow(entry)) ? [index] : []
+          ),
+    [entries, held]
+  );
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const indexes = defaultRangeExtractor(range);
+      const outOfView = heldIndexes.filter(index => !indexes.includes(index));
+      return outOfView.length === 0
+        ? indexes
+        : [...indexes, ...outOfView].sort((a, b) => a - b);
+    },
+    [heldIndexes]
+  );
+  const virtualizer = useWindowVirtualizer({
+    count: virtualized ? entries.length : 0,
+    estimateSize: () => ROW_ESTIMATE,
+    overscan: 10,
+    rangeExtractor,
+    scrollMargin: listTop,
+    // The app bar and the bottom bar cover the window's edges.
+    scrollPaddingStart: theme.appBar.height,
+    scrollPaddingEnd: theme.footer.height,
+    getItemKey: index => {
+      const entry = entries[index];
+      return entry === undefined ? index : keyOfRow(entry);
+    },
+  });
+
+  /** Bring the row at `index` into view, if it is not. */
+  const scrollTo = useCallback(
+    (index: number, entryId: string, block: 'start' | 'end') => {
+      if (virtualized) {
+        virtualizer.scrollToIndex(index, {align: 'auto'});
+        return;
+      }
+      const elRef = {current: rows.current.get(entryId) ?? null};
+      if (needsScrollingIntoView(elRef, theme)) {
+        elRef.current?.scrollIntoView({behavior: 'auto', block});
+      }
+    },
+    [virtualized, virtualizer, theme]
+  );
 
   const keyListener = useCallback(
     (event: KeyboardEvent) => {
@@ -117,13 +212,7 @@ const EntryList = () => {
               const entry = entries[newIndex];
               if (entry) {
                 appConfig.setEntrySelectedID(entry.id);
-                const elRef = rowOf(entry.id);
-                if (needsScrollingIntoView(elRef, theme)) {
-                  elRef.current?.scrollIntoView({
-                    behavior: 'auto',
-                    block: 'start',
-                  });
-                }
+                scrollTo(newIndex, entry.id, 'start');
               }
             }
           } else if (event.key === 'ArrowDown') {
@@ -132,13 +221,7 @@ const EntryList = () => {
               const entry = entries[newIndex];
               invariant(entry, 'entry is undefined');
               appConfig.setEntrySelectedID(entry.id);
-              const elRef = rowOf(entry.id);
-              if (needsScrollingIntoView(elRef, theme)) {
-                elRef.current?.scrollIntoView({
-                  behavior: 'auto',
-                  block: 'end',
-                });
-              }
+              scrollTo(newIndex, entry.id, 'end');
             }
           } else if (event.key === 'Enter') {
             navigator.clipboard.writeText(selected.attributes.body);
@@ -148,7 +231,7 @@ const EntryList = () => {
         }
       }
     },
-    [appConfig, entries, theme]
+    [appConfig, entries, scrollTo]
   );
 
   useEffect(() => {
@@ -224,6 +307,44 @@ const EntryList = () => {
     [mouse]
   );
 
+  /** The row of `element`, at `index` (measured and placed, in a long list). */
+  const renderRow = (
+    element: TextEntry,
+    index: number,
+    placed?: {
+      measure: (node: HTMLDivElement | null) => void;
+      style: React.CSSProperties;
+    }
+  ) => (
+    // Keyed so a row made here stays the same component (an open editor
+    // and its text too) when the API's id replaces its own.
+    <div
+      key={keyOfRow(element)}
+      data-index={index}
+      style={placed?.style}
+      ref={node => {
+        placed?.measure(node);
+        if (node === null) {
+          rows.current.delete(element.id);
+        } else {
+          rows.current.set(element.id, node);
+        }
+      }}
+    >
+      <Entry
+        id={element.id}
+        index={index}
+        moveEntry={moveEntry}
+        findEntry={findEntry}
+        object={element}
+        rowKey={keyOfRow(element)}
+        tagId={currentTag?.id}
+        findEntryByIndex={findEntryByIndex}
+        keepRendered={keepRendered}
+      />
+    </div>
+  );
+
   return (
     <Box
       ref={dropBoxRef}
@@ -238,34 +359,39 @@ const EntryList = () => {
       {appConfig.entryNew === 'textEntry-top' && !readOnly && (
         <EntryNew id="textEntryNewTop" tagId={currentTag?.id} />
       )}
-      {entries.map((element, i) => {
-        const index = i;
-        return (
-          // Keyed so a row made here stays the same component (an open
-          // editor and its text too) when the API's id replaces its own.
-          <div
-            key={keyOfRow(element)}
-            ref={element_ => {
-              if (element_ === null) {
-                rows.current.delete(element.id);
-              } else {
-                rows.current.set(element.id, element_);
+      {/* One parent for the rows, however many there are: a list that
+          grows or shrinks past `VIRTUALIZE_FROM` keeps its rows (and their
+          forms) rendered as they were. */}
+      <div
+        ref={list}
+        style={
+          virtualized
+            ? {
+                height: virtualizer.getTotalSize(),
+                position: 'relative',
+                width: '100%',
               }
-            }}
-          >
-            <Entry
-              id={element.id}
-              index={index}
-              moveEntry={moveEntry}
-              findEntry={findEntry}
-              object={element}
-              rowKey={keyOfRow(element)}
-              tagId={currentTag?.id}
-              findEntryByIndex={findEntryByIndex}
-            />
-          </div>
-        );
-      })}
+            : undefined
+        }
+      >
+        {virtualized
+          ? virtualizer.getVirtualItems().map(item => {
+              const element = entries[item.index];
+              return element === undefined
+                ? null
+                : renderRow(element, item.index, {
+                    measure: virtualizer.measureElement,
+                    style: {
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${item.start - virtualizer.options.scrollMargin}px)`,
+                    },
+                  });
+            })
+          : entries.map((element, index) => renderRow(element, index))}
+      </div>
       {appConfig.entryNew === 'textEntry-bottom' && !readOnly && (
         <EntryNew id="textEntryNewBottom" tagId={currentTag?.id} />
       )}
