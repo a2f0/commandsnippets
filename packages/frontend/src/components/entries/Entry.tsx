@@ -253,7 +253,9 @@ const Entry = ({
   drag(dragRef);
   drop(dropRef);
 
-  const mostRecentCopyID = useAppState(state => state.mostRecentCopyID);
+  // Whether this entry is the one copied last: watched alone, so copying
+  // another entry renders only the rows it changes.
+  const copiedLast = useAppState(state => state.mostRecentCopyID === object.id);
   // Whether this entry is the one selected in the list: watched alone, so
   // selecting another entry renders only the rows it changes.
   const selected = useAppState(
@@ -262,8 +264,8 @@ const Entry = ({
       state.appMode === appMode.entriesList
   );
   useEffect(() => {
-    setShowCheckIcon(mostRecentCopyID === object.id);
-  }, [mostRecentCopyID, object.id]);
+    setShowCheckIcon(copiedLast);
+  }, [copiedLast]);
 
   const mouseEnter = useCallback(() => {
     setHoverState({

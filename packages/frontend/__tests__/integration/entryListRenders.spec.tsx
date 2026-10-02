@@ -1,12 +1,11 @@
 /**
  * How often the entry list renders its rows: once each when the list is
- * read, and only the rows whose selection changes when another entry is
- * selected (a long list stays quick).
+ * read, and only the rows whose selection (or last copy) changes when
+ * another entry is clicked (a long list stays quick).
  */
 import {act, fireEvent, render, screen} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw';
-import React from 'react';
 import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
@@ -16,31 +15,38 @@ import {TestAppRouter} from '../util/TestAppRouter';
 
 const renders = vi.hoisted(() => ({rows: 0, bodies: 0}));
 
-// The rows and their bodies, counted: each wrapper is memoized as the
-// component it wraps, so it renders exactly when that would.
-vi.mock('../../src/components/entries/Entry', async importOriginal => {
+/** Whether the hook calling this was called by a component in `file`. */
+const calledIn = (file: string) =>
+  (new Error().stack ?? '').split('\n')[3]?.includes(`/entries/${file}:`) ??
+  false;
+
+// The rows' and their bodies' renders, every one (from their props or
+// their subscriptions): each calls these hooks once a render.
+vi.mock('../../src/lib/data/hooks', async importOriginal => {
   const actual =
-    await importOriginal<typeof import('../../src/components/entries/Entry')>();
-  const Counted = React.memo(
-    (props: React.ComponentProps<typeof actual.Entry>) => {
-      renders.rows += 1;
-      return <actual.Entry {...props} />;
-    }
-  );
-  return {...actual, Entry: Counted};
+    await importOriginal<typeof import('../../src/lib/data/hooks')>();
+  return {
+    ...actual,
+    useSession: () => {
+      if (calledIn('Entry.tsx')) {
+        renders.rows += 1;
+      }
+      return actual.useSession();
+    },
+  };
 });
-vi.mock('../../src/components/entries/EntryBody', async importOriginal => {
+vi.mock('../../src/lib/state/appState', async importOriginal => {
   const actual =
-    await importOriginal<
-      typeof import('../../src/components/entries/EntryBody')
-    >();
-  const Counted = React.memo(
-    (props: React.ComponentProps<typeof actual.MemoizedEntryBody>) => {
-      renders.bodies += 1;
-      return <actual.MemoizedEntryBody {...props} />;
-    }
-  );
-  return {...actual, MemoizedEntryBody: Counted};
+    await importOriginal<typeof import('../../src/lib/state/appState')>();
+  return {
+    ...actual,
+    useAppConfig: () => {
+      if (calledIn('EntryBody.tsx')) {
+        renders.bodies += 1;
+      }
+      return actual.useAppConfig();
+    },
+  };
 });
 
 const API = 'http://localhost:9001/api/v1';
@@ -79,6 +85,7 @@ it('renders each row once when read, and only the changed rows on selection', as
   history.push('/test?entries=all');
   render(<TestAppRouter history={history} />);
   await screen.findByText(`subject ${COUNT}`);
+  expect(renders.rows).toBeGreaterThanOrEqual(COUNT);
   // (The first entry is selected once the list is read.)
   expect(renders.rows).toBeLessThanOrEqual(COUNT + 1);
 
@@ -87,7 +94,9 @@ it('renders each row once when read, and only the changed rows on selection', as
   await act(async () => {
     fireEvent.click(screen.getByText(`body-${COUNT / 2}`));
   });
-  // The entry selected before, and the one selected now.
-  expect(renders.bodies).toBeLessThanOrEqual(2);
-  expect(renders.rows).toBeLessThanOrEqual(2);
+  // The entry selected (and copied) before, and the one now: a few renders
+  // each (selected, copied), none of the other rows'.
+  expect(renders.rows).toBeGreaterThan(0);
+  expect(renders.rows).toBeLessThanOrEqual(6);
+  expect(renders.bodies).toBeLessThanOrEqual(4);
 });
