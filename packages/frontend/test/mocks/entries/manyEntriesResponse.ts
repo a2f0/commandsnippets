@@ -9,9 +9,21 @@ import {onePage} from '../../../src/msw/documents';
 
 const user = {data: {type: 'User', id: '1'}} as const;
 
-// Generate many entries for Holy Grail layout testing
-const generateManyEntries = (
-  count: number
+const pad = (n: number) => n.toString().padStart(2, '0');
+/** Entry `i`'s revision (distinct and valid for up to 3599 entries). */
+const revisionOf = (i: number, fraction: string) =>
+  `2024-12-01T${pad(10 + Math.floor(i / 3600))}:${pad(Math.floor(i / 60) % 60)}:${pad(i % 60)}.${fraction}`;
+
+const holyGrailBody = (i: number) =>
+  `Test entry ${i} - This is a longer entry body to test the Holy Grail layout with scrollable content. The bottom toolbar should remain sticky at the bottom of the viewport regardless of how much content is in the entries list. This entry contains enough text to ensure the list will scroll.`;
+
+/**
+ * `count` entries, all in tag 1 (bodies by `body`, the Holy Grail layout's
+ * by default), with their junctions.
+ */
+export const generateManyEntries = (
+  count: number,
+  body: (i: number) => string = holyGrailBody
 ): TextEntryListDocument & JsonObject => {
   const entries: Array<TextEntry & JsonObject> = [];
   const throughModels: TagTextEntry[] = [];
@@ -21,10 +33,10 @@ const generateManyEntries = (
       type: 'TextEntry',
       id: `${i}`,
       attributes: {
-        body: `Test entry ${i} - This is a longer entry body to test the Holy Grail layout with scrollable content. The bottom toolbar should remain sticky at the bottom of the viewport regardless of how much content is in the entries list. This entry contains enough text to ensure the list will scroll.`,
+        body: body(i),
         subject: `Holy Grail Test Entry ${i}`,
-        date_updated: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.995003`,
-        date_created: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.994989`,
+        date_updated: revisionOf(i, '995003'),
+        date_created: revisionOf(i, '994989'),
         reused_count: 0,
         is_deleted: false,
         tag_count: 1,
@@ -43,8 +55,8 @@ const generateManyEntries = (
       id: `${i}`,
       attributes: {
         order: i,
-        date_updated: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.995003`,
-        date_created: `2024-12-${i.toString().padStart(2, '0')}T10:30:${i.toString().padStart(2, '0')}.994989`,
+        date_updated: revisionOf(i, '995003'),
+        date_created: revisionOf(i, '994989'),
         is_deleted: false,
       },
       relationships: {

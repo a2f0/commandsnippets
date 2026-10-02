@@ -243,8 +243,6 @@ const EntryList = () => {
         return (
           // Keyed so a row made here stays the same component (an open
           // editor and its text too) when the API's id replaces its own.
-          // The browser skips laying out and painting rows off screen
-          // (`content-visibility`), sizing them as last rendered.
           <div
             key={keyOfRow(element)}
             ref={element_ => {
@@ -254,7 +252,6 @@ const EntryList = () => {
                 rows.current.set(element.id, element_);
               }
             }}
-            style={ROW_STYLE}
           >
             <Entry
               id={element.id}
@@ -281,12 +278,6 @@ const EntryList = () => {
       {appConfig.loggedInUser && !readOnly && <>{contextMenu}</>}
     </Box>
   );
-};
-
-/** Rows off screen are not laid out or painted (sized as last rendered). */
-const ROW_STYLE: React.CSSProperties = {
-  contentVisibility: 'auto',
-  containIntrinsicSize: 'auto 60px',
 };
 
 const memoizedEntryList = React.memo(EntryList);
