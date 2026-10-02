@@ -353,9 +353,10 @@ export async function leaveForeignSession(username: string): Promise<void> {
   }
 }
 
-// Set while a sign-out the user chose to make without their queued writes
-// resets the state: their data goes, queue and all.
-let discardingQueued = false;
+// The user signing out by choice without their queued writes, while they
+// do: however their sign-out happens (the API's answer, or a 401 ending the
+// session first), their data goes, queue and all.
+let discardingFor: string | null = null;
 
 /**
  * Sign out through the API (it ends the session), then here
@@ -371,24 +372,24 @@ export async function signOut({
   discardQueued?: boolean;
 } = {}): Promise<void> {
   const username = useAppState.getState().loggedInUser;
+  discardingFor = discardQueued ? username : null;
   try {
-    await apiClient.logout();
-  } catch (error: unknown) {
-    if (error instanceof UserMismatchError && username !== null) {
-      await leaveForeignSession(username);
-      return;
-    }
-    console.error('Logout error:', error);
-  }
-  // Unless this tab has left that session meanwhile (another tab's sign-in
-  // taken up), which stands.
-  if (useAppState.getState().loggedInUser === username) {
-    discardingQueued = discardQueued;
     try {
-      resetApplicationState();
-    } finally {
-      discardingQueued = false;
+      await apiClient.logout();
+    } catch (error: unknown) {
+      if (error instanceof UserMismatchError && username !== null) {
+        await leaveForeignSession(username);
+        return;
+      }
+      console.error('Logout error:', error);
     }
+    // Unless this tab has left that session meanwhile (another tab's sign-in
+    // taken up), which stands.
+    if (useAppState.getState().loggedInUser === username) {
+      resetApplicationState();
+    }
+  } finally {
+    discardingFor = null;
   }
 }
 
@@ -407,7 +408,7 @@ useAppState.subscribe((state, previous) => {
   const {loggedInUser: leaving} = previous;
   if (leaving !== null && state.loggedInUser !== leaving) {
     cleanedUp = endSyncSession(leaving, {
-      discardQueued: discardingQueued,
+      discardQueued: discardingFor === leaving,
     }).catch((error: unknown) => {
       console.error('ERROR: could not delete the IndexedDB data:', error);
     });

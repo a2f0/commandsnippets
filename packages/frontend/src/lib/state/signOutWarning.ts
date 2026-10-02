@@ -9,21 +9,35 @@ import {queuedCount} from '../sync/outbox';
 import {syncSession} from '../sync/session';
 import {signOut, useAppState} from './appState';
 
-/** How long a sign-out waits for the queue to be sent before warning. */
-export const FLUSH_WAIT_MS = 5000;
+/**
+ * How long a sign-out waits for the queue to be sent before warning (in
+ * milliseconds; tests shorten it).
+ */
+export const signOutTiming = {flushWaitMs: 5000};
 
 interface SignOutWarningState {
   /** The writes still unsent when the user asked to sign out (shown). */
   unsent: number | null;
+  /** The user who asked: the warning is theirs only. */
+  username: string | null;
 }
 
-export const useSignOutWarning = create<SignOutWarningState>(() => ({
-  unsent: null,
-}));
+const none = {unsent: null, username: null};
+
+export const useSignOutWarning = create<SignOutWarningState>(() => none);
+
+// Another account (or none) signed in meanwhile: the warning was the last
+// one's, and goes.
+useAppState.subscribe((state, previous) => {
+  if (state.loggedInUser !== previous.loggedInUser) {
+    useSignOutWarning.setState(none);
+  }
+});
 
 /**
- * The user asked to sign out: send the queue (waiting `FLUSH_WAIT_MS` at
- * most), then sign out, or warn when writes are still unsent.
+ * The user asked to sign out: send the queue (waiting
+ * `signOutTiming.flushWaitMs` at most), then sign out, or warn when writes
+ * are still unsent.
  */
 export async function requestSignOut(): Promise<void> {
   const username = useAppState.getState().loggedInUser;
@@ -33,30 +47,39 @@ export async function requestSignOut(): Promise<void> {
   const {db, sync} = syncSession(username);
   await Promise.race([
     sync.flush().catch(() => undefined),
-    new Promise(resolve => setTimeout(resolve, FLUSH_WAIT_MS)),
+    new Promise(resolve => setTimeout(resolve, signOutTiming.flushWaitMs)),
   ]);
   const unsent = await queuedCount(db, username);
+  // Signed out, or in as another, meanwhile: nothing to do.
+  if (useAppState.getState().loggedInUser !== username) {
+    return;
+  }
   if (unsent === 0) {
     await signOut();
     return;
   }
-  useSignOutWarning.setState({unsent});
+  useSignOutWarning.setState({unsent, username});
 }
 
 /** Stay signed in, the writes queued. */
 export function cancelSignOut(): void {
-  useSignOutWarning.setState({unsent: null});
+  useSignOutWarning.setState(none);
 }
 
 /**
  * Sign out after the warning: keeping the unsent writes on this device, or
- * discarding them.
+ * discarding them. Only as the user it warned (a warning left from another
+ * account does nothing).
  */
 export async function confirmSignOut({
   discardQueued,
 }: {
   discardQueued: boolean;
 }): Promise<void> {
-  useSignOutWarning.setState({unsent: null});
+  const {username} = useSignOutWarning.getState();
+  useSignOutWarning.setState(none);
+  if (username === null || useAppState.getState().loggedInUser !== username) {
+    return;
+  }
   await signOut({discardQueued});
 }

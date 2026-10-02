@@ -97,7 +97,7 @@ API; everything else the app keeps is a zustand store.
   next sign-in here sends them (`discardQueued` deletes it all the same).
   `signedOutDataCleanedUp()` settles once that is done. The logout menus
   sign out through `requestSignOut` (`src/lib/state/signOutWarning.ts`):
-  the queue is sent first (waiting `FLUSH_WAIT_MS` at most), and writes
+  the queue is sent first (waiting `signOutTiming.flushWaitMs` at most), and writes
   still unsent bring up a warning (`SignOutWarning`): stay, sign out
   keeping them on this device, or discard them
   (`signOut({discardQueued: true})`). Kept data is bound
