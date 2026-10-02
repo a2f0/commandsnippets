@@ -3,7 +3,7 @@ import {Box} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
 import invariant from 'invariant';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {
@@ -67,34 +67,35 @@ const EntryList = () => {
       : sortTagEntries(tagged, tagOrder, search);
   }, [listsAll, listed, tagged, entryOrder, tagOrder, search]);
 
-  // The list as the database has it now: a drag reorders this copy until the
-  // drop is stored.
-  const [entries, setEntries] = useState<Array<TextEntry>>([]);
+  // The list as the database has it now, rendered as soon as it is read: a
+  // drag reorders a copy of it (`dragged`), which a newer list (the drop
+  // stored) replaces.
+  const [dragged, setDragged] = useState<{
+    of: TextEntry[];
+    entries: TextEntry[];
+  } | null>(null);
+  const entries = useMemo(
+    () =>
+      dragged !== null && dragged.of === shown
+        ? dragged.entries
+        : (shown ?? []),
+    [dragged, shown]
+  );
   useEffect(() => {
-    if (shown === undefined) {
-      return;
-    }
-    setEntries(shown);
-    const [first] = shown;
+    const [first] = shown ?? [];
     if (
       first !== undefined &&
-      !shown.some(entry => entry.id === appConfig.entrySelectedID)
+      !shown?.some(entry => entry.id === appConfig.entrySelectedID)
     ) {
       appConfig.setEntrySelectedID(first.id);
     }
   }, [shown, appConfig]);
 
-  const [elRefs, setElRefs] = useState<
-    Array<React.RefObject<HTMLDivElement | null>>
-  >([]);
-
-  useEffect(() => {
-    setElRefs(
-      Array.from({length: entries.length}, () =>
-        React.createRef<HTMLDivElement | null>()
-      )
-    );
-  }, [entries.length]);
+  // Each row's element, by entry id (for scrolling the selection into view).
+  const rows = useRef(new Map<string, HTMLDivElement>());
+  const rowOf = (entryId: string | undefined) => ({
+    current: entryId === undefined ? null : (rows.current.get(entryId) ?? null),
+  });
 
   const keyListener = useCallback(
     (event: KeyboardEvent) => {
@@ -116,8 +117,7 @@ const EntryList = () => {
               const entry = entries[newIndex];
               if (entry) {
                 appConfig.setEntrySelectedID(entry.id);
-                const elRef = elRefs[newIndex];
-                invariant(elRef, 'entry ref is undefined');
+                const elRef = rowOf(entry.id);
                 if (needsScrollingIntoView(elRef, theme)) {
                   elRef.current?.scrollIntoView({
                     behavior: 'auto',
@@ -132,8 +132,7 @@ const EntryList = () => {
               const entry = entries[newIndex];
               invariant(entry, 'entry is undefined');
               appConfig.setEntrySelectedID(entry.id);
-              const elRef = elRefs[newIndex];
-              invariant(elRef, 'entry ref is undefined');
+              const elRef = rowOf(entry.id);
               if (needsScrollingIntoView(elRef, theme)) {
                 elRef.current?.scrollIntoView({
                   behavior: 'auto',
@@ -149,7 +148,7 @@ const EntryList = () => {
         }
       }
     },
-    [appConfig, entries, elRefs, theme]
+    [appConfig, entries, theme]
   );
 
   useEffect(() => {
@@ -181,19 +180,22 @@ const EntryList = () => {
       const newEntries = [...entries];
       newEntries.splice(index, 1);
       newEntries.splice(atIndex, 0, entry);
-      setEntries(newEntries);
+      setDragged({of: shown ?? [], entries: newEntries});
     },
-    [findEntry, entries]
+    [findEntry, entries, shown]
   );
 
-  const findEntryByIndex = (index: number): TextEntry | null => {
-    if (index > entries.length - 1) {
-      return null;
-    }
-    const entry = entries[index];
-    invariant(entry, 'entry is undefined');
-    return entry;
-  };
+  const findEntryByIndex = useCallback(
+    (index: number): TextEntry | null => {
+      if (index > entries.length - 1) {
+        return null;
+      }
+      const entry = entries[index];
+      invariant(entry, 'entry is undefined');
+      return entry;
+    },
+    [entries]
+  );
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
@@ -241,7 +243,16 @@ const EntryList = () => {
         return (
           // Keyed so a row made here stays the same component (an open
           // editor and its text too) when the API's id replaces its own.
-          <div key={keyOfRow(element)} ref={elRefs[index]}>
+          <div
+            key={keyOfRow(element)}
+            ref={element_ => {
+              if (element_ === null) {
+                rows.current.delete(element.id);
+              } else {
+                rows.current.set(element.id, element_);
+              }
+            }}
+          >
             <Entry
               id={element.id}
               index={index}

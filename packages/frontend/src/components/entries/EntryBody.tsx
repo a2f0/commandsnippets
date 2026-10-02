@@ -3,15 +3,20 @@ import {useTheme} from '@mui/material/styles';
 import React from 'react';
 import Highlighter from 'react-highlight-words';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
-import {appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 
 export interface IProps {
   handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   object: ITextEntryJsonApi;
+  /**
+   * Whether the entry is the one selected in the list: given by its row,
+   * which watches that alone, so selecting another entry renders only the
+   * two rows it changes.
+   */
+  selected: boolean;
 }
 
-const EntryBody = ({object, handleClick}: IProps) => {
+const EntryBody = ({object, handleClick, selected}: IProps) => {
   const appConfig = useAppConfig();
   const theme: Theme = useTheme();
 
@@ -29,10 +34,7 @@ const EntryBody = ({object, handleClick}: IProps) => {
     lineHeight: 'normal',
   };
 
-  if (
-    object.id === appConfig.entrySelectedID &&
-    appConfig.appMode === appMode.entriesList
-  ) {
+  if (selected) {
     styleOuterDiv.backgroundColor = theme.selected.background;
     style.color = theme.selected.foreground;
   }
