@@ -252,6 +252,20 @@ describe('a queue that takes longer to send than sign-out waits', () => {
     expect(store.loggedInUser).toBe(TEST_USER);
   });
 
+  it("lets another user signed in meanwhile sign out, not joining the first's wait", async () => {
+    signOutTiming.flushWaitMs = 2000;
+    await queueHanging();
+    const first = requestSignOut();
+    // Another account signs in here while the first's queue is being sent.
+    act(() => store.setLoggedInUser('alice'));
+
+    // Its own sign-out: decided at once (alice has nothing queued).
+    await requestSignOut();
+    expect(store.loggedInUser).toBeNull();
+    release();
+    await first;
+  });
+
   it('warns while it is still being sent, and signs out discarding it', async () => {
     const {history, click} = await logOut();
     const name = await queueHanging();
