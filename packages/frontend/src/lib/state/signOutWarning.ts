@@ -34,9 +34,10 @@ useAppState.subscribe((state, previous) => {
   }
 });
 
-// The sign-out the user asked for, while it decides: asking again (another
-// click) joins it, never warning a second time after a Cancel.
-let requested: Promise<void> | null = null;
+// The sign-out a user asked for, while it decides: asking again as that
+// user (another click) joins it, never warning a second time after a
+// Cancel. Another user signed in meanwhile asks anew.
+let requested: {username: string | null; deciding: Promise<void>} | null = null;
 
 /**
  * The user asked to sign out: send the queue (waiting
@@ -45,14 +46,19 @@ let requested: Promise<void> | null = null;
  * the same, any queued writes kept on this device (`endSyncSession`).
  */
 export function requestSignOut(): Promise<void> {
-  requested ??= decideSignOut().finally(() => {
-    requested = null;
-  });
-  return requested;
+  const username = useAppState.getState().loggedInUser;
+  if (requested?.username !== username) {
+    const deciding: Promise<void> = decideSignOut(username).finally(() => {
+      if (requested?.deciding === deciding) {
+        requested = null;
+      }
+    });
+    requested = {username, deciding};
+  }
+  return requested.deciding;
 }
 
-async function decideSignOut(): Promise<void> {
-  const username = useAppState.getState().loggedInUser;
+async function decideSignOut(username: string | null): Promise<void> {
   if (username === null) {
     return;
   }
