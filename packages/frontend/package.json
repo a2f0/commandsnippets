@@ -81,6 +81,7 @@
     "@emotion/styled": "11.14.1",
     "@mui/icons-material": "9.4.0",
     "@mui/material": "9.4.0",
+    "@tanstack/react-virtual": "3.14.13",
     "dexie": "4.4.6",
     "dexie-react-hooks": "4.4.0",
     "i18next": "26.4.2",
