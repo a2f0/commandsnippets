@@ -7,7 +7,7 @@ manager and script runner.
 
 It replaces the Django backend in `../../backend`. Routes, JSON:API documents,
 cookies, tokens, timestamps and error messages follow Django's wherever clients
-rely on them, but it is not a drop-in replacement: reads are owner-only,
+rely on them, but it is not a drop-in replacement: the original collection routes are owner-only,
 staging has its own cookie names, and staff get an admin API (see
 [Differences from the Django backend](#differences-from-the-django-backend)).
 The web client must be a build that knows these (see
@@ -256,6 +256,28 @@ creates answered with it (of a name the user had). Tags and entries render
 the `client_id` of the create that made them, so a client whose create's
 answer was lost recognizes the row when it syncs it. Untagging answers with the junction, and untagging one already untagged
 changes nothing, so a retried untag is answered as the first was.
+
+## Public user data
+
+`GET /api/v1/users/:username` identifies a data owner without exposing account
+details. Its `/tags`, `/entries`, and `/tags_entries` routes reuse the existing
+filters, sorts, includes, and pagination. Owners and staff receive full reads;
+everyone else receives only public data. `X-Data-Access: public` pins a public
+read even for an owner or staff member. These routes accept no writes.
+
+Tags and entries have `is_public`, defaulting to false (including existing rows
+in migration `0013`). Owners change it through their existing PATCH routes.
+An entry is visible only when it and at least one attached, live, same-owner
+tag are public. Public responses omit private tags, entries, junctions, and
+their counts. Deleted data and inactive or deletion-marked accounts are hidden.
+
+Migration `0014` adds triggers that advance the owner's `public_revision` on
+content, visibility, relationship, or account availability changes. Public
+clients send `X-Public-Revision` and `X-Data-Owner-Id` from the owner metadata;
+a mismatch returns `409 view_changed`. The API checks the revision again after
+serialization, and public clients clear that owner's rows and cursors before
+restarting a paginated sync. Public responses use `Cache-Control: no-store`.
+Full owner/admin incremental cursors retain their existing behavior.
 
 ## Admin API
 

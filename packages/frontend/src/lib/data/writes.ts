@@ -239,6 +239,7 @@ export async function createTag(
         date_last_used: made,
         date_updated: made,
         entry_count: 0,
+        is_public: false,
         order: bottomOf(tags.map(other => other.attributes.order)),
         is_deleted: false,
       },
@@ -279,6 +280,53 @@ export async function renameTag(
     return {
       writes: [{kind: 'renameTag', tagId: tag.id, name}],
       result: renamed,
+    };
+  });
+}
+
+/** Visibility changes use the same local queue and last-writer rules as edits. */
+export async function setTagPublic(
+  session: SyncSession,
+  tagId: string,
+  isPublic: boolean
+): Promise<void> {
+  await write(session, async () => {
+    const tag = await rowNamed(session.db.tags, session.owner, tagId);
+    if (tag === undefined) return {writes: [], result: undefined};
+    await session.db.tags.put({
+      ...tag,
+      attributes: {
+        ...tag.attributes,
+        is_public: isPublic,
+        date_updated: madeNow(),
+      },
+    });
+    return {
+      writes: [{kind: 'setTagPublic', tagId: tag.id, isPublic}],
+      result: undefined,
+    };
+  });
+}
+
+export async function setEntryPublic(
+  session: SyncSession,
+  entryId: string,
+  isPublic: boolean
+): Promise<void> {
+  await write(session, async () => {
+    const entry = await rowNamed(session.db.entries, session.owner, entryId);
+    if (entry === undefined) return {writes: [], result: undefined};
+    await session.db.entries.put({
+      ...entry,
+      attributes: {
+        ...entry.attributes,
+        is_public: isPublic,
+        date_updated: madeNow(),
+      },
+    });
+    return {
+      writes: [{kind: 'setEntryPublic', entryId: entry.id, isPublic}],
+      result: undefined,
     };
   });
 }
@@ -422,6 +470,7 @@ export async function createEntry(
         date_created: made,
         date_updated: made,
         reused_count: 0,
+        is_public: false,
         is_deleted: false,
         tag_count: 0,
       },

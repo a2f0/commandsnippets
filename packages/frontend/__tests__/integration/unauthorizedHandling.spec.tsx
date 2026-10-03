@@ -31,6 +31,7 @@ const tag: TagDocument = {
       date_created: '2026-09-28T12:00:00',
       date_last_used: '2026-09-28T12:00:00',
       date_updated: '2026-09-28T12:00:00.000001',
+      is_public: false,
       entry_count: 0,
       order: 1,
       is_deleted: false,

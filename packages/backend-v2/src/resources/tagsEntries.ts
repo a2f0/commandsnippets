@@ -31,6 +31,7 @@ import {
   tagTextEntryResource,
   textEntryResource,
 } from './owned';
+import {publicJunction} from './publicPolicy';
 import {resolveRelated} from './related';
 import {reorder} from './reorder';
 import {TAG_TEXT_ENTRY} from './resourceTypes';
@@ -101,10 +102,16 @@ export const tagEntryRoutes = new Hono<AppEnv>();
  * it since. The requester's own (`GET /tags_entries`), or for staff another
  * user's, read-only (`GET /admin/users/:id/tags_entries`).
  */
-export const listTagEntries = (c: Context<AppEnv>, owner: User) =>
+export const listTagEntries = (
+  c: Context<AppEnv>,
+  owner: User,
+  publicOnly = false
+) =>
   listResponse(c, {
     ...tagTextEntryResource,
     user: owner,
+    publicOnly,
+    ...(publicOnly ? {visibility: publicJunction(owner.id)} : {}),
     query: tagTextEntryListQuerySchema,
     filters: {
       tag__id: value => eq(tagsEntries.tag_id, value),

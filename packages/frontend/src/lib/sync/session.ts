@@ -2,11 +2,13 @@
  * The signed-in user's database and its syncs (`sync.ts`): opened for a user
  * on first use, and deleted when they sign out. The database holds their own
  * data and, for staff, the data of the users whose data they read, each
- * user's under their username; each has its own session.
+ * user's under their username; each has its own session. Public sessions
+ * use a separate database, with rows and cursors partitioned by owner.
  */
 import {Dexie} from 'dexie';
 import {adminSyncApi} from '../api/adminApi';
 import {apiClient} from '../api/apiClient';
+import {publicSyncApi} from '../api/publicApi';
 import {
   CommandsnippetsDatabase,
   databaseName,
@@ -56,6 +58,38 @@ interface OpenDatabase {
 }
 
 let open: OpenDatabase | null = null;
+let publicOpen: OpenDatabase | null = null;
+
+/** Public rows and cursors can never inherit the owner's or staff's full view. */
+export function publicSyncSession(owner: string): SyncSession {
+  if (publicOpen === null || publicOpen.db.hasBeenClosed()) {
+    const db = new CommandsnippetsDatabase(
+      `commandsnippets-${environment}-public`
+    );
+    db.on('versionchange', () => {
+      publicOpen = null;
+      ended();
+    });
+    publicOpen = {username: '', db, sessions: new Map()};
+  }
+  let session = publicOpen.sessions.get(owner);
+  if (session === undefined) {
+    session = {
+      username: '',
+      owner,
+      readOnly: true,
+      db: publicOpen.db,
+      sync: createSyncEngine(
+        publicOpen.db,
+        publicSyncApi(owner),
+        `${publicOpen.db.name}:${owner}`,
+        owner
+      ),
+    };
+    publicOpen.sessions.set(owner, session);
+  }
+  return session;
+}
 
 // Told when the open database's sessions end, for the UI to open the next
 // (`subscribeSessions`).

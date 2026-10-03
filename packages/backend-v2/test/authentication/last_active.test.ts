@@ -23,6 +23,7 @@ describe('LastActive', () => {
 
   it('advances on every authenticated request, whatever its outcome', async () => {
     const user = await userFactory();
+    const before = await refreshUser(user.id);
     const joined = await lastActive(user.id);
     const client = new ApiClient(await tokenFor(user.id));
 
@@ -36,7 +37,10 @@ describe('LastActive', () => {
     expect(second > first).toBe(true);
 
     // Only last_active moves: not the revision clients sync on, nor logins.
-    expect(await refreshUser(user.id)).toEqual({...user, last_active: second});
+    expect(await refreshUser(user.id)).toEqual({
+      ...before,
+      last_active: second,
+    });
   });
 
   it('advances for a token in an Authorization header', async () => {

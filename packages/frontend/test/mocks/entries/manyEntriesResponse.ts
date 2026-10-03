@@ -37,6 +37,7 @@ export const generateManyEntries = (
         subject: `Holy Grail Test Entry ${i}`,
         date_updated: revisionOf(i, '995003'),
         date_created: revisionOf(i, '994989'),
+        is_public: false,
         reused_count: 0,
         is_deleted: false,
         tag_count: 1,

@@ -1,7 +1,7 @@
 import {Box} from '@mui/material';
 import React, {useCallback, useEffect} from 'react';
 import {useCookies} from 'react-cookie';
-import {useLocation, useNavigate, useParams} from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import {AppHeader} from '../components/AppHeader';
 import {BottomToolbar} from '../components/bottomBar/BottomToolbar';
 import {LeftDrawer} from '../components/drawer/LeftDrawer';
@@ -34,17 +34,6 @@ const EntriesPageContent = () => {
       navigate(`/${appConfig.loggedInUser}`);
     }
   }, [location.pathname, appConfig.loggedInUser, navigate]);
-
-  // Another user's page is for staff (who read that user's data there);
-  // anyone else goes to their own.
-  const {user} = useParams();
-  const owner = useOwner();
-  const ownPage = owner === null || owner.readOnly ? null : owner.owner;
-  useEffect(() => {
-    if (user !== undefined && ownPage !== null && user !== ownPage) {
-      navigate(`/${ownPage}`, {replace: true});
-    }
-  }, [user, ownPage, navigate]);
 
   // If the user has cleared their cookies, log them out from the application state.
   // Note: this is not the Authorization cookie containing the authorization token.
@@ -95,9 +84,11 @@ const MemoizedEntriesPageContent = React.memo(EntriesPageContent);
  */
 const EntriesPage = () => {
   const loggedInUser = useAppState(state => state.loggedInUser);
-  const owner = useOwner()?.owner;
+  const context = useOwner();
   return (
-    <MemoizedEntriesPageContent key={`${loggedInUser ?? ''}:${owner ?? ''}`} />
+    <MemoizedEntriesPageContent
+      key={`${loggedInUser ?? ''}:${context?.owner ?? ''}:${context?.publicOnly ? 'public' : 'full'}`}
+    />
   );
 };
 

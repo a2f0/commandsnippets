@@ -2,6 +2,8 @@ import {Menu} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 import {useParams, useSearchParams} from 'react-router-dom';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
+import {useSession} from '../../lib/data/hooks';
+import {setEntryPublic} from '../../lib/data/writes';
 import type {IMouse} from '../../lib/shared';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 
@@ -63,7 +65,9 @@ const EntryContextMenu = ({
   handleBeginEditParent,
   handleCopyParent,
   readOnly,
+  text_entry,
 }: IEntryContextMenu) => {
+  const session = useSession();
   const initialMouse: IMouse = {
     mouseX: null,
     mouseY: null,
@@ -134,6 +138,24 @@ const EntryContextMenu = ({
           }}
         >
           Edit
+        </StyledMenuItem>
+      )}
+      {!readOnly && (
+        <StyledMenuItem
+          id={`entry-context-menu-${id}-visibility`}
+          onClick={() => {
+            handleClose();
+            if (session !== null)
+              void setEntryPublic(
+                session,
+                id,
+                !text_entry.attributes.is_public
+              ).catch((error: unknown) =>
+                console.error('Failed to change entry visibility:', error)
+              );
+          }}
+        >
+          {text_entry.attributes.is_public ? 'Make private' : 'Make public'}
         </StyledMenuItem>
       )}
       {!readOnly && (

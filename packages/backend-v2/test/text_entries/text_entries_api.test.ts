@@ -56,7 +56,7 @@ describe('TestTextEntriesApi', () => {
     expect(data.id).toBe(String(entry1.id));
 
     const attributes = data.attributes;
-    expect(Object.keys(attributes).length).toBe(8);
+    expect(Object.keys(attributes).length).toBe(9);
     expect(attributes.subject).toBe(entry1.subject);
     expect(attributes.body).toBe(entry1.body);
     expect(attributes.date_created).toBe(isoformat(entry1.date_created));
@@ -73,7 +73,7 @@ describe('TestTextEntriesApi', () => {
     // Test Tag (first included item)
     const tagData = included[0];
     expect(tagData.type).toBe('Tag');
-    expect(Object.keys(tagData.attributes).length).toBe(8);
+    expect(Object.keys(tagData.attributes).length).toBe(9);
     expect(tagData.attributes.name).toBe(tag1.name);
     expect(tagData.attributes.date_created).toBe(isoformat(tag1.date_created));
     expect(tagData.attributes.date_last_used).toBe(

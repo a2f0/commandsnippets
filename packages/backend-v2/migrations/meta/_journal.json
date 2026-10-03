@@ -92,6 +92,20 @@
       "when": 1790883020578,
       "tag": "0012_client_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1791032876312,
+      "tag": "0013_public_visibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1791032876592,
+      "tag": "0014_public_revisions",
+      "breakpoints": true
     }
   ]
 }

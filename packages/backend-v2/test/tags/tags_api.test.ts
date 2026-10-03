@@ -55,7 +55,7 @@ describe('TestTagsApi', () => {
     expect(data[0].id).toBe(String(tag.id));
 
     const attributes = data[0].attributes;
-    expect(Object.keys(attributes)).toHaveLength(8);
+    expect(Object.keys(attributes)).toHaveLength(9);
     expect(attributes.name).toBe(tag.name);
     expect(attributes.date_created).toBe(isoformat(tag.date_created));
     expect(attributes.date_updated).toBe(isoformat(tag.date_updated));

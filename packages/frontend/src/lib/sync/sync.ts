@@ -59,6 +59,7 @@ import {
   type Remap,
 } from './outbox';
 import {SYNC_PAGE_SIZE} from './pageSize';
+import {PublicViewChangedError} from './publicView';
 import {checkOwner, putEntries, putJunctions, putTags} from './store';
 
 /**
@@ -67,7 +68,7 @@ import {checkOwner, putEntries, putJunctions, putTags} from './store';
  */
 export interface SyncApi {
   /** The user whose data the reads return. */
-  getOwner(): Promise<{id: string; username: string}>;
+  getOwner(): Promise<{id: string; username: string; publicRevision?: number}>;
   getTagsAfter(after: string): Promise<TagCursorListDocument>;
   getEntriesAfter(after: string): Promise<TextEntryCursorListDocument>;
   /** Counts the same rows the entry cursor reads, including deletions. */
@@ -144,12 +145,13 @@ async function readAfter<P extends Page>(
 }
 
 /** The id of the user whose data the API reads, who must be `owner`. */
-async function ownerOf(api: SyncApi, owner: string): Promise<string> {
-  const {id, username} = await api.getOwner();
+async function ownerOf(api: SyncApi, owner: string) {
+  const identity = await api.getOwner();
+  const {username} = identity;
   if (username !== owner) {
     throw new SyncUserError(owner, username);
   }
-  return id;
+  return identity;
 }
 
 /** The account a stored row of `owner`'s in `table` names, if any does. */
@@ -253,9 +255,45 @@ async function bindToApi(
   owner: string
 ): Promise<string> {
   const held = await boundAccount(db, owner);
-  const ownerId = await ownerOf(api, owner);
+  const {id: ownerId, publicRevision} = await ownerOf(api, owner);
   await bindOwner(db, owner, ownerId, {held});
+  if (publicRevision !== undefined) {
+    await db.transaction(
+      'rw',
+      [db.tags, db.entries, db.junctions, db.cursors],
+      async () => {
+        const revision = String(publicRevision);
+        if (
+          (await db.cursors.get([owner, 'public_revision']))?.after !== revision
+        ) {
+          await clearPublicOwner(db, owner);
+          await db.cursors.put({owner, key: OWNER_ID_KEY, after: ownerId});
+          await db.cursors.put({
+            owner,
+            key: 'public_revision',
+            after: revision,
+          });
+        }
+      }
+    );
+  }
   return ownerId;
+}
+
+/** Only a public cache uses this: never removes an owner's queued writes. */
+async function clearPublicOwner(
+  db: CommandsnippetsDatabase,
+  owner: string
+): Promise<void> {
+  await db.transaction(
+    'rw',
+    [db.tags, db.entries, db.junctions, db.cursors],
+    async () => {
+      for (const table of [db.tags, db.entries, db.junctions, db.cursors]) {
+        await table.where('owner').equals(owner).delete();
+      }
+    }
+  );
 }
 
 /**
@@ -492,16 +530,29 @@ export function createSyncEngine(
   let tagSyncsWaiting = 0;
   const exclusive = <T>(task: () => Promise<T>): Promise<T> => {
     const locks = globalThis.navigator?.locks;
+    const checked = async () => {
+      try {
+        return await task();
+      } catch (error) {
+        if (error instanceof PublicViewChangedError)
+          await clearPublicOwner(db, owner);
+        throw error;
+      }
+    };
     const run = () =>
-      locks === undefined ? task() : locks.request(lockName, task);
+      locks === undefined ? checked() : locks.request(lockName, checked);
     const result = queue.then(run, run);
     queue = result.catch(() => undefined);
     return result;
   };
   const syncAllToTheEnd = (): Promise<void> =>
-    exclusive(() => syncAll(db, api, owner, () => tagSyncsWaiting > 0)).then(
-      done => (done ? undefined : syncAllToTheEnd())
-    );
+    exclusive(() => syncAll(db, api, owner, () => tagSyncsWaiting > 0))
+      .then(done => (done ? undefined : syncAllToTheEnd()))
+      .catch((error: unknown) => {
+        if (error instanceof PublicViewChangedError && error.restart)
+          return syncAllToTheEnd();
+        throw error;
+      });
   // One flush at a time; one asked for while it runs runs again after it, so
   // a write queued meanwhile is sent.
   let flushing: Promise<void> | null = null;

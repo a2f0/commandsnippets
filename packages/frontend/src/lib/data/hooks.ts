@@ -4,8 +4,8 @@
  * change the moment a sync or a write stores it, whichever tab it came from.
  * Each is `undefined` until the database answers the first time.
  *
- * The data is the signed-in user's own, or for staff on another user's page
- * (`/:user`) that user's, read-only (`useOwner`). Every query names whose.
+ * Owners read their own data; staff read other users' full data; other
+ * visitors read public data. Every query names whose (`useOwner`).
  */
 import type {
   Tag,
@@ -18,6 +18,7 @@ import {useParams} from 'react-router-dom';
 import type {RowKey} from '../db/database';
 import {useAppState} from '../state/appState';
 import {
+  publicSyncSession,
   type SyncSession,
   sessionsEndedCount,
   subscribeSessions,
@@ -33,25 +34,26 @@ export interface Owner {
   owner: string;
   /** Another user's data, which the page only shows. */
   readOnly: boolean;
+  publicOnly: boolean;
 }
 
 /**
- * Whose data the page shows, or null when signed out: the signed-in user's
- * own, or for staff the user the route names (`/:user`), read-only. Anyone
- * else on another user's page is shown their own (and the page sends them
- * to it).
+ * The route's owner, or the signed-in user at the root. Other users' pages
+ * are read-only; only staff get a full view. Guests use the public view.
  */
 export function useOwner(): Owner | null {
   const username = useAppState(state => state.loggedInUser);
   const isStaff = useAppState(state => state.isStaff);
   const {user} = useParams();
   if (username === null) {
-    return null;
+    return user === undefined
+      ? null
+      : {owner: user, readOnly: true, publicOnly: true};
   }
-  if (user === undefined || user === username || !isStaff) {
-    return {owner: username, readOnly: false};
+  if (user === undefined || user === username) {
+    return {owner: username, readOnly: false, publicOnly: false};
   }
-  return {owner: user, readOnly: true};
+  return {owner: user, readOnly: true, publicOnly: !isStaff};
 }
 
 /** Whether the page shows another user's data, which it only shows. */
@@ -66,11 +68,12 @@ export function useReadOnly(): boolean {
  */
 export function useSession(): SyncSession | null {
   const username = useAppState(state => state.loggedInUser);
-  const owner = useOwner()?.owner;
+  const context = useOwner();
+  const owner = context?.owner;
   useSyncExternalStore(subscribeSessions, sessionsEndedCount);
-  return username === null || owner === undefined
-    ? null
-    : syncSession(username, owner);
+  if (owner === undefined) return null;
+  if (context?.publicOnly) return publicSyncSession(owner);
+  return username === null ? null : syncSession(username, owner);
 }
 
 /** The tags, deleted ones too. */

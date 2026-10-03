@@ -54,6 +54,7 @@ const tag = {
     date_created: '2024-01-01T12:34:56',
     date_last_used: null,
     date_updated: ts,
+    is_public: false,
     entry_count: 1,
     order: 0,
     is_deleted: false,

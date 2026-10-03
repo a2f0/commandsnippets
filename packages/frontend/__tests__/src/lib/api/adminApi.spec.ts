@@ -33,6 +33,7 @@ const userResource = (overrides: Record<string, unknown> = {}) => ({
     login_count: 3,
     date_updated: '2026-01-01T00:00:00.000000',
     date_marked_for_deletion: null,
+    is_public: false,
     entry_count: 5,
     tag_count: 2,
     ...overrides,

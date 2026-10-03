@@ -3,8 +3,11 @@ import {
   CLIENT_UPDATED_HEADER,
   CLIENT_WRITE_ID_HEADER,
   CODES,
+  DATA_ACCESS_HEADER,
+  DATA_OWNER_ID_HEADER,
   EXPECTED_USER_HEADER,
   EXPECTED_USER_ID_HEADER,
+  PUBLIC_REVISION_HEADER,
 } from '@commandsnippets/api-shared';
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
@@ -27,6 +30,7 @@ import {entryReuseRoutes} from './resources/entryReuses';
 import {jsonApi} from './resources/responses';
 import {tagRoutes} from './resources/tags';
 import {tagEntryRoutes} from './resources/tagsEntries';
+import {userDataRoutes} from './resources/userData';
 
 const API_VERSION = packageJson.version;
 
@@ -73,6 +77,9 @@ app.use(
       EXPECTED_USER_ID_HEADER.toLowerCase(),
       CLIENT_UPDATED_HEADER.toLowerCase(),
       CLIENT_WRITE_ID_HEADER.toLowerCase(),
+      DATA_ACCESS_HEADER.toLowerCase(),
+      DATA_OWNER_ID_HEADER.toLowerCase(),
+      PUBLIC_REVISION_HEADER.toLowerCase(),
       'x-requested-with',
     ],
     // For the web app, on another origin, to read which API version answered.
@@ -152,6 +159,7 @@ app.route('/api/v1/entries', entryRoutes);
 app.route('/api/v1/tags_entries', tagEntryRoutes);
 app.route('/api/v1/entry_reuses', entryReuseRoutes);
 app.route('/api/v1/admin', adminRoutes);
+app.route('/api/v1/users', userDataRoutes);
 
 app.notFound(c =>
   jsonApi(
