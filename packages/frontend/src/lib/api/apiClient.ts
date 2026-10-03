@@ -35,11 +35,13 @@ import {
   tagTextEntryListDocumentSchema,
   textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
+  textEntryListDocumentSchema,
   type UserDocument,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
 import {signedInUser} from '../auth/authUtils';
+import {SYNC_PAGE_SIZE} from '../sync/pageSize';
 import {fetchApi} from './apiVersion';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
@@ -413,7 +415,10 @@ class ApiClient {
 
   /** The page of the user's tags after `after`. */
   public async getTagsAfter(after: string): Promise<TagCursorListDocument> {
-    const params: TagListParams = {'page[after]': after, 'page[size]': 100};
+    const params: TagListParams = {
+      'page[after]': after,
+      'page[size]': SYNC_PAGE_SIZE,
+    };
     return this.requestDocument(
       urlWithQuery(`${baseURL}/tags`, params),
       {method: 'GET'},
@@ -428,7 +433,7 @@ class ApiClient {
   ): Promise<TextEntryCursorListDocument> {
     const params: TextEntryListParams = {
       'page[after]': after,
-      'page[size]': 100,
+      'page[size]': SYNC_PAGE_SIZE,
       include: 'text_entry_to_tag',
     };
     return this.requestDocument(
@@ -437,6 +442,18 @@ class ApiClient {
       'Failed to sync entries',
       textEntryCursorListDocumentSchema
     );
+  }
+
+  /** All entry rows (deleted ones too), for the first load's page total. */
+  public async getEntryCount(): Promise<number> {
+    const params: TextEntryListParams = {'page[size]': 1};
+    const page = await this.requestDocument(
+      urlWithQuery(`${baseURL}/entries`, params),
+      {method: 'GET'},
+      'Failed to count entries',
+      textEntryListDocumentSchema
+    );
+    return page.meta.pagination.count;
   }
 
   /**
@@ -450,7 +467,7 @@ class ApiClient {
     const params: TagTextEntryListParams = {
       'filter[tag.id]': Number(tagId),
       'page[after]': after,
-      'page[size]': 100,
+      'page[size]': SYNC_PAGE_SIZE,
       include: 'text_entry,text_entry.text_entry_to_tag',
     };
     return this.requestDocument(

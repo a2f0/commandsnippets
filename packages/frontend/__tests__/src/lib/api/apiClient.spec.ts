@@ -420,6 +420,25 @@ describe('apiClient requests', () => {
 });
 
 describe('apiClient responses', () => {
+  it('reads the entry count from pagination using a one-row request', async () => {
+    const fetchSpy = reply(200, {
+      ...entriesResponse,
+      meta: {pagination: {page: 1, pages: 205, count: 205}},
+    });
+    await expect(apiClient.getEntryCount()).resolves.toBe(205);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe(`${API}/entries?page%5Bsize%5D=1`);
+  });
+
+  it('refuses a malformed count response', async () => {
+    reply(200, {
+      ...entriesResponse,
+      meta: {pagination: {page: 1, pages: 1, count: -1}},
+    });
+    await expect(apiClient.getEntryCount()).rejects.toBeInstanceOf(
+      InvalidResponseError
+    );
+  });
+
   const parsing = calls.flatMap(({malformed, ...call}) =>
     malformed === undefined ? [] : [{...call, malformed}]
   );

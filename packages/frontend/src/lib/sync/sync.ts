@@ -58,6 +58,7 @@ import {
   type OutboxApi,
   type Remap,
 } from './outbox';
+import {SYNC_PAGE_SIZE} from './pageSize';
 import {checkOwner, putEntries, putJunctions, putTags} from './store';
 
 /**
@@ -69,6 +70,8 @@ export interface SyncApi {
   getOwner(): Promise<{id: string; username: string}>;
   getTagsAfter(after: string): Promise<TagCursorListDocument>;
   getEntriesAfter(after: string): Promise<TextEntryCursorListDocument>;
+  /** Counts the same rows the entry cursor reads, including deletions. */
+  getEntryCount(): Promise<number>;
   getTagJunctionsAfter(
     tagId: string,
     after: string
@@ -105,7 +108,7 @@ async function readAfter<P extends Page>(
   read: (after: string) => Promise<P>,
   store: (page: P) => Promise<Remap[]>,
   options: {
-    cursor?: (after: string, done: boolean) => SyncCursor;
+    cursor?: (after: string, done: boolean, page: P) => SyncCursor;
     pause?: () => boolean;
   } = {}
 ): Promise<boolean> {
@@ -126,7 +129,7 @@ async function readAfter<P extends Page>(
         // Bound to another account since the sync began: not stored.
         await assertBound(db, owner, account);
         const stored = await store(page);
-        await db.cursors.put(cursor(after, done));
+        await db.cursors.put(cursor(after, done, page));
         return stored;
       }
     );
@@ -274,6 +277,49 @@ async function syncAll(
   pause: () => boolean
 ): Promise<boolean> {
   const ownerId = await bindToApi(db, api, owner);
+  // Older cursors have no progress marker; their next sync still reads to
+  // the end, without starting a new first-load indicator.
+  let initialLoad = await db.transaction('rw', db.cursors, async () => {
+    await assertBound(db, owner, ownerId);
+    const held = await db.cursors.get([owner, 'entries']);
+    if (held !== undefined) {
+      return held.initialLoad;
+    }
+    const progress = {pages: 0, totalPages: null, complete: false};
+    await db.cursors.put({
+      owner,
+      key: 'entries',
+      after: CURSOR_START,
+      initialLoad: progress,
+    });
+    return progress;
+  });
+  if (
+    initialLoad !== undefined &&
+    !initialLoad.complete &&
+    initialLoad.totalPages === null
+  ) {
+    // Counting is presentation only: a failed count never prevents loading
+    // the entries. The UI uses an indeterminate bar until the total is known.
+    const count = await api.getEntryCount().catch((error: unknown) => {
+      console.warn('WARNING: could not count entry pages:', error);
+      return null;
+    });
+    if (count !== null) {
+      const counted = {
+        ...initialLoad,
+        totalPages: Math.max(
+          Math.ceil(count / SYNC_PAGE_SIZE),
+          initialLoad.pages === 0 ? 0 : initialLoad.pages + 1
+        ),
+      };
+      await db.transaction('rw', db.cursors, async () => {
+        await assertBound(db, owner, ownerId);
+        await db.cursors.update([owner, 'entries'], {initialLoad: counted});
+      });
+      initialLoad = counted;
+    }
+  }
   const mark = await junctionsMark(api);
   await readAfter(
     db,
@@ -303,7 +349,31 @@ async function syncAll(
       await putEntries(db, owner, page.data, page.included);
       return remaps;
     },
-    {pause}
+    {
+      pause,
+      cursor: (after, done, page) => {
+        if (initialLoad !== undefined && !initialLoad.complete) {
+          const pages = initialLoad.pages + (page.data.length > 0 ? 1 : 0);
+          initialLoad = {
+            pages,
+            // Entries may change while loading. Never show 100% with a
+            // next page still to read; finishing fixes the actual total.
+            totalPages: done
+              ? pages
+              : initialLoad.totalPages === null
+                ? null
+                : Math.max(initialLoad.totalPages, pages + 1),
+            complete: done,
+          };
+        }
+        return {
+          owner,
+          key: 'entries',
+          after,
+          ...(initialLoad === undefined ? {} : {initialLoad}),
+        };
+      },
+    }
   );
   if (!done) {
     return false;

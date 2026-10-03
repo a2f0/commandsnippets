@@ -98,6 +98,11 @@ export const en: I18NextTranslations = {
     tagCount_other: '{{count}} tags',
   },
   entries: {
+    loadingEntries: 'Loading entries…',
+    loadingEntryPage: 'Loading entries: page {{page}} of {{pages}}',
+    entryPagesLoaded: '{{page}} of {{pages}} pages loaded',
+    entryLoadFailed: 'Entry loading interrupted. Your saved pages are kept.',
+    retryEntryLoad: 'Retry',
     entryTitle: 'Entry Title',
     entryContent: 'Entry Content',
     createEntry: 'Create Entry',

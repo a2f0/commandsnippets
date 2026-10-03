@@ -37,7 +37,13 @@ import {
   type SyncApi,
   SyncUserError,
 } from '../../../../src/lib/sync/sync';
-import {handlers, resetMSWState} from '../../../../src/msw/handlers';
+import {onePage} from '../../../../src/msw/documents';
+import {
+  handlers,
+  resetMSWState,
+  setRuntimeEntriesOverride,
+} from '../../../../src/msw/handlers';
+import {entry} from '../../../util/storeFixtures';
 
 const API = 'http://localhost:9001/api/v1';
 const JSON_API = {'Content-Type': 'application/vnd.api+json'};
@@ -83,6 +89,7 @@ function pagedApi(size: number, pages: string[] = []): SyncApi {
     return read(`${path}&page[size]=${size}`);
   };
   return {
+    getEntryCount: () => ownSyncApi.getEntryCount(),
     getOwner: async () => {
       const {data} = userDocumentSchema.parse(await read('/user/'));
       return {id: data.id, username: data.attributes.username};
@@ -147,6 +154,104 @@ const activeJunctions = async () =>
   );
 
 describe('syncAll', () => {
+  it('loads 205 entries in 100-row pages and saves first-load progress', async () => {
+    const entries = Array.from({length: 205}, (_, index) =>
+      entry(String(index + 1), {})
+    );
+    setRuntimeEntriesOverride({
+      ...onePage(`${API}/entries`, entries.length),
+      data: entries,
+    });
+    const count = vi.fn(ownSyncApi.getEntryCount);
+    const progress: Array<unknown> = [];
+    const sync = createSyncEngine(
+      db,
+      {
+        ...ownSyncApi,
+        getEntryCount: count,
+        getEntriesAfter: async after => {
+          progress.push((await db.cursors.get(key('entries')))?.initialLoad);
+          return ownSyncApi.getEntriesAfter(after);
+        },
+      },
+      'spec'
+    );
+    await sync.syncAll();
+
+    expect(await db.entries.count()).toBe(205);
+    expect(progress).toEqual([
+      {pages: 0, totalPages: 3, complete: false},
+      {pages: 1, totalPages: 3, complete: false},
+      {pages: 2, totalPages: 3, complete: false},
+    ]);
+    expect((await db.cursors.get(key('entries')))?.initialLoad).toEqual({
+      pages: 3,
+      totalPages: 3,
+      complete: true,
+    });
+    await sync.syncAll();
+    expect(count).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps page progress across an interruption and a new engine', async () => {
+    const api = pagedApi(1);
+    let reads = 0;
+    const failing: SyncApi = {
+      ...api,
+      getEntriesAfter: async after => {
+        if (++reads === 2) {
+          throw new Error('offline');
+        }
+        return api.getEntriesAfter(after);
+      },
+    };
+    await expect(
+      createSyncEngine(db, failing, 'spec').syncAll()
+    ).rejects.toThrow('offline');
+    expect((await db.cursors.get(key('entries')))?.initialLoad).toEqual({
+      pages: 1,
+      totalPages: 2,
+      complete: false,
+    });
+    await createSyncEngine(db, api, 'spec').syncAll();
+    expect(await db.entries.count()).toBe(3);
+    expect((await db.cursors.get(key('entries')))?.initialLoad).toEqual({
+      pages: 3,
+      totalPages: 3,
+      complete: true,
+    });
+  });
+
+  it('still reads all pages when counting fails', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await createSyncEngine(
+      db,
+      {
+        ...pagedApi(1),
+        getEntryCount: async () => {
+          throw new Error('count unavailable');
+        },
+      },
+      'spec'
+    ).syncAll();
+    expect(await db.entries.count()).toBe(3);
+    expect((await db.cursors.get(key('entries')))?.initialLoad).toEqual({
+      pages: 3,
+      totalPages: 3,
+      complete: true,
+    });
+  });
+
+  it('completes an empty collection without inventing a loaded page', async () => {
+    setRuntimeEntriesOverride({...onePage(`${API}/entries`, 0), data: []});
+    await createSyncEngine(db, ownSyncApi, 'spec').syncAll();
+    expect((await db.cursors.get(key('entries')))?.initialLoad).toEqual({
+      pages: 0,
+      totalPages: 0,
+      complete: true,
+    });
+  });
+
   it('reads the whole collection on the first sync', async () => {
     await createSyncEngine(db, ownSyncApi, 'spec').syncAll();
 
@@ -331,6 +436,7 @@ describe('syncAll', () => {
     const sync = createSyncEngine(
       db,
       {
+        getEntryCount: slow(api.getEntryCount),
         getOwner: slow(api.getOwner),
         getTagsAfter: slow(api.getTagsAfter),
         getEntriesAfter: slow(api.getEntriesAfter),
