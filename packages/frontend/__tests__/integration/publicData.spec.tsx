@@ -18,6 +18,7 @@ import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
+import {entry, tag} from '../util/storeFixtures';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
@@ -42,6 +43,31 @@ const publish = async () => {
 };
 
 describe('public user pages', () => {
+  it('keeps private rows and cursors isolated for an account named public', async () => {
+    const full = syncSession('public');
+    await full.db.tags.put({
+      owner: 'public',
+      ...tag('1', {name: 'private-tag'}),
+    });
+    await full.db.entries.put({
+      owner: 'public',
+      ...entry('1', {subject: 'private-entry'}),
+    });
+    await full.db.cursors.put({
+      owner: 'public',
+      key: 'entries',
+      after: 'private-cursor',
+    });
+    const visitor = publicSyncSession('public');
+    expect(visitor.db.name).not.toBe(full.db.name);
+    expect(await visitor.db.tags.where('owner').equals('public').count()).toBe(
+      0
+    );
+    expect(
+      await visitor.db.entries.where('owner').equals('public').count()
+    ).toBe(0);
+    expect(await visitor.db.cursors.get(['public', 'entries'])).toBeUndefined();
+  });
   it('lets an owner publish and hide tags and entries from their context menus', async () => {
     signIn();
     assignLoggedInCookie();

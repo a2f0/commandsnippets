@@ -64,7 +64,7 @@ let publicOpen: OpenDatabase | null = null;
 export function publicSyncSession(owner: string): SyncSession {
   if (publicOpen === null || publicOpen.db.hasBeenClosed()) {
     const db = new CommandsnippetsDatabase(
-      `commandsnippets-${environment}-public`
+      `commandsnippets-public-${environment}`
     );
     db.on('versionchange', () => {
       publicOpen = null;

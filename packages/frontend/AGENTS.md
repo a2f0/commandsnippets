@@ -133,7 +133,7 @@ API; everything else the app keeps is a zustand store.
   be public and have at least one live public tag; private tags and links
   are omitted, and public untagged lists are empty. `publicSyncApi` reads
   `/users/:username` and its collection routes with public access pinned.
-  `publicSyncSession` uses `commandsnippets-<environment>-public`, separate
+  `publicSyncSession` uses `commandsnippets-public-<environment>`, separate
   from full owner/staff caches. Each owner's `public_revision` invalidates
   their rows and cursors together; a generation change during pagination
   clears that owner's cache and restarts the sync. An unavailable owner
