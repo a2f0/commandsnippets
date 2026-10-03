@@ -45,7 +45,7 @@ describe('Tab Switching Behavior', () => {
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
-    // Assert initial GETs happened once for this load
+    // Initial loading reads the tags once and the entries count plus one page.
     await browser.toBeRequestedTimes(
       'GET',
       'http://localhost:9001/api/v1/tags',
@@ -54,7 +54,7 @@ describe('Tab Switching Behavior', () => {
     await browser.toBeRequestedTimes(
       'GET',
       'http://localhost:9001/api/v1/entries',
-      1
+      2
     );
 
     // Verify basic functionality persists after window switch

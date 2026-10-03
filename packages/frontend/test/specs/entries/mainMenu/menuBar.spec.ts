@@ -15,7 +15,7 @@ describe('Entry Main Menu', () => {
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
     await BasePage.entriesMenuButton.waitAndLeftClick();
     await expect(BasePage.entriesMenu).toBeDisplayed();
-    // Assert initial GETs occurred
+    // Initial loading reads the tags once and the entries count plus one page.
     await browser.toBeRequestedTimes(
       'GET',
       'http://localhost:9001/api/v1/tags',
@@ -24,7 +24,7 @@ describe('Entry Main Menu', () => {
     await browser.toBeRequestedTimes(
       'GET',
       'http://localhost:9001/api/v1/entries',
-      1
+      2
     );
     await browser.keys('Escape');
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
