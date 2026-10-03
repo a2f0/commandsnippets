@@ -99,8 +99,8 @@ it('offers retry when the first load fails before it creates a cursor', async ()
 it('shows each page and loads all 205 entries without scrolling', async () => {
   const second = gate();
   const third = gate();
+  const thirdRequested = gate();
   const sizes: string[] = [];
-  let reads = 0;
   server.use(
     http.get('*/api/v1/entries', async ({request}) => {
       const url = new URL(request.url);
@@ -112,11 +112,11 @@ it('shows each page and loads all 205 entries without scrolling', async () => {
         });
       }
       sizes.push(url.searchParams.get('page[size]') ?? '');
-      reads += 1;
-      if (reads === 2) {
+      if (after.id === 100) {
         await second.promise;
       }
-      if (reads === 3) {
+      if (after.id === 200) {
+        thirdRequested.release();
         await third.promise;
       }
       return HttpResponse.json(keysetPage(url, entries, after));
@@ -134,6 +134,7 @@ it('shows each page and loads all 205 entries without scrolling', async () => {
     );
     await act(async () => {
       second.release();
+      await thirdRequested.promise;
     });
     await screen.findByText('Loading entries: page 3 of 3', {}, loadingWait);
     expect(screen.getByRole('progressbar')).toHaveAttribute(
