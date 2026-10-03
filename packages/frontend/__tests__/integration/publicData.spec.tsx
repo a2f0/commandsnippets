@@ -124,6 +124,13 @@ describe('public user pages', () => {
     expect(screen.queryByRole('menu', {name: 'File'})).toBeNull();
     expect(document.getElementById('file-menu-new-entry')).toBeNull();
     expect(document.getElementById('file-menu-new-tag')).toBeNull();
+    fireEvent.contextMenu(screen.getByText('entry-1-subject'));
+    expect(
+      await screen.findByRole('menuitem', {name: 'Copy'})
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('menuitem').map(item => item.textContent)
+    ).toEqual(['Copy']);
     expect(writes).toEqual([]);
   });
 

@@ -500,7 +500,7 @@ const Entry = ({
         <EntryNew id={`textEntryNew-${object.id}-bottom`} tagId={tagId} />
       )}
 
-      {appConfig.loggedInUser && <>{contextMenu}</>}
+      {(appConfig.loggedInUser !== null || readOnly) && contextMenu}
 
       {isEditing && !readOnly && (
         <EntryEdit
