@@ -1,3 +1,4 @@
+import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
@@ -46,6 +47,54 @@ function gate() {
   });
   return {promise, release};
 }
+
+it('keeps a legacy cursor background failure out of the first-load UI', async () => {
+  const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+  await syncSession('test').db.cursors.put({
+    owner: 'test',
+    key: 'entries',
+    after: CURSOR_START,
+  });
+  server.use(
+    http.get('*/api/v1/entries', () =>
+      HttpResponse.json({errors: []}, {status: 500})
+    )
+  );
+  renderApp();
+  await waitFor(
+    () =>
+      expect(logged).toHaveBeenCalledWith(
+        'ERROR: sync failed:',
+        expect.any(Error)
+      ),
+    loadingWait
+  );
+  await act(async () => {
+    await syncSession('test')
+      .sync.syncAll()
+      .catch(() => {});
+  });
+  expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  expect(
+    screen.queryByText('Entry loading interrupted. Your saved pages are kept.')
+  ).not.toBeInTheDocument();
+});
+
+it('offers retry when the first load fails before it creates a cursor', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  server.use(
+    http.get('*/api/v1/user/', () =>
+      HttpResponse.json({errors: []}, {status: 500})
+    )
+  );
+  renderApp();
+  await screen.findByText(
+    'Entry loading interrupted. Your saved pages are kept.',
+    {},
+    loadingWait
+  );
+  expect(screen.getByRole('button', {name: 'Retry'})).toBeInTheDocument();
+});
 
 it('shows each page and loads all 205 entries without scrolling', async () => {
   const second = gate();
@@ -141,7 +190,7 @@ it('shows an interrupted load and retries from the saved cursor', async () => {
     {},
     loadingWait
   );
-  expect(screen.getByText('1 of 3 pages loaded')).toBeInTheDocument();
+  await screen.findByText('1 of 3 pages loaded', {}, loadingWait);
   expect(await syncSession('test').db.entries.count()).toBe(100);
   const held = await syncSession('test').db.cursors.get(['test', 'entries']);
   invariant(held, 'the first page has a saved cursor');

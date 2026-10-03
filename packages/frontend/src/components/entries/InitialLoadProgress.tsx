@@ -12,14 +12,18 @@ interface Props {
 export function InitialLoadProgress({failed, retry}: Props) {
   const session = useSession();
   const {t} = useTypedTranslation('entries');
-  const progress = useLiveQuery(async () => {
+  const cursor = useLiveQuery(async () => {
     if (session === null) {
       return null;
     }
-    const cursor = await session.db.cursors.get([session.owner, 'entries']);
-    return cursor?.initialLoad ?? null;
+    return (await session.db.cursors.get([session.owner, 'entries'])) ?? null;
   }, [session]);
-  if (progress?.complete || (progress == null && !failed)) {
+  const progress = cursor?.initialLoad;
+  if (
+    cursor === undefined ||
+    progress?.complete ||
+    (progress === undefined && (cursor !== null || !failed))
+  ) {
     return null;
   }
   const total = progress?.totalPages;
@@ -37,6 +41,7 @@ export function InitialLoadProgress({failed, retry}: Props) {
         top: theme => `${theme.appBar.height}px`,
         zIndex: theme => theme.zIndex.drawer + 1,
         bgcolor: 'background.paper',
+        mx: theme => `${theme.drawer.width}px`,
         px: 2,
         py: 1,
         borderBottom: 1,
