@@ -1,6 +1,8 @@
 import {Menu} from '@mui/material';
+import {useLiveQuery} from 'dexie-react-hooks';
 import React, {useCallback, useEffect, useState} from 'react';
-
+import {useSession} from '../../lib/data/hooks';
+import {setTagPublic} from '../../lib/data/writes';
 import {type IMouse, initialMouse} from '../../lib/shared';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 import {TagDeleteDialog} from './TagDeleteDialog';
@@ -56,6 +58,11 @@ const TagContextMenu = ({
   deleteTagParent,
   handleBeginEditParent,
 }: ITagContextMenuProps) => {
+  const session = useSession();
+  const tag = useLiveQuery(
+    () => session?.db.tags.get([session.owner, id]),
+    [session, id]
+  );
   const [mousePosition, setMousePosition] = useState<IMouse>(initialMouse);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
@@ -122,6 +129,19 @@ const TagContextMenu = ({
           onClick={handleDelete}
         >
           Delete Tag
+        </StyledMenuItem>
+        <StyledMenuItem
+          id={`tag-context-menu-${id}-visibility`}
+          onClick={() => {
+            handleClose();
+            if (session !== null && tag !== undefined)
+              void setTagPublic(session, id, !tag.attributes.is_public).catch(
+                (error: unknown) =>
+                  console.error('Failed to change tag visibility:', error)
+              );
+          }}
+        >
+          {tag?.attributes.is_public ? 'Make private' : 'Make public'}
         </StyledMenuItem>
       </StyledMenu>
       <TagDeleteDialog

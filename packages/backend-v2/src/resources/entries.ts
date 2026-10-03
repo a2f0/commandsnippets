@@ -16,6 +16,7 @@ import {validateFields} from '../lib/validate';
 import {icontains, usernameIs} from './filters';
 import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, textEntryResource} from './owned';
+import {publicEntry, publicEntryFields, publicTagCount} from './publicPolicy';
 import {TEXT_ENTRY} from './resourceTypes';
 import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
 
@@ -25,7 +26,11 @@ import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
  * tag to this user's entry, and matching on it would reveal its name. A
  * deleted junction (untagged) does not count.
  */
-const hasTag = (userId: number, condition: ReturnType<typeof sql>) =>
+const hasTag = (
+  userId: number,
+  condition: ReturnType<typeof sql>,
+  publicOnly = false
+) =>
   sql`EXISTS (
     SELECT 1 FROM tags_tagtextentrythroughmodel AS j
     JOIN tags_tag AS t ON t.id = j.tag_id
@@ -33,6 +38,7 @@ const hasTag = (userId: number, condition: ReturnType<typeof sql>) =>
       AND j.user_id = ${userId}
       AND j.is_deleted = 0
       AND t.user_id = ${userId}
+      AND ${publicOnly ? sql`t.is_public = 1 AND t.is_deleted = 0` : sql`1`}
       AND ${condition}
   )`;
 
@@ -42,17 +48,28 @@ export const entryRoutes = new Hono<AppEnv>();
  * `owner`'s entries: the requester's own (`GET /entries`), or for staff
  * another user's, read-only (`GET /admin/users/:id/entries`).
  */
-export const listEntries = (c: Context<AppEnv>, owner: User) =>
+export const listEntries = (
+  c: Context<AppEnv>,
+  owner: User,
+  publicOnly = false
+) =>
   listResponse(c, {
     ...textEntryResource,
     user: owner,
+    publicOnly,
+    ...(publicOnly
+      ? {visibility: publicEntry(owner.id), fields: publicEntryFields(owner.id)}
+      : {}),
     query: textEntryListQuerySchema,
     filters: {
       id: value => eq(textEntries.id, value),
-      tags__name: value => hasTag(owner.id, sql`t.name = ${value}`),
-      tags__id: value => hasTag(owner.id, sql`t.id = ${value}`),
+      tags__name: value => hasTag(owner.id, sql`t.name = ${value}`, publicOnly),
+      tags__id: value => hasTag(owner.id, sql`t.id = ${value}`, publicOnly),
       user__username: value => usernameIs(textEntries.user_id, value),
-      tag_count: value => eq(textEntries.tag_count, value),
+      tag_count: value =>
+        publicOnly
+          ? eq(publicTagCount(owner.id), value)
+          : eq(textEntries.tag_count, value),
       is_deleted: value => eq(textEntries.is_deleted, value),
       date_updated__gt: value => sql`${textEntries.date_updated} > ${value}`,
     },

@@ -285,6 +285,7 @@ describe('POST /entries', () => {
         body: 'body',
         date_updated: data.attributes.date_updated,
         date_created: data.attributes.date_created,
+        is_public: false,
         reused_count: 0,
         is_deleted: false,
         tag_count: 0,

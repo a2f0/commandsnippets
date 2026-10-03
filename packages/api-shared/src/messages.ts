@@ -7,6 +7,7 @@
 
 /** The `code` member of a JSON:API error object (DRF's error codes). */
 export const CODES = {
+  viewChanged: 'view_changed',
   // Serializer fields.
   required: 'required',
   null: 'null',
@@ -119,6 +120,10 @@ export const EXPECTED_USER_HEADER = 'X-Expected-User';
  * unaffected.
  */
 export const EXPECTED_USER_ID_HEADER = 'X-Expected-User-Id';
+/** A public read never upgrades to full access because a cookie is present. */
+export const DATA_ACCESS_HEADER = 'X-Data-Access';
+/** Bind every page to the public collection revision read before syncing. */
+export const PUBLIC_REVISION_HEADER = 'X-Public-Revision';
 
 /**
  * The header a write names when it was made in (a datetime, as
@@ -149,3 +154,6 @@ export const CLIENT_WRITE_ID_MAX_LENGTH = 64;
  * `Access-Control-Expose-Headers`.
  */
 export const API_VERSION_HEADER = 'API-Version';
+
+/** Bind a public page to the account whose metadata the client read. */
+export const DATA_OWNER_ID_HEADER = 'X-Data-Owner-Id';

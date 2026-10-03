@@ -11,6 +11,7 @@ import {
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
   CURSOR_START,
+  dataOwnerDocumentSchema,
   EXPECTED_USER_HEADER,
   emptyObjectSchema,
   errorDocumentSchema,
@@ -115,6 +116,34 @@ const tagEntryDocument = (
 
 // In the order they run: the handlers keep state (resetMSWState).
 const exchanges: Exchange[] = [
+  {
+    handler: `GET ${API}/users/:username`,
+    method: 'GET',
+    url: `${API}/users/test`,
+    status: 200,
+    schema: dataOwnerDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/users/:username/tags`,
+    method: 'GET',
+    url: `${API}/users/test/tags`,
+    status: 200,
+    schema: tagListDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/users/:username/entries`,
+    method: 'GET',
+    url: `${API}/users/test/entries`,
+    status: 200,
+    schema: textEntryListDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/users/:username/tags_entries`,
+    method: 'GET',
+    url: `${API}/users/test/tags_entries`,
+    status: 200,
+    schema: tagTextEntryListDocumentSchema,
+  },
   {
     handler: `GET ${API}/user/`,
     method: 'GET',

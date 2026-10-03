@@ -147,6 +147,11 @@ export interface OutboxApi {
   ): Promise<TagDocument>;
   keepTag(tagId: string, made?: string): Promise<TagDocument>;
   updateTag(tagId: string, name: string, made?: string): Promise<TagDocument>;
+  setTagPublic(
+    tagId: string,
+    isPublic: boolean,
+    made?: string
+  ): Promise<TagDocument>;
   deleteTag(tagId: string, made?: string): Promise<TagDocument>;
   reorderTag(payload: TagReorderDocument, made?: string): Promise<void>;
   createEntry(
@@ -162,6 +167,11 @@ export interface OutboxApi {
     made?: string
   ): Promise<TextEntryDocument>;
   deleteEntry(entryId: string, made?: string): Promise<TextEntryDocument>;
+  setEntryPublic(
+    entryId: string,
+    isPublic: boolean,
+    made?: string
+  ): Promise<TextEntryDocument>;
   tagEntry(
     tagId: string,
     entryId: string,
@@ -188,12 +198,14 @@ export function rowsOf(owner: string, write: QueuedWrite): string[] {
     case 'createTag':
     case 'keepTag':
     case 'renameTag':
+    case 'setTagPublic':
     case 'deleteTag':
       return [rowKey(owner, TAG, write.tagId)];
     case 'reorderTags':
       return [rowKey(owner, TAG, write.top)];
     case 'createEntry':
     case 'updateEntry':
+    case 'setEntryPublic':
     case 'deleteEntry':
       return [rowKey(owner, TEXT_ENTRY, write.entryId)];
     // The tag and the entry too: their counts changed.
@@ -222,6 +234,7 @@ function idsOf(write: QueuedWrite): Array<[string, string]> {
     case 'createTag':
     case 'keepTag':
     case 'renameTag':
+    case 'setTagPublic':
     case 'deleteTag':
       return [[TAG, write.tagId]];
     case 'reorderTags':
@@ -231,6 +244,7 @@ function idsOf(write: QueuedWrite): Array<[string, string]> {
       ];
     case 'createEntry':
     case 'updateEntry':
+    case 'setEntryPublic':
     case 'deleteEntry':
       return [[TEXT_ENTRY, write.entryId]];
     case 'tagEntry':
@@ -288,6 +302,7 @@ function renamed(
     case 'createTag':
     case 'keepTag':
     case 'renameTag':
+    case 'setTagPublic':
     case 'deleteTag':
       return type === TAG ? {...write, tagId: swap(write.tagId)} : write;
     case 'reorderTags':
@@ -296,6 +311,7 @@ function renamed(
         : write;
     case 'createEntry':
     case 'updateEntry':
+    case 'setEntryPublic':
     case 'deleteEntry':
       return type === TEXT_ENTRY
         ? {...write, entryId: swap(write.entryId)}
@@ -425,6 +441,18 @@ async function send(
     case 'renameTag':
       return {
         resources: answer(await api.updateTag(write.tagId, write.name, made)),
+      };
+    case 'setTagPublic':
+      return {
+        resources: answer(
+          await api.setTagPublic(write.tagId, write.isPublic, made)
+        ),
+      };
+    case 'setEntryPublic':
+      return {
+        resources: answer(
+          await api.setEntryPublic(write.entryId, write.isPublic, made)
+        ),
       };
     case 'deleteTag':
       return {resources: answer(await api.deleteTag(write.tagId, made))};

@@ -119,8 +119,7 @@ API; everything else the app keeps is a zustand store.
   `readOnly` for another user's); sessions end when another tab deletes or
   upgrades the database, and the next opens it anew.
 - **Another user's data (staff)**: on another user's page (`/:user`), staff
-  read that user's data (`useOwner` in `src/lib/data/hooks.ts`; anyone else
-  is sent to their own page). It syncs through the admin API's read-only
+  read that user's full data (`useOwner` in `src/lib/data/hooks.ts`). It syncs through the admin API's read-only
   routes (`adminSyncApi`, `GET /admin/users/:id/tags` ...) into the signed-in
   user's database under that user's name, and signing out deletes it with
   the rest. The page is read-only: a badge in the menu bar
@@ -128,6 +127,17 @@ API; everything else the app keeps is a zustand store.
   only Copy on an entry's, no drag and drop (`useReadOnly`), and a
   read-only session's writes throw `ReadOnlyError` before anything is sent.
   The admin users table opens it (View data).
+- **Public user pages**: guests and non-staff visitors use the same
+  `/:user/:tag` and `/:user?entries=all` routes, read-only. Tags and entries
+  default to private; owners toggle each in its context menu. An entry must
+  be public and have at least one live public tag; private tags and links
+  are omitted, and public untagged lists are empty. `publicSyncApi` reads
+  `/users/:username` and its collection routes with public access pinned.
+  `publicSyncSession` uses `commandsnippets-public-<environment>`, separate
+  from full owner/staff caches. Each owner's `public_revision` invalidates
+  their rows and cursors together; a generation change during pagination
+  clears that owner's cache and restarts the sync. An unavailable owner
+  clears their public cache. Collection sync still runs every half minute.
 - **What the UI shows**: `src/lib/data/hooks.ts`, live queries of the
   owner's rows in the database (`dexie-react-hooks`: `useTags`,
   `useTagNamed`, `useTagEntries`, `useEntries('all' | 'untagged')`, of the

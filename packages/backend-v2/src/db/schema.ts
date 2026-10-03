@@ -41,6 +41,8 @@ export const users = sqliteTable(
     date_joined: text('date_joined').notNull(),
     date_updated: text('date_updated').notNull(),
     login_count: integer('login_count').notNull().default(1),
+    // Invalidates this owner's public view, including rows it no longer lists.
+    public_revision: integer('public_revision').notNull().default(0),
     // When staff marked the account for deletion through the admin API, which
     // also deactivates it; NULL if it is not marked.
     date_marked_for_deletion: text('date_marked_for_deletion'),
@@ -110,6 +112,7 @@ export const textEntries = sqliteTable(
     is_deleted: integer('is_deleted', {mode: 'boolean'})
       .notNull()
       .default(false),
+    is_public: integer('is_public', {mode: 'boolean'}).notNull().default(false),
     tag_count: integer('tag_count').notNull().default(0),
     reused_count: integer('reused_count').notNull().default(0),
     reused_date: text('reused_date'),
@@ -158,6 +161,7 @@ export const tags = sqliteTable(
     is_deleted: integer('is_deleted', {mode: 'boolean'})
       .notNull()
       .default(false),
+    is_public: integer('is_public', {mode: 'boolean'}).notNull().default(false),
     // A client's last write (see text_entries_textentry.client_updated).
     client_updated: text('client_updated'),
     // The client id of the queued create that made the tag, which the API

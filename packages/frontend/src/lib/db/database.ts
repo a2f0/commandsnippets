@@ -61,10 +61,12 @@ export type QueuedWrite =
   // brought back if deleted, by id (never a new tag of the name).
   | {kind: 'keepTag'; tagId: string}
   | {kind: 'renameTag'; tagId: string; name: string}
+  | {kind: 'setTagPublic'; tagId: string; isPublic: boolean}
   | {kind: 'deleteTag'; tagId: string}
   | {kind: 'reorderTags'; top: string; bottom: string}
   | {kind: 'createEntry'; entryId: string; subject: string; body: string}
   | {kind: 'updateEntry'; entryId: string; subject: string; body: string}
+  | {kind: 'setEntryPublic'; entryId: string; isPublic: boolean}
   | {kind: 'deleteEntry'; entryId: string}
   | {kind: 'tagEntry'; junctionId: string; tagId: string; entryId: string}
   | {kind: 'untagEntry'; junctionId: string; tagId: string; entryId: string}

@@ -52,6 +52,7 @@ const resource = (user: MockUser) => ({
     login_count: 4,
     date_updated: '2026-09-01T00:00:00.000000',
     date_marked_for_deletion: user.date_marked_for_deletion ?? null,
+    is_public: false,
     entry_count: 12,
     tag_count: 3,
   },

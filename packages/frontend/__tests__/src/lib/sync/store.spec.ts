@@ -30,6 +30,7 @@ const entry = (
     subject: `subject-${id}`,
     date_updated,
     date_created: '2020-01-01T00:00:00',
+    is_public: false,
     reused_count: 0,
     is_deleted: false,
     tag_count: junctionIds.length,

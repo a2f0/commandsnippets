@@ -8,7 +8,7 @@ import {
   DEFAULT_INCLUDES,
   type RELATIONSHIPS,
 } from '@commandsnippets/api-shared';
-import {and, asc, eq} from 'drizzle-orm';
+import {and, asc, eq, getTableColumns} from 'drizzle-orm';
 import {type Db, inIds} from '../db/client';
 import {
   entryReuses,
@@ -24,6 +24,13 @@ import {
 } from '../db/schema';
 import {isoformat} from '../lib/clock';
 import type {Registry, ResourceDef, ToMany, ToOne} from '../lib/jsonapi';
+import {
+  publicEntry,
+  publicEntryFields,
+  publicJunction,
+  publicTag,
+  publicTagFields,
+} from './publicPolicy';
 import {
   TAG,
   TAG_TEXT_ENTRY,
@@ -56,7 +63,11 @@ type RelationshipsOf<T extends keyof Relationships, Row> = {
  * point at another user's entry or tag; such a resource keeps its relationship
  * linkage (an id) but is never loaded into `included`.
  */
-export function createRegistry(db: Db, userId: number): Registry {
+export function createRegistry(
+  db: Db,
+  userId: number,
+  publicOnly = false
+): Registry {
   const user: ResourceDef<User> = {
     type: USER,
     load: ids =>
@@ -68,7 +79,7 @@ export function createRegistry(db: Db, userId: number): Registry {
     // web app whether to offer the admin page; the admin API checks it again.
     attributes: row => ({
       username: row.username,
-      is_staff: row.is_staff,
+      is_staff: publicOnly ? false : row.is_staff,
       date_updated: isoformat(row.date_updated),
     }),
     relationships: {} satisfies RelationshipsOf<typeof USER, User>,
@@ -79,9 +90,15 @@ export function createRegistry(db: Db, userId: number): Registry {
     type: TAG,
     load: ids =>
       db
-        .select()
+        .select(publicOnly ? publicTagFields(userId) : getTableColumns(tags))
         .from(tags)
-        .where(and(inIds(tags.id, ids), eq(tags.user_id, userId))),
+        .where(
+          and(
+            inIds(tags.id, ids),
+            eq(tags.user_id, userId),
+            publicOnly ? publicTag(userId) : undefined
+          )
+        ),
     attributes: row => ({
       name: row.name,
       date_created: isoformat(row.date_created),
@@ -90,7 +107,8 @@ export function createRegistry(db: Db, userId: number): Registry {
       entry_count: row.entry_count,
       order: row.order,
       is_deleted: row.is_deleted,
-      client_id: row.client_id,
+      is_public: row.is_public,
+      client_id: publicOnly ? null : row.client_id,
     }),
     relationships: {
       user: {type: USER, key: row => row.user_id},
@@ -102,20 +120,27 @@ export function createRegistry(db: Db, userId: number): Registry {
     type: TEXT_ENTRY,
     load: ids =>
       db
-        .select()
+        .select(
+          publicOnly ? publicEntryFields(userId) : getTableColumns(textEntries)
+        )
         .from(textEntries)
         .where(
-          and(inIds(textEntries.id, ids), eq(textEntries.user_id, userId))
+          and(
+            inIds(textEntries.id, ids),
+            eq(textEntries.user_id, userId),
+            publicOnly ? publicEntry(userId) : undefined
+          )
         ),
     attributes: row => ({
       body: row.body,
       subject: row.subject,
       date_updated: isoformat(row.date_updated),
       date_created: isoformat(row.date_created),
-      reused_count: row.reused_count,
+      reused_count: publicOnly ? 0 : row.reused_count,
       is_deleted: row.is_deleted,
+      is_public: row.is_public,
       tag_count: row.tag_count,
-      client_id: row.client_id,
+      client_id: publicOnly ? null : row.client_id,
     }),
     relationships: {
       user: {type: USER, key: row => row.user_id},
@@ -132,7 +157,8 @@ export function createRegistry(db: Db, userId: number): Registry {
                 eq(tagsEntries.user_id, userId),
                 // The entry's tags: a deleted junction is only in the
                 // junction list, which shows its tag's syncs it left.
-                eq(tagsEntries.is_deleted, false)
+                eq(tagsEntries.is_deleted, false),
+                publicOnly ? publicJunction(userId) : undefined
               )
             )
             .orderBy(asc(tagsEntries.date_updated), asc(tagsEntries.id)),
@@ -149,7 +175,11 @@ export function createRegistry(db: Db, userId: number): Registry {
         .select()
         .from(tagsEntries)
         .where(
-          and(inIds(tagsEntries.id, ids), eq(tagsEntries.user_id, userId))
+          and(
+            inIds(tagsEntries.id, ids),
+            eq(tagsEntries.user_id, userId),
+            publicOnly ? publicJunction(userId) : undefined
+          )
         ),
     attributes: row => ({
       order: row.order,

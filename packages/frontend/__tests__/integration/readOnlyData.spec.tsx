@@ -132,16 +132,15 @@ describe("Another user's page", () => {
     expect(writes).toEqual([]);
   });
 
-  it('sends anyone who is not staff to their own page', async () => {
+  it('keeps non-staff on the requested public page', async () => {
     act(() => store.setIsStaff(false));
 
     const history = renderAt('/alice');
 
-    await waitFor(() =>
-      expect(history.location.pathname).toMatch(new RegExp(`^/${TEST_USER}`))
-    );
-    expect(await screen.findByText('test-tag-1')).toBeInTheDocument();
-    expect(document.getElementById('readOnlyBadge')).toBeNull();
+    await waitFor(() => expect(history.location.pathname).toBe('/alice'));
+    expect(await screen.findByText('Read-only: alice')).toBeInTheDocument();
+    expect(screen.queryByText('test-tag-1')).toBeNull();
+    expect(screen.queryByText('alices-entry')).toBeNull();
   });
 
   it("leaves staff's own page as it was: editable, with no badge", async () => {

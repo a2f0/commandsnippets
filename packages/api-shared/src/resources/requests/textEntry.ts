@@ -43,6 +43,7 @@ export const textEntryUpdateAttributesSchema = z.partial(
     body: charField({maxLength: TEXT_ENTRY_BODY_MAX_LENGTH}),
     subject: charField({maxLength: TEXT_ENTRY_SUBJECT_MAX_LENGTH}),
     is_deleted: booleanField(),
+    is_public: booleanField(),
   })
 );
 

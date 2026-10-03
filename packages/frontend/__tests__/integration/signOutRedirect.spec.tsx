@@ -69,10 +69,15 @@ describe('Signing out', () => {
 });
 
 describe('Signed-out visitors', () => {
-  it("are sent from a user's page to the sign-in page", async () => {
+  it('can open a public user page without signing in', async () => {
     const history = await renderAt('/alice/some-tag');
+    expect(history.location.pathname).toBe('/alice/some-tag');
+    expect(document.getElementById('signInPage')).toBeNull();
+    expect(screen.getByText('Read-only: alice')).toBeInTheDocument();
+  });
 
-    await expectSignInPage(history);
+  it('is sent from the admin page to sign-in', async () => {
+    await expectSignInPage(await renderAt('/admin'));
   });
 
   it('still reach the OAuth callbacks', async () => {

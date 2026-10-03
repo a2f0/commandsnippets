@@ -24,6 +24,12 @@ import {
   writtenBefore,
 } from './lww';
 import {nextRevision, tagResource} from './owned';
+import {
+  publicEntryCount,
+  publicLastUsed,
+  publicTag,
+  publicTagFields,
+} from './publicPolicy';
 import {reorder} from './reorder';
 import {TAG} from './resourceTypes';
 import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
@@ -42,10 +48,14 @@ export const tagRoutes = new Hono<AppEnv>();
  * `owner`'s tags: the requester's own (`GET /tags`), or for staff another
  * user's, read-only (`GET /admin/users/:id/tags`).
  */
-export const listTags = (c: Context<AppEnv>, owner: User) =>
+export const listTags = (c: Context<AppEnv>, owner: User, publicOnly = false) =>
   listResponse(c, {
     ...tagResource,
     user: owner,
+    publicOnly,
+    ...(publicOnly
+      ? {visibility: publicTag(owner.id), fields: publicTagFields(owner.id)}
+      : {}),
     query: tagListQuerySchema,
     filters: {
       name: value => eq(tags.name, value),
@@ -53,10 +63,14 @@ export const listTags = (c: Context<AppEnv>, owner: User) =>
       date_updated__gt: value => sql`${tags.date_updated} > ${value}`,
     },
     ordering: {
-      date_last_used: sql`${tags.date_last_used}`,
+      date_last_used: publicOnly
+        ? publicLastUsed(owner.id)
+        : sql`${tags.date_last_used}`,
       date_created: sql`${tags.date_created}`,
       date_updated: sql`${tags.date_updated}`,
-      entry_count: sql`${tags.entry_count}`,
+      entry_count: publicOnly
+        ? publicEntryCount(owner.id)
+        : sql`${tags.entry_count}`,
       name: sql`${tags.name} COLLATE NOCASE`,
       order: sql`${tags.order}`,
     },

@@ -8,7 +8,7 @@ import type {
   SearchMode,
   ListQuery as SharedListQuery,
 } from '@commandsnippets/api-shared';
-import {and, asc, count, eq, type SQL, sql} from 'drizzle-orm';
+import {and, asc, count, eq, getTableColumns, type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
@@ -166,6 +166,9 @@ interface ListOptions<
   /** The rows' revision, for keyset pages (where the query supports them). */
   dateUpdated?: SQLiteColumn;
   user: User;
+  publicOnly?: boolean;
+  visibility?: SQL;
+  fields?: Record<string, SQLiteColumn | SQL>;
   defaultOrdering: SQLiteColumn[];
   /** `filter[search]`, where the query schema supports it. */
   search?: (term: string) => SQL;
@@ -189,6 +192,7 @@ export async function listResponse<
     where: query => {
       const conditions = [
         eq(options.userId, options.user.id),
+        ...(options.visibility === undefined ? [] : [options.visibility]),
         ...query.filters,
       ];
       if (query.search !== null && options.search !== undefined) {
@@ -210,7 +214,7 @@ export async function listResponse<
     // key.
     fetch: async ({query, where, limit, offset, orderBy}) =>
       (await db
-        .select()
+        .select(options.fields ?? getTableColumns(options.table))
         .from(options.table)
         .where(where)
         .orderBy(
@@ -222,11 +226,11 @@ export async function listResponse<
             ))
         )
         .limit(limit)
-        .offset(offset)) as RevisedRow[],
+        .offset(offset)) as unknown as RevisedRow[],
   });
 
   const {data, included} = await serialize(
-    createRegistry(db, options.user.id),
+    createRegistry(db, options.user.id, options.publicOnly),
     options.type,
     rows,
     query.include

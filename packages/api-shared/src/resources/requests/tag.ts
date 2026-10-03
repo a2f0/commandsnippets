@@ -34,6 +34,7 @@ export const tagUpdateAttributesSchema = z.partial(
   z.object({
     name: charField({maxLength: TAG_NAME_MAX_LENGTH}),
     is_deleted: booleanField(),
+    is_public: booleanField(),
   })
 );
 

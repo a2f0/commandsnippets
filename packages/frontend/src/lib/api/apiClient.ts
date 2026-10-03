@@ -358,6 +358,38 @@ class ApiClient {
   }
 
   // Entry methods
+  public setTagPublic(
+    tagId: string,
+    isPublic: boolean,
+    made?: string
+  ): Promise<TagDocument> {
+    const payload: TagUpdateDocument = {
+      data: {type: 'Tag', id: tagId, attributes: {is_public: isPublic}},
+    };
+    return this.requestDocument(
+      `${baseURL}/tags/${tagId}`,
+      {method: 'PATCH', body: payload, made},
+      'Failed to change tag visibility',
+      tagDocumentSchema
+    );
+  }
+
+  public setEntryPublic(
+    entryId: string,
+    isPublic: boolean,
+    made?: string
+  ): Promise<TextEntryDocument> {
+    const payload: TextEntryUpdateDocument = {
+      data: {type: 'TextEntry', id: entryId, attributes: {is_public: isPublic}},
+    };
+    return this.requestDocument(
+      `${baseURL}/entries/${entryId}`,
+      {method: 'PATCH', body: payload, made},
+      'Failed to change entry visibility',
+      textEntryDocumentSchema
+    );
+  }
+
   /**
    * Create an entry. `clientId` makes a retried create find the entry the
    * first one made (`client_id`).

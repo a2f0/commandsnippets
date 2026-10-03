@@ -28,6 +28,7 @@ export function tag(
     type: 'Tag',
     attributes: {
       name: `tag-${id}`,
+      is_public: false,
       entry_count: 0,
       order: Number(id),
       date_updated: date,
@@ -54,6 +55,7 @@ export function entry(
       subject: `subject-${id}`,
       date_updated: date,
       date_created: date,
+      is_public: false,
       reused_count: 0,
       is_deleted: false,
       tag_count: junctionIds.length,
