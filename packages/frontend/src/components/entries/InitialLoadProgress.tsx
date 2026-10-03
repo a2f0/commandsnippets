@@ -37,31 +37,37 @@ export function InitialLoadProgress({failed, retry}: Props) {
   return (
     <Box
       sx={{
-        position: 'sticky',
-        top: theme => `${theme.appBar.height}px`,
+        position: 'fixed',
+        right: 12,
+        bottom: theme => `${theme.footer.height + 12}px`,
         zIndex: theme => theme.zIndex.drawer + 1,
+        width: '144px',
+        maxWidth: 'calc(100vw - 24px)',
         bgcolor: 'background.paper',
-        mx: theme => `${theme.drawer.width}px`,
-        px: 2,
-        py: 1,
-        borderBottom: 1,
+        color: 'text.secondary',
+        px: 1,
+        py: 0.75,
+        border: 1,
         borderColor: 'divider',
       }}
     >
-      <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-        <Typography variant="body2" role="status" sx={{flex: 1}}>
-          {failed ? t('entryLoadFailed') : label}
-        </Typography>
-        {failed && (
-          <Button size="small" onClick={retry}>
-            {t('retryEntryLoad')}
-          </Button>
-        )}
-      </Box>
+      <Typography variant="caption" role="status" sx={{display: 'block'}}>
+        {failed ? t('entryLoadFailed') : label}
+      </Typography>
       {failed && total != null && total > 0 && (
-        <Typography variant="caption">
+        <Typography variant="caption" sx={{display: 'block'}}>
           {t('entryPagesLoaded', {page: completed, pages: total})}
         </Typography>
+      )}
+      {failed && (
+        <Button
+          size="small"
+          color="inherit"
+          onClick={retry}
+          sx={{minWidth: 0, p: 0, fontSize: 'caption.fontSize'}}
+        >
+          {t('retryEntryLoad')}
+        </Button>
       )}
       <LinearProgress
         aria-label={label}
@@ -72,8 +78,13 @@ export function InitialLoadProgress({failed, retry}: Props) {
         }
         variant={total == null || total === 0 ? 'indeterminate' : 'determinate'}
         value={total == null || total === 0 ? 0 : (completed / total) * 100}
-        color={failed ? 'error' : 'primary'}
-        sx={{mt: 1}}
+        color="inherit"
+        sx={{
+          mt: 0.75,
+          height: 3,
+          bgcolor: 'action.disabledBackground',
+          '& .MuiLinearProgress-bar': {bgcolor: 'text.secondary'},
+        }}
       />
     </Box>
   );
