@@ -183,7 +183,16 @@ API; everything else the app keeps is a zustand store.
   read. `syncAll` reads the tags, then the entries with their junctions,
   after the master cursors `tags` and `entries` (from the start on a fresh
   sign-in), storing each page with its cursor in one transaction, so a sync
-  resumes where one stopped; when the entries are read to the end, every tag
+  resumes where one stopped. Pages hold 100 rows (`SYNC_PAGE_SIZE`), the
+  API's maximum (its default is 50). On a first collection load,
+  `getEntryCount` reads the numbered list's count with a one-row request,
+  including deleted rows just like the cursor reads. The entry cursor's
+  `initialLoad` keeps the completed page count, total and completion flag
+  with each page; `InitialLoadProgress` shows the current page and a bar
+  until loading finishes, or an interruption with a retry. A failed count
+  uses an indeterminate bar and still loads all pages. Older cursors without
+  this marker continue syncing without a first-load indicator. When the
+  entries are read to the end, every tag
   gets a cursor of its own (`tag:<id>`: the newest junction revision when the
   sync began, and the tag's revision). `syncTag` reads one tag's junctions
   (`GET /tags_entries?filter[tag.id]=`, deleted ones too: entries that left

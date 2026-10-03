@@ -42,6 +42,7 @@ export const ownSyncApi: SyncApi = {
   },
   getTagsAfter: after => apiClient.getTagsAfter(after),
   getEntriesAfter: after => apiClient.getEntriesAfter(after),
+  getEntryCount: () => apiClient.getEntryCount(),
   getTagJunctionsAfter: (tagId, after) =>
     apiClient.getTagJunctionsAfter(tagId, after),
   getNewestJunction: () => apiClient.getNewestJunction(),

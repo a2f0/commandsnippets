@@ -42,6 +42,12 @@ export interface SyncCursor {
   after: string;
   /** For a tag: its revision (`date_updated`) when its sync ended. */
   revision?: string;
+  /** Entry pages saved during the first collection load, across retries. */
+  initialLoad?: {
+    pages: number;
+    totalPages: number | null;
+    complete: boolean;
+  };
 }
 
 /**

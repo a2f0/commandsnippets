@@ -7,6 +7,7 @@ import {BottomToolbar} from '../components/bottomBar/BottomToolbar';
 import {LeftDrawer} from '../components/drawer/LeftDrawer';
 import {RightDrawer} from '../components/drawer/RightDrawer';
 import {EntryList} from '../components/entries/EntryList';
+import {InitialLoadProgress} from '../components/entries/InitialLoadProgress';
 import {hasLoginCookie, loggedInCookieNames} from '../lib/auth/authUtils';
 import {useOwner} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
@@ -25,7 +26,7 @@ const EntriesPageContent = () => {
   const [cookies] = useCookies(COOKIE_KEYS, {doNotUpdate: false});
   const loggedInCookie = hasLoginCookie(cookies, environment);
   // The user's data, from the API into IndexedDB, which the lists show.
-  useCollectionSync();
+  const syncStatus = useCollectionSync();
 
   // Redirect to user's page when on root path.
   useEffect(() => {
@@ -67,6 +68,7 @@ const EntriesPageContent = () => {
       }}
     >
       <AppHeader />
+      <InitialLoadProgress {...syncStatus} />
       <Box
         sx={{
           display: 'flex',

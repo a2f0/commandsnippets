@@ -9,7 +9,7 @@
  * every half minute, after a sync of it failed).
  */
 import type {Tag} from '@commandsnippets/api-shared/responses';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {leaveForeignSession} from '../state/appState';
 import type {SyncSession} from '../sync/session';
 import {ForeignDataError} from '../sync/store';
@@ -40,25 +40,34 @@ function syncFailed(session: SyncSession, error: unknown): void {
  * Send the queued writes, then sync the collection: now, on coming into view
  * or back online, and every half minute.
  */
-export function useCollectionSync(): void {
+export function useCollectionSync(): {failed: boolean; retry: () => void} {
   const session = useSession();
+  const [failedSession, setFailedSession] = useState<SyncSession | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (session === null) {
       return undefined;
     }
     let startedAt = 0;
     let running = false;
+    let stopped = false;
     const run = () => {
       if (running) {
         return;
       }
       running = true;
+      setFailedSession(null);
       startedAt = Date.now();
       session.sync
         .flush()
         .catch((error: unknown) => flushFailed(session, error))
         .then(() => session.sync.syncAll())
-        .catch((error: unknown) => syncFailed(session, error))
+        .catch((error: unknown) => {
+          syncFailed(session, error);
+          if (!stopped) {
+            setFailedSession(session);
+          }
+        })
         .finally(() => {
           running = false;
         });
@@ -79,11 +88,16 @@ export function useCollectionSync(): void {
       }
     }, SYNC_INTERVAL_MS);
     return () => {
+      stopped = true;
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('online', run);
       clearInterval(timer);
     };
-  }, [session]);
+  }, [session, attempt]);
+  return {
+    failed: session !== null && failedSession === session,
+    retry: () => setAttempt(value => value + 1),
+  };
 }
 
 /**

@@ -46,10 +46,12 @@ import {
   tagTextEntryCursorListDocumentSchema,
   tagTextEntryListDocumentSchema,
   textEntryCursorListDocumentSchema,
+  textEntryListDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
 import {handleUnauthorized, signedInUser} from '../auth/authUtils';
+import {SYNC_PAGE_SIZE} from '../sync/pageSize';
 import type {SyncApi} from '../sync/sync';
 import {UserMismatchError} from './apiClient';
 import {fetchApi} from './apiVersion';
@@ -324,7 +326,10 @@ export function adminSyncApi(username: string): SyncApi {
       return {id: user.id, username: user.username};
     },
     getTagsAfter: async after => {
-      const params: TagListParams = {'page[after]': after, 'page[size]': 100};
+      const params: TagListParams = {
+        'page[after]': after,
+        'page[size]': SYNC_PAGE_SIZE,
+      };
       const body = await adminFetch(
         `${await base()}/tags?${toSearchParams(params)}`
       );
@@ -333,7 +338,7 @@ export function adminSyncApi(username: string): SyncApi {
     getEntriesAfter: async after => {
       const params: TextEntryListParams = {
         'page[after]': after,
-        'page[size]': 100,
+        'page[size]': SYNC_PAGE_SIZE,
         include: 'text_entry_to_tag',
       };
       const body = await adminFetch(
@@ -341,11 +346,18 @@ export function adminSyncApi(username: string): SyncApi {
       );
       return parse(textEntryCursorListDocumentSchema, body);
     },
+    getEntryCount: async () => {
+      const params: TextEntryListParams = {'page[size]': 1};
+      const body = await adminFetch(
+        `${await base()}/entries?${toSearchParams(params)}`
+      );
+      return parse(textEntryListDocumentSchema, body).meta.pagination.count;
+    },
     getTagJunctionsAfter: async (tagId, after) => {
       const params: TagTextEntryListParams = {
         'filter[tag.id]': Number(tagId),
         'page[after]': after,
-        'page[size]': 100,
+        'page[size]': SYNC_PAGE_SIZE,
         include: 'text_entry,text_entry.text_entry_to_tag',
       };
       const body = await adminFetch(

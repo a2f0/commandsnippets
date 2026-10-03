@@ -96,6 +96,11 @@ export interface TagsTranslations {
 }
 
 export interface EntriesTranslations {
+  loadingEntries: string;
+  loadingEntryPage: string;
+  entryPagesLoaded: string;
+  entryLoadFailed: string;
+  retryEntryLoad: string;
   entryTitle: string;
   entryContent: string;
   createEntry: string;

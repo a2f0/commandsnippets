@@ -47,7 +47,7 @@ describe('Entry Main Menu Behavior', () => {
       'OK: Entry context menu test completed: all basic MSW-integrated functionality verified'
     );
 
-    // Assert initial GETs occurred for this page load
+    // Initial loading reads the tags once and the entries count plus one page.
     await browser.toBeRequestedTimes(
       'GET',
       'http://localhost:9001/api/v1/tags',
@@ -56,7 +56,7 @@ describe('Entry Main Menu Behavior', () => {
     await browser.toBeRequestedTimes(
       'GET',
       'http://localhost:9001/api/v1/entries',
-      1
+      2
     );
 
     expect(browser.currentTestErrors).toHaveLength(0);
