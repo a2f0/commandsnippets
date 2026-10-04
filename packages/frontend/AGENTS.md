@@ -358,6 +358,20 @@ not, so a tag switch rendered every tag and entry row and the whole page).
   from the `history` package: `TestAppRouter`), `Navigate` (a route that
   sends elsewhere) and `Link` (for MUI's `component` prop).
 
+### Rendering long lists
+A tag switch mounts a list's rows, and the tag list holds every tag, so
+per-row work multiplies (the HUD's Analytics tab times it).
+- Rows (`Tag`, `Entry`) are `React.memo`, and render again only for what
+  they show: narrow store selectors (`useAppState(state => state.x === id)`),
+  route values (`useRouteParam`), stable callbacks.
+- A row's context menu is rendered only while it is open (MUI's
+  `keepMounted` off), and takes where it was opened (`mouse`) and `onClose`
+  from the row: never a copy of a prop in state, set again by an effect,
+  which renders every row a second time after it mounts.
+- What a row needs of its data comes from its props (the tag's
+  `is_public`), not a live query of its own: one query per row is one
+  IndexedDB transaction per row.
+
 ### Top-level routes
 - Every top-level route in `src/routePaths.ts` must also be a reserved username
   in backend-v2 `src/services/reserved-usernames.json` (usernames are the first

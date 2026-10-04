@@ -30,9 +30,8 @@ describe('Tag Context Menu', () => {
     // Verify we have all 4 tags from MSW
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
 
-    // Verify tag context menu exists but is initially hidden
-    await expect(BasePage.tagContextMenu1).toBeExisting();
-    await expect(BasePage.tagContextMenu1).not.toBeDisplayed();
+    // The tag's context menu is rendered only once it is opened.
+    await expect(BasePage.tagContextMenu1).not.toBeExisting();
 
     // Test right-click interaction on tag-1
     await BasePage.tag1.waitAndRightClick();
