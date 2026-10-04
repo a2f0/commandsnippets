@@ -1,8 +1,8 @@
 import {ThemeProvider} from '@mui/material/styles';
-import {fireEvent, render, screen, within} from '@testing-library/react';
+import {act, fireEvent, render, screen, within} from '@testing-library/react';
 import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   formatMs,
   niceTicks,
@@ -14,6 +14,7 @@ import {
   clearMetrics,
   listKey,
   listShown,
+  NOTIFY_MS,
   recordTiming,
 } from '../../../../../src/lib/metrics/timings';
 import {darkTheme} from '../../../../../src/theme/themes';
@@ -142,6 +143,34 @@ describe('TimingAnalytics', () => {
         name: 'Duration of each timing (log scale), by when it began',
       })
     ).toBeInTheDocument();
+  });
+
+  it('moves its time window on while nothing new is timed', async () => {
+    vi.useFakeTimers({
+      toFake: [
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+        'clearInterval',
+        'performance',
+      ],
+    });
+    try {
+      clearMetrics();
+      recordTiming('idb', 'useTags', performance.now());
+      renderPanel();
+      await act(() => vi.advanceTimersByTimeAsync(NOTIFY_MS));
+      fireEvent.change(screen.getByRole('combobox', {name: 'Window'}), {
+        target: {value: '10000'},
+      });
+      expect(screen.getByRole('table')).toBeInTheDocument();
+
+      await act(() => vi.advanceTimersByTimeAsync(11_000));
+
+      expect(screen.getByText('No timings recorded yet.')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('clears the timings', async () => {

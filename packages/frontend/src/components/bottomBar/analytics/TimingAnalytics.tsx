@@ -1,5 +1,5 @@
 import {Box, Button} from '@mui/material';
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {useMetrics} from '../../../lib/metrics/hooks';
 import {
@@ -15,6 +15,19 @@ import {InteractionWaterfall} from './InteractionWaterfall';
 import {KindSwatch} from './KindSwatch';
 import {TimingTable} from './TimingTable';
 import {TimingTimeline} from './TimingTimeline';
+
+/** How often the time window moves on while nothing new is timed, in ms. */
+const CLOCK_MS = 1000;
+
+/** `performance.now()`, as of the last `CLOCK_MS` (rendering again then). */
+function useClock(): number {
+  const [now, setNow] = useState(() => performance.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(performance.now()), CLOCK_MS);
+    return () => clearInterval(timer);
+  }, []);
+  return now;
+}
 
 /** The spans of time the timeline and table can show, in ms (null: all). */
 const WINDOWS = [10_000, 60_000, 300_000, null] as const;
@@ -89,6 +102,7 @@ export const TimingAnalytics = () => {
   const {t} = useTypedTranslation('menu');
   const kindLabels = useKindLabels();
   const metrics = useMetrics();
+  const now = useClock();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(60_000);
 
@@ -100,7 +114,8 @@ export const TimingAnalytics = () => {
     [metrics, interaction]
   );
   const {from, to, recent} = useMemo(() => {
-    const to = performance.now();
+    // Now, or the newest timing if it is newer (told since the clock ticked).
+    const to = Math.max(now, ...metrics.timings.map(({start}) => start));
     const from =
       timeWindow === null
         ? Math.min(to - 1000, ...metrics.timings.map(({start}) => start))
@@ -110,7 +125,7 @@ export const TimingAnalytics = () => {
       to,
       recent: metrics.timings.filter(({start}) => start >= from),
     };
-  }, [metrics, timeWindow]);
+  }, [metrics, timeWindow, now]);
   const stats = useMemo(() => statsOf(recent), [recent]);
 
   const windowLabels: Record<string, string> = {

@@ -102,23 +102,31 @@ export function useTags(): Tag[] | undefined {
   );
 }
 
-/** The tag named `name` (not deleted), null when there is none. */
-export function useTagNamed(name: string | undefined): Tag | null | undefined {
+/**
+ * The tag named `name` (not deleted), null when there is none, and the name
+ * it is of.
+ */
+export function useTagNamed(
+  name: string | undefined
+): {name: string | undefined; tag: Tag | null} | undefined {
   const session = useSession();
   return useLiveQuery(
-    async () =>
-      name === undefined || session === null
-        ? null
-        : ((await timed('idb', 'useTagNamed', () =>
-            session.db.tags
-              .where('owner')
-              .equals(session.owner)
-              .filter(
-                tag =>
-                  tag.attributes.name === name && !tag.attributes.is_deleted
-              )
-              .first()
-          )) ?? null),
+    async () => ({
+      name,
+      tag:
+        name === undefined || session === null
+          ? null
+          : ((await timed('idb', 'useTagNamed', () =>
+              session.db.tags
+                .where('owner')
+                .equals(session.owner)
+                .filter(
+                  tag =>
+                    tag.attributes.name === name && !tag.attributes.is_deleted
+                )
+                .first()
+            )) ?? null),
+    }),
     [session, name]
   );
 }

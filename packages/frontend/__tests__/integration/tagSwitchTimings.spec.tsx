@@ -98,4 +98,31 @@ describe('Switching tags', () => {
       entries: rows,
     });
   });
+
+  it('from all the entries, is timed to the paint of the tag’s own', async () => {
+    const history = createMemoryHistory();
+    history.push('/test?entries=all');
+    render(<TestAppRouter history={history} />);
+    await screen.findByText('test-tag-1');
+    await waitFor(() =>
+      expect(screen.queryAllByRole('entry').length).toBeGreaterThan(0)
+    );
+    clearMetrics();
+    const listsShown = watchListsShown();
+
+    await clickTag('test-tag-1');
+
+    await paintedSwitch('test-tag-1');
+    await waitFor(() =>
+      expect(history.location.pathname).toBe('/test/test-tag-1')
+    );
+    const rows = screen.getAllByRole('entry').length;
+    expect(rows).toBeGreaterThan(0);
+    // Not with no rows, while its tag was still being read (the tag query
+    // answering with the last list's, none): with the tag's own.
+    expect(listsShown.find(({target}) => target === 'tag:test-tag-1')).toEqual({
+      target: 'tag:test-tag-1',
+      entries: rows,
+    });
+  });
 });

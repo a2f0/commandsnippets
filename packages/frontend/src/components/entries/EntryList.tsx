@@ -72,7 +72,8 @@ const EntryList = () => {
   const entriesList = searchParams.get('entries');
   const listsAll = entriesList === 'all' || entriesList === 'untagged';
 
-  const currentTag = useTagNamed(listsAll ? undefined : tag);
+  const named = useTagNamed(listsAll ? undefined : tag);
+  const currentTag = named?.tag;
   useTagSync(currentTag);
   const tagged = useTagEntries(currentTag?.id);
   // (Nothing to read for a tag's list.)
@@ -101,9 +102,9 @@ const EntryList = () => {
     : listKey({tag: tag ?? ''});
   const ownRows = listsAll
     ? listed?.which === entriesList
-    : currentTag !== undefined &&
-      (currentTag === null || currentTag.attributes.name === tag) &&
-      tagged?.tagId === currentTag?.id;
+    : named !== undefined &&
+      named.name === tag &&
+      tagged?.tagId === named.tag?.id;
   useLayoutEffect(() => {
     if (ownRows) {
       listShown(shownList);
