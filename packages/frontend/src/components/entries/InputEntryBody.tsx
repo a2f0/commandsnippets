@@ -20,11 +20,17 @@ const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
   background-color: ${props => props.theme.palette.background.default};
   font-size: 13.333px;
   border-radius: 0px;
+  /* The border is 1px in every state: the autosize counts it in the height,
+     so a thicker one would move what is below. Focus thickens it inward with
+     a shadow, which takes no space. */
+  border-width: 1px;
+  border-style: solid;
   &:hover {
-    border: 1px solid ${props => props.theme.palette.text.primary};
+    border-color: ${props => props.theme.palette.text.primary};
   }
   &:focus {
-    border: 2px solid ${props => props.theme.palette.text.primary};
+    border-color: ${props => props.theme.palette.text.primary};
+    box-shadow: inset 0 0 0 1px ${props => props.theme.palette.text.primary};
     outline: none;
   }
 `;
