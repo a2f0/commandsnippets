@@ -8,6 +8,7 @@ import {useNavigate, useParams} from 'react-router-dom';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {deleteTag as deleteStoredTag, reorderTags} from '../../lib/data/writes';
+import {beginInteraction, listKey} from '../../lib/metrics/timings';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {
   activeSearch,
@@ -336,6 +337,7 @@ const Tag = ({
   );
 
   const handleTagClick = (object: ITagJsonApi): void => {
+    beginInteraction('tag switch', listKey({tag: object.attributes.name}));
     navigate(`/${user}/${object.attributes.name}`);
     // Reset the main panel in case Untagged Entries were being viewed.
     appConfig.setAppMode(appMode.tagsList);

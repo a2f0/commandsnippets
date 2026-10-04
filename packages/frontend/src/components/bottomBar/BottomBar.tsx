@@ -9,7 +9,11 @@ import {environment} from '../../lib/environment';
 import {TextEntrySearchField} from '../entries/TextEntrySearchField';
 import {LanguageSwitcher} from '../LanguageSwitcher';
 import {TagSearch} from '../tags/TagSearch';
+import {TimingAnalytics} from './analytics/TimingAnalytics';
 import {Mode} from './Mode';
+
+/** How far the expanded HUD keeps from the window's edges, in px. */
+const EXPANDED_MARGIN = 16;
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -144,12 +148,16 @@ const BottomBar = () => {
               slotProps={{
                 paper: {
                   sx: {
-                    width: isExpanded ? Math.min(windowWidth * 0.9, 1200) : 600,
+                    // Expanded, nearly the whole window: room for the
+                    // timing charts.
+                    width: isExpanded
+                      ? Math.max(600, windowWidth - 2 * EXPANDED_MARGIN)
+                      : 600,
                     height: isExpanded
-                      ? Math.min(windowHeight * 0.8, 800)
+                      ? Math.max(400, windowHeight - 2 * EXPANDED_MARGIN)
                       : 400,
-                    maxWidth: '95vw',
-                    maxHeight: '90vh',
+                    maxWidth: `calc(100vw - ${2 * EXPANDED_MARGIN}px)`,
+                    maxHeight: `calc(100vh - ${2 * EXPANDED_MARGIN}px)`,
                     overflow: 'hidden',
                     position: 'relative',
                   },
@@ -322,19 +330,7 @@ const BottomBar = () => {
                     </Box>
                   </CustomTabPanel>
                   <CustomTabPanel value={selectedTab} index={2}>
-                    <Box sx={{color: 'text.secondary'}}>
-                      {t('analyticsData')}
-                      {isExpanded && (
-                        <Box sx={{mt: 2}}>
-                          {/* TODO: Replace with real analytics data from analytics service */}
-                          <div>{t('activeUsers', {count: 127})}</div>
-                          <div>{t('totalSessions', {count: 3452})}</div>
-                          <div>
-                            {t('avgSessionDuration', {duration: '8m 34s'})}
-                          </div>
-                        </Box>
-                      )}
-                    </Box>
+                    <TimingAnalytics />
                   </CustomTabPanel>
                 </Box>
               </Box>

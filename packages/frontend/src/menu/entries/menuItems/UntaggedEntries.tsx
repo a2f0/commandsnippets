@@ -3,6 +3,7 @@ import React from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
+import {beginInteraction, listKey} from '../../../lib/metrics/timings';
 import {entrySearchMethod} from '../../../lib/shared';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../StyledMenuItem';
@@ -23,6 +24,7 @@ const UntaggedEntries = ({onClose}: IProps) => {
       id={`entries-menu-list-method-${entrySearchMethod.untaggedEntryList}`}
       onClick={() => {
         if (user !== undefined) {
+          beginInteraction('untagged entries', listKey({entries: 'untagged'}));
           navigate(`/${user}?entries=untagged`);
         }
         onClose();

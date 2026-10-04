@@ -19,6 +19,7 @@ import {apiClient, UserMismatchError} from '../api/apiClient';
 import {setSignedInUser, setUnauthorizedHandler} from '../auth/authUtils';
 import {databaseName} from '../db/database';
 import {environment} from '../environment';
+import {clearMetrics} from '../metrics/timings';
 import {
   activeEntryEditField,
   activeSearch,
@@ -406,6 +407,10 @@ export const signedOutDataCleanedUp = (): Promise<void> => cleanedUp;
 // still queued in it: those stay for the user's next sign-in here.)
 useAppState.subscribe((state, previous) => {
   const {loggedInUser: leaving} = previous;
+  // The HUD's timings too: interactions name the lists they opened.
+  if (state.loggedInUser !== leaving) {
+    clearMetrics();
+  }
   if (leaving !== null && state.loggedInUser !== leaving) {
     cleanedUp = endSyncSession(leaving, {
       discardQueued: discardingFor === leaving,

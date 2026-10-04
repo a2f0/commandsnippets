@@ -7,6 +7,7 @@ import {useNavigate} from 'react-router-dom';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly} from '../../lib/data/hooks';
 import {keyOfRow} from '../../lib/db/database';
+import {beginInteraction, listKey} from '../../lib/metrics/timings';
 import {
   activeSearch,
   appMode,
@@ -158,6 +159,10 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
               setMovedSelectedUp(false);
             }
           } else if (event.key === 'Enter') {
+            beginInteraction(
+              'tag switch',
+              listKey({tag: selected.attributes.name})
+            );
             appConfig.setAppMode(appMode.entriesList);
             appConfig.setActiveSearch(activeSearch.entries);
             navigate(`/${username}/${selected.attributes.name}`);

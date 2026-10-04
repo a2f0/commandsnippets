@@ -29,6 +29,9 @@
  * Every sync first checks that the API reads the data of the user it syncs
  * (for their own: another tab may have signed in as someone else), and
  * refuses a page with anyone else's data (`ForeignDataError`).
+ *
+ * The stores and checks are timed for the HUD (`lib/metrics/`); the reads
+ * are, as every API request is (`fetchApi`).
  */
 import {CURSOR_START, cursorOf} from '@commandsnippets/api-shared/cursor';
 import type {
@@ -48,6 +51,7 @@ import {
   tagCursorKey,
 } from '../db/database';
 import {environment} from '../environment';
+import {timed} from '../metrics/timings';
 import {
   AccountChangedError,
   adoptCreates,
@@ -123,16 +127,22 @@ async function readAfter<P extends Page>(
     const last = page.data.at(-1);
     after = last === undefined ? after : cursorOf(last);
     const done = page.links.next === null;
-    const remaps = await db.transaction(
-      'rw',
-      [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
-      async () => {
-        // Bound to another account since the sync began: not stored.
-        await assertBound(db, owner, account);
-        const stored = await store(page);
-        await db.cursors.put(cursor(after, done, page));
-        return stored;
-      }
+    const remaps = await timed(
+      'idb',
+      `sync store ${key.startsWith('tag:') ? 'tag junctions' : key}`,
+      () =>
+        db.transaction(
+          'rw',
+          [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
+          async () => {
+            // Bound to another account since the sync began: not stored.
+            await assertBound(db, owner, account);
+            const stored = await store(page);
+            await db.cursors.put(cursor(after, done, page));
+            return stored;
+          }
+        ),
+      () => `${page.data.length} rows`
     );
     announceRemaps(remaps);
     if (done) {
@@ -256,7 +266,9 @@ async function bindToApi(
 ): Promise<string> {
   const held = await boundAccount(db, owner);
   const {id: ownerId, publicRevision} = await ownerOf(api, owner);
-  await bindOwner(db, owner, ownerId, {held});
+  await timed('idb', 'sync bindOwner', () =>
+    bindOwner(db, owner, ownerId, {held})
+  );
   if (publicRevision !== undefined) {
     await db.transaction(
       'rw',
@@ -488,10 +500,12 @@ export async function isTagSynced(
   if (isLocalId(tagId)) {
     return true;
   }
-  const [tag, cursor] = await Promise.all([
-    db.tags.get([owner, tagId]),
-    db.cursors.get([owner, tagCursorKey(tagId)]),
-  ]);
+  const [tag, cursor] = await timed('idb', 'isTagSynced', () =>
+    Promise.all([
+      db.tags.get([owner, tagId]),
+      db.cursors.get([owner, tagCursorKey(tagId)]),
+    ])
+  );
   return (
     tag !== undefined &&
     cursor?.revision !== undefined &&

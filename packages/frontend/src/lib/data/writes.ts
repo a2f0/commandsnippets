@@ -31,6 +31,7 @@ import type {Table} from 'dexie';
 import type * as z from 'zod/mini';
 import {UserMismatchError} from '../api/apiClient';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
+import {timed} from '../metrics/timings';
 import {leaveForeignSession} from '../state/appState';
 import {
   AccountChangedError,
@@ -127,18 +128,20 @@ async function write<T>(
   refuseReadOnly(session);
   const {db, owner} = session;
   // Never while a sign-out (in any tab) decides whether to delete the data.
-  const result = await withDataLock(db.name, 'shared', () =>
-    db.transaction(
-      'rw',
-      [db.tags, db.entries, db.junctions, db.outbox, db.cursors],
-      async () => {
-        const {writes, result} = await change();
-        const made = await nextMade(db, owner);
-        for (const queued of writes) {
-          await enqueue(db, owner, queued, made);
+  const result = await timed('idb', 'write', () =>
+    withDataLock(db.name, 'shared', () =>
+      db.transaction(
+        'rw',
+        [db.tags, db.entries, db.junctions, db.outbox, db.cursors],
+        async () => {
+          const {writes, result} = await change();
+          const made = await nextMade(db, owner);
+          for (const queued of writes) {
+            await enqueue(db, owner, queued, made);
+          }
+          return result;
         }
-        return result;
-      }
+      )
     )
   );
   flushSoon(session);

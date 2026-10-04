@@ -9,6 +9,12 @@ import {
   databaseName,
 } from '../../../../src/lib/db/database';
 import {
+  beginInteraction,
+  listKey,
+  metricsSnapshot,
+  recordTiming,
+} from '../../../../src/lib/metrics/timings';
+import {
   defaultSavedState,
   leaveForeignSession,
   RETIRED_STORAGE_KEYS,
@@ -98,6 +104,21 @@ describe('signing out', () => {
     const name = await hasData('frank');
     store.setLoggedInUser(null);
     await gone(name);
+  });
+
+  it("clears the HUD's timings, which name the user's tags", async () => {
+    for (const next of [null, 'judy']) {
+      store.setLoggedInUser('frank');
+      beginInteraction('tag switch', listKey({tag: 'private-tag'}));
+      recordTiming('idb', 'useTags', performance.now());
+      await vi.waitFor(() =>
+        expect(metricsSnapshot().interactions).toHaveLength(1)
+      );
+
+      store.setLoggedInUser(next);
+
+      expect(metricsSnapshot()).toEqual({timings: [], interactions: []});
+    }
   });
 
   it('deletes it on resetApplicationState, and on another sign-in', async () => {

@@ -27,6 +27,8 @@ import {
 import {sortEntries, sortTagEntries} from '../../lib/data/sort';
 import {useTagSync} from '../../lib/data/useSync';
 import {keyOfRow} from '../../lib/db/database';
+import {useRenderTiming} from '../../lib/metrics/hooks';
+import {listKey, listShown} from '../../lib/metrics/timings';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
@@ -55,9 +57,12 @@ const ROW_ESTIMATE = 72;
  * (`?entries=all`, `?entries=untagged`), from IndexedDB as syncs and writes
  * store them, sorted and searched. The tag shown syncs whenever it is not
  * synced through its revision. A long list renders only the rows in view
- * (`VIRTUALIZE_FROM`), as the window scrolls.
+ * (`VIRTUALIZE_FROM`), as the window scrolls. Each render is timed for the
+ * HUD, and the list's first render with its own rows ends the interaction
+ * that asked for it (`listShown`).
  */
 const EntryList = () => {
+  const renderStart = performance.now();
   const appConfig = useAppConfig();
   // Another user's entries (staff reading them): no New Entry.
   const readOnly = useReadOnly();
@@ -67,7 +72,8 @@ const EntryList = () => {
   const entriesList = searchParams.get('entries');
   const listsAll = entriesList === 'all' || entriesList === 'untagged';
 
-  const currentTag = useTagNamed(listsAll ? undefined : tag);
+  const named = useTagNamed(listsAll ? undefined : tag);
+  const currentTag = named?.tag;
   useTagSync(currentTag);
   const tagged = useTagEntries(currentTag?.id);
   // (Nothing to read for a tag's list.)
@@ -83,12 +89,27 @@ const EntryList = () => {
     if (listsAll) {
       return listed === undefined
         ? undefined
-        : sortEntries(listed, entryOrder, search);
+        : sortEntries(listed.entries, entryOrder, search);
     }
     return tagged === undefined
       ? undefined
-      : sortTagEntries(tagged, tagOrder, search);
+      : sortTagEntries(tagged.entries, tagOrder, search);
   }, [listsAll, listed, tagged, entryOrder, tagOrder, search]);
+  // The list asked for, with its own rows: not the last list's, which the
+  // queries answer with until they read the next.
+  const shownList = listsAll
+    ? listKey({entries: entriesList ?? ''})
+    : listKey({tag: tag ?? ''});
+  const ownRows = listsAll
+    ? listed?.which === entriesList
+    : named !== undefined &&
+      named.name === tag &&
+      tagged?.tagId === named.tag?.id;
+  useLayoutEffect(() => {
+    if (ownRows) {
+      listShown(shownList);
+    }
+  }, [ownRows, shownList]);
 
   // The list as the database has it now, rendered as soon as it is read: a
   // drag reorders a copy of it (`dragged`), which a newer list (the drop
@@ -301,6 +322,8 @@ const EntryList = () => {
   };
 
   const [mouse, setMouse] = useState(initialMouse);
+
+  useRenderTiming('EntryList', renderStart, `${entries.length} rows`);
 
   const contextMenu = useMemo(
     () => <EntryListContextMenu mouse={mouse} />,
