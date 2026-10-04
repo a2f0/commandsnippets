@@ -81,12 +81,13 @@ describe('Switching tags', () => {
     );
     const names = during.map(({kind, name}) => `${kind} ${name}`);
     expect(names).toEqual(
-      expect.arrayContaining([
-        'idb useTagNamed',
-        'idb useTagEntries',
-        'render EntryList',
-      ])
+      expect.arrayContaining(['idb useTagEntries', 'render EntryList'])
     );
+    // The tag is looked up in the tags read already: the first read is of
+    // its entries, and the tags are not read again.
+    const reads = names.filter(name => name.startsWith('idb use'));
+    expect(reads[0]).toBe('idb useTagEntries');
+    expect(reads).not.toContain('idb useTags');
     expect(
       during.filter(({name}) => name === 'EntryList').map(({detail}) => detail)
     ).toContain(`${rows} rows`);

@@ -11,14 +11,20 @@
  * name. A query asked for something else keeps answering with its last
  * rows until the new ones are read: the lists' hooks name what their rows
  * are of.
+ *
+ * The tags are one live query per session, which every reader shares (the
+ * tag list, and the entry list looking up the tag it shows): a tag switch
+ * finds the new tag in it at once, and reads the database only for the
+ * tag's entries.
  */
 import type {
   Tag,
   TagTextEntry,
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
+import {liveQuery} from 'dexie';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {useSyncExternalStore} from 'react';
+import {useLayoutEffect, useMemo, useRef, useSyncExternalStore} from 'react';
 import type {RowKey} from '../db/database';
 import {timed} from '../metrics/timings';
 import {useRouteParam} from '../router/navigation';
@@ -85,51 +91,151 @@ export function useSession(): SyncSession | null {
 
 const rows = (list: readonly unknown[]) => `${list.length} rows`;
 
-/** The tags, deleted ones too. */
+/**
+ * A session's tags as one live query that its readers share: run while
+ * anyone reads it, `undefined` until the database first answers (and again
+ * once no one reads it).
+ */
+interface SharedTags {
+  /** The last answer (or failure), a new object for each. */
+  state: TagsState;
+  /** Read it (`useSyncExternalStore`): the same function for the session. */
+  subscribe: (listener: () => void) => () => void;
+}
+
+interface TagsState {
+  tags: Tag[] | undefined;
+  error?: unknown;
+}
+
+const UNREAD: TagsState = {tags: undefined};
+
+const sharedTags = new WeakMap<SyncSession, SharedTags>();
+
+function tagsOf(session: SyncSession): SharedTags {
+  const known = sharedTags.get(session);
+  if (known !== undefined) {
+    return known;
+  }
+  const listeners = new Set<() => void>();
+  let subscription: {unsubscribe: () => void} | null = null;
+  const notify = () => {
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+  const shared: SharedTags = {
+    state: UNREAD,
+    subscribe: listener => {
+      listeners.add(listener);
+      subscription ??= liveQuery(() =>
+        timed(
+          'idb',
+          'useTags',
+          () => session.db.tags.where('owner').equals(session.owner).toArray(),
+          rows
+        )
+      ).subscribe({
+        next: tags => {
+          shared.state = {tags};
+          notify();
+        },
+        error: (error: unknown) => {
+          shared.state = {tags: shared.state.tags, error};
+          notify();
+        },
+      });
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) {
+          subscription?.unsubscribe();
+          subscription = null;
+          shared.state = UNREAD;
+        }
+      };
+    },
+  };
+  sharedTags.set(session, shared);
+  return shared;
+}
+
+const NO_TAGS: TagsState = {tags: []};
+const subscribeToNothing = () => () => {};
+
+/**
+ * The tags, deleted ones too (none when signed out). A failed read throws,
+ * for the error boundary, as `useLiveQuery` does.
+ */
 export function useTags(): Tag[] | undefined {
   const session = useSession();
-  return useLiveQuery(
-    () =>
-      session === null
-        ? []
-        : timed(
-            'idb',
-            'useTags',
-            () =>
-              session.db.tags.where('owner').equals(session.owner).toArray(),
-            rows
-          ),
-    [session]
+  const shared = session === null ? null : tagsOf(session);
+  const {tags, error} = useSyncExternalStore(
+    shared?.subscribe ?? subscribeToNothing,
+    () => (shared === null ? NO_TAGS : shared.state)
   );
+  if (error !== undefined) {
+    throw error;
+  }
+  return tags;
 }
+
+/** The tag named `name` (not deleted), or null, and the name asked for. */
+type TagNamed = {name: string | undefined; tag: Tag | null};
+
+const isNamed = (name: string) => (tag: Tag) =>
+  tag.attributes.name === name && !tag.attributes.is_deleted;
 
 /**
  * The tag named `name` (not deleted), null when there is none, and the name
- * it is of.
+ * it is of. Looked up in the tags (`useTags`), so a new name finds its tag
+ * at once (a tag switch) with no read of its own. A name not among them is
+ * read from the database (a tag just renamed to it, before the tags are
+ * read again; or no tag of the name), the last answer standing until then,
+ * as a query asked for something else does: no empty list in between.
  */
-export function useTagNamed(
-  name: string | undefined
-): {name: string | undefined; tag: Tag | null} | undefined {
+export function useTagNamed(name: string | undefined): TagNamed | undefined {
   const session = useSession();
-  return useLiveQuery(
-    async () => ({
-      name,
-      tag:
-        name === undefined || session === null
-          ? null
-          : ((await timed('idb', 'useTagNamed', () =>
-              session.db.tags
-                .where('owner')
-                .equals(session.owner)
-                .filter(
-                  tag =>
-                    tag.attributes.name === name && !tag.attributes.is_deleted
-                )
-                .first()
-            )) ?? null),
-    }),
-    [session, name]
+  const tags = useTags();
+  const found =
+    name === undefined || tags === undefined
+      ? undefined
+      : tags.find(isNamed(name));
+  const missed = tags !== undefined && name !== undefined && !found;
+  const lookedUp = useLiveQuery(
+    async (): Promise<TagNamed | undefined> =>
+      !missed || name === undefined || session === null
+        ? undefined
+        : {
+            name,
+            tag:
+              (await timed('idb', 'useTagNamed', () =>
+                session.db.tags
+                  .where('owner')
+                  .equals(session.owner)
+                  .filter(isNamed(name))
+                  .first()
+              )) ?? null,
+          },
+    [session, name, missed]
   );
+  // The answer the page shows, which a name still being read keeps.
+  const shown = useRef<TagNamed | undefined>(undefined);
+  const answer = useMemo((): TagNamed | undefined => {
+    if (tags === undefined) {
+      return undefined;
+    }
+    if (name === undefined) {
+      return {name, tag: null};
+    }
+    if (found !== undefined) {
+      return {name, tag: found};
+    }
+    return lookedUp?.name === name ? lookedUp : shown.current;
+  }, [tags, name, found, lookedUp]);
+  useLayoutEffect(() => {
+    shown.current = answer;
+  });
+  return answer;
 }
 
 /** Tag `tagId`'s junctions not deleted. */

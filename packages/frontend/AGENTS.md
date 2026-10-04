@@ -139,10 +139,13 @@ API; everything else the app keeps is a zustand store.
   clears that owner's cache and restarts the sync. An unavailable owner
   clears their public cache. Collection sync still runs every half minute.
 - **What the UI shows**: `src/lib/data/hooks.ts`, live queries of the
-  owner's rows in the database (`dexie-react-hooks`: `useTags`,
-  `useTagNamed`, `useTagEntries`, `useEntries('all' | 'untagged')`, of the
-  session `useSession` gives), so a list shows each change the moment
-  a sync or a write stores it, in any tab; `src/lib/data/sort.ts` sorts and
+  owner's rows in the database (Dexie's `liveQuery`: `useTags`,
+  `useTagEntries`, `useEntries('all' | 'untagged')`, of the session
+  `useSession` gives), so a list shows each change the moment a sync or a
+  write stores it, in any tab. The tags are one query per session that
+  every reader shares (the tag list, the entry list), and `useTagNamed`
+  looks the tag shown up in it: a tag switch reads only the tag's entries.
+  `src/lib/data/sort.ts` sorts and
   searches them (case-insensitively in any script, as the API's search).
   Deleted tags and entries are left out; untagged entries are those in no
   tag.
