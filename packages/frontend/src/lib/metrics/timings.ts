@@ -8,7 +8,9 @@
  * lay out what ran in between.
  *
  * Kept in memory, the latest `MAX_TIMINGS` and `MAX_INTERACTIONS`, and only
- * where there is a HUD: production records nothing.
+ * where there is a HUD: production records nothing. A change of the
+ * signed-in user clears them (`appState.ts`), as it does the user's data:
+ * interactions name the lists they open (a tag's name).
  */
 import {environment} from '../environment';
 
@@ -52,7 +54,8 @@ export const NOTIFY_MS = 250;
 export const listKey = (list: {tag: string} | {entries: string}): string =>
   'tag' in list ? `tag:${list.tag}` : `entries:${list.entries}`;
 
-const recording = () => environment !== 'production';
+/** Whether timings are recorded: everywhere but production. */
+export const isRecording = () => environment !== 'production';
 
 let timings: Timing[] = [];
 let interactions: Interaction[] = [];
@@ -60,6 +63,8 @@ let nextId = 1;
 /** The list shown last (`listShown`). */
 let shown: string | null = null;
 let snapshot: Metrics = {timings: [], interactions: []};
+/** When the timings were last cleared: work begun before is not recorded. */
+let clearedAt = Number.NEGATIVE_INFINITY;
 
 const listeners = new Set<() => void>();
 let notifying: ReturnType<typeof setTimeout> | null = null;
@@ -88,10 +93,14 @@ export function subscribeMetrics(listener: () => void): () => void {
 /** The timings and interactions as last told (`subscribeMetrics`). */
 export const metricsSnapshot = (): Metrics => snapshot;
 
-/** Forget every timing and interaction. */
+/**
+ * Forget every timing and interaction, and the work still running: a
+ * request or query begun before is not recorded when it ends.
+ */
 export function clearMetrics(): void {
   timings = [];
   interactions = [];
+  clearedAt = performance.now();
   if (notifying !== null) {
     clearTimeout(notifying);
   }
@@ -106,7 +115,7 @@ export function recordTiming(
   end: number = performance.now(),
   detail?: string
 ): void {
-  if (!recording()) {
+  if (!isRecording() || start < clearedAt) {
     return;
   }
   timings.push({
@@ -133,7 +142,7 @@ export async function timed<T>(
   task: () => Promise<T>,
   describe?: (result: T) => string
 ): Promise<T> {
-  if (!recording()) {
+  if (!isRecording()) {
     return task();
   }
   const start = performance.now();
@@ -156,16 +165,23 @@ function afterNextPaint(callback: () => void): void {
   }
 }
 
-/** The latest interaction ends when the frame now being made is painted. */
+/**
+ * The latest interaction ends when the frame now being made is painted:
+ * unless by then another has begun, or another list is shown.
+ */
 function endLatestAtPaint(): void {
   const latest = interactions.at(-1);
   if (latest === undefined || latest.painted !== null) {
     return;
   }
   afterNextPaint(() => {
-    const index = interactions.findIndex(({id}) => id === latest.id);
+    const index = interactions.length - 1;
     const interaction = interactions[index];
-    if (interaction === undefined || interaction.painted !== null) {
+    if (
+      interaction?.id !== latest.id ||
+      interaction.painted !== null ||
+      shown !== interaction.target
+    ) {
       return;
     }
     interactions[index] = {...interaction, painted: performance.now()};
@@ -179,7 +195,7 @@ function endLatestAtPaint(): void {
  * before its list was shown (another asked for) is never painted.
  */
 export function beginInteraction(name: string, target: string): void {
-  if (!recording()) {
+  if (!isRecording()) {
     return;
   }
   interactions.push({
@@ -203,7 +219,7 @@ export function beginInteraction(name: string, target: string): void {
  * interaction that asked for it ends when they are painted.
  */
 export function listShown(target: string): void {
-  if (!recording()) {
+  if (!isRecording()) {
     return;
   }
   shown = target;

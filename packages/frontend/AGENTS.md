@@ -237,7 +237,10 @@ API; everything else the app keeps is a zustand store.
 ### Timings (the HUD)
 Outside production, the app times its work for the HUD's Analytics tab
 (`src/lib/metrics/timings.ts`, in memory: the latest 2000 timings and 20
-interactions; production records nothing and has no HUD).
+interactions; production records nothing, copies no response body, and has
+no HUD). A change of the signed-in user clears them (`appState.ts`), as it
+does the user's data, since interactions name tags; work begun before a
+clear is not recorded when it ends.
 - **What is timed**, by kind: `network`, every `fetchApi` (method and
   path, ids as `:id`; to the end of the body, read from a clone, with status
   and size); `idb`, the lists' live queries (`lib/data/hooks.ts`, by hook
@@ -252,7 +255,8 @@ interactions; production records nothing and has no HUD).
   Entries) calls `beginInteraction`; `EntryList` calls `listShown` once it
   renders the list asked for with its own rows (the list hooks name what
   their rows are of: a live query answers with the last rows until it reads
-  the next), and the interaction ends at the next paint. Its timings
+  the next), and the interaction ends at the next paint, unless another has begun or another
+list is shown by then. Its timings
   (`timingsOf`) are those from the click to the paint, and the work that
   follows on until the app idles 100 ms.
 - **The tab** (`src/components/bottomBar/analytics/`): the interaction's

@@ -9,6 +9,7 @@ import {
   MAX_INTERACTIONS,
   MAX_TIMINGS,
   metricsSnapshot,
+  NOTIFY_MS,
   quantile,
   recordTiming,
   statsOf,
@@ -41,8 +42,9 @@ describe('recordTiming', () => {
   it('records work and tells the HUD of it, once for many', async () => {
     const listener = vi.fn();
     const unsubscribe = subscribeMetrics(listener);
-    recordTiming('network', 'GET /tags', 10, 25, '200');
-    recordTiming('idb', 'useTags', 30, 31);
+    const now = performance.now();
+    recordTiming('network', 'GET /tags', now, now + 15, '200');
+    recordTiming('idb', 'useTags', now + 20, now + 21);
 
     const timings = await told();
 
@@ -50,7 +52,7 @@ describe('recordTiming', () => {
       expect.objectContaining({
         kind: 'network',
         name: 'GET /tags',
-        start: 10,
+        start: now,
         duration: 15,
         detail: '200',
       }),
@@ -61,14 +63,26 @@ describe('recordTiming', () => {
   });
 
   it('keeps only the latest timings', async () => {
+    const now = performance.now();
     for (let index = 0; index < MAX_TIMINGS + 5; index++) {
-      recordTiming('render', `render ${index}`, index, index + 1);
+      recordTiming('render', `render ${index}`, now + index, now + index + 1);
     }
 
     const timings = await told();
 
     expect(timings).toHaveLength(MAX_TIMINGS);
     expect(timings[0]?.name).toBe('render 5');
+  });
+
+  it('records no work begun before a clear (a sign-out)', async () => {
+    const start = performance.now();
+    const query = timed('idb', 'useTags', async () => []);
+    clearMetrics();
+    recordTiming('network', 'GET /tags', start);
+    await query;
+    recordTiming('idb', 'useTagEntries', performance.now());
+
+    expect((await told()).map(({name}) => name)).toEqual(['useTagEntries']);
   });
 
   it('records nothing in production, which has no HUD', async () => {
@@ -155,6 +169,28 @@ describe('interactions', () => {
       )
     );
     expect(metricsSnapshot().interactions[0]?.painted).toBeNull();
+  });
+
+  /** The interactions once the paints they waited for are past. */
+  const settled = async () => {
+    await new Promise(resolve => setTimeout(resolve, NOTIFY_MS + 100));
+    return metricsSnapshot().interactions;
+  };
+
+  it('is not painted when another began before the paint', async () => {
+    listShown(listKey({tag: 'a'}));
+    beginInteraction('tag switch', listKey({tag: 'a'}));
+    beginInteraction('tag switch', listKey({tag: 'b'}));
+
+    expect((await settled()).map(({painted}) => painted)).toEqual([null, null]);
+  });
+
+  it('is not painted when another list is shown by the paint', async () => {
+    listShown(listKey({tag: 'a'}));
+    beginInteraction('tag switch', listKey({tag: 'a'}));
+    listShown(listKey({tag: 'c'}));
+
+    expect((await settled()).map(({painted}) => painted)).toEqual([null]);
   });
 
   it('keeps only the latest interactions', async () => {

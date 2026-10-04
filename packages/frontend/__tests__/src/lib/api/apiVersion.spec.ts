@@ -8,6 +8,7 @@ import {
   requestName,
   useApiVersion,
 } from '../../../../src/lib/api/apiVersion';
+import * as envModule from '../../../../src/lib/environment';
 import {
   clearMetrics,
   metricsSnapshot,
@@ -124,6 +125,18 @@ describe('fetchApi timings', () => {
         }),
       ])
     );
+  });
+
+  it('neither copies a body nor times a request in production', async () => {
+    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+    const clone = vi.spyOn(Response.prototype, 'clone');
+    answer('0.2.1');
+
+    await fetchApi('http://localhost:9001/api/v1/user/');
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    expect(clone).not.toHaveBeenCalled();
+    expect(metricsSnapshot().timings).toEqual([]);
   });
 
   it('times a request that failed', async () => {

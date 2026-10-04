@@ -6,11 +6,12 @@
  *
  * `fetchApi` also times each request for the HUD (`lib/metrics/`), from
  * when it is sent to the end of its body (read from a copy, so the caller
- * still reads the body).
+ * still reads the body): only where timings are recorded, so production
+ * never copies a body.
  */
 import {API_VERSION_HEADER} from '@commandsnippets/api-shared/messages';
 import {create} from 'zustand';
-import {recordTiming} from '../metrics/timings';
+import {isRecording, recordTiming} from '../metrics/timings';
 
 export const useApiVersion = create<{version: string | null}>()(() => ({
   version: null,
@@ -73,16 +74,27 @@ export async function fetchApi(
   url: string,
   init?: RequestInit
 ): Promise<Response> {
-  const start = performance.now();
-  const name = requestName(url, init?.method);
+  const timing = isRecording()
+    ? {name: requestName(url, init?.method), start: performance.now()}
+    : null;
   let response: Response;
   try {
     response = await fetch(url, init);
   } catch (error) {
-    recordTiming('network', name, start, performance.now(), 'failed');
+    if (timing !== null) {
+      recordTiming(
+        'network',
+        timing.name,
+        timing.start,
+        performance.now(),
+        'failed'
+      );
+    }
     throw error;
   }
-  timeBody(name, start, response);
+  if (timing !== null) {
+    timeBody(timing.name, timing.start, response);
+  }
   const version = response.headers.get(API_VERSION_HEADER);
   if (version !== null) {
     useApiVersion.setState({version});
