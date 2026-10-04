@@ -6,6 +6,7 @@ import {useSession, useTagNamed, useTags} from '../../../../src/lib/data/hooks';
 import {
   clearMetrics,
   metricsSnapshot,
+  NOTIFY_MS,
 } from '../../../../src/lib/metrics/timings';
 import {type SyncSession, syncSession} from '../../../../src/lib/sync/session';
 import {signIn, TEST_USER} from '../../../util/signIn';
@@ -60,6 +61,53 @@ describe('useTags', () => {
 
     await waitFor(() => expect(seen).toEqual({'tag list': 3, 'entry list': 3}));
     await vi.waitFor(() => expect(tagReads()).toBe(2));
+  });
+});
+
+describe('useTags, as readers come and go', () => {
+  /** The tag reads, once the HUD has been told of them all. */
+  const settledReads = async () => {
+    await new Promise(resolve => setTimeout(resolve, NOTIFY_MS + 150));
+    return tagReads();
+  };
+
+  it('keeps reading for the readers left, and stops when none is', async () => {
+    signIn();
+    await seed([tag('1', {name: 'shell'})]);
+    clearMetrics();
+    const seen: Record<string, number | undefined> = {};
+    const Reader = ({name}: {name: string}) => {
+      seen[name] = useTags()?.length;
+      return null;
+    };
+    const {rerender, unmount} = render(
+      <>
+        <Reader key="a" name="a" />
+        <Reader key="b" name="b" />
+      </>
+    );
+    await waitFor(() => expect(seen).toEqual({a: 1, b: 1}));
+
+    // One reader goes: the other still sees every change.
+    rerender(<Reader key="a" name="a" />);
+    await act(() => seed([tag('2', {name: 'git'})]));
+    await waitFor(() => expect(seen['a']).toBe(2));
+
+    // The last goes: the query stops, and reads nothing on a change.
+    unmount();
+    const reads = await settledReads();
+    await act(() => seed([tag('3', {name: 'docker'})]));
+    expect(await settledReads()).toBe(reads);
+
+    // A new reader starts it afresh: unread, then the tags as they are now.
+    const fresh: Array<number | undefined> = [];
+    const Fresh = () => {
+      fresh.push(useTags()?.length);
+      return null;
+    };
+    render(<Fresh />);
+    expect(fresh[0]).toBeUndefined();
+    await waitFor(() => expect(fresh.at(-1)).toBe(3));
   });
 });
 
