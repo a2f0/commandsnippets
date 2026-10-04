@@ -3,7 +3,6 @@ import {Check, FileCopySharp} from '@mui/icons-material';
 import {styled} from '@mui/material/styles';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
-import {useSearchParams} from 'react-router-dom';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {
   deleteEntry,
@@ -11,6 +10,7 @@ import {
   tagEntry,
   untagEntry,
 } from '../../lib/data/writes';
+import {useSearchParam} from '../../lib/router/navigation';
 import {appMode, getSelection, initialMouse} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {DragHandle} from '../dnd/DragHandle';
@@ -106,8 +106,7 @@ const Entry = ({
     showCopyIcon: false,
   });
   const [showCheckIcon, setShowCheckIcon] = useState(false);
-  const [searchParams] = useSearchParams();
-  const entriesFilter = searchParams.get('entries');
+  const entriesFilter = useSearchParam('entries');
   const previewRef = useRef<HTMLDivElement>(null);
   const [mouse, setMouse] = useState(initialMouse);
   const [isEditing, setIsEditing] = useState(false);

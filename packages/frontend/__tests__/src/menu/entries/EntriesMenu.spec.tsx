@@ -1,12 +1,13 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
-import {MemoryRouter} from 'react-router-dom';
 import {describe, expect, it} from 'vitest';
 
 import {i18n} from '../../../../src/i18n/i18n';
+import {Router} from '../../../../src/lib/router/Router';
 import {EntriesMenu} from '../../../../src/menu/entries/EntriesMenu';
 import {darkTheme} from '../../../../src/theme/themes';
 import {store} from '../../../util/signIn';
@@ -19,9 +20,9 @@ function renderEntriesMenu(route: string) {
   return render(
     <I18nextProvider i18n={i18n}>
       <ThemeProvider theme={darkTheme}>
-        <MemoryRouter initialEntries={[route]}>
+        <Router history={createMemoryHistory({initialEntries: [route]})}>
           <EntriesMenu anchorEl={document.body} onClose={() => {}} />
-        </MemoryRouter>
+        </Router>
       </ThemeProvider>
     </I18nextProvider>
   );

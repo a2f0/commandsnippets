@@ -1,7 +1,6 @@
 import {Box} from '@mui/material';
 import React, {Profiler, useCallback, useEffect} from 'react';
 import {useCookies} from 'react-cookie';
-import {useLocation, useNavigate} from 'react-router-dom';
 import {AppHeader} from '../components/AppHeader';
 import {BottomToolbar} from '../components/bottomBar/BottomToolbar';
 import {LeftDrawer} from '../components/drawer/LeftDrawer';
@@ -13,19 +12,20 @@ import {useOwner} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
 import {environment} from '../lib/environment';
 import {recordCommit, useRenderTiming} from '../lib/metrics/hooks';
+import {navigate, useRoute} from '../lib/router/navigation';
 import {useAppConfig, useAppState} from '../lib/state/appState';
 
 const COOKIE_KEYS = loggedInCookieNames(environment);
 
 /**
- * The page, rendered again on every navigation (a tag switch too): each
- * render is timed for the HUD, the whole page's (its lists' included).
+ * The page, which a tag switch does not render again (only the lists showing
+ * the tag do): each render is timed for the HUD, the whole page's (its
+ * lists' included).
  */
 const EntriesPageContent = () => {
   const renderStart = performance.now();
-  const location = useLocation();
+  const atRoot = useRoute(route => route.page === 'root');
   const appConfig = useAppConfig();
-  const navigate = useNavigate();
   // Read `document.cookie` afresh on mount: CookiesProvider parsed it when the
   // page loaded, before a sign-in's API answer set the login cookie, and that
   // stale copy would sign the user straight back out.
@@ -36,10 +36,10 @@ const EntriesPageContent = () => {
 
   // Redirect to user's page when on root path.
   useEffect(() => {
-    if (location.pathname === '/' && appConfig.loggedInUser !== null) {
+    if (atRoot && appConfig.loggedInUser !== null) {
       navigate(`/${appConfig.loggedInUser}`);
     }
-  }, [location.pathname, appConfig.loggedInUser, navigate]);
+  }, [atRoot, appConfig.loggedInUser]);
 
   // If the user has cleared their cookies, log them out from the application state.
   // Note: this is not the Authorization cookie containing the authorization token.

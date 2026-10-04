@@ -1,8 +1,7 @@
 import {memo} from 'react';
 import {CookiesProvider} from 'react-cookie';
-import {BrowserRouter as Router} from 'react-router-dom';
-
 import {App} from './App';
+import {Router} from './lib/router/Router';
 
 const AppRouter = memo(() => (
   <Router>

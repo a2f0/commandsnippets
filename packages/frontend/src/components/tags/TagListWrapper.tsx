@@ -1,8 +1,12 @@
 import React, {useEffect, useMemo} from 'react';
-import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {useTags} from '../../lib/data/hooks';
 import {sortTags} from '../../lib/data/sort';
 import {useRenderTiming} from '../../lib/metrics/hooks';
+import {
+  navigate,
+  useRouteParam,
+  useSearchParam,
+} from '../../lib/router/navigation';
 import {useAppState} from '../../lib/state/appState';
 import {TagList} from './TagList';
 
@@ -13,10 +17,9 @@ import {TagList} from './TagList';
  */
 const TagListWrapper = () => {
   const renderStart = performance.now();
-  const navigate = useNavigate();
-  const {user, tag} = useParams();
-  const [searchParams] = useSearchParams();
-  const entriesList = searchParams.get('entries');
+  const user = useRouteParam('user');
+  const tag = useRouteParam('tag');
+  const entriesList = useSearchParam('entries');
   const allTags = useTags();
   const tagSortOrder = useAppState(state => state.tagSortOrder);
   const tagSearchString = useAppState(state => state.tagSearchString);
@@ -46,7 +49,7 @@ const TagListWrapper = () => {
       setTagSelectedID(first.id);
       navigate(`/${user}/${first.attributes.name}`);
     }
-  }, [user, tag, entriesList, current, first, navigate, setTagSelectedID]);
+  }, [user, tag, entriesList, current, first, setTagSelectedID]);
 
   useRenderTiming('TagList', renderStart, `${tags?.length ?? 0} tags`);
 

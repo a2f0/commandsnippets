@@ -1,9 +1,9 @@
 import {Menu} from '@mui/material';
 import React, {useEffect, useState} from 'react';
-import {useParams, useSearchParams} from 'react-router-dom';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
 import {setEntryPublic} from '../../lib/data/writes';
+import {useRoute, useSearchParam} from '../../lib/router/navigation';
 import type {IMouse} from '../../lib/shared';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 
@@ -74,9 +74,12 @@ const EntryContextMenu = ({
   };
 
   const [mousePosition, setMousePosition] = useState(initialMouse);
-  const {user, tag} = useParams();
-  const [searchParams] = useSearchParams();
-  const entriesFilter = searchParams.get('entries');
+  // Whether the list is a tag's, not which tag's: a tag switch renders no
+  // row's menu again.
+  const onTagList = useRoute(
+    route => route.user !== undefined && route.tag !== undefined
+  );
+  const entriesFilter = useSearchParam('entries');
 
   useEffect(() => {
     setMousePosition(mouse);
@@ -170,7 +173,7 @@ const EntryContextMenu = ({
           New Entry
         </StyledMenuItem>
       )}
-      {!readOnly && user !== undefined && tag !== undefined && (
+      {!readOnly && onTagList && (
         <StyledMenuItem
           id={`tagsEntriesContextMenu${id}Untag`}
           onClick={() => {
