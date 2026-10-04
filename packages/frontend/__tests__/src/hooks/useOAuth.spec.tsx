@@ -1,12 +1,12 @@
 import {inspect} from 'node:util';
-
 import {act, render, waitFor} from '@testing-library/react';
+import {createMemoryHistory} from 'history';
 import {CookiesProvider} from 'react-cookie';
-import {MemoryRouter} from 'react-router-dom';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {useOAuth} from '../../../src/hooks/useOAuth';
 import {apiClient} from '../../../src/lib/api/apiClient';
+import {Router} from '../../../src/lib/router/Router';
 import {signIn, store} from '../../util/signIn';
 
 // The authorization code is a credential until it is exchanged: it must never
@@ -67,11 +67,11 @@ function openCallback(provider: 'github' | 'google', query: string) {
 async function renderCallback(Callback: () => null) {
   await act(async () => {
     render(
-      <MemoryRouter>
+      <Router history={createMemoryHistory()}>
         <CookiesProvider>
           <Callback />
         </CookiesProvider>
-      </MemoryRouter>
+      </Router>
     );
   });
 }

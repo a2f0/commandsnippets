@@ -333,12 +333,30 @@ writing its type by hand.
   styles and the shared `sx` objects (`sx.ts`)
 - **Non-UI code**: `src/lib/` (the API clients, auth, the app state
   (`state/`), the Dexie database (`db/`), its sync (`sync/`), what the UI
-  reads and writes (`data/`), and helpers), `src/hooks/`, `src/providers/`,
+  reads and writes (`data/`), the router (`router/`), and helpers), `src/hooks/`, `src/providers/`,
   `src/i18n/` and `src/msw/`
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
   (`/:user/:tag`)
-- **Libraries**: Material UI, Emotion (styled components), React Router,
-  React DnD (reordering), i18next (`src/i18n/`)
+- **Libraries**: Material UI, Emotion (styled components), React DnD
+  (reordering), i18next (`src/i18n/`)
+
+### Routing
+The app's own router, `src/lib/router/` (no React Router: its hooks render
+every component that calls them on any change of the URL, `React.memo` or
+not, so a tag switch rendered every tag and entry row and the whole page).
+- `route.ts`: `routeOf(pathname)`, the page (`admin`, `githubOAuth`,
+  `googleOAuth`, `user`, `root`, `none`) and a user's page's `user` and
+  `tag`, decoded and matched as React Router matched them.
+- `navigation.ts`: the URL as an external store. Read it through a selector
+  that returns a value, never an object: `useRoute(route => route.page)`,
+  `useRouteParam('user' | 'tag')`, `useSearchParam('entries')`. A component
+  renders again only when what it selects changes, so select the least it
+  needs (whose page, not which tag; `route.tag !== undefined`, not the tag).
+  Event handlers and effects read it without subscribing (`currentRoute()`)
+  and change it with `navigate(to, {replace})`, a function, not a hook.
+- `Router.tsx`: `Router` (the browser's history, or a test's memory history
+  from the `history` package: `TestAppRouter`), `Navigate` (a route that
+  sends elsewhere) and `Link` (for MUI's `component` prop).
 
 ### Top-level routes
 - Every top-level route in `src/routePaths.ts` must also be a reserved username

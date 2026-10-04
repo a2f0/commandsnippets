@@ -3,11 +3,11 @@ import {styled} from '@mui/material/styles';
 import invariant from 'invariant';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrop} from 'react-dnd';
-import {useNavigate} from 'react-router-dom';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly} from '../../lib/data/hooks';
 import {keyOfRow} from '../../lib/db/database';
 import {beginInteraction, listKey} from '../../lib/metrics/timings';
+import {navigate} from '../../lib/router/navigation';
 import {
   activeSearch,
   appMode,
@@ -39,7 +39,6 @@ interface IProps {
 }
 const TagList = ({tagsFromWrapper, username}: IProps) => {
   const appConfig = useAppConfig();
-  const navigate = useNavigate();
   // Another user's tags (staff reading them): no New Tag.
   const readOnly = useReadOnly();
 
@@ -170,7 +169,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
         }
       }
     },
-    [appConfig, navigate, username, tags, selectedTag]
+    [appConfig, username, tags, selectedTag]
   );
 
   useEffect(() => {

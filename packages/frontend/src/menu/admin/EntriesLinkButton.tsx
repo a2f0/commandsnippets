@@ -1,8 +1,7 @@
 import {Button} from '@mui/material';
 import React from 'react';
-import {Link as RouterLink} from 'react-router-dom';
-
 import {useTypedTranslation} from '../../i18n/hooks';
+import {Link} from '../../lib/router/Router';
 import {menuBarButtonSx} from '../../theme/sx';
 
 interface IProps {
@@ -15,7 +14,7 @@ const EntriesLinkButton = ({username}: IProps) => {
 
   return (
     <Button
-      component={RouterLink}
+      component={Link}
       to={`/${username}`}
       id="entriesLinkButton"
       color="secondary"

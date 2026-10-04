@@ -99,6 +99,23 @@ describe('Switching tags', () => {
     });
   });
 
+  it('renders what shows the tag, not the whole page', async () => {
+    const history = createMemoryHistory();
+    history.push('/test/test-tag-2');
+    render(<TestAppRouter history={history} />);
+    await screen.findByText('test-tag-1');
+    clearMetrics();
+
+    await clickTag('test-tag-1');
+
+    const interaction = await paintedSwitch('test-tag-1');
+    const rendered = timingsOf(metricsSnapshot(), interaction)
+      .filter(({kind}) => kind === 'render')
+      .map(({name}) => name);
+    expect(rendered).toEqual(expect.arrayContaining(['TagList', 'EntryList']));
+    expect(rendered).not.toContain('EntriesPage');
+  });
+
   it('from all the entries, is timed to the paint of the tag’s own', async () => {
     const history = createMemoryHistory();
     history.push('/test?entries=all');

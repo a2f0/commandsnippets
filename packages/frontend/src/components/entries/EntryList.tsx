@@ -17,7 +17,6 @@ import React, {
   useState,
 } from 'react';
 import {useDrop} from 'react-dnd';
-import {useParams, useSearchParams} from 'react-router-dom';
 import {
   useEntries,
   useReadOnly,
@@ -29,6 +28,7 @@ import {useTagSync} from '../../lib/data/useSync';
 import {keyOfRow} from '../../lib/db/database';
 import {useRenderTiming} from '../../lib/metrics/hooks';
 import {listKey, listShown} from '../../lib/metrics/timings';
+import {useRouteParam, useSearchParam} from '../../lib/router/navigation';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {appMode, type IMouse, initialMouse} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
@@ -66,10 +66,9 @@ const EntryList = () => {
   const appConfig = useAppConfig();
   // Another user's entries (staff reading them): no New Entry.
   const readOnly = useReadOnly();
-  const {tag} = useParams();
+  const tag = useRouteParam('tag');
   const theme: Theme = useTheme();
-  const [searchParams] = useSearchParams();
-  const entriesList = searchParams.get('entries');
+  const entriesList = useSearchParam('entries');
   const listsAll = entriesList === 'all' || entriesList === 'untagged';
 
   const named = useTagNamed(listsAll ? undefined : tag);
@@ -361,7 +360,10 @@ const EntryList = () => {
         findEntry={findEntry}
         object={element}
         rowKey={keyOfRow(element)}
-        tagId={currentTag?.id}
+        // The tag the rows are of, read with them: the last tag's while the
+        // next tag's are read (its rows render again only once they are),
+        // and none in the all or untagged list.
+        tagId={listsAll ? undefined : tagged?.tagId}
         findEntryByIndex={findEntryByIndex}
         keepRendered={keepRendered}
       />

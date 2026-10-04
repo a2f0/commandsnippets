@@ -1,5 +1,4 @@
-import {useSearchParams} from 'react-router-dom';
-
+import {useSearchParam} from '../lib/router/navigation';
 import {useAppConfig} from '../lib/state/appState';
 
 /**
@@ -10,8 +9,7 @@ import {useAppConfig} from '../lib/state/appState';
  */
 export function useEntrySortOrder() {
   const appConfig = useAppConfig();
-  const [searchParams] = useSearchParams();
-  const entriesFilter = searchParams.get('entries');
+  const entriesFilter = useSearchParam('entries');
   const tagList = entriesFilter !== 'untagged' && entriesFilter !== 'all';
 
   return {

@@ -1,9 +1,13 @@
 import {ListItemIcon} from '@mui/material';
 import React from 'react';
-import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {beginInteraction, listKey} from '../../../lib/metrics/timings';
+import {
+  navigate,
+  useRouteParam,
+  useSearchParam,
+} from '../../../lib/router/navigation';
 import {entrySearchMethod} from '../../../lib/shared';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../StyledMenuItem';
@@ -14,10 +18,8 @@ interface IProps {
 
 const AllEntries = ({onClose}: IProps) => {
   const {t} = useTypedTranslation('menu');
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const {user} = useParams();
-  const entriesFilter = searchParams.get('entries');
+  const user = useRouteParam('user');
+  const entriesFilter = useSearchParam('entries');
 
   return (
     <StyledMenuItem

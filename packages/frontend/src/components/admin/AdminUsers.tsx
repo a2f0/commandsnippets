@@ -25,7 +25,6 @@ import {
   Tooltip,
 } from '@mui/material';
 import React, {useCallback, useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
 
 import type {AdminKeys} from '../../i18n/hooks';
 import {useTypedTranslation} from '../../i18n/hooks';
@@ -43,6 +42,7 @@ import {
 } from '../../lib/api/adminApi';
 import {UserMismatchError} from '../../lib/api/apiClient';
 import {formatTimestamp} from '../../lib/formatTimestamp';
+import {navigate} from '../../lib/router/navigation';
 import {type IMouse, initialMouse} from '../../lib/shared';
 import {leaveForeignSession} from '../../lib/state/appState';
 import {commonButtonSx} from '../../theme/sx';
@@ -141,7 +141,6 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
     user: AdminUser;
     action: AdminUserChange;
   } | null>(null);
-  const navigate = useNavigate();
   // The menu keeps its user while it closes; the position opens and closes it.
   const [menuUser, setMenuUser] = useState<AdminUser | null>(null);
   const [menuMouse, setMenuMouse] = useState<IMouse>(initialMouse);

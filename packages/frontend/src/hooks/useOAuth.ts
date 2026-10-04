@@ -1,7 +1,7 @@
 import {useEffect} from 'react';
-import {useNavigate} from 'react-router-dom';
 import {v4 as uuidv4} from 'uuid';
 import {apiClient} from '../lib/api/apiClient';
+import {navigate} from '../lib/router/navigation';
 import {useAppConfig} from '../lib/state/appState';
 import {claimData} from '../lib/sync/session';
 
@@ -22,7 +22,6 @@ interface OAuthCallbackParams {
 
 export const useOAuth = (config: OAuthConfig) => {
   const appConfig = useAppConfig();
-  const navigate = useNavigate();
 
   const isOAuthCallback = () => {
     const path = window.location.pathname;

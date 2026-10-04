@@ -1,9 +1,10 @@
 import {Tab, Tabs} from '@mui/material';
 import type {SxProps, Theme} from '@mui/material/styles';
 import type React from 'react';
-import {Link as RouterLink, useMatch} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../i18n/hooks';
+import {useRoute} from '../../lib/router/navigation';
+import {Link} from '../../lib/router/Router';
 import {ADMIN_PATH} from '../../routePaths';
 
 type Mode = 'user' | 'admin';
@@ -29,7 +30,7 @@ interface IProps {
  */
 const ModeTabs = ({username, readOnly}: IProps) => {
   const {t} = useTypedTranslation('admin');
-  const onAdmin = useMatch(ADMIN_PATH) !== null;
+  const onAdmin = useRoute(route => route.page === 'admin');
   const mode: Mode | false = onAdmin ? 'admin' : readOnly ? false : 'user';
 
   // The selected tab's link would reload its page (and drop the tag shown).
@@ -60,7 +61,7 @@ const ModeTabs = ({username, readOnly}: IProps) => {
         id="userModeTab"
         value="user"
         label={t('userMode')}
-        component={RouterLink}
+        component={Link}
         to={`/${username}`}
         onClick={stayOn('user')}
         sx={tabSx}
@@ -69,7 +70,7 @@ const ModeTabs = ({username, readOnly}: IProps) => {
         id="adminModeTab"
         value="admin"
         label={t('adminMode')}
-        component={RouterLink}
+        component={Link}
         to={ADMIN_PATH}
         onClick={stayOn('admin')}
         sx={tabSx}

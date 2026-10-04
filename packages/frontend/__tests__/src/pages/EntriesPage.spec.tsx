@@ -1,12 +1,13 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {render} from '@testing-library/react';
+import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 import {I18nextProvider} from 'react-i18next';
-import {MemoryRouter} from 'react-router-dom';
 import {describe, expect, it, vi} from 'vitest';
 import {i18n} from '../../../src/i18n/i18n';
+import {Router} from '../../../src/lib/router/Router';
 import {EntriesPage} from '../../../src/pages/EntriesPage';
 import {darkTheme} from '../../../src/theme/themes';
 import {signIn} from '../../util/signIn';
@@ -17,14 +18,16 @@ vi.mock('react-cookie', () => ({
   useCookies: () => [{}, vi.fn(), vi.fn()],
 }));
 
+const history = createMemoryHistory();
+
 const EntriesPageWithProviders = () => (
   <I18nextProvider i18n={i18n}>
     <ThemeProvider theme={darkTheme}>
-      <MemoryRouter>
+      <Router history={history}>
         <DndProvider backend={HTML5Backend}>
           <EntriesPage />
         </DndProvider>
-      </MemoryRouter>
+      </Router>
     </ThemeProvider>
   </I18nextProvider>
 );

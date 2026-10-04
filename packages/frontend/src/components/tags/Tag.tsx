@@ -4,11 +4,15 @@ import type {Theme} from '@mui/material/styles';
 import {styled, useTheme} from '@mui/material/styles';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
-import {useNavigate, useParams} from 'react-router-dom';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {deleteTag as deleteStoredTag, reorderTags} from '../../lib/data/writes';
 import {beginInteraction, listKey} from '../../lib/metrics/timings';
+import {
+  currentRoute,
+  navigate,
+  useRouteParam,
+} from '../../lib/router/navigation';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {
   activeSearch,
@@ -83,8 +87,9 @@ const Tag = ({
   const originalIndex = findEntry(id).index;
   const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
-  const {user, tag: shownTag} = useParams();
-  const navigate = useNavigate();
+  // Whose page, not the tag shown: a tag switch renders only the two rows
+  // whose selection changes.
+  const user = useRouteParam('user');
   const tagRef = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
@@ -281,7 +286,7 @@ const Tag = ({
   // The tag shown follows its new name.
   const handleSave = (renamed: ITagJsonApi) => {
     setIsEditing(false);
-    if (shownTag === tagObject.attributes.name) {
+    if (currentRoute().tag === tagObject.attributes.name) {
       navigate(`/${user}/${renamed.attributes.name}`, {replace: true});
     }
   };

@@ -19,9 +19,9 @@ import type {
 } from '@commandsnippets/api-shared/responses';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useSyncExternalStore} from 'react';
-import {useParams} from 'react-router-dom';
 import type {RowKey} from '../db/database';
 import {timed} from '../metrics/timings';
+import {useRouteParam} from '../router/navigation';
 import {useAppState} from '../state/appState';
 import {
   publicSyncSession,
@@ -50,7 +50,8 @@ export interface Owner {
 export function useOwner(): Owner | null {
   const username = useAppState(state => state.loggedInUser);
   const isStaff = useAppState(state => state.isStaff);
-  const {user} = useParams();
+  // Only whose page: a tag switch renders none of the hooks' readers again.
+  const user = useRouteParam('user');
   if (username === null) {
     return user === undefined
       ? null
