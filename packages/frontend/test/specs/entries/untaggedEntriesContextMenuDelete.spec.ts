@@ -42,9 +42,9 @@ describe('Entries Context Menu Delete Entry', () => {
     // Check that we have the entries list displayed
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
-    // The context menu of entry 3, the one in no tag.
-    await expect(BasePage.tagsEntryContextMenu('3')).toBeExisting();
-    await expect(BasePage.tagsEntryContextMenu('3')).not.toBeDisplayed();
+    // The context menu of entry 3, the one in no tag: rendered only once it
+    // is opened.
+    await expect(BasePage.tagsEntryContextMenu('3')).not.toBeExisting();
     await BasePage.tagsEntry('3').waitAndRightClick();
     await expect(BasePage.tagsEntryContextMenu('3')).toBeDisplayed();
     await expect(BasePage.tagsEntryContextMenuDelete('3')).toBeDisplayed();

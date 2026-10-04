@@ -323,6 +323,10 @@ const Entry = ({
     []
   );
 
+  const closeContextMenu = useCallback(() => {
+    setMouse(initialMouse);
+  }, []);
+
   const handleNewEntry = useCallback(() => {
     appConfig.setEntryNew(`textEntry-${rowKey}-top`);
   }, [appConfig, rowKey]);
@@ -368,6 +372,7 @@ const Entry = ({
     () => (
       <EntryContextMenu
         mouse={mouse}
+        onClose={closeContextMenu}
         id={id}
         text_entry={textEntryObject}
         handleRemoveFromListParent={handleRemoveFromList}
@@ -380,6 +385,7 @@ const Entry = ({
     [
       readOnly,
       mouse,
+      closeContextMenu,
       id,
       textEntryObject,
       handleRemoveFromList,

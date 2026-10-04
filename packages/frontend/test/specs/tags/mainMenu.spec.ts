@@ -23,7 +23,8 @@ describe('Tag Main Menu', () => {
     await BasePage.open('');
     await expect(BasePage.tagList).toBeExisting();
     await expect(BasePage.tagList).toBeDisplayed();
-    await expect(BasePage.tagContextMenu1).toBeExisting();
+    // A tag's context menu is rendered only once it is opened.
+    await expect(BasePage.tagContextMenu1).not.toBeExisting();
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.tag1).toBeExisting();
     await expect(BasePage.tag1).toBeDisplayed();

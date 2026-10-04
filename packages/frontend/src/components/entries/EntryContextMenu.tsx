@@ -1,5 +1,5 @@
 import {Menu} from '@mui/material';
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
 import {setEntryPublic} from '../../lib/data/writes';
@@ -9,18 +9,19 @@ import {StyledMenuItem} from '../../menu/StyledMenuItem';
 
 interface IStyledMenuProps {
   id: string;
-  keepMounted: boolean;
   mousePosition: IMouse;
   open: boolean;
   onClose: () => void;
   anchorReference: 'anchorPosition';
-  anchorPosition: {top: number; left: number} | undefined;
   children: React.ReactNode;
 }
 
+/**
+ * Not kept mounted: a closed menu renders nothing, so a list does not carry
+ * a whole menu (in a portal of its own) for every row.
+ */
 const StyledMenu = ({
   id,
-  keepMounted,
   mousePosition,
   open,
   onClose,
@@ -30,7 +31,6 @@ const StyledMenu = ({
   return (
     <Menu
       id={id}
-      keepMounted={keepMounted}
       open={open}
       onClose={onClose}
       anchorReference={anchorReference}
@@ -46,7 +46,13 @@ const StyledMenu = ({
 };
 
 export interface IEntryContextMenu {
+  /**
+   * Where the menu was opened (the right click), or nowhere (null
+   * coordinates): closed.
+   */
   mouse: IMouse;
+  /** Close the menu: the row forgets where it was opened. */
+  onClose: () => void;
   id: string;
   text_entry: ITextEntryJsonApi;
   handleRemoveFromListParent: () => void;
@@ -59,6 +65,7 @@ export interface IEntryContextMenu {
 
 const EntryContextMenu = ({
   mouse,
+  onClose,
   id,
   handleRemoveFromListParent,
   handleNewEntryParent,
@@ -68,12 +75,6 @@ const EntryContextMenu = ({
   text_entry,
 }: IEntryContextMenu) => {
   const session = useSession();
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
-  };
-
-  const [mousePosition, setMousePosition] = useState(initialMouse);
   // Whether the list is a tag's, not which tag's: a tag switch renders no
   // row's menu again.
   const onTagList = useRoute(
@@ -81,13 +82,10 @@ const EntryContextMenu = ({
   );
   const entriesFilter = useSearchParam('entries');
 
-  useEffect(() => {
-    setMousePosition(mouse);
-  }, [mouse]);
-
-  const handleClose = () => {
-    setMousePosition(initialMouse);
-  };
+  // Open where the row was right-clicked, from the row's state: no copy of
+  // it here, which an effect would set again after every row mounts,
+  // rendering every row's menu twice.
+  const handleClose = onClose;
 
   const handleRemoveFromList = () => {
     handleRemoveFromListParent();
@@ -112,16 +110,10 @@ const EntryContextMenu = ({
   return (
     <StyledMenu
       id={`tagsEntriesContextMenu-${id}`}
-      keepMounted
-      mousePosition={mousePosition}
-      open={mousePosition.mouseY !== null}
+      mousePosition={mouse}
+      open={mouse.mouseY !== null}
       onClose={handleClose}
       anchorReference="anchorPosition"
-      anchorPosition={
-        mousePosition.mouseY !== null && mousePosition.mouseX !== null
-          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : {top: 0, left: 0}
-      }
     >
       <StyledMenuItem
         id={`tags-entries-context-menu-${id}-copy`}

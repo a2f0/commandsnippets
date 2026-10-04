@@ -1,33 +1,41 @@
 import {Menu} from '@mui/material';
-import {useLiveQuery} from 'dexie-react-hooks';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback} from 'react';
 import {useSession} from '../../lib/data/hooks';
 import {setTagPublic} from '../../lib/data/writes';
-import {type IMouse, initialMouse} from '../../lib/shared';
+import type {IMouse} from '../../lib/shared';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 import {TagDeleteDialog} from './TagDeleteDialog';
 
 interface ITagContextMenuProps {
   id: string;
+  /** Whether the tag is public, for Make public or Make private. */
+  isPublic: boolean;
+  /**
+   * Where the menu was opened (the right click), or nowhere (null
+   * coordinates): closed.
+   */
   mouse: IMouse;
+  /** Close the menu: the tag forgets where it was opened. */
+  onClose: () => void;
   deleteTagParent: () => void;
   handleBeginEditParent: () => void;
 }
 
 interface IStyledMenuProps {
   id: string;
-  keepMounted: boolean;
   mousePosition: IMouse;
   open: boolean;
   onClose: () => void;
   anchorReference: 'anchorPosition';
-  anchorPosition: {top: number; left: number} | undefined;
   children: React.ReactNode;
 }
 
+/**
+ * Not kept mounted: a closed menu renders nothing, so the tag list does not
+ * carry a whole menu (in a portal of its own) for every tag.
+ */
 const StyledMenu = ({
   id,
-  keepMounted,
   mousePosition,
   open,
   onClose,
@@ -37,7 +45,6 @@ const StyledMenu = ({
   return (
     <Menu
       id={id}
-      keepMounted={keepMounted}
       open={open}
       onClose={onClose}
       anchorReference={anchorReference}
@@ -54,25 +61,16 @@ const StyledMenu = ({
 
 const TagContextMenu = ({
   id,
+  isPublic,
   mouse,
+  onClose,
   deleteTagParent,
   handleBeginEditParent,
 }: ITagContextMenuProps) => {
   const session = useSession();
-  const tag = useLiveQuery(
-    () => session?.db.tags.get([session.owner, id]),
-    [session, id]
-  );
-  const [mousePosition, setMousePosition] = useState<IMouse>(initialMouse);
   const [dialogOpen, setDialogOpen] = React.useState(false);
-
-  useEffect(() => {
-    setMousePosition(mouse);
-  }, [mouse]);
-
-  const handleClose = useCallback(() => {
-    setMousePosition(initialMouse);
-  }, []);
+  // Open where the tag was right-clicked, from the tag's state.
+  const handleClose = onClose;
 
   const handleBeginEdit = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
@@ -84,7 +82,7 @@ const TagContextMenu = ({
   const handleDelete = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    setMousePosition(initialMouse);
+    onClose();
     setDialogOpen(true);
   }, []);
 
@@ -101,16 +99,10 @@ const TagContextMenu = ({
     <>
       <StyledMenu
         id={`tagContextMenu-${id}`}
-        keepMounted
-        mousePosition={mousePosition}
-        open={mousePosition.mouseY !== null}
+        mousePosition={mouse}
+        open={mouse.mouseY !== null}
         onClose={handleClose}
         anchorReference="anchorPosition"
-        anchorPosition={
-          mousePosition.mouseY !== null && mousePosition.mouseX !== null
-            ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-            : {top: 0, left: 0}
-        }
       >
         <StyledMenuItem
           id={`tag-context-menu-${id}-new-tag`}
@@ -134,14 +126,14 @@ const TagContextMenu = ({
           id={`tag-context-menu-${id}-visibility`}
           onClick={() => {
             handleClose();
-            if (session !== null && tag !== undefined)
-              void setTagPublic(session, id, !tag.attributes.is_public).catch(
+            if (session !== null)
+              void setTagPublic(session, id, !isPublic).catch(
                 (error: unknown) =>
                   console.error('Failed to change tag visibility:', error)
               );
           }}
         >
-          {tag?.attributes.is_public ? 'Make private' : 'Make public'}
+          {isPublic ? 'Make private' : 'Make public'}
         </StyledMenuItem>
       </StyledMenu>
       <TagDeleteDialog

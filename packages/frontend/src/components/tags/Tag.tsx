@@ -2,7 +2,7 @@ import type {StyledComponent} from '@emotion/styled';
 import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {styled, useTheme} from '@mui/material/styles';
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
@@ -329,16 +329,22 @@ const Tag = ({
     preview(el);
   };
 
+  const closeContextMenu = useCallback(() => {
+    setMouse(initialMouse);
+  }, []);
+
   const contextMenu = useMemo(
     () => (
       <TagContextMenu
         id={id}
+        isPublic={object.attributes.is_public}
         mouse={mouse}
+        onClose={closeContextMenu}
         deleteTagParent={deleteTag}
         handleBeginEditParent={handleBeginEdit}
       />
     ),
-    [mouse]
+    [mouse, object.attributes.is_public]
   );
 
   const handleTagClick = (object: ITagJsonApi): void => {
