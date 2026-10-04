@@ -40,15 +40,22 @@ const timing = (start: number, duration: number): Timing => ({
 
 describe('recordTiming', () => {
   it('records work and tells the HUD of it, once for many', async () => {
-    const listener = vi.fn();
-    const unsubscribe = subscribeMetrics(listener);
+    // The number of the timings below in each snapshot the HUD is told of.
+    const told: number[] = [];
+    const unsubscribe = subscribeMetrics(() =>
+      told.push(
+        metricsSnapshot().timings.filter(({name}) =>
+          ['GET /tags', 'useTags'].includes(name)
+        ).length
+      )
+    );
     const now = performance.now();
     recordTiming('network', 'GET /tags', now, now + 15, '200');
     recordTiming('idb', 'useTags', now + 20, now + 21);
 
-    const timings = await told();
-
-    expect(timings).toEqual([
+    // Both in the first snapshot told of them: one notification for both.
+    await vi.waitFor(() => expect(told.find(count => count > 0)).toBe(2));
+    expect(metricsSnapshot().timings).toEqual([
       expect.objectContaining({
         kind: 'network',
         name: 'GET /tags',
@@ -58,7 +65,6 @@ describe('recordTiming', () => {
       }),
       expect.objectContaining({kind: 'idb', name: 'useTags', duration: 1}),
     ]);
-    expect(listener).toHaveBeenCalledTimes(1);
     unsubscribe();
   });
 
