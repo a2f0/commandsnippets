@@ -7,7 +7,7 @@ import {defineConfig} from 'vitest/config';
 import packageJson from './package.json' with {type: 'json'};
 
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
-export default defineConfig(({mode}) => {
+export default defineConfig(({command, mode}) => {
   const basePlugins = [
     react(),
     createHtmlPlugin({
@@ -90,7 +90,17 @@ export default defineConfig(({mode}) => {
     // api-shared (the API contract) is installed from ../api-shared, and Vite
     // resolves its imports from where its files are: bundle (and test with)
     // this package's zod, the only copy.
-    resolve: {dedupe: ['zod']},
+    resolve: {
+      dedupe: ['zod'],
+      // Builds for the environments with a HUD (staging) render with React's
+      // profiling build, whose Profilers time each commit for the HUD
+      // (`lib/metrics/`); production's do nothing. (Development and tests
+      // run React's development build, which profiles anyway.)
+      alias:
+        command === 'build' && mode !== 'production'
+          ? [{find: /^react-dom\/client$/, replacement: 'react-dom/profiling'}]
+          : [],
+    },
     build: {
       outDir: 'build',
       target: 'esnext',

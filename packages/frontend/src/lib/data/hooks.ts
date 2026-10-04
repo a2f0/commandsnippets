@@ -6,6 +6,11 @@
  *
  * Owners read their own data; staff read other users' full data; other
  * visitors read public data. Every query names whose (`useOwner`).
+ *
+ * Each run of a query is timed for the HUD (`lib/metrics/`), by the hook's
+ * name. A query asked for something else keeps answering with its last
+ * rows until the new ones are read: the lists' hooks name what their rows
+ * are of.
  */
 import type {
   Tag,
@@ -16,6 +21,7 @@ import {useLiveQuery} from 'dexie-react-hooks';
 import {useSyncExternalStore} from 'react';
 import {useParams} from 'react-router-dom';
 import type {RowKey} from '../db/database';
+import {timed} from '../metrics/timings';
 import {useAppState} from '../state/appState';
 import {
   publicSyncSession,
@@ -76,6 +82,8 @@ export function useSession(): SyncSession | null {
   return username === null ? null : syncSession(username, owner);
 }
 
+const rows = (list: readonly unknown[]) => `${list.length} rows`;
+
 /** The tags, deleted ones too. */
 export function useTags(): Tag[] | undefined {
   const session = useSession();
@@ -83,7 +91,13 @@ export function useTags(): Tag[] | undefined {
     () =>
       session === null
         ? []
-        : session.db.tags.where('owner').equals(session.owner).toArray(),
+        : timed(
+            'idb',
+            'useTags',
+            () =>
+              session.db.tags.where('owner').equals(session.owner).toArray(),
+            rows
+          ),
     [session]
   );
 }
@@ -95,13 +109,16 @@ export function useTagNamed(name: string | undefined): Tag | null | undefined {
     async () =>
       name === undefined || session === null
         ? null
-        : ((await session.db.tags
-            .where('owner')
-            .equals(session.owner)
-            .filter(
-              tag => tag.attributes.name === name && !tag.attributes.is_deleted
-            )
-            .first()) ?? null),
+        : ((await timed('idb', 'useTagNamed', () =>
+            session.db.tags
+              .where('owner')
+              .equals(session.owner)
+              .filter(
+                tag =>
+                  tag.attributes.name === name && !tag.attributes.is_deleted
+              )
+              .first()
+          )) ?? null),
     [session, name]
   );
 }
@@ -136,16 +153,24 @@ export async function entriesOfTag(
   });
 }
 
-/** Tag `tagId`'s entries, each with its junction. */
+/** Tag `tagId`'s entries, each with its junction, and the tag they are of. */
 export function useTagEntries(
   tagId: string | undefined
-): TaggedEntry[] | undefined {
+): {tagId: string | undefined; entries: TaggedEntry[]} | undefined {
   const session = useSession();
   return useLiveQuery(
-    () =>
-      tagId === undefined || session === null
-        ? []
-        : entriesOfTag(session, tagId),
+    async () => ({
+      tagId,
+      entries:
+        tagId === undefined || session === null
+          ? []
+          : await timed(
+              'idb',
+              'useTagEntries',
+              () => entriesOfTag(session, tagId),
+              rows
+            ),
+    }),
     [session, tagId]
   );
 }
@@ -175,19 +200,29 @@ async function liveEntries({
 
 /**
  * The entries (not deleted): all of them, or those in no tag; none (`null`)
- * for a list that shows neither, which reads nothing.
+ * for a list that shows neither, which reads nothing. With which they are.
  */
 export function useEntries(
   which: 'all' | 'untagged' | null
-): TextEntry[] | undefined {
+): {which: 'all' | 'untagged' | null; entries: TextEntry[]} | undefined {
   const session = useSession();
   return useLiveQuery(
-    async () =>
-      session === null || which === null
-        ? []
-        : (await liveEntries(session))
-            .filter(({tagged}) => which === 'all' || !tagged)
-            .map(({entry}) => entry),
+    async () => ({
+      which,
+      entries:
+        session === null || which === null
+          ? []
+          : (
+              await timed(
+                'idb',
+                `useEntries(${which})`,
+                () => liveEntries(session),
+                rows
+              )
+            )
+              .filter(({tagged}) => which === 'all' || !tagged)
+              .map(({entry}) => entry),
+    }),
     [session, which]
   );
 }

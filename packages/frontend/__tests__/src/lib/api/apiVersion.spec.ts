@@ -3,7 +3,15 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {getStaffStatus, listUsers} from '../../../../src/lib/api/adminApi';
 import {apiClient} from '../../../../src/lib/api/apiClient';
-import {fetchApi, useApiVersion} from '../../../../src/lib/api/apiVersion';
+import {
+  fetchApi,
+  requestName,
+  useApiVersion,
+} from '../../../../src/lib/api/apiVersion';
+import {
+  clearMetrics,
+  metricsSnapshot,
+} from '../../../../src/lib/metrics/timings';
 
 const user = JSON.stringify({
   data: {
@@ -94,5 +102,65 @@ describe('Every API call keeps the version', () => {
       })
     ).rejects.toThrow();
     expect(apiVersion()).toBe('0.2.2');
+  });
+});
+
+describe('fetchApi timings', () => {
+  beforeEach(() => clearMetrics());
+
+  it('times a request to the end of its body, which the caller still reads', async () => {
+    answer('0.2.1');
+    const response = await fetchApi('http://localhost:9001/api/v1/user/');
+
+    expect(await response.json()).toEqual(JSON.parse(user));
+    await vi.waitFor(() =>
+      expect(metricsSnapshot().timings).toEqual([
+        expect.objectContaining({
+          kind: 'network',
+          name: 'GET /user/',
+          detail: expect.stringMatching(
+            new RegExp(`^200, headers in \\d+ ms, ${user.length} B$`)
+          ),
+        }),
+      ])
+    );
+  });
+
+  it('times a request that failed', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
+
+    await expect(
+      fetchApi('http://localhost:9001/api/v1/tags', {method: 'POST'})
+    ).rejects.toThrow('offline');
+
+    await vi.waitFor(() =>
+      expect(metricsSnapshot().timings).toEqual([
+        expect.objectContaining({name: 'POST /tags', detail: 'failed'}),
+      ])
+    );
+  });
+});
+
+describe('requestName', () => {
+  it.each([
+    ['http://localhost:9001/api/v1/tags?page[after]=x', 'GET', 'GET /tags'],
+    ['http://localhost:9001/api/v1/tags/12', 'patch', 'PATCH /tags/:id'],
+    [
+      'http://localhost:9001/api/v1/tags_entries?filter[tag.id]=3',
+      'GET',
+      'GET /tags_entries',
+    ],
+    [
+      'http://localhost:9001/api/v1/users/alice/entries',
+      'GET',
+      'GET /users/:user/entries',
+    ],
+    [
+      'http://localhost:9001/api-token-deauth/',
+      'POST',
+      'POST /api-token-deauth/',
+    ],
+  ])('names %s', (url, method, name) => {
+    expect(requestName(url, method)).toBe(name);
   });
 });

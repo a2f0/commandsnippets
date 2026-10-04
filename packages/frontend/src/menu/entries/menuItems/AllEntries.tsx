@@ -3,6 +3,7 @@ import React from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 
 import {useTypedTranslation} from '../../../i18n/hooks';
+import {beginInteraction, listKey} from '../../../lib/metrics/timings';
 import {entrySearchMethod} from '../../../lib/shared';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../StyledMenuItem';
@@ -24,6 +25,7 @@ const AllEntries = ({onClose}: IProps) => {
       onClick={() => {
         onClose();
         if (user !== undefined) {
+          beginInteraction('all entries', listKey({entries: 'all'}));
           navigate(`/${user}?entries=all`);
         }
       }}

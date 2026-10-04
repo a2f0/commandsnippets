@@ -2,14 +2,17 @@ import React, {useEffect, useMemo} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {useTags} from '../../lib/data/hooks';
 import {sortTags} from '../../lib/data/sort';
+import {useRenderTiming} from '../../lib/metrics/hooks';
 import {useAppState} from '../../lib/state/appState';
 import {TagList} from './TagList';
 
 /**
  * The user's tags (from IndexedDB, as syncs and writes store them), sorted
  * and searched. With no tag or entries list in the URL, it opens the first.
+ * Each render is timed for the HUD.
  */
 const TagListWrapper = () => {
+  const renderStart = performance.now();
   const navigate = useNavigate();
   const {user, tag} = useParams();
   const [searchParams] = useSearchParams();
@@ -44,6 +47,8 @@ const TagListWrapper = () => {
       navigate(`/${user}/${first.attributes.name}`);
     }
   }, [user, tag, entriesList, current, first, navigate, setTagSelectedID]);
+
+  useRenderTiming('TagList', renderStart, `${tags?.length ?? 0} tags`);
 
   if (user === undefined) {
     return null;

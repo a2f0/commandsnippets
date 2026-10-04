@@ -1,5 +1,5 @@
 import {Box} from '@mui/material';
-import React, {useCallback, useEffect} from 'react';
+import React, {Profiler, useCallback, useEffect} from 'react';
 import {useCookies} from 'react-cookie';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {AppHeader} from '../components/AppHeader';
@@ -12,11 +12,17 @@ import {hasLoginCookie, loggedInCookieNames} from '../lib/auth/authUtils';
 import {useOwner} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
 import {environment} from '../lib/environment';
+import {recordCommit, useRenderTiming} from '../lib/metrics/hooks';
 import {useAppConfig, useAppState} from '../lib/state/appState';
 
 const COOKIE_KEYS = loggedInCookieNames(environment);
 
+/**
+ * The page, rendered again on every navigation (a tag switch too): each
+ * render is timed for the HUD, the whole page's (its lists' included).
+ */
 const EntriesPageContent = () => {
+  const renderStart = performance.now();
   const location = useLocation();
   const appConfig = useAppConfig();
   const navigate = useNavigate();
@@ -48,6 +54,8 @@ const EntriesPageContent = () => {
     handleCookieLogout();
   }, [handleCookieLogout]);
 
+  useRenderTiming('EntriesPage', renderStart);
+
   return (
     <Box
       sx={{
@@ -56,19 +64,23 @@ const EntriesPageContent = () => {
         minHeight: '100vh',
       }}
     >
-      <AppHeader />
-      <InitialLoadProgress {...syncStatus} />
-      <Box
-        sx={{
-          display: 'flex',
-          flex: 1,
-          paddingBottom: theme => `${theme.footer.height}px`,
-        }}
-      >
-        <LeftDrawer />
-        <EntryList />
-        <RightDrawer />
-      </Box>
+      {/* Every commit of the page is timed, but the bottom bar's: the HUD
+          showing the timings would time itself showing them, ever again. */}
+      <Profiler id="EntriesPage" onRender={recordCommit}>
+        <AppHeader />
+        <InitialLoadProgress {...syncStatus} />
+        <Box
+          sx={{
+            display: 'flex',
+            flex: 1,
+            paddingBottom: theme => `${theme.footer.height}px`,
+          }}
+        >
+          <LeftDrawer />
+          <EntryList />
+          <RightDrawer />
+        </Box>
+      </Profiler>
       <BottomToolbar />
     </Box>
   );

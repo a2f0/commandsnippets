@@ -234,6 +234,33 @@ API; everything else the app keeps is a zustand store.
   store: the store imports the sync, which imports the API client, so that
   would be an import cycle.
 
+### Timings (the HUD)
+Outside production, the app times its work for the HUD's Analytics tab
+(`src/lib/metrics/timings.ts`, in memory: the latest 2000 timings and 20
+interactions; production records nothing and has no HUD).
+- **What is timed**, by kind: `network`, every `fetchApi` (method and
+  path, ids as `:id`; to the end of the body, read from a clone, with status
+  and size); `idb`, the lists' live queries (`lib/data/hooks.ts`, by hook
+  name), the sync's page stores, `isTagSynced` and `bindOwner`, and the
+  user's writes (`timed`); `render`, `EntriesPage`, `TagList` and `EntryList`
+  (`useRenderTiming`: render start to layout effect) and every commit of the
+  page but the bottom bar (`<Profiler onRender={recordCommit}>` in
+  `EntriesPage.tsx`; the HUD is left out, or showing timings would time
+  itself). Staging builds alias `react-dom/client` to `react-dom/profiling`
+  (`vite.config.ts`), since Profilers do nothing in React's production build.
+- **Interactions**: a tag click (or Enter in the tag list, or All/Untagged
+  Entries) calls `beginInteraction`; `EntryList` calls `listShown` once it
+  renders the list asked for with its own rows (the list hooks name what
+  their rows are of: a live query answers with the last rows until it reads
+  the next), and the interaction ends at the next paint. Its timings
+  (`timingsOf`) are those from the click to the paint, and the work that
+  follows on until the app idles 100 ms.
+- **The tab** (`src/components/bottomBar/analytics/`): the interaction's
+  click-to-paint time, how long each kind was busy before the paint, and a
+  waterfall of its timings; then every timing in a window (log-scale
+  scatter) and a table by name (count, p50, p95, max, total). The expanded
+  HUD fills the window but for a 16px margin.
+
 ### API
 The API's contract is `@commandsnippets/api-shared` (`packages/api-shared`, a
 `file:` dependency; see the README's "The API contract"): zod schemas for

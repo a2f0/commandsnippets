@@ -309,6 +309,37 @@ describe('BottomBar Component', () => {
         expect(screen.getByText('Network: 125 KB/s')).toBeInTheDocument();
       });
 
+      it('expands to nearly the whole window', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        await user.click(screen.getByRole('button', {name: /Open HUD menu/i}));
+        await user.click(
+          await screen.findByRole('button', {name: /Expand HUD/i})
+        );
+
+        const paper = document.querySelector('#hud-menu .MuiPaper-root');
+        expect(paper).toHaveStyle({
+          width: `${window.innerWidth - 32}px`,
+          height: `${window.innerHeight - 32}px`,
+        });
+      });
+
+      it('shows the timings in the Analytics tab, expanded or not', async () => {
+        const user = userEvent.setup();
+        render(<BottomBarWithProviders />);
+
+        await user.click(screen.getByRole('button', {name: /Open HUD menu/i}));
+        await user.click(await screen.findByRole('tab', {name: /Analytics/i}));
+
+        expect(
+          screen.getByRole('heading', {name: 'Interaction'})
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole('heading', {name: 'All timings'})
+        ).toBeInTheDocument();
+      });
+
       it('properly styles tab panels without gray areas', async () => {
         const user = userEvent.setup();
         render(<BottomBarWithProviders />);
@@ -356,8 +387,10 @@ describe('BottomBar Component', () => {
         });
         await user.click(analyticsTab);
 
-        // Check analytics enhanced content
-        expect(screen.getByText('Active Users: 127')).toBeInTheDocument();
+        // The timings of the network, IndexedDB and renders
+        expect(
+          screen.getByRole('heading', {name: 'All timings'})
+        ).toBeInTheDocument();
         expect(
           screen.queryByText(/INFO: Application started/)
         ).not.toBeInTheDocument();
