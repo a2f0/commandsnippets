@@ -7,13 +7,14 @@ import type {TimingKind} from '../../../lib/metrics/timings';
 export const KINDS: readonly TimingKind[] = ['network', 'idb', 'render'];
 
 /**
- * Each kind's color: the first three slots of a categorical palette that
- * tells them apart with any color vision, on the HUD's light and dark
- * backgrounds alike. Text never wears them: a swatch beside it does.
+ * Each kind's color: grays, as the whole app is, about 20 lightness steps
+ * apart and at least 3:1 against the HUD's light and dark backgrounds, the
+ * first kind the most prominent. Text never wears them: a swatch beside it
+ * does, and the tooltip names the kind.
  */
 const KIND_COLORS: Record<'light' | 'dark', Record<TimingKind, string>> = {
-  light: {network: '#2a78d6', idb: '#eb6834', render: '#1baf7a'},
-  dark: {network: '#3987e5', idb: '#d95926', render: '#199e70'},
+  light: {network: '#222222', idb: '#575757', render: '#8c8c8c'},
+  dark: {network: '#f0f0f0', idb: '#b0b0b0', render: '#7a7a7a'},
 };
 
 export function useKindColors(): Record<TimingKind, string> {

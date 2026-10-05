@@ -333,7 +333,10 @@ writing its type by hand.
   use the item too)
 - **Shared styling**: `src/styled/` holds small styled components used across
   features; `src/theme/` the MUI themes, the theme provider, the global
-  styles and the shared `sx` objects (`sx.ts`)
+  styles and the shared `sx` objects (`sx.ts`). The app is grayscale: the
+  themes make every palette color gray (primary, secondary and the status
+  colors), and `__tests__/src/theme/themes.spec.ts` fails on a color with a
+  hue in the themes or hard-coded in `src/`, `public/` or `index.html`
 - **Non-UI code**: `src/lib/` (the API clients, auth, the app state
   (`state/`), the Dexie database (`db/`), its sync (`sync/`), what the UI
   reads and writes (`data/`), the router (`router/`), and helpers), `src/hooks/`, `src/providers/`,
