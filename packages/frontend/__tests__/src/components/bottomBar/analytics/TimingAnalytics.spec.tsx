@@ -1,11 +1,26 @@
-import {ThemeProvider} from '@mui/material/styles';
-import {act, fireEvent, render, screen, within} from '@testing-library/react';
+import {
+  decomposeColor,
+  getContrastRatio,
+  type Theme,
+  ThemeProvider,
+} from '@mui/material/styles';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  within,
+} from '@testing-library/react';
 import invariant from 'invariant';
+import type {ReactNode} from 'react';
 import {I18nextProvider} from 'react-i18next';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   formatMs,
+  KINDS,
   niceTicks,
+  useKindColors,
 } from '../../../../../src/components/bottomBar/analytics/chartStyle';
 import {TimingAnalytics} from '../../../../../src/components/bottomBar/analytics/TimingAnalytics';
 import {i18n} from '../../../../../src/i18n/i18n';
@@ -17,7 +32,7 @@ import {
   NOTIFY_MS,
   recordTiming,
 } from '../../../../../src/lib/metrics/timings';
-import {darkTheme} from '../../../../../src/theme/themes';
+import {darkTheme, lightTheme} from '../../../../../src/theme/themes';
 
 beforeEach(() => clearMetrics());
 
@@ -200,5 +215,27 @@ describe('the charts’ numbers', () => {
     expect(niceTicks(8)).toEqual([0, 2, 4, 6, 8]);
     expect(niceTicks(0)).toEqual([0, 1]);
     expect(formatMs(0)).toBe('0 ms');
+  });
+});
+
+describe('the kinds’ colors', () => {
+  it.each([
+    ['light', lightTheme],
+    ['dark', darkTheme],
+  ])('are grays apart and against the %s background', (_mode, theme: Theme) => {
+    const {result} = renderHook(useKindColors, {
+      wrapper: ({children}: {children: ReactNode}) => (
+        <ThemeProvider theme={theme}>{children}</ThemeProvider>
+      ),
+    });
+    const colors = KINDS.map(kind => result.current[kind]);
+    for (const color of colors) {
+      const [red, green, blue] = decomposeColor(color).values;
+      expect(red === green && green === blue).toBe(true);
+      expect(
+        getContrastRatio(color, theme.palette.background.paper)
+      ).toBeGreaterThanOrEqual(3);
+    }
+    expect(new Set(colors).size).toBe(KINDS.length);
   });
 });
