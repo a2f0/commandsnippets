@@ -1,6 +1,7 @@
 {
   "name": "@commandsnippets/api-shared",
   "version": "0.1.0",
+  "license": "UNLICENSED",
   "private": true,
   "type": "module",
   "sideEffects": false,

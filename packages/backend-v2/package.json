@@ -1,6 +1,7 @@
 {
   "name": "commandsnippets-backend-v2",
   "version": "0.2.6",
+  "license": "UNLICENSED",
   "private": true,
   "type": "module",
   "scripts": {

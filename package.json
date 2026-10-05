@@ -1,6 +1,7 @@
 {
   "name": "commandsnippets",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "workspaces": ["packages/agent-tool"],
   "catalog": {
