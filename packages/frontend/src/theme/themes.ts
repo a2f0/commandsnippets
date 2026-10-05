@@ -1,4 +1,10 @@
-import {createTheme, type Theme, type ThemeOptions} from '@mui/material/styles';
+import {grey} from '@mui/material/colors';
+import {
+  createTheme,
+  type PaletteOptions,
+  type Theme,
+  type ThemeOptions,
+} from '@mui/material/styles';
 
 declare module '@mui/material/styles' {
   interface Theme {
@@ -69,10 +75,26 @@ const defaultThemeOptions: ThemeOptions = {
   },
 } as const;
 
+/**
+ * The app is grayscale: every palette color MUI would draw with a hue
+ * (primary, secondary and the status colors: buttons, chips, alerts, focus)
+ * is a gray. `strong` is what stands out (primary, and error: what is
+ * destructive), `muted` the rest.
+ */
+const grayscalePalette = (strong: string, muted: string): PaletteOptions => ({
+  primary: {main: strong},
+  secondary: {main: muted},
+  error: {main: strong},
+  warning: {main: muted},
+  info: {main: muted},
+  success: {main: muted},
+});
+
 export const darkTheme: Theme = createTheme({
   ...defaultThemeOptions,
   palette: {
     mode: 'dark',
+    ...grayscalePalette(grey[200], grey[500]),
   },
   shape: {
     borderRadius: 0,
@@ -155,6 +177,7 @@ export const lightTheme: Theme = createTheme({
   ...defaultThemeOptions,
   palette: {
     mode: 'light',
+    ...grayscalePalette(grey[900], grey[600]),
   },
   shape: {
     borderRadius: 0,
