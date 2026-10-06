@@ -25,6 +25,7 @@ export interface CommonTranslations {
   unsentWritesKept: string;
   signOutKeepingWrites: string;
   discardAndSignOut: string;
+  dismiss: string;
 }
 
 export interface MenuTranslations {
@@ -43,6 +44,9 @@ export interface MenuTranslations {
   debug: string;
   newTag: string;
   newEntry: string;
+  exportBackup: string;
+  exportBackupFailedTitle: string;
+  exportBackupFailed: string;
   hud: string;
   performance: string;
   logs: string;

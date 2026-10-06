@@ -3,6 +3,9 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   adminUserUpdateAttributesSchema,
+  BACKUP_FORMAT,
+  BACKUP_VERSION,
+  type Backup,
   CLIENT_WRITE_ID_HEADER,
   CODES,
   DATA_OWNER_ID_HEADER,
@@ -1065,6 +1068,70 @@ function refuseAnotherUsersRequest(request: Request) {
   );
 }
 
+/**
+ * The signed-in user's backup, as the API makes it: what is not deleted, in
+ * the API's order, and only the taggings of tags and entries it holds. The
+ * mock has no reuses.
+ */
+function backupOf(): Backup {
+  const byId = (a: {id: string}, b: {id: string}) =>
+    Number(a.id) - Number(b.id);
+  const liveTags = tags
+    .filter(tag => !tag.attributes.is_deleted)
+    .sort((a, b) => a.attributes.order - b.attributes.order || byId(a, b));
+  const state = activeEntries();
+  const liveEntries = state.data
+    .filter(entry => !entry.attributes.is_deleted)
+    .sort(byId);
+  const tagIds = new Set(liveTags.map(tag => tag.id));
+  const entryIds = new Set(liveEntries.map(entry => entry.id));
+  const taggings = junctionsOf(state)
+    .filter(
+      junction =>
+        !junction.attributes.is_deleted &&
+        tagIds.has(junction.relationships.tag.data.id) &&
+        entryIds.has(junction.relationships.text_entry.data.id)
+    )
+    .sort(
+      (a, b) =>
+        Number(a.relationships.tag.data.id) -
+          Number(b.relationships.tag.data.id) ||
+        a.attributes.order - b.attributes.order ||
+        byId(a, b)
+    );
+  return {
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    date_exported: now(),
+    user: {id: testUser.id, username: SIGNED_IN_USER},
+    tags: liveTags.map(({id, attributes}) => ({
+      id,
+      name: attributes.name,
+      order: attributes.order,
+      is_public: attributes.is_public,
+      date_created: attributes.date_created,
+      date_updated: attributes.date_updated,
+    })),
+    entries: liveEntries.map(({id, attributes}) => ({
+      id,
+      subject: attributes.subject,
+      body: attributes.body,
+      is_public: attributes.is_public,
+      date_created: attributes.date_created,
+      date_updated: attributes.date_updated,
+    })),
+    tags_entries: taggings.map(({id, attributes, relationships}) => ({
+      id,
+      tag_id: relationships.tag.data.id,
+      text_entry_id: relationships.text_entry.data.id,
+      order: attributes.order,
+      date_created: attributes.date_created,
+      date_updated: attributes.date_updated,
+    })),
+    entry_reuses: [],
+  };
+}
+
 // Create handlers for all URLs
 const createHandlers = () => {
   const handlers = [];
@@ -1087,6 +1154,13 @@ const createHandlers = () => {
               date_updated: '2026-09-01T00:00:00.000000',
             },
           },
+        });
+      }),
+
+      http.get(`${baseUrl}/user/backup`, ({request}) => {
+        recordRequest('GET', request.url);
+        return HttpResponse.json(backupOf(), {
+          headers: {'Cache-Control': 'no-store'},
         });
       }),
 

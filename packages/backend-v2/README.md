@@ -36,6 +36,7 @@ and Capacitor apps are gone.
 | `src/lib/revision.ts` | `date_updated` assigned by D1 | — |
 | `src/lib/search.ts` | Unicode search folds | Postgres `UPPER()` in `icontains` |
 | `src/resources/{tags,entries,tagsEntries,entryReuses,currentUser}.ts` | the resource routes | viewsets |
+| `src/resources/backup.ts` | `GET /api/v1/user/backup`: the requester's data as a backup file | — |
 | `src/resources/serializers.ts`, `resourceTypes.ts` | resource definitions and type names | serializers |
 | `src/resources/viewset.ts`, `owned.ts`, `filters.ts`, `related.ts`, `reorder.ts`, `responses.ts` | shared list, lookup, ownership, soft-delete, filter and reorder behavior | `ModelViewSet`, `IsOwner`, django-filter |
 | `src/resources/admin.ts` | the `/api/v1/admin` API for staff | Django admin |
@@ -278,6 +279,21 @@ a mismatch returns `409 view_changed`. The API checks the revision again after
 serialization, and public clients clear that owner's rows and cursors before
 restarting a paginated sync. Public responses use `Cache-Control: no-store`.
 Full owner/admin incremental cursors retain their existing behavior.
+
+## Backups
+
+`GET /api/v1/user/backup` answers with a backup of the requester's data
+(403 `not_authenticated` without a session): api-shared's `backupSchema`, a
+versioned JSON file (`format`, `version`) rather than a JSON:API document.
+It holds every tag, entry, tagging (`tags_entries`) and reuse
+(`entry_reuses`) of theirs that is not deleted, each with its id, read in
+one D1 batch so they are of one moment. A tagging or reuse whose tag or
+entry is deleted, or another user's (rows imported from Django), is left
+out, so every id a row refers to is in the backup. Counters and dates the
+API works out from these rows (`entry_count`, `tag_count`,
+`date_last_used`, `reused_count`, `reused_date`) are left out too. The web
+app's File menu saves it (Export Backup); a restore is to come. It is sent
+with `Cache-Control: no-store`.
 
 ## Admin API
 

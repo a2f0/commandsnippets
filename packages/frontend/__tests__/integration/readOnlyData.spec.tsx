@@ -92,11 +92,13 @@ describe("Another user's page", () => {
     renderAt('/alice/alices-tag');
     const entry = await screen.findByText('alices-entry');
 
-    // File: no New Tag or New Entry.
+    // File: no New Tag or New Entry, and no Export Backup (of their own
+    // data, which would read as alice's).
     fireEvent.click(screen.getByRole('menu', {name: 'File'}));
     expect(await screen.findByText('Logout')).toBeInTheDocument();
     expect(document.getElementById('file-menu-new-tag')).toBeNull();
     expect(document.getElementById('file-menu-new-entry')).toBeNull();
+    expect(document.getElementById('file-menu-export-backup')).toBeNull();
     fireEvent.keyDown(screen.getByText('Logout'), {key: 'Escape'});
 
     // No context menu on a tag, the tag list, or the entry list.
