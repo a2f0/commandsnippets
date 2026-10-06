@@ -30,6 +30,7 @@ export const en: I18NextTranslations = {
       'Signing out keeps them on this device, and sends them the next time you sign in here. Discard them to sign out without them.',
     signOutKeepingWrites: 'Sign out',
     discardAndSignOut: 'Discard and sign out',
+    dismiss: 'Dismiss',
   },
   menu: {
     file: 'File',
@@ -47,6 +48,10 @@ export const en: I18NextTranslations = {
     debug: 'Debug',
     newTag: 'New Tag',
     newEntry: 'New Entry',
+    exportBackup: 'Export Backup',
+    exportBackupFailedTitle: 'Export failed',
+    exportBackupFailed:
+      'Your backup could not be made. Check your connection and try again.',
     hud: 'HUD',
     performance: 'Performance',
     logs: 'Logs',

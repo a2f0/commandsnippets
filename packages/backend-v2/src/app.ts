@@ -24,6 +24,7 @@ import {
 } from './lib/errors';
 import {assertJsonMediaType} from './lib/jsonapi';
 import {adminRoutes} from './resources/admin';
+import {backupRoutes} from './resources/backup';
 import {currentUserRoutes} from './resources/currentUser';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
@@ -153,6 +154,7 @@ app.use('*', async (c, next) => {
 app.get('/healthcheck', c => c.body(null, 200));
 
 app.route('/', authRoutes);
+app.route('/api/v1/user/backup', backupRoutes);
 app.route('/api/v1/user', currentUserRoutes);
 app.route('/api/v1/tags', tagRoutes);
 app.route('/api/v1/entries', entryRoutes);

@@ -20,6 +20,8 @@ import type {
   TextEntryUpdateDocument,
 } from '@commandsnippets/api-shared/requests';
 import {
+  type Backup,
+  backupSchema,
   emptyObjectSchema,
   type TagCursorListDocument,
   type TagDocument,
@@ -272,6 +274,19 @@ class ApiClient {
       {method: 'GET'},
       'Failed to fetch user',
       userDocumentSchema
+    );
+  }
+
+  /**
+   * A backup of the user's data (`GET /user/backup`): every tag, entry,
+   * tagging and reuse not deleted, with its id.
+   */
+  public async getBackup(): Promise<Backup> {
+    return this.requestDocument(
+      `${baseURL}/user/backup`,
+      {method: 'GET'},
+      'Failed to export backup',
+      backupSchema
     );
   }
 

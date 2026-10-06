@@ -8,6 +8,7 @@ import {
   adminAuditLogListDocumentSchema,
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
+  backupSchema,
   CURSOR_START,
   emptyObjectSchema,
   errorDocumentSchema,
@@ -102,6 +103,24 @@ describe('User', () => {
     await expectError(
       await base.unauthenticatedClient.get('/api/v1/user'),
       401
+    );
+  });
+});
+
+describe('Backup', () => {
+  it('GET /api/v1/user/backup', async () => {
+    const [entry] = await entriesOf(base.user1);
+    if (entry === undefined) throw new Error('no example entry');
+    await textEntryReusedFactory({text_entry: entry, user: base.user1});
+    const backup = await expectDocument(
+      backupSchema,
+      await client.get('/api/v1/user/backup')
+    );
+    expect(backup.tags_entries.length).toBeGreaterThan(0);
+    expect(backup.entry_reuses.length).toBe(1);
+    await expectError(
+      await base.unauthenticatedClient.get('/api/v1/user/backup'),
+      403
     );
   });
 });

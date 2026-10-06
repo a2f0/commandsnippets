@@ -652,6 +652,8 @@ describe('AdminPage', () => {
     fireEvent.click(screen.getByRole('menu', {name: 'File'}));
     expect(await screen.findByText('Logout')).toBeInTheDocument();
     expect(document.getElementById('file-menu-new-entry')).toBeNull();
+    // A backup of their own data works from any page.
+    expect(screen.getByText('Export Backup')).toBeInTheDocument();
 
     fireEvent.click(back);
     await waitFor(() => {

@@ -30,6 +30,7 @@ export const es: I18NextTranslations = {
       'Al cerrar sesión se guardan en este dispositivo y se envían la próxima vez que inicies sesión aquí. Descártalos para cerrar sesión sin ellos.',
     signOutKeepingWrites: 'Cerrar sesión',
     discardAndSignOut: 'Descartar y cerrar sesión',
+    dismiss: 'Cerrar',
   },
   menu: {
     file: 'Archivo',
@@ -47,6 +48,10 @@ export const es: I18NextTranslations = {
     debug: 'Depurar',
     newTag: 'Nueva Etiqueta',
     newEntry: 'Nueva Entrada',
+    exportBackup: 'Exportar Copia de Seguridad',
+    exportBackupFailedTitle: 'No se pudo exportar',
+    exportBackupFailed:
+      'No se pudo crear la copia de seguridad. Comprueba tu conexión e inténtalo de nuevo.',
     hud: 'HUD',
     performance: 'Rendimiento',
     logs: 'Registros',

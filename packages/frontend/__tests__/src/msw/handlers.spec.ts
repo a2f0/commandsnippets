@@ -4,6 +4,7 @@
  * reads show it. contract.spec.ts checks the documents' shapes.
  */
 import {
+  backupSchema,
   CLIENT_WRITE_ID_HEADER,
   CODES,
   CURSOR_START,
@@ -899,3 +900,36 @@ describe('keyset pages (the sync reads)', () => {
 const entryIdsAndDeletion = (
   entries: ReadonlyArray<{id: string; attributes: {is_deleted: boolean}}>
 ) => entries.map(({id, attributes}) => [id, attributes.is_deleted]);
+
+describe('GET /user/backup', () => {
+  const getBackup = async () =>
+    backupSchema.parse((await send('GET', '/user/backup')).json);
+
+  it("holds the user's rows, in the API's order, with their ids", async () => {
+    const backup = await getBackup();
+    expect(backup.user).toEqual({id: '1', username: 'test'});
+    const tags = await getTags();
+    expect(backup.tags.map(({id}) => id)).toEqual(
+      [...tags.data]
+        .sort((a, b) => a.attributes.order - b.attributes.order)
+        .map(({id}) => id)
+    );
+    expect(backup.entries.map(({id}) => id)).toEqual(['1', '2', '3']);
+    expect(
+      backup.tags_entries.map(row => [row.tag_id, row.text_entry_id])
+    ).toEqual([
+      ['1', '1'],
+      ['1', '2'],
+    ]);
+    expect(backup.entry_reuses).toEqual([]);
+  });
+
+  it('leaves out what is deleted, and the taggings of it', async () => {
+    expect((await send('DELETE', '/tags/1')).status).toBe(200);
+    expect((await send('DELETE', '/entries/3')).status).toBe(200);
+    const backup = await getBackup();
+    expect(backup.tags.map(({id}) => id)).not.toContain('1');
+    expect(backup.entries.map(({id}) => id)).toEqual(['1', '2']);
+    expect(backup.tags_entries).toEqual([]);
+  });
+});

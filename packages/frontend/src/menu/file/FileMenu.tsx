@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyledMenu} from '../StyledMenu';
+import {ExportBackup} from './menuItems/ExportBackup';
 import {Logout} from './menuItems/Logout';
 import {NewEntry} from './menuItems/NewEntry';
 import {NewTag} from './menuItems/NewTag';
@@ -9,7 +10,7 @@ interface IProps {
   anchorEl: HTMLElement | null;
   /** New Tag and New Entry need the entries page's editors. */
   entriesPage: boolean;
-  /** Another user's data, which nothing here changes. */
+  /** Another user's data, which nothing here changes or exports. */
   readOnly: boolean;
 }
 
@@ -22,6 +23,8 @@ const FileMenu = ({onClose, anchorEl, entriesPage, readOnly}: IProps) => (
   >
     {entriesPage && !readOnly && <NewTag onClose={onClose} />}
     {entriesPage && !readOnly && <NewEntry onClose={onClose} />}
+    {/* Of the signed-in user's data: on another user's, it would read as theirs. */}
+    {!readOnly && <ExportBackup onClose={onClose} />}
     <Logout onClose={onClose} />
   </StyledMenu>
 );

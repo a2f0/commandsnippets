@@ -236,6 +236,14 @@ API; everything else the app keeps is a zustand store.
   signed in (a late answer to a session the tab has left changes nothing). `authUtils` must not import the
   store: the store imports the sync, which imports the API client, so that
   would be an import cycle.
+- **Backups**: File > Export Backup (`src/menu/file/menuItems/ExportBackup.tsx`,
+  `src/lib/data/backup.ts`) sends the queue (`flush`), then saves the API's
+  backup of the signed-in user's data (`GET /user/backup`, api-shared's
+  `backupSchema`: every tag, entry, tagging and reuse not deleted, with its
+  id) as `commandsnippets-backup-<username>-<YYYY-MM-DD>.json`. When the
+  queue cannot be sent or the backup read, nothing is saved and a dialog
+  says so. Another user's page does not offer it (it would read as theirs).
+  A restore is to come.
 
 ### Timings (the HUD)
 Outside production, the app times its work for the HUD's Analytics tab

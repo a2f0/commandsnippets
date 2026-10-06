@@ -10,6 +10,7 @@ import {
   adminAuditLogListDocumentSchema,
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
+  backupSchema,
   CURSOR_START,
   dataOwnerDocumentSchema,
   EXPECTED_USER_HEADER,
@@ -150,6 +151,13 @@ const exchanges: Exchange[] = [
     url: `${API}/user/`,
     status: 200,
     schema: userDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/user/backup`,
+    method: 'GET',
+    url: `${API}/user/backup`,
+    status: 200,
+    schema: backupSchema,
   },
   {
     handler: `GET ${API}/admin/users`,
