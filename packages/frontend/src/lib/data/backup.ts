@@ -7,6 +7,19 @@
 import type {Backup} from '@commandsnippets/api-shared/responses';
 import {apiClient} from '../api/apiClient';
 import {syncSession} from '../sync/session';
+import {boundAccount} from '../sync/sync';
+
+/**
+ * No account the backup can be asked for as (the data is bound to none), or
+ * a backup the API answered with for another account than the one this
+ * tab's data is bound to: never saved as this user's.
+ */
+export class BackupAccountError extends Error {
+  constructor(username: string) {
+    super(`Failed to export backup: not ${username}'s account`);
+    this.name = 'BackupAccountError';
+  }
+}
 
 /** The backup's file name: whose it is, and the day (UTC) it was made. */
 export function backupFileName(backup: Backup): string {
@@ -27,13 +40,27 @@ export function saveFile(name: string, text: string, type: string): void {
 
 /**
  * Send `username`'s queued writes, then save the API's backup of their data.
- * Throws when the queue cannot be sent (offline, say: the backup would miss
- * those writes) or the backup cannot be read, saving nothing; and
- * `UserMismatchError` when this tab is no longer signed in as `username`.
+ * The backup is asked for as the account the data is bound to (the flush
+ * binds it), as the queue's writes are: refused (`UserMismatchError`) when
+ * this tab is no longer signed in as that account, though another of the
+ * same username (the first deleted, its name taken again) is. Throws when
+ * the queue cannot be sent (offline, say: the backup would miss those
+ * writes) or the backup cannot be read, saving nothing.
  */
 export async function exportBackup(username: string): Promise<void> {
-  await syncSession(username).sync.flush();
-  const backup = await apiClient.writesAs(username).getBackup();
+  const {db, sync} = syncSession(username);
+  await sync.flush();
+  const accountId = await boundAccount(db, username);
+  if (accountId === undefined) {
+    throw new BackupAccountError(username);
+  }
+  const backup = await apiClient
+    .writesAs(username)
+    .forAccount(accountId)
+    .getBackup();
+  if (backup.user.id !== accountId || backup.user.username !== username) {
+    throw new BackupAccountError(username);
+  }
   saveFile(
     backupFileName(backup),
     `${JSON.stringify(backup, null, 2)}\n`,

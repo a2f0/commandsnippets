@@ -240,9 +240,11 @@ API; everything else the app keeps is a zustand store.
   `src/lib/data/backup.ts`) sends the queue (`flush`), then saves the API's
   backup of the signed-in user's data (`GET /user/backup`, api-shared's
   `backupSchema`: every tag, entry, tagging and reuse not deleted, with its
-  id) as `commandsnippets-backup-<username>-<YYYY-MM-DD>.json`. When the
-  queue cannot be sent or the backup read, nothing is saved and a dialog
-  says so. Another user's page does not offer it (it would read as theirs).
+  id) as `commandsnippets-backup-<username>-<YYYY-MM-DD>.json`. It is asked
+  for as the user and the account their data is bound to (`forAccount`), as
+  the queue's writes are, and a backup of any other account is refused
+  (`BackupAccountError`). When the queue cannot be sent or the backup read,
+  nothing is saved and a dialog says so. Another user's page does not offer it (it would read as theirs).
   A restore is to come.
 
 ### Timings (the HUD)
