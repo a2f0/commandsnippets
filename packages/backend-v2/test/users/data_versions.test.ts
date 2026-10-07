@@ -36,8 +36,15 @@ import {raceBeforeInsert, raceBeforeStatement} from '../support/races';
 
 const VERSIONS = '/api/v1/user/data_versions';
 
-const clientOf = async (user: User, bindings?: Cloudflare.Env) =>
-  new ApiClient(await tokenFor(user.id), bindings);
+/**
+ * A client of `user`, whose writes name their active data version (as the
+ * app's do once it has read it).
+ */
+async function clientOf(user: User, bindings?: Cloudflare.Env) {
+  const client = new ApiClient(await tokenFor(user.id), bindings);
+  client.dataVersion = (await refreshUser(user.id))?.active_version;
+  return client;
+}
 
 async function backupOf(client: ApiClient) {
   return backupSchema.parse(
@@ -438,6 +445,7 @@ describe('a switch that lands while a write is on its way', () => {
 
     expect(response.status).toBe(409);
     expect((await json(response)).errors[0].code).toBe('data_version_changed');
+    expect((await refreshUser(base.user1.id))?.active_version).toBe(1);
     expect((await rowsOf(base.user1, 2)).entries).toBe(2);
   });
 
@@ -456,6 +464,8 @@ describe('a switch that lands while a write is on its way', () => {
     });
 
     expect(response.status).toBe(409);
+    // The switch ran in the race (the reorder named version 2, active then).
+    expect((await refreshUser(base.user1.id))?.active_version).toBe(1);
   });
 
   it('refuses a delete in its update', async () => {
@@ -471,6 +481,7 @@ describe('a switch that lands while a write is on its way', () => {
     const response = await raced.delete(`/api/v1/tags/${tag.id}`);
 
     expect(response.status).toBe(409);
+    expect((await refreshUser(base.user1.id))?.active_version).toBe(1);
     const [row] = await db()
       .select()
       .from(tags)
