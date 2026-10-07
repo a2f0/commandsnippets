@@ -29,6 +29,7 @@ import {currentUserRoutes} from './resources/currentUser';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
 import {jsonApi} from './resources/responses';
+import {restoreRoutes} from './resources/restore';
 import {tagRoutes} from './resources/tags';
 import {tagEntryRoutes} from './resources/tagsEntries';
 import {userDataRoutes} from './resources/userData';
@@ -155,6 +156,7 @@ app.get('/healthcheck', c => c.body(null, 200));
 
 app.route('/', authRoutes);
 app.route('/api/v1/user/backup', backupRoutes);
+app.route('/api/v1/user/restore', restoreRoutes);
 app.route('/api/v1/user', currentUserRoutes);
 app.route('/api/v1/tags', tagRoutes);
 app.route('/api/v1/entries', entryRoutes);

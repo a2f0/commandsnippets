@@ -6,6 +6,7 @@ import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
   type Backup,
+  backupSchema,
   CLIENT_WRITE_ID_HEADER,
   CODES,
   DATA_OWNER_ID_HEADER,
@@ -15,6 +16,7 @@ import {
   MESSAGES,
   PUBLIC_REVISION_HEADER,
   parseDateTime,
+  type RestoreResult,
   reorderAttributesSchema,
   type Tag,
   type TagCursorListDocument,
@@ -35,6 +37,7 @@ import {
   textEntryUpdateAttributesSchema,
   type User,
 } from '@commandsnippets/api-shared';
+import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {
   errorDocument,
@@ -1132,6 +1135,143 @@ function backupOf(): Backup {
   };
 }
 
+/**
+ * Replace the signed-in user's data with `backup`'s, as the API does
+ * (`POST /user/restore`): every junction, entry and tag soft-deleted (with
+ * new revisions), then the backup's made anew, ranked after the user's (a
+ * tag of a name the user has brought back in place), with the counters the
+ * database's triggers keep. The mock keeps no reuses: they are only counted.
+ */
+function restoreBackup(backup: Backup): RestoreResult {
+  // Checked first, as the API does: a refused backup changes nothing.
+  const tagIds = new Set(backup.tags.map(tag => tag.id));
+  const entryIds = new Set(backup.entries.map(entry => entry.id));
+  if (
+    backup.tags_entries.some(
+      row => !tagIds.has(row.tag_id) || !entryIds.has(row.text_entry_id)
+    ) ||
+    backup.entry_reuses.some(row => !entryIds.has(row.text_entry_id))
+  ) {
+    throw apiError(
+      400,
+      CODES.invalid,
+      'Invalid backup: a row names a tag or entry it does not hold.'
+    );
+  }
+  const state = activeEntries();
+  for (const junction of junctionsOf(state)) {
+    deleteJunction(state, junction);
+  }
+  const deletedAt = nextRevision(
+    state.data.map(entry => entry.attributes.date_updated)
+  );
+  for (const entry of state.data) {
+    if (!entry.attributes.is_deleted) {
+      entry.attributes = {
+        ...entry.attributes,
+        is_deleted: true,
+        date_updated: deletedAt,
+      };
+    }
+  }
+  const tagsDeletedAt = nextTagRevision();
+  for (const tag of tags) {
+    if (!tag.attributes.is_deleted) {
+      tag.attributes = {
+        ...tag.attributes,
+        is_deleted: true,
+        date_updated: tagsDeletedAt,
+      };
+    }
+  }
+
+  const tagsMade = new Map<string, Tag>();
+  for (const row of [...backup.tags].sort((a, b) => a.order - b.order)) {
+    const attributes = {
+      name: row.name,
+      order: Math.max(-1, ...tags.map(other => other.attributes.order)) + 1,
+      is_public: row.is_public,
+      is_deleted: false,
+      date_created: row.date_created,
+      date_last_used: row.date_created,
+      date_updated: nextTagRevision(),
+    };
+    let tag = tags.find(other => other.attributes.name === row.name);
+    if (tag === undefined) {
+      tag = {
+        type: 'Tag',
+        id: nextId('Tag', tags),
+        attributes: {...attributes, entry_count: 0, client_id: null},
+        relationships: ownedByTestUser,
+      };
+      tags = [...tags, tag];
+    } else {
+      tag.attributes = {...tag.attributes, ...attributes};
+    }
+    tagsMade.set(row.id, tag);
+  }
+
+  const entriesMade = new Map<string, TextEntry>();
+  for (const row of backup.entries) {
+    const entry: TextEntry = {
+      type: 'TextEntry',
+      id: nextId('TextEntry', state.data),
+      attributes: {
+        subject: row.subject,
+        body: row.body,
+        date_created: row.date_created,
+        date_updated: nextRevision(
+          state.data.map(candidate => candidate.attributes.date_updated)
+        ),
+        is_public: row.is_public,
+        reused_count: backup.entry_reuses.filter(
+          reuse => reuse.text_entry_id === row.id
+        ).length,
+        is_deleted: false,
+        tag_count: 0,
+        client_id: null,
+      },
+      relationships: {
+        ...ownedByTestUser,
+        text_entry_to_tag: {data: [], meta: {count: 0}},
+      },
+    };
+    state.data = [...state.data, entry];
+    entriesMade.set(row.id, entry);
+  }
+
+  const taggings = [...backup.tags_entries].sort(
+    (a, b) => Number(a.tag_id) - Number(b.tag_id) || a.order - b.order
+  );
+  for (const row of taggings) {
+    const tag = tagsMade.get(row.tag_id);
+    const entry = entriesMade.get(row.text_entry_id);
+    invariant(tag && entry, 'the backup holds each tagging tag and entry');
+    const junction = createJunction(state, tag, entry);
+    junction.attributes = {
+      ...junction.attributes,
+      date_created: row.date_created,
+    };
+  }
+  for (const tag of tagsMade.values()) {
+    const newest = junctionsOf(state)
+      .filter(junction => junction.relationships.tag.data.id === tag.id)
+      .map(junction => junction.attributes.date_created)
+      .sort(compare)
+      .at(-1);
+    tag.attributes = {
+      ...tag.attributes,
+      date_last_used: newest ?? tag.attributes.date_created,
+    };
+  }
+  return {
+    tags: backup.tags.length,
+    entries: backup.entries.length,
+    tags_entries: backup.tags_entries.length,
+    entry_reuses: backup.entry_reuses.length,
+  };
+}
+
 // Create handlers for all URLs
 const createHandlers = () => {
   const handlers = [];
@@ -1162,6 +1302,27 @@ const createHandlers = () => {
         return HttpResponse.json(backupOf(), {
           headers: {'Cache-Control': 'no-store'},
         });
+      }),
+      http.post(`${baseUrl}/user/restore`, async ({request}) => {
+        recordRequest('POST', request.url);
+        try {
+          const body: unknown = await request.json().catch(() => undefined);
+          const parsed = backupSchema.safeParse(body);
+          if (!parsed.success) {
+            const [issue] = parsed.error.issues;
+            const pointer = `/${(issue?.path ?? []).map(String).join('/')}`;
+            throw apiError(
+              400,
+              CODES.invalid,
+              `Invalid backup at ${pointer}: ${issue?.message ?? 'invalid'}`
+            );
+          }
+          return HttpResponse.json(restoreBackup(parsed.data), {
+            headers: {'Cache-Control': 'no-store'},
+          });
+        } catch (error) {
+          return errorResponse(error);
+        }
       }),
 
       // Admin API

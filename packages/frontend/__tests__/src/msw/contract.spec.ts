@@ -16,6 +16,7 @@ import {
   EXPECTED_USER_HEADER,
   emptyObjectSchema,
   errorDocumentSchema,
+  restoreResultSchema,
   type TagTextEntryCreateDocument,
   type TagUpdateDocument,
   type TextEntryCreateDocument,
@@ -559,6 +560,59 @@ const exchanges: Exchange[] = [
     url: `${HOST}/api-token-deauth/`,
     status: 200,
     schema: emptyObjectSchema,
+  },
+  {
+    handler: `POST ${API}/user/restore`,
+    method: 'POST',
+    url: `${API}/user/restore`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: {format: 'something-else'},
+  },
+  {
+    // Last: it replaces the mock's data.
+    handler: `POST ${API}/user/restore`,
+    method: 'POST',
+    url: `${API}/user/restore`,
+    status: 200,
+    schema: restoreResultSchema,
+    body: {
+      format: 'commandsnippets-backup',
+      version: 1,
+      date_exported: '2026-10-01T00:00:00.000000',
+      user: {id: '9', username: 'elsewhere'},
+      tags: [
+        {
+          id: '5',
+          name: 'restored',
+          order: 0,
+          is_public: false,
+          date_created: '2026-10-01T00:00:00.000000',
+          date_updated: '2026-10-01T00:00:00.000000',
+        },
+      ],
+      entries: [
+        {
+          id: '6',
+          subject: 'restored',
+          body: 'body',
+          is_public: false,
+          date_created: '2026-10-01T00:00:00.000000',
+          date_updated: '2026-10-01T00:00:00.000000',
+        },
+      ],
+      tags_entries: [
+        {
+          id: '7',
+          tag_id: '5',
+          text_entry_id: '6',
+          order: 0,
+          date_created: '2026-10-01T00:00:00.000000',
+          date_updated: '2026-10-01T00:00:00.000000',
+        },
+      ],
+      entry_reuses: [],
+    },
   },
   {
     // A write naming another user than the signed-in one.

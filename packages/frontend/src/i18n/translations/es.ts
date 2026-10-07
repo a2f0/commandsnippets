@@ -52,6 +52,26 @@ export const es: I18NextTranslations = {
     exportBackupFailedTitle: 'No se pudo exportar',
     exportBackupFailed:
       'No se pudo crear la copia de seguridad. Comprueba tu conexión e inténtalo de nuevo.',
+    restoreBackup: 'Restaurar Copia de Seguridad',
+    restoreConfirmTitle: '¿Reemplazar todos tus datos?',
+    restoreConfirmText:
+      'Restaurar esta copia de seguridad elimina todas tus etiquetas y entradas y las reemplaza con las de la copia. No se puede deshacer. Para conservar una copia de tus datos, exporta antes una copia de seguridad.',
+    restoreYourData: 'Tus datos ahora',
+    restoreBackupData:
+      'La copia de seguridad de los datos de {{username}}, del {{date}}',
+    restoreCounts: 'Etiquetas: {{tags}} · Entradas: {{entries}}',
+    restoreConfirm: 'Eliminar mis datos y restaurar',
+    restoringTitle: 'Restaurando la copia de seguridad',
+    restoringText:
+      'Reemplazando tus datos. Mantén esta página abierta hasta que termine.',
+    restoreDoneTitle: 'Copia de seguridad restaurada',
+    restoreDoneText: 'Tus datos son ahora los de la copia de seguridad.',
+    restoreFailedTitle: 'No se pudo restaurar',
+    restoreFailedText:
+      'No se pudo restaurar la copia de seguridad. Comprueba tu conexión e inténtalo de nuevo.',
+    restoreInvalidTitle: 'No es una copia de seguridad',
+    restoreInvalidText:
+      'Este archivo no es una copia de seguridad de Commandsnippets que se pueda restaurar.',
     hud: 'HUD',
     performance: 'Rendimiento',
     logs: 'Registros',

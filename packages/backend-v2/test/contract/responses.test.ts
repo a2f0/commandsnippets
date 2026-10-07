@@ -12,6 +12,7 @@ import {
   CURSOR_START,
   emptyObjectSchema,
   errorDocumentSchema,
+  restoreResultSchema,
   tagCursorListDocumentSchema,
   tagDocumentSchema,
   tagListDocumentSchema,
@@ -120,6 +121,25 @@ describe('Backup', () => {
     expect(backup.entry_reuses.length).toBe(1);
     await expectError(
       await base.unauthenticatedClient.get('/api/v1/user/backup'),
+      403
+    );
+  });
+
+  it('POST /api/v1/user/restore', async () => {
+    const backup = await expectDocument(
+      backupSchema,
+      await client.get('/api/v1/user/backup')
+    );
+    await expectDocument(
+      restoreResultSchema,
+      await client.post('/api/v1/user/restore', backup)
+    );
+    await expectError(
+      await client.post('/api/v1/user/restore', {...backup, version: 2}),
+      400
+    );
+    await expectError(
+      await base.unauthenticatedClient.post('/api/v1/user/restore', backup),
       403
     );
   });
