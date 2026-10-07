@@ -398,6 +398,9 @@ bun scripts/manage.ts usage-report --env production [--format csv --output repor
 bun scripts/manage.ts delete-user <username> --env production
 ```
 
+`usage-report` counts each user's live (not deleted) tags, entries and
+taggings in their active data version, as the admin API does.
+
 Without `--env` they use the local development database. A bare or unknown
 `--env`, like any flag missing its value, prints the usage and exits 2 rather
 than falling back to another database.

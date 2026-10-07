@@ -123,6 +123,36 @@ describe('usage-report', () => {
     expect(lines.join('\n')).toContain('alice: 3 entries');
   });
 
+  test("counts only the live rows of each user's active data version", async () => {
+    const report = async () => {
+      lines = [];
+      await usageReport(context(), {format: 'csv'});
+      return lines.join('\n').split('\n');
+    };
+    // Untagged and deleted: one of alice's entries, and the tagging of another.
+    db.run(
+      'UPDATE text_entries_textentry SET is_deleted = 1 WHERE id = (SELECT MIN(id) FROM text_entries_textentry WHERE user_id = 1)'
+    );
+    db.run(
+      'UPDATE tags_tagtextentrythroughmodel SET is_deleted = 1 WHERE id = (SELECT MAX(id) FROM tags_tagtextentrythroughmodel WHERE user_id = 1)'
+    );
+    expect(await report()).toContain('alice,alice@example.com,2,2,2');
+
+    // A restore elsewhere: version 2 active, with one tag; version 1 is kept.
+    db.run(
+      `INSERT INTO users_dataversion (user_id, version, date_created, origin) VALUES (1, 2, '${TS}', 'restore')`
+    );
+    db.run(
+      'UPDATE users_user SET last_version = 2, active_version = 2 WHERE id = 1'
+    );
+    db.run(
+      `INSERT INTO tags_tag (name, date_created, date_updated, user_id, "order", version) VALUES ('restored', '${TS}', '${TS}', 1, 0, 2)`
+    );
+    const rows = await report();
+    expect(rows).toContain('alice,alice@example.com,1,0,0');
+    expect(rows).toContain('TOTAL,,2,1,1');
+  });
+
   test('writes CSV, quoting fields that need it', async () => {
     await usageReport(context(), {format: 'csv'});
     const csv = lines[0]?.split('\n') ?? [];
