@@ -15,6 +15,9 @@ a monorepo.
 
 Each directory retains the commit history of its original repository.
 
+Dependency update boundaries, supported tool combinations, and deployment
+previews are documented in [docs/dependencies.md](docs/dependencies.md).
+
 ## Local CI scripts
 
 Install the frontend dependencies before running its scripts. The test

@@ -57,7 +57,7 @@ jobs:
         run: yamllint -c .yamllint .
       - run: ../../scripts/runUnitTests.sh
       - run: ../../scripts/runWebdriverTests.sh
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
           name: wdio-video-reporter
