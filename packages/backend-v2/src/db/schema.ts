@@ -100,7 +100,6 @@ export const tokens = sqliteTable(
   'authtoken_token',
   {
     key: text('key').primaryKey(),
-    created: text('created').notNull(),
     user_id: integer('user_id')
       .notNull()
       .unique()

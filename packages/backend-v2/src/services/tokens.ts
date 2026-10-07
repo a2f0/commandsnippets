@@ -15,7 +15,7 @@ function generateKey(): string {
 
 /** A new token row for `userId` (an id, or a subquery that selects one). */
 export function newToken(userId: number | SQL) {
-  return {key: generateKey(), created: now(), user_id: userId};
+  return {key: generateKey(), user_id: userId};
 }
 
 /**

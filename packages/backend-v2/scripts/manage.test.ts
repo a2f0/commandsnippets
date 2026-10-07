@@ -36,8 +36,8 @@ function seedUser(
     [id, username, email, lastLogin, TS, TS]
   );
   db.run(
-    'INSERT INTO authtoken_token (key, created, user_id) VALUES (?, ?, ?)',
-    [String(id).repeat(40).slice(0, 40), TS, id]
+    'INSERT INTO authtoken_token (key, user_id) VALUES (?, ?)',
+    [String(id).repeat(40).slice(0, 40), id]
   );
 }
 
