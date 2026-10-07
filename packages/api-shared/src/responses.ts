@@ -10,6 +10,7 @@ export * from './jsonapi/response';
 export * from './resources/admin';
 export * from './resources/backup';
 export * from './resources/dataOwner';
+export * from './resources/dataVersion';
 export * from './resources/documents';
 export * from './resources/tag';
 export * from './resources/tagTextEntry';

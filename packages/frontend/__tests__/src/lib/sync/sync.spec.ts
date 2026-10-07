@@ -4,6 +4,7 @@
  */
 import {
   CURSOR_START,
+  DATA_VERSION_HEADER,
   type TagTextEntryCreateDocument,
   tagCursorListDocumentSchema,
   tagTextEntryCursorListDocumentSchema,
@@ -122,11 +123,14 @@ async function send(
   path: string,
   body?: unknown
 ) {
+  // As another device holding the first data version.
   const response = await fetch(`${API}${path}`, {
     method,
-    ...(body === undefined
-      ? {}
-      : {body: JSON.stringify(body), headers: JSON_API}),
+    headers: {
+      [DATA_VERSION_HEADER]: '1',
+      ...(body === undefined ? {} : JSON_API),
+    },
+    ...(body === undefined ? {} : {body: JSON.stringify(body)}),
   });
   expect(response.ok).toBe(true);
 }
@@ -164,10 +168,12 @@ describe('syncAll', () => {
     });
     const count = vi.fn(ownSyncApi.getEntryCount);
     const progress: Array<unknown> = [];
+    // Unversioned, so the reads counted are the ones made.
+    const {atVersion: _, ...reads} = ownSyncApi;
     const sync = createSyncEngine(
       db,
       {
-        ...ownSyncApi,
+        ...reads,
         getEntryCount: count,
         getEntriesAfter: async after => {
           progress.push((await db.cursors.get(key('entries')))?.initialLoad);

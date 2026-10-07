@@ -15,6 +15,7 @@ import {uniqueTogether} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {validateFields} from '../lib/validate';
+import {versionOf} from './dataVersions';
 import {usernameIs} from './filters';
 import {
   appliesAfter,
@@ -52,6 +53,7 @@ export const listTags = (c: Context<AppEnv>, owner: User, publicOnly = false) =>
   listResponse(c, {
     ...tagResource,
     user: owner,
+    dataVersion: versionOf(c, owner),
     publicOnly,
     ...(publicOnly
       ? {visibility: publicTag(owner.id), fields: publicTagFields(owner.id)}
@@ -79,7 +81,15 @@ export const listTags = (c: Context<AppEnv>, owner: User, publicOnly = false) =>
 
 tagRoutes.get('/', c => listTags(c, requireUser(c)));
 
-tagRoutes.post('/reorder', c => reorder(c, {...tagResource, ...tagOrdering}));
+// Only the version written holds a place in the order: rows of another are
+// never shifted, moved, or positioned against.
+tagRoutes.post('/reorder', c =>
+  reorder(c, {
+    ...tagResource,
+    ...tagOrdering,
+    ranked: eq(tags.version, versionOf(c, requireUser(c))),
+  })
+);
 
 tagRoutes.get('/:id', async c => {
   const tag = await getOwned<Tag>(c, tagResource);
@@ -95,6 +105,7 @@ tagRoutes.get('/:id', async c => {
  */
 tagRoutes.post('/', async c => {
   const user = requireUser(c);
+  const version = versionOf(c, user);
   const db = c.get('db');
   const {attributes} = await parseResource(c.req.raw, {type: TAG});
   const {client_id: clientId} = validateFields(
@@ -113,17 +124,21 @@ tagRoutes.post('/', async c => {
             .select()
             .from(tags)
             .where(
-              inArray(
-                tags.id,
-                db
-                  .select({id: tagClientIds.tag_id})
-                  .from(tagClientIds)
-                  .where(
-                    and(
-                      eq(tagClientIds.user_id, user.id),
-                      eq(tagClientIds.client_id, clientId)
+              and(
+                eq(tags.version, version),
+                inArray(
+                  tags.id,
+                  db
+                    .select({id: tagClientIds.tag_id})
+                    .from(tagClientIds)
+                    .where(
+                      and(
+                        eq(tagClientIds.user_id, user.id),
+                        eq(tagClientIds.version, version),
+                        eq(tagClientIds.client_id, clientId)
+                      )
                     )
-                  )
+                )
               )
             )
             .limit(1)
@@ -136,6 +151,7 @@ tagRoutes.post('/', async c => {
   const reserve = (which: SQL) =>
     db.insert(tagClientIds).values({
       user_id: user.id,
+      version,
       client_id: clientId ?? '',
       tag_id: sql`(SELECT ${tags.id} FROM ${tags} WHERE ${which})`,
     });
@@ -147,7 +163,13 @@ tagRoutes.post('/', async c => {
       await db
         .select()
         .from(tags)
-        .where(and(eq(tags.user_id, user.id), eq(tags.name, name)))
+        .where(
+          and(
+            eq(tags.user_id, user.id),
+            eq(tags.version, version),
+            eq(tags.name, name)
+          )
+        )
         .limit(1)
     )[0];
 
@@ -225,6 +247,7 @@ tagRoutes.post('/', async c => {
         .values({
           name,
           user_id: user.id,
+          version,
           order: new OrderedModel(db, tagOrdering).nextOrderSql(user.id),
           date_created: timestamp,
           date_updated: nextRevision(tagResource, user.id),
@@ -240,7 +263,11 @@ tagRoutes.post('/', async c => {
               await db.batch([
                 insert,
                 reserve(
-                  and(eq(tags.user_id, user.id), eq(tags.name, name)) ?? sql`0`
+                  and(
+                    eq(tags.user_id, user.id),
+                    eq(tags.version, version),
+                    eq(tags.name, name)
+                  ) ?? sql`0`
                 ),
               ])
             )[0];

@@ -53,25 +53,49 @@ export const es: I18NextTranslations = {
     exportBackupFailed:
       'No se pudo crear la copia de seguridad. Comprueba tu conexión e inténtalo de nuevo.',
     restoreBackup: 'Restaurar Copia de Seguridad',
-    restoreConfirmTitle: '¿Reemplazar todos tus datos?',
+    restoreConfirmTitle: '¿Restaurar esta copia de seguridad?',
     restoreConfirmText:
-      'Restaurar esta copia de seguridad elimina todas tus etiquetas y entradas y las reemplaza con las de la copia. No se puede deshacer. Para conservar una copia de tus datos, exporta antes una copia de seguridad.',
+      'Restaurar convierte las etiquetas y entradas de la copia en tus datos, como una versión nueva, en todos tus dispositivos. Tus datos actuales se conservan como la versión anterior: vuelve a ella desde Archivo > Versiones de datos. Los cambios aún no enviados desde tus otros dispositivos se descartan.',
     restoreYourData: 'Tus datos ahora',
     restoreBackupData:
       'La copia de seguridad de los datos de {{username}}, del {{date}}',
     restoreCounts: 'Etiquetas: {{tags}} · Entradas: {{entries}}',
-    restoreConfirm: 'Eliminar mis datos y restaurar',
+    restoreConfirm: 'Restaurar copia',
     restoringTitle: 'Restaurando la copia de seguridad',
     restoringText:
       'Reemplazando tus datos. Mantén esta página abierta hasta que termine.',
     restoreDoneTitle: 'Copia de seguridad restaurada',
-    restoreDoneText: 'Tus datos son ahora los de la copia de seguridad.',
+    restoreDoneText:
+      'Tus datos son ahora los de la copia de seguridad, como versión {{version}}.',
     restoreFailedTitle: 'No se pudo restaurar',
     restoreFailedText:
       'No se pudo restaurar la copia de seguridad. Comprueba tu conexión e inténtalo de nuevo.',
     restoreInvalidTitle: 'No es una copia de seguridad',
     restoreInvalidText:
       'Este archivo no es una copia de seguridad de Commandsnippets que se pueda restaurar.',
+    dataVersions: 'Versiones de Datos',
+    dataVersionsTitle: 'Versiones de datos',
+    dataVersionsText:
+      'Cada restauración crea una versión nueva de tus datos y conserva las anteriores. Cambia a una para que vuelva a ser tus datos.',
+    dataVersionName: 'Versión {{version}}',
+    dataVersionActive: 'Activa',
+    dataVersionInitial: 'Tus primeros datos, del {{date}}',
+    dataVersionRestored:
+      'Restaurada de la copia de seguridad de {{username}} del {{exported}}, el {{date}}',
+    dataVersionSwitch: 'Cambiar a',
+    dataVersionExport: 'Exportar',
+    dataVersionDelete: 'Eliminar',
+    dataVersionSwitchTitle: '¿Cambiar a la versión {{version}}?',
+    dataVersionSwitchText:
+      'La versión {{version}} pasa a ser tus datos en todos tus dispositivos. Tus datos actuales se conservan y puedes volver a ellos. Los cambios aún no enviados desde tus otros dispositivos se descartan.',
+    dataVersionSwitchConfirm: 'Cambiar',
+    dataVersionDeleteTitle: '¿Eliminar la versión {{version}}?',
+    dataVersionDeleteText:
+      'Sus etiquetas y entradas se eliminan para siempre. No se puede deshacer.',
+    dataVersionDeleteConfirm: 'Eliminar versión',
+    dataVersionsLoading: 'Cargando…',
+    dataVersionsFailed:
+      'Algo salió mal. Comprueba tu conexión e inténtalo de nuevo.',
     hud: 'HUD',
     performance: 'Rendimiento',
     logs: 'Registros',

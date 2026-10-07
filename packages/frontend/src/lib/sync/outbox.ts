@@ -56,6 +56,7 @@ import type {Table} from 'dexie';
 import {ApiRequestError, UserMismatchError} from '../api/apiClient';
 import {
   type CommandsnippetsDatabase,
+  MADE_KEY,
   type OutboxRow,
   OWNER_ID_KEY,
   type QueuedWrite,
@@ -63,6 +64,7 @@ import {
   rowKey,
   type Stored,
 } from '../db/database';
+import {assertHeld, heldVersion} from './dataVersion';
 import {putResources} from './store';
 
 const TAG = 'Tag';
@@ -107,9 +109,6 @@ export function madeNow(): string {
   return formatMicros(micros);
 }
 
-/** The key (in `cursors`) of the time the last write queued here was made. */
-export const MADE_KEY = 'made';
-
 /** A microsecond after `time` (the API's fixed-width datetime form). */
 function justAfter(time: string): string {
   const seconds = Date.parse(`${time.slice(0, 19)}Z`);
@@ -134,31 +133,14 @@ export async function nextMade(
   return made;
 }
 
-/**
- * Make every write queued in `owner`'s data from now on after `time` (the
- * API's fixed-width form), whatever this device's clock says: after a
- * restore, which the API stamps by its own clock and refuses the writes
- * made before.
- */
-export async function madeAfter(
-  db: CommandsnippetsDatabase,
-  owner: string,
-  time: string
-): Promise<void> {
-  await db.transaction('rw', db.cursors, async () => {
-    const last = (await db.cursors.get([owner, MADE_KEY]))?.after;
-    if (last === undefined || last < time) {
-      await db.cursors.put({owner, key: MADE_KEY, after: time});
-    }
-  });
-}
-
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
   /** These calls, naming the queued write `writeId` (`Client-Write-Id`). */
   forWrite(writeId: string): OutboxApi;
   /** These calls, naming the account `userId` (`X-Expected-User-Id`). */
   forAccount(userId: string): OutboxApi;
+  /** These calls, naming the data version `version` (`X-Data-Version`). */
+  forVersion(version: number): OutboxApi;
   createTag(
     name: string,
     clientId?: string,
@@ -368,10 +350,12 @@ export async function enqueue(
   write: QueuedWrite,
   made: string
 ): Promise<void> {
+  const version = await heldVersion(db, owner);
   await db.outbox.add({
     owner,
     made,
     writeId: globalThis.crypto.randomUUID(),
+    ...(version === undefined ? {} : {version}),
     write,
     rows: rowsOf(owner, write),
   });
@@ -702,7 +686,8 @@ export async function assertBound(
 /**
  * The write reached the API: unqueue it (or put what is left to do in its
  * place), give a row it created the API's id, and store the answer, unless
- * the data was bound to another account meanwhile (`assertBound`).
+ * the data was bound to another account meanwhile (`assertBound`), or held
+ * at another data version than the write's (`assertHeld`).
  */
 async function acknowledge(
   db: CommandsnippetsDatabase,
@@ -725,6 +710,7 @@ async function acknowledge(
     [db.outbox, db.tags, db.entries, db.junctions, db.cursors],
     async () => {
       await assertBound(db, owner, accountId);
+      await assertHeld(db, owner, queued.version);
       if (queued.seq !== undefined) {
         if (sent.next === undefined) {
           await db.outbox.delete(queued.seq);
@@ -890,8 +876,12 @@ export async function flushOutbox(
           'its row was never made'
         );
       }
+      const named =
+        queued.version === undefined
+          ? account
+          : account.forVersion(queued.version);
       sent = await send(
-        account.forWrite(queued.writeId),
+        named.forWrite(queued.writeId),
         queued.write,
         queued.made
       );

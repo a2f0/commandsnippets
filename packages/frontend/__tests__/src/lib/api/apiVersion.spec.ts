@@ -22,6 +22,7 @@ const user = JSON.stringify({
       username: 'test',
       is_staff: false,
       date_updated: '2026-09-01T00:00:00',
+      data_version: 1,
     },
   },
 });

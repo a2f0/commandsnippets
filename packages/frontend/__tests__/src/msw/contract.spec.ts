@@ -12,7 +12,10 @@ import {
   adminUserListDocumentSchema,
   backupSchema,
   CURSOR_START,
+  DATA_VERSION_HEADER,
   dataOwnerDocumentSchema,
+  dataVersionDocumentSchema,
+  dataVersionListDocumentSchema,
   EXPECTED_USER_HEADER,
   emptyObjectSchema,
   errorDocumentSchema,
@@ -75,10 +78,29 @@ interface Exchange {
   /** The request document, sent as JSON:API; otherwise `{}` (not JSON:API). */
   body?: unknown;
   headers?: Record<string, string>;
+  /**
+   * The data version a write names (`X-Data-Version`), as the app's name the
+   * one their copy is of: the first by default; `null` for none.
+   */
+  version?: number | null;
 }
 
 /** Send `exchange`'s request and check the response against it. */
-async function check({method, url, status, schema, body, headers}: Exchange) {
+async function check({
+  method,
+  url,
+  status,
+  schema,
+  body,
+  headers: given,
+  version = 1,
+}: Exchange) {
+  const headers = {
+    ...(method === 'GET' || version === null
+      ? {}
+      : {[DATA_VERSION_HEADER]: String(version)}),
+    ...given,
+  };
   const init: RequestInit = {method, headers: {...headers}};
   if (body !== undefined) {
     init.body = JSON.stringify(body);
@@ -287,6 +309,16 @@ const exchanges: Exchange[] = [
     status: 400,
     schema: errorDocumentSchema,
     body: {data: {type: 'Tag', attributes: {name: ''}}},
+  },
+  {
+    // A write naming no data version.
+    handler: `POST ${API}/tags`,
+    method: 'POST',
+    url: `${API}/tags`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: {data: {type: 'Tag', attributes: {name: 'unversioned'}}},
+    version: null,
   },
   // One tag or entry (to put back what a refused write changed).
   {
@@ -613,6 +645,64 @@ const exchanges: Exchange[] = [
       ],
       entry_reuses: [],
     },
+  },
+  {
+    handler: `GET ${API}/user/data_versions`,
+    method: 'GET',
+    url: `${API}/user/data_versions`,
+    status: 200,
+    schema: dataVersionListDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/user/backup`,
+    method: 'GET',
+    url: `${API}/user/backup?version=1`,
+    status: 200,
+    schema: backupSchema,
+  },
+  {
+    handler: `GET ${API}/user/backup`,
+    method: 'GET',
+    url: `${API}/user/backup?version=9`,
+    status: 404,
+    schema: errorDocumentSchema,
+  },
+  {
+    handler: `DELETE ${API}/user/data_versions/:version`,
+    method: 'DELETE',
+    url: `${API}/user/data_versions/2`,
+    status: 400,
+    schema: errorDocumentSchema,
+  },
+  {
+    handler: `POST ${API}/user/data_versions/:version/activate`,
+    method: 'POST',
+    url: `${API}/user/data_versions/1/activate`,
+    status: 200,
+    schema: dataVersionDocumentSchema,
+  },
+  {
+    handler: `POST ${API}/user/data_versions/:version/activate`,
+    method: 'POST',
+    url: `${API}/user/data_versions/9/activate`,
+    status: 404,
+    schema: errorDocumentSchema,
+  },
+  {
+    handler: `DELETE ${API}/user/data_versions/:version`,
+    method: 'DELETE',
+    url: `${API}/user/data_versions/9`,
+    status: 404,
+    schema: errorDocumentSchema,
+  },
+  {
+    // A read naming another data version than the active one.
+    handler: `/.+/ ${API}/*`,
+    method: 'GET',
+    url: `${API}/tags`,
+    headers: {'X-Data-Version': '7'},
+    status: 409,
+    schema: errorDocumentSchema,
   },
   {
     // A write naming another user than the signed-in one.

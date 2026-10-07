@@ -53,12 +53,13 @@ adminRoutes.use('*', async (c, next) => {
 // ---------------------------------------------------------------------------
 
 /**
- * Live (not soft-deleted) entries and tags, per user. Written out with table
+ * Live (not soft-deleted) entries and tags of the active data version, per
+ * user. Written out with table
  * names: drizzle leaves columns unqualified in a single-table select, so
  * `${users.id}` in here would bind to the counted table's own id.
  */
-const entryCount = sql<number>`(SELECT COUNT(*) FROM text_entries_textentry AS e WHERE e.user_id = users_user.id AND e.is_deleted = 0)`;
-const tagCount = sql<number>`(SELECT COUNT(*) FROM tags_tag AS t WHERE t.user_id = users_user.id AND t.is_deleted = 0)`;
+const entryCount = sql<number>`(SELECT COUNT(*) FROM text_entries_textentry AS e WHERE e.user_id = users_user.id AND e.version = users_user.active_version AND e.is_deleted = 0)`;
+const tagCount = sql<number>`(SELECT COUNT(*) FROM tags_tag AS t WHERE t.user_id = users_user.id AND t.version = users_user.active_version AND t.is_deleted = 0)`;
 
 type AdminUserRow = User & {entry_count: number; tag_count: number};
 
@@ -96,6 +97,7 @@ function renderUser(row: AdminUserRow): ResourceObject {
       date_marked_for_deletion: isoformat(row.date_marked_for_deletion),
       entry_count: row.entry_count,
       tag_count: row.tag_count,
+      data_version: row.active_version,
     },
   };
 }

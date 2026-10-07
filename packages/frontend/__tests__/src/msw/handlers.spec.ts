@@ -10,6 +10,9 @@ import {
   CODES,
   CURSOR_START,
   cursorOf,
+  DATA_VERSION_HEADER,
+  dataVersionDocumentSchema,
+  dataVersionListDocumentSchema,
   type IncludedResource,
   restoreResultSchema,
   type TagListDocument,
@@ -54,8 +57,16 @@ const server = setupServer(...handlers);
 
 beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
 afterAll(() => server.close());
+/**
+ * The data version the writes `send` makes name (`X-Data-Version`), as the
+ * app's name the one their copy of the data is of: the first, until a
+ * restore or a switch makes another active (or none, `undefined`).
+ */
+let named: number | undefined;
+
 beforeEach(() => {
   resetMSWState();
+  named = 1;
   // The handlers announce each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
   return () => vi.restoreAllMocks();
@@ -69,7 +80,13 @@ async function send(
 ) {
   const response = await fetch(`${API}${path}`, {
     method,
-    ...(body === undefined ? {} : {body: JSON.stringify(body), headers}),
+    headers: {
+      ...(method === 'GET' || named === undefined
+        ? {}
+        : {[DATA_VERSION_HEADER]: String(named)}),
+      ...(body === undefined ? {} : headers),
+    },
+    ...(body === undefined ? {} : {body: JSON.stringify(body)}),
   });
   const text = await response.text();
   return {status: response.status, json: text === '' ? null : JSON.parse(text)};
@@ -939,8 +956,15 @@ describe('GET /user/backup', () => {
 describe('POST /user/restore', () => {
   const getBackup = async () =>
     backupSchema.parse((await send('GET', '/user/backup')).json);
-  const restore = (body: unknown) =>
-    send('POST', '/user/restore', body, {'Content-Type': 'application/json'});
+  const restore = async (body: unknown) => {
+    const sent = await send('POST', '/user/restore', body, {
+      'Content-Type': 'application/json',
+    });
+    if (sent.status === 200) {
+      named = restoreResultSchema.parse(sent.json).data_version;
+    }
+    return sent;
+  };
 
   it("replaces the user's data with the backup's, made anew", async () => {
     const before = await getBackup();
@@ -973,7 +997,7 @@ describe('POST /user/restore', () => {
 
     expect(status).toBe(200);
     expect(restoreResultSchema.parse(json)).toEqual({
-      date_restored: expect.any(String),
+      data_version: 2,
       tags: 2,
       entries: 1,
       tags_entries: 1,
@@ -985,14 +1009,21 @@ describe('POST /user/restore', () => {
     expect(after.entries[0]?.id).not.toBe(entry.id);
     const [tagging] = after.tags_entries;
     expect(tagging?.text_entry_id).toBe(after.entries[0]?.id);
-    // The tag of a name the user had is the same tag, back in place.
-    expect(tagging?.tag_id).toBe(second.id);
-    // The old rows are deleted, as the sync's reads list them.
+    // A new version: every row is new, and the old rows are not listed.
+    expect(tagging?.tag_id).not.toBe(second.id);
     const entries = await getEntries();
-    expect(entryOf(entries, entry.id).attributes.is_deleted).toBe(true);
+    expect(entries.data.map(({id}) => id)).toEqual([after.entries[0]?.id]);
     expect(
       entryOf(entries, after.entries[0]?.id ?? '').attributes
     ).toMatchObject({tag_count: 1, reused_count: 1, is_deleted: false});
+    // The version before is kept, as it was.
+    const kept = backupSchema.parse(
+      (await send('GET', '/user/backup?version=1')).json
+    );
+    expect({...kept, date_exported: ''}).toEqual({
+      ...before,
+      date_exported: '',
+    });
   });
 
   it('refuses a backup naming a tag or entry it does not hold, changing nothing', async () => {
@@ -1008,5 +1039,107 @@ describe('POST /user/restore', () => {
       ...before,
       date_exported: '',
     });
+  });
+});
+
+describe('/user/data_versions', () => {
+  const versions = async () =>
+    dataVersionListDocumentSchema.parse(
+      (await send('GET', '/user/data_versions')).json
+    ).data;
+  const backup = async () =>
+    backupSchema.parse((await send('GET', '/user/backup')).json);
+  const restoreOwn = async () => {
+    const sent = await send('POST', '/user/restore', await backup(), {
+      'Content-Type': 'application/json',
+    });
+    named = restoreResultSchema.parse(sent.json).data_version;
+    return sent;
+  };
+
+  it('lists the versions, newest first, with what each holds', async () => {
+    const before = await versions();
+    expect(before.map(({attributes}) => attributes)).toEqual([
+      expect.objectContaining({version: 1, active: true, origin: 'initial'}),
+    ]);
+    await restoreOwn();
+    const after = await versions();
+    expect(after.map(({id, attributes}) => [id, attributes.active])).toEqual([
+      ['2', true],
+      ['1', false],
+    ]);
+    expect(after[1]?.attributes.entry_count).toBe(
+      before[0]?.attributes.entry_count
+    );
+  });
+
+  it('makes a version active again, its data the one read', async () => {
+    const [entry] = (await getEntries()).data;
+    await restoreOwn();
+    const {status, json} = await send(
+      'POST',
+      '/user/data_versions/1/activate',
+      {},
+      {'Content-Type': 'application/json'}
+    );
+    expect(status).toBe(200);
+    expect(dataVersionDocumentSchema.parse(json).data.attributes.active).toBe(
+      true
+    );
+    expect((await getEntries()).data.map(({id}) => id)).toContain(entry?.id);
+    expect(
+      (
+        await send(
+          'POST',
+          '/user/data_versions/9/activate',
+          {},
+          {
+            'Content-Type': 'application/json',
+          }
+        )
+      ).status
+    ).toBe(404);
+  });
+
+  it('deletes a version that is not active, and never the active one', async () => {
+    await restoreOwn();
+    expect((await send('DELETE', '/user/data_versions/2')).status).toBe(400);
+    expect((await send('DELETE', '/user/data_versions/1')).status).toBe(204);
+    expect((await versions()).map(({id}) => id)).toEqual(['2']);
+    expect((await send('DELETE', '/user/data_versions/1')).status).toBe(404);
+  });
+
+  it('refuses a write naming no version, changing nothing', async () => {
+    const before = await getTags();
+    named = undefined;
+    for (const sent of [
+      await send('POST', '/tags', {
+        data: {type: 'Tag', attributes: {name: 'n'}},
+      }),
+      await send('DELETE', `/tags/${before.data[0]?.id}`),
+      await send('POST', '/user/restore', await backup(), {
+        'Content-Type': 'application/json',
+      }),
+    ]) {
+      expect(sent.status).toBe(400);
+      expect(sent.json.errors[0].detail).toMatch(DATA_VERSION_HEADER);
+    }
+    expect(await getTags()).toEqual(before);
+    expect((await versions()).map(({id}) => id)).toEqual(['1']);
+  });
+
+  it('refuses a read or write naming another version', async () => {
+    await restoreOwn();
+    const response = await fetch(`${API}/tags`, {
+      headers: {[DATA_VERSION_HEADER]: '1'},
+    });
+    expect(response.status).toBe(409);
+    expect((await response.json()).errors[0].code).toBe(
+      CODES.dataVersionChanged
+    );
+    expect(
+      (await fetch(`${API}/tags`, {headers: {[DATA_VERSION_HEADER]: '2'}}))
+        .status
+    ).toBe(200);
   });
 });

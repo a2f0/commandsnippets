@@ -128,6 +128,7 @@ describe('AdminApi users', () => {
       date_marked_for_deletion: null,
       entry_count: 1,
       tag_count: 1,
+      data_version: 1,
     });
     expect(body.data[0].attributes.is_staff).toBe(true);
   });

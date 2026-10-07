@@ -10,6 +10,7 @@ import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
+import {versionOf} from './dataVersions';
 import {textEntryResource, textEntryReusedResource} from './owned';
 import {resolveRelated} from './related';
 import {TEXT_ENTRY_REUSED} from './resourceTypes';
@@ -17,16 +18,18 @@ import {getOwned, listResponse, resourceResponse} from './viewset';
 
 export const entryReuseRoutes = new Hono<AppEnv>();
 
-entryReuseRoutes.get('/', c =>
-  listResponse(c, {
+entryReuseRoutes.get('/', c => {
+  const user = requireUser(c);
+  return listResponse(c, {
     ...textEntryReusedResource,
-    user: requireUser(c),
+    user,
+    dataVersion: versionOf(c, user),
     query: textEntryReusedListQuerySchema,
     filters: {},
     ordering: {date_created: sql`${entryReuses.date_created}`},
     defaultOrdering: [entryReuses.date_created, entryReuses.id],
-  })
-);
+  });
+});
 
 entryReuseRoutes.get('/:id', async c => {
   const reuse = await getOwned<TextEntryReused>(c, textEntryReusedResource);
@@ -36,6 +39,7 @@ entryReuseRoutes.get('/:id', async c => {
 /** Record a reuse; a trigger maintains the entry's reused_count/date. */
 entryReuseRoutes.post('/', async c => {
   const user = requireUser(c);
+  const version = versionOf(c, user);
   const db = c.get('db');
   const {relationships} = await parseResource(c.req.raw, {
     type: TEXT_ENTRY_REUSED,
@@ -43,6 +47,7 @@ entryReuseRoutes.post('/', async c => {
   const ids = await resolveRelated(
     db,
     user.id,
+    version,
     relationships,
     textEntryReusedCreateRelationshipsSchema,
     {text_entry: textEntryResource}
@@ -52,6 +57,7 @@ entryReuseRoutes.post('/', async c => {
     .values({
       text_entry_id: ids.text_entry,
       user_id: user.id,
+      version,
       date_created: now(),
     })
     .returning();

@@ -15,7 +15,10 @@ const files = migrations.files();
  * has them: the first release of a two-release column removal (README,
  * Deployment). Empty between removals.
  */
-const PENDING_DROPS: Record<string, string[]> = {};
+const PENDING_DROPS: Record<string, string[]> = {
+  // The restore cutoff's, which data versions replace (0017).
+  users_user: ['date_restored'],
+};
 
 /** The schema the Postgres import loaded; later migrations run on real data. */
 const IMPORTED = '0003_unique_user_email.sql';
@@ -137,6 +140,26 @@ describe('migrations', () => {
         columns: expected.sort(),
       });
     }
+  });
+
+  test("the tags_tagclientid rebuild keeps every client id, at its tag's version", () => {
+    const db = new Database(':memory:');
+    db.run('PRAGMA foreign_keys = ON');
+    migrations.load(db, {through: '0017_drop_restore_cutoff.sql'});
+    seed(db);
+    db.run(
+      `INSERT INTO tags_tagclientid (user_id, client_id, tag_id) VALUES (1, 'local-1', 1)`
+    );
+
+    migrations.apply(db, '0018_data_versions_schema.sql');
+
+    expect(
+      db
+        .query(
+          'SELECT user_id, version, client_id, tag_id FROM tags_tagclientid'
+        )
+        .all()
+    ).toEqual([{user_id: 1, version: 1, client_id: 'local-1', tag_id: 1}]);
   });
 
   test('none rebuilds users_user', () => {

@@ -236,34 +236,56 @@ API; everything else the app keeps is a zustand store.
   signed in (a late answer to a session the tab has left changes nothing). `authUtils` must not import the
   store: the store imports the sync, which imports the API client, so that
   would be an import cycle.
+- **Data versions**: every tag, entry, tagging and reuse belongs to one of
+  the user's data versions, and their reads and writes are of the active
+  one (the API's `data_version`). `src/lib/sync/dataVersion.ts` holds which
+  version an owner's rows here are of (`VERSION_KEY`, in `cursors`). Every
+  sync reads the active one first (`bindToApi`) and asks for its pages of
+  it (`X-Data-Version`, `apiClient.forVersion`, `SyncApi.atVersion`), so
+  no page of one is stored among another's rows (nor a page or a write's
+  answer once the copy holds another: `assertHeld`); every queued write
+  records the version it was made against (`OutboxRow.version`) and names
+  it, as the API requires of a write (a 400 otherwise). When another
+  version is active (a restore or a switch, on any device), the owner's
+  rows, cursors (but the account's) and queued writes go (`adoptVersion`,
+  in turn with the syncs when made active here: `SyncEngine.adopt`) and the
+  sync reads the active one from the start; so do rows read with no version
+  held, which are of none known. Data never read keeps what was made here,
+  and the writes queued before any version was held take the first read. A
+  request naming a version no longer active is a 409
+  (`DataVersionChangedError`): the engine takes up the active version and
+  syncs again, and a flush drops the queue of the old one. A version that
+  is not active never changes, so rows held of the active one stay right.
 - **Backups**: `src/lib/data/backup.ts`, api-shared's `backupSchema`
-  (every tag, entry, tagging and reuse not deleted, with its id). Both send
-  the queue (`flush`) first, then act as the user and the account their
-  data is bound to (`forAccount`), as the queue's writes do.
-  - File > Export Backup (`ExportBackup.tsx`) saves the API's backup
-    (`GET /user/backup`) as
+  (every tag, entry, tagging and reuse not deleted in one data version,
+  with its id). Each action sends the queue (`flush`) first, then acts as
+  the user and the account their data is bound to (`forAccount`), as the
+  queue's writes do.
+  - File > Export Backup (`ExportBackup.tsx`) saves the API's backup of the
+    active version (`GET /user/backup`) as
     `commandsnippets-backup-<username>-<YYYY-MM-DD>.json`; a backup of any
     other account is refused (`BackupAccountError`).
   - File > Restore Backup (`RestoreBackup.tsx`, `RestoreBackupDialog.tsx`)
     reads a backup file (any account's: data moves between accounts) and
-    checks it (`readBackupFile`), then warns: all of the user's tags and
-    entries are deleted (counted as this device holds them) and replaced
-    with the backup's, which cannot be undone. The warning is for the user
-    who chose the file and the account their data is bound to then
-    (`restoreAccount`, which sends the queue first): another signing in
-    meanwhile closes it, and data bound to another account since is not
-    restored (`BackupAccountError`). Only the
-    confirmation sends it (`POST /user/restore`, which makes the rows anew,
-    with new ids); the data then syncs here (the deletes come in like any
-    others). The API refuses (400 `data_restored`, dropped like any refusal)
-    every write made before the restore by its clock, so writes are made
-    after it (`madeAfter`, the `made` cursor) once this device knows of it:
-    at once after its own restore, and at each sync for one made elsewhere
-    (`GET /user/`'s `date_restored`, read by `bindToApi`). The API's reason
-    for refusing a backup is shown (`ApiRequestError.detail`).
-  - When the queue cannot be sent or the API fails, nothing is saved or
-    restored and a dialog says so. Another user's page offers neither (they
-    would read as that user's data).
+    checks it (`readBackupFile`), then warns: the backup becomes the user's
+    data on every device, as a new version, the current data kept as the
+    version before, and changes not yet sent from other devices are
+    discarded. The warning is for the user who chose the file, and the
+    account their data is bound to and the version it is held at then
+    (`restoreTarget`): another signing in meanwhile closes it, and data
+    bound to another account since is not restored (`BackupAccountError`).
+    Only the confirmation sends it (`POST /user/restore`, over the version
+    warned about: another made active since, though a sync here took it up,
+    is a 409); this copy then takes up the new version and syncs it. The API's reason for refusing a backup is shown
+    (`ApiRequestError.detail`).
+  - File > Data Versions (`DataVersions.tsx`, `DataVersionsDialog.tsx`)
+    lists the versions, newest first, with their origin and counts; one not
+    active can be made active (after a warning; `activateVersion`, which
+    then takes it up here) or deleted (after another), and any exported
+    (`-v<N>` in the file name for one not active).
+  - When the queue cannot be sent or the API fails, nothing is saved,
+    restored or switched, and a dialog says so. Another user's page offers
+    none of them (they would read as that user's data).
 
 ### Timings (the HUD)
 Outside production, the app times its work for the HUD's Analytics tab

@@ -423,7 +423,7 @@ describe('a write a newer one beat (last writer wins)', () => {
     await expect(session().sync.flush()).rejects.toThrow();
     server.resetHandlers();
     // ...and on the API by another device, which a sync brings meanwhile.
-    const {data: theirs} = await apiClient.createTag('elsewhere');
+    const {data: theirs} = await apiClient.forVersion(1).createTag('elsewhere');
     await session().sync.syncAll();
     const named = async () =>
       (await db().tags.where('owner').equals(TEST_USER).toArray()).filter(
@@ -572,7 +572,7 @@ describe('the writes', () => {
     await expect(session().sync.flush()).rejects.toThrow();
     server.resetHandlers();
     // Renamed on the API (another device) after it was asked for here.
-    await apiClient.updateTag('1', 'renamed-elsewhere');
+    await apiClient.forVersion(1).updateTag('1', 'renamed-elsewhere');
 
     await session().sync.flush();
 
@@ -625,7 +625,7 @@ describe('the writes', () => {
       entry => entry.attributes.client_id === local.id
     );
     invariant(made, 'the API should have made the entry');
-    await apiClient.tagEntry('2', made.id);
+    await apiClient.forVersion(1).tagEntry('2', made.id);
     // The retried create answers with the entry and that junction; this
     // device's own tagging then fails to be sent.
     server.use(http.post(`${API}/tags_entries`, () => HttpResponse.error()));
@@ -704,7 +704,7 @@ describe('the writes', () => {
       entry => entry.attributes.client_id === local.id
     );
     invariant(made, 'the API should have made the entry');
-    await apiClient.tagEntry('2', made.id);
+    await apiClient.forVersion(1).tagEntry('2', made.id);
 
     await session().sync.syncAll();
     const pair = (
@@ -783,7 +783,7 @@ describe('the writes', () => {
     };
     const before = (await tag()).entry_count;
     // Another device renames the tag.
-    await apiClient.updateTag('2', 'renamed-elsewhere');
+    await apiClient.forVersion(1).updateTag('2', 'renamed-elsewhere');
     offline();
     await tagEntry(session(), '2', '1');
 
@@ -849,7 +849,7 @@ describe('the writes', () => {
   it('store a moved tag as the API holds it once sent, though a sync left it as it was', async () => {
     await session().sync.syncAll();
     // Another device renames the tag, which this one moves meanwhile.
-    await apiClient.updateTag('3', 'renamed-elsewhere');
+    await apiClient.forVersion(1).updateTag('3', 'renamed-elsewhere');
     offline();
     await reorderTags(session(), '3', '1');
     await session().sync.syncAll();

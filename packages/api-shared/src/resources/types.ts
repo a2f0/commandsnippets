@@ -12,6 +12,7 @@ export const TAG_TEXT_ENTRY = 'TagTextEntryThroughModel';
 export const TEXT_ENTRY_REUSED = 'TextEntryReused';
 
 export const ADMIN_USER = 'AdminUser';
+export const DATA_VERSION = 'DataVersion';
 export const ADMIN_AUDIT_LOG_ENTRY = 'AdminAuditLogEntry';
 
 /** Login request documents; nothing is ever rendered with these types. */

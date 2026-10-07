@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyledMenu} from '../StyledMenu';
+import {DataVersions} from './menuItems/DataVersions';
 import {ExportBackup} from './menuItems/ExportBackup';
 import {Logout} from './menuItems/Logout';
 import {NewEntry} from './menuItems/NewEntry';
@@ -27,6 +28,7 @@ const FileMenu = ({onClose, anchorEl, entriesPage, readOnly}: IProps) => (
     {/* Of the signed-in user's data: on another user's, it would read as theirs. */}
     {!readOnly && <ExportBackup onClose={onClose} />}
     {!readOnly && <RestoreBackup onClose={onClose} />}
+    {!readOnly && <DataVersions onClose={onClose} />}
     <Logout onClose={onClose} />
   </StyledMenu>
 );

@@ -10,6 +10,8 @@ import {
   adminUserListDocumentSchema,
   backupSchema,
   CURSOR_START,
+  dataVersionDocumentSchema,
+  dataVersionListDocumentSchema,
   emptyObjectSchema,
   errorDocumentSchema,
   restoreResultSchema,
@@ -130,16 +132,53 @@ describe('Backup', () => {
       backupSchema,
       await client.get('/api/v1/user/backup')
     );
-    await expectDocument(
+    const {data_version} = await expectDocument(
       restoreResultSchema,
       await client.post('/api/v1/user/restore', backup)
     );
+    client.dataVersion = data_version;
     await expectError(
       await client.post('/api/v1/user/restore', {...backup, version: 2}),
       400
     );
+    client.dataVersion = undefined;
+    await expectError(await client.post('/api/v1/user/restore', backup), 400);
     await expectError(
       await base.unauthenticatedClient.post('/api/v1/user/restore', backup),
+      403
+    );
+  });
+});
+
+describe('DataVersion', () => {
+  it('lists, makes active, and deletes', async () => {
+    const backup = await expectDocument(
+      backupSchema,
+      await client.get('/api/v1/user/backup')
+    );
+    await client.post('/api/v1/user/restore', backup);
+    await expectDocument(
+      dataVersionListDocumentSchema,
+      await client.get('/api/v1/user/data_versions')
+    );
+    await expectDocument(
+      dataVersionDocumentSchema,
+      await client.post('/api/v1/user/data_versions/1/activate')
+    );
+    await expectError(
+      await client.post('/api/v1/user/data_versions/9/activate'),
+      404
+    );
+    await expectError(await client.delete('/api/v1/user/data_versions/1'), 400);
+    expect((await client.delete('/api/v1/user/data_versions/2')).status).toBe(
+      204
+    );
+    await expectError(
+      await client.get('/api/v1/tags', {'X-Data-Version': '2'}),
+      409
+    );
+    await expectError(
+      await base.unauthenticatedClient.get('/api/v1/user/data_versions'),
       403
     );
   });

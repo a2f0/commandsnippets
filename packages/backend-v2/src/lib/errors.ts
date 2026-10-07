@@ -84,14 +84,15 @@ export const unsupportedMediaType = (mediaType: string | undefined) =>
   );
 
 /**
- * A client write made before the user's data was restored from a backup,
- * which replaced what it would change: clients drop it.
+ * A request naming a data version (`DATA_VERSION_HEADER`) that is not the
+ * user's active one, or a write landing after a switch: the client clears
+ * its copy of the data and syncs it again.
  */
-export const dataRestored = () =>
+export const dataVersionChanged = () =>
   ApiError.of(
-    400,
-    'This write was made before the data was restored from a backup, which replaced it.',
-    CODES.dataRestored
+    409,
+    'The data version changed. Sync the data again.',
+    CODES.dataVersionChanged
   );
 
 /** DRF's ValidationError on the document as a whole. */

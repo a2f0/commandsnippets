@@ -48,7 +48,7 @@ const user = {
     username: 'dan',
     is_staff: false,
     date_updated: ts,
-    date_restored: null,
+    data_version: 1,
   },
 };
 const tag = {

@@ -55,6 +55,7 @@ const resource = (user: MockUser) => ({
     is_public: false,
     entry_count: 12,
     tag_count: 3,
+    data_version: 1,
   },
 });
 
@@ -78,6 +79,7 @@ const server = setupServer(
           username: 'test',
           is_staff: viewerIsStaff,
           date_updated: '2026-09-01T00:00:00.000000',
+          data_version: 1,
         },
       },
     })
@@ -655,6 +657,7 @@ describe('AdminPage', () => {
     // Backups of their own data work from any page.
     expect(screen.getByText('Export Backup')).toBeInTheDocument();
     expect(screen.getByText('Restore Backup')).toBeInTheDocument();
+    expect(screen.getByText('Data Versions')).toBeInTheDocument();
 
     fireEvent.click(back);
     await waitFor(() => {

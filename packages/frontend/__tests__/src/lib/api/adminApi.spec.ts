@@ -36,6 +36,7 @@ const userResource = (overrides: Record<string, unknown> = {}) => ({
     is_public: false,
     entry_count: 5,
     tag_count: 2,
+    data_version: 1,
     ...overrides,
   },
 });
@@ -54,6 +55,7 @@ const currentUser = (isStaff: boolean) => ({
       username: 'a',
       is_staff: isStaff,
       date_updated: '2026-01-01T00:00:00',
+      data_version: 1,
     },
   },
 });
@@ -129,6 +131,7 @@ describe('adminApi', () => {
           dateMarkedForDeletion: null,
           entryCount: 5,
           tagCount: 2,
+          dataVersion: 1,
         },
       ],
       page: 1,

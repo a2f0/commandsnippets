@@ -3,6 +3,7 @@
  * the lists show what IndexedDB holds at once, and each sync's changes as it
  * stores them.
  */
+import {DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
 import {act, render, screen, waitFor} from '@testing-library/react';
 import {Dexie} from 'dexie';
 import {createMemoryHistory} from 'history';
@@ -20,6 +21,8 @@ import {TestAppRouter} from '../util/TestAppRouter';
 
 const API = 'http://localhost:9001/api/v1';
 const JSON_API = {'Content-Type': 'application/vnd.api+json'};
+/** Another device's writes name the data version it holds: the first. */
+const ELSEWHERE = {[DATA_VERSION_HEADER]: '1'};
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -91,7 +94,7 @@ describe('The entries page', () => {
     // Another device edits entry 1.
     await fetch(`${API}/entries/1`, {
       method: 'PATCH',
-      headers: JSON_API,
+      headers: {...JSON_API, ...ELSEWHERE},
       body: JSON.stringify({
         data: {type: 'TextEntry', id: '1', attributes: {subject: 'edited'}},
       }),
@@ -159,7 +162,10 @@ describe('The entries page', () => {
     renderAt('/test/test-tag-1');
     await waitFor(() => expect(listed()).toHaveLength(4));
 
-    const untagged = await fetch(`${API}/tags_entries/2`, {method: 'DELETE'});
+    const untagged = await fetch(`${API}/tags_entries/2`, {
+      method: 'DELETE',
+      headers: ELSEWHERE,
+    });
     expect(untagged.status).toBe(200);
     comeBackIntoView();
 
@@ -191,6 +197,7 @@ describe('The entries page', () => {
               username: 'someone-else',
               is_staff: false,
               date_updated: '2020-01-01T00:00:00',
+              data_version: 1,
             },
           },
         })
@@ -224,6 +231,7 @@ describe('The entries page', () => {
               username: 'someone-else',
               is_staff: false,
               date_updated: '2020-01-01T00:00:00',
+              data_version: 1,
             },
           },
         })

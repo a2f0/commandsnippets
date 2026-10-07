@@ -1,4 +1,5 @@
 /** Ports of the Django tests' factory_boy factories. */
+import {eq, sql} from 'drizzle-orm';
 import {
   entryReuses,
   type Tag,
@@ -9,6 +10,7 @@ import {
   tagsEntries,
   textEntries,
   type User,
+  users,
 } from '../../src/db/schema';
 import {now} from '../../src/lib/clock';
 import {OrderedModel} from '../../src/lib/ordered';
@@ -16,6 +18,10 @@ import {searchColumns} from '../../src/lib/search';
 import {tagOrdering} from '../../src/resources/tags';
 import {createUser} from '../../src/services/users';
 import {db} from './db';
+
+/** The user's active data version, read as the row is written. */
+const activeVersion = (userId: number) =>
+  sql<number>`(SELECT ${users.active_version} FROM ${users} WHERE ${users.id} = ${userId})`;
 
 let sequence = 0;
 const next = () => sequence++;
@@ -83,6 +89,7 @@ async function seedExampleData(user: User): Promise<void> {
       .values({
         ...tag,
         user_id: user.id,
+        version: activeVersion(user.id),
         date_created: timestamp,
         date_updated: timestamp,
         date_last_used: timestamp,
@@ -99,6 +106,7 @@ async function seedExampleData(user: User): Promise<void> {
         ...entry,
         ...searchColumns(entry),
         user_id: user.id,
+        version: activeVersion(user.id),
         date_created: timestamp,
         date_updated: timestamp,
       })
@@ -113,6 +121,7 @@ async function seedExampleData(user: User): Promise<void> {
         tag_id: (tagRows[tagIndex] as Tag).id,
         text_entry_id: (entryRows[entryIndex] as TextEntry).id,
         user_id: user.id,
+        version: activeVersion(user.id),
         order,
         date_created: timestamp,
         date_updated: timestamp,
@@ -133,6 +142,7 @@ export async function tagFactory(fields: {
     .values({
       name: fields.name ?? `tag-${next()}`,
       user_id: fields.user.id,
+      version: activeVersion(fields.user.id),
       order:
         fields.order ??
         (await new OrderedModel(db(), tagOrdering).nextOrder(fields.user.id)),
@@ -163,6 +173,7 @@ export async function textEntryFactory(fields: {
       body,
       ...searchColumns({subject, body}),
       user_id: fields.user.id,
+      version: activeVersion(fields.user.id),
       is_deleted: fields.is_deleted ?? false,
       date_created: timestamp,
       date_updated: timestamp,
@@ -185,6 +196,7 @@ export async function tagTextEntryFactory(fields: {
       tag_id: fields.tag.id,
       text_entry_id: fields.text_entry.id,
       user_id: fields.user.id,
+      version: activeVersion(fields.user.id),
       order: fields.order ?? 0,
       is_deleted: fields.is_deleted ?? false,
       date_created: timestamp,
@@ -203,8 +215,31 @@ export async function textEntryReusedFactory(fields: {
     .values({
       text_entry_id: fields.text_entry.id,
       user_id: fields.user.id,
+      version: activeVersion(fields.user.id),
       date_created: now(),
     })
     .returning();
   return reuse as TextEntryReused;
+}
+
+/** A user with tags, entries (one public), taggings and reuses. */
+export async function richUserFactory(): Promise<User> {
+  const user = await userFactory({}, {examples: false});
+  const shell = await tagFactory({user, name: 'shell'});
+  const git = await tagFactory({user, name: 'git'});
+  await db().update(tags).set({is_public: true}).where(eq(tags.id, git.id));
+  const ls = await textEntryFactory({user, subject: 'list', body: 'ls -la'});
+  const log = await textEntryFactory({user, subject: 'log', body: 'git log'});
+  const untagged = await textEntryFactory({user, subject: 'alone'});
+  await db()
+    .update(textEntries)
+    .set({is_public: true})
+    .where(eq(textEntries.id, log.id));
+  await tagTextEntryFactory({tag: shell, text_entry: log, user, order: 0});
+  await tagTextEntryFactory({tag: shell, text_entry: ls, user, order: 1});
+  await tagTextEntryFactory({tag: git, text_entry: log, user, order: 0});
+  await textEntryReusedFactory({text_entry: ls, user});
+  await textEntryReusedFactory({text_entry: ls, user});
+  await textEntryReusedFactory({text_entry: untagged, user});
+  return user;
 }

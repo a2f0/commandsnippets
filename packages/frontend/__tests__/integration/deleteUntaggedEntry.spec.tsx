@@ -34,7 +34,9 @@ describe('Delete Untagged Entry', () => {
 
   beforeEach(async () => {
     // The mock API's fixtures are all in tag 1: one in no tag.
-    await apiClient.createEntry('untagged-subject', 'untagged body');
+    await apiClient
+      .forVersion(1)
+      .createEntry('untagged-subject', 'untagged body');
     deleteEntrySpy = vi.spyOn(apiClientMethods, 'deleteEntry');
     untagEntrySpy = vi.spyOn(apiClientMethods, 'untagEntry');
   });

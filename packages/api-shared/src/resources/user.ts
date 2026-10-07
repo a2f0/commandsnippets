@@ -1,6 +1,10 @@
 /** `User`: the requesting user (`GET /api/v1/user`), and included owners. */
 import * as z from 'zod/mini';
-import {resourceSchema, timestampSchema} from '../jsonapi/response';
+import {
+  resourceSchema,
+  timestampSchema,
+  versionSchema,
+} from '../jsonapi/response';
 import {USER} from './types';
 
 export const userAttributesSchema = z.object({
@@ -9,12 +13,11 @@ export const userAttributesSchema = z.object({
   is_staff: z.boolean(),
   date_updated: timestampSchema,
   /**
-   * When the user's data was last restored from a backup, or null: the API
-   * refuses their client writes made before it (`data_restored`), so a
-   * client makes its writes after it once it knows. Missing from an API
-   * that predates restores.
+   * The user's active data version (`dataVersion.ts`): what their data
+   * reads and writes are of. A client whose copy is of another clears it
+   * and syncs again.
    */
-  date_restored: z.optional(z.nullable(timestampSchema)),
+  data_version: versionSchema,
 });
 
 export const userSchema = resourceSchema(USER, userAttributesSchema);

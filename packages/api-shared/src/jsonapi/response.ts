@@ -24,6 +24,9 @@ export const timestampSchema = z
 /** A count or a rank: a non-negative integer. */
 export const countSchema = z.number().check(z.int(), z.nonnegative());
 
+/** A data version's number: a positive integer, the first 1. */
+export const versionSchema = z.number().check(z.int(), z.positive());
+
 // @__NO_SIDE_EFFECTS__
 export function resourceIdentifierSchema<const T extends string>(type: T) {
   return z.object({type: z.literal(type), id: resourceIdSchema});

@@ -46,11 +46,12 @@ export const users = sqliteTable(
     // When staff marked the account for deletion through the admin API, which
     // also deactivates it; NULL if it is not marked.
     date_marked_for_deletion: text('date_marked_for_deletion'),
-    // When the user's data was last restored from a backup (the API's write
-    // clock, resources/restore.ts); NULL if never. A client write made
-    // before it is refused (resources/lww.ts): it would change what the
-    // restore replaced.
-    date_restored: text('date_restored'),
+    // The user's active data version (users_dataversion): what their data
+    // reads and writes are of (resources/dataVersions.ts).
+    active_version: integer('active_version').notNull().default(1),
+    // The newest version number given out: the next is one past it, so no
+    // number is used twice (not even a deleted version's).
+    last_version: integer('last_version').notNull().default(1),
   },
   table => [
     check('users_user_username_length', sql`length(${table.username}) <= 150`),
@@ -62,6 +63,38 @@ export const users = sqliteTable(
     uniqueIndex('users_user_email_unique')
       .on(table.email)
       .where(sql`${table.email} != ''`),
+  ]
+);
+
+/**
+ * The versions of a user's data (resources/dataVersions.ts): every tag,
+ * entry, tagging and reuse belongs to one (`version`), and the user's active
+ * one (users_user.active_version) is what their reads and writes are of.
+ * Version 1 is the data an account starts with; a restore makes the next and
+ * makes it active, keeping the one before as it was. A version that is not
+ * active never changes (0019_data_versions.sql).
+ */
+export const dataVersions = sqliteTable(
+  'users_dataversion',
+  {
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id, {onDelete: 'cascade'}),
+    version: integer('version').notNull(),
+    date_created: text('date_created').notNull(),
+    // 'initial' (the account's first) or 'restore'.
+    origin: text('origin').notNull(),
+    // A restore's backup: whose data it was, and when it was exported.
+    backup_username: text('backup_username'),
+    backup_exported: text('backup_exported'),
+  },
+  table => [
+    primaryKey({columns: [table.user_id, table.version]}),
+    check('users_dataversion_version_check', sql`${table.version} >= 1`),
+    check(
+      'users_dataversion_origin_check',
+      sql`${table.origin} IN ('initial', 'restore')`
+    ),
   ]
 );
 
@@ -114,6 +147,8 @@ export const textEntries = sqliteTable(
     user_id: integer('user_id')
       .notNull()
       .references(() => users.id, {onDelete: 'cascade'}),
+    // The data version the row belongs to (users_dataversion).
+    version: integer('version').notNull().default(1),
     is_deleted: integer('is_deleted', {mode: 'boolean'})
       .notNull()
       .default(false),
@@ -142,10 +177,11 @@ export const textEntries = sqliteTable(
     ),
     index('text_entries_textentry_user_id_idx').on(
       table.user_id,
+      table.version,
       table.date_updated
     ),
     uniqueIndex('text_entries_textentry_client_id_unique')
-      .on(table.user_id, table.client_id)
+      .on(table.user_id, table.version, table.client_id)
       .where(sql`${table.client_id} IS NOT NULL`),
   ]
 );
@@ -163,6 +199,8 @@ export const tags = sqliteTable(
     entry_count: integer('entry_count').notNull().default(0),
     date_last_used: text('date_last_used'),
     order: integer('order').notNull(),
+    // The data version the row belongs to (users_dataversion).
+    version: integer('version').notNull().default(1),
     is_deleted: integer('is_deleted', {mode: 'boolean'})
       .notNull()
       .default(false),
@@ -176,11 +214,23 @@ export const tags = sqliteTable(
     client_id: text('client_id'),
   },
   table => [
-    unique('One tag of same name per user').on(table.name, table.user_id),
+    unique('One tag of same name per user').on(
+      table.name,
+      table.user_id,
+      table.version
+    ),
     check('tags_tag_name_length', sql`length(${table.name}) <= 24`),
     check('tags_tag_order_check', sql`${table.order} >= 0`),
-    index('tags_tag_user_order_idx').on(table.user_id, table.order),
-    index('tags_tag_user_updated_idx').on(table.user_id, table.date_updated),
+    index('tags_tag_user_order_idx').on(
+      table.user_id,
+      table.version,
+      table.order
+    ),
+    index('tags_tag_user_updated_idx').on(
+      table.user_id,
+      table.version,
+      table.date_updated
+    ),
   ]
 );
 
@@ -188,7 +238,8 @@ export const tags = sqliteTable(
  * The client id of every queued tag create, and the tag it was answered with
  * (the tag it made, or the user's of the name): a retried create finds that
  * tag by it, however it is named by then. Reserved in the batch of the write
- * the create is answered with, so a client id names one tag.
+ * the create is answered with, so a client id names one tag in a data
+ * version (as an entry's does: `text_entries_textentry_client_id_unique`).
  */
 export const tagClientIds = sqliteTable(
   'tags_tagclientid',
@@ -196,13 +247,15 @@ export const tagClientIds = sqliteTable(
     user_id: integer('user_id')
       .notNull()
       .references(() => users.id, {onDelete: 'cascade'}),
+    // The data version of the create, and so of its tag.
+    version: integer('version').notNull().default(1),
     client_id: text('client_id').notNull(),
     tag_id: integer('tag_id')
       .notNull()
       .references(() => tags.id, {onDelete: 'cascade'}),
   },
   table => [
-    primaryKey({columns: [table.user_id, table.client_id]}),
+    primaryKey({columns: [table.user_id, table.version, table.client_id]}),
     index('tags_tagclientid_tag_id_idx').on(table.tag_id),
   ]
 );
@@ -256,6 +309,8 @@ export const tagsEntries = sqliteTable(
     user_id: integer('user_id')
       .notNull()
       .references(() => users.id, {onDelete: 'cascade'}),
+    // The data version the row belongs to (users_dataversion).
+    version: integer('version').notNull().default(1),
     // Untagging soft-deletes the junction, so a tag's junctions after a
     // cursor show the entries that left it (resources/tagsEntries.ts).
     is_deleted: integer('is_deleted', {mode: 'boolean'})
@@ -283,6 +338,7 @@ export const tagsEntries = sqliteTable(
     // The junction lists in revision order: a user's, and a tag's.
     index('tags_tagtextentrythroughmodel_user_updated_idx').on(
       table.user_id,
+      table.version,
       table.date_updated
     ),
     index('tags_tagtextentrythroughmodel_tag_updated_idx').on(
@@ -303,16 +359,22 @@ export const entryReuses = sqliteTable(
     user_id: integer('user_id')
       .notNull()
       .references(() => users.id, {onDelete: 'cascade'}),
+    // The data version the row belongs to (users_dataversion).
+    version: integer('version').notNull().default(1),
   },
   table => [
     index('text_entries_textentryreused_text_entry_id_idx').on(
       table.text_entry_id
     ),
-    index('text_entries_textentryreused_user_id_idx').on(table.user_id),
+    index('text_entries_textentryreused_user_id_idx').on(
+      table.user_id,
+      table.version
+    ),
   ]
 );
 
 export type User = typeof users.$inferSelect;
+export type DataVersionRow = typeof dataVersions.$inferSelect;
 export type Token = typeof tokens.$inferSelect;
 export type Tag = typeof tags.$inferSelect;
 export type TagClientId = typeof tagClientIds.$inferSelect;

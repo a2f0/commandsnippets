@@ -26,11 +26,24 @@ export function isNotNullViolation(error: unknown, column: string): boolean {
 }
 
 /**
- * A client write refused by the restore cutoff's triggers (made before the
- * user's data was restored, `0016_restore_cutoff.sql`).
+ * A write the data version triggers refused: of a version that is not the
+ * user's active one (`0019_data_versions.sql`).
  */
-export function isDataRestored(error: unknown): boolean {
+export function isDataVersionChanged(error: unknown): boolean {
   const message = String((error as Error)?.message ?? error);
   const cause = String((error as {cause?: Error})?.cause?.message ?? '');
-  return (message + cause).includes('data_restored:');
+  return (message + cause).includes('data_version_changed:');
+}
+
+/**
+ * A second row of a user's data version (`users_dataversion`'s primary key):
+ * a restore's guard that the active version is the one it was made over
+ * (`resources/restore.ts`).
+ */
+export function isVersionClash(error: unknown): boolean {
+  const message = String((error as Error)?.message ?? error);
+  const cause = String((error as {cause?: Error})?.cause?.message ?? '');
+  return /UNIQUE constraint failed: users_dataversion\.user_id/.test(
+    message + cause
+  );
 }

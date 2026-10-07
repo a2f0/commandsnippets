@@ -102,7 +102,7 @@ describe('TestTextEntriesApi', () => {
     const userData = included[2];
     expect(userData.type).toBe('User');
     expect(userData.id).toBe(String(entry1.user_id));
-    expect(Object.keys(userData.attributes).length).toBe(4); // v2: date_restored
+    expect(Object.keys(userData.attributes).length).toBe(4); // v2: data_version
     expect(userData.attributes.username).toBe(user1.username);
     expect(userData.attributes.date_updated).toBe(
       isoformat(user1.date_updated)
@@ -344,7 +344,7 @@ describe('TestTextEntriesApi', () => {
     expect(included.length).toBe(1);
     const userData = included[0];
     expect(userData.type).toBe('User');
-    expect(Object.keys(userData.attributes).length).toBe(4); // v2: date_restored
+    expect(Object.keys(userData.attributes).length).toBe(4); // v2: data_version
     expect(userData.attributes.username).toBe(user1.username);
     expect(userData.attributes.date_updated).toBe(
       isoformat(user1.date_updated)
@@ -422,7 +422,7 @@ describe('TestTextEntriesApi', () => {
     expect(included.length).toBe(1);
     const userData = included[0];
     expect(userData.type).toBe('User');
-    expect(Object.keys(userData.attributes).length).toBe(4); // v2: date_restored
+    expect(Object.keys(userData.attributes).length).toBe(4); // v2: data_version
     expect(userData.attributes.username).toBe(user1.username);
     expect(userData.attributes.date_updated).toBe(
       isoformat(user1.date_updated)
@@ -446,7 +446,7 @@ describe('TestTextEntriesApi', () => {
     expect(included.length).toBe(1);
     const userData = included[0];
     expect(userData.type).toBe('User');
-    expect(Object.keys(userData.attributes).length).toBe(4); // v2: date_restored
+    expect(Object.keys(userData.attributes).length).toBe(4); // v2: data_version
     expect(userData.attributes.username).toBe(user1.username);
     expect(userData.attributes.date_updated).toBe(
       isoformat(user1.date_updated)

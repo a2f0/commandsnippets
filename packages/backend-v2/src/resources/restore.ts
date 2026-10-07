@@ -1,20 +1,14 @@
 /**
- * `POST /api/v1/user/restore`: replace all of the requester's data with a
- * backup (api-shared's `backupSchema`), whoever's it is, so data can move
- * between accounts. Every tag, entry and tagging the user has is deleted,
- * and the backup's are made anew, with ids of their own, in one D1 batch:
- * one transaction, so all of it happens or none of it.
- *
- * Deletes are soft, as everywhere: each row deleted advances its revision,
- * so every device's sync takes it out, as it takes in the rows made. A tag
- * whose name the user has (deleted or not) is brought back in place, since
- * names are unique per user. Rows keep the backup's `date_created`. Tags
- * rank after every tag the user has (deleted tags keep their ranks), in the
- * backup's order, and taggings after their tag's, in theirs. Every row
- * written counts as a client write made now by the API's clock
- * (`client_updated`), and the user's `date_restored` is set to that time: a
- * client write made before it (queued offline on another device, say) is
- * refused (`lww.ts`), so none brings back or changes what was replaced.
+ * `POST /api/v1/user/restore`: make a backup (api-shared's `backupSchema`,
+ * whoever's it is, so data can move between accounts) the requester's data,
+ * as a new data version (`dataVersions.ts`) made active. Nothing is deleted:
+ * the version before is kept as it was, to make active again, export or
+ * delete. The backup's rows are made anew in the new version, with ids of
+ * their own and their `date_created`, tags in the backup's order and
+ * taggings in their tag's, in one D1 batch: one transaction, so all of it
+ * happens or none of it. Every client's copy of the data is then of another
+ * version than the active one, and syncs it again; a write queued against
+ * the version before is refused (`0019_data_versions.sql`).
  */
 import {
   type Backup,
@@ -33,12 +27,21 @@ import {Hono} from 'hono';
 import * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
 import type {Db} from '../db/client';
-import {entryReuses, tags, tagsEntries, textEntries, users} from '../db/schema';
+import {isVersionClash} from '../db/errors';
+import {
+  dataVersions,
+  entryReuses,
+  tags,
+  tagsEntries,
+  textEntries,
+  users,
+} from '../db/schema';
 import type {AppEnv} from '../env';
-import {ApiError, parseError} from '../lib/errors';
+import {now} from '../lib/clock';
+import {ApiError, dataVersionChanged, parseError} from '../lib/errors';
 import {assertJsonMediaType} from '../lib/jsonapi';
 import {searchColumns} from '../lib/search';
-import {clockTime, tick} from './lww';
+import {versionOf} from './dataVersions';
 import {
   nextRevision,
   tagResource,
@@ -113,6 +116,8 @@ async function readBackup(request: Request): Promise<Backup> {
 
 interface TagRow {
   name: string;
+  /** Its rank: its place in the backup's order. */
+  order: number;
   is_public: boolean;
   date_created: string;
 }
@@ -130,6 +135,8 @@ interface TaggingRow {
   tag_name: string;
   /** The entry's place in the backup's entries (and so among those made). */
   entry_index: number;
+  /** Its rank: its place in its tag's order in the backup. */
+  order: number;
   date_created: string;
 }
 
@@ -139,6 +146,8 @@ interface ReuseRow {
 }
 
 export interface Restore {
+  /** The backup's: whose data it was, and when it was exported. */
+  source: {username: string; exported: string};
   /** In the backup's order. */
   tags: TagRow[];
   entries: EntryRow[];
@@ -168,7 +177,7 @@ export function prepareRestore(backup: Backup): Restore {
   const tagRows = backup.tags
     .map((row, index) => ({row, index}))
     .sort(byOrder)
-    .map(({row, index}) => {
+    .map(({row, index}, order) => {
       const path = ['tags', index];
       const {name} = parsed(tagFields, {name: row.name}, path);
       if (tagNames.has(row.id)) {
@@ -185,6 +194,7 @@ export function prepareRestore(backup: Backup): Restore {
       names.add(name);
       return {
         name,
+        order,
         is_public: row.is_public,
         date_created: stored(row.date_created, [...path, 'date_created']),
       };
@@ -252,6 +262,12 @@ export function prepareRestore(backup: Backup): Restore {
         a.index - b.index
     )
     .map(({tagging}) => tagging);
+  const ranks = new Map<string, number>();
+  const rankedTaggings = taggingRows.map(tagging => {
+    const order = ranks.get(tagging.tag_name) ?? 0;
+    ranks.set(tagging.tag_name, order + 1);
+    return {...tagging, order};
+  });
 
   const reuseRows = backup.entry_reuses
     .map((row, index) => {
@@ -271,9 +287,13 @@ export function prepareRestore(backup: Backup): Restore {
     .map(({reuse}) => reuse);
 
   return {
+    source: {
+      username: backup.user.username,
+      exported: stored(backup.date_exported, ['date_exported']),
+    },
     tags: tagRows,
     entries: entryRows,
-    taggings: taggingRows,
+    taggings: rankedTaggings,
     reuses: reuseRows,
   };
 }
@@ -300,130 +320,93 @@ export function chunked<T>(rows: readonly T[], maxBytes = CHUNK_BYTES): T[][] {
   return chunks;
 }
 
-/** `rows` with each one's place in its run (`rank`), by `group`. */
-function ranked<T>(rows: readonly T[], group: (row: T) => string) {
-  const next = new Map<string, number>();
-  return rows.map(row => {
-    const key = group(row);
-    const rank = next.get(key) ?? 0;
-    next.set(key, rank + 1);
-    return {...row, rank};
-  });
-}
-
 const field = (name: string, from: SQL = sql`value`) =>
   sql`json_extract(${from}, ${`$.${name}`})`;
 
 /**
- * The statements of a restore into `userId`'s account, in order. The live
- * entries, once the old ones are deleted, are exactly the ones made, in the
- * order made: their row numbers are the backup's entry indexes.
+ * The statements of a restore into `userId`'s account, in order. The new
+ * version is numbered (one past the last given out), recorded and made
+ * active first, so the rows written next are of the active version, as the
+ * data version triggers require. Its entries, all made here, in order, have
+ * the backup's entry indexes as their row numbers.
  */
 function restoreStatements(
   db: Db,
   userId: number,
-  at: SQL,
   restore: Restore,
   chunkBytes: number
 ): SQL[] {
+  const user = sql`${users.id} = ${userId}`;
+  const version = sql`(SELECT ${users.active_version} FROM ${users} WHERE ${user})`;
   const madeEntries = sql`(
     SELECT ${textEntries.id} AS id, ROW_NUMBER() OVER (ORDER BY ${textEntries.id}) - 1 AS k
     FROM ${textEntries}
-    WHERE ${textEntries.user_id} = ${userId} AND ${textEntries.is_deleted} = 0
+    WHERE ${textEntries.user_id} = ${userId} AND ${textEntries.version} = ${version}
   )`;
-  const deleted = {is_deleted: true, client_updated: at} as const;
   return [
-    // Client writes made before now are refused from here on (`lww.ts`,
-    // `0016_restore_cutoff.sql`). The write clock only goes forward, and is
-    // ticked in this batch, so neither does the cutoff.
     db
       .update(users)
-      .set({date_restored: at})
-      .where(sql`${users.id} = ${userId}`)
+      .set({last_version: sql`${users.last_version} + 1`})
+      .where(user)
       .getSQL(),
-    // Taggings first: the entries' deletes then advance no tagging.
+    sql`INSERT INTO ${dataVersions} (
+        "user_id", "version", "date_created", "origin", "backup_username", "backup_exported"
+      )
+      SELECT ${userId}, ${users.last_version}, ${now()}, 'restore',
+        ${restore.source.username}, ${restore.source.exported}
+      FROM ${users} WHERE ${user}`,
+    // The public view (`public_revision`) is of the active version too.
     db
-      .update(tagsEntries)
+      .update(users)
       .set({
-        ...deleted,
-        date_updated: nextRevision(tagTextEntryResource, userId),
+        active_version: sql`${users.last_version}`,
+        public_revision: sql`${users.public_revision} + 1`,
       })
-      .where(
-        sql`${tagsEntries.user_id} = ${userId} AND ${tagsEntries.is_deleted} = 0`
-      )
+      .where(user)
       .getSQL(),
-    db
-      .update(textEntries)
-      .set({...deleted, date_updated: nextRevision(textEntryResource, userId)})
-      .where(
-        sql`${textEntries.user_id} = ${userId} AND ${textEntries.is_deleted} = 0`
-      )
-      .getSQL(),
-    db
-      .update(tags)
-      .set({...deleted, date_updated: nextRevision(tagResource, userId)})
-      .where(sql`${tags.user_id} = ${userId} AND ${tags.is_deleted} = 0`)
-      .getSQL(),
-    // Ranked after every tag the user has, as read before each run (the
-    // statement reads the table it writes, so SQLite reads it all first).
     ...chunked(restore.tags, chunkBytes).map(
-      run =>
-        sql`INSERT INTO ${tags} (
-          "name", "user_id", "order", "is_public", "is_deleted",
-          "date_created", "date_updated", "date_last_used", "client_updated"
+      run => sql`INSERT INTO ${tags} (
+          "name", "user_id", "version", "order", "is_public", "is_deleted",
+          "date_created", "date_updated", "date_last_used"
         )
-        SELECT ${field('name')}, ${userId},
-          (SELECT COALESCE(MAX("order"), -1) + 1 FROM ${tags} WHERE "user_id" = ${userId}) + ${field('rank')},
+        SELECT ${field('name')}, ${userId}, ${version}, ${field('order')},
           ${field('is_public')}, 0, ${field('date_created')},
-          ${nextRevision(tagResource, userId)}, ${field('date_created')}, ${at}
-        FROM json_each(${JSON.stringify(ranked(run, () => ''))})
-        WHERE true
-        ORDER BY key
-        ON CONFLICT ("name", "user_id") DO UPDATE SET
-          "order" = excluded."order",
-          "is_public" = excluded."is_public",
-          "is_deleted" = 0,
-          "date_created" = excluded."date_created",
-          "date_updated" = excluded."date_updated",
-          "date_last_used" = excluded."date_last_used",
-          "client_updated" = excluded."client_updated"`
-    ),
-    ...chunked(restore.entries, chunkBytes).map(
-      run =>
-        sql`INSERT INTO ${textEntries} (
-          "subject", "body", "subject_folded", "body_folded", "user_id",
-          "is_public", "is_deleted", "date_created", "date_updated",
-          "client_updated"
-        )
-        SELECT ${field('subject')}, ${field('body')},
-          ${field('subject_folded')}, ${field('body_folded')}, ${userId},
-          ${field('is_public')}, 0, ${field('date_created')},
-          ${nextRevision(textEntryResource, userId)}, ${at}
+          ${nextRevision(tagResource, userId)}, ${field('date_created')}
         FROM json_each(${JSON.stringify(run)})
         ORDER BY key`
     ),
-    // Each tag's taggings after its old ones' ranks, in the backup's order.
+    ...chunked(restore.entries, chunkBytes).map(
+      run => sql`INSERT INTO ${textEntries} (
+          "subject", "body", "subject_folded", "body_folded", "user_id",
+          "version", "is_public", "is_deleted", "date_created", "date_updated"
+        )
+        SELECT ${field('subject')}, ${field('body')},
+          ${field('subject_folded')}, ${field('body_folded')}, ${userId},
+          ${version}, ${field('is_public')}, 0, ${field('date_created')},
+          ${nextRevision(textEntryResource, userId)}
+        FROM json_each(${JSON.stringify(run)})
+        ORDER BY key`
+    ),
     ...chunked(restore.taggings, chunkBytes).map(run => {
       const value = sql`j.value`;
       return sql`INSERT INTO ${tagsEntries} (
-          "tag_id", "text_entry_id", "user_id", "order", "is_deleted",
-          "date_created", "date_updated", "client_updated"
+          "tag_id", "text_entry_id", "user_id", "version", "order",
+          "is_deleted", "date_created", "date_updated"
         )
-        SELECT t."id", e.id, ${userId},
-          (SELECT COALESCE(MAX(o."order"), -1) + 1 FROM ${tagsEntries} AS o WHERE o."tag_id" = t."id") + ${field('rank', value)},
+        SELECT t."id", e.id, ${userId}, ${version}, ${field('order', value)},
           0, ${field('date_created', value)},
-          ${nextRevision(tagTextEntryResource, userId)}, ${at}
-        FROM json_each(${JSON.stringify(ranked(run, row => row.tag_name))}) AS j
+          ${nextRevision(tagTextEntryResource, userId)}
+        FROM json_each(${JSON.stringify(run)}) AS j
         JOIN ${tags} AS t
-          ON t."user_id" = ${userId} AND t."is_deleted" = 0
+          ON t."user_id" = ${userId} AND t."version" = ${version}
           AND t."name" = ${field('tag_name', value)}
         JOIN ${madeEntries} AS e ON e.k = ${field('entry_index', value)}
         ORDER BY j.key`;
     }),
     ...chunked(restore.reuses, chunkBytes).map(run => {
       const value = sql`r.value`;
-      return sql`INSERT INTO ${entryReuses} ("text_entry_id", "user_id", "date_created")
-        SELECT e.id, ${userId}, ${field('date_created', value)}
+      return sql`INSERT INTO ${entryReuses} ("text_entry_id", "user_id", "version", "date_created")
+        SELECT e.id, ${userId}, ${version}, ${field('date_created', value)}
         FROM json_each(${JSON.stringify(run)}) AS r
         JOIN ${madeEntries} AS e ON e.k = ${field('entry_index', value)}
         ORDER BY r.key`;
@@ -435,51 +418,82 @@ function restoreStatements(
           WHERE j."tag_id" = ${tags}."id" AND j."is_deleted" = 0),
         "date_created"
       )
-      WHERE "user_id" = ${userId} AND "is_deleted" = 0`,
+      WHERE "user_id" = ${userId} AND "version" = ${version}`,
   ];
 }
 
 /**
- * Replace `userId`'s data with `restore`'s rows, in one batch (runs of at
- * most `chunkBytes` of JSON each), as of now by the API's write clock: its
- * tick is the batch's first statement, so restores commit in the order of
- * their times, and the cutoff never goes back. Returns the cutoff.
+ * Only over data version `over`: unless it is the active one, the active
+ * version's row is made again, which its primary key refuses (the active
+ * version always has one), so the batch, all of the restore, is undone.
+ * Checked in the batch itself, so a restore or a switch that commits after
+ * the request's own check (`versionOf`) stops it too.
+ */
+const overGuard = (userId: number, over: number) =>
+  sql`INSERT INTO ${dataVersions} ("user_id", "version", "date_created", "origin")
+    SELECT ${users.id}, ${users.active_version}, ${now()}, 'restore'
+    FROM ${users}
+    WHERE ${users.id} = ${userId} AND ${users.active_version} <> ${over}`;
+
+/** How a restore runs. */
+export interface RestoreOptions {
+  /** The most JSON one statement binds (`CHUNK_BYTES`). */
+  chunkBytes?: number;
+  /** The data version it must be made over (the one the request names). */
+  over?: number;
+}
+
+/**
+ * Make `restore`'s rows `userId`'s data as a new data version, active, in
+ * one batch: one transaction, so a failure anywhere in it undoes all of it.
+ * Returns its number; 409 `data_version_changed` when `over` is not the
+ * active version by the time the batch runs.
  */
 export async function restoreInto(
   db: Db,
   userId: number,
   restore: Restore,
-  chunkBytes = CHUNK_BYTES
-): Promise<string> {
+  {chunkBytes = CHUNK_BYTES, over}: RestoreOptions = {}
+): Promise<number> {
   const statements = [
-    tick,
-    ...restoreStatements(db, userId, clockTime, restore, chunkBytes),
-    sql`SELECT ${users.date_restored} AS restored FROM ${users} WHERE ${users.id} = ${userId}`,
+    ...(over === undefined ? [] : [overGuard(userId, over)]),
+    ...restoreStatements(db, userId, restore, chunkBytes),
+    sql`SELECT ${users.active_version} AS version FROM ${users} WHERE ${users.id} = ${userId}`,
   ];
   // Drizzle (0.45) cannot batch raw statements with parameters, so they are
   // prepared on the D1 binding.
   const d1 = db.$client;
-  const results = await d1.batch<{restored: string}>(
-    statements.map(statement => {
-      const query = dialect.sqlToQuery(statement);
-      return d1.prepare(query.sql).bind(...query.params);
-    })
-  );
-  const restored = results.at(-1)?.results[0]?.restored;
-  if (restored === undefined) {
-    throw new Error(`restore of user ${userId} recorded no time`);
+  let results: D1Result<{version: number}>[];
+  try {
+    results = await d1.batch<{version: number}>(
+      statements.map(statement => {
+        const query = dialect.sqlToQuery(statement);
+        return d1.prepare(query.sql).bind(...query.params);
+      })
+    );
+  } catch (error) {
+    if (isVersionClash(error)) {
+      throw dataVersionChanged();
+    }
+    throw error;
   }
-  return restored;
+  const version = results.at(-1)?.results[0]?.version;
+  if (version === undefined) {
+    throw new Error(`restore into user ${userId} made no version`);
+  }
+  return version;
 }
 
 restoreRoutes.post('/', async c => {
   const user = requireUser(c);
+  // Only over the version the client's copy is of (the one it warned
+  // about): another device's restore or switch since is a 409, checked now
+  // and again in the batch.
+  const over = versionOf(c, user);
   const restore = prepareRestore(await readBackup(c.req.raw));
-  // As of the API's time, whatever the request says: every row it writes,
-  // and the cutoff for client writes.
-  const restored = await restoreInto(c.get('db'), user.id, restore);
+  const version = await restoreInto(c.get('db'), user.id, restore, {over});
   const result: RestoreResult = {
-    date_restored: restored,
+    data_version: version,
     tags: restore.tags.length,
     entries: restore.entries.length,
     tags_entries: restore.taggings.length,
