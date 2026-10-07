@@ -15,10 +15,7 @@ const files = migrations.files();
  * has them: the first release of a two-release column removal (README,
  * Deployment). Empty between removals.
  */
-const PENDING_DROPS: Record<string, string[]> = {
-  // The restore cutoff's, which data versions replace (0017).
-  users_user: ['date_restored'],
-};
+const PENDING_DROPS: Record<string, string[]> = {};
 
 /** The schema the Postgres import loaded; later migrations run on real data. */
 const IMPORTED = '0003_unique_user_email.sql';
