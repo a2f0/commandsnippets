@@ -1,6 +1,6 @@
 {
   "name": "commandsnippets-frontend",
-  "version": "0.7.129",
+  "version": "0.7.130",
   "license": "UNLICENSED",
   "description": "",
   "repository": {
@@ -37,7 +37,7 @@
   "keywords": [],
   "author": "Dan Sullivan",
   "devDependencies": {
-    "@biomejs/biome": "2.5.14",
+    "@biomejs/biome": "2.5.15",
     "@ffmpeg-installer/ffmpeg": "1.1.0",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",

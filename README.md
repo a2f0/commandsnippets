@@ -11,10 +11,13 @@ a monorepo.
 | `packages/frontend/` | Web client |
 | `packages/website/` | Public website (Astro) |
 | `scripts/` | Local entrypoints shared with CI/CD |
-| `docs/` | Repository docs (the CI merge gate) |
+| `docs/` | CI merge gate and dependency update guidance |
 | `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
 
 Each directory retains the commit history of its original repository.
+
+Dependency update boundaries, supported tool combinations, and deployment
+previews are documented in [docs/dependencies.md](docs/dependencies.md).
 
 ## Local CI scripts
 

@@ -16,11 +16,11 @@
     "deploy:production": "bun run build:production && wrangler deploy --env production"
   },
   "dependencies": {
-    "astro": "^7.3.5"
+    "astro": "^7.3.6"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@biomejs/biome": "^2.5.14",
+    "@biomejs/biome": "^2.5.15",
     "@types/bun": "1.4.2",
     "typescript": "6.0.3",
     "wrangler": "^4.142.0"
