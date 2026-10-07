@@ -15,7 +15,6 @@ exercise every lane.
 | Lane | Workflow | Scope |
 |---|---|---|
 | `tooling` | inline in `ci.yml` | `packages/agent-tool/`, `scripts/`, tooling config |
-| `backend` | `backend.yml` (Backend CI) | `backend/`, `runBackendTests.sh` |
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/`, `packages/api-shared/` |
 | `api-shared` | `api-shared.yml` (API Shared CI) | `packages/api-shared/` |
 | `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts |
@@ -28,7 +27,7 @@ change there also runs the lanes of its consumers: `backend-v2`, and
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch
-pushes themselves; `Backend CI` and `Frontend CI` still run on pushes to `main`
+pushes themselves; `Frontend CI` still runs on pushes to `main`
 and `staging`. `Backend v2 CI` also deploys from those pushes, including those
 that change only `packages/api-shared/` (the Worker bundles it); its deploy job
 checks `github.workflow`, because a reusable workflow sees its caller's context,

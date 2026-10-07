@@ -1,8 +1,0 @@
-[run]
-include = tearleads/*
-omit = *migrations*, *tests*
-
-[report]
-fail_under = 98
-show_missing = True
-skip_covered = True
