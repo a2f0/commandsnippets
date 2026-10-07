@@ -52,7 +52,7 @@ within the owner's supported range. Keep the frontend's existing Puppeteer and
 serialize-javascript overrides until their documented regression and audit
 conditions allow removal.
 
-The September 2026 advisory baseline identified these remaining constraints:
+Known constrained transitive dependencies include:
 
 - Miniflare's exact Sharp 0.35.4 pin carries
   [GHSA-wq5f-xc86-pv6w](https://github.com/advisories/GHSA-wq5f-xc86-pv6w).
@@ -80,9 +80,8 @@ The September 2026 advisory baseline identified these remaining constraints:
 
 Source-map-js 1.2.2's
 [release](https://github.com/7rulnik/source-map-js/releases/tag/v1.2.2)
-fixes malicious indexed source-map denial of service. Its supported ranges
-allowed a targeted Bun lock refresh; frontend, backend-v2 and website now
-resolve 1.2.2.
+fixes malicious indexed source-map denial of service. Refresh an older
+resolution within its owner's supported range with Bun, then rerun the audit.
 Report unavailable registry audits and release metadata as coverage limits,
 separately from any known unresolved advisories.
 
@@ -90,9 +89,12 @@ separately from any known unresolved advisories.
 
 Before a Terraform CLI, provider or module update, use the SOPS credentials and
 the real R2 backend for each of `zone`, `staging` and `production`. Save a full
-refreshed plan with locking, inspect its JSON using the workspace's dependency
-plan helper, and reject every deletion or replacement. Backend-disabled
-validation and mocked module tests do not prove production safety.
+refreshed plan with locking. From `terraform/`, use
+`scripts/tf <stack> plan -input=false -lock=true -out=<private-plan>` and
+`scripts/tf <stack> show -json <private-plan>` to inspect its resource actions,
+drift, checks and deferred changes. Keep the plan and JSON private; reject
+deletions, replacements and incomplete evidence. Backend-disabled validation
+and mocked module tests do not prove production safety.
 
 Before updating Wrangler or its coupled workerd/Miniflare packages, run the
 proposed CLI's `deploy --dry-run` for each affected environment. Verify existing
@@ -100,9 +102,10 @@ account, Worker, route and binding identities separately: bundling does not plan
 remote resources or D1 migrations. Inspect pending SQL and migration semantics
 before any application or deployment.
 
-Feature-branch pushes and PR CI do not deploy. A merge that touches backend-v2 or
-api-shared can trigger remote D1 migrations and deployment when the repository
-variable `BACKEND_V2_DEPLOY` is `true`. Re-read that variable before shipping and
-require the same preview and identity checks before the workflow's mutation.
+Feature-branch pushes and PR CI do not deploy. Pushes to `main` or `staging`
+that change backend-v2, api-shared or `.github/workflows/backend-v2.yml` can
+trigger remote D1 migrations and deployment when the repository variable
+`BACKEND_V2_DEPLOY` is `true`. Re-read that variable before shipping and require
+the same preview and identity checks before the workflow's mutation.
 Never apply, deploy, reset data or replace a resource to discover whether an
 upgrade is safe.
