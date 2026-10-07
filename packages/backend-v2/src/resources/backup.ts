@@ -1,20 +1,31 @@
 /**
  * `GET /api/v1/user/backup`: a backup of the requesting user's data
  * (api-shared's `backupSchema`), for them to keep: every tag, entry, tagging
- * and reuse of theirs that is not deleted, with its id.
+ * and reuse of theirs that is not deleted, with its id, of their active data
+ * version, or of the one `?version=` names (any of theirs: one that is not
+ * active never changes).
  */
 import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
   type Backup,
+  DATA_VERSION,
 } from '@commandsnippets/api-shared';
 import {and, asc, eq} from 'drizzle-orm';
 import {alias} from 'drizzle-orm/sqlite-core';
-import {Hono} from 'hono';
+import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
-import {entryReuses, tags, tagsEntries, textEntries} from '../db/schema';
+import {
+  entryReuses,
+  tags,
+  tagsEntries,
+  textEntries,
+  type User,
+} from '../db/schema';
 import type {AppEnv} from '../env';
 import {isoformat, now} from '../lib/clock';
+import {notFound} from '../lib/errors';
+import {findVersion, versionOf} from './dataVersions';
 
 export const backupRoutes = new Hono<AppEnv>();
 
@@ -23,8 +34,24 @@ const taggedTag = alias(tags, 'tagged_tag');
 const taggedEntry = alias(textEntries, 'tagged_entry');
 const reusedEntry = alias(textEntries, 'reused_entry');
 
+/** The version a backup is of: `?version=`, one of the user's, else theirs. */
+async function backupVersion(c: Context<AppEnv>, user: User): Promise<number> {
+  const param = c.req.query('version');
+  if (param === undefined) {
+    return versionOf(c, user);
+  }
+  const found = /^[1-9]\d*$/.test(param)
+    ? await findVersion(c.get('db'), user.id, Number(param))
+    : undefined;
+  if (found === undefined) {
+    throw notFound(`No ${DATA_VERSION} matches the given query.`);
+  }
+  return found.version;
+}
+
 backupRoutes.get('/', async c => {
   const user = requireUser(c);
+  const version = await backupVersion(c, user);
   const db = c.get('db');
   // One batch, so one transaction: the rows are read as of one moment, and
   // every tagging's tag and entry is among the tags and entries read.
@@ -32,13 +59,23 @@ backupRoutes.get('/', async c => {
     db
       .select()
       .from(tags)
-      .where(and(eq(tags.user_id, user.id), eq(tags.is_deleted, false)))
+      .where(
+        and(
+          eq(tags.user_id, user.id),
+          eq(tags.version, version),
+          eq(tags.is_deleted, false)
+        )
+      )
       .orderBy(asc(tags.order), asc(tags.id)),
     db
       .select()
       .from(textEntries)
       .where(
-        and(eq(textEntries.user_id, user.id), eq(textEntries.is_deleted, false))
+        and(
+          eq(textEntries.user_id, user.id),
+          eq(textEntries.version, version),
+          eq(textEntries.is_deleted, false)
+        )
       )
       .orderBy(asc(textEntries.id)),
     // Rows imported from Django can tag another user's tag or entry: such a
@@ -58,10 +95,13 @@ backupRoutes.get('/', async c => {
       .where(
         and(
           eq(tagsEntries.user_id, user.id),
+          eq(tagsEntries.version, version),
           eq(tagsEntries.is_deleted, false),
           eq(taggedTag.user_id, user.id),
+          eq(taggedTag.version, version),
           eq(taggedTag.is_deleted, false),
           eq(taggedEntry.user_id, user.id),
+          eq(taggedEntry.version, version),
           eq(taggedEntry.is_deleted, false)
         )
       )
@@ -81,7 +121,9 @@ backupRoutes.get('/', async c => {
       .where(
         and(
           eq(entryReuses.user_id, user.id),
+          eq(entryReuses.version, version),
           eq(reusedEntry.user_id, user.id),
+          eq(reusedEntry.version, version),
           eq(reusedEntry.is_deleted, false)
         )
       )

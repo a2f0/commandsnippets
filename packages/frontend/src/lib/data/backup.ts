@@ -1,21 +1,29 @@
 /**
- * Backups of the signed-in user's data (api-shared's `backupSchema`: every
- * tag, entry, tagging and reuse not deleted, with the id the API knows it
- * by). File > Export Backup saves the API's backup as a file; File > Restore
- * Backup replaces all of the user's data with a backup file's, any
- * account's. Either way the writes queued here are sent first: a backup then
- * holds them, and a restore is not changed by them afterwards.
+ * Backups and data versions of the signed-in user's data. A backup
+ * (api-shared's `backupSchema`) is every tag, entry, tagging and reuse not
+ * deleted in one data version, with the ids the API knows them by.
+ *
+ * - File > Export Backup saves the API's backup of the active version (or,
+ *   from Data Versions, of another) as a file.
+ * - File > Restore Backup makes a backup file's data (any account's) the
+ *   user's, as a new data version made active; the version before is kept.
+ * - File > Data Versions lists the versions, makes one active, exports one,
+ *   or deletes one not active.
+ *
+ * Each sends the writes queued here first, to the version they were made
+ * against, and acts as the account the data is bound to. Making another
+ * version active (a restore, or a switch) holds this copy of the data at it
+ * (`adoptVersion`: the rows of the one before go) and syncs it again.
  */
-
-import {parseDateTime} from '@commandsnippets/api-shared/datetime';
 import {
   type Backup,
   backupSchema,
+  type DataVersion,
   type RestoreResult,
 } from '@commandsnippets/api-shared/responses';
 import {apiClient} from '../api/apiClient';
 import {describeIssues} from '../api/parseResponse';
-import {madeAfter} from '../sync/outbox';
+import {adoptVersion, heldVersion} from '../sync/dataVersion';
 import {syncSession} from '../sync/session';
 import {boundAccount, type SyncEngine} from '../sync/sync';
 
@@ -39,10 +47,14 @@ export class BackupFileError extends Error {
   }
 }
 
-/** The backup's file name: whose it is, and the day (UTC) it was made. */
-export function backupFileName(backup: Backup): string {
+/**
+ * The backup's file name: whose it is, the day (UTC) it was made, and the
+ * data version it is of when one was named.
+ */
+export function backupFileName(backup: Backup, version?: number): string {
   const day = backup.date_exported.slice(0, 10);
-  return `commandsnippets-backup-${backup.user.username}-${day}.json`;
+  const of = version === undefined ? '' : `-v${version}`;
+  return `commandsnippets-backup-${backup.user.username}-${day}${of}.json`;
 }
 
 /** Offer `text` to the user as a file named `name` (a download). */
@@ -82,20 +94,23 @@ async function flushedAccount(
 }
 
 /**
- * Send `username`'s queued writes, then save the API's backup of their data
- * (asked for as their account, `flushedAccount`). Throws when the queue
- * cannot be sent (the backup would miss those writes) or the backup cannot
- * be read, saving nothing.
+ * Send `username`'s queued writes, then save the API's backup of their data:
+ * of the active version, or of `version`. Throws when the queue cannot be
+ * sent (the backup would miss those writes) or the backup cannot be read,
+ * saving nothing.
  */
-export async function exportBackup(username: string): Promise<void> {
+export async function exportBackup(
+  username: string,
+  version?: number
+): Promise<void> {
   const failure = 'Failed to export backup';
   const {api, accountId} = await flushedAccount(username, failure);
-  const backup = await api.getBackup();
+  const backup = await api.getBackup(version);
   if (backup.user.id !== accountId || backup.user.username !== username) {
     throw new BackupAccountError(failure, username);
   }
   saveFile(
-    backupFileName(backup),
+    backupFileName(backup, version),
     `${JSON.stringify(backup, null, 2)}\n`,
     'application/json'
   );
@@ -118,7 +133,7 @@ export function readBackupFile(text: string): Backup {
 
 /**
  * How many tags and entries (not deleted) `username` has, as this device
- * holds them: what a restore deletes.
+ * holds them: what a restore replaces.
  */
 export async function liveCounts(
   username: string
@@ -141,8 +156,8 @@ export async function liveCounts(
 
 /**
  * The account `username`'s data is bound to (`flushedAccount`, which sends
- * their queued writes and binds it): the one a restore is to replace, whose
- * data the user is warned about.
+ * their queued writes and binds it): the one a restore is to make the data
+ * of, whose data the user is warned about.
  */
 export async function restoreAccount(username: string): Promise<string> {
   const {accountId} = await flushedAccount(
@@ -153,14 +168,29 @@ export async function restoreAccount(username: string): Promise<string> {
 }
 
 /**
- * Replace all of account `accountId`'s data (`username`'s) with `backup`'s
- * (`POST /user/restore`, as that account: refused when the data here is
- * bound to another since, though of the same username, or the tab is signed
- * in as another), then sync it here. Their queued writes
- * are sent first: the API refuses any made before the restore. The writes
- * queued here next are made after it (`madeAfter`).
- * Throws when they cannot be sent (restoring nothing) or the restore fails
- * (`ApiRequestError`, with the API's `detail` when it refused the backup).
+ * Hold `username`'s data here at the active data version `version`, and
+ * sync it. A sync that fails now is the page's to retry.
+ */
+async function adopt(
+  username: string,
+  sync: SyncEngine,
+  version: number
+): Promise<void> {
+  await adoptVersion(syncSession(username).db, username, version);
+  await sync.syncAll().catch((error: unknown) => {
+    console.warn('WARNING: sync after a data version switch failed:', error);
+  });
+}
+
+/**
+ * Make `backup`'s data that of account `accountId` (`username`'s), as a new
+ * data version made active (`POST /user/restore`): as that account, and
+ * over the version this copy of the data is of (the one the user was
+ * warned about), so refused (`UserMismatchError`, `DataVersionChangedError`)
+ * when the data here is bound to another account since, or another version
+ * is active. Then this copy is held at the new version, and synced. Throws
+ * when the queue cannot be sent or the restore fails (`ApiRequestError`,
+ * with the API's `detail` when it refused the backup).
  */
 export async function restoreBackup(
   username: string,
@@ -174,17 +204,46 @@ export async function restoreBackup(
   if (bound.accountId !== accountId) {
     throw new BackupAccountError(failure, username);
   }
-  const result = await bound.api.restoreBackup(backup);
-  // The API refuses writes made before the restore, by its clock: the next
-  // ones here are made after it, however far behind this device's clock is.
-  await madeAfter(
-    db,
-    username,
-    parseDateTime(result.date_restored) ?? result.date_restored
-  );
-  // The restore is made: a sync that fails now is the page's to retry.
-  await bound.sync.syncAll().catch((error: unknown) => {
-    console.warn('WARNING: sync after restore failed:', error);
-  });
+  const held = await heldVersion(db, username);
+  const api = held === undefined ? bound.api : bound.api.forVersion(held);
+  const result = await api.restoreBackup(backup);
+  await adopt(username, bound.sync, result.data_version);
   return result;
+}
+
+/** `username`'s data versions, newest first, as their account. */
+export async function listVersions(username: string): Promise<DataVersion[]> {
+  const accountId = await boundAccount(syncSession(username).db, username);
+  const api = apiClient.writesAs(username);
+  const {data} = await (accountId === undefined
+    ? api
+    : api.forAccount(accountId)
+  ).getDataVersions();
+  return data;
+}
+
+/**
+ * Make data version `version` `username`'s active one, after sending the
+ * writes queued here (to the version they were made against), then hold
+ * this copy of the data at it, and sync it.
+ */
+export async function activateVersion(
+  username: string,
+  version: number
+): Promise<void> {
+  const {api, sync} = await flushedAccount(
+    username,
+    'Failed to switch data versions'
+  );
+  await api.activateDataVersion(version);
+  await adopt(username, sync, version);
+}
+
+/** Delete `username`'s data version `version` (one not active). */
+export async function deleteVersion(
+  username: string,
+  version: number
+): Promise<void> {
+  const {api} = await flushedAccount(username, 'Failed to delete data version');
+  await api.deleteDataVersion(version);
 }

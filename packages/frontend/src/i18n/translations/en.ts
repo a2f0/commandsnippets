@@ -53,23 +53,46 @@ export const en: I18NextTranslations = {
     exportBackupFailed:
       'Your backup could not be made. Check your connection and try again.',
     restoreBackup: 'Restore Backup',
-    restoreConfirmTitle: 'Replace all of your data?',
+    restoreConfirmTitle: 'Restore this backup?',
     restoreConfirmText:
-      "Restoring this backup deletes every tag and entry you have and replaces them with the backup's. This cannot be undone. To keep a copy of your data, export a backup first.",
+      "Restoring makes the backup's tags and entries your data, as a new version, on every device. Your current data is kept as the version before: switch back to it from File > Data Versions. Changes not yet sent from your other devices are discarded.",
     restoreYourData: 'Your data now',
     restoreBackupData: "The backup of {{username}}'s data, from {{date}}",
     restoreCounts: 'Tags: {{tags}} · Entries: {{entries}}',
-    restoreConfirm: 'Delete my data and restore',
+    restoreConfirm: 'Restore backup',
     restoringTitle: 'Restoring backup',
     restoringText: 'Replacing your data. Keep this page open until it is done.',
     restoreDoneTitle: 'Backup restored',
-    restoreDoneText: "Your data is now the backup's.",
+    restoreDoneText: "Your data is now the backup's, as version {{version}}.",
     restoreFailedTitle: 'Restore failed',
     restoreFailedText:
       'The backup could not be restored. Check your connection and try again.',
     restoreInvalidTitle: 'Not a backup',
     restoreInvalidText:
       'This file is not a Commandsnippets backup that can be restored.',
+    dataVersions: 'Data Versions',
+    dataVersionsTitle: 'Data versions',
+    dataVersionsText:
+      'Each restore makes a new version of your data, and keeps the ones before. Switch to one to make it your data again.',
+    dataVersionName: 'Version {{version}}',
+    dataVersionActive: 'Active',
+    dataVersionInitial: 'Your first data, from {{date}}',
+    dataVersionRestored:
+      "Restored from {{username}}'s backup of {{exported}}, on {{date}}",
+    dataVersionSwitch: 'Switch to',
+    dataVersionExport: 'Export',
+    dataVersionDelete: 'Delete',
+    dataVersionSwitchTitle: 'Switch to version {{version}}?',
+    dataVersionSwitchText:
+      'Version {{version}} becomes your data on every device. Your current data is kept, and you can switch back. Changes not yet sent from your other devices are discarded.',
+    dataVersionSwitchConfirm: 'Switch',
+    dataVersionDeleteTitle: 'Delete version {{version}}?',
+    dataVersionDeleteText:
+      'Its tags and entries are deleted for good. This cannot be undone.',
+    dataVersionDeleteConfirm: 'Delete version',
+    dataVersionsLoading: 'Loading…',
+    dataVersionsFailed:
+      'Something went wrong. Check your connection and try again.',
     hud: 'HUD',
     performance: 'Performance',
     logs: 'Logs',

@@ -27,7 +27,7 @@ and Capacitor apps are gone.
 | `src/auth/oauth.ts`, `src/auth/routes.ts` | GitHub and Google OAuth; login and logout routes | the `authentication` app |
 | `src/db/schema.ts` | tables (same table and column names) | models |
 | `src/db/client.ts`, `src/db/errors.ts` | the Drizzle client; D1 constraint failures | — |
-| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries; `0009_junction_soft_delete.sql` adds the junctions' `is_deleted` and revision indexes, and `0010_junction_revisions.sql` their triggers: counters and tags that skip deleted junctions, and junctions that advance with their entries) | migrations |
+| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries; `0009_junction_soft_delete.sql` adds the junctions' `is_deleted` and revision indexes, and `0010_junction_revisions.sql` their triggers: counters and tags that skip deleted junctions, and junctions that advance with their entries; `0020_data_versions.sql` keeps versions that are not active from changing) | migrations |
 | `src/lib/jsonapi.ts` | JSON:API request parsing, includes, filters, sort, pagination (validated by api-shared's schemas) | django-rest-framework-json-api |
 | `src/lib/validate.ts` | api-shared's zod issues as JSON:API errors | DRF serializer fields' `is_valid()` |
 | `src/lib/errors.ts` | errors in the JSON:API error format | DRF exceptions, DJA's exception handler |
@@ -37,7 +37,8 @@ and Capacitor apps are gone.
 | `src/lib/search.ts` | Unicode search folds | Postgres `UPPER()` in `icontains` |
 | `src/resources/{tags,entries,tagsEntries,entryReuses,currentUser}.ts` | the resource routes | viewsets |
 | `src/resources/backup.ts` | `GET /api/v1/user/backup`: the requester's data as a backup file | — |
-| `src/resources/restore.ts` | `POST /api/v1/user/restore`: replace the requester's data with a backup | — |
+| `src/resources/restore.ts` | `POST /api/v1/user/restore`: a backup as the requester's data, a new data version | — |
+| `src/resources/dataVersions.ts` | data versions: `versionOf`, and `/api/v1/user/data_versions` | — |
 | `src/resources/serializers.ts`, `resourceTypes.ts` | resource definitions and type names | serializers |
 | `src/resources/viewset.ts`, `owned.ts`, `filters.ts`, `related.ts`, `reorder.ts`, `responses.ts` | shared list, lookup, ownership, soft-delete, filter and reorder behavior | `ModelViewSet`, `IsOwner`, django-filter |
 | `src/resources/admin.ts` | the `/api/v1/admin` API for staff | Django admin |
@@ -281,54 +282,80 @@ serialization, and public clients clear that owner's rows and cursors before
 restarting a paginated sync. Public responses use `Cache-Control: no-store`.
 Full owner/admin incremental cursors retain their existing behavior.
 
+## Data versions
+
+Every tag, entry, tagging and reuse belongs to one of its user's data
+versions (`users_dataversion`, keyed by user and version number), and the
+user's reads and writes are of the active one (`users_user.active_version`).
+Version 1 is the data an account starts with (a trigger makes it for every
+new account); a restore makes the next and makes it active, keeping the one
+before as it was. Numbers are never reused (`users_user.last_version`), so a
+client's copy of one version is never taken for another's.
+
+- **Scoping.** Every list, lookup, relationship check and include is of
+  one version (`src/resources/dataVersions.ts`'s `versionOf`, the viewset,
+  `related.ts`, the serializers' loaders): the requester's active one for
+  their own data, the owner's for staff and public reads. Unique names and
+  client ids are per version (`One tag of same name per user` is on name,
+  user and version), and a reorder moves only the version's rows.
+- **`X-Data-Version`.** A client names the version its copy is of; a request
+  naming another than the active one is a 409 `data_version_changed`, and
+  the client clears its copy and syncs again. Requests that name none use
+  the active version.
+- **A version that is not active never changes.** The triggers of
+  `0020_data_versions.sql` refuse, in the statement that writes, any
+  insert into a version that is not active and any update or delete of a
+  row of one (and a tagging or reuse of rows of another version), so a
+  write that lands after a switch (queued on a device that had not synced
+  since) is refused too: a 409 `data_version_changed`. Rows of a version
+  being deleted (its `users_dataversion` row gone first) and of an account
+  being deleted may change and go.
+- **Routes.** `GET /api/v1/user/data_versions` lists the versions, newest
+  first, with their origin (`initial`, or `restore` with the backup's user
+  and export date) and live counts (api-shared's `dataVersionSchema`).
+  `POST /api/v1/user/data_versions/:version/activate` makes one active.
+  `DELETE /api/v1/user/data_versions/:version` deletes one that is not
+  active, rows and all (400 for the active one). Making another version
+  active, by either route, advances `public_revision`, so public views
+  sync again. `GET /api/v1/user` and the admin API's users name the active
+  version (`data_version`).
+
 ## Backups
 
 `GET /api/v1/user/backup` answers with a backup of the requester's data
 (403 `not_authenticated` without a session): api-shared's `backupSchema`, a
 versioned JSON file (`format`, `version`) rather than a JSON:API document.
 It holds every tag, entry, tagging (`tags_entries`) and reuse
-(`entry_reuses`) of theirs that is not deleted, each with its id, read in
-one D1 batch so they are of one moment. A tagging or reuse whose tag or
+(`entry_reuses`) not deleted in their active data version, or in the one
+`?version=` names (404 for one they do not have), each with its id, read
+in one D1 batch so they are of one moment. A tagging or reuse whose tag or
 entry is deleted, or another user's (rows imported from Django), is left
 out, so every id a row refers to is in the backup. Counters and dates the
 API works out from these rows (`entry_count`, `tag_count`,
-`date_last_used`, `reused_count`, `reused_date`) are left out too. The web
-app's File menu saves it (Export Backup). It is sent with
-`Cache-Control: no-store`.
+`date_last_used`, `reused_count`, `reused_date`) are left out too. It is
+sent with `Cache-Control: no-store`.
 
 `POST /api/v1/user/restore` takes a backup as its body (any account's, so
-data can move between accounts) and replaces all of the requester's data
-with it, answering with how many tags, entries, taggings and reuses it made
-(api-shared's `restoreResultSchema`). It is checked first, as a create of
-each row would be (a tag's name, an entry's subject and body), with every
-id a row refers to in the backup: anything else is a 400 whose pointer and
-detail say where (`Invalid backup at /tags/3/name: ...`), and nothing
-changes. Then, in one D1 batch (all of it or none):
-
-- Every tag, entry and tagging of the user's is deleted. Deletes are soft,
-  as everywhere, so every device's sync takes them out.
-- The backup's rows are made anew, with ids of their own and their
-  `date_created`. A tag whose name the user has (deleted or not) is brought
-  back in place, since names are unique per user. Tags rank after every
-  tag the user has (deleted tags keep their ranks), in the backup's order,
-  and taggings after their tag's, in theirs. The counters, `date_last_used`
-  and `reused_date` follow from the rows made.
-- It is made as of now by the API's write clock, whatever time the request
-  names: the clock's tick is the batch's first statement, so restores
-  commit in the order of their times. Every row written counts as a client
-  write made then (`client_updated`), and so does the user's
-  `date_restored` (`0015_user_date_restored.sql`), which the answer and the
-  `User` resource return.
-- From then on a client write made before it (queued offline on another
-  device, say) is a 400 `data_restored`, which clients drop: no create,
-  edit, delete or reorder made before the restore brings back or changes
-  what it replaced. `lww.ts` checks it first; the triggers of
-  `0016_restore_cutoff.sql` refuse a create, edit or delete in its own
-  statement (its `client_updated` older than the cutoff), so none lands
-  after a restore that commits meanwhile. A reorder that names when it was
-  made is refused in its move the same way (`OrderedSpec.guard`). The web
-  app makes its writes after the cutoff once it knows it (the restore's
-  answer, or `GET /user` at each sync).
+data can move between accounts) and makes it the requester's data, as a new
+data version made active, answering with its number and how many tags,
+entries, taggings and reuses it made (api-shared's `restoreResultSchema`).
+Nothing is deleted: the version before stays as it was. It is checked
+first, as a create of each row would be (a tag's name, an entry's subject
+and body), with every id a row refers to in the backup: anything else is a
+400 whose pointer and detail say where (`Invalid backup at /tags/3/name:
+...`), and no version is made. A request naming another version than the
+active one (`X-Data-Version`) is a 409, checked when it arrives and again as
+its batch's first statement (the active version's row is made again, which
+its primary key refuses unless it is the one named), so a restore or switch
+that commits in between stops it too. Then, in one D1 batch (one
+transaction: a failure anywhere in it undoes all of it), the version is
+numbered, recorded (with the backup's user and
+export date) and made active, and the backup's rows are made in it anew,
+with ids of their own and their `date_created`, tags in the backup's order
+and taggings in their tag's; the counters, `date_last_used` and
+`reused_date` follow from the rows made. Two restores at once make a
+version each, the one committed last active, unless they name the
+version they are made over.
 
 Rows go in as JSON (`json_each`), in runs of at most 1 MB per statement,
 since D1 caps a bound value at 2 MB.

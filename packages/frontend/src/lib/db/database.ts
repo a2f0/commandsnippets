@@ -98,6 +98,12 @@ export interface OutboxRow {
    * retry as made when the write first arrived.
    */
   writeId: string;
+  /**
+   * The data version it was made against (`X-Data-Version`): the one the
+   * owner's rows were of then. The API refuses it once another is active.
+   * None before the rows were first synced (the active one, then).
+   */
+  version?: number;
   write: QueuedWrite;
   /**
    * The rows it changed locally (`rowKey`): a sync leaves them as they are
@@ -141,6 +147,12 @@ export const databaseName = (environment: string, username: string) =>
  * (`bindOwner`).
  */
 export const OWNER_ID_KEY = 'user';
+
+/**
+ * The key (in `cursors`) of the data version an owner's rows are of
+ * (`lib/sync/dataVersion.ts`): the API's `data_version` when they were read.
+ */
+export const VERSION_KEY = 'data_version';
 
 /** The key of tag `tagId`'s cursor. */
 export const tagCursorKey = (tagId: string) => `tag:${tagId}`;

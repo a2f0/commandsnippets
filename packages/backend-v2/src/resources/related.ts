@@ -6,18 +6,22 @@ import type {Db} from '../db/client';
 import {ApiError, type ErrorObject} from '../lib/errors';
 import {eachField} from '../lib/validate';
 
-/** Where a relationship's pk must be one of the requesting user's rows. */
+/**
+ * Where a relationship's pk must be one of the requesting user's rows, of
+ * the data version written.
+ */
 interface RelatedTable {
   table: SQLiteTable;
   id: SQLiteColumn;
   userId: SQLiteColumn;
+  version: SQLiteColumn;
 }
 
 const POINTER = '/data/relationships';
 
 /**
  * PrimaryKeyRelatedField validation for a request document's relationships,
- * with the queryset limited to the requesting user's rows: `schema`'s fields
+ * with the queryset limited to the requesting user's rows of `version`: `schema`'s fields
  * (present, not null, a pk; see api-shared's `relatedField`), then that each
  * pk exists in its `tables` entry. Every field's error is reported, in field
  * order.
@@ -27,6 +31,7 @@ export async function resolveRelated<
 >(
   db: Db,
   userId: number,
+  version: number,
   relationships: Record<string, string | null>,
   schema: z.ZodMiniObject<Shape>,
   tables: {[K in keyof Shape]: RelatedTable}
@@ -38,12 +43,14 @@ export async function resolveRelated<
       errors.push(field.error);
       continue;
     }
-    const {table, id, userId: owner} = tables[field.name];
+    const {table, id, userId: owner, version: rowVersion} = tables[field.name];
     const pk = (field.value as ToOneLinkage).data.id;
     const [row] = await db
       .select({id})
       .from(table)
-      .where(and(eq(id, Number(pk)), eq(owner, userId)))
+      .where(
+        and(eq(id, Number(pk)), eq(owner, userId), eq(rowVersion, version))
+      )
       .limit(1);
     if (row === undefined) {
       errors.push({

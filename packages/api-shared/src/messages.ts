@@ -41,11 +41,12 @@ export const CODES = {
    */
   userMismatch: 'user_mismatch',
   /**
-   * A 400: a client write made (by its `Client-Updated` time) before the
-   * user's data was restored from a backup, which replaced what it changed.
-   * Clients drop it.
+   * A 409: a request names a data version (`DATA_VERSION_HEADER`) other than
+   * the user's active one (a backup was restored, or another version made
+   * active, since its client last synced), or a write lands after such a
+   * switch. Clients clear their copy of the data and sync it again.
    */
-  dataRestored: 'data_restored',
+  dataVersionChanged: 'data_version_changed',
   serverError: 'error',
 } as const;
 
@@ -163,3 +164,13 @@ export const API_VERSION_HEADER = 'API-Version';
 
 /** Bind a public page to the account whose metadata the client read. */
 export const DATA_OWNER_ID_HEADER = 'X-Data-Owner-Id';
+
+/**
+ * The header a client's reads and writes of a user's data name the data
+ * version they are of with: the version its copy holds (a number). The API
+ * answers 409 `data_version_changed` when it is not the user's active one,
+ * and refuses a write that lands after a switch in its own statement, since
+ * a version that is not active never changes. Requests that name none use
+ * the active version.
+ */
+export const DATA_VERSION_HEADER = 'X-Data-Version';

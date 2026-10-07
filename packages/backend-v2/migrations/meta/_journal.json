@@ -120,6 +120,34 @@
       "when": 1791332031962,
       "tag": "0016_restore_cutoff",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1791364819166,
+      "tag": "0017_drop_restore_cutoff",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1791364880402,
+      "tag": "0018_drop_date_restored",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1791364891938,
+      "tag": "0019_data_versions_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1791364933558,
+      "tag": "0020_data_versions",
+      "breakpoints": true
     }
   ]
 }

@@ -15,7 +15,7 @@ export const testUser: User = {
     username: 'test',
     is_staff: false,
     date_updated: date,
-    date_restored: null,
+    data_version: 1,
   },
 };
 

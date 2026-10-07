@@ -24,6 +24,7 @@
  */
 import {
   CODES,
+  DATA_VERSION_HEADER,
   EXPECTED_USER_HEADER,
 } from '@commandsnippets/api-shared/messages';
 import type {
@@ -53,7 +54,7 @@ import type * as z from 'zod/mini';
 import {handleUnauthorized, signedInUser} from '../auth/authUtils';
 import {SYNC_PAGE_SIZE} from '../sync/pageSize';
 import type {SyncApi} from '../sync/sync';
-import {UserMismatchError} from './apiClient';
+import {DataVersionChangedError, UserMismatchError} from './apiClient';
 import {fetchApi} from './apiVersion';
 import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
@@ -77,6 +78,8 @@ export interface AdminUser {
   dateMarkedForDeletion: string | null;
   entryCount: number;
   tagCount: number;
+  /** Their active data version: the one the counts and their data are of. */
+  dataVersion: number;
 }
 
 export interface AdminAuditEntry {
@@ -161,6 +164,7 @@ function toUser({id, attributes}: AdminUserResource): AdminUser {
     dateMarkedForDeletion: attributes.date_marked_for_deletion,
     entryCount: attributes.entry_count,
     tagCount: attributes.tag_count,
+    dataVersion: attributes.data_version,
   };
 }
 
@@ -190,7 +194,9 @@ function toPage<R, T>(
 
 async function adminFetch(
   path: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  /** The data version a read of a user's data is of (`DATA_VERSION_HEADER`). */
+  version?: number
 ): Promise<unknown> {
   const user = signedInUser();
   // A write names the signed-in user, as every write does (`apiClient`).
@@ -203,6 +209,9 @@ async function adminFetch(
       ...(named === null
         ? {}
         : {[EXPECTED_USER_HEADER]: encodeURIComponent(named)}),
+      ...(version === undefined
+        ? {}
+        : {[DATA_VERSION_HEADER]: String(version)}),
     },
   });
   const body: unknown = await response.json().catch(() => null);
@@ -212,6 +221,9 @@ async function adminFetch(
   const {code, detail} = firstError(body);
   if (named !== null && code === CODES.userMismatch) {
     throw new UserMismatchError('Admin request failed', named);
+  }
+  if (response.status === 409 && code === CODES.dataVersionChanged) {
+    throw new DataVersionChangedError('Admin request failed');
   }
   if (response.status === 403 && code === CODES.permissionDenied) {
     throw new AdminForbiddenError();
@@ -312,7 +324,7 @@ export async function findUser(username: string): Promise<AdminUser> {
  * admin API's read-only routes (`/admin/users/:id/tags`, ...): the same
  * keyset pages as the user's own `apiClient` reads. Only staff can make them.
  */
-export function adminSyncApi(username: string): SyncApi {
+export function adminSyncApi(username: string, version?: number): SyncApi {
   // Looked up by each sync first (`getOwner`), and by a read made before.
   let id: string | null = null;
   const base = async () => {
@@ -323,15 +335,22 @@ export function adminSyncApi(username: string): SyncApi {
     getOwner: async () => {
       const user = await findUser(username);
       id = user.id;
-      return {id: user.id, username: user.username};
+      return {
+        id: user.id,
+        username: user.username,
+        dataVersion: user.dataVersion,
+      };
     },
+    atVersion: dataVersion => adminSyncApi(username, dataVersion),
     getTagsAfter: async after => {
       const params: TagListParams = {
         'page[after]': after,
         'page[size]': SYNC_PAGE_SIZE,
       };
       const body = await adminFetch(
-        `${await base()}/tags?${toSearchParams(params)}`
+        `${await base()}/tags?${toSearchParams(params)}`,
+        {},
+        version
       );
       return parse(tagCursorListDocumentSchema, body);
     },
@@ -342,14 +361,18 @@ export function adminSyncApi(username: string): SyncApi {
         include: 'text_entry_to_tag',
       };
       const body = await adminFetch(
-        `${await base()}/entries?${toSearchParams(params)}`
+        `${await base()}/entries?${toSearchParams(params)}`,
+        {},
+        version
       );
       return parse(textEntryCursorListDocumentSchema, body);
     },
     getEntryCount: async () => {
       const params: TextEntryListParams = {'page[size]': 1};
       const body = await adminFetch(
-        `${await base()}/entries?${toSearchParams(params)}`
+        `${await base()}/entries?${toSearchParams(params)}`,
+        {},
+        version
       );
       return parse(textEntryListDocumentSchema, body).meta.pagination.count;
     },
@@ -361,7 +384,9 @@ export function adminSyncApi(username: string): SyncApi {
         include: 'text_entry,text_entry.text_entry_to_tag',
       };
       const body = await adminFetch(
-        `${await base()}/tags_entries?${toSearchParams(params)}`
+        `${await base()}/tags_entries?${toSearchParams(params)}`,
+        {},
+        version
       );
       return parse(tagTextEntryCursorListDocumentSchema, body);
     },
@@ -371,7 +396,9 @@ export function adminSyncApi(username: string): SyncApi {
         'page[size]': 1,
       };
       const body = await adminFetch(
-        `${await base()}/tags_entries?${toSearchParams(params)}`
+        `${await base()}/tags_entries?${toSearchParams(params)}`,
+        {},
+        version
       );
       return parse(tagTextEntryListDocumentSchema, body);
     },

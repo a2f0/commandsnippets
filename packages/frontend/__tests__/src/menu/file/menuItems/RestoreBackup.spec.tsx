@@ -5,11 +5,14 @@
  * syncs here.
  */
 import {
-  CLIENT_UPDATED_HEADER,
+  DATA_VERSION_HEADER,
   EXPECTED_USER_HEADER,
   EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
-import type {Backup} from '@commandsnippets/api-shared/responses';
+import {
+  type Backup,
+  dataVersionListDocumentSchema,
+} from '@commandsnippets/api-shared/responses';
 import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
@@ -19,6 +22,7 @@ import {vi} from 'vitest';
 import {createEntry} from '../../../../../src/lib/data/writes';
 import {OWNER_ID_KEY} from '../../../../../src/lib/db/database';
 import {useAppState} from '../../../../../src/lib/state/appState';
+import {heldVersion} from '../../../../../src/lib/sync/dataVersion';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {server} from '../../../../util/msw';
@@ -167,7 +171,7 @@ const liveTagNames = async () => {
 };
 
 describe('Restore Backup', () => {
-  it('warns what it deletes and what replaces it, and changes nothing when cancelled', async () => {
+  it('warns what it replaces and what is kept, and changes nothing when cancelled', async () => {
     await renderEntries();
     const subjects = await liveSubjects();
     const tags = await liveTagNames();
@@ -175,13 +179,11 @@ describe('Restore Backup', () => {
 
     const user = await chooseFile(fileOf(backup));
 
+    expect(await screen.findByText('Restore this backup?')).toBeInTheDocument();
     expect(
-      await screen.findByText('Replace all of your data?')
+      screen.getByText(/makes the backup's tags and entries your data/)
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/deletes every tag and entry you have/)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/This cannot be undone/)).toBeInTheDocument();
+    expect(screen.getByText(/kept as the version before/)).toBeInTheDocument();
     expect(document.getElementById('restoreBackupCurrent')).toHaveTextContent(
       `Tags: ${tags.length} · Entries: ${subjects.length}`
     );
@@ -195,7 +197,7 @@ describe('Restore Backup', () => {
     await user.click(screen.getByRole('button', {name: 'Cancel'}));
 
     await waitFor(() =>
-      expect(screen.queryByText('Replace all of your data?')).toBeNull()
+      expect(screen.queryByText('Restore this backup?')).toBeNull()
     );
     expect(requests).toEqual([]);
     expect(await liveSubjects()).toEqual(subjects);
@@ -206,11 +208,9 @@ describe('Restore Backup', () => {
     await renderEntries();
     const requests = restoreRequests();
     const user = await chooseFile(fileOf(backup));
-    await screen.findByText('Replace all of your data?');
+    await screen.findByText('Restore this backup?');
 
-    await user.click(
-      screen.getByRole('button', {name: 'Delete my data and restore'})
-    );
+    await user.click(screen.getByRole('button', {name: 'Restore backup'}));
 
     expect(await screen.findByText('Backup restored')).toBeInTheDocument();
     expect(screen.getByText('Tags: 1 · Entries: 2')).toBeInTheDocument();
@@ -251,7 +251,7 @@ describe('Restore Backup', () => {
 
     const user = await chooseFile(fileOf(backup));
     await user.click(
-      await screen.findByRole('button', {name: 'Delete my data and restore'})
+      await screen.findByRole('button', {name: 'Restore backup'})
     );
 
     expect(await screen.findByText('Backup restored')).toBeInTheDocument();
@@ -279,7 +279,7 @@ describe('Restore Backup', () => {
 
     // Before any warning: the queue is sent when the file is chosen.
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
-    expect(screen.queryByText('Replace all of your data?')).toBeNull();
+    expect(screen.queryByText('Restore this backup?')).toBeNull();
     expect(requests).toEqual([]);
     expect(error).toHaveBeenCalled();
     expect(await liveSubjects()).toContain('entry-1-subject');
@@ -310,7 +310,7 @@ describe('Restore Backup', () => {
 
     const user = await chooseFile(fileOf(backup));
     await user.click(
-      await screen.findByRole('button', {name: 'Delete my data and restore'})
+      await screen.findByRole('button', {name: 'Restore backup'})
     );
 
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
@@ -333,7 +333,7 @@ describe('Restore Backup', () => {
     await chooseFile(fileOf(content));
 
     expect(await screen.findByText('Not a backup')).toBeInTheDocument();
-    expect(screen.queryByText('Replace all of your data?')).toBeNull();
+    expect(screen.queryByText('Restore this backup?')).toBeNull();
     expect(requests).toEqual([]);
   });
 
@@ -345,89 +345,68 @@ describe('Restore Backup', () => {
     await screen.findByRole('table', {name: 'Users'});
     const requests = restoreRequests();
     await chooseFile(fileOf(backup));
-    await screen.findByText('Replace all of your data?');
+    await screen.findByText('Restore this backup?');
 
     // Another tab signs in as someone else.
     act(() => useAppState.setState({loggedInUser: 'someone-else'}));
 
     await waitFor(() =>
-      expect(screen.queryByText('Replace all of your data?')).toBeNull()
+      expect(screen.queryByText('Restore this backup?')).toBeNull()
     );
     expect(document.getElementById('file-menu-restore-backup')).not.toBeNull();
     expect(requests).toEqual([]);
   });
 
-  it("makes the next writes after the restore, by the API's clock", async () => {
-    const later = '2099-01-01T00:00:00.000000';
-    server.use(
-      http.post(`${API}/user/restore`, () =>
-        HttpResponse.json({
-          date_restored: later,
-          tags: 1,
-          entries: 2,
-          tags_entries: 1,
-          entry_reuses: 0,
-        })
-      )
-    );
+  it('restores over the version its copy is of, then holds the new one', async () => {
     await renderEntries();
+    const named: (string | null)[] = [];
+    server.events.on('request:start', ({request}) => {
+      if (new URL(request.url).pathname === '/api/v1/user/restore') {
+        named.push(request.headers.get(DATA_VERSION_HEADER));
+      }
+    });
     const user = await chooseFile(fileOf(backup));
     await user.click(
-      await screen.findByRole('button', {name: 'Delete my data and restore'})
+      await screen.findByRole('button', {name: 'Restore backup'})
     );
-    await screen.findByText('Backup restored');
-    const made: string[] = [];
-    server.events.on('request:start', ({request}) => {
-      const header = request.headers.get(CLIENT_UPDATED_HEADER);
-      if (request.method === 'POST' && header !== null) {
-        made.push(header);
-      }
-    });
 
-    await createEntry(syncSession(TEST_USER), 'made after', 'body');
-    await syncSession(TEST_USER).sync.flush();
-
-    expect(made.length).toBeGreaterThan(0);
-    for (const time of made) {
-      expect(time > later).toBe(true);
-    }
+    expect(await screen.findByText(/as version 2/)).toBeInTheDocument();
+    expect(named).toEqual(['1']);
+    const {db} = syncSession(TEST_USER);
+    expect(await heldVersion(db, TEST_USER)).toBe(2);
+    // The version before is kept, there to switch back to.
+    const {data} = dataVersionListDocumentSchema.parse(
+      await (await fetch(`${API}/user/data_versions`)).json()
+    );
+    expect(
+      data.map(({attributes}) => [attributes.version, attributes.active])
+    ).toEqual([
+      [2, true],
+      [1, false],
+    ]);
   });
 
-  it('makes writes after a restore made on another device, once a sync learns of it', async () => {
-    const later = '2099-01-01T00:00:00.000000';
-    server.use(
-      http.get(`${API}/user/`, () =>
-        HttpResponse.json({
-          data: {
-            type: 'User',
-            id: '1',
-            attributes: {
-              username: TEST_USER,
-              is_staff: true,
-              date_updated: '2026-09-01T00:00:00.000000',
-              date_restored: later,
-            },
-          },
-        })
-      )
-    );
-    // Syncs, reading the user.
+  it('restores nothing over a version made active elsewhere since', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     await renderEntries();
-    const made: string[] = [];
-    server.events.on('request:start', ({request}) => {
-      const header = request.headers.get(CLIENT_UPDATED_HEADER);
-      if (request.method === 'POST' && header !== null) {
-        made.push(header);
-      }
+    const user = await chooseFile(fileOf(backup));
+    await screen.findByText('Restore this backup?');
+    // Another device restores meanwhile: version 2 is active, not 1.
+    await fetch(`${API}/user/restore`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(backup),
     });
+    const requests = restoreRequests();
 
-    await createEntry(syncSession(TEST_USER), 'made here', 'body');
-    await syncSession(TEST_USER).sync.flush();
+    await user.click(screen.getByRole('button', {name: 'Restore backup'}));
 
-    expect(made.length).toBeGreaterThan(0);
-    for (const time of made) {
-      expect(time > later).toBe(true);
-    }
+    expect(await screen.findByText('Restore failed')).toBeInTheDocument();
+    expect(requests).toHaveLength(1);
+    const {data} = dataVersionListDocumentSchema.parse(
+      await (await fetch(`${API}/user/data_versions`)).json()
+    );
+    expect(data).toHaveLength(2);
   });
 
   it('restores only into the account the user was warned about', async () => {
@@ -441,13 +420,11 @@ describe('Restore Backup', () => {
     const subjects = await liveSubjects();
     const requests = restoreRequests();
     const user = await chooseFile(fileOf(backup));
-    await screen.findByText('Replace all of your data?');
+    await screen.findByText('Restore this backup?');
 
     // ...which another account of the same username replaced since.
     await bindTo('1');
-    await user.click(
-      screen.getByRole('button', {name: 'Delete my data and restore'})
-    );
+    await user.click(screen.getByRole('button', {name: 'Restore backup'}));
 
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
     expect(requests).toEqual([]);

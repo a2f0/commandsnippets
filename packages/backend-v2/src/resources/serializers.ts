@@ -57,8 +57,9 @@ type RelationshipsOf<T extends keyof Relationships, Row> = {
 };
 
 /**
- * Every loader is scoped to `userId`, the requesting user: reads are
- * owner-only, and a relationship must not become a way around that. Django
+ * Every loader is scoped to `userId`, the requesting user, and to the data
+ * version read: reads are owner-only, and a relationship must not become a
+ * way around that (nor into another version). Django
  * never checked ownership when recording reuses or tags, so imported rows can
  * point at another user's entry or tag; such a resource keeps its relationship
  * linkage (an id) but is never loaded into `included`.
@@ -66,6 +67,7 @@ type RelationshipsOf<T extends keyof Relationships, Row> = {
 export function createRegistry(
   db: Db,
   userId: number,
+  version: number,
   publicOnly = false
 ): Registry {
   const user: ResourceDef<User> = {
@@ -81,7 +83,7 @@ export function createRegistry(
       username: row.username,
       is_staff: publicOnly ? false : row.is_staff,
       date_updated: isoformat(row.date_updated),
-      date_restored: publicOnly ? null : row.date_restored,
+      data_version: row.active_version,
     }),
     relationships: {} satisfies RelationshipsOf<typeof USER, User>,
     defaultIncludes: DEFAULT_INCLUDES[USER],
@@ -97,6 +99,7 @@ export function createRegistry(
           and(
             inIds(tags.id, ids),
             eq(tags.user_id, userId),
+            eq(tags.version, version),
             publicOnly ? publicTag(userId) : undefined
           )
         ),
@@ -129,6 +132,7 @@ export function createRegistry(
           and(
             inIds(textEntries.id, ids),
             eq(textEntries.user_id, userId),
+            eq(textEntries.version, version),
             publicOnly ? publicEntry(userId) : undefined
           )
         ),
@@ -156,6 +160,7 @@ export function createRegistry(
               and(
                 inIds(tagsEntries.text_entry_id, parentIds),
                 eq(tagsEntries.user_id, userId),
+                eq(tagsEntries.version, version),
                 // The entry's tags: a deleted junction is only in the
                 // junction list, which shows its tag's syncs it left.
                 eq(tagsEntries.is_deleted, false),
@@ -179,6 +184,7 @@ export function createRegistry(
           and(
             inIds(tagsEntries.id, ids),
             eq(tagsEntries.user_id, userId),
+            eq(tagsEntries.version, version),
             publicOnly ? publicJunction(userId) : undefined
           )
         ),
@@ -203,7 +209,11 @@ export function createRegistry(
         .select()
         .from(entryReuses)
         .where(
-          and(inIds(entryReuses.id, ids), eq(entryReuses.user_id, userId))
+          and(
+            inIds(entryReuses.id, ids),
+            eq(entryReuses.user_id, userId),
+            eq(entryReuses.version, version)
+          )
         ),
     attributes: () => ({}),
     relationships: {

@@ -10,6 +10,10 @@ import {
   CLIENT_WRITE_ID_HEADER,
   CODES,
   DATA_OWNER_ID_HEADER,
+  DATA_VERSION_HEADER,
+  type DataVersion,
+  type DataVersionDocument,
+  type DataVersionListDocument,
   EXPECTED_USER_HEADER,
   EXPECTED_USER_ID_HEADER,
   type IncludedResource,
@@ -69,7 +73,7 @@ const testUser: User = {
     username: 'test',
     is_staff: true,
     date_updated: '2020-04-13T18:20:00',
-    date_restored: null,
+    data_version: 1,
   },
 };
 
@@ -716,7 +720,7 @@ const aliceUser: User = {
     username: 'alice',
     is_staff: false,
     date_updated: ALICE_DATE,
-    date_restored: null,
+    data_version: 1,
   },
 };
 const aliceIs = {data: {type: 'User', id: '7'}} as const;
@@ -1018,6 +1022,7 @@ const adminUserResource = (user: MockAdminUser): AdminUser => ({
     date_marked_for_deletion: user.date_marked_for_deletion,
     entry_count: 12,
     tag_count: 3,
+    data_version: 1,
   },
 });
 
@@ -1078,17 +1083,130 @@ function refuseAnotherUsersRequest(request: Request) {
 }
 
 /**
- * The signed-in user's backup, as the API makes it: what is not deleted, in
- * the API's order, and only the taggings of tags and entries it holds. The
- * mock has no reuses.
+ * The signed-in user's data versions, as the API keeps them: the handlers'
+ * state is the active version's data, and every other version's is kept as
+ * it was (`saved`) until it is made active again.
  */
-function backupOf(): Backup {
+interface MockData {
+  tags: Tag[];
+  entries: EntriesState;
+  deletedJunctions: TagTextEntry[];
+}
+
+interface MockVersion {
+  version: number;
+  date_created: string;
+  origin: 'initial' | 'restore';
+  backup_username: string | null;
+  backup_exported: string | null;
+  /** Its data, while another version is active. */
+  saved: MockData | null;
+}
+
+const initialVersions = (): MockVersion[] => [
+  {
+    version: 1,
+    date_created: '2026-01-02T03:04:05.000000',
+    origin: 'initial',
+    backup_username: null,
+    backup_exported: null,
+    saved: null,
+  },
+];
+
+let versions = initialVersions();
+let activeVersion = 1;
+let lastVersion = 1;
+
+/** The active version's data: the handlers' state. */
+const currentData = (): MockData => ({
+  tags,
+  entries: activeEntries(),
+  deletedJunctions,
+});
+
+/**
+ * Keep the active version's data, and make version `version`'s the state.
+ * Ids stay unique across versions, as the database's do.
+ */
+function switchTo(version: MockVersion, data: MockData): void {
+  const current = currentData();
+  for (const tag of current.tags) retireId('Tag', tag.id);
+  for (const entry of current.entries.data) retireId('TextEntry', entry.id);
+  for (const junction of allJunctions(current.entries))
+    retireId('TagTextEntryThroughModel', junction.id);
+  const active = versions.find(({version: v}) => v === activeVersion);
+  if (active !== undefined && active !== version) {
+    active.saved = structuredClone(currentData());
+  }
+  tags = data.tags;
+  entriesResponse = data.entries;
+  runtimeEntriesOverride = null;
+  deletedJunctions = data.deletedJunctions;
+  version.saved = null;
+  activeVersion = version.version;
+}
+
+/** A version as the API renders it, with what its data holds. */
+function dataVersionResource(version: MockVersion): DataVersion {
+  const data = version.saved ?? currentData();
+  return {
+    type: 'DataVersion',
+    id: String(version.version),
+    attributes: {
+      version: version.version,
+      date_created: version.date_created,
+      active: version.version === activeVersion,
+      origin: version.origin,
+      backup_username: version.backup_username,
+      backup_exported: version.backup_exported,
+      tag_count: data.tags.filter(tag => !tag.attributes.is_deleted).length,
+      entry_count: data.entries.data.filter(
+        entry => !entry.attributes.is_deleted
+      ).length,
+    },
+  };
+}
+
+/**
+ * A request naming another data version (`X-Data-Version`) than the
+ * active one for the signed-in user's data, refused as the API refuses it
+ * (409 `data_version_changed`); anything else goes on to the handlers.
+ */
+function refuseAnotherVersion(request: Request) {
+  const named = request.headers.get(DATA_VERSION_HEADER);
+  const path = new URL(request.url).pathname;
+  if (
+    named === null ||
+    !/\/api\/v1\/(tags|entries|tags_entries|user\/backup|user\/restore)\b/.test(
+      path
+    ) ||
+    Number(named) === activeVersion
+  ) {
+    return undefined;
+  }
+  return HttpResponse.json(
+    errorDocument(
+      409,
+      CODES.dataVersionChanged,
+      'The data version changed. Sync the data again.'
+    ),
+    {status: 409}
+  );
+}
+
+/**
+ * The signed-in user's backup of `data` (the active version's by default),
+ * as the API makes it: what is not deleted, in the API's order, and only the
+ * taggings of tags and entries it holds. The mock has no reuses.
+ */
+function backupOf(data: MockData = currentData()): Backup {
   const byId = (a: {id: string}, b: {id: string}) =>
     Number(a.id) - Number(b.id);
-  const liveTags = tags
+  const liveTags = data.tags
     .filter(tag => !tag.attributes.is_deleted)
     .sort((a, b) => a.attributes.order - b.attributes.order || byId(a, b));
-  const state = activeEntries();
+  const state = data.entries;
   const liveEntries = state.data
     .filter(entry => !entry.attributes.is_deleted)
     .sort(byId);
@@ -1148,9 +1266,13 @@ function backupOf(): Backup {
  * tag of a name the user has brought back in place), with the counters the
  * database's triggers keep. The mock keeps no reuses: they are only counted.
  */
-/** When the mock user's data was last restored (`date_restored`), if ever. */
-let restoredAt: string | null = null;
-
+/**
+ * Make `backup` the signed-in user's data, as the API does (`POST
+ * /user/restore`): a new version, made active, of the backup's rows made
+ * anew (new ids, the backup's order), with the counters the database's
+ * triggers keep; the version before is kept as it was. The mock keeps no
+ * reuses: they are only counted.
+ */
 function restoreBackup(backup: Backup): RestoreResult {
   // Checked first, as the API does: a refused backup changes nothing.
   const tagIds = new Set(backup.tags.map(tag => tag.id));
@@ -1167,59 +1289,41 @@ function restoreBackup(backup: Backup): RestoreResult {
       'Invalid backup: a row names a tag or entry it does not hold.'
     );
   }
-  const state = activeEntries();
-  for (const junction of junctionsOf(state)) {
-    deleteJunction(state, junction);
-  }
-  const deletedAt = nextRevision(
-    state.data.map(entry => entry.attributes.date_updated)
-  );
-  for (const entry of state.data) {
-    if (!entry.attributes.is_deleted) {
-      entry.attributes = {
-        ...entry.attributes,
-        is_deleted: true,
-        date_updated: deletedAt,
-      };
-    }
-  }
-  const tagsDeletedAt = nextTagRevision();
-  for (const tag of tags) {
-    if (!tag.attributes.is_deleted) {
-      tag.attributes = {
-        ...tag.attributes,
-        is_deleted: true,
-        date_updated: tagsDeletedAt,
-      };
-    }
-  }
+  lastVersion += 1;
+  const version: MockVersion = {
+    version: lastVersion,
+    date_created: now(),
+    origin: 'restore',
+    backup_username: backup.user.username,
+    backup_exported: backup.date_exported,
+    saved: null,
+  };
+  versions = [...versions, version];
+  switchTo(version, {tags: [], entries: {data: []}, deletedJunctions: []});
 
   const tagsMade = new Map<string, Tag>();
-  for (const row of [...backup.tags].sort((a, b) => a.order - b.order)) {
-    const attributes = {
-      name: row.name,
-      order: Math.max(-1, ...tags.map(other => other.attributes.order)) + 1,
-      is_public: row.is_public,
-      is_deleted: false,
-      date_created: row.date_created,
-      date_last_used: row.date_created,
-      date_updated: nextTagRevision(),
+  const ordered = [...backup.tags].sort((a, b) => a.order - b.order);
+  for (const [order, row] of ordered.entries()) {
+    const tag: Tag = {
+      type: 'Tag',
+      id: nextId('Tag', tags),
+      attributes: {
+        name: row.name,
+        order,
+        is_public: row.is_public,
+        is_deleted: false,
+        date_created: row.date_created,
+        date_last_used: row.date_created,
+        date_updated: nextTagRevision(),
+        entry_count: 0,
+        client_id: null,
+      },
+      relationships: ownedByTestUser,
     };
-    let tag = tags.find(other => other.attributes.name === row.name);
-    if (tag === undefined) {
-      tag = {
-        type: 'Tag',
-        id: nextId('Tag', tags),
-        attributes: {...attributes, entry_count: 0, client_id: null},
-        relationships: ownedByTestUser,
-      };
-      tags = [...tags, tag];
-    } else {
-      tag.attributes = {...tag.attributes, ...attributes};
-    }
+    tags = [...tags, tag];
     tagsMade.set(row.id, tag);
   }
-
+  const state = activeEntries();
   const entriesMade = new Map<string, TextEntry>();
   for (const row of backup.entries) {
     const entry: TextEntry = {
@@ -1248,7 +1352,6 @@ function restoreBackup(backup: Backup): RestoreResult {
     state.data = [...state.data, entry];
     entriesMade.set(row.id, entry);
   }
-
   const taggings = [...backup.tags_entries].sort(
     (a, b) => Number(a.tag_id) - Number(b.tag_id) || a.order - b.order
   );
@@ -1273,9 +1376,8 @@ function restoreBackup(backup: Backup): RestoreResult {
       date_last_used: newest ?? tag.attributes.date_created,
     };
   }
-  restoredAt = now();
   return {
-    date_restored: restoredAt,
+    data_version: activeVersion,
     tags: backup.tags.length,
     entries: backup.entries.length,
     tags_entries: backup.tags_entries.length,
@@ -1289,8 +1391,10 @@ const createHandlers = () => {
 
   for (const baseUrl of apiBaseUrls) {
     handlers.push(
-      http.all(`${baseUrl}/*`, ({request}) =>
-        refuseAnotherUsersRequest(request)
+      http.all(
+        `${baseUrl}/*`,
+        ({request}) =>
+          refuseAnotherUsersRequest(request) ?? refuseAnotherVersion(request)
       ),
       // The signed-in user (read by the admin page)
       http.get(`${baseUrl}/user/`, ({request}) => {
@@ -1303,18 +1407,97 @@ const createHandlers = () => {
               username: SIGNED_IN_USER,
               is_staff: true,
               date_updated: '2026-09-01T00:00:00.000000',
-              date_restored: restoredAt,
+              data_version: activeVersion,
             },
           },
         });
       }),
 
+      // A version's backup: the active one's, or `?version=`'s.
       http.get(`${baseUrl}/user/backup`, ({request}) => {
         recordRequest('GET', request.url);
-        return HttpResponse.json(backupOf(), {
+        const named = new URL(request.url).searchParams.get('version');
+        const version =
+          named === null
+            ? undefined
+            : versions.find(candidate => String(candidate.version) === named);
+        if (named !== null && version === undefined) {
+          return errorResponse(
+            apiError(
+              404,
+              CODES.notFound,
+              'No DataVersion matches the given query.'
+            )
+          );
+        }
+        return HttpResponse.json(backupOf(version?.saved ?? currentData()), {
           headers: {'Cache-Control': 'no-store'},
         });
       }),
+      // The data versions: listed, made active, and deleted.
+      http.get(`${baseUrl}/user/data_versions`, ({request}) => {
+        recordRequest('GET', request.url);
+        const body: DataVersionListDocument = {
+          data: [...versions]
+            .sort((a, b) => b.version - a.version)
+            .map(dataVersionResource),
+        };
+        return HttpResponse.json(body);
+      }),
+      http.post(
+        `${baseUrl}/user/data_versions/:version/activate`,
+        ({request, params}) => {
+          recordRequest('POST', request.url);
+          const version = versions.find(
+            candidate => String(candidate.version) === params['version']
+          );
+          if (version === undefined) {
+            return errorResponse(
+              apiError(
+                404,
+                CODES.notFound,
+                'No DataVersion matches the given query.'
+              )
+            );
+          }
+          if (version.version !== activeVersion && version.saved !== null) {
+            switchTo(version, version.saved);
+          }
+          const body: DataVersionDocument = {
+            data: dataVersionResource(version),
+          };
+          return HttpResponse.json(body);
+        }
+      ),
+      http.delete(
+        `${baseUrl}/user/data_versions/:version`,
+        ({request, params}) => {
+          recordRequest('DELETE', request.url);
+          const version = versions.find(
+            candidate => String(candidate.version) === params['version']
+          );
+          if (version === undefined) {
+            return errorResponse(
+              apiError(
+                404,
+                CODES.notFound,
+                'No DataVersion matches the given query.'
+              )
+            );
+          }
+          if (version.version === activeVersion) {
+            return errorResponse(
+              apiError(
+                400,
+                CODES.invalid,
+                'The active data version cannot be deleted.'
+              )
+            );
+          }
+          versions = versions.filter(candidate => candidate !== version);
+          return new HttpResponse(null, {status: 204});
+        }
+      ),
       http.post(`${baseUrl}/user/restore`, async ({request}) => {
         recordRequest('POST', request.url);
         try {
@@ -2273,7 +2456,9 @@ export const resetMSWState = () => {
   deletedJunctions = [];
   adminUsers = structuredClone(originalAdminUsers);
   adminAuditLog = [];
-  restoredAt = null;
+  versions = initialVersions();
+  activeVersion = 1;
+  lastVersion = 1;
 };
 
 // Function to set runtime entries override for tests

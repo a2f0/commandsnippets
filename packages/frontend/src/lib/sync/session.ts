@@ -36,23 +36,30 @@ export interface SyncSession {
   sync: SyncEngine;
 }
 
-/** The signed-in user's own data's reads (`apiClient`'s). */
-export const ownSyncApi: SyncApi = {
+/**
+ * The signed-in user's own data's reads (`apiClient`'s), of the data
+ * version `client` names, if any.
+ */
+const ownReads = (client: typeof apiClient): SyncApi => ({
   getOwner: async () => {
-    const {data} = await apiClient.getCurrentUser();
+    const {data} = await client.getCurrentUser();
     return {
       id: data.id,
       username: data.attributes.username,
-      restored: data.attributes.date_restored,
+      dataVersion: data.attributes.data_version,
     };
   },
-  getTagsAfter: after => apiClient.getTagsAfter(after),
-  getEntriesAfter: after => apiClient.getEntriesAfter(after),
-  getEntryCount: () => apiClient.getEntryCount(),
+  getTagsAfter: after => client.getTagsAfter(after),
+  getEntriesAfter: after => client.getEntriesAfter(after),
+  getEntryCount: () => client.getEntryCount(),
   getTagJunctionsAfter: (tagId, after) =>
-    apiClient.getTagJunctionsAfter(tagId, after),
-  getNewestJunction: () => apiClient.getNewestJunction(),
-};
+    client.getTagJunctionsAfter(tagId, after),
+  getNewestJunction: () => client.getNewestJunction(),
+  atVersion: version => ownReads(client.forVersion(version)),
+});
+
+/** The signed-in user's own data's reads (`apiClient`'s). */
+export const ownSyncApi: SyncApi = ownReads(apiClient);
 
 interface OpenDatabase {
   username: string;

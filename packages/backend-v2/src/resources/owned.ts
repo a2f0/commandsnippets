@@ -20,6 +20,8 @@ export interface OwnedResource {
   id: SQLiteColumn;
   /** The owning user's column. */
   userId: SQLiteColumn;
+  /** The column of the data version the row belongs to (`dataVersions.ts`). */
+  version: SQLiteColumn;
 }
 
 /**
@@ -36,6 +38,7 @@ export const tagResource = {
   table: tags,
   id: tags.id,
   userId: tags.user_id,
+  version: tags.version,
   dateUpdated: tags.date_updated,
   clientUpdated: tags.client_updated,
 } satisfies RevisedResource;
@@ -45,6 +48,7 @@ export const textEntryResource = {
   table: textEntries,
   id: textEntries.id,
   userId: textEntries.user_id,
+  version: textEntries.version,
   dateUpdated: textEntries.date_updated,
   clientUpdated: textEntries.client_updated,
 } satisfies RevisedResource;
@@ -54,6 +58,7 @@ export const tagTextEntryResource = {
   table: tagsEntries,
   id: tagsEntries.id,
   userId: tagsEntries.user_id,
+  version: tagsEntries.version,
   dateUpdated: tagsEntries.date_updated,
   clientUpdated: tagsEntries.client_updated,
 } satisfies RevisedResource;
@@ -63,6 +68,7 @@ export const textEntryReusedResource = {
   table: entryReuses,
   id: entryReuses.id,
   userId: entryReuses.user_id,
+  version: entryReuses.version,
 } satisfies OwnedResource;
 
 /** The next `date_updated` for `ownerId`'s rows (see lib/revision.ts). */

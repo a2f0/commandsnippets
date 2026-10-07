@@ -87,7 +87,7 @@ async function completeLogin(isStaff: boolean) {
         username: 'dan',
         is_staff: isStaff,
         date_updated: '2026-09-01T00:00:00',
-        date_restored: null,
+        data_version: 1,
       },
     },
   });

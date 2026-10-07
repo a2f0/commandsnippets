@@ -10,6 +10,9 @@ import {
   CODES,
   CURSOR_START,
   cursorOf,
+  DATA_VERSION_HEADER,
+  dataVersionDocumentSchema,
+  dataVersionListDocumentSchema,
   type IncludedResource,
   restoreResultSchema,
   type TagListDocument,
@@ -973,7 +976,7 @@ describe('POST /user/restore', () => {
 
     expect(status).toBe(200);
     expect(restoreResultSchema.parse(json)).toEqual({
-      date_restored: expect.any(String),
+      data_version: 2,
       tags: 2,
       entries: 1,
       tags_entries: 1,
@@ -985,14 +988,21 @@ describe('POST /user/restore', () => {
     expect(after.entries[0]?.id).not.toBe(entry.id);
     const [tagging] = after.tags_entries;
     expect(tagging?.text_entry_id).toBe(after.entries[0]?.id);
-    // The tag of a name the user had is the same tag, back in place.
-    expect(tagging?.tag_id).toBe(second.id);
-    // The old rows are deleted, as the sync's reads list them.
+    // A new version: every row is new, and the old rows are not listed.
+    expect(tagging?.tag_id).not.toBe(second.id);
     const entries = await getEntries();
-    expect(entryOf(entries, entry.id).attributes.is_deleted).toBe(true);
+    expect(entries.data.map(({id}) => id)).toEqual([after.entries[0]?.id]);
     expect(
       entryOf(entries, after.entries[0]?.id ?? '').attributes
     ).toMatchObject({tag_count: 1, reused_count: 1, is_deleted: false});
+    // The version before is kept, as it was.
+    const kept = backupSchema.parse(
+      (await send('GET', '/user/backup?version=1')).json
+    );
+    expect({...kept, date_exported: ''}).toEqual({
+      ...before,
+      date_exported: '',
+    });
   });
 
   it('refuses a backup naming a tag or entry it does not hold, changing nothing', async () => {
@@ -1008,5 +1018,85 @@ describe('POST /user/restore', () => {
       ...before,
       date_exported: '',
     });
+  });
+});
+
+describe('/user/data_versions', () => {
+  const versions = async () =>
+    dataVersionListDocumentSchema.parse(
+      (await send('GET', '/user/data_versions')).json
+    ).data;
+  const backup = async () =>
+    backupSchema.parse((await send('GET', '/user/backup')).json);
+  const restoreOwn = async () =>
+    send('POST', '/user/restore', await backup(), {
+      'Content-Type': 'application/json',
+    });
+
+  it('lists the versions, newest first, with what each holds', async () => {
+    const before = await versions();
+    expect(before.map(({attributes}) => attributes)).toEqual([
+      expect.objectContaining({version: 1, active: true, origin: 'initial'}),
+    ]);
+    await restoreOwn();
+    const after = await versions();
+    expect(after.map(({id, attributes}) => [id, attributes.active])).toEqual([
+      ['2', true],
+      ['1', false],
+    ]);
+    expect(after[1]?.attributes.entry_count).toBe(
+      before[0]?.attributes.entry_count
+    );
+  });
+
+  it('makes a version active again, its data the one read', async () => {
+    const [entry] = (await getEntries()).data;
+    await restoreOwn();
+    const {status, json} = await send(
+      'POST',
+      '/user/data_versions/1/activate',
+      {},
+      {'Content-Type': 'application/json'}
+    );
+    expect(status).toBe(200);
+    expect(dataVersionDocumentSchema.parse(json).data.attributes.active).toBe(
+      true
+    );
+    expect((await getEntries()).data.map(({id}) => id)).toContain(entry?.id);
+    expect(
+      (
+        await send(
+          'POST',
+          '/user/data_versions/9/activate',
+          {},
+          {
+            'Content-Type': 'application/json',
+          }
+        )
+      ).status
+    ).toBe(404);
+  });
+
+  it('deletes a version that is not active, and never the active one', async () => {
+    await restoreOwn();
+    expect((await send('DELETE', '/user/data_versions/2')).status).toBe(400);
+    expect((await send('DELETE', '/user/data_versions/1')).status).toBe(204);
+    expect((await versions()).map(({id}) => id)).toEqual(['2']);
+    expect((await send('DELETE', '/user/data_versions/1')).status).toBe(404);
+  });
+
+  it('refuses a read or write naming another version', async () => {
+    await restoreOwn();
+    const response = await fetch(`${API}/tags`, {
+      headers: {[DATA_VERSION_HEADER]: '1'},
+    });
+    expect(response.status).toBe(409);
+    expect((await response.json()).errors[0].code).toBe(
+      CODES.dataVersionChanged
+    );
+    expect(
+      (await fetch(`${API}/tags`, {headers: {[DATA_VERSION_HEADER]: '2'}}))
+        .status
+    ).toBe(200);
   });
 });

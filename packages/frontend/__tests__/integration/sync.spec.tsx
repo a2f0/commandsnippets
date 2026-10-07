@@ -191,6 +191,7 @@ describe('The entries page', () => {
               username: 'someone-else',
               is_staff: false,
               date_updated: '2020-01-01T00:00:00',
+              data_version: 1,
             },
           },
         })
@@ -224,6 +225,7 @@ describe('The entries page', () => {
               username: 'someone-else',
               is_staff: false,
               date_updated: '2020-01-01T00:00:00',
+              data_version: 1,
             },
           },
         })

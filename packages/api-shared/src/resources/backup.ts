@@ -1,18 +1,20 @@
 /**
  * A backup of a user's data (`GET /api/v1/user/backup`): every tag, entry,
- * tagging and reuse of theirs that is not deleted, each with the id the API
- * knows it by, which the taggings and reuses refer to. It is a file to keep,
- * not a JSON:API document: what a client saves, and what a restore
- * (`POST /api/v1/user/restore`) reads back into any account, which makes the
- * rows anew (with ids of their own). The counters and dates the API works
- * out from these rows (a tag's `entry_count` and `date_last_used`, an
- * entry's `tag_count`, `reused_count` and `reused_date`) are left out.
+ * tagging and reuse not deleted in one of their data versions (the active
+ * one by default), each with the id the API knows it by, which the taggings
+ * and reuses refer to. It is a file to keep, not a JSON:API document: what a
+ * client saves, and what a restore (`POST /api/v1/user/restore`) reads back
+ * into any account, as a new data version whose rows have ids of their own.
+ * The counters and dates the API works out from these rows (a tag's
+ * `entry_count` and `date_last_used`, an entry's `tag_count`,
+ * `reused_count` and `reused_date`) are left out.
  */
 import * as z from 'zod/mini';
 import {
   countSchema,
   resourceIdSchema,
   timestampSchema,
+  versionSchema,
 } from '../jsonapi/response';
 
 /** What every backup's `format` says it is. */
@@ -72,14 +74,13 @@ export const backupSchema = z.object({
 });
 
 /**
- * `POST /api/v1/user/restore`'s answer: when the restore was made (the
- * API's clock; client writes made before it are refused, so a client that
- * restores makes its next ones after it), and how many of each it made. Its
- * request body is a backup (`backupSchema`), which replaces all of the
- * requester's data.
+ * `POST /api/v1/user/restore`'s answer: the data version the restore made
+ * of the backup, now the requester's active one (the one before is kept),
+ * and how many of each row it made. Its request body is a backup
+ * (`backupSchema`).
  */
 export const restoreResultSchema = z.object({
-  date_restored: timestampSchema,
+  data_version: versionSchema,
   tags: countSchema,
   entries: countSchema,
   tags_entries: countSchema,

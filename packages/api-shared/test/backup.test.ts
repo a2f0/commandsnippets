@@ -3,6 +3,9 @@ import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
   backupSchema,
+  dataVersionDocumentSchema,
+  dataVersionListDocumentSchema,
+  dataVersionSchema,
   restoreResultSchema,
 } from '../src/index';
 import {failures, parsed} from './support';
@@ -96,7 +99,7 @@ describe('backups', () => {
 describe('restore results', () => {
   test('count what the restore made', () => {
     const result = {
-      date_restored: ts,
+      data_version: 2,
       tags: 1,
       entries: 2,
       tags_entries: 3,
@@ -106,7 +109,65 @@ describe('restore results', () => {
     expect(
       failures(restoreResultSchema, {...result, entries: -1})
     ).toHaveLength(1);
-    const {date_restored: _, ...undated} = result;
-    expect(failures(restoreResultSchema, undated)).toHaveLength(1);
+    const {data_version: _, ...unversioned} = result;
+    expect(failures(restoreResultSchema, unversioned)).toHaveLength(1);
+    expect(
+      failures(restoreResultSchema, {...result, data_version: 0})
+    ).toHaveLength(1);
+  });
+});
+
+describe('data versions', () => {
+  const version = {
+    type: 'DataVersion',
+    id: '2',
+    attributes: {
+      version: 2,
+      date_created: ts,
+      active: true,
+      origin: 'restore',
+      backup_username: 'alice',
+      backup_exported: ts,
+      tag_count: 3,
+      entry_count: 7,
+    },
+  };
+
+  test('parse as the API renders them, losing nothing', () => {
+    const initial = {
+      ...version,
+      id: '1',
+      attributes: {
+        ...version.attributes,
+        version: 1,
+        active: false,
+        origin: 'initial',
+        backup_username: null,
+        backup_exported: null,
+      },
+    };
+    const list = {data: [version, initial]};
+    expect(parsed(dataVersionListDocumentSchema, list)).toEqual(list as never);
+    expect(parsed(dataVersionDocumentSchema, {data: version})).toEqual({
+      data: version,
+    } as never);
+  });
+
+  test('refuse another origin, or a version that is not a positive number', () => {
+    expect(
+      failures(dataVersionSchema, {
+        ...version,
+        attributes: {...version.attributes, origin: 'copy'},
+      })
+    ).toHaveLength(1);
+    expect(
+      failures(dataVersionSchema, {
+        ...version,
+        attributes: {...version.attributes, version: 0},
+      })
+    ).toHaveLength(1);
+    expect(
+      failures(dataVersionDocumentSchema, {data: version, included: [version]})
+    ).toHaveLength(1);
   });
 });

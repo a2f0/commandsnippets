@@ -30,6 +30,7 @@ import {
   parseListQuery,
   serialize,
 } from '../lib/jsonapi';
+import {versionOf} from './dataVersions';
 import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, type OwnedResource, type RevisedResource} from './owned';
 import {jsonApi} from './responses';
@@ -166,6 +167,8 @@ interface ListOptions<
   /** The rows' revision, for keyset pages (where the query supports them). */
   dateUpdated?: SQLiteColumn;
   user: User;
+  /** The data version read (`versionOf`). */
+  dataVersion: number;
   publicOnly?: boolean;
   visibility?: SQL;
   fields?: Record<string, SQLiteColumn | SQL>;
@@ -192,6 +195,7 @@ export async function listResponse<
     where: query => {
       const conditions = [
         eq(options.userId, options.user.id),
+        eq(options.version, options.dataVersion),
         ...(options.visibility === undefined ? [] : [options.visibility]),
         ...query.filters,
       ];
@@ -230,7 +234,12 @@ export async function listResponse<
   });
 
   const {data, included} = await serialize(
-    createRegistry(db, options.user.id, options.publicOnly),
+    createRegistry(
+      db,
+      options.user.id,
+      options.dataVersion,
+      options.publicOnly
+    ),
     options.type,
     rows,
     query.include
@@ -249,13 +258,15 @@ export function parseId(value: string | undefined, model: string): number {
 /**
  * `get_object()` for the `:id` route parameter, followed by the IsOwner
  * object permission: 403 when anonymous (checked before the id is parsed),
- * 404 when missing, 403 when owned by someone else.
+ * 404 when missing or of another data version than the request's
+ * (`versionOf`), 403 when owned by someone else.
  */
-export async function getOwned<Row extends {user_id: number}>(
+export async function getOwned<Row extends {user_id: number; version: number}>(
   c: Context<AppEnv>,
   {type, table, id}: OwnedResource
 ): Promise<Row> {
   const user = requireUser(c);
+  const version = versionOf(c, user);
   const [row] = (await c
     .get('db')
     .select()
@@ -267,6 +278,9 @@ export async function getOwned<Row extends {user_id: number}>(
   }
   if (row.user_id !== user.id) {
     throw permissionDenied();
+  }
+  if (row.version !== version) {
+    throw notFound(`No ${type} matches the given query.`);
   }
   return row;
 }
@@ -282,8 +296,9 @@ export async function resourceResponse(
   status: ContentfulStatusCode = 200
 ): Promise<Response> {
   const include = new URL(c.req.url).searchParams.get('include');
+  const user = requireUser(c);
   const {data, included} = await serialize(
-    createRegistry(c.get('db'), requireUser(c).id),
+    createRegistry(c.get('db'), user.id, versionOf(c, user)),
     type,
     [row],
     include
@@ -305,7 +320,10 @@ export async function softDelete(
   c: Context<AppEnv>,
   resource: SoftDeletedResource
 ): Promise<Response> {
-  const row = await getOwned<{id: number; user_id: number}>(c, resource);
+  const row = await getOwned<{id: number; user_id: number; version: number}>(
+    c,
+    resource
+  );
   const at = await clientUpdated(c);
   const [deleted] = await c
     .get('db')
@@ -323,6 +341,9 @@ export async function softDelete(
     c,
     resource.type,
     (deleted as {id: number} | undefined) ??
-      (await getOwned<{id: number; user_id: number}>(c, resource))
+      (await getOwned<{id: number; user_id: number; version: number}>(
+        c,
+        resource
+      ))
   );
 }

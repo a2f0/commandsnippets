@@ -54,12 +54,6 @@ export interface OrderedSpec {
    * It runs after the move's UPDATE, so `changes()` tells whether that applied.
    */
   touch?: (moved: OrderedRow) => SQL;
-  /**
-   * A condition every move requires, checked in the statement that moves
-   * (so atomically): e.g. that no restore has come since a reorder was made.
-   * One that fails leaves the rows as they are, like a race lost.
-   */
-  guard?: SQL;
 }
 
 export interface OrderedRow {
@@ -214,7 +208,6 @@ export class OrderedModel {
         AND ${this.rankOf(self)} = ${self.order}
         ${refGuard}
         ${neighborGuard}
-        ${this.spec.guard === undefined ? sql`` : sql`AND ${this.spec.guard}`}
     `;
     const touch = this.spec.touch?.(self);
     if (touch === undefined && record === undefined) {

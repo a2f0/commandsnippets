@@ -18,6 +18,7 @@ import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
+import {versionOf} from './dataVersions';
 import {
   appliesAfter,
   changedMeanwhile,
@@ -110,6 +111,7 @@ export const listTagEntries = (
   listResponse(c, {
     ...tagTextEntryResource,
     user: owner,
+    dataVersion: versionOf(c, owner),
     publicOnly,
     ...(publicOnly ? {visibility: publicJunction(owner.id)} : {}),
     query: tagTextEntryListQuerySchema,
@@ -126,7 +128,15 @@ export const listTagEntries = (
 tagEntryRoutes.get('/', c => listTagEntries(c, requireUser(c)));
 
 tagEntryRoutes.post('/reorder', c =>
-  reorder(c, {...tagTextEntryResource, ...tagEntryOrdering})
+  reorder(c, {
+    ...tagTextEntryResource,
+    ...tagEntryOrdering,
+    // A tag's junctions are of its version: one of another is no row here.
+    ranked: and(
+      tagEntryOrdering.ranked,
+      eq(tagsEntries.version, versionOf(c, requireUser(c)))
+    ),
+  })
 );
 
 /**
@@ -136,6 +146,7 @@ tagEntryRoutes.post('/reorder', c =>
  */
 tagEntryRoutes.post('/', async c => {
   const user = requireUser(c);
+  const version = versionOf(c, user);
   const db = c.get('db');
   const {relationships} = await parseResource(c.req.raw, {
     type: TAG_TEXT_ENTRY,
@@ -143,6 +154,7 @@ tagEntryRoutes.post('/', async c => {
   const {tag: tagId, text_entry: textEntryId} = await resolveRelated(
     db,
     user.id,
+    version,
     relationships,
     tagTextEntryCreateRelationshipsSchema,
     {tag: tagResource, text_entry: textEntryResource}
@@ -174,6 +186,7 @@ tagEntryRoutes.post('/', async c => {
             tag_id: tagId,
             text_entry_id: textEntryId,
             user_id: user.id,
+            version,
             order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
             date_created: timestamp,
             date_updated: nextRevision(tagTextEntryResource, user.id),

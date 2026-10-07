@@ -13,6 +13,7 @@ import {now} from '../lib/clock';
 import {parseResource} from '../lib/jsonapi';
 import {fold, searchColumns} from '../lib/search';
 import {validateFields} from '../lib/validate';
+import {versionOf} from './dataVersions';
 import {icontains, usernameIs} from './filters';
 import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, textEntryResource} from './owned';
@@ -56,6 +57,7 @@ export const listEntries = (
   listResponse(c, {
     ...textEntryResource,
     user: owner,
+    dataVersion: versionOf(c, owner),
     publicOnly,
     ...(publicOnly
       ? {visibility: publicEntry(owner.id), fields: publicEntryFields(owner.id)}
@@ -103,6 +105,7 @@ entryRoutes.get('/:id', async c => {
  */
 entryRoutes.post('/', async c => {
   const user = requireUser(c);
+  const version = versionOf(c, user);
   const db = c.get('db');
   const {attributes} = await parseResource(c.req.raw, {type: TEXT_ENTRY});
   const {client_id: clientId, ...fields} = validateFields(
@@ -120,6 +123,7 @@ entryRoutes.post('/', async c => {
             .where(
               and(
                 eq(textEntries.user_id, user.id),
+                eq(textEntries.version, version),
                 eq(textEntries.client_id, clientId)
               )
             )
@@ -137,6 +141,7 @@ entryRoutes.post('/', async c => {
         ...fields,
         ...searchColumns(fields),
         user_id: user.id,
+        version,
         client_id: clientId ?? null,
         client_updated: at,
         date_created: timestamp,

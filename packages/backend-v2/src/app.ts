@@ -5,6 +5,7 @@ import {
   CODES,
   DATA_ACCESS_HEADER,
   DATA_OWNER_ID_HEADER,
+  DATA_VERSION_HEADER,
   EXPECTED_USER_HEADER,
   EXPECTED_USER_ID_HEADER,
   PUBLIC_REVISION_HEADER,
@@ -15,11 +16,11 @@ import packageJson from '../package.json';
 import {authenticate} from './auth/authentication';
 import {authRoutes} from './auth/routes';
 import {createDb} from './db/client';
-import {isDataRestored} from './db/errors';
+import {isDataVersionChanged} from './db/errors';
 import type {AppEnv} from './env';
 import {
   ApiError,
-  dataRestored,
+  dataVersionChanged,
   describeError,
   originNotAllowed,
   userMismatch,
@@ -28,6 +29,7 @@ import {assertJsonMediaType} from './lib/jsonapi';
 import {adminRoutes} from './resources/admin';
 import {backupRoutes} from './resources/backup';
 import {currentUserRoutes} from './resources/currentUser';
+import {dataVersionRoutes} from './resources/dataVersions';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
 import {jsonApi} from './resources/responses';
@@ -83,6 +85,7 @@ app.use(
       CLIENT_WRITE_ID_HEADER.toLowerCase(),
       DATA_ACCESS_HEADER.toLowerCase(),
       DATA_OWNER_ID_HEADER.toLowerCase(),
+      DATA_VERSION_HEADER.toLowerCase(),
       PUBLIC_REVISION_HEADER.toLowerCase(),
       'x-requested-with',
     ],
@@ -159,6 +162,7 @@ app.get('/healthcheck', c => c.body(null, 200));
 app.route('/', authRoutes);
 app.route('/api/v1/user/backup', backupRoutes);
 app.route('/api/v1/user/restore', restoreRoutes);
+app.route('/api/v1/user/data_versions', dataVersionRoutes);
 app.route('/api/v1/user', currentUserRoutes);
 app.route('/api/v1/tags', tagRoutes);
 app.route('/api/v1/entries', entryRoutes);
@@ -178,8 +182,8 @@ app.notFound(c =>
 );
 
 app.onError((error, c) => {
-  // The restore cutoff's triggers refuse a write in the statement itself.
-  const apiError = isDataRestored(error) ? dataRestored() : error;
+  // The data version triggers refuse a write in the statement itself.
+  const apiError = isDataVersionChanged(error) ? dataVersionChanged() : error;
   if (apiError instanceof ApiError) {
     return jsonApi(c, {errors: apiError.errors}, apiError.status as 400);
   }

@@ -9,6 +9,7 @@ import {
   resourceIdSchema,
   resourceSchema,
   timestampSchema,
+  versionSchema,
 } from '../jsonapi/response';
 import {ADMIN_AUDIT_LOG_ENTRY, ADMIN_USER} from './types';
 
@@ -32,9 +33,11 @@ export const adminUserAttributesSchema = z.object({
    * null if it is not marked.
    */
   date_marked_for_deletion: z.nullable(timestampSchema),
-  /** Live (not deleted) entries and tags. */
+  /** Live (not deleted) entries and tags, of the active data version. */
   entry_count: countSchema,
   tag_count: countSchema,
+  /** The user's active data version (see `User`'s `data_version`). */
+  data_version: versionSchema,
 });
 
 export const adminUserSchema = resourceSchema(

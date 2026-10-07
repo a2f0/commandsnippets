@@ -21,8 +21,8 @@ describe('TestUsersApi', () => {
     expect(body.data.id).toBe(String(base.user1.id));
     expect(Object.keys(body.data.attributes)).toHaveLength(4);
     expect(body.data.attributes.username).toBe(base.user1.username);
-    // v2: never restored from a backup.
-    expect(body.data.attributes.date_restored).toBeNull();
+    // v2: the active data version, the account's first.
+    expect(body.data.attributes.data_version).toBe(1);
     expect(body.data.attributes.is_staff).toBe(false);
     expect(body.data.attributes.date_updated).toBe(
       isoformat(base.user1.date_updated)

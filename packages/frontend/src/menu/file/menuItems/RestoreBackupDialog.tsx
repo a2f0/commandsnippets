@@ -156,7 +156,7 @@ const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
           body: (
             <>
               <DialogContentText id="restoreBackupText">
-                {t('restoreDoneText')}
+                {t('restoreDoneText', {version: view.result.data_version})}
               </DialogContentText>
               <DialogContentText sx={{...counts, mt: 2}}>
                 {t('restoreCounts', view.result)}

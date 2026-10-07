@@ -2,6 +2,7 @@ import {
   CLIENT_UPDATED_HEADER,
   CLIENT_WRITE_ID_HEADER,
   CODES,
+  DATA_VERSION_HEADER,
   EXPECTED_USER_HEADER,
   EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
@@ -22,6 +23,10 @@ import type {
 import {
   type Backup,
   backupSchema,
+  type DataVersionDocument,
+  type DataVersionListDocument,
+  dataVersionDocumentSchema,
+  dataVersionListDocumentSchema,
   emptyObjectSchema,
   type RestoreResult,
   restoreResultSchema,
@@ -89,6 +94,20 @@ export class UserMismatchError extends Error {
   }
 }
 
+/**
+ * A request the API refused because the data version it named
+ * (`DATA_VERSION_HEADER`) is no longer the user's active one (409
+ * `data_version_changed`): a backup was restored, or another version made
+ * active, since this copy of the data was read. The copy is cleared and
+ * synced again (`lib/sync/dataVersion.ts`).
+ */
+export class DataVersionChangedError extends Error {
+  constructor(failure: string) {
+    super(`${failure}: the data version changed`);
+    this.name = 'DataVersionChangedError';
+  }
+}
+
 interface RequestOptions {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   /** Sent as JSON. */
@@ -116,20 +135,34 @@ interface RequestOptions {
  * handle it as a failed request and the store never sees the body. The calls
  * that return nothing (the logins, deletes and reorders) do not read it.
  */
+/** Whom and what a client's requests name (see the methods setting each). */
+interface ClientOptions {
+  /** The user every write names (`writesAs`), read at each request. */
+  actingUser: () => string | null;
+  /** The queued write the writes name (`forWrite`). */
+  writeId: string | null;
+  /** Whether reads name the acting user too (`writesAs`'s). */
+  readsAsUser: boolean;
+  /** The account (user id) every request names (`forAccount`). */
+  accountId: string | null;
+  /** The data version every request names (`forVersion`). */
+  dataVersion: number | null;
+}
+
 class ApiClient {
-  /**
-   * The user every write names: the signed-in user, read at each request
-   * (`authUtils.signedInUser`), or for a client bound to one (`writesAs`)
-   * always that user.
-   */
   constructor(
-    private readonly actingUser: () => string | null = signedInUser,
-    private readonly writeId: string | null = null,
-    /** Whether reads name the acting user too (`writesAs`'s). */
-    private readonly readsAsUser = false,
-    /** The account (user id) every request names (`forAccount`'s). */
-    private readonly accountId: string | null = null
+    private readonly options: ClientOptions = {
+      actingUser: signedInUser,
+      writeId: null,
+      readsAsUser: false,
+      accountId: null,
+      dataVersion: null,
+    }
   ) {}
+
+  private with(changes: Partial<ClientOptions>): ApiClient {
+    return new ApiClient({...this.options, ...changes});
+  }
 
   /**
    * A client whose requests always name `username`, whoever is signed in
@@ -140,7 +173,7 @@ class ApiClient {
    * rather than storing the other user's rows as `username`'s.
    */
   public writesAs(username: string): ApiClient {
-    return new ApiClient(() => username, this.writeId, true, this.accountId);
+    return this.with({actingUser: () => username, readsAsUser: true});
   }
 
   /**
@@ -148,12 +181,7 @@ class ApiClient {
    * (`CLIENT_WRITE_ID_HEADER`), the same on every attempt to send it.
    */
   public forWrite(writeId: string): ApiClient {
-    return new ApiClient(
-      this.actingUser,
-      writeId,
-      this.readsAsUser,
-      this.accountId
-    );
+    return this.with({writeId});
   }
 
   /**
@@ -163,12 +191,16 @@ class ApiClient {
    * its name taken again).
    */
   public forAccount(userId: string): ApiClient {
-    return new ApiClient(
-      this.actingUser,
-      this.writeId,
-      this.readsAsUser,
-      userId
-    );
+    return this.with({accountId: userId});
+  }
+
+  /**
+   * A client whose requests name the data version `version`
+   * (`DATA_VERSION_HEADER`): the one the rows they read and write are of,
+   * refused (`DataVersionChangedError`) once another is active.
+   */
+  public forVersion(version: number): ApiClient {
+    return this.with({dataVersion: version});
   }
 
   /**
@@ -192,10 +224,10 @@ class ApiClient {
   ): Promise<Response> {
     // Writes name the signed-in user: the API refuses one signed in as
     // anyone else (`UserMismatchError`).
+    const {actingUser, writeId, readsAsUser, accountId, dataVersion} =
+      this.options;
     const user =
-      withAuth && (method !== 'GET' || this.readsAsUser)
-        ? this.actingUser()
-        : null;
+      withAuth && (method !== 'GET' || readsAsUser) ? actingUser() : null;
     const init: RequestInit = {
       method,
       credentials: 'include',
@@ -205,13 +237,16 @@ class ApiClient {
         ...(user === null
           ? {}
           : {[EXPECTED_USER_HEADER]: encodeURIComponent(user)}),
-        ...(user === null || this.accountId === null
+        ...(user === null || accountId === null
           ? {}
-          : {[EXPECTED_USER_ID_HEADER]: this.accountId}),
+          : {[EXPECTED_USER_ID_HEADER]: accountId}),
+        ...(dataVersion === null
+          ? {}
+          : {[DATA_VERSION_HEADER]: String(dataVersion)}),
         ...(made === undefined ? {} : {[CLIENT_UPDATED_HEADER]: made}),
-        ...(this.writeId === null || method === 'GET'
+        ...(writeId === null || method === 'GET'
           ? {}
-          : {[CLIENT_WRITE_ID_HEADER]: this.writeId}),
+          : {[CLIENT_WRITE_ID_HEADER]: writeId}),
       },
       ...(body === undefined ? {} : {body: JSON.stringify(body)}),
     };
@@ -223,6 +258,9 @@ class ApiClient {
       const {code, detail} = firstError(body);
       if (user !== null && resp.status === 409 && code === CODES.userMismatch) {
         throw new UserMismatchError(failure, user);
+      }
+      if (resp.status === 409 && code === CODES.dataVersionChanged) {
+        throw new DataVersionChangedError(failure);
       }
       throw new ApiRequestError(failure, resp.status, resp.statusText, detail);
     }
@@ -282,21 +320,54 @@ class ApiClient {
 
   /**
    * A backup of the user's data (`GET /user/backup`): every tag, entry,
-   * tagging and reuse not deleted, with its id.
+   * tagging and reuse not deleted, with its id, of their active data version
+   * or of `version`.
    */
-  public async getBackup(): Promise<Backup> {
+  public async getBackup(version?: number): Promise<Backup> {
     return this.requestDocument(
-      `${baseURL}/user/backup`,
+      `${baseURL}/user/backup${version === undefined ? '' : `?version=${version}`}`,
       {method: 'GET'},
       'Failed to export backup',
       backupSchema
     );
   }
 
+  /** The user's data versions, newest first (`GET /user/data_versions`). */
+  public async getDataVersions(): Promise<DataVersionListDocument> {
+    return this.requestDocument(
+      `${baseURL}/user/data_versions`,
+      {method: 'GET'},
+      'Failed to list data versions',
+      dataVersionListDocumentSchema
+    );
+  }
+
+  /** Make data version `version` the user's active one. */
+  public async activateDataVersion(
+    version: number
+  ): Promise<DataVersionDocument> {
+    return this.requestDocument(
+      `${baseURL}/user/data_versions/${version}/activate`,
+      {method: 'POST', body: {}, contentType: 'application/json'},
+      'Failed to switch data versions',
+      dataVersionDocumentSchema
+    );
+  }
+
+  /** Delete data version `version` (one not active), rows and all. */
+  public async deleteDataVersion(version: number): Promise<void> {
+    await this.request(
+      `${baseURL}/user/data_versions/${version}`,
+      {method: 'DELETE'},
+      'Failed to delete data version'
+    );
+  }
+
   /**
-   * Replace all of the user's data with `backup`'s (`POST /user/restore`):
-   * how many of each the restore made. A backup the API refuses is an
-   * `ApiRequestError` whose `detail` says why.
+   * Make `backup`'s data the user's, as a new data version made active
+   * (`POST /user/restore`): its number, and how many of each the restore
+   * made. A backup the API refuses is an `ApiRequestError` whose `detail`
+   * says why.
    */
   public async restoreBackup(backup: Backup): Promise<RestoreResult> {
     return this.requestDocument(

@@ -164,10 +164,12 @@ describe('syncAll', () => {
     });
     const count = vi.fn(ownSyncApi.getEntryCount);
     const progress: Array<unknown> = [];
+    // Unversioned, so the reads counted are the ones made.
+    const {atVersion: _, ...reads} = ownSyncApi;
     const sync = createSyncEngine(
       db,
       {
-        ...ownSyncApi,
+        ...reads,
         getEntryCount: count,
         getEntriesAfter: async after => {
           progress.push((await db.cursors.get(key('entries')))?.initialLoad);
