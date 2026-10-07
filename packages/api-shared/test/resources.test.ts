@@ -44,7 +44,12 @@ const ts = '2024-01-01T12:34:56.123456';
 const user = {
   type: 'User',
   id: '1',
-  attributes: {username: 'dan', is_staff: false, date_updated: ts},
+  attributes: {
+    username: 'dan',
+    is_staff: false,
+    date_updated: ts,
+    date_restored: null,
+  },
 };
 const tag = {
   type: 'Tag',

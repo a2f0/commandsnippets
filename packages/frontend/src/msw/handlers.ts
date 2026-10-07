@@ -69,6 +69,7 @@ const testUser: User = {
     username: 'test',
     is_staff: true,
     date_updated: '2020-04-13T18:20:00',
+    date_restored: null,
   },
 };
 
@@ -711,7 +712,12 @@ const ALICE_DATE = '2026-09-01T00:00:00.000000';
 const aliceUser: User = {
   type: 'User',
   id: '7',
-  attributes: {username: 'alice', is_staff: false, date_updated: ALICE_DATE},
+  attributes: {
+    username: 'alice',
+    is_staff: false,
+    date_updated: ALICE_DATE,
+    date_restored: null,
+  },
 };
 const aliceIs = {data: {type: 'User', id: '7'}} as const;
 const aliceTags: Tag[] = [
@@ -1142,6 +1148,9 @@ function backupOf(): Backup {
  * tag of a name the user has brought back in place), with the counters the
  * database's triggers keep. The mock keeps no reuses: they are only counted.
  */
+/** When the mock user's data was last restored (`date_restored`), if ever. */
+let restoredAt: string | null = null;
+
 function restoreBackup(backup: Backup): RestoreResult {
   // Checked first, as the API does: a refused backup changes nothing.
   const tagIds = new Set(backup.tags.map(tag => tag.id));
@@ -1264,8 +1273,9 @@ function restoreBackup(backup: Backup): RestoreResult {
       date_last_used: newest ?? tag.attributes.date_created,
     };
   }
+  restoredAt = now();
   return {
-    date_restored: now(),
+    date_restored: restoredAt,
     tags: backup.tags.length,
     entries: backup.entries.length,
     tags_entries: backup.tags_entries.length,
@@ -1293,6 +1303,7 @@ const createHandlers = () => {
               username: SIGNED_IN_USER,
               is_staff: true,
               date_updated: '2026-09-01T00:00:00.000000',
+              date_restored: restoredAt,
             },
           },
         });
@@ -2262,6 +2273,7 @@ export const resetMSWState = () => {
   deletedJunctions = [];
   adminUsers = structuredClone(originalAdminUsers);
   adminAuditLog = [];
+  restoredAt = null;
 };
 
 // Function to set runtime entries override for tests

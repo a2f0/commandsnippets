@@ -38,7 +38,7 @@ import type {AppEnv} from '../env';
 import {ApiError, parseError} from '../lib/errors';
 import {assertJsonMediaType} from '../lib/jsonapi';
 import {searchColumns} from '../lib/search';
-import {writeClock} from './lww';
+import {clockTime, tick} from './lww';
 import {
   nextRevision,
   tagResource,
@@ -322,7 +322,7 @@ const field = (name: string, from: SQL = sql`value`) =>
 function restoreStatements(
   db: Db,
   userId: number,
-  at: string,
+  at: SQL,
   restore: Restore,
   chunkBytes: number
 ): SQL[] {
@@ -333,7 +333,9 @@ function restoreStatements(
   )`;
   const deleted = {is_deleted: true, client_updated: at} as const;
   return [
-    // Client writes made before now are refused from here on (`lww.ts`).
+    // Client writes made before now are refused from here on (`lww.ts`,
+    // `0016_restore_cutoff.sql`). The write clock only goes forward, and is
+    // ticked in this batch, so neither does the cutoff.
     db
       .update(users)
       .set({date_restored: at})
@@ -438,37 +440,46 @@ function restoreStatements(
 }
 
 /**
- * Replace `userId`'s data with `restore`'s rows, writing as a client write
- * made at `at`, in one batch (runs of at most `chunkBytes` of JSON each).
+ * Replace `userId`'s data with `restore`'s rows, in one batch (runs of at
+ * most `chunkBytes` of JSON each), as of now by the API's write clock: its
+ * tick is the batch's first statement, so restores commit in the order of
+ * their times, and the cutoff never goes back. Returns the cutoff.
  */
 export async function restoreInto(
   db: Db,
   userId: number,
-  at: string,
   restore: Restore,
   chunkBytes = CHUNK_BYTES
-): Promise<void> {
+): Promise<string> {
+  const statements = [
+    tick,
+    ...restoreStatements(db, userId, clockTime, restore, chunkBytes),
+    sql`SELECT ${users.date_restored} AS restored FROM ${users} WHERE ${users.id} = ${userId}`,
+  ];
   // Drizzle (0.45) cannot batch raw statements with parameters, so they are
   // prepared on the D1 binding.
   const d1 = db.$client;
-  await d1.batch(
-    restoreStatements(db, userId, at, restore, chunkBytes).map(statement => {
+  const results = await d1.batch<{restored: string}>(
+    statements.map(statement => {
       const query = dialect.sqlToQuery(statement);
       return d1.prepare(query.sql).bind(...query.params);
     })
   );
+  const restored = results.at(-1)?.results[0]?.restored;
+  if (restored === undefined) {
+    throw new Error(`restore of user ${userId} recorded no time`);
+  }
+  return restored;
 }
 
 restoreRoutes.post('/', async c => {
   const user = requireUser(c);
   const restore = prepareRestore(await readBackup(c.req.raw));
-  const db = c.get('db');
-  // The API's time, whatever the request says: every row it writes, and the
-  // cutoff for client writes, are as of now.
-  const at = await writeClock(db);
-  await restoreInto(db, user.id, at, restore);
+  // As of the API's time, whatever the request says: every row it writes,
+  // and the cutoff for client writes.
+  const restored = await restoreInto(c.get('db'), user.id, restore);
   const result: RestoreResult = {
-    date_restored: at,
+    date_restored: restored,
     tags: restore.tags.length,
     entries: restore.entries.length,
     tags_entries: restore.taggings.length,

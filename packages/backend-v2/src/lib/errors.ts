@@ -83,6 +83,17 @@ export const unsupportedMediaType = (mediaType: string | undefined) =>
     CODES.unsupportedMediaType
   );
 
+/**
+ * A client write made before the user's data was restored from a backup,
+ * which replaced what it would change: clients drop it.
+ */
+export const dataRestored = () =>
+  ApiError.of(
+    400,
+    'This write was made before the data was restored from a backup, which replaced it.',
+    CODES.dataRestored
+  );
+
 /** DRF's ValidationError on the document as a whole. */
 export const validationError = (detail: string) =>
   ApiError.of(400, detail, CODES.invalid);

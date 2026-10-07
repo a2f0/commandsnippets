@@ -11,7 +11,12 @@ const date = '2020-01-01T00:00:00';
 export const testUser: User = {
   id: '1',
   type: 'User',
-  attributes: {username: 'test', is_staff: false, date_updated: date},
+  attributes: {
+    username: 'test',
+    is_staff: false,
+    date_updated: date,
+    date_restored: null,
+  },
 };
 
 const owner: ITagJsonApi['relationships'] = {

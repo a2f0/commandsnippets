@@ -20,11 +20,10 @@ import {and, eq, type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
-import type {Db} from '../db/client';
 import {clientWrites, users} from '../db/schema';
 import type {AppEnv} from '../env';
 import {formatMicros, now, parseDateTime} from '../lib/clock';
-import {ApiError, validationError} from '../lib/errors';
+import {ApiError, dataRestored, validationError} from '../lib/errors';
 
 /**
  * Advance the API's write clock (`sync_clock`): the database's clock, which
@@ -32,14 +31,14 @@ import {ApiError, validationError} from '../lib/errors';
  * makes a later write older), advanced by at least a microsecond at each
  * write, so no two writes share a time (D1 runs one statement at a time).
  */
-const tick = sql`INSERT INTO sync_clock (id, micros)
+export const tick = sql`INSERT INTO sync_clock (id, micros)
   VALUES (1, CAST((julianday('now') - 2440587.5) * 86400000000 AS INTEGER))
   ON CONFLICT (id) DO UPDATE
   SET micros = MAX(excluded.micros, sync_clock.micros + 1)
   RETURNING micros`;
 
 /** The write clock's time, in the API's fixed-width form. */
-const clockTime = sql<string>`(SELECT strftime('%Y-%m-%dT%H:%M:%S', micros / 1000000, 'unixepoch') || '.' || printf('%06d', micros % 1000000) FROM sync_clock WHERE id = 1)`;
+export const clockTime = sql<string>`(SELECT strftime('%Y-%m-%dT%H:%M:%S', micros / 1000000, 'unixepoch') || '.' || printf('%06d', micros % 1000000) FROM sync_clock WHERE id = 1)`;
 
 /** The id the request names its write by (`CLIENT_WRITE_ID_HEADER`), if any. */
 export function clientWriteId(c: Context<AppEnv>): string | undefined {
@@ -56,21 +55,15 @@ export function clientWriteId(c: Context<AppEnv>): string | undefined {
 }
 
 /**
- * Now by the API's write clock (`tick`), whatever the request says: for a
- * write made by the API itself (a restore), which no client's time decides.
- */
-export async function writeClock(db: Db): Promise<string> {
-  const {micros} = await db.get<{micros: number}>(tick);
-  return formatMicros(micros);
-}
-
-/**
  * A 400 (`data_restored`) unless a client write made at `made` came after
  * the user's last restore (`date_restored`, read now): one made before it
  * (queued offline, say) would change what the restore replaced, or make
  * again what it deleted, so clients drop it. Made times are the clients',
- * as last writer wins compares them; a client that restores raises its own
- * past the restore's.
+ * as last writer wins compares them; clients raise theirs past the
+ * restore's once they know of it. This is the early answer: the cutoff's
+ * triggers refuse a create, edit or delete in the statement that makes it
+ * (`0016_restore_cutoff.sql`), so none lands after a restore that commits
+ * meanwhile. Reorders, which no time guards, are checked here only.
  */
 async function assertMadeAfterRestore(
   c: Context<AppEnv>,
@@ -85,11 +78,7 @@ async function assertMadeAfterRestore(
     .limit(1);
   const restored = row?.restored ?? null;
   if (restored !== null && made < restored) {
-    throw ApiError.of(
-      400,
-      'This write was made before the data was restored from a backup, which replaced it.',
-      CODES.dataRestored
-    );
+    throw dataRestored();
   }
 }
 
@@ -130,7 +119,8 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   const writeId = clientWriteId(c);
   const db = c.get('db');
   if (writeId === undefined) {
-    const current = await writeClock(db);
+    const {micros} = await db.get<{micros: number}>(tick);
+    const current = formatMicros(micros);
     const made = at !== null && at < current ? at : current;
     await assertMadeAfterRestore(c, made);
     return made;

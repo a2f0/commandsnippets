@@ -7,6 +7,7 @@ import {
 } from '@commandsnippets/api-shared';
 import {and, asc, eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
+import {isDataRestored} from '../../src/db/errors';
 import {
   entryReuses,
   type Tag,
@@ -37,6 +38,7 @@ import {
   tokenFor,
   userFactory,
 } from '../helpers';
+import {raceBeforeInsert, raceBeforeStatement} from '../support/races';
 
 // v2: restoring a backup replaces all of the requester's data.
 
@@ -343,7 +345,7 @@ describe('POST /api/v1/user/restore', () => {
     const user = await userFactory({}, {examples: false});
     await tagFactory({user, name: 'shell'});
 
-    await restoreInto(db(), user.id, now(), prepareRestore(backup), 1);
+    await restoreInto(db(), user.id, prepareRestore(backup), 1);
 
     const restored = await backupOf(await clientOf(user));
     expect(contentOf(restored)).toEqual(contentOf(backup));
@@ -760,5 +762,125 @@ describe('restored reuses', () => {
       .from(entryReuses)
       .where(eq(entryReuses.user_id, target.id));
     expect(reuses).toHaveLength(3);
+  });
+});
+
+/** `write` fails as the restore cutoff's triggers refuse it. */
+async function expectRefused(write: Promise<unknown>) {
+  const error = await write.then(
+    () => undefined,
+    (reason: unknown) => reason
+  );
+  expect(isDataRestored(error)).toBe(true);
+}
+
+describe('the restore cutoff', () => {
+  let base: Base;
+
+  beforeEach(async () => {
+    base = await setUpBase();
+  });
+
+  const createEntry = (client: ApiClient, made: string) =>
+    client.request(
+      'POST',
+      '/api/v1/entries',
+      {
+        data: {
+          type: 'TextEntry',
+          attributes: {subject: 'made offline', body: 'body'},
+        },
+      },
+      {[CLIENT_UPDATED_HEADER]: made}
+    );
+
+  it("refuses a stale create a restore lands under, in the create's own statement", async () => {
+    const made = new Date(Date.now() - 60_000).toISOString();
+    const backup = await backupOf(base.user1Client);
+    // The restore commits after the create is checked, before it inserts.
+    const raced = new ApiClient(
+      await tokenFor(base.user1.id),
+      raceBeforeInsert('text_entries_textentry', () =>
+        restore(base.user1Client, backup)
+      )
+    );
+
+    const response = await createEntry(raced, made);
+
+    expect(response.status).toBe(400);
+    expect((await json(response)).errors[0].code).toBe('data_restored');
+    const subjects = (await liveEntries(base.user1)).map(row => row.subject);
+    expect(subjects).not.toContain('made offline');
+  });
+
+  it('refuses rows written with an older client time, in the database', async () => {
+    const [tag] = await liveTags(base.user1);
+    const [entry] = await liveEntries(base.user1);
+    if (tag === undefined || entry === undefined) {
+      throw new Error('the user has data');
+    }
+    const restored = now();
+    await db()
+      .update(users)
+      .set({date_restored: restored})
+      .where(eq(users.id, base.user1.id));
+    const old = '2000-01-01T00:00:00.000000';
+
+    await expectRefused(
+      textEntryFactory({user: base.user1}).then(row =>
+        db()
+          .update(textEntries)
+          .set({client_updated: `${old}|write`})
+          .where(eq(textEntries.id, row.id))
+      )
+    );
+    await expectRefused(
+      db().update(tags).set({client_updated: old}).where(eq(tags.id, tag.id))
+    );
+    await expectRefused(
+      db().insert(tagsEntries).values({
+        tag_id: tag.id,
+        text_entry_id: entry.id,
+        user_id: base.user1.id,
+        order: 99,
+        is_deleted: false,
+        date_created: old,
+        date_updated: old,
+        client_updated: old,
+      })
+    );
+    // No client time (an import), the cutoff's own, or a change that leaves
+    // it alone (a reorder) is not refused.
+    await textEntryFactory({user: base.user1});
+    await db()
+      .update(tags)
+      .set({client_updated: restored})
+      .where(eq(tags.id, tag.id));
+    await db().update(tags).set({order: 50}).where(eq(tags.id, tag.id));
+  });
+
+  it('restores commit in the order of their times, so the cutoff never goes back', async () => {
+    const backup = await backupOf(base.user1Client);
+    let earlier = '';
+    // Another restore commits after this one began, before its batch runs.
+    const raced = new ApiClient(
+      await tokenFor(base.user1.id),
+      raceBeforeStatement(/insert into sync_clock/i, async () => {
+        const response = await restore(base.user1Client, backup);
+        earlier = restoreResultSchema.parse(await json(response)).date_restored;
+      })
+    );
+
+    const response = await restore(raced, backup);
+
+    expect(response.status).toBe(200);
+    const later = restoreResultSchema.parse(await json(response)).date_restored;
+    expect(earlier).not.toBe('');
+    expect(later > earlier).toBe(true);
+    const [user] = await db()
+      .select()
+      .from(users)
+      .where(eq(users.id, base.user1.id));
+    expect(user?.date_restored).toBe(later);
   });
 });

@@ -15,9 +15,11 @@ import packageJson from '../package.json';
 import {authenticate} from './auth/authentication';
 import {authRoutes} from './auth/routes';
 import {createDb} from './db/client';
+import {isDataRestored} from './db/errors';
 import type {AppEnv} from './env';
 import {
   ApiError,
+  dataRestored,
   describeError,
   originNotAllowed,
   userMismatch,
@@ -176,8 +178,10 @@ app.notFound(c =>
 );
 
 app.onError((error, c) => {
-  if (error instanceof ApiError) {
-    return jsonApi(c, {errors: error.errors}, error.status as 400);
+  // The restore cutoff's triggers refuse a write in the statement itself.
+  const apiError = isDataRestored(error) ? dataRestored() : error;
+  if (apiError instanceof ApiError) {
+    return jsonApi(c, {errors: apiError.errors}, apiError.status as 400);
   }
   console.error(describeError(error));
   return jsonApi(

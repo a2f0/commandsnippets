@@ -392,4 +392,41 @@ describe('Restore Backup', () => {
       expect(time > later).toBe(true);
     }
   });
+
+  it('makes writes after a restore made on another device, once a sync learns of it', async () => {
+    const later = '2099-01-01T00:00:00.000000';
+    server.use(
+      http.get(`${API}/user/`, () =>
+        HttpResponse.json({
+          data: {
+            type: 'User',
+            id: '1',
+            attributes: {
+              username: TEST_USER,
+              is_staff: true,
+              date_updated: '2026-09-01T00:00:00.000000',
+              date_restored: later,
+            },
+          },
+        })
+      )
+    );
+    // Syncs, reading the user.
+    await renderEntries();
+    const made: string[] = [];
+    server.events.on('request:start', ({request}) => {
+      const header = request.headers.get(CLIENT_UPDATED_HEADER);
+      if (request.method === 'POST' && header !== null) {
+        made.push(header);
+      }
+    });
+
+    await createEntry(syncSession(TEST_USER), 'made here', 'body');
+    await syncSession(TEST_USER).sync.flush();
+
+    expect(made.length).toBeGreaterThan(0);
+    for (const time of made) {
+      expect(time > later).toBe(true);
+    }
+  });
 });

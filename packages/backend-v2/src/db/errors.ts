@@ -24,3 +24,13 @@ export function isNotNullViolation(error: unknown, column: string): boolean {
   const cause = String((error as {cause?: Error})?.cause?.message ?? '');
   return (message + cause).includes(`NOT NULL constraint failed: ${column}`);
 }
+
+/**
+ * A client write refused by the restore cutoff's triggers (made before the
+ * user's data was restored, `0016_restore_cutoff.sql`).
+ */
+export function isDataRestored(error: unknown): boolean {
+  const message = String((error as Error)?.message ?? error);
+  const cause = String((error as {cause?: Error})?.cause?.message ?? '');
+  return (message + cause).includes('data_restored:');
+}

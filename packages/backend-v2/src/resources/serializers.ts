@@ -81,6 +81,7 @@ export function createRegistry(
       username: row.username,
       is_staff: publicOnly ? false : row.is_staff,
       date_updated: isoformat(row.date_updated),
+      date_restored: publicOnly ? null : row.date_restored,
     }),
     relationships: {} satisfies RelationshipsOf<typeof USER, User>,
     defaultIncludes: DEFAULT_INCLUDES[USER],

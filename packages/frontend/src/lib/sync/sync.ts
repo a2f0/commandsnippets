@@ -34,6 +34,7 @@
  * are, as every API request is (`fetchApi`).
  */
 import {CURSOR_START, cursorOf} from '@commandsnippets/api-shared/cursor';
+import {parseDateTime} from '@commandsnippets/api-shared/datetime';
 import type {
   TagCursorListDocument,
   TagTextEntryCursorListDocument,
@@ -59,6 +60,7 @@ import {
   assertBound,
   flushOutbox,
   isLocalId,
+  madeAfter,
   type OutboxApi,
   type Remap,
 } from './outbox';
@@ -71,8 +73,17 @@ import {checkOwner, putEntries, putJunctions, putTags} from './store';
  * (`apiClient`'s), or of another user's (`adminSyncApi`).
  */
 export interface SyncApi {
-  /** The user whose data the reads return. */
-  getOwner(): Promise<{id: string; username: string; publicRevision?: number}>;
+  /**
+   * The user whose data the reads return, and for the signed-in user's own
+   * data when it was last restored from a backup (`restored`): the API
+   * refuses their writes made before it, so the next are made after it.
+   */
+  getOwner(): Promise<{
+    id: string;
+    username: string;
+    publicRevision?: number;
+    restored?: string | null | undefined;
+  }>;
   getTagsAfter(after: string): Promise<TagCursorListDocument>;
   getEntriesAfter(after: string): Promise<TextEntryCursorListDocument>;
   /** Counts the same rows the entry cursor reads, including deletions. */
@@ -265,10 +276,15 @@ async function bindToApi(
   owner: string
 ): Promise<string> {
   const held = await boundAccount(db, owner);
-  const {id: ownerId, publicRevision} = await ownerOf(api, owner);
+  const {id: ownerId, publicRevision, restored} = await ownerOf(api, owner);
   await timed('idb', 'sync bindOwner', () =>
     bindOwner(db, owner, ownerId, {held})
   );
+  if (typeof restored === 'string') {
+    // Restored (on another device, say): writes made here from now on are
+    // made after it, however far behind this device's clock is.
+    await madeAfter(db, owner, parseDateTime(restored) ?? restored);
+  }
   if (publicRevision !== undefined) {
     await db.transaction(
       'rw',

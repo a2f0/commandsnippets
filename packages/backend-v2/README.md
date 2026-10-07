@@ -314,13 +314,20 @@ changes. Then, in one D1 batch (all of it or none):
   and taggings after their tag's, in theirs. The counters, `date_last_used`
   and `reused_date` follow from the rows made.
 - It is made as of now by the API's write clock, whatever time the request
-  names: every row written counts as a client write made then
-  (`client_updated`), and so does the user's `date_restored`
-  (`0015_user_date_restored.sql`), which the answer returns. From then on a
-  client write made before it (queued offline on another device, say) is a
-  400 `data_restored`, which clients drop (`lww.ts`): no create, edit,
-  delete or reorder made before the restore brings back or changes what it
-  replaced. The web app makes its next writes after the restore's time.
+  names: the clock's tick is the batch's first statement, so restores
+  commit in the order of their times. Every row written counts as a client
+  write made then (`client_updated`), and so does the user's
+  `date_restored` (`0015_user_date_restored.sql`), which the answer and the
+  `User` resource return.
+- From then on a client write made before it (queued offline on another
+  device, say) is a 400 `data_restored`, which clients drop: no create,
+  edit, delete or reorder made before the restore brings back or changes
+  what it replaced. `lww.ts` checks it first; the triggers of
+  `0016_restore_cutoff.sql` refuse a create, edit or delete in its own
+  statement (its `client_updated` older than the cutoff), so none lands
+  after a restore that commits meanwhile. Reorders, which no time guards,
+  are checked first only. The web app makes its writes after the cutoff
+  once it knows it (the restore's answer, or `GET /user` at each sync).
 
 Rows go in as JSON (`json_each`), in runs of at most 1 MB per statement,
 since D1 caps a bound value at 2 MB.
