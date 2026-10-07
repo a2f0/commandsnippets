@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 import {useTypedTranslation} from '../../../i18n/hooks';
+import type {RestoreTarget} from '../../../lib/data/backup';
 import {formatTimestamp} from '../../../lib/formatTimestamp';
 import {commonButtonSx} from '../../../theme/sx';
 
@@ -23,13 +24,14 @@ export type RestoreStep =
   /** The file chosen is not a backup. */
   | {step: 'invalid'}
   /**
-   * The warning: the data now of `username` (the user who chose the file)
-   * and their account `accountId`, and the backup's, to replace it.
+   * The warning: the data now of `username` (the user who chose the file),
+   * `target` (their account, and the data version it is of here), and the
+   * backup's, to replace it.
    */
   | {
       step: 'confirm';
       username: string;
-      accountId: string;
+      target: RestoreTarget;
       backup: Backup;
       current: {tags: number; entries: number};
     }
@@ -40,7 +42,7 @@ export type RestoreStep =
 
 interface IProps {
   state: RestoreStep;
-  onConfirm: (username: string, accountId: string, backup: Backup) => void;
+  onConfirm: (username: string, target: RestoreTarget, backup: Backup) => void;
   onClose: () => void;
 }
 
@@ -83,7 +85,7 @@ const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
   } => {
     switch (view.step) {
       case 'confirm': {
-        const {username, accountId, backup, current} = view;
+        const {username, target, backup, current} = view;
         return {
           title: t('restoreConfirmTitle'),
           body: (
@@ -128,7 +130,7 @@ const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
                 id="restoreBackupConfirm"
                 variant="outlined"
                 color="error"
-                onClick={() => onConfirm(username, accountId, backup)}
+                onClick={() => onConfirm(username, target, backup)}
                 sx={commonButtonSx}
               >
                 {t('restoreConfirm')}

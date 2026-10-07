@@ -38,8 +38,8 @@ const mount = (url: string) => {
   return history;
 };
 const publish = async () => {
-  await apiClient.setTagPublic('1', true);
-  await apiClient.setEntryPublic('1', true);
+  await apiClient.forVersion(1).setTagPublic('1', true);
+  await apiClient.forVersion(1).setEntryPublic('1', true);
 };
 
 describe('public user pages', () => {
@@ -136,8 +136,8 @@ describe('public user pages', () => {
 
   it('supports entries=all for a non-admin viewing someone else, with one copy of an entry in multiple public tags', async () => {
     await publish();
-    await apiClient.tagEntry('2', '1');
-    await apiClient.setTagPublic('2', true);
+    await apiClient.forVersion(1).tagEntry('2', '1');
+    await apiClient.forVersion(1).setTagPublic('2', true);
     signIn();
     assignLoggedInCookie();
     act(() => {
@@ -158,16 +158,16 @@ describe('public user pages', () => {
     const subject = 'entry-1-subject';
     expect(await screen.findByText(subject)).toBeInTheDocument();
     const session = publicSyncSession('test');
-    await apiClient.setTagPublic('1', false);
+    await apiClient.forVersion(1).setTagPublic('1', false);
     await act(async () => session.sync.syncAll());
     await waitFor(() => expect(screen.queryByText(subject)).toBeNull());
     expect(await session.db.entries.where('owner').equals('test').count()).toBe(
       0
     );
-    await apiClient.setTagPublic('1', true);
+    await apiClient.forVersion(1).setTagPublic('1', true);
     await act(async () => session.sync.syncAll());
     expect(await screen.findByText(subject)).toBeInTheDocument();
-    await apiClient.setEntryPublic('1', false);
+    await apiClient.forVersion(1).setEntryPublic('1', false);
     await act(async () => session.sync.syncAll());
     await waitFor(() => expect(screen.queryByText(subject)).toBeNull());
   });
@@ -260,7 +260,7 @@ describe('public user pages', () => {
             !changed
           ) {
             changed = true;
-            await apiClient.setEntryPublic('1', false);
+            await apiClient.forVersion(1).setEntryPublic('1', false);
             return HttpResponse.json(
               {errors: [{status: '409', code: 'view_changed'}]},
               {status: 409}

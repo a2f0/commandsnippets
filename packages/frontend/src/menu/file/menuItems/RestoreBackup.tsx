@@ -5,9 +5,10 @@ import {useTypedTranslation} from '../../../i18n/hooks';
 import {ApiRequestError} from '../../../lib/api/apiClient';
 import {
   liveCounts,
+  type RestoreTarget,
   readBackupFile,
-  restoreAccount,
   restoreBackup,
+  restoreTarget,
 } from '../../../lib/data/backup';
 import {useAppState} from '../../../lib/state/appState';
 import {StyledMenuItem} from '../../StyledMenuItem';
@@ -61,12 +62,13 @@ const RestoreBackup = ({onClose}: IProps) => {
       return;
     }
     try {
-      // The account the warning is about, and only it is restored.
-      const accountId = await restoreAccount(username);
+      // The account and data version the warning is about: only they are
+      // restored over.
+      const target = await restoreTarget(username);
       const current = await liveCounts(username);
       setState(
         useAppState.getState().loggedInUser === username
-          ? {step: 'confirm', username, accountId, backup, current}
+          ? {step: 'confirm', username, target, backup, current}
           : {step: 'closed'}
       );
     } catch (error: unknown) {
@@ -77,7 +79,7 @@ const RestoreBackup = ({onClose}: IProps) => {
 
   const handleConfirm = (
     username: string,
-    accountId: string,
+    target: RestoreTarget,
     backup: Backup
   ) => {
     // Only into the account the user was warned about.
@@ -86,7 +88,7 @@ const RestoreBackup = ({onClose}: IProps) => {
       return;
     }
     setState({step: 'restoring'});
-    restoreBackup(username, accountId, backup)
+    restoreBackup(username, target, backup)
       .then(result => setState({step: 'done', result}))
       .catch((error: unknown) => {
         console.error('ERROR: backup restore failed:', error);

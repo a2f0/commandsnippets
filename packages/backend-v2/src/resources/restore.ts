@@ -8,13 +8,12 @@
  * taggings in their tag's, in one D1 batch: one transaction, so all of it
  * happens or none of it. Every client's copy of the data is then of another
  * version than the active one, and syncs it again; a write queued against
- * the version before is refused (`0020_data_versions.sql`).
+ * the version before is refused (`0019_data_versions.sql`).
  */
 import {
   type Backup,
   backupSchema,
   CODES,
-  DATA_VERSION_HEADER,
   errorMeta,
   MESSAGES,
   parseDateTime,
@@ -488,17 +487,11 @@ export async function restoreInto(
 restoreRoutes.post('/', async c => {
   const user = requireUser(c);
   // Only over the version the client's copy is of (the one it warned
-  // about), when it names one: another device's restore or switch since is
-  // a 409, checked now and again in the batch.
+  // about): another device's restore or switch since is a 409, checked now
+  // and again in the batch.
   const over = versionOf(c, user);
-  const named = c.req.header(DATA_VERSION_HEADER) !== undefined;
   const restore = prepareRestore(await readBackup(c.req.raw));
-  const version = await restoreInto(
-    c.get('db'),
-    user.id,
-    restore,
-    named ? {over} : {}
-  );
+  const version = await restoreInto(c.get('db'), user.id, restore, {over});
   const result: RestoreResult = {
     data_version: version,
     tags: restore.tags.length,

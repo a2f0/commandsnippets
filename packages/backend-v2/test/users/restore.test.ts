@@ -46,8 +46,19 @@ async function backupOf(client: ApiClient, version?: number): Promise<Backup> {
   return backupSchema.parse(await json(response));
 }
 
-const restore = (client: ApiClient, body: unknown) =>
-  client.post('/api/v1/user/restore', body);
+/**
+ * Restore `body` as `client`, whose writes then name the version it made
+ * (as the app's do once it holds it).
+ */
+async function restore(client: ApiClient, body: unknown): Promise<Response> {
+  const response = await client.post('/api/v1/user/restore', body);
+  if (response.status === 200) {
+    client.dataVersion = restoreResultSchema.parse(
+      await response.clone().json()
+    ).data_version;
+  }
+  return response;
+}
 
 /**
  * A backup's content without ids or revisions: what a restore must make

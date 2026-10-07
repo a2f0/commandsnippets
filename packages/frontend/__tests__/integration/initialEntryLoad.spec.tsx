@@ -5,6 +5,7 @@ import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
+import {VERSION_KEY} from '../../src/lib/db/database';
 import {syncSession} from '../../src/lib/sync/session';
 import {onePage} from '../../src/msw/documents';
 import {afterOf, keysetPage} from '../../src/msw/keyset';
@@ -50,11 +51,11 @@ function gate() {
 
 it('keeps a legacy cursor background failure out of the first-load UI', async () => {
   const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
-  await syncSession('test').db.cursors.put({
-    owner: 'test',
-    key: 'entries',
-    after: CURSOR_START,
-  });
+  // A copy read (of the first data version) before cursors kept progress.
+  await syncSession('test').db.cursors.bulkPut([
+    {owner: 'test', key: 'entries', after: CURSOR_START},
+    {owner: 'test', key: VERSION_KEY, after: '1'},
+  ]);
   server.use(
     http.get('*/api/v1/entries', () =>
       HttpResponse.json({errors: []}, {status: 500})

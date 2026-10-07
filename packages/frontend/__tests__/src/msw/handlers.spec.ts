@@ -57,8 +57,16 @@ const server = setupServer(...handlers);
 
 beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
 afterAll(() => server.close());
+/**
+ * The data version the writes `send` makes name (`X-Data-Version`), as the
+ * app's name the one their copy of the data is of: the first, until a
+ * restore or a switch makes another active (or none, `undefined`).
+ */
+let named: number | undefined;
+
 beforeEach(() => {
   resetMSWState();
+  named = 1;
   // The handlers announce each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
   return () => vi.restoreAllMocks();
@@ -72,7 +80,13 @@ async function send(
 ) {
   const response = await fetch(`${API}${path}`, {
     method,
-    ...(body === undefined ? {} : {body: JSON.stringify(body), headers}),
+    headers: {
+      ...(method === 'GET' || named === undefined
+        ? {}
+        : {[DATA_VERSION_HEADER]: String(named)}),
+      ...(body === undefined ? {} : headers),
+    },
+    ...(body === undefined ? {} : {body: JSON.stringify(body)}),
   });
   const text = await response.text();
   return {status: response.status, json: text === '' ? null : JSON.parse(text)};
@@ -942,8 +956,15 @@ describe('GET /user/backup', () => {
 describe('POST /user/restore', () => {
   const getBackup = async () =>
     backupSchema.parse((await send('GET', '/user/backup')).json);
-  const restore = (body: unknown) =>
-    send('POST', '/user/restore', body, {'Content-Type': 'application/json'});
+  const restore = async (body: unknown) => {
+    const sent = await send('POST', '/user/restore', body, {
+      'Content-Type': 'application/json',
+    });
+    if (sent.status === 200) {
+      named = restoreResultSchema.parse(sent.json).data_version;
+    }
+    return sent;
+  };
 
   it("replaces the user's data with the backup's, made anew", async () => {
     const before = await getBackup();
@@ -1028,10 +1049,13 @@ describe('/user/data_versions', () => {
     ).data;
   const backup = async () =>
     backupSchema.parse((await send('GET', '/user/backup')).json);
-  const restoreOwn = async () =>
-    send('POST', '/user/restore', await backup(), {
+  const restoreOwn = async () => {
+    const sent = await send('POST', '/user/restore', await backup(), {
       'Content-Type': 'application/json',
     });
+    named = restoreResultSchema.parse(sent.json).data_version;
+    return sent;
+  };
 
   it('lists the versions, newest first, with what each holds', async () => {
     const before = await versions();
@@ -1083,6 +1107,25 @@ describe('/user/data_versions', () => {
     expect((await send('DELETE', '/user/data_versions/1')).status).toBe(204);
     expect((await versions()).map(({id}) => id)).toEqual(['2']);
     expect((await send('DELETE', '/user/data_versions/1')).status).toBe(404);
+  });
+
+  it('refuses a write naming no version, changing nothing', async () => {
+    const before = await getTags();
+    named = undefined;
+    for (const sent of [
+      await send('POST', '/tags', {
+        data: {type: 'Tag', attributes: {name: 'n'}},
+      }),
+      await send('DELETE', `/tags/${before.data[0]?.id}`),
+      await send('POST', '/user/restore', await backup(), {
+        'Content-Type': 'application/json',
+      }),
+    ]) {
+      expect(sent.status).toBe(400);
+      expect(sent.json.errors[0].detail).toMatch(DATA_VERSION_HEADER);
+    }
+    expect(await getTags()).toEqual(before);
+    expect((await versions()).map(({id}) => id)).toEqual(['1']);
   });
 
   it('refuses a read or write naming another version', async () => {

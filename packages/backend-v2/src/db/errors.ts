@@ -27,7 +27,7 @@ export function isNotNullViolation(error: unknown, column: string): boolean {
 
 /**
  * A write the data version triggers refused: of a version that is not the
- * user's active one (`0020_data_versions.sql`).
+ * user's active one (`0019_data_versions.sql`).
  */
 export function isDataVersionChanged(error: unknown): boolean {
   const message = String((error as Error)?.message ?? error);

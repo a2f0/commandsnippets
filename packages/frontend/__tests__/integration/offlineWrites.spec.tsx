@@ -197,7 +197,9 @@ it("keeps a new entry's form opened next to an entry made offline, with its text
 
 it("keeps an editor open on an entry when a tag made offline gets the entry's id", async () => {
   // Entry 5 and, once sent, tag 5: ids of different types can be alike.
-  const {data: entry} = await apiClient.createEntry('five', 'body');
+  const {data: entry} = await apiClient
+    .forVersion(1)
+    .createEntry('five', 'body');
   const history = createMemoryHistory();
   history.push('/test?entries=untagged');
   render(<TestAppRouter history={history} />);
@@ -299,7 +301,7 @@ it('adopts the tag a create whose answer was lost made, renamed since', async ()
   const listed = await apiClient.getTagsAfter(CURSOR_START);
   const made = listed.data.find(row => row.attributes.client_id === tag.id);
   invariant(made, 'the API should have made the tag');
-  await apiClient.updateTag(made.id, 'renamed-tag');
+  await apiClient.forVersion(1).updateTag(made.id, 'renamed-tag');
   // This device's clock runs ahead: its copy reads as newer than the API's.
   await session.db.tags.update([TEST_USER, tag.id], {
     'attributes.date_updated': '2999-01-01T00:00:00.000000',

@@ -1,6 +1,11 @@
 /** A small DRF-style APIClient with a cookie jar, calling the app in-process. */
+
 import {env} from 'cloudflare:workers';
+import {DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
 import {app} from '../../src/app';
+
+/** The methods that only read: their requests name no data version. */
+const READS = ['GET', 'HEAD', 'OPTIONS'];
 
 /** One request to the app exactly as given: no default headers or cookies. */
 export async function appRequest(
@@ -49,6 +54,12 @@ interface Cookie {
 
 export class ApiClient {
   readonly cookies = new Map<string, Cookie>();
+  /**
+   * The data version its writes name (`X-Data-Version`), as the app's name
+   * the one their copy of the data is of: an account's first, until a test
+   * moves it on (after a restore, say) or names none (`undefined`).
+   */
+  dataVersion: number | undefined = 1;
 
   constructor(
     token?: string,
@@ -76,6 +87,9 @@ export class ApiClient {
         headers: {
           'Content-Type': 'application/vnd.api+json',
           ...(cookie === '' ? {} : {Cookie: cookie}),
+          ...(this.dataVersion === undefined || READS.includes(method)
+            ? {}
+            : {[DATA_VERSION_HEADER]: String(this.dataVersion)}),
           ...headers,
         },
         ...(body === undefined ? {} : {body: JSON.stringify(body)}),

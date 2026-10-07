@@ -45,14 +45,19 @@ async function backupOf(client: ApiClient) {
   );
 }
 
-/** Restore `client`'s own backup: a version 2 of the same content. */
+/**
+ * Restore `client`'s own backup: a new version of the same content, which
+ * `client`'s writes then name (as the app's do once it holds it).
+ */
 async function restoreOwn(client: ApiClient): Promise<number> {
   const response = await client.post(
     '/api/v1/user/restore',
     await backupOf(client)
   );
   expect(response.status).toBe(200);
-  return restoreResultSchema.parse(await json(response)).data_version;
+  const version = restoreResultSchema.parse(await json(response)).data_version;
+  client.dataVersion = version;
+  return version;
 }
 
 const listVersions = async (client: ApiClient) => {
@@ -61,8 +66,14 @@ const listVersions = async (client: ApiClient) => {
   return dataVersionListDocumentSchema.parse(await json(response)).data;
 };
 
-const activate = (client: ApiClient, version: number | string) =>
-  client.post(`${VERSIONS}/${version}/activate`);
+/** Make `version` active as `client`, whose writes then name it. */
+async function activate(client: ApiClient, version: number | string) {
+  const response = await client.post(`${VERSIONS}/${version}/activate`);
+  if (response.status === 200) {
+    client.dataVersion = Number(version);
+  }
+  return response;
+}
 
 const rowsOf = async (user: User, version: number) => {
   const of = <
@@ -271,6 +282,41 @@ describe('the version a request names', () => {
     expect((await client.get('/api/v1/tags')).status).toBe(200);
   });
 
+  it('must be named by a write: one naming none is refused, changing nothing', async () => {
+    const [entry] = (await json(await client.get('/api/v1/entries'))).data;
+    const [top, bottom] = (await json(await client.get('/api/v1/tags'))).data;
+    const backup = await backupOf(client);
+    const before = await rowsOf(base.user1, 1);
+    client.dataVersion = undefined;
+    for (const response of [
+      await createEntry(client),
+      await client.patch(`/api/v1/entries/${entry.id}`, {
+        data: {type: 'TextEntry', id: entry.id, attributes: {subject: 'x'}},
+      }),
+      await client.delete(`/api/v1/entries/${entry.id}`),
+      await client.post('/api/v1/tags', {
+        data: {type: 'Tag', attributes: {name: 'unnamed'}},
+      }),
+      await client.post('/api/v1/tags/reorder', {
+        data: {
+          type: 'Tag',
+          attributes: {top: top.id, bottom: bottom.id},
+          relationships: {},
+        },
+      }),
+      await client.post('/api/v1/user/restore', backup),
+    ]) {
+      expect(response.status).toBe(400);
+      expect((await json(response)).errors[0].detail).toMatch(
+        DATA_VERSION_HEADER
+      );
+    }
+    expect(await rowsOf(base.user1, 1)).toEqual(before);
+    expect((await listVersions(client)).map(({id}) => id)).toEqual(['1']);
+    // A read naming none is of the active one.
+    expect((await client.get('/api/v1/tags')).status).toBe(200);
+  });
+
   it('must be a version number', async () => {
     const response = await client.get('/api/v1/tags', {
       [DATA_VERSION_HEADER]: 'latest',
@@ -464,29 +510,24 @@ describe('a delete and a switch at once', () => {
   });
 });
 
-describe('two restores at once', () => {
-  it('make a version each, the one committed last active', async () => {
+describe('two restores over one version at once', () => {
+  it('make one version: the one committed last is refused', async () => {
     const backup = await backupOf(client);
     let first = 0;
     const raced = await clientOf(
       base.user1,
       raceBeforeStatement(/insert into "users_dataversion"/i, async () => {
-        const response = await client.post('/api/v1/user/restore', backup);
-        first = restoreResultSchema.parse(await json(response)).data_version;
+        first = await restoreOwn(client);
       })
     );
 
     const response = await raced.post('/api/v1/user/restore', backup);
 
-    expect(response.status).toBe(200);
-    const second = restoreResultSchema.parse(await json(response)).data_version;
-    expect([first, second]).toEqual([2, 3]);
-    expect((await refreshUser(base.user1.id))?.active_version).toBe(3);
-    expect((await listVersions(client)).map(({id}) => id)).toEqual([
-      '3',
-      '2',
-      '1',
-    ]);
+    expect(first).toBe(2);
+    expect(response.status).toBe(409);
+    expect((await json(response)).errors[0].code).toBe('data_version_changed');
+    expect((await refreshUser(base.user1.id))?.active_version).toBe(2);
+    expect((await listVersions(client)).map(({id}) => id)).toEqual(['2', '1']);
   });
 });
 

@@ -14,6 +14,7 @@ import {heldVersion} from '../../../../../src/lib/sync/dataVersion';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {server} from '../../../../util/msw';
+import {restoreElsewhere} from '../../../../util/restoreElsewhere';
 import {signIn, TEST_USER} from '../../../../util/signIn';
 import {TestAppRouter} from '../../../../util/TestAppRouter';
 
@@ -66,18 +67,6 @@ beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
-
-/** Another device restores the user's own backup: version 2, active. */
-async function restoreElsewhere(): Promise<void> {
-  const backup = backupSchema.parse(
-    await (await fetch(`${API}/user/backup`)).json()
-  );
-  await fetch(`${API}/user/restore`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(backup),
-  });
-}
 
 async function openVersions() {
   const history = createMemoryHistory();
@@ -178,10 +167,11 @@ describe('Data Versions', () => {
     expect(screen.getByText(/This cannot be undone/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', {name: 'Delete version'}));
 
-    await waitFor(() =>
-      expect(document.getElementById('dataVersion-1')).toBeNull()
-    );
-    expect(document.getElementById('dataVersion-2')).not.toBeNull();
+    // The list is read again (none shown meanwhile): version 2 alone.
+    await waitFor(() => {
+      expect(document.getElementById('dataVersion-1')).toBeNull();
+      expect(document.getElementById('dataVersion-2')).not.toBeNull();
+    });
   });
 
   it('says why the API refused', async () => {

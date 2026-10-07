@@ -84,8 +84,8 @@ describe('Sorting the entries list from the Entries menu', () => {
 
   it('sorts the untagged list by the chosen sort and checks it', async () => {
     // The mock API's fixtures are all in tag 1: two in no tag.
-    await apiClient.createEntry('entry-8-subject', 'body');
-    await apiClient.createEntry('entry-9-subject', 'body');
+    await apiClient.forVersion(1).createEntry('entry-8-subject', 'body');
+    await apiClient.forVersion(1).createEntry('entry-9-subject', 'body');
     renderApp('/test?entries=untagged');
 
     await sortBy('Sort by Subject', 'ArrowDownwardIcon');

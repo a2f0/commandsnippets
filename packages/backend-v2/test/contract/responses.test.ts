@@ -132,14 +132,17 @@ describe('Backup', () => {
       backupSchema,
       await client.get('/api/v1/user/backup')
     );
-    await expectDocument(
+    const {data_version} = await expectDocument(
       restoreResultSchema,
       await client.post('/api/v1/user/restore', backup)
     );
+    client.dataVersion = data_version;
     await expectError(
       await client.post('/api/v1/user/restore', {...backup, version: 2}),
       400
     );
+    client.dataVersion = undefined;
+    await expectError(await client.post('/api/v1/user/restore', backup), 400);
     await expectError(
       await base.unauthenticatedClient.post('/api/v1/user/restore', backup),
       403

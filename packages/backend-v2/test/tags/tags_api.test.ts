@@ -31,7 +31,7 @@ describe('TestTagsApi', () => {
     expect(included).toHaveLength(1);
     const userData = included[0];
     expect(userData?.type).toBe('User');
-    expect(Object.keys(userData?.attributes ?? {})).toHaveLength(4); // v2: date_restored
+    expect(Object.keys(userData?.attributes ?? {})).toHaveLength(4); // v2: data_version
     expect(userData?.attributes['username']).toBe(base.user1.username);
     expect(userData?.attributes['is_staff']).toBe(false);
     expect(userData?.attributes['date_updated']).toBe(

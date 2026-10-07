@@ -1,8 +1,8 @@
 {
+  "id": "5f64cc5b-badf-47c7-a51a-91a084064901",
+  "prevId": "287847d8-e8fd-4fb2-afc5-66b0a52cb597",
   "version": "6",
   "dialect": "sqlite",
-  "id": "71f21f94-adf3-4e46-980f-5f9fe1e7315f",
-  "prevId": "aea45ebb-7bf3-417c-abb5-5e0bdb62017c",
   "tables": {
     "admin_audit_log": {
       "name": "admin_audit_log",
@@ -77,28 +77,28 @@
         "admin_audit_log_actor_id_users_user_id_fk": {
           "name": "admin_audit_log_actor_id_users_user_id_fk",
           "tableFrom": "admin_audit_log",
-          "tableTo": "users_user",
           "columnsFrom": [
             "actor_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "admin_audit_log_target_user_id_users_user_id_fk": {
           "name": "admin_audit_log_target_user_id_users_user_id_fk",
           "tableFrom": "admin_audit_log",
-          "tableTo": "users_user",
           "columnsFrom": [
             "target_user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
@@ -142,15 +142,15 @@
         "sync_clientwrite_user_id_users_user_id_fk": {
           "name": "sync_clientwrite_user_id_users_user_id_fk",
           "tableFrom": "sync_clientwrite",
-          "tableTo": "users_user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -216,15 +216,15 @@
         "users_dataversion_user_id_users_user_id_fk": {
           "name": "users_dataversion_user_id_users_user_id_fk",
           "tableFrom": "users_dataversion",
-          "tableTo": "users_user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -309,28 +309,28 @@
         "text_entries_textentryreused_text_entry_id_text_entries_textentry_id_fk": {
           "name": "text_entries_textentryreused_text_entry_id_text_entries_textentry_id_fk",
           "tableFrom": "text_entries_textentryreused",
-          "tableTo": "text_entries_textentry",
           "columnsFrom": [
             "text_entry_id"
           ],
+          "tableTo": "text_entries_textentry",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "text_entries_textentryreused_user_id_users_user_id_fk": {
           "name": "text_entries_textentryreused_user_id_users_user_id_fk",
           "tableFrom": "text_entries_textentryreused",
-          "tableTo": "users_user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -404,28 +404,28 @@
         "tags_tagclientid_user_id_users_user_id_fk": {
           "name": "tags_tagclientid_user_id_users_user_id_fk",
           "tableFrom": "tags_tagclientid",
-          "tableTo": "users_user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "tags_tagclientid_tag_id_tags_tag_id_fk": {
           "name": "tags_tagclientid_tag_id_tags_tag_id_fk",
           "tableFrom": "tags_tagclientid",
-          "tableTo": "tags_tag",
           "columnsFrom": [
             "tag_id"
           ],
+          "tableTo": "tags_tag",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -572,15 +572,15 @@
         "tags_tag_user_id_users_user_id_fk": {
           "name": "tags_tag_user_id_users_user_id_fk",
           "tableFrom": "tags_tag",
-          "tableTo": "users_user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -718,41 +718,41 @@
         "tags_tagtextentrythroughmodel_tag_id_tags_tag_id_fk": {
           "name": "tags_tagtextentrythroughmodel_tag_id_tags_tag_id_fk",
           "tableFrom": "tags_tagtextentrythroughmodel",
-          "tableTo": "tags_tag",
           "columnsFrom": [
             "tag_id"
           ],
+          "tableTo": "tags_tag",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "tags_tagtextentrythroughmodel_text_entry_id_text_entries_textentry_id_fk": {
           "name": "tags_tagtextentrythroughmodel_text_entry_id_text_entries_textentry_id_fk",
           "tableFrom": "tags_tagtextentrythroughmodel",
-          "tableTo": "text_entries_textentry",
           "columnsFrom": [
             "text_entry_id"
           ],
+          "tableTo": "text_entries_textentry",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "tags_tagtextentrythroughmodel_user_id_users_user_id_fk": {
           "name": "tags_tagtextentrythroughmodel_user_id_users_user_id_fk",
           "tableFrom": "tags_tagtextentrythroughmodel",
-          "tableTo": "users_user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -904,23 +904,23 @@
             "version",
             "client_id"
           ],
-          "isUnique": true,
-          "where": "\"text_entries_textentry\".\"client_id\" IS NOT NULL"
+          "where": "\"text_entries_textentry\".\"client_id\" IS NOT NULL",
+          "isUnique": true
         }
       },
       "foreignKeys": {
         "text_entries_textentry_user_id_users_user_id_fk": {
           "name": "text_entries_textentry_user_id_users_user_id_fk",
           "tableFrom": "text_entries_textentry",
-          "tableTo": "users_user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -974,15 +974,15 @@
         "authtoken_token_user_id_users_user_id_fk": {
           "name": "authtoken_token_user_id_users_user_id_fk",
           "tableFrom": "authtoken_token",
-          "tableTo": "users_user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users_user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1102,6 +1102,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "date_restored": {
+          "name": "date_restored",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "active_version": {
           "name": "active_version",
           "type": "integer",
@@ -1132,8 +1139,8 @@
           "columns": [
             "email"
           ],
-          "isUnique": true,
-          "where": "\"users_user\".\"email\" != ''"
+          "where": "\"users_user\".\"email\" != ''",
+          "isUnique": true
         }
       },
       "foreignKeys": {},
@@ -1158,9 +1165,9 @@
   "views": {},
   "enums": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {}
   },
   "internal": {
     "indexes": {}

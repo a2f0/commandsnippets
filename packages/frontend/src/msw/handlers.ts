@@ -1169,20 +1169,34 @@ function dataVersionResource(version: MockVersion): DataVersion {
 }
 
 /**
- * A request naming another data version (`X-Data-Version`) than the
- * active one for the signed-in user's data, refused as the API refuses it
- * (409 `data_version_changed`); anything else goes on to the handlers.
+ * A request of the signed-in user's data naming another data version
+ * (`X-Data-Version`) than the active one, or a write of it naming none,
+ * refused as the API refuses them (409 `data_version_changed`, 400);
+ * anything else goes on to the handlers.
  */
 function refuseAnotherVersion(request: Request) {
   const named = request.headers.get(DATA_VERSION_HEADER);
   const path = new URL(request.url).pathname;
   if (
-    named === null ||
     !/\/api\/v1\/(tags|entries|tags_entries|user\/backup|user\/restore)\b/.test(
       path
-    ) ||
-    Number(named) === activeVersion
+    )
   ) {
+    return undefined;
+  }
+  if (named === null) {
+    return request.method === 'GET'
+      ? undefined
+      : HttpResponse.json(
+          errorDocument(
+            400,
+            CODES.invalid,
+            `${DATA_VERSION_HEADER} must name the data version a write was made against.`
+          ),
+          {status: 400}
+        );
+  }
+  if (Number(named) === activeVersion) {
     return undefined;
   }
   return HttpResponse.json(

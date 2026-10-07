@@ -27,7 +27,7 @@ and Capacitor apps are gone.
 | `src/auth/oauth.ts`, `src/auth/routes.ts` | GitHub and Google OAuth; login and logout routes | the `authentication` app |
 | `src/db/schema.ts` | tables (same table and column names) | models |
 | `src/db/client.ts`, `src/db/errors.ts` | the Drizzle client; D1 constraint failures | — |
-| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries; `0009_junction_soft_delete.sql` adds the junctions' `is_deleted` and revision indexes, and `0010_junction_revisions.sql` their triggers: counters and tags that skip deleted junctions, and junctions that advance with their entries; `0020_data_versions.sql` keeps versions that are not active from changing) | migrations |
+| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries; `0009_junction_soft_delete.sql` adds the junctions' `is_deleted` and revision indexes, and `0010_junction_revisions.sql` their triggers: counters and tags that skip deleted junctions, and junctions that advance with their entries; `0019_data_versions.sql` keeps versions that are not active from changing) | migrations |
 | `src/lib/jsonapi.ts` | JSON:API request parsing, includes, filters, sort, pagination (validated by api-shared's schemas) | django-rest-framework-json-api |
 | `src/lib/validate.ts` | api-shared's zod issues as JSON:API errors | DRF serializer fields' `is_valid()` |
 | `src/lib/errors.ts` | errors in the JSON:API error format | DRF exceptions, DJA's exception handler |
@@ -300,10 +300,12 @@ client's copy of one version is never taken for another's.
   user and version), and a reorder moves only the version's rows.
 - **`X-Data-Version`.** A client names the version its copy is of; a request
   naming another than the active one is a 409 `data_version_changed`, and
-  the client clears its copy and syncs again. Requests that name none use
-  the active version.
+  the client clears its copy and syncs again. A read that names none is of
+  the active version; a write must name the one it was made against (a 400
+  otherwise), so none queued before a restore or a switch lands in the
+  version made active.
 - **A version that is not active never changes.** The triggers of
-  `0020_data_versions.sql` refuse, in the statement that writes, any
+  `0019_data_versions.sql` refuse, in the statement that writes, any
   insert into a version that is not active and any update or delete of a
   row of one (and a tagging or reuse of rows of another version), so a
   write that lands after a switch (queued on a device that had not synced
@@ -343,8 +345,9 @@ Nothing is deleted: the version before stays as it was. It is checked
 first, as a create of each row would be (a tag's name, an entry's subject
 and body), with every id a row refers to in the backup: anything else is a
 400 whose pointer and detail say where (`Invalid backup at /tags/3/name:
-...`), and no version is made. A request naming another version than the
-active one (`X-Data-Version`) is a 409, checked when it arrives and again as
+...`), and no version is made. It names the version it is made over
+(`X-Data-Version`, a 400 when it names none): another than the active one
+is a 409, checked when it arrives and again as
 its batch's first statement (the active version's row is made again, which
 its primary key refuses unless it is the one named), so a restore or switch
 that commits in between stops it too. Then, in one D1 batch (one

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "aea45ebb-7bf3-417c-abb5-5e0bdb62017c",
+  "id": "287847d8-e8fd-4fb2-afc5-66b0a52cb597",
   "prevId": "73e7cac1-ca31-4f08-906b-896a2b4a3a9b",
   "tables": {
     "admin_audit_log": {
@@ -165,6 +165,89 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "users_dataversion": {
+      "name": "users_dataversion",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date_created": {
+          "name": "date_created",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "backup_username": {
+          "name": "backup_username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "backup_exported": {
+          "name": "backup_exported",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_dataversion_user_id_users_user_id_fk": {
+          "name": "users_dataversion_user_id_users_user_id_fk",
+          "tableFrom": "users_dataversion",
+          "tableTo": "users_user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "users_dataversion_user_id_version_pk": {
+          "columns": [
+            "user_id",
+            "version"
+          ],
+          "name": "users_dataversion_user_id_version_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "users_dataversion_version_check": {
+          "name": "users_dataversion_version_check",
+          "value": "\"users_dataversion\".\"version\" >= 1"
+        },
+        "users_dataversion_origin_check": {
+          "name": "users_dataversion_origin_check",
+          "value": "\"users_dataversion\".\"origin\" IN ('initial', 'restore')"
+        }
+      }
+    },
     "text_entries_textentryreused": {
       "name": "text_entries_textentryreused",
       "columns": {
@@ -195,6 +278,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
         }
       },
       "indexes": {
@@ -208,7 +299,8 @@
         "text_entries_textentryreused_user_id_idx": {
           "name": "text_entries_textentryreused_user_id_idx",
           "columns": [
-            "user_id"
+            "user_id",
+            "version"
           ],
           "isUnique": false
         }
@@ -408,6 +500,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
@@ -444,6 +544,7 @@
           "name": "tags_tag_user_order_idx",
           "columns": [
             "user_id",
+            "version",
             "order"
           ],
           "isUnique": false
@@ -452,6 +553,7 @@
           "name": "tags_tag_user_updated_idx",
           "columns": [
             "user_id",
+            "version",
             "date_updated"
           ],
           "isUnique": false
@@ -460,7 +562,8 @@
           "name": "One tag of same name per user",
           "columns": [
             "name",
-            "user_id"
+            "user_id",
+            "version"
           ],
           "isUnique": true
         }
@@ -545,6 +648,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
@@ -581,6 +692,7 @@
           "name": "tags_tagtextentrythroughmodel_user_updated_idx",
           "columns": [
             "user_id",
+            "version",
             "date_updated"
           ],
           "isUnique": false
@@ -697,6 +809,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
@@ -772,6 +892,7 @@
           "name": "text_entries_textentry_user_id_idx",
           "columns": [
             "user_id",
+            "version",
             "date_updated"
           ],
           "isUnique": false
@@ -780,6 +901,7 @@
           "name": "text_entries_textentry_client_id_unique",
           "columns": [
             "user_id",
+            "version",
             "client_id"
           ],
           "isUnique": true,
@@ -979,6 +1101,29 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "date_restored": {
+          "name": "date_restored",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "active_version": {
+          "name": "active_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "last_version": {
+          "name": "last_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
         }
       },
       "indexes": {

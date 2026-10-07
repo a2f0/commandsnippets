@@ -100,8 +100,9 @@ export interface OutboxRow {
   writeId: string;
   /**
    * The data version it was made against (`X-Data-Version`): the one the
-   * owner's rows were of then. The API refuses it once another is active.
-   * None before the rows were first synced (the active one, then).
+   * owner's rows were of then. The API refuses it once another is active,
+   * and one naming none. None when queued before the owner's data was first
+   * read: the version first read takes it (`adoptVersion`).
    */
   version?: number;
   write: QueuedWrite;
@@ -153,6 +154,9 @@ export const OWNER_ID_KEY = 'user';
  * (`lib/sync/dataVersion.ts`): the API's `data_version` when they were read.
  */
 export const VERSION_KEY = 'data_version';
+
+/** The key (in `cursors`) of the time the last write queued here was made. */
+export const MADE_KEY = 'made';
 
 /** The key of tag `tagId`'s cursor. */
 export const tagCursorKey = (tagId: string) => `tag:${tagId}`;

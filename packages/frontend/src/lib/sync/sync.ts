@@ -53,7 +53,7 @@ import {
 } from '../db/database';
 import {environment} from '../environment';
 import {timed} from '../metrics/timings';
-import {adoptVersion} from './dataVersion';
+import {adoptVersion, assertHeld} from './dataVersion';
 import {
   AccountChangedError,
   adoptCreates,
@@ -118,14 +118,15 @@ type Page = {
  * Read the pages after `owner`'s stored cursor `key` (from the start without
  * one), storing each (`store`) with the cursor past it in one transaction,
  * until the last, or until `pause` (checked between pages) asks to stop.
+ * A page is stored only while the data is bound to the account and held at
+ * the data version it was read of (`bound`, from `bindToApi`).
  * The local ids a page's store replaced (`adoptCreates`) are announced once
  * it commits. Returns whether it read to the end.
  */
 async function readAfter<P extends Page>(
   db: CommandsnippetsDatabase,
   owner: string,
-  /** The account the sync bound the data to (`bindToApi`). */
-  account: string,
+  bound: Bound,
   key: string,
   read: (after: string) => Promise<P>,
   store: (page: P) => Promise<Remap[]>,
@@ -152,8 +153,10 @@ async function readAfter<P extends Page>(
           'rw',
           [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
           async () => {
-            // Bound to another account since the sync began: not stored.
-            await assertBound(db, owner, account);
+            // Bound to another account, or held at another version, since
+            // the sync began: not stored.
+            await assertBound(db, owner, bound.ownerId);
+            await assertHeld(db, owner, bound.version);
             const stored = await store(page);
             await db.cursors.put(cursor(after, done, page));
             return stored;
@@ -272,17 +275,26 @@ export async function bindOwner(
   );
 }
 
+/** What a sync read its data as (`bindToApi`). */
+interface Bound {
+  /** The account the data is bound to. */
+  ownerId: string;
+  /** The data version it is held at (none: the API named none). */
+  version: number | undefined;
+  /** The reads, of that version. */
+  reads: SyncApi;
+}
+
 /**
  * Bind `owner`'s data to the account the API reads under that name, read
  * now (see `bindOwner`), and hold it at their active data version
- * (`adoptVersion`: rows of another go); returns the account's id, and the
- * reads of that version.
+ * (`adoptVersion`: rows of another go).
  */
 async function bindToApi(
   db: CommandsnippetsDatabase,
   api: SyncApi,
   owner: string
-): Promise<{ownerId: string; reads: SyncApi}> {
+): Promise<Bound> {
   const held = await boundAccount(db, owner);
   const {id: ownerId, publicRevision, dataVersion} = await ownerOf(api, owner);
   await timed('idb', 'sync bindOwner', () =>
@@ -313,7 +325,7 @@ async function bindToApi(
       }
     );
   }
-  return {ownerId, reads};
+  return {ownerId, version: dataVersion, reads};
 }
 
 /** Only a public cache uses this: never removes an owner's queued writes. */
@@ -350,7 +362,8 @@ async function syncAll(
   owner: string,
   pause: () => boolean
 ): Promise<boolean> {
-  const {ownerId, reads} = await bindToApi(db, api, owner);
+  const bound = await bindToApi(db, api, owner);
+  const {ownerId, reads} = bound;
   // Older cursors have no progress marker; their next sync still reads to
   // the end, without starting a new first-load indicator.
   let initialLoad = await db.transaction('rw', db.cursors, async () => {
@@ -398,7 +411,7 @@ async function syncAll(
   await readAfter(
     db,
     owner,
-    ownerId,
+    bound,
     'tags',
     after => reads.getTagsAfter(after),
     async page => {
@@ -411,7 +424,7 @@ async function syncAll(
   const done = await readAfter(
     db,
     owner,
-    ownerId,
+    bound,
     'entries',
     after => reads.getEntriesAfter(after),
     async page => {
@@ -476,7 +489,8 @@ async function syncTag(
   if (isLocalId(tagId)) {
     return;
   }
-  const {ownerId, reads} = await bindToApi(db, api, owner);
+  const bound = await bindToApi(db, api, owner);
+  const {ownerId, reads} = bound;
   const tag = await db.tags.get([owner, tagId]);
   if (tag === undefined) {
     return;
@@ -489,7 +503,7 @@ async function syncTag(
   await readAfter(
     db,
     owner,
-    ownerId,
+    bound,
     key,
     after => reads.getTagJunctionsAfter(tagId, after),
     async page => {
@@ -548,6 +562,12 @@ export interface SyncEngine {
    * the data is read-only.
    */
   flush(): Promise<void>;
+  /**
+   * Hold the data at data version `version`, made active from here (a
+   * restore, a switch): the rows of another go (`adoptVersion`), in turn
+   * with the syncs and flushes, so none they read of it is stored after.
+   */
+  adopt(version: number): Promise<void>;
 }
 
 /**
@@ -637,6 +657,9 @@ export function createSyncEngine(
   };
   return {
     flush,
+    adopt: async version => {
+      await exclusive(() => adoptVersion(db, owner, version));
+    },
     syncAll: syncAllToTheEnd,
     syncTag: tagId => {
       tagSyncsWaiting += 1;

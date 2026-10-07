@@ -26,6 +26,7 @@ import {heldVersion} from '../../../../../src/lib/sync/dataVersion';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {server} from '../../../../util/msw';
+import {restoreElsewhere} from '../../../../util/restoreElsewhere';
 import {signIn, TEST_USER} from '../../../../util/signIn';
 import {TestAppRouter} from '../../../../util/TestAppRouter';
 
@@ -86,10 +87,11 @@ const fileOf = (content: unknown, name = 'backup.json') =>
     {type: 'application/json'}
   );
 
-/** Each restore request: who it named, and what it sent. */
+/** Each restore request: whom and which data version it named, and what it sent. */
 interface RestoreRequest {
   user: string | null;
   account: string | null;
+  version: string | null;
   body: unknown;
 }
 
@@ -100,6 +102,7 @@ function restoreRequests(): RestoreRequest[] {
       requests.push({
         user: request.headers.get(EXPECTED_USER_HEADER),
         account: request.headers.get(EXPECTED_USER_ID_HEADER),
+        version: request.headers.get(DATA_VERSION_HEADER),
         body: await request.clone().json(),
       });
     }
@@ -215,7 +218,9 @@ describe('Restore Backup', () => {
     expect(await screen.findByText('Backup restored')).toBeInTheDocument();
     expect(screen.getByText('Tags: 1 · Entries: 2')).toBeInTheDocument();
     // Asked for as the user and their account, with the backup as it was.
-    expect(requests).toEqual([{user: TEST_USER, account: '1', body: backup}]);
+    expect(requests).toEqual([
+      {user: TEST_USER, account: '1', version: '1', body: backup},
+    ]);
     // Synced here: the old data is gone, the backup's is shown.
     expect(await liveSubjects()).toEqual([
       'restored-subject',
@@ -392,17 +397,36 @@ describe('Restore Backup', () => {
     const user = await chooseFile(fileOf(backup));
     await screen.findByText('Restore this backup?');
     // Another device restores meanwhile: version 2 is active, not 1.
-    await fetch(`${API}/user/restore`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(backup),
-    });
+    await restoreElsewhere(backup);
     const requests = restoreRequests();
 
     await user.click(screen.getByRole('button', {name: 'Restore backup'}));
 
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
-    expect(requests).toHaveLength(1);
+    expect(requests.map(({version}) => version)).toEqual(['1']);
+    const {data} = dataVersionListDocumentSchema.parse(
+      await (await fetch(`${API}/user/data_versions`)).json()
+    );
+    expect(data).toHaveLength(2);
+  });
+
+  it('restores nothing over a version a sync here took up after the warning', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await renderEntries();
+    const user = await chooseFile(fileOf(backup));
+    await screen.findByText('Restore this backup?');
+    // Another device restores, and this one syncs it: the data here is of
+    // version 2 now, which the warning was not about.
+    await restoreElsewhere(backup);
+    const {db, sync} = syncSession(TEST_USER);
+    await sync.syncAll();
+    expect(await heldVersion(db, TEST_USER)).toBe(2);
+    const requests = restoreRequests();
+
+    await user.click(screen.getByRole('button', {name: 'Restore backup'}));
+
+    expect(await screen.findByText('Restore failed')).toBeInTheDocument();
+    expect(requests.map(({version}) => version)).toEqual(['1']);
     const {data} = dataVersionListDocumentSchema.parse(
       await (await fetch(`${API}/user/data_versions`)).json()
     );

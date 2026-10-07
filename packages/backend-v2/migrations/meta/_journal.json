@@ -131,22 +131,15 @@
     {
       "idx": 18,
       "version": "6",
-      "when": 1791364880402,
-      "tag": "0018_drop_date_restored",
+      "when": 1791368902016,
+      "tag": "0018_data_versions_schema",
       "breakpoints": true
     },
     {
       "idx": 19,
       "version": "6",
-      "when": 1791364891938,
-      "tag": "0019_data_versions_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 20,
-      "version": "6",
-      "when": 1791364933558,
-      "tag": "0020_data_versions",
+      "when": 1791368906382,
+      "tag": "0019_data_versions",
       "breakpoints": true
     }
   ]

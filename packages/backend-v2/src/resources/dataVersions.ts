@@ -4,7 +4,7 @@
  * the active one (`users_user.active_version`). Version 1 is the data an
  * account starts with; a restore (`restore.ts`) makes the next and makes it
  * active, keeping the one before as it was. A version that is not active
- * never changes (the triggers of `0020_data_versions.sql` refuse it in the
+ * never changes (the triggers of `0019_data_versions.sql` refuse it in the
  * statement that writes), so a client's copy of one stays right however
  * long it waited, and a write queued against it is refused once another is
  * active. Numbers are never reused (`users_user.last_version`).
@@ -42,13 +42,20 @@ import {jsonApi} from './responses';
 /**
  * The data version a request reads or writes `owner`'s data at: the one it
  * names (`DATA_VERSION_HEADER`), which must be their active one (409
- * `data_version_changed` otherwise: the client's copy is of another), or
- * their active one when it names none.
+ * `data_version_changed` otherwise: the client's copy is of another). A
+ * read that names none is of the active one; a write must name the one it
+ * was made against (400 otherwise), so none made before a restore or a
+ * switch lands in the version made active.
  */
 export function versionOf(c: Context<AppEnv>, owner: User): number {
   const header = c.req.header(DATA_VERSION_HEADER);
   if (header === undefined) {
-    return owner.active_version;
+    if (c.req.method === 'GET' || c.req.method === 'HEAD') {
+      return owner.active_version;
+    }
+    throw validationError(
+      `${DATA_VERSION_HEADER} must name the data version a write was made against.`
+    );
   }
   if (!/^[1-9]\d*$/.test(header)) {
     throw validationError(`${DATA_VERSION_HEADER} must be a version number.`);

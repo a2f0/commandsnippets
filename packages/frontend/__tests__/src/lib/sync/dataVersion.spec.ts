@@ -4,7 +4,8 @@
  * another (a restore, here or elsewhere) clears the copy, which the next
  * sync reads from the start. Against the E2E handlers' mock API.
  */
-import {backupSchema, DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
+import {DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
+import invariant from 'invariant';
 import {http} from 'msw';
 import {setupServer} from 'msw/node';
 import {
@@ -28,6 +29,7 @@ import {enqueue} from '../../../../src/lib/sync/outbox';
 import {ownSyncApi} from '../../../../src/lib/sync/session';
 import {createSyncEngine} from '../../../../src/lib/sync/sync';
 import {handlers, resetMSWState} from '../../../../src/msw/handlers';
+import {restoreElsewhere} from '../../../util/restoreElsewhere';
 import {entry, tag} from '../../../util/storeFixtures';
 
 const API = 'http://localhost:9001/api/v1';
@@ -63,19 +65,6 @@ const engine = () =>
     apiClient.writesAs(OWNER)
   );
 
-/** Another device restores the user's own backup: version 2, active. */
-async function restoreElsewhere(): Promise<void> {
-  const backup = backupSchema.parse(
-    await (await fetch(`${API}/user/backup`)).json()
-  );
-  const response = await fetch(`${API}/user/restore`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(backup),
-  });
-  expect(response.status).toBe(200);
-}
-
 const entryIds = async () =>
   (await db.entries.where('owner').equals(OWNER).toArray())
     .map(row => row.id)
@@ -92,15 +81,82 @@ function versionsNamed(): (string | null)[] {
   return named;
 }
 
+/**
+ * Hold the first `method` request to `path` until released; the handlers
+ * then answer it.
+ */
+function gate(method: 'get' | 'delete', path: string) {
+  let release = () => {};
+  const released = new Promise<void>(resolve => {
+    release = resolve;
+  });
+  let reach = () => {};
+  const reached = new Promise<void>(resolve => {
+    reach = resolve;
+  });
+  let held = false;
+  server.use(
+    http[method](`${API}${path}`, async () => {
+      if (!held) {
+        held = true;
+        reach();
+        await released;
+      }
+      return undefined;
+    })
+  );
+  return {reached, release};
+}
+
+const queuedVersions = async () =>
+  (await db.outbox.toArray()).map(({version}) => version);
+
 describe('adoptVersion', () => {
-  it('holds the first version read, keeping the rows there are', async () => {
-    await db.entries.put({...entry('1', {}), owner: OWNER});
+  it('holds the first version read of data never read: what was made here stays', async () => {
+    await db.cursors.put({owner: OWNER, key: OWNER_ID_KEY, after: '1'});
+    await db.entries.put({...entry('local-1', {}), owner: OWNER});
+    await enqueue(
+      db,
+      OWNER,
+      {kind: 'deleteEntry', entryId: 'local-1'},
+      '2026-01-01T00:00:00.000000'
+    );
+    expect(await queuedVersions()).toEqual([undefined]);
+
     expect(await adoptVersion(db, OWNER, 1)).toBe(false);
+
     expect(await heldVersion(db, OWNER)).toBe(1);
-    expect(await entryIds()).toEqual(['1']);
+    expect(await entryIds()).toEqual(['local-1']);
+    // Queued before any version was held: of the one first read.
+    expect(await queuedVersions()).toEqual([1]);
     // The same version again changes nothing.
     expect(await adoptVersion(db, OWNER, 1)).toBe(false);
-    expect(await entryIds()).toEqual(['1']);
+    expect(await entryIds()).toEqual(['local-1']);
+  });
+
+  it('clears data read with no version held, of none known', async () => {
+    await db.entries.put({...entry('1', {}), owner: OWNER});
+    await db.cursors.bulkPut([
+      {owner: OWNER, key: OWNER_ID_KEY, after: '1'},
+      {owner: OWNER, key: 'entries', after: '2026-01-01T00:00:00,1'},
+    ]);
+    await enqueue(
+      db,
+      OWNER,
+      {kind: 'deleteEntry', entryId: '1'},
+      '2026-01-01T00:00:00.000000'
+    );
+
+    expect(await adoptVersion(db, OWNER, 1)).toBe(true);
+
+    expect(await entryIds()).toEqual([]);
+    expect(await db.outbox.count()).toBe(0);
+    expect(
+      (await db.cursors.where('owner').equals(OWNER).toArray())
+        .map(({key}) => key)
+        .sort()
+    ).toEqual([VERSION_KEY, OWNER_ID_KEY].sort());
+    expect(await heldVersion(db, OWNER)).toBe(1);
   });
 
   it("clears an owner's rows of another version, but the account's binding", async () => {
@@ -186,6 +242,69 @@ describe('the sync', () => {
     const after = await entryIds();
     expect(after).toHaveLength(before.length);
     expect(after.some(id => before.includes(id))).toBe(false);
+  });
+
+  it('adopts a version in turn with a sync: a page read before it is stored first', async () => {
+    const sync = engine();
+    const tags = gate('get', '/tags');
+    const syncing = sync.syncAll();
+    await tags.reached;
+    let adopted = false;
+    const adopting = sync.adopt(2).then(() => {
+      adopted = true;
+    });
+    await new Promise(resolve => setTimeout(resolve, 20));
+    // Its turn is after the sync's.
+    expect(adopted).toBe(false);
+
+    tags.release();
+    await syncing;
+    await adopting;
+
+    expect(await heldVersion(db, OWNER)).toBe(2);
+    expect(await entryIds()).toEqual([]);
+    expect(await db.tags.where('owner').equals(OWNER).count()).toBe(0);
+  });
+
+  it('stores no page of a version this copy no longer holds', async () => {
+    const sync = engine();
+    const tags = gate('get', '/tags');
+    const syncing = sync.syncAll();
+    await tags.reached;
+    // Held at another version out of turn (a tab the lock did not reach).
+    await adoptVersion(db, OWNER, 2);
+    tags.release();
+
+    await syncing;
+
+    // Not stored at version 2: the sync took the active one up again, and
+    // read it from the start.
+    expect(await heldVersion(db, OWNER)).toBe(1);
+    expect((await entryIds()).length).toBeGreaterThan(0);
+  });
+
+  it('stores no answer to a write of a version this copy no longer holds', async () => {
+    const sync = engine();
+    await sync.syncAll();
+    const [first] = await entryIds();
+    invariant(first, 'the mock has entries');
+    await enqueue(
+      db,
+      OWNER,
+      {kind: 'deleteEntry', entryId: first},
+      '2026-01-01T00:00:00.000000'
+    );
+    const deleting = gate('delete', `/entries/${first}`);
+    const flushing = sync.flush();
+    await deleting.reached;
+    await adoptVersion(db, OWNER, 2);
+    deleting.release();
+
+    await flushing;
+
+    // Not stored at version 2: the copy holds the active version again.
+    expect(await heldVersion(db, OWNER)).toBe(1);
+    expect(await db.entries.get([OWNER, first])).toBeUndefined();
   });
 
   it('drops the writes queued against a version no longer active', async () => {

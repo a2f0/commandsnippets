@@ -56,6 +56,7 @@ import type {Table} from 'dexie';
 import {ApiRequestError, UserMismatchError} from '../api/apiClient';
 import {
   type CommandsnippetsDatabase,
+  MADE_KEY,
   type OutboxRow,
   OWNER_ID_KEY,
   type QueuedWrite,
@@ -63,7 +64,7 @@ import {
   rowKey,
   type Stored,
 } from '../db/database';
-import {heldVersion} from './dataVersion';
+import {assertHeld, heldVersion} from './dataVersion';
 import {putResources} from './store';
 
 const TAG = 'Tag';
@@ -107,9 +108,6 @@ export function madeNow(): string {
   }
   return formatMicros(micros);
 }
-
-/** The key (in `cursors`) of the time the last write queued here was made. */
-export const MADE_KEY = 'made';
 
 /** A microsecond after `time` (the API's fixed-width datetime form). */
 function justAfter(time: string): string {
@@ -688,7 +686,8 @@ export async function assertBound(
 /**
  * The write reached the API: unqueue it (or put what is left to do in its
  * place), give a row it created the API's id, and store the answer, unless
- * the data was bound to another account meanwhile (`assertBound`).
+ * the data was bound to another account meanwhile (`assertBound`), or held
+ * at another data version than the write's (`assertHeld`).
  */
 async function acknowledge(
   db: CommandsnippetsDatabase,
@@ -711,6 +710,7 @@ async function acknowledge(
     [db.outbox, db.tags, db.entries, db.junctions, db.cursors],
     async () => {
       await assertBound(db, owner, accountId);
+      await assertHeld(db, owner, queued.version);
       if (queued.seq !== undefined) {
         if (sent.next === undefined) {
           await db.outbox.delete(queued.seq);

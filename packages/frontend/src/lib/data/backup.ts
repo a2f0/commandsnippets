@@ -13,7 +13,7 @@
  * Each sends the writes queued here first, to the version they were made
  * against, and acts as the account the data is bound to. Making another
  * version active (a restore, or a switch) holds this copy of the data at it
- * (`adoptVersion`: the rows of the one before go) and syncs it again.
+ * (`SyncEngine.adopt`: the rows of the one before go) and syncs it again.
  */
 import {
   type Backup,
@@ -23,7 +23,7 @@ import {
 } from '@commandsnippets/api-shared/responses';
 import {apiClient} from '../api/apiClient';
 import {describeIssues} from '../api/parseResponse';
-import {adoptVersion, heldVersion} from '../sync/dataVersion';
+import {heldVersion} from '../sync/dataVersion';
 import {syncSession} from '../sync/session';
 import {boundAccount, type SyncEngine} from '../sync/sync';
 
@@ -154,60 +154,67 @@ export async function liveCounts(
   return {tags, entries};
 }
 
-/**
- * The account `username`'s data is bound to (`flushedAccount`, which sends
- * their queued writes and binds it): the one a restore is to make the data
- * of, whose data the user is warned about.
- */
-export async function restoreAccount(username: string): Promise<string> {
-  const {accountId} = await flushedAccount(
-    username,
-    'Failed to restore backup'
-  );
-  return accountId;
+/** What a restore replaces: the data the user was warned about. */
+export interface RestoreTarget {
+  /** The account the data is of. */
+  accountId: string;
+  /** The data version this copy of it is of. */
+  version: number;
 }
 
 /**
- * Hold `username`'s data here at the active data version `version`, and
- * sync it. A sync that fails now is the page's to retry.
+ * The account `username`'s data is bound to and the data version it is held
+ * at, once their queued writes are sent (`flushedAccount`, which binds
+ * both): what a restore is to replace, which the user is warned about.
  */
-async function adopt(
-  username: string,
-  sync: SyncEngine,
-  version: number
-): Promise<void> {
-  await adoptVersion(syncSession(username).db, username, version);
+export async function restoreTarget(username: string): Promise<RestoreTarget> {
+  const failure = 'Failed to restore backup';
+  const {accountId} = await flushedAccount(username, failure);
+  const version = await heldVersion(syncSession(username).db, username);
+  if (version === undefined) {
+    throw new Error(`${failure}: the data here is of no data version`);
+  }
+  return {accountId, version};
+}
+
+/**
+ * Hold this copy of the data at the data version `version`, made active
+ * from here, in turn with its syncs (`SyncEngine.adopt`), and sync it. A
+ * sync that fails now is the page's to retry.
+ */
+async function adopt(sync: SyncEngine, version: number): Promise<void> {
+  await sync.adopt(version);
   await sync.syncAll().catch((error: unknown) => {
     console.warn('WARNING: sync after a data version switch failed:', error);
   });
 }
 
 /**
- * Make `backup`'s data that of account `accountId` (`username`'s), as a new
- * data version made active (`POST /user/restore`): as that account, and
- * over the version this copy of the data is of (the one the user was
- * warned about), so refused (`UserMismatchError`, `DataVersionChangedError`)
- * when the data here is bound to another account since, or another version
- * is active. Then this copy is held at the new version, and synced. Throws
- * when the queue cannot be sent or the restore fails (`ApiRequestError`,
- * with the API's `detail` when it refused the backup).
+ * Make `backup`'s data that of `username`'s account, as a new data version
+ * made active (`POST /user/restore`), in place of `target` (the data the
+ * user was warned about): as its account, and over its version, so refused
+ * (`UserMismatchError`, `DataVersionChangedError`) when the data here is
+ * bound to another account since, or another version is active (a restore
+ * or a switch elsewhere, which a sync here may have taken up). Then this
+ * copy is held at the new version, and synced. Throws when the queue cannot
+ * be sent or the restore fails (`ApiRequestError`, with the API's `detail`
+ * when it refused the backup).
  */
 export async function restoreBackup(
   username: string,
-  accountId: string,
+  target: RestoreTarget,
   backup: Backup
 ): Promise<RestoreResult> {
   const failure = 'Failed to restore backup';
-  const {db} = syncSession(username);
   const bound = await flushedAccount(username, failure);
   // Only into the account the user was warned about.
-  if (bound.accountId !== accountId) {
+  if (bound.accountId !== target.accountId) {
     throw new BackupAccountError(failure, username);
   }
-  const held = await heldVersion(db, username);
-  const api = held === undefined ? bound.api : bound.api.forVersion(held);
-  const result = await api.restoreBackup(backup);
-  await adopt(username, bound.sync, result.data_version);
+  const result = await bound.api
+    .forVersion(target.version)
+    .restoreBackup(backup);
+  await adopt(bound.sync, result.data_version);
   return result;
 }
 
@@ -236,7 +243,7 @@ export async function activateVersion(
     'Failed to switch data versions'
   );
   await api.activateDataVersion(version);
-  await adopt(username, sync, version);
+  await adopt(sync, version);
 }
 
 /** Delete `username`'s data version `version` (one not active). */

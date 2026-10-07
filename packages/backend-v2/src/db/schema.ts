@@ -46,6 +46,10 @@ export const users = sqliteTable(
     // When staff marked the account for deletion through the admin API, which
     // also deactivates it; NULL if it is not marked.
     date_marked_for_deletion: text('date_marked_for_deletion'),
+    // Unused: the restore cutoff, which data versions replace. Dropped once
+    // no deployed Worker reads it (migrations apply before a deploy, so the
+    // Worker running then still selects it).
+    date_restored: text('date_restored'),
     // The user's active data version (users_dataversion): what their data
     // reads and writes are of (resources/dataVersions.ts).
     active_version: integer('active_version').notNull().default(1),

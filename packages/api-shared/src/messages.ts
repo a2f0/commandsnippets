@@ -170,7 +170,8 @@ export const DATA_OWNER_ID_HEADER = 'X-Data-Owner-Id';
  * version they are of with: the version its copy holds (a number). The API
  * answers 409 `data_version_changed` when it is not the user's active one,
  * and refuses a write that lands after a switch in its own statement, since
- * a version that is not active never changes. Requests that name none use
- * the active version.
+ * a version that is not active never changes. A read that names none is of
+ * the active version; a write must name the one it was made against (400
+ * otherwise).
  */
 export const DATA_VERSION_HEADER = 'X-Data-Version';

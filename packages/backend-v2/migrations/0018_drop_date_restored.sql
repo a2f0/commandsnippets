@@ -1,1 +1,0 @@
-ALTER TABLE `users_user` DROP COLUMN `date_restored`;

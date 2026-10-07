@@ -242,11 +242,16 @@ API; everything else the app keeps is a zustand store.
   version an owner's rows here are of (`VERSION_KEY`, in `cursors`). Every
   sync reads the active one first (`bindToApi`) and asks for its pages of
   it (`X-Data-Version`, `apiClient.forVersion`, `SyncApi.atVersion`), so
-  no page of one is stored among another's rows; every queued write records
-  the version it was made against (`OutboxRow.version`) and names it. When
-  another version is active (a restore or a switch, on any device), the
-  owner's rows, cursors (but the account's) and queued writes go
-  (`adoptVersion`) and the sync reads the active one from the start. A
+  no page of one is stored among another's rows (nor a page or a write's
+  answer once the copy holds another: `assertHeld`); every queued write
+  records the version it was made against (`OutboxRow.version`) and names
+  it, as the API requires of a write (a 400 otherwise). When another
+  version is active (a restore or a switch, on any device), the owner's
+  rows, cursors (but the account's) and queued writes go (`adoptVersion`,
+  in turn with the syncs when made active here: `SyncEngine.adopt`) and the
+  sync reads the active one from the start; so do rows read with no version
+  held, which are of none known. Data never read keeps what was made here,
+  and the writes queued before any version was held take the first read. A
   request naming a version no longer active is a 409
   (`DataVersionChangedError`): the engine takes up the active version and
   syncs again, and a flush drops the queue of the old one. A version that
@@ -265,13 +270,13 @@ API; everything else the app keeps is a zustand store.
     checks it (`readBackupFile`), then warns: the backup becomes the user's
     data on every device, as a new version, the current data kept as the
     version before, and changes not yet sent from other devices are
-    discarded. The warning is for the user who chose the file and the
-    account their data is bound to then (`restoreAccount`): another
-    signing in meanwhile closes it, and data bound to another account
-    since is not restored (`BackupAccountError`). Only the confirmation
-    sends it (`POST /user/restore`, over the version this copy is of: a
-    restore elsewhere since is a 409); this copy then takes up the new
-    version and syncs it. The API's reason for refusing a backup is shown
+    discarded. The warning is for the user who chose the file, and the
+    account their data is bound to and the version it is held at then
+    (`restoreTarget`): another signing in meanwhile closes it, and data
+    bound to another account since is not restored (`BackupAccountError`).
+    Only the confirmation sends it (`POST /user/restore`, over the version
+    warned about: another made active since, though a sync here took it up,
+    is a 409); this copy then takes up the new version and syncs it. The API's reason for refusing a backup is shown
     (`ApiRequestError.detail`).
   - File > Data Versions (`DataVersions.tsx`, `DataVersionsDialog.tsx`)
     lists the versions, newest first, with their origin and counts; one not
