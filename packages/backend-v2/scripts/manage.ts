@@ -111,11 +111,15 @@ export async function usageReport(
     writeFile?: (path: string, data: string) => void;
   } = {}
 ): Promise<void> {
+  // The live (not deleted) rows of each user's active data version, as the
+  // admin API counts them: a restore copies a user's rows into a new version.
+  const live =
+    'user_id = u.id AND version = u.active_version AND is_deleted = 0';
   const rows = await query(
     `SELECT u.username, u.email,
-       (SELECT COUNT(*) FROM tags_tag WHERE user_id = u.id) AS tag_count,
-       (SELECT COUNT(*) FROM text_entries_textentry WHERE user_id = u.id) AS text_entry_count,
-       (SELECT COUNT(*) FROM tags_tagtextentrythroughmodel WHERE user_id = u.id)
+       (SELECT COUNT(*) FROM tags_tag WHERE ${live}) AS tag_count,
+       (SELECT COUNT(*) FROM text_entries_textentry WHERE ${live}) AS text_entry_count,
+       (SELECT COUNT(*) FROM tags_tagtextentrythroughmodel WHERE ${live})
          AS tag_text_relationship_count
      FROM users_user u ORDER BY u.id`
   );
