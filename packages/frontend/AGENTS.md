@@ -248,9 +248,13 @@ API; everything else the app keeps is a zustand store.
     reads a backup file (any account's: data moves between accounts) and
     checks it (`readBackupFile`), then warns: all of the user's tags and
     entries are deleted (counted as this device holds them) and replaced
-    with the backup's, which cannot be undone. Only the confirmation sends
-    it (`POST /user/restore`, which makes the rows anew, with new ids); the
-    data then syncs here (the deletes come in like any others). The API's
+    with the backup's, which cannot be undone. The warning is for the user
+    who chose the file: another signing in meanwhile closes it. Only the
+    confirmation sends it (`POST /user/restore`, which makes the rows anew,
+    with new ids); the data then syncs here (the deletes come in like any
+    others). The API refuses (400 `data_restored`, dropped like any refusal)
+    every write made before the restore by its clock, so the writes queued
+    here next are made after it (`madeAfter`, the `made` cursor). The API's
     reason for refusing a backup is shown (`ApiRequestError.detail`).
   - When the queue cannot be sent or the API fails, nothing is saved or
     restored and a dialog says so. Another user's page offers neither (they

@@ -40,6 +40,12 @@ export const CODES = {
    * the request is signed in as.
    */
   userMismatch: 'user_mismatch',
+  /**
+   * A 400: a client write made (by its `Client-Updated` time) before the
+   * user's data was restored from a backup, which replaced what it changed.
+   * Clients drop it.
+   */
+  dataRestored: 'data_restored',
   serverError: 'error',
 } as const;
 

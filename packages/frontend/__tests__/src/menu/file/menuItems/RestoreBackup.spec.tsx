@@ -5,17 +5,19 @@
  * syncs here.
  */
 import {
+  CLIENT_UPDATED_HEADER,
   EXPECTED_USER_HEADER,
   EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
 import type {Backup} from '@commandsnippets/api-shared/responses';
-import {render, screen, waitFor} from '@testing-library/react';
+import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
 import {createEntry} from '../../../../../src/lib/data/writes';
+import {useAppState} from '../../../../../src/lib/state/appState';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {server} from '../../../../util/msw';
@@ -333,5 +335,61 @@ describe('Restore Backup', () => {
     expect(await screen.findByText('Not a backup')).toBeInTheDocument();
     expect(screen.queryByText('Replace all of your data?')).toBeNull();
     expect(requests).toEqual([]);
+  });
+
+  it('closes the warning when another user signs in meanwhile, restoring nothing', async () => {
+    // The admin page keeps the menu bar when the signed-in user changes.
+    const history = createMemoryHistory();
+    history.push('/admin');
+    render(<TestAppRouter history={history} />);
+    await screen.findByRole('table', {name: 'Users'});
+    const requests = restoreRequests();
+    await chooseFile(fileOf(backup));
+    await screen.findByText('Replace all of your data?');
+
+    // Another tab signs in as someone else.
+    act(() => useAppState.setState({loggedInUser: 'someone-else'}));
+
+    await waitFor(() =>
+      expect(screen.queryByText('Replace all of your data?')).toBeNull()
+    );
+    expect(document.getElementById('file-menu-restore-backup')).not.toBeNull();
+    expect(requests).toEqual([]);
+  });
+
+  it("makes the next writes after the restore, by the API's clock", async () => {
+    const later = '2099-01-01T00:00:00.000000';
+    server.use(
+      http.post(`${API}/user/restore`, () =>
+        HttpResponse.json({
+          date_restored: later,
+          tags: 1,
+          entries: 2,
+          tags_entries: 1,
+          entry_reuses: 0,
+        })
+      )
+    );
+    await renderEntries();
+    const user = await chooseFile(fileOf(backup));
+    await user.click(
+      await screen.findByRole('button', {name: 'Delete my data and restore'})
+    );
+    await screen.findByText('Backup restored');
+    const made: string[] = [];
+    server.events.on('request:start', ({request}) => {
+      const header = request.headers.get(CLIENT_UPDATED_HEADER);
+      if (request.method === 'POST' && header !== null) {
+        made.push(header);
+      }
+    });
+
+    await createEntry(syncSession(TEST_USER), 'made after', 'body');
+    await syncSession(TEST_USER).sync.flush();
+
+    expect(made.length).toBeGreaterThan(0);
+    for (const time of made) {
+      expect(time > later).toBe(true);
+    }
   });
 });

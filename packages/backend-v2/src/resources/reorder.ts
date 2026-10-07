@@ -19,7 +19,12 @@ import {
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {eachField} from '../lib/validate';
-import {changedMeanwhile, clientWriteId, WRITE_ATTEMPTS} from './lww';
+import {
+  assertReorderAfterRestore,
+  changedMeanwhile,
+  clientWriteId,
+  WRITE_ATTEMPTS,
+} from './lww';
 import {nextRevision, type RevisedResource} from './owned';
 
 /** The resource and its ordering (whose owner/touch the move honors). */
@@ -45,6 +50,7 @@ export async function reorder(
   const user = requireUser(c);
   const db = c.get('db');
   const {attributes} = await parseResource(c.req.raw, {type: options.type});
+  await assertReorderAfterRestore(c);
 
   // PrimaryKeyRelatedField validation for `top` and `bottom`: the pks'
   // format (api-shared's `reorderAttributesSchema`), then that they exist.

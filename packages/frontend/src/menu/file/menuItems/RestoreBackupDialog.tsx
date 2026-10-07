@@ -22,9 +22,13 @@ export type RestoreStep =
   | {step: 'closed'}
   /** The file chosen is not a backup. */
   | {step: 'invalid'}
-  /** The warning: the user's data now, and the backup's, to replace it. */
+  /**
+   * The warning: `username`'s data now (the user who chose the file), and
+   * the backup's, to replace it.
+   */
   | {
       step: 'confirm';
+      username: string;
       backup: Backup;
       current: {tags: number; entries: number};
     }
@@ -35,7 +39,7 @@ export type RestoreStep =
 
 interface IProps {
   state: RestoreStep;
-  onConfirm: (backup: Backup) => void;
+  onConfirm: (username: string, backup: Backup) => void;
   onClose: () => void;
 }
 
@@ -78,7 +82,7 @@ const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
   } => {
     switch (view.step) {
       case 'confirm': {
-        const {backup, current} = view;
+        const {username, backup, current} = view;
         return {
           title: t('restoreConfirmTitle'),
           body: (
@@ -123,7 +127,7 @@ const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
                 id="restoreBackupConfirm"
                 variant="outlined"
                 color="error"
-                onClick={() => onConfirm(backup)}
+                onClick={() => onConfirm(username, backup)}
                 sx={commonButtonSx}
               >
                 {t('restoreConfirm')}

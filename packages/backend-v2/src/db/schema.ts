@@ -46,6 +46,11 @@ export const users = sqliteTable(
     // When staff marked the account for deletion through the admin API, which
     // also deactivates it; NULL if it is not marked.
     date_marked_for_deletion: text('date_marked_for_deletion'),
+    // When the user's data was last restored from a backup (the API's write
+    // clock, resources/restore.ts); NULL if never. A client write made
+    // before it is refused (resources/lww.ts): it would change what the
+    // restore replaced.
+    date_restored: text('date_restored'),
   },
   table => [
     check('users_user_username_length', sql`length(${table.username}) <= 150`),

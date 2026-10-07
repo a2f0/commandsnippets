@@ -2,12 +2,21 @@ import {
   type Backup,
   backupSchema,
   CLIENT_UPDATED_HEADER,
+  CLIENT_WRITE_ID_HEADER,
   restoreResultSchema,
 } from '@commandsnippets/api-shared';
 import {and, asc, eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
-import type {User} from '../../src/db/schema';
-import {entryReuses, tags, tagsEntries, textEntries} from '../../src/db/schema';
+import {
+  entryReuses,
+  type Tag,
+  type TextEntry,
+  tags,
+  tagsEntries,
+  textEntries,
+  type User,
+  users,
+} from '../../src/db/schema';
 import {now} from '../../src/lib/clock';
 import {
   CHUNK_BYTES,
@@ -131,6 +140,7 @@ describe('POST /api/v1/user/restore', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(restoreResultSchema.parse(await json(response))).toEqual({
+      date_restored: expect.any(String),
       tags: 2,
       entries: 3,
       tags_entries: 3,
@@ -406,31 +416,196 @@ describe('POST /api/v1/user/restore', () => {
     expect([...byId.values()].filter(deleted => !deleted)).toHaveLength(3);
   });
 
-  it('wins over a write queued before it on another device', async () => {
-    const [entry] = await liveEntries(base.user1);
-    const before = new Date(Date.now() - 60_000).toISOString();
-    const backup = await backupOf(base.user1Client);
-    await restore(base.user1Client, backup);
+  describe('refuses client writes made before it', () => {
+    const minuteAgo = () => new Date(Date.now() - 60_000).toISOString();
+    let entry: TextEntry;
+    let tag: Tag;
 
+    beforeEach(async () => {
+      const [firstEntry] = await liveEntries(base.user1);
+      const [firstTag] = await liveTags(base.user1);
+      if (firstEntry === undefined || firstTag === undefined) {
+        throw new Error('the user has data');
+      }
+      entry = firstEntry;
+      tag = firstTag;
+    });
+
+    /** `send` made a minute ago, after a restore made now: refused. */
+    async function refusedAfterRestore(
+      send: (headers: Record<string, string>) => Promise<Response>
+    ) {
+      const made = minuteAgo();
+      await restore(base.user1Client, await backupOf(base.user1Client));
+      const response = await send({[CLIENT_UPDATED_HEADER]: made});
+      expect(response.status).toBe(400);
+      const [error] = (await json(response)).errors;
+      expect(error.code).toBe('data_restored');
+      return response;
+    }
+
+    it('creates, which would bring back what it replaced', async () => {
+      const entriesBefore = (await liveEntries(base.user1)).length;
+      await refusedAfterRestore(headers =>
+        base.user1Client.request(
+          'POST',
+          '/api/v1/entries',
+          {
+            data: {
+              type: 'TextEntry',
+              attributes: {subject: 'made offline', body: 'body'},
+            },
+          },
+          headers
+        )
+      );
+      await refusedAfterRestore(headers =>
+        base.user1Client.request(
+          'POST',
+          '/api/v1/tags',
+          {data: {type: 'Tag', attributes: {name: 'made-offline'}}},
+          headers
+        )
+      );
+      const restored = await liveEntries(base.user1);
+      expect(restored).toHaveLength(entriesBefore);
+      expect(restored.map(row => row.subject)).not.toContain('made offline');
+      expect((await liveTags(base.user1)).map(row => row.name)).not.toContain(
+        'made-offline'
+      );
+    });
+
+    it('edits and deletes of the rows it deleted', async () => {
+      await refusedAfterRestore(headers =>
+        base.user1Client.request(
+          'PATCH',
+          `/api/v1/entries/${entry.id}`,
+          {
+            data: {
+              type: 'TextEntry',
+              id: String(entry.id),
+              attributes: {subject: 'edited offline', is_deleted: false},
+            },
+          },
+          headers
+        )
+      );
+      const [row] = await db()
+        .select()
+        .from(textEntries)
+        .where(eq(textEntries.id, entry.id));
+      expect(row).toMatchObject({is_deleted: true, subject: entry.subject});
+      await refusedAfterRestore(headers =>
+        base.user1Client.request(
+          'DELETE',
+          `/api/v1/tags/${tag.id}`,
+          undefined,
+          headers
+        )
+      );
+      // The tag of the name came back in place, and stays.
+      const [kept] = await db().select().from(tags).where(eq(tags.id, tag.id));
+      expect(kept?.is_deleted).toBe(false);
+    });
+
+    it('reorders that name when they were made', async () => {
+      const [top, bottom] = await liveTags(base.user1);
+      await refusedAfterRestore(headers =>
+        base.user1Client.request(
+          'POST',
+          '/api/v1/tags/reorder',
+          {
+            data: {
+              type: 'Tag',
+              attributes: {top: String(bottom?.id), bottom: String(top?.id)},
+            },
+          },
+          headers
+        )
+      );
+      expect((await liveTags(base.user1)).map(row => row.id)).toEqual([
+        top?.id,
+        bottom?.id,
+      ]);
+    });
+
+    it('retries of a write first sent before it', async () => {
+      const writeId = 'queued-before-restore';
+      const send = () =>
+        base.user1Client.request(
+          'POST',
+          '/api/v1/entries',
+          {
+            data: {
+              type: 'TextEntry',
+              attributes: {subject: 'retried', body: 'body'},
+            },
+          },
+          {[CLIENT_WRITE_ID_HEADER]: writeId}
+        );
+      expect((await send()).status).toBe(201);
+      await restore(base.user1Client, await backupOf(base.user1Client));
+      const response = await send();
+      expect(response.status).toBe(400);
+      expect((await json(response)).errors[0].code).toBe('data_restored');
+    });
+
+    it('but not writes made after it', async () => {
+      await restore(base.user1Client, await backupOf(base.user1Client));
+      const response = await base.user1Client.request(
+        'POST',
+        '/api/v1/entries',
+        {
+          data: {
+            type: 'TextEntry',
+            attributes: {subject: 'made after', body: 'body'},
+          },
+        },
+        {[CLIENT_UPDATED_HEADER]: new Date().toISOString()}
+      );
+      expect(response.status).toBe(201);
+      expect((await liveEntries(base.user1)).map(row => row.subject)).toContain(
+        'made after'
+      );
+    });
+  });
+
+  it("is made as of the API's clock, whatever time the request names", async () => {
+    const old = '2020-01-01T00:00:00.000000';
     const response = await base.user1Client.request(
+      'POST',
+      '/api/v1/user/restore',
+      await backupOf(base.user1Client),
+      {[CLIENT_UPDATED_HEADER]: old}
+    );
+    expect(response.status).toBe(200);
+    const {date_restored: restored} = restoreResultSchema.parse(
+      await json(response)
+    );
+    expect(restored > old).toBe(true);
+    const [user] = await db()
+      .select()
+      .from(users)
+      .where(eq(users.id, base.user1.id));
+    expect(user?.date_restored).toBe(restored);
+    for (const row of await liveEntries(base.user1)) {
+      expect(row.client_updated).toBe(restored);
+    }
+    // A write made between the time named and the restore changes nothing.
+    const [entry] = await liveEntries(base.user1);
+    const edit = await base.user1Client.request(
       'PATCH',
       `/api/v1/entries/${entry?.id}`,
       {
         data: {
           type: 'TextEntry',
           id: String(entry?.id),
-          attributes: {subject: 'edited offline', is_deleted: false},
+          attributes: {subject: 'between'},
         },
       },
-      {[CLIENT_UPDATED_HEADER]: before}
+      {[CLIENT_UPDATED_HEADER]: '2021-01-01T00:00:00'}
     );
-
-    expect(response.status).toBe(200);
-    const [row] = await db()
-      .select()
-      .from(textEntries)
-      .where(eq(textEntries.id, entry?.id ?? 0));
-    expect(row).toMatchObject({is_deleted: true, subject: entry?.subject});
+    expect(edit.status).toBe(400);
   });
 
   it('is refused without a session', async () => {

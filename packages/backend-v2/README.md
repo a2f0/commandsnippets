@@ -313,8 +313,14 @@ changes. Then, in one D1 batch (all of it or none):
   tag the user has (deleted tags keep their ranks), in the backup's order,
   and taggings after their tag's, in theirs. The counters, `date_last_used`
   and `reused_date` follow from the rows made.
-- Every row written counts as a client write made now (`client_updated`),
-  so a write queued before the restore on another device changes nothing.
+- It is made as of now by the API's write clock, whatever time the request
+  names: every row written counts as a client write made then
+  (`client_updated`), and so does the user's `date_restored`
+  (`0015_user_date_restored.sql`), which the answer returns. From then on a
+  client write made before it (queued offline on another device, say) is a
+  400 `data_restored`, which clients drop (`lww.ts`): no create, edit,
+  delete or reorder made before the restore brings back or changes what it
+  replaced. The web app makes its next writes after the restore's time.
 
 Rows go in as JSON (`json_each`), in runs of at most 1 MB per statement,
 since D1 caps a bound value at 2 MB.

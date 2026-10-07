@@ -95,10 +95,18 @@ describe('backups', () => {
 
 describe('restore results', () => {
   test('count what the restore made', () => {
-    const result = {tags: 1, entries: 2, tags_entries: 3, entry_reuses: 0};
+    const result = {
+      date_restored: ts,
+      tags: 1,
+      entries: 2,
+      tags_entries: 3,
+      entry_reuses: 0,
+    };
     expect(parsed(restoreResultSchema, result)).toEqual(result);
     expect(
       failures(restoreResultSchema, {...result, entries: -1})
     ).toHaveLength(1);
+    const {date_restored: _, ...undated} = result;
+    expect(failures(restoreResultSchema, undated)).toHaveLength(1);
   });
 });

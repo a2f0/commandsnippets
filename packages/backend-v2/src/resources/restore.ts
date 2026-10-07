@@ -11,8 +11,10 @@
  * names are unique per user. Rows keep the backup's `date_created`. Tags
  * rank after every tag the user has (deleted tags keep their ranks), in the
  * backup's order, and taggings after their tag's, in theirs. Every row
- * written counts as a client write made now (`client_updated`), so a write
- * queued before the restore on another device changes nothing.
+ * written counts as a client write made now by the API's clock
+ * (`client_updated`), and the user's `date_restored` is set to that time: a
+ * client write made before it (queued offline on another device, say) is
+ * refused (`lww.ts`), so none brings back or changes what was replaced.
  */
 import {
   type Backup,
@@ -31,12 +33,12 @@ import {Hono} from 'hono';
 import * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
 import type {Db} from '../db/client';
-import {entryReuses, tags, tagsEntries, textEntries} from '../db/schema';
+import {entryReuses, tags, tagsEntries, textEntries, users} from '../db/schema';
 import type {AppEnv} from '../env';
 import {ApiError, parseError} from '../lib/errors';
 import {assertJsonMediaType} from '../lib/jsonapi';
 import {searchColumns} from '../lib/search';
-import {clientUpdated} from './lww';
+import {writeClock} from './lww';
 import {
   nextRevision,
   tagResource,
@@ -331,6 +333,12 @@ function restoreStatements(
   )`;
   const deleted = {is_deleted: true, client_updated: at} as const;
   return [
+    // Client writes made before now are refused from here on (`lww.ts`).
+    db
+      .update(users)
+      .set({date_restored: at})
+      .where(sql`${users.id} = ${userId}`)
+      .getSQL(),
     // Taggings first: the entries' deletes then advance no tagging.
     db
       .update(tagsEntries)
@@ -454,8 +462,13 @@ export async function restoreInto(
 restoreRoutes.post('/', async c => {
   const user = requireUser(c);
   const restore = prepareRestore(await readBackup(c.req.raw));
-  await restoreInto(c.get('db'), user.id, await clientUpdated(c), restore);
+  const db = c.get('db');
+  // The API's time, whatever the request says: every row it writes, and the
+  // cutoff for client writes, are as of now.
+  const at = await writeClock(db);
+  await restoreInto(db, user.id, at, restore);
   const result: RestoreResult = {
+    date_restored: at,
     tags: restore.tags.length,
     entries: restore.entries.length,
     tags_entries: restore.taggings.length,

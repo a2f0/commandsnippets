@@ -72,11 +72,14 @@ export const backupSchema = z.object({
 });
 
 /**
- * `POST /api/v1/user/restore`'s answer: how many of each the restore made.
- * Its request body is a backup (`backupSchema`), which replaces all of the
+ * `POST /api/v1/user/restore`'s answer: when the restore was made (the
+ * API's clock; client writes made before it are refused, so a client that
+ * restores makes its next ones after it), and how many of each it made. Its
+ * request body is a backup (`backupSchema`), which replaces all of the
  * requester's data.
  */
 export const restoreResultSchema = z.object({
+  date_restored: timestampSchema,
   tags: countSchema,
   entries: countSchema,
   tags_entries: countSchema,

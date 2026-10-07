@@ -1265,6 +1265,7 @@ function restoreBackup(backup: Backup): RestoreResult {
     };
   }
   return {
+    date_restored: now(),
     tags: backup.tags.length,
     entries: backup.entries.length,
     tags_entries: backup.tags_entries.length,

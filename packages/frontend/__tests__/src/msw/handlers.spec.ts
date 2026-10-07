@@ -973,6 +973,7 @@ describe('POST /user/restore', () => {
 
     expect(status).toBe(200);
     expect(restoreResultSchema.parse(json)).toEqual({
+      date_restored: expect.any(String),
       tags: 2,
       entries: 1,
       tags_entries: 1,

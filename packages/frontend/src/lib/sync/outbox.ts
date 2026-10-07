@@ -134,6 +134,25 @@ export async function nextMade(
   return made;
 }
 
+/**
+ * Make every write queued in `owner`'s data from now on after `time` (the
+ * API's fixed-width form), whatever this device's clock says: after a
+ * restore, which the API stamps by its own clock and refuses the writes
+ * made before.
+ */
+export async function madeAfter(
+  db: CommandsnippetsDatabase,
+  owner: string,
+  time: string
+): Promise<void> {
+  await db.transaction('rw', db.cursors, async () => {
+    const last = (await db.cursors.get([owner, MADE_KEY]))?.after;
+    if (last === undefined || last < time) {
+      await db.cursors.put({owner, key: MADE_KEY, after: time});
+    }
+  });
+}
+
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
   /** These calls, naming the queued write `writeId` (`Client-Write-Id`). */

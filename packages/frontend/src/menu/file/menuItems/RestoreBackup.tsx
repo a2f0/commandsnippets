@@ -8,7 +8,7 @@ import {
   readBackupFile,
   restoreBackup,
 } from '../../../lib/data/backup';
-import {useAppConfig} from '../../../lib/state/appState';
+import {useAppState} from '../../../lib/state/appState';
 import {StyledMenuItem} from '../../StyledMenuItem';
 import {RestoreBackupDialog, type RestoreStep} from './RestoreBackupDialog';
 
@@ -24,7 +24,6 @@ interface IProps {
  */
 const RestoreBackup = ({onClose}: IProps) => {
   const {t} = useTypedTranslation('menu');
-  const appConfig = useAppConfig();
   const input = React.useRef<HTMLInputElement>(null);
   const [state, setState] = React.useState<RestoreStep>({step: 'closed'});
 
@@ -33,30 +32,42 @@ const RestoreBackup = ({onClose}: IProps) => {
     input.current?.click();
   };
 
+  const loggedInUser = useAppState(appState => appState.loggedInUser);
+  // The warning is for the user who chose the file: another signed in
+  // meanwhile (in another tab) closes it.
+  React.useEffect(() => {
+    setState(current =>
+      current.step === 'confirm' && current.username !== loggedInUser
+        ? {step: 'closed'}
+        : current
+    );
+  }, [loggedInUser]);
+
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     // The same file can be chosen again.
     event.target.value = '';
-    const username = appConfig.loggedInUser;
+    const username = useAppState.getState().loggedInUser;
     if (file === undefined || username === null) {
       return;
     }
     try {
       const backup = readBackupFile(await file.text());
-      setState({
-        step: 'confirm',
-        backup,
-        current: await liveCounts(username),
-      });
+      const current = await liveCounts(username);
+      setState(
+        useAppState.getState().loggedInUser === username
+          ? {step: 'confirm', username, backup, current}
+          : {step: 'closed'}
+      );
     } catch (error: unknown) {
       console.error('ERROR: not a backup:', error);
       setState({step: 'invalid'});
     }
   };
 
-  const handleConfirm = (backup: Backup) => {
-    const username = appConfig.loggedInUser;
-    if (username === null) {
+  const handleConfirm = (username: string, backup: Backup) => {
+    // Only into the account the user was warned about.
+    if (useAppState.getState().loggedInUser !== username) {
       setState({step: 'closed'});
       return;
     }

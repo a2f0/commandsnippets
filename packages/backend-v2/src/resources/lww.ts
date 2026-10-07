@@ -20,7 +20,8 @@ import {and, eq, type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
-import {clientWrites} from '../db/schema';
+import type {Db} from '../db/client';
+import {clientWrites, users} from '../db/schema';
 import type {AppEnv} from '../env';
 import {formatMicros, now, parseDateTime} from '../lib/clock';
 import {ApiError, validationError} from '../lib/errors';
@@ -55,6 +56,59 @@ export function clientWriteId(c: Context<AppEnv>): string | undefined {
 }
 
 /**
+ * Now by the API's write clock (`tick`), whatever the request says: for a
+ * write made by the API itself (a restore), which no client's time decides.
+ */
+export async function writeClock(db: Db): Promise<string> {
+  const {micros} = await db.get<{micros: number}>(tick);
+  return formatMicros(micros);
+}
+
+/**
+ * A 400 (`data_restored`) unless a client write made at `made` came after
+ * the user's last restore (`date_restored`, read now): one made before it
+ * (queued offline, say) would change what the restore replaced, or make
+ * again what it deleted, so clients drop it. Made times are the clients',
+ * as last writer wins compares them; a client that restores raises its own
+ * past the restore's.
+ */
+async function assertMadeAfterRestore(
+  c: Context<AppEnv>,
+  made: string
+): Promise<void> {
+  const user = requireUser(c);
+  const [row] = await c
+    .get('db')
+    .select({restored: users.date_restored})
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+  const restored = row?.restored ?? null;
+  if (restored !== null && made < restored) {
+    throw ApiError.of(
+      400,
+      'This write was made before the data was restored from a backup, which replaced it.',
+      CODES.dataRestored
+    );
+  }
+}
+
+/**
+ * The time a reorder names (`CLIENT_UPDATED_HEADER`), when it names one,
+ * checked against the user's last restore (`assertMadeAfterRestore`).
+ * Reorders are not otherwise guarded by when they were made.
+ */
+export async function assertReorderAfterRestore(
+  c: Context<AppEnv>
+): Promise<void> {
+  const header = c.req.header(CLIENT_UPDATED_HEADER);
+  const at = header === undefined ? null : parseDateTime(header);
+  if (at !== null) {
+    await assertMadeAfterRestore(c, at);
+  }
+}
+
+/**
  * When the request's write was made: the header's time, but never later than
  * now by the API's write clock (`tick`: a device whose clock runs ahead
  * cannot win every later write), or that now when the request names none.
@@ -64,7 +118,8 @@ export function clientWriteId(c: Context<AppEnv>): string | undefined {
  * a lost answer, or after a failure, or alongside the first attempt, counts
  * as the write did, never beating a write made in between nor losing to one
  * made before. Its time is followed by its id (`<time>|<id>`), which orders
- * two writes of the same time. A malformed time or write id is a 400.
+ * two writes of the same time. A malformed time or write id is a 400, and so
+ * is a write made before the user's last restore (`assertMadeAfterRestore`).
  */
 export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   const header = c.req.header(CLIENT_UPDATED_HEADER);
@@ -75,9 +130,10 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   const writeId = clientWriteId(c);
   const db = c.get('db');
   if (writeId === undefined) {
-    const {micros} = await db.get<{micros: number}>(tick);
-    const current = formatMicros(micros);
-    return at !== null && at < current ? at : current;
+    const current = await writeClock(db);
+    const made = at !== null && at < current ? at : current;
+    await assertMadeAfterRestore(c, made);
+    return made;
   }
   const user = requireUser(c);
   const counted =
@@ -109,6 +165,7 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   if (recorded === undefined) {
     throw new Error(`write ${writeId} was not recorded`);
   }
+  await assertMadeAfterRestore(c, recorded.made);
   // Two writes of the same time (from two devices) are ordered by their ids,
   // whichever arrives first: the time is fixed-width, so the two compare as
   // strings in that order, and a retry never wins a tie its write lost.

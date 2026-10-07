@@ -6,6 +6,8 @@
  * account's. Either way the writes queued here are sent first: a backup then
  * holds them, and a restore is not changed by them afterwards.
  */
+
+import {parseDateTime} from '@commandsnippets/api-shared/datetime';
 import {
   type Backup,
   backupSchema,
@@ -13,6 +15,7 @@ import {
 } from '@commandsnippets/api-shared/responses';
 import {apiClient} from '../api/apiClient';
 import {describeIssues} from '../api/parseResponse';
+import {madeAfter} from '../sync/outbox';
 import {syncSession} from '../sync/session';
 import {boundAccount, type SyncEngine} from '../sync/sync';
 
@@ -139,7 +142,8 @@ export async function liveCounts(
 /**
  * Replace all of `username`'s data with `backup`'s (`POST /user/restore`, as
  * their account, `flushedAccount`), then sync it here. Their queued writes
- * are sent first: sent after it, they would change the data restored.
+ * are sent first: the API refuses any made before the restore. The writes
+ * queued here next are made after it (`madeAfter`).
  * Throws when they cannot be sent (restoring nothing) or the restore fails
  * (`ApiRequestError`, with the API's `detail` when it refused the backup).
  */
@@ -147,11 +151,19 @@ export async function restoreBackup(
   username: string,
   backup: Backup
 ): Promise<RestoreResult> {
+  const {db} = syncSession(username);
   const {api, sync} = await flushedAccount(
     username,
     'Failed to restore backup'
   );
   const result = await api.restoreBackup(backup);
+  // The API refuses writes made before the restore, by its clock: the next
+  // ones here are made after it, however far behind this device's clock is.
+  await madeAfter(
+    db,
+    username,
+    parseDateTime(result.date_restored) ?? result.date_restored
+  );
   // The restore is made: a sync that fails now is the page's to retry.
   await sync.syncAll().catch((error: unknown) => {
     console.warn('WARNING: sync after restore failed:', error);

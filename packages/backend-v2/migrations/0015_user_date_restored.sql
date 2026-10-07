@@ -1,0 +1,1 @@
+ALTER TABLE `users_user` ADD `date_restored` text;
