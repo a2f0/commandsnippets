@@ -17,6 +17,7 @@ import invariant from 'invariant';
 import {HttpResponse, http} from 'msw';
 import {vi} from 'vitest';
 import {createEntry} from '../../../../../src/lib/data/writes';
+import {OWNER_ID_KEY} from '../../../../../src/lib/db/database';
 import {useAppState} from '../../../../../src/lib/state/appState';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
@@ -274,12 +275,11 @@ describe('Restore Backup', () => {
     );
     await createEntry(syncSession(TEST_USER), 'unsent-subject', 'body');
 
-    const user = await chooseFile(fileOf(backup));
-    await user.click(
-      await screen.findByRole('button', {name: 'Delete my data and restore'})
-    );
+    await chooseFile(fileOf(backup));
 
+    // Before any warning: the queue is sent when the file is chosen.
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
+    expect(screen.queryByText('Replace all of your data?')).toBeNull();
     expect(requests).toEqual([]);
     expect(error).toHaveBeenCalled();
     expect(await liveSubjects()).toContain('entry-1-subject');
@@ -428,5 +428,33 @@ describe('Restore Backup', () => {
     for (const time of made) {
       expect(time > later).toBe(true);
     }
+  });
+
+  it('restores only into the account the user was warned about', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await renderEntries();
+    const {db} = syncSession(TEST_USER);
+    const bindTo = (account: string) =>
+      db.cursors.put({owner: TEST_USER, key: OWNER_ID_KEY, after: account});
+    // Warned about the data of the account it is bound to then...
+    await bindTo('99');
+    const subjects = await liveSubjects();
+    const requests = restoreRequests();
+    const user = await chooseFile(fileOf(backup));
+    await screen.findByText('Replace all of your data?');
+
+    // ...which another account of the same username replaced since.
+    await bindTo('1');
+    await user.click(
+      screen.getByRole('button', {name: 'Delete my data and restore'})
+    );
+
+    expect(await screen.findByText('Restore failed')).toBeInTheDocument();
+    expect(requests).toEqual([]);
+    expect(await liveSubjects()).toEqual(subjects);
+    expect(error).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({name: 'BackupAccountError'})
+    );
   });
 });

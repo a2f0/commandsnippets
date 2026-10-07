@@ -140,8 +140,23 @@ export async function liveCounts(
 }
 
 /**
- * Replace all of `username`'s data with `backup`'s (`POST /user/restore`, as
- * their account, `flushedAccount`), then sync it here. Their queued writes
+ * The account `username`'s data is bound to (`flushedAccount`, which sends
+ * their queued writes and binds it): the one a restore is to replace, whose
+ * data the user is warned about.
+ */
+export async function restoreAccount(username: string): Promise<string> {
+  const {accountId} = await flushedAccount(
+    username,
+    'Failed to restore backup'
+  );
+  return accountId;
+}
+
+/**
+ * Replace all of account `accountId`'s data (`username`'s) with `backup`'s
+ * (`POST /user/restore`, as that account: refused when the data here is
+ * bound to another since, though of the same username, or the tab is signed
+ * in as another), then sync it here. Their queued writes
  * are sent first: the API refuses any made before the restore. The writes
  * queued here next are made after it (`madeAfter`).
  * Throws when they cannot be sent (restoring nothing) or the restore fails
@@ -149,14 +164,17 @@ export async function liveCounts(
  */
 export async function restoreBackup(
   username: string,
+  accountId: string,
   backup: Backup
 ): Promise<RestoreResult> {
+  const failure = 'Failed to restore backup';
   const {db} = syncSession(username);
-  const {api, sync} = await flushedAccount(
-    username,
-    'Failed to restore backup'
-  );
-  const result = await api.restoreBackup(backup);
+  const bound = await flushedAccount(username, failure);
+  // Only into the account the user was warned about.
+  if (bound.accountId !== accountId) {
+    throw new BackupAccountError(failure, username);
+  }
+  const result = await bound.api.restoreBackup(backup);
   // The API refuses writes made before the restore, by its clock: the next
   // ones here are made after it, however far behind this device's clock is.
   await madeAfter(
@@ -165,7 +183,7 @@ export async function restoreBackup(
     parseDateTime(result.date_restored) ?? result.date_restored
   );
   // The restore is made: a sync that fails now is the page's to retry.
-  await sync.syncAll().catch((error: unknown) => {
+  await bound.sync.syncAll().catch((error: unknown) => {
     console.warn('WARNING: sync after restore failed:', error);
   });
   return result;

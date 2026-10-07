@@ -82,19 +82,39 @@ async function assertMadeAfterRestore(
   }
 }
 
+/** The time a reorder names (`CLIENT_UPDATED_HEADER`), if it names one. */
+function reorderMade(c: Context<AppEnv>): string | null {
+  const header = c.req.header(CLIENT_UPDATED_HEADER);
+  return header === undefined ? null : parseDateTime(header);
+}
+
 /**
- * The time a reorder names (`CLIENT_UPDATED_HEADER`), when it names one,
- * checked against the user's last restore (`assertMadeAfterRestore`).
- * Reorders are not otherwise guarded by when they were made.
+ * The time a reorder names, when it names one, checked against the user's
+ * last restore (`assertMadeAfterRestore`). Reorders are not otherwise
+ * guarded by when they were made.
  */
 export async function assertReorderAfterRestore(
   c: Context<AppEnv>
 ): Promise<void> {
-  const header = c.req.header(CLIENT_UPDATED_HEADER);
-  const at = header === undefined ? null : parseDateTime(header);
-  if (at !== null) {
-    await assertMadeAfterRestore(c, at);
+  const made = reorderMade(c);
+  if (made !== null) {
+    await assertMadeAfterRestore(c, made);
   }
+}
+
+/**
+ * The condition that no restore came after the time a reorder names, for
+ * its move's statement (`OrderedSpec.guard`), so one committing after
+ * `assertReorderAfterRestore` still stops it; none when it names no time.
+ */
+export function reorderRestoreGuard(
+  c: Context<AppEnv>,
+  userId: number
+): SQL | undefined {
+  const made = reorderMade(c);
+  return made === null
+    ? undefined
+    : sql`NOT EXISTS (SELECT 1 FROM ${users} WHERE ${users.id} = ${userId} AND ${users.date_restored} > ${made})`;
 }
 
 /**

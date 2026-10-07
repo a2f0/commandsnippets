@@ -249,7 +249,10 @@ API; everything else the app keeps is a zustand store.
     checks it (`readBackupFile`), then warns: all of the user's tags and
     entries are deleted (counted as this device holds them) and replaced
     with the backup's, which cannot be undone. The warning is for the user
-    who chose the file: another signing in meanwhile closes it. Only the
+    who chose the file and the account their data is bound to then
+    (`restoreAccount`, which sends the queue first): another signing in
+    meanwhile closes it, and data bound to another account since is not
+    restored (`BackupAccountError`). Only the
     confirmation sends it (`POST /user/restore`, which makes the rows anew,
     with new ids); the data then syncs here (the deletes come in like any
     others). The API refuses (400 `data_restored`, dropped like any refusal)

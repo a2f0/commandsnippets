@@ -325,9 +325,10 @@ changes. Then, in one D1 batch (all of it or none):
   what it replaced. `lww.ts` checks it first; the triggers of
   `0016_restore_cutoff.sql` refuse a create, edit or delete in its own
   statement (its `client_updated` older than the cutoff), so none lands
-  after a restore that commits meanwhile. Reorders, which no time guards,
-  are checked first only. The web app makes its writes after the cutoff
-  once it knows it (the restore's answer, or `GET /user` at each sync).
+  after a restore that commits meanwhile. A reorder that names when it was
+  made is refused in its move the same way (`OrderedSpec.guard`). The web
+  app makes its writes after the cutoff once it knows it (the restore's
+  answer, or `GET /user` at each sync).
 
 Rows go in as JSON (`json_each`), in runs of at most 1 MB per statement,
 since D1 caps a bound value at 2 MB.

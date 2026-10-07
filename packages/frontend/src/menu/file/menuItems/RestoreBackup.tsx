@@ -6,6 +6,7 @@ import {ApiRequestError} from '../../../lib/api/apiClient';
 import {
   liveCounts,
   readBackupFile,
+  restoreAccount,
   restoreBackup,
 } from '../../../lib/data/backup';
 import {useAppState} from '../../../lib/state/appState';
@@ -51,28 +52,41 @@ const RestoreBackup = ({onClose}: IProps) => {
     if (file === undefined || username === null) {
       return;
     }
+    let backup: Backup;
     try {
-      const backup = readBackupFile(await file.text());
-      const current = await liveCounts(username);
-      setState(
-        useAppState.getState().loggedInUser === username
-          ? {step: 'confirm', username, backup, current}
-          : {step: 'closed'}
-      );
+      backup = readBackupFile(await file.text());
     } catch (error: unknown) {
       console.error('ERROR: not a backup:', error);
       setState({step: 'invalid'});
+      return;
+    }
+    try {
+      // The account the warning is about, and only it is restored.
+      const accountId = await restoreAccount(username);
+      const current = await liveCounts(username);
+      setState(
+        useAppState.getState().loggedInUser === username
+          ? {step: 'confirm', username, accountId, backup, current}
+          : {step: 'closed'}
+      );
+    } catch (error: unknown) {
+      console.error('ERROR: backup restore failed:', error);
+      setState({step: 'failed', detail: undefined});
     }
   };
 
-  const handleConfirm = (username: string, backup: Backup) => {
+  const handleConfirm = (
+    username: string,
+    accountId: string,
+    backup: Backup
+  ) => {
     // Only into the account the user was warned about.
     if (useAppState.getState().loggedInUser !== username) {
       setState({step: 'closed'});
       return;
     }
     setState({step: 'restoring'});
-    restoreBackup(username, backup)
+    restoreBackup(username, accountId, backup)
       .then(result => setState({step: 'done', result}))
       .catch((error: unknown) => {
         console.error('ERROR: backup restore failed:', error);

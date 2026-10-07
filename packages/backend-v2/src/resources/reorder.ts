@@ -23,6 +23,7 @@ import {
   assertReorderAfterRestore,
   changedMeanwhile,
   clientWriteId,
+  reorderRestoreGuard,
   WRITE_ATTEMPTS,
 } from './lww';
 import {nextRevision, type RevisedResource} from './owned';
@@ -96,61 +97,76 @@ export async function reorder(
     throw validationError('top and bottom must share the same ordering scope.');
   }
 
-  const model = new OrderedModel(db, options);
-  const writeId = clientWriteId(c);
-  if (writeId === undefined) {
-    // Every row the move touches gets the requester's next revision
-    // (lib/revision).
-    await model.above(top, bottom, nextRevision(options, user.id));
-    return c.body(null, 200);
-  }
-  // A reorder the client names is made once: a retry after a lost answer
-  // never moves the row again, over a move made since (another device's).
-  // It is recorded in the transaction that makes it: with its move, or, in
-  // place already, with seeing so; a concurrent attempt's record then fails
-  // (a unique violation), undoing what that attempt did.
-  const applied = async () =>
-    (
-      await db
-        .select({id: clientWrites.write_id})
-        .from(clientWrites)
-        .where(
-          and(
-            eq(clientWrites.user_id, user.id),
-            eq(clientWrites.write_id, writeId)
-          )
-        )
-        .limit(1)
-    ).length > 0;
-  const timestamp = now();
-  const recordWhere = (condition: SQL) =>
-    sql`INSERT INTO sync_clientwrite (user_id, write_id, made, date_created)
-      SELECT ${user.id}, ${writeId}, ${timestamp}, ${timestamp}
-      WHERE ${condition}`;
-  for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
-    if (await applied()) {
+  // The cutoff of a restore, checked above, is checked again in the move's
+  // own statement: a restore committing meanwhile stops it.
+  const guard = reorderRestoreGuard(c, user.id);
+  const model = new OrderedModel(
+    db,
+    guard === undefined ? options : {...options, guard}
+  );
+  const moved = async (): Promise<Response> => {
+    const writeId = clientWriteId(c);
+    if (writeId === undefined) {
+      // Every row the move touches gets the requester's next revision
+      // (lib/revision).
+      await model.above(top, bottom, nextRevision(options, user.id));
       return c.body(null, 200);
     }
-    try {
-      const inPlace = await db.run(
-        recordWhere(model.directlyAbove(top, bottom))
-      );
-      if (inPlace.meta.changes > 0) {
+    // A reorder the client names is made once: a retry after a lost answer
+    // never moves the row again, over a move made since (another device's).
+    // It is recorded in the transaction that makes it: with its move, or, in
+    // place already, with seeing so; a concurrent attempt's record then fails
+    // (a unique violation), undoing what that attempt did.
+    const applied = async () =>
+      (
+        await db
+          .select({id: clientWrites.write_id})
+          .from(clientWrites)
+          .where(
+            and(
+              eq(clientWrites.user_id, user.id),
+              eq(clientWrites.write_id, writeId)
+            )
+          )
+          .limit(1)
+      ).length > 0;
+    const timestamp = now();
+    const recordWhere = (condition: SQL) =>
+      sql`INSERT INTO sync_clientwrite (user_id, write_id, made, date_created)
+        SELECT ${user.id}, ${writeId}, ${timestamp}, ${timestamp}
+        WHERE ${condition}`;
+    for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
+      if (await applied()) {
         return c.body(null, 200);
       }
-      await model.above(
-        top,
-        bottom,
-        nextRevision(options, user.id),
-        recordWhere(sql`changes() > 0`)
-      );
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        return c.body(null, 200);
+      try {
+        const inPlace = await db.run(
+          recordWhere(model.directlyAbove(top, bottom))
+        );
+        if (inPlace.meta.changes > 0) {
+          return c.body(null, 200);
+        }
+        await model.above(
+          top,
+          bottom,
+          nextRevision(options, user.id),
+          recordWhere(sql`changes() > 0`)
+        );
+      } catch (error) {
+        if (isUniqueViolation(error)) {
+          return c.body(null, 200);
+        }
+        throw error;
       }
-      throw error;
+      // Nothing moved (in place by then): recorded as such next.
     }
-    // Nothing moved (in place by then): recorded as such next.
+    throw changedMeanwhile('ordering');
+  };
+  try {
+    return await moved();
+  } catch (error) {
+    // The guard failed: the restore that came meanwhile is the reason.
+    await assertReorderAfterRestore(c);
+    throw error;
   }
-  throw changedMeanwhile('ordering');
 }

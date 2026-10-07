@@ -813,6 +813,42 @@ describe('the restore cutoff', () => {
     expect(subjects).not.toContain('made offline');
   });
 
+  it('refuses a stale reorder a restore lands under, in its move', async () => {
+    const made = new Date(Date.now() - 60_000).toISOString();
+    const backup = await backupOf(base.user1Client);
+    const [top, bottom] = await liveTags(base.user1);
+    if (top === undefined || bottom === undefined) {
+      throw new Error('the user has two tags');
+    }
+    // The restore commits after the reorder is checked, before it moves.
+    const raced = new ApiClient(
+      await tokenFor(base.user1.id),
+      raceBeforeStatement(/^\s*update "tags_tag"\s+set "order"/i, () =>
+        restore(base.user1Client, backup)
+      )
+    );
+
+    const response = await raced.request(
+      'POST',
+      '/api/v1/tags/reorder',
+      {
+        data: {
+          type: 'Tag',
+          attributes: {top: String(bottom.id), bottom: String(top.id)},
+        },
+      },
+      {[CLIENT_UPDATED_HEADER]: made}
+    );
+
+    expect(response.status).toBe(400);
+    expect((await json(response)).errors[0].code).toBe('data_restored');
+    // The tags came back in place, in the backup's order, and stay so.
+    expect((await liveTags(base.user1)).map(row => row.id)).toEqual([
+      top.id,
+      bottom.id,
+    ]);
+  });
+
   it('refuses rows written with an older client time, in the database', async () => {
     const [tag] = await liveTags(base.user1);
     const [entry] = await liveEntries(base.user1);
