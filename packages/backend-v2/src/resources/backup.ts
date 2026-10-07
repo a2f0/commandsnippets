@@ -78,8 +78,8 @@ backupRoutes.get('/', async c => {
         )
       )
       .orderBy(asc(textEntries.id)),
-    // Rows imported from Django can tag another user's tag or entry: such a
-    // tagging is left out with them.
+    // A tagging of a deleted tag or entry is left out with it. (A tagging is
+    // of its tag's and entry's user and version: migrations/0019 and 0021.)
     db
       .select({
         id: tagsEntries.id,
@@ -97,11 +97,7 @@ backupRoutes.get('/', async c => {
           eq(tagsEntries.user_id, user.id),
           eq(tagsEntries.version, version),
           eq(tagsEntries.is_deleted, false),
-          eq(taggedTag.user_id, user.id),
-          eq(taggedTag.version, version),
           eq(taggedTag.is_deleted, false),
-          eq(taggedEntry.user_id, user.id),
-          eq(taggedEntry.version, version),
           eq(taggedEntry.is_deleted, false)
         )
       )
@@ -122,8 +118,6 @@ backupRoutes.get('/', async c => {
         and(
           eq(entryReuses.user_id, user.id),
           eq(entryReuses.version, version),
-          eq(reusedEntry.user_id, user.id),
-          eq(reusedEntry.version, version),
           eq(reusedEntry.is_deleted, false)
         )
       )

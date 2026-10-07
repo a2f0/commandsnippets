@@ -59,10 +59,8 @@ type RelationshipsOf<T extends keyof Relationships, Row> = {
 /**
  * Every loader is scoped to `userId`, the requesting user, and to the data
  * version read: reads are owner-only, and a relationship must not become a
- * way around that (nor into another version). Django
- * never checked ownership when recording reuses or tags, so imported rows can
- * point at another user's entry or tag; such a resource keeps its relationship
- * linkage (an id) but is never loaded into `included`.
+ * way around that (nor into another version). A relationship never links two
+ * users' rows (migrations/0021_own_links.sql).
  */
 export function createRegistry(
   db: Db,

@@ -153,7 +153,7 @@ export interface Restore {
   entries: EntryRow[];
   /** By tag, each tag's in its order. */
   taggings: TaggingRow[];
-  /** Oldest first: the last made sets the entry's `reused_date`. */
+  /** Oldest first, as they were made. */
   reuses: ReuseRow[];
 }
 

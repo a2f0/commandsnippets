@@ -63,31 +63,24 @@ const edit = (entry: TextEntry, body: string) => ({
 // So a tag advances whenever anything that sync returns changes
 // (migrations/0008_tag_revisions.sql).
 describe('tag revisions follow their entries', () => {
-  /** user1's entry in tags a and b (not c); user2's tag d links it too. */
+  /** user1's entry in tags a and b (not c). */
   async function tagged() {
     const base = await setUpBase();
-    const {user1, user2} = base;
+    const {user1} = base;
     const [a, b, c] = [
       await tagFactory({user: user1}),
       await tagFactory({user: user1}),
       await tagFactory({user: user1}),
     ];
-    const d = await tagFactory({user: user2});
     const entry = await textEntryFactory({user: user1});
     await tagTextEntryFactory({tag: a, text_entry: entry, user: user1});
     await tagTextEntryFactory({tag: b, text_entry: entry, user: user1});
-    // Legacy data: another user's junction from their tag to this entry.
-    await tagTextEntryFactory({tag: d, text_entry: entry, user: user2});
-    return {...base, a, b, c, d, entry};
+    return {...base, a, b, c, entry};
   }
 
-  it("editing an entry advances its tags, and only its owner's", async () => {
-    const {user1, user1Client, a, b, c, d, entry} = await tagged();
-    const [before, cBefore, dBefore] = [
-      await latest(user1),
-      await revisionOf(c),
-      await revisionOf(d),
-    ];
+  it('editing an entry advances its tags, and only those', async () => {
+    const {user1, user1Client, a, b, c, entry} = await tagged();
+    const [before, cBefore] = [await latest(user1), await revisionOf(c)];
     const response = await user1Client.patch(
       `/api/v1/entries/${entry.id}`,
       edit(entry, 'edited')
@@ -100,7 +93,6 @@ describe('tag revisions follow their entries', () => {
     // One statement's change: every tag it advances gets the same revision.
     expect(bAfter).toBe(aAfter);
     expect(await revisionOf(c)).toBe(cBefore);
-    expect(await revisionOf(d)).toBe(dBefore);
     expect(await syncFrom(user1Client, before)).toEqual(ids(a, b));
   });
 

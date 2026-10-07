@@ -141,9 +141,12 @@ describe('TestTagsEntriesApi', () => {
     const entry1 = await textEntryFactory({user: base.user2});
     const entry2 = await textEntryFactory({user: base.user1});
     const tag1 = await tagFactory({user: base.user1});
+    // v2: the other user's junction is in their own tag (one can never join
+    // another user's tag and entry).
+    const tag2 = await tagFactory({user: base.user2});
     const tagEntry1 = await tagTextEntryFactory({
       text_entry: entry1,
-      tag: tag1,
+      tag: tag2,
       user: base.user2,
       order: 1,
     });
@@ -179,6 +182,8 @@ describe('TestTagsEntriesApi', () => {
     const entry1 = await textEntryFactory({user: base.user1});
     const entry2 = await textEntryFactory({user: base.user2});
     const tag1 = await tagFactory({user: base.user1});
+    // v2: the other user's junction is in their own tag.
+    const tag2 = await tagFactory({user: base.user2});
     const tagEntry1 = await tagTextEntryFactory({
       text_entry: entry1,
       tag: tag1,
@@ -188,7 +193,7 @@ describe('TestTagsEntriesApi', () => {
     const tagEntry1Timestamp = tagEntry1.date_updated;
     const tagEntry2 = await tagTextEntryFactory({
       text_entry: entry2,
-      tag: tag1,
+      tag: tag2,
       user: base.user2,
       order: 2,
     });

@@ -305,18 +305,7 @@ describe('user-scoped public reads', () => {
     expect((await json(response)).errors[0].code).toBe(CODES.viewChanged);
   });
 
-  it('does not count deleted objects, tag links, or cross-owner links as public', async () => {
-    const other = await userFactory({}, {examples: false});
-    const theirs = await textEntryFactory({user: other});
-    await db()
-      .update(textEntries)
-      .set({is_public: true})
-      .where(eq(textEntries.id, theirs.id));
-    await tagTextEntryFactory({
-      user: owner,
-      tag: visibleTag,
-      text_entry: theirs,
-    });
+  it('does not count deleted objects or tag links as public', async () => {
     expect(
       (await json(await new ApiClient().get(`${path}/entries`))).data
     ).toHaveLength(1);

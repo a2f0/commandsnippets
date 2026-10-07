@@ -18,8 +18,6 @@ import {ADMIN_AUDIT_LOG_ENTRY, ADMIN_USER} from './types';
 export const adminUserAttributesSchema = z.object({
   username: z.string(),
   email: z.string(),
-  first_name: z.string(),
-  last_name: z.string(),
   is_staff: z.boolean(),
   is_active: z.boolean(),
   date_joined: timestampSchema,

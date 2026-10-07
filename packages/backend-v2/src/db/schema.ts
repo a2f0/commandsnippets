@@ -1,6 +1,6 @@
 /**
- * Tables mirror the Django models (and keep Django's table/column names) so
- * the Postgres import is a straight copy and existing ad-hoc SQL keeps working.
+ * The tables keep the Django models' table and column names (the data began
+ * in Django's Postgres); the raw SQL in migrations/ and src/ names them.
  *
  * Timestamps are stored as fixed-width naive UTC text with microseconds
  * (`YYYY-MM-DDTHH:MM:SS.ffffff`), which sorts lexicographically. See
@@ -27,8 +27,6 @@ export const users = sqliteTable(
     id: integer('id').primaryKey({autoIncrement: true}),
     username: text('username').notNull().unique(),
     email: text('email').notNull().default(''),
-    first_name: text('first_name').notNull().default(''),
-    last_name: text('last_name').notNull().default(''),
     // Staff use the admin API (/api/v1/admin). Django's is_superuser is gone.
     is_staff: integer('is_staff', {mode: 'boolean'}).notNull().default(false),
     // Deactivated accounts cannot log in, and their tokens are not accepted.
@@ -155,7 +153,6 @@ export const textEntries = sqliteTable(
     is_public: integer('is_public', {mode: 'boolean'}).notNull().default(false),
     tag_count: integer('tag_count').notNull().default(0),
     reused_count: integer('reused_count').notNull().default(0),
-    reused_date: text('reused_date'),
     // Folded copies of subject/body for Unicode-aware search (lib/search.ts).
     subject_folded: text('subject_folded').notNull().default(''),
     body_folded: text('body_folded').notNull().default(''),

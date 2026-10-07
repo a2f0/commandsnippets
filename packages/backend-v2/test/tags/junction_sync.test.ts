@@ -368,29 +368,6 @@ describe('untagging soft-deletes the junction', () => {
     expect((await refreshEntry(entry.id))?.tag_count).toBe(1);
   });
 
-  it("takes over and restores another user's deleted legacy junction", async () => {
-    const {user1, user2, client} = await setUpTagged();
-    const tag = await tagFactory({user: user1});
-    const entry = await textEntryFactory({user: user1});
-    // Legacy data: user2's junction between user1's tag and entry, deleted.
-    const legacy = await tagTextEntryFactory({
-      tag,
-      text_entry: entry,
-      user: user2,
-      is_deleted: true,
-    });
-    const response = await client.post(
-      '/api/v1/tags_entries',
-      tagPayload(tag, entry)
-    );
-    expect(response.status).toBe(201);
-    expect(await refreshJunction(legacy.id)).toMatchObject({
-      user_id: user1.id,
-      is_deleted: false,
-    });
-    expect((await refreshTag(tag.id))?.entry_count).toBe(1);
-  });
-
   it('recomputes date_last_used from the junctions left in the tag', async () => {
     const {user1, client, tag, junction} = await setUpTagged();
     const kept = await tagTextEntryFactory({

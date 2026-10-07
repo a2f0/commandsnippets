@@ -1010,8 +1010,6 @@ const adminUserResource = (user: MockAdminUser): AdminUser => ({
   attributes: {
     username: user.username,
     email: user.email,
-    first_name: '',
-    last_name: '',
     is_staff: user.is_staff,
     is_active: user.is_active,
     date_joined: '2026-01-02T03:04:05.000000',

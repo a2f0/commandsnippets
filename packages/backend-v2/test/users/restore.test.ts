@@ -237,17 +237,6 @@ describe('POST /api/v1/user/restore', () => {
       ['log', 2, 0, true],
       ['alone', 0, 1, false],
     ]);
-    const lsReuses = backup.entry_reuses
-      .filter(
-        row =>
-          backup.entries.find(entry => entry.id === row.text_entry_id)
-            ?.subject === 'list'
-      )
-      .map(row => row.date_created)
-      .sort();
-    expect(entries[0]?.reused_date?.startsWith(lsReuses.at(-1) ?? '-')).toBe(
-      true
-    );
     // Search finds restored entries (their folded columns are written).
     const found = await json(
       await base.user1Client.get('/api/v1/entries?filter[search]=LOG')

@@ -166,26 +166,6 @@ describe('GET /api/v1/user/backup', () => {
     expect(backup.entry_reuses.map(row => row.id)).toEqual([String(reuse.id)]);
   });
 
-  it("leaves out a tagging of another user's tag or entry", async () => {
-    // Django never checked ownership, so imported rows can do this.
-    const user = await userFactory({}, {examples: false});
-    const client = new ApiClient(await tokenFor(user.id));
-    const tag = await tagFactory({user});
-    const entry = await textEntryFactory({user});
-    const theirTag = await tagFactory({user: base.user2});
-    const theirEntry = await textEntryFactory({user: base.user2});
-    await tagTextEntryFactory({tag: theirTag, text_entry: entry, user});
-    await tagTextEntryFactory({tag, text_entry: theirEntry, user});
-    await textEntryReusedFactory({text_entry: theirEntry, user});
-
-    const backup = await backupOf(client);
-
-    expect(backup.tags.map(row => row.id)).toEqual([String(tag.id)]);
-    expect(backup.entries.map(row => row.id)).toEqual([String(entry.id)]);
-    expect(backup.tags_entries).toEqual([]);
-    expect(backup.entry_reuses).toEqual([]);
-  });
-
   it('is an empty backup for a user with no data', async () => {
     const user = await userFactory({}, {examples: false});
     const backup = await backupOf(new ApiClient(await tokenFor(user.id)));

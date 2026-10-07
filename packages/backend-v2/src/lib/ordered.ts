@@ -8,8 +8,8 @@
  *
  * Differences from the Django version, both deliberate:
  * - Ranks are scoped (`order_with_respect_to`): tags per user, junctions per
- *   tag. Django ranked every row in one global sequence. Relative order within
- *   a scope is unchanged by the switch, so imported ranks are used as-is.
+ *   tag. Django ranked every row in one global sequence; relative order within
+ *   a scope is the same either way.
  * - Deletes leave gaps rather than compacting. `above`/`below`/`to` never need
  *   dense ranks, and compaction silently rewrote ranks clients had cached
  *   without bumping `date_updated`.
@@ -37,9 +37,8 @@ export interface OrderedSpec {
   /** The `order_with_respect_to` column. */
   scope: SQLiteColumn;
   /**
-   * The owning user's column, when a scope can hold other users' rows (legacy
-   * junctions in someone's tag). Moves then only ever shift, and position
-   * relative to, the mover's own rows; other users' rows are never touched.
+   * The owning user's column: a move reads the mover's owner with it
+   * (`OrderedRow.owner`), for `touch`. (A scope holds one user's rows.)
    */
   owner?: SQLiteColumn;
   /**
@@ -203,7 +202,7 @@ export class OrderedModel {
           END,
           ${sql.identifier(dateUpdated.name)} = ${now}
       WHERE ${scope} = ${self.scope}
-        ${this.ownedBy(self)}
+        ${this.live()}
         AND (${id} = ${self.id} OR ${order} BETWEEN ${low} AND ${high})
         AND ${this.rankOf(self)} = ${self.order}
         ${refGuard}
@@ -228,27 +227,18 @@ export class OrderedModel {
   }
 
   /**
-   * The conditions on the rows a move shifts and positions against: `AND
-   * owner = <row's owner>` for specs with an owner column, and the spec's
-   * `ranked` condition.
+   * The condition on the rows a move shifts and positions against: the spec's
+   * `ranked` condition, if any.
    */
-  private ownedBy(row: OrderedRow): SQL {
-    const {owner, ranked} = this.spec;
-    const live = ranked === undefined ? sql`` : sql`AND ${ranked}`;
-    if (owner === undefined) {
-      return live;
-    }
-    if (row.owner === undefined) {
-      throw new Error('An owned ordering needs the row owner');
-    }
-    return sql`AND ${owner} = ${row.owner} ${live}`;
+  private live(): SQL {
+    const {ranked} = this.spec;
+    return ranked === undefined ? sql`` : sql`AND ${ranked}`;
   }
 
   /** `row`'s rank as SQL: null once it is out of the order (`ranked`). */
   private rankOf(row: OrderedRow): SQL {
-    const {table, id, order, ranked} = this.spec;
-    const live = ranked === undefined ? sql`` : sql`AND ${ranked}`;
-    return sql`(SELECT ${order} FROM ${table} WHERE ${id} = ${row.id} ${live})`;
+    const {table, id, order} = this.spec;
+    return sql`(SELECT ${order} FROM ${table} WHERE ${id} = ${row.id} ${this.live()})`;
   }
 
   /**
@@ -258,16 +248,16 @@ export class OrderedModel {
   directlyAbove(self: OrderedRow, ref: OrderedRow): SQL {
     const {table, order, scope} = this.spec;
     const [mine, theirs] = [this.rankOf(self), this.rankOf(ref)];
-    return sql`(${mine} = ${theirs} OR (${mine} < ${theirs} AND NOT EXISTS (SELECT 1 FROM ${table} WHERE ${scope} = ${ref.scope} ${this.ownedBy(ref)} AND ${order} > ${mine} AND ${order} < ${theirs})))`;
+    return sql`(${mine} = ${theirs} OR (${mine} < ${theirs} AND NOT EXISTS (SELECT 1 FROM ${table} WHERE ${scope} = ${ref.scope} ${this.live()} AND ${order} > ${mine} AND ${order} < ${theirs})))`;
   }
 
-  /** The rank just before or after `ref` among the mover's rows, as SQL. */
+  /** The rank just before or after `ref` in its scope, as SQL. */
   private neighborRank(ref: OrderedRow, side: 'before' | 'after'): SQL {
     const {table, order, scope} = this.spec;
-    const owned = this.ownedBy(ref);
+    const live = this.live();
     return side === 'before'
-      ? sql`(SELECT MAX(${order}) FROM ${table} WHERE ${scope} = ${ref.scope} ${owned} AND ${order} < ${ref.order})`
-      : sql`(SELECT MIN(${order}) FROM ${table} WHERE ${scope} = ${ref.scope} ${owned} AND ${order} > ${ref.order})`;
+      ? sql`(SELECT MAX(${order}) FROM ${table} WHERE ${scope} = ${ref.scope} ${live} AND ${order} < ${ref.order})`
+      : sql`(SELECT MIN(${order}) FROM ${table} WHERE ${scope} = ${ref.scope} ${live} AND ${order} > ${ref.order})`;
   }
 
   private async neighbor(

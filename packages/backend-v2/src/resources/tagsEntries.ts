@@ -44,7 +44,8 @@ export const tagEntryOrdering: OrderedSpec = {
   order: tagsEntries.order,
   dateUpdated: tagsEntries.date_updated,
   scope: tagsEntries.tag_id,
-  // Imported Django data can put another user's junction in a user's tag.
+  // The tag's user (a junction is its tag's: migrations/0021_own_links.sql),
+  // whose revisions a move takes.
   owner: tagsEntries.user_id,
   // A deleted junction is out of its tag's order (it keeps its old rank).
   ranked: sql`${tagsEntries.is_deleted} = 0`,
@@ -77,10 +78,10 @@ export const tagEntryOrdering: OrderedSpec = {
 
 /**
  * Advance an entry's revision when the junction write batched before it
- * applied (`changes()` counts only that statement's own rows, not triggers').
- * Only the requester's own entries: legacy junctions can link another user's.
- * The entry's trigger then advances its tags; the junction's own triggers
- * advance the tag it joined or left (migrations/0008_tag_revisions.sql).
+ * applied (`changes()` counts only that statement's own rows, not triggers'),
+ * scoped to the requester's own entries. The entry's trigger then advances its
+ * tags; the junction's own triggers advance the tag it joined or left
+ * (migrations/0008_tag_revisions.sql).
  */
 const touchEntry = (db: Db, entryId: number, userId: number) =>
   db
@@ -212,15 +213,12 @@ tagEntryRoutes.post('/', async c => {
     if (junction === undefined) {
       break;
     }
-    const {id, user_id, is_deleted} = junction;
-    const own = user_id === user.id;
-    // Untagged (or tagged) after this tagging was made: that stands. (Only
-    // for the user's own junction: another's is always taken over below, so
-    // it is never answered with.)
-    if (own && !appliesAfter(junction.client_updated, at)) {
+    const {id, is_deleted} = junction;
+    // Untagged (or tagged) after this tagging was made: that stands.
+    if (!appliesAfter(junction.client_updated, at)) {
       return resourceResponse(c, TAG_TEXT_ENTRY, junction, 201);
     }
-    if (own && !is_deleted) {
+    if (!is_deleted) {
       // Already tagged: still a write made at `at`, which an older untag must
       // not undo. Nothing a client syncs changes, so no revision advances.
       const [stamped] = await db
@@ -239,34 +237,24 @@ tagEntryRoutes.post('/', async c => {
         return resourceResponse(c, TAG_TEXT_ENTRY, stamped, 201);
       }
     } else {
-      // Imported Django data can hold a junction owned by another user
-      // between this user's own tag and entry. It links only their data, so
-      // it is theirs: take it over rather than return someone else's row. A
-      // deleted one comes back, as a new junction would: at the bottom of
-      // the tag.
-      const restore = is_deleted
-        ? {
-            is_deleted: false,
-            order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
-            date_created: now(),
-          }
-        : {};
+      // Untagged before this tagging was made: it comes back, as a new
+      // junction would, at the bottom of the tag.
       const [updated] = await db.batch([
         db
           .update(tagsEntries)
           .set({
-            user_id: user.id,
+            is_deleted: false,
+            order: new OrderedModel(db, tagEntryOrdering).nextOrderSql(tagId),
+            date_created: now(),
             date_updated: nextRevision(tagTextEntryResource, user.id),
             client_updated: at,
-            ...restore,
           })
           .where(
             and(
               eq(tagsEntries.id, id),
-              eq(tagsEntries.user_id, user_id),
-              eq(tagsEntries.is_deleted, is_deleted),
-              // Another user's (legacy) writes do not count against this one.
-              own ? writtenBefore(tagsEntries.client_updated, at) : undefined
+              eq(tagsEntries.user_id, user.id),
+              eq(tagsEntries.is_deleted, true),
+              writtenBefore(tagsEntries.client_updated, at)
             )
           )
           .returning(),

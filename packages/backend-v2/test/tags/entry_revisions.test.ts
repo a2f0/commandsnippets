@@ -20,7 +20,7 @@ type Resource = {type: string; id: string; attributes: {order?: number}};
 // on the entry's revision, so re-ranking a junction must advance its entry.
 describe('junction reorders and incremental entry sync', () => {
   it('advances the revisions of the entries whose junctions moved', async () => {
-    const {user1, user2, user1Client} = await setUpBase();
+    const {user1, user1Client} = await setUpBase();
     const tag = await tagFactory({user: user1});
     const entries = [];
     for (let i = 0; i < 4; i++) {
@@ -32,20 +32,12 @@ describe('junction reorders and incremental entry sync', () => {
       (typeof entries)[0],
       (typeof entries)[0],
     ];
-    // Legacy data: the requester's junction to another user's entry.
-    const foreign = await textEntryFactory({user: user2});
     await tagTextEntryFactory({tag, text_entry: e1, user: user1, order: 0});
     const j2 = await tagTextEntryFactory({
       tag,
       text_entry: e2,
       user: user1,
       order: 1,
-    });
-    await tagTextEntryFactory({
-      tag,
-      text_entry: foreign,
-      user: user1,
-      order: 2,
     });
     const j3 = await tagTextEntryFactory({
       tag,
@@ -67,7 +59,7 @@ describe('junction reorders and incremental entry sync', () => {
       );
     expect((await sync()).data).toEqual([]);
 
-    // j3 moves above j2: j2 and the foreign junction shift down one rank.
+    // j3 moves above j2: j2 shifts down one rank.
     const response = await user1Client.post('/api/v1/tags_entries/reorder', {
       data: {
         type: 'TagTextEntryThroughModel',
@@ -88,9 +80,8 @@ describe('junction reorders and incremental entry sync', () => {
     );
     expect(orders).toEqual({[j3.id]: 1, [j2.id]: 2});
 
-    // Entries whose junctions kept their ranks, and other users' entries, are
-    // untouched.
-    for (const entry of [e1, e4, foreign]) {
+    // Entries whose junctions kept their ranks are untouched.
+    for (const entry of [e1, e4]) {
       expect((await refreshEntry(entry.id))?.date_updated).toBe(
         entry.date_updated
       );
@@ -171,19 +162,6 @@ describe('tagging and untagging advance the entry revision', () => {
     expect(await advanced(entry)).toBe(false);
   });
 
-  it('taking over a legacy junction advances the entry', async () => {
-    const {user1, user2, user1Client} = await setUpBase();
-    const tag = await tagFactory({user: user1});
-    const entry = await textEntryFactory({user: user1});
-    await tagTextEntryFactory({tag, text_entry: entry, user: user2});
-    const response = await user1Client.post(
-      '/api/v1/tags_entries',
-      tagging(tag.id, entry.id)
-    );
-    expect(response.status).toBe(201);
-    expect(await advanced(entry)).toBe(true);
-  });
-
   it('untagging an entry advances it', async () => {
     const {user1, user1Client} = await setUpBase();
     const tag = await tagFactory({user: user1});
@@ -201,22 +179,5 @@ describe('tagging and untagging advance the entry revision', () => {
       is_deleted: true,
     });
     expect(await advanced(entry)).toBe(true);
-  });
-
-  it("untagging never advances another user's entry", async () => {
-    const {user1, user2, user1Client} = await setUpBase();
-    const tag = await tagFactory({user: user1});
-    // Legacy data: the requester's junction to another user's entry.
-    const foreign = await textEntryFactory({user: user2});
-    const junction = await tagTextEntryFactory({
-      tag,
-      text_entry: foreign,
-      user: user1,
-    });
-    const response = await user1Client.delete(
-      `/api/v1/tags_entries/${junction.id}`
-    );
-    expect(response.status).toBe(200);
-    expect(await advanced(foreign)).toBe(false);
   });
 });
