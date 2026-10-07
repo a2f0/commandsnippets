@@ -15,11 +15,7 @@ const files = migrations.files();
  * has them: the first release of a two-release column removal (README,
  * Deployment). Empty between removals.
  */
-const PENDING_DROPS: Record<string, string[]> = {
-  // Django's, which nothing sets or reads.
-  users_user: ['first_name', 'last_name'],
-  text_entries_textentry: ['reused_date'],
-};
+const PENDING_DROPS: Record<string, string[]> = {};
 
 /** The schema the Postgres import loaded; later migrations run on real data. */
 const IMPORTED = '0003_unique_user_email.sql';
