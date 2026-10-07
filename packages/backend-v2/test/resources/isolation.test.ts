@@ -1,107 +1,106 @@
+import {eq} from 'drizzle-orm';
 import {describe, expect, it} from 'vitest';
+import {entryReuses, tagsEntries} from '../../src/db/schema';
 import {
+  db,
   json,
-  refreshJunction,
   setUpBase,
   tagFactory,
   tagTextEntryFactory,
   textEntryFactory,
   textEntryReusedFactory,
 } from '../helpers';
+import {failureOf} from '../support/errors';
 
-type Resource = {type: string; id: string; attributes: Record<string, unknown>};
+// v2: a tagging belongs to its tag's user and its entry's, and a reuse to its
+// entry's (migrations/0021_own_links.sql). No row links one user's data to
+// another's, so none can leak through `include` or a filter.
+describe("a link between two users' rows", () => {
+  it("is refused as a tagging of another user's tag or entry", async () => {
+    const {user1, user2} = await setUpBase();
+    const tag = await tagFactory({user: user1});
+    const entry = await textEntryFactory({user: user1});
+    const theirTag = await tagFactory({user: user2});
+    const theirEntry = await textEntryFactory({user: user2});
 
-const ids = (resources: Resource[] | undefined, type: string) =>
-  (resources ?? []).filter(r => r.type === type).map(r => r.id);
+    for (const fields of [
+      {tag: theirTag, text_entry: entry, user: user1},
+      {tag, text_entry: theirEntry, user: user1},
+      {tag, text_entry: entry, user: user2},
+    ]) {
+      expect(await failureOf(tagTextEntryFactory(fields))).toMatch(
+        'cross_user_link'
+      );
+    }
+    // The user's own tagging is made.
+    expect(
+      (await tagTextEntryFactory({tag, text_entry: entry, user: user1})).id
+    ).toBeGreaterThan(0);
+  });
 
-// Django never checked ownership when recording reuses or tagging, so imported
-// data can link one user's rows to another's. These rows are created directly
-// (as the import would) and must never leak through `include`.
-describe('cross-user relationships from legacy data', () => {
-  it("does not include another user's entry through a reuse", async () => {
-    const {user1, user2, user1Client} = await setUpBase();
-    const foreign = await textEntryFactory({user: user2, body: 'secret'});
-    const reuse = await textEntryReusedFactory({
-      text_entry: foreign,
+  it('is refused when a tagging is moved to another user', async () => {
+    const {user1, user2} = await setUpBase();
+    const tag = await tagFactory({user: user1});
+    const entry = await textEntryFactory({user: user1});
+    const junction = await tagTextEntryFactory({
+      tag,
+      text_entry: entry,
       user: user1,
     });
+    const theirTag = await tagFactory({user: user2});
 
-    for (const path of [
-      `/api/v1/entry_reuses/${reuse.id}?include=text_entry,user`,
-      '/api/v1/entry_reuses?include=text_entry,user',
-    ]) {
-      const response = await user1Client.get(path);
-      expect(response.status).toBe(200);
-      const body = await json(response);
-      const text = JSON.stringify(body);
-      expect(text).not.toContain('secret');
-      expect(ids(body.included, 'TextEntry')).toEqual([]);
-      expect(ids(body.included, 'User')).toEqual([String(user1.id)]);
+    for (const set of [{user_id: user2.id}, {tag_id: theirTag.id}]) {
+      expect(
+        await failureOf(
+          db()
+            .update(tagsEntries)
+            .set(set)
+            .where(eq(tagsEntries.id, junction.id))
+        )
+      ).toMatch('cross_user_link');
     }
   });
 
-  it("hides another user's junctions on an entry and their tags", async () => {
-    const {user1, user2, user1Client} = await setUpBase();
-    const entry = await textEntryFactory({user: user1});
-    const foreignTag = await tagFactory({user: user2, name: 'their-tag'});
-    const foreignJunction = await tagTextEntryFactory({
-      tag: foreignTag,
-      text_entry: entry,
-      user: user2,
-    });
-
-    const response = await user1Client.get(`/api/v1/entries/${entry.id}`);
-    expect(response.status).toBe(200);
-    const body = await json(response);
+  it("is refused as a reuse of another user's entry", async () => {
+    const {user1, user2} = await setUpBase();
+    const theirEntry = await textEntryFactory({user: user2});
     expect(
-      body.data.relationships.text_entry_to_tag.data.map(
-        (r: {id: string}) => r.id
+      await failureOf(
+        textEntryReusedFactory({text_entry: theirEntry, user: user1})
       )
-    ).not.toContain(String(foreignJunction.id));
-    expect(ids(body.included, 'TagTextEntryThroughModel')).toEqual([]);
-    expect(JSON.stringify(body)).not.toContain('their-tag');
-  });
+    ).toMatch('cross_user_link');
 
-  it("does not include another user's tag through the requester's junction", async () => {
-    const {user1, user2, user1Client} = await setUpBase();
     const entry = await textEntryFactory({user: user1});
-    const foreignTag = await tagFactory({user: user2, name: 'their-tag'});
-    const junction = await tagTextEntryFactory({
-      tag: foreignTag,
+    const reuse = await textEntryReusedFactory({
       text_entry: entry,
       user: user1,
     });
-
-    const response = await user1Client.get(
-      `/api/v1/entries/${entry.id}?include=text_entry_to_tag.tag,text_entry_to_tag.user`
-    );
-    expect(response.status).toBe(200);
-    const body = await json(response);
-    expect(ids(body.included, 'TagTextEntryThroughModel')).toEqual([
-      String(junction.id),
-    ]);
-    expect(ids(body.included, 'Tag')).toEqual([]);
-    expect(JSON.stringify(body)).not.toContain('their-tag');
+    expect(
+      await failureOf(
+        db()
+          .update(entryReuses)
+          .set({text_entry_id: theirEntry.id})
+          .where(eq(entryReuses.id, reuse.id))
+      )
+    ).toMatch('cross_user_link');
   });
 });
 
-describe('filters over cross-user relationships from legacy data', () => {
-  it("does not match entries by another user's tag", async () => {
+describe('filters by tag', () => {
+  it("do not match entries by another user's tag", async () => {
     const {user1, user2, user1Client} = await setUpBase();
-    const entry = await textEntryFactory({user: user1});
-    const foreignTag = await tagFactory({user: user2, name: 'their-tag'});
-    // Both the junction owned by the other user and one owned by the requester.
+    await textEntryFactory({user: user1});
+    const theirTag = await tagFactory({user: user2, name: 'their-tag'});
+    const theirEntry = await textEntryFactory({user: user2});
     await tagTextEntryFactory({
-      tag: foreignTag,
-      text_entry: entry,
+      tag: theirTag,
+      text_entry: theirEntry,
       user: user2,
     });
-    const own = await textEntryFactory({user: user1});
-    await tagTextEntryFactory({tag: foreignTag, text_entry: own, user: user1});
 
     for (const filter of [
       'filter[tags.name]=their-tag',
-      `filter[tags.id]=${foreignTag.id}`,
+      `filter[tags.id]=${theirTag.id}`,
     ]) {
       const response = await user1Client.get(`/api/v1/entries?${filter}`);
       expect(response.status).toBe(200);
@@ -109,7 +108,7 @@ describe('filters over cross-user relationships from legacy data', () => {
     }
   });
 
-  it("still matches the requester's own tags", async () => {
+  it("still match the requester's own tags", async () => {
     const {user1, user1Client} = await setUpBase();
     const entry = await textEntryFactory({user: user1});
     const tag = await tagFactory({user: user1, name: 'mine'});
@@ -120,36 +119,5 @@ describe('filters over cross-user relationships from legacy data', () => {
     expect((await json(response)).data.map((r: {id: string}) => r.id)).toEqual([
       String(entry.id),
     ]);
-  });
-});
-
-describe('tagging over a legacy junction owned by someone else', () => {
-  it("takes over the junction between the requester's own tag and entry", async () => {
-    const {user1, user2, user1Client} = await setUpBase();
-    const tag = await tagFactory({user: user1});
-    const entry = await textEntryFactory({user: user1});
-    const legacy = await tagTextEntryFactory({
-      tag,
-      text_entry: entry,
-      user: user2,
-    });
-
-    const response = await user1Client.post('/api/v1/tags_entries', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        attributes: {},
-        relationships: {
-          tag: {data: {type: 'Tag', id: tag.id}},
-          text_entry: {data: {type: 'TextEntry', id: entry.id}},
-        },
-      },
-    });
-    expect(response.status).toBe(201);
-    const body = await json(response);
-    expect(body.data.id).toBe(String(legacy.id));
-    expect(body.data.relationships.user.data.id).toBe(String(user1.id));
-    expect(ids(body.included, 'User')).toEqual([String(user1.id)]);
-    expect(JSON.stringify(body)).not.toContain(user2.username);
-    expect((await refreshJunction(legacy.id))?.user_id).toBe(user1.id);
   });
 });

@@ -1,9 +1,6 @@
-import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {entryReuses} from '../../src/db/schema';
 import {
   type Base,
-  db,
   type Json,
   json,
   refreshEntry,
@@ -279,22 +276,15 @@ describe('EntryReusesApi v2', () => {
     }
   });
 
-  it('maintains reused_count and reused_date through the triggers', async () => {
+  it('maintains reused_count through the triggers', async () => {
     const {user1, user1Client} = base;
     const entry = await textEntryFactory({user: user1});
     expect(entry.reused_count).toBe(0);
-    expect(entry.reused_date).toBeNull();
 
     const created = await json(
       await user1Client.post('/api/v1/entry_reuses', reusePayload(entry.id))
     );
-    const [reuse] = await db()
-      .select()
-      .from(entryReuses)
-      .where(eq(entryReuses.id, Number(created.data.id)));
-    let refreshed = await refreshEntry(entry.id);
-    expect(refreshed?.reused_count).toBe(1);
-    expect(refreshed?.reused_date).toBe(reuse?.date_created);
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(1);
 
     await textEntryReusedFactory({text_entry: entry, user: user1});
     expect((await refreshEntry(entry.id))?.reused_count).toBe(2);
@@ -304,13 +294,7 @@ describe('EntryReusesApi v2', () => {
     );
     expect(deleted.status).toBe(204);
     expect(await deleted.text()).toBe('');
-    refreshed = await refreshEntry(entry.id);
-    expect(refreshed?.reused_count).toBe(1);
-    // The delete trigger stamps reused_date with the current time in the
-    // same fixed-width format.
-    expect(refreshed?.reused_date).toMatch(
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}$/
-    );
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(1);
   });
 
   it('includes the reused entry’s linkage but no included resources by default', async () => {

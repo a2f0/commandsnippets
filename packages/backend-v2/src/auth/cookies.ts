@@ -10,8 +10,9 @@ const AUTH_COOKIE_MAX_AGE = 2_419_200;
 /**
  * This environment's auth cookie names. Staging prefixes them: production's
  * `.commandsnippets.com` cookies are sent to staging hosts too, and with
- * shared names a production token (valid if staging holds imported data)
- * could authenticate on staging and outlive a staging logout.
+ * shared names a production token (staging was loaded from the same data,
+ * tokens included) could authenticate on staging and outlive a staging
+ * logout.
  */
 export function cookieNames(c: Context<AppEnv>): {
   auth: string;

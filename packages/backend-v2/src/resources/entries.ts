@@ -22,9 +22,8 @@ import {TEXT_ENTRY} from './resourceTypes';
 import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
 
 /**
- * Entries tagged with a tag matching `condition`, counting only the
- * requester's own junctions and tags: imported rows can link another user's
- * tag to this user's entry, and matching on it would reveal its name. A
+ * Entries tagged with a tag matching `condition`, through the requester's own
+ * junctions (each joins the user's own tag: migrations/0021_own_links.sql). A
  * deleted junction (untagged) does not count.
  */
 const hasTag = (
@@ -38,7 +37,6 @@ const hasTag = (
     WHERE j.text_entry_id = ${textEntries.id}
       AND j.user_id = ${userId}
       AND j.is_deleted = 0
-      AND t.user_id = ${userId}
       AND ${publicOnly ? sql`t.is_public = 1 AND t.is_deleted = 0` : sql`1`}
       AND ${condition}
   )`;

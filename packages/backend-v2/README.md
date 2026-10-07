@@ -330,7 +330,7 @@ in one D1 batch so they are of one moment. A tagging or reuse whose tag or
 entry is deleted, or another user's (rows imported from Django), is left
 out, so every id a row refers to is in the backup. Counters and dates the
 API works out from these rows (`entry_count`, `tag_count`,
-`date_last_used`, `reused_count`, `reused_date`) are left out too. It is
+`date_last_used`, `reused_count`) are left out too. It is
 sent with `Cache-Control: no-store`.
 
 `POST /api/v1/user/restore` takes a backup as its body (any account's, so
@@ -351,10 +351,9 @@ transaction: a failure anywhere in it undoes all of it), the version is
 numbered, recorded (with the backup's user and
 export date) and made active, and the backup's rows are made in it anew,
 with ids of their own and their `date_created`, tags in the backup's order
-and taggings in their tag's; the counters, `date_last_used` and
-`reused_date` follow from the rows made. Two restores at once make a
-version each, the one committed last active, unless they name the
-version they are made over.
+and taggings in their tag's; the counters and `date_last_used` follow
+from the rows made. Of two restores over one version at once, the first to
+commit makes its version; the other is a 409 `data_version_changed`.
 
 Rows go in as JSON (`json_each`), in runs of at most 1 MB per statement,
 since D1 caps a bound value at 2 MB.

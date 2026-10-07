@@ -6,8 +6,8 @@
  * client saves, and what a restore (`POST /api/v1/user/restore`) reads back
  * into any account, as a new data version whose rows have ids of their own.
  * The counters and dates the API works out from these rows (a tag's
- * `entry_count` and `date_last_used`, an entry's `tag_count`,
- * `reused_count` and `reused_date`) are left out.
+ * `entry_count` and `date_last_used`, an entry's `tag_count` and
+ * `reused_count`) are left out.
  */
 import * as z from 'zod/mini';
 import {

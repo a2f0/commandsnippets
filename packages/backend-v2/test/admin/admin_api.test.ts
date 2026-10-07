@@ -116,8 +116,6 @@ describe('AdminApi users', () => {
     expect(row.attributes).toEqual({
       username: 'alice',
       email: 'alice@example.com',
-      first_name: '',
-      last_name: '',
       is_staff: false,
       is_active: true,
       date_joined: expect.any(String),
