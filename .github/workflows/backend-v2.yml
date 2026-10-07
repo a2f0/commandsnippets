@@ -32,14 +32,15 @@ jobs:
         run: bun run cf-typegen && bun run typecheck
       - name: Test with coverage (fails under 98%)
         run: bun run test:coverage
-      - name: Test import and management scripts (fails under 98%)
+      - name: Test management scripts and migrations (fails under 98%)
         run: bun run test:scripts
   deploy:
     runs-on: ubuntu-latest
     needs: test
     # Never when called from `CI` (a reusable workflow sees the caller's
-    # context), and not until the D1 databases and secrets exist: set the
-    # BACKEND_V2_DEPLOY repository variable to `true` to turn deploys on.
+    # context), and off until the BACKEND_V2_DEPLOY repository variable is
+    # `true` and the CLOUDFLARE_* secrets exist (neither is set: releases are
+    # deployed by hand; packages/backend-v2/README.md, Deployment).
     if: >-
       github.workflow == 'Backend v2 CI' &&
       github.event_name == 'push' &&

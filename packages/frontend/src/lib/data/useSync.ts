@@ -1,6 +1,7 @@
 /**
  * When the data the page shows syncs (`lib/sync/`; the signed-in user's own,
- * or another user's for staff), the writes queued for it sent first: the
+ * another user's for staff, or what an owner shares), the writes queued for
+ * it sent first (none for read-only data): the
  * whole collection when the entries page opens, and again when it comes back
  * into view or online and every half minute while in view; and the tag
  * shown, whenever it is not

@@ -563,6 +563,11 @@ console.error('ERROR: Build failed');
     with the entries of `test/mocks/entries/entriesResponse.ts`
   - `storeFixtures.ts` - builders of tags, entries and junctions, and
     `seed()`, which stores them in the signed-in user's database
+  - `apiClientMethods.ts` - the API client's methods, shared by every client
+    (`apiClient` and `apiClient.writesAs`'s): spy on these to see a call
+    whichever client makes it
+  - `restoreElsewhere.ts` - another device's restore against the mock API
+    (over the active data version), making a new version active
 - Every jsdom test starts signed out, with no IndexedDB data and the mock
   API's data reset (`__tests__/setup.ts`); sign in with `signIn()` in a
   `beforeEach`.

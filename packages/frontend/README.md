@@ -78,9 +78,9 @@ compiles and bundles with its own code:
   with an editor that saves by replacing the file (the old one stays linked),
   and commit `bun.lock` if it changes. CI runs this package's checks whenever
   `packages/api-shared/` changes.
-- **Size:** zod/mini and the response schemas add about 34 kB to the
-  production bundle, 11 kB gzipped (classic zod and every schema took
-  about 30 kB gzipped).
+- **Size:** zod/mini and the api-shared modules the app imports add about
+  43 kB to the production bundle (35 kB of it zod; measured 2026-10-07 with
+  `bun run build:analyze`); classic zod and every schema took about 102 kB.
 
 ## Code Quality
 

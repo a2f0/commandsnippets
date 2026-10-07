@@ -9,8 +9,9 @@ alone does not make a check required.
 job decides which lanes apply (`scripts/checks/ciPolicy.ts`), and the gate then
 requires each lane to have succeeded, or to have been skipped *because* change
 detection marked it irrelevant. A failed, cancelled, missing, or unexpectedly
-skipped lane fails the gate. Workflow, `package.json`, and `bun.lock` changes
-exercise every lane.
+skipped lane fails the gate. Changes to a workflow, to the CI policy itself
+(`scripts/checks/ci*`), or to the root `package.json` or `bun.lock` exercise
+every lane.
 
 | Lane | Workflow | Scope |
 |---|---|---|
@@ -22,16 +23,19 @@ exercise every lane.
 | `terraform` | `terraform.yml` (Terraform CI) | `terraform/` |
 
 `packages/api-shared/` is the API contract its consumers build against, so a
-change there also runs the lanes of its consumers: `backend-v2`, and
-`frontend` (which will consume it).
+change there also runs the lanes of its consumers: `backend-v2` and
+`frontend`.
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch
-pushes themselves; `Frontend CI` still runs on pushes to `main`
-and `staging`. `Backend v2 CI` also deploys from those pushes, including those
-that change only `packages/api-shared/` (the Worker bundles it); its deploy job
-checks `github.workflow`, because a reusable workflow sees its caller's context,
-so a `CI` run can never deploy.
+pushes themselves; `Frontend CI` and `Backend v2 CI` still run on pushes to
+`main` and `staging`. `Backend v2 CI` has a deploy job for those pushes, but
+it is off: it runs only once the `BACKEND_V2_DEPLOY` repository variable is
+`true` and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets
+exist, and neither is set. Deploys are run by hand
+(`../packages/backend-v2/README.md`, Deployment). The job also checks
+`github.workflow`, because a reusable workflow sees its caller's context, so a
+`CI` run can never deploy.
 
 Require the aggregate gate rather than individual path-filtered workflows:
 GitHub leaves checks from skipped workflows pending, while skipped jobs count as
@@ -46,7 +50,9 @@ or pending check. Missing checks and API errors stop the merge.
 1. Add the job to `ci.yml`, gated on `needs.changes.outputs.<scope>`.
 2. Add `<scope>` and its path pattern to `CI_SCOPES` in `ciPolicy.ts`, and the
    output to the `changes` job.
-3. Add the job to the gate's `needs`.
+3. Map the job id to its scope in `CI_JOBS` (`ciPolicy.ts`): the gate checks
+   only the jobs listed there, so a lane missing from it never blocks a merge.
+4. Add the job to the gate's `needs`.
 
 ## Local hooks
 

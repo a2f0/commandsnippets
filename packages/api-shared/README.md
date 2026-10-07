@@ -22,7 +22,7 @@ a bundler drops any module whose exports go unused:
 | `@commandsnippets/api-shared/responses` | response documents, resources and error documents: schemas and types; resource type names | clients, to parse |
 | `@commandsnippets/api-shared/requests` | request documents, fields, filters and collection queries: schemas, messages and types | the API; clients, for types |
 | `@commandsnippets/api-shared/messages` | `CODES` and `MESSAGES` | anyone |
-| `@commandsnippets/api-shared/datetime` | the timestamp format and `parseDateTime` (no imports; see below) | the backend's Bun scripts |
+| `@commandsnippets/api-shared/datetime` | the timestamp format and `parseDateTime` (no imports; see below) | the API (`src/lib/clock.ts`); clients, to compare and sort timestamps |
 | `@commandsnippets/api-shared/cursor` | keyset cursors: `CURSOR_START`, `cursorOf`, `parseCursor` (no zod; also in `./responses` and `./requests`) | clients, to page |
 
 `./responses` loads none of the request-side modules (`test/entries.test.ts`
@@ -115,9 +115,10 @@ with the schemas (it imports the root entry), and the web app
 responses (its `src/lib/api/` imports `./responses`, `./messages`, and types
 from `./requests`).
 
-Code that runs outside a bundler (the backend's Bun scripts) can only load
-modules without imports: `@commandsnippets/api-shared/datetime` is one, and
-must stay one (a test checks).
+`@commandsnippets/api-shared/datetime` imports nothing, and must stay so (a
+test checks): code that runs outside a bundler, where zod would not resolve,
+can load it. Nothing does today; the backend's Bun scripts import nothing from
+api-shared.
 
 **After changing api-shared, run `bun install` in each consumer**
 (`packages/backend-v2`, `packages/frontend`) when you add, move or remove a
@@ -200,9 +201,10 @@ MSW mocks are checked against these schemas too
 The schemas are `zod/mini` schemas (`z.ZodMiniType`), whose functional API
 bundlers can tree-shake: a client bundles only the zod it uses. Classic zod
 puts every method on every schema, so importing it at all bundles nearly all
-of it. In the web app's production bundle, zod/mini and the response schemas
-come to about 34 kB (11 kB gzipped), where classic zod and all the schemas
-took about 102 kB (30 kB gzipped).
+of it. In the web app's production bundle, zod/mini and the api-shared
+modules the app imports come to about 43 kB (35 kB of it zod; measured
+2026-10-07 with `bun run build:analyze` there), where classic zod and all the
+schemas took about 102 kB (30 kB gzipped).
 
 For a consumer, that means:
 
