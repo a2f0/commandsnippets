@@ -849,6 +849,49 @@ describe('the restore cutoff', () => {
     ]);
   });
 
+  it('refuses a stale write that sets the time a row already has, as a restore lands under it', async () => {
+    const made = new Date(Date.now() - 60_000).toISOString();
+    const headers = {
+      [CLIENT_UPDATED_HEADER]: made,
+      [CLIENT_WRITE_ID_HEADER]: 'deleted-before-restore',
+    };
+    const tag = await tagFactory({user: base.user1, name: 'gone-before'});
+    // Deleted before the restore, which leaves deleted rows as they are.
+    const deleted = await base.user1Client.request(
+      'DELETE',
+      `/api/v1/tags/${tag.id}`,
+      undefined,
+      headers
+    );
+    expect(deleted.status).toBe(200);
+    const backup = await backupOf(base.user1Client);
+    const raced = new ApiClient(
+      await tokenFor(base.user1.id),
+      raceBeforeStatement(/^\s*update "tags_tag" set/i, () =>
+        restore(base.user1Client, backup)
+      )
+    );
+
+    // Naming the write that deleted it, so made when the row was written.
+    const response = await raced.request(
+      'PATCH',
+      `/api/v1/tags/${tag.id}`,
+      {
+        data: {
+          type: 'Tag',
+          id: String(tag.id),
+          attributes: {is_deleted: false},
+        },
+      },
+      headers
+    );
+
+    expect(response.status).toBe(400);
+    expect((await json(response)).errors[0].code).toBe('data_restored');
+    const [row] = await db().select().from(tags).where(eq(tags.id, tag.id));
+    expect(row?.is_deleted).toBe(true);
+  });
+
   it('refuses rows written with an older client time, in the database', async () => {
     const [tag] = await liveTags(base.user1);
     const [entry] = await liveEntries(base.user1);
