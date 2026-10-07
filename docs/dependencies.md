@@ -33,8 +33,9 @@ policy.
   asynchronous. Regenerate `public/mockServiceWorker.js` with the chosen version,
   then test the HTTP contracts and browser interception on the actual Node and
   browser runtimes.
-- The backend's `@cloudflare/vitest-plugin` 1.3.0 requires Vitest and its runner
-  and snapshot packages on 4.1.x. Keep coverage-istanbul on the same version.
+- The backend's `@cloudflare/vitest-plugin` 1.3.0 is verified here with Vitest
+  4.1.x and matching runner and snapshot packages. Keep coverage-istanbul on
+  the same version, and validate later compatible minors before adopting them.
 - The website's `@astrojs/check` 0.9.10 supports TypeScript 5 and 6. Keep its
   TypeScript 6.0.3 pin until the checker supports TypeScript 7's compiler API.
 - Match each Biome schema URL to its CLI. Native optional packages in the Bun
@@ -89,12 +90,14 @@ separately from any known unresolved advisories.
 
 Before a Terraform CLI, provider or module update, use the SOPS credentials and
 the real R2 backend for each of `zone`, `staging` and `production`. Save a full
-refreshed plan with locking. From `terraform/`, use
-`scripts/tf <stack> plan -input=false -lock=true -out=<private-plan>` and
-`scripts/tf <stack> show -json <private-plan>` to inspect its resource actions,
-drift, checks and deferred changes. Keep the plan and JSON private; reject
-deletions, replacements and incomplete evidence. Backend-disabled validation
-and mocked module tests do not prove production safety.
+refreshed plan with locking. From `terraform/`, use `mktemp -d` to create a
+private directory outside the checkout, pass its absolute path to
+`scripts/tf <stack> plan -input=false -lock=true -out=<private-plan>`, and
+redirect `scripts/tf <stack> show -json <private-plan>` to a JSON file there.
+Inspect resource actions, drift, checks and deferred changes; reject deletions,
+replacements and incomplete evidence. Keep both files private and remove them
+after use. Backend-disabled validation and mocked module tests do not prove
+production safety.
 
 Before updating Wrangler or its coupled workerd/Miniflare packages, run the
 proposed CLI's `deploy --dry-run` for each affected environment. Verify existing
