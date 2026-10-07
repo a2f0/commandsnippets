@@ -80,9 +80,11 @@ The September 2026 advisory baseline identified these remaining constraints:
 
 Source-map-js 1.2.2's
 [release](https://github.com/7rulnik/source-map-js/releases/tag/v1.2.2)
-fixes malicious indexed source-map denial of service. Its supported ranges allow
-a targeted lock refresh. Report unavailable registry audits and release metadata
-as coverage limits, separately from any known unresolved advisories.
+fixes malicious indexed source-map denial of service. Its supported ranges
+allowed a targeted Bun lock refresh; frontend, backend-v2 and website now
+resolve 1.2.2.
+Report unavailable registry audits and release metadata as coverage limits,
+separately from any known unresolved advisories.
 
 ## Infrastructure previews
 
