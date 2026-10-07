@@ -25,7 +25,7 @@ and Capacitor apps are gone.
 | `src/auth/oauth.ts`, `src/auth/routes.ts` | GitHub and Google OAuth; login and logout routes | the `authentication` app |
 | `src/db/schema.ts` | tables (same table and column names) | models |
 | `src/db/client.ts`, `src/db/errors.ts` | the Drizzle client; D1 constraint failures | — |
-| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries; `0009_junction_soft_delete.sql` adds the junctions' `is_deleted` and revision indexes, and `0010_junction_revisions.sql` their triggers: counters and tags that skip deleted junctions, and junctions that advance with their entries; `0019_data_versions.sql` keeps versions that are not active from changing) | migrations |
+| `migrations/` | D1 migrations (`0001_counter_triggers.sql` replaces the counter signals; `0008_tag_revisions.sql` advances tags with their entries; `0009_junction_soft_delete.sql` adds the junctions' `is_deleted` and revision indexes, and `0010_junction_revisions.sql` their triggers: counters and tags that skip deleted junctions, and junctions that advance with their entries; `0019_data_versions.sql` keeps versions that are not active from changing; `0021_own_links.sql` keeps every tagging and reuse within one user's data) | migrations |
 | `src/lib/jsonapi.ts` | JSON:API request parsing, includes, filters, sort, pagination (validated by api-shared's schemas) | django-rest-framework-json-api |
 | `src/lib/validate.ts` | api-shared's zod issues as JSON:API errors | DRF serializer fields' `is_valid()` |
 | `src/lib/errors.ts` | errors in the JSON:API error format | DRF exceptions, DJA's exception handler |
@@ -37,12 +37,15 @@ and Capacitor apps are gone.
 | `src/resources/backup.ts` | `GET /api/v1/user/backup`: the requester's data as a backup file | — |
 | `src/resources/restore.ts` | `POST /api/v1/user/restore`: a backup as the requester's data, a new data version | — |
 | `src/resources/dataVersions.ts` | data versions: `versionOf`, and `/api/v1/user/data_versions` | — |
+| `src/resources/userData.ts`, `publicPolicy.ts` | `/api/v1/users/:username/...`: an owner's data, read in full by them or staff and as shared by everyone else; what counts as shared | — |
+| `src/resources/lww.ts` | last writer wins for queued client writes (`Client-Updated`, `Client-Write-Id`) | — |
 | `src/resources/serializers.ts`, `resourceTypes.ts` | resource definitions and type names | serializers |
 | `src/resources/viewset.ts`, `owned.ts`, `filters.ts`, `related.ts`, `reorder.ts`, `responses.ts` | shared list, lookup, ownership, soft-delete, filter and reorder behavior | `ModelViewSet`, `IsOwner`, django-filter |
 | `src/resources/admin.ts` | the `/api/v1/admin` API for staff | Django admin |
 | `src/services/users.ts`, `src/services/tokens.ts` | account creation, reserved usernames, logins; auth tokens | the `users` app; DRF `authtoken` |
+| `src/services/accounts.ts` | staff changes to an account's status (deactivate, reactivate, mark for deletion), audited | Django admin |
 | `scripts/manage.ts` | management commands | `manage.py` commands |
-| `scripts/lib/` | the scripts' shared helpers (migrations, SQL literals, processes) | — |
+| `scripts/lib/` | the scripts' shared helpers (flags, migrations, SQL literals, processes) | — |
 | `test/` | the Django test suite, ported test-for-test, and v2's own tests | the apps' `tests/` |
 | `test/contract/` | the API's requests and responses against api-shared's schemas | — |
 | `test/support/`, `test/helpers.ts` | factories, an API client, the base test case | `BaseTestCase`, factory_boy |
@@ -65,9 +68,8 @@ schemas' messages), and that every response parses with its schema.
 api-shared is a `file:` dependency, which Bun installs as symlinks into
 `../api-shared`. So `tsconfig.base.json` (`paths`), `vitest.config.ts`
 (`resolve.dedupe`) and `wrangler.jsonc` (`alias`, one entry per import:
-`zod/mini`, and `zod`) resolve its zod imports to this package's copy, and
-the Bun scripts import only its dependency-free `datetime` entry (through
-`src/lib/clock.ts`). After adding or removing files in `../api-shared`, or
+`zod/mini`, and `zod`) resolve its zod imports to this package's copy. (The
+Bun scripts import nothing from it.) After adding or removing files in `../api-shared`, or
 changing its `package.json`, run `bun install` here (see
 `../api-shared/README.md`).
 
@@ -76,9 +78,10 @@ The schemas are `zod/mini` schemas, so code here types them as
 `src/lib/validate.ts` loads zod's English locale, which zod/mini leaves out.
 The API's errors do not depend on it (every failure carries its own
 message), but zod's own issues keep reading as they did under classic zod.
-zod/mini tree-shakes: it and the schemas are about 73 kB of the Worker's
-387 KiB (85 KiB gzipped), where classic zod alone was about 760 kB of
-1109 KiB (194 KiB gzipped).
+zod/mini tree-shakes: it and the schemas are about 97 kB of the Worker's
+462 KiB (101 KiB gzipped; measured 2026-10-07 with `wrangler deploy
+--dry-run --metafile`), where classic zod alone was about 760 kB of a
+1109 KiB Worker (194 KiB gzipped).
 
 ## Development
 
@@ -111,6 +114,41 @@ Changing the schema: edit `src/db/schema.ts`, then `bun run db:generate` and
 commit the generated migration. Triggers and other hand-written SQL go in a
 custom migration (`bunx drizzle-kit generate --custom --name <name>`).
 
+## Routes and headers
+
+| Route | What |
+|---|---|
+| `GET /healthcheck` | 200, empty |
+| `POST /api/v1/github-login`, `POST /api/v1/google-login` | OAuth logins: set the auth cookies |
+| `POST /api-token-deauth` | log out: expire the cookies |
+| `GET /api/v1/user` | the requester (401 when anonymous), with their `data_version` |
+| `/api/v1/tags`, `/entries` | list, retrieve, create, `PATCH`/`PUT`, delete (soft); `POST /tags/reorder` |
+| `/api/v1/tags_entries` | taggings: list, create, delete (soft); `POST /reorder`; no retrieve or update (405) |
+| `/api/v1/entry_reuses` | reuses: list, retrieve, create, delete; no update (405) |
+| `GET /api/v1/user/backup`, `POST /api/v1/user/restore` | [Backups](#backups) |
+| `/api/v1/user/data_versions` | [Data versions](#data-versions) |
+| `GET /api/v1/users/:username[/tags,/entries,/tags_entries]` | [Public user data](#public-user-data) |
+| `/api/v1/admin/...` | [Admin API](#admin-api) (staff) |
+
+Request headers (api-shared's `messages.ts` names each):
+
+- `X-Data-Version`: the data version a client's copy is of. A read naming
+  none is of the active one; a write must name one (see
+  [Data versions](#data-versions)).
+- `X-Expected-User`, `X-Expected-User-Id`: the user, or account, a request
+  acts for. Signed in as anyone else, it is a 409 `user_mismatch`, so a tab
+  whose session another tab replaced never reads or writes the new user's
+  data as its own.
+- `Client-Updated`, `Client-Write-Id`: when a queued write was made, and its
+  id ([Queued writes](#queued-writes-last-writer-wins)).
+- `X-Data-Access` (`public` or `full`), `X-Public-Revision`,
+  `X-Data-Owner-Id`: the access a read of a user's data asks for, and the
+  public revision and owner it is bound to (a mismatch is a 409
+  `view_changed`; [Public user data](#public-user-data)).
+
+Every response names the build that answered in `API-Version` (this
+package's version).
+
 ## Differences from the Django backend
 
 Deliberate changes, by area. The admin API is new; see
@@ -118,9 +156,11 @@ Deliberate changes, by area. The admin API is new; see
 
 ### Access and auth
 
-- **Owner-only reads.** Every list/retrieve is scoped to the requesting user;
+- **Owner-only reads.** Every list/retrieve of the original collection routes
+  (`/api/v1/tags`, `/entries`, ...) is scoped to the requesting user;
   anonymous reads get 403. (Django let anyone list anyone's entries and tags by
-  username.)
+  username.) What an owner shares is read through its own routes (see
+  [Public user data](#public-user-data)).
 - **Tagging checks ownership.** Creating a junction or a reuse only accepts the
   requester's own tag/entry (400 `Invalid pk`).
 - **Deactivated accounts are locked out.** An `is_active = false` account's
@@ -160,8 +200,8 @@ Deliberate changes, by area. The admin API is new; see
   removed) re-ranked scopes that had tied ranks.
 - **`date_updated` comes from D1, not the Worker's clock** (`src/lib/revision.ts`):
   the later of D1's clock and one millisecond past the user's latest row, so
-  sync (`filter[date_updated.gt]`) never misses a write because two Workers'
-  clocks disagreed.
+  a sync (keyset reads in `date_updated` order, `page[after]`) never misses a
+  write because two Workers' clocks disagreed.
 - **Tagging, untagging and junction reorders advance the entry's
   `date_updated`**, in the same D1 batch as the junction write, so a sync of
   `/entries` gets each entry's junctions (its `text_entry_to_tag`) as they
@@ -363,7 +403,8 @@ since D1 caps a bound value at 2 MB.
 An admin API replaces Django admin. `/api/v1/admin` is for `is_staff` users
 only (403 for everyone else):
 
-- `GET /users` lists every account, with live entry and tag counts.
+- `GET /users` lists every account, with the live entry and tag counts of
+  its active data version.
   Filters: `filter[is_active]`, `filter[is_staff]`, `filter[username]`
   (exactly), and `filter[search]` (username or email). Sorts: `username`,
   `email`, `date_joined`, `last_login`, `last_active`, `login_count`,
@@ -418,8 +459,10 @@ Reserving another username (adding it to
 existing accounts that have it, as `0006_rename_reserved_usernames.sql` did;
 `scripts/migrations.test.ts` fails without one.
 
-Backups: D1 Time Travel restores to any point in the last 30 days
-(`wrangler d1 time-travel restore`); `wrangler d1 export` produces a SQL dump.
+Database backups (as opposed to a user's backup, above): D1 Time Travel
+restores to any point in the last 30 days (`wrangler d1 time-travel restore`,
+to a bookmark from `wrangler d1 time-travel info`); `wrangler d1 export`
+produces a SQL dump.
 
 ## Deployment
 
@@ -432,7 +475,7 @@ One-time setup, after `bunx wrangler login` (`--device` over SSH) or with
 for env in staging production; do
   bunx wrangler d1 migrations apply DB --remote --env "$env"
   bunx wrangler deploy --env "$env"
-  # Only the Worker's four secrets; the files (Django's) hold many more.
+  # The Worker's four secrets, all the files hold (jq keeps it to them).
   sops -d --output-type json secrets/$env.sops.env |
     jq '{GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID,
          GOOGLE_CLIENT_SECRET}' |
@@ -442,15 +485,34 @@ done
 
 Secrets persist across deploys; rerun the last step only to rotate them.
 
-Migrations run before the deploy (here and in CI), so a migration must work
-with the Worker that is still running. Removing a column takes two releases:
+Each release, from this directory, for staging and then production (CI does
+not deploy; see below):
+
+```shell
+bunx wrangler d1 time-travel info DB --env "$env"   # keep the bookmark
+bunx wrangler d1 migrations apply DB --remote --env "$env"
+bun run deploy:$env   # wrangler deploy; it applies no migrations
+bunx wrangler deployments list --env "$env"
+```
+
+The web app (`../frontend`, `bun run deploy:$env`) goes after the API when it
+needs something the API adds, and before it when the API removes something
+older builds read (an attribute their schemas require). The `API-Version`
+response header is this package's version, so a request shows which build
+answered.
+
+Migrations run before the deploy, so a migration must work with the Worker
+that is still running. Removing a column takes two releases:
 first stop reading it (drop it from `src/db/schema.ts`, but not from the
 database), then drop it in a later migration. Every request loads the user
 row, so dropping a `users_user` column the running Worker still selects fails
 every request until the new code is live. `is_superuser` went this way
-(`0005`), and so did `date_restored` (`0020`).
-`scripts/migrations.test.ts` checks that migrations after the import keep
-every row, never rebuild `users_user` (which cascades to all user data), and
+(`0005`), `date_restored` (`0020`), and Django's `first_name`, `last_name` and
+`reused_date` (`0022`). A column the Worker only writes, never reads, can go in
+one release, at the cost of the writes in between: `authtoken_token.created`
+(`0022`).
+`scripts/migrations.test.ts` checks that migrations after `0003` (the schema
+production's data was imported into) keep every row, never rebuild `users_user` (which cascades to all user data), and
 leave the database matching `src/db/schema.ts`. Between the two releases, list
 the column in its `PENDING_DROPS`.
 
@@ -461,6 +523,7 @@ The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
 CI: pull requests run lint, typecheck, and the coverage-gated tests as the
 `backend-v2` lane of the required `CI gate` (see `../../docs/ci-merge-gate.md`),
 for changes here or in `../api-shared`. Pushes to `staging`/`main` that change
-either run `Backend v2 CI`, which applies D1 migrations and deploys once the `BACKEND_V2_DEPLOY` repository variable is `true` and the
-`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist. Deploys stay
-off until then.
+either run `Backend v2 CI`, whose deploy job would apply D1 migrations and
+deploy, but only once the `BACKEND_V2_DEPLOY` repository variable is `true`
+and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist.
+Neither is set, so CI never deploys: releases are deployed by hand, as above.

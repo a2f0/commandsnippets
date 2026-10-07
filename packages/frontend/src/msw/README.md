@@ -14,6 +14,7 @@ src/msw/
 ├── worker.ts         # MSW service worker setup
 ├── handlers.ts       # All API mock handlers
 ├── documents.ts      # Pagination, timestamps and errors as the API renders them
+├── keyset.ts         # Keyset pages (`page[after]`) as the API renders them
 ├── requests.ts       # Request documents parsed (and refused) as the API does
 ├── browser.ts        # Window globals the E2E tests use
 ├── healthCheck.ts    # Health check utilities
@@ -62,13 +63,22 @@ Main initialization function that:
 4. Performs health check
 
 ### `handlers.ts`
-Contains all API mock handlers:
-- Tags CRUD operations
-- Entries CRUD operations
-- Tagging and untagging entries (`/tags_entries`)
-- Health check endpoint
-- Authentication endpoints
-- Stateful mock data with reset capability
+Contains all API mock handlers, over stateful mock data with reset
+capability:
+- Tags and entries: list (keyset pages too), retrieve, create, update, delete,
+  and tag reorders
+- Tagging, untagging and junction reorders (`/tags_entries`)
+- The signed-in user (`/user/`), their backup and restore (`/user/backup`,
+  `/user/restore`), and their data versions (`/user/data_versions`, with
+  activate and delete): a restore makes a new version, as the API's does
+- Public user data (`/users/:username` and its `/tags`, `/entries`,
+  `/tags_entries`)
+- The admin API (`/admin/users`, a user's data, `/admin/audit_log`)
+- Health check and authentication endpoints
+
+Requests about the signed-in user's data are refused as the API refuses them
+(`refuseAnotherVersion`): one naming another data version (`X-Data-Version`)
+than the active one is a 409, and a write naming none a 400.
 
 The write handlers keep that state as the API keeps its database. A rename,
 an edit or a new junction gets a new revision (`date_updated`, past every

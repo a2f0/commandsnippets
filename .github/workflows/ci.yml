@@ -9,10 +9,8 @@ on:
   pull_request:
   workflow_dispatch:
 
-# The frontend lanes install packages from GitHub Packages.
 permissions:
   contents: read
-  packages: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.run_id }}

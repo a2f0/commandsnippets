@@ -18,7 +18,7 @@ bun packages/agent-tool/src/index.ts solicitOpencodeReview          # effort: hi
 bun packages/agent-tool/src/index.ts solicitCodexReview xhigh
 ```
 
-Both actions:
+All three actions:
 
 1. Resolve the review base from git + `gh` — the PR's base when the branch has an
    open PR, the repository's default branch when it does not.

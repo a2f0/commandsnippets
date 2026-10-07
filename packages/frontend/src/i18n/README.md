@@ -191,12 +191,11 @@ src/i18n/
    } as const;
    ```
 
-3. Update `src/i18n/i18n.ts`:
+3. Update `src/i18n/i18n.ts`: add the language to the `supportedLanguages`
+   constant (i18next's `supportedLngs` is set from it; resources come from the
+   translations object):
    ```ts
-   // Resources are automatically included from translations object
-
-   // Update supportedLngs
-   supportedLngs: ['en', 'es', 'fr'] as const,
+   export const supportedLanguages = ['en', 'es', 'fr'] as const;
    ```
 
 4. Add to language switcher component

@@ -10,6 +10,7 @@ Monorepo for the Commandsnippets app.
 | `packages/website/` | Public website (Astro); bun, own lockfile |
 | `packages/agent-tool/` | CLI behind the ship/review skills (root bun workspace) |
 | `scripts/` | git hooks, CI policy, test entrypoints |
+| `docs/` | the CI merge gate (`docs/ci-merge-gate.md`) |
 | `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
 
 ## Conventions
