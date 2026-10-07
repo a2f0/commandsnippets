@@ -341,6 +341,36 @@ describe('the version a request names', () => {
   });
 });
 
+describe('a client id', () => {
+  const createTag = (name: string) =>
+    client.post('/api/v1/tags', {
+      data: {type: 'Tag', attributes: {name, client_id: 'local-1'}},
+    });
+  const tagOf = async (response: Response) => {
+    expect(response.status).toBe(201);
+    const {data} = await json(response);
+    const [row] = await db()
+      .select()
+      .from(tags)
+      .where(eq(tags.id, Number(data.id)));
+    return {id: data.id, name: row?.name, version: row?.version};
+  };
+
+  it("names one tag in each version: a create naming it makes that version's once", async () => {
+    const first = await tagOf(await createTag('first'));
+    await restoreOwn(client);
+
+    const made = await tagOf(await createTag('again'));
+    expect(made).toEqual({id: made.id, name: 'again', version: 2});
+    expect(made.id).not.toBe(first.id);
+    // Retried, whatever it is called: the tag it made.
+    expect(await tagOf(await createTag('renamed'))).toEqual(made);
+    // And in the first version, the tag it made there.
+    await activate(client, 1);
+    expect(await tagOf(await createTag('other'))).toEqual(first);
+  });
+});
+
 describe('a version that is not active', () => {
   it("is no row to the API's writes", async () => {
     const [entry] = (await json(await client.get('/api/v1/entries'))).data;

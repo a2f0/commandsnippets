@@ -1,6 +1,6 @@
 {
-  "id": "5f64cc5b-badf-47c7-a51a-91a084064901",
-  "prevId": "287847d8-e8fd-4fb2-afc5-66b0a52cb597",
+  "id": "8ebd396e-ba42-4004-991c-eb6313408456",
+  "prevId": "af7da3b0-1f3c-4960-b717-7375de9dbf4a",
   "version": "6",
   "dialect": "sqlite",
   "tables": {
@@ -376,6 +376,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
         "client_id": {
           "name": "client_id",
           "type": "text",
@@ -429,12 +437,13 @@
         }
       },
       "compositePrimaryKeys": {
-        "tags_tagclientid_user_id_client_id_pk": {
+        "tags_tagclientid_user_id_version_client_id_pk": {
           "columns": [
             "user_id",
+            "version",
             "client_id"
           ],
-          "name": "tags_tagclientid_user_id_client_id_pk"
+          "name": "tags_tagclientid_user_id_version_client_id_pk"
         }
       },
       "uniqueConstraints": {},
@@ -1097,13 +1106,6 @@
         },
         "date_marked_for_deletion": {
           "name": "date_marked_for_deletion",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "date_restored": {
-          "name": "date_restored",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

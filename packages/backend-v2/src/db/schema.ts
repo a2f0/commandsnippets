@@ -46,10 +46,6 @@ export const users = sqliteTable(
     // When staff marked the account for deletion through the admin API, which
     // also deactivates it; NULL if it is not marked.
     date_marked_for_deletion: text('date_marked_for_deletion'),
-    // Unused: the restore cutoff, which data versions replace. Dropped once
-    // no deployed Worker reads it (migrations apply before a deploy, so the
-    // Worker running then still selects it).
-    date_restored: text('date_restored'),
     // The user's active data version (users_dataversion): what their data
     // reads and writes are of (resources/dataVersions.ts).
     active_version: integer('active_version').notNull().default(1),
@@ -242,7 +238,8 @@ export const tags = sqliteTable(
  * The client id of every queued tag create, and the tag it was answered with
  * (the tag it made, or the user's of the name): a retried create finds that
  * tag by it, however it is named by then. Reserved in the batch of the write
- * the create is answered with, so a client id names one tag.
+ * the create is answered with, so a client id names one tag in a data
+ * version (as an entry's does: `text_entries_textentry_client_id_unique`).
  */
 export const tagClientIds = sqliteTable(
   'tags_tagclientid',
@@ -250,13 +247,15 @@ export const tagClientIds = sqliteTable(
     user_id: integer('user_id')
       .notNull()
       .references(() => users.id, {onDelete: 'cascade'}),
+    // The data version of the create, and so of its tag.
+    version: integer('version').notNull().default(1),
     client_id: text('client_id').notNull(),
     tag_id: integer('tag_id')
       .notNull()
       .references(() => tags.id, {onDelete: 'cascade'}),
   },
   table => [
-    primaryKey({columns: [table.user_id, table.client_id]}),
+    primaryKey({columns: [table.user_id, table.version, table.client_id]}),
     index('tags_tagclientid_tag_id_idx').on(table.tag_id),
   ]
 );

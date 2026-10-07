@@ -134,6 +134,7 @@ tagRoutes.post('/', async c => {
                     .where(
                       and(
                         eq(tagClientIds.user_id, user.id),
+                        eq(tagClientIds.version, version),
                         eq(tagClientIds.client_id, clientId)
                       )
                     )
@@ -150,6 +151,7 @@ tagRoutes.post('/', async c => {
   const reserve = (which: SQL) =>
     db.insert(tagClientIds).values({
       user_id: user.id,
+      version,
       client_id: clientId ?? '',
       tag_id: sql`(SELECT ${tags.id} FROM ${tags} WHERE ${which})`,
     });
