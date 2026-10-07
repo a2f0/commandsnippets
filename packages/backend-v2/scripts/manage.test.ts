@@ -35,10 +35,10 @@ function seedUser(
      VALUES (?, ?, ?, ?, ?, ?, 1)`,
     [id, username, email, lastLogin, TS, TS]
   );
-  db.run(
-    'INSERT INTO authtoken_token (key, user_id) VALUES (?, ?)',
-    [String(id).repeat(40).slice(0, 40), id]
-  );
+  db.run('INSERT INTO authtoken_token (key, user_id) VALUES (?, ?)', [
+    String(id).repeat(40).slice(0, 40),
+    id,
+  ]);
 }
 
 function seedContent(userId: number, tags: number, entries: number) {
