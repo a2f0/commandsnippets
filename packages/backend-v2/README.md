@@ -475,7 +475,7 @@ One-time setup, after `bunx wrangler login` (`--device` over SSH) or with
 for env in staging production; do
   bunx wrangler d1 migrations apply DB --remote --env "$env"
   bunx wrangler deploy --env "$env"
-  # Only the Worker's four secrets; the files (Django's) hold many more.
+  # The Worker's four secrets, all the files hold (jq keeps it to them).
   sops -d --output-type json secrets/$env.sops.env |
     jq '{GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID,
          GOOGLE_CLIENT_SECRET}' |
