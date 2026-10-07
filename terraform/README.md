@@ -78,7 +78,9 @@ hook runs the format check and the wrapper tests. Locally:
 ```shell
 terraform fmt -recursive
 tflint --init && tflint --recursive --config="$PWD/.tflint.hcl"
-(cd modules/zone && terraform init -backend=false && terraform test)
+for module in modules/*/; do
+  (cd "$module" && terraform init -backend=false && terraform test)
+done
 bun test ./scripts/
 ```
 

@@ -6,8 +6,9 @@
  * (`parseDateTime`).
  *
  * This module imports nothing, and is exported on its own as
- * `@commandsnippets/api-shared/datetime`: the backend's Bun scripts load it
- * outside a bundler, where api-shared's imports (zod) would not resolve.
+ * `@commandsnippets/api-shared/datetime`, so code that runs outside a bundler,
+ * where api-shared's imports (zod) would not resolve, can load it. The API
+ * (`src/lib/clock.ts`) and the web app (its sync and sorting) import it.
  */
 
 /** Microseconds since the epoch as the fixed-width stored form. */

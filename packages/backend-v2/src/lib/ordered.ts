@@ -3,8 +3,8 @@
  * TagTextEntryThroughModel: new rows go to the bottom (`max + 1`, or 0), and
  * `above()`/`below()` move a row next to a reference row by shifting the rows
  * in between, bumping `date_updated` on every row they touch (the Django code
- * passed `extra_update={"date_updated": now}`) so incremental sync
- * (`filter[date_updated.gt]`) picks the new ranks up.
+ * passed `extra_update={"date_updated": now}`) so a sync by revision picks
+ * the new ranks up.
  *
  * Differences from the Django version, both deliberate:
  * - Ranks are scoped (`order_with_respect_to`): tags per user, junctions per

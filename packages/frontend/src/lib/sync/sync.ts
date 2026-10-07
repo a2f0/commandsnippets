@@ -1,7 +1,9 @@
 /**
- * The sync between the API and one user's data in the signed-in user's
- * IndexedDB database (`lib/db/database.ts`): their own, or for staff another
- * user's, read through the admin API. Keyset reads (api-shared's
+ * The sync between the API and one user's data in an IndexedDB database
+ * (`lib/db/database.ts`): the signed-in user's own, another user's for staff
+ * (read through the admin API), both in the signed-in user's database, or what
+ * an owner shares, for anyone (`publicSyncApi`, in the public database; see
+ * `session.ts`). Keyset reads (api-shared's
  * `cursor.ts`) from cursors the database keeps for that user, so a sync
  * resumes where the last one stopped, and a first one (no cursors: a fresh
  * sign-in) reads everything.
@@ -70,7 +72,8 @@ import {checkOwner, putEntries, putJunctions, putTags} from './store';
 
 /**
  * The API reads a sync makes: of the signed-in user's own data
- * (`apiClient`'s), or of another user's (`adminSyncApi`).
+ * (`apiClient`'s), of another user's for staff (`adminSyncApi`), or of what an
+ * owner shares (`publicSyncApi`).
  */
 export interface SyncApi {
   /**
