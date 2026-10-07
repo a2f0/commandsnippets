@@ -5,7 +5,6 @@ a monorepo.
 
 | Directory | Contents |
 | --- | --- |
-| `backend/` | Django API (being replaced by `packages/backend-v2/`) |
 | `packages/agent-tool/` | CLI behind the ship/review skills |
 | `packages/api-shared/` | API contract (zod schemas) shared by the API and its clients |
 | `packages/backend-v2/` | Cloudflare Workers API |
@@ -18,14 +17,10 @@ Each directory retains the commit history of its original repository.
 
 ## Local CI scripts
 
-Install the backend or frontend dependencies before running its scripts. The
-test entrypoints mirror the commands used by GitHub Actions:
+Install the frontend dependencies before running its scripts. The test
+entrypoints mirror the commands used by GitHub Actions:
 
 ```sh
-./scripts/runBackendTests.sh
 ./scripts/runUnitTests.sh
 ./scripts/runWebdriverTests.sh
 ```
-
-Backend tests expect PostgreSQL on `localhost:5432` by default. Override the
-standard `POSTGRES_*` variables to use another test database.

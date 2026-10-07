@@ -528,8 +528,8 @@ loop, subject-only squash, and `MERGED`-state verification.
   confirms it on the reviewed head just before the merge. Two PRs racing on the
   same package therefore land consecutive patch versions in merge order: the
   loser goes `BEHIND`, syncs (any version-only conflict is resolved), bumps one
-  past the winner, and is reviewed again. The Django `backend/` and the other
-  packages are not versioned by this flow.
+  past the winner, and is reviewed again. The other packages are not versioned
+  by this flow.
 - **Base-ref validation is fail-fast, not an atomic API precondition.** GitHub's
   synchronous merge API exposes `expectedHeadOid` but no corresponding expected
   base-ref input. This flow preserves the base identity used for review and

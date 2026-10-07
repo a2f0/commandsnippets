@@ -10,8 +10,6 @@
 export const CI_SCOPES = {
   tooling:
     /^(packages\/agent-tool\/|scripts\/|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
-  backend:
-    /^(backend\/|scripts\/runBackendTests\.sh$)/,
   frontend:
     /^(packages\/(frontend|api-shared)\/|scripts\/(runUnitTests|runWebdriverTests)\.sh$)/,
   backendV2: /^packages\/(backend-v2|api-shared)\//,
@@ -25,7 +23,6 @@ export type CiScope = keyof typeof CI_SCOPES;
 /** Each scoped job in .github/workflows/ci.yml, by job id, and its scope. */
 export const CI_JOBS = {
   tooling: "tooling",
-  backend: "backend",
   "backend-v2": "backendV2",
   "api-shared": "apiShared",
   frontend: "frontend",

@@ -5,14 +5,12 @@ workerd, [D1](https://developers.cloudflare.com/d1/) (SQLite) through
 [Drizzle](https://orm.drizzle.team), with [Bun](https://bun.sh) as the package
 manager and script runner.
 
-It replaces the Django backend in `../../backend`. Routes, JSON:API documents,
+It replaced the Django backend (retired, and since removed from this repository). Routes, JSON:API documents,
 cookies, tokens, timestamps and error messages follow Django's wherever clients
 rely on them, but it is not a drop-in replacement: the original collection routes are owner-only,
 staging has its own cookie names, and staff get an admin API (see
 [Differences from the Django backend](#differences-from-the-django-backend)).
-The web client must be a build that knows these (see
-[Importing the Postgres data](#importing-the-postgres-data), step 0). It is
-web-only: the API endpoints and CORS origins that served the retired Electron
+The web client must be a build that knows these. It is web-only: the API endpoints and CORS origins that served the retired Electron
 and Capacitor apps are gone.
 
 ## Layout
@@ -44,7 +42,6 @@ and Capacitor apps are gone.
 | `src/resources/admin.ts` | the `/api/v1/admin` API for staff | Django admin |
 | `src/services/users.ts`, `src/services/tokens.ts` | account creation, reserved usernames, logins; auth tokens | the `users` app; DRF `authtoken` |
 | `scripts/manage.ts` | management commands | `manage.py` commands |
-| `scripts/import-postgres.ts` | one-time Postgres → D1 import | — |
 | `scripts/lib/` | the scripts' shared helpers (migrations, SQL literals, processes) | — |
 | `test/` | the Django test suite, ported test-for-test, and v2's own tests | the apps' `tests/` |
 | `test/contract/` | the API's requests and responses against api-shared's schemas | — |
@@ -95,7 +92,7 @@ bun run dev                      # http://localhost:9001, as the frontend expect
 ```shell
 bun run test             # vitest inside workerd, against a real (local) D1
 bun run test:coverage    # the same, with the src/ coverage gate
-bun run test:scripts     # import + management scripts (bun test), own gate
+bun run test:scripts     # management scripts and migrations (bun test), own gate
 bun run typecheck
 bun run lint
 ```
@@ -136,8 +133,7 @@ Deliberate changes, by area. The admin API is new; see
   taken in any letter case, and a new account gets the usual `-<digits>`
   suffix instead. The frontend's tests check its routes against the list.
   `0006_rename_reserved_usernames.sql` renamed any existing account with one
-  to `<name>-<id>` (staging and production had none), and the Postgres import
-  refuses them. Reserving another name takes a migration too (see
+  to `<name>-<id>` (staging and production had none). Reserving another name takes a migration too (see
   [Operations](#operations)).
 - **Web only.** `/api/v1/integrated-oauth/` (native Google sign-in), the
   Electron GitHub OAuth app (`clientType: 'electron'`, now ignored) with its
@@ -160,8 +156,8 @@ Deliberate changes, by area. The admin API is new; see
 
 - **Ordering is scoped.** Tags are ranked per user and tag↔entry junctions per
   tag (`order_with_respect_to`); Django used one global sequence per table.
-  Deletes leave gaps instead of compacting ranks. The import re-ranks scopes that
-  had tied ranks (see below).
+  Deletes leave gaps instead of compacting ranks. The Postgres import (since
+  removed) re-ranked scopes that had tied ranks.
 - **`date_updated` comes from D1, not the Worker's clock** (`src/lib/revision.ts`):
   the later of D1's clock and one millisecond past the user's latest row, so
   sync (`filter[date_updated.gt]`) never misses a write because two Workers'
@@ -197,7 +193,7 @@ Deliberate changes, by area. The admin API is new; see
   the tag itself was edited.
 - **Search folds Unicode in the app.** D1's SQLite has no ICU, so
   `filter[search]` compares against `subject_folded`/`body_folded`, written by
-  every entry write path and the import (`src/lib/search.ts`). Anything that
+  every entry write path (`src/lib/search.ts`). Anything that
   writes entries outside the API must set them too.
 - `PATCH`/`PUT` on `/entry_reuses` is 405 (it would desync counters), and
   renaming a tag to an existing name is a 400 rather than a 500.
@@ -212,16 +208,16 @@ Deliberate changes, by area. The admin API is new; see
   written out in SQL.
 - **Length limits are CHECK constraints**, since SQLite has no varchar lengths.
 - **Emails are unique** among accounts that have one (logins find accounts by
-  email); the Postgres import refuses shared emails.
+  email).
 - **`is_superuser` is gone.** `is_staff` is the only admin flag. The schema
-  and the import stopped using the column in the `0004_admin.sql` release, and
+  stopped using the column in the `0004_admin.sql` release, and
   `0005_drop_is_superuser.sql` drops it (see Deployment).
 - **`users_user.last_active`** is the time of the user's latest authenticated
   request or login. The token lookup bumps it in the same statement
   (`UPDATE ... RETURNING`), so every request that authenticates writes to D1.
   It does not advance `date_updated`, and only the admin API shows it.
-  `0007_user_last_active.sql` (and the Postgres import) start existing
-  accounts at their `last_login`.
+  `0007_user_last_active.sql` started existing accounts at their
+  `last_login`.
 
 Unchanged on purpose: timestamps keep Django's naive-UTC microsecond format
 (`2024-01-01T12:34:56.123456`), tokens are the same 40-hex DRF keys (existing
@@ -394,45 +390,6 @@ Nothing in the API grants staff; see [Operations](#operations).
 `GET /api/v1/user` reports the requester's own `is_staff`, which the web app
 uses to offer its `/admin` page.
 
-## Importing the Postgres data
-
-The Django API and its hosts were shut down on 2026-09-27, so the production
-database no longer changes: import the dump taken before the shutdown (a
-`pg_dump -Fc` file).
-
-0. **Host the web app first.** Its S3/CloudFront sites were torn down with the
-   Django hosts. It must be a build from after #47: v2's reads are owner-only,
-   and earlier builds sent no credentials on entry/tag reads
-   (`getEntries`/`getTags`), so against v2 they would get 403s and reset their
-   sessions.
-
-1. **Convert and verify.** This needs `pg_restore` but no Postgres server:
-
-   ```shell
-   bun scripts/import-postgres.ts <dump-file>
-   ```
-
-   It writes `data/import.sql` (git-ignored; it contains user data and tokens)
-   and verifies it in an in-memory SQLite built from `migrations/`, statement by
-   statement: row counts, foreign keys, counters, rank ties, sequence
-   positions, cross-user rows, duplicate emails. If the backup is from a newer
-   Postgres than your `pg_restore`, use
-   `PG_RESTORE="docker run --rm -i postgres:18 pg_restore"`.
-
-2. **Load it** into an empty, migrated database:
-
-   ```shell
-   bunx wrangler d1 migrations apply DB --remote --env production
-   bunx wrangler d1 execute DB --remote --env production --file data/import.sql
-   ```
-
-3. **Switch traffic** to the Worker (attach `api.commandsnippets.com`).
-
-4. Delete `data/import.sql`.
-
-Nothing reads D1 before step 3, so a failed load can be retried on a freshly
-created database.
-
 ## Operations
 
 ```shell
@@ -473,8 +430,8 @@ One-time setup, after `bunx wrangler login` (`--device` over SSH) or with
 for env in staging production; do
   bunx wrangler d1 migrations apply DB --remote --env "$env"
   bunx wrangler deploy --env "$env"
-  # Only the Worker's four secrets; the Django files hold many more.
-  sops -d --output-type json ../../backend/.env-$env.sops.env |
+  # Only the Worker's four secrets; the files (Django's) hold many more.
+  sops -d --output-type json secrets/$env.sops.env |
     jq '{GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID,
          GOOGLE_CLIENT_SECRET}' |
     bunx wrangler secret bulk --env "$env"

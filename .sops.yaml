@@ -1,4 +1,8 @@
 creation_rules:
+  # The API Worker's secrets (packages/backend-v2/README.md, Deployment).
+  - path_regex: ^packages/backend-v2/secrets/(staging|production)\.sops\.env$
+    pgp:
+      - 6FFAEA28B304FA98E7521822827B8379F39A31F0
   - path_regex: \.sops$
     pgp:
       - 6FFAEA28B304FA98E7521822827B8379F39A31F0

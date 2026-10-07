@@ -32,18 +32,8 @@ describe("ciScopes", () => {
   });
 
   test("selects application lanes by their paths", () => {
-    expect(ciScopes(["backend/tearleads/urls.py"])).toEqual({
-      tooling: false,
-      backend: true,
-      frontend: false,
-      backendV2: false,
-      apiShared: false,
-      website: false,
-      terraform: false,
-    });
     expect(ciScopes(["packages/backend-v2/src/app.ts"])).toEqual({
       tooling: false,
-      backend: false,
       frontend: false,
       backendV2: true,
       apiShared: false,
@@ -52,7 +42,6 @@ describe("ciScopes", () => {
     });
     expect(ciScopes(["packages/frontend/src/App.tsx"])).toEqual({
       tooling: false,
-      backend: false,
       frontend: true,
       backendV2: false,
       apiShared: false,
@@ -61,7 +50,6 @@ describe("ciScopes", () => {
     });
     expect(ciScopes(["packages/api-shared/src/index.ts"])).toEqual({
       tooling: false,
-      backend: false,
       frontend: true,
       backendV2: true,
       apiShared: true,
@@ -69,10 +57,8 @@ describe("ciScopes", () => {
       terraform: false,
     });
     expect(ciScopes(["scripts/runWebdriverTests.sh"]).frontend).toBe(true);
-    expect(ciScopes(["scripts/runBackendTests.sh"]).backend).toBe(true);
     expect(ciScopes(["terraform/stacks/zone/main.tf"])).toEqual({
       tooling: false,
-      backend: false,
       frontend: false,
       backendV2: false,
       apiShared: false,
@@ -81,7 +67,6 @@ describe("ciScopes", () => {
     });
     expect(ciScopes(["packages/website/src/pages/index.astro"])).toEqual({
       tooling: false,
-      backend: false,
       frontend: false,
       backendV2: false,
       apiShared: false,
@@ -93,7 +78,6 @@ describe("ciScopes", () => {
   test("skips every lane for unrelated paths", () => {
     expect(ciScopes(["README.md", "docs/ci-merge-gate.md"])).toEqual({
       tooling: false,
-      backend: false,
       frontend: false,
       backendV2: false,
       apiShared: false,
@@ -119,7 +103,6 @@ describe("assertCiSuccess", () => {
     result: "success",
     outputs: {
       tooling: value,
-      backend: value,
       frontend: value,
       backendV2: value,
       apiShared: value,
@@ -129,7 +112,6 @@ describe("assertCiSuccess", () => {
   });
   const jobs = (result: string) => ({
     tooling: { result },
-    backend: { result },
     "backend-v2": { result },
     "api-shared": { result },
     frontend: { result },
@@ -151,7 +133,6 @@ describe("assertCiSuccess", () => {
       result: "success",
       outputs: {
         tooling: "false",
-        backend: "false",
         frontend: "true",
         backendV2: "false",
         apiShared: "false",
@@ -162,7 +143,6 @@ describe("assertCiSuccess", () => {
     const needs = {
       changes,
       tooling: { result: "skipped" },
-      backend: { result: "skipped" },
       "backend-v2": { result: "success" },
       "api-shared": { result: "skipped" },
       frontend: { result: "success" },
@@ -179,7 +159,6 @@ describe("assertCiSuccess", () => {
       result: "success",
       outputs: {
         tooling: "false",
-        backend: "false",
         frontend: "true",
         backendV2: "true",
         apiShared: "true",
@@ -215,9 +194,9 @@ describe("assertCiSuccess", () => {
         assertCiSuccess({
           changes: scopes("true"),
           ...jobs("success"),
-          backend: { result },
+          frontend: { result },
         }),
-      ).toThrow("backend must be success");
+      ).toThrow(`frontend must be success: ${result}`);
     }
   });
 

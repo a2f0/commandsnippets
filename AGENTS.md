@@ -9,7 +9,6 @@ Monorepo for the Commandsnippets app.
 | `packages/api-shared/` | The API contract: zod schemas and types shared by the API and its clients; bun, own lockfile |
 | `packages/website/` | Public website (Astro); bun, own lockfile |
 | `packages/agent-tool/` | CLI behind the ship/review skills (root bun workspace) |
-| `backend/` | Django API (being replaced by `packages/backend-v2/`) |
 | `scripts/` | git hooks, CI policy, test entrypoints |
 | `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
 
