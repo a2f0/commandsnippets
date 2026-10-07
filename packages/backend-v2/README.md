@@ -488,7 +488,8 @@ with the Worker that is still running. Removing a column takes two releases:
 first stop reading it (drop it from `src/db/schema.ts`, but not from the
 database), then drop it in a later migration. Every request loads the user
 row, so dropping a `users_user` column the running Worker still selects fails
-every request until the new code is live. `is_superuser` went this way.
+every request until the new code is live. `is_superuser` went this way
+(`0005`), and so did `date_restored` (`0020`).
 `scripts/migrations.test.ts` checks that migrations after the import keep
 every row, never rebuild `users_user` (which cascades to all user data), and
 leave the database matching `src/db/schema.ts`. Between the two releases, list
