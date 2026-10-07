@@ -106,6 +106,20 @@
       "when": 1791032876592,
       "tag": "0014_public_revisions",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1791331518199,
+      "tag": "0015_user_date_restored",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1791332031962,
+      "tag": "0016_restore_cutoff",
+      "breakpoints": true
     }
   ]
 }

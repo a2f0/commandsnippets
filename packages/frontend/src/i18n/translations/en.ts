@@ -52,6 +52,24 @@ export const en: I18NextTranslations = {
     exportBackupFailedTitle: 'Export failed',
     exportBackupFailed:
       'Your backup could not be made. Check your connection and try again.',
+    restoreBackup: 'Restore Backup',
+    restoreConfirmTitle: 'Replace all of your data?',
+    restoreConfirmText:
+      "Restoring this backup deletes every tag and entry you have and replaces them with the backup's. This cannot be undone. To keep a copy of your data, export a backup first.",
+    restoreYourData: 'Your data now',
+    restoreBackupData: "The backup of {{username}}'s data, from {{date}}",
+    restoreCounts: 'Tags: {{tags}} · Entries: {{entries}}',
+    restoreConfirm: 'Delete my data and restore',
+    restoringTitle: 'Restoring backup',
+    restoringText: 'Replacing your data. Keep this page open until it is done.',
+    restoreDoneTitle: 'Backup restored',
+    restoreDoneText: "Your data is now the backup's.",
+    restoreFailedTitle: 'Restore failed',
+    restoreFailedText:
+      'The backup could not be restored. Check your connection and try again.',
+    restoreInvalidTitle: 'Not a backup',
+    restoreInvalidText:
+      'This file is not a Commandsnippets backup that can be restored.',
     hud: 'HUD',
     performance: 'Performance',
     logs: 'Logs',

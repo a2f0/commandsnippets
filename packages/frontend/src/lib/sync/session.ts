@@ -40,7 +40,11 @@ export interface SyncSession {
 export const ownSyncApi: SyncApi = {
   getOwner: async () => {
     const {data} = await apiClient.getCurrentUser();
-    return {id: data.id, username: data.attributes.username};
+    return {
+      id: data.id,
+      username: data.attributes.username,
+      restored: data.attributes.date_restored,
+    };
   },
   getTagsAfter: after => apiClient.getTagsAfter(after),
   getEntriesAfter: after => apiClient.getEntriesAfter(after),

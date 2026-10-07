@@ -4,12 +4,14 @@
  * reads show it. contract.spec.ts checks the documents' shapes.
  */
 import {
+  type Backup,
   backupSchema,
   CLIENT_WRITE_ID_HEADER,
   CODES,
   CURSOR_START,
   cursorOf,
   type IncludedResource,
+  restoreResultSchema,
   type TagListDocument,
   type TagTextEntry,
   type TagTextEntryCreateDocument,
@@ -931,5 +933,80 @@ describe('GET /user/backup', () => {
     expect(backup.tags.map(({id}) => id)).not.toContain('1');
     expect(backup.entries.map(({id}) => id)).toEqual(['1', '2']);
     expect(backup.tags_entries).toEqual([]);
+  });
+});
+
+describe('POST /user/restore', () => {
+  const getBackup = async () =>
+    backupSchema.parse((await send('GET', '/user/backup')).json);
+  const restore = (body: unknown) =>
+    send('POST', '/user/restore', body, {'Content-Type': 'application/json'});
+
+  it("replaces the user's data with the backup's, made anew", async () => {
+    const before = await getBackup();
+    const [entry] = before.entries;
+    const [first, second] = before.tags;
+    invariant(entry && first && second, 'the mock has entries and tags');
+    const incoming: Backup = {
+      ...before,
+      tags: [
+        {...second, id: '90', order: 1},
+        {...first, id: '91', name: 'new', order: 0},
+      ],
+      entries: [{...entry, id: '92', subject: 'moved'}],
+      tags_entries: [
+        {
+          id: '93',
+          tag_id: '90',
+          text_entry_id: '92',
+          order: 0,
+          date_created: entry.date_created,
+          date_updated: entry.date_updated,
+        },
+      ],
+      entry_reuses: [
+        {id: '94', text_entry_id: '92', date_created: entry.date_created},
+      ],
+    };
+
+    const {status, json} = await restore(incoming);
+
+    expect(status).toBe(200);
+    expect(restoreResultSchema.parse(json)).toEqual({
+      date_restored: expect.any(String),
+      tags: 2,
+      entries: 1,
+      tags_entries: 1,
+      entry_reuses: 1,
+    });
+    const after = await getBackup();
+    expect(after.tags.map(({name}) => name)).toEqual(['new', second.name]);
+    expect(after.entries.map(({subject}) => subject)).toEqual(['moved']);
+    expect(after.entries[0]?.id).not.toBe(entry.id);
+    const [tagging] = after.tags_entries;
+    expect(tagging?.text_entry_id).toBe(after.entries[0]?.id);
+    // The tag of a name the user had is the same tag, back in place.
+    expect(tagging?.tag_id).toBe(second.id);
+    // The old rows are deleted, as the sync's reads list them.
+    const entries = await getEntries();
+    expect(entryOf(entries, entry.id).attributes.is_deleted).toBe(true);
+    expect(
+      entryOf(entries, after.entries[0]?.id ?? '').attributes
+    ).toMatchObject({tag_count: 1, reused_count: 1, is_deleted: false});
+  });
+
+  it('refuses a backup naming a tag or entry it does not hold, changing nothing', async () => {
+    const before = await getBackup();
+    const [tagging] = before.tags_entries;
+    invariant(tagging, 'the mock has taggings');
+    const {status} = await restore({
+      ...before,
+      tags_entries: [{...tagging, tag_id: '999'}],
+    });
+    expect(status).toBe(400);
+    expect({...(await getBackup()), date_exported: ''}).toEqual({
+      ...before,
+      date_exported: '',
+    });
   });
 });

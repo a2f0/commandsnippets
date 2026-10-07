@@ -20,10 +20,10 @@ import {and, eq, type SQL, sql} from 'drizzle-orm';
 import type {SQLiteColumn} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
-import {clientWrites} from '../db/schema';
+import {clientWrites, users} from '../db/schema';
 import type {AppEnv} from '../env';
 import {formatMicros, now, parseDateTime} from '../lib/clock';
-import {ApiError, validationError} from '../lib/errors';
+import {ApiError, dataRestored, validationError} from '../lib/errors';
 
 /**
  * Advance the API's write clock (`sync_clock`): the database's clock, which
@@ -31,14 +31,14 @@ import {ApiError, validationError} from '../lib/errors';
  * makes a later write older), advanced by at least a microsecond at each
  * write, so no two writes share a time (D1 runs one statement at a time).
  */
-const tick = sql`INSERT INTO sync_clock (id, micros)
+export const tick = sql`INSERT INTO sync_clock (id, micros)
   VALUES (1, CAST((julianday('now') - 2440587.5) * 86400000000 AS INTEGER))
   ON CONFLICT (id) DO UPDATE
   SET micros = MAX(excluded.micros, sync_clock.micros + 1)
   RETURNING micros`;
 
 /** The write clock's time, in the API's fixed-width form. */
-const clockTime = sql<string>`(SELECT strftime('%Y-%m-%dT%H:%M:%S', micros / 1000000, 'unixepoch') || '.' || printf('%06d', micros % 1000000) FROM sync_clock WHERE id = 1)`;
+export const clockTime = sql<string>`(SELECT strftime('%Y-%m-%dT%H:%M:%S', micros / 1000000, 'unixepoch') || '.' || printf('%06d', micros % 1000000) FROM sync_clock WHERE id = 1)`;
 
 /** The id the request names its write by (`CLIENT_WRITE_ID_HEADER`), if any. */
 export function clientWriteId(c: Context<AppEnv>): string | undefined {
@@ -55,6 +55,69 @@ export function clientWriteId(c: Context<AppEnv>): string | undefined {
 }
 
 /**
+ * A 400 (`data_restored`) unless a client write made at `made` came after
+ * the user's last restore (`date_restored`, read now): one made before it
+ * (queued offline, say) would change what the restore replaced, or make
+ * again what it deleted, so clients drop it. Made times are the clients',
+ * as last writer wins compares them; clients raise theirs past the
+ * restore's once they know of it. This is the early answer: the cutoff's
+ * triggers refuse a create, edit or delete in the statement that makes it
+ * (`0016_restore_cutoff.sql`), so none lands after a restore that commits
+ * meanwhile. Reorders, which no time guards, are checked here only.
+ */
+async function assertMadeAfterRestore(
+  c: Context<AppEnv>,
+  made: string
+): Promise<void> {
+  const user = requireUser(c);
+  const [row] = await c
+    .get('db')
+    .select({restored: users.date_restored})
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+  const restored = row?.restored ?? null;
+  if (restored !== null && made < restored) {
+    throw dataRestored();
+  }
+}
+
+/** The time a reorder names (`CLIENT_UPDATED_HEADER`), if it names one. */
+function reorderMade(c: Context<AppEnv>): string | null {
+  const header = c.req.header(CLIENT_UPDATED_HEADER);
+  return header === undefined ? null : parseDateTime(header);
+}
+
+/**
+ * The time a reorder names, when it names one, checked against the user's
+ * last restore (`assertMadeAfterRestore`). Reorders are not otherwise
+ * guarded by when they were made.
+ */
+export async function assertReorderAfterRestore(
+  c: Context<AppEnv>
+): Promise<void> {
+  const made = reorderMade(c);
+  if (made !== null) {
+    await assertMadeAfterRestore(c, made);
+  }
+}
+
+/**
+ * The condition that no restore came after the time a reorder names, for
+ * its move's statement (`OrderedSpec.guard`), so one committing after
+ * `assertReorderAfterRestore` still stops it; none when it names no time.
+ */
+export function reorderRestoreGuard(
+  c: Context<AppEnv>,
+  userId: number
+): SQL | undefined {
+  const made = reorderMade(c);
+  return made === null
+    ? undefined
+    : sql`NOT EXISTS (SELECT 1 FROM ${users} WHERE ${users.id} = ${userId} AND ${users.date_restored} > ${made})`;
+}
+
+/**
  * When the request's write was made: the header's time, but never later than
  * now by the API's write clock (`tick`: a device whose clock runs ahead
  * cannot win every later write), or that now when the request names none.
@@ -64,7 +127,8 @@ export function clientWriteId(c: Context<AppEnv>): string | undefined {
  * a lost answer, or after a failure, or alongside the first attempt, counts
  * as the write did, never beating a write made in between nor losing to one
  * made before. Its time is followed by its id (`<time>|<id>`), which orders
- * two writes of the same time. A malformed time or write id is a 400.
+ * two writes of the same time. A malformed time or write id is a 400, and so
+ * is a write made before the user's last restore (`assertMadeAfterRestore`).
  */
 export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   const header = c.req.header(CLIENT_UPDATED_HEADER);
@@ -77,7 +141,9 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   if (writeId === undefined) {
     const {micros} = await db.get<{micros: number}>(tick);
     const current = formatMicros(micros);
-    return at !== null && at < current ? at : current;
+    const made = at !== null && at < current ? at : current;
+    await assertMadeAfterRestore(c, made);
+    return made;
   }
   const user = requireUser(c);
   const counted =
@@ -109,6 +175,7 @@ export async function clientUpdated(c: Context<AppEnv>): Promise<string> {
   if (recorded === undefined) {
     throw new Error(`write ${writeId} was not recorded`);
   }
+  await assertMadeAfterRestore(c, recorded.made);
   // Two writes of the same time (from two devices) are ordered by their ids,
   // whichever arrives first: the time is fixed-width, so the two compare as
   // strings in that order, and a retry never wins a tie its write lost.

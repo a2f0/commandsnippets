@@ -236,16 +236,34 @@ API; everything else the app keeps is a zustand store.
   signed in (a late answer to a session the tab has left changes nothing). `authUtils` must not import the
   store: the store imports the sync, which imports the API client, so that
   would be an import cycle.
-- **Backups**: File > Export Backup (`src/menu/file/menuItems/ExportBackup.tsx`,
-  `src/lib/data/backup.ts`) sends the queue (`flush`), then saves the API's
-  backup of the signed-in user's data (`GET /user/backup`, api-shared's
-  `backupSchema`: every tag, entry, tagging and reuse not deleted, with its
-  id) as `commandsnippets-backup-<username>-<YYYY-MM-DD>.json`. It is asked
-  for as the user and the account their data is bound to (`forAccount`), as
-  the queue's writes are, and a backup of any other account is refused
-  (`BackupAccountError`). When the queue cannot be sent or the backup read,
-  nothing is saved and a dialog says so. Another user's page does not offer it (it would read as theirs).
-  A restore is to come.
+- **Backups**: `src/lib/data/backup.ts`, api-shared's `backupSchema`
+  (every tag, entry, tagging and reuse not deleted, with its id). Both send
+  the queue (`flush`) first, then act as the user and the account their
+  data is bound to (`forAccount`), as the queue's writes do.
+  - File > Export Backup (`ExportBackup.tsx`) saves the API's backup
+    (`GET /user/backup`) as
+    `commandsnippets-backup-<username>-<YYYY-MM-DD>.json`; a backup of any
+    other account is refused (`BackupAccountError`).
+  - File > Restore Backup (`RestoreBackup.tsx`, `RestoreBackupDialog.tsx`)
+    reads a backup file (any account's: data moves between accounts) and
+    checks it (`readBackupFile`), then warns: all of the user's tags and
+    entries are deleted (counted as this device holds them) and replaced
+    with the backup's, which cannot be undone. The warning is for the user
+    who chose the file and the account their data is bound to then
+    (`restoreAccount`, which sends the queue first): another signing in
+    meanwhile closes it, and data bound to another account since is not
+    restored (`BackupAccountError`). Only the
+    confirmation sends it (`POST /user/restore`, which makes the rows anew,
+    with new ids); the data then syncs here (the deletes come in like any
+    others). The API refuses (400 `data_restored`, dropped like any refusal)
+    every write made before the restore by its clock, so writes are made
+    after it (`madeAfter`, the `made` cursor) once this device knows of it:
+    at once after its own restore, and at each sync for one made elsewhere
+    (`GET /user/`'s `date_restored`, read by `bindToApi`). The API's reason
+    for refusing a backup is shown (`ApiRequestError.detail`).
+  - When the queue cannot be sent or the API fails, nothing is saved or
+    restored and a dialog says so. Another user's page offers neither (they
+    would read as that user's data).
 
 ### Timings (the HUD)
 Outside production, the app times its work for the HUD's Analytics tab

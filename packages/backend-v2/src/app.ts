@@ -15,9 +15,11 @@ import packageJson from '../package.json';
 import {authenticate} from './auth/authentication';
 import {authRoutes} from './auth/routes';
 import {createDb} from './db/client';
+import {isDataRestored} from './db/errors';
 import type {AppEnv} from './env';
 import {
   ApiError,
+  dataRestored,
   describeError,
   originNotAllowed,
   userMismatch,
@@ -29,6 +31,7 @@ import {currentUserRoutes} from './resources/currentUser';
 import {entryRoutes} from './resources/entries';
 import {entryReuseRoutes} from './resources/entryReuses';
 import {jsonApi} from './resources/responses';
+import {restoreRoutes} from './resources/restore';
 import {tagRoutes} from './resources/tags';
 import {tagEntryRoutes} from './resources/tagsEntries';
 import {userDataRoutes} from './resources/userData';
@@ -155,6 +158,7 @@ app.get('/healthcheck', c => c.body(null, 200));
 
 app.route('/', authRoutes);
 app.route('/api/v1/user/backup', backupRoutes);
+app.route('/api/v1/user/restore', restoreRoutes);
 app.route('/api/v1/user', currentUserRoutes);
 app.route('/api/v1/tags', tagRoutes);
 app.route('/api/v1/entries', entryRoutes);
@@ -174,8 +178,10 @@ app.notFound(c =>
 );
 
 app.onError((error, c) => {
-  if (error instanceof ApiError) {
-    return jsonApi(c, {errors: error.errors}, error.status as 400);
+  // The restore cutoff's triggers refuse a write in the statement itself.
+  const apiError = isDataRestored(error) ? dataRestored() : error;
+  if (apiError instanceof ApiError) {
+    return jsonApi(c, {errors: apiError.errors}, apiError.status as 400);
   }
   console.error(describeError(error));
   return jsonApi(

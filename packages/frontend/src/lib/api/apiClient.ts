@@ -23,6 +23,8 @@ import {
   type Backup,
   backupSchema,
   emptyObjectSchema,
+  type RestoreResult,
+  restoreResultSchema,
   type TagCursorListDocument,
   type TagDocument,
   type TagTextEntryCursorListDocument,
@@ -57,13 +59,15 @@ type LogoutResponse = z.output<typeof emptyObjectSchema>;
  * A request the API answered with an error status (`${failure}:
  * ${statusText}`), which says whether trying it again can help: a queued
  * write (`lib/sync/outbox.ts`) is retried after a network failure or a 5xx,
- * and dropped after a 4xx.
+ * and dropped after a 4xx. `detail` is the first error's, when the answer
+ * was an error document (`errorDocument.ts`): why a backup was refused, say.
  */
 export class ApiRequestError extends Error {
   constructor(
     failure: string,
     readonly status: number,
-    statusText: string
+    statusText: string,
+    readonly detail?: string
   ) {
     super(`${failure}: ${statusText}`);
     this.name = 'ApiRequestError';
@@ -215,13 +219,12 @@ class ApiClient {
       ? await fetchWithAuth(url, init)
       : await fetchApi(url, init);
     if (!resp.ok) {
-      if (user !== null && resp.status === 409) {
-        const body: unknown = await resp.json().catch(() => undefined);
-        if (firstError(body).code === CODES.userMismatch) {
-          throw new UserMismatchError(failure, user);
-        }
+      const body: unknown = await resp.json().catch(() => undefined);
+      const {code, detail} = firstError(body);
+      if (user !== null && resp.status === 409 && code === CODES.userMismatch) {
+        throw new UserMismatchError(failure, user);
       }
-      throw new ApiRequestError(failure, resp.status, resp.statusText);
+      throw new ApiRequestError(failure, resp.status, resp.statusText, detail);
     }
     return resp;
   }
@@ -287,6 +290,20 @@ class ApiClient {
       {method: 'GET'},
       'Failed to export backup',
       backupSchema
+    );
+  }
+
+  /**
+   * Replace all of the user's data with `backup`'s (`POST /user/restore`):
+   * how many of each the restore made. A backup the API refuses is an
+   * `ApiRequestError` whose `detail` says why.
+   */
+  public async restoreBackup(backup: Backup): Promise<RestoreResult> {
+    return this.requestDocument(
+      `${baseURL}/user/restore`,
+      {method: 'POST', body: backup, contentType: 'application/json'},
+      'Failed to restore backup',
+      restoreResultSchema
     );
   }
 

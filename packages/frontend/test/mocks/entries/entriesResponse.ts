@@ -168,6 +168,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
         username: 'test',
         is_staff: true,
         date_updated: '2020-04-13T18:20:00',
+        date_restored: null,
       },
     },
   ],

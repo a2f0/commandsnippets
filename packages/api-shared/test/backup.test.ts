@@ -1,5 +1,10 @@
 import {describe, expect, test} from 'bun:test';
-import {BACKUP_FORMAT, BACKUP_VERSION, backupSchema} from '../src/index';
+import {
+  BACKUP_FORMAT,
+  BACKUP_VERSION,
+  backupSchema,
+  restoreResultSchema,
+} from '../src/index';
 import {failures, parsed} from './support';
 
 const ts = '2024-01-01T12:34:56.123456';
@@ -85,5 +90,23 @@ describe('backups', () => {
   test('refuse a missing collection', () => {
     const {entry_reuses: _, ...withoutReuses} = backup;
     expect(failures(backupSchema, withoutReuses)).toHaveLength(1);
+  });
+});
+
+describe('restore results', () => {
+  test('count what the restore made', () => {
+    const result = {
+      date_restored: ts,
+      tags: 1,
+      entries: 2,
+      tags_entries: 3,
+      entry_reuses: 0,
+    };
+    expect(parsed(restoreResultSchema, result)).toEqual(result);
+    expect(
+      failures(restoreResultSchema, {...result, entries: -1})
+    ).toHaveLength(1);
+    const {date_restored: _, ...undated} = result;
+    expect(failures(restoreResultSchema, undated)).toHaveLength(1);
   });
 });

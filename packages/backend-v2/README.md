@@ -37,6 +37,7 @@ and Capacitor apps are gone.
 | `src/lib/search.ts` | Unicode search folds | Postgres `UPPER()` in `icontains` |
 | `src/resources/{tags,entries,tagsEntries,entryReuses,currentUser}.ts` | the resource routes | viewsets |
 | `src/resources/backup.ts` | `GET /api/v1/user/backup`: the requester's data as a backup file | — |
+| `src/resources/restore.ts` | `POST /api/v1/user/restore`: replace the requester's data with a backup | — |
 | `src/resources/serializers.ts`, `resourceTypes.ts` | resource definitions and type names | serializers |
 | `src/resources/viewset.ts`, `owned.ts`, `filters.ts`, `related.ts`, `reorder.ts`, `responses.ts` | shared list, lookup, ownership, soft-delete, filter and reorder behavior | `ModelViewSet`, `IsOwner`, django-filter |
 | `src/resources/admin.ts` | the `/api/v1/admin` API for staff | Django admin |
@@ -292,8 +293,45 @@ entry is deleted, or another user's (rows imported from Django), is left
 out, so every id a row refers to is in the backup. Counters and dates the
 API works out from these rows (`entry_count`, `tag_count`,
 `date_last_used`, `reused_count`, `reused_date`) are left out too. The web
-app's File menu saves it (Export Backup); a restore is to come. It is sent
-with `Cache-Control: no-store`.
+app's File menu saves it (Export Backup). It is sent with
+`Cache-Control: no-store`.
+
+`POST /api/v1/user/restore` takes a backup as its body (any account's, so
+data can move between accounts) and replaces all of the requester's data
+with it, answering with how many tags, entries, taggings and reuses it made
+(api-shared's `restoreResultSchema`). It is checked first, as a create of
+each row would be (a tag's name, an entry's subject and body), with every
+id a row refers to in the backup: anything else is a 400 whose pointer and
+detail say where (`Invalid backup at /tags/3/name: ...`), and nothing
+changes. Then, in one D1 batch (all of it or none):
+
+- Every tag, entry and tagging of the user's is deleted. Deletes are soft,
+  as everywhere, so every device's sync takes them out.
+- The backup's rows are made anew, with ids of their own and their
+  `date_created`. A tag whose name the user has (deleted or not) is brought
+  back in place, since names are unique per user. Tags rank after every
+  tag the user has (deleted tags keep their ranks), in the backup's order,
+  and taggings after their tag's, in theirs. The counters, `date_last_used`
+  and `reused_date` follow from the rows made.
+- It is made as of now by the API's write clock, whatever time the request
+  names: the clock's tick is the batch's first statement, so restores
+  commit in the order of their times. Every row written counts as a client
+  write made then (`client_updated`), and so does the user's
+  `date_restored` (`0015_user_date_restored.sql`), which the answer and the
+  `User` resource return.
+- From then on a client write made before it (queued offline on another
+  device, say) is a 400 `data_restored`, which clients drop: no create,
+  edit, delete or reorder made before the restore brings back or changes
+  what it replaced. `lww.ts` checks it first; the triggers of
+  `0016_restore_cutoff.sql` refuse a create, edit or delete in its own
+  statement (its `client_updated` older than the cutoff), so none lands
+  after a restore that commits meanwhile. A reorder that names when it was
+  made is refused in its move the same way (`OrderedSpec.guard`). The web
+  app makes its writes after the cutoff once it knows it (the restore's
+  answer, or `GET /user` at each sync).
+
+Rows go in as JSON (`json_each`), in runs of at most 1 MB per statement,
+since D1 caps a bound value at 2 MB.
 
 ## Admin API
 
