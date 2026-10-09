@@ -16,7 +16,6 @@ import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {validateFields} from '../lib/validate';
 import {versionOf} from './dataVersions';
-import {usernameIs} from './filters';
 import {
   appliesAfter,
   changedMeanwhile,
@@ -61,7 +60,6 @@ export const listTags = (c: Context<AppEnv>, owner: User, publicOnly = false) =>
     query: tagListQuerySchema,
     filters: {
       name: value => eq(tags.name, value),
-      user__username: value => usernameIs(tags.user_id, value),
       date_updated__gt: value => sql`${tags.date_updated} > ${value}`,
     },
     ordering: {
@@ -97,11 +95,11 @@ tagRoutes.get('/:id', async c => {
 });
 
 /**
- * Create a tag, or return the user's existing tag of the same name
- * (resurrecting it if it was soft-deleted). Always 201, as in Django. One
- * naming a `client_id` the user's tags already have answers with that tag,
- * whatever it is called now: a queued create retried after a lost answer is
- * made once.
+ * Create a tag (201), or answer with the user's existing tag of the same name
+ * (200; resurrected if it was soft-deleted). One naming a `client_id` the
+ * user's tags already have answers with that tag, whatever it is called now,
+ * as its first attempt was answered (201 when that attempt made the tag): a
+ * queued create retried after a lost answer is made once.
  */
 tagRoutes.post('/', async c => {
   const user = requireUser(c);
@@ -183,7 +181,12 @@ tagRoutes.post('/', async c => {
   for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
     const made = await findMade();
     if (made !== undefined) {
-      return resourceResponse(c, TAG, made, 201);
+      return resourceResponse(
+        c,
+        TAG,
+        made,
+        made.client_id === clientId ? 201 : 200
+      );
     }
     const existing = named === undefined ? undefined : await findByName(named);
     const asRead =
@@ -201,7 +204,7 @@ tagRoutes.post('/', async c => {
           if (clientId !== undefined) {
             await reserve(asRead);
           }
-          return resourceResponse(c, TAG, existing, 201);
+          return resourceResponse(c, TAG, existing, 200);
         }
         const update = db
           .update(tags)
@@ -236,7 +239,7 @@ tagRoutes.post('/', async c => {
                 ])
               )[0];
         if (written !== undefined) {
-          return resourceResponse(c, TAG, written, 201);
+          return resourceResponse(c, TAG, written, 200);
         }
         continue;
       }

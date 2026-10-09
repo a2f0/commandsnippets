@@ -89,7 +89,6 @@ const textEntryListQuery = {
     id: integerFilter,
     tags__name: textFilter,
     tags__id: integerFilter,
-    user__username: textFilter,
     tag_count: integerFilter,
     is_deleted: booleanFilter,
     /** Sync: entries changed after a revision. */

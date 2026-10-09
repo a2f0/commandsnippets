@@ -83,7 +83,6 @@ describe('list params', () => {
         | 'filter[id]'
         | 'filter[tags.name]'
         | 'filter[tags.id]'
-        | 'filter[user.username]'
         | 'filter[tag_count]'
         | 'filter[is_deleted]'
         | 'filter[date_updated.gt]'
@@ -99,7 +98,6 @@ describe('list params', () => {
       Equal<
         keyof TagListParams,
         | 'filter[name]'
-        | 'filter[user.username]'
         | 'filter[date_updated.gt]'
         | 'sort'
         | 'page[number]'
@@ -203,7 +201,6 @@ describe('list params', () => {
           'filter[id]': 3,
           'filter[tags.name]': 'a',
           'filter[tags.id]': 4,
-          'filter[user.username]': 'u',
           'filter[tag_count]': 0,
           'filter[is_deleted]': false,
           'filter[date_updated.gt]': '2024-01-01T12:34:56.123456',
@@ -218,7 +215,6 @@ describe('list params', () => {
           'page[number]': 1,
           'page[size]': 100,
           'filter[name]': 'n',
-          'filter[user.username]': 'u',
           'filter[date_updated.gt]': '2024-01-01T12:34:56',
           sort: '-order',
           include: 'user',

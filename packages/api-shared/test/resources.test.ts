@@ -314,14 +314,14 @@ describe('collection queries', () => {
   test('tags', () => {
     expect(
       parsed(tagListQuerySchema, [
-        ['filter[user.username]', 'dan'],
+        ['filter[name]', 'dan'],
         ['filter[date_updated.gt]', '2024-01-01'],
         ['filter[search]', 'ignored'],
         ['sort', '-order'],
       ])
     ).toEqual({
       filters: [
-        {name: 'user__username', value: 'dan'},
+        {name: 'name', value: 'dan'},
         {name: 'date_updated__gt', value: '2024-01-01T00:00:00.000000'},
       ],
       search: null,

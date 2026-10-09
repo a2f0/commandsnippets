@@ -141,9 +141,9 @@ tagEntryRoutes.post('/reorder', c =>
 );
 
 /**
- * Tag an entry: get_or_create on (tag, text_entry), restoring the pair's
- * deleted junction (at the bottom of the tag, as a new one would be). Always
- * 201.
+ * Tag an entry: get_or_create on (tag, text_entry): a new junction is 201;
+ * the pair's junction there is (restored, at the bottom of the tag as a new
+ * one would be, if it was untagged) is 200.
  */
 tagEntryRoutes.post('/', async c => {
   const user = requireUser(c);
@@ -216,7 +216,7 @@ tagEntryRoutes.post('/', async c => {
     const {id, is_deleted} = junction;
     // Untagged (or tagged) after this tagging was made: that stands.
     if (!appliesAfter(junction.client_updated, at)) {
-      return resourceResponse(c, TAG_TEXT_ENTRY, junction, 201);
+      return resourceResponse(c, TAG_TEXT_ENTRY, junction, 200);
     }
     if (!is_deleted) {
       // Already tagged: still a write made at `at`, which an older untag must
@@ -234,7 +234,7 @@ tagEntryRoutes.post('/', async c => {
         )
         .returning();
       if (stamped !== undefined) {
-        return resourceResponse(c, TAG_TEXT_ENTRY, stamped, 201);
+        return resourceResponse(c, TAG_TEXT_ENTRY, stamped, 200);
       }
     } else {
       // Untagged before this tagging was made: it comes back, as a new
@@ -262,7 +262,7 @@ tagEntryRoutes.post('/', async c => {
       ]);
       const [written] = updated;
       if (written !== undefined) {
-        return resourceResponse(c, TAG_TEXT_ENTRY, written, 201);
+        return resourceResponse(c, TAG_TEXT_ENTRY, written, 200);
       }
     }
     junction = await find();

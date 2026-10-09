@@ -14,7 +14,7 @@ import {parseResource} from '../lib/jsonapi';
 import {fold, searchColumns} from '../lib/search';
 import {validateFields} from '../lib/validate';
 import {versionOf} from './dataVersions';
-import {icontains, usernameIs} from './filters';
+import {icontains} from './filters';
 import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, textEntryResource} from './owned';
 import {publicEntry, publicEntryFields, publicTagCount} from './publicPolicy';
@@ -65,7 +65,6 @@ export const listEntries = (
       id: value => eq(textEntries.id, value),
       tags__name: value => hasTag(owner.id, sql`t.name = ${value}`, publicOnly),
       tags__id: value => hasTag(owner.id, sql`t.id = ${value}`, publicOnly),
-      user__username: value => usernameIs(textEntries.user_id, value),
       tag_count: value =>
         publicOnly
           ? eq(publicTagCount(owner.id), value)
@@ -97,9 +96,9 @@ entryRoutes.get('/:id', async c => {
 });
 
 /**
- * Create an entry. One naming a `client_id` the user's entries already have
- * answers with that entry (201, as a create): a queued create retried after
- * a lost answer is made once.
+ * Create an entry (201). One naming a `client_id` the user's entries already
+ * have answers with that entry, as its first attempt was answered (201): a
+ * queued create retried after a lost answer is made once.
  */
 entryRoutes.post('/', async c => {
   const user = requireUser(c);

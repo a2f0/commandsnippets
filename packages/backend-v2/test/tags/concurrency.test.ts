@@ -52,7 +52,7 @@ describe('concurrent creates', () => {
     const response = await client.post('/api/v1/tags', {
       data: {type: 'Tag', attributes: {name: 'racy'}},
     });
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect((await json(response)).data.id).toBe(String(concurrentId));
   });
 
@@ -92,7 +92,7 @@ describe('concurrent creates', () => {
       '/api/v1/tags_entries',
       tagEntryPayload(tag.id, entry.id)
     );
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect((await json(response)).data.attributes.order).toBe(7);
     const rows = await db()
       .select()

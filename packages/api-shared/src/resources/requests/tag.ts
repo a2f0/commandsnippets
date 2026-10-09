@@ -78,7 +78,6 @@ export const TAG_SORT_FIELDS = [
 const tagListQuery = {
   filters: {
     name: textFilter,
-    user__username: textFilter,
     /** Sync: tags changed after a revision. */
     date_updated__gt: dateTimeFilter,
   },
