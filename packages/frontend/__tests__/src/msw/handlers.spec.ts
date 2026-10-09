@@ -789,6 +789,7 @@ describe('DELETE /tags_entries/:id', () => {
 
   it('keeps the deleted junction, which tagging the pair again restores', async () => {
     const tagged = await send('POST', '/tags_entries', tagEntry('3', '2'));
+    expect(tagged.status).toBe(201);
     const first = tagTextEntryDocumentSchema.parse(tagged.json).data;
     expect((await send('DELETE', `/tags_entries/${first.id}`)).status).toBe(
       200
@@ -802,15 +803,16 @@ describe('DELETE /tags_entries/:id', () => {
         attributes: expect.objectContaining({is_deleted: true}),
       }),
     ]);
-    const again = tagTextEntryDocumentSchema.parse(
-      (await send('POST', '/tags_entries', tagEntry('3', '2'))).json
-    ).data;
+    // Restored, not made: 200, as the API answers.
+    const restored = await send('POST', '/tags_entries', tagEntry('3', '2'));
+    expect(restored.status).toBe(200);
+    const again = tagTextEntryDocumentSchema.parse(restored.json).data;
     expect(again.id).toBe(first.id);
     expect(again.attributes.is_deleted).toBe(false);
     // A new junction still gets an id no junction had.
-    const other = tagTextEntryDocumentSchema.parse(
-      (await send('POST', '/tags_entries', tagEntry('4', '2'))).json
-    ).data;
+    const made = await send('POST', '/tags_entries', tagEntry('4', '2'));
+    expect(made.status).toBe(201);
+    const other = tagTextEntryDocumentSchema.parse(made.json).data;
     expect(Number(other.id)).toBeGreaterThan(Number(first.id));
   });
 

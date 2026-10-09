@@ -2254,7 +2254,15 @@ const createHandlers = () => {
               candidate.relationships.tag.data.id === tagId &&
               candidate.relationships.text_entry.data.id === entryId
           );
-          const fresh = junction === undefined;
+          // New only when the pair has no junction, not even a deleted one
+          // (which tagging restores).
+          const fresh =
+            junction === undefined &&
+            !deletedJunctions.some(
+              candidate =>
+                candidate.relationships.tag.data.id === tagId &&
+                candidate.relationships.text_entry.data.id === entryId
+            );
           if (junction === undefined) {
             junction = createJunction(state, tag, entry);
           }
