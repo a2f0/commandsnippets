@@ -123,7 +123,7 @@ describe('tag revisions follow their entries', () => {
       '/api/v1/tags_entries',
       tagging(a.id, entry.id)
     );
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(await syncFrom(user1Client, before)).toEqual([]);
   });
 

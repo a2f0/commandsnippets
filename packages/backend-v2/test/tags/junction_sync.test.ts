@@ -359,7 +359,7 @@ describe('untagging soft-deletes the junction', () => {
       '/api/v1/tags_entries',
       tagPayload(tag, entry)
     );
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     const body = await json(response);
     expect(body.data.id).toBe(String(junction.id));
     expect(body.data.attributes.is_deleted).toBe(false);
@@ -406,7 +406,7 @@ describe('untagging soft-deletes the junction', () => {
       '/api/v1/tags_entries',
       tagPayload(tag, entry)
     );
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect((await json(response)).data).toMatchObject({
       id: String(junction.id),
       attributes: {is_deleted: false},

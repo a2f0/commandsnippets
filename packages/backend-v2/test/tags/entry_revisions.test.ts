@@ -158,7 +158,7 @@ describe('tagging and untagging advance the entry revision', () => {
       '/api/v1/tags_entries',
       tagging(tag.id, entry.id)
     );
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(await advanced(entry)).toBe(false);
   });
 

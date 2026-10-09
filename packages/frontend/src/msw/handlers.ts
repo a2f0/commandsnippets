@@ -1795,9 +1795,10 @@ const createHandlers = () => {
         });
       }),
 
-      // Create a tag, or answer with the user's of that name (bringing back
-      // a deleted one), always 201, as the API does; a create naming a
-      // client id a tag has answers with that tag, whatever it is called now
+      // Create a tag (201), or answer with the user's of that name (200,
+      // bringing back a deleted one), as the API does; a create naming a
+      // client id a tag has answers with that tag, whatever it is called now,
+      // as its first attempt was answered (201 when that attempt made it)
       http.post(`${baseUrl}/tags`, async ({request}) => {
         recordRequest('POST', request.url);
         console.log('OK: MSW intercepted tags POST request');
@@ -1819,12 +1820,15 @@ const createHandlers = () => {
                 );
           if (made !== undefined) {
             const again: TagDocument = {data: made, included: [testUser]};
-            return HttpResponse.json(again, {status: 201});
+            return HttpResponse.json(again, {
+              status: made.attributes.client_id === clientId ? 201 : 200,
+            });
           }
           let tag = tags.find(candidate => candidate.attributes.name === name);
           if (tag !== undefined && clientId !== undefined) {
             tagsByClientId.set(clientId, tag.id);
           }
+          const isNew = tag === undefined;
           if (tag === undefined) {
             const created = now();
             tag = {
@@ -1854,7 +1858,7 @@ const createHandlers = () => {
             };
           }
           const body: TagDocument = {data: tag, included: [testUser]};
-          return HttpResponse.json(body, {status: 201});
+          return HttpResponse.json(body, {status: isNew ? 201 : 200});
         } catch (error) {
           return errorResponse(error);
         }
@@ -2197,7 +2201,7 @@ const createHandlers = () => {
       }),
 
       // Tag an entry: get-or-create its junction with the tag (restoring the
-      // pair's deleted one), always 201
+      // pair's deleted one): 201 for a new junction, 200 for the one there is
       http.post(`${baseUrl}/tags_entries`, async ({request}) => {
         recordRequest('POST', request.url);
         console.log('OK: MSW intercepted tags_entries POST request');
@@ -2232,6 +2236,7 @@ const createHandlers = () => {
               candidate.relationships.tag.data.id === tagId &&
               candidate.relationships.text_entry.data.id === entryId
           );
+          const fresh = junction === undefined;
           if (junction === undefined) {
             junction = createJunction(state, tag, entry);
           }
@@ -2239,7 +2244,7 @@ const createHandlers = () => {
             data: junction,
             included: [tag, entry, testUser].sort(byTypeAndId),
           };
-          return HttpResponse.json(body, {status: 201});
+          return HttpResponse.json(body, {status: fresh ? 201 : 200});
         } catch (error) {
           return errorResponse(error);
         }

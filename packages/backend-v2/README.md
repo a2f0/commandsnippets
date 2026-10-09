@@ -160,7 +160,8 @@ Deliberate changes, by area. The admin API is new; see
   (`/api/v1/tags`, `/entries`, ...) is scoped to the requesting user;
   anonymous reads get 403. (Django let anyone list anyone's entries and tags by
   username.) What an owner shares is read through its own routes (see
-  [Public user data](#public-user-data)).
+  [Public user data](#public-user-data)). Django's `filter[user.username]` is
+  gone with it: those lists are the requester's own, so it is refused (400).
 - **Tagging checks ownership.** Creating a junction or a reuse only accepts the
   requester's own tag/entry (400 `Invalid pk`).
 - **Deactivated accounts are locked out.** An `is_active = false` account's
@@ -194,6 +195,11 @@ Deliberate changes, by area. The admin API is new; see
 
 ### Data and sync
 
+- **Creates answer 201 only for a row they make.** A tag create answered with
+  the user's tag of that name, or a tagging answered with the pair's junction
+  there is (restored if it was untagged), is 200; Django answered 201 either
+  way. A create retried with its `client_id` is answered as its first attempt
+  was (201 when that attempt made the row).
 - **Ordering is scoped.** Tags are ranked per user and tag↔entry junctions per
   tag (`order_with_respect_to`); Django used one global sequence per table.
   Deletes leave gaps instead of compacting ranks. The Postgres import (since

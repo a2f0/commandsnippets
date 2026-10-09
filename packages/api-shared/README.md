@@ -153,7 +153,7 @@ import type {
 const body: TagCreateDocument = {data: {type: 'Tag', attributes: {name}}};
 const query: TextEntryListParams = {
   'page[number]': 1,
-  'filter[user.username]': username,
+  'filter[tags.name]': name,
   'filter[tag_count]': 0,
   sort: '-date_created',
   include: 'text_entry_to_tag.tag,user',

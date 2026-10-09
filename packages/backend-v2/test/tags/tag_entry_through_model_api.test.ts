@@ -369,7 +369,7 @@ describe('TestTagsEntriesApi v2', () => {
       tagPayload(tag.id, textEntry.id)
     );
     const second = await json(response);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(second.data.id).toBe(first.data.id);
     expect((await refreshEntry(textEntry.id))?.tag_count).toBe(1);
     expect((await refreshTag(tag.id))?.entry_count).toBe(1);

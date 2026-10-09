@@ -298,7 +298,7 @@ const exchanges: Exchange[] = [
     handler: `POST ${API}/tags`,
     method: 'POST',
     url: `${API}/tags`,
-    status: 201,
+    status: 200,
     schema: tagDocumentSchema,
     body: {data: {type: 'Tag', attributes: {name: 'test-tag-1'}}},
   },
@@ -438,13 +438,14 @@ const exchanges: Exchange[] = [
     body: tagEntryDocument('2', '1'),
   },
   {
-    // Get-or-create: the same junction again.
+    // Get-or-create: a pair already tagged (the fixtures' junction 1) is
+    // answered with its junction.
     handler: `POST ${API}/tags_entries`,
     method: 'POST',
     url: `${API}/tags_entries`,
-    status: 201,
+    status: 200,
     schema: tagTextEntryDocumentSchema,
-    body: tagEntryDocument('2', '1'),
+    body: tagEntryDocument('1', '1'),
   },
   {
     handler: `POST ${API}/tags_entries`,

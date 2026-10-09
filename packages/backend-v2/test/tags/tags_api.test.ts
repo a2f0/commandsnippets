@@ -44,9 +44,7 @@ describe('TestTagsApi', () => {
     const [tag] = await tagsOf(base.user1);
     if (tag === undefined) throw new Error('missing tag');
 
-    const response = await base.user1Client.get(
-      `/api/v1/tags?&filter[user.username]=${base.user1.username}`
-    );
+    const response = await base.user1Client.get('/api/v1/tags');
     const body = await json(response);
 
     expect(response.status).toBe(200);
@@ -75,7 +73,7 @@ describe('TestTagsApi', () => {
     expect(tags).toHaveLength(2);
 
     let response = await base.user1Client.get(
-      `/api/v1/tags?page[number]=1&page[size]=1&filter[user.username]=${base.user1.username}`
+      '/api/v1/tags?page[number]=1&page[size]=1'
     );
     let body = await json(response);
     expect(response.status).toBe(200);
@@ -84,7 +82,7 @@ describe('TestTagsApi', () => {
     expect(body.meta.pagination.count).toBe(2);
 
     response = await base.user1Client.get(
-      `/api/v1/tags?page[number]=2&page[size]=1&filter[user.username]=${base.user1.username}`
+      '/api/v1/tags?page[number]=2&page[size]=1'
     );
     body = await json(response);
     expect(response.status).toBe(200);
@@ -143,7 +141,7 @@ describe('TestTagsApi', () => {
     const response = await base.user1Client.post('/api/v1/tags', payload);
     const body = await json(response);
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(body.data.attributes.name).toBe(payload.data.attributes.name);
     expect(body.data.id).toBe(String(deletedTag.id));
     expectIncludedUser1(body);
@@ -250,32 +248,21 @@ describe('TestTagsApi', () => {
     expect(body.errors[0].detail).toBe('invalid filter[bad]');
   });
 
+  // v2: the list is the requester's own, so a username filter is refused.
   it('test_filter_by_user_name', async () => {
     base = await setUpBase();
-    const [tag1, tag2] = await tagsOf(base.user1);
-
-    let response = await base.user1Client.get(
+    const response = await base.user1Client.get(
       `/api/v1/tags?filter[user.username]=${base.user1.username}`
     );
-    let body = await json(response);
-    expect(response.status).toBe(200);
-    expect(body.data).toHaveLength(2);
-    expect(body.data[0].id).toBe(String(tag1?.id));
-    expect(body.data[1].id).toBe(String(tag2?.id));
-
-    response = await base.user1Client.get(
-      '/api/v1/tags?filter[user.username]=random'
-    );
-    body = await json(response);
-    expect(response.status).toBe(200);
-    expect(body.data).toHaveLength(0);
+    expect(response.status).toBe(400);
+    expect((await json(response)).errors[0].detail).toMatch('user__username');
   });
 
   it('test_filter_by_date_updated_gt', async () => {
     base = await setUpBase();
     const [tag1, tag2] = await tagsOf(base.user1);
     const response = await base.user1Client.get(
-      `/api/v1/tags?filter[date_updated.gt]=${pyStr(tag1?.date_updated as string)}&filter[user.username]=${base.user1.username}`
+      `/api/v1/tags?filter[date_updated.gt]=${pyStr(tag1?.date_updated as string)}`
     );
     const body = await json(response);
     expect(response.status).toBe(200);
@@ -288,7 +275,7 @@ describe('TestTagsApi', () => {
     const [tag1, tag2] = await tagsOf(base.user1);
 
     let response = await base.user1Client.get(
-      `/api/v1/tags?sort=invalid_sort_key&filter[user.username]=${base.user1.username}`
+      '/api/v1/tags?sort=invalid_sort_key'
     );
     let body = await json(response);
     expect(response.status).toBe(400);
@@ -308,9 +295,7 @@ describe('TestTagsApi', () => {
       ['-name', tag2?.id as number, tag1?.id as number],
     ];
     for (const [sortParam, expectedFirstId, expectedSecondId] of sortTests) {
-      response = await base.user1Client.get(
-        `/api/v1/tags?sort=${sortParam}&filter[user.username]=${base.user1.username}`
-      );
+      response = await base.user1Client.get(`/api/v1/tags?sort=${sortParam}`);
       body = await json(response);
       expect(response.status).toBe(200);
       expect(body.data).toHaveLength(2);
@@ -323,7 +308,7 @@ describe('TestTagsApi', () => {
     base = await setUpBase();
     const [tag1, tag2] = await tagsOf(base.user1);
     const response = await base.user1Client.get(
-      `/api/v1/tags?sort=-date_updated&filter[user.username]=${base.user1.username}&filter[date_updated.gt]=${pyStr(tag1?.date_updated as string)}`
+      `/api/v1/tags?sort=-date_updated&filter[date_updated.gt]=${pyStr(tag1?.date_updated as string)}`
     );
     const body = await json(response);
     expect(response.status).toBe(200);
@@ -350,17 +335,17 @@ describe('TestTagsApi v2', () => {
     }
   });
 
-  // v2: filtering by another user's username returns nothing.
+  // v2: the list is the requester's own.
   it("does not list other users' tags", async () => {
     base = await setUpBase();
-    const response = await base.user1Client.get(
-      `/api/v1/tags?filter[user.username]=${base.user2.username}`
-    );
+    const theirs = (await tagsOf(base.user2)).map(tag => String(tag.id));
+    expect(theirs.length).toBeGreaterThan(0);
+    const response = await base.user1Client.get('/api/v1/tags');
     const body = await json(response);
     expect(response.status).toBe(200);
-    expect(body.data).toHaveLength(0);
-    expect(body.meta.pagination.count).toBe(0);
-    expect(body.links.next).toBeNull();
+    const ids = body.data.map((tag: {id: string}) => tag.id);
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids.some((id: string) => theirs.includes(id))).toBe(false);
   });
 
   it('retrieves own tags, 403s for others, 404s for missing', async () => {
@@ -399,10 +384,34 @@ describe('TestTagsApi v2', () => {
       data: {type: 'Tag', attributes: {name: existing?.name}},
     });
     const body = await json(response);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(body.data.id).toBe(String(existing?.id));
     expect(body.data.attributes.is_deleted).toBe(false);
     expect(await tagsOf(base.user1)).toHaveLength(2);
+  });
+
+  // v2: 201 only for a tag the create made; a retry of it (its client id) is
+  // answered as the first attempt was.
+  it('answers 201 for a tag made, 200 for one there was, a retry as the first', async () => {
+    base = await setUpBase();
+    const create = (name: string, client_id: string) =>
+      base.user1Client.post('/api/v1/tags', {
+        data: {type: 'Tag', attributes: {name, client_id}},
+      });
+    const made = await create('fresh', 'local-1');
+    expect(made.status).toBe(201);
+    const id = (await json(made)).data.id;
+
+    const retried = await create('fresh', 'local-1');
+    expect(retried.status).toBe(201);
+    expect((await json(retried)).data.id).toBe(id);
+
+    // Another create of the name is answered with that tag, as is its retry.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const other = await create('fresh', 'local-2');
+      expect(other.status).toBe(200);
+      expect((await json(other)).data.id).toBe(id);
+    }
   });
 
   it('assigns new tags the next rank for the user', async () => {

@@ -118,7 +118,7 @@ describe('TestTextEntriesApi', () => {
     expect(entries.length).toBe(2);
 
     let response = await user1Client.get(
-      `/api/v1/entries?page[number]=1&page[size]=1&filter[user.username]=${user1.username}`
+      '/api/v1/entries?page[number]=1&page[size]=1'
     );
     let jsonResponse = await json(response);
     expect(response.status).toBe(200);
@@ -127,7 +127,7 @@ describe('TestTextEntriesApi', () => {
     expect(jsonResponse.meta.pagination.count).toBe(2);
 
     response = await user1Client.get(
-      `/api/v1/entries?page[number]=2&page[size]=1&filter[user.username]=${user1.username}`
+      '/api/v1/entries?page[number]=2&page[size]=1'
     );
     jsonResponse = await json(response);
     expect(response.status).toBe(200);
@@ -218,7 +218,7 @@ describe('TestTextEntriesApi', () => {
     const entries = await entriesOf(user1);
     const entry1 = entries[entries.length - 1];
     const response = await user1Client.get(
-      `/api/v1/entries?filter[tag_count]=2&filter[user.username]=${user1.username}`
+      '/api/v1/entries?filter[tag_count]=2'
     );
     const jsonResponse = await json(response);
     expect(response.status).toBe(200);
@@ -229,40 +229,25 @@ describe('TestTextEntriesApi', () => {
   it('test_filter_by_is_deleted', async () => {
     const {user1, user1Client} = base;
     let response = await user1Client.get(
-      `/api/v1/entries?filter[is_deleted]=0&filter[user.username]=${user1.username}`
+      '/api/v1/entries?filter[is_deleted]=0'
     );
     let jsonResponse = await json(response);
     expect(response.status).toBe(200);
     expect(jsonResponse.data.length).toBe(2);
-    response = await user1Client.get(
-      `/api/v1/entries?filter[is_deleted]=1&filter[user.username]=${user1.username}`
-    );
+    response = await user1Client.get('/api/v1/entries?filter[is_deleted]=1');
     jsonResponse = await json(response);
     expect(response.status).toBe(200);
     expect(jsonResponse.data.length).toBe(0);
   });
 
+  // v2: the list is the requester's own, so a username filter is refused.
   it('test_filter_by_username', async () => {
     const {user1, user1Client} = base;
-    const [entry1] = await entriesOf(user1);
-
-    // Test filtering by valid username
-    let response = await user1Client.get(
+    const response = await user1Client.get(
       `/api/v1/entries?filter[user.username]=${user1.username}`
     );
-    let jsonResponse = await json(response);
-    expect(response.status).toBe(200);
-    const data = jsonResponse.data;
-    expect(data.length).toBe(2);
-    expect(data[0].id).toBe(String(entry1?.id));
-
-    // Test filtering by invalid username
-    response = await user1Client.get(
-      '/api/v1/entries?filter[user.username]=random'
-    );
-    jsonResponse = await json(response);
-    expect(response.status).toBe(200);
-    expect(jsonResponse.data.length).toBe(0);
+    expect(response.status).toBe(400);
+    expect((await json(response)).errors[0].detail).toMatch('user__username');
   });
 
   it('test_filter_by_date_updated_gt', async () => {
@@ -272,8 +257,7 @@ describe('TestTextEntriesApi', () => {
     const entry2 = entries[entries.length - 1];
     if (entry1 === undefined) throw new Error('setup');
     const response = await user1Client.get(
-      `/api/v1/entries?filter[date_updated.gt]=${q(strDatetime(entry1.date_updated))}` +
-        `&filter[user.username]=${user1.username}`
+      `/api/v1/entries?filter[date_updated.gt]=${q(strDatetime(entry1.date_updated))}`
     );
     const jsonResponse = await json(response);
     expect(response.status).toBe(200);
@@ -313,9 +297,7 @@ describe('TestTextEntriesApi', () => {
     ];
 
     for (const [sortParam, expectedFirstId, expectedSecondId] of sortTests) {
-      response = await user1Client.get(
-        `/api/v1/entries?sort=${sortParam}&filter[user.username]=${user1.username}`
-      );
+      response = await user1Client.get(`/api/v1/entries?sort=${sortParam}`);
       jsonResponse = await json(response);
       expect(response.status).toBe(200);
       expect(jsonResponse.data.length).toBe(2);
@@ -487,7 +469,7 @@ describe('TestTextEntriesApi', () => {
     const {user1, user1Client} = base;
     const [entry1] = await entriesOf(user1);
     const response = await user1Client.get(
-      `/api/v1/entries?${SEARCH_PARAM}=pg_terminate_backend&filter[user.username]=${user1.username}`
+      `/api/v1/entries?${SEARCH_PARAM}=pg_terminate_backend`
     );
     const jsonResponse = await json(response);
     expect(response.status).toBe(200);
@@ -499,8 +481,7 @@ describe('TestTextEntriesApi', () => {
     const {user1, user1Client} = base;
     const [entry1] = await entriesOf(user1);
     const response = await user1Client.get(
-      `/api/v1/entries?${SEARCH_PARAM}=${q('close all postgres connections')}` +
-        `&filter[user.username]=${user1.username}`
+      `/api/v1/entries?${SEARCH_PARAM}=${q('close all postgres connections')}`
     );
     const jsonResponse = await json(response);
     expect(response.status).toBe(200);
@@ -554,13 +535,6 @@ describe('TextEntriesApi v2', () => {
     for (const entry of user2Entries) {
       expect(ids).not.toContain(String(entry.id));
     }
-
-    const filtered = await json(
-      await user1Client.get(
-        `/api/v1/entries?filter[user.username]=${user2.username}`
-      )
-    );
-    expect(filtered.data.length).toBe(0);
 
     const byId = await json(
       await user1Client.get(`/api/v1/entries?filter[id]=${other.id}`)

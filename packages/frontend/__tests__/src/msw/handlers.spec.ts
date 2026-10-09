@@ -653,7 +653,7 @@ describe('POST /tags_entries', () => {
     const first = await send('POST', '/tags_entries', tagEntry('2', '1'));
     const [tags, entries] = [await getTags(), await getEntries()];
     const again = await send('POST', '/tags_entries', tagEntry('2', '1'));
-    expect(again.status).toBe(201);
+    expect(again.status).toBe(200);
     expect(again.json).toEqual(first.json);
     expect(await getTags()).toEqual(tags);
     expect(await getEntries()).toEqual(entries);

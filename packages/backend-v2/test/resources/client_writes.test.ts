@@ -99,7 +99,7 @@ describe('a write older than the last one', () => {
     const created = await send('POST', '/tags', EARLY, {
       data: {type: 'Tag', attributes: {name: 'gone'}},
     });
-    expect(created.status).toBe(201);
+    expect(created.status).toBe(200);
     const body = await json(created);
     expect(body.data.id).toBe(String(tag.id));
     expect(body.data.attributes.is_deleted).toBe(true);
@@ -162,7 +162,7 @@ describe('a write older than the last one', () => {
     // Untagged later than a tagging made offline.
     await send('DELETE', `/tags_entries/${junction.id}`, LATEST);
     const staleTag = await send('POST', '/tags_entries', LATER, tagging);
-    expect(staleTag.status).toBe(201);
+    expect(staleTag.status).toBe(200);
     expect((await json(staleTag)).data.attributes.is_deleted).toBe(true);
     expect((await refreshJunction(junction.id))?.is_deleted).toBe(true);
     expect((await refreshTag(tag.id))?.entry_count).toBe(0);
@@ -223,7 +223,7 @@ describe('writes arriving out of order', () => {
       made(LATER)
     );
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect((await json(response)).data.attributes.is_deleted).toBe(false);
     expect(await refreshTag(tag.id)).toMatchObject({
       is_deleted: false,
@@ -250,7 +250,7 @@ describe('writes arriving out of order', () => {
       {data: {type: 'Tag', attributes: {name: 'raced'}}},
       made(LATER)
     );
-    expect(created.status).toBe(201);
+    expect(created.status).toBe(200);
     const id = (await json(created)).data.id;
 
     // So a delete made in between (older than this create) loses to it.
@@ -306,7 +306,7 @@ describe('writes arriving out of order', () => {
       made(LATER)
     );
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect((await json(response)).data.attributes.is_deleted).toBe(false);
     expect(await refreshJunction(junction.id)).toMatchObject({
       is_deleted: false,
@@ -573,7 +573,7 @@ describe('a write made ahead of the clock', () => {
       {data: {type: 'Tag', attributes: {name: 'kept'}}},
       {[CLIENT_WRITE_ID_HEADER]: 'create-1'}
     );
-    expect(create.status).toBe(201);
+    expect(create.status).toBe(200);
     expect((await json(create)).data.attributes.is_deleted).toBe(true);
     expect((await refreshTag(tag.id))?.is_deleted).toBe(true);
   });
@@ -604,7 +604,7 @@ describe('a write made ahead of the clock', () => {
       },
       {[CLIENT_WRITE_ID_HEADER]: 'tagging-1'}
     );
-    expect(tagging.status).toBe(201);
+    expect(tagging.status).toBe(200);
     expect((await refreshJunction(junction.id))?.is_deleted).toBe(true);
   });
 
@@ -957,7 +957,7 @@ describe('a tag created with a client id', () => {
       })
     );
     const response = await create('local-alias', 'fresh', racing);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect((await json(response)).data.id).toBe(String(tag.id));
     expect((await userTags()).map(row => row.name)).not.toContain('fresh');
     expect(
