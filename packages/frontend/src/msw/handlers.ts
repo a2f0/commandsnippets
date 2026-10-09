@@ -691,6 +691,22 @@ const includePaths = (url: URL, defaults: readonly string[]) => {
     : include.split(',').filter(path => path !== '');
 };
 
+/**
+ * The signed-in user's own lists take no username filter: refused as an
+ * invalid filter, as the API refuses it (400).
+ */
+function refuseUsernameFilter(url: URL): void {
+  for (const name of ['user.username', 'user__username']) {
+    if (url.searchParams.has(`filter[${name}]`)) {
+      throw apiError(
+        400,
+        CODES.invalid,
+        MESSAGES.invalidFilter('user__username')
+      );
+    }
+  }
+}
+
 /** `filter[name]` as a boolean, when given. */
 const booleanFilter = (url: URL, name: string) => {
   const value = url.searchParams.get(`filter[${name}]`);
@@ -1764,6 +1780,7 @@ const createHandlers = () => {
         console.log('OK: MSW intercepted tags request:', req.request.url);
         const url = new URL(req.request.url);
         try {
+          refuseUsernameFilter(url);
           // A keyset page, as the API renders it (the sync's reads).
           const after = afterOf(url);
           if (after !== null) {
@@ -1950,6 +1967,7 @@ const createHandlers = () => {
           // A keyset page, as the API renders it (the sync's reads): deleted
           // entries too, filtered by tag, deletion and revision.
           const url = new URL(req.request.url);
+          refuseUsernameFilter(url);
           const after = afterOf(url);
           if (after !== null) {
             const state = activeEntries();

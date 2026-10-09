@@ -281,9 +281,24 @@ const exchanges: Exchange[] = [
   {
     handler: `GET ${API}/tags`,
     method: 'GET',
-    url: `${API}/tags?page%5Bnumber%5D=1&filter%5Buser.username%5D=test`,
+    url: `${API}/tags?page%5Bnumber%5D=1`,
     status: 200,
     schema: tagListDocumentSchema,
+  },
+  {
+    // The user's own lists take no username filter.
+    handler: `GET ${API}/tags`,
+    method: 'GET',
+    url: `${API}/tags?filter%5Buser.username%5D=test`,
+    status: 400,
+    schema: errorDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/entries`,
+    method: 'GET',
+    url: `${API}/entries?filter%5Buser.username%5D=test`,
+    status: 400,
+    schema: errorDocumentSchema,
   },
   {
     handler: `POST ${API}/tags`,
