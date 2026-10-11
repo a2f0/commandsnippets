@@ -36,6 +36,15 @@ Monorepo for the Commandsnippets app.
   The repository-owned `packages/agent-tool` still owns review, PR, versioning,
   and merge policy; the published tool supplies command capture only.
 
+## Dependency documentation
+
+Read [dependency maintenance](docs/dependencies.md) before upgrades. Keep reusable
+procedures and active constraints there, reconciling entries in place and removing
+resolved ones. Put run-specific inventories, audits, validation, previews, and
+skipped-group evidence in the upgrade PR. Keep README focused on setup and normal
+usage with a short maintenance link, without upgrade reports or duplicated agent
+instructions.
+
 ## Review focus
 
 Flag as blocking: security issues (auth, data exposure across users, secrets in

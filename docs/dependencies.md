@@ -1,5 +1,13 @@
 # Dependency updates
 
+This document holds reusable upgrade procedures and active constraints. Update
+entries in place and remove resolved ones, linking the PR or upstream evidence
+and the condition for revisiting each exception. Put each run's version inventory,
+audits, validation, warnings, previews, and held groups in its upgrade PR; do not
+append a dated journal here or in README. Existing advisory observations are
+recheck targets, not a fresh audit. Keep private logs, credentials, plans, and
+state out of public reports.
+
 The root Bun workspace contains only `packages/agent-tool`. The frontend,
 backend-v2, api-shared and website each own their `package.json` and `bun.lock`;
 install and validate each changed package from its own directory. Reinstall both

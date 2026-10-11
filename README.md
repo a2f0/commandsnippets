@@ -29,30 +29,5 @@ entrypoints mirror the commands used by GitHub Actions:
 ./scripts/runWebdriverTests.sh
 ```
 
-## Compact output for agents
-
-Install root dependencies with `bun install`, then capture noisy finite commands
-with the exactly pinned `@a2f0/agent-tool` harness:
-
-```sh
-bun run agent:run --label tooling-tests -- bun run test:agent-tool
-bun run agent:run --label frontend-unit -- ./scripts/runUnitTests.sh
-bun run agent:run --label push -- git push -u origin HEAD
-node_modules/.bin/agent-tool logs <log-path> --max-bytes 4096 --tail-lines 40
-```
-
-Commands retain their arguments, environment, working directory, stdin, and exit
-status. A successful run returns a JSON receipt with duration, output size, and
-the private full-log path. Failure also prints a bounded tail (4096 bytes and
-40 lines by default). Inspect needed warnings, coverage, timings, and artifacts
-with bounded excerpts or targeted searches; exit zero alone does not establish
-that the log is warning-free. Logs may contain secrets and remain in the system
-temporary directory until you remove the reported task directory or the OS
-cleans it.
-
-Use the harness for installs, checks, tests, builds, and pushes with noisy hooks.
-Keep review findings and verdicts, audits, version decisions, and other
-structured evidence directly visible. Interactive programs and persistent
-servers run directly because captured stdout and stderr are regular files.
-The existing `packages/agent-tool` continues to own reviews, version bumps, PRs,
-and merges; its repository-specific policies are unchanged.
+Coding agents follow [AGENTS.md](AGENTS.md) for setup, compact command output,
+and the repository-owned review and shipping workflow.
