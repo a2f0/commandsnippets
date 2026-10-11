@@ -86,6 +86,25 @@ AGENT_TOOL="$ROOT_DIR/packages/agent-tool/src/index.ts"
 [ -n "$DEFAULT_BRANCH" ] || { echo "Error: repository default branch is unavailable" >&2; exit 1; }
 ```
 
+## Compact command output
+
+Use the root `bun run agent:run --label <step> -- <command> [args...]`
+for noisy finite installs, checks, tests, builds, and pushes with hooks. For
+example, capture the existing push with
+`bun run agent:run --label push -- git push -u "$PUSH_REMOTE" "$BRANCH"`.
+Preserve the command arguments, working directory, checks, and their failure
+handling. The published `@a2f0/agent-tool` supplies capture only; keep calling
+`bun "$AGENT_TOOL"` for this repository's review, PR, version, and merge actions.
+
+Capture returns the original status and a JSON receipt with a full private log;
+a failure also includes a bounded tail. Inspect required warnings, coverage,
+timings, and artifacts through `"$ROOT_DIR/node_modules/.bin/agent-tool" logs
+<log-path>` or targeted searches. Do not read successful suite logs wholesale.
+Keep review findings and verdicts, version/bump decisions, audit and plan output,
+and the final push-gate timing rows directly visible. Do not wrap commands whose
+stdout drives a decision or another command, interactive tools, or persistent
+servers. Remove the reported task-log directories once investigation is done.
+
 ## Workflow
 
 Run the wrapped skills in order. Stop on operational failures, an unresolved
