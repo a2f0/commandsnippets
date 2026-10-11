@@ -25,6 +25,16 @@ Monorepo for the Commandsnippets app.
   `CI gate` (see `docs/ci-merge-gate.md`).
 - Ship work with the `ship-pr` skill (`.claude/skills/`, `.codex/skills/`):
   commit, cross-agent review and repair, open the PR, squash-merge, reset.
+- Capture noisy finite checks, installs, builds, and hook-running pushes with
+  `bun run agent:run --label <check> -- <command> [args...]`. The exact pinned
+  `@a2f0/agent-tool` keeps full private logs and preserves exit status while
+  returning a compact receipt and a bounded failure excerpt. Use
+  `node_modules/.bin/agent-tool logs <log-path>` or targeted searches to inspect
+  required warnings, coverage, timings, and artifacts before accepting a check.
+  Keep review findings, version decisions, audits, and other structured decision
+  output visible. Run interactive tools and persistent servers directly.
+  The repository-owned `packages/agent-tool` still owns review, PR, versioning,
+  and merge policy; the published tool supplies command capture only.
 
 ## Review focus
 
