@@ -25,7 +25,7 @@ export async function enableMocking() {
   // Start the MSW worker with configuration
   const registration = await worker.start({
     serviceWorker: MSW_CONFIG.serviceWorker,
-    onUnhandledRequest: MSW_CONFIG.onUnhandledRequest,
+    onUnhandledFrame: MSW_CONFIG.onUnhandledFrame,
   });
 
   // Expose MSW utilities globally for tests

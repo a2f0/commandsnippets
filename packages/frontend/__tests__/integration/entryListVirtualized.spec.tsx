@@ -5,7 +5,7 @@
  */
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {VIRTUALIZE_FROM} from '../../src/components/entries/EntryList';
 import {syncSession} from '../../src/lib/sync/session';

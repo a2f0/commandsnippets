@@ -6,7 +6,7 @@
  */
 import {DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
 import invariant from 'invariant';
-import {http} from 'msw';
+import {http} from 'msw/http';
 import {setupServer} from 'msw/node';
 import {
   afterAll,
@@ -37,7 +37,7 @@ const OWNER = 'test';
 
 const server = setupServer(...handlers);
 
-beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
 afterAll(() => server.close());
 
 let db: CommandsnippetsDatabase;

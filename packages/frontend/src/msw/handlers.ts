@@ -42,7 +42,7 @@ import {
   type User,
 } from '@commandsnippets/api-shared';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {
   errorDocument,
   nextRevision,

@@ -738,7 +738,7 @@ const notTheApi = new Set([`GET ${API}/health`]);
 describe('the E2E handlers (src/msw/handlers.ts)', () => {
   const server = setupServer(...handlers);
 
-  beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+  beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
   afterAll(() => server.close());
   beforeEach(() => {
     resetMSWState();
@@ -796,7 +796,7 @@ describe('the E2E handlers (src/msw/handlers.ts)', () => {
 });
 
 describe("the unit tests' server (__tests__/util/msw.ts)", () => {
-  beforeAll(() => unitServer.listen({onUnhandledRequest: 'error'}));
+  beforeAll(() => unitServer.listen({onUnhandledFrame: 'error'}));
   afterAll(() => unitServer.close());
 
   it('answers every request as the API would', async () => {

@@ -17,7 +17,8 @@ import {
 import {act} from '@testing-library/react';
 import {Dexie} from 'dexie';
 import invariant from 'invariant';
-import {delay, HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
+import {delay} from 'msw/utils/delay';
 import {
   afterAll,
   afterEach,
@@ -60,7 +61,7 @@ import {tag} from '../../../util/storeFixtures';
 
 const API = 'http://localhost:9001/api/v1';
 
-beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
 afterEach(() => {
   server.resetHandlers();
   server.events.removeAllListeners();

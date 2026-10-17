@@ -35,7 +35,7 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
       - name: Determine required checks
         id: scopes
         env:
@@ -54,7 +54,7 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Lint branch name
@@ -118,7 +118,7 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
       - name: Require every applicable check to succeed
         env:
           CI_NEEDS: ${{ toJSON(needs) }}

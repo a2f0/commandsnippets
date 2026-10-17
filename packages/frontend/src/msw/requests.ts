@@ -15,7 +15,7 @@ import {
   requestEnvelopeSchema,
   type ToOneLinkage,
 } from '@commandsnippets/api-shared';
-import {HttpResponse} from 'msw';
+import {HttpResponse} from 'msw/http';
 import type * as z from 'zod/mini';
 
 export type ErrorObject = z.output<typeof errorObjectSchema>;
@@ -43,7 +43,9 @@ export function apiError(
 }
 
 /** `error`'s error document; anything but an API error is rethrown. */
-export function errorResponse(error: unknown) {
+export function errorResponse(
+  error: unknown
+): HttpResponse<{errors: ErrorObject[]}> {
   if (!(error instanceof MockApiError)) {
     throw error;
   }

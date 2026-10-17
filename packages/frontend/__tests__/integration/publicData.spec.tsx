@@ -1,6 +1,6 @@
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {
   afterAll,
   afterEach,
@@ -21,7 +21,7 @@ import {signIn, store} from '../util/signIn';
 import {entry, tag} from '../util/storeFixtures';
 import {TestAppRouter} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
 afterAll(() => server.close());
 afterEach(() => {
   server.resetHandlers();

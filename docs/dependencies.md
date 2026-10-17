@@ -21,7 +21,7 @@ installed source links and run its checks. With a complete verified local cache,
 scripts; run their required validation separately. Preserve minimum release age
 and verify that unrelated package identities did not change.
 
-Use Bun 1.4.2, matching CI. Frontend tools execute on Node 24.21.0 from its
+Use Bun 1.4.3, matching CI. Frontend tools execute on Node 24.22.0 from its
 `.nvmrc`; keep `engines.node`, Node types and CI's version-file input together.
 Preserve the frontend's exact dependency pins and one-day minimum release age.
 An offline install lacking release timestamps does not justify disabling that
@@ -35,15 +35,20 @@ policy.
 - Upgrade WebdriverIO with every `@wdio/*` runner, framework and reporter, browser
   driver tooling and the video reporter. A permissive peer range cannot replace
   a working browser run.
-- MSW 3 requires the [2.x to 3.x migration](https://mswjs.io/docs/migrations/2.x-to-3.x):
-  HTTP exports move to `msw/http`, utilities have individual entrypoints,
-  `onUnhandledRequest` becomes `onUnhandledFrame`, and `worker.stop()` becomes
-  asynchronous. Regenerate `public/mockServiceWorker.js` with the chosen version,
+- WebdriverIO stays on the latest 9.x group while `wdio-video-reporter` 6.2
+  depends on the 9.x globals, reporters, logger, and types. Revisit 10.x when
+  the reporter supports it, then run the full browser suite and failure-video
+  integration; do not force a mixed runner/reporter major. See the
+  [reporter manifest](https://github.com/webdriverio-community/wdio-video-reporter/blob/v6.2.0/package.json).
+- MSW 3 uses the [migrated entrypoints](https://mswjs.io/docs/migrations/2.x-to-3.x):
+  HTTP exports come from `msw/http` and utilities have individual entrypoints.
+  Preserve `onUnhandledFrame` and await `worker.stop()` when adding shutdown.
+  Regenerate `public/mockServiceWorker.js` with the chosen version,
   then test the HTTP contracts and browser interception on the actual Node and
   browser runtimes.
-- The backend's `@cloudflare/vitest-plugin` 1.3.0 is verified here with Vitest
-  4.1.x and matching runner and snapshot packages. Keep coverage-istanbul on
-  the same version, and validate later compatible minors before adopting them.
+- Keep the backend's `@cloudflare/vitest-plugin`, Wrangler, and Miniflare
+  aligned. Plugin 1.4.4 supports Vitest 5; keep coverage-istanbul on the exact
+  same Vitest release and run both backend coverage gates after changing them.
 - The website's `@astrojs/check` 0.9.10 supports TypeScript 5 and 6. Keep its
   TypeScript 6.0.3 pin until the checker supports TypeScript 7's compiler API.
 - Match each Biome schema URL to its CLI. Native optional packages in the Bun
@@ -63,12 +68,6 @@ conditions allow removal.
 
 Known constrained transitive dependencies include:
 
-- Miniflare's exact Sharp 0.35.4 pin carries
-  [GHSA-wq5f-xc86-pv6w](https://github.com/advisories/GHSA-wq5f-xc86-pv6w).
-  Sharp 0.35.5 is available, but an override needs native ABI checks and a real
-  offline Miniflare Images SVG-to-PNG regression before adoption.
-- Miniflare's exact Undici 7.29.0 pin remains affected by the advisories fixed
-  in 7.29.1. An owner update is coupled to Wrangler and workerd validation.
 - The frontend's micromatch and chokidar graph includes Braces 3.0.3;
   [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
   has no verified published fixed version. The patterns are repository tooling
@@ -95,6 +94,11 @@ Report unavailable registry audits and release metadata as coverage limits,
 separately from any known unresolved advisories.
 
 ## Infrastructure previews
+
+Keep `upload_source_maps: false` explicit in the API and website Worker
+configurations, inherited by staging and production. Wrangler 4.150 changed
+its deploy default to upload generated source maps; dependency updates must
+preserve the existing opt-out unless that upload policy is intentionally changed.
 
 Before a Terraform CLI, provider or module update, use the `.secrets` tier
 credentials that `scripts/tf` loads and the real R2 backend for each of `zone`,

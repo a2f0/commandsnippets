@@ -1,6 +1,6 @@
 import {CURSOR_START, type TagDocument} from '@commandsnippets/api-shared';
 import {act} from '@testing-library/react';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
 
@@ -42,7 +42,7 @@ const tag: TagDocument = {
 
 const server = setupServer();
 
-beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
 afterEach(() => {
   server.resetHandlers();
   vi.restoreAllMocks();

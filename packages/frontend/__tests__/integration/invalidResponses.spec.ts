@@ -5,7 +5,7 @@
  */
 import {CURSOR_START} from '@commandsnippets/api-shared';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {
   afterAll,
   afterEach,
@@ -23,7 +23,7 @@ import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 
-beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
 afterAll(() => server.close());
 beforeEach(() => {
   signIn();

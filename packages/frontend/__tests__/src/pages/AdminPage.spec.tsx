@@ -11,7 +11,7 @@ import {
   within,
 } from '@testing-library/react';
 import {createMemoryHistory} from 'history';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {setupServer} from 'msw/node';
 
 import {errorDocument, onePage, pagination} from '../../../src/msw/documents';

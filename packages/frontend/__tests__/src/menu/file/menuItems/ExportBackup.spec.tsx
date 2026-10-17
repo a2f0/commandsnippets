@@ -11,7 +11,7 @@ import {backupSchema} from '@commandsnippets/api-shared/responses';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {backupFileName} from '../../../../../src/lib/data/backup';
 import {createEntry} from '../../../../../src/lib/data/writes';

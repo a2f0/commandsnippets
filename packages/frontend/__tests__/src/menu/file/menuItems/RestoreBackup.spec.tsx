@@ -17,7 +17,7 @@ import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {createEntry} from '../../../../../src/lib/data/writes';
 import {OWNER_ID_KEY} from '../../../../../src/lib/db/database';
