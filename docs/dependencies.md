@@ -95,6 +95,11 @@ separately from any known unresolved advisories.
 
 ## Infrastructure previews
 
+Keep `upload_source_maps: false` explicit in the API and website Worker
+configurations, inherited by staging and production. Wrangler 4.150 changed
+its deploy default to upload generated source maps; dependency updates must
+preserve the existing opt-out unless that upload policy is intentionally changed.
+
 Before a Terraform CLI, provider or module update, use the `.secrets` tier
 credentials that `scripts/tf` loads and the real R2 backend for each of `zone`,
 `staging` and `production`. Save a full refreshed plan with locking. From

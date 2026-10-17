@@ -2,6 +2,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "commandsnippets-api",
   "main": "src/index.ts",
+  // Preserve the source-map upload policy from before Wrangler 4.150.
+  "upload_source_maps": false,
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
