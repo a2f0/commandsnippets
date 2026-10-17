@@ -7,7 +7,7 @@ import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {createEntry, createTag} from '../../src/lib/data/writes';

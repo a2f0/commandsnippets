@@ -2,7 +2,7 @@ import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {VERSION_KEY} from '../../src/lib/db/database';
@@ -19,7 +19,7 @@ import {TestAppRouter} from '../util/TestAppRouter';
 const loadingWait = {timeout: 10000};
 vi.setConfig({testTimeout: 30000});
 
-beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
 afterAll(() => server.close());
 afterEach(() => {
   server.resetHandlers();

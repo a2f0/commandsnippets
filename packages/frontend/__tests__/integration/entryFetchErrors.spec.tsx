@@ -1,6 +1,6 @@
 import {act, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';

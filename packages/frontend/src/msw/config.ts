@@ -7,7 +7,7 @@ export const MSW_CONFIG = {
   },
 
   // Request handling configuration
-  onUnhandledRequest: 'bypass' as const,
+  onUnhandledFrame: 'bypass' as const,
 
   // Health check endpoint for verification
   healthCheckUrl: 'http://localhost:9001/api/v1/health',

@@ -1,6 +1,6 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {type MockInstance, vi} from 'vitest';
 import {UserProfileCircle} from '../../../src/components/UserProfileCircle';
 import {apiClient} from '../../../src/lib/api/apiClient';

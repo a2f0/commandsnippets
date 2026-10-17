@@ -5,7 +5,7 @@
  */
 import {act, fireEvent, render, screen} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';

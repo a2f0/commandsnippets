@@ -8,7 +8,7 @@ import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {heldVersion} from '../../../../../src/lib/sync/dataVersion';
 import {syncSession} from '../../../../../src/lib/sync/session';

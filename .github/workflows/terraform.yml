@@ -22,12 +22,12 @@ jobs:
         with:
           terraform_version: ${{ steps.version.outputs.terraform }}
           terraform_wrapper: false
-      - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef # v6.3.1
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
         with:
           tflint_version: v0.64.0
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
       - name: Check formatting
         run: terraform fmt -check -recursive
       - name: Lint and test the wrapper script

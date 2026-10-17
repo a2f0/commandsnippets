@@ -7,7 +7,7 @@
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {Dexie} from 'dexie';
 import {createMemoryHistory} from 'history';
-import {HttpResponse, http} from 'msw';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {createTag} from '../../src/lib/data/writes';
 import {signedOutDataCleanedUp} from '../../src/lib/state/appState';

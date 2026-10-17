@@ -51,7 +51,7 @@ const JSON_API = {'Content-Type': 'application/vnd.api+json'};
 
 const server = setupServer(...handlers);
 
-beforeAll(() => server.listen({onUnhandledRequest: 'error'}));
+beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
 afterAll(() => server.close());
 
 let db: CommandsnippetsDatabase;
