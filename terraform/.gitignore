@@ -10,8 +10,8 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
-# Plaintext variable files; secrets live in secrets.env.sops.
+# Plaintext variable files; secrets live in ../.secrets (README.md, Usage).
 *.tfvars
 
-# Plaintext keys decrypted from the removed ssh_keys/*.sops files
+# Plaintext SSH keys that old clones may still hold from a retired setup
 /ssh_keys/

@@ -13,8 +13,7 @@ stacks/
   zone/            commandsnippets.com (shared by every environment)
   staging/         module "environment" for staging
   production/      module "environment" for production
-scripts/tf         runs Terraform for one stack with the SOPS credentials
-secrets.env.sops   the scoped Cloudflare token and the R2 state keys
+scripts/tf         runs Terraform for one stack with its tier's credentials
 ```
 
 A stack is a root module with its own state (`<stack>/terraform.tfstate` in
@@ -41,8 +40,9 @@ Universal SSL certificate covers only one level below the apex.
 
 ## Usage
 
-Prerequisites: Terraform (`.terraform-version`), SOPS with the GPG key for
-`../.sops.yaml`, and tflint.
+Prerequisites: Terraform (`.terraform-version`), tflint, and the repository
+root's gitignored `.secrets` link to this project's matrix-secrets folder
+(`matrix-secrets/commandsnippets`).
 
 ```shell
 scripts/tf zone init
@@ -50,20 +50,21 @@ scripts/tf staging plan
 scripts/tf production apply
 ```
 
-`scripts/tf <stack> <arguments...>` decrypts `secrets.env.sops` into the
-Terraform process's environment only:
+`scripts/tf <stack> <arguments...>` reads `../.secrets/<tier>/app.env` into
+the Terraform process's environment only. `staging` uses the `staging` tier;
+`production` and the shared `zone` use `prod`. A tier's optional `shared.env`
+loads first and `app.env` wins. The files hold plain `NAME=value` lines, which
+the script parses rather than runs; it ignores other names, clears credentials
+inherited from the shell, and stops, naming the file or variable, when one is
+missing.
 
 | Variable | Used by |
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | The Cloudflare provider: the scoped user token `commandsnippets-terraform` (DNS, Zone Settings, Zone Read and Single Redirects on this zone; D1 on the account). |
-| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | The S3 backend, pointed at R2: the token `commandsnippets-terraform-state`, limited to the state bucket. The key ID is the token ID and the secret its SHA-256. |
+| `TF_STATE_ACCESS_KEY_ID`, `TF_STATE_SECRET_ACCESS_KEY` | The S3 backend, pointed at R2, which receives them as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`: the token `commandsnippets-terraform-state`, limited to the state bucket. The key ID is the token ID and the secret its SHA-256. |
 
-Edit the secrets with:
-
-    sops edit --input-type dotenv --output-type dotenv secrets.env.sops
-
-After changing the GPG recipients in `../.sops.yaml`, re-encrypt with
-`sops updatekeys --input-type dotenv secrets.env.sops`.
+Both tiers hold the same values today, so change a value in each tier's
+`app.env`.
 
 ## Checks
 
@@ -71,8 +72,9 @@ The `terraform` lane of `CI gate` runs `terraform fmt -check`, `terraform
 validate` for every stack, the modules' `terraform test` suites (against a
 mocked provider: the www redirect, CAA set, TXT quoting, TLS settings and D1
 read replication), `tflint --recursive` with the shared `.tflint.hcl`, and shellcheck plus `bun test` for
-`scripts/tf` (with fake `sops`/`terraform`: decryption failures and missing
-credentials stop it, inherited credentials never reach Terraform). The pre-push
+`scripts/tf` (against fixture `.secrets` tiers and a fake `terraform`: each
+stack reads its tier, a missing file or credential stops it, and inherited
+credentials never reach Terraform). The pre-push
 hook runs the format check and the wrapper tests. Locally:
 
 ```shell

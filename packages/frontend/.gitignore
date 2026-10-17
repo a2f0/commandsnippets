@@ -6,10 +6,6 @@ node_modules/
 .env
 .ts-out
 
-/.blackbox/pubring.gpg~
-/.blackbox/pubring.kbx~
-/.blackbox/secring.gpg/.env
-
 # Vite PWA
 dev-dist
 
