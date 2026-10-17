@@ -479,17 +479,21 @@ One-time setup, after `bunx wrangler login` (`--device` over SSH) or with
 
 ```shell
 for env in staging production; do
+  case $env in production) tier=prod ;; *) tier=$env ;; esac
   bunx wrangler d1 migrations apply DB --remote --env "$env"
   bunx wrangler deploy --env "$env"
-  # The Worker's four secrets, all the files hold (jq keeps it to them).
-  sops -d --output-type json secrets/$env.sops.env |
-    jq '{GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID,
-         GOOGLE_CLIENT_SECRET}' |
+  # The Worker's four secrets, all the file holds (grep keeps it to them),
+  # piped to wrangler as .env lines.
+  grep -E '^(GITHUB|GOOGLE)_CLIENT_(ID|SECRET)=' "../../.secrets/$tier/worker.env" |
     bunx wrangler secret bulk --env "$env"
 done
 ```
 
-Secrets persist across deploys; rerun the last step only to rotate them.
+The values live in the repository root's gitignored `.secrets` link to this
+project's matrix-secrets folder: `.secrets/staging/worker.env` for the
+`staging` environment and `.secrets/prod/worker.env` for `production`.
+Secrets persist across deploys; rerun the last step only to rotate them, after
+changing the tier's `worker.env`.
 
 Each release, from this directory, for staging and then production (CI does
 not deploy; see below):

@@ -96,10 +96,11 @@ separately from any known unresolved advisories.
 
 ## Infrastructure previews
 
-Before a Terraform CLI, provider or module update, use the SOPS credentials and
-the real R2 backend for each of `zone`, `staging` and `production`. Save a full
-refreshed plan with locking. From `terraform/`, use `mktemp -d` to create a
-private directory outside the checkout, pass its absolute path to
+Before a Terraform CLI, provider or module update, use the `.secrets` tier
+credentials that `scripts/tf` loads and the real R2 backend for each of `zone`,
+`staging` and `production`. Save a full refreshed plan with locking. From
+`terraform/`, use `mktemp -d` to create a private directory outside the
+checkout, pass its absolute path to
 `scripts/tf <stack> plan -input=false -lock=true -out=<private-plan>`, and
 redirect `scripts/tf <stack> show -json <private-plan>` to a JSON file there.
 Inspect resource actions, drift, checks and deferred changes; reject deletions,

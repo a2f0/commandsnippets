@@ -1,2 +1,6 @@
 # JavaScript tooling (root workspace)
 node_modules/
+
+# Link to this project's matrix-secrets folder; never commit it. No trailing
+# slash: a directory pattern does not match a symlink.
+.secrets

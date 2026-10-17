@@ -1,5 +1,5 @@
-# State lives in Cloudflare R2 (S3-compatible). Credentials come from
-# secrets.env.sops through scripts/tf (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY).
+# State lives in Cloudflare R2 (S3-compatible). scripts/tf passes the state key
+# from .secrets/prod/app.env as AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY.
 terraform {
   backend "s3" {
     bucket = "commandsnippets-terraform-state"
