@@ -19,6 +19,22 @@ Each directory retains the commit history of its original repository.
 Dependency update boundaries, supported tool combinations, and deployment
 previews are documented in [docs/dependencies.md](docs/dependencies.md).
 
+## Setup
+
+Install [mise](https://mise.jdx.dev/getting-started.html) and activate it in your
+shell, then run these commands from the repository root:
+
+```sh
+mise install
+bun install --frozen-lockfile
+bun run hooks:install
+```
+
+The root `.mise.toml` pins Bun and Node for every package and for CI. Bun
+installs dependencies and runs scripts; tools such as Vite, Vitest, WebdriverIO
+and Wrangler continue to execute on Node. Each application package keeps its
+own lockfile: run `bun install --frozen-lockfile` in the package you work on.
+
 ## Local CI scripts
 
 Install the frontend dependencies before running its scripts. The test

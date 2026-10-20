@@ -1,8 +1,9 @@
 {
   "name": "commandsnippets-backend-v2",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "license": "UNLICENSED",
   "private": true,
+  "packageManager": "bun@1.4.3",
   "type": "module",
   "scripts": {
     "postinstall": "wrangler types",

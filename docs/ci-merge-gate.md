@@ -10,7 +10,7 @@ job decides which lanes apply (`scripts/checks/ciPolicy.ts`), and the gate then
 requires each lane to have succeeded, or to have been skipped *because* change
 detection marked it irrelevant. A failed, cancelled, missing, or unexpectedly
 skipped lane fails the gate. Changes to a workflow, to the CI policy itself
-(`scripts/checks/ci*`), or to the root `package.json` or `bun.lock` exercise
+(`scripts/checks/ci*`), or to the root `.mise.toml`, `package.json` or `bun.lock` exercise
 every lane.
 
 | Lane | Workflow | Scope |

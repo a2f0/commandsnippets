@@ -32,7 +32,7 @@ export const CI_JOBS = {
 
 /** Changes that can affect every lane run them all. */
 const COMMON =
-  /^(\.github\/workflows\/|scripts\/checks\/ci|package\.json$|bun\.lock$)/;
+  /^(\.github\/workflows\/|scripts\/checks\/ci|package\.json$|bun\.lock$|\.mise\.toml$)/;
 
 export function ciDiffRange(
   base: string | undefined,

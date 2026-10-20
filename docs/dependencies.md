@@ -21,8 +21,10 @@ installed source links and run its checks. With a complete verified local cache,
 scripts; run their required validation separately. Preserve minimum release age
 and verify that unrelated package identities did not change.
 
-Use Bun 1.4.3, matching CI. Frontend tools execute on Node 24.22.0 from its
-`.nvmrc`; keep `engines.node`, Node types and CI's version-file input together.
+The root `.mise.toml` pins Bun 1.4.3 and Node 24.22.0 for development and CI.
+Keep its Bun pin and all five install roots' `packageManager` declarations
+together. Keep its Node pin, frontend `engines.node` and Node types compatible.
+Python and Terraform retain their existing specialized setup.
 Preserve the frontend's exact dependency pins and one-day minimum release age.
 An offline install lacking release timestamps does not justify disabling that
 policy.

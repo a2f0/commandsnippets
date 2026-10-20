@@ -16,8 +16,8 @@ entries can be put in a user-defined order. The API is backend-v2
 Run these from `packages/frontend`.
 
 ### Setup
-- Requires Bun, and Node.js at the `.nvmrc` version (Vite, Vitest, WebdriverIO
-  and wrangler run on it)
+- Requires Bun and Node.js from the root `.mise.toml` (Vite, Vitest,
+  WebdriverIO and wrangler run on Node); see the root README for mise setup
 - `bun install` - Install dependencies
 - `bun run dev` - Start the development server on http://localhost:8085
 - `bun run server-test` - Start the server in test mode on
