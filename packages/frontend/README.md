@@ -10,9 +10,9 @@ and the rest of the app's state in a zustand store saved in `localStorage`
 
 ### Prerequisites
 
-- [Bun](https://bun.com) installs dependencies and runs the scripts.
-- Node.js, at the version in `.nvmrc`: Vite, Vitest, WebdriverIO and wrangler
-  run on it.
+Use the repository root's [mise setup](../../README.md#setup) to install the
+Bun and Node versions pinned in `../../.mise.toml`. Bun installs dependencies
+and runs scripts; Vite, Vitest, WebdriverIO and Wrangler execute on Node.
 
 ### Setup
 

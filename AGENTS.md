@@ -15,6 +15,7 @@ Monorepo for the Commandsnippets app.
 
 ## Conventions
 
+- Use the Bun and Node versions in `.mise.toml`; see README for mise setup.
 - Commits and PR titles are conventional commits, header ≤50 chars
   (`commitlint.config.mts`). Branches are `<type>/<name>` with the same types
   (`bun run lint:branch-name`).
