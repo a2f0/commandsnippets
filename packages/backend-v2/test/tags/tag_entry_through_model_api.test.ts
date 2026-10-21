@@ -49,7 +49,7 @@ describe('TestTagsEntriesApi', () => {
     expect(response.status).toBe(405);
   });
 
-  it('test_retrieve_fails', async () => {
+  it('test_retrieve_missing_fails', async () => {
     base = await setUpBase();
     const response = await base.user1Client.get('/api/v1/tags_entries/1');
     expect(response.status).toBe(405);

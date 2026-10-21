@@ -5,11 +5,11 @@ The public site (Astro, static HTML): the home page and the footer pages
 the web app (`../frontend`); the website only links to it, per build mode
 (`src/lib/appUrl.ts`):
 
-| Mode | App |
-|---|---|
-| `production` | https://app.commandsnippets.com |
-| `staging` | https://app-staging.commandsnippets.com |
-| development | http://localhost:8085 |
+| Mode         | App                                     |
+| ------------ | --------------------------------------- |
+| `production` | https://app.commandsnippets.com         |
+| `staging`    | https://app-staging.commandsnippets.com |
+| development  | http://localhost:8085                   |
 
 ```shell
 bun install
