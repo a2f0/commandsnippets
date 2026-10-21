@@ -18,9 +18,9 @@
     "agent:run": "agent-tool run"
   },
   "devDependencies": {
-    "@a2f0/agent-tool": "0.1.15",
-    "@commitlint/cli": "21.2.3",
-    "@commitlint/config-conventional": "21.2.3",
+    "@a2f0/agent-tool": "0.1.17",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
     "@tsconfig/strictest": "2.0.8",
     "@types/bun": "catalog:",
     "typescript": "7.0.2"

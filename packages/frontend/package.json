@@ -11,7 +11,7 @@
   },
   "type": "module",
   "engines": {
-    "node": "=24.22.0"
+    "node": "=24.22.1"
   },
   "scripts": {
     "server-test": "vite serve --mode test --port 8081",
@@ -74,7 +74,7 @@
     "vitest": "5.0.5",
     "wdio-video-reporter": "6.2.0",
     "webdriverio": "9.32.0",
-    "wrangler": "4.151.1"
+    "wrangler": "4.151.3"
   },
   "dependencies": {
     "@commandsnippets/api-shared": "file:../api-shared",
@@ -85,7 +85,7 @@
     "@tanstack/react-virtual": "3.14.21",
     "dexie": "4.4.6",
     "dexie-react-hooks": "4.4.0",
-    "i18next": "26.4.7",
+    "i18next": "26.5.3",
     "i18next-browser-languagedetector": "8.2.1",
     "react": "19.3.1",
     "react-cookie": "8.1.2",
@@ -93,7 +93,7 @@
     "react-dnd-html5-backend": "16.0.1",
     "react-dom": "19.3.1",
     "react-highlight-words": "1.0.0",
-    "react-i18next": "17.0.20",
+    "react-i18next": "17.1.0",
     "uuid": "14.0.3",
     "zod": "4.6.7",
     "zustand": "5.0.15"
