@@ -24,10 +24,7 @@ and verify that unrelated package identities did not change.
 The root `.mise.toml` pins Bun 1.4.3 and Node 24.22.1 for development and CI.
 Keep its Bun pin and all five install roots' `packageManager` declarations
 together. Keep its Node pin, frontend `engines.node` and Node types compatible.
-Python and Terraform retain their specialized setup. Python uses the 3.14
-line for YAML tooling: PyYAML 6.0.3 declares support through 3.14 in its
-[release metadata](https://pypi.org/project/PyYAML/6.0.3/). Revisit 3.15 once
-PyYAML supports it and the actual yamllint environment passes.
+Python and Terraform retain their specialized setup.
 Preserve the frontend's exact dependency pins and one-day minimum release age.
 That age policy also applies to api-shared's development dependencies when Bun
 refreshes the frontend's local package snapshot; select that tooling together.
