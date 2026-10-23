@@ -95,12 +95,16 @@ afterAll(async () => {
 });
 
 describe.each([false, true])('with navigate=%s', navigate => {
-  test.each(['/', '/privacy/', '/terms/', '/favicon.svg'])(
-    'serves %s from the build',
-    async path => {
-      expect((await get(path, navigate)).status).toBe(200);
-    }
-  );
+  test.each([
+    '/',
+    '/privacy/',
+    '/terms/',
+    '/favicon.ico',
+    '/favicon.svg',
+    '/apple-touch-icon.png',
+  ])('serves %s from the build', async path => {
+    expect((await get(path, navigate)).status).toBe(200);
+  });
 
   test.each([
     '/dan',

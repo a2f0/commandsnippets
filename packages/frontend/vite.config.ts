@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react';
-import type {PluginOption} from 'vite';
+import {type PluginOption, searchForWorkspaceRoot} from 'vite';
 import {analyzer} from 'vite-bundle-analyzer';
 import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
@@ -22,18 +22,18 @@ export default defineConfig(({command, mode}) => {
         enabled: false,
       },
       registerType: 'autoUpdate',
-      includeAssets: ['pwa-icon-144x144.svg'],
+      // The icons are rendered into public/ from ../../assets/brand by
+      // `bun run images`, which the dev, test and build scripts run first.
+      includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Commandsnippets',
         short_name: 'Commandsnippets',
         description: 'Note taking for technical professionals.',
         theme_color: '#ffffff',
         icons: [
-          {
-            src: 'pwa-icon-144x144.svg',
-            sizes: '144x144',
-            type: 'image/svg+xml',
-          },
+          {src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png'},
+          {src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png'},
+          {src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml'},
         ],
       },
       workbox: {
@@ -123,6 +123,11 @@ export default defineConfig(({command, mode}) => {
       port: 8085,
       host: true, // Listen on all network interfaces
       hmr: true,
+      // The menu bar imports the logo from the repository's brand sources,
+      // outside this package.
+      fs: {
+        allow: [searchForWorkspaceRoot(process.cwd()), '../../assets/brand'],
+      },
     },
     test: {
       globals: true,

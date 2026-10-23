@@ -23,13 +23,17 @@ classification remains repository-owned.
 | `tooling` | inline in `ci.yml` | `scripts/`, managed skills, tooling config |
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/`, `packages/api-shared/` |
 | `api-shared` | `api-shared.yml` (API Shared CI) | `packages/api-shared/` |
-| `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts |
-| `website` | `website.yml` (Website CI) | `packages/website/` |
+| `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts, `assets/brand/`, `agent-tool.json` |
+| `website` | `website.yml` (Website CI) | `packages/website/`, `assets/brand/`, `agent-tool.json` |
 | `terraform` | `terraform.yml` (Terraform CI) | `terraform/` |
 
 `packages/api-shared/` is the API contract its consumers build against, so a
 change there also runs the lanes of its consumers: `backend-v2` and
-`frontend`.
+`frontend`. Both web packages render their icons from the brand sources in
+`assets/brand/` with the `images` settings in `agent-tool.json`, using the
+root's pinned agent-tool, so those paths run the `frontend` and `website`
+lanes (and, on push, the website checks), and both lanes install the root
+tooling too.
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch

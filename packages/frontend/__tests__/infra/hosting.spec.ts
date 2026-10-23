@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {type ChildProcess, spawn, spawnSync} from 'node:child_process';
-import {mkdtempSync, readdirSync, rmSync} from 'node:fs';
+import {mkdtempSync, readdirSync, readFileSync, rmSync} from 'node:fs';
 import {type IncomingHttpHeaders, request} from 'node:http';
 import {createServer} from 'node:net';
 import {tmpdir} from 'node:os';
@@ -9,7 +9,8 @@ import {fileURLToPath} from 'node:url';
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 
 // The deployed hosting, end to end: a real build served by `wrangler dev` with
-// wrangler.jsonc (single-page-app fallback) and public/_headers.
+// wrangler.jsonc (single-page-app fallback) and public/_headers, with the
+// icons the build scripts render into public/ first (`bun run images`).
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const bin = (name: string) => join(root, 'node_modules', '.bin', name);
 let outDir = '';
@@ -45,6 +46,13 @@ const freePort = () =>
 
 beforeAll(async () => {
   outDir = mkdtempSync(join(tmpdir(), 'app-hosting-'));
+  const images = spawnSync('bun', ['run', 'images'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  if (images.status !== 0) {
+    throw new Error(images.stderr || images.stdout);
+  }
   const build = spawnSync(
     bin('vite'),
     ['build', '--mode', 'staging', '--outDir', outDir, '--emptyOutDir'],
@@ -133,4 +141,42 @@ it('caches fingerprinted assets for a year, immutably', async () => {
     'public, max-age=31536000, immutable'
   );
   expect(response.headers).toMatchObject(SECURITY_HEADERS);
+});
+
+// The single-page-app fallback answers a missing file with the shell, so an
+// icon must come back as an image, not just with a 200.
+it.each(['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png'])(
+  'serves the icon %s',
+  async path => {
+    const response = await get(path);
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toMatch(/^image\//);
+  }
+);
+
+it('links the icons from the app shell and serves every manifest icon', async () => {
+  // The build minifies index.html, so match each tag however it closes.
+  const html = readFileSync(join(outDir, 'index.html'), 'utf8');
+  expect(html).toMatch(
+    /<link rel="icon" href="\/favicon\.ico" sizes="any"\s*\/?>/
+  );
+  expect(html).toMatch(
+    /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml"\s*\/?>/
+  );
+  expect(html).toMatch(
+    /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png"\s*\/?>/
+  );
+  const manifest: {icons: {src: string; type: string}[]} = JSON.parse(
+    readFileSync(join(outDir, 'manifest.webmanifest'), 'utf8')
+  );
+  expect(manifest.icons.map(icon => icon.src)).toEqual([
+    'pwa-192x192.png',
+    'pwa-512x512.png',
+    'favicon.svg',
+  ]);
+  for (const icon of manifest.icons) {
+    const response = await get(`/${icon.src}`);
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain(icon.type);
+  }
 });

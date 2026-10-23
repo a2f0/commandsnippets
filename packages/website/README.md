@@ -22,6 +22,12 @@ bun run lint && bun run check && bun run test
 `bun run test` builds the staging and production sites into temporary
 directories and checks the generated HTML, and tests the redirect Worker.
 
+`bun run images` renders the favicons and Apple touch icon into `public/`
+from the repository's brand sources (`../../assets/brand/`), using the
+pinned agent-tool and the `favicons` target in `../../agent-tool.json`. The
+dev, build and test scripts run it first, so it needs the repository root's
+`bun install`; the outputs are gitignored.
+
 Deployed pages use CT for click analytics. See
 [click tracking](../../docs/click-tracking.md) for environments, privacy behavior
 and test isolation.

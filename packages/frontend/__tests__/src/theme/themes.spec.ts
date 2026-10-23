@@ -58,6 +58,12 @@ describe('the app', () => {
       ...readdirSync(join(root, 'public'))
         .filter(file => file.endsWith('.svg'))
         .map(file => join('public', file)),
+      // The brand sources the logo and icons are rendered from, and the
+      // image settings (agent-tool.json) that fill the icons' backgrounds.
+      ...readdirSync(join(root, '../../assets/brand'))
+        .filter(file => file.endsWith('.svg'))
+        .map(file => join('../../assets/brand', file)),
+      '../../agent-tool.json',
       'index.html',
     ];
     const hues = files.flatMap(file =>

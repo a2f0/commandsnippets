@@ -15,3 +15,10 @@ _results_
 logs/
 *.log
 .wrangler/
+
+# Rendered from ../../assets/brand by `bun run images` (agent-tool.json)
+/public/favicon.svg
+/public/favicon.ico
+/public/apple-touch-icon.png
+/public/pwa-192x192.png
+/public/pwa-512x512.png

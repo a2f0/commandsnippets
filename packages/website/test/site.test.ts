@@ -90,8 +90,27 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     }
   });
 
-  test('ships the favicon and discloses the analytics operator', () => {
-    expect(existsSync(join(outDir, 'favicon.svg'))).toBe(true);
+  // The icons are rendered into public/ by `bun run images`, which `test`
+  // and the build scripts run first.
+  test('ships the icons and links them from every page', () => {
+    for (const icon of ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png']) {
+      expect(existsSync(join(outDir, icon))).toBe(true);
+    }
+    for (const path of ['', ...FOOTER_LINKS.map(link => link.href)]) {
+      const html = page(path);
+      expect(html).toMatch(
+        /<link rel="icon" href="\/favicon\.ico" sizes="any"\s*\/?>/
+      );
+      expect(html).toMatch(
+        /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml"\s*\/?>/
+      );
+      expect(html).toMatch(
+        /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png"\s*\/?>/
+      );
+    }
+  });
+
+  test('discloses the analytics operator', () => {
     for (const path of ['', ...FOOTER_LINKS.map(link => link.href)]) {
       if (path !== '/privacy/') {
         expect(page(path).toLowerCase()).not.toContain('tearleads');

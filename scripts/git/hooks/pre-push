@@ -162,8 +162,11 @@ if touches 'terraform/' && [ -d "$REPO_ROOT/terraform" ]; then
   step_timings_run terraform-wrapper bun test ./terraform/
 fi
 
-if touches 'packages/website/' && [ -d "$REPO_ROOT/packages/website" ]; then
-  require_worktree_is_push packages/website
+# The website renders its icons from the brand sources with the settings in
+# agent-tool.json, so a change to either checks it too.
+if { touches 'packages/website/' || touches 'assets/brand/' || touches 'agent-tool.json'; } &&
+  [ -d "$REPO_ROOT/packages/website" ]; then
+  require_worktree_is_push packages/website assets/brand agent-tool.json
   step_timings_run website-lint sh -c 'cd packages/website && bun run lint'
   step_timings_run website-check sh -c 'cd packages/website && bun run check'
   step_timings_run website-tests sh -c 'cd packages/website && bun run test'
