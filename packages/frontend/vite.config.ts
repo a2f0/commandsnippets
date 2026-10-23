@@ -8,13 +8,8 @@ import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
 import packageJson from './package.json' with {type: 'json'};
 
-// Where each deployed mode's app is served (wrangler.jsonc). Search engines
-// may index production only: every other build says noindex in index.html
-// and, through _headers, on every response.
-const APP_ORIGINS: Record<string, string> = {
-  production: 'https://app.commandsnippets.com',
-  staging: 'https://app-staging.commandsnippets.com',
-};
+// Search engines may index production only: every other build says noindex
+// in index.html and, through _headers, on every response.
 const NOINDEX = 'noindex, nofollow';
 
 /**
@@ -52,7 +47,6 @@ export default defineConfig(({command, mode}) => {
       inject: {
         data: {
           VITE_APP_VERSION: packageJson.version,
-          APP_URL: `${APP_ORIGINS[mode] ?? 'http://localhost:8085'}/`,
         },
         tags: indexable
           ? []

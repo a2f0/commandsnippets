@@ -112,7 +112,8 @@ Only production may appear in search results. Every other build mode adds
 `X-Robots-Tag: noindex, nofollow` to the `/*` rule of the built `_headers` and a
 robots `noindex` meta to `index.html` (`vite.config.ts`); `public/robots.txt`
 allows crawling everywhere, so crawlers can see that noindex. `index.html`
-names the environment's app root as the canonical URL of every route.
+has no canonical URL or `og:url`: every route serves it, including users'
+public pages, and naming the root would mark those duplicates of it.
 
 ```shell
 bun run deploy:staging      # vite build --mode staging, then wrangler deploy

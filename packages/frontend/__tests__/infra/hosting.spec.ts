@@ -30,10 +30,7 @@ const SECURITY_HEADERS = {
   'x-frame-options': 'DENY',
 };
 
-describe.each([
-  ['staging', 'https://app-staging.commandsnippets.com/'],
-  ['production', 'https://app.commandsnippets.com/'],
-])('the %s build', (mode, appUrl) => {
+describe.each(['staging', 'production'])('the %s build', mode => {
   let outDir = '';
   let port = 0;
   let server: ChildProcess | undefined;
@@ -142,15 +139,20 @@ describe.each([
     );
   });
 
-  it('names the app root as canonical, and says noindex outside production', () => {
+  it('describes the app, and says noindex outside production', () => {
     const html = readFileSync(join(outDir, 'index.html'), 'utf8');
-    expect(html).toContain(`<link rel="canonical" href="${appUrl}"/>`);
-    expect(html).toContain(`<meta property="og:url" content="${appUrl}"/>`);
     expect(html).toMatch(/<title>Commandsnippets – [^<]+<\/title>/);
     expect(html).toMatch(/<meta name="description" content="[^"]{120,160}"\/>/);
+    expect(html).toContain(
+      '<meta property="og:title" content="Commandsnippets'
+    );
     expect(html.match(/<meta name="robots" content="([^"]*)"/)?.[1]).toBe(
       robots
     );
+    // Users' public pages share this page; naming the root would mark them
+    // duplicates of it (index.html).
+    expect(html).not.toContain('rel="canonical"');
+    expect(html).not.toContain('og:url');
   });
 
   it('caches fingerprinted assets for a year, immutably', async () => {
