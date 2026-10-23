@@ -13,6 +13,7 @@ export const textEntryAttributesSchema = z.object({
   subject: z.string(),
   date_updated: timestampSchema,
   date_created: timestampSchema,
+  /** Times the entry was reused (`/entry_reuses`); 0 in public reads. */
   reused_count: countSchema,
   is_deleted: z.boolean(),
   is_public: z.boolean(),

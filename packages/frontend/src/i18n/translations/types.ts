@@ -181,6 +181,8 @@ export interface EntriesTranslations {
   noEntries: string;
   entryCount_one: string;
   entryCount_other: string;
+  reusedCount_one: string;
+  reusedCount_other: string;
 }
 
 export interface AdminTranslations {
