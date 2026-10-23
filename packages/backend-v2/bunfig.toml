@@ -1,4 +1,4 @@
-# `bun test` runs only the scripts' tests (scripts/*.test.ts, on Bun with
+# `bun test` runs only the scripts' tests (scripts/**/*.test.ts, on Bun with
 # bun:sqlite). The scripts import some of src/ (the schema), whose coverage the
 # Worker's vitest run in workerd measures instead. This gate is 98% of lines
 # and 95% of functions in scripts/ (README, Development).

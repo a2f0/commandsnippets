@@ -1,0 +1,37 @@
+{
+  "label": "tooling",
+  "steps": [
+    {
+      "label": "shell",
+      "command": [
+        "bun",
+        "run",
+        "lint:shell"
+      ]
+    },
+    {
+      "label": "types",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ]
+    },
+    {
+      "label": "scripts",
+      "command": [
+        "bun",
+        "run",
+        "test:scripts"
+      ]
+    },
+    {
+      "label": "skills",
+      "command": [
+        "bun",
+        "run",
+        "agents:check"
+      ]
+    }
+  ]
+}

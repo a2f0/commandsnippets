@@ -8,7 +8,8 @@ append a dated journal here or in README. Existing advisory observations are
 recheck targets, not a fresh audit. Keep private logs, credentials, plans, and
 state out of public reports.
 
-The root Bun workspace contains only `packages/agent-tool`. The frontend,
+The root Bun install owns development tooling, including the exact-pinned
+`@a2f0/agent-tool`; it is not an application workspace. The frontend,
 backend-v2, api-shared and website each own their `package.json` and `bun.lock`;
 install and validate each changed package from its own directory. Reinstall both
 API consumers after changing api-shared, as its README describes.
@@ -60,8 +61,9 @@ policy.
 
 Frontend TypeScript 7.0.2 still needs `compile`'s `--force` workaround documented
 in its `AGENTS.md`. Do not remove it on the strength of a clean incremental run.
-Root commitlint's programmatic TypeScript consumers also need validation even
-when the compiler CLI passes.
+`commitlint.config.mts` reads subject types/length from `agent-tool.json`.
+Full commitlint rules still run in commit-msg and the required PR-title check;
+the shared tool's data-only subject checks do not replace those additional rules.
 
 ## Transitive security checks
 

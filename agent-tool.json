@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "subject": {
+    "conventional": true,
+    "maxLength": 50,
+    "types": [
+      "build",
+      "chore",
+      "ci",
+      "docs",
+      "feat",
+      "fix",
+      "perf",
+      "refactor",
+      "revert",
+      "style",
+      "test",
+      "cleanup"
+    ],
+    "lowercaseInitial": true,
+    "rejectTerminalPeriod": true
+  },
+  "branch": {
+    "types": null,
+    "exempt": [
+      "main",
+      "staging"
+    ],
+    "maxLength": 50
+  },
+  "commits": {
+    "signatures": "present",
+    "rejectCoauthors": true,
+    "rejectClaudeAttribution": true
+  },
+  "hooks": {
+    "files": [
+      {
+        "source": "scripts/git/hooks/commit-msg",
+        "target": "commit-msg",
+        "executable": true
+      },
+      {
+        "source": "scripts/git/hooks/pre-push",
+        "target": "pre-push",
+        "executable": true
+      }
+    ]
+  },
+  "merge": {
+    "requiredChecks": [
+      {
+        "name": "CI gate",
+        "workflow": "CI"
+      }
+    ],
+    "requireStrictBaseFreshness": true
+  },
+  "versions": {
+    "packages": [
+      "packages/frontend",
+      "packages/backend-v2"
+    ],
+    "lockfile": null
+  },
+  "pr": {
+    "rejectClaudeBranding": true
+  }
+}

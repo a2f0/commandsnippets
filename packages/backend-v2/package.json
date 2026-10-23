@@ -18,7 +18,8 @@
     "format": "biome format --write .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:scripts": "bun test --coverage ./scripts/"
+    "test:scripts": "bun test --coverage ./scripts/",
+    "manage": "bun scripts/admin/manage.ts"
   },
   "dependencies": {
     "@commandsnippets/api-shared": "file:../api-shared",

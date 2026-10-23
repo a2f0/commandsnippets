@@ -20,7 +20,7 @@
     "test-headless": "wdio test/wdio.headless.conf.ts",
     "ci": "start-server-and-test 'bun run server-test' http-get://localhost:8081 'bun run test'",
     "ci-headless": "start-server-and-test 'bun run server-test' http-get://localhost:8081 'bun run test-headless'",
-    "unit": "vitest --no-watch",
+    "unit": "../../scripts/testing/runUnitTests.sh",
     "fix": "biome check --write",
     "format": "biome format",
     "lint": "biome lint",
@@ -33,7 +33,9 @@
     "compile": "tsc -b --force",
     "prepare": "bun run compile",
     "deploy:staging": "bun run build:staging && wrangler deploy --env staging",
-    "deploy:production": "bun run build:production && wrangler deploy --env production"
+    "deploy:production": "bun run build:production && wrangler deploy --env production",
+    "test:spec": "./scripts/testing/runSpec.sh",
+    "test:spec:headless": "./scripts/testing/runSpecHeadless.sh"
   },
   "keywords": [],
   "author": "Dan Sullivan",

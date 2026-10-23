@@ -144,7 +144,7 @@ else, a link) goes back to your entries.
 ### E2E Tests
 
 Start the server and run tests in a single command (Chrome only;
-`../../scripts/runWebdriverTests.sh` runs the headless suite as CI does):
+`../../scripts/testing/runWebdriverTests.sh` runs the headless suite as CI does):
 
 ```shell
 bun run ci
@@ -170,7 +170,7 @@ bun run test -- --spec=test/specs/entries/entriesContextMenu/listsEntries.spec.t
 or
 
 ```shell
-./scripts/runSpec.sh test/specs/tags/tagContextMenu/allowsDeletingATag.spec.ts
+bun run test:spec test/specs/tags/tagContextMenu/allowsDeletingATag.spec.ts
 ```
 
 ### Unit Tests
@@ -179,8 +179,8 @@ Run unit tests (the script disables Node's experimental Web Storage, which
 would replace jsdom's `localStorage`):
 
 ```shell
-../../scripts/runUnitTests.sh
-../../scripts/runUnitTests.sh __tests__/integration/reorderEntryList.spec.tsx
+bun run unit
+bun run unit __tests__/integration/reorderEntryList.spec.tsx
 ```
 
 For watch mode, run `NODE_OPTIONS=--no-experimental-webstorage bunx vitest`

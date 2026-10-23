@@ -1,4 +1,4 @@
-# JavaScript tooling (root workspace)
+# JavaScript tooling (root tooling)
 node_modules/
 
 # Link to this project's matrix-secrets folder; never commit it. No trailing

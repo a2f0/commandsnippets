@@ -13,8 +13,8 @@ on:
       - '.mise.toml'
       - 'packages/frontend/**'
       - 'packages/api-shared/**'
-      - 'scripts/runUnitTests.sh'
-      - 'scripts/runWebdriverTests.sh'
+      - 'scripts/testing/runUnitTests.sh'
+      - 'scripts/testing/runWebdriverTests.sh'
       - '.github/workflows/frontend.yml'
 jobs:
   code-quality:
@@ -50,8 +50,8 @@ jobs:
           xargs -0 shellcheck
       - name: Lint YAML
         run: yamllint -c .yamllint .
-      - run: ../../scripts/runUnitTests.sh
-      - run: ../../scripts/runWebdriverTests.sh
+      - run: ../../scripts/testing/runUnitTests.sh
+      - run: ../../scripts/testing/runWebdriverTests.sh
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
