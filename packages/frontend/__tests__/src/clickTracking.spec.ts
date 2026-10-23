@@ -120,7 +120,15 @@ describe('deployed browser app click collection', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it('imports are inert and non-production builds never initialize', async () => {
+  it('imports are inert even on an allowed origin', async () => {
+    vi.stubEnv('MODE', 'production');
+    vi.stubGlobal('location', new URL('https://app.commandsnippets.com'));
+    await import('../../src/lib/clickTracking');
+    expect(click).toBeUndefined();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('non-production builds never initialize', async () => {
     vi.stubEnv('PROD', false);
     await start();
     expect(tracker).toBeUndefined();

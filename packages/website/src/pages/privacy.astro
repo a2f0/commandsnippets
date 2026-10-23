@@ -4,12 +4,16 @@ import Base from '../layouts/Base.astro';
 
 <Base title="Privacy Policy · Commandsnippets">
   <h1>Privacy Policy</h1>
+  <p class="muted">
+    This page currently describes click analytics. The broader privacy policy is
+    being prepared.
+  </p>
   <h2>Click analytics</h2>
   <p>
     Our website and web app use CT, operated by Tearleads, LLC and hosted on
     Cloudflare, to understand which parts of the service people use. CT records
     click times, element types, the application and environment, and public
-    website page categories. Web app clicks use a generic page identifier so
+    website paths, such as /about/. Web app clicks use a generic page identifier so
     usernames and tag names in routes are not collected.
   </p>
   <p>
@@ -21,7 +25,9 @@ import Base from '../layouts/Base.astro';
     Editable fields are excluded from click collection.
   </p>
   <p>
-    CT honors the browser's Do Not Track setting and the CT browser extension's
-    opt-out. Global Privacy Control does not disable this click collection.
+    CT honors the browser's Do Not Track setting. You can also disable CT using
+    the <a href="https://github.com/a2f0/ct/blob/main/packages/extension/README.md">CT browser extension</a>
+    in each browser or profile you use. Global Privacy Control does not disable
+    this click collection.
   </p>
 </Base>

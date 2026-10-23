@@ -1,7 +1,8 @@
 # Commandsnippets website
 
 The public site (Astro, static HTML): the home page and the footer pages
-(privacy, terms, contact, about). Signing in happens in
+(privacy's click-analytics notice, plus terms, contact and about placeholders).
+Signing in happens in
 the web app (`../frontend`); the website only links to it, per build mode
 (`src/lib/appUrl.ts`):
 
