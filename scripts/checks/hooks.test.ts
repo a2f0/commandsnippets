@@ -3,21 +3,18 @@ import {
   appendFileSync,
   chmodSync,
   cpSync,
-  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
-  realpathSync,
   rmSync,
-  statSync,
   writeFileSync,
+  symlinkSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
-const STRIP = path.join(REPO_ROOT, "scripts/checks/stripClaudeCoauthors.sh");
-const TRUST = path.join(REPO_ROOT, "scripts/checks/checkCommitTrust.sh");
+const TOOL = path.join(REPO_ROOT, "node_modules/.bin/agent-tool");
 
 const temporary: string[] = [];
 function tempDir(): string {
@@ -47,50 +44,6 @@ function run(command: string[], cwd: string) {
   };
 }
 
-function strip(message: string): { message: string; stderr: string } {
-  const file = path.join(tempDir(), "COMMIT_EDITMSG");
-  writeFileSync(file, message);
-  const result = run(["sh", STRIP, file], REPO_ROOT);
-  expect(result.exitCode).toBe(0);
-  return { message: readFileSync(file, "utf8"), stderr: result.stderr };
-}
-
-describe("stripClaudeCoauthors.sh", () => {
-  test("removes Claude co-author trailers and the Claude Code footer", () => {
-    const { message, stderr } = strip(
-      [
-        "feat(app): add widget",
-        "",
-        "Body text.",
-        "",
-        "🤖 Generated with [Claude Code](https://claude.com/claude-code)",
-        "",
-        "Co-Authored-By: Claude <noreply@anthropic.com>",
-        "co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
-        "",
-      ].join("\n"),
-    );
-    expect(message).toBe("feat(app): add widget\n\nBody text.\n");
-    expect(stderr).toContain("Stripped 3 Claude attribution line(s)");
-  });
-
-  test("matches an anthropic.com address even without the Claude name", () => {
-    const { message } = strip(
-      "fix: thing\n\nCo-authored-by: Bot <bot@anthropic.com>\n",
-    );
-    expect(message).toBe("fix: thing\n");
-  });
-
-  test("keeps human co-authors and leaves clean messages untouched", () => {
-    const human = "fix: thing\n\nCo-authored-by: Ada <ada@example.com>\n";
-    expect(strip(human).message).toBe(human);
-    const clean = "chore: tidy\n\nMentions claude in prose, which stays.\n";
-    const result = strip(clean);
-    expect(result.message).toBe(clean);
-    expect(result.stderr).toBe("");
-  });
-});
-
 /** A scratch repo whose commits are SSH-signed with a throwaway key. */
 function signedRepo(): string {
   const dir = tempDir();
@@ -100,7 +53,7 @@ function signedRepo(): string {
       .exitCode,
   ).toBe(0);
   // Without an allowed-signers file git reports SSH signatures as "N"
-  // (unsigned), which checkCommitTrust would rightly reject.
+  // (unsigned), which the configured signature-presence check rejects.
   const allowedSigners = path.join(dir, "allowed-signers");
   writeFileSync(
     allowedSigners,
@@ -138,95 +91,6 @@ function commit(repo: string, message: string, sign = true): void {
   expect(result.exitCode).toBe(0);
 }
 
-describe("checkCommitTrust.sh", () => {
-  test("accepts signed commits without co-author trailers", () => {
-    const repo = signedRepo();
-    commit(repo, "feat: signed work");
-    expect(run(["sh", TRUST, "--range", "HEAD~1..HEAD"], repo).exitCode).toBe(
-      0,
-    );
-  });
-
-  test("rejects unsigned commits", () => {
-    const repo = signedRepo();
-    commit(repo, "feat: unsigned work", false);
-    const result = run(["sh", TRUST, "--range", "HEAD~1..HEAD"], repo);
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("missing or invalid signature");
-  });
-
-  test("rejects any Co-authored-by trailer with rewrite instructions", () => {
-    const repo = signedRepo();
-    commit(
-      repo,
-      "feat: pairing\n\nCo-authored-by: Claude <noreply@anthropic.com>",
-    );
-    const result = run(["sh", TRUST, "--range", "HEAD~1..HEAD"], repo);
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Co-authored-by trailer");
-    expect(result.stderr).toContain("AGENT INSTRUCTION");
-  });
-
-  test("fails closed on an invalid range", () => {
-    const repo = signedRepo();
-    const result = run(["sh", TRUST, "--range", "nope..HEAD"], repo);
-    expect(result.exitCode).toBe(1);
-  });
-});
-
-describe("install-hooks.sh", () => {
-  test("installs every hook, prunes stale ones, and sets core.hooksPath", () => {
-    const repo = path.join(tempDir(), "repo");
-    expect(run(["git", "init", "-q", "-b", "main", repo], REPO_ROOT).exitCode).toBe(0);
-    cpSync(path.join(REPO_ROOT, "scripts/git"), path.join(repo, "scripts/git"), {
-      recursive: true,
-    });
-    const hooksDir = path.join(repo, ".git/hooks");
-    writeFileSync(path.join(hooksDir, "pre-rebase"), "#!/bin/sh\nexit 1\n");
-    chmodSync(path.join(hooksDir, "pre-rebase"), 0o755);
-
-    const result = run(["sh", "scripts/git/install-hooks.sh"], repo);
-    expect(result.exitCode).toBe(0);
-    for (const hook of ["commit-msg", "pre-push"]) {
-      const installed = path.join(hooksDir, hook);
-      expect(readFileSync(installed, "utf8")).toBe(
-        readFileSync(path.join(REPO_ROOT, "scripts/git/hooks", hook), "utf8"),
-      );
-      expect(statSync(installed).mode & 0o111).not.toBe(0);
-    }
-    expect(existsSync(path.join(hooksDir, "pre-rebase"))).toBe(false);
-    expect(result.stdout).toContain("Removed stale pre-rebase hook");
-    expect(
-      realpathSync(run(["git", "config", "core.hooksPath"], repo).stdout.trim()),
-    ).toBe(realpathSync(hooksDir));
-  });
-});
-
-describe("lintBranchName.ts", () => {
-  const lint = (name: string) =>
-    run(["bun", "scripts/checks/lintBranchName.ts", name], REPO_ROOT);
-
-  test.each([
-    "main",
-    "staging",
-    "feat/backend-v2",
-    "chore/ship-pr-flow",
-    "fix/a.b_c",
-  ])(
-    "accepts %s",
-    (name) => {
-      expect(lint(name).exitCode).toBe(0);
-    },
-  );
-
-  test.each(["backend-v2", "Feat/x", "nope/x", `feat/${"x".repeat(50)}`])(
-    "rejects %s",
-    (name) => {
-      expect(lint(name).exitCode).toBe(1);
-    },
-  );
-});
-
 describe("pre-push", () => {
   const ZERO = "0".repeat(40);
 
@@ -254,8 +118,10 @@ describe("pre-push", () => {
         recursive: true,
       });
     }
-    mkdirSync(path.join(repo, "scripts/checks"));
-    cpSync(TRUST, path.join(repo, "scripts/checks/checkCommitTrust.sh"));
+    cpSync(path.join(REPO_ROOT, "agent-tool.json"), path.join(repo, "agent-tool.json"));
+    cpSync(path.join(REPO_ROOT, "commitlint.config.mts"), path.join(repo, "commitlint.config.mts"));
+    writeFileSync(path.join(repo, ".gitignore"), "node_modules/\n");
+    symlinkSync(path.join(REPO_ROOT, "node_modules"), path.join(repo, "node_modules"), "dir");
     writeFileSync(
       path.join(repo, "package.json"),
       JSON.stringify({
@@ -271,7 +137,7 @@ describe("pre-push", () => {
     writeFileSync(path.join(repo, "scripts/notes.txt"), "notes\n");
     commitAll(repo, "chore: add tooling");
     setup?.(repo);
-    expect(run(["sh", "scripts/git/install-hooks.sh"], repo).exitCode).toBe(0);
+    expect(run([TOOL, "hooks", "install", "--apply"], repo).exitCode).toBe(0);
     git(repo, "switch", "-q", "-c", "feat/x");
     return repo;
   }
@@ -280,10 +146,12 @@ describe("pre-push", () => {
     repo: string,
     sha = git(repo, "rev-parse", "HEAD"),
     env: Record<string, string> = {},
+    destination = "refs/heads/feat/x",
+    remoteSha = ZERO,
   ) {
     const result = Bun.spawnSync([".git/hooks/pre-push", "origin", "url"], {
       cwd: repo,
-      stdin: Buffer.from(`refs/heads/feat/x ${sha} refs/heads/feat/x ${ZERO}\n`),
+      stdin: Buffer.from(`refs/heads/feat/x ${sha} ${destination} ${remoteSha}\n`),
       env: {
         ...process.env,
         GIT_CONFIG_GLOBAL: "/dev/null",
@@ -357,7 +225,52 @@ describe("pre-push", () => {
     );
     const result = prePush(repo);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Co-authored-by trailer");
+    expect(result.stdout + result.stderr).toContain("Co-authored-by");
+  });
+
+  test("validates the destination instead of only the current branch", () => {
+    const repo = hookRepo();
+    const result = prePush(repo, undefined, {}, "refs/heads/untyped");
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout + result.stderr).toContain("untyped");
+  });
+
+  test("rejects a newly introduced unsigned commit", () => {
+    const repo = hookRepo();
+    commit(repo, "feat: unsigned work", false);
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout + result.stderr).toContain("Signature does not meet");
+  });
+
+  test("base integration excludes history the push remote already owns", () => {
+    const repo = hookRepo();
+    git(repo, "remote", "add", "origin", repo);
+    commit(repo, "feat: original work");
+    const published = git(repo, "rev-parse", "HEAD");
+    git(repo, "update-ref", "refs/remotes/origin/feat/x", published);
+    git(repo, "switch", "main");
+    // Simulate existing upstream history, not a new commit being introduced.
+    git(repo, "-c", "core.hooksPath=/dev/null", "commit", "--no-gpg-sign",
+      "--allow-empty", "-m", "chore: upstream work\n\nCo-authored-by: Ada <ada@example.com>");
+    git(repo, "update-ref", "refs/remotes/origin/main", git(repo, "rev-parse", "HEAD"));
+    git(repo, "switch", "feat/x");
+    git(repo, "merge", "--no-ff", "origin/main", "-m", "chore: integrate main");
+    const result = prePush(repo, undefined, {}, undefined, published);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('"checked": 1');
+    commit(repo, "feat: new unsigned work", false);
+    expect(prePush(repo, undefined, {}, undefined, published).exitCode).toBe(1);
+  });
+
+  test("commit-msg rejects attribution without rewriting the message", () => {
+    const repo = hookRepo();
+    const message = "fix: change\n\nCo-authored-by: Ada <ada@example.com>\n";
+    const file = path.join(repo, ".git/TEST_COMMIT_EDITMSG");
+    writeFileSync(file, message);
+    const result = run([".git/hooks/commit-msg", file], repo);
+    expect(result.exitCode).toBe(1);
+    expect(readFileSync(file, "utf8")).toBe(message);
   });
 
   /**

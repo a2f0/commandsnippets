@@ -7,6 +7,7 @@ name: CI
 # yamllint disable-line rule:truthy
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
 
 permissions:
@@ -57,17 +58,12 @@ jobs:
           version: 2026.10.17
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Lint branch name
-        if: github.event_name == 'pull_request'
-        env:
-          HEAD_REF: ${{ github.head_ref }}
-        run: bun run lint:branch-name "$HEAD_REF"
       - name: Lint shell scripts
         run: bun run lint:shell
       - name: Typecheck
         run: bun run typecheck
-      - name: Test agent-tool
-        run: bun run test:agent-tool
+      - name: Check managed skills
+        run: bun run agents:check
       - name: Test hooks and CI policy
         run: bun run test:scripts
 
@@ -119,7 +115,19 @@ jobs:
         uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
         with:
           version: 2026.10.17
+      - name: Install tooling dependencies
+        run: bun install --frozen-lockfile
+      - name: Check managed skills
+        run: bun run agents:check
+      - name: Validate PR branch and title
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          bun run lint:branch-name "$HEAD_REF"
+          bun run lint:pr-title
       - name: Require every applicable check to succeed
         env:
           CI_NEEDS: ${{ toJSON(needs) }}
-        run: bun scripts/checks/ciGate.ts
+        run: printf '%s\n' "$CI_NEEDS" | bun run agent-tool ci gate - --policy scripts/checks/ciGate.json

@@ -1,5 +1,22 @@
 import { describe, expect, test } from "bun:test";
-import { assertCiSuccess, ciDiffRange, ciScopes } from "./ciPolicy";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { ciDiffRange, ciScopes, CI_SCOPES } from "./ciPolicy";
+import gatePolicy from "./ciGate.json";
+
+const root = path.resolve(import.meta.dirname, "../..");
+function assertCiSuccess(needs: unknown): void {
+  const result = spawnSync(path.join(root, "node_modules/.bin/agent-tool"),
+    ["ci", "gate", "-", "--policy", "scripts/checks/ciGate.json"],
+    { cwd: root, input: JSON.stringify(needs), encoding: "utf8" });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(result.stdout + result.stderr);
+}
+
+test("gate policy covers every classified scope", () => {
+  expect(gatePolicy.conditional.map(rule => rule.output).sort()).toEqual(Object.keys(CI_SCOPES).sort());
+  expect(gatePolicy.conditional.every(rule => rule.source === "changes")).toBe(true);
+});
 
 const sha = (c: string) => c.repeat(40);
 
@@ -22,7 +39,10 @@ describe("ciDiffRange", () => {
 describe("ciScopes", () => {
   test("selects tooling for packages, scripts, and tooling config", () => {
     for (const path of [
-      "packages/agent-tool/src/index.ts",
+      "agent-tool.json",
+      ".agent-tool-skills.json",
+      ".agents/skills/ship-pr/SKILL.md",
+      ".claude/skills/ship-pr/SKILL.md",
       "scripts/git/hooks/pre-push",
       "commitlint.config.mts",
       "tsconfig.base.json",
@@ -56,7 +76,7 @@ describe("ciScopes", () => {
       website: false,
       terraform: false,
     });
-    expect(ciScopes(["scripts/runWebdriverTests.sh"]).frontend).toBe(true);
+    expect(ciScopes(["scripts/testing/runWebdriverTests.sh"]).frontend).toBe(true);
     expect(ciScopes(["terraform/stacks/zone/main.tf"])).toEqual({
       tooling: false,
       frontend: false,
@@ -151,7 +171,7 @@ describe("assertCiSuccess", () => {
       terraform: { result: "skipped" },
     };
     expect(() => assertCiSuccess(needs)).toThrow(
-      "backend-v2 must be skipped",
+      "backend-v2: expected skipped",
     );
   });
 
@@ -177,16 +197,16 @@ describe("assertCiSuccess", () => {
     expect(() => assertCiSuccess(needs)).not.toThrow();
     expect(() =>
       assertCiSuccess({ ...needs, "api-shared": { result: "skipped" } }),
-    ).toThrow("api-shared must be success: skipped");
+    ).toThrow("api-shared: expected success");
     expect(() =>
       assertCiSuccess({ ...needs, "backend-v2": { result: "skipped" } }),
-    ).toThrow("backend-v2 must be success: skipped");
+    ).toThrow("backend-v2: expected success");
   });
 
   test("fails when change detection did not succeed", () => {
     expect(() =>
       assertCiSuccess({ changes: { result: "failure" }, ...jobs("skipped") }),
-    ).toThrow("changes did not succeed");
+    ).toThrow("changes: expected success");
   });
 
   test("fails a required lane that failed, was cancelled, or skipped", () => {
@@ -197,7 +217,7 @@ describe("assertCiSuccess", () => {
           ...jobs("success"),
           frontend: { result },
         }),
-      ).toThrow(`frontend must be success: ${result}`);
+      ).toThrow(`frontend: expected success`);
     }
   });
 
@@ -208,16 +228,16 @@ describe("assertCiSuccess", () => {
         ...jobs("skipped"),
         frontend: { result: "success" },
       }),
-    ).toThrow("frontend must be skipped");
+    ).toThrow("frontend: expected skipped");
     const { frontend: _frontend, ...withoutFrontend } = jobs("skipped");
     expect(() =>
       assertCiSuccess({ changes: scopes("false"), ...withoutFrontend }),
-    ).toThrow("frontend must be skipped: missing");
+    ).toThrow("frontend: expected skipped");
   });
 
   test("fails on a missing or malformed scope output", () => {
     expect(() =>
       assertCiSuccess({ changes: scopes("maybe"), ...jobs("success") }),
-    ).toThrow("Missing or invalid change scope");
+    ).toThrow("must succeed and produce 'true' or 'false'");
   });
 });

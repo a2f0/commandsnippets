@@ -5,12 +5,11 @@ a monorepo.
 
 | Directory | Contents |
 | --- | --- |
-| `packages/agent-tool/` | CLI behind the ship/review skills |
 | `packages/api-shared/` | API contract (zod schemas) shared by the API and its clients |
 | `packages/backend-v2/` | Cloudflare Workers API |
 | `packages/frontend/` | Web client |
 | `packages/website/` | Public website (Astro) |
-| `scripts/` | Local entrypoints shared with CI/CD |
+| `scripts/` | Repository checks, tracked hooks, and test launchers ([layout](scripts/README.md)) |
 | `docs/` | CI merge gate and dependency update guidance |
 | `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
 
@@ -41,9 +40,13 @@ Install the frontend dependencies before running its scripts. The test
 entrypoints mirror the commands used by GitHub Actions:
 
 ```sh
-./scripts/runUnitTests.sh
-./scripts/runWebdriverTests.sh
+bun run test:unit
+bun run test:browser
 ```
 
-Coding agents follow [AGENTS.md](AGENTS.md) for setup, compact command output,
-and the repository-owned review and shipping workflow.
+`bun run check` records root shell lint, typechecking, script tests, and
+managed-skill checks. Each application README
+documents its own checks and deployments. The exact-pinned `@a2f0/agent-tool`
+provides shared Git and shipping commands, configured in `agent-tool.json`.
+See [CI and merge requirements](docs/ci-merge-gate.md) for local hook migration
+and [AGENTS.md](AGENTS.md) for agent requirements.

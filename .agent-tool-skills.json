@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "files": {
+    ".agents/skills/cross-agent-review/SKILL.md": "b153d5442a2267fb59d40ab7c0e0100d54630bf7d7a8ddab951cd3dec39ef7f8",
+    ".agents/skills/open-pr/SKILL.md": "09a7a1f2a144e2d12c23e9b5dcae66a70a4aa944d38fcec9b153527f9bbd4cb1",
+    ".agents/skills/reset/SKILL.md": "a8eb37680e3707140fbd779e5f5b229d25b7e673761be8fde7be62d731885a44",
+    ".agents/skills/ship-pr/SKILL.md": "57f064c26cd03de73a1ae0a173a820882282d6939eb4952069b64e62c60de587",
+    ".agents/skills/squash-merge/SKILL.md": "27e95958086f53cea0ae1ccea5cad113feb08d0d546424daa01915dfeb7b0ff4",
+    ".agents/skills/update-dependencies/SKILL.md": "f7cff2431d598fab3daf3aee79e135f749a819b5a0cbb48cdc5ba199cbb8305b",
+    ".claude/skills/cross-agent-review/SKILL.md": "b153d5442a2267fb59d40ab7c0e0100d54630bf7d7a8ddab951cd3dec39ef7f8",
+    ".claude/skills/open-pr/SKILL.md": "09a7a1f2a144e2d12c23e9b5dcae66a70a4aa944d38fcec9b153527f9bbd4cb1",
+    ".claude/skills/reset/SKILL.md": "a8eb37680e3707140fbd779e5f5b229d25b7e673761be8fde7be62d731885a44",
+    ".claude/skills/ship-pr/SKILL.md": "57f064c26cd03de73a1ae0a173a820882282d6939eb4952069b64e62c60de587",
+    ".claude/skills/squash-merge/SKILL.md": "27e95958086f53cea0ae1ccea5cad113feb08d0d546424daa01915dfeb7b0ff4",
+    ".claude/skills/update-dependencies/SKILL.md": "f7cff2431d598fab3daf3aee79e135f749a819b5a0cbb48cdc5ba199cbb8305b"
+  }
+}

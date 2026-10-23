@@ -9,9 +9,9 @@
  */
 export const CI_SCOPES = {
   tooling:
-    /^(packages\/agent-tool\/|scripts\/|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
+    /^(scripts\/|\.agents\/|\.claude\/|agent-tool\.json$|\.agent-tool-skills\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   frontend:
-    /^(packages\/(frontend|api-shared)\/|scripts\/(runUnitTests|runWebdriverTests)\.sh$)/,
+    /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests)\.sh$)/,
   backendV2: /^packages\/(backend-v2|api-shared)\//,
   apiShared: /^packages\/api-shared\//,
   website: /^packages\/website\//,
@@ -19,16 +19,6 @@ export const CI_SCOPES = {
 } as const satisfies Record<string, RegExp>;
 
 export type CiScope = keyof typeof CI_SCOPES;
-
-/** Each scoped job in .github/workflows/ci.yml, by job id, and its scope. */
-export const CI_JOBS = {
-  tooling: "tooling",
-  "backend-v2": "backendV2",
-  "api-shared": "apiShared",
-  frontend: "frontend",
-  website: "website",
-  terraform: "terraform",
-} as const satisfies Record<string, CiScope>;
 
 /** Changes that can affect every lane run them all. */
 const COMMON =
@@ -60,32 +50,4 @@ export function allScopes(): Record<CiScope, boolean> {
   return Object.fromEntries(
     Object.keys(CI_SCOPES).map((scope) => [scope, true]),
   ) as Record<CiScope, boolean>;
-}
-
-interface JobResult {
-  readonly result: string;
-  readonly outputs?: Readonly<Record<string, string>>;
-}
-
-// A skipped job is safe only when successful change detection explicitly says
-// it is irrelevant. Failed/cancelled prerequisites must never turn the gate green.
-export function assertCiSuccess(
-  needs: Readonly<Record<string, JobResult | undefined>>,
-): void {
-  const { changes } = needs;
-  if (changes?.result !== "success") {
-    throw new Error(`changes did not succeed: ${changes?.result ?? "missing"}`);
-  }
-  for (const [job, scopeName] of Object.entries(CI_JOBS)) {
-    const scope = changes.outputs?.[scopeName];
-    if (scope !== "true" && scope !== "false") {
-      throw new Error(`Missing or invalid change scope: ${scopeName}`);
-    }
-    const expected = scope === "true" ? "success" : "skipped";
-    if (needs[job]?.result !== expected) {
-      throw new Error(
-        `${job} must be ${expected}: ${needs[job]?.result ?? "missing"}`,
-      );
-    }
-  }
 }

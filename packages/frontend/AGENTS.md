@@ -41,20 +41,20 @@ Run these from `packages/frontend`.
 ### Testing
 
 #### Unit Tests (Vitest)
-- `../../scripts/runUnitTests.sh` - Run all unit tests, as CI does (it disables
+- `../../scripts/testing/runUnitTests.sh` - Run all unit tests, as CI does (it disables
   Node's experimental Web Storage, which would replace jsdom's `localStorage`)
 - Pass paths to run specific files, for example
-  `../../scripts/runUnitTests.sh __tests__/integration/reorderEntryList.spec.tsx`
+  `../../scripts/testing/runUnitTests.sh __tests__/integration/reorderEntryList.spec.tsx`
 - For watch mode, run
   `NODE_OPTIONS=--no-experimental-webstorage bunx vitest` in a terminal.
   `bun run unit -- --watch` fails: `unit` already passes `--no-watch`.
 
 #### E2E Tests (WebdriverIO, Chrome only)
-- `../../scripts/runWebdriverTests.sh` - Start the test server and run the
+- `../../scripts/testing/runWebdriverTests.sh` - Start the test server and run the
   headless suite, as CI does (`bun run ci-headless`)
-- `scripts/runSpecHeadless.sh <spec-file>` - Run one spec headless, for
-  example `scripts/runSpecHeadless.sh test/specs/tags/search.spec.ts`
-- `scripts/runSpec.sh <spec-file>` - Run one spec in a visible browser
+- `scripts/testing/runSpecHeadless.sh <spec-file>` - Run one spec headless, for
+  example `scripts/testing/runSpecHeadless.sh test/specs/tags/search.spec.ts`
+- `scripts/testing/runSpec.sh <spec-file>` - Run one spec in a visible browser
 - `bun run test-headless` / `bun run test` - Run the suite against a
   `bun run server-test` you started yourself
 
@@ -552,7 +552,7 @@ console.error('ERROR: Build failed');
 
 ### Testing
 - After changing E2E specs or `test/mocks/`, run the unit tests too
-  (`../../scripts/runUnitTests.sh`): some unit specs import those mocks.
+  (`../../scripts/testing/runUnitTests.sh`): some unit specs import those mocks.
 - Unit tests are Vitest specs in `__tests__/`. Helpers in `__tests__/util/`:
   - `signIn.ts` - `signIn()` (as the mock API's user, `test`), `resetApp()`,
     and `store`, the app state as components use it (`store.setIsStaff(...)`)

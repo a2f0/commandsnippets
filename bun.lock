@@ -5,33 +5,21 @@
     "": {
       "name": "commandsnippets",
       "devDependencies": {
-        "@a2f0/agent-tool": "0.1.17",
+        "@a2f0/agent-tool": "0.1.19",
         "@commitlint/cli": "21.2.4",
         "@commitlint/config-conventional": "21.2.4",
         "@tsconfig/strictest": "2.0.8",
-        "@types/bun": "catalog:",
+        "@types/bun": "1.4.3",
         "typescript": "7.0.2",
       },
     },
-    "packages/agent-tool": {
-      "name": "@commandsnippets/agent-tool",
-      "version": "0.1.0",
-      "devDependencies": {
-        "@types/bun": "catalog:",
-      },
-    },
-  },
-  "catalog": {
-    "@types/bun": "1.4.3",
   },
   "packages": {
-    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.17", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-SknBpNArgVkIX0RdY4cLXDudJu0Cu8zYJbZJF2kx5gTnYLEzC9i4Qik39/ijQJYtZStdivit6pHeClsCwm5KnA=="],
+    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.19", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-Lh4LCkfb7u7W4Q+nHOGTORTDBQLfr9LkRtoV6BEZsHl5Ewlvik8pxYBo+nuOwVLo+cUSNe55Q+H7kHJxb9aiIA=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
     "@babel/helper-validator-identifier": ["@babel/helper-validator-identifier@7.29.7", "", {}, "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="],
-
-    "@commandsnippets/agent-tool": ["@commandsnippets/agent-tool@workspace:packages/agent-tool"],
 
     "@commitlint/cli": ["@commitlint/cli@21.2.4", "", { "dependencies": { "@commitlint/config-conventional": "^21.2.4", "@commitlint/format": "^21.2.3", "@commitlint/lint": "^21.2.4", "@commitlint/load": "^21.2.4", "@commitlint/read": "^21.2.3", "@commitlint/types": "^21.2.3", "tinyexec": "^1.0.0", "yargs": "^18.0.0" }, "bin": { "commitlint": "cli.js" } }, "sha512-g3M/wrQdElqGH5vROIeL2QiYIxrzqUkhCgsDyDlWfKEyQdCt10OyMB28W2cJtpZ+VNGMvmaN923infr1hOfyrg=="],
 

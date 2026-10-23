@@ -8,7 +8,6 @@ Monorepo for the Commandsnippets app.
 | `packages/backend-v2/` | Cloudflare Workers API; bun, own lockfile |
 | `packages/api-shared/` | The API contract: zod schemas and types shared by the API and its clients; bun, own lockfile |
 | `packages/website/` | Public website (Astro); bun, own lockfile |
-| `packages/agent-tool/` | CLI behind the ship/review skills (root bun workspace) |
 | `scripts/` | git hooks, CI policy, test entrypoints |
 | `docs/` | CI merge gate and dependency update guidance |
 | `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
@@ -19,12 +18,12 @@ Monorepo for the Commandsnippets app.
 - Commits and PR titles are conventional commits, header ≤50 chars
   (`commitlint.config.mts`). Branches are `<type>/<name>` with the same types
   (`bun run lint:branch-name`).
-- Commits are signed and carry no `Co-authored-by` trailers; the `commit-msg`
-  hook strips Claude's, and `pre-push` rejects any left. Install the hooks with
+- Commits are signed and carry no `Co-authored-by` trailers; both `commit-msg`
+  and `pre-push` reject attribution. Install the hooks with
   `bun install && bun run hooks:install`.
 - `main` is protected: changes land through squash-merged PRs that pass
   `CI gate` (see `docs/ci-merge-gate.md`).
-- Ship work with the `ship-pr` skill (`.claude/skills/`, `.codex/skills/`):
+- Ship work with the managed `ship-pr` skill (`.agents/skills/`, `.claude/skills/`):
   commit, cross-agent review and repair, open the PR, squash-merge, reset.
 - Capture noisy finite checks, installs, builds, and hook-running pushes with
   `bun run agent:run --label <check> -- <command> [args...]`. The exact pinned
@@ -34,8 +33,24 @@ Monorepo for the Commandsnippets app.
   required warnings, coverage, timings, and artifacts before accepting a check.
   Keep review findings, version decisions, audits, and other structured decision
   output visible. Run interactive tools and persistent servers directly.
-  The repository-owned `packages/agent-tool` still owns review, PR, versioning,
-  and merge policy; the published tool supplies command capture only.
+  Shared commands and policy are configured in `agent-tool.json`. Do not edit
+  managed skills: after changing the exact tool pin, run `bun run agents:sync`
+  and commit the lockfile, skills, and `.agent-tool-skills.json` together.
+- Validate root tooling with `bun run check`, which records shell lint,
+  typecheck, script tests, and managed-skill checks; run every affected
+  application's documented checks. Full PR-title commitlint runs in `CI gate`.
+- Before each review, use `agent-tool versions prepare <base-oid>` to keep
+  changed `packages/frontend` and `packages/backend-v2` one patch beyond the
+  pinned base, preserving deliberate major/minor releases. Their lockfiles are
+  independent; the root manifest is tooling only.
+- Keep repository checks in `scripts/checks`, hooks in `scripts/git/hooks`,
+  and test launchers in `scripts/testing`; see [script layout](scripts/README.md).
+  Put reusable mechanics in agent-tool and application-specific policy here.
+  Preserve all callers when moving a script, including package-local guidance.
+- Follow [CI and merge requirements](docs/ci-merge-gate.md) for strict freshness,
+  scoped checks, hook setup, timing evidence, and deploy conditions. Inspect
+  unresolved review threads and reply in each original thread before resolving
+  a fully addressed finding.
 
 ## Dependency documentation
 

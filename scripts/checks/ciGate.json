@@ -1,0 +1,37 @@
+{
+  "required": [
+    "changes"
+  ],
+  "conditional": [
+    {
+      "job": "tooling",
+      "source": "changes",
+      "output": "tooling"
+    },
+    {
+      "job": "backend-v2",
+      "source": "changes",
+      "output": "backendV2"
+    },
+    {
+      "job": "api-shared",
+      "source": "changes",
+      "output": "apiShared"
+    },
+    {
+      "job": "frontend",
+      "source": "changes",
+      "output": "frontend"
+    },
+    {
+      "job": "website",
+      "source": "changes",
+      "output": "website"
+    },
+    {
+      "job": "terraform",
+      "source": "changes",
+      "output": "terraform"
+    }
+  ]
+}

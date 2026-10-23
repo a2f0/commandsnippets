@@ -4,25 +4,30 @@
   "packageManager": "bun@1.4.3",
   "license": "UNLICENSED",
   "type": "module",
-  "workspaces": ["packages/agent-tool"],
-  "catalog": {
-    "@types/bun": "1.4.3"
-  },
   "scripts": {
-    "hooks:install": "sh scripts/git/install-hooks.sh",
-    "lint:branch-name": "bun scripts/checks/lintBranchName.ts",
-    "lint:shell": "shellcheck --shell=sh scripts/git/install-hooks.sh scripts/git/showPushGateTimings.sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/lib/stepTimings.sh scripts/checks/checkCommitTrust.sh scripts/checks/stripClaudeCoauthors.sh",
-    "test:agent-tool": "bun run --cwd packages/agent-tool test",
+    "hooks:install": "agent-tool hooks install --apply",
+    "lint:branch-name": "agent-tool branch check",
+    "lint:shell": "shellcheck --shell=sh scripts/git/showPushGateTimings.sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/lib/stepTimings.sh scripts/testing/*.sh packages/frontend/scripts/testing/*.sh",
+    "test:agent-tool": "bun run agents:check",
     "test:scripts": "bun test ./scripts/",
-    "typecheck": "tsc -p packages/agent-tool && tsc -p tsconfig.scripts.json",
-    "agent:run": "agent-tool run"
+    "typecheck": "tsc -p tsconfig.scripts.json",
+    "agent:run": "agent-tool run",
+    "agent-tool": "agent-tool",
+    "hooks:check": "agent-tool hooks check",
+    "lint:pr-title": "bun scripts/checks/lintPrTitle.ts",
+    "agents:sync": "agent-tool skills install --apply",
+    "agents:check": "agent-tool skills check",
+    "test:unit": "sh scripts/testing/runUnitTests.sh",
+    "test:browser": "sh scripts/testing/runWebdriverTests.sh",
+    "timings:push": "sh scripts/git/showPushGateTimings.sh",
+    "check": "agent-tool run-group scripts/testing/verify.json"
   },
   "devDependencies": {
-    "@a2f0/agent-tool": "0.1.17",
+    "@a2f0/agent-tool": "0.1.19",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@tsconfig/strictest": "2.0.8",
-    "@types/bun": "catalog:",
+    "@types/bun": "1.4.3",
     "typescript": "7.0.2"
   }
 }

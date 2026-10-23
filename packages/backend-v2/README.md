@@ -44,8 +44,8 @@ and Capacitor apps are gone.
 | `src/resources/admin.ts`                                                                         | the `/api/v1/admin` API for staff                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Django admin                              |
 | `src/services/users.ts`, `src/services/tokens.ts`                                                | account creation, reserved usernames, logins; auth tokens                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | the `users` app; DRF `authtoken`          |
 | `src/services/accounts.ts`                                                                       | staff changes to an account's status (deactivate, reactivate, mark for deletion), audited                                                                                                                                                                                                                                                                                                                                                                                                                                        | Django admin                              |
-| `scripts/manage.ts`                                                                              | management commands                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `manage.py` commands                      |
-| `scripts/lib/`                                                                                   | the scripts' shared helpers (flags, migrations, SQL literals, processes)                                                                                                                                                                                                                                                                                                                                                                                                                                                         | —                                         |
+| `scripts/admin/manage.ts`                                                                        | management commands                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `manage.py` commands                      |
+| `scripts/admin/`, `scripts/checks/`                                                              | management helpers and migration/configuration checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | —                                         |
 | `test/`                                                                                          | the Django test suite, ported test-for-test, and v2's own tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | the apps' `tests/`                        |
 | `test/contract/`                                                                                 | the API's requests and responses against api-shared's schemas                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | —                                         |
 | `test/support/`, `test/helpers.ts`                                                               | factories, an API client, the base test case                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `BaseTestCase`, factory_boy               |
@@ -435,10 +435,10 @@ uses to offer its `/admin` page.
 ## Operations
 
 ```shell
-bun scripts/manage.ts list-users --env production
-bun scripts/manage.ts list-recent-logins --env production
-bun scripts/manage.ts usage-report --env production [--format csv --output report.csv]
-bun scripts/manage.ts delete-user <username> --env production
+bun run manage list-users --env production
+bun run manage list-recent-logins --env production
+bun run manage usage-report --env production [--format csv --output report.csv]
+bun run manage delete-user <username> --env production
 ```
 
 `usage-report` counts each user's live (not deleted) tags, entries and
@@ -459,7 +459,7 @@ bunx wrangler d1 execute DB --env production --remote \
 Reserving another username (adding it to
 `src/services/reserved-usernames.json`) needs a migration that renames the
 existing accounts that have it, as `0006_rename_reserved_usernames.sql` did;
-`scripts/migrations.test.ts` fails without one.
+`scripts/checks/migrations.test.ts` fails without one.
 
 Database backups (as opposed to a user's backup, above): D1 Time Travel
 restores to any point in the last 30 days (`wrangler d1 time-travel restore`,
@@ -517,7 +517,7 @@ every request until the new code is live. `is_superuser` went this way
 `reused_date` (`0022`). A column the Worker only writes, never reads, can go in
 one release, at the cost of the writes in between: `authtoken_token.created`
 (`0022`).
-`scripts/migrations.test.ts` checks that migrations after `0003` (the schema
+`scripts/checks/migrations.test.ts` checks that migrations after `0003` (the schema
 production's data was imported into) keep every row, never rebuild `users_user` (which cascades to all user data), and
 leave the database matching `src/db/schema.ts`. Between the two releases, list
 the column in its `PENDING_DROPS`.
@@ -532,4 +532,4 @@ for changes here or in `../api-shared`. Pushes to `staging`/`main` that change
 either run `Backend v2 CI`, whose deploy job would apply D1 migrations and
 deploy, but only once the `BACKEND_V2_DEPLOY` repository variable is `true`
 and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist.
-Neither is set, so CI never deploys: releases are deployed by hand, as above.
+Without that configuration, releases are deployed by hand as above; inspect the current repository variable and secret names before shipping.
