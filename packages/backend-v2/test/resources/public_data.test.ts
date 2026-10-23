@@ -28,6 +28,7 @@ import {
   tagFactory,
   tagTextEntryFactory,
   textEntryFactory,
+  textEntryReusedFactory,
   tokenFor,
   userFactory,
 } from '../helpers';
@@ -219,6 +220,51 @@ describe('user-scoped public reads', () => {
     expect((await new ApiClient().post(`${path}/entries`, {})).status).toBe(
       404
     );
+  });
+
+  it('keeps reuse counts private: owner and staff read them, public reads 0', async () => {
+    await textEntryReusedFactory({text_entry: visibleEntry, user: owner});
+    await textEntryReusedFactory({text_entry: visibleEntry, user: owner});
+    const staff = await userFactory({username: 'staff'}, {examples: false});
+    await db()
+      .update(users)
+      .set({is_staff: true})
+      .where(eq(users.id, staff.id));
+    const stranger = await userFactory({username: 'bob'}, {examples: false});
+    const reusedCount = async (
+      reader: ApiClient,
+      headers?: Record<string, string>
+    ) => {
+      const body = textEntryListDocumentSchema.parse(
+        await json(
+          await reader.get(
+            `${path}/entries?filter[id]=${visibleEntry.id}`,
+            headers
+          )
+        )
+      );
+      return body.data[0]?.attributes.reused_count;
+    };
+    for (const reader of [client, new ApiClient(await tokenFor(staff.id))]) {
+      expect(await reusedCount(reader)).toBe(2);
+      expect(await reusedCount(reader, {[DATA_ACCESS_HEADER]: 'public'})).toBe(
+        0
+      );
+    }
+    const guest = new ApiClient();
+    for (const reader of [guest, new ApiClient(await tokenFor(stranger.id))]) {
+      expect(await reusedCount(reader)).toBe(0);
+    }
+    // Nor through a junction's included entry.
+    const junctions = await json(
+      await guest.get(`${path}/tags_entries?include=text_entry`)
+    );
+    expect(
+      junctions.included.map(
+        (row: {attributes: {reused_count: number}}) =>
+          row.attributes.reused_count
+      )
+    ).toEqual([0]);
   });
 
   it('shows an entry once with multiple public tags, and hides it when its last public tag is removed', async () => {

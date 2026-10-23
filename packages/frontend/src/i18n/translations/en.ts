@@ -194,6 +194,8 @@ export const en: I18NextTranslations = {
     noEntries: 'No entries available',
     entryCount_one: '{{count}} entry',
     entryCount_other: '{{count}} entries',
+    reusedCount_one: 'Reused {{count}} time',
+    reusedCount_other: 'Reused {{count}} times',
   },
   admin: {
     title: 'Admin',

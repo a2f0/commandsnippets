@@ -20,6 +20,7 @@ import {MemoizedEntryBody} from './EntryBody';
 import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';
 import {EntryNew} from './EntryNew';
+import {MemoizedEntryReuseCount} from './EntryReuseCount';
 import {MemoizedEntrySubject} from './EntrySubject';
 
 const EntryText = styled('div')(() => ({
@@ -52,11 +53,6 @@ const CheckIndicator = styled('div')(() => ({
 const CopyIndicator = styled('div')(() => ({
   fontSize: '13px',
   cursor: 'pointer',
-}));
-
-const ReuseCount = styled('div')(() => ({
-  display: 'inline-block',
-  verticalAlign: 'top',
 }));
 
 interface IEntryProps {
@@ -456,11 +452,14 @@ const Entry = ({
                   ::
                 </DragHandle>
               </DragHandleContainer>
-              <ReuseCount onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
-                {/* {text_entry.attributes.reused_count} */}
-              </ReuseCount>
               <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
                 <MemoizedEntrySubject object={textEntryObject} />
+                {/* Private: public views get 0 from the API, so none. */}
+                {textEntryObject.attributes.reused_count > 0 && (
+                  <MemoizedEntryReuseCount
+                    count={textEntryObject.attributes.reused_count}
+                  />
+                )}
               </EntryText>
             </div>
             <div>
@@ -489,7 +488,6 @@ const Entry = ({
                   <Check fontSize="inherit" />
                 </CheckIndicator>
               </DragHandleContainer>
-              <ReuseCount />
               <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
                 <MemoizedEntryBody
                   handleClick={handleBodyClick}

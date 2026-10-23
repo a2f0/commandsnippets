@@ -199,6 +199,8 @@ export const es: I18NextTranslations = {
     noEntries: 'No hay entradas disponibles',
     entryCount_one: '{{count}} entrada',
     entryCount_other: '{{count}} entradas',
+    reusedCount_one: 'Reutilizada {{count}} vez',
+    reusedCount_other: 'Reutilizada {{count}} veces',
   },
   admin: {
     title: 'Administración',
