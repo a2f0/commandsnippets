@@ -62,6 +62,10 @@ describe('AboutDialog', () => {
       screen.getByText(`App version: v${packageJson.version}`)
     ).toBeVisible();
     expect(screen.getByText('API version: v0.2.2')).toBeVisible();
+    expect(screen.getByRole('link', {name: 'Privacy Policy'})).toHaveAttribute(
+      'href',
+      'https://commandsnippets.com/privacy/'
+    );
   });
 
   it('says the API version is unknown until the API answers', () => {

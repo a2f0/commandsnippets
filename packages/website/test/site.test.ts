@@ -62,19 +62,46 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     expect(html).toContain(`href="${appUrl(mode)}">Get started</a>`);
   });
 
+  test('every built page initializes the bundled CT browser integration', () => {
+    for (const path of ['', ...FOOTER_LINKS.map(link => link.href)]) {
+      const script = page(path).match(
+        /<script type="module" src="(\/_astro\/[^"]+\.js)"><\/script>/
+      )?.[1];
+      expect(script).toBeDefined();
+      const source = readFileSync(join(outDir, script ?? ''), 'utf8');
+      expect(source).toContain('https://ct.a2f0.net/v1/clicks');
+      expect(source).toContain(
+        mode === 'production'
+          ? 'https://commandsnippets.com'
+          : 'https://website-staging.commandsnippets.com'
+      );
+      expect(source).toContain('website');
+    }
+  });
+
   test('every footer link has a page', () => {
     for (const link of FOOTER_LINKS) {
       const html = page(link.href);
       expect(html).toContain(`<h1>${link.text}</h1>`);
-      expect(html).toContain('This page is coming soon.');
+      if (link.href !== '/privacy/') {
+        expect(html).toContain('This page is coming soon.');
+      }
       expect(page('')).toContain(`href="${link.href}"`);
     }
   });
 
-  test('ships the favicon and no old branding', () => {
+  test('ships the favicon and discloses the analytics operator', () => {
     expect(existsSync(join(outDir, 'favicon.svg'))).toBe(true);
     for (const path of ['', ...FOOTER_LINKS.map(link => link.href)]) {
-      expect(page(path).toLowerCase()).not.toContain('tearleads');
+      if (path !== '/privacy/') {
+        expect(page(path).toLowerCase()).not.toContain('tearleads');
+      }
     }
+    expect(page('/privacy/')).toContain('Tearleads, LLC');
+    expect(page('/privacy/')).toContain('Do Not Track');
+    expect(page('/privacy/')).toContain('Global Privacy Control');
+    expect(page('/privacy/')).toContain(
+      'https://github.com/a2f0/ct/blob/main/packages/extension/README.md'
+    );
   });
 });

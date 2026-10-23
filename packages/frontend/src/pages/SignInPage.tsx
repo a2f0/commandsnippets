@@ -3,6 +3,7 @@ import React from 'react';
 
 import {GithubAuth} from '../components/auth/GithubAuth';
 import {GoogleAuth} from '../components/auth/GoogleAuth';
+import {PrivacyLink} from '../components/PrivacyLink';
 
 /** What a signed-out visitor sees; the marketing site is packages/website. */
 const SignInPage = () => {
@@ -30,6 +31,7 @@ const SignInPage = () => {
         <GithubAuth />
         <GoogleAuth />
       </Box>
+      <PrivacyLink />
     </Box>
   );
 };

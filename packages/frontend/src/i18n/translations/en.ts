@@ -31,6 +31,7 @@ export const en: I18NextTranslations = {
     signOutKeepingWrites: 'Sign out',
     discardAndSignOut: 'Discard and sign out',
     dismiss: 'Dismiss',
+    privacyPolicy: 'Privacy Policy',
   },
   menu: {
     file: 'File',

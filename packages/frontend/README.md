@@ -99,6 +99,10 @@ bun run compile
 
 ## Deploying
 
+The deployed browser app uses CT for click analytics with generic page
+identifiers. See [click tracking](../../docs/click-tracking.md) for environments,
+privacy behavior and test isolation.
+
 The app is a static single-page app served by a Cloudflare Worker (assets only;
 `wrangler.jsonc`): files from `build/`, and `index.html` for any other path, so
 client routes like `/:user/:tag` work. `public/_headers` adds security headers
