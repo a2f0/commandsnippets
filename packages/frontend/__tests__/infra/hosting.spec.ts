@@ -166,6 +166,34 @@ describe.each(['staging', 'production'])('the %s build', mode => {
     expect(html).not.toContain('og:url');
   });
 
+  // Every build names production's copy of the image the website renders
+  // into its public/ (the `social` target in agent-tool.json).
+  it('names the product preview image for the large card', () => {
+    const html = readFileSync(join(outDir, 'index.html'), 'utf8');
+    const meta = (key: string) =>
+      html.match(
+        new RegExp(`<meta (?:name|property)="${key}" content="([^"]*)"`)
+      )?.[1];
+    expect(meta('og:image')).toBe('https://commandsnippets.com/og-image.png');
+    expect(meta('og:image:width')).toBe('1200');
+    expect(meta('og:image:height')).toBe('630');
+    expect(meta('og:image:alt')).toBe('The Commandsnippets logo');
+    expect(meta('twitter:card')).toBe('summary_large_image');
+    const images: {
+      images: {
+        targets: Record<
+          string,
+          {dir?: string; outputs: {path: string; size?: unknown}[]}
+        >;
+      };
+    } = JSON.parse(readFileSync(join(root, '../../agent-tool.json'), 'utf8'));
+    const social = images.images.targets['social'];
+    expect(social?.dir).toBe('packages/website/public');
+    expect(social?.outputs).toContainEqual(
+      expect.objectContaining({path: 'og-image.png', size: [1200, 630]})
+    );
+  });
+
   // The single-page-app fallback answers a missing file with the shell, so an
   // icon must come back as an image, not just with a 200.
   it.each(['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png'])(

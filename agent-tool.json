@@ -86,6 +86,17 @@
           { "path": "pwa-192x192.png", "size": 192, "layers": [{ "source": "logo" }] },
           { "path": "pwa-512x512.png", "size": 512, "layers": [{ "source": "logo" }] }
         ]
+      },
+      "social": {
+        "dir": "packages/website/public",
+        "outputs": [
+          {
+            "path": "og-image.png",
+            "size": [1200, 630],
+            "opaque": true,
+            "layers": [{ "fill": "#ffffff" }, { "source": "logo", "scale": 0.5 }]
+          }
+        ]
       }
     }
   }

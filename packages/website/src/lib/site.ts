@@ -29,6 +29,18 @@ export const SITE_DESCRIPTION =
   'An opinionated note-taking system for technical professionals.';
 
 /**
+ * The link-preview image every page names (`og:image`), rendered into
+ * `public/` from the brand logo by `bun run images` (the `social` target in
+ * `../../agent-tool.json`). The web app's shell names production's copy.
+ */
+export const PREVIEW_IMAGE = {
+  path: '/og-image.png',
+  width: 1200,
+  height: 630,
+  alt: 'The Commandsnippets logo',
+} as const;
+
+/**
  * The pages listed in the sitemap. The placeholder footer pages (terms,
  * contact, about) stay out until they have content.
  */
