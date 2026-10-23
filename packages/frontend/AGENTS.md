@@ -59,6 +59,9 @@ Run these from `packages/frontend`.
   `bun run server-test` you started yourself
 
 ### Build and Deploy
+- `bun run images` - Render the favicons and PWA icons into `public/` from
+  `../../assets/brand/` (gitignored; needs the root `bun install`). `dev`,
+  `server-test` and every `build` script run it first
 - `bun run build` - Production bundle in `build/`
 - `bun run build:staging` / `bun run build:production` - Build in that mode
   (`.env.staging` / `.env.production`)
@@ -386,7 +389,8 @@ writing its type by hand.
   styles and the shared `sx` objects (`sx.ts`). The app is grayscale: the
   themes make every palette color gray (primary, secondary and the status
   colors), and `__tests__/src/theme/themes.spec.ts` fails on a color with a
-  hue in the themes or hard-coded in `src/`, `public/` or `index.html`
+  hue in the themes or hard-coded in `src/`, `public/`, `index.html`, the
+  brand sources (`../../assets/brand/`) or `../../agent-tool.json`
 - **Non-UI code**: `src/lib/` (the API clients, auth, the app state
   (`state/`), the Dexie database (`db/`), its sync (`sync/`), what the UI
   reads and writes (`data/`), the router (`router/`), and helpers), `src/hooks/`, `src/providers/`,

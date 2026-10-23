@@ -10,7 +10,8 @@ import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 
 // The deployed hosting, end to end: a real build of each environment served
 // by `wrangler dev` with wrangler.jsonc (single-page-app fallback) and
-// public/_headers.
+// public/_headers, with the icons the build scripts render into public/ first
+// (`bun run images`).
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const bin = (name: string) => join(root, 'node_modules', '.bin', name);
 
@@ -29,6 +30,16 @@ const SECURITY_HEADERS = {
   'referrer-policy': 'strict-origin-when-cross-origin',
   'x-frame-options': 'DENY',
 };
+
+beforeAll(() => {
+  const images = spawnSync('bun', ['run', 'images'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  if (images.status !== 0) {
+    throw new Error(images.stderr || images.stdout);
+  }
+}, 60_000);
 
 describe.each(['staging', 'production'])('the %s build', mode => {
   let outDir = '';
@@ -153,6 +164,44 @@ describe.each(['staging', 'production'])('the %s build', mode => {
     // duplicates of it (index.html).
     expect(html).not.toContain('rel="canonical"');
     expect(html).not.toContain('og:url');
+  });
+
+  // The single-page-app fallback answers a missing file with the shell, so an
+  // icon must come back as an image, not just with a 200.
+  it.each(['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png'])(
+    'serves the icon %s',
+    async path => {
+      const response = await get(path);
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toMatch(/^image\//);
+    }
+  );
+
+  it('links the icons from the app shell and serves every manifest icon', async () => {
+    // The build minifies index.html, so match each tag however it closes.
+    const html = readFileSync(join(outDir, 'index.html'), 'utf8');
+    expect(html).toMatch(
+      /<link rel="icon" href="\/favicon\.ico" sizes="any"\s*\/?>/
+    );
+    expect(html).toMatch(
+      /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml"\s*\/?>/
+    );
+    expect(html).toMatch(
+      /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png"\s*\/?>/
+    );
+    const manifest: {icons: {src: string; type: string}[]} = JSON.parse(
+      readFileSync(join(outDir, 'manifest.webmanifest'), 'utf8')
+    );
+    expect(manifest.icons.map(icon => icon.src)).toEqual([
+      'pwa-192x192.png',
+      'pwa-512x512.png',
+      'favicon.svg',
+    ]);
+    for (const icon of manifest.icons) {
+      const response = await get(`/${icon.src}`);
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toContain(icon.type);
+    }
   });
 
   it('caches fingerprinted assets for a year, immutably', async () => {

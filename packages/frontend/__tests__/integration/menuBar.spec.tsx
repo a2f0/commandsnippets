@@ -75,7 +75,13 @@ describe('MenuBar', () => {
       await waitFor(() => {
         const logo = screen.getByAltText('Commandsnippets Logo');
         expect(logo).toBeInTheDocument();
-        expect(logo).toHaveAttribute('src', '/logo-small.svg');
+        // The brand logo (assets/brand/logo.svg), small enough that Vite
+        // inlines it as a data URL.
+        const src = logo.getAttribute('src') ?? '';
+        expect(src).toMatch(/^data:image\/svg\+xml,/);
+        expect(decodeURIComponent(src)).toContain(
+          '<title>Commandsnippets</title>'
+        );
       });
     });
 

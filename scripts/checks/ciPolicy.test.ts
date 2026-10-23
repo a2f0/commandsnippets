@@ -95,6 +95,25 @@ describe("ciScopes", () => {
     });
   });
 
+  test("brand sources and image settings run the web package lanes", () => {
+    expect(ciScopes(["assets/brand/logo.svg"])).toEqual({
+      tooling: false,
+      frontend: true,
+      backendV2: false,
+      apiShared: false,
+      website: true,
+      terraform: false,
+    });
+    expect(ciScopes(["agent-tool.json"])).toEqual({
+      tooling: true,
+      frontend: true,
+      backendV2: false,
+      apiShared: false,
+      website: true,
+      terraform: false,
+    });
+  });
+
   test("skips every lane for unrelated paths", () => {
     expect(ciScopes(["README.md", "docs/ci-merge-gate.md"])).toEqual({
       tooling: false,

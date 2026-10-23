@@ -97,6 +97,16 @@ Run TypeScript compilation check:
 bun run compile
 ```
 
+## Icons
+
+The favicons, the Apple touch icon and the PWA manifest icons are rendered
+into `public/` from the repository's brand sources (`../../assets/brand/`)
+by `bun run images`, the pinned agent-tool's `images build` with the
+settings in `../../agent-tool.json`. The dev, test-server and build scripts
+run it first, and the outputs are gitignored; it needs the repository root's
+`bun install`. The menu bar imports the logo from `../../assets/brand/`
+directly.
+
 ## Deploying
 
 The deployed browser app uses CT for click analytics with generic page

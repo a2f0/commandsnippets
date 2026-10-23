@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="227" height="227" viewBox="0 0 227 227">
+  <title>Commandsnippets</title>
+  <!-- L -->
+  <rect x="167.95941" y="84.62986" width="59.028267" height="142.77325" fill="#666666"/>
+  <!-- Colon -->
+  <rect x="0.13713939" y="167.04536" width="59.854156" height="59.981678" fill="#666666"/>
+  <rect x="0.20086436" y="84.129601" width="59.341198" height="59.468719" fill="#666666"/>
+  <!-- T -->
+  <g fill="#999999" transform="matrix(1,0,0,1.0059168,-138.49892,-139.00983)">
+    <rect x="138.73218" y="138.36932" width="226.771" height="58.647984"/>
+    <rect x="222.21382" y="138.93088" width="59.751553" height="224.84669"/>
+  </g>
+</svg>

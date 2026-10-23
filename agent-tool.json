@@ -65,5 +65,28 @@
   },
   "pr": {
     "rejectClaudeBranding": true
+  },
+  "images": {
+    "targets": {
+      "favicons": {
+        "outputs": [
+          { "path": "favicon.svg", "layers": [{ "source": "logo" }] },
+          { "path": "favicon.ico", "sizes": [16, 32, 48], "layers": [{ "source": "logo" }] },
+          {
+            "path": "apple-touch-icon.png",
+            "size": 180,
+            "opaque": true,
+            "layers": [{ "fill": "#ffffff" }, { "source": "logo", "scale": 0.8 }]
+          }
+        ]
+      },
+      "pwa-icons": {
+        "dir": "packages/frontend/public",
+        "outputs": [
+          { "path": "pwa-192x192.png", "size": 192, "layers": [{ "source": "logo" }] },
+          { "path": "pwa-512x512.png", "size": 512, "layers": [{ "source": "logo" }] }
+        ]
+      }
+    }
   }
 }

@@ -416,6 +416,31 @@ describe("pre-push", () => {
     expect(output).not.toContain("All checks passed.");
   });
 
+  test("brand source changes check the website, which renders its icons", () => {
+    const repo = hookRepo((repo) => {
+      const scripts = Object.fromEntries(
+        ["lint", "check", "test"].map((name) => [name, `echo LANE:website:${name}`]),
+      );
+      mkdirSync(path.join(repo, "packages/website"), { recursive: true });
+      writeFileSync(
+        path.join(repo, "packages/website/package.json"),
+        JSON.stringify({ name: "website", scripts }),
+      );
+      mkdirSync(path.join(repo, "assets/brand"), { recursive: true });
+      writeFileSync(path.join(repo, "assets/brand/logo.svg"), "<svg/>\n");
+      commitAll(repo, "chore: add website and brand");
+    });
+    appendFileSync(path.join(repo, "assets/brand/logo.svg"), "<!-- edit -->\n");
+    commitAll(repo, "feat: edit the logo");
+    const result = prePush(repo);
+    const output = result.stdout + result.stderr;
+    expect(result.exitCode).toBe(0);
+    for (const lane of ["LANE:website:lint", "LANE:website:check", "LANE:website:test"]) {
+      expect(output).toContain(lane);
+    }
+    expect(output).not.toContain("LANE:tooling");
+  });
+
   test("refuses to run a stale installed copy", () => {
     const repo = hookRepo();
     appendFileSync(path.join(repo, "scripts/git/hooks/pre-push"), "# edited\n");

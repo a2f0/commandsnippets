@@ -1,6 +1,7 @@
 import {Box} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import React from 'react';
+import logoUrl from '../../../../assets/brand/logo.svg';
 import {UserProfileCircle} from '../components/UserProfileCircle';
 import {useTypedTranslation} from '../i18n/hooks';
 import {useOwner} from '../lib/data/hooks';
@@ -124,7 +125,7 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           pb: 0.5,
         }}
       >
-        <img src="/logo-small.svg" alt={t('logoAlt')} />
+        <img src={logoUrl} width={33} height={33} alt={t('logoAlt')} />
       </Box>
       <Aligner>
         {appConfig.loggedInUser && (

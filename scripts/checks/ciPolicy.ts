@@ -5,16 +5,18 @@
 
 /**
  * Path patterns that make each scope of checks applicable. api-shared (the API
- * contract) also runs the lanes of the packages that consume it.
+ * contract) also runs the lanes of the packages that consume it, and the brand
+ * sources and their image settings (`agent-tool.json`) run the lanes of the web
+ * packages that render icons from them.
  */
 export const CI_SCOPES = {
   tooling:
     /^(scripts\/|\.agents\/|\.claude\/|agent-tool\.json$|\.agent-tool-skills\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   frontend:
-    /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests)\.sh$)/,
+    /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests)\.sh$|assets\/brand\/|agent-tool\.json$)/,
   backendV2: /^packages\/(backend-v2|api-shared)\//,
   apiShared: /^packages\/api-shared\//,
-  website: /^packages\/website\//,
+  website: /^(packages\/website\/|assets\/brand\/|agent-tool\.json$)/,
   terraform: /^terraform\//,
 } as const satisfies Record<string, RegExp>;
 
