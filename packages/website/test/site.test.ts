@@ -154,8 +154,10 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       expect(html).toContain('<meta name="viewport"');
       expect(meta(html, 'description')?.length).toBeGreaterThan(50);
       expect(meta(html, 'theme-color')).toBeDefined();
-      expect(canonicalOf(html)).toBe(pageUrl(mode, path));
-      expect(meta(html, 'og:url')).toBe(pageUrl(mode, path));
+      // A noindexed page names no URL for search engines.
+      const url = mode === 'production' ? pageUrl(mode, path) : undefined;
+      expect(canonicalOf(html)).toBe(url);
+      expect(meta(html, 'og:url')).toBe(url);
       expect(meta(html, 'og:title')).toBe(title);
       expect(meta(html, 'og:description')).toBe(meta(html, 'description'));
       expect(meta(html, 'og:site_name')).toBe('Commandsnippets');
@@ -188,10 +190,15 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     }
   );
 
-  test('the home page describes the site and app as JSON-LD', () => {
-    const json = page('').match(
+  test('only the production home page has JSON-LD, in its head', () => {
+    const head = page('').match(/<head>.*<\/head>/s)?.[0] ?? '';
+    const json = head.match(
       /<script type="application\/ld\+json">([^<]*)<\/script>/
     )?.[1];
+    if (mode !== 'production') {
+      expect(json).toBeUndefined();
+      return;
+    }
     const data = JSON.parse(json ?? '') as {
       '@context': string;
       '@graph': Array<Record<string, unknown>>;

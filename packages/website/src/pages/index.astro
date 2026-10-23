@@ -1,13 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
 import {appUrl} from '../lib/appUrl';
-import {pageUrl, SITE_DESCRIPTION, SITE_NAME} from '../lib/site';
+import {indexable, pageUrl, SITE_DESCRIPTION, SITE_NAME} from '../lib/site';
 
 const mode = import.meta.env.MODE;
 const app = appUrl(mode);
 const home = pageUrl(mode, '/');
 const organization = `${home}#organization`;
-// Structured data for search engines; only facts this site states.
+// Structured data for search engines, in production only; only facts this
+// site states.
 const structuredData = JSON.stringify({
   '@context': 'https://schema.org',
   '@graph': [
@@ -45,7 +46,13 @@ const structuredData = JSON.stringify({
   title="Note-Taking for Technical Professionals · Commandsnippets"
   description="Solve, curate, retrieve. Commandsnippets is an opinionated note-taking system for technical professionals, built around tagged command snippets."
 >
-  <script slot="head" type="application/ld+json" set:html={structuredData} />
+  <Fragment slot="head">
+    {
+      indexable(mode) && (
+        <script type="application/ld+json" set:html={structuredData} />
+      )
+    }
+  </Fragment>
   <section class="hero">
     <h1>Solve, Curate, Retrieve.</h1>
     <p id="tagLine">
