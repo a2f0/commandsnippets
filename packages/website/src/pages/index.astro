@@ -46,11 +46,13 @@ const structuredData = JSON.stringify({
   title="Note-Taking for Technical Professionals · Commandsnippets"
   description="Solve, curate, retrieve. Commandsnippets is an opinionated note-taking system for technical professionals, built around tagged command snippets."
 >
-  {
-    indexable(mode) && (
-      <script slot="head" type="application/ld+json" set:html={structuredData} />
-    )
-  }
+  <Fragment slot="head">
+    {
+      indexable(mode) && (
+        <script type="application/ld+json" set:html={structuredData} />
+      )
+    }
+  </Fragment>
   <section class="hero">
     <h1>Solve, Curate, Retrieve.</h1>
     <p id="tagLine">

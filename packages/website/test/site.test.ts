@@ -190,8 +190,9 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     }
   );
 
-  test('only the production home page has JSON-LD', () => {
-    const json = page('').match(
+  test('only the production home page has JSON-LD, in its head', () => {
+    const head = page('').match(/<head>.*<\/head>/s)?.[0] ?? '';
+    const json = head.match(
       /<script type="application\/ld\+json">([^<]*)<\/script>/
     )?.[1];
     if (mode !== 'production') {
