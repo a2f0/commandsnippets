@@ -35,8 +35,9 @@ and test isolation.
 ## Search engines
 
 Only the production build may be indexed (`src/lib/site.ts`). Every page has
-a canonical URL, Open Graph tags and its description; the home page also has
-JSON-LD. The build writes the files that differ by mode (`astro.config.mjs`):
+its description and Open Graph tags. Production pages also name their
+canonical URL (and `og:url`), and the home page has JSON-LD; staging pages name
+no URL. The build writes the files that differ by mode (`astro.config.mjs`):
 production gets `robots.txt` naming `sitemap.xml`, the pages with content;
 staging gets a `robots.txt` without a sitemap (crawling stays allowed, so
 crawlers see the noindex), a robots `noindex` meta on every page, and a
