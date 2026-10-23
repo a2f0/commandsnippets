@@ -147,10 +147,11 @@ describe("pre-push", () => {
     sha = git(repo, "rev-parse", "HEAD"),
     env: Record<string, string> = {},
     destination = "refs/heads/feat/x",
+    remoteSha = ZERO,
   ) {
     const result = Bun.spawnSync([".git/hooks/pre-push", "origin", "url"], {
       cwd: repo,
-      stdin: Buffer.from(`refs/heads/feat/x ${sha} ${destination} ${ZERO}\n`),
+      stdin: Buffer.from(`refs/heads/feat/x ${sha} ${destination} ${remoteSha}\n`),
       env: {
         ...process.env,
         GIT_CONFIG_GLOBAL: "/dev/null",
@@ -232,6 +233,34 @@ describe("pre-push", () => {
     const result = prePush(repo, undefined, {}, "refs/heads/untyped");
     expect(result.exitCode).toBe(1);
     expect(result.stdout + result.stderr).toContain("untyped");
+  });
+
+  test("rejects a newly introduced unsigned commit", () => {
+    const repo = hookRepo();
+    commit(repo, "feat: unsigned work", false);
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout + result.stderr).toContain("Signature does not meet");
+  });
+
+  test("base integration excludes history the push remote already owns", () => {
+    const repo = hookRepo();
+    git(repo, "remote", "add", "origin", repo);
+    commit(repo, "feat: original work");
+    const published = git(repo, "rev-parse", "HEAD");
+    git(repo, "update-ref", "refs/remotes/origin/feat/x", published);
+    git(repo, "switch", "main");
+    // Simulate existing upstream history, not a new commit being introduced.
+    git(repo, "-c", "core.hooksPath=/dev/null", "commit", "--no-gpg-sign",
+      "--allow-empty", "-m", "chore: upstream work\n\nCo-authored-by: Ada <ada@example.com>");
+    git(repo, "update-ref", "refs/remotes/origin/main", git(repo, "rev-parse", "HEAD"));
+    git(repo, "switch", "feat/x");
+    git(repo, "merge", "--no-ff", "origin/main", "-m", "chore: integrate main");
+    const result = prePush(repo, undefined, {}, undefined, published);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('"checked": 1');
+    commit(repo, "feat: new unsigned work", false);
+    expect(prePush(repo, undefined, {}, undefined, published).exitCode).toBe(1);
   });
 
   test("commit-msg rejects attribution without rewriting the message", () => {

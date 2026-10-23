@@ -114,7 +114,13 @@ step_timings_run branch-name "$REPO_ROOT/node_modules/.bin/agent-tool" branch ch
 step_timings_begin commit-trust "Checking commit signatures and co-authors"
 while read -r _ local_sha _ remote_sha; do
   [ "$local_sha" != "$zero_sha" ] || continue
-  "$REPO_ROOT/node_modules/.bin/agent-tool" commits check --range "$(push_range "$local_sha" "$remote_sha")" </dev/null
+  set -- "$REPO_ROOT/node_modules/.bin/agent-tool" commits check --range "$(push_range "$local_sha" "$remote_sha")"
+  # Integrating the fetched base must not re-check commits the destination
+  # already owns. Keep the original range when pushing directly to a URL/path.
+  if git remote get-url "$push_remote" >/dev/null 2>&1; then
+    set -- "$@" --exclude-remotes "$push_remote"
+  fi
+  "$@" </dev/null
 done <"$refs_file"
 step_timings_end
 

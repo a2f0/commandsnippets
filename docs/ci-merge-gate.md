@@ -76,6 +76,11 @@ changes take effect. `bun run hooks:check` reports missing or stale copies.
 - `pre-push` validates every pushed branch destination using
   `agent-tool branch check --pre-push`, rejects unsigned/bad signatures and
   `Co-authored-by` trailers with `agent-tool commits check --range`, and runs the
+  checks below. Trust checks exclude history already reachable through the named
+  push remote, so integrating its fetched base does not re-check upstream commits.
+  New branches retain the local-main range fallback; pushes to a URL/path retain
+  the original range without remote-name filtering. Path selection still uses the
+  full diff, including base integration, and runs the
   checks for the areas the push touches. Those checks run against the
   worktree, so the hook first requires the pushed commit to be the checked-out
   `HEAD`, with no uncommitted tracked changes and no untracked files under the
