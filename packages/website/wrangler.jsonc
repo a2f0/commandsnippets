@@ -28,7 +28,10 @@
         }
       ],
       "vars": {
-        "APP_ORIGIN": "https://app-staging.commandsnippets.com"
+        "APP_ORIGIN": "https://app-staging.commandsnippets.com",
+        // Keeps staging out of search results; the staging build's _headers
+        // covers its pages, this the Worker's redirects (worker/index.ts).
+        "X_ROBOTS_TAG": "noindex, nofollow"
       }
     },
     "production": {
