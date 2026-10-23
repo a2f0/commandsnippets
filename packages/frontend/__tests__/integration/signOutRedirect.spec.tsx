@@ -24,6 +24,10 @@ async function expectSignInPage(history: {location: {pathname: string}}) {
   });
   expect(document.getElementById('signInPage')).toBeInTheDocument();
   expect(document.getElementById('file-menu-button')).toBeNull();
+  expect(screen.getByRole('link', {name: 'Privacy Policy'})).toHaveAttribute(
+    'href',
+    'https://commandsnippets.com/privacy/'
+  );
 }
 
 describe('Signing out', () => {
@@ -74,6 +78,11 @@ describe('Signed-out visitors', () => {
     expect(history.location.pathname).toBe('/alice/some-tag');
     expect(document.getElementById('signInPage')).toBeNull();
     expect(screen.getByText('Read-only: alice')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('menu', {name: 'Help'}));
+    fireEvent.click(await screen.findByText('About'));
+    expect(
+      await screen.findByRole('link', {name: 'Privacy Policy'})
+    ).toHaveAttribute('href', 'https://commandsnippets.com/privacy/');
   });
 
   it('is sent from the admin page to sign-in', async () => {

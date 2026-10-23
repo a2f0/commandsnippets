@@ -31,6 +31,7 @@ export const es: I18NextTranslations = {
     signOutKeepingWrites: 'Cerrar sesión',
     discardAndSignOut: 'Descartar y cerrar sesión',
     dismiss: 'Cerrar',
+    privacyPolicy: 'Política de privacidad',
   },
   menu: {
     file: 'Archivo',

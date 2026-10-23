@@ -1,9 +1,12 @@
 import type {Tracker} from '@a2f0/ct-client';
+import invariant from 'invariant';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 let tracker: Tracker | undefined;
 let click: EventListener | undefined;
-const send = vi.fn().mockResolvedValue({ok: true});
+const send = vi
+  .fn<typeof fetch>()
+  .mockResolvedValue(new Response(null, {status: 204}));
 
 async function start(
   mode = 'production',
@@ -14,18 +17,33 @@ async function start(
     'location',
     new URL(`${origin}/private-user/private-tag?token=secret#private`)
   );
-  const {initClickTracking} = await import('../../src/lib/clickTracking');
+  const {initClickTracking} = await import('../../../src/lib/clickTracking');
   tracker = initClickTracking();
   return initClickTracking;
 }
 
 function trustedClick(html = '<button>Private snippet text</button>') {
   document.body.innerHTML = html;
-  const target = document.body.firstElementChild;
-  click?.({
-    isTrusted: true,
-    composedPath: () => [target, document.body],
-  } as unknown as Event);
+  let target =
+    document.querySelector('[data-test-target]') ??
+    document.body.firstElementChild;
+  invariant(target, 'Click target must exist');
+  const path: EventTarget[] = [];
+  while (target) {
+    path.push(target);
+    target = target.parentElement;
+  }
+  // Only browsers create trusted events. Exercise the real SDK listener with
+  // a typed Event proxy while keeping every transport request intercepted.
+  click?.(
+    new Proxy(new MouseEvent('click'), {
+      get(event, property) {
+        if (property === 'isTrusted') return true;
+        if (property === 'composedPath') return () => path;
+        return Reflect.get(event, property, event);
+      },
+    })
+  );
 }
 
 beforeEach(() => {
@@ -50,7 +68,7 @@ beforeEach(() => {
   const addListener = document.addEventListener.bind(document);
   vi.spyOn(document, 'addEventListener').mockImplementation(
     (type, listener, options) => {
-      if (type === 'click') click = listener as EventListener;
+      if (type === 'click' && typeof listener === 'function') click = listener;
       addListener(type, listener, options);
     }
   );
@@ -81,7 +99,13 @@ describe('deployed browser app click collection', () => {
       expect(send).not.toHaveBeenCalled();
       await tracker?.flush();
       expect(send).toHaveBeenCalledTimes(1);
-      const [endpoint, request] = send.mock.calls[0] as [string, RequestInit];
+      const call = send.mock.calls[0];
+      invariant(call, 'Expected a transport request');
+      const [endpoint, request] = call;
+      invariant(
+        request && typeof request.body === 'string',
+        'Expected a JSON payload'
+      );
       expect(endpoint).toBe('https://ct.a2f0.net/v1/clicks');
       expect(request).toMatchObject({
         credentials: 'omit',
@@ -123,7 +147,7 @@ describe('deployed browser app click collection', () => {
   it('imports are inert even on an allowed origin', async () => {
     vi.stubEnv('MODE', 'production');
     vi.stubGlobal('location', new URL('https://app.commandsnippets.com'));
-    await import('../../src/lib/clickTracking');
+    await import('../../../src/lib/clickTracking');
     expect(click).toBeUndefined();
     expect(send).not.toHaveBeenCalled();
   });
@@ -156,21 +180,46 @@ describe('deployed browser app click collection', () => {
       trustedClick();
       await tracker?.flush();
       expect(send).not.toHaveBeenCalled();
+      Object.defineProperty(navigator, 'doNotTrack', {
+        configurable: true,
+        value: null,
+      });
+      Object.defineProperty(navigator, 'webdriver', {
+        configurable: true,
+        value: false,
+      });
+      document.documentElement.removeAttribute('data-ct-disabled');
+      localStorage.removeItem('ct:opt-out');
+      tracker?.destroy();
+      tracker?.init();
+      expect(click).toBeDefined();
+      trustedClick();
+      await tracker?.flush();
+      expect(send).toHaveBeenCalledTimes(1);
     }
   );
 
   it('excludes form contents, editable controls and ignored elements', async () => {
     await start();
+    expect(click).toBeDefined();
     for (const html of [
       '<input value="secret">',
       '<textarea>secret</textarea>',
+      '<select><option>secret</option></select>',
       '<div contenteditable>secret</div>',
       '<button data-ct-ignore>secret</button>',
+      '<div data-ct-ignore><button data-test-target>secret</button></div>',
     ]) {
       trustedClick(html);
     }
     await tracker?.flush();
     expect(send).not.toHaveBeenCalled();
+    trustedClick();
+    await tracker?.flush();
+    expect(send).toHaveBeenCalledTimes(1);
+    const body = send.mock.calls[0]?.[1]?.body;
+    invariant(typeof body === 'string', 'Expected a JSON payload');
+    expect(JSON.parse(body).events).toHaveLength(1);
   });
 
   it('drops pending clicks when the extension opts out', async () => {
