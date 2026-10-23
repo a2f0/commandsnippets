@@ -1,20 +1,68 @@
+import {readFileSync, writeFileSync} from 'node:fs';
+import {join} from 'node:path';
 import react from '@vitejs/plugin-react';
-import type {PluginOption} from 'vite';
+import type {Plugin, PluginOption} from 'vite';
 import {analyzer} from 'vite-bundle-analyzer';
 import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
 import packageJson from './package.json' with {type: 'json'};
 
+// Where each deployed mode's app is served (wrangler.jsonc). Search engines
+// may index production only: every other build says noindex in index.html
+// and, through _headers, on every response.
+const APP_ORIGINS: Record<string, string> = {
+  production: 'https://app.commandsnippets.com',
+  staging: 'https://app-staging.commandsnippets.com',
+};
+const NOINDEX = 'noindex, nofollow';
+
+/**
+ * Writes public/_headers with a noindex header in its `/*` rule. A second
+ * `/*` rule would replace that one's headers rather than add to them.
+ */
+const noindexHeaders = (): Plugin => ({
+  name: 'commandsnippets:noindex-headers',
+  apply: 'build',
+  writeBundle({dir}) {
+    if (dir === undefined) {
+      throw new Error('No output directory for _headers');
+    }
+    const headers = readFileSync(
+      join(import.meta.dirname, 'public/_headers'),
+      'utf8'
+    );
+    const everyPath = /^\/\*$/m;
+    if (!everyPath.test(headers)) {
+      throw new Error('public/_headers has no /* rule for X-Robots-Tag');
+    }
+    writeFileSync(
+      join(dir, '_headers'),
+      headers.replace(everyPath, `/*\n  X-Robots-Tag: ${NOINDEX}`)
+    );
+  },
+});
+
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
 export default defineConfig(({command, mode}) => {
+  const indexable = mode === 'production';
   const basePlugins = [
     react(),
     createHtmlPlugin({
       inject: {
         data: {
           VITE_APP_VERSION: packageJson.version,
+          APP_URL: `${APP_ORIGINS[mode] ?? 'http://localhost:8085'}/`,
         },
+        tags: indexable
+          ? []
+          : [
+              {
+                tag: 'meta',
+                attrs: {name: 'robots', content: NOINDEX},
+                injectTo: 'head',
+              },
+            ],
       },
     }),
     VitePWA({
@@ -26,7 +74,8 @@ export default defineConfig(({command, mode}) => {
       manifest: {
         name: 'Commandsnippets',
         short_name: 'Commandsnippets',
-        description: 'Note taking for technical professionals.',
+        description:
+          'An opinionated note-taking system for technical professionals.',
         theme_color: '#ffffff',
         icons: [
           {
@@ -76,6 +125,10 @@ export default defineConfig(({command, mode}) => {
   ];
 
   const plugins: PluginOption[] = [...basePlugins];
+
+  if (!indexable) {
+    plugins.push(noindexHeaders());
+  }
 
   if (mode === 'analyze') {
     plugins.push(

@@ -108,6 +108,12 @@ The app is a static single-page app served by a Cloudflare Worker (assets only;
 client routes like `/:user/:tag` work. `public/_headers` adds security headers
 and long-lived caching for the fingerprinted `/assets/`.
 
+Only production may appear in search results. Every other build mode adds
+`X-Robots-Tag: noindex, nofollow` to the `/*` rule of the built `_headers` and a
+robots `noindex` meta to `index.html` (`vite.config.ts`); `public/robots.txt`
+allows crawling everywhere, so crawlers can see that noindex. `index.html`
+names the environment's app root as the canonical URL of every route.
+
 ```shell
 bun run deploy:staging      # vite build --mode staging, then wrangler deploy
 bun run deploy:production

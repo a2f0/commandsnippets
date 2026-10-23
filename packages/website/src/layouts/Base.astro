@@ -1,17 +1,24 @@
 ---
 import '../styles/global.css';
 import {appUrl, FOOTER_LINKS} from '../lib/appUrl';
+import {
+  indexable,
+  NOINDEX,
+  pageUrl,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+} from '../lib/site';
 
 interface Props {
   title: string;
   description?: string;
 }
 
-const {
-  title,
-  description = 'An opinionated note-taking system for technical professionals.',
-} = Astro.props;
-const app = appUrl(import.meta.env.MODE);
+const {title, description = SITE_DESCRIPTION} = Astro.props;
+const mode = import.meta.env.MODE;
+const app = appUrl(mode);
+// Built pages are directories (`/privacy/`), the form the assets are served at.
+const canonical = pageUrl(mode, Astro.url.pathname);
 const year = new Date().getFullYear();
 ---
 
@@ -20,9 +27,28 @@ const year = new Date().getFullYear();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    {!indexable(mode) && <meta name="robots" content={NOINDEX} />}
+    <link rel="canonical" href={canonical} />
+    <meta
+      name="theme-color"
+      content="#f5f5f5"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#1e1e1e"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <slot name="head" />
   </head>
   <body>
     <header>
