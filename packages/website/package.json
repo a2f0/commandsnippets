@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "images": "../../node_modules/.bin/agent-tool --repo ../.. images build favicons --out packages/website/public",
+    "images": "../../node_modules/.bin/agent-tool --repo ../.. images build favicons --out packages/website/public && ../../node_modules/.bin/agent-tool --repo ../.. images build social",
     "dev": "bun run images && astro dev --port 4321",
     "build": "bun run images && astro build",
     "build:staging": "bun run images && astro build --mode staging",

@@ -114,6 +114,7 @@ describe.each([
       '/favicon.ico',
       '/favicon.svg',
       '/apple-touch-icon.png',
+      '/og-image.png',
       '/robots.txt',
     ])('serves %s from the build', async path => {
       expect(await get(path, navigate)).toMatchObject({status: 200, robots});

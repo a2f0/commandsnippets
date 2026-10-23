@@ -6,6 +6,7 @@ import {appUrl, FOOTER_LINKS} from '../src/lib/appUrl';
 import {
   indexable,
   NOINDEX,
+  PREVIEW_IMAGE,
   pageUrl,
   SITEMAP_PATHS,
   siteOrigin,
@@ -148,6 +149,15 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     }
   });
 
+  // Rendered into public/ by `bun run images` (the `social` target).
+  test('ships the preview image at the size the pages declare', () => {
+    const png = readFileSync(file(PREVIEW_IMAGE.path));
+    // The PNG signature, then the IHDR chunk's width and height.
+    expect(png.subarray(1, 4).toString('latin1')).toBe('PNG');
+    expect(png.readUInt32BE(16)).toBe(PREVIEW_IMAGE.width);
+    expect(png.readUInt32BE(20)).toBe(PREVIEW_IMAGE.height);
+  });
+
   test('discloses the analytics operator', () => {
     for (const path of ['', ...FOOTER_LINKS.map(link => link.href)]) {
       if (path !== '/privacy/') {
@@ -181,9 +191,14 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       expect(meta(html, 'og:description')).toBe(meta(html, 'description'));
       expect(meta(html, 'og:site_name')).toBe('Commandsnippets');
       expect(meta(html, 'og:type')).toBe('website');
-      // No og:image yet (no brand sources), so the small card.
-      expect(meta(html, 'og:image')).toBeUndefined();
-      expect(meta(html, 'twitter:card')).toBe('summary');
+      // The large card, with this build's own absolute image URL.
+      expect(meta(html, 'og:image')).toBe(
+        `${siteOrigin(mode)}${PREVIEW_IMAGE.path}`
+      );
+      expect(meta(html, 'og:image:width')).toBe('1200');
+      expect(meta(html, 'og:image:height')).toBe('630');
+      expect(meta(html, 'og:image:alt')).toBe(PREVIEW_IMAGE.alt);
+      expect(meta(html, 'twitter:card')).toBe('summary_large_image');
       expect(html.match(/<h1[ >]/g)).toHaveLength(1);
     }
     expect(titles.size).toBe(PAGES.length);

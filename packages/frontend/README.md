@@ -123,7 +123,10 @@ Only production may appear in search results. Every other build mode adds
 robots `noindex` meta to `index.html` (`vite.config.ts`); `public/robots.txt`
 allows crawling everywhere, so crawlers can see that noindex. `index.html`
 has no canonical URL or `og:url`: every route serves it, including users'
-public pages, and naming the root would mark those duplicates of it.
+public pages, and naming the root would mark those duplicates of it. Its
+`og:image` is the product's preview image on the production website
+(`https://commandsnippets.com/og-image.png`, rendered by the website's
+`bun run images`), so deploy the website first when that image changes.
 
 ```shell
 bun run deploy:staging      # vite build --mode staging, then wrangler deploy

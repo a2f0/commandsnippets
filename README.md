@@ -9,7 +9,7 @@ a monorepo.
 | `packages/backend-v2/` | Cloudflare Workers API |
 | `packages/frontend/` | Web client |
 | `packages/website/` | Public website (Astro) |
-| `assets/brand/` | Brand SVG sources the web packages render their icons from |
+| `assets/brand/` | Brand SVG sources the web packages render their icons and link-preview image from |
 | `scripts/` | Repository checks, tracked hooks, and test launchers ([layout](scripts/README.md)) |
 | `docs/` | CI merge gate and dependency update guidance |
 | `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |

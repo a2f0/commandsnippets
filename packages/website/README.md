@@ -22,9 +22,10 @@ bun run lint && bun run check && bun run test
 `bun run test` builds the staging and production sites into temporary
 directories and checks the generated HTML, and tests the redirect Worker.
 
-`bun run images` renders the favicons and Apple touch icon into `public/`
-from the repository's brand sources (`../../assets/brand/`), using the
-pinned agent-tool and the `favicons` target in `../../agent-tool.json`. The
+`bun run images` renders the favicons, Apple touch icon and link-preview
+image (`og-image.png`, 1200×630) into `public/` from the repository's brand
+sources (`../../assets/brand/`), using the pinned agent-tool and the
+`favicons` and `social` targets in `../../agent-tool.json`. The
 dev, build and test scripts run it first, so it needs the repository root's
 `bun install`; the outputs are gitignored.
 
@@ -35,14 +36,16 @@ and test isolation.
 ## Search engines
 
 Only the production build may be indexed (`src/lib/site.ts`). Every page has
-its description and Open Graph tags. Production pages also name their
-canonical URL (and `og:url`), and the home page has JSON-LD; staging pages name
-no URL. The build writes the files that differ by mode (`astro.config.mjs`):
-production gets `robots.txt` naming `sitemap.xml`, the pages with content;
-staging gets a `robots.txt` without a sitemap (crawling stays allowed, so
-crawlers see the noindex), a robots `noindex` meta on every page, and a
-`_headers` that sends `X-Robots-Tag: noindex, nofollow` with every file. The
-Worker's own responses get that header from staging's `X_ROBOTS_TAG` var.
+its description and Open Graph tags, including the preview image at the
+build's own host (`og:image`, shown as Twitter's large card). Production pages
+also name their canonical URL (and `og:url`), and the home page has JSON-LD;
+staging pages name no page URL. The build writes the files that differ by
+mode (`astro.config.mjs`): production gets `robots.txt` naming `sitemap.xml`,
+the pages with content; staging gets a `robots.txt` without a sitemap
+(crawling stays allowed, so crawlers see the noindex), a robots `noindex` meta
+on every page, and a `_headers` that sends `X-Robots-Tag: noindex, nofollow`
+with every file. The Worker's own responses get that header from staging's
+`X_ROBOTS_TAG` var.
 
 ## Old app links
 
