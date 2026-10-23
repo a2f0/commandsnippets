@@ -18,7 +18,10 @@ const {title, description = SITE_DESCRIPTION} = Astro.props;
 const mode = import.meta.env.MODE;
 const app = appUrl(mode);
 // Built pages are directories (`/privacy/`), the form the assets are served at.
-const canonical = pageUrl(mode, Astro.url.pathname);
+// Pages that may not be indexed name no URL for search engines to follow.
+const canonical = indexable(mode)
+  ? pageUrl(mode, Astro.url.pathname)
+  : undefined;
 const year = new Date().getFullYear();
 ---
 
@@ -30,7 +33,7 @@ const year = new Date().getFullYear();
     <title>{title}</title>
     <meta name="description" content={description} />
     {!indexable(mode) && <meta name="robots" content={NOINDEX} />}
-    <link rel="canonical" href={canonical} />
+    {canonical && <link rel="canonical" href={canonical} />}
     <meta
       name="theme-color"
       content="#f5f5f5"
@@ -45,7 +48,7 @@ const year = new Date().getFullYear();
     <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    {canonical && <meta property="og:url" content={canonical} />}
     <meta name="twitter:card" content="summary" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <slot name="head" />
