@@ -1,11 +1,51 @@
 ---
 import Base from '../layouts/Base.astro';
 import {appUrl} from '../lib/appUrl';
+import {pageUrl, SITE_DESCRIPTION, SITE_NAME} from '../lib/site';
 
-const app = appUrl(import.meta.env.MODE);
+const mode = import.meta.env.MODE;
+const app = appUrl(mode);
+const home = pageUrl(mode, '/');
+const organization = `${home}#organization`;
+// Structured data for search engines; only facts this site states.
+const structuredData = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': organization,
+      name: SITE_NAME,
+      url: home,
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${home}#website`,
+      name: SITE_NAME,
+      url: home,
+      description: SITE_DESCRIPTION,
+      inLanguage: 'en',
+      publisher: {'@id': organization},
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': `${home}#app`,
+      name: SITE_NAME,
+      url: new URL('/', app).href,
+      description: SITE_DESCRIPTION,
+      applicationCategory: 'DeveloperApplication',
+      // The web app only, until the native apps are published.
+      operatingSystem: 'Web',
+      publisher: {'@id': organization},
+    },
+  ],
+}).replaceAll('<', '\\u003c');
 ---
 
-<Base title="Commandsnippets">
+<Base
+  title="Note-Taking for Technical Professionals · Commandsnippets"
+  description="Solve, curate, retrieve. Commandsnippets is an opinionated note-taking system for technical professionals, built around tagged command snippets."
+>
+  <script slot="head" type="application/ld+json" set:html={structuredData} />
   <section class="hero">
     <h1>Solve, Curate, Retrieve.</h1>
     <p id="tagLine">

@@ -32,6 +32,22 @@ describe('old app links', () => {
     expect(post.status).toBe(405);
     expect(post.headers.get('Allow')).toBe('GET, HEAD');
   });
+
+  test('production responses carry no robots header', () => {
+    expect(request('/dan').headers.has('X-Robots-Tag')).toBe(false);
+    expect(request('/dan', 'POST').headers.has('X-Robots-Tag')).toBe(false);
+  });
+
+  test('X_ROBOTS_TAG is sent on every response', () => {
+    const staging = {...env, X_ROBOTS_TAG: 'noindex, nofollow'};
+    for (const method of ['GET', 'POST']) {
+      const response = worker.fetch(
+        new Request('https://commandsnippets.com/dan', {method}),
+        staging
+      );
+      expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+    }
+  });
 });
 
 describe('wrangler.jsonc', () => {
@@ -42,7 +58,7 @@ describe('wrangler.jsonc', () => {
       .join('\n')
   ) as {
     vars: {APP_ORIGIN: string};
-    env: Record<string, {vars: {APP_ORIGIN: string}}>;
+    env: Record<string, {vars: {APP_ORIGIN: string; X_ROBOTS_TAG?: string}}>;
     assets: {directory: string; not_found_handling: string};
     compatibility_flags: string[];
   };
@@ -59,6 +75,15 @@ describe('wrangler.jsonc', () => {
     for (const mode of ['staging', 'production']) {
       expect(config.env[mode]?.vars.APP_ORIGIN).toBe(appUrl(mode));
     }
+  });
+
+  // Wrangler does not inherit vars into environments, so only staging has it.
+  test('only staging sends noindex from the Worker', () => {
+    const {staging, production} = config.env;
+    expect(staging?.vars.X_ROBOTS_TAG).toBe('noindex, nofollow');
+    expect(production?.vars).toEqual({
+      APP_ORIGIN: 'https://app.commandsnippets.com',
+    });
   });
 
   test.each([

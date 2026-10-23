@@ -32,6 +32,17 @@ Deployed pages use CT for click analytics. See
 [click tracking](../../docs/click-tracking.md) for environments, privacy behavior
 and test isolation.
 
+## Search engines
+
+Only the production build may be indexed (`src/lib/site.ts`). Every page has
+a canonical URL, Open Graph tags and its description; the home page also has
+JSON-LD. The build writes the files that differ by mode (`astro.config.mjs`):
+production gets `robots.txt` naming `sitemap.xml`, the pages with content;
+staging gets a `robots.txt` without a sitemap (crawling stays allowed, so
+crawlers see the noindex), a robots `noindex` meta on every page, and a
+`_headers` that sends `X-Robots-Tag: noindex, nofollow` with every file. The
+Worker's own responses get that header from staging's `X_ROBOTS_TAG` var.
+
 ## Old app links
 
 The web app used to be served on this host. `worker/index.ts` runs only when

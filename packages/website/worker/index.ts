@@ -7,14 +7,25 @@
  */
 export interface Env {
   APP_ORIGIN: string;
+  /**
+   * Set on staging only: the `X-Robots-Tag` for these responses, which the
+   * build's `_headers` (static assets only) does not reach.
+   */
+  X_ROBOTS_TAG?: string;
 }
 
 export function redirectToApp(request: Request, env: Env): Response {
+  const headers = new Headers();
+  if (env.X_ROBOTS_TAG) {
+    headers.set('X-Robots-Tag', env.X_ROBOTS_TAG);
+  }
   if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return new Response(null, {status: 405, headers: {Allow: 'GET, HEAD'}});
+    headers.set('Allow', 'GET, HEAD');
+    return new Response(null, {status: 405, headers});
   }
   const {pathname, search} = new URL(request.url);
-  return Response.redirect(`${env.APP_ORIGIN}${pathname}${search}`, 302);
+  headers.set('Location', `${env.APP_ORIGIN}${pathname}${search}`);
+  return new Response(null, {status: 302, headers});
 }
 
 export default {
