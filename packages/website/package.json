@@ -17,6 +17,7 @@
     "deploy:production": "bun run build:production && wrangler deploy --env production"
   },
   "dependencies": {
+    "@a2f0/ct-client": "0.1.5",
     "astro": "^7.4.2"
   },
   "devDependencies": {

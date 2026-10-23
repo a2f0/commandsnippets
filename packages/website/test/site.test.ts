@@ -66,15 +66,22 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     for (const link of FOOTER_LINKS) {
       const html = page(link.href);
       expect(html).toContain(`<h1>${link.text}</h1>`);
-      expect(html).toContain('This page is coming soon.');
+      if (link.href !== '/privacy/') {
+        expect(html).toContain('This page is coming soon.');
+      }
       expect(page('')).toContain(`href="${link.href}"`);
     }
   });
 
-  test('ships the favicon and no old branding', () => {
+  test('ships the favicon and discloses the analytics operator', () => {
     expect(existsSync(join(outDir, 'favicon.svg'))).toBe(true);
     for (const path of ['', ...FOOTER_LINKS.map(link => link.href)]) {
-      expect(page(path).toLowerCase()).not.toContain('tearleads');
+      if (path !== '/privacy/') {
+        expect(page(path).toLowerCase()).not.toContain('tearleads');
+      }
     }
+    expect(page('/privacy/')).toContain('Tearleads, LLC');
+    expect(page('/privacy/')).toContain('Do Not Track');
+    expect(page('/privacy/')).toContain('Global Privacy Control');
   });
 });

@@ -1,5 +1,27 @@
 ---
-import Placeholder from '../layouts/Placeholder.astro';
+import Base from '../layouts/Base.astro';
 ---
 
-<Placeholder title="Privacy Policy" />
+<Base title="Privacy Policy · Commandsnippets">
+  <h1>Privacy Policy</h1>
+  <h2>Click analytics</h2>
+  <p>
+    Our website and web app use CT, operated by Tearleads, LLC and hosted on
+    Cloudflare, to understand which parts of the service people use. CT records
+    click times, element types, the application and environment, and public
+    website page categories. Web app clicks use a generic page identifier so
+    usernames and tag names in routes are not collected.
+  </p>
+  <p>
+    The collector also records the IP address and available approximate location
+    information, such as country, region and city. Click records are retained
+    for up to 90 days and are available only to authenticated CT administrators.
+    We do not send snippet text, form values, link destinations, query strings,
+    account identifiers or persistent visitor identifiers with these events.
+    Editable fields are excluded from click collection.
+  </p>
+  <p>
+    CT honors the browser's Do Not Track setting and the CT browser extension's
+    opt-out. Global Privacy Control does not disable this click collection.
+  </p>
+</Base>
