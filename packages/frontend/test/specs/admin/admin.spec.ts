@@ -37,7 +37,9 @@ describe('Admin page', () => {
       1
     );
 
-    // So does a right-click on the row.
+    // So does a right-click on the row, once the confirmation has closed: a
+    // right-click while it fades out lands on its backdrop, not the row.
+    await $('[role="dialog"]').waitForExist({reverse: true});
     await BasePage.adminUserRow('7').click({button: 'right'});
     await expect(BasePage.adminUserMenuReactivate).toBeDisplayed();
     await BasePage.adminUserMenuMarkForDeletion.waitAndLeftClick();
