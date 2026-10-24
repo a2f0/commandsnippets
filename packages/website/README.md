@@ -38,14 +38,25 @@ and test isolation.
 Only the production build may be indexed (`src/lib/site.ts`). Every page has
 its description and Open Graph tags, including the preview image at the
 build's own host (`og:image`, shown as Twitter's large card). Production pages
-also name their canonical URL (and `og:url`), and the home page has JSON-LD;
-staging pages name no page URL. The build writes the files that differ by
-mode (`astro.config.mjs`): production gets `robots.txt` naming `sitemap.xml`,
-the pages with content; staging gets a `robots.txt` without a sitemap
-(crawling stays allowed, so crawlers see the noindex), a robots `noindex` meta
-on every page, and a `_headers` that sends `X-Robots-Tag: noindex, nofollow`
-with every file. The Worker's own responses get that header from staging's
-`X_ROBOTS_TAG` var.
+with content also name their canonical URL (and `og:url`), and the home page
+has JSON-LD; staging pages name no page URL. The build writes the files that
+differ by mode (`astro.config.mjs`): production gets `robots.txt` naming
+`sitemap.xml`, which lists the canonical URL of every built page that names
+one; staging gets a `robots.txt` without a sitemap (crawling stays allowed,
+so crawlers see the noindex), a robots `noindex` meta on every page, and a
+`_headers` that sends `X-Robots-Tag: noindex, nofollow` with every file. The
+Worker's own responses get that header from staging's `X_ROBOTS_TAG` var.
+
+Placeholder pages (terms, contact and about, built on
+`src/layouts/Placeholder.astro`) stay out of search in production too, until
+they have content: the layout passes `placeholder` to `Base.astro`, so the
+page carries the robots `noindex, nofollow` meta and names no canonical or
+`og:url`. The build reads that back from the HTML: the page gets no sitemap
+entry, and production's `_headers` sends the header on it and on its
+redirects (`/about` and `/about/index.html` as well as `/about/`). To publish
+a page, write its copy on `Base.astro` without `placeholder`: the next build
+makes it indexable and adds it to the sitemap. `test/site.test.ts` pins
+today's placeholder and sitemap lists, so move the page there too.
 
 ## Old app links
 

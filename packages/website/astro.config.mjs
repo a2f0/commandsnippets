@@ -1,11 +1,14 @@
-import {writeFileSync} from 'node:fs';
+import {readdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {defineConfig} from 'astro/config';
-import {modeFiles} from './src/lib/site';
+import {builtPage, modeFiles} from './src/lib/site';
 
 /**
  * Writes the files that differ by build mode (robots.txt, production's
- * sitemap, staging's noindex `_headers`) into the build output. Integration
- * hooks are not told the mode, so a Vite plugin records the resolved one.
+ * sitemap, the noindex `_headers`) into the build output, from the pages it
+ * built: what each page's HTML says decides its sitemap entry and header.
+ * Integration hooks are not told the mode, so a Vite plugin records the
+ * resolved one.
  */
 function modeFilesIntegration() {
   let mode;
@@ -30,7 +33,12 @@ function modeFilesIntegration() {
         if (mode === undefined) {
           throw new Error('The build mode was not recorded.');
         }
-        for (const [name, content] of Object.entries(modeFiles(mode))) {
+        const pages = readdirSync(fileURLToPath(dir), {recursive: true})
+          .filter(file => file.endsWith('.html'))
+          .map(file =>
+            builtPage(file, readFileSync(new URL(file, dir), 'utf8'))
+          );
+        for (const [name, content] of Object.entries(modeFiles(mode, pages))) {
           writeFileSync(new URL(name, dir), content);
         }
       },
