@@ -11,6 +11,7 @@ import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {syncSession} from '../../src/lib/sync/session';
+import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
@@ -41,8 +42,8 @@ const list = () => screen.findByRole('list', {name: 'Reuses'});
 it('opens from View, combines entries newest first, and returns after drilling into an entry', async () => {
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'first');
-  await apiClient.forVersion(1).reuseEntry('2', 'second');
-  await apiClient.forVersion(1).reuseEntry('1', 'third');
+  await apiClient.forVersion(1).reuseEntry('1', 'second');
+  await apiClient.forVersion(1).reuseEntry('2', 'third');
   const history = mount('/test?entries=all');
   fireEvent.click(await screen.findByRole('menu', {name: 'View'}));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'All reuses'}));
@@ -54,7 +55,7 @@ it('opens from View, combines entries newest first, and returns after drilling i
       within(await list())
         .getAllByRole('link')
         .map(link => link.textContent)
-    ).toEqual(['entry-1-subject', 'entry-2-subject', 'entry-1-subject'])
+    ).toEqual(['entry-2-subject', 'entry-1-subject', 'entry-1-subject'])
   );
   expect(screen.getByText('3 reuses')).toBeInTheDocument();
   fireEvent.click(
@@ -92,11 +93,16 @@ it('shows the whole history in manageable batches', async () => {
   signInHere();
   for (let index = 0; index < 51; index += 1)
     await apiClient.forVersion(1).reuseEntry('1', `copy-${index}`);
+  const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
   mount();
   expect(within(await list()).getAllByRole('listitem')).toHaveLength(50);
   expect(screen.getByText('51 reuses')).toBeInTheDocument();
+  expect(pages.mock.calls.map(([, page]) => page)).toEqual([1]);
   fireEvent.click(screen.getByRole('button', {name: 'Show more'}));
-  expect(within(await list()).getAllByRole('listitem')).toHaveLength(51);
+  await waitFor(async () =>
+    expect(within(await list()).getAllByRole('listitem')).toHaveLength(51)
+  );
+  expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
   expect(screen.queryByRole('button', {name: 'Show more'})).toBeNull();
 });
 
@@ -115,6 +121,66 @@ it('retries initial errors and refreshes copies from another device', async () =
   await apiClient.forVersion(1).reuseEntry('2', 'another-device');
   fireEvent.click(screen.getByRole('button', {name: 'Refresh'}));
   expect(within(await list()).getAllByRole('listitem')).toHaveLength(1);
+});
+
+it('retries the next page without dropping loaded rows or duplicating a shifted row', async () => {
+  signInHere();
+  for (let index = 0; index < 51; index += 1)
+    await apiClient.forVersion(1).reuseEntry('1', `copy-${index}`);
+  const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
+  mount();
+  await list();
+  // A new copy shifts the last row of page one onto page two.
+  await apiClient.forVersion(1).reuseEntry('2', 'between-pages');
+  server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
+  fireEvent.click(screen.getByRole('button', {name: 'Show more'}));
+  await screen.findByRole('alert');
+  expect(within(await list()).getAllByRole('listitem')).toHaveLength(50);
+  server.resetHandlers();
+  fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
+  await waitFor(async () =>
+    expect(within(await list()).getAllByRole('listitem')).toHaveLength(51)
+  );
+  expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2, 2]);
+  fireEvent.click(screen.getByRole('button', {name: 'Refresh'}));
+  await waitFor(async () =>
+    expect(
+      within(await list()).getByRole('link', {name: 'entry-2-subject'})
+    ).toBeInTheDocument()
+  );
+  expect(within(await list()).getAllByRole('listitem')).toHaveLength(50);
+  expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2, 2, 1]);
+});
+
+it('coalesces reconnects during a read and refreshes only the newest page', async () => {
+  signInHere();
+  const engine = syncSession('test').sync;
+  await engine.syncAll();
+  const original = engine.entryReuses.bind(engine);
+  const gate = Promise.withResolvers<void>();
+  const reads = vi
+    .spyOn(engine, 'entryReuses')
+    .mockImplementationOnce(async (...args) => {
+      await gate.promise;
+      return original(...args);
+    });
+  mount();
+  await waitFor(() => expect(reads).toHaveBeenCalledTimes(1));
+  act(() => {
+    window.dispatchEvent(new Event('online'));
+    window.dispatchEvent(new Event('online'));
+  });
+  expect(reads).toHaveBeenCalledTimes(1);
+  await apiClient.forVersion(1).reuseEntry('2', 'while-reading');
+  await act(async () => {
+    gate.resolve();
+    await gate.promise;
+  });
+  await waitFor(() => expect(reads).toHaveBeenCalledTimes(2));
+  expect(
+    within(await list()).getByRole('link', {name: 'entry-2-subject'})
+  ).toBeInTheDocument();
+  expect(reads.mock.calls.map(([, page]) => page)).toEqual([1, 1]);
 });
 
 it('keeps the last history visible on refresh failure and offers Retry', async () => {

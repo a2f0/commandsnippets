@@ -590,7 +590,8 @@ class ApiClient {
         : {'filter[text_entry.id]': Number(entryId)}),
       sort: '-date_created',
       'page[number]': page,
-      'page[size]': SYNC_PAGE_SIZE,
+      'page[size]': 50,
+      ...(entryId === undefined ? {include: 'text_entry' as const} : {}),
     };
     return this.requestDocument(
       urlWithQuery(`${baseURL}/entry_reuses`, params),

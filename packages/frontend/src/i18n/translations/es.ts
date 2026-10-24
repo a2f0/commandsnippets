@@ -229,7 +229,7 @@ export const es: I18NextTranslations = {
     infoCopied: 'Copiada',
     allReuses: 'Todas las reutilizaciones',
     backToReuses: 'Volver a todas las reutilizaciones',
-    recentReuses: 'Historial de reutilizaciones',
+    profileReuseHistory: 'Historial de reutilizaciones',
     allReusesDescription:
       'Cada copia de tus entradas, de la más reciente a la más antigua. Abre una entrada para ver sus detalles.',
     allReusesEmpty:

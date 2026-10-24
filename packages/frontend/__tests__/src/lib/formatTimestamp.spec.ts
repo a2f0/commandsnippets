@@ -1,6 +1,9 @@
 import {describe, expect, it} from 'vitest';
 
-import {formatTimestamp} from '../../../src/lib/formatTimestamp';
+import {
+  formatTimestamp,
+  timestampWithZone,
+} from '../../../src/lib/formatTimestamp';
 
 const format = (date: Date) =>
   new Intl.DateTimeFormat('en-US', {
@@ -24,4 +27,12 @@ describe('formatTimestamp', () => {
   it('returns anything unparseable as is', () => {
     expect(formatTimestamp('not a date', 'en-US')).toBe('not a date');
   });
+});
+
+it.each([
+  ['2026-01-02T03:04:05.123456', '2026-01-02T03:04:05.123456Z'],
+  ['2026-01-02T03:04:05Z', '2026-01-02T03:04:05Z'],
+  ['2026-01-02T03:04:05+02:00', '2026-01-02T03:04:05+02:00'],
+])('normalizes the machine-readable timestamp %s', (value, expected) => {
+  expect(timestampWithZone(value)).toBe(expected);
 });

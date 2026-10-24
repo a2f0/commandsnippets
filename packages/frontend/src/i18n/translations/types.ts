@@ -211,7 +211,7 @@ export interface EntriesTranslations {
   infoCopied: string;
   allReuses: string;
   backToReuses: string;
-  recentReuses: string;
+  profileReuseHistory: string;
   allReusesDescription: string;
   allReusesEmpty: string;
   reuseRefresh: string;

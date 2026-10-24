@@ -3,19 +3,19 @@ import {DetailPage} from '../components/DetailPage';
 import {ReuseHistory} from '../components/entries/ReuseHistory';
 import {useCookieLogout} from '../hooks/useCookieLogout';
 import {useTypedTranslation} from '../i18n/hooks';
-import {useEntries, useOwner, useSession} from '../lib/data/hooks';
+import {useOwner, useSession} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
 import {Navigate} from '../lib/router/Router';
 
 const ReusesContent = () => {
   useCookieLogout();
   const session = useSession();
-  const entries = useEntries('all');
   const syncStatus = useCollectionSync();
   const {t} = useTypedTranslation('entries');
   if (session === null) return null;
   return (
     <DetailPage
+      backId="reusesBack"
       id="reusesPage"
       backTo={`/${encodeURIComponent(session.owner)}?entries=all`}
       backLabel={t('entryBack')}
@@ -30,7 +30,7 @@ const ReusesContent = () => {
       <Typography color="text.secondary" sx={{mt: 1}}>
         {t('allReusesDescription')}
       </Typography>
-      <ReuseHistory session={session} entries={entries?.entries ?? []} />
+      <ReuseHistory session={session} />
     </DetailPage>
   );
 };

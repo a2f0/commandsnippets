@@ -10,12 +10,14 @@ import {RobotsNoindex} from './RobotsNoindex';
 export const DetailPage = ({
   id,
   backTo,
+  backId,
   backLabel,
   syncStatus,
   children,
 }: {
   id: string;
   backTo: string;
+  backId: string;
   backLabel: string;
   syncStatus: {failed: boolean; retry: () => void};
   children: ReactNode;
@@ -34,7 +36,7 @@ export const DetailPage = ({
         sx={{mb: 3, pb: 2, borderBottom: 1, borderColor: 'divider'}}
       >
         <Button
-          id={id === 'entryPage' ? 'entryBack' : 'reusesBack'}
+          id={backId}
           component={Link}
           to={backTo}
           startIcon={<ArrowBack fontSize="small" />}

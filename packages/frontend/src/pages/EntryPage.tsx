@@ -253,6 +253,7 @@ const EntryPageContent = () => {
 
   return (
     <DetailPage
+      backId="entryBack"
       id="entryPage"
       backTo={returnPath ?? `/${encodeURIComponent(owner)}`}
       backLabel={

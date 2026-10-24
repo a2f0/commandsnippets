@@ -177,32 +177,31 @@ API; everything else the app keeps is a zustand store.
   (no list sorted by it moves), so the sync never reads another device's
   reuses.
 - **An entry's page** (`/:user/entries/:id`, `EntryPage.tsx`; Get Info in
-  an entry's context menu goes there, for owners and staff, never on public
-  pages): its subject, body (with Copy, a reuse too), tags (links to their
-  lists), visibility, reuse count, dates, size and id, and every reuse,
-  newest first. It reads them from the API (`SyncEngine.entryReuses`: the
-  queue is sent first, so this device's copies are among them, then the
-  entry, for its count as other devices left it, then every page of
-  `GET /entry_reuses?filter[text_entry.id]=`), again whenever the count
-  changes, on Refresh, online, and periodically while visible; they are not
-  stored. Its owner sees the reuses; staff the count only (their session reads no reuses); a public page neither, the count
-  being private (the API sends 0). The shared `DetailPage` gives the entry
-  and profile history a responsive layout and a labeled back link. Back returns
-  to the list or reuse history the entry was opened from (`entryReturnPath`), or the user's page. Its data syncs as
-  the entries page's does (`useCollectionSync`); an entry not found while
-  the first load runs is still loading (`useEntry`).
+  an entry's context menu, for owners and staff, never on public pages): its
+  subject, body (with Copy, a reuse too), tags, visibility, reuse count,
+  dates, size and id, and its reuse history, newest first. It reads one page
+  from the API (`SyncEngine.entryReuses`): the queue is sent first, then the
+  entry is refreshed for its count on page 1, then the requested page of
+  `GET /entry_reuses?filter[text_entry.id]=`. History is not stored. Owners
+  see reuses; staff the count only; public pages neither. The shared
+  `DetailPage` provides a responsive layout and a labeled back link to the
+  list or history the entry was opened from (`entryReturnPath`), falling
+  back to the user's page. Its data syncs with `useCollectionSync`; an entry
+  not found during the first load is still loading (`useEntry`).
 - **All reuses** (`/:user/activity/reuses`, `ReusesPage.tsx`): View > All
-  reuses, or the link in an entry's history, opens the owner's private history
+  reuses, or an entry's history link, opens the owner's private history
   across all entries. Guests and other users (staff included) are redirected
   without reading it. `SyncEngine.entryReuses()` omits the entry filter and
-  reads all pages after flushing the queue, deduplicating rows if a concurrent
-  copy shifts numbered pages. `ReuseHistory` shows 50 rows at a time, with
-  Show more, entry links, timestamps, Refresh and Retry; a failed refresh keeps
-  the previous list visible. It refreshes on reconnect, visibility and every
-  half minute in view, and clears on data-version changes. Missing or deleted
-  entries retain their reuse row with an unavailable label. Entry links remember
-  the master history as their return path. Tags named `activity` or `reuses`
-  remain ordinary tag routes.
+  requests `include=text_entry` so each page has its entry names, independent
+  of the collection sync. `ReuseHistory` fetches 50 rows at a time; Show more
+  fetches only the next page and deduplicates rows if concurrent copies shift
+  numbered pages. Refresh, reconnect and a changed entry count read only the
+  first page; a failed request retains the last result and offers Retry for
+  that page. There is no automatic full-history polling. Version changes
+  clear the old history, and initial reads wait for a known data version.
+  Missing or deleted entries retain their reuse row with an unavailable
+  label. Entry links remember the master history as their return path. Tags
+  named `activity` or `reuses` remain ordinary tag routes.
 - **The queue** (`flushOutbox`, run by the sync engine's `flush`, under the
   same lock as the syncs): writes go in order, each naming when it was made
   (`Client-Updated`, api-shared's `CLIENT_UPDATED_HEADER`: the API keeps the

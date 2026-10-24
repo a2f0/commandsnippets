@@ -224,7 +224,7 @@ export const en: I18NextTranslations = {
     infoCopied: 'Copied',
     allReuses: 'All reuses',
     backToReuses: 'Back to all reuses',
-    recentReuses: 'Reuse history',
+    profileReuseHistory: 'Reuse history',
     allReusesDescription:
       'Every copy across your entries, newest first. Open an entry to see its details.',
     allReusesEmpty: 'No reuses yet. Copy an entry to start your history.',

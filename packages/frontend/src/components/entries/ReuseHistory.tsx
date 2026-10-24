@@ -5,10 +5,9 @@ import type {
 import {History, Refresh} from '@mui/icons-material';
 import {Alert, Box, Button, Typography} from '@mui/material';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {SYNC_INTERVAL_MS} from '../../lib/data/useSync';
-import {formatTimestamp} from '../../lib/formatTimestamp';
+import {formatTimestamp, timestampWithZone} from '../../lib/formatTimestamp';
 import {Link} from '../../lib/router/Router';
 import {entryPath, reusesPath} from '../../lib/router/route';
 import {useAppState} from '../../lib/state/appState';
@@ -21,61 +20,104 @@ interface Props {
   /** Omit for every reuse across the profile. */
   entryId?: string;
   count?: number;
-  entries?: TextEntry[];
 }
 
-const PAGE_SIZE = 50;
+interface HistoryPage {
+  reuses: TextEntryReused[];
+  entries: TextEntry[];
+  page: number;
+  total: number;
+  more: boolean;
+}
 
-const HistoryContent = ({session, entryId, count, entries}: Props) => {
+const HistoryContent = ({session, entryId, count}: Props) => {
   const {t, i18n} = useTypedTranslation('entries');
-  const [reuses, setReuses] = useState<TextEntryReused[] | null>(null);
+  const [history, setHistory] = useState<HistoryPage | null>(null);
+  const reuses = history?.reuses ?? null;
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [attempt, setAttempt] = useState(0);
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [failedPage, setFailedPage] = useState(1);
+  const running = useRef(false);
+  const refreshPending = useRef(false);
+  const readPage = useRef<(page: number) => void>(() => {});
   const unsent = entryId !== undefined && isLocalId(entryId);
   const all = entryId === undefined;
 
   useEffect(() => {
     if (unsent || session.readOnly) return undefined;
     let current = true;
-    let running = false;
-    const read = () => {
-      if (running) return;
-      running = true;
+    const read = (page: number) => {
+      if (running.current) {
+        // A changed count waits for the in-flight read, then refreshes once.
+        if (page === 1) refreshPending.current = true;
+        return;
+      }
+      running.current = true;
       setLoading(true);
       setFailed(false);
       session.sync
-        .entryReuses(entryId)
+        .entryReuses(entryId, page)
         .then(result => {
-          if (current) setReuses(result);
+          if (!current || result === null) return;
+          setHistory(previous => {
+            const reuses = new Map(
+              (page === 1 ? [] : (previous?.reuses ?? [])).map(reuse => [
+                reuse.id,
+                reuse,
+              ])
+            );
+            for (const reuse of result.data) reuses.set(reuse.id, reuse);
+            const entries = new Map(
+              (page === 1 ? [] : (previous?.entries ?? [])).map(entry => [
+                entry.id,
+                entry,
+              ])
+            );
+            for (const resource of result.included ?? []) {
+              if (
+                resource.type === 'TextEntry' &&
+                !resource.attributes.is_deleted
+              )
+                entries.set(resource.id, resource);
+            }
+            return {
+              reuses: [...reuses.values()],
+              entries: [...entries.values()],
+              page,
+              total: result.meta.pagination.count,
+              more: result.links.next !== null && result.data.length > 0,
+            };
+          });
         })
         .catch((error: unknown) => {
           console.warn('WARNING: the reuses could not be read:', error);
-          if (current) setFailed(true);
+          if (current) {
+            setFailed(true);
+            setFailedPage(page);
+          }
         })
         .finally(() => {
-          running = false;
+          running.current = false;
           if (current) setLoading(false);
+          if (refreshPending.current) {
+            refreshPending.current = false;
+            readPage.current(1);
+          }
         });
     };
-    const inView = () => {
-      if (document.visibilityState === 'visible') read();
-    };
-    read();
-    window.addEventListener('online', read);
-    document.addEventListener('visibilitychange', inView);
-    const timer = setInterval(inView, SYNC_INTERVAL_MS);
+    readPage.current = read;
+    const refresh = () => read(1);
+    refresh();
+    window.addEventListener('online', refresh);
     return () => {
       current = false;
-      window.removeEventListener('online', read);
-      document.removeEventListener('visibilitychange', inView);
-      clearInterval(timer);
+      readPage.current = () => {};
+      window.removeEventListener('online', refresh);
     };
-  }, [session, entryId, count, attempt, unsent]);
+  }, [session, entryId, count, unsent]);
 
-  const entryById = new Map(entries?.map(entry => [entry.id, entry]));
-  const refresh = () => setAttempt(value => value + 1);
+  const entryById = new Map(history?.entries.map(entry => [entry.id, entry]));
+  const refresh = () => readPage.current(1);
   return (
     <Box
       component="section"
@@ -97,11 +139,11 @@ const HistoryContent = ({session, entryId, count, entries}: Props) => {
       >
         <Box>
           <Typography id="entryReuseHistory" variant="h6" component="h2">
-            {all ? t('recentReuses') : t('reuseHistory')}
+            {all ? t('profileReuseHistory') : t('reuseHistory')}
           </Typography>
           {reuses !== null && (
             <Typography variant="body2" color="text.secondary">
-              {t('reuseTotal', {count: reuses.length})}
+              {t('reuseTotal', {count: history?.total ?? 0})}
             </Typography>
           )}
         </Box>
@@ -132,7 +174,12 @@ const HistoryContent = ({session, entryId, count, entries}: Props) => {
           severity="warning"
           sx={{m: 2}}
           action={
-            <Button color="inherit" size="small" onClick={refresh}>
+            <Button
+              color="inherit"
+              size="small"
+              disabled={loading}
+              onClick={() => readPage.current(failedPage)}
+            >
               {t('reuseHistoryRetry')}
             </Button>
           }
@@ -169,7 +216,7 @@ const HistoryContent = ({session, entryId, count, entries}: Props) => {
             aria-label={t('reuseHistory')}
             sx={{listStyle: 'none', p: 0, m: 0}}
           >
-            {reuses.slice(0, visible).map(reuse => {
+            {reuses.map(reuse => {
               const id = reuse.relationships.text_entry.data.id;
               const entry = entryById.get(id);
               const path = entryPath(session.owner, id);
@@ -224,7 +271,9 @@ const HistoryContent = ({session, entryId, count, entries}: Props) => {
                     <Typography
                       component="time"
                       variant="body2"
-                      dateTime={`${reuse.attributes.date_created}Z`}
+                      dateTime={timestampWithZone(
+                        reuse.attributes.date_created
+                      )}
                       color={all ? 'text.secondary' : 'text.primary'}
                     >
                       {formatTimestamp(
@@ -238,7 +287,7 @@ const HistoryContent = ({session, entryId, count, entries}: Props) => {
               );
             })}
           </Box>
-          {visible < reuses.length && (
+          {history?.more && (
             <Box
               sx={{
                 p: 2,
@@ -249,7 +298,8 @@ const HistoryContent = ({session, entryId, count, entries}: Props) => {
             >
               <Button
                 variant="outlined"
-                onClick={() => setVisible(value => value + PAGE_SIZE)}
+                disabled={loading}
+                onClick={() => readPage.current(history.page + 1)}
               >
                 {t('reuseShowMore')}
               </Button>
@@ -263,10 +313,21 @@ const HistoryContent = ({session, entryId, count, entries}: Props) => {
 
 /** Drop the previous version's history when a restore or version switch occurs. */
 export const ReuseHistory = (props: Props) => {
+  const {t} = useTypedTranslation('entries');
   const version = useLiveQuery(
     () => heldVersion(props.session.db, props.session.owner),
     [props.session]
   );
+  if (
+    version === undefined &&
+    !props.session.readOnly &&
+    !(props.entryId && isLocalId(props.entryId))
+  )
+    return (
+      <Typography role="status" sx={{mt: 3}}>
+        {t('reuseHistoryLoading')}
+      </Typography>
+    );
   return (
     <HistoryContent
       key={`${version ?? ''}:${props.entryId ?? ''}`}
