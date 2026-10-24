@@ -104,13 +104,14 @@ describe.each([
 
   // Production may be indexed; every staging response says noindex, the
   // pages through the build's _headers and the redirects through the Worker.
+  // Node joins a repeated header into one value, so a header sent twice
+  // fails these matches.
   const robots = mode === 'production' ? undefined : 'noindex, nofollow';
 
   describe.each([false, true])('with navigate=%s', navigate => {
     test.each([
       '/',
       '/privacy/',
-      '/terms/',
       '/favicon.ico',
       '/favicon.svg',
       '/apple-touch-icon.png',
@@ -119,6 +120,28 @@ describe.each([
     ])('serves %s from the build', async path => {
       expect(await get(path, navigate)).toMatchObject({status: 200, robots});
     });
+
+    // Placeholder pages stay out of search on both tiers, and so do the
+    // redirects to them; production's _headers names them, staging's /* rule
+    // already covers them.
+    test.each([
+      ['/terms/', 200, undefined],
+      ['/terms', 307, '/terms/'],
+      ['/contact/', 200, undefined],
+      ['/contact', 307, '/contact/'],
+      ['/about/', 200, undefined],
+      ['/about', 307, '/about/'],
+      ['/about/index.html', 307, '/about/'],
+    ] as const)(
+      'keeps placeholder %s out of search',
+      async (path, status, location) => {
+        expect(await get(path, navigate)).toMatchObject({
+          status,
+          location,
+          robots: 'noindex, nofollow',
+        });
+      }
+    );
 
     test.each([
       '/dan',

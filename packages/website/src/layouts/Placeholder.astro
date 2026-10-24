@@ -6,9 +6,11 @@ interface Props {
 }
 
 const {title} = Astro.props;
+// Out of search until the page has its copy: a page with content is built
+// on Base without the flag, and is indexable and in the sitemap.
 ---
 
-<Base title={`${title} · Commandsnippets`}>
+<Base title={`${title} · Commandsnippets`} placeholder>
   <h1>{title}</h1>
   <p class="muted" data-placeholder>This page is coming soon.</p>
 </Base>

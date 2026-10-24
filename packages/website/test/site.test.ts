@@ -4,16 +4,30 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {appUrl, FOOTER_LINKS} from '../src/lib/appUrl';
 import {
+  type BuiltPage,
+  builtPage,
   indexable,
+  modeFiles,
   NOINDEX,
   PREVIEW_IMAGE,
   pageUrl,
-  SITEMAP_PATHS,
+  searchable,
   siteOrigin,
 } from '../src/lib/site';
 
 const root = join(import.meta.dir, '..');
 const PAGES = ['/', ...FOOTER_LINKS.map(link => link.href)];
+// The pages with content today. The others are placeholders, which stay out
+// of search until they have their copy.
+const CONTENT = ['/', '/privacy/'];
+const PLACEHOLDERS = ['/terms/', '/contact/', '/about/'];
+/** The production `_headers` rules for pages kept out of search. */
+const noindexRules = (paths: readonly string[]) =>
+  paths
+    .toSorted()
+    .flatMap(path => [path.slice(0, -1), `${path}*`])
+    .map(pattern => `${pattern}\n  X-Robots-Tag: ${NOINDEX}\n`)
+    .join('');
 
 /** The `content` of a `<meta>` (by name or property) in built HTML. */
 const meta = (html: string, key: string) =>
@@ -68,6 +82,109 @@ describe('siteOrigin', () => {
     for (const mode of ['staging', 'development', 'test']) {
       expect(indexable(mode)).toBe(false);
     }
+  });
+
+  test('only production pages with content are searchable', () => {
+    expect(searchable('production', false)).toBe(true);
+    expect(searchable('production', true)).toBe(false);
+    for (const mode of ['staging', 'development', 'test']) {
+      expect(searchable(mode, false)).toBe(false);
+      expect(searchable(mode, true)).toBe(false);
+    }
+  });
+});
+
+describe('builtPage', () => {
+  test.each([
+    ['index.html', '/'],
+    ['about/index.html', '/about/'],
+    ['docs/setup/index.html', '/docs/setup/'],
+    ['404.html', '/404'],
+  ])('%s is served at %s', (name, path) => {
+    expect(builtPage(name, '').path).toBe(path);
+  });
+
+  test('reads the canonical URL and the robots meta', () => {
+    const indexed =
+      '<head><link rel="canonical" href="https://commandsnippets.com/"></head>';
+    expect(builtPage('index.html', indexed)).toEqual({
+      path: '/',
+      canonical: 'https://commandsnippets.com/',
+      robots: undefined,
+    });
+    const kept = `<head><meta name="robots" content="${NOINDEX}"></head>`;
+    expect(builtPage('about/index.html', kept)).toEqual({
+      path: '/about/',
+      canonical: undefined,
+      robots: NOINDEX,
+    });
+  });
+});
+
+describe('modeFiles', () => {
+  const content = (path: string): BuiltPage => ({
+    path,
+    canonical: pageUrl('production', path),
+    robots: undefined,
+  });
+  const placeholder = (path: string): BuiltPage => ({
+    path,
+    canonical: undefined,
+    robots: NOINDEX,
+  });
+  const locs = (files: Record<string, string>) =>
+    [...(files['sitemap.xml'] ?? '').matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+      match => match[1]
+    );
+
+  test('production lists the canonical pages and sends noindex for the rest', () => {
+    const files = modeFiles('production', [
+      placeholder('/about/'),
+      content('/privacy/'),
+      content('/'),
+      placeholder('/404'),
+    ]);
+    expect(locs(files)).toEqual([
+      'https://commandsnippets.com/',
+      'https://commandsnippets.com/privacy/',
+    ]);
+    // A directory page's header also covers its redirecting forms.
+    expect(files._headers).toBe(
+      [
+        `/404\n  X-Robots-Tag: ${NOINDEX}\n`,
+        `/about\n  X-Robots-Tag: ${NOINDEX}\n`,
+        `/about/*\n  X-Robots-Tag: ${NOINDEX}\n`,
+      ].join('')
+    );
+  });
+
+  // Nothing but the page's own markup changes when its copy lands.
+  test('a placeholder that gets its copy joins the sitemap and loses its header', () => {
+    const before = modeFiles('production', [
+      content('/'),
+      placeholder('/about/'),
+    ]);
+    expect(locs(before)).toEqual(['https://commandsnippets.com/']);
+    expect(before._headers).toBe(noindexRules(['/about/']));
+    const after = modeFiles('production', [content('/'), content('/about/')]);
+    expect(locs(after)).toEqual([
+      'https://commandsnippets.com/',
+      'https://commandsnippets.com/about/',
+    ]);
+    expect(after._headers).toBeUndefined();
+  });
+
+  test('the home page cannot be kept out of search', () => {
+    expect(() => modeFiles('production', [placeholder('/')])).toThrow();
+  });
+
+  // Staging's one rule already covers every page; another would repeat it.
+  test('staging sends one noindex rule for every file and no sitemap', () => {
+    const files = modeFiles('staging', [content('/'), placeholder('/about/')]);
+    expect(files).toEqual({
+      'robots.txt': 'User-agent: *\nAllow: /\n',
+      _headers: `/*\n  X-Robots-Tag: ${NOINDEX}\n`,
+    });
   });
 });
 
@@ -184,7 +301,9 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       expect(meta(html, 'description')?.length).toBeGreaterThan(50);
       expect(meta(html, 'theme-color')).toBeDefined();
       // A noindexed page names no URL for search engines.
-      const url = mode === 'production' ? pageUrl(mode, path) : undefined;
+      const url = searchable(mode, PLACEHOLDERS.includes(path))
+        ? pageUrl(mode, path)
+        : undefined;
       expect(canonicalOf(html)).toBe(url);
       expect(meta(html, 'og:url')).toBe(url);
       expect(meta(html, 'og:title')).toBe(title);
@@ -206,21 +325,31 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
 
   test(
     mode === 'production'
-      ? 'pages may be indexed'
+      ? 'pages with content may be indexed; placeholders and their headers say noindex'
       : 'pages and their headers say noindex',
     () => {
+      expect([...CONTENT, ...PLACEHOLDERS].toSorted()).toEqual(
+        PAGES.toSorted()
+      );
       for (const path of PAGES) {
-        expect(meta(page(path), 'robots')).toBe(
-          mode === 'production' ? undefined : NOINDEX
+        const html = page(path);
+        // Placeholder.astro is what keeps a page out of search.
+        expect(html.includes('data-placeholder')).toBe(
+          PLACEHOLDERS.includes(path)
+        );
+        const robots = searchable(mode, PLACEHOLDERS.includes(path))
+          ? undefined
+          : NOINDEX;
+        expect(meta(html, 'robots')).toBe(robots);
+        expect(html.match(/<meta name="robots"/g)?.length ?? 0).toBe(
+          robots === undefined ? 0 : 1
         );
       }
-      if (mode === 'production') {
-        expect(existsSync(file('_headers'))).toBe(false);
-      } else {
-        expect(readFileSync(file('_headers'), 'utf8')).toBe(
-          `/*\n  X-Robots-Tag: ${NOINDEX}\n`
-        );
-      }
+      expect(readFileSync(file('_headers'), 'utf8')).toBe(
+        mode === 'production'
+          ? noindexRules(PLACEHOLDERS)
+          : `/*\n  X-Robots-Tag: ${NOINDEX}\n`
+      );
     }
   );
 
@@ -270,7 +399,7 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
   });
 
   if (mode === 'production') {
-    test('the sitemap lists the pages with content', () => {
+    test('the sitemap lists the pages with content, at their canonical URLs', () => {
       const sitemap = readFileSync(file('sitemap.xml'), 'utf8');
       const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
         match => match[1]
@@ -279,9 +408,8 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
         'https://commandsnippets.com/',
         'https://commandsnippets.com/privacy/',
       ]);
-      for (const path of SITEMAP_PATHS) {
-        expect(existsSync(join(outDir, path, 'index.html'))).toBe(true);
-        expect(page(path)).not.toContain('data-placeholder');
+      for (const path of CONTENT) {
+        expect(canonicalOf(page(path))).toBe(pageUrl(mode, path));
       }
     });
   }

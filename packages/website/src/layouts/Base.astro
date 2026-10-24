@@ -2,27 +2,35 @@
 import '../styles/global.css';
 import {appUrl, FOOTER_LINKS} from '../lib/appUrl';
 import {
-  indexable,
   NOINDEX,
   PREVIEW_IMAGE,
   pageUrl,
   SITE_DESCRIPTION,
   SITE_NAME,
+  searchable,
 } from '../lib/site';
 
 interface Props {
   title: string;
   description?: string;
+  /**
+   * The page has no content yet (`Placeholder.astro`), so it stays out of
+   * search on every tier until it does (`searchable` in `../lib/site`).
+   */
+  placeholder?: boolean;
 }
 
-const {title, description = SITE_DESCRIPTION} = Astro.props;
+const {
+  title,
+  description = SITE_DESCRIPTION,
+  placeholder = false,
+} = Astro.props;
 const mode = import.meta.env.MODE;
 const app = appUrl(mode);
+const mayIndex = searchable(mode, placeholder);
 // Built pages are directories (`/privacy/`), the form the assets are served at.
 // Pages that may not be indexed name no URL for search engines to follow.
-const canonical = indexable(mode)
-  ? pageUrl(mode, Astro.url.pathname)
-  : undefined;
+const canonical = mayIndex ? pageUrl(mode, Astro.url.pathname) : undefined;
 // Link previews need an absolute image URL; each build names its own host's.
 const previewImage = pageUrl(mode, PREVIEW_IMAGE.path);
 const year = new Date().getFullYear();
@@ -35,7 +43,7 @@ const year = new Date().getFullYear();
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {!indexable(mode) && <meta name="robots" content={NOINDEX} />}
+    {!mayIndex && <meta name="robots" content={NOINDEX} />}
     {canonical && <link rel="canonical" href={canonical} />}
     <meta
       name="theme-color"
