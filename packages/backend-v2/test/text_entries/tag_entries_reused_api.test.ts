@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
+  ApiClient,
   type Base,
   type Json,
   json,
@@ -7,12 +8,13 @@ import {
   setUpBase,
   textEntryFactory,
   textEntryReusedFactory,
+  tokenFor,
 } from '../helpers';
 
-const reusePayload = (textEntryId: number | string) => ({
+const reusePayload = (textEntryId: number | string, clientId?: string) => ({
   data: {
     type: 'TextEntryReused',
-    attributes: {},
+    attributes: clientId === undefined ? {} : {client_id: clientId},
     relationships: {
       text_entry: {data: {type: 'TextEntry', id: textEntryId}},
     },
@@ -317,5 +319,79 @@ describe('EntryReusesApi v2', () => {
       'TextEntry',
       'User',
     ]);
+  });
+
+  it('counts a reuse retried with its client_id once', async () => {
+    const {user1, user1Client} = base;
+    const entry = await textEntryFactory({user: user1});
+    const first = await user1Client.post(
+      '/api/v1/entry_reuses',
+      reusePayload(entry.id, 'reuse-1')
+    );
+    const retried = await user1Client.post(
+      '/api/v1/entry_reuses',
+      reusePayload(entry.id, 'reuse-1')
+    );
+    expect(first.status).toBe(201);
+    expect(retried.status).toBe(201);
+    expect((await json(retried)).data.id).toBe((await json(first)).data.id);
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(1);
+    // Another client id is another reuse.
+    await user1Client.post(
+      '/api/v1/entry_reuses',
+      reusePayload(entry.id, 'reuse-2')
+    );
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(2);
+  });
+
+  it('keeps client ids per user', async () => {
+    const {user1, user2, user1Client} = base;
+    const mine = await textEntryFactory({user: user1});
+    const theirs = await textEntryFactory({user: user2});
+    const user2Client = new ApiClient(await tokenFor(user2.id));
+    const made = await json(
+      await user1Client.post(
+        '/api/v1/entry_reuses',
+        reusePayload(mine.id, 'shared-id')
+      )
+    );
+    const response = await user2Client.post(
+      '/api/v1/entry_reuses',
+      reusePayload(theirs.id, 'shared-id')
+    );
+    expect(response.status).toBe(201);
+    const body = await json(response);
+    expect(body.data.id).not.toBe(made.data.id);
+    expect(body.data.relationships.user.data.id).toBe(String(user2.id));
+    expect((await refreshEntry(theirs.id))?.reused_count).toBe(1);
+  });
+
+  it('refuses a client_id longer than 64 characters', async () => {
+    const entry = await textEntryFactory({user: base.user1});
+    const response = await base.user1Client.post(
+      '/api/v1/entry_reuses',
+      reusePayload(entry.id, 'x'.repeat(65))
+    );
+    expect(response.status).toBe(400);
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(0);
+  });
+
+  it('answers with the entry, counted, when asked to include it', async () => {
+    const entry = await textEntryFactory({user: base.user1});
+    const response = await base.user1Client.post(
+      '/api/v1/entry_reuses?include=text_entry',
+      reusePayload(entry.id, 'reuse-1')
+    );
+    expect(response.status).toBe(201);
+    const body = await json(response);
+    expect(body.included).toHaveLength(1);
+    expect(body.included[0].type).toBe('TextEntry');
+    expect(body.included[0].id).toBe(String(entry.id));
+    expect(body.included[0].attributes.reused_count).toBe(1);
+    // The entry's revision does not move: lists sorted by it stay put.
+    expect(body.included[0].attributes.date_updated).toBe(
+      (await json(await base.user1Client.get(`/api/v1/entries/${entry.id}`)))
+        .data.attributes.date_updated
+    );
   });
 });

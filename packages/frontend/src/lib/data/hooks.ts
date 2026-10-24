@@ -342,6 +342,36 @@ export function useEntries(
   );
 }
 
+/**
+ * The tags entry `entryId` is in (not deleted), by name, for its info (Get
+ * Info): read while it is open, never by a list row.
+ */
+export function useEntryTags(entryId: string): Tag[] | undefined {
+  const session = useSession();
+  return useLiveQuery(async () => {
+    if (session === null) {
+      return [];
+    }
+    const {db, owner} = session;
+    const junctions = await db.junctions
+      .where('[owner+relationships.text_entry.data.id]')
+      .equals([owner, entryId])
+      .filter(junction => !junction.attributes.is_deleted)
+      .toArray();
+    const tags = await db.tags.bulkGet(
+      junctions.map(
+        (junction): RowKey => [owner, junction.relationships.tag.data.id]
+      )
+    );
+    return tags
+      .filter(
+        (tag): tag is NonNullable<typeof tag> =>
+          tag !== undefined && !tag.attributes.is_deleted
+      )
+      .sort((a, b) => a.attributes.name.localeCompare(b.attributes.name));
+  }, [session, entryId]);
+}
+
 /** The junction putting entry `entryId` in tag `tagId`, when there is one. */
 export async function junctionOf(
   data: OwnedData,

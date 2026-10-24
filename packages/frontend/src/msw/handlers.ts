@@ -34,10 +34,14 @@ import {
   type TextEntryCursorListDocument,
   type TextEntryDocument,
   type TextEntryListDocument,
+  type TextEntryReused,
+  type TextEntryReusedDocument,
   tagCreateAttributesSchema,
   tagTextEntryCreateRelationshipsSchema,
   tagUpdateAttributesSchema,
   textEntryCreateAttributesSchema,
+  textEntryReusedCreateAttributesSchema,
+  textEntryReusedCreateRelationshipsSchema,
   textEntryUpdateAttributesSchema,
   type User,
 } from '@commandsnippets/api-shared';
@@ -262,6 +266,12 @@ let runtimeEntriesOverride: TextEntryListDocument | null = null;
 // the junction list shows). Kept apart from the entries' `included`, which
 // holds only the junctions the entries have.
 let deletedJunctions: TagTextEntry[] = [];
+
+/**
+ * The reuses recorded (`POST /entry_reuses`), with the client ids they were
+ * made with: a retried one is counted once, as the API counts it.
+ */
+let reuses: Array<{reuse: TextEntryReused; clientId: string | null}> = [];
 
 /**
  * The entries (with their junctions in `included`) that the handlers answer
@@ -2115,6 +2125,76 @@ const createHandlers = () => {
         }
       }),
 
+      // Record a reuse: the entry's reused_count goes up (as the API's trigger
+      // does), its revision stays. A client id already recorded answers with
+      // its reuse, counted once.
+      http.post(`${baseUrl}/entry_reuses`, async ({request}) => {
+        recordRequest('POST', request.url);
+        try {
+          const state = activeEntries();
+          const {attributes, relationships} = await parseResource(request, {
+            type: 'TextEntryReused',
+          });
+          const {client_id: clientId} = validateFields(
+            textEntryReusedCreateAttributesSchema,
+            attributes
+          );
+          const errors: ErrorObject[] = [];
+          const entryId = relatedId(
+            textEntryReusedCreateRelationshipsSchema.shape.text_entry,
+            'text_entry',
+            relationships,
+            id => state.data.some(entry => entry.id === id),
+            errors
+          );
+          if (entryId === undefined) {
+            throw new MockApiError(400, errors);
+          }
+          let recorded =
+            clientId === undefined
+              ? undefined
+              : reuses.find(candidate => candidate.clientId === clientId)
+                  ?.reuse;
+          if (recorded === undefined) {
+            recorded = {
+              type: 'TextEntryReused',
+              id: nextId(
+                'TextEntryReused',
+                reuses.map(({reuse}) => reuse)
+              ),
+              attributes: {},
+              relationships: {
+                text_entry: {data: {type: 'TextEntry', id: entryId}},
+                ...ownedByTestUser,
+              },
+            };
+            reuses = [...reuses, {reuse: recorded, clientId: clientId ?? null}];
+            state.data = state.data.map(entry =>
+              entry.id === entryId
+                ? {
+                    ...entry,
+                    attributes: {
+                      ...entry.attributes,
+                      reused_count: entry.attributes.reused_count + 1,
+                    },
+                  }
+                : entry
+            );
+          }
+          const reusedId = recorded.relationships.text_entry.data.id;
+          const include = new URL(request.url).searchParams.get('include');
+          const body: TextEntryReusedDocument = {
+            data: recorded,
+            ...(include?.split(',').includes('text_entry')
+              ? {included: state.data.filter(entry => entry.id === reusedId)}
+              : {}),
+          };
+          return HttpResponse.json(body, {status: 201});
+        } catch (error) {
+          return errorResponse(error);
+        }
+      }),
+
       // Edit or (un)delete an entry: the attributes sent, and a new revision
       // (its tags' too)
       http.patch(`${baseUrl}/entries/:id`, async ({params, request}) => {
@@ -2497,6 +2577,7 @@ export const resetMSWState = () => {
   entriesResponse = structuredClone(originalEntriesResponse);
   runtimeEntriesOverride = null;
   deletedJunctions = [];
+  reuses = [];
   adminUsers = structuredClone(originalAdminUsers);
   adminAuditLog = [];
   versions = initialVersions();

@@ -65,6 +65,7 @@ import {
   isLocalId,
   type OutboxApi,
   type Remap,
+  refreshEntry,
 } from './outbox';
 import {SYNC_PAGE_SIZE} from './pageSize';
 import {PublicViewChangedError} from './publicView';
@@ -571,6 +572,12 @@ export interface SyncEngine {
    * with the syncs and flushes, so none they read of it is stored after.
    */
   adopt(version: number): Promise<void>;
+  /**
+   * Send the queued writes, then read entry `entryId` again (`refreshEntry`
+   * in `outbox.ts`): its reuse count, as other devices left it. Nothing
+   * where the data is read-only.
+   */
+  refreshEntry(entryId: string): Promise<void>;
 }
 
 /**
@@ -662,6 +669,13 @@ export function createSyncEngine(
     flush,
     adopt: async version => {
       await exclusive(() => adoptVersion(db, owner, version));
+    },
+    refreshEntry: async entryId => {
+      if (writes === null) {
+        return;
+      }
+      await flush();
+      await exclusive(() => refreshEntry(db, writes, owner, entryId));
     },
     syncAll: syncAllToTheEnd,
     syncTag: tagId => {

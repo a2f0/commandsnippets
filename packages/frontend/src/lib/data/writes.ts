@@ -563,6 +563,41 @@ export async function deleteEntry(
   });
 }
 
+/**
+ * Count a reuse of entry `entryId` (it was copied): its `reused_count`, as
+ * the API's trigger does, at once; the API's count replaces it once the reuse
+ * is sent. The entry's revision stays, so no list sorted by it moves.
+ */
+export async function reuseEntry(
+  session: SyncSession,
+  entryId: string
+): Promise<void> {
+  const {db, owner} = session;
+  await write(session, async () => {
+    const entry = await rowNamed(db.entries, owner, entryId);
+    if (entry === undefined) {
+      return {writes: [], result: undefined};
+    }
+    await db.entries.put({
+      ...entry,
+      attributes: {
+        ...entry.attributes,
+        reused_count: entry.attributes.reused_count + 1,
+      },
+    });
+    return {
+      writes: [
+        {
+          kind: 'reuseEntry',
+          entryId: entry.id,
+          reuseId: globalThis.crypto.randomUUID(),
+        },
+      ],
+      result: undefined,
+    };
+  });
+}
+
 /** Put entry `entryId` in tag `tagId` (at the bottom), unless it is there. */
 export async function tagEntry(
   session: SyncSession,

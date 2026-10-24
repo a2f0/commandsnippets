@@ -42,6 +42,7 @@ import {
   renameTag,
   reorderEntries,
   reorderTags,
+  reuseEntry,
   tagEntry,
   untagEntry,
   updateEntry,
@@ -1280,5 +1281,87 @@ describe('the writes', () => {
     expect(writes).toEqual([]);
     expect(await Dexie.exists(alice.db.name)).toBe(true);
     expect(await syncSession('alice').db.outbox.count()).toBe(1);
+  });
+});
+
+describe('a reuse (a copy)', () => {
+  const reusedCount = async (id: string) =>
+    (await entryRow(id))?.attributes.reused_count;
+  const apiCount = async (id: string) =>
+    (await apiClient.forVersion(1).getEntry(id)).data.attributes.reused_count;
+
+  it('is counted at once, and the API counts it once, though retried', async () => {
+    await session().sync.syncAll();
+    const reuse = vi.spyOn(apiClientMethods, 'reuseEntry');
+    offline();
+
+    await reuseEntry(session(), '1');
+    expect(await reusedCount('1')).toBe(1);
+    expect(await queued()).toBe(1);
+    await expect(session().sync.flush()).rejects.toThrow();
+    server.resetHandlers();
+    await session().sync.flush();
+
+    expect(await queued()).toBe(0);
+    expect(await reusedCount('1')).toBe(1);
+    expect(await apiCount('1')).toBe(1);
+    // Both attempts named the same reuse.
+    const clientIds = reuse.mock.calls.map(([, clientId]) => clientId);
+    expect(clientIds).toHaveLength(2);
+    expect(new Set(clientIds).size).toBe(1);
+  });
+
+  it('whose answer was lost is counted once when retried', async () => {
+    await session().sync.syncAll();
+    const reuseId = '00000000-0000-4000-8000-000000000001';
+    vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValueOnce(reuseId);
+    await reuseEntry(session(), '1');
+    // Its first attempt reached the API, but the answer never came back.
+    await apiClient.forVersion(1).reuseEntry('1', reuseId);
+
+    await session().sync.flush();
+
+    expect(await apiCount('1')).toBe(1);
+    expect(await reusedCount('1')).toBe(1);
+  });
+
+  it('keeps its count through a sync before it is sent', async () => {
+    await session().sync.syncAll();
+    offline();
+    await reuseEntry(session(), '1');
+    await session().sync.syncAll();
+    expect(await reusedCount('1')).toBe(1);
+
+    server.resetHandlers();
+    await session().sync.flush();
+    expect(await reusedCount('1')).toBe(1);
+  });
+
+  it('leaves the entry where it was in lists sorted by revision', async () => {
+    await session().sync.syncAll();
+    const before = (await entryRow('1'))?.attributes.date_updated;
+    await reuseEntry(session(), '1');
+    await session().sync.flush();
+    expect((await entryRow('1'))?.attributes.date_updated).toBe(before);
+  });
+
+  it('is never made where the data is read-only', async () => {
+    store.setIsStaff(true);
+    const writes = sent();
+    await expect(
+      reuseEntry(syncSession(TEST_USER, 'alice'), '71')
+    ).rejects.toThrow(ReadOnlyError);
+    expect(writes).toEqual([]);
+  });
+
+  it("made on another device is read when the entry's info asks", async () => {
+    await session().sync.syncAll();
+    await apiClient.forVersion(1).reuseEntry('1', 'another-device');
+    // Its revision did not move: a sync does not read it again.
+    await session().sync.syncAll();
+    expect(await reusedCount('1')).toBe(0);
+
+    await session().sync.refreshEntry('1');
+    expect(await reusedCount('1')).toBe(1);
   });
 });

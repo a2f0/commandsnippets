@@ -162,6 +162,13 @@
       "when": 1791381041624,
       "tag": "0022_drop_django_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1792847958354,
+      "tag": "0023_reuse_client_ids",
+      "breakpoints": true
     }
   ]
 }

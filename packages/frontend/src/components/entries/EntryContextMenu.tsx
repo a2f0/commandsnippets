@@ -1,7 +1,7 @@
 import {Menu} from '@mui/material';
 import React from 'react';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
-import {useSession} from '../../lib/data/hooks';
+import {useOwner, useSession} from '../../lib/data/hooks';
 import {setEntryPublic} from '../../lib/data/writes';
 import {useRoute, useSearchParam} from '../../lib/router/navigation';
 import type {IMouse} from '../../lib/shared';
@@ -59,7 +59,11 @@ export interface IEntryContextMenu {
   handleNewEntryParent: () => void;
   handleBeginEditParent: () => void;
   handleCopyParent: () => void;
-  /** Another user's entry (staff reading it): Copy is all it offers. */
+  handleGetInfoParent: () => void;
+  /**
+   * Another user's entry: Copy is all it offers, and Get Info to staff (not
+   * on public pages: the reuse count is private).
+   */
   readOnly: boolean;
 }
 
@@ -71,10 +75,12 @@ const EntryContextMenu = ({
   handleNewEntryParent,
   handleBeginEditParent,
   handleCopyParent,
+  handleGetInfoParent,
   readOnly,
   text_entry,
 }: IEntryContextMenu) => {
   const session = useSession();
+  const publicOnly = useOwner()?.publicOnly ?? true;
   // Whether the list is a tag's, not which tag's: a tag switch renders no
   // row's menu again.
   const onTagList = useRoute(
@@ -107,6 +113,11 @@ const EntryContextMenu = ({
     handleClose();
   };
 
+  const handleGetInfo = () => {
+    handleGetInfoParent();
+    handleClose();
+  };
+
   return (
     <StyledMenu
       id={`tagsEntriesContextMenu-${id}`}
@@ -123,6 +134,16 @@ const EntryContextMenu = ({
       >
         Copy
       </StyledMenuItem>
+      {!publicOnly && (
+        <StyledMenuItem
+          id={`tags-entries-context-menu-${id}-get-info`}
+          onClick={() => {
+            handleGetInfo();
+          }}
+        >
+          Get Info
+        </StyledMenuItem>
+      )}
       {!readOnly && (
         <StyledMenuItem
           id={`tagsEntriesContextMenu${id}Edit`}

@@ -109,7 +109,7 @@ describe("Another user's page", () => {
     expect(document.getElementById('tagListContextMenu')).toBeNull();
     expect(document.getElementById('entryListContextMenu')).toBeNull();
 
-    // An entry's offers Copy alone.
+    // An entry's offers Copy, and its info (staff only, not the public).
     const row = entry.closest('[role="entry"]');
     invariant(row instanceof HTMLElement, 'the entry is rendered');
     fireEvent.contextMenu(row);
@@ -119,7 +119,7 @@ describe("Another user's page", () => {
         within(menu)
           .getAllByRole('menuitem', {hidden: true})
           .map(item => item.textContent)
-      ).toEqual(['Copy'])
+      ).toEqual(['Copy', 'Get Info'])
     );
 
     // No drag handles, to reorder or tag with.
