@@ -1,4 +1,5 @@
 ---
+import AppPreview from '../components/AppPreview.astro';
 import Base from '../layouts/Base.astro';
 import {appUrl} from '../lib/appUrl';
 import {indexable, pageUrl, SITE_DESCRIPTION, SITE_NAME} from '../lib/site';
@@ -40,6 +41,49 @@ const structuredData = JSON.stringify({
     },
   ],
 }).replaceAll('<', '\\u003c');
+
+// What the app does today; each line is a feature it has.
+const STEPS = [
+  {
+    title: 'Solve',
+    text: 'Work it out once. Save the command, query or config as a snippet: a subject to find it by, and the text you’ll paste.',
+  },
+  {
+    title: 'Curate',
+    text: 'File it under every tag it belongs to, and arrange each tag in the order that makes sense to you.',
+  },
+  {
+    title: 'Retrieve',
+    text: 'Next time, open the tag or search, click, and paste. The snippets you lean on show how often you’ve used them.',
+  },
+];
+
+const FEATURES = [
+  {
+    title: 'Tags, in your order',
+    text: 'A snippet can sit in any number of tags. Drag snippets and tags into the order you think in.',
+  },
+  {
+    title: 'One click to copy',
+    text: 'Click a snippet to copy it, or move through a list with the arrow keys and press Enter.',
+  },
+  {
+    title: 'Search as you type',
+    text: 'Filter tags and snippets as you type, and sort a list by subject, date, tag count or your own order.',
+  },
+  {
+    title: 'See what you reach for',
+    text: 'Every copy is counted. A snippet’s page shows how often, and exactly when, you used it. It never appears on public pages.',
+  },
+  {
+    title: 'Works offline',
+    text: 'Changes save on your device first and sync when you’re back online, across tabs and devices.',
+  },
+  {
+    title: 'Private until you share',
+    text: 'Everything starts private. Make a tag and its snippets public to share them as a read-only page.',
+  },
+];
 ---
 
 <Base
@@ -58,6 +102,76 @@ const structuredData = JSON.stringify({
     <p id="tagLine">
       An opinionated note-taking system for technical professionals.
     </p>
-    <a class="login" href={app}>Get started</a>
+    <p class="lede">
+      Keep the commands you work out once: tagged, in your order, and a click
+      away from your clipboard.
+    </p>
+    <div class="actions">
+      <a class="login primary" href={app}>Get started</a>
+      <a class="secondary" href="#how">How it works</a>
+    </div>
+  </section>
+
+  <AppPreview />
+
+  <section id="how" class="band" aria-labelledby="howHeading">
+    <h2 id="howHeading">How it works</h2>
+    <ol class="steps">
+      {
+        STEPS.map((step, index) => (
+          <li>
+            <span class="step-number" aria-hidden="true">
+              {index + 1}
+            </span>
+            <h3>{step.title}</h3>
+            <p>{step.text}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section id="features" class="band" aria-labelledby="featuresHeading">
+    <h2 id="featuresHeading">Built for the commands you reuse</h2>
+    <ul class="features">
+      {
+        FEATURES.map(feature => (
+          <li>
+            <h3>{feature.title}</h3>
+            <p>{feature.text}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="band" aria-labelledby="dataHeading">
+    <h2 id="dataHeading">Your snippets stay yours</h2>
+    <ul class="features">
+      <li>
+        <h3>Backups you keep</h3>
+        <p>
+          Export a backup of your tags and snippets whenever you like. Restoring
+          one keeps what it replaced as an earlier version you can switch back
+          to.
+        </p>
+      </li>
+      <li>
+        <h3>No password to manage</h3>
+        <p>Sign in with GitHub or Google. It runs in your browser.</p>
+      </li>
+      <li>
+        <h3>Light or dark</h3>
+        <p>
+          A quiet, grayscale interface in light and dark themes, in English
+          and Spanish.
+        </p>
+      </li>
+    </ul>
+  </section>
+
+  <section class="cta" aria-labelledby="ctaHeading">
+    <h2 id="ctaHeading">Your next command is worth keeping.</h2>
+    <a class="login primary" href={app}>Start your collection</a>
   </section>
 </Base>

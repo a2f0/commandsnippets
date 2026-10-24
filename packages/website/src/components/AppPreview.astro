@@ -1,0 +1,65 @@
+---
+/**
+ * A sketch of the app in HTML: a tag list, and the selected tag's snippets
+ * with their reuse counts. Drawn here rather than a screenshot, so it follows
+ * the light and dark themes and never shows anyone's data.
+ */
+const TAGS = ['docker', 'git', 'kubernetes', 'postgres', 'ssh'];
+const SELECTED = 'git';
+const SNIPPETS = [
+  {
+    subject: 'Undo the last commit, keep its changes',
+    body: 'git reset --soft HEAD~1',
+    reused: 12,
+  },
+  {
+    subject: 'Delete local branches already merged',
+    body: "git branch --merged main | grep -v ' main$' | xargs git branch -d",
+    reused: 5,
+  },
+  {
+    subject: 'Show a file as it was at a commit',
+    body: 'git show <commit>:<path>',
+    reused: 3,
+  },
+  {
+    subject: 'Find the commit that broke it',
+    body: 'git bisect start <bad> <good>',
+    reused: 0,
+  },
+];
+---
+
+<div
+  class="preview"
+  role="img"
+  aria-label="Commandsnippets: tags on the left; the git tag's snippets on the right, each with a subject, a command, and how many times it was reused."
+>
+  <div class="preview-bar" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+  <div class="preview-body" aria-hidden="true">
+    <ul class="preview-tags">
+      {
+        TAGS.map(tag => (
+          <li class={tag === SELECTED ? 'selected' : undefined}>{tag}</li>
+        ))
+      }
+    </ul>
+    <ol class="preview-snippets">
+      {
+        SNIPPETS.map(snippet => (
+          <li>
+            <span class="preview-subject">
+              {snippet.subject}
+              {snippet.reused > 0 && (
+                <span class="preview-count">{snippet.reused}×</span>
+              )}
+            </span>
+            <code>{snippet.body}</code>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</div>
