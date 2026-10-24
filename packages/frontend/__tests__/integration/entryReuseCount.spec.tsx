@@ -2,20 +2,13 @@
  * An entry's reuse count (`reused_count`) shows beside its subject for its
  * owner, and not for an entry never reused. Each copy is a reuse, counted at
  * once and sent like any write. It is private: public pages get 0 from the
- * API, so a guest sees none, and a guest's copy counts nothing. Get Info
- * shows it with the rest of the entry's info, read again from the API.
+ * API, so a guest sees none, and a guest's copy counts nothing. (An entry's
+ * page, Get Info, is `entryPage.spec.tsx`.)
  */
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
+import {fireEvent, render, screen, within} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
-import {useAppState} from '../../src/lib/state/appState';
 import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {setRuntimeEntriesOverride} from '../../src/msw/handlers';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
@@ -127,25 +120,6 @@ it('counts a copy made with Enter in the list', async () => {
   );
 });
 
-it("keeps the dialog's keys from the list: no copy, no move", async () => {
-  signInHere();
-  mount('/test/test-tag-1');
-  fireEvent.click(await screen.findByText('entry-1-body'));
-  expect(await screen.findByTitle('Reused 4 times')).toBeInTheDocument();
-  await openMenu('entry-1-subject', '1');
-  fireEvent.click(screen.getByRole('menuitem', {name: 'Get Info'}));
-  const dialog = await screen.findByRole('dialog', {name: 'Entry Info'});
-  const copies = vi.mocked(navigator.clipboard.writeText).mock.calls.length;
-
-  const close = within(dialog).getByRole('button', {name: 'Close'});
-  fireEvent.keyDown(close, {key: 'ArrowDown', code: 'ArrowDown'});
-  fireEvent.keyDown(close, {key: 'Enter', code: 'Enter'});
-
-  expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(copies);
-  expect(screen.getByTitle('Reused 4 times')).toBeInTheDocument();
-  expect(useAppState.getState().entrySelectedID).toBe('1');
-});
-
 it('shows a guest no reuse counts on a public page, and counts no copy', async () => {
   await apiClient.forVersion(1).setTagPublic('1', true);
   await apiClient.forVersion(1).setEntryPublic('1', true);
@@ -162,49 +136,4 @@ it('shows a guest no reuse counts on a public page, and counts no copy', async (
   expect(sent).toEqual([]);
   // Nor is its info offered: the count is private.
   expect(await openMenu('entry-1-subject', '1')).toEqual(['Copy']);
-});
-
-it("shows an entry's info from its menu: Get Info", async () => {
-  signInHere();
-  mount('/test/test-tag-1');
-
-  expect(await openMenu('entry-1-subject', '1')).toContain('Get Info');
-  fireEvent.click(screen.getByRole('menuitem', {name: 'Get Info'}));
-
-  const dialog = await screen.findByRole('dialog', {name: 'Entry Info'});
-  const field = (key: string) =>
-    within(dialog).getByText((_, element) => element?.id === `entryInfo${key}`);
-  expect(field('Subject')).toHaveTextContent('entry-1-subject');
-  // Read on opening.
-  await waitFor(() => expect(field('Tags')).toHaveTextContent('test-tag-1'));
-  expect(field('Visibility')).toHaveTextContent('Private');
-  expect(field('Reused')).toHaveTextContent('3 times');
-  expect(field('Size')).toHaveTextContent('12 characters · 1 line');
-  expect(field('Id')).toHaveTextContent('1');
-  expect(field('Created')).toHaveTextContent('2019');
-
-  fireEvent.click(within(dialog).getByRole('button', {name: 'Close'}));
-  await waitFor(() =>
-    expect(screen.queryByRole('dialog', {name: 'Entry Info'})).toBeNull()
-  );
-});
-
-it("reads the entry again for its info: another device's copies", async () => {
-  signInHere();
-  mount('/test/test-tag-1');
-  expect(await screen.findByTitle('Reused 3 times')).toBeInTheDocument();
-  await apiClient.forVersion(1).reuseEntry('1', 'another-device');
-
-  await openMenu('entry-1-subject', '1');
-  fireEvent.click(screen.getByRole('menuitem', {name: 'Get Info'}));
-
-  const dialog = await screen.findByRole('dialog', {name: 'Entry Info'});
-  await waitFor(() =>
-    expect(
-      within(dialog).getByText(
-        (_, element) => element?.id === 'entryInfoReused'
-      )
-    ).toHaveTextContent('4 times')
-  );
-  expect(screen.getByTitle('Reused 4 times')).toHaveTextContent('4×');
 });

@@ -51,7 +51,9 @@ import type {
   TagTextEntryDocument,
   TagTextEntryListDocument,
   TextEntryDocument,
+  TextEntryReused,
   TextEntryReusedDocument,
+  TextEntryReusedListDocument,
 } from '@commandsnippets/api-shared/responses';
 import type {Table} from 'dexie';
 import {ApiRequestError, UserMismatchError} from '../api/apiClient';
@@ -193,6 +195,10 @@ export interface OutboxApi {
     after: string
   ): Promise<TagTextEntryCursorListDocument>;
   getEntry(entryId: string): Promise<TextEntryDocument>;
+  getEntryReuses(
+    entryId: string,
+    page: number
+  ): Promise<TextEntryReusedListDocument>;
   getJunction(
     tagId: string,
     entryId: string
@@ -1015,10 +1021,7 @@ export async function refreshEntry(
   owner: string,
   entryId: string
 ): Promise<void> {
-  const accountId = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
-  const account = accountId === undefined ? api : api.forAccount(accountId);
-  const version = await heldVersion(db, owner);
-  const named = version === undefined ? account : account.forVersion(version);
+  const {named, accountId, version} = await readerOf(db, api, owner);
   const document = await named.getEntry(entryId);
   await db.transaction(
     'rw',
@@ -1029,6 +1032,52 @@ export async function refreshEntry(
       await putResources(db, owner, answer(document));
     }
   );
+}
+
+/**
+ * Every reuse of `owner`'s entry `entryId` the API holds, newest first (all
+ * of its pages). Not stored: only the entry's page shows them. Call after a
+ * flush, under the same lock, so the reuses queued here are among them.
+ */
+export async function readReuses(
+  db: CommandsnippetsDatabase,
+  api: OutboxApi,
+  owner: string,
+  entryId: string
+): Promise<TextEntryReused[]> {
+  const {named, accountId, version} = await readerOf(db, api, owner);
+  const reuses: TextEntryReused[] = [];
+  for (let page = 1; ; page += 1) {
+    const listed = await named.getEntryReuses(entryId, page);
+    reuses.push(...listed.data);
+    if (listed.links.next === null || listed.data.length === 0) {
+      break;
+    }
+  }
+  // Of the account and version read, not another taken up meanwhile.
+  await assertBound(db, owner, accountId);
+  await assertHeld(db, owner, version);
+  return reuses;
+}
+
+/**
+ * `api` naming the account `owner`'s data is bound to and the data version
+ * it holds, as the queue's requests name them.
+ */
+async function readerOf(
+  db: CommandsnippetsDatabase,
+  api: OutboxApi,
+  owner: string
+): Promise<{
+  named: OutboxApi;
+  accountId: string | undefined;
+  version: number | undefined;
+}> {
+  const accountId = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+  const account = accountId === undefined ? api : api.forAccount(accountId);
+  const version = await heldVersion(db, owner);
+  const named = version === undefined ? account : account.forVersion(version);
+  return {named, accountId, version};
 }
 
 /** How many writes `owner` has queued. */

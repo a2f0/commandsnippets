@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {routeOf} from '../../../../src/lib/router/route';
+import {entryPath, routeOf} from '../../../../src/lib/router/route';
 
 describe('routeOf', () => {
   it.each([
@@ -14,6 +14,10 @@ describe('routeOf', () => {
     ['/test/shell', {page: 'user', user: 'test', tag: 'shell'}],
     // Another path under /oauth is a user's tag, as React Router matched it.
     ['/oauth/other', {page: 'user', user: 'oauth', tag: 'other'}],
+    ['/test/entries/589', {page: 'entry', user: 'test', entryId: '589'}],
+    ['/test/entries/589/', {page: 'entry', user: 'test', entryId: '589'}],
+    // A tag named "entries" is still a tag.
+    ['/test/entries', {page: 'user', user: 'test', tag: 'entries'}],
   ])('routes %s', (pathname, route) => {
     expect(routeOf(pathname)).toEqual(route);
   });
@@ -28,7 +32,23 @@ describe('routeOf', () => {
     expect(routeOf(pathname)).toEqual({page: 'user', user: 'test', tag});
   });
 
-  it.each(['/a/b/c', '//x', '/test//x'])('has no route for %s', pathname => {
+  it.each([
+    '/a/b/c',
+    '//x',
+    '/test//x',
+    '/test/entries/1/more',
+    '/test/Entries/1',
+  ])('has no route for %s', pathname => {
     expect(routeOf(pathname)).toEqual({page: 'none'});
+  });
+
+  it("names an entry's page, any id round-tripping", () => {
+    expect(entryPath('test', '589')).toBe('/test/entries/589');
+    const local = 'local-1/2 x';
+    expect(routeOf(entryPath('test', local))).toEqual({
+      page: 'entry',
+      user: 'test',
+      entryId: local,
+    });
   });
 });

@@ -123,7 +123,7 @@ custom migration (`bunx drizzle-kit generate --custom --name <name>`).
 | `GET /api/v1/user`                                          | the requester (401 when anonymous), with their `data_version`                       |
 | `/api/v1/tags`, `/entries`                                  | list, retrieve, create, `PATCH`/`PUT`, delete (soft); `POST /tags/reorder`          |
 | `/api/v1/tags_entries`                                      | taggings: list, create, delete (soft); `POST /reorder`; no retrieve or update (405) |
-| `/api/v1/entry_reuses`                                      | reuses: list, retrieve, create (one per `client_id`), delete; no update (405)       |
+| `/api/v1/entry_reuses`                                      | reuses: list (by entry), retrieve, create (one per `client_id`), delete; no update  |
 | `GET /api/v1/user/backup`, `POST /api/v1/user/restore`      | [Backups](#backups)                                                                 |
 | `/api/v1/user/data_versions`                                | [Data versions](#data-versions)                                                     |
 | `GET /api/v1/users/:username[/tags,/entries,/tags_entries]` | [Public user data](#public-user-data)                                               |

@@ -175,10 +175,21 @@ API; everything else the app keeps is a zustand store.
   after a lost answer is counted once. Its answer is the entry as counted. A
   read-only page counts nothing. A reuse leaves the entry's revision alone
   (no list sorted by it moves), so the sync never reads another device's
-  reuses; the entry's Get Info (`EntryInfoDialog`: subject, tags,
-  visibility, reuse count, dates, size, id; owners and staff, never public
-  pages, as the count is private) reads the entry again on opening
-  (`SyncEngine.refreshEntry`, after a flush).
+  reuses.
+- **An entry's page** (`/:user/entries/:id`, `EntryPage.tsx`; Get Info in
+  an entry's context menu goes there, for owners and staff, never on public
+  pages): its subject, body (with Copy, a reuse too), tags (links to their
+  lists), visibility, reuse count, dates, size and id, and every reuse,
+  newest first. It reads them from the API (`SyncEngine.entryReuses`: the
+  queue is sent first, so this device's copies are among them, then the
+  entry, for its count as other devices left it, then every page of
+  `GET /entry_reuses?filter[text_entry.id]=`), again whenever the count
+  changes; they are not stored. Its owner sees the reuses; staff the count
+  only (their session reads no reuses); a public page neither, the count
+  being private (the API sends 0). Back returns to the list Get Info was
+  opened from (`entryReturnPath`), or the user's page. Its data syncs as
+  the entries page's does (`useCollectionSync`); an entry not found while
+  the first load runs is still loading (`useEntry`).
 - **The queue** (`flushOutbox`, run by the sync engine's `flush`, under the
   same lock as the syncs): writes go in order, each naming when it was made
   (`Client-Updated`, api-shared's `CLIENT_UPDATED_HEADER`: the API keeps the
@@ -383,8 +394,8 @@ writing its type by hand.
   `AppRouter.tsx`, `App.tsx` (the providers), `Routes.tsx` and
   `routePaths.ts`
 - **Pages**: `src/pages/`, one component per route: `EntriesPage.tsx`
-  (`/:user/:tag`), `AdminPage.tsx` (`/admin`) and `SignInPage.tsx` (`/` when
-  signed out)
+  (`/:user/:tag`), `EntryPage.tsx` (`/:user/entries/:id`), `AdminPage.tsx`
+  (`/admin`) and `SignInPage.tsx` (`/` when signed out)
 - **Components**: `src/components/<feature>/`: `entries/` and `tags/` (the
   lists, their editors, context menus and styled fields), `admin/` (the admin
   page's tabs), `auth/` (the GitHub and Google sign-in buttons, which are also
@@ -408,7 +419,7 @@ writing its type by hand.
   reads and writes (`data/`), the router (`router/`), and helpers), `src/hooks/`, `src/providers/`,
   `src/i18n/` and `src/msw/`
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
-  (`/:user/:tag`)
+  (`/:user/:tag`, `/:user/entries/:id`)
 - **Libraries**: Material UI, Emotion (styled components), React DnD
   (reordering), i18next (`src/i18n/`)
 
@@ -417,11 +428,14 @@ The app's own router, `src/lib/router/` (no React Router: its hooks render
 every component that calls them on any change of the URL, `React.memo` or
 not, so a tag switch rendered every tag and entry row and the whole page).
 - `route.ts`: `routeOf(pathname)`, the page (`admin`, `githubOAuth`,
-  `googleOAuth`, `user`, `root`, `none`) and a user's page's `user` and
-  `tag`, decoded and matched as React Router matched them.
+  `googleOAuth`, `user`, `entry`, `root`, `none`), a user's page's `user`
+  and `tag`, and an entry's page's `user` and `entryId` (`entryPath` makes
+  one), decoded and matched as React Router matched them. A tag named
+  `entries` is still a tag (`/:user/entries`); `/:user/entries/:id` is the
+  entry's page.
 - `navigation.ts`: the URL as an external store. Read it through a selector
   that returns a value, never an object: `useRoute(route => route.page)`,
-  `useRouteParam('user' | 'tag')`, `useSearchParam('entries')`. A component
+  `useRouteParam('user' | 'tag' | 'entryId')`, `useSearchParam('entries')`. A component
   renders again only when what it selects changes, so select the least it
   needs (whose page, not which tag; `route.tag !== undefined`, not the tag).
   Event handlers and effects read it without subscribing (`currentRoute()`)

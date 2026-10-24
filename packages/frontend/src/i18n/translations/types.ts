@@ -203,7 +203,18 @@ export interface EntriesTranslations {
   infoLines_other: string;
   infoId: string;
   infoNotSent: string;
-  infoClose: string;
+  entryBack: string;
+  entryLoading: string;
+  entryNotFound: string;
+  infoBody: string;
+  infoCopy: string;
+  infoCopied: string;
+  reuseHistory: string;
+  reuseHistoryLoading: string;
+  reuseHistoryEmpty: string;
+  reuseHistoryFailed: string;
+  reuseHistoryRetry: string;
+  reuseHistoryOwnerOnly: string;
 }
 
 export interface AdminTranslations {

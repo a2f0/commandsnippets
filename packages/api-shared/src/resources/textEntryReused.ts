@@ -3,11 +3,17 @@
  * (`/api/v1/entry_reuses`). Its requests are in `requests/textEntryReused.ts`.
  */
 import * as z from 'zod/mini';
-import {relatedResourceSchema, relationshipsSchema} from '../jsonapi/response';
+import {
+  relatedResourceSchema,
+  relationshipsSchema,
+  timestampSchema,
+} from '../jsonapi/response';
 import {RELATIONSHIPS, TEXT_ENTRY_REUSED} from './types';
 
-/** A reuse has no attributes of its own. */
-export const textEntryReusedAttributesSchema = z.object({});
+/** A reuse is when its entry was reused (copied). */
+export const textEntryReusedAttributesSchema = z.object({
+  date_created: timestampSchema,
+});
 
 export const textEntryReusedSchema = relatedResourceSchema(
   TEXT_ENTRY_REUSED,

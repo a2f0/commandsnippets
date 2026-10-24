@@ -28,7 +28,9 @@ entryReuseRoutes.get('/', c => {
     user,
     dataVersion: versionOf(c, user),
     query: textEntryReusedListQuerySchema,
-    filters: {},
+    filters: {
+      text_entry__id: value => eq(entryReuses.text_entry_id, value),
+    },
     ordering: {date_created: sql`${entryReuses.date_created}`},
     defaultOrdering: [entryReuses.date_created, entryReuses.id],
   });

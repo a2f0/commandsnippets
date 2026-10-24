@@ -20,7 +20,6 @@ import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/itemTypes';
 import {MemoizedEntryBody} from './EntryBody';
 import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';
-import {EntryInfoDialog} from './EntryInfoDialog';
 import {EntryNew} from './EntryNew';
 import {MemoizedEntryReuseCount} from './EntryReuseCount';
 import {MemoizedEntrySubject} from './EntrySubject';
@@ -108,7 +107,6 @@ const Entry = ({
   const previewRef = useRef<HTMLDivElement>(null);
   const [mouse, setMouse] = useState(initialMouse);
   const [isEditing, setIsEditing] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
   const [{isDragging}, drag, preview] = useDrag<
     DraggableItem,
     DropResult,
@@ -304,8 +302,7 @@ const Entry = ({
   const newEntryHere =
     appConfig.entryNew === `textEntry-${rowKey}-top` ||
     appConfig.entryNew === `textEntry-${rowKey}-bottom`;
-  const held =
-    isDragging || showInfo || (!readOnly && (isEditing || newEntryHere));
+  const held = isDragging || (!readOnly && (isEditing || newEntryHere));
   useEffect(
     () => (held ? keepRendered(rowKey) : undefined),
     [held, keepRendered, rowKey]
@@ -364,14 +361,6 @@ const Entry = ({
     [appConfig, session, textEntryObject.type, textEntryObject.id]
   );
 
-  const handleGetInfo = useCallback(() => {
-    setShowInfo(true);
-  }, []);
-
-  const handleCloseInfo = useCallback(() => {
-    setShowInfo(false);
-  }, []);
-
   const handleCopyClick = useCallback(() => {
     copyToClipboard(textEntryObject.attributes.body);
   }, [copyToClipboard, textEntryObject.attributes.body]);
@@ -387,7 +376,6 @@ const Entry = ({
         handleNewEntryParent={handleNewEntry}
         handleBeginEditParent={handleBeginEdit}
         handleCopyParent={handleCopyClick}
-        handleGetInfoParent={handleGetInfo}
         readOnly={readOnly}
       />
     ),
@@ -401,7 +389,6 @@ const Entry = ({
       handleNewEntry,
       handleBeginEdit,
       handleCopyClick,
-      handleGetInfo,
     ]
   );
 
@@ -518,10 +505,6 @@ const Entry = ({
       )}
 
       {(appConfig.loggedInUser !== null || readOnly) && contextMenu}
-
-      {showInfo && (
-        <EntryInfoDialog entry={textEntryObject} onClose={handleCloseInfo} />
-      )}
 
       {isEditing && !readOnly && (
         <EntryEdit
