@@ -3,11 +3,11 @@ import {Check, FileCopySharp} from '@mui/icons-material';
 import {styled} from '@mui/material/styles';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
+import {copyEntry} from '../../lib/data/copyEntry';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {
   deleteEntry,
   reorderEntries,
-  reuseEntry,
   tagEntry,
   untagEntry,
 } from '../../lib/data/writes';
@@ -357,22 +357,11 @@ const Entry = ({
     (text: string) => {
       setHoverState(prev => ({...prev, showCopyIcon: false}));
       setShowCheckIcon(true);
-      const entryId = textEntryObject.id;
-      // Each copy is a reuse of the entry, counted for its owner only.
-      void navigator.clipboard
-        .writeText(text)
-        .then(() =>
-          session === null || readOnly
-            ? undefined
-            : reuseEntry(session, entryId)
-        )
-        .catch((error: unknown) =>
-          console.error('Failed to copy the entry or count it:', error)
-        );
+      copyEntry(session, textEntryObject.id, text);
       appConfig.setMostRecentCopyType(textEntryObject.type);
-      appConfig.setMostRecentCopyID(entryId);
+      appConfig.setMostRecentCopyID(textEntryObject.id);
     },
-    [appConfig, readOnly, session, textEntryObject.type, textEntryObject.id]
+    [appConfig, session, textEntryObject.type, textEntryObject.id]
   );
 
   const handleGetInfo = useCallback(() => {

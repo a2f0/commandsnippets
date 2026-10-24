@@ -76,7 +76,9 @@ const EntryInfoDialog = ({entry, onClose}: IProps) => {
   ];
 
   // Rendered by the row: its events reach the list's handlers through the
-  // portal, which would deselect the entry or open the list's menu.
+  // portal, which would deselect the entry or open the list's menu, and its
+  // keys the list's (on the document), which would copy or move the
+  // selection behind it (and keep Enter from pressing Close).
   const stop = (event: React.SyntheticEvent) => event.stopPropagation();
 
   return (
@@ -87,6 +89,7 @@ const EntryInfoDialog = ({entry, onClose}: IProps) => {
       onClick={stop}
       onMouseDown={stop}
       onContextMenu={stop}
+      onKeyDown={stop}
       fullWidth={true}
       maxWidth="sm"
       aria-labelledby={`entryInfoTitle-${id}`}

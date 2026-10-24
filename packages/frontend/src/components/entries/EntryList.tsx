@@ -17,9 +17,11 @@ import React, {
   useState,
 } from 'react';
 import {useDrop} from 'react-dnd';
+import {copyEntry} from '../../lib/data/copyEntry';
 import {
   useEntries,
   useReadOnly,
+  useSession,
   useTagEntries,
   useTagNamed,
 } from '../../lib/data/hooks';
@@ -66,6 +68,8 @@ const EntryList = () => {
   const appConfig = useAppConfig();
   // Another user's entries (staff reading them): no New Entry.
   const readOnly = useReadOnly();
+  // Whose entries a copy (Enter) counts a reuse of: none but the owner's.
+  const session = useSession();
   const tag = useRouteParam('tag');
   const theme: Theme = useTheme();
   const entriesList = useSearchParam('entries');
@@ -244,14 +248,14 @@ const EntryList = () => {
               scrollTo(newIndex, entry.id, 'end');
             }
           } else if (event.key === 'Enter') {
-            navigator.clipboard.writeText(selected.attributes.body);
+            copyEntry(session, selected.id, selected.attributes.body);
             appConfig.setMostRecentCopyID(selected.id);
             appConfig.setMostRecentCopyType(selected.type);
           }
         }
       }
     },
-    [appConfig, entries, scrollTo]
+    [appConfig, entries, scrollTo, session]
   );
 
   useEffect(() => {

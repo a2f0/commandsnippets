@@ -15,6 +15,7 @@ import {
 import {createMemoryHistory} from 'history';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
+import {useAppState} from '../../src/lib/state/appState';
 import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {setRuntimeEntriesOverride} from '../../src/msw/handlers';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
@@ -109,6 +110,40 @@ it('counts a copy as a reuse at once, and sends it once', async () => {
   expect(
     (await apiClient.forVersion(1).getEntry('1')).data.attributes.reused_count
   ).toBe(4);
+});
+
+it('counts a copy made with Enter in the list', async () => {
+  signInHere();
+  mount('/test/test-tag-1');
+  // Selected (and copied) by a click on its body.
+  fireEvent.click(await screen.findByText('entry-1-body'));
+  expect(await screen.findByTitle('Reused 4 times')).toBeInTheDocument();
+
+  fireEvent.keyDown(document, {key: 'Enter', code: 'Enter'});
+
+  expect(await screen.findByTitle('Reused 5 times')).toHaveTextContent('5×');
+  expect(navigator.clipboard.writeText).toHaveBeenLastCalledWith(
+    'entry-1-body'
+  );
+});
+
+it("keeps the dialog's keys from the list: no copy, no move", async () => {
+  signInHere();
+  mount('/test/test-tag-1');
+  fireEvent.click(await screen.findByText('entry-1-body'));
+  expect(await screen.findByTitle('Reused 4 times')).toBeInTheDocument();
+  await openMenu('entry-1-subject', '1');
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Get Info'}));
+  const dialog = await screen.findByRole('dialog', {name: 'Entry Info'});
+  const copies = vi.mocked(navigator.clipboard.writeText).mock.calls.length;
+
+  const close = within(dialog).getByRole('button', {name: 'Close'});
+  fireEvent.keyDown(close, {key: 'ArrowDown', code: 'ArrowDown'});
+  fireEvent.keyDown(close, {key: 'Enter', code: 'Enter'});
+
+  expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(copies);
+  expect(screen.getByTitle('Reused 4 times')).toBeInTheDocument();
+  expect(useAppState.getState().entrySelectedID).toBe('1');
 });
 
 it('shows a guest no reuse counts on a public page, and counts no copy', async () => {

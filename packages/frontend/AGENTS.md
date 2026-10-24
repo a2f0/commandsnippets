@@ -168,7 +168,8 @@ API; everything else the app keeps is a zustand store.
   checked against api-shared's request schemas first (`InvalidWriteError`):
   one the API would refuse is never queued, and its editor keeps it.
 - **Reuses**: every copy of an entry (its copy icon, a click on its body,
-  its menu's Copy) is a reuse (`reuseEntry`): the entry's `reused_count`
+  its menu's Copy, Enter in the list: `copyEntry`) is a reuse
+  (`reuseEntry`): the entry's `reused_count`
   goes up at once, shown beside its subject (`EntryReuseCount`), and the
   reuse is queued with a client id of its own (`client_id`), so one retried
   after a lost answer is counted once. Its answer is the entry as counted. A
