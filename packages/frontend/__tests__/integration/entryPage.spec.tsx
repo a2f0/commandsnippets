@@ -155,3 +155,33 @@ it('shows a guest a public entry without its reuses', async () => {
   expect(screen.queryByRole('heading', {name: 'Reuses'})).toBeNull();
   expect(screen.queryByRole('list')).toBeNull();
 });
+
+it("goes back to the list each entry's page was opened from", async () => {
+  signInHere();
+  const history = mount('/test/test-tag-1');
+  fireEvent.contextMenu(await screen.findByText('entry-1-subject'));
+  fireEvent.click(await screen.findByRole('menuitem', {name: 'Get Info'}));
+  await screen.findByRole('heading', {name: 'entry-1-subject'});
+  act(() => history.push('/test?entries=all'));
+  fireEvent.contextMenu(await screen.findByText('entry-3-subject'));
+  fireEvent.click(await screen.findByRole('menuitem', {name: 'Get Info'}));
+  await screen.findByRole('heading', {name: 'entry-3-subject'});
+
+  // The first entry's page again (Forward, say): its Back is still its own.
+  act(() => history.push('/test/entries/1'));
+  await screen.findByRole('heading', {name: 'entry-1-subject'});
+  fireEvent.click(screen.getByRole('button', {name: 'Back'}));
+  expect(`${history.location.pathname}${history.location.search}`).toBe(
+    '/test/test-tag-1'
+  );
+});
+
+it('signs out when the login cookie is gone, showing nothing private', async () => {
+  // Signed in here, but the user has cleared their cookies since.
+  signIn();
+  assignLoggedInCookie('');
+  mount('/test/entries/1');
+
+  await waitFor(() => expect(store.loggedInUser).toBeNull());
+  expect(screen.queryByRole('heading', {name: 'entry-1-subject'})).toBeNull();
+});

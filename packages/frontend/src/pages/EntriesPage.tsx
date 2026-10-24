@@ -1,6 +1,5 @@
 import {Box} from '@mui/material';
-import React, {Profiler, useCallback, useEffect} from 'react';
-import {useCookies} from 'react-cookie';
+import React, {Profiler, useEffect} from 'react';
 import {AppHeader} from '../components/AppHeader';
 import {BottomToolbar} from '../components/bottomBar/BottomToolbar';
 import {LeftDrawer} from '../components/drawer/LeftDrawer';
@@ -8,15 +7,12 @@ import {RightDrawer} from '../components/drawer/RightDrawer';
 import {EntryList} from '../components/entries/EntryList';
 import {InitialLoadProgress} from '../components/entries/InitialLoadProgress';
 import {RobotsNoindex} from '../components/RobotsNoindex';
-import {hasLoginCookie, loggedInCookieNames} from '../lib/auth/authUtils';
+import {useCookieLogout} from '../hooks/useCookieLogout';
 import {useOwner} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
-import {environment} from '../lib/environment';
 import {recordCommit, useRenderTiming} from '../lib/metrics/hooks';
 import {navigate, useRoute} from '../lib/router/navigation';
 import {useAppConfig, useAppState} from '../lib/state/appState';
-
-const COOKIE_KEYS = loggedInCookieNames(environment);
 
 /**
  * The page, which a tag switch does not render again (only the lists showing
@@ -27,11 +23,7 @@ const EntriesPageContent = () => {
   const renderStart = performance.now();
   const atRoot = useRoute(route => route.page === 'root');
   const appConfig = useAppConfig();
-  // Read `document.cookie` afresh on mount: CookiesProvider parsed it when the
-  // page loaded, before a sign-in's API answer set the login cookie, and that
-  // stale copy would sign the user straight back out.
-  const [cookies] = useCookies(COOKIE_KEYS, {doNotUpdate: false});
-  const loggedInCookie = hasLoginCookie(cookies, environment);
+  useCookieLogout();
   // The user's data, from the API into IndexedDB, which the lists show.
   const syncStatus = useCollectionSync();
 
@@ -41,19 +33,6 @@ const EntriesPageContent = () => {
       navigate(`/${appConfig.loggedInUser}`);
     }
   }, [atRoot, appConfig.loggedInUser]);
-
-  // If the user has cleared their cookies, log them out from the application state.
-  // Note: this is not the Authorization cookie containing the authorization token.
-  const handleCookieLogout = useCallback(() => {
-    if (!loggedInCookie && appConfig.loggedInUser !== null) {
-      console.warn('Cookie logout occurred.');
-      appConfig.setLoggedInUser(null);
-    }
-  }, [loggedInCookie, appConfig.loggedInUser, appConfig.setLoggedInUser]);
-
-  useEffect(() => {
-    handleCookieLogout();
-  }, [handleCookieLogout]);
 
   useRenderTiming('EntriesPage', renderStart);
 

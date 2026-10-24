@@ -8,6 +8,7 @@ import React, {useEffect, useState} from 'react';
 import {AppHeader} from '../components/AppHeader';
 import {InitialLoadProgress} from '../components/entries/InitialLoadProgress';
 import {RobotsNoindex} from '../components/RobotsNoindex';
+import {useCookieLogout} from '../hooks/useCookieLogout';
 import {useTypedTranslation} from '../i18n/hooks';
 import {copyEntry} from '../lib/data/copyEntry';
 import {useEntry, useEntryTags, useOwner, useSession} from '../lib/data/hooks';
@@ -15,6 +16,7 @@ import {useCollectionSync} from '../lib/data/useSync';
 import {formatTimestamp} from '../lib/formatTimestamp';
 import {navigate, useRouteParam} from '../lib/router/navigation';
 import {Link} from '../lib/router/Router';
+import {entryPath} from '../lib/router/route';
 import {useAppState} from '../lib/state/appState';
 import {isLocalId} from '../lib/sync/outbox';
 import type {SyncSession} from '../lib/sync/session';
@@ -297,13 +299,16 @@ const EntryDetail = ({entry, owner, session, publicOnly}: EntryDetailProps) => {
  */
 const EntryPageContent = () => {
   const {t} = useTypedTranslation('entries');
+  useCookieLogout();
   const entryId = useRouteParam('entryId') ?? '';
   const context = useOwner();
   const session = useSession();
   const syncStatus = useCollectionSync();
   const shown = useEntry(entryId);
-  const returnPath = useAppState(state => state.entryReturnPath);
   const owner = context?.owner ?? '';
+  const returnPath = useAppState(
+    state => state.entryReturnPaths[entryPath(owner, entryId)]
+  );
 
   let content: React.ReactNode;
   if (shown?.entry) {

@@ -125,8 +125,9 @@ const EntryContextMenu = ({
     if (owner === null) {
       return;
     }
-    useAppState.getState().setEntryReturnPath(currentPath());
-    navigate(entryPath(owner.owner, id));
+    const page = entryPath(owner.owner, id);
+    useAppState.getState().setEntryReturnPath(page, currentPath());
+    navigate(page);
   };
 
   return (

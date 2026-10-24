@@ -59,11 +59,11 @@ export interface UiState {
   mostRecentCopyID: string | null;
   clickCount: number;
   /**
-   * The list an entry's page was opened from (Get Info), where its Back goes;
-   * null for one opened another way (a link), whose Back goes to the user's
-   * page.
+   * By entry page (`entryPath`), the list it was last opened from (Get
+   * Info), where its Back goes; none for one opened another way (a link),
+   * whose Back goes to the user's page.
    */
-  entryReturnPath: string | null;
+  entryReturnPaths: Readonly<Record<string, string>>;
 }
 
 export interface AppActions {
@@ -86,7 +86,7 @@ export interface AppActions {
   setTagSearchString(value: string): void;
   setMostRecentCopyType(value: string): void;
   setMostRecentCopyID(value: string): void;
-  setEntryReturnPath(value: string | null): void;
+  setEntryReturnPath(entryPage: string, returnPath: string): void;
   incrementClickCount(): void;
 }
 
@@ -116,7 +116,7 @@ export const defaultUiState: UiState = {
   mostRecentCopyType: null,
   mostRecentCopyID: null,
   clickCount: 0,
-  entryReturnPath: null,
+  entryReturnPaths: {},
 };
 
 export const STORAGE_KEY = `commandsnippets-${environment}`;
@@ -206,7 +206,13 @@ export const useAppState = create<AppState>()(
       setTagSearchString: tagSearchString => set({tagSearchString}),
       setMostRecentCopyType: mostRecentCopyType => set({mostRecentCopyType}),
       setMostRecentCopyID: mostRecentCopyID => set({mostRecentCopyID}),
-      setEntryReturnPath: entryReturnPath => set({entryReturnPath}),
+      setEntryReturnPath: (entryPage, returnPath) =>
+        set(state => ({
+          entryReturnPaths: {
+            ...state.entryReturnPaths,
+            [entryPage]: returnPath,
+          },
+        })),
       incrementClickCount: () =>
         set(state => ({clickCount: state.clickCount + 1})),
     }),
