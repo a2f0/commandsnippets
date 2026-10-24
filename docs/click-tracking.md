@@ -32,7 +32,8 @@ with click records, retained for up to 90 days. The dashboard and data API
 require an authenticated CT administrator. There are no account or persistent
 visitor identifiers in browser event payloads. The website's privacy page
 discloses this collection and its browser-preference behavior.
-The app links to that notice on its sign-in page and in Help > About, including
+The app links to the privacy policy and terms on its sign-in page and in
+Help > About, including
 for visitors viewing shared public snippets.
 
 Deploy the website and frontend independently to both environments using each

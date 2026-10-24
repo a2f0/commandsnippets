@@ -9,7 +9,7 @@ import {
 import React from 'react';
 
 import packageJson from '../../../../package.json';
-import {PrivacyLink} from '../../../components/PrivacyLink';
+import {LegalLinks} from '../../../components/LegalLinks';
 import {useTypedTranslation} from '../../../i18n/hooks';
 import {useApiVersion} from '../../../lib/api/apiVersion';
 
@@ -50,7 +50,7 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
               apiVersion === null ? t('versionUnknown') : `v${apiVersion}`,
           })}
         </DialogContentText>
-        <PrivacyLink />
+        <LegalLinks />
       </DialogContent>
       <DialogActions>
         <Button

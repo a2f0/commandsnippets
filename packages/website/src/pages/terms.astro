@@ -1,5 +1,204 @@
 ---
-import Placeholder from '../layouts/Placeholder.astro';
+import Legal from '../layouts/Legal.astro';
+import {SUPPORT_EMAIL} from '../lib/site';
+
+const sections = [
+  {id: 'agreement', title: 'Using the service'},
+  {id: 'accounts', title: 'Your account'},
+  {id: 'content', title: 'Your content and permissions'},
+  {id: 'public', title: 'Public snippets and third-party content'},
+  {id: 'acceptable-use', title: 'Acceptable use'},
+  {id: 'backups', title: 'Synchronization and backups'},
+  {id: 'availability', title: 'Availability and changes'},
+  {id: 'termination', title: 'Suspension and closing your account'},
+  {id: 'disclaimers', title: 'Disclaimers and responsibility'},
+  {id: 'disputes', title: 'Disputes and legal rights'},
+  {id: 'updates', title: 'Changes to these terms'},
+  {id: 'contact', title: 'Contact'},
+];
 ---
 
-<Placeholder title="Terms of Service" />
+<Legal
+  title="Terms of Service"
+  description="The terms for using Command Snippets, operated by Tearleads, LLC: accounts, content ownership, public sharing, acceptable use, backups and your legal rights."
+  sections={sections}
+>
+  <Fragment slot="intro">
+    <p class="lede">
+      These terms govern your use of the Command Snippets website, web app and
+      API, provided by Tearleads, LLC (“we,” “us” or “our”).
+    </p>
+    <p>
+      Please read these terms and our <a href="/privacy/">Privacy Policy</a>{' '}
+      before using the service. Questions can be sent to{' '}
+      <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+    </p>
+  </Fragment>
+
+  <h2 id="agreement">1. Using the service</h2>
+  <p>
+    By creating an account or using Command Snippets, you agree to these terms.
+    If you do not agree, do not use the service. You must be at least 18 and
+    legally able to enter into this agreement. If you use the service for an
+    organization, you must have authority to agree on its behalf.
+  </p>
+  <p>
+    Command Snippets helps you save, organize, copy and optionally share text
+    snippets. We give you permission to use the service in accordance with these
+    terms. The service's software, branding and other materials remain owned by
+    Tearleads, LLC or their respective owners; these terms do not transfer those
+    rights to you. Separate open-source licenses continue to apply where provided.
+  </p>
+
+  <h2 id="accounts">2. Your account</h2>
+  <p>
+    Sign-in uses Google or GitHub. Keep your identity-provider account and devices
+    secure, provide accurate account information, and notify us if you suspect
+    unauthorized access. You are responsible for activity you authorize through
+    your account. Third-party sign-in services have their own terms and policies;
+    losing access to them may affect access to Command Snippets.
+  </p>
+
+  <h2 id="content">3. Your content and permissions</h2>
+  <p>
+    You retain your rights in the snippets and other content you submit. You
+    must have permission to store and share that content, including any material
+    belonging to an employer, client or other person.
+  </p>
+  <p>
+    You grant Tearleads, LLC a nonexclusive permission to host, store, reproduce,
+    transmit and display your content only as needed to provide, maintain and
+    secure the service, follow your sharing choices, and meet legal obligations.
+    This includes using service providers for those purposes. It does not give
+    us ownership of your content or permission to use private snippets in advertising.
+    After deletion or account closure, this permission continues only for retained
+    copies and purposes described in the Privacy Policy or required by law.
+  </p>
+
+  <h2 id="public">4. Public snippets and third-party content</h2>
+  <p>
+    Snippets and tags start private. Making a snippet and a tag containing it
+    public allows other people to view and copy that snippet. Publish only
+    content you have the right to share. Making content private or deleting it
+    cannot remove copies already made by others.
+  </p>
+  <p>
+    Public availability is not a promise that content is accurate, safe or licensed
+    for every use. Respect any applicable licenses and obtain permission when
+    needed. Review commands before running them; a snippet may delete data,
+    expose credentials or behave differently on your system. Command Snippets
+    does not test or guarantee commands copied from the service.
+  </p>
+
+  <h2 id="acceptable-use">5. Acceptable use</h2>
+  <p>You must not use the service to:</p>
+  <ul>
+    <li>Violate applicable law or another person's privacy, intellectual property or other rights.</li>
+    <li>Publish stolen credentials, private personal information, malicious code intended to harm others, or unlawful content.</li>
+    <li>Access another person's account or private content without authorization, bypass access controls, or impersonate someone.</li>
+    <li>Disrupt the service, overload its infrastructure, evade restrictions or use it to distribute spam.</li>
+  </ul>
+  <p>
+    Good-faith security reports are welcome at{' '}
+    <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. Do not access or
+    disclose other people's data while investigating. These terms do not
+    restrict conduct that applicable law protects.
+  </p>
+
+  <h2 id="backups">6. Synchronization and backups</h2>
+  <p>
+    Edits save on your device before they synchronize. Offline changes may not
+    reach the server until you reconnect; clearing browser data or discarding
+    pending changes can permanently lose them. Keep independent backups of
+    important content using the app's export feature.
+  </p>
+  <p>
+    Restoring a backup creates a new data version. Earlier versions remain until
+    deleted, and switching versions may discard edits that have not synchronized
+    from other devices. Read the app's confirmation messages before restoring,
+    switching versions or clearing data. The service is not a substitute for
+    your own backup or recovery process.
+  </p>
+
+  <h2 id="availability">7. Availability and changes</h2>
+  <p>
+    We may maintain, update or change features, set reasonable usage limits, or
+    discontinue the service. We do not promise uninterrupted access or that
+    every feature will remain available. Where reasonably practicable, we will
+    give advance notice of a discontinuation or material reduction in access
+    and an opportunity to export your data. Urgent security, abuse or legal
+    issues may require immediate action.
+  </p>
+  <p>
+    These terms do not authorize charges. If we introduce paid features, their
+    prices and payment terms will be presented separately before you choose them.
+  </p>
+
+  <h2 id="termination">8. Suspension and closing your account</h2>
+  <p>
+    You can stop using the service at any time. To close your account or request
+    deletion, email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+    Signing out or revoking Google or GitHub access does not itself delete your
+    account or stored content. Export anything you want to keep first.
+  </p>
+  <p>
+    We may restrict or suspend access or remove content when reasonably necessary
+    to address a breach of these terms, security risks, unlawful activity or a
+    legal requirement. When appropriate, we will explain the reason and allow
+    you to contact us to resolve it. Data retention and deletion are described
+    in the <a href="/privacy/#retention">Privacy Policy</a>. Provisions that
+    by their nature need to continue, including ownership and dispute provisions,
+    remain applicable after you stop using the service.
+  </p>
+
+  <h2 id="disclaimers">9. Disclaimers and responsibility</h2>
+  <p>
+    To the extent permitted by applicable law, the service is provided “as is”
+    and “as available,” without implied warranties of merchantability, fitness
+    for a particular purpose or noninfringement. We do not guarantee that the
+    service or user content will be error-free, secure in every circumstance,
+    or suitable for a particular workflow.
+  </p>
+  <p>
+    To the extent permitted by applicable law, Tearleads, LLC is not liable for
+    indirect or consequential losses, including lost profits or business
+    opportunities, arising from use of the service. This does not exclude or
+    limit liability for fraud, intentional misconduct, gross negligence, or any
+    other liability that cannot lawfully be excluded or limited. Your mandatory
+    consumer rights and remedies remain intact.
+  </p>
+
+  <h2 id="disputes">10. Disputes and legal rights</h2>
+  <p>
+    Please contact us first so we can try to resolve concerns informally. This
+    does not prevent you from contacting a regulator, seeking urgent relief or
+    pursuing any remedy available under applicable law. These terms do not
+    require arbitration or waive class-action rights.
+  </p>
+  <p>
+    Applicable law governs your rights and obligations. Nothing in these terms
+    removes protections or access to courts that mandatory law gives you. If a
+    provision is unenforceable, the remaining provisions continue to apply to
+    the extent permitted by law.
+  </p>
+
+  <h2 id="updates">11. Changes to these terms</h2>
+  <p>
+    We may revise these terms and will update the date on this page. For material
+    changes, we will provide notice through the service or another appropriate
+    channel before they take effect, unless an urgent legal or security reason
+    requires otherwise. Changes apply prospectively. If you do not agree to
+    revised terms, stop using the service and contact us about exporting your
+    data and closing your account. We will request affirmative agreement when
+    required by applicable law.
+  </p>
+
+  <h2 id="contact">12. Contact</h2>
+  <p>
+    Command Snippets is operated by Tearleads, LLC. For support, questions about
+    these terms, or reports of content that infringes your rights, email{' '}
+    <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. Include the relevant
+    page or snippet link and a description of the issue; do not send passwords
+    or access tokens.
+  </p>
+</Legal>

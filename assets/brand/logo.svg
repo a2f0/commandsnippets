@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <title>Commandsnippets</title>
+  <title>Command Snippets</title>
   <!-- A shell prompt, >_, on a rounded tile: the tile keeps it legible as a
        16px favicon on light and dark tabs alike. Grayscale, as the app is. -->
   <rect id="tile" width="64" height="64" rx="14" fill="#2a2a2a"/>

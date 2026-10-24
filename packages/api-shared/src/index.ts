@@ -1,5 +1,5 @@
 /**
- * The Commandsnippets API contract: zod schemas (and their TypeScript types)
+ * The Command Snippets API contract: zod schemas (and their TypeScript types)
  * for every request and response document, query, and error, with the exact
  * error messages the API sends. This entry is all of it; clients import the
  * smaller entries (`./responses`, `./requests`, `./messages`). See README.md.

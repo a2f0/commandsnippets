@@ -3,7 +3,7 @@ import React from 'react';
 
 import {GithubAuth} from '../components/auth/GithubAuth';
 import {GoogleAuth} from '../components/auth/GoogleAuth';
-import {PrivacyLink} from '../components/PrivacyLink';
+import {LegalLinks} from '../components/LegalLinks';
 
 /** What a signed-out visitor sees; the marketing site is packages/website. */
 const SignInPage = () => {
@@ -17,6 +17,7 @@ const SignInPage = () => {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 3,
+        px: 2,
         backgroundColor: theme => theme.palette.background.default,
       }}
     >
@@ -27,11 +28,18 @@ const SignInPage = () => {
       >
         Login to Continue
       </Typography>
-      <Box sx={{display: 'flex', gap: 1}}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: 1,
+        }}
+      >
         <GithubAuth />
         <GoogleAuth />
       </Box>
-      <PrivacyLink />
+      <LegalLinks centered />
     </Box>
   );
 };

@@ -28,6 +28,13 @@ async function expectSignInPage(history: {location: {pathname: string}}) {
     'href',
     'https://commandsnippets.com/privacy/'
   );
+  expect(screen.getByRole('link', {name: 'Terms of Service'})).toHaveAttribute(
+    'href',
+    'https://commandsnippets.com/terms/'
+  );
+  expect(
+    screen.getByText('Command Snippets is operated by Tearleads, LLC.')
+  ).toBeVisible();
 }
 
 describe('Signing out', () => {

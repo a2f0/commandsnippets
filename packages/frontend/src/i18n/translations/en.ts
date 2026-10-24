@@ -20,7 +20,7 @@ export const en: I18NextTranslations = {
     languageName: 'English',
     selectLanguage: 'Select language',
     settings: 'Settings',
-    logoAlt: 'Commandsnippets Logo',
+    logoAlt: 'Command Snippets Logo',
     unsentWritesTitle: 'Changes not saved yet',
     unsentWrites_one:
       '{{count}} change on this device has not reached the server yet.',
@@ -32,6 +32,8 @@ export const en: I18NextTranslations = {
     discardAndSignOut: 'Discard and sign out',
     dismiss: 'Dismiss',
     privacyPolicy: 'Privacy Policy',
+    termsOfService: 'Terms of Service',
+    serviceOperator: 'Command Snippets is operated by Tearleads, LLC.',
   },
   menu: {
     file: 'File',
@@ -42,7 +44,7 @@ export const en: I18NextTranslations = {
     allEntries: 'All Entries',
     untaggedEntries: 'Untagged Entries',
     about: 'About',
-    aboutDialogTitle: 'About Commandsnippets',
+    aboutDialogTitle: 'About Command Snippets',
     appVersion: 'App version: {{version}}',
     apiVersion: 'API version: {{version}}',
     versionUnknown: 'unknown',
@@ -70,7 +72,7 @@ export const en: I18NextTranslations = {
       'The backup could not be restored. Check your connection and try again.',
     restoreInvalidTitle: 'Not a backup',
     restoreInvalidText:
-      'This file is not a Commandsnippets backup that can be restored.',
+      'This file is not a Command Snippets backup that can be restored.',
     dataVersions: 'Data Versions',
     dataVersionsTitle: 'Data versions',
     dataVersionsText:

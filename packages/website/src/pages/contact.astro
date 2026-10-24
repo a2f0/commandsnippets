@@ -1,5 +1,34 @@
 ---
-import Placeholder from '../layouts/Placeholder.astro';
+import Base from '../layouts/Base.astro';
+import {SUPPORT_EMAIL} from '../lib/site';
 ---
 
-<Placeholder title="Contact Us" />
+<Base
+  title="Contact Us · Command Snippets"
+  description="Contact Tearleads, LLC for Command Snippets support, privacy requests, account deletion, security reports or questions about the terms of service."
+>
+  <article class="prose">
+    <h1>Contact Us</h1>
+    <p class="lede">Command Snippets is operated by Tearleads, LLC.</p>
+    <p>
+      For product support, privacy requests, account deletion or questions about
+      our terms, email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+    </p>
+    <h2>Help us find the right account</h2>
+    <p>
+      Include your username and a description of the issue. For account requests,
+      write from the email address associated with your Google or GitHub sign-in
+      if possible. We may need to verify account ownership before making changes.
+    </p>
+    <h2>Keep sensitive information out of email</h2>
+    <p>
+      Do not send passwords, access tokens or private snippet content. For a
+      security issue, describe the problem without including anyone else's data;
+      we can discuss an appropriate way to share further details.
+    </p>
+    <p>
+      Learn more in our <a href="/privacy/">Privacy Policy</a> and{' '}
+      <a href="/terms/">Terms of Service</a>.
+    </p>
+  </article>
+</Base>

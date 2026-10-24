@@ -281,11 +281,12 @@ main {
   text-align: center;
 }
 
-/* A page of reading (about). */
+/* Pages of reading, including the legal policies. */
 .prose {
   max-width: 680px;
   margin: 48px auto 96px;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .prose .lede {
@@ -303,6 +304,27 @@ main {
 
 .prose-cta {
   margin-top: 32px;
+}
+
+.legal h2 {
+  scroll-margin-top: 24px;
+}
+
+.contents {
+  margin: 32px 0;
+  padding: 20px 24px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.contents ol {
+  margin-bottom: 0;
+  padding-left: 24px;
+}
+
+.contents li {
+  margin-bottom: 6px;
 }
 
 footer {

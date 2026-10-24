@@ -1,0 +1,26 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  sections: readonly {id: string; title: string}[];
+}
+
+const {title, description, sections} = Astro.props;
+---
+
+<Base title={`${title} · Command Snippets`} description={description}>
+  <article class="prose legal">
+    <h1>{title}</h1>
+    <p class="muted">Last updated: <time datetime="2026-10-24">October 24, 2026</time></p>
+    <slot name="intro" />
+    <nav class="contents" aria-label="On this page">
+      <strong>On this page</strong>
+      <ol>
+        {sections.map(section => <li><a href={`#${section.id}`}>{section.title}</a></li>)}
+      </ol>
+    </nav>
+    <slot />
+  </article>
+</Base>

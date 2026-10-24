@@ -27,6 +27,8 @@ export interface CommonTranslations {
   discardAndSignOut: string;
   dismiss: string;
   privacyPolicy: string;
+  termsOfService: string;
+  serviceOperator: string;
 }
 
 export interface MenuTranslations {
