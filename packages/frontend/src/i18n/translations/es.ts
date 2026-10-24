@@ -20,7 +20,7 @@ export const es: I18NextTranslations = {
     languageName: 'Español',
     selectLanguage: 'Seleccionar idioma',
     settings: 'Configuración',
-    logoAlt: 'Logo de Commandsnippets',
+    logoAlt: 'Logo de Command Snippets',
     unsentWritesTitle: 'Cambios aún no guardados',
     unsentWrites_one:
       '{{count}} cambio en este dispositivo aún no ha llegado al servidor.',
@@ -32,6 +32,8 @@ export const es: I18NextTranslations = {
     discardAndSignOut: 'Descartar y cerrar sesión',
     dismiss: 'Cerrar',
     privacyPolicy: 'Política de privacidad',
+    termsOfService: 'Términos del servicio',
+    serviceOperator: 'Command Snippets es operado por Tearleads, LLC.',
   },
   menu: {
     file: 'Archivo',
@@ -42,7 +44,7 @@ export const es: I18NextTranslations = {
     allEntries: 'Todas las Entradas',
     untaggedEntries: 'Entradas sin Etiqueta',
     about: 'Acerca de',
-    aboutDialogTitle: 'Acerca de Commandsnippets',
+    aboutDialogTitle: 'Acerca de Command Snippets',
     appVersion: 'Versión de la app: {{version}}',
     apiVersion: 'Versión de la API: {{version}}',
     versionUnknown: 'desconocida',
@@ -73,7 +75,7 @@ export const es: I18NextTranslations = {
       'No se pudo restaurar la copia de seguridad. Comprueba tu conexión e inténtalo de nuevo.',
     restoreInvalidTitle: 'No es una copia de seguridad',
     restoreInvalidText:
-      'Este archivo no es una copia de seguridad de Commandsnippets que se pueda restaurar.',
+      'Este archivo no es una copia de seguridad de Command Snippets que se pueda restaurar.',
     dataVersions: 'Versiones de Datos',
     dataVersionsTitle: 'Versiones de datos',
     dataVersionsText:

@@ -17,10 +17,9 @@ import {
 
 const root = join(import.meta.dir, '..');
 const PAGES = ['/', ...FOOTER_LINKS.map(link => link.href)];
-// The pages with content today. The others are placeholders, which stay out
-// of search until they have their copy.
-const CONTENT = ['/', '/privacy/', '/about/'];
-const PLACEHOLDERS = ['/terms/', '/contact/'];
+// Every published page now has content. Keep placeholder handling covered below.
+const CONTENT = ['/', '/privacy/', '/about/', '/terms/', '/contact/'];
+const PLACEHOLDERS: string[] = [];
 /** The production `_headers` rules for pages kept out of search. */
 const noindexRules = (paths: readonly string[]) =>
   paths
@@ -324,11 +323,10 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     expect(png.readUInt32BE(20)).toBe(PREVIEW_IMAGE.height);
   });
 
-  test('discloses the analytics operator', () => {
+  test('identifies the service operator and explains analytics choices', () => {
     for (const path of ['', ...FOOTER_LINKS.map(link => link.href)]) {
-      if (path !== '/privacy/') {
-        expect(page(path).toLowerCase()).not.toContain('tearleads');
-      }
+      expect(page(path)).toContain('Tearleads, LLC');
+      expect(page(path)).not.toContain('Commandsnippets');
     }
     expect(page('/privacy/')).toContain('Tearleads, LLC');
     expect(page('/privacy/')).toContain('Do Not Track');
@@ -338,12 +336,32 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     );
   });
 
+  test('publishes legal and contact pages with working section links', () => {
+    for (const path of ['/privacy/', '/terms/', '/contact/']) {
+      const html = page(path);
+      expect(html).toContain('mailto:support@tearleads.com');
+      expect(html).not.toContain('data-placeholder');
+      expect(html).not.toContain('being prepared');
+      if (path === '/contact/') continue;
+      expect(html).toContain('<time datetime="2026-10-24">');
+      const sections = [...html.matchAll(/<h2 id="([^"]+)"/g)].map(
+        match => match[1]
+      );
+      const links = [...html.matchAll(/href="#([^"]+)"/g)].map(
+        match => match[1]
+      );
+      expect(sections.length).toBeGreaterThanOrEqual(10);
+      expect(new Set(sections).size).toBe(sections.length);
+      expect(links).toEqual(sections);
+    }
+  });
+
   test('every page has its own title, description and canonical URL', () => {
     const titles = new Set<string>();
     for (const path of PAGES) {
       const html = page(path);
       const title = html.match(/<title>([^<]+)<\/title>/)?.[1] ?? '';
-      expect(title).toEndWith('Commandsnippets');
+      expect(title).toEndWith('Command Snippets');
       titles.add(title);
       expect(html).toStartWith('<!DOCTYPE html><html lang="en">');
       expect(html).toContain('<meta name="viewport"');
@@ -357,7 +375,7 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       expect(meta(html, 'og:url')).toBe(url);
       expect(meta(html, 'og:title')).toBe(title);
       expect(meta(html, 'og:description')).toBe(meta(html, 'description'));
-      expect(meta(html, 'og:site_name')).toBe('Commandsnippets');
+      expect(meta(html, 'og:site_name')).toBe('Command Snippets');
       expect(meta(html, 'og:type')).toBe('website');
       // The large card, with this build's own absolute image URL.
       expect(meta(html, 'og:image')).toBe(
@@ -394,7 +412,11 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
           robots === undefined ? 0 : 1
         );
       }
-      expect(readFileSync(file('_headers'), 'utf8')).toBe(
+      expect(
+        existsSync(file('_headers'))
+          ? readFileSync(file('_headers'), 'utf8')
+          : ''
+      ).toBe(
         mode === 'production'
           ? noindexRules(PLACEHOLDERS)
           : `/*\n  X-Robots-Tag: ${NOINDEX}\n`
@@ -422,7 +444,14 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       'WebSite',
       'WebApplication',
     ]);
-    expect(byType.get('WebSite')).toMatchObject({url: pageUrl(mode, '/')});
+    expect(byType.get('Organization')).toMatchObject({
+      name: 'Tearleads, LLC',
+      legalName: 'Tearleads, LLC',
+    });
+    expect(byType.get('WebSite')).toMatchObject({
+      url: pageUrl(mode, '/'),
+      name: 'Command Snippets',
+    });
     expect(byType.get('WebApplication')).toMatchObject({
       url: `${appUrl(mode)}/`,
       operatingSystem: 'Web',
@@ -456,7 +485,9 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       expect(urls.toSorted()).toEqual([
         'https://commandsnippets.com/',
         'https://commandsnippets.com/about/',
+        'https://commandsnippets.com/contact/',
         'https://commandsnippets.com/privacy/',
+        'https://commandsnippets.com/terms/',
       ]);
       for (const path of CONTENT) {
         expect(canonicalOf(page(path))).toBe(pageUrl(mode, path));

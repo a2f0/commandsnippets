@@ -1,6 +1,6 @@
-# Commandsnippets
+# Command Snippets
 
-Monorepo for the Commandsnippets app.
+Monorepo for the Command Snippets app.
 
 | Path | What |
 |---|---|

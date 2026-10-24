@@ -37,7 +37,7 @@ describe('Help Menu', () => {
     await user.pointer({target: helpMenu, keys: '[MouseLeft]'});
     const about = screen.getByText('About');
     await user.pointer({target: about, keys: '[MouseLeft]'});
-    const dialogTitle = screen.getByText('About Commandsnippets');
+    const dialogTitle = screen.getByText('About Command Snippets');
     expect(dialogTitle).toBeVisible();
     const dismiss = screen.getByText('Dismiss');
     await user.pointer({target: dismiss, keys: '[MouseLeft]'});
@@ -66,6 +66,12 @@ describe('AboutDialog', () => {
       'href',
       'https://commandsnippets.com/privacy/'
     );
+    expect(
+      screen.getByRole('link', {name: 'Terms of Service'})
+    ).toHaveAttribute('href', 'https://commandsnippets.com/terms/');
+    expect(
+      screen.getByText('Command Snippets is operated by Tearleads, LLC.')
+    ).toBeVisible();
   });
 
   it('says the API version is unknown until the API answers', () => {
@@ -90,7 +96,10 @@ describe('AboutDialog', () => {
           <AboutDialog dialogOpen={true} closeDialog={() => {}} />
         </I18nextProvider>
       );
-      expect(screen.getByText('Acerca de Commandsnippets')).toBeVisible();
+      expect(screen.getByText('Acerca de Command Snippets')).toBeVisible();
+      expect(
+        screen.getByRole('link', {name: 'Términos del servicio'})
+      ).toHaveAttribute('href', 'https://commandsnippets.com/terms/');
     } finally {
       await act(async () => {
         await i18n.changeLanguage('en');

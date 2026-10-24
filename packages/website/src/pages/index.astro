@@ -2,7 +2,7 @@
 import AppPreview from '../components/AppPreview.astro';
 import Base from '../layouts/Base.astro';
 import {appUrl} from '../lib/appUrl';
-import {indexable, pageUrl, SITE_DESCRIPTION, SITE_NAME} from '../lib/site';
+import {COMPANY_NAME, indexable, pageUrl, SITE_DESCRIPTION, SITE_NAME} from '../lib/site';
 
 const mode = import.meta.env.MODE;
 const app = appUrl(mode);
@@ -16,7 +16,8 @@ const structuredData = JSON.stringify({
     {
       '@type': 'Organization',
       '@id': organization,
-      name: SITE_NAME,
+      name: COMPANY_NAME,
+      legalName: COMPANY_NAME,
       url: home,
     },
     {
@@ -87,8 +88,8 @@ const FEATURES = [
 ---
 
 <Base
-  title="Note-Taking for Technical Professionals · Commandsnippets"
-  description="Solve, curate, retrieve. Commandsnippets is an opinionated note-taking system for technical professionals, built around tagged command snippets."
+  title="Note-Taking for Technical Professionals · Command Snippets"
+  description="Solve, curate, retrieve. Command Snippets is an opinionated note-taking system for technical professionals, built around tagged command snippets."
 >
   <Fragment slot="head">
     {

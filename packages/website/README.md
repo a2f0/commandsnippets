@@ -1,9 +1,10 @@
-# Commandsnippets website
+# Command Snippets website
 
 The public site (Astro, static HTML): the home page (what the app does, with
 an HTML sketch of it: `src/components/AppPreview.astro`), the about page, and
-the footer pages (privacy's click-analytics notice, plus terms and contact
-placeholders). Its copy states only what the app does today.
+the privacy policy, terms of service and contact page. Tearleads, LLC is
+the operator; support@tearleads.com handles support and privacy requests.
+Its copy states only what the app does today.
 Signing in happens in the web app (`../frontend`); the website only links to it,
 per build mode
 (`src/lib/appUrl.ts`):
@@ -49,16 +50,14 @@ so crawlers see the noindex), a robots `noindex` meta on every page, and a
 `_headers` that sends `X-Robots-Tag: noindex, nofollow` with every file. The
 Worker's own responses get that header from staging's `X_ROBOTS_TAG` var.
 
-Placeholder pages (terms and contact, built on
-`src/layouts/Placeholder.astro`) stay out of search in production too, until
-they have content: the layout passes `placeholder` to `Base.astro`, so the
-page carries the robots `noindex, nofollow` meta and names no canonical or
-`og:url`. The build reads that back from the HTML: the page gets no sitemap
-entry, and production's `_headers` sends the header on it and on its
-redirects (`/terms` and `/terms/index.html` as well as `/terms/`). To publish
-a page, write its copy on `Base.astro` without `placeholder`: the next build
-makes it indexable and adds it to the sitemap. `test/site.test.ts` pins
-today's placeholder and sitemap lists, so move the page there too.
+All current pages have content and may be indexed in production, including
+privacy, terms and contact. The legal pages share `src/layouts/Legal.astro`
+for their individual revision dates and section navigation. Keep their disclosures in
+sync with authentication, storage, sharing, deletion and analytics behavior;
+update their date when policy content changes. `test/site.test.ts` checks
+published page metadata, section links and the sitemap. Any future placeholder
+can use `Placeholder.astro`, which passes `placeholder` to `Base.astro` to stay
+out of search until published.
 
 ## Old app links
 

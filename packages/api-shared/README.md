@@ -1,6 +1,6 @@
 # @commandsnippets/api-shared
 
-The Commandsnippets API contract, as [zod](https://zod.dev) schemas: every
+The Command Snippets API contract, as [zod](https://zod.dev) schemas: every
 request document, query, response document and error the API
 (`../backend-v2`) speaks, with the exact error messages it sends and the
 TypeScript types inferred from them. The API validates its input with these

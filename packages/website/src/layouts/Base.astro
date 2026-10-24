@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import {appUrl, FOOTER_LINKS} from '../lib/appUrl';
 import {
+  COMPANY_NAME,
   NOINDEX,
   PREVIEW_IMAGE,
   pageUrl,
@@ -72,7 +73,7 @@ const year = new Date().getFullYear();
   </head>
   <body>
     <header>
-      <a class="brand" href="/">Commandsnippets</a>
+      <a class="brand" href="/">{SITE_NAME}</a>
       <nav aria-label="Main">
         <a class="nav-optional" href="/#features">Features</a>
         <a href="/about/">About</a>
@@ -86,7 +87,8 @@ const year = new Date().getFullYear();
       <nav aria-label="Site">
         {FOOTER_LINKS.map(link => <a href={link.href}>{link.text}</a>)}
       </nav>
-      <div class="muted">© {year} Commandsnippets. All rights reserved.</div>
+      <div class="muted">{SITE_NAME} is operated by {COMPANY_NAME}.</div>
+      <div class="muted">© {year} {COMPANY_NAME}. All rights reserved.</div>
     </footer>
     <script>
       import {initClickTracking} from '../lib/clickTracking';

@@ -124,8 +124,8 @@ export default defineConfig(({command, mode}) => {
       // `bun run images`, which the dev, test and build scripts run first.
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Commandsnippets',
-        short_name: 'Commandsnippets',
+        name: 'Command Snippets',
+        short_name: 'Command Snippets',
         description:
           'An opinionated note-taking system for technical professionals.',
         theme_color: '#ffffff',
@@ -141,7 +141,7 @@ export default defineConfig(({command, mode}) => {
         skipWaiting: true,
         clientsClaim: true,
         navigateFallback: null,
-        // These cache names predate the rename to Commandsnippets. Keep them:
+        // These cache names predate the rename to Command Snippets. Keep them:
         // new names would leave the caches browsers already hold behind.
         runtimeCaching: [
           {

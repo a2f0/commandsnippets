@@ -214,10 +214,10 @@ describe.each(['staging', 'production'])('the %s build', mode => {
 
   it('describes the app, and says noindex outside production', () => {
     const html = readFileSync(join(outDir, 'index.html'), 'utf8');
-    expect(html).toMatch(/<title>Commandsnippets – [^<]+<\/title>/);
+    expect(html).toMatch(/<title>Command Snippets – [^<]+<\/title>/);
     expect(html).toMatch(/<meta name="description" content="[^"]{120,160}"\/>/);
     expect(html).toContain(
-      '<meta property="og:title" content="Commandsnippets'
+      '<meta property="og:title" content="Command Snippets'
     );
     expect(html.match(/<meta name="robots" content="([^"]*)"/)?.[1]).toBe(
       robots
@@ -239,7 +239,7 @@ describe.each(['staging', 'production'])('the %s build', mode => {
     expect(meta('og:image')).toBe('https://commandsnippets.com/og-image.png');
     expect(meta('og:image:width')).toBe('1200');
     expect(meta('og:image:height')).toBe('630');
-    expect(meta('og:image:alt')).toBe('The Commandsnippets logo');
+    expect(meta('og:image:alt')).toBe('The Command Snippets logo');
     expect(meta('twitter:card')).toBe('summary_large_image');
     const images: {
       images: {

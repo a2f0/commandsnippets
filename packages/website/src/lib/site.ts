@@ -40,7 +40,9 @@ export function searchable(mode: string, placeholder: boolean): boolean {
  */
 export const NOINDEX = 'noindex, nofollow';
 
-export const SITE_NAME = 'Commandsnippets';
+export const SITE_NAME = 'Command Snippets';
+export const COMPANY_NAME = 'Tearleads, LLC';
+export const SUPPORT_EMAIL = 'support@tearleads.com';
 
 export const SITE_DESCRIPTION =
   'An opinionated note-taking system for technical professionals.';
@@ -54,7 +56,7 @@ export const PREVIEW_IMAGE = {
   path: '/og-image.png',
   width: 1200,
   height: 630,
-  alt: 'The Commandsnippets logo',
+  alt: 'The Command Snippets logo',
 } as const;
 
 /** Absolute URL of a page; paths end in `/`, as the assets are served. */

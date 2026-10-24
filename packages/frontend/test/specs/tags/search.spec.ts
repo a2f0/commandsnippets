@@ -11,7 +11,7 @@ describe('Tag Search Menu Behavior', () => {
 
     const pageTitle = await browser.getTitle();
     expect(pageTitle).toBe(
-      'Commandsnippets – Note-Taking for Technical Professionals'
+      'Command Snippets – Note-Taking for Technical Professionals'
     );
 
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

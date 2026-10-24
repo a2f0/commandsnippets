@@ -1,6 +1,6 @@
-# CommandSnippets
+# Command Snippets
 
-This repository contains the CommandSnippets application and infrastructure as
+This repository contains the Command Snippets application and infrastructure as
 a monorepo.
 
 | Directory | Contents |

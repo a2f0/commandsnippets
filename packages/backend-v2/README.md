@@ -1,6 +1,6 @@
-# Commandsnippets Backend v2
+# Command Snippets Backend v2
 
-The Commandsnippets API on Cloudflare Workers: [Hono](https://hono.dev) on
+The Command Snippets API on Cloudflare Workers: [Hono](https://hono.dev) on
 workerd, [D1](https://developers.cloudflare.com/d1/) (SQLite) through
 [Drizzle](https://orm.drizzle.team), with [Bun](https://bun.sh) as the package
 manager and script runner.

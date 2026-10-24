@@ -122,9 +122,8 @@ describe.each([
       expect(await get(path, navigate)).toMatchObject({status: 200, robots});
     });
 
-    // Placeholder pages stay out of search on both tiers, and so do the
-    // redirects to them; production's _headers names them, staging's /* rule
-    // already covers them.
+    // Published legal and contact pages follow the same indexing policy as
+    // the rest of the site, including their canonical redirects.
     test.each([
       ['/terms/', 200, undefined],
       ['/terms', 307, '/terms/'],
@@ -132,12 +131,12 @@ describe.each([
       ['/contact', 307, '/contact/'],
       ['/contact/index.html', 307, '/contact/'],
     ] as const)(
-      'keeps placeholder %s out of search',
+      'serves published page or redirect %s',
       async (path, status, location) => {
         expect(await get(path, navigate)).toMatchObject({
           status,
           location,
-          robots: 'noindex, nofollow',
+          robots,
         });
       }
     );

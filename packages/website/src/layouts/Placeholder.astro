@@ -1,5 +1,6 @@
 ---
 import Base from './Base.astro';
+import {SITE_NAME} from '../lib/site';
 
 interface Props {
   title: string;
@@ -10,7 +11,7 @@ const {title} = Astro.props;
 // on Base without the flag, and is indexable and in the sitemap.
 ---
 
-<Base title={`${title} · Commandsnippets`} placeholder>
+<Base title={`${title} · ${SITE_NAME}`} placeholder>
   <h1>{title}</h1>
   <p class="muted" data-placeholder>This page is coming soon.</p>
 </Base>

@@ -6,7 +6,7 @@ focus) are in the root `AGENTS.md`.
 
 ## Project Overview
 
-The Commandsnippets web client: a command snippet tool for programmers and
+The Command Snippets web client: a command snippet tool for programmers and
 system administrators. Snippets (entries) are tagged, and both tags and
 entries can be put in a user-defined order. The API is backend-v2
 (`packages/backend-v2/`).
