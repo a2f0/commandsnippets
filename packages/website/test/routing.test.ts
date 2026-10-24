@@ -112,6 +112,7 @@ describe.each([
     test.each([
       '/',
       '/privacy/',
+      '/about/',
       '/favicon.ico',
       '/favicon.svg',
       '/apple-touch-icon.png',
@@ -129,9 +130,7 @@ describe.each([
       ['/terms', 307, '/terms/'],
       ['/contact/', 200, undefined],
       ['/contact', 307, '/contact/'],
-      ['/about/', 200, undefined],
-      ['/about', 307, '/about/'],
-      ['/about/index.html', 307, '/about/'],
+      ['/contact/index.html', 307, '/contact/'],
     ] as const)(
       'keeps placeholder %s out of search',
       async (path, status, location) => {

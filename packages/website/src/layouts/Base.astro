@@ -73,7 +73,11 @@ const year = new Date().getFullYear();
   <body>
     <header>
       <a class="brand" href="/">Commandsnippets</a>
-      <a class="login" id="loginLink" href={app}>App</a>
+      <nav aria-label="Main">
+        <a href="/#features">Features</a>
+        <a href="/about/">About</a>
+        <a class="login" id="loginLink" href={app}>App</a>
+      </nav>
     </header>
     <main>
       <slot />

@@ -1,7 +1,9 @@
 # Commandsnippets website
 
-The public site (Astro, static HTML): the home page and the footer pages
-(privacy's click-analytics notice, plus terms, contact and about placeholders).
+The public site (Astro, static HTML): the home page (what the app does, with
+an HTML sketch of it: `src/components/AppPreview.astro`), the about page, and
+the footer pages (privacy's click-analytics notice, plus terms and contact
+placeholders). Its copy states only what the app does today.
 Signing in happens in the web app (`../frontend`); the website only links to it,
 per build mode
 (`src/lib/appUrl.ts`):
@@ -47,13 +49,13 @@ so crawlers see the noindex), a robots `noindex` meta on every page, and a
 `_headers` that sends `X-Robots-Tag: noindex, nofollow` with every file. The
 Worker's own responses get that header from staging's `X_ROBOTS_TAG` var.
 
-Placeholder pages (terms, contact and about, built on
+Placeholder pages (terms and contact, built on
 `src/layouts/Placeholder.astro`) stay out of search in production too, until
 they have content: the layout passes `placeholder` to `Base.astro`, so the
 page carries the robots `noindex, nofollow` meta and names no canonical or
 `og:url`. The build reads that back from the HTML: the page gets no sitemap
 entry, and production's `_headers` sends the header on it and on its
-redirects (`/about` and `/about/index.html` as well as `/about/`). To publish
+redirects (`/terms` and `/terms/index.html` as well as `/terms/`). To publish
 a page, write its copy on `Base.astro` without `placeholder`: the next build
 makes it indexable and adds it to the sitemap. `test/site.test.ts` pins
 today's placeholder and sitemap lists, so move the page there too.

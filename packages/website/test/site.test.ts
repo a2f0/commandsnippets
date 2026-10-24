@@ -19,8 +19,8 @@ const root = join(import.meta.dir, '..');
 const PAGES = ['/', ...FOOTER_LINKS.map(link => link.href)];
 // The pages with content today. The others are placeholders, which stay out
 // of search until they have their copy.
-const CONTENT = ['/', '/privacy/'];
-const PLACEHOLDERS = ['/terms/', '/contact/', '/about/'];
+const CONTENT = ['/', '/privacy/', '/about/'];
+const PLACEHOLDERS = ['/terms/', '/contact/'];
 /** The production `_headers` rules for pages kept out of search. */
 const noindexRules = (paths: readonly string[]) =>
   paths
@@ -218,6 +218,55 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     expect(html).toContain(`href="${appUrl(mode)}">Get started</a>`);
   });
 
+  test('home page explains the app: a sketch, the steps and the features', () => {
+    const html = page('');
+    // The app sketched in HTML, read as one image.
+    expect(html).toMatch(/<div class="preview" role="img" aria-label="[^"]+"/);
+    expect(html).toContain('git reset --soft HEAD~1');
+    // "How it works" is the hero's second link, and the steps' section.
+    expect(html).toContain('href="#how">How it works</a>');
+    expect(html).toContain('id="how"');
+    for (const step of ['Solve', 'Curate', 'Retrieve']) {
+      expect(html).toContain(`<h3>${step}</h3>`);
+    }
+    expect(html).toContain('id="features"');
+    for (const feature of [
+      'Tags, in your order',
+      'One click to copy',
+      'Search as you type',
+      'See what you reach for',
+      'Works offline',
+      'Private until you share',
+      'Backups you keep',
+    ]) {
+      expect(html).toContain(`<h3>${feature}</h3>`);
+    }
+    expect(html).toContain(`href="${appUrl(mode)}">Start your collection</a>`);
+  });
+
+  test('every page links to the features, About and the app', () => {
+    for (const path of PAGES) {
+      const nav =
+        page(path).match(/<nav aria-label="Main">(.*?)<\/nav>/s)?.[1] ?? '';
+      expect(nav).toContain('href="/#features">Features</a>');
+      expect(nav).toContain('href="/about/">About</a>');
+      expect(nav).toContain(`href="${appUrl(mode)}">App</a>`);
+    }
+  });
+
+  test('the about page says what the app is and promises', () => {
+    const html = page('/about/');
+    expect(html).toContain('a note-taking system for technical professionals');
+    for (const promise of [
+      'Private by default.',
+      'Local first.',
+      'Yours to keep.',
+    ]) {
+      expect(html).toContain(`<strong>${promise}</strong>`);
+    }
+    expect(html).toContain(`href="${appUrl(mode)}">Get started</a>`);
+  });
+
   test('every built page initializes the bundled CT browser integration', () => {
     for (const path of ['', ...FOOTER_LINKS.map(link => link.href)]) {
       const script = page(path).match(
@@ -239,9 +288,9 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     for (const link of FOOTER_LINKS) {
       const html = page(link.href);
       expect(html).toContain(`<h1>${link.text}</h1>`);
-      if (link.href !== '/privacy/') {
-        expect(html).toContain('This page is coming soon.');
-      }
+      expect(html.includes('This page is coming soon.')).toBe(
+        PLACEHOLDERS.includes(link.href)
+      );
       expect(page('')).toContain(`href="${link.href}"`);
     }
   });
@@ -404,8 +453,9 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
         match => match[1]
       );
-      expect(urls).toEqual([
+      expect(urls.toSorted()).toEqual([
         'https://commandsnippets.com/',
+        'https://commandsnippets.com/about/',
         'https://commandsnippets.com/privacy/',
       ]);
       for (const path of CONTENT) {

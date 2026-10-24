@@ -1,5 +1,59 @@
 ---
-import Placeholder from '../layouts/Placeholder.astro';
+import Base from '../layouts/Base.astro';
+import {appUrl} from '../lib/appUrl';
+
+const app = appUrl(import.meta.env.MODE);
 ---
 
-<Placeholder title="About" />
+<Base
+  title="About · Commandsnippets"
+  description="Why Commandsnippets exists and how it works: tagged command snippets, ordered your way, one click from your clipboard, private by default and yours to back up."
+>
+  <article class="prose">
+    <h1>About</h1>
+    <p class="lede">
+      Commandsnippets is a note-taking system for technical professionals:
+      programmers, system administrators, and anyone whose work runs on
+      commands they’d rather not work out twice.
+    </p>
+
+    <h2>Why it exists</h2>
+    <p>
+      The hard part of a command is rarely typing it. It’s finding the flag,
+      the query or the incantation the first time, then finding it again six
+      months later. Shell history forgets, and general-purpose notes bury the
+      one line you need under everything else.
+    </p>
+
+    <h2>An opinionated shape</h2>
+    <p>
+      In Commandsnippets a note is a snippet: a subject to find it by, and a
+      body you’ll paste. Snippets live in tags, a snippet can sit in as many
+      tags as it belongs to, and you put every tag in the order you think in.
+      A click copies a snippet, and every copy is counted, so the snippets you
+      rely on show it. That’s most of it, on purpose.
+    </p>
+
+    <h2>What it promises</h2>
+    <ul>
+      <li>
+        <strong>Private by default.</strong> Your tags and snippets are yours
+        alone until you choose to make some public, and how often you reuse a
+        snippet never appears on a public page.
+      </li>
+      <li>
+        <strong>Local first.</strong> Every change saves on your device at once
+        and reaches the server when it can, so the app keeps working offline.
+      </li>
+      <li>
+        <strong>Yours to keep.</strong> Export a backup of everything whenever
+        you like, and restore it later; what a restore replaces is kept as an
+        earlier version.
+      </li>
+    </ul>
+
+    <p class="prose-cta">
+      <a class="login primary" href={app}>Get started</a>
+    </p>
+  </article>
+</Base>
