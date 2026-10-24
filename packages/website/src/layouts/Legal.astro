@@ -1,19 +1,25 @@
 ---
 import Base from './Base.astro';
+import {SITE_NAME} from '../lib/site';
 
 interface Props {
   title: string;
   description: string;
+  updatedAt: string;
   sections: readonly {id: string; title: string}[];
 }
 
-const {title, description, sections} = Astro.props;
+const {title, description, updatedAt, sections} = Astro.props;
+const updatedLabel = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'long',
+  timeZone: 'UTC',
+}).format(new Date(`${updatedAt}T00:00:00Z`));
 ---
 
-<Base title={`${title} · Command Snippets`} description={description}>
+<Base title={`${title} · ${SITE_NAME}`} description={description}>
   <article class="prose legal">
     <h1>{title}</h1>
-    <p class="muted">Last updated: <time datetime="2026-10-24">October 24, 2026</time></p>
+    <p class="muted">Last updated: <time datetime={updatedAt}>{updatedLabel}</time></p>
     <slot name="intro" />
     <nav class="contents" aria-label="On this page">
       <strong>On this page</strong>

@@ -3,7 +3,8 @@
 The public site (Astro, static HTML): the home page (what the app does, with
 an HTML sketch of it: `src/components/AppPreview.astro`), the about page, and
 the privacy policy, terms of service and contact page. Tearleads, LLC is
-the operator; support@tearleads.com handles support and privacy requests. Its copy states only what the app does today.
+the operator; support@tearleads.com handles support and privacy requests.
+Its copy states only what the app does today.
 Signing in happens in the web app (`../frontend`); the website only links to it,
 per build mode
 (`src/lib/appUrl.ts`):
@@ -51,11 +52,12 @@ Worker's own responses get that header from staging's `X_ROBOTS_TAG` var.
 
 All current pages have content and may be indexed in production, including
 privacy, terms and contact. The legal pages share `src/layouts/Legal.astro`
-for their revision date and section navigation. Keep their disclosures in
+for their individual revision dates and section navigation. Keep their disclosures in
 sync with authentication, storage, sharing, deletion and analytics behavior;
 update their date when policy content changes. `test/site.test.ts` checks
 published page metadata, section links and the sitemap. Any future placeholder
-must pass `placeholder` to `Base.astro` to stay out of search until published.
+can use `Placeholder.astro`, which passes `placeholder` to `Base.astro` to stay
+out of search until published.
 
 ## Old app links
 
