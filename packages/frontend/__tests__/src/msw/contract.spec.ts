@@ -23,6 +23,7 @@ import {
   type TagTextEntryCreateDocument,
   type TagUpdateDocument,
   type TextEntryCreateDocument,
+  type TextEntryReusedCreateDocument,
   type TextEntryUpdateDocument,
   tagCursorListDocumentSchema,
   tagDocumentSchema,
@@ -33,6 +34,7 @@ import {
   textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
   textEntryListDocumentSchema,
+  textEntryReusedDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared';
 import {setupServer} from 'msw/node';
@@ -419,6 +421,34 @@ const exchanges: Exchange[] = [
     status: 400,
     schema: errorDocumentSchema,
     body: {data: {type: 'TextEntry', attributes: {subject: 'new'}}},
+  },
+  {
+    handler: `POST ${API}/entry_reuses`,
+    method: 'POST',
+    url: `${API}/entry_reuses?include=text_entry`,
+    status: 201,
+    schema: textEntryReusedDocumentSchema,
+    body: {
+      data: {
+        type: 'TextEntryReused',
+        attributes: {client_id: 'reuse-1'},
+        relationships: {text_entry: {data: {type: 'TextEntry', id: '1'}}},
+      },
+    } satisfies TextEntryReusedCreateDocument,
+  },
+  {
+    handler: `POST ${API}/entry_reuses`,
+    method: 'POST',
+    url: `${API}/entry_reuses`,
+    status: 400,
+    schema: errorDocumentSchema,
+    body: {
+      data: {
+        type: 'TextEntryReused',
+        attributes: {},
+        relationships: {text_entry: {data: {type: 'TextEntry', id: '99'}}},
+      },
+    },
   },
   {
     handler: `PATCH ${API}/entries/:id`,

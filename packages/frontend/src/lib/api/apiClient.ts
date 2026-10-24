@@ -18,6 +18,7 @@ import type {
   TagUpdateDocument,
   TextEntryCreateDocument,
   TextEntryListParams,
+  TextEntryReusedCreateDocument,
   TextEntryUpdateDocument,
 } from '@commandsnippets/api-shared/requests';
 import {
@@ -37,6 +38,7 @@ import {
   type TagTextEntryListDocument,
   type TextEntryCursorListDocument,
   type TextEntryDocument,
+  type TextEntryReusedDocument,
   tagCursorListDocumentSchema,
   tagDocumentSchema,
   tagTextEntryCursorListDocumentSchema,
@@ -45,6 +47,7 @@ import {
   textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
   textEntryListDocumentSchema,
+  textEntryReusedDocumentSchema,
   type UserDocument,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
@@ -543,6 +546,33 @@ class ApiClient {
       {method: 'PATCH', body: payload, made},
       'Failed to update entry',
       textEntryDocumentSchema
+    );
+  }
+
+  /**
+   * Record that entry `entryId` was reused (copied), answered with the entry
+   * as counted. `clientId` makes a retried reuse find the one the first
+   * attempt made, so it is counted once.
+   */
+  public async reuseEntry(
+    entryId: string,
+    clientId: string,
+    made?: string
+  ): Promise<TextEntryReusedDocument> {
+    const payload: TextEntryReusedCreateDocument = {
+      data: {
+        type: 'TextEntryReused',
+        attributes: {client_id: clientId},
+        relationships: {
+          text_entry: {data: {type: 'TextEntry', id: entryId}},
+        },
+      },
+    };
+    return this.requestDocument(
+      `${baseURL}/entry_reuses?include=text_entry`,
+      {method: 'POST', body: payload, made},
+      'Failed to record a reuse',
+      textEntryReusedDocumentSchema
     );
   }
 

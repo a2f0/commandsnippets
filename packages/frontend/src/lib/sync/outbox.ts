@@ -51,6 +51,7 @@ import type {
   TagTextEntryDocument,
   TagTextEntryListDocument,
   TextEntryDocument,
+  TextEntryReusedDocument,
 } from '@commandsnippets/api-shared/responses';
 import type {Table} from 'dexie';
 import {ApiRequestError, UserMismatchError} from '../api/apiClient';
@@ -168,6 +169,11 @@ export interface OutboxApi {
     made?: string
   ): Promise<TextEntryDocument>;
   deleteEntry(entryId: string, made?: string): Promise<TextEntryDocument>;
+  reuseEntry(
+    entryId: string,
+    clientId: string,
+    made?: string
+  ): Promise<TextEntryReusedDocument>;
   setEntryPublic(
     entryId: string,
     isPublic: boolean,
@@ -208,6 +214,8 @@ export function rowsOf(owner: string, write: QueuedWrite): string[] {
     case 'updateEntry':
     case 'setEntryPublic':
     case 'deleteEntry':
+    // Its count changed.
+    case 'reuseEntry':
       return [rowKey(owner, TEXT_ENTRY, write.entryId)];
     // The tag and the entry too: their counts changed.
     case 'tagEntry':
@@ -247,6 +255,7 @@ function idsOf(write: QueuedWrite): Array<[string, string]> {
     case 'updateEntry':
     case 'setEntryPublic':
     case 'deleteEntry':
+    case 'reuseEntry':
       return [[TEXT_ENTRY, write.entryId]];
     case 'tagEntry':
     case 'untagEntry':
@@ -314,6 +323,7 @@ function renamed(
     case 'updateEntry':
     case 'setEntryPublic':
     case 'deleteEntry':
+    case 'reuseEntry':
       return type === TEXT_ENTRY
         ? {...write, entryId: swap(write.entryId)}
         : write;
@@ -497,6 +507,11 @@ async function send(
       };
     case 'deleteEntry':
       return {resources: answer(await api.deleteEntry(write.entryId, made))};
+    case 'reuseEntry': {
+      // The reuse itself is not stored: only the entry, as counted.
+      const document = await api.reuseEntry(write.entryId, write.reuseId, made);
+      return {resources: document.included ?? []};
+    }
     case 'tagEntry': {
       const document = await api.tagEntry(write.tagId, write.entryId, made);
       return {
@@ -986,6 +1001,34 @@ export async function adoptCreates(
     remaps.push(junction);
   }
   return remaps;
+}
+
+/**
+ * Read `owner`'s entry `entryId` as the API holds it and store it (as a sync
+ * would: a queued write to it still stands): what changes it without a new
+ * revision, which the sync's cursors never see again (its reuse count, from
+ * another device's copies). Call after a flush, under the same lock.
+ */
+export async function refreshEntry(
+  db: CommandsnippetsDatabase,
+  api: OutboxApi,
+  owner: string,
+  entryId: string
+): Promise<void> {
+  const accountId = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+  const account = accountId === undefined ? api : api.forAccount(accountId);
+  const version = await heldVersion(db, owner);
+  const named = version === undefined ? account : account.forVersion(version);
+  const document = await named.getEntry(entryId);
+  await db.transaction(
+    'rw',
+    [db.outbox, db.tags, db.entries, db.junctions, db.cursors],
+    async () => {
+      await assertBound(db, owner, accountId);
+      await assertHeld(db, owner, version);
+      await putResources(db, owner, answer(document));
+    }
+  );
 }
 
 /** How many writes `owner` has queued. */

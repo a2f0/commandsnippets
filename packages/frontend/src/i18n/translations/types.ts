@@ -183,6 +183,27 @@ export interface EntriesTranslations {
   entryCount_other: string;
   reusedCount_one: string;
   reusedCount_other: string;
+  entryInfoTitle: string;
+  infoSubject: string;
+  infoTags: string;
+  infoNoTags: string;
+  infoVisibility: string;
+  infoPublic: string;
+  infoPrivate: string;
+  infoReused: string;
+  infoTimes_one: string;
+  infoTimes_other: string;
+  infoCreated: string;
+  infoUpdated: string;
+  infoSize: string;
+  infoSizeValue: string;
+  infoCharacters_one: string;
+  infoCharacters_other: string;
+  infoLines_one: string;
+  infoLines_other: string;
+  infoId: string;
+  infoNotSent: string;
+  infoClose: string;
 }
 
 export interface AdminTranslations {

@@ -357,6 +357,8 @@ export const entryReuses = sqliteTable(
       .references(() => users.id, {onDelete: 'cascade'}),
     // The data version the row belongs to (users_dataversion).
     version: integer('version').notNull().default(1),
+    // A queued reuse's client id: a retried create finds the reuse it made.
+    client_id: text('client_id'),
   },
   table => [
     index('text_entries_textentryreused_text_entry_id_idx').on(
@@ -366,6 +368,9 @@ export const entryReuses = sqliteTable(
       table.user_id,
       table.version
     ),
+    uniqueIndex('text_entries_textentryreused_client_id_unique')
+      .on(table.user_id, table.version, table.client_id)
+      .where(sql`${table.client_id} IS NOT NULL`),
   ]
 );
 

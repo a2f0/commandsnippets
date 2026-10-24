@@ -127,7 +127,7 @@ API; everything else the app keeps is a zustand store.
   user's database under that user's name, and signing out deletes it with
   the rest. The page is read-only: a badge in the menu bar
   (`ReadOnlyBadge`), no New Tag or New Entry, no tag or list context menus,
-  only Copy on an entry's, no drag and drop (`useReadOnly`), and a
+  only Copy and Get Info on an entry's, no drag and drop (`useReadOnly`), and a
   read-only session's writes throw `ReadOnlyError` before anything is sent.
   The admin users table opens it (View data).
 - **Public user pages**: guests and non-staff visitors use the same
@@ -167,6 +167,18 @@ API; everything else the app keeps is a zustand store.
   replaces the local one, so the row is never shown twice. Writes are
   checked against api-shared's request schemas first (`InvalidWriteError`):
   one the API would refuse is never queued, and its editor keeps it.
+- **Reuses**: every copy of an entry (its copy icon, a click on its body,
+  its menu's Copy, Enter in the list: `copyEntry`) is a reuse
+  (`reuseEntry`): the entry's `reused_count`
+  goes up at once, shown beside its subject (`EntryReuseCount`), and the
+  reuse is queued with a client id of its own (`client_id`), so one retried
+  after a lost answer is counted once. Its answer is the entry as counted. A
+  read-only page counts nothing. A reuse leaves the entry's revision alone
+  (no list sorted by it moves), so the sync never reads another device's
+  reuses; the entry's Get Info (`EntryInfoDialog`: subject, tags,
+  visibility, reuse count, dates, size, id; owners and staff, never public
+  pages, as the count is private) reads the entry again on opening
+  (`SyncEngine.refreshEntry`, after a flush).
 - **The queue** (`flushOutbox`, run by the sync engine's `flush`, under the
   same lock as the syncs): writes go in order, each naming when it was made
   (`Client-Updated`, api-shared's `CLIENT_UPDATED_HEADER`: the API keeps the
@@ -447,7 +459,8 @@ per-row work multiplies (the HUD's Analytics tab times it).
   api-shared's schemas (losing nothing), failing on drift or on a handler it
   does not check. Type mock documents with api-shared's types, and build their
   pagination, timestamps and error documents with `src/msw/documents.ts`.
-  The handlers of `POST /entries`, the `PATCH`es and `/tags_entries` parse the
+  The handlers of `POST /entries`, `POST /entry_reuses`, the `PATCH`es and
+  `/tags_entries` parse the
   request document as the API does (`src/msw/requests.ts`) and keep the mock
   state as its database would (revisions, counters, junctions: deletes are
   soft, and untagging keeps the junction for the junction list; reorders

@@ -68,6 +68,8 @@ export type QueuedWrite =
   | {kind: 'updateEntry'; entryId: string; subject: string; body: string}
   | {kind: 'setEntryPublic'; entryId: string; isPublic: boolean}
   | {kind: 'deleteEntry'; entryId: string}
+  // The entry was copied: a reuse, counted once by its client id (`reuseId`).
+  | {kind: 'reuseEntry'; entryId: string; reuseId: string}
   | {kind: 'tagEntry'; junctionId: string; tagId: string; entryId: string}
   | {kind: 'untagEntry'; junctionId: string; tagId: string; entryId: string}
   | {kind: 'reorderEntries'; tagId: string; top: string; bottom: string}
