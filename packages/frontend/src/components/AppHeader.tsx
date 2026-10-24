@@ -22,6 +22,11 @@ const AppHeader = ({entriesPage = true}: IProps) => (
       backgroundColor: theme => theme.header.background,
       top: 0,
       height: theme => `${theme.appBar.height}px`,
+      // Detail pages have no drawer to align with; keep a narrow viewport's
+      // menus within the header, including the extra controls staff see.
+      ...(!entriesPage && {
+        '& .MuiToolbar-root': {overflowX: 'auto', scrollbarWidth: 'thin'},
+      }),
     }}
   >
     <StyledToolbar>

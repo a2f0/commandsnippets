@@ -1,3 +1,11 @@
+/** UTC timestamp for HTML time elements, with millisecond precision. */
+export const timestampWithZone = (value: string): string => {
+  const milliseconds = value.replace(/(\.\d{3})\d+/, '$1');
+  return /(?:[zZ]|[+-]\d\d:\d\d)$/.test(milliseconds)
+    ? milliseconds
+    : `${milliseconds}Z`;
+};
+
 /**
  * Format an API timestamp for display. The API sends naive UTC
  * (`2026-09-28T11:42:49.185000`); without a zone, Date would read it as local
@@ -8,8 +16,7 @@ export function formatTimestamp(
   locale: string,
   timeStyle: 'short' | 'medium' = 'short'
 ): string {
-  const hasZone = /(?:[zZ]|[+-]\d\d:\d\d)$/.test(value);
-  const date = new Date(hasZone ? value : `${value}Z`);
+  const date = new Date(timestampWithZone(value));
   if (Number.isNaN(date.getTime())) {
     return value;
   }

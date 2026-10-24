@@ -445,6 +445,13 @@ const exchanges: Exchange[] = [
     schema: textEntryReusedListDocumentSchema,
   },
   {
+    handler: `GET ${API}/entry_reuses`,
+    method: 'GET',
+    url: `${API}/entry_reuses?include=text_entry&sort=-date_created&page%5Bsize%5D=50`,
+    status: 200,
+    schema: textEntryReusedListDocumentSchema,
+  },
+  {
     handler: `POST ${API}/entry_reuses`,
     method: 'POST',
     url: `${API}/entry_reuses`,

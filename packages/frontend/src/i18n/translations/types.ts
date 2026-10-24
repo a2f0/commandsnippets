@@ -209,6 +209,16 @@ export interface EntriesTranslations {
   infoBody: string;
   infoCopy: string;
   infoCopied: string;
+  allReuses: string;
+  backToReuses: string;
+  profileReuseHistory: string;
+  allReusesDescription: string;
+  allReusesEmpty: string;
+  reuseRefresh: string;
+  reuseShowMore: string;
+  reuseTotal_one: string;
+  reuseTotal_other: string;
+  reuseUnavailableEntry: string;
   reuseHistory: string;
   reuseHistoryLoading: string;
   reuseHistoryEmpty: string;

@@ -51,7 +51,6 @@ import type {
   TagTextEntryDocument,
   TagTextEntryListDocument,
   TextEntryDocument,
-  TextEntryReused,
   TextEntryReusedDocument,
   TextEntryReusedListDocument,
 } from '@commandsnippets/api-shared/responses';
@@ -196,7 +195,7 @@ export interface OutboxApi {
   ): Promise<TagTextEntryCursorListDocument>;
   getEntry(entryId: string): Promise<TextEntryDocument>;
   getEntryReuses(
-    entryId: string,
+    entryId: string | undefined,
     page: number
   ): Promise<TextEntryReusedListDocument>;
   getJunction(
@@ -1034,30 +1033,19 @@ export async function refreshEntry(
   );
 }
 
-/**
- * Every reuse of `owner`'s entry `entryId` the API holds, newest first (all
- * of its pages). Not stored: only the entry's page shows them. Call after a
- * flush, under the same lock, so the reuses queued here are among them.
- */
+/** Read one history page, bound to the same account and data version. */
 export async function readReuses(
   db: CommandsnippetsDatabase,
   api: OutboxApi,
   owner: string,
-  entryId: string
-): Promise<TextEntryReused[]> {
+  entryId: string | undefined,
+  page: number
+): Promise<TextEntryReusedListDocument> {
   const {named, accountId, version} = await readerOf(db, api, owner);
-  const reuses: TextEntryReused[] = [];
-  for (let page = 1; ; page += 1) {
-    const listed = await named.getEntryReuses(entryId, page);
-    reuses.push(...listed.data);
-    if (listed.links.next === null || listed.data.length === 0) {
-      break;
-    }
-  }
-  // Of the account and version read, not another taken up meanwhile.
+  const listed = await named.getEntryReuses(entryId, page);
   await assertBound(db, owner, accountId);
   await assertHeld(db, owner, version);
-  return reuses;
+  return listed;
 }
 
 /**

@@ -2126,7 +2126,7 @@ const createHandlers = () => {
         }
       }),
 
-      // One entry's reuses (`filter[text_entry.id]`), newest first with
+      // One entry's or the whole profile's reuses, newest first with
       // `sort=-date_created`, a page at a time, as the API lists them.
       http.get(`${baseUrl}/entry_reuses`, ({request}) => {
         recordRequest('GET', request.url);
@@ -2152,6 +2152,15 @@ const createHandlers = () => {
           data: listed.slice((page - 1) * size, page * size),
           ...pagination(request.url, page, pages, listed.length),
         };
+        if (url.searchParams.get('include') === 'text_entry') {
+          const entryIds = new Set(
+            body.data.map(reuse => reuse.relationships.text_entry.data.id)
+          );
+          const included = activeEntries().data.filter(
+            entry => entryIds.has(entry.id) && !entry.attributes.is_deleted
+          );
+          if (included.length > 0) body.included = included;
+        }
         return HttpResponse.json(body);
       }),
 

@@ -41,7 +41,7 @@ import type {
   TagTextEntryCursorListDocument,
   TagTextEntryListDocument,
   TextEntryCursorListDocument,
-  TextEntryReused,
+  TextEntryReusedListDocument,
 } from '@commandsnippets/api-shared/responses';
 import {Dexie, type Table} from 'dexie';
 import {DataVersionChangedError} from '../api/apiClient';
@@ -575,12 +575,14 @@ export interface SyncEngine {
    */
   adopt(version: number): Promise<void>;
   /**
-   * Send the queued writes, then read entry `entryId` again (its reuse
-   * count, as other devices left it: `refreshEntry` in `outbox.ts`) and every
-   * reuse of it, newest first (`readReuses`): what its page shows. None
-   * (null) where the data is read-only: only their owner reads them.
+   * Send queued writes and read one history page (default 1), newest first.
+   * On page 1 only, refresh the entry for its count on other devices. Without
+   * an entry id, read across the profile. Read-only data returns null.
    */
-  entryReuses(entryId: string): Promise<TextEntryReused[] | null>;
+  entryReuses(
+    entryId?: string,
+    page?: number
+  ): Promise<TextEntryReusedListDocument | null>;
 }
 
 /**
@@ -673,14 +675,15 @@ export function createSyncEngine(
     adopt: async version => {
       await exclusive(() => adoptVersion(db, owner, version));
     },
-    entryReuses: async entryId => {
+    entryReuses: async (entryId, page = 1) => {
       if (writes === null) {
         return null;
       }
       await flush();
       return exclusive(async () => {
-        await refreshEntry(db, writes, owner, entryId);
-        return readReuses(db, writes, owner, entryId);
+        if (entryId !== undefined && page === 1)
+          await refreshEntry(db, writes, owner, entryId);
+        return readReuses(db, writes, owner, entryId, page);
       });
     },
     syncAll: syncAllToTheEnd,
