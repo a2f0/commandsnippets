@@ -109,6 +109,25 @@ it('counts a copy made on the page, which joins its reuses', async () => {
   ).toBe(1);
 });
 
+it('loads the next page of an individual entry history with Show more', async () => {
+  signInHere();
+  for (let index = 0; index < 51; index += 1) {
+    await apiClient.forVersion(1).reuseEntry('1', `copy-${index}`);
+  }
+  await apiClient.forVersion(1).reuseEntry('2', 'another-entry');
+  mount('/test/entries/1');
+  await waitFor(async () =>
+    expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(50)
+  );
+  const more = screen.getByRole('button', {name: 'Show more'});
+  await waitFor(() => expect(more).toBeEnabled());
+  fireEvent.click(more);
+  await waitFor(async () =>
+    expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(51)
+  );
+  expect(screen.queryByRole('button', {name: 'Show more'})).toBeNull();
+});
+
 it("lists a deep link's reuses, and goes back to the user's page", async () => {
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'first');

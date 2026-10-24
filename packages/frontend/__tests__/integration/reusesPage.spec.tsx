@@ -159,6 +159,9 @@ it('retries the next page without dropping loaded rows or duplicating a shifted 
     expect(within(await list()).getAllByRole('listitem')).toHaveLength(51)
   );
   expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2, 2]);
+  await waitFor(() =>
+    expect(screen.getByRole('button', {name: 'Refresh'})).toBeEnabled()
+  );
   fireEvent.click(screen.getByRole('button', {name: 'Refresh'}));
   await waitFor(async () =>
     expect(
