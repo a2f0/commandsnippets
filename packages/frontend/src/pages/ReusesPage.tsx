@@ -30,7 +30,7 @@ const ReusesContent = () => {
       <Typography color="text.secondary" sx={{mt: 1}}>
         {t('allReusesDescription')}
       </Typography>
-      <ReuseHistory session={session} />
+      <ReuseHistory session={session} initialSync={syncStatus} />
     </DetailPage>
   );
 };

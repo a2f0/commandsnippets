@@ -575,10 +575,9 @@ export interface SyncEngine {
    */
   adopt(version: number): Promise<void>;
   /**
-   * Send the queued writes, then read entry `entryId` again (its reuse
-   * count, as other devices left it: `refreshEntry` in `outbox.ts`) and every
-   * page of its history, newest first. Without an id, read across the
-   * profile. None (null) for read-only data: only the owner reads history.
+   * Send queued writes and read one history page (default 1), newest first.
+   * On page 1 only, refresh the entry for its count on other devices. Without
+   * an entry id, read across the profile. Read-only data returns null.
    */
   entryReuses(
     entryId?: string,

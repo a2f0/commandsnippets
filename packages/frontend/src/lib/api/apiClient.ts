@@ -56,7 +56,7 @@ import {
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
 import {signedInUser} from '../auth/authUtils';
-import {SYNC_PAGE_SIZE} from '../sync/pageSize';
+import {REUSE_PAGE_SIZE, SYNC_PAGE_SIZE} from '../sync/pageSize';
 import {fetchApi} from './apiVersion';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
@@ -590,7 +590,7 @@ class ApiClient {
         : {'filter[text_entry.id]': Number(entryId)}),
       sort: '-date_created',
       'page[number]': page,
-      'page[size]': 50,
+      'page[size]': REUSE_PAGE_SIZE,
       ...(entryId === undefined ? {include: 'text_entry' as const} : {}),
     };
     return this.requestDocument(

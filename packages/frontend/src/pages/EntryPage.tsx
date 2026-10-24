@@ -32,10 +32,17 @@ interface EntryDetailProps {
   session: SyncSession | null;
   /** A public page: no reuse count or history (they are private). */
   publicOnly: boolean;
+  syncStatus: {failed: boolean; retry: () => void};
 }
 
 /** The entry: its subject, body, info and (its owner's) reuses. */
-const EntryDetail = ({entry, owner, session, publicOnly}: EntryDetailProps) => {
+const EntryDetail = ({
+  entry,
+  owner,
+  session,
+  publicOnly,
+  syncStatus,
+}: EntryDetailProps) => {
   const {t, i18n} = useTypedTranslation('entries');
   const tags = useEntryTags(entry.id);
   const [copied, setCopied] = useState(false);
@@ -206,7 +213,12 @@ const EntryDetail = ({entry, owner, session, publicOnly}: EntryDetailProps) => {
         </Box>
       </Box>
       {!publicOnly && session !== null && (
-        <ReuseHistory session={session} entryId={id} count={reused_count} />
+        <ReuseHistory
+          session={session}
+          entryId={id}
+          count={reused_count}
+          initialSync={syncStatus}
+        />
       )}
     </>
   );
@@ -243,6 +255,7 @@ const EntryPageContent = () => {
         owner={owner}
         session={session}
         publicOnly={context?.publicOnly ?? true}
+        syncStatus={syncStatus}
       />
     );
   } else if (shown === undefined || !shown.loaded) {

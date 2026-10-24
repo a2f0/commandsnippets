@@ -123,6 +123,23 @@ it('retries initial errors and refreshes copies from another device', async () =
   expect(within(await list()).getAllByRole('listitem')).toHaveLength(1);
 });
 
+it('offers Retry when the first sync cannot determine a data version offline', async () => {
+  signInHere();
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  server.use(http.all(`${API}/*`, () => HttpResponse.error()));
+  mount();
+  const warning = await screen.findByRole('alert');
+  expect(warning).toHaveTextContent('The reuses could not be read.');
+  expect(screen.queryByText('Loading the reuses…')).toBeNull();
+  server.resetHandlers();
+  fireEvent.click(within(warning).getByRole('button', {name: 'Retry'}));
+  expect(
+    await screen.findByText(
+      'No reuses yet. Copy an entry to start your history.'
+    )
+  ).toBeInTheDocument();
+});
+
 it('retries the next page without dropping loaded rows or duplicating a shifted row', async () => {
   signInHere();
   for (let index = 0; index < 51; index += 1)

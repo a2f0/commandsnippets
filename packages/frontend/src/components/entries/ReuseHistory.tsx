@@ -17,6 +17,7 @@ import type {SyncSession} from '../../lib/sync/session';
 
 interface Props {
   session: SyncSession;
+  initialSync: {failed: boolean; retry: () => void};
   /** Omit for every reuse across the profile. */
   entryId?: string;
   count?: number;
@@ -323,7 +324,23 @@ export const ReuseHistory = (props: Props) => {
     !props.session.readOnly &&
     !(props.entryId && isLocalId(props.entryId))
   )
-    return (
+    return props.initialSync.failed ? (
+      <Alert
+        severity="warning"
+        sx={{mt: 3}}
+        action={
+          <Button
+            color="inherit"
+            size="small"
+            onClick={props.initialSync.retry}
+          >
+            {t('reuseHistoryRetry')}
+          </Button>
+        }
+      >
+        {t('reuseHistoryFailed')}
+      </Alert>
+    ) : (
       <Typography role="status" sx={{mt: 3}}>
         {t('reuseHistoryLoading')}
       </Typography>

@@ -25,7 +25,7 @@ const AppHeader = ({entriesPage = true}: IProps) => (
       // Detail pages have no drawer to align with; keep a narrow viewport's
       // menus within the header, including the extra controls staff see.
       ...(!entriesPage && {
-        '& .MuiToolbar-root': {overflowX: 'auto', scrollbarWidth: 'none'},
+        '& .MuiToolbar-root': {overflowX: 'auto', scrollbarWidth: 'thin'},
       }),
     }}
   >
