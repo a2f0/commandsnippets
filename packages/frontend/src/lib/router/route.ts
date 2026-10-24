@@ -1,6 +1,7 @@
 /**
  * The app's routes, by the URL's path: the OAuth callbacks, the admin page, a
- * user's page (`/:user`, `/:user/:tag`) and the root. Every other first path
+ * user's page (`/:user`, `/:user/:tag`), one of their entries'
+ * (`/:user/entries/:id`) and the root. Every other first path
  * segment is a username (`routePaths.ts`). Paths match as React Router
  * matched them: decoded, the app's own paths in any case, a trailing slash
  * ignored.
@@ -16,6 +17,8 @@ export type Page =
   | 'githubOAuth'
   | 'googleOAuth'
   | 'user'
+  /** An entry's page: its info and reuses (`/:user/entries/:id`). */
+  | 'entry'
   | 'root'
   /** No route: a path of more segments, or an empty one. */
   | 'none';
@@ -26,7 +29,13 @@ export interface Route {
   user?: string | undefined;
   /** On a user's page: the tag shown (`/:user/:tag`). */
   tag?: string | undefined;
+  /** On an entry's page: its id (`/:user/entries/:id`). */
+  entryId?: string | undefined;
 }
+
+/** The path of `user`'s entry `entryId`'s page. */
+export const entryPath = (user: string, entryId: string): string =>
+  `/${encodeURIComponent(user)}/entries/${encodeURIComponent(entryId)}`;
 
 const STATIC_PAGES: ReadonlyArray<readonly [string, Page]> = [
   [ADMIN_PATH, 'admin'],
@@ -64,6 +73,17 @@ export function routeOf(pathname: string): Route {
     return {page};
   }
   const [user, tag, ...rest] = path.split('/').slice(1);
+  const [entryId] = rest;
+  if (
+    user !== undefined &&
+    user !== '' &&
+    tag === 'entries' &&
+    rest.length === 1 &&
+    entryId !== undefined &&
+    entryId !== ''
+  ) {
+    return {page: 'entry', user: paramOf(user), entryId: paramOf(entryId)};
+  }
   if (user === undefined || user === '' || tag === '' || rest.length > 0) {
     return {page: 'none'};
   }

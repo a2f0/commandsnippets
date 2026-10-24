@@ -3,8 +3,15 @@ import React from 'react';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useOwner, useSession} from '../../lib/data/hooks';
 import {setEntryPublic} from '../../lib/data/writes';
-import {useRoute, useSearchParam} from '../../lib/router/navigation';
+import {
+  currentPath,
+  navigate,
+  useRoute,
+  useSearchParam,
+} from '../../lib/router/navigation';
+import {entryPath} from '../../lib/router/route';
 import type {IMouse} from '../../lib/shared';
+import {useAppState} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 
 interface IStyledMenuProps {
@@ -59,7 +66,6 @@ export interface IEntryContextMenu {
   handleNewEntryParent: () => void;
   handleBeginEditParent: () => void;
   handleCopyParent: () => void;
-  handleGetInfoParent: () => void;
   /**
    * Another user's entry: Copy is all it offers, and Get Info to staff (not
    * on public pages: the reuse count is private).
@@ -75,12 +81,12 @@ const EntryContextMenu = ({
   handleNewEntryParent,
   handleBeginEditParent,
   handleCopyParent,
-  handleGetInfoParent,
   readOnly,
   text_entry,
 }: IEntryContextMenu) => {
   const session = useSession();
-  const publicOnly = useOwner()?.publicOnly ?? true;
+  const owner = useOwner();
+  const publicOnly = owner?.publicOnly ?? true;
   // Whether the list is a tag's, not which tag's: a tag switch renders no
   // row's menu again.
   const onTagList = useRoute(
@@ -113,9 +119,15 @@ const EntryContextMenu = ({
     handleClose();
   };
 
+  // The entry's page; its Back returns to this list.
   const handleGetInfo = () => {
-    handleGetInfoParent();
     handleClose();
+    if (owner === null) {
+      return;
+    }
+    const page = entryPath(owner.owner, id);
+    useAppState.getState().setEntryReturnPath(page, currentPath());
+    navigate(page);
   };
 
   return (

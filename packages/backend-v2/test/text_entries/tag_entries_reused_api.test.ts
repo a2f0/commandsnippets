@@ -307,7 +307,12 @@ describe('EntryReusesApi v2', () => {
     );
     const jsonResponse = await json(response);
     expect(response.status).toBe(201);
-    expect(jsonResponse.data.attributes).toEqual({});
+    // Its one attribute: when it was reused.
+    expect(Object.keys(jsonResponse.data.attributes)).toEqual(['date_created']);
+    expect(jsonResponse.data.attributes.date_created).toMatch(
+      // (Python's isoformat: no fraction when the microseconds are 0.)
+      /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{6})?$/
+    );
     expect(jsonResponse.included).toBeUndefined();
 
     const withInclude = await json(
@@ -393,5 +398,48 @@ describe('EntryReusesApi v2', () => {
       (await json(await base.user1Client.get(`/api/v1/entries/${entry.id}`)))
         .data.attributes.date_updated
     );
+  });
+
+  it("lists one entry's reuses, newest first, and only the user's own", async () => {
+    const {user1, user2, user1Client} = base;
+    const entry = await textEntryFactory({user: user1});
+    const other = await textEntryFactory({user: user1});
+    const theirs = await textEntryFactory({user: user2});
+    const first = await textEntryReusedFactory({
+      text_entry: entry,
+      user: user1,
+    });
+    const second = await textEntryReusedFactory({
+      text_entry: entry,
+      user: user1,
+    });
+    await textEntryReusedFactory({text_entry: other, user: user1});
+    await textEntryReusedFactory({text_entry: theirs, user: user2});
+
+    const listed = await json(
+      await user1Client.get(
+        `/api/v1/entry_reuses?filter[text_entry.id]=${entry.id}&sort=-date_created`
+      )
+    );
+    expect(listed.data.map((reuse: Json) => reuse.id)).toEqual([
+      String(second.id),
+      String(first.id),
+    ]);
+    expect(listed.data[0].attributes.date_created).toBe(second.date_created);
+    expect(listed.meta.pagination.count).toBe(2);
+    // Another user's entry lists nothing to this one.
+    const foreign = await json(
+      await user1Client.get(
+        `/api/v1/entry_reuses?filter[text_entry.id]=${theirs.id}`
+      )
+    );
+    expect(foreign.data).toEqual([]);
+    expect(
+      (
+        await user1Client.get(
+          '/api/v1/entry_reuses?filter[text_entry.id]=not-a-number'
+        )
+      ).status
+    ).toBe(400);
   });
 });

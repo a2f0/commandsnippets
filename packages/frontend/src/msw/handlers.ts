@@ -36,6 +36,7 @@ import {
   type TextEntryListDocument,
   type TextEntryReused,
   type TextEntryReusedDocument,
+  type TextEntryReusedListDocument,
   tagCreateAttributesSchema,
   tagTextEntryCreateRelationshipsSchema,
   tagUpdateAttributesSchema,
@@ -2125,6 +2126,35 @@ const createHandlers = () => {
         }
       }),
 
+      // One entry's reuses (`filter[text_entry.id]`), newest first with
+      // `sort=-date_created`, a page at a time, as the API lists them.
+      http.get(`${baseUrl}/entry_reuses`, ({request}) => {
+        recordRequest('GET', request.url);
+        const url = new URL(request.url);
+        const entryId = url.searchParams.get('filter[text_entry.id]');
+        const descending = url.searchParams.get('sort') === '-date_created';
+        const size = Number(url.searchParams.get('page[size]') ?? 50);
+        const page = Number(url.searchParams.get('page[number]') ?? 1);
+        const listed = reuses
+          .map(({reuse}) => reuse)
+          .filter(
+            reuse =>
+              entryId === null ||
+              reuse.relationships.text_entry.data.id === entryId
+          )
+          .sort(
+            (a, b) =>
+              compare(a.attributes.date_created, b.attributes.date_created) *
+                (descending ? -1 : 1) || compare(Number(a.id), Number(b.id))
+          );
+        const pages = Math.max(1, Math.ceil(listed.length / size));
+        const body: TextEntryReusedListDocument = {
+          data: listed.slice((page - 1) * size, page * size),
+          ...pagination(request.url, page, pages, listed.length),
+        };
+        return HttpResponse.json(body);
+      }),
+
       // Record a reuse: the entry's reused_count goes up (as the API's trigger
       // does), its revision stays. A client id already recorded answers with
       // its reuse, counted once.
@@ -2162,7 +2192,12 @@ const createHandlers = () => {
                 'TextEntryReused',
                 reuses.map(({reuse}) => reuse)
               ),
-              attributes: {},
+              // After every reuse before it, as the API's clock never repeats.
+              attributes: {
+                date_created: nextRevision(
+                  reuses.map(({reuse}) => reuse.attributes.date_created)
+                ),
+              },
               relationships: {
                 text_entry: {data: {type: 'TextEntry', id: entryId}},
                 ...ownedByTestUser,

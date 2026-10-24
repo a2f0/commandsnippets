@@ -123,7 +123,11 @@ describe('list params', () => {
     assert<
       Equal<
         keyof TextEntryReusedListParams,
-        'sort' | 'page[number]' | 'page[size]' | 'include'
+        | 'filter[text_entry.id]'
+        | 'sort'
+        | 'page[number]'
+        | 'page[size]'
+        | 'include'
       >
     >();
     assert<
@@ -223,6 +227,7 @@ describe('list params', () => {
       ],
       [
         {
+          'filter[text_entry.id]': 7,
           'page[number]': 1,
           'page[size]': 5,
           sort: '-date_created',

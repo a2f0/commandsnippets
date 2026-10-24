@@ -213,7 +213,7 @@ export function createRegistry(
             eq(entryReuses.version, version)
           )
         ),
-    attributes: () => ({}),
+    attributes: row => ({date_created: isoformat(row.date_created)}),
     relationships: {
       text_entry: {type: TEXT_ENTRY, key: row => row.text_entry_id},
       user: {type: USER, key: row => row.user_id},

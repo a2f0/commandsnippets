@@ -1354,14 +1354,58 @@ describe('a reuse (a copy)', () => {
     expect(writes).toEqual([]);
   });
 
-  it("made on another device is read when the entry's info asks", async () => {
+  it("made on another device is read with the entry's reuses", async () => {
     await session().sync.syncAll();
     await apiClient.forVersion(1).reuseEntry('1', 'another-device');
     // Its revision did not move: a sync does not read it again.
     await session().sync.syncAll();
     expect(await reusedCount('1')).toBe(0);
 
-    await session().sync.refreshEntry('1');
+    const reuses = await session().sync.entryReuses('1');
+    expect(reuses).toHaveLength(1);
     expect(await reusedCount('1')).toBe(1);
+  });
+
+  it("are listed newest first, this device's queued ones too", async () => {
+    await session().sync.syncAll();
+    offline();
+    await reuseEntry(session(), '1');
+    await reuseEntry(session(), '1');
+    await reuseEntry(session(), '2');
+    server.resetHandlers();
+
+    const reuses = await session().sync.entryReuses('1');
+
+    expect(await queued()).toBe(0);
+    invariant(reuses !== null, 'the owner reads them');
+    expect(reuses).toHaveLength(2);
+    const [newest, oldest] = reuses;
+    invariant(newest && oldest, 'two reuses');
+    expect(
+      newest.attributes.date_created > oldest.attributes.date_created
+    ).toBe(true);
+  });
+
+  it('are read page by page, each once, to the last', async () => {
+    await session().sync.syncAll();
+    // More than a page (`SYNC_PAGE_SIZE`, 100) of them.
+    for (let index = 0; index < 101; index += 1) {
+      await apiClient.forVersion(1).reuseEntry('1', `reuse-${index}`);
+    }
+    const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
+
+    const reuses = await session().sync.entryReuses('1');
+
+    invariant(reuses !== null, 'the owner reads them');
+    expect(reuses).toHaveLength(101);
+    expect(new Set(reuses.map(reuse => reuse.id)).size).toBe(101);
+    expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+  });
+
+  it('are not read where the data is read-only', async () => {
+    store.setIsStaff(true);
+    expect(await syncSession(TEST_USER, 'alice').sync.entryReuses('71')).toBe(
+      null
+    );
   });
 });

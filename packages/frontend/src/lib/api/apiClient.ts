@@ -19,6 +19,7 @@ import type {
   TextEntryCreateDocument,
   TextEntryListParams,
   TextEntryReusedCreateDocument,
+  TextEntryReusedListParams,
   TextEntryUpdateDocument,
 } from '@commandsnippets/api-shared/requests';
 import {
@@ -39,6 +40,7 @@ import {
   type TextEntryCursorListDocument,
   type TextEntryDocument,
   type TextEntryReusedDocument,
+  type TextEntryReusedListDocument,
   tagCursorListDocumentSchema,
   tagDocumentSchema,
   tagTextEntryCursorListDocumentSchema,
@@ -48,6 +50,7 @@ import {
   textEntryDocumentSchema,
   textEntryListDocumentSchema,
   textEntryReusedDocumentSchema,
+  textEntryReusedListDocumentSchema,
   type UserDocument,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
@@ -573,6 +576,25 @@ class ApiClient {
       {method: 'POST', body: payload, made},
       'Failed to record a reuse',
       textEntryReusedDocumentSchema
+    );
+  }
+
+  /** Page `page` (from 1) of entry `entryId`'s reuses, newest first. */
+  public async getEntryReuses(
+    entryId: string,
+    page: number
+  ): Promise<TextEntryReusedListDocument> {
+    const params: TextEntryReusedListParams = {
+      'filter[text_entry.id]': Number(entryId),
+      sort: '-date_created',
+      'page[number]': page,
+      'page[size]': SYNC_PAGE_SIZE,
+    };
+    return this.requestDocument(
+      urlWithQuery(`${baseURL}/entry_reuses`, params),
+      {method: 'GET'},
+      'Failed to read the reuses',
+      textEntryReusedListDocumentSchema
     );
   }
 

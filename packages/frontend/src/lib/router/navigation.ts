@@ -84,9 +84,13 @@ export function useRoute<
   });
 }
 
-/** A parameter of a user's page: whose (`user`), or the tag shown (`tag`). */
-export const useRouteParam = (name: 'user' | 'tag'): string | undefined =>
-  useRoute(route => route[name]);
+/**
+ * A parameter of a user's page: whose (`user`), the tag shown (`tag`), or the
+ * entry shown (`entryId`).
+ */
+export const useRouteParam = (
+  name: 'user' | 'tag' | 'entryId'
+): string | undefined => useRoute(route => route[name]);
 
 /** A parameter of the query: `entries` (`?entries=all`). */
 export const useSearchParam = (name: string): string | null =>

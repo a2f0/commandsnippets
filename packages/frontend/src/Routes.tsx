@@ -6,6 +6,7 @@ import {Navigate} from './lib/router/Router';
 import {useAppConfig} from './lib/state/appState';
 import {AdminPage} from './pages/AdminPage';
 import {EntriesPage} from './pages/EntriesPage';
+import {EntryPage} from './pages/EntryPage';
 import {SignInPage} from './pages/SignInPage';
 
 /**
@@ -41,6 +42,8 @@ const Routes = () => {
       return username ? <AdminPage /> : <Navigate to="/" replace />;
     case 'user':
       return <EntriesPage />;
+    case 'entry':
+      return <EntryPage />;
     case 'root':
       // The same page as a user's (`/:user`), which it goes on to.
       return username ? <EntriesPage /> : <SignInPage />;

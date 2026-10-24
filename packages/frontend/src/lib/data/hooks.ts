@@ -25,10 +25,11 @@ import type {
 import {liveQuery} from 'dexie';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useLayoutEffect, useMemo, useRef, useSyncExternalStore} from 'react';
-import type {RowKey} from '../db/database';
+import type {RowKey, Stored} from '../db/database';
 import {timed} from '../metrics/timings';
 import {useRouteParam} from '../router/navigation';
 import {useAppState} from '../state/appState';
+import {isLocalId} from '../sync/outbox';
 import {
   publicSyncSession,
   type SyncSession,
@@ -342,10 +343,53 @@ export function useEntries(
   );
 }
 
+/** An entry read for its page, and whether its owner's entries are read. */
+export interface EntryShown {
+  /**
+   * The id asked for: a query asked for another keeps answering with its
+   * last result until it reads the next.
+   */
+  entryId: string;
+  /** The entry (not deleted), or null when there is none (yet). */
+  entry: Stored<TextEntry> | null;
+  /**
+   * Whether the first load of the entries is done: until then an entry not
+   * found may yet come.
+   */
+  loaded: boolean;
+}
+
 /**
- * The tags entry `entryId` is in (not deleted), by name, for its info (Get
- * Info): read while it is open, never by a list row.
+ * Entry `entryId` for its page (`/:user/entries/:id`), by its id or the
+ * local id it was made with (a page opened before its create reached the
+ * API); undefined until read.
  */
+export function useEntry(entryId: string): EntryShown | undefined {
+  const session = useSession();
+  return useLiveQuery(async () => {
+    if (session === null) {
+      return {entryId, entry: null, loaded: true};
+    }
+    const {db, owner} = session;
+    const row =
+      (await db.entries.get([owner, entryId])) ??
+      (isLocalId(entryId)
+        ? await db.entries
+            .where('owner')
+            .equals(owner)
+            .filter(candidate => candidate.localId === entryId)
+            .first()
+        : undefined);
+    const cursor = await db.cursors.get([owner, 'entries']);
+    return {
+      entryId,
+      entry: row === undefined || row.attributes.is_deleted ? null : row,
+      loaded: cursor !== undefined && cursor.initialLoad?.complete !== false,
+    };
+  }, [session, entryId]);
+}
+
+/** The tags entry `entryId` is in (not deleted), by name, for its page. */
 export function useEntryTags(entryId: string): Tag[] | undefined {
   const session = useSession();
   return useLiveQuery(async () => {

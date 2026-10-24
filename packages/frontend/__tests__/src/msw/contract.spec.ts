@@ -35,6 +35,7 @@ import {
   textEntryDocumentSchema,
   textEntryListDocumentSchema,
   textEntryReusedDocumentSchema,
+  textEntryReusedListDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared';
 import {setupServer} from 'msw/node';
@@ -435,6 +436,13 @@ const exchanges: Exchange[] = [
         relationships: {text_entry: {data: {type: 'TextEntry', id: '1'}}},
       },
     } satisfies TextEntryReusedCreateDocument,
+  },
+  {
+    handler: `GET ${API}/entry_reuses`,
+    method: 'GET',
+    url: `${API}/entry_reuses?filter%5Btext_entry.id%5D=1&sort=-date_created&page%5Bnumber%5D=1&page%5Bsize%5D=100`,
+    status: 200,
+    schema: textEntryReusedListDocumentSchema,
   },
   {
     handler: `POST ${API}/entry_reuses`,
