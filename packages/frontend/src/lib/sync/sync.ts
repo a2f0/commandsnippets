@@ -577,10 +577,11 @@ export interface SyncEngine {
   /**
    * Send the queued writes, then read entry `entryId` again (its reuse
    * count, as other devices left it: `refreshEntry` in `outbox.ts`) and every
-   * reuse of it, newest first (`readReuses`): what its page shows. None
+   * reuse of it, newest first (`readReuses`). Without an id, read the whole
+   * profile's history. None
    * (null) where the data is read-only: only their owner reads them.
    */
-  entryReuses(entryId: string): Promise<TextEntryReused[] | null>;
+  entryReuses(entryId?: string): Promise<TextEntryReused[] | null>;
 }
 
 /**
@@ -679,7 +680,8 @@ export function createSyncEngine(
       }
       await flush();
       return exclusive(async () => {
-        await refreshEntry(db, writes, owner, entryId);
+        if (entryId !== undefined)
+          await refreshEntry(db, writes, owner, entryId);
         return readReuses(db, writes, owner, entryId);
       });
     },

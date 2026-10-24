@@ -7,6 +7,7 @@ import {useAppConfig} from './lib/state/appState';
 import {AdminPage} from './pages/AdminPage';
 import {EntriesPage} from './pages/EntriesPage';
 import {EntryPage} from './pages/EntryPage';
+import {ReusesPage} from './pages/ReusesPage';
 import {SignInPage} from './pages/SignInPage';
 
 /**
@@ -42,6 +43,8 @@ const Routes = () => {
       return username ? <AdminPage /> : <Navigate to="/" replace />;
     case 'user':
       return <EntriesPage />;
+    case 'reuses':
+      return <ReusesPage />;
     case 'entry':
       return <EntryPage />;
     case 'root':

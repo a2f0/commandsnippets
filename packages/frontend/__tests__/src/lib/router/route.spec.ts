@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {entryPath, routeOf} from '../../../../src/lib/router/route';
+import {entryPath, reusesPath, routeOf} from '../../../../src/lib/router/route';
 
 describe('routeOf', () => {
   it.each([
@@ -17,6 +17,10 @@ describe('routeOf', () => {
     ['/test/entries/589', {page: 'entry', user: 'test', entryId: '589'}],
     ['/test/entries/589/', {page: 'entry', user: 'test', entryId: '589'}],
     // A tag named "entries" is still a tag.
+    ['/test/activity/reuses', {page: 'reuses', user: 'test'}],
+    ['/test/activity/reuses/', {page: 'reuses', user: 'test'}],
+    ['/test/reuses', {page: 'user', user: 'test', tag: 'reuses'}],
+    ['/test/activity', {page: 'user', user: 'test', tag: 'activity'}],
     ['/test/entries', {page: 'user', user: 'test', tag: 'entries'}],
   ])('routes %s', (pathname, route) => {
     expect(routeOf(pathname)).toEqual(route);
@@ -40,6 +44,13 @@ describe('routeOf', () => {
     '/test/Entries/1',
   ])('has no route for %s', pathname => {
     expect(routeOf(pathname)).toEqual({page: 'none'});
+  });
+
+  it('round-trips a profile history path', () => {
+    expect(routeOf(reusesPath('a/b c'))).toEqual({
+      page: 'reuses',
+      user: 'a/b c',
+    });
   });
 
   it("names an entry's page, any id round-tripping", () => {

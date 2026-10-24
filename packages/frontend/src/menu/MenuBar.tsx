@@ -118,10 +118,12 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           flexDirection: 'row',
           alignItems: 'flex-end',
           justifyContent: 'flex-start',
-          width: `calc(${theme.drawer.width}px + ${theme.main.dragIndicatorWidth}px)`,
+          width: entriesPage
+            ? `calc(${theme.drawer.width}px + ${theme.main.dragIndicatorWidth}px)`
+            : {xs: 56, sm: theme.drawer.width + theme.main.dragIndicatorWidth},
           height: theme.appBar.height,
           flexShrink: 0,
-          pl: 2.5,
+          pl: entriesPage ? 2.5 : {xs: 1.5, sm: 2.5},
           pb: 0.5,
         }}
       >

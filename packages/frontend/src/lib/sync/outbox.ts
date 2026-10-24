@@ -196,7 +196,7 @@ export interface OutboxApi {
   ): Promise<TagTextEntryCursorListDocument>;
   getEntry(entryId: string): Promise<TextEntryDocument>;
   getEntryReuses(
-    entryId: string,
+    entryId: string | undefined,
     page: number
   ): Promise<TextEntryReusedListDocument>;
   getJunction(
@@ -1035,21 +1035,22 @@ export async function refreshEntry(
 }
 
 /**
- * Every reuse of `owner`'s entry `entryId` the API holds, newest first (all
- * of its pages). Not stored: only the entry's page shows them. Call after a
+ * Every reuse of one entry, or the whole profile when no id is given,
+ * newest first (all pages). Not stored: the history pages show them. Call after a
  * flush, under the same lock, so the reuses queued here are among them.
  */
 export async function readReuses(
   db: CommandsnippetsDatabase,
   api: OutboxApi,
   owner: string,
-  entryId: string
+  entryId?: string
 ): Promise<TextEntryReused[]> {
   const {named, accountId, version} = await readerOf(db, api, owner);
-  const reuses: TextEntryReused[] = [];
+  const reuses = new Map<string, TextEntryReused>();
   for (let page = 1; ; page += 1) {
     const listed = await named.getEntryReuses(entryId, page);
-    reuses.push(...listed.data);
+    // A copy arriving between numbered pages can shift a row onto both.
+    for (const reuse of listed.data) reuses.set(reuse.id, reuse);
     if (listed.links.next === null || listed.data.length === 0) {
       break;
     }
@@ -1057,7 +1058,7 @@ export async function readReuses(
   // Of the account and version read, not another taken up meanwhile.
   await assertBound(db, owner, accountId);
   await assertHeld(db, owner, version);
-  return reuses;
+  return [...reuses.values()];
 }
 
 /**

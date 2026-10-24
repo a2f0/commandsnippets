@@ -579,13 +579,15 @@ class ApiClient {
     );
   }
 
-  /** Page `page` (from 1) of entry `entryId`'s reuses, newest first. */
+  /** Newest reuses, of one entry or the whole profile when no id is given. */
   public async getEntryReuses(
-    entryId: string,
+    entryId: string | undefined,
     page: number
   ): Promise<TextEntryReusedListDocument> {
     const params: TextEntryReusedListParams = {
-      'filter[text_entry.id]': Number(entryId),
+      ...(entryId === undefined
+        ? {}
+        : {'filter[text_entry.id]': Number(entryId)}),
       sort: '-date_created',
       'page[number]': page,
       'page[size]': SYNC_PAGE_SIZE,

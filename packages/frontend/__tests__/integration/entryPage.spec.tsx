@@ -86,7 +86,7 @@ it('opens from Get Info, shows the entry and its reuses, and goes back to the li
   await waitFor(() => expect(field('Reused')).toHaveTextContent('2 times'));
   expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(2);
 
-  fireEvent.click(screen.getByRole('button', {name: 'Back'}));
+  fireEvent.click(screen.getByRole('link', {name: 'Back to entries'}));
   expect(history.location.pathname).toBe('/test/test-tag-1');
   expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
 });
@@ -117,7 +117,7 @@ it("lists a deep link's reuses, and goes back to the user's page", async () => {
 
   expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(2);
   // Opened by a link, not from a list: Back goes to the user's page.
-  fireEvent.click(screen.getByRole('button', {name: 'Back'}));
+  fireEvent.click(screen.getByRole('link', {name: 'Back to entries'}));
   expect(history.location.pathname).toBe('/test');
 });
 
@@ -171,7 +171,7 @@ it("goes back to the list each entry's page was opened from", async () => {
   // The first entry's page again (Forward, say): its Back is still its own.
   act(() => history.push('/test/entries/1'));
   await screen.findByRole('heading', {name: 'entry-1-subject'});
-  fireEvent.click(screen.getByRole('button', {name: 'Back'}));
+  fireEvent.click(screen.getByRole('link', {name: 'Back to entries'}));
   expect(`${history.location.pathname}${history.location.search}`).toBe(
     '/test/test-tag-1'
   );

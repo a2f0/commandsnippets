@@ -1386,20 +1386,59 @@ describe('a reuse (a copy)', () => {
     ).toBe(true);
   });
 
-  it('are read page by page, each once, to the last', async () => {
+  it('flushes copies across the whole profile without an entry filter', async () => {
     await session().sync.syncAll();
-    // More than a page (`SYNC_PAGE_SIZE`, 100) of them.
-    for (let index = 0; index < 101; index += 1) {
-      await apiClient.forVersion(1).reuseEntry('1', `reuse-${index}`);
-    }
+    offline();
+    await reuseEntry(session(), '1');
+    await reuseEntry(session(), '2');
+    server.resetHandlers();
     const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
+    const reuses = await session().sync.entryReuses();
+    expect(await queued()).toBe(0);
+    expect(
+      reuses?.map(reuse => reuse.relationships.text_entry.data.id)
+    ).toEqual(['2', '1']);
+    expect(pages).toHaveBeenCalledWith(undefined, 1);
+  });
 
-    const reuses = await session().sync.entryReuses('1');
+  it.each(['1', undefined])(
+    'are read page by page for entry %s or the whole profile',
+    async entryId => {
+      await session().sync.syncAll();
+      // More than a page (`SYNC_PAGE_SIZE`, 100) of them.
+      for (let index = 0; index < 101; index += 1) {
+        await apiClient
+          .forVersion(1)
+          .reuseEntry(entryId ?? (index % 2 ? '1' : '2'), `reuse-${index}`);
+      }
+      const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
 
-    invariant(reuses !== null, 'the owner reads them');
+      const reuses = await session().sync.entryReuses(entryId);
+
+      invariant(reuses !== null, 'the owner reads them');
+      expect(reuses).toHaveLength(101);
+      expect(new Set(reuses.map(reuse => reuse.id)).size).toBe(101);
+      expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+    }
+  );
+
+  it('does not repeat a reuse shifted between pages by a new copy', async () => {
+    await session().sync.syncAll();
+    for (let index = 0; index < 101; index += 1) {
+      await apiClient.forVersion(1).reuseEntry('1', `initial-${index}`);
+    }
+    const readPage = apiClientMethods.getEntryReuses;
+    vi.spyOn(apiClientMethods, 'getEntryReuses').mockImplementation(
+      async function (this: typeof apiClient, entryId, page) {
+        const result = await readPage.call(this, entryId, page);
+        if (page === 1)
+          await apiClient.forVersion(1).reuseEntry('2', 'between-pages');
+        return result;
+      }
+    );
+    const reuses = await session().sync.entryReuses();
     expect(reuses).toHaveLength(101);
-    expect(new Set(reuses.map(reuse => reuse.id)).size).toBe(101);
-    expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+    expect(new Set(reuses?.map(reuse => reuse.id)).size).toBe(101);
   });
 
   it('are not read where the data is read-only', async () => {
@@ -1407,5 +1446,6 @@ describe('a reuse (a copy)', () => {
     expect(await syncSession(TEST_USER, 'alice').sync.entryReuses('71')).toBe(
       null
     );
+    expect(await syncSession(TEST_USER, 'alice').sync.entryReuses()).toBe(null);
   });
 });
