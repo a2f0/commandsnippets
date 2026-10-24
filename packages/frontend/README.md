@@ -125,8 +125,9 @@ the `/*` rule of the built `_headers` and a robots `noindex` meta to
 (`/:user`, `/:user/:tag`) out of search: no pattern tells a username from the
 app's own routes (`/admin`, `/oauth/...`), so its built `_headers` starts with
 `/:user` and `/:user/*` rules that send the header on every path below the
-root, and every file and directory of the build detaches it again
-(`! X-Robots-Tag`), which works only after those rules. The entries page adds
+root, and every file of the build (not its directories: `/assets/<tag>` is a
+page of a user named `assets`) detaches it again (`! X-Robots-Tag`), which
+works only after those rules. The entries page adds
 the robots meta on a user's page too (`src/components/RobotsNoindex.tsx`).
 Never let two rules set the header on one path: rules of different patterns
 merge, so the response would carry it twice. `public/robots.txt` allows

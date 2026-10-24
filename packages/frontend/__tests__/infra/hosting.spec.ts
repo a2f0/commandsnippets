@@ -1,6 +1,12 @@
 // @vitest-environment node
 import {type ChildProcess, spawn, spawnSync} from 'node:child_process';
-import {mkdtempSync, readdirSync, readFileSync, rmSync} from 'node:fs';
+import {
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
 import {type IncomingHttpHeaders, request} from 'node:http';
 import {createServer} from 'node:net';
 import {tmpdir} from 'node:os';
@@ -171,21 +177,28 @@ describe.each(['staging', 'production'])('the %s build', mode => {
   // `/:user` matches every top-level file too, and `/:user/*` every asset:
   // each detaches the header again, which only works after those rules.
   it("sends each of the build's files the tier's robots header", async () => {
-    const entries = readdirSync(outDir, {withFileTypes: true}).filter(
-      entry => entry.name !== '_headers'
+    const files = readdirSync(outDir, {recursive: true, encoding: 'utf8'})
+      .filter(file => statSync(join(outDir, file)).isFile())
+      .filter(file => file !== '_headers');
+    expect(files).toEqual(
+      expect.arrayContaining(['favicon.ico', 'robots.txt', 'sw.js'])
     );
-    expect(entries.map(entry => entry.name)).toEqual(
-      expect.arrayContaining(['assets', 'favicon.ico', 'robots.txt', 'sw.js'])
-    );
-    for (const entry of entries) {
-      const file = entry.isDirectory()
-        ? `${entry.name}/${readdirSync(join(outDir, entry.name))[0]}`
-        : entry.name;
+    expect(files.some(file => file.startsWith('assets/'))).toBe(true);
+    for (const file of files) {
       const response = await get(`/${file}`);
       // index.html redirects to the root.
       expect([200, 307], file).toContain(response.status);
       expect(response.robotsTags, file).toEqual(tierRobots);
     }
+  });
+
+  // Only the files are detached, not their directory: `assets` is a
+  // username like any other (routePaths.ts).
+  it('keeps the pages of a user named assets out of search', async () => {
+    const response = await get('/assets/kubernetes', true);
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain('text/html');
+    expect(response.robotsTags).toEqual(NOINDEX);
   });
 
   // Without the file, the app's fallback would answer robots.txt with HTML.

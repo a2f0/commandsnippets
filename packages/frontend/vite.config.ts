@@ -1,5 +1,5 @@
 import {readdirSync, readFileSync, writeFileSync} from 'node:fs';
-import {join, resolve} from 'node:path';
+import {join, relative, resolve, sep} from 'node:path';
 import react from '@vitejs/plugin-react';
 import {type Plugin, type PluginOption, searchForWorkspaceRoot} from 'vite';
 import {analyzer} from 'vite-bundle-analyzer';
@@ -39,9 +39,10 @@ function addToRule(headers: string, pattern: string, line: string): string {
  *   root. Users' public pages (`/:user`, `/:user/:tag`) stay out of search,
  *   and a pattern cannot tell them from the app's own routes (`/admin`,
  *   `/oauth/...`, routePaths.ts), which have nothing to rank either. Each
- *   file and directory of the build then detaches the header again (`!`),
- *   so the icons, robots.txt and assets answer as before. A detach removes
- *   only what the rules before it attached, so the page rules come first.
+ *   file of the build then detaches the header again (`!`), so the icons,
+ *   robots.txt and assets answer as before. Files, not directories: a user
+ *   named `assets` has pages under `/assets/`. A detach removes only what
+ *   the rules before it attached, so the page rules come first.
  *
  * It runs once the build is written, after vite-plugin-pwa's service worker.
  */
@@ -67,16 +68,25 @@ const robotsHeaders = (indexable: boolean): Plugin => {
         );
         if (indexable) {
           headers = `# Every page below the root says noindex (vite.config.ts).\n/:user\n  ${header}\n\n/:user/*\n  ${header}\n\n${headers}`;
-          for (const entry of readdirSync(outDir, {withFileTypes: true})) {
-            if (entry.name !== '_headers') {
-              const pattern = entry.isDirectory()
-                ? `/${entry.name}/*`
-                : `/${entry.name}`;
-              headers = addToRule(headers, pattern, '! X-Robots-Tag');
-            }
+          const files = readdirSync(outDir, {
+            recursive: true,
+            withFileTypes: true,
+          }).filter(entry => entry.isFile() && entry.name !== '_headers');
+          for (const file of files) {
+            const path = relative(outDir, join(file.parentPath, file.name));
+            headers = addToRule(
+              headers,
+              `/${path.split(sep).join('/')}`,
+              '! X-Robots-Tag'
+            );
           }
         } else {
           headers = addToRule(headers, '/*', header);
+        }
+        // Cloudflare's limit; a code-split build could reach it one day.
+        const rules = headers.split('\n').filter(line => line.startsWith('/'));
+        if (rules.length > 100) {
+          throw new Error(`_headers has ${rules.length} rules, over 100`);
         }
         writeFileSync(join(outDir, '_headers'), headers);
       },
