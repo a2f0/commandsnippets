@@ -56,6 +56,7 @@ header {
 .brand {
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 header nav {
@@ -384,5 +385,13 @@ footer nav a:hover {
 
   .cta {
     margin: 72px 0 64px;
+  }
+}
+
+/* The narrowest phones keep the header to one line: the features are the
+   home page's own section. */
+@media (max-width: 380px) {
+  .nav-optional {
+    display: none;
   }
 }
