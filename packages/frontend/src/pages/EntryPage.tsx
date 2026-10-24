@@ -313,7 +313,9 @@ const EntryPageContent = () => {
   let content: React.ReactNode;
   if (shown?.entry) {
     content = (
+      // Another entry's page starts afresh: none of the last one's reuses.
       <EntryDetail
+        key={shown.entry.id}
         entry={shown.entry}
         owner={owner}
         session={session}

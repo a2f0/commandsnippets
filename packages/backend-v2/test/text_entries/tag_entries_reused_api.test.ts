@@ -310,7 +310,8 @@ describe('EntryReusesApi v2', () => {
     // Its one attribute: when it was reused.
     expect(Object.keys(jsonResponse.data.attributes)).toEqual(['date_created']);
     expect(jsonResponse.data.attributes.date_created).toMatch(
-      /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}$/
+      // (Python's isoformat: no fraction when the microseconds are 0.)
+      /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{6})?$/
     );
     expect(jsonResponse.included).toBeUndefined();
 

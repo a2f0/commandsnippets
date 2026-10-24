@@ -1386,6 +1386,22 @@ describe('a reuse (a copy)', () => {
     ).toBe(true);
   });
 
+  it('are read page by page, each once, to the last', async () => {
+    await session().sync.syncAll();
+    // More than a page (`SYNC_PAGE_SIZE`, 100) of them.
+    for (let index = 0; index < 101; index += 1) {
+      await apiClient.forVersion(1).reuseEntry('1', `reuse-${index}`);
+    }
+    const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
+
+    const reuses = await session().sync.entryReuses('1');
+
+    invariant(reuses !== null, 'the owner reads them');
+    expect(reuses).toHaveLength(101);
+    expect(new Set(reuses.map(reuse => reuse.id)).size).toBe(101);
+    expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+  });
+
   it('are not read where the data is read-only', async () => {
     store.setIsStaff(true);
     expect(await syncSession(TEST_USER, 'alice').sync.entryReuses('71')).toBe(

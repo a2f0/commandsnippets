@@ -13,6 +13,7 @@ import {
   within,
 } from '@testing-library/react';
 import {createMemoryHistory, type MemoryHistory} from 'history';
+import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
@@ -184,4 +185,24 @@ it('signs out when the login cookie is gone, showing nothing private', async () 
 
   await waitFor(() => expect(store.loggedInUser).toBeNull());
   expect(screen.queryByRole('heading', {name: 'entry-1-subject'})).toBeNull();
+});
+
+it("shows none of the last entry's reuses on another entry's page", async () => {
+  signInHere();
+  await apiClient.forVersion(1).reuseEntry('1', 'one');
+  const history = mount('/test/entries/1');
+  expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(1);
+  server.use(
+    http.get('http://localhost:9001/api/v1/entry_reuses', () =>
+      HttpResponse.error()
+    )
+  );
+
+  act(() => history.push('/test/entries/2'));
+
+  await screen.findByRole('heading', {name: 'entry-2-subject'});
+  expect(
+    await screen.findByText('The reuses could not be read.')
+  ).toBeInTheDocument();
+  expect(document.getElementById('entryReuses')).toBeNull();
 });
