@@ -7,6 +7,7 @@ import {LeftDrawer} from '../components/drawer/LeftDrawer';
 import {RightDrawer} from '../components/drawer/RightDrawer';
 import {EntryList} from '../components/entries/EntryList';
 import {InitialLoadProgress} from '../components/entries/InitialLoadProgress';
+import {RobotsNoindex} from '../components/RobotsNoindex';
 import {hasLoginCookie, loggedInCookieNames} from '../lib/auth/authUtils';
 import {useOwner} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
@@ -64,6 +65,9 @@ const EntriesPageContent = () => {
         minHeight: '100vh',
       }}
     >
+      {/* A user's page (`/:user/:tag`) stays out of search results; the
+          root, the sign-in page for guests, is the app's one to rank. */}
+      {atRoot ? null : <RobotsNoindex />}
       {/* Every commit of the page is timed, but the bottom bar's: the HUD
           showing the timings would time itself showing them, ever again. */}
       <Profiler id="EntriesPage" onRender={recordCommit}>

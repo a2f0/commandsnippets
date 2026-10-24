@@ -1,5 +1,5 @@
-import {readFileSync, writeFileSync} from 'node:fs';
-import {join} from 'node:path';
+import {readdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {join, relative, resolve, sep} from 'node:path';
 import react from '@vitejs/plugin-react';
 import {type Plugin, type PluginOption, searchForWorkspaceRoot} from 'vite';
 import {analyzer} from 'vite-bundle-analyzer';
@@ -8,35 +8,91 @@ import {VitePWA} from 'vite-plugin-pwa';
 import {defineConfig} from 'vitest/config';
 import packageJson from './package.json' with {type: 'json'};
 
-// Search engines may index production only: every other build says noindex
-// in index.html and, through _headers, on every response.
+// Search engines may index production only, and there only the root (the
+// sign-in page): every other build says noindex in index.html and, through
+// _headers, on every response; production says it on every other page
+// (robotsHeaders). src/components/RobotsNoindex.tsx says it on users' pages.
 const NOINDEX = 'noindex, nofollow';
 
 /**
- * Writes public/_headers with a noindex header in its `/*` rule. A second
- * `/*` rule would replace that one's headers rather than add to them.
+ * `headers` (a _headers file) with `line` added to the rule for `pattern`,
+ * or with a new rule for it: a second rule with the same pattern would
+ * replace the first one's headers rather than add to them.
  */
-const noindexHeaders = (): Plugin => ({
-  name: 'commandsnippets:noindex-headers',
-  apply: 'build',
-  writeBundle({dir}) {
-    if (dir === undefined) {
-      throw new Error('No output directory for _headers');
-    }
-    const headers = readFileSync(
-      join(import.meta.dirname, 'public/_headers'),
-      'utf8'
-    );
-    const everyPath = /^\/\*$/m;
-    if (!everyPath.test(headers)) {
-      throw new Error('public/_headers has no /* rule for X-Robots-Tag');
-    }
-    writeFileSync(
-      join(dir, '_headers'),
-      headers.replace(everyPath, `/*\n  X-Robots-Tag: ${NOINDEX}`)
-    );
-  },
-});
+function addToRule(headers: string, pattern: string, line: string): string {
+  const lines = headers.split('\n');
+  const rule = lines.indexOf(pattern);
+  if (rule === -1) {
+    return `${headers.trimEnd()}\n\n${pattern}\n  ${line}\n`;
+  }
+  lines.splice(rule + 1, 0, `  ${line}`);
+  return lines.join('\n');
+}
+
+/**
+ * Writes public/_headers to the build with its X-Robots-Tag rules. Rules of
+ * different patterns merge, so a response matching two that set the header
+ * would carry it twice; each build sets it in one place:
+ *
+ * - Outside production, the `/*` rule says noindex on every response.
+ * - In production, `/:user` and `/:user/*` say it on every path below the
+ *   root. Users' public pages (`/:user`, `/:user/:tag`) stay out of search,
+ *   and a pattern cannot tell them from the app's own routes (`/admin`,
+ *   `/oauth/...`, routePaths.ts), which have nothing to rank either. Each
+ *   file of the build then detaches the header again (`!`), so the icons,
+ *   robots.txt and assets answer as before. Files, not directories: a user
+ *   named `assets` has pages under `/assets/`. A detach removes only what
+ *   the rules before it attached, so the page rules come first.
+ *
+ * It runs once the build is written, after vite-plugin-pwa's service worker.
+ */
+const robotsHeaders = (indexable: boolean): Plugin => {
+  let outDir = '';
+  return {
+    name: 'commandsnippets:robots-headers',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir);
+    },
+    closeBundle: {
+      order: 'post',
+      sequential: true,
+      handler(error) {
+        if (error) {
+          return;
+        }
+        const header = `X-Robots-Tag: ${NOINDEX}`;
+        let headers = readFileSync(
+          join(import.meta.dirname, 'public/_headers'),
+          'utf8'
+        );
+        if (indexable) {
+          headers = `# Every page below the root says noindex (vite.config.ts).\n/:user\n  ${header}\n\n/:user/*\n  ${header}\n\n${headers}`;
+          const files = readdirSync(outDir, {
+            recursive: true,
+            withFileTypes: true,
+          }).filter(entry => entry.isFile() && entry.name !== '_headers');
+          for (const file of files) {
+            const path = relative(outDir, join(file.parentPath, file.name));
+            headers = addToRule(
+              headers,
+              `/${path.split(sep).join('/')}`,
+              '! X-Robots-Tag'
+            );
+          }
+        } else {
+          headers = addToRule(headers, '/*', header);
+        }
+        // Cloudflare's limit; a code-split build could reach it one day.
+        const rules = headers.split('\n').filter(line => line.startsWith('/'));
+        if (rules.length > 100) {
+          throw new Error(`_headers has ${rules.length} rules, over 100`);
+        }
+        writeFileSync(join(outDir, '_headers'), headers);
+      },
+    },
+  };
+};
 
 // biome-ignore lint/style/noDefaultExport: Vite requires default export for config
 export default defineConfig(({command, mode}) => {
@@ -118,11 +174,7 @@ export default defineConfig(({command, mode}) => {
     }),
   ];
 
-  const plugins: PluginOption[] = [...basePlugins];
-
-  if (!indexable) {
-    plugins.push(noindexHeaders());
-  }
+  const plugins: PluginOption[] = [...basePlugins, robotsHeaders(indexable)];
 
   if (mode === 'analyze') {
     plugins.push(

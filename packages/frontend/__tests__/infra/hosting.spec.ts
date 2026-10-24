@@ -1,6 +1,12 @@
 // @vitest-environment node
 import {type ChildProcess, spawn, spawnSync} from 'node:child_process';
-import {mkdtempSync, readdirSync, readFileSync, rmSync} from 'node:fs';
+import {
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
 import {type IncomingHttpHeaders, request} from 'node:http';
 import {createServer} from 'node:net';
 import {tmpdir} from 'node:os';
@@ -45,10 +51,20 @@ describe.each(['staging', 'production'])('the %s build', mode => {
   let outDir = '';
   let port = 0;
   let server: ChildProcess | undefined;
-  // Only production may be indexed; staging says noindex on every response.
+  // Only production's root may be indexed (the sign-in page): staging says
+  // noindex on every response, and production on every page below the root,
+  // users' public pages (/:user/:tag) among them, but not on its files.
   const robots = mode === 'production' ? undefined : 'noindex, nofollow';
+  const NOINDEX = ['noindex, nofollow'];
+  /** Each X-Robots-Tag the tier sends: none, or one; never two. */
+  const tierRobots = robots === undefined ? [] : [robots];
 
-  type Result = {status: number; headers: IncomingHttpHeaders};
+  type Result = {
+    status: number;
+    headers: IncomingHttpHeaders;
+    /** Every X-Robots-Tag header line, as sent (Node joins repeats). */
+    robotsTags: string[];
+  };
   const get = (path: string, navigate = false) =>
     new Promise<Result>((resolve, reject) => {
       const headers: Record<string, string> = navigate
@@ -56,9 +72,15 @@ describe.each(['staging', 'production'])('the %s build', mode => {
         : {};
       request({host: '127.0.0.1', port, path, headers}, response => {
         response.resume();
+        const raw = response.rawHeaders;
         resolve({
           status: response.statusCode ?? 0,
           headers: response.headers,
+          robotsTags: raw.filter(
+            (_value, index) =>
+              index % 2 === 1 &&
+              raw[index - 1]?.toLowerCase() === 'x-robots-tag'
+          ),
         });
       })
         .on('error', reject)
@@ -123,14 +145,27 @@ describe.each(['staging', 'production'])('the %s build', mode => {
   });
 
   describe.each([false, true])('with navigate=%s', navigate => {
-    it.each(['/', '/dan', '/dan/kubernetes', '/admin'])(
+    // The root, then users' pages (each also with the trailing slash the
+    // router ignores), the app's own routes, and a path of no route, which
+    // the app sends to the root.
+    it.each([
+      ['/', tierRobots],
+      ['/dan', NOINDEX],
+      ['/dan/', NOINDEX],
+      ['/dan/kubernetes', NOINDEX],
+      ['/dan/kubernetes/', NOINDEX],
+      ['/admin', NOINDEX],
+      ['/oauth/github', NOINDEX],
+      ['/oauth/google', NOINDEX],
+      ['/dan/kubernetes/more', NOINDEX],
+    ])(
       'serves the app shell for %s with the security headers',
-      async path => {
+      async (path, robotsTags) => {
         const response = await get(path, navigate);
         expect(response.status).toBe(200);
         expect(response.headers['content-type']).toContain('text/html');
         expect(response.headers).toMatchObject(SECURITY_HEADERS);
-        expect(response.headers['x-robots-tag']).toBe(robots);
+        expect(response.robotsTags).toEqual(robotsTags);
         // The shell must revalidate, or a deploy would not reach returning users.
         expect(response.headers['cache-control'] ?? '').not.toContain(
           'immutable'
@@ -139,12 +174,39 @@ describe.each(['staging', 'production'])('the %s build', mode => {
     );
   });
 
+  // `/:user` matches every top-level file too, and `/:user/*` every asset:
+  // each detaches the header again, which only works after those rules.
+  it("sends each of the build's files the tier's robots header", async () => {
+    const files = readdirSync(outDir, {recursive: true, encoding: 'utf8'})
+      .filter(file => statSync(join(outDir, file)).isFile())
+      .filter(file => file !== '_headers');
+    expect(files).toEqual(
+      expect.arrayContaining(['favicon.ico', 'robots.txt', 'sw.js'])
+    );
+    expect(files.some(file => file.startsWith('assets/'))).toBe(true);
+    for (const file of files) {
+      const response = await get(`/${file}`);
+      // index.html redirects to the root.
+      expect([200, 307], file).toContain(response.status);
+      expect(response.robotsTags, file).toEqual(tierRobots);
+    }
+  });
+
+  // Only the files are detached, not their directory: `assets` is a
+  // username like any other (routePaths.ts).
+  it('keeps the pages of a user named assets out of search', async () => {
+    const response = await get('/assets/kubernetes', true);
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain('text/html');
+    expect(response.robotsTags).toEqual(NOINDEX);
+  });
+
   // Without the file, the app's fallback would answer robots.txt with HTML.
   it('serves robots.txt as text, allowing crawlers to see the noindex', async () => {
     const response = await get('/robots.txt');
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('text/plain');
-    expect(response.headers['x-robots-tag']).toBe(robots);
+    expect(response.robotsTags).toEqual(tierRobots);
     expect(readFileSync(join(outDir, 'robots.txt'), 'utf8')).toBe(
       'User-agent: *\nAllow: /\n'
     );
@@ -243,6 +305,6 @@ describe.each(['staging', 'production'])('the %s build', mode => {
       'public, max-age=31536000, immutable'
     );
     expect(response.headers).toMatchObject(SECURITY_HEADERS);
-    expect(response.headers['x-robots-tag']).toBe(robots);
+    expect(response.robotsTags).toEqual(tierRobots);
   });
 });
