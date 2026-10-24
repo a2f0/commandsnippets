@@ -118,12 +118,21 @@ The app is a static single-page app served by a Cloudflare Worker (assets only;
 client routes like `/:user/:tag` work. `public/_headers` adds security headers
 and long-lived caching for the fingerprinted `/assets/`.
 
-Only production may appear in search results. Every other build mode adds
-`X-Robots-Tag: noindex, nofollow` to the `/*` rule of the built `_headers` and a
-robots `noindex` meta to `index.html` (`vite.config.ts`); `public/robots.txt`
-allows crawling everywhere, so crawlers can see that noindex. `index.html`
-has no canonical URL or `og:url`: every route serves it, including users'
-public pages, and naming the root would mark those duplicates of it. Its
+Only production may appear in search results, and there only the root (the
+sign-in page). Every other build mode adds `X-Robots-Tag: noindex, nofollow` to
+the `/*` rule of the built `_headers` and a robots `noindex` meta to
+`index.html` (`vite.config.ts`). Production keeps users' public pages
+(`/:user`, `/:user/:tag`) out of search: no pattern tells a username from the
+app's own routes (`/admin`, `/oauth/...`), so its built `_headers` starts with
+`/:user` and `/:user/*` rules that send the header on every path below the
+root, and every file and directory of the build detaches it again
+(`! X-Robots-Tag`), which works only after those rules. The entries page adds
+the robots meta on a user's page too (`src/components/RobotsNoindex.tsx`).
+Never let two rules set the header on one path: rules of different patterns
+merge, so the response would carry it twice. `public/robots.txt` allows
+crawling everywhere, so crawlers can see the noindex. `index.html` has no
+canonical URL or `og:url`: every route serves it, including users' public
+pages, and naming the root would mark those duplicates of it. Its
 `og:image` is the product's preview image on the production website
 (`https://commandsnippets.com/og-image.png`, rendered by the website's
 `bun run images`), so deploy the website first when that image changes.
