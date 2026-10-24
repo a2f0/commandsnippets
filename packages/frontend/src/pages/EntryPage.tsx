@@ -55,7 +55,14 @@ const ReuseHistory = ({session, entryId, count}: ReuseHistoryProps) => {
   const [attempt, setAttempt] = useState(0);
   const unsent = isLocalId(entryId);
 
-  // A new count (a copy) or a retry reads them again.
+  // Back online, a copy made offline has been sent: read them again.
+  useEffect(() => {
+    const reread = () => setAttempt(previous => previous + 1);
+    window.addEventListener('online', reread);
+    return () => window.removeEventListener('online', reread);
+  }, []);
+
+  // A new count (a copy), a retry or the connection back reads them again.
   useEffect(() => {
     if (unsent) {
       return undefined;
@@ -304,7 +311,9 @@ const EntryPageContent = () => {
   const context = useOwner();
   const session = useSession();
   const syncStatus = useCollectionSync();
-  const shown = useEntry(entryId);
+  // The last entry's, until the one asked for is read: not shown.
+  const read = useEntry(entryId);
+  const shown = read?.entryId === entryId ? read : undefined;
   const owner = context?.owner ?? '';
   const returnPath = useAppState(
     state => state.entryReturnPaths[entryPath(owner, entryId)]

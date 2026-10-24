@@ -345,6 +345,11 @@ export function useEntries(
 
 /** An entry read for its page, and whether its owner's entries are read. */
 export interface EntryShown {
+  /**
+   * The id asked for: a query asked for another keeps answering with its
+   * last result until it reads the next.
+   */
+  entryId: string;
   /** The entry (not deleted), or null when there is none (yet). */
   entry: Stored<TextEntry> | null;
   /**
@@ -363,7 +368,7 @@ export function useEntry(entryId: string): EntryShown | undefined {
   const session = useSession();
   return useLiveQuery(async () => {
     if (session === null) {
-      return {entry: null, loaded: true};
+      return {entryId, entry: null, loaded: true};
     }
     const {db, owner} = session;
     const row =
@@ -377,6 +382,7 @@ export function useEntry(entryId: string): EntryShown | undefined {
         : undefined);
     const cursor = await db.cursors.get([owner, 'entries']);
     return {
+      entryId,
       entry: row === undefined || row.attributes.is_deleted ? null : row,
       loaded: cursor !== undefined && cursor.initialLoad?.complete !== false,
     };

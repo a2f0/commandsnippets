@@ -206,3 +206,23 @@ it("shows none of the last entry's reuses on another entry's page", async () => 
   ).toBeInTheDocument();
   expect(document.getElementById('entryReuses')).toBeNull();
 });
+
+it('reads the reuses again once back online: a copy made offline', async () => {
+  signInHere();
+  mount('/test/entries/2');
+  expect(await screen.findByText('Not reused yet.')).toBeInTheDocument();
+  // Offline: the copy is counted here, but neither sent nor listed.
+  server.use(
+    http.all('http://localhost:9001/api/v1/*', () => HttpResponse.error())
+  );
+  fireEvent.click(screen.getByRole('button', {name: 'Copy'}));
+  await waitFor(() => expect(field('Reused')).toHaveTextContent('1 time'));
+  expect(screen.getByText('Not reused yet.')).toBeInTheDocument();
+
+  server.resetHandlers();
+  act(() => {
+    window.dispatchEvent(new Event('online'));
+  });
+
+  expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(1);
+});
