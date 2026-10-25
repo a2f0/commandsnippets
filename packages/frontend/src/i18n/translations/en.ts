@@ -40,6 +40,7 @@ export const en: I18NextTranslations = {
     view: 'View',
     help: 'Help',
     tags: 'Tags',
+    resizeTagSidebar: 'Resize tag sidebar',
     entries: 'Entries',
     allEntries: 'All Entries',
     untaggedEntries: 'Untagged Entries',

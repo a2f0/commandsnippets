@@ -40,6 +40,7 @@ export const es: I18NextTranslations = {
     view: 'Ver',
     help: 'Ayuda',
     tags: 'Etiquetas',
+    resizeTagSidebar: 'Cambiar el ancho de la barra de etiquetas',
     entries: 'Entradas',
     allEntries: 'Todas las Entradas',
     untaggedEntries: 'Entradas sin Etiqueta',

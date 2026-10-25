@@ -24,6 +24,7 @@ import {
   activeTagEditField,
   appMode,
 } from '../shared';
+import {clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH} from '../sidebarWidth';
 import {subscribeRemaps} from '../sync/outbox';
 import {endSyncSession} from '../sync/session';
 
@@ -39,6 +40,7 @@ export interface SavedState {
   /** The order of the untagged and all entries lists. */
   entrySortOrder: string;
   showTagCounts: boolean;
+  tagSidebarWidth: number;
 }
 
 /** The UI's state, which each page starts afresh. */
@@ -74,6 +76,7 @@ export interface AppActions {
   setTagTextEntryThroughModelSortOrder(order: string): void;
   setEntrySortOrder(order: string): void;
   setShowTagCounts(value: boolean): void;
+  setTagSidebarWidth(value: number): void;
   setAppMode(value: appMode): void;
   setActiveSearch(value: activeSearch): void;
   setActiveEntryEditField(value: activeEntryEditField): void;
@@ -100,6 +103,7 @@ export const defaultSavedState: SavedState = {
   tagTextEntryThroughModelSortOrder: 'order',
   entrySortOrder: 'date_updated',
   showTagCounts: false,
+  tagSidebarWidth: DEFAULT_SIDEBAR_WIDTH,
 };
 
 export const defaultUiState: UiState = {
@@ -193,6 +197,8 @@ export const useAppState = create<AppState>()(
         set({tagTextEntryThroughModelSortOrder}),
       setEntrySortOrder: entrySortOrder => set({entrySortOrder}),
       setShowTagCounts: showTagCounts => set({showTagCounts}),
+      setTagSidebarWidth: width =>
+        set({tagSidebarWidth: clampSidebarWidth(width)}),
       setAppMode: appMode => set({appMode}),
       setActiveSearch: activeSearch => set({activeSearch}),
       setActiveEntryEditField: activeEntryEditField =>
@@ -228,6 +234,7 @@ export const useAppState = create<AppState>()(
           state.tagTextEntryThroughModelSortOrder,
         entrySortOrder: state.entrySortOrder,
         showTagCounts: state.showTagCounts,
+        tagSidebarWidth: state.tagSidebarWidth,
       }),
     }
   )

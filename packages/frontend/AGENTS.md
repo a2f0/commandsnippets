@@ -83,6 +83,11 @@ API; everything else the app keeps is a zustand store.
   Tabs share it: a tab saves only while the saved sign-in is the one it
   last read or wrote, so a stale tab never saves its user back over another
   tab's sign-in (`guardedStorage`).
+  The tag sidebar's width is also saved here (200px by default). Its right
+  edge resizes by pointer or arrow keys; double-click or Enter resets it.
+  `TagSidebarLayout` shares the clamped width with the sidebar, header and
+  tag search through `--tag-sidebar-width`, keeping them aligned without
+  rendering the lists again on each pointer move.
   Components read one field with a selector
   (`useAppState(state => state.tagSortOrder)`), or the whole state with
   `useAppConfig()`: one object that stays the same across renders (a safe

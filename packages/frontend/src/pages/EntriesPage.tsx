@@ -4,6 +4,7 @@ import {AppHeader} from '../components/AppHeader';
 import {BottomToolbar} from '../components/bottomBar/BottomToolbar';
 import {LeftDrawer} from '../components/drawer/LeftDrawer';
 import {RightDrawer} from '../components/drawer/RightDrawer';
+import {TagSidebarLayout} from '../components/drawer/TagSidebarLayout';
 import {EntryList} from '../components/entries/EntryList';
 import {InitialLoadProgress} from '../components/entries/InitialLoadProgress';
 import {RobotsNoindex} from '../components/RobotsNoindex';
@@ -37,13 +38,7 @@ const EntriesPageContent = () => {
   useRenderTiming('EntriesPage', renderStart);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-      }}
-    >
+    <TagSidebarLayout>
       {/* A user's page (`/:user/:tag`) stays out of search results; the
           root, the sign-in page for guests, is the app's one to rank. */}
       {atRoot ? null : <RobotsNoindex />}
@@ -65,7 +60,7 @@ const EntriesPageContent = () => {
         </Box>
       </Profiler>
       <BottomToolbar />
-    </Box>
+    </TagSidebarLayout>
   );
 };
 
