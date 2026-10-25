@@ -237,6 +237,7 @@ export const en: I18NextTranslations = {
     reuseUnavailableEntry: 'Unavailable entry #{{id}}',
     reuseHistory: 'Reuses',
     reuseHistoryLoading: 'Loading the reuses…',
+    reuseHistoryEnd: 'End of reuse history.',
     reuseHistoryEmpty: 'Not reused yet.',
     reuseHistoryFailed: 'The reuses could not be read.',
     reuseHistoryRetry: 'Retry',

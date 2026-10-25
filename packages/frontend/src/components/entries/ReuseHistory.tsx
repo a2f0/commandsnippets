@@ -41,8 +41,10 @@ const HistoryContent = ({session, entryId, count}: Props) => {
   const running = useRef(false);
   const refreshPending = useRef(false);
   const readPage = useRef<(page: number) => void>(() => {});
+  const loadMoreTarget = useRef<HTMLDivElement>(null);
   const unsent = entryId !== undefined && isLocalId(entryId);
   const all = entryId === undefined;
+  const nextPage = history?.more ? history.page + 1 : null;
 
   useEffect(() => {
     if (unsent || session.readOnly) return undefined;
@@ -117,8 +119,58 @@ const HistoryContent = ({session, entryId, count}: Props) => {
     };
   }, [session, entryId, count, unsent]);
 
+  useEffect(() => {
+    const target = loadMoreTarget.current;
+    if (
+      target === null ||
+      nextPage === null ||
+      loading ||
+      failed ||
+      unsent ||
+      session.readOnly ||
+      typeof IntersectionObserver === 'undefined'
+    )
+      return undefined;
+
+    // Re-observe after each page: a short batch can leave the footer in view.
+    // Each observer may request only once, even before React commits loading.
+    let active = true;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (!active || !entries.some(entry => entry.isIntersecting)) return;
+        active = false;
+        observer.disconnect();
+        readPage.current(nextPage);
+      },
+      {rootMargin: '0px 0px 400px 0px'}
+    );
+    observer.observe(target);
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [nextPage, loading, failed, unsent, session.readOnly]);
+
   const entryById = new Map(history?.entries.map(entry => [entry.id, entry]));
   const refresh = () => readPage.current(1);
+  const errorNotice = failed && (
+    <Alert
+      severity="warning"
+      sx={{m: 2}}
+      action={
+        <Button
+          color="inherit"
+          size="small"
+          disabled={loading}
+          onClick={() => readPage.current(failedPage)}
+        >
+          {t('reuseHistoryRetry')}
+        </Button>
+      }
+    >
+      {t('reuseHistoryFailed')}
+    </Alert>
+  );
   return (
     <Box
       component="section"
@@ -170,24 +222,7 @@ const HistoryContent = ({session, entryId, count}: Props) => {
           )}
         </Box>
       </Box>
-      {failed && (
-        <Alert
-          severity="warning"
-          sx={{m: 2}}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              disabled={loading}
-              onClick={() => readPage.current(failedPage)}
-            >
-              {t('reuseHistoryRetry')}
-            </Button>
-          }
-        >
-          {t('reuseHistoryFailed')}
-        </Alert>
-      )}
+      {failedPage === 1 && errorNotice}
       {unsent || session.readOnly || reuses === null || reuses.length === 0 ? (
         <Box sx={{p: 3}}>
           <Typography
@@ -215,6 +250,7 @@ const HistoryContent = ({session, entryId, count}: Props) => {
             component="ol"
             id="entryReuses"
             aria-label={t('reuseHistory')}
+            aria-busy={loading}
             sx={{listStyle: 'none', p: 0, m: 0}}
           >
             {reuses.map(reuse => {
@@ -288,24 +324,41 @@ const HistoryContent = ({session, entryId, count}: Props) => {
               );
             })}
           </Box>
-          {history?.more && (
-            <Box
-              sx={{
-                p: 2,
-                borderTop: 1,
-                borderColor: 'divider',
-                textAlign: 'center',
-              }}
-            >
+          <Box
+            ref={loadMoreTarget}
+            id="entryReusePagination"
+            sx={{
+              p: 2,
+              borderTop: 1,
+              borderColor: 'divider',
+              textAlign: 'center',
+            }}
+          >
+            {failedPage > 1 && errorNotice}
+            {nextPage !== null && (
               <Button
                 variant="outlined"
-                disabled={loading}
-                onClick={() => readPage.current(history.page + 1)}
+                loading={loading}
+                disabled={failed}
+                aria-controls="entryReuses"
+                onClick={() => readPage.current(nextPage)}
               >
                 {t('reuseShowMore')}
               </Button>
-            </Box>
-          )}
+            )}
+            <Typography
+              role="status"
+              variant="body2"
+              color="text.secondary"
+              sx={{mt: nextPage !== null ? 1 : 0}}
+            >
+              {loading
+                ? t('reuseHistoryLoading')
+                : nextPage === null && !failed
+                  ? t('reuseHistoryEnd')
+                  : null}
+            </Typography>
+          </Box>
         </>
       )}
     </Box>

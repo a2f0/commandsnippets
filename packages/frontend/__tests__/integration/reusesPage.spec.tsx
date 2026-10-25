@@ -13,6 +13,7 @@ import {apiClient} from '../../src/lib/api/apiClient';
 import {syncSession} from '../../src/lib/sync/session';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockIntersectionObserver} from '../util/intersectionObserver';
 import {server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
 import {TestAppRouter} from '../util/TestAppRouter';
@@ -23,6 +24,7 @@ afterAll(() => server.close());
 afterEach(() => {
   server.resetHandlers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -38,6 +40,202 @@ const mount = (path = '/test/activity/reuses') => {
   return history;
 };
 const list = () => screen.findByRole('list', {name: 'Reuses'});
+
+const seedReuses = async (count: number) => {
+  for (let index = 0; index < count; index += 1)
+    await apiClient.forVersion(1).reuseEntry('1', `scroll-copy-${index}`);
+};
+
+describe('infinite scrolling', () => {
+  it.each(['/test/activity/reuses', '/test/entries/1'])(
+    'loads near the bottom of %s, preserving rows and stopping at the end',
+    async path => {
+      const observer = mockIntersectionObserver();
+      signInHere();
+      await seedReuses(51);
+      const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
+      mount(path);
+      const rows = within(await list()).getAllByRole('listitem');
+      expect(rows).toHaveLength(50);
+      await waitFor(() => expect(observer.observers.length).toBeGreaterThan(0));
+      const first = observer.latest();
+      act(() => first.intersect(false));
+      expect(pages.mock.calls.filter(([, page]) => page > 1)).toHaveLength(0);
+
+      act(() => first.intersect());
+      await waitFor(async () =>
+        expect(within(await list()).getAllByRole('listitem')).toHaveLength(51)
+      );
+      expect(within(await list()).getAllByRole('listitem')[0]).toBe(rows[0]);
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'End of reuse history.'
+      );
+      expect(screen.queryByRole('button', {name: 'Show more'})).toBeNull();
+      act(() => first.intersect());
+      expect(
+        pages.mock.calls.filter(([, page]) => page > 1).map(([, page]) => page)
+      ).toEqual([2]);
+      expect(first.disconnect).toHaveBeenCalled();
+    }
+  );
+
+  it('coalesces repeated notifications and manual loading, then observes the next batch', async () => {
+    const observer = mockIntersectionObserver();
+    signInHere();
+    await seedReuses(101);
+    const engine = syncSession('test').sync;
+    await engine.syncAll();
+    const original = engine.entryReuses.bind(engine);
+    const gate = Promise.withResolvers<void>();
+    const reads = vi
+      .spyOn(engine, 'entryReuses')
+      .mockImplementation(async (id, page) => {
+        if (page === 2) await gate.promise;
+        return original(id, page);
+      });
+    mount();
+    await list();
+    await waitFor(() => expect(observer.observers).toHaveLength(1));
+    const first = observer.latest();
+    act(() => {
+      first.intersect();
+      first.intersect();
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Show more'}));
+    expect(reads.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+    expect(screen.getByRole('status')).toHaveTextContent('Loading the reuses…');
+    expect(await list()).toHaveAttribute('aria-busy', 'true');
+    expect(within(await list()).getAllByRole('listitem')).toHaveLength(50);
+    await act(async () => gate.resolve());
+    await waitFor(async () =>
+      expect(within(await list()).getAllByRole('listitem')).toHaveLength(100)
+    );
+    await waitFor(() => expect(observer.observers).toHaveLength(2));
+    // A queued notification from the old footer cannot request page 2 again.
+    act(() => first.intersect());
+    expect(reads.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+    act(() => observer.latest().intersect());
+    await waitFor(async () =>
+      expect(within(await list()).getAllByRole('listitem')).toHaveLength(101)
+    );
+    expect(reads.mock.calls.map(([, page]) => page)).toEqual([1, 2, 3]);
+    expect(await list()).toHaveAttribute('aria-busy', 'false');
+  });
+
+  it('pauses on a failed page and retries it beside the retained rows', async () => {
+    const observer = mockIntersectionObserver();
+    signInHere();
+    await seedReuses(51);
+    const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
+    mount();
+    await list();
+    await waitFor(() => expect(observer.observers).toHaveLength(1));
+    const first = observer.latest();
+    server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
+    act(() => first.intersect());
+    const warning = await screen.findByRole('alert');
+    expect(warning.closest('#entryReusePagination')).not.toBeNull();
+    expect(within(await list()).getAllByRole('listitem')).toHaveLength(50);
+    act(() => {
+      first.intersect();
+      first.intersect();
+    });
+    expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+    expect(screen.getByRole('button', {name: 'Show more'})).toBeDisabled();
+    server.resetHandlers();
+    fireEvent.click(within(warning).getByRole('button', {name: 'Retry'}));
+    await waitFor(async () =>
+      expect(within(await list()).getAllByRole('listitem')).toHaveLength(51)
+    );
+    expect(pages.mock.calls.map(([, page]) => page)).toEqual([1, 2, 2]);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('ignores notifications and an in-flight page after leaving history', async () => {
+    const observer = mockIntersectionObserver();
+    signInHere();
+    await seedReuses(51);
+    const engine = syncSession('test').sync;
+    await engine.syncAll();
+    const original = engine.entryReuses.bind(engine);
+    const gate = Promise.withResolvers<void>();
+    const reads = vi
+      .spyOn(engine, 'entryReuses')
+      .mockImplementation(async (id, page) => {
+        if (page === 2) await gate.promise;
+        return original(id, page);
+      });
+    const history = mount();
+    await list();
+    await waitFor(() => expect(observer.observers).toHaveLength(1));
+    const first = observer.latest();
+    act(() => first.intersect());
+    act(() => history.push('/test?entries=all'));
+    await waitFor(() =>
+      expect(screen.queryByRole('list', {name: 'Reuses'})).toBeNull()
+    );
+    await act(async () => {
+      gate.resolve();
+      await reads.mock.results[1]?.value;
+    });
+    act(() => first.intersect());
+    expect(reads.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+    expect(screen.queryByRole('list', {name: 'Reuses'})).toBeNull();
+  });
+
+  it('prioritizes a queued reconnect refresh over further automatic pages', async () => {
+    const observer = mockIntersectionObserver();
+    signInHere();
+    await seedReuses(101);
+    const engine = syncSession('test').sync;
+    await engine.syncAll();
+    const original = engine.entryReuses.bind(engine);
+    const gate = Promise.withResolvers<void>();
+    const reads = vi
+      .spyOn(engine, 'entryReuses')
+      .mockImplementation(async (id, page) => {
+        if (page === 2) await gate.promise;
+        return original(id, page);
+      });
+    mount();
+    await list();
+    await waitFor(() => expect(observer.observers).toHaveLength(1));
+    const first = observer.latest();
+    act(() => {
+      first.intersect();
+      window.dispatchEvent(new Event('online'));
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(reads.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
+    await act(async () => gate.resolve());
+    await waitFor(() => expect(reads).toHaveBeenCalledTimes(3));
+    await waitFor(() =>
+      expect(screen.getByRole('button', {name: 'Refresh'})).toBeEnabled()
+    );
+    expect(within(await list()).getAllByRole('listitem')).toHaveLength(50);
+    act(() => first.intersect());
+    expect(reads.mock.calls.map(([, page]) => page)).toEqual([1, 2, 1]);
+  });
+
+  it('discards the observer when the data version changes', async () => {
+    const observer = mockIntersectionObserver();
+    signInHere();
+    await seedReuses(51);
+    const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
+    mount();
+    await list();
+    await waitFor(() => expect(observer.observers).toHaveLength(1));
+    const first = observer.latest();
+    server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
+    await act(() => syncSession('test').sync.adopt(2));
+    await waitFor(() =>
+      expect(screen.queryByRole('list', {name: 'Reuses'})).toBeNull()
+    );
+    act(() => first.intersect());
+    expect(pages.mock.calls.filter(([, page]) => page > 1)).toHaveLength(0);
+    expect(first.disconnect).toHaveBeenCalled();
+  });
+});
 
 it('opens from View, combines entries newest first, and returns after drilling into an entry', async () => {
   signInHere();
