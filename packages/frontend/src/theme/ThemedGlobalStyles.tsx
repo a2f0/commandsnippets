@@ -1,12 +1,14 @@
 import {GlobalStyles} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import React from 'react';
+import {scrollbarStyles} from './scrollbars';
 
 const ThemedGlobalStyle = () => {
   const theme = useTheme();
   return (
     <GlobalStyles
       styles={{
+        ...scrollbarStyles(theme),
         '::selection': {background: theme.selected.background},
         '::-webkit-selection': {background: theme.selected.background},
         // The browser's own focus ring and form controls are blue: gray
