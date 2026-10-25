@@ -104,8 +104,8 @@ into `public/` from the repository's brand sources (`../../assets/brand/`)
 by `bun run images`, the pinned agent-tool's `images build` with the
 settings in `../../agent-tool.json`. The dev, test-server and build scripts
 run it first, and the outputs are gitignored; it needs the repository root's
-`bun install`. The menu bar imports the logo from `../../assets/brand/`
-directly.
+`bun install`. The app imports the logo and shared text-selection styles
+from `../../assets/brand/` directly.
 
 ## Deploying
 
