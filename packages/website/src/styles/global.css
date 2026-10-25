@@ -1,3 +1,5 @@
+@import "../../../../assets/brand/selection.css";
+
 :root {
   color-scheme: light dark;
   --background: #ffffff;
@@ -9,6 +11,8 @@
   --surface: #fafafa;
   --border-soft: #dcdcdc;
   --selected: #e2e2e2;
+  --text-selection-background: var(--text-selection-light-background);
+  --text-selection-color: var(--text-selection-light-color);
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -23,6 +27,8 @@
     --surface: #1a1a1a;
     --border-soft: #383838;
     --selected: #333333;
+    --text-selection-background: var(--text-selection-dark-background);
+    --text-selection-color: var(--text-selection-dark-color);
   }
 }
 

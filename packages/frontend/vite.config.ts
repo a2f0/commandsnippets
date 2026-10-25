@@ -222,8 +222,8 @@ export default defineConfig(({command, mode}) => {
       port: 8085,
       host: true, // Listen on all network interfaces
       hmr: true,
-      // The menu bar imports the logo from the repository's brand sources,
-      // outside this package.
+      // The logo and shared selection styles come from the repository's
+      // brand sources, outside this package.
       fs: {
         allow: [searchForWorkspaceRoot(process.cwd()), '../../assets/brand'],
       },

@@ -8,7 +8,7 @@ Monorepo for the Command Snippets app.
 | `packages/backend-v2/` | Cloudflare Workers API; bun, own lockfile |
 | `packages/api-shared/` | The API contract: zod schemas and types shared by the API and its clients; bun, own lockfile |
 | `packages/website/` | Public website (Astro); bun, own lockfile |
-| `assets/brand/` | Brand SVG sources; `agent-tool images build` renders the web icons and the link-preview image (`images` in `agent-tool.json`) |
+| `assets/brand/` | Shared brand SVGs and selection styles; `agent-tool images build` renders the web icons and the link-preview image (`images` in `agent-tool.json`) |
 | `scripts/` | git hooks, CI policy, test entrypoints |
 | `docs/` | CI merge gate and dependency update guidance |
 | `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
