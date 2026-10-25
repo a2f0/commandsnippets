@@ -1,17 +1,6 @@
 import {browser, expect} from '@wdio/globals';
 import {BasePage} from '../../pageobjects/base';
 
-// Chrome screenshots can temporarily override the viewport. Keep the video
-// reporter's asynchronous captures and our resizes from restoring stale sizes.
-let viewportWork: Promise<unknown> = Promise.resolve();
-const withViewport = <T>(work: () => Promise<T>): Promise<T> => {
-  const result = viewportWork.then(work);
-  viewportWork = result.catch(() => undefined);
-  return result;
-};
-const resizeViewport = (width: number) =>
-  withViewport(() => browser.setViewport({width, height: 800}));
-
 const dimensions = () =>
   browser.execute(() => {
     const rect = (selector: string) => {
@@ -57,19 +46,8 @@ const expectAligned = async (width: number) => {
 };
 
 describe('Resizable tag sidebar', () => {
-  let capture: typeof browser.browsingContextCaptureScreenshot;
-  before(() => {
-    capture = browser.browsingContextCaptureScreenshot.bind(browser);
-    browser.browsingContextCaptureScreenshot = parameters =>
-      withViewport(() => capture(parameters));
-  });
-  after(async () => {
-    await viewportWork;
-    browser.browsingContextCaptureScreenshot = capture;
-  });
-
   it('aligns the narrower search, resizes and remembers the width within viewport limits', async () => {
-    await resizeViewport(1200);
+    await browser.setViewport({width: 1200, height: 800});
     await BasePage.open('');
     await browser.login();
     await BasePage.open('');
@@ -93,7 +71,7 @@ describe('Resizable tag sidebar', () => {
     await dragTo(1000);
     await expectAligned(480);
 
-    await resizeViewport(800);
+    await browser.setViewport({width: 800, height: 800});
     // Browser/OS viewport sizing can differ from the requested dimensions.
     // Check the actual space left for the entries and the right drawer.
     const narrowViewport = await browser.waitUntil(
@@ -108,7 +86,7 @@ describe('Resizable tag sidebar', () => {
       '[role="separator"][aria-controls="tagSidebar"]'
     );
     await separator.click();
-    await resizeViewport(1200);
+    await browser.setViewport({width: 1200, height: 800});
     await expectAligned(480);
 
     await separator.doubleClick();
