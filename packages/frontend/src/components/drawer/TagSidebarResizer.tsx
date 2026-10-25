@@ -108,8 +108,11 @@ export const TagSidebarResizer = () => {
         userSelect: 'none',
         zIndex: 1,
         borderRight: 1,
-        borderColor: 'divider',
-        '&:hover, &:focus-visible': {backgroundColor: 'action.selected'},
+        borderColor: 'transparent',
+        '&:hover, &:focus-visible': {
+          borderColor: 'divider',
+          backgroundColor: 'action.selected',
+        },
         '&:focus-visible': {
           outline: '2px solid',
           outlineColor: 'text.secondary',
