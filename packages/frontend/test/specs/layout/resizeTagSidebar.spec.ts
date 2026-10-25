@@ -1,6 +1,20 @@
 import {browser, expect} from '@wdio/globals';
 import {BasePage} from '../../pageobjects/base';
 
+// Chrome's screenshot capture can restore a stale viewport after a concurrent
+// resize. Keep the video reporter's captures and viewport changes in order.
+const screenshots = new Set<Promise<unknown>>();
+let resizing: Promise<void> | undefined;
+const resizeViewport = async (width: number) => {
+  while (screenshots.size) await Promise.all(screenshots);
+  resizing = browser.setViewport({width, height: 800});
+  try {
+    await resizing;
+  } finally {
+    resizing = undefined;
+  }
+};
+
 const dimensions = () =>
   browser.execute(() => {
     const rect = (selector: string) => {
@@ -46,8 +60,50 @@ const expectAligned = async (width: number) => {
 };
 
 describe('Resizable tag sidebar', () => {
+  let captureDescriptor: PropertyDescriptor | undefined;
+  let capturedFrames = 0;
+  const observeScreenshots = () => {
+    // @wdio/globals forwards reads only. The real instance's protocol method
+    // is configurable but not writable, so preserve and replace its descriptor.
+    captureDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis.browser,
+      'browsingContextCaptureScreenshot'
+    );
+    if (!captureDescriptor) throw new Error('Missing screenshot command');
+    const capture = browser.browsingContextCaptureScreenshot;
+    Object.defineProperty(
+      globalThis.browser,
+      'browsingContextCaptureScreenshot',
+      {
+        configurable: true,
+        value: (parameters: Parameters<typeof capture>[0]) => {
+          const start = () => {
+            const result = capture(parameters).then(frame => {
+              capturedFrames++;
+              return frame;
+            });
+            screenshots.add(result);
+            const finished = () => screenshots.delete(result);
+            void result.then(finished, finished);
+            return result;
+          };
+          return resizing ? resizing.then(start) : start();
+        },
+      }
+    );
+  };
+  after(() => {
+    if (!captureDescriptor) return;
+    Object.defineProperty(
+      globalThis.browser,
+      'browsingContextCaptureScreenshot',
+      captureDescriptor
+    );
+    expect(capturedFrames).toBeGreaterThan(0);
+  });
+
   it('aligns the narrower search, resizes and remembers the width within viewport limits', async () => {
-    await browser.setViewport({width: 1200, height: 800});
+    await resizeViewport(1200);
     await BasePage.open('');
     await browser.login();
     await BasePage.open('');
@@ -66,12 +122,15 @@ describe('Resizable tag sidebar', () => {
     await BasePage.tagList.waitForDisplayed();
     await expectAligned(320);
 
+    // Observe the active page's resize sequence. Captures from navigation may
+    // outlive their document and must not hold subsequent resizes open.
+    observeScreenshots();
     await dragTo(2);
     await expectAligned(140);
     await dragTo(1000);
     await expectAligned(480);
 
-    await browser.setViewport({width: 800, height: 800});
+    await resizeViewport(800);
     // Browser/OS viewport sizing can differ from the requested dimensions.
     // Check the actual space left for the entries and the right drawer.
     const narrowViewport = await browser.waitUntil(
@@ -86,7 +145,7 @@ describe('Resizable tag sidebar', () => {
       '[role="separator"][aria-controls="tagSidebar"]'
     );
     await separator.click();
-    await browser.setViewport({width: 1200, height: 800});
+    await resizeViewport(1200);
     await expectAligned(480);
 
     await separator.doubleClick();
