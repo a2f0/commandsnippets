@@ -8,9 +8,7 @@ const ThemedGlobalStyle = () => {
   return (
     <GlobalStyles
       styles={{
-        // The root styles the entries' window scrollbar; nested containers
-        // such as the tag list and dialogs use the same rules.
-        '*': scrollbarStyles(theme),
+        ...scrollbarStyles(theme),
         '::selection': {background: theme.selected.background},
         '::-webkit-selection': {background: theme.selected.background},
         // The browser's own focus ring and form controls are blue: gray

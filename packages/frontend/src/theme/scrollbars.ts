@@ -6,23 +6,24 @@ export const scrollbarStyles = (theme: Theme): CSSObject => {
     theme.palette.mode === 'dark'
       ? theme.palette.grey[500]
       : theme.palette.grey[600];
-  const track = theme.palette.background.default;
-
   return {
     // High-contrast modes keep the platform's own scrollbar controls.
     '@media (forced-colors: none)': {
-      scrollbarColor: `${thumb} ${track}`,
-      scrollbarWidth: 'auto',
+      // The viewport and nested scroll containers inherit the same colors.
+      ':root': {scrollbarColor: `${thumb} transparent`},
       // Older Safari/Chromium versions do not support scrollbar-color.
       '@supports not (scrollbar-color: auto)': {
-        '&::-webkit-scrollbar': {width: '12px', height: '12px'},
-        '&::-webkit-scrollbar-track': {backgroundColor: track},
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: thumb,
-          border: `3px solid ${track}`,
-          borderRadius: '6px',
+        '*': {
+          '&::-webkit-scrollbar': {width: '12px', height: '12px'},
+          '&::-webkit-scrollbar-track': {backgroundColor: 'transparent'},
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: thumb,
+            backgroundClip: 'padding-box',
+            border: '3px solid transparent',
+            borderRadius: '6px',
+          },
+          '&::-webkit-scrollbar-corner': {backgroundColor: 'transparent'},
         },
-        '&::-webkit-scrollbar-corner': {backgroundColor: track},
       },
     },
   };
