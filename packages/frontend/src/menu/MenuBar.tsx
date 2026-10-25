@@ -1,7 +1,7 @@
 import {Box} from '@mui/material';
 import {styled, useTheme} from '@mui/material/styles';
 import React from 'react';
-import logoUrl from '../../../../assets/brand/logo.svg';
+import logoUrl from '../../../../assets/brand/logo.svg?no-inline';
 import {UserProfileCircle} from '../components/UserProfileCircle';
 import {useTypedTranslation} from '../i18n/hooks';
 import {useOwner} from '../lib/data/hooks';
@@ -24,7 +24,7 @@ import {ViewMenu} from './view/ViewMenu';
 import {ViewMenuButton} from './view/ViewMenuButton';
 
 const Aligner = styled('div')`
-  min-height: ${props => props.theme.appBar.height}px;
+  align-self: stretch;
   display: flex;
 `;
 
@@ -121,13 +121,24 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           width: entriesPage
             ? `calc(${theme.drawer.width}px + ${theme.main.dragIndicatorWidth}px)`
             : {xs: 56, sm: theme.drawer.width + theme.main.dragIndicatorWidth},
-          height: theme.appBar.height,
+          alignSelf: 'stretch',
           flexShrink: 0,
           pl: entriesPage ? 2.5 : {xs: 1.5, sm: 2.5},
           pb: 0.5,
         }}
       >
-        <img src={logoUrl} width={33} height={33} alt={t('logoAlt')} />
+        <Box
+          component="svg"
+          width={33}
+          height={33}
+          viewBox="0 0 64 64"
+          role="img"
+          aria-label={t('logoAlt')}
+          sx={{color: 'text.primary'}}
+        >
+          {/* Reuse the prompt without the favicon's tile or fixed color. */}
+          <use href={`${logoUrl}#prompt`} />
+        </Box>
       </Box>
       <Aligner>
         {appConfig.loggedInUser && (

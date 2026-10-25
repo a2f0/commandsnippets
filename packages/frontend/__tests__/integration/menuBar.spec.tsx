@@ -73,15 +73,14 @@ describe('MenuBar', () => {
       });
 
       await waitFor(() => {
-        const logo = screen.getByAltText('Command Snippets Logo');
+        const logo = screen.getByRole('img', {name: 'Command Snippets Logo'});
         expect(logo).toBeInTheDocument();
-        // The brand logo (assets/brand/logo.svg), small enough that Vite
-        // inlines it as a data URL.
-        const src = logo.getAttribute('src') ?? '';
-        expect(src).toMatch(/^data:image\/svg\+xml,/);
-        expect(decodeURIComponent(src)).toContain(
-          '<title>Command Snippets</title>'
-        );
+        expect(logo).toHaveAttribute('width', '33');
+        expect(logo).toHaveAttribute('height', '33');
+        // External SVG use needs a file URL; browsers reject data URLs.
+        const href = logo.querySelector('use')?.getAttribute('href') ?? '';
+        expect(href).toMatch(/\.svg(?:\?[^#]*)?#prompt$/);
+        expect(href).not.toMatch(/^data:/);
       });
     });
 
@@ -276,7 +275,7 @@ describe('MenuBar', () => {
         expect(menuBar).toBeInTheDocument();
 
         // Check that the logo exists
-        const logo = screen.getByAltText('Command Snippets Logo');
+        const logo = screen.getByRole('img', {name: 'Command Snippets Logo'});
         expect(logo).toBeInTheDocument();
       });
     });
