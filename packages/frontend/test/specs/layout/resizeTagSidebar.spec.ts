@@ -68,14 +68,15 @@ describe('Resizable tag sidebar', () => {
       async () => (await dimensions()).sidebar.width <= 320
     );
     await expectAligned(320);
+    const separator = await browser.$(
+      '[role="separator"][aria-controls="tagSidebar"]'
+    );
+    await separator.click();
     await browser.setViewport({width: 1200, height: 800});
     await browser.waitUntil(
       async () => (await dimensions()).sidebar.width === 480
     );
 
-    const separator = await browser.$(
-      '[role="separator"][aria-controls="tagSidebar"]'
-    );
     await separator.doubleClick();
     await expectAligned(200);
     await browser.keys('ArrowRight');

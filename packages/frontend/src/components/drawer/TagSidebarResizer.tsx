@@ -88,7 +88,9 @@ export const TagSidebarResizer = () => {
       onPointerMove={move}
       onPointerUp={(event: PointerEvent<HTMLDivElement>) => {
         if (drag.current?.pointerId === event.pointerId) {
-          setWidth(dragWidth(event));
+          // A click alone must not replace a wider preference while the
+          // current viewport temporarily clamps it.
+          if (event.clientX !== drag.current.x) setWidth(dragWidth(event));
           cancel();
           event.currentTarget.releasePointerCapture(event.pointerId);
         }
