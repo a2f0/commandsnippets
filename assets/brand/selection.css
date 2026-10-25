@@ -1,0 +1,16 @@
+/* Shared by the app and marketing site. Each chooses a pair for its theme. */
+:root {
+  --text-selection-light-background: #bdbdbd;
+  --text-selection-light-color: #101010;
+  --text-selection-dark-background: #616161;
+  --text-selection-dark-color: #ffffff;
+}
+
+/* Respect the user's system highlight colors in high-contrast mode. */
+@media (forced-colors: none) {
+  ::selection {
+    background-color: var(--text-selection-background);
+    color: var(--text-selection-color);
+    text-shadow: none;
+  }
+}
