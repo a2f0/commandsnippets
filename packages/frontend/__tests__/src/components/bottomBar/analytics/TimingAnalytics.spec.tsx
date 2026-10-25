@@ -64,8 +64,12 @@ const renderPanel = () =>
  */
 async function switchTags({painted = true} = {}) {
   listShown(listKey({tag: painted ? 'docker' : 'other'}));
-  beginInteraction('tag switch', listKey({tag: 'docker'}));
   const start = performance.now();
+  // The fixture's offsets are relative to the exact interaction start,
+  // independent of elapsed time between clock reads on a busy CI runner.
+  const clock = vi.spyOn(performance, 'now').mockReturnValue(start);
+  beginInteraction('tag switch', listKey({tag: 'docker'}));
+  clock.mockRestore();
   recordTiming('network', 'GET /tags_entries', start, start + 120, '200');
   recordTiming('idb', 'useTagEntries', start + 1, start + 9, '12 rows');
   recordTiming('render', 'EntryList', start + 10, start + 14, '12 rows');

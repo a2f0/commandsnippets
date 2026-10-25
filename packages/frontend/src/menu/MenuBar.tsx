@@ -6,6 +6,7 @@ import {UserProfileCircle} from '../components/UserProfileCircle';
 import {useTypedTranslation} from '../i18n/hooks';
 import {useOwner} from '../lib/data/hooks';
 import {environment} from '../lib/environment';
+import {SIDEBAR_WIDTH} from '../lib/sidebarWidth';
 import {useAppConfig} from '../lib/state/appState';
 import {EntriesLinkButton} from './admin/EntriesLinkButton';
 import {ModeTabs} from './admin/ModeTabs';
@@ -119,7 +120,7 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           alignItems: 'flex-end',
           justifyContent: 'flex-start',
           width: entriesPage
-            ? `calc(${theme.drawer.width}px + ${theme.main.dragIndicatorWidth}px)`
+            ? `calc(${SIDEBAR_WIDTH} + ${theme.main.dragIndicatorWidth}px)`
             : {xs: 56, sm: theme.drawer.width + theme.main.dragIndicatorWidth},
           alignSelf: 'stretch',
           flexShrink: 0,

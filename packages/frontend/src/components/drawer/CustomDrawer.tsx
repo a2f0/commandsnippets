@@ -1,8 +1,8 @@
 import {Drawer, type DrawerProps} from '@mui/material';
 import * as React from 'react';
 
-const CustomDrawer = ({anchor = 'left', children}: DrawerProps) => (
-  <Drawer anchor={anchor} variant="permanent">
+const CustomDrawer = ({anchor = 'left', children, ...props}: DrawerProps) => (
+  <Drawer anchor={anchor} variant="permanent" {...props}>
     {children}
   </Drawer>
 );

@@ -381,6 +381,7 @@ const EntryList = () => {
       onMouseDown={onMouseDown}
       sx={{
         flexGrow: '1',
+        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
       }}

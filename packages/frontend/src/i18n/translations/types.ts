@@ -36,6 +36,7 @@ export interface MenuTranslations {
   view: string;
   help: string;
   tags: string;
+  resizeTagSidebar: string;
   entries: string;
   allEntries: string;
   untaggedEntries: string;
