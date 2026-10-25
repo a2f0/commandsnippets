@@ -1,40 +1,41 @@
 import {Box} from '@mui/material';
 import {type KeyboardEvent, type PointerEvent, useRef} from 'react';
-import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {
   clampSidebarWidth,
   DEFAULT_SIDEBAR_WIDTH,
   MIN_SIDEBAR_WIDTH,
-  maxSidebarWidth,
 } from '../../lib/sidebarWidth';
 import {useAppState} from '../../lib/state/appState';
+import {useSidebarSizing} from './TagSidebarLayout';
 
 export const TagSidebarResizer = () => {
   const {t} = useTypedTranslation('menu');
-  const savedWidth = useAppState(state => state.tagSidebarWidth);
   const setWidth = useAppState(state => state.setTagSidebarWidth);
-  const {width: viewportWidth} = useWindowSize();
-  const maximum = maxSidebarWidth(viewportWidth);
-  const width = clampSidebarWidth(savedWidth, maximum);
+  const {width, maximum, preview} = useSidebarSizing();
   const drag = useRef<{pointerId: number; x: number; width: number} | null>(
     null
   );
 
+  const dragWidth = (event: PointerEvent<HTMLDivElement>): number => {
+    const start = drag.current;
+    return start === null
+      ? width
+      : clampSidebarWidth(start.width + event.clientX - start.x, maximum);
+  };
+
   const move = (event: PointerEvent<HTMLDivElement>) => {
     if (drag.current?.pointerId === event.pointerId) {
-      setWidth(
-        clampSidebarWidth(
-          drag.current.width + event.clientX - drag.current.x,
-          maximum
-        )
-      );
+      preview(dragWidth(event));
     }
   };
 
+  const cancel = () => {
+    drag.current = null;
+    preview(null);
+  };
+
   const keyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    // Keep the list shortcuts from taking focus away from the separator.
-    event.stopPropagation();
     let next: number;
     switch (event.key) {
       case 'ArrowLeft':
@@ -52,9 +53,15 @@ export const TagSidebarResizer = () => {
       case 'Enter':
         next = DEFAULT_SIDEBAR_WIDTH;
         break;
+      case 'Tab':
+        // Allow native focus traversal instead of the lists' Tab shortcut.
+        event.stopPropagation();
+        return;
       default:
         return;
     }
+    // Handled resize keys must not also navigate the lists.
+    event.stopPropagation();
     event.preventDefault();
     setWidth(clampSidebarWidth(next, maximum));
   };
@@ -80,18 +87,14 @@ export const TagSidebarResizer = () => {
       }}
       onPointerMove={move}
       onPointerUp={(event: PointerEvent<HTMLDivElement>) => {
-        move(event);
         if (drag.current?.pointerId === event.pointerId) {
-          drag.current = null;
+          setWidth(dragWidth(event));
+          cancel();
           event.currentTarget.releasePointerCapture(event.pointerId);
         }
       }}
-      onPointerCancel={() => {
-        drag.current = null;
-      }}
-      onLostPointerCapture={() => {
-        drag.current = null;
-      }}
+      onPointerCancel={cancel}
+      onLostPointerCapture={cancel}
       sx={{
         position: 'absolute',
         right: 0,

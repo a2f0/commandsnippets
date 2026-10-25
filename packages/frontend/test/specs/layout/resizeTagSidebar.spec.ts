@@ -85,7 +85,48 @@ describe('Resizable tag sidebar', () => {
     await expectAligned(200);
     await browser.keys('Home');
     await expectAligned(140);
+    await browser.keys('End');
+    await expectAligned(480);
     await browser.keys('Enter');
     await expectAligned(200);
+    await browser.keys('Escape');
+    await expect(BasePage.tagSearch).toBeFocused();
+
+    // A cancelled drag restores the last saved width.
+    await browser
+      .action('pointer')
+      .move({x: 197, y: 150})
+      .down()
+      .move({x: 317, y: 150, duration: 250})
+      .perform(true);
+    await expectAligned(320);
+    await browser.execute(() => {
+      document
+        .querySelector('[aria-controls="tagSidebar"]')
+        ?.dispatchEvent(new PointerEvent('pointercancel', {bubbles: true}));
+    });
+    await browser.releaseActions();
+    await expectAligned(200);
+
+    // Older or malformed saved preferences fall back safely, in either theme.
+    for (const invalidWidth of [null, 'wide']) {
+      await browser.execute((tagSidebarWidth: string | null) => {
+        localStorage.setItem(
+          'commandsnippets-test',
+          JSON.stringify({
+            state: {
+              loggedInUser: 'test',
+              selectedTheme: 'lightTheme',
+              tagSidebarWidth,
+            },
+            version: 0,
+          })
+        );
+      }, invalidWidth);
+      await browser.refresh();
+      await browser.waitForMSW();
+      await BasePage.tagList.waitForDisplayed();
+      await expectAligned(200);
+    }
   });
 });

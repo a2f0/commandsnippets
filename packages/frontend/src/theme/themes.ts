@@ -64,6 +64,7 @@ const defaultThemeOptions: ThemeOptions = {
     height: 52,
   },
   drawer: {
+    // Right drawer and entry editor spacing; the tag sidebar has its own width.
     width: 160,
   },
   main: {
