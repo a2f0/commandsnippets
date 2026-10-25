@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import logoUrl from '../../../../assets/brand/logo.svg?url&no-inline';
 import {appUrl, FOOTER_LINKS} from '../lib/appUrl';
 import {
   COMPANY_NAME,
@@ -73,7 +74,12 @@ const year = new Date().getFullYear();
   </head>
   <body>
     <header>
-      <a class="brand" href="/">{SITE_NAME}</a>
+      <a class="brand" href="/" aria-label={SITE_NAME}>
+        <svg class="brand-logo" width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <use href={`${logoUrl}#prompt`} />
+        </svg>
+        <span class="brand-name">{SITE_NAME}</span>
+      </a>
       <nav aria-label="Main">
         <a class="nav-optional" href="/#features">Features</a>
         <a href="/about/">About</a>
