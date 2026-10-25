@@ -1,6 +1,17 @@
 import {browser, expect} from '@wdio/globals';
 import {BasePage} from '../../pageobjects/base';
 
+// Chrome screenshots can temporarily override the viewport. Keep the video
+// reporter's asynchronous captures and our resizes from restoring stale sizes.
+let viewportWork: Promise<unknown> = Promise.resolve();
+const withViewport = <T>(work: () => Promise<T>): Promise<T> => {
+  const result = viewportWork.then(work);
+  viewportWork = result.catch(() => undefined);
+  return result;
+};
+const resizeViewport = (width: number) =>
+  withViewport(() => browser.setViewport({width, height: 800}));
+
 const dimensions = () =>
   browser.execute(() => {
     const rect = (selector: string) => {
@@ -31,19 +42,34 @@ const dragTo = async (x: number) => {
 };
 
 const expectAligned = async (width: number) => {
-  await browser.waitUntil(
-    async () => Math.abs((await dimensions()).sidebar.width - width) < 0.5,
-    {timeoutMsg: `Sidebar did not settle at ${width}px`}
+  // Keep the matching snapshot: another WebDriver round trip can observe a
+  // different resize frame between the wait and the alignment assertions.
+  const layout = await browser.waitUntil(
+    async () => {
+      const snapshot = await dimensions();
+      return Math.abs(snapshot.sidebar.width - width) < 0.5 && snapshot;
+    },
+    {timeoutMsg: `Sidebar did not reach ${width}px`}
   );
-  const layout = await dimensions();
   expect(layout.sidebar.width).toBeCloseTo(width, 0);
   expect(layout.search.right).toBeCloseTo(layout.sidebar.right, 0);
   expect(layout.entries.left).toBeGreaterThanOrEqual(layout.sidebar.right);
 };
 
 describe('Resizable tag sidebar', () => {
+  let capture: typeof browser.browsingContextCaptureScreenshot;
+  before(() => {
+    capture = browser.browsingContextCaptureScreenshot.bind(browser);
+    browser.browsingContextCaptureScreenshot = parameters =>
+      withViewport(() => capture(parameters));
+  });
+  after(async () => {
+    await viewportWork;
+    browser.browsingContextCaptureScreenshot = capture;
+  });
+
   it('aligns the narrower search, resizes and remembers the width within viewport limits', async () => {
-    await browser.setViewport({width: 1200, height: 800});
+    await resizeViewport(1200);
     await BasePage.open('');
     await browser.login();
     await BasePage.open('');
@@ -67,17 +93,22 @@ describe('Resizable tag sidebar', () => {
     await dragTo(1000);
     await expectAligned(480);
 
-    await browser.setViewport({width: 800, height: 800});
+    await resizeViewport(800);
     // Browser/OS viewport sizing can differ from the requested dimensions.
     // Check the actual space left for the entries and the right drawer.
-    const narrowViewport = await browser.execute(() => window.innerWidth);
-    expect(narrowViewport).toBeLessThan(960);
+    const narrowViewport = await browser.waitUntil(
+      async () => {
+        const width = await browser.execute(() => window.innerWidth);
+        return width > 620 && width < 960 && width;
+      },
+      {timeoutMsg: 'The viewport did not shrink between 620px and 960px'}
+    );
     await expectAligned(narrowViewport - 480);
     const separator = await browser.$(
       '[role="separator"][aria-controls="tagSidebar"]'
     );
     await separator.click();
-    await browser.setViewport({width: 1200, height: 800});
+    await resizeViewport(1200);
     await expectAligned(480);
 
     await separator.doubleClick();
