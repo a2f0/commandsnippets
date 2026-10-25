@@ -6,7 +6,11 @@ import {BasePage} from '../../pageobjects/base';
 const screenshots = new Set<Promise<unknown>>();
 let resizing: Promise<void> | undefined;
 const resizeViewport = async (width: number) => {
-  while (screenshots.size) await Promise.allSettled(screenshots);
+  while (screenshots.size) {
+    await browser.waitUntil(() => screenshots.size === 0, {
+      timeoutMsg: 'Video screenshots did not finish before the viewport resize',
+    });
+  }
   resizing = browser.setViewport({width, height: 800});
   try {
     await resizing;
@@ -92,14 +96,17 @@ describe('Resizable tag sidebar', () => {
       }
     );
   };
-  after(() => {
+  const restoreScreenshots = () => {
     if (!captureDescriptor) return;
     Object.defineProperty(
       globalThis.browser,
       'browsingContextCaptureScreenshot',
       captureDescriptor
     );
-  });
+    captureDescriptor = undefined;
+    screenshots.clear();
+  };
+  after(restoreScreenshots);
 
   it('aligns the narrower search, resizes and remembers the width within viewport limits', async () => {
     await resizeViewport(1200);
@@ -148,6 +155,7 @@ describe('Resizable tag sidebar', () => {
     await expectAligned(480);
     // The video reporter must have exercised the wrapper, not just the resizes.
     expect(capturedFrames).toBeGreaterThan(0);
+    restoreScreenshots();
 
     await separator.doubleClick();
     await expectAligned(200);
