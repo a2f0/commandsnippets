@@ -31,6 +31,10 @@ const dragTo = async (x: number) => {
 };
 
 const expectAligned = async (width: number) => {
+  await browser.waitUntil(
+    async () => Math.abs((await dimensions()).sidebar.width - width) < 0.5,
+    {timeoutMsg: `Sidebar did not settle at ${width}px`}
+  );
   const layout = await dimensions();
   expect(layout.sidebar.width).toBeCloseTo(width, 0);
   expect(layout.search.right).toBeCloseTo(layout.sidebar.right, 0);
@@ -64,18 +68,17 @@ describe('Resizable tag sidebar', () => {
     await expectAligned(480);
 
     await browser.setViewport({width: 800, height: 800});
-    await browser.waitUntil(
-      async () => (await dimensions()).sidebar.width <= 320
-    );
-    await expectAligned(320);
+    // Browser/OS viewport sizing can differ from the requested dimensions.
+    // Check the actual space left for the entries and the right drawer.
+    const narrowViewport = await browser.execute(() => window.innerWidth);
+    expect(narrowViewport).toBeLessThan(960);
+    await expectAligned(narrowViewport - 480);
     const separator = await browser.$(
       '[role="separator"][aria-controls="tagSidebar"]'
     );
     await separator.click();
     await browser.setViewport({width: 1200, height: 800});
-    await browser.waitUntil(
-      async () => (await dimensions()).sidebar.width === 480
-    );
+    await expectAligned(480);
 
     await separator.doubleClick();
     await expectAligned(200);
