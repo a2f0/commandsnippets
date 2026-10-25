@@ -54,9 +54,18 @@ header {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.brand-logo {
+  display: block;
+  flex-shrink: 0;
 }
 
 header nav {
@@ -356,6 +365,10 @@ footer nav a:hover {
 }
 
 @media (max-width: 600px) {
+  .brand-name {
+    display: none;
+  }
+
   header nav {
     gap: 14px;
   }
