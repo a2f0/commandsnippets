@@ -243,6 +243,7 @@ export const es: I18NextTranslations = {
     reuseUnavailableEntry: 'Entrada no disponible #{{id}}',
     reuseHistory: 'Reutilizaciones',
     reuseHistoryLoading: 'Cargando las reutilizaciones…',
+    reuseHistoryEnd: 'Fin del historial de reutilizaciones.',
     reuseHistoryEmpty: 'Aún no se ha reutilizado.',
     reuseHistoryFailed: 'No se pudieron leer las reutilizaciones.',
     reuseHistoryRetry: 'Reintentar',

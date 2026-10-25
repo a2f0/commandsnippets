@@ -223,6 +223,7 @@ export interface EntriesTranslations {
   reuseUnavailableEntry: string;
   reuseHistory: string;
   reuseHistoryLoading: string;
+  reuseHistoryEnd: string;
   reuseHistoryEmpty: string;
   reuseHistoryFailed: string;
   reuseHistoryRetry: string;

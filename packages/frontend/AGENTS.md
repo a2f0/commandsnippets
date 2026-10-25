@@ -193,11 +193,13 @@ API; everything else the app keeps is a zustand store.
   across all entries. Guests and other users (staff included) are redirected
   without reading it. `SyncEngine.entryReuses()` omits the entry filter and
   requests `include=text_entry` so each page has its entry names, independent
-  of the collection sync. `ReuseHistory` fetches 50 rows at a time; Show more
-  fetches only the next page and deduplicates rows if concurrent copies shift
-  numbered pages. Refresh, reconnect and a changed entry count read only the
-  first page; a failed request retains the last result and offers Retry for
-  that page. There is no automatic full-history polling. Version changes
+  of the collection sync. `ReuseHistory` fetches 50 rows at a time, loading
+  the next page within 400px of the bottom of the history. It keeps Show more
+  for keyboard access and browsers without IntersectionObserver, and
+  deduplicates rows if concurrent copies shift numbered pages. Only one read
+  runs at a time. A failed page pauses automatic loading and offers Retry
+  beside the retained rows. Refresh, reconnect and a changed entry count read
+  only the first page. There is no automatic full-history polling. Version changes
   clear the old history, and initial reads wait for a known data version.
   Missing or deleted entries retain their reuse row with an unavailable
   label. Entry links remember the master history as their return path. Tags
