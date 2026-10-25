@@ -22,11 +22,19 @@ const AppHeader = ({entriesPage = true}: IProps) => (
       backgroundColor: theme => theme.header.background,
       top: 0,
       height: theme => `${theme.appBar.height}px`,
-      // Detail pages have no drawer to align with; keep a narrow viewport's
-      // menus within the header, including the extra controls staff see.
-      ...(!entriesPage && {
-        '& .MuiToolbar-root': {overflowX: 'auto', scrollbarWidth: 'thin'},
-      }),
+      '& .MuiToolbar-root': {
+        // Fit inside the header's border, with children stretching to match.
+        height: '100%',
+        minHeight: 0,
+        flexShrink: 0,
+        // Detail pages keep narrow viewports' menus within the header,
+        // including the extra controls staff see.
+        ...(!entriesPage && {
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          scrollbarWidth: 'thin',
+        }),
+      },
     }}
   >
     <StyledToolbar>
