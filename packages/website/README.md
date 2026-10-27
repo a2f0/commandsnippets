@@ -2,7 +2,8 @@
 
 The public site (Astro, static HTML): the home page (what the app does, with
 an HTML sketch of it: `src/components/AppPreview.astro`), the about page, and
-the privacy policy, terms of service and contact page. Tearleads, LLC is
+the privacy policy, terms of service and contact page. This package is
+available on the web at <https://commandsnippets.com>. Tearleads, LLC is
 the operator; support@tearleads.com handles support and privacy requests.
 Its copy states only what the app does today.
 Signing in happens in the web app (`../frontend`); the website only links to it,
