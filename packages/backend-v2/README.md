@@ -3,7 +3,8 @@
 The Command Snippets API on Cloudflare Workers: [Hono](https://hono.dev) on
 workerd, [D1](https://developers.cloudflare.com/d1/) (SQLite) through
 [Drizzle](https://orm.drizzle.team), with [Bun](https://bun.sh) as the package
-manager and script runner.
+manager and script runner. Production serves it at
+<https://api.commandsnippets.com>.
 
 It replaced the Django backend (retired, and since removed from this repository). Routes, JSON:API documents,
 cookies, tokens, timestamps and error messages follow Django's wherever clients
@@ -532,4 +533,4 @@ for changes here or in `../api-shared`. Pushes to `staging`/`main` that change
 either run `Backend v2 CI`, whose deploy job would apply D1 migrations and
 deploy, but only once the `BACKEND_V2_DEPLOY` repository variable is `true`
 and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist.
-Without that configuration, releases are deployed by hand as above; inspect the current repository variable and secret names before shipping.
+Without that configuration, releases are deployed by hand as above.

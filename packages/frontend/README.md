@@ -4,15 +4,17 @@ A command snippet tool for computer programmers and system administrators. It's
 a tagging system that allows for user-defined ordering of both Tag and Entry
 objects. The user's data is kept in IndexedDB (Dexie), synced with the API,
 and the rest of the app's state in a zustand store saved in `localStorage`
-(see `AGENTS.md`).
+(see `AGENTS.md`). This package is available on the web at
+<https://app.commandsnippets.com>.
 
 ## Development
 
 ### Prerequisites
 
-Use the repository root's [mise setup](../../README.md#setup) to install the
-Bun and Node versions pinned in `../../.mise.toml`. Bun installs dependencies
-and runs scripts; Vite, Vitest, WebdriverIO and Wrangler execute on Node.
+Use the repository root's [quick start](../../README.md#quick-start) to
+install the Bun and Node versions pinned in `../../.mise.toml`. Bun installs
+dependencies and runs scripts; Vite, Vitest, WebdriverIO and Wrangler execute
+on Node.
 
 ### Setup
 
@@ -20,9 +22,12 @@ and runs scripts; Vite, Vitest, WebdriverIO and Wrangler execute on Node.
 # Install dependencies
 bun install
 
-# Start development server
+# Start development server (http://localhost:8085)
 bun run dev
 ```
+
+The development server talks to the API on `http://localhost:9001`; start it
+from `../backend-v2` ([development](../backend-v2/README.md#development)).
 
 The git hooks are the repository's (`scripts/git/hooks`); install them from
 the repository root with `bun install && bun run hooks:install`.
