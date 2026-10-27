@@ -6,6 +6,7 @@ import {History, Refresh} from '@mui/icons-material';
 import {Alert, Box, Button, Typography} from '@mui/material';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useEffect, useRef, useState} from 'react';
+import {useInfiniteScroll} from '../../hooks/useInfiniteScroll';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {formatTimestamp, timestampWithZone} from '../../lib/formatTimestamp';
 import {Link} from '../../lib/router/Router';
@@ -41,7 +42,6 @@ const HistoryContent = ({session, entryId, count}: Props) => {
   const running = useRef(false);
   const refreshPending = useRef(false);
   const readPage = useRef<(page: number) => void>(() => {});
-  const loadMoreTarget = useRef<HTMLDivElement>(null);
   const unsent = entryId !== undefined && isLocalId(entryId);
   const all = entryId === undefined;
   const nextPage = history?.more ? history.page + 1 : null;
@@ -119,37 +119,12 @@ const HistoryContent = ({session, entryId, count}: Props) => {
     };
   }, [session, entryId, count, unsent]);
 
-  useEffect(() => {
-    const target = loadMoreTarget.current;
-    if (
-      target === null ||
-      nextPage === null ||
-      loading ||
-      failed ||
-      unsent ||
-      session.readOnly ||
-      typeof IntersectionObserver === 'undefined'
-    )
-      return undefined;
-
-    // Re-observe after each page: a short batch can leave the footer in view.
-    // Each observer may request only once, even before React commits loading.
-    let active = true;
-    const observer = new IntersectionObserver(
-      entries => {
-        if (!active || !entries.some(entry => entry.isIntersecting)) return;
-        active = false;
-        observer.disconnect();
-        readPage.current(nextPage);
-      },
-      {rootMargin: '0px 0px 400px 0px'}
-    );
-    observer.observe(target);
-    return () => {
-      active = false;
-      observer.disconnect();
-    };
-  }, [nextPage, loading, failed, unsent, session.readOnly]);
+  const loadMoreTarget = useInfiniteScroll(
+    () => {
+      if (nextPage !== null) readPage.current(nextPage);
+    },
+    nextPage !== null && !loading && !failed && !unsent && !session.readOnly
+  );
 
   const entryById = new Map(history?.entries.map(entry => [entry.id, entry]));
   const refresh = () => readPage.current(1);
