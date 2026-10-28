@@ -23,6 +23,7 @@ import {EntryEdit} from './EntryEdit';
 import {EntryNew} from './EntryNew';
 import {MemoizedEntryReuseCount} from './EntryReuseCount';
 import {MemoizedEntrySubject} from './EntrySubject';
+import {MemoizedEntryTags} from './EntryTags';
 
 const EntryText = styled('div')(() => ({
   display: 'inline-block',
@@ -70,6 +71,8 @@ interface IEntryProps {
   rowKey: string;
   /** The tag the list shows, when it shows one. */
   tagId: string | undefined;
+  /** The names of the entry's other tags, shown under it (none: hidden). */
+  tagNames: readonly string[];
   findEntryByIndex: (id: number) => TextEntry | null;
   /**
    * Keep the row rendered, out of view too (a long list renders only the
@@ -86,6 +89,7 @@ const Entry = ({
   object,
   rowKey,
   tagId,
+  tagNames,
   findEntryByIndex,
   keepRendered,
 }: IEntryProps) => {
@@ -497,6 +501,7 @@ const Entry = ({
                 />
               </EntryText>
             </div>
+            {tagNames.length > 0 && <MemoizedEntryTags names={tagNames} />}
           </EntryContainer>
         </div>
       )}

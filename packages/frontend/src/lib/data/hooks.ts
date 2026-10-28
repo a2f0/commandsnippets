@@ -37,6 +37,7 @@ import {
   subscribeSessions,
   syncSession,
 } from '../sync/session';
+import {tagNamesByEntry} from './entryTags';
 import type {TaggedEntry} from './sort';
 
 /** Whose data a query reads: a session's database and owner. */
@@ -414,6 +415,69 @@ export function useEntryTags(entryId: string): Tag[] | undefined {
       )
       .sort((a, b) => a.attributes.name.localeCompare(b.attributes.name));
   }, [session, entryId]);
+}
+
+/** The ids of the tags each entry is in (its junctions not deleted). */
+async function tagIdsOfEntries({
+  db,
+  owner,
+}: OwnedData): Promise<Map<string, string[]>> {
+  const junctions = await timed(
+    'idb',
+    'useEntryTagNames',
+    () =>
+      db.junctions
+        .where('owner')
+        .equals(owner)
+        .filter(junction => !junction.attributes.is_deleted)
+        .toArray(),
+    rows
+  );
+  const byEntry = new Map<string, string[]>();
+  for (const {relationships} of junctions) {
+    const entryId = relationships.text_entry.data.id;
+    const tagIds = byEntry.get(entryId);
+    if (tagIds === undefined) {
+      byEntry.set(entryId, [relationships.tag.data.id]);
+    } else {
+      tagIds.push(relationships.tag.data.id);
+    }
+  }
+  return byEntry;
+}
+
+/**
+ * The names of the tags an entry list shows under each entry, by entry id
+ * (`tagNamesByEntry`): the tags it is in, but `shownTagId`, the one the list
+ * shows. One query for the whole list, which a tag switch does not run
+ * again; its rows take their names from it, as a query of each row's own is
+ * a transaction per row.
+ */
+export function useEntryTagNames(
+  shownTagId: string | undefined
+): ReadonlyMap<string, readonly string[]> {
+  const session = useSession();
+  const tags = useTags();
+  const tagIds = useLiveQuery(
+    async () =>
+      session === null
+        ? new Map<string, string[]>()
+        : await tagIdsOfEntries(session),
+    [session]
+  );
+  // The names the rows show, whose unchanged arrays the next answer keeps.
+  const shown = useRef<ReadonlyMap<string, readonly string[]>>(new Map());
+  const names = useMemo(
+    () =>
+      tagIds === undefined || tags === undefined
+        ? shown.current
+        : tagNamesByEntry(tagIds, tags, shownTagId, shown.current),
+    [tagIds, tags, shownTagId]
+  );
+  useLayoutEffect(() => {
+    shown.current = names;
+  });
+  return names;
 }
 
 /** The junction putting entry `entryId` in tag `tagId`, when there is one. */
