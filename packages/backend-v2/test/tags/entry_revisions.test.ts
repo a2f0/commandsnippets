@@ -8,8 +8,10 @@ import {
   json,
   refreshEntry,
   refreshJunction,
+  reorderDocument,
   setUpBase,
   tagFactory,
+  taggingDocument,
   tagTextEntryFactory,
   textEntryFactory,
 } from '../helpers';
@@ -60,13 +62,10 @@ describe('junction reorders and incremental entry sync', () => {
     expect((await sync()).data).toEqual([]);
 
     // j3 moves above j2: j2 shifts down one rank.
-    const response = await user1Client.post('/api/v1/tags_entries/reorder', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        attributes: {top: j3.id, bottom: j2.id},
-        relationships: {},
-      },
-    });
+    const response = await user1Client.post(
+      '/api/v1/tags_entries/reorder',
+      reorderDocument('TagTextEntryThroughModel', j3.id, j2.id)
+    );
     expect(response.status).toBe(200);
 
     const body = await sync();
@@ -124,16 +123,6 @@ describe('junction reorders and incremental entry sync', () => {
 });
 
 describe('tagging and untagging advance the entry revision', () => {
-  const tagging = (tagId: number, entryId: number) => ({
-    data: {
-      type: 'TagTextEntryThroughModel',
-      attributes: {},
-      relationships: {
-        tag: {data: {type: 'Tag', id: tagId}},
-        text_entry: {data: {type: 'TextEntry', id: entryId}},
-      },
-    },
-  });
   const advanced = async (entry: TextEntry) =>
     ((await refreshEntry(entry.id))?.date_updated ?? '') > entry.date_updated;
 
@@ -143,7 +132,7 @@ describe('tagging and untagging advance the entry revision', () => {
     const entry = await textEntryFactory({user: user1});
     const response = await user1Client.post(
       '/api/v1/tags_entries',
-      tagging(tag.id, entry.id)
+      taggingDocument(tag.id, entry.id)
     );
     expect(response.status).toBe(201);
     expect(await advanced(entry)).toBe(true);
@@ -156,7 +145,7 @@ describe('tagging and untagging advance the entry revision', () => {
     await tagTextEntryFactory({tag, text_entry: entry, user: user1});
     const response = await user1Client.post(
       '/api/v1/tags_entries',
-      tagging(tag.id, entry.id)
+      taggingDocument(tag.id, entry.id)
     );
     expect(response.status).toBe(200);
     expect(await advanced(entry)).toBe(false);

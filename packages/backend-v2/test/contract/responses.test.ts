@@ -29,25 +29,25 @@ import {
   textEntryReusedListDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared';
-import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import * as z from 'zod/mini';
-import {users} from '../../src/db/schema';
 import {
   ApiClient,
   appRequest,
   type Base,
-  db,
+  clientFor,
   entriesOf,
   type Json,
   json,
+  makeStaff,
+  reorderDocument,
   setUpBase,
   tagFactory,
+  taggingDocument,
   tagsOf,
   tagTextEntryFactory,
   textEntryFactory,
   textEntryReusedFactory,
-  tokenFor,
   userFactory,
 } from '../helpers';
 import {
@@ -240,9 +240,10 @@ describe('Tag', () => {
 
   it('reorders, with an empty 200', async () => {
     const [top, bottom] = await tagsOf(base.user1);
-    const response = await client.post('/api/v1/tags/reorder', {
-      data: {type: 'Tag', attributes: {top: top?.id, bottom: bottom?.id}},
-    });
+    const response = await client.post(
+      '/api/v1/tags/reorder',
+      reorderDocument('Tag', top?.id, bottom?.id)
+    );
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('');
   });
@@ -304,15 +305,10 @@ describe('TagTextEntryThroughModel', () => {
     const [entry] = await entriesOf(base.user1);
     const created = await expectDocument(
       tagTextEntryDocumentSchema,
-      await client.post('/api/v1/tags_entries', {
-        data: {
-          type: 'TagTextEntryThroughModel',
-          relationships: {
-            tag: {data: {type: 'Tag', id: String(tag.id)}},
-            text_entry: {data: {type: 'TextEntry', id: String(entry?.id)}},
-          },
-        },
-      }),
+      await client.post(
+        '/api/v1/tags_entries',
+        taggingDocument(tag.id, entry?.id)
+      ),
       201
     );
     expect(
@@ -324,12 +320,10 @@ describe('TagTextEntryThroughModel', () => {
       tag,
       text_entry: await textEntryFactory({user: base.user1}),
     });
-    const reorder = await client.post('/api/v1/tags_entries/reorder', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        attributes: {top: other.id, bottom: created.data.id},
-      },
-    });
+    const reorder = await client.post(
+      '/api/v1/tags_entries/reorder',
+      reorderDocument('TagTextEntryThroughModel', other.id, created.data.id)
+    );
     expect(reorder.status).toBe(200);
 
     // Untagging answers with the junction, deleted.
@@ -431,10 +425,7 @@ describe('TextEntryReused', () => {
 
 describe('the admin API', () => {
   it('lists and reads users, changes one, and lists the audit log', async () => {
-    await db()
-      .update(users)
-      .set({is_staff: true})
-      .where(eq(users.id, base.user1.id));
+    await makeStaff(base.user1);
     const alice = await userFactory({}, {examples: false});
     await expectDocument(
       adminUserListDocumentSchema,
@@ -477,10 +468,7 @@ describe('the admin API', () => {
   });
 
   it("reads a user's data as the sync does", async () => {
-    await db()
-      .update(users)
-      .set({is_staff: true})
-      .where(eq(users.id, base.user1.id));
+    await makeStaff(base.user1);
     const base2 = `/api/v1/admin/users/${base.user2.id}`;
     await expectDocument(
       tagCursorListDocumentSchema,
@@ -535,7 +523,7 @@ describe('authentication', () => {
 
 describe('errors', () => {
   it('are error documents, whatever their cause', async () => {
-    const other = new ApiClient(await tokenFor(base.user2.id));
+    const other = await clientFor(base.user2);
     const [tag] = await tagsOf(base.user1);
     const cases: Array<[Promise<Response>, number]> = [
       // Serializer fields: every field's error.

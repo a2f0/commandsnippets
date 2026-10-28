@@ -3,16 +3,15 @@
  * filter, sort field or relationship: they get the 400 any unknown name gets
  * (they used to reach the lookups, and 500 or quietly misbehave).
  */
-import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {users} from '../../src/db/schema';
 import {
   type ApiClient,
   type Base,
-  db,
   entriesOf,
   json,
+  makeStaff,
   setUpBase,
+  taggingDocument,
   tagsOf,
   textEntryReusedFactory,
 } from '../helpers';
@@ -49,10 +48,7 @@ beforeEach(async () => {
   base = await setUpBase();
   client = base.user1Client;
   // The admin API needs staff.
-  await db()
-    .update(users)
-    .set({is_staff: true})
-    .where(eq(users.id, base.user1.id));
+  await makeStaff(base.user1);
   const [entry] = await entriesOf(base.user1);
   await textEntryReusedFactory({user: base.user1, text_entry: entry as never});
 });
@@ -111,15 +107,7 @@ describe('single resources', () => {
     async name => {
       const [tag] = await tagsOf(base.user1);
       const [, entry] = await entriesOf(base.user1);
-      const document = {
-        data: {
-          type: 'TagTextEntryThroughModel',
-          relationships: {
-            tag: {data: {type: 'Tag', id: String(tag?.id)}},
-            text_entry: {data: {type: 'TextEntry', id: String(entry?.id)}},
-          },
-        },
-      };
+      const document = taggingDocument(tag?.id, entry?.id);
       await expectUnknown(
         n => client.post(`/api/v1/tags_entries?include=${n}`, document),
         name

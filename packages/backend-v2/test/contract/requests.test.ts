@@ -18,17 +18,15 @@ import {
   textEntryReusedCreateDocumentSchema,
   textEntryUpdateDocumentSchema,
 } from '@commandsnippets/api-shared';
-import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
 import type * as z from 'zod/mini';
-import {users} from '../../src/db/schema';
 import {
   ApiClient,
   type Base,
-  db,
   entriesOf,
   type Json,
   json,
+  makeStaff,
   setUpBase,
   tagFactory,
   tagsOf,
@@ -307,10 +305,7 @@ describe('TextEntryReused documents', () => {
 
 describe('AdminUser documents', () => {
   it('update', async () => {
-    await db()
-      .update(users)
-      .set({is_staff: true})
-      .where(eq(users.id, base.user1.id));
+    await makeStaff(base.user1);
     const alice = await userFactory({}, {examples: false});
     const id = String(alice.id);
     const document = (attributes: object) => ({

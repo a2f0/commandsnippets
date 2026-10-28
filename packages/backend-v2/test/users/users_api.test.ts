@@ -1,8 +1,13 @@
-import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
 import packageJson from '../../package.json';
-import {users} from '../../src/db/schema';
-import {ApiClient, type Base, db, isoformat, json, setUpBase} from '../helpers';
+import {
+  ApiClient,
+  type Base,
+  isoformat,
+  json,
+  makeStaff,
+  setUpBase,
+} from '../helpers';
 
 // Django origin: backend/tearleads/users/tests/test_users_api.py
 describe('TestUsersApi', () => {
@@ -31,10 +36,7 @@ describe('TestUsersApi', () => {
 
   // v2: the web app offers the admin page to staff.
   it('reports is_staff for staff users', async () => {
-    await db()
-      .update(users)
-      .set({is_staff: true})
-      .where(eq(users.id, base.user1.id));
+    await makeStaff(base.user1);
     const body = await json(await base.user1Client.get('/api/v1/user/'));
     expect(body.data.attributes.is_staff).toBe(true);
   });

@@ -1,7 +1,8 @@
 import {env} from 'cloudflare:workers';
 import {describe, expect, it} from 'vitest';
-import {type Fetcher, GithubOAuthService} from '../../src/auth/oauth';
+import {GithubOAuthService} from '../../src/auth/oauth';
 import type {Bindings} from '../../src/env';
+import {type FetcherCall, fakeFetch} from '../support/auth';
 
 // Wrangler types vars as literal unions, hence the cast.
 const TEST_ENV = {
@@ -11,31 +12,10 @@ const TEST_ENV = {
   GITHUB_REDIRECT_URI: 'https://example.com/callback',
 } as unknown as Bindings;
 
-interface Call {
-  url: string;
-  init: RequestInit | undefined;
-}
-
-/** A `responses`-style fake: one canned response, every call recorded. */
-function fakeFetch(
-  body: string | object,
-  contentType = 'application/json'
-): {fetcher: Fetcher; calls: Call[]} {
-  const calls: Call[] = [];
-  const fetcher: Fetcher = async (url, init) => {
-    calls.push({url, init});
-    return new Response(
-      typeof body === 'string' ? body : JSON.stringify(body),
-      {status: 200, headers: {'Content-Type': contentType}}
-    );
-  };
-  return {fetcher, calls};
-}
-
-const sentForm = (call: Call | undefined) =>
+const sentForm = (call: FetcherCall | undefined) =>
   new URLSearchParams(String(call?.init?.body));
 
-const header = (call: Call | undefined, name: string) =>
+const header = (call: FetcherCall | undefined, name: string) =>
   new Headers(call?.init?.headers).get(name);
 
 // Django origin: backend/tearleads/authentication/tests/test_github_authentication_service.py

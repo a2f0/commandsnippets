@@ -3,6 +3,7 @@ import {describe, expect, it} from 'vitest';
 import {users} from '../../src/db/schema';
 import {
   ApiClient,
+  clientFor,
   db,
   json,
   refreshUser,
@@ -42,7 +43,7 @@ describe('InactiveUsers', () => {
 
   it('accepts the token again once the account is reactivated', async () => {
     const user = await userFactory();
-    const client = new ApiClient(await tokenFor(user.id));
+    const client = await clientFor(user);
     await deactivate(user.id);
     expect((await client.get('/api/v1/user/')).status).toBe(401);
     await deactivate(user.id, true);

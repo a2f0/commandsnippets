@@ -16,11 +16,14 @@ import {
 } from '../../src/db/schema';
 import {
   ApiClient,
+  clientFor,
   db,
   json,
+  reorderDocument,
   richUserFactory,
+  staffFactory,
+  taggingDocument,
   tokenFor,
-  userFactory,
 } from '../helpers';
 import {raceBeforeStatement} from '../support/races';
 
@@ -263,15 +266,7 @@ describe('pks a write names', () => {
     const {bindings, calls} = recorded();
     const response = await new ApiClient(token, bindings).post(
       '/api/v1/tags_entries',
-      {
-        data: {
-          type: 'TagTextEntryThroughModel',
-          relationships: {
-            tag: {data: {type: 'Tag', id: String(tag?.id)}},
-            text_entry: {data: {type: 'TextEntry', id: String(entry?.id)}},
-          },
-        },
-      }
+      taggingDocument(tag?.id, entry?.id)
     );
     expect(response.status).toBe(201);
     expect(
@@ -286,19 +281,15 @@ describe('pks a write names', () => {
   it('are each reported missing, in field order', async () => {
     const {bindings, calls} = recorded();
     const client = new ApiClient(token, bindings);
-    const tagging = await client.post('/api/v1/tags_entries', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        relationships: {
-          tag: {data: {type: 'Tag', id: '99999'}},
-          text_entry: {data: {type: 'TextEntry', id: 'x'}},
-        },
-      },
-    });
+    const tagging = await client.post(
+      '/api/v1/tags_entries',
+      taggingDocument('99999', 'x')
+    );
     const tagLookups = calls.length;
-    const reorder = await client.post('/api/v1/tags/reorder', {
-      data: {type: 'Tag', attributes: {top: 99999, bottom: 99998}},
-    });
+    const reorder = await client.post(
+      '/api/v1/tags/reorder',
+      reorderDocument('Tag', 99999, 99998)
+    );
 
     expect(tagging.status).toBe(400);
     expect(await json(tagging)).toEqual({
@@ -352,9 +343,10 @@ describe('pks a write names', () => {
       .where(eq(tags.user_id, owner.id))
       .orderBy(tags.order);
     const [first, second] = ranked;
-    const response = await new ApiClient(token).post('/api/v1/tags/reorder', {
-      data: {type: 'Tag', attributes: {top: second?.id, bottom: first?.id}},
-    });
+    const response = await new ApiClient(token).post(
+      '/api/v1/tags/reorder',
+      reorderDocument('Tag', second?.id, first?.id)
+    );
     expect(response.status).toBe(200);
     expect(
       (
@@ -477,16 +469,12 @@ describe('data versions', () => {
 
 describe("a staff read of a user's data", () => {
   it('reads the account without its counts', async () => {
-    const staff = await userFactory();
-    await db()
-      .update(users)
-      .set({is_staff: true})
-      .where(eq(users.id, staff.id));
+    const staff = await staffFactory();
     const {bindings, calls} = recorded();
-    const response = await new ApiClient(
-      await tokenFor(staff.id),
-      bindings
-    ).get(`/api/v1/admin/users/${owner.id}/entries`);
+    const reader = await clientFor(staff, bindings);
+    const response = await reader.get(
+      `/api/v1/admin/users/${owner.id}/entries`
+    );
     expect(response.status).toBe(200);
     // The admin user list's counts are of the account's active version.
     expect(

@@ -22,21 +22,19 @@ import {
   restoreInto,
 } from '../../src/resources/restore';
 import {
-  ApiClient,
+  type ApiClient,
   type Base,
+  clientFor,
   db,
   json,
   refreshUser,
   richUserFactory as richUser,
   setUpBase,
-  tokenFor,
   userFactory,
 } from '../helpers';
 import {raceBeforeStatement} from '../support/races';
 
 // v2: restoring a backup makes it the requester's data, as a new version.
-
-const clientOf = async (user: User) => new ApiClient(await tokenFor(user.id));
 
 async function backupOf(client: ApiClient, version?: number): Promise<Backup> {
   const response = await client.get(
@@ -143,7 +141,7 @@ describe('POST /api/v1/user/restore', () => {
 
   it("makes another account's backup the user's data, keeping the version before", async () => {
     const source = await richUser();
-    const backup = await backupOf(await clientOf(source));
+    const backup = await backupOf(await clientFor(source));
     const before = await backupOf(base.user1Client);
 
     const response = await restore(base.user1Client, backup);
@@ -172,14 +170,14 @@ describe('POST /api/v1/user/restore', () => {
       undated(before)
     );
     // And the source account is untouched.
-    expect(undated(await backupOf(await clientOf(source)))).toEqual(
+    expect(undated(await backupOf(await clientFor(source)))).toEqual(
       undated(backup)
     );
   });
 
   it('records where the version came from, and moves the public view to it', async () => {
     const source = await richUser();
-    const backup = await backupOf(await clientOf(source));
+    const backup = await backupOf(await clientFor(source));
     const revision = (await refreshUser(base.user1.id))?.public_revision ?? 0;
 
     await restore(base.user1Client, backup);
@@ -207,7 +205,7 @@ describe('POST /api/v1/user/restore', () => {
 
   it('works out the counters and dates from the rows made', async () => {
     const source = await richUser();
-    const backup = await backupOf(await clientOf(source));
+    const backup = await backupOf(await clientFor(source));
     await restore(base.user1Client, backup);
 
     const [shell, git] = await liveTags(base.user1, 2);
@@ -250,7 +248,7 @@ describe('POST /api/v1/user/restore', () => {
 
   it("restores the user's own backup as a version of rows of its own", async () => {
     const user = await richUser();
-    const client = await clientOf(user);
+    const client = await clientFor(user);
     const backup = await backupOf(client);
 
     expect((await restore(client, backup)).status).toBe(200);
@@ -275,7 +273,7 @@ describe('POST /api/v1/user/restore', () => {
 
   it('ranks tags in the backup order, and taggings in their tag order', async () => {
     const user = await userFactory({}, {examples: false});
-    const client = await clientOf(user);
+    const client = await clientFor(user);
     const at = now();
     const backup: Backup = {
       ...(await backupOf(client)),
@@ -343,14 +341,14 @@ describe('POST /api/v1/user/restore', () => {
   });
 
   it('makes the same rows when every row goes in a statement of its own', async () => {
-    const backup = await backupOf(await clientOf(await richUser()));
+    const backup = await backupOf(await clientFor(await richUser()));
     const user = await userFactory({}, {examples: false});
 
     expect(
       await restoreInto(db(), user.id, prepareRestore(backup), {chunkBytes: 1})
     ).toBe(2);
 
-    expect(contentOf(await backupOf(await clientOf(user)))).toEqual(
+    expect(contentOf(await backupOf(await clientFor(user)))).toEqual(
       contentOf(backup)
     );
   });
@@ -412,7 +410,7 @@ describe('POST /api/v1/user/restore', () => {
     let backup: Backup;
 
     beforeEach(async () => {
-      backup = await backupOf(await clientOf(await richUser()));
+      backup = await backupOf(await clientFor(await richUser()));
     });
 
     const refused = async (body: unknown, pointer: string, detail: RegExp) => {
@@ -552,7 +550,7 @@ describe('a restore, as one transaction', () => {
 
   it('is undone whole when its last write fails', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    const backup = await backupOf(await clientOf(await richUser()));
+    const backup = await backupOf(await clientFor(await richUser()));
     const at = now();
     // A tag no tagging dates, which only the batch's last write touches:
     // made to fail there, after every row is in.
@@ -592,8 +590,8 @@ describe('a restore, as one transaction', () => {
   it('is refused over a version made inactive after its check, in its batch', async () => {
     const backup = await backupOf(base.user1Client);
     // Another restore commits after this one is checked, before its batch.
-    const raced = new ApiClient(
-      await tokenFor(base.user1.id),
+    const raced = await clientFor(
+      base.user1,
       raceBeforeStatement(/insert into "users_dataversion"/i, () =>
         restore(base.user1Client, backup)
       )
@@ -638,9 +636,9 @@ describe('a restore, as one transaction', () => {
 
 describe('restored reuses', () => {
   it('count toward the entry they name, in the new version', async () => {
-    const backup = await backupOf(await clientOf(await richUser()));
+    const backup = await backupOf(await clientFor(await richUser()));
     const target = await userFactory({}, {examples: false});
-    await restore(await clientOf(target), backup);
+    await restore(await clientFor(target), backup);
     const reuses = await db()
       .select()
       .from(entryReuses)

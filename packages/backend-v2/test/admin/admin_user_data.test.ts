@@ -1,42 +1,24 @@
 import {CURSOR_START} from '@commandsnippets/api-shared';
-import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {
-  type Tag,
-  type TagTextEntry,
-  type TextEntry,
-  type User,
-  users,
-} from '../../src/db/schema';
+import type {Tag, TagTextEntry, TextEntry, User} from '../../src/db/schema';
 import {
   ApiClient,
-  db,
+  clientFor,
   json,
   refreshEntry,
   refreshJunction,
   refreshTag,
-  refreshUser,
+  reorderDocument,
+  staffClient,
   tagFactory,
+  taggingDocument,
   tagTextEntryFactory,
   textEntryFactory,
-  tokenFor,
   userFactory,
 } from '../helpers';
 
 // v2: staff read another user's data through the admin API, and can change
 // none of it.
-async function staffClient(): Promise<{staff: User; client: ApiClient}> {
-  const staff = await userFactory(
-    {username: 'staff', email: 'staff@example.com'},
-    {examples: false}
-  );
-  await db().update(users).set({is_staff: true}).where(eq(users.id, staff.id));
-  return {
-    staff: (await refreshUser(staff.id)) as User,
-    client: new ApiClient(await tokenFor(staff.id)),
-  };
-}
-
 type Resource = {type: string; id: string};
 
 const idsOf = (resources: Resource[] | undefined, type?: string) =>
@@ -129,10 +111,8 @@ describe("AdminApi a user's data", () => {
   });
 
   it('refuses users who are not staff, and anonymous requests', async () => {
-    const bob = new ApiClient(
-      await tokenFor(
-        (await userFactory({username: 'bob'}, {examples: false})).id
-      )
+    const bob = await clientFor(
+      await userFactory({username: 'bob'}, {examples: false})
     );
     for (const path of ['tags', 'entries', 'tags_entries']) {
       const forbidden = await bob.get(`${base}/${path}`);
@@ -196,24 +176,18 @@ describe("AdminApi a user's data", () => {
       }),
       await client.delete(`/api/v1/entries/${entry.id}`),
       await client.delete(`/api/v1/tags_entries/${junction.id}`),
-      await client.post('/api/v1/tags_entries', {
-        data: {
-          type: 'TagTextEntryThroughModel',
-          relationships: {
-            tag: {data: {type: 'Tag', id: String(other.id)}},
-            text_entry: {data: {type: 'TextEntry', id: String(entry.id)}},
-          },
-        },
-      }),
-      await client.post('/api/v1/tags/reorder', {
-        data: {type: 'Tag', attributes: {top: other.id, bottom: tag.id}},
-      }),
-      await client.post('/api/v1/tags_entries/reorder', {
-        data: {
-          type: 'TagTextEntryThroughModel',
-          attributes: {top: second.id, bottom: junction.id},
-        },
-      }),
+      await client.post(
+        '/api/v1/tags_entries',
+        taggingDocument(other.id, entry.id)
+      ),
+      await client.post(
+        '/api/v1/tags/reorder',
+        reorderDocument('Tag', other.id, tag.id)
+      ),
+      await client.post(
+        '/api/v1/tags_entries/reorder',
+        reorderDocument('TagTextEntryThroughModel', second.id, junction.id)
+      ),
     ];
     for (const response of refused) {
       expect(response.status).toBeGreaterThanOrEqual(400);

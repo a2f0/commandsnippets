@@ -1,23 +1,7 @@
 import {env} from 'cloudflare:workers';
 import {describe, expect, it} from 'vitest';
-import {type Fetcher, GoogleOAuthService} from '../../src/auth/oauth';
-
-interface Call {
-  url: string;
-  init: RequestInit | undefined;
-}
-
-function fakeFetch(body: object): {fetcher: Fetcher; calls: Call[]} {
-  const calls: Call[] = [];
-  const fetcher: Fetcher = async (url, init) => {
-    calls.push({url, init});
-    return new Response(JSON.stringify(body), {
-      status: 200,
-      headers: {'Content-Type': 'application/json'},
-    });
-  };
-  return {fetcher, calls};
-}
+import {GoogleOAuthService} from '../../src/auth/oauth';
+import {fakeFetch} from '../support/auth';
 
 // Django origin: backend/tearleads/authentication/tests/test_google_authentication_service.py
 describe('TestGoogleAuthentication', () => {

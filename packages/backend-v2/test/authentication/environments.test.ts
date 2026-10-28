@@ -1,11 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {authorizationCookies} from '../../src/auth/cookies';
-import {
-  setCookieHeaders as parsedSetCookies,
-  setUpBase,
-  tokenFor,
-  userFactory,
-} from '../helpers';
+import {setCookieHeaders, setUpBase, tokenFor, userFactory} from '../helpers';
 import {
   googlePayload,
   googleRoutes,
@@ -44,8 +39,8 @@ const lowerCase = (value: string | true | undefined) =>
   typeof value === 'string' ? value.toLowerCase() : undefined;
 
 /** Every Set-Cookie header, including repeated names, summarized. */
-const setCookieHeaders = (response: Response) =>
-  parsedSetCookies(response).map(({name, value, attributes}) => ({
+const cookieSummaries = (response: Response) =>
+  setCookieHeaders(response).map(({name, value, attributes}) => ({
     name,
     value,
     domain: lowerCase(attributes['domain']),
@@ -58,7 +53,7 @@ const setCookieHeaders = (response: Response) =>
 // sent to staging hosts. Staging uses its own cookie names and scope.
 describe('staging and production cookies', () => {
   it('staging sets its own cookie names on the shared domain', async () => {
-    const set = setCookieHeaders(await googleLogin(STAGING));
+    const set = cookieSummaries(await googleLogin(STAGING));
     expect(set.map(c => c.name)).toEqual([
       'StagingAuthorization',
       'StagingLoggedIn',
@@ -118,7 +113,7 @@ describe('staging and production cookies', () => {
   });
 
   it('staging logout expires only staging cookies', async () => {
-    const set = setCookieHeaders(
+    const set = cookieSummaries(
       await requestWithEnv(STAGING, 'POST', '/api-token-deauth/')
     );
     for (const name of ['StagingAuthorization', 'StagingLoggedIn']) {

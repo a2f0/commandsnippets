@@ -2,13 +2,12 @@ import {eq} from 'drizzle-orm';
 import {describe, expect, it} from 'vitest';
 import {textEntries} from '../../src/db/schema';
 import {
-  ApiClient,
+  clientFor,
   db,
   json,
   raceBeforeStatement,
   setUpBase,
   textEntryFactory,
-  tokenFor,
 } from '../helpers';
 
 type Row = {id: string};
@@ -106,8 +105,8 @@ describe('search folds under concurrent edits', () => {
     });
     // Another request changes the subject after this one has read the entry,
     // just before this one's UPDATE runs.
-    const client = new ApiClient(
-      await tokenFor(user1.id),
+    const client = await clientFor(
+      user1,
       raceBeforeStatement(/^\s*update "text_entries_textentry"/i, async () => {
         await db()
           .update(textEntries)

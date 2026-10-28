@@ -15,7 +15,8 @@ import {
   type User,
 } from '../../src/db/schema';
 import {
-  ApiClient,
+  type ApiClient,
+  clientFor,
   db,
   isoformat,
   type Json,
@@ -24,11 +25,12 @@ import {
   refreshEntry,
   refreshJunction,
   refreshTag,
+  reorderDocument,
   setUpBase,
   tagFactory,
+  taggingDocument,
   tagTextEntryFactory,
   textEntryFactory,
-  tokenFor,
 } from '../helpers';
 
 /** Every page of `path` from `after`, one keyset page at a time. */
@@ -62,16 +64,6 @@ async function stampAlike(ids: number[], revision: string): Promise<void> {
     .set({date_updated: revision})
     .where(inArray(textEntries.id, ids));
 }
-
-const tagPayload = (tag: Tag, entry: TextEntry) => ({
-  data: {
-    type: 'TagTextEntryThroughModel',
-    relationships: {
-      tag: {data: {type: 'Tag', id: String(tag.id)}},
-      text_entry: {data: {type: 'TextEntry', id: String(entry.id)}},
-    },
-  },
-});
 
 /** The ids of tag `tag`'s junctions listed after `cursor`, with their state. */
 async function tagChanges(
@@ -357,7 +349,7 @@ describe('untagging soft-deletes the junction', () => {
     await client.delete(`/api/v1/tags_entries/${junction.id}`);
     const response = await client.post(
       '/api/v1/tags_entries',
-      tagPayload(tag, entry)
+      taggingDocument(tag.id, entry.id)
     );
     expect(response.status).toBe(200);
     const body = await json(response);
@@ -393,8 +385,8 @@ describe('untagging soft-deletes the junction', () => {
   it('restoring answers with the junction a concurrent request restored', async () => {
     const {user1, client, tag, entry, junction} = await setUpTagged();
     await client.delete(`/api/v1/tags_entries/${junction.id}`);
-    const racing = new ApiClient(
-      await tokenFor(user1.id),
+    const racing = await clientFor(
+      user1,
       raceBeforeStatement(/^\s*update "tags_tagtextentrythroughmodel"/i, () =>
         db()
           .update(tagsEntries)
@@ -404,7 +396,7 @@ describe('untagging soft-deletes the junction', () => {
     );
     const response = await racing.post(
       '/api/v1/tags_entries',
-      tagPayload(tag, entry)
+      taggingDocument(tag.id, entry.id)
     );
     expect(response.status).toBe(200);
     expect((await json(response)).data).toMatchObject({
@@ -416,15 +408,15 @@ describe('untagging soft-deletes the junction', () => {
   it('restoring a junction a concurrent request removed is a conflict', async () => {
     const {user1, client, tag, entry, junction} = await setUpTagged();
     await client.delete(`/api/v1/tags_entries/${junction.id}`);
-    const racing = new ApiClient(
-      await tokenFor(user1.id),
+    const racing = await clientFor(
+      user1,
       raceBeforeStatement(/^\s*update "tags_tagtextentrythroughmodel"/i, () =>
         db().delete(tagsEntries).where(eq(tagsEntries.id, junction.id))
       )
     );
     const response = await racing.post(
       '/api/v1/tags_entries',
-      tagPayload(tag, entry)
+      taggingDocument(tag.id, entry.id)
     );
     expect(response.status).toBe(409);
     expect((await json(response)).errors[0].code).toBe('conflict');
@@ -452,9 +444,10 @@ describe('untagging soft-deletes the junction', () => {
     await client.delete(`/api/v1/tags_entries/${middle.id}`);
     const deleted = await refreshJunction(middle.id);
     const reorder = (top: number, bottom: number) =>
-      client.post('/api/v1/tags_entries/reorder', {
-        data: {type: 'TagTextEntryThroughModel', attributes: {top, bottom}},
-      });
+      client.post(
+        '/api/v1/tags_entries/reorder',
+        reorderDocument('TagTextEntryThroughModel', top, bottom)
+      );
     // Not a row of the order any more.
     expect((await reorder(middle.id, first.id)).status).toBe(400);
     expect((await reorder(first.id, middle.id)).status).toBe(400);
@@ -492,9 +485,9 @@ describe('a reorder racing an untagging', () => {
   }
 
   /** A client whose move runs just after `junction` is soft-deleted. */
-  const racingDeletion = async (userId: number, junction: TagTextEntry) =>
-    new ApiClient(
-      await tokenFor(userId),
+  const racingDeletion = (user: User, junction: TagTextEntry) =>
+    clientFor(
+      user,
       raceBeforeStatement(
         /^\s*update "tags_tagtextentrythroughmodel"\s+set "order"/i,
         () =>
@@ -506,9 +499,10 @@ describe('a reorder racing an untagging', () => {
     );
 
   const reorder = (client: ApiClient, top: number, bottom: number) =>
-    client.post('/api/v1/tags_entries/reorder', {
-      data: {type: 'TagTextEntryThroughModel', attributes: {top, bottom}},
-    });
+    client.post(
+      '/api/v1/tags_entries/reorder',
+      reorderDocument('TagTextEntryThroughModel', top, bottom)
+    );
 
   const ranks = async (rows: TagTextEntry[]) =>
     Promise.all(rows.map(async row => (await refreshJunction(row.id))?.order));
@@ -516,7 +510,7 @@ describe('a reorder racing an untagging', () => {
   it('never shifts the live rows around a mover deleted meanwhile', async () => {
     const {user1, ranked} = await setUpRanked();
     const [first, , last] = ranked;
-    const client = await racingDeletion(user1.id, last);
+    const client = await racingDeletion(user1, last);
     // `last` above `first`: it is gone by the time the move runs.
     expect((await reorder(client, last.id, first.id)).status).toBe(404);
     expect(await ranks(ranked)).toEqual([0, 1, 2]);
@@ -525,7 +519,7 @@ describe('a reorder racing an untagging', () => {
   it('never moves next to a reference deleted meanwhile', async () => {
     const {user1, ranked} = await setUpRanked();
     const [first, , last] = ranked;
-    const client = await racingDeletion(user1.id, first);
+    const client = await racingDeletion(user1, first);
     expect((await reorder(client, last.id, first.id)).status).toBe(404);
     expect(await ranks(ranked)).toEqual([0, 1, 2]);
   });
@@ -555,18 +549,23 @@ describe("a tag's junctions after a cursor are its changes", () => {
     // A join.
     const joining = await textEntryFactory({user: user1});
     const joined = await json(
-      await client.post('/api/v1/tags_entries', tagPayload(tag, joining))
+      await client.post(
+        '/api/v1/tags_entries',
+        taggingDocument(tag.id, joining.id)
+      )
     );
     ({rows, cursor} = await tagChanges(client, tag, cursor));
     expect(rows.map(row => row.id)).toEqual([Number(joined.data.id)]);
 
     // A re-rank: both junctions it shifts.
-    await client.post('/api/v1/tags_entries/reorder', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        attributes: {top: Number(joined.data.id), bottom: junction.id},
-      },
-    });
+    await client.post(
+      '/api/v1/tags_entries/reorder',
+      reorderDocument(
+        'TagTextEntryThroughModel',
+        Number(joined.data.id),
+        junction.id
+      )
+    );
     ({rows, cursor} = await tagChanges(client, tag, cursor));
     expect(rows.map(row => row.id).sort()).toEqual(
       [junction.id, Number(joined.data.id)].sort()
