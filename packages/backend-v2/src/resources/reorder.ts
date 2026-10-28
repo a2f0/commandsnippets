@@ -1,26 +1,19 @@
-import {
-  CODES,
-  MESSAGES,
-  reorderAttributesSchema,
-} from '@commandsnippets/api-shared';
+import {reorderAttributesSchema} from '@commandsnippets/api-shared';
 import {and, eq, type SQL, sql} from 'drizzle-orm';
+import type {RunnableQuery} from 'drizzle-orm/runnable-query';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
 import {isUniqueViolation} from '../db/errors';
 import {clientWrites} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
-import {
-  ApiError,
-  type ErrorObject,
-  permissionDenied,
-  validationError,
-} from '../lib/errors';
+import {permissionDenied, validationError} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {eachField} from '../lib/validate';
 import {changedMeanwhile, clientWriteId, WRITE_ATTEMPTS} from './lww';
 import {nextRevision, type RevisedResource} from './owned';
+import {existingRows} from './related';
 
 /** The resource and its ordering (whose owner/touch the move honors). */
 type ReorderOptions = RevisedResource & OrderedSpec;
@@ -48,41 +41,34 @@ export async function reorder(
 
   // PrimaryKeyRelatedField validation for `top` and `bottom`: the pks'
   // format (api-shared's `reorderAttributesSchema`), then that they exist.
-  const errors: ErrorObject[] = [];
-  const rows: Partial<Record<'top' | 'bottom', Row>> = {};
   const pointer = '/data/attributes';
-  for (const field of eachField(reorderAttributesSchema, attributes, pointer)) {
-    if ('error' in field) {
-      errors.push(field.error);
-      continue;
-    }
-    const [row] = (await db
-      .select({
-        id: options.id,
-        order: options.order,
-        user_id: options.userId,
-        owner: options.userId,
-        scope: options.scope,
-      })
-      .from(options.table)
-      // A row out of the order (a deleted junction) does not exist here.
-      .where(and(eq(options.id, Number(field.value)), options.ranked))
-      .limit(1)) as Row[];
-    if (row === undefined) {
-      errors.push({
-        detail: MESSAGES.pkDoesNotExist(field.value),
-        status: '400',
-        source: {pointer: `${pointer}/${field.name}`},
-        code: CODES.doesNotExist,
-      });
-    } else {
-      rows[field.name] = row;
-    }
-  }
-  const {top, bottom} = rows;
-  if (errors.length > 0 || top === undefined || bottom === undefined) {
-    throw new ApiError(400, errors);
-  }
+  const {top, bottom} = await existingRows(
+    db,
+    pointer,
+    eachField(reorderAttributesSchema, attributes, pointer).map(field =>
+      'error' in field
+        ? field
+        : {
+            name: field.name,
+            pk: field.value,
+            query: db
+              .select({
+                id: options.id,
+                order: options.order,
+                user_id: options.userId,
+                // Named apart: the same column twice (or thrice: a tag's
+                // scope is its user) would come back from the batch as one.
+                owner: sql<number>`${options.userId}`.as('owner'),
+                scope: sql<number>`${options.scope}`.as('scope'),
+              })
+              .from(options.table)
+              // A row out of the order (a deleted junction) does not exist
+              // here.
+              .where(and(eq(options.id, Number(field.value)), options.ranked))
+              .limit(1) as unknown as RunnableQuery<Row[], 'sqlite'>,
+          }
+    )
+  );
   if (top.user_id !== user.id || bottom.user_id !== user.id) {
     throw permissionDenied();
   }

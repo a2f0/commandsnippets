@@ -16,7 +16,7 @@ import {validateFields} from '../lib/validate';
 import {versionOf} from './dataVersions';
 import {icontains} from './filters';
 import {clientUpdated, writtenBefore} from './lww';
-import {nextRevision, textEntryResource} from './owned';
+import {entryColumns, nextRevision, textEntryResource} from './owned';
 import {publicEntry, publicEntryFields, publicTagCount} from './publicPolicy';
 import {TEXT_ENTRY} from './resourceTypes';
 import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
@@ -24,18 +24,19 @@ import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
 /**
  * Entries tagged with a tag matching `condition`, through the requester's own
  * junctions (each joins the user's own tag: migrations/0021_own_links.sql). A
- * deleted junction (untagged) does not count.
+ * deleted junction (untagged) does not count. Not correlated with the entry,
+ * so SQLite reads the matching junctions once rather than probing them for
+ * each of the user's entries.
  */
 const hasTag = (
   userId: number,
   condition: ReturnType<typeof sql>,
   publicOnly = false
 ) =>
-  sql`EXISTS (
-    SELECT 1 FROM tags_tagtextentrythroughmodel AS j
+  sql`${textEntries.id} IN (
+    SELECT j.text_entry_id FROM tags_tagtextentrythroughmodel AS j
     JOIN tags_tag AS t ON t.id = j.tag_id
-    WHERE j.text_entry_id = ${textEntries.id}
-      AND j.user_id = ${userId}
+    WHERE j.user_id = ${userId}
       AND j.is_deleted = 0
       AND ${publicOnly ? sql`t.is_public = 1 AND t.is_deleted = 0` : sql`1`}
       AND ${condition}
@@ -59,7 +60,7 @@ export const listEntries = (
     publicOnly,
     ...(publicOnly
       ? {visibility: publicEntry(owner.id), fields: publicEntryFields(owner.id)}
-      : {}),
+      : {fields: entryColumns}),
     query: textEntryListQuerySchema,
     filters: {
       id: value => eq(textEntries.id, value),

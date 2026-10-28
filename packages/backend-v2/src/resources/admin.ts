@@ -149,14 +149,33 @@ adminRoutes.get('/users', async c => {
   );
 });
 
-async function getUser(db: Db, id: string | undefined): Promise<AdminUserRow> {
-  const [row] = await selectUsers(db).where(
-    eq(users.id, parseId(id, ADMIN_USER))
-  );
+/** A route's account, or a 404. */
+function found<Row>(row: Row | undefined): Row {
   if (row === undefined) {
     throw notFound(`No ${ADMIN_USER} matches the given query.`);
   }
-  return toRow(row);
+  return row;
+}
+
+async function getUser(db: Db, id: string | undefined): Promise<AdminUserRow> {
+  return toRow(
+    found(
+      (await selectUsers(db).where(eq(users.id, parseId(id, ADMIN_USER))))[0]
+    )
+  );
+}
+
+/** The account whose data is read: `getUser` without its counts. */
+async function getOwner(db: Db, id: string | undefined): Promise<User> {
+  return found(
+    (
+      await db
+        .select()
+        .from(users)
+        .where(eq(users.id, parseId(id, ADMIN_USER)))
+        .limit(1)
+    )[0]
+  );
 }
 
 adminRoutes.get('/users/:id', async c =>
@@ -228,13 +247,13 @@ adminRoutes.on(['PATCH', 'PUT'], '/users/:id', async c => {
 // routed: any other method is a 404, and the owner-only routes refuse staff
 // a write to anyone's data but their own.
 adminRoutes.get('/users/:id/tags', async c =>
-  listTags(c, await getUser(c.get('db'), c.req.param('id')))
+  listTags(c, await getOwner(c.get('db'), c.req.param('id')))
 );
 adminRoutes.get('/users/:id/entries', async c =>
-  listEntries(c, await getUser(c.get('db'), c.req.param('id')))
+  listEntries(c, await getOwner(c.get('db'), c.req.param('id')))
 );
 adminRoutes.get('/users/:id/tags_entries', async c =>
-  listTagEntries(c, await getUser(c.get('db'), c.req.param('id')))
+  listTagEntries(c, await getOwner(c.get('db'), c.req.param('id')))
 );
 
 // ---------------------------------------------------------------------------
