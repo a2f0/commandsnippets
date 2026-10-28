@@ -2,7 +2,8 @@ import {Menu} from '@mui/material';
 import React, {useCallback} from 'react';
 import {useSession} from '../../lib/data/hooks';
 import {setTagPublic} from '../../lib/data/writes';
-import type {IMouse} from '../../lib/shared';
+import {appMode, type IMouse} from '../../lib/shared';
+import {useAppState} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 import {TagDeleteDialog} from './TagDeleteDialog';
 
@@ -94,6 +95,14 @@ const TagContextMenu = ({
     [onClose]
   );
 
+  // A new tag's form, at the top of the list, as File > New Tag opens it.
+  const handleNewTag = useCallback(() => {
+    const {setAppMode, setTagNew} = useAppState.getState();
+    setAppMode(appMode.tagEditor);
+    handleClose();
+    setTagNew('top');
+  }, [handleClose]);
+
   const handleCancelDialog = useCallback(() => {
     setDialogOpen(false);
   }, []);
@@ -114,7 +123,7 @@ const TagContextMenu = ({
       >
         <StyledMenuItem
           id={`tag-context-menu-${id}-new-tag`}
-          onClick={handleClose}
+          onClick={handleNewTag}
         >
           New Tag
         </StyledMenuItem>
