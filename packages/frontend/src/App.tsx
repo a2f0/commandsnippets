@@ -6,40 +6,30 @@ import {HTML5Backend} from 'react-dnd-html5-backend';
 import {I18nextProvider} from 'react-i18next';
 
 import {SignOutWarning} from './components/auth/SignOutWarning';
-import {ErrorBoundary, type ErrorInfo} from './components/errorBoundary';
-import {getGlobalErrorStore} from './hooks/useErrorStore';
+import {ErrorBoundary} from './components/errorBoundary';
+import {recordError} from './hooks/useErrorStore';
 import {i18n} from './i18n/i18n';
-import {ErrorStoreProvider} from './providers/ErrorStoreProvider';
 import {Routes} from './Routes';
 import {ThemeProvider} from './theme/Theme';
 import {MemoizedThemedGlobalStyle} from './theme/ThemedGlobalStyles';
 
-const App = React.memo(() => {
-  const handleError = (errorInfo: ErrorInfo) => {
-    const store = getGlobalErrorStore();
-    if (store) {
-      store.addError(errorInfo);
-    }
-  };
-
-  return (
-    <ErrorStoreProvider>
-      <ErrorBoundary onError={handleError}>
-        <I18nextProvider i18n={i18n}>
-          <StyledEngineProvider injectFirst>
-            <ThemeProvider>
-              <CssBaseline />
-              <MemoizedThemedGlobalStyle />
-              <DndProvider backend={HTML5Backend}>
-                <Routes />
-              </DndProvider>
-              <SignOutWarning />
-            </ThemeProvider>
-          </StyledEngineProvider>
-        </I18nextProvider>
-      </ErrorBoundary>
-    </ErrorStoreProvider>
-  );
-});
+const App = React.memo(() => (
+  // What the boundary catches goes to the HUD's error store; the app, the
+  // HUD included, then renders nothing until the page reloads.
+  <ErrorBoundary onError={recordError}>
+    <I18nextProvider i18n={i18n}>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider>
+          <CssBaseline />
+          <MemoizedThemedGlobalStyle />
+          <DndProvider backend={HTML5Backend}>
+            <Routes />
+          </DndProvider>
+          <SignOutWarning />
+        </ThemeProvider>
+      </StyledEngineProvider>
+    </I18nextProvider>
+  </ErrorBoundary>
+));
 
 export {App};

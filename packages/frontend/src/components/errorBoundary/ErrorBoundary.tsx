@@ -78,8 +78,9 @@ export class ErrorBoundary extends React.Component<
         );
       }
 
-      // Return null to prevent rendering children that may throw again
-      // The error has been logged to the store and will appear in HUD logs
+      // Render nothing rather than children that may throw again. The error
+      // is in the console and went to `onError` (the app's records it for
+      // the HUD, but a HUD among these children is gone with them).
       return null;
     }
 

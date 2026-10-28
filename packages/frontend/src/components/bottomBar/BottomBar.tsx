@@ -1,7 +1,7 @@
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {useErrorStore} from '../../hooks/useErrorStore';
 import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
@@ -14,6 +14,9 @@ import {Mode} from './Mode';
 
 /** How far the expanded HUD keeps from the window's edges, in px. */
 const EXPANDED_MARGIN = 16;
+
+/** How many logs the expanded Logs tab lists, newest first. */
+const RECENT_LOGS = 20;
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -51,7 +54,15 @@ const a11yProps = (index: number) => ({
 const BottomBar = () => {
   const {t} = useTypedTranslation('menu');
   const {width: windowWidth, height: windowHeight} = useWindowSize();
-  const {logs, errors, getRecentLogs} = useErrorStore();
+  const logs = useErrorStore(state => state.logs);
+  const errorCount = useErrorStore(state => state.errors.length);
+  const recentLogs = useMemo(
+    () =>
+      [...logs]
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, RECENT_LOGS),
+    [logs]
+  );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -222,27 +233,11 @@ const BottomBar = () => {
                     },
                   }}
                 >
-                  <Tab label={t('performance')} {...a11yProps(0)} />
-                  <Tab label={t('logs')} {...a11yProps(1)} />
-                  <Tab label={t('analytics')} {...a11yProps(2)} />
+                  <Tab label={t('logs')} {...a11yProps(0)} />
+                  <Tab label={t('analytics')} {...a11yProps(1)} />
                 </Tabs>
                 <Box sx={{flex: 1, overflow: 'auto', height: '100%'}}>
                   <CustomTabPanel value={selectedTab} index={0}>
-                    <Box sx={{color: 'text.secondary'}}>
-                      {t('performanceMetrics')}
-                      {isExpanded && (
-                        <Box sx={{mt: 2}}>
-                          {/* TODO: Replace with real performance metrics from application services */}
-                          <div>{t('cpuUsage', {value: '45%'})}</div>
-                          <div>
-                            {t('memory', {used: '2.3GB', total: '8GB'})}
-                          </div>
-                          <div>{t('network', {speed: '125 KB/s'})}</div>
-                        </Box>
-                      )}
-                    </Box>
-                  </CustomTabPanel>
-                  <CustomTabPanel value={selectedTab} index={1}>
                     <Box sx={{color: 'text.secondary'}}>
                       {isExpanded ? (
                         <Box
@@ -258,7 +253,7 @@ const BottomBar = () => {
                             p: 1,
                           }}
                         >
-                          {getRecentLogs(20).map(log => (
+                          {recentLogs.map(log => (
                             <Box
                               key={log.id}
                               sx={{
@@ -313,23 +308,23 @@ const BottomBar = () => {
                           )}
                         </Box>
                       ) : (
-                        logs.length > 0 && (
-                          <Box
-                            sx={{
-                              mt: 1,
-                              fontSize: '0.875rem',
-                              color: 'text.disabled',
-                            }}
-                          >
-                            {t('logEntry', {count: logs.length})}
-                            {errors.length > 0 &&
-                              ` • ${t('errorCaptured', {count: errors.length})}`}
-                          </Box>
-                        )
+                        <Box
+                          sx={{
+                            mt: 1,
+                            fontSize: '0.875rem',
+                            color: 'text.disabled',
+                          }}
+                        >
+                          {logs.length === 0
+                            ? t('noLogsAvailable')
+                            : t('logEntry', {count: logs.length})}
+                          {errorCount > 0 &&
+                            ` • ${t('errorCaptured', {count: errorCount})}`}
+                        </Box>
                       )}
                     </Box>
                   </CustomTabPanel>
-                  <CustomTabPanel value={selectedTab} index={2}>
+                  <CustomTabPanel value={selectedTab} index={1}>
                     <TimingAnalytics />
                   </CustomTabPanel>
                 </Box>

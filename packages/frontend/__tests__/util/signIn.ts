@@ -1,4 +1,5 @@
 import {Dexie} from 'dexie';
+import {useErrorStore} from '../../src/hooks/useErrorStore';
 /**
  * The app's state for a test: signed in as the mock API's user, or back to
  * the defaults (signed out, which deletes the user's IndexedDB data).
@@ -24,9 +25,11 @@ export function signIn(): void {
 
 /**
  * Every setting back to its default, nothing saved (as a test may have
- * saved another tab's sign-in), and the user's IndexedDB data gone.
+ * saved another tab's sign-in), the user's IndexedDB data gone, and no
+ * errors recorded for the HUD.
  */
 export async function resetApp(): Promise<void> {
+  useErrorStore.setState({errors: [], logs: []});
   localStorage.removeItem(STORAGE_KEY);
   await useAppState.persist.rehydrate();
   useAppState.setState({...defaultSavedState, ...defaultUiState});
