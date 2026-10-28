@@ -36,8 +36,10 @@ const TAG_KEYS: Record<string, (tag: Tag) => Key> = {
   order: tag => tag.attributes.order,
 };
 
+const subject = (entry: TextEntry) => entry.attributes.subject.toUpperCase();
+
 const ENTRY_KEYS: Record<string, (entry: TextEntry) => Key> = {
-  subject: entry => entry.attributes.subject.toUpperCase(),
+  subject,
   body: entry => entry.attributes.body.toUpperCase(),
   date_created: entry => time(entry.attributes.date_created),
   date_updated: entry => time(entry.attributes.date_updated),
@@ -77,7 +79,13 @@ export function entryMatches(entry: TextEntry, search: string): boolean {
   );
 }
 
-/** `entries` that match `search`, in `order` (one of the entry fields). */
+/** Entries that tie in a sort (many share a tag count): by subject. */
+const bySubject = by('subject', subject);
+
+/**
+ * `entries` that match `search`, in `order` (one of the entry fields), and
+ * by subject where they tie.
+ */
 export function sortEntries(
   entries: readonly TextEntry[],
   order: string,
@@ -86,9 +94,10 @@ export function sortEntries(
   const key =
     ENTRY_KEYS[field(order)] ??
     ((entry: TextEntry) => time(entry.attributes.date_updated));
+  const byOrder = by(order, key);
   return entries
     .filter(entry => entryMatches(entry, search))
-    .sort(by(order, key));
+    .sort((a, b) => byOrder(a, b) || bySubject(a, b));
 }
 
 /** A tag's entry, with the junction that puts it there. */
