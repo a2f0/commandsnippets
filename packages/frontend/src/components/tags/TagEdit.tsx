@@ -1,5 +1,5 @@
 import Grid from '@mui/material/Grid';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
 import {renameTag} from '../../lib/data/writes';
@@ -34,9 +34,6 @@ const TagEdit = ({
       document.removeEventListener('keydown', escFunction, false);
     };
   }, [escFunction]);
-
-  const inputSaveRef = useRef<HTMLButtonElement>(null);
-  const inputCancelRef = useRef<HTMLButtonElement>(null);
 
   const handleSave = () => {
     if (session === null) {
@@ -73,7 +70,6 @@ const TagEdit = ({
       <Grid container spacing={0}>
         <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
           <StyledTagButton
-            ref={inputSaveRef}
             id={`tagEditSave${object.id}`}
             onClick={() => {
               handleSave();
@@ -84,7 +80,6 @@ const TagEdit = ({
         </Grid>
         <Grid sx={{paddingLeft: '1px'}} size={{xs: 6}}>
           <StyledTagButton
-            ref={inputCancelRef}
             id={`tagEditCancel${object.id}`}
             onClick={() => {
               handleCancel();
