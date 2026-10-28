@@ -207,6 +207,7 @@ export const es: I18NextTranslations = {
     entryInfoTitle: 'Información de la entrada',
     infoSubject: 'Asunto',
     infoTags: 'Etiquetas',
+    entryTags: 'Etiquetas',
     infoNoTags: 'Ninguna',
     infoVisibility: 'Visibilidad',
     infoPublic: 'Pública',

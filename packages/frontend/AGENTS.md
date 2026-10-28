@@ -153,6 +153,10 @@ API; everything else the app keeps is a zustand store.
   write stores it, in any tab. The tags are one query per session that
   every reader shares (the tag list, the entry list), and `useTagNamed`
   looks the tag shown up in it: a tag switch reads only the tag's entries.
+  Under each entry, the list shows its other tags as plain labels
+  (`EntryTags`): all of them in the all-entries list, all but the tag
+  shown in a tag's. `useEntryTagNames` reads them for the whole list in one
+  query of the owner's junctions, which a tag switch does not run again.
   `src/lib/data/sort.ts` sorts and
   searches them (case-insensitively in any script, as the API's search).
   Deleted tags and entries are left out; untagged entries are those in no
