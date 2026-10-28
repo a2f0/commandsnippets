@@ -6,6 +6,7 @@
 import * as z from 'zod/mini';
 import {fail, QUERY_ERROR} from './issues';
 import {MESSAGES} from './messages';
+import {own} from './records';
 
 /** One relationship of a resource type: the related type, and whether to-many. */
 export interface RelationshipDef {
@@ -46,14 +47,6 @@ export type IncludePath<
         | `${K}.${IncludePath<G, G[T][K]['type'] & keyof G, Rest>}`;
     }[keyof G[T] & string]
   : never;
-
-/** An own property only: `constructor` is nobody's relationship. */
-function own<T>(
-  record: Readonly<Record<string, T>>,
-  key: string
-): T | undefined {
-  return Object.hasOwn(record, key) ? record[key] : undefined;
-}
 
 /** The paths of an `include` value, trimmed, without empty ones. */
 export function splitInclude(include: string): string[] {

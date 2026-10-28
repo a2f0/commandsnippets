@@ -43,6 +43,7 @@ not the request validators beside it.
 | `src/index.ts`, `src/responses.ts`, `src/requests.ts` | the entry points (above): re-exports |
 | `src/messages.ts` | `MESSAGES` and `CODES`: the DRF-style error texts and codes, byte for byte |
 | `src/issues.ts` | how a schema failure carries an API error (`fail`, `errorMeta`) |
+| `src/records.ts` | `isRecord` and own-property lookups (`own`); internal, not exported |
 | `src/fields.ts` | DRF serializer fields: `charField`, `booleanField`, `pkField`, `relatedField` |
 | `src/filters.ts` | `filter[...]` value schemas (`integerFilter`, `dateTimeFilter`, ...) |
 | `src/query.ts` | `listQuerySchema`: a collection's `filter`, `sort`, `page`, `include`, `filter[search]`; `ListParams`, the same as a client sends them |

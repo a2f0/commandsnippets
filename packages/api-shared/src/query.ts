@@ -17,6 +17,7 @@ import {type Cursor, parseCursor} from './cursor';
 import type {FilterSchema} from './filters';
 import {DOCUMENT_POINTER, fail, forward, QUERY_ERROR} from './issues';
 import {CODES, MESSAGES} from './messages';
+import {own} from './records';
 
 export type QueryEntries = ReadonlyArray<readonly [string, string]>;
 
@@ -238,14 +239,6 @@ const groupedSchema = z.pipe(
     };
   })
 );
-
-/** An own property only: `constructor` is nobody's filter. */
-function own<T>(
-  record: Readonly<Record<string, T>>,
-  key: string
-): T | undefined {
-  return Object.hasOwn(record, key) ? record[key] : undefined;
-}
 
 function filtersSchema<F extends FilterSchemas>(filters: F) {
   return z.pipe(

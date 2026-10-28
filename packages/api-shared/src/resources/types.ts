@@ -13,6 +13,7 @@ export const TEXT_ENTRY_REUSED = 'TextEntryReused';
 
 export const ADMIN_USER = 'AdminUser';
 export const DATA_VERSION = 'DataVersion';
+export const DATA_OWNER = 'DataOwner';
 export const ADMIN_AUDIT_LOG_ENTRY = 'AdminAuditLogEntry';
 
 /** Login request documents; nothing is ever rendered with these types. */

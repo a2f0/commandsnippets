@@ -7,6 +7,7 @@
  */
 import * as z from 'zod/mini';
 import {CODES} from './messages';
+import {isRecord} from './records';
 
 export interface ErrorMeta {
   /** The error's `code` (DRF's error code). */
@@ -77,9 +78,6 @@ export function forward(
 export function check(message: string, code: string) {
   return {message, abort: true, params: {code}} as const;
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * The error metadata an issue carries. Issues from zod's own checks (which

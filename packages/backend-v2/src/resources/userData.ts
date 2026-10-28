@@ -12,6 +12,7 @@ import type {AppEnv} from '../env';
 import {ApiError, notFound} from '../lib/errors';
 import {document} from '../lib/jsonapi';
 import {listEntries} from './entries';
+import {DATA_OWNER} from './resourceTypes';
 import {jsonApi} from './responses';
 import {listTags} from './tags';
 import {listTagEntries} from './tagsEntries';
@@ -87,7 +88,7 @@ userDataRoutes.get('/:username', c =>
     jsonApi(
       c,
       document({
-        type: 'DataOwner',
+        type: DATA_OWNER,
         id: String(owner.id),
         attributes: {
           username: owner.username,
