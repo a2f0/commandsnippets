@@ -1,9 +1,8 @@
 import type {AnalyticsParams} from '@commandsnippets/api-shared/requests';
 import {apiClient, DataVersionChangedError} from '../api/apiClient';
 import {assertHeld, heldVersion} from '../sync/dataVersion';
-import {assertBound} from '../sync/outbox';
+import {assertBound, boundAccount} from '../sync/outbox';
 import type {SyncSession} from '../sync/session';
-import {boundAccount} from '../sync/sync';
 
 /** Include queued writes and refuse answers from another account or version. */
 export async function readAnalytics(

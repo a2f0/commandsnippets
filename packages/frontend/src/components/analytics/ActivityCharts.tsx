@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import {useId, useMemo, useState} from 'react';
+import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {Link} from '../../lib/router/Router';
 import {analyticsPath, entryPath} from '../../lib/router/route';
@@ -48,7 +49,10 @@ export const ActivityCharts = ({
       year: 'numeric',
       timeZone: 'UTC',
     }).format(new Date(`${date}T00:00:00Z`));
-  const step = 824 / points.length;
+  const {width} = useWindowSize();
+  const chartWidth = Math.min(900, Math.max(280, width - 96));
+  const plotWidth = chartWidth - 76;
+  const step = plotWidth / points.length;
   return (
     <>
       <Box
@@ -115,10 +119,9 @@ export const ActivityCharts = ({
                 component="svg"
                 role="img"
                 aria-labelledby={`${chartId}-title ${chartId}-description`}
-                viewBox="0 0 900 260"
+                viewBox={`0 0 ${chartWidth} 260`}
                 sx={{
                   width: '100%',
-                  minWidth: 480,
                   display: 'block',
                   color: 'text.primary',
                 }}
@@ -134,7 +137,7 @@ export const ActivityCharts = ({
                   <g key={value}>
                     <line
                       x1={60}
-                      x2={884}
+                      x2={chartWidth - 16}
                       y1={215 - (180 * value) / max}
                       y2={215 - (180 * value) / max}
                       stroke="currentColor"
@@ -167,7 +170,10 @@ export const ActivityCharts = ({
                     </title>
                   </rect>
                 ))}
-                {[0, Math.floor((points.length - 1) / 2), points.length - 1]
+                {(chartWidth < 480
+                  ? [0, points.length - 1]
+                  : [0, Math.floor((points.length - 1) / 2), points.length - 1]
+                )
                   .filter((index, i, all) => all.indexOf(index) === i)
                   .map(index => (
                     <text
