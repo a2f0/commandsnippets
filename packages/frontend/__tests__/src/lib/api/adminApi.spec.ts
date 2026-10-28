@@ -1,17 +1,26 @@
-import {CODES, EXPECTED_USER_HEADER} from '@commandsnippets/api-shared';
+import {
+  CODES,
+  DATA_VERSION_HEADER,
+  EXPECTED_USER_HEADER,
+} from '@commandsnippets/api-shared';
+import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {
   AdminApiError,
   AdminForbiddenError,
   AdminSignedOutError,
+  adminSyncApi,
   getStaffStatus,
   listAuditLog,
   listUsers,
   setUserActive,
   setUserMarkedForDeletion,
 } from '../../../../src/lib/api/adminApi';
-import {UserMismatchError} from '../../../../src/lib/api/apiClient';
+import {
+  DataVersionChangedError,
+  UserMismatchError,
+} from '../../../../src/lib/api/apiClient';
 import {errorDocument, onePage} from '../../../../src/msw/documents';
 import {signIn, TEST_USER} from '../../../util/signIn';
 
@@ -222,6 +231,78 @@ describe('adminApi', () => {
     await expect(change).rejects.toBeInstanceOf(UserMismatchError);
     await expect(change).rejects.toMatchObject({username: TEST_USER});
     expect(loggedOut()).toBe(false);
+  });
+
+  describe("another user's data (adminSyncApi)", () => {
+    /** The user lookup answers alice (id 7); every other read `read`. */
+    const answer = (read: (url: string) => Response) =>
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+        const url = String(input);
+        return url.includes('filter%5Busername%5D')
+          ? new Response(JSON.stringify(page([userResource()])))
+          : read(url);
+      });
+
+    it("reads the sync's pages through the user's routes, of the version named", async () => {
+      const fetchSpy = answer(
+        url =>
+          new Response(
+            JSON.stringify(
+              url.includes('page%5Bafter%5D')
+                ? {links: {next: null}, data: []}
+                : {...onePage(url, 0), data: []}
+            )
+          )
+      );
+      const reads = adminSyncApi('alice', 3);
+      await reads.getTagsAfter(CURSOR_START);
+      await reads.getEntriesAfter(CURSOR_START);
+      await expect(reads.getEntryCount()).resolves.toBe(0);
+      await reads.getTagJunctionsAfter('5', CURSOR_START);
+      await reads.getNewestJunction();
+
+      const after = encodeURIComponent(CURSOR_START);
+      const user = `${API}/users/7`;
+      expect(
+        fetchSpy.mock.calls.map(([url, init]) => [
+          String(url),
+          new Headers(init?.headers).get(DATA_VERSION_HEADER),
+        ])
+      ).toEqual([
+        [`${API}/users?filter%5Busername%5D=alice`, null],
+        [`${user}/tags?page%5Bafter%5D=${after}&page%5Bsize%5D=100`, '3'],
+        [
+          `${user}/entries?page%5Bafter%5D=${after}&page%5Bsize%5D=100` +
+            '&include=text_entry_to_tag',
+          '3',
+        ],
+        [`${user}/entries?page%5Bsize%5D=1`, '3'],
+        [
+          `${user}/tags_entries?filter%5Btag.id%5D=5&page%5Bafter%5D=${after}` +
+            '&page%5Bsize%5D=100&include=text_entry%2Ctext_entry.text_entry_to_tag',
+          '3',
+        ],
+        [`${user}/tags_entries?sort=-date_updated&page%5Bsize%5D=1`, '3'],
+      ]);
+    });
+
+    it('raises DataVersionChangedError once the version named is not active', async () => {
+      answer(
+        () =>
+          new Response(
+            JSON.stringify(
+              errorDocument(409, CODES.dataVersionChanged, 'Changed.')
+            ),
+            {status: 409}
+          )
+      );
+      const read = adminSyncApi('alice', 3).getTagsAfter(CURSOR_START);
+      await expect(read).rejects.toBeInstanceOf(DataVersionChangedError);
+      await expect(read).rejects.toThrow(
+        'Admin request failed: the data version changed'
+      );
+      expect(loggedOut()).toBe(false);
+    });
   });
 
   it('lists the audit log', async () => {
