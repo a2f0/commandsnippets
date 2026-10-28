@@ -291,18 +291,18 @@ const Tag = ({
     }
   };
 
-  const deleteTag = () => {
+  const deleteTag = useCallback(() => {
     if (session === null) {
       return;
     }
     deleteStoredTag(session, tagObject.id).catch((error: unknown) => {
       console.error('Failed to delete tag:', error);
     });
-  };
+  }, [session, tagObject.id]);
 
-  const handleBeginEdit = () => {
+  const handleBeginEdit = useCallback(() => {
     setIsEditing(true);
-  };
+  }, []);
 
   const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -344,7 +344,14 @@ const Tag = ({
         handleBeginEditParent={handleBeginEdit}
       />
     ),
-    [mouse, object.attributes.is_public]
+    [
+      id,
+      mouse,
+      object.attributes.is_public,
+      closeContextMenu,
+      deleteTag,
+      handleBeginEdit,
+    ]
   );
 
   const handleTagClick = (object: ITagJsonApi): void => {

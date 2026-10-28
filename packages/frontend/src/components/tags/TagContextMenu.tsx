@@ -72,19 +72,27 @@ const TagContextMenu = ({
   // Open where the tag was right-clicked, from the tag's state.
   const handleClose = onClose;
 
-  const handleBeginEdit = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    handleBeginEditParent();
-    handleClose();
-  }, []);
+  // The menu lives as long as the row: each handler calls the row's as it
+  // is now (a delete goes through the session the row has now).
+  const handleBeginEdit = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handleBeginEditParent();
+      handleClose();
+    },
+    [handleBeginEditParent, handleClose]
+  );
 
-  const handleDelete = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    onClose();
-    setDialogOpen(true);
-  }, []);
+  const handleDelete = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+      setDialogOpen(true);
+    },
+    [onClose]
+  );
 
   const handleCancelDialog = useCallback(() => {
     setDialogOpen(false);
@@ -93,7 +101,7 @@ const TagContextMenu = ({
   const handleAcceptDialog = useCallback(() => {
     setDialogOpen(false);
     deleteTagParent();
-  }, []);
+  }, [deleteTagParent]);
 
   return (
     <>
