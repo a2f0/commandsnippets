@@ -6,7 +6,6 @@ export interface CommonTranslations {
   save: string;
   cancel: string;
   delete: string;
-  edit: string;
   search: string;
   loading: string;
   error: string;
@@ -14,10 +13,8 @@ export interface CommonTranslations {
   confirm: string;
   yes: string;
   no: string;
-  language: string;
   languageName: string;
   selectLanguage: string;
-  settings: string;
   logoAlt: string;
   unsentWritesTitle: string;
   unsentWrites_one: string;
@@ -153,15 +150,9 @@ export interface MenuTranslations {
 }
 
 export interface TagsTranslations {
-  tagName: string;
   createTag: string;
-  editTag: string;
   deleteTag: string;
   confirmDeleteTag: string;
-  tagCreated: string;
-  tagUpdated: string;
-  tagDeleted: string;
-  noTags: string;
   tagCount_one: string;
   tagCount_other: string;
 }
@@ -172,22 +163,13 @@ export interface EntriesTranslations {
   entryPagesLoaded: string;
   entryLoadFailed: string;
   retryEntryLoad: string;
-  entryTitle: string;
-  entryContent: string;
   createEntry: string;
-  editEntry: string;
   deleteEntry: string;
-  confirmDeleteEntry: string;
-  entryCreated: string;
-  entryUpdated: string;
-  entryDeleted: string;
-  noEntries: string;
   entryCount_one: string;
   entryCount_other: string;
   reusedCount_one: string;
   reusedCount_other: string;
   entryInfoTitle: string;
-  infoSubject: string;
   infoTags: string;
   entryTags: string;
   infoNoTags: string;
