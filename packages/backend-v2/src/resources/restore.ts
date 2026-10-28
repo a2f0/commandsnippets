@@ -22,11 +22,10 @@ import {
   textEntryCreateAttributesSchema,
 } from '@commandsnippets/api-shared';
 import {type SQL, sql} from 'drizzle-orm';
-import {SQLiteAsyncDialect} from 'drizzle-orm/sqlite-core';
 import {Hono} from 'hono';
 import * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
-import type {Db} from '../db/client';
+import {type Db, rawBatch} from '../db/client';
 import {isVersionClash} from '../db/errors';
 import {
   dataVersions,
@@ -50,8 +49,6 @@ import {
 } from './owned';
 
 export const restoreRoutes = new Hono<AppEnv>();
-
-const dialect = new SQLiteAsyncDialect();
 
 /**
  * The most JSON one statement binds: D1 caps a bound value at 2 MB, so the
@@ -460,17 +457,9 @@ export async function restoreInto(
     ...restoreStatements(db, userId, restore, chunkBytes),
     sql`SELECT ${users.active_version} AS version FROM ${users} WHERE ${users.id} = ${userId}`,
   ];
-  // Drizzle (0.45) cannot batch raw statements with parameters, so they are
-  // prepared on the D1 binding.
-  const d1 = db.$client;
   let results: D1Result<{version: number}>[];
   try {
-    results = await d1.batch<{version: number}>(
-      statements.map(statement => {
-        const query = dialect.sqlToQuery(statement);
-        return d1.prepare(query.sql).bind(...query.params);
-      })
-    );
+    results = await rawBatch<{version: number}>(db, statements);
   } catch (error) {
     if (isVersionClash(error)) {
       throw dataVersionChanged();
