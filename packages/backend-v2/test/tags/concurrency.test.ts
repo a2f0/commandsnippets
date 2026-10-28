@@ -4,27 +4,17 @@ import {tags, tagsEntries} from '../../src/db/schema';
 import {now} from '../../src/lib/clock';
 import {OrderedModel} from '../../src/lib/ordered';
 import {
-  ApiClient,
+  clientFor,
   db,
   json,
   raceBeforeInsert,
   raceBeforeStatement,
+  reorderDocument,
   setUpBase,
   tagFactory,
+  taggingDocument,
   textEntryFactory,
-  tokenFor,
 } from '../helpers';
-
-const tagEntryPayload = (tagId: number, entryId: number) => ({
-  data: {
-    type: 'TagTextEntryThroughModel',
-    attributes: {},
-    relationships: {
-      tag: {data: {type: 'Tag', id: tagId}},
-      text_entry: {data: {type: 'TextEntry', id: entryId}},
-    },
-  },
-});
 
 // Races between the existence check and the INSERT, simulated by having
 // another writer land immediately before the request's INSERT executes.
@@ -32,8 +22,8 @@ describe('concurrent creates', () => {
   it('tag create returns the tag a concurrent request just created', async () => {
     const {user1} = await setUpBase();
     let concurrentId = 0;
-    const client = new ApiClient(
-      await tokenFor(user1.id),
+    const client = await clientFor(
+      user1,
       raceBeforeInsert('tags_tag', async () => {
         const timestamp = now();
         const [row] = await db()
@@ -74,8 +64,8 @@ describe('concurrent creates', () => {
     const {user1} = await setUpBase();
     const tag = await tagFactory({user: user1});
     const entry = await textEntryFactory({user: user1});
-    const client = new ApiClient(
-      await tokenFor(user1.id),
+    const client = await clientFor(
+      user1,
       raceBeforeInsert('tags_tagtextentrythroughmodel', async () => {
         const timestamp = now();
         await db().insert(tagsEntries).values({
@@ -90,7 +80,7 @@ describe('concurrent creates', () => {
     );
     const response = await client.post(
       '/api/v1/tags_entries',
-      tagEntryPayload(tag.id, entry.id)
+      taggingDocument(tag.id, entry.id)
     );
     expect(response.status).toBe(200);
     expect((await json(response)).data.attributes.order).toBe(7);
@@ -110,7 +100,7 @@ describe('concurrent creates', () => {
     );
     const response = await user1Client.post(
       '/api/v1/tags_entries',
-      tagEntryPayload(tag.id, entry.id)
+      taggingDocument(tag.id, entry.id)
     );
     expect(response.status).toBe(500);
   });
@@ -141,7 +131,7 @@ describe('concurrent creates', () => {
       entries.map(entry =>
         user1Client.post(
           '/api/v1/tags_entries',
-          tagEntryPayload(tag.id, entry.id)
+          taggingDocument(tag.id, entry.id)
         )
       )
     );
@@ -194,19 +184,16 @@ describe('concurrent reorders', () => {
     ];
     // Just before the reorder's UPDATE runs, another request moves C (the
     // reference) to the bottom.
-    const client = new ApiClient(
-      await tokenFor(owner.id),
+    const client = await clientFor(
+      owner,
       raceBeforeStatement(/^\s*update "tags_tag"/i, async () => {
         await db().update(tags).set({order: 10}).where(eq(tags.id, c.id));
       })
     );
-    const response = await client.post('/api/v1/tags/reorder', {
-      data: {
-        type: 'Tag',
-        attributes: {top: a.id, bottom: c.id},
-        relationships: {},
-      },
-    });
+    const response = await client.post(
+      '/api/v1/tags/reorder',
+      reorderDocument('Tag', a.id, c.id)
+    );
     expect(response.status).toBe(200);
 
     const ranked = (
@@ -228,19 +215,16 @@ describe('reorders across rank gaps', () => {
     const q = await tagFactory({user: user1, name: 'q', order: 9});
     // Moving s above r targets r's neighbor (p, rank 1). Just before the
     // UPDATE, another request moves q into the gap at rank 3.
-    const client = new ApiClient(
-      await tokenFor(user1.id),
+    const client = await clientFor(
+      user1,
       raceBeforeStatement(/^\s*update "tags_tag"/i, async () => {
         await db().update(tags).set({order: 3}).where(eq(tags.id, q.id));
       })
     );
-    const response = await client.post('/api/v1/tags/reorder', {
-      data: {
-        type: 'Tag',
-        attributes: {top: s.id, bottom: r.id},
-        relationships: {},
-      },
-    });
+    const response = await client.post(
+      '/api/v1/tags/reorder',
+      reorderDocument('Tag', s.id, r.id)
+    );
     expect(response.status).toBe(200);
     const ranked = (
       await db().select().from(tags).where(eq(tags.user_id, user1.id))

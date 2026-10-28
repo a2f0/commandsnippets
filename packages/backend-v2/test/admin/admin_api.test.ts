@@ -5,9 +5,11 @@ import {changeAccountStatus} from '../../src/services/accounts';
 import {getOrCreateToken} from '../../src/services/tokens';
 import {
   ApiClient,
+  clientFor,
   db,
   json,
   refreshUser,
+  staffClient,
   tagFactory,
   textEntryFactory,
   tokenFor,
@@ -15,18 +17,6 @@ import {
 } from '../helpers';
 
 // v2: the admin API (/api/v1/admin), for is_staff users.
-async function staffClient(): Promise<{staff: User; client: ApiClient}> {
-  const staff = await userFactory(
-    {username: 'staff', email: 'staff@example.com'},
-    {examples: false}
-  );
-  await db().update(users).set({is_staff: true}).where(eq(users.id, staff.id));
-  return {
-    staff: (await refreshUser(staff.id)) as User,
-    client: new ApiClient(await tokenFor(staff.id)),
-  };
-}
-
 const userPatch = (id: number, attributes: Record<string, unknown>) => ({
   data: {type: 'AdminUser', id: String(id), attributes},
 });
@@ -60,7 +50,7 @@ describe('AdminApi access', () => {
 
   it('refuses users who are not staff', async () => {
     const user = await userFactory();
-    const client = new ApiClient(await tokenFor(user.id));
+    const client = await clientFor(user);
     for (const [method, path] of routes) {
       const response = await call(client, method, path);
       expect(response.status).toBe(403);
@@ -223,7 +213,7 @@ describe('AdminApi deactivation', () => {
   });
 
   it('deactivates an account, ends its sessions and records it', async () => {
-    const targetClient = new ApiClient(await tokenFor(target.id));
+    const targetClient = await clientFor(target);
     expect((await targetClient.get('/api/v1/user/')).status).toBe(200);
 
     const response = await client.patch(
@@ -376,7 +366,7 @@ describe('AdminApi marking for deletion', () => {
   });
 
   it('marks an account, deactivating it, ending its sessions and recording it', async () => {
-    const targetClient = new ApiClient(await tokenFor(target.id));
+    const targetClient = await clientFor(target);
     expect((await targetClient.get('/api/v1/user/')).status).toBe(200);
 
     const response = await patch({marked_for_deletion: true});

@@ -4,6 +4,7 @@ import {
   isoformat,
   json,
   refreshTag,
+  reorderDocument,
   setUpBase,
   tagFactory,
   tagsOf,
@@ -14,10 +15,6 @@ const TAG_NAME_MAX_LENGTH = 24;
 /** Python's `str(datetime)`: isoformat with a space separator. */
 const pyStr = (timestamp: string) =>
   encodeURIComponent(isoformat(timestamp).replace('T', ' '));
-
-const reorderPayload = (top: number | string, bottom: number | string) => ({
-  data: {type: 'Tag', attributes: {top, bottom}, relationships: {}},
-});
 
 // Django origin: backend/tearleads/tags/tests/test_tags_api.py
 describe('TestTagsApi', () => {
@@ -187,7 +184,7 @@ describe('TestTagsApi', () => {
     expect(tag1.order).toBeLessThan(tag2.order);
     const response = await base.user1Client.post(
       '/api/v1/tags/reorder',
-      reorderPayload(tag2.id, tag1.id)
+      reorderDocument('Tag', tag2.id, tag1.id)
     );
     expect(response.status).toBe(200);
     expect(tag1Timestamp).toBe(tag1.date_updated);
@@ -209,7 +206,7 @@ describe('TestTagsApi', () => {
     expect(tag1.order).toBeLessThan(tag2.order);
     const response = await base.user1Client.post(
       '/api/v1/tags/reorder',
-      reorderPayload(tag2.id, tag1.id)
+      reorderDocument('Tag', tag2.id, tag1.id)
     );
     expect(response.status).toBe(403);
     const tag1After = await refreshTag(tag1.id);
@@ -229,7 +226,7 @@ describe('TestTagsApi', () => {
     expect(tag1.order).toBeLessThan(tag2.order);
     const response = await base.user1Client.post(
       '/api/v1/tags/reorder',
-      reorderPayload(tag2.id, tag1.id)
+      reorderDocument('Tag', tag2.id, tag1.id)
     );
     expect(response.status).toBe(403);
     const tag1After = await refreshTag(tag1.id);
@@ -535,17 +532,17 @@ describe('TestTagsApi v2', () => {
         '/data/attributes/top',
       ],
       [
-        reorderPayload('abc', tag?.id as number),
+        reorderDocument('Tag', 'abc', tag?.id),
         'Incorrect type. Expected pk value, received str.',
         '/data/attributes/top',
       ],
       [
-        reorderPayload(tag?.id as number, 999999),
+        reorderDocument('Tag', tag?.id, 999999),
         'Invalid pk "999999" - object does not exist.',
         '/data/attributes/bottom',
       ],
       [
-        {data: {type: 'Tag', attributes: {top: null, bottom: tag?.id}}},
+        reorderDocument('Tag', null, tag?.id),
         'This field may not be null.',
         '/data/attributes/top',
       ],
@@ -577,7 +574,7 @@ describe('TestTagsApi v2', () => {
     // Down: a above c lands between b and c.
     let response = await base.user1Client.post(
       '/api/v1/tags/reorder',
-      reorderPayload(a.id, c.id)
+      reorderDocument('Tag', a.id, c.id)
     );
     expect(response.status).toBe(200);
     expect(await ranks()).toEqual([
@@ -591,7 +588,7 @@ describe('TestTagsApi v2', () => {
     // Up: c above b goes to b's rank and pushes b and a down.
     response = await base.user1Client.post(
       '/api/v1/tags/reorder',
-      reorderPayload(c.id, b.id)
+      reorderDocument('Tag', c.id, b.id)
     );
     expect(response.status).toBe(200);
     expect(await ranks()).toEqual([
@@ -616,7 +613,7 @@ describe('TestTagsApi v2', () => {
     const before = await tagsOf(base.user2);
     const response = await base.user1Client.post(
       '/api/v1/tags/reorder',
-      reorderPayload(tag2?.id as number, tag1?.id as number)
+      reorderDocument('Tag', tag2?.id, tag1?.id)
     );
     expect(response.status).toBe(200);
     expect(await tagsOf(base.user2)).toEqual(before);

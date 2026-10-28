@@ -21,15 +21,16 @@ import {
 } from '../../src/db/schema';
 import {
   ApiClient,
+  clientFor,
   db,
   json,
   raceBeforeStatement,
   refreshUser,
+  staffFactory,
   tagFactory,
   tagTextEntryFactory,
   textEntryFactory,
   textEntryReusedFactory,
-  tokenFor,
   userFactory,
 } from '../helpers';
 
@@ -43,7 +44,7 @@ describe('user-scoped public reads', () => {
   let path: string;
   beforeEach(async () => {
     owner = await userFactory({username: 'alice'}, {examples: false});
-    client = new ApiClient(await tokenFor(owner.id));
+    client = await clientFor(owner);
     visibleTag = await tagFactory({user: owner, name: 'public'});
     hiddenTag = await tagFactory({user: owner, name: 'secret-tag'});
     visibleEntry = await textEntryFactory({
@@ -167,13 +168,11 @@ describe('user-scoped public reads', () => {
   });
 
   it('lets owner and staff see full data on the same endpoint while strangers see filtered data', async () => {
-    const staff = await userFactory({username: 'staff'}, {examples: false});
-    await db()
-      .update(users)
-      .set({is_staff: true})
-      .where(eq(users.id, staff.id));
-    const stranger = await userFactory({username: 'bob'}, {examples: false});
-    for (const reader of [client, new ApiClient(await tokenFor(staff.id))]) {
+    const staff = await staffFactory({username: 'staff'}, {examples: false});
+    const stranger = await clientFor(
+      await userFactory({username: 'bob'}, {examples: false})
+    );
+    for (const reader of [client, await clientFor(staff)]) {
       expect(
         (await json(await reader.get(`${path}/entries`))).data
       ).toHaveLength(2);
@@ -198,13 +197,7 @@ describe('user-scoped public reads', () => {
       ).toHaveLength(1);
     }
     expect(
-      (
-        await json(
-          await new ApiClient(await tokenFor(stranger.id)).get(
-            `${path}/entries`
-          )
-        )
-      ).data
+      (await json(await stranger.get(`${path}/entries`))).data
     ).toHaveLength(1);
     const metadata = await json(await new ApiClient().get(path));
     expect(Object.keys(metadata.data.attributes).sort()).toEqual([
@@ -225,11 +218,7 @@ describe('user-scoped public reads', () => {
   it('keeps reuse counts private: owner and staff read them, public reads 0', async () => {
     await textEntryReusedFactory({text_entry: visibleEntry, user: owner});
     await textEntryReusedFactory({text_entry: visibleEntry, user: owner});
-    const staff = await userFactory({username: 'staff'}, {examples: false});
-    await db()
-      .update(users)
-      .set({is_staff: true})
-      .where(eq(users.id, staff.id));
+    const staff = await staffFactory({username: 'staff'}, {examples: false});
     const stranger = await userFactory({username: 'bob'}, {examples: false});
     const reusedCount = async (
       reader: ApiClient,
@@ -245,14 +234,14 @@ describe('user-scoped public reads', () => {
       );
       return body.data[0]?.attributes.reused_count;
     };
-    for (const reader of [client, new ApiClient(await tokenFor(staff.id))]) {
+    for (const reader of [client, await clientFor(staff)]) {
       expect(await reusedCount(reader)).toBe(2);
       expect(await reusedCount(reader, {[DATA_ACCESS_HEADER]: 'public'})).toBe(
         0
       );
     }
     const guest = new ApiClient();
-    for (const reader of [guest, new ApiClient(await tokenFor(stranger.id))]) {
+    for (const reader of [guest, await clientFor(stranger)]) {
       expect(await reusedCount(reader)).toBe(0);
     }
     // Nor through a junction's included entry.

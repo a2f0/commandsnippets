@@ -19,15 +19,18 @@ import {
 } from '../../src/db/schema';
 import {now} from '../../src/lib/clock';
 import {
-  ApiClient,
+  type ApiClient,
   type Base,
+  clientFor,
   db,
   isoformat,
   json,
+  makeStaff,
   refreshUser,
+  reorderDocument,
   richUserFactory as richUser,
   setUpBase,
-  tokenFor,
+  taggingDocument,
 } from '../helpers';
 import {raceBeforeInsert, raceBeforeStatement} from '../support/races';
 
@@ -41,7 +44,7 @@ const VERSIONS = '/api/v1/user/data_versions';
  * app's do once it has read it).
  */
 async function clientOf(user: User, bindings?: Cloudflare.Env) {
-  const client = new ApiClient(await tokenFor(user.id), bindings);
+  const client = await clientFor(user, bindings);
   client.dataVersion = (await refreshUser(user.id))?.active_version;
   return client;
 }
@@ -304,13 +307,10 @@ describe('the version a request names', () => {
       await client.post('/api/v1/tags', {
         data: {type: 'Tag', attributes: {name: 'unnamed'}},
       }),
-      await client.post('/api/v1/tags/reorder', {
-        data: {
-          type: 'Tag',
-          attributes: {top: top.id, bottom: bottom.id},
-          relationships: {},
-        },
-      }),
+      await client.post(
+        '/api/v1/tags/reorder',
+        reorderDocument('Tag', top.id, bottom.id)
+      ),
       await client.post('/api/v1/user/restore', backup),
     ]) {
       expect(response.status).toBe(400);
@@ -381,15 +381,10 @@ describe('a version that is not active', () => {
       data: {type: 'TextEntry', id: entry.id, attributes: {subject: 'stale'}},
     });
     expect(edit.status).toBe(404);
-    const tagging = await client.post('/api/v1/tags_entries', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        relationships: {
-          tag: {data: {type: 'Tag', id: tag.id}},
-          text_entry: {data: {type: 'TextEntry', id: entry.id}},
-        },
-      },
-    });
+    const tagging = await client.post(
+      '/api/v1/tags_entries',
+      taggingDocument(tag.id, entry.id)
+    );
     expect(tagging.status).toBe(400);
     const [row] = await db()
       .select()
@@ -489,9 +484,10 @@ describe('a switch that lands while a write is on its way', () => {
       )
     );
 
-    const response = await raced.post('/api/v1/tags/reorder', {
-      data: {type: 'Tag', attributes: {top: bottom.id, bottom: top.id}},
-    });
+    const response = await raced.post(
+      '/api/v1/tags/reorder',
+      reorderDocument('Tag', bottom.id, top.id)
+    );
 
     expect(response.status).toBe(409);
     // The switch ran in the race (the reorder named version 2, active then).
@@ -577,10 +573,7 @@ describe("another user's data", () => {
     const owner = await richUser();
     const own = await clientOf(owner);
     await restoreOwn(own);
-    await db()
-      .update(users)
-      .set({is_staff: true})
-      .where(eq(users.id, base.user1.id));
+    await makeStaff(base.user1);
     const staff = await clientOf(base.user1);
 
     const read = await json(

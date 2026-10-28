@@ -227,7 +227,7 @@ describe('TestTextEntriesApi', () => {
   });
 
   it('test_filter_by_is_deleted', async () => {
-    const {user1, user1Client} = base;
+    const {user1Client} = base;
     let response = await user1Client.get(
       '/api/v1/entries?filter[is_deleted]=0'
     );

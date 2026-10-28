@@ -15,17 +15,19 @@ import {
 } from '../../src/db/schema';
 import {formatMicros, nowMicros} from '../../src/lib/clock';
 import {
-  ApiClient,
+  type ApiClient,
+  clientFor,
   db,
   json,
   refreshEntry,
   refreshJunction,
   refreshTag,
+  reorderDocument,
   setUpBase,
   tagFactory,
+  taggingDocument,
   tagTextEntryFactory,
   textEntryFactory,
-  tokenFor,
 } from '../helpers';
 import {raceBeforeInsert, raceBeforeStatement} from '../support/races';
 
@@ -139,15 +141,7 @@ describe('a write older than the last one', () => {
     const tag = await tagFactory({user});
     const entry = await textEntryFactory({user});
     const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
-    const tagging = {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        relationships: {
-          tag: {data: {type: 'Tag', id: String(tag.id)}},
-          text_entry: {data: {type: 'TextEntry', id: String(entry.id)}},
-        },
-      },
-    };
+    const tagging = taggingDocument(tag.id, entry.id);
     // Tagged (again) later than an untag made offline.
     await send('POST', '/tags_entries', LATER, tagging);
     const staleUntag = await send(
@@ -170,16 +164,6 @@ describe('a write older than the last one', () => {
 });
 
 describe('writes arriving out of order', () => {
-  const tagging = (tagId: number, entryId: number) => ({
-    data: {
-      type: 'TagTextEntryThroughModel',
-      relationships: {
-        tag: {data: {type: 'Tag', id: String(tagId)}},
-        text_entry: {data: {type: 'TextEntry', id: String(entryId)}},
-      },
-    },
-  });
-
   it('keep the latest untag, even of a junction untagged already', async () => {
     const tag = await tagFactory({user});
     const entry = await textEntryFactory({user});
@@ -192,7 +176,7 @@ describe('writes arriving out of order', () => {
       'POST',
       '/tags_entries',
       LATER,
-      tagging(tag.id, entry.id)
+      taggingDocument(tag.id, entry.id)
     );
 
     expect((await json(tagged)).data.attributes.is_deleted).toBe(true);
@@ -206,8 +190,8 @@ describe('writes arriving out of order', () => {
     const tag = await tagFactory({user, name: 'kept'});
     // Just before the create (made LATER) writes the tag, a delete made
     // EARLY lands.
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeStatement(/^\s*update "tags_tag"/i, async () => {
         await db()
           .update(tags)
@@ -234,8 +218,8 @@ describe('writes arriving out of order', () => {
   it('record a create that lost the race to a concurrent one of the name', async () => {
     // Just before this create (made LATER) inserts, another (made EARLY)
     // creates the tag.
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeInsert('tags_tag', async () => {
         const raced = await tagFactory({user, name: 'raced'});
         await db()
@@ -261,8 +245,8 @@ describe('writes arriving out of order', () => {
 
   it('create the name asked for when the tag of it is renamed meanwhile', async () => {
     const tag = await tagFactory({user, name: 'alpha'});
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeStatement(/^\s*update "tags_tag"/i, async () => {
         await db().update(tags).set({name: 'beta'}).where(eq(tags.id, tag.id));
       })
@@ -286,8 +270,8 @@ describe('writes arriving out of order', () => {
     const tag = await tagFactory({user});
     const entry = await textEntryFactory({user});
     const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeStatement(
         /^\s*update "tags_tagtextentrythroughmodel"/i,
         async () => {
@@ -302,7 +286,7 @@ describe('writes arriving out of order', () => {
     const response = await racing.request(
       'POST',
       '/api/v1/tags_entries',
-      tagging(tag.id, entry.id),
+      taggingDocument(tag.id, entry.id),
       made(LATER)
     );
 
@@ -449,8 +433,8 @@ describe('a write made ahead of the clock', () => {
     const tag = await tagFactory({user, name: 'start'});
     // Just before this write (naming no time) updates the tag, another,
     // which arrived after it, does.
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeStatement(/^\s*update "tags_tag"/i, () =>
         client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'committed'))
       )
@@ -470,18 +454,10 @@ describe('a write made ahead of the clock', () => {
     const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
     // Just before this untag (naming no time) writes, a tagging of the pair,
     // which arrived after it, records its time.
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeStatement(/^\s*update "tags_tagtextentrythroughmodel"/i, () =>
-        client.post('/api/v1/tags_entries', {
-          data: {
-            type: 'TagTextEntryThroughModel',
-            relationships: {
-              tag: {data: {type: 'Tag', id: String(tag.id)}},
-              text_entry: {data: {type: 'TextEntry', id: String(entry.id)}},
-            },
-          },
-        })
+        client.post('/api/v1/tags_entries', taggingDocument(tag.id, entry.id))
       )
     );
     const untag = await racing.delete(`/api/v1/tags_entries/${junction.id}`);
@@ -500,8 +476,8 @@ describe('a write made ahead of the clock', () => {
       tagRename(tag.id, 'before')
     );
     // The first attempt is timed, then fails before it writes.
-    const failing = new ApiClient(
-      await tokenFor(user.id),
+    const failing = await clientFor(
+      user,
       raceBeforeStatement(/^\s*update "tags_tag"/i, () =>
         Promise.reject(new Error('D1 is unavailable'))
       )
@@ -561,8 +537,8 @@ describe('a write made ahead of the clock', () => {
     const tag = await tagFactory({user, name: 'kept'});
     // Once this create (naming no time) is timed, before it reads the tag,
     // a delete that arrived after it is made.
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeStatement(/^\s*select\b.*\bfrom "tags_tag"\s/i, () =>
         client.delete(`/api/v1/tags/${tag.id}`)
       )
@@ -583,8 +559,8 @@ describe('a write made ahead of the clock', () => {
     const entry = await textEntryFactory({user});
     const junction = await tagTextEntryFactory({tag, text_entry: entry, user});
     // Likewise an untag, before this tagging reads the junction.
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeStatement(
         /^\s*select\b.*\bfrom "tags_tagtextentrythroughmodel"\s/i,
         () => client.delete(`/api/v1/tags_entries/${junction.id}`)
@@ -593,15 +569,7 @@ describe('a write made ahead of the clock', () => {
     const tagging = await racing.request(
       'POST',
       '/api/v1/tags_entries',
-      {
-        data: {
-          type: 'TagTextEntryThroughModel',
-          relationships: {
-            tag: {data: {type: 'Tag', id: String(tag.id)}},
-            text_entry: {data: {type: 'TextEntry', id: String(entry.id)}},
-          },
-        },
-      },
+      taggingDocument(tag.id, entry.id),
       {[CLIENT_WRITE_ID_HEADER]: 'tagging-1'}
     );
     expect(tagging.status).toBe(200);
@@ -705,7 +673,7 @@ describe('a write made ahead of the clock', () => {
       tagRename(tag.id, 'mine-2')
     );
     await client.patch(`/api/v1/tags/${tag.id}`, tagRename(tag.id, 'mine-3'));
-    const otherClient = new ApiClient(await tokenFor(other.id));
+    const otherClient = await clientFor(other);
     // Their own write after the first counted, which theirs must beat.
     await otherClient.patch(
       `/api/v1/tags/${theirs.id}`,
@@ -738,12 +706,7 @@ describe('a reorder named by the client', () => {
     client.request(
       'POST',
       '/api/v1/tags/reorder',
-      {
-        data: {
-          type: 'Tag',
-          attributes: {top: String(top), bottom: String(bottom)},
-        },
-      },
+      reorderDocument('Tag', String(top), String(bottom)),
       writeId === undefined ? {} : {[CLIENT_WRITE_ID_HEADER]: writeId}
     );
   const mine = ['one', 'two', 'three', 'four'];
@@ -817,11 +780,7 @@ describe('an entry created with a client id', () => {
   it("is each user's own", async () => {
     const mine = await json(await create('local-same', 'mine'));
     const theirs = await json(
-      await create(
-        'local-same',
-        'theirs',
-        new ApiClient(await tokenFor(other.id))
-      )
+      await create('local-same', 'theirs', await clientFor(other))
     );
     expect(theirs.data.id).not.toBe(mine.data.id);
     expect(theirs.data.attributes.subject).toBe('theirs');
@@ -866,11 +825,7 @@ describe('a tag created with a client id', () => {
   it("is each user's own", async () => {
     const mine = await json(await create('local-same', 'mine'));
     const theirs = await json(
-      await create(
-        'local-same',
-        'theirs',
-        new ApiClient(await tokenFor(other.id))
-      )
+      await create('local-same', 'theirs', await clientFor(other))
     );
     expect(theirs.data.id).not.toBe(mine.data.id);
     expect(theirs.data.attributes.name).toBe('theirs');
@@ -923,8 +878,8 @@ describe('a tag created with a client id', () => {
   it('answers a retry racing the create with the tag the create made', async () => {
     // Just before this create inserts, its earlier attempt (whose answer was
     // lost) makes the tag, under another name by now.
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeInsert('tags_tag', () =>
         create('local-raced', 'raced').then(async made => {
           const {data} = await json(made);
@@ -946,8 +901,8 @@ describe('a tag created with a client id', () => {
     // attempt is answered with the user's tag of another name it had then,
     // renamed since: the client id names that tag, and no other is made.
     const tag = await tagFactory({user, name: 'had'});
-    const racing = new ApiClient(
-      await tokenFor(user.id),
+    const racing = await clientFor(
+      user,
       raceBeforeInsert('tags_tag', async () => {
         await create('local-alias', 'had');
         await client.patch(

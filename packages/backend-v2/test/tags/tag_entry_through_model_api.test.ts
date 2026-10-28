@@ -5,30 +5,13 @@ import {
   refreshEntry,
   refreshJunction,
   refreshTag,
+  reorderDocument,
   setUpBase,
   tagFactory,
+  taggingDocument,
   tagTextEntryFactory,
   textEntryFactory,
 } from '../helpers';
-
-const reorderPayload = (top: number | string, bottom: number | string) => ({
-  data: {
-    type: 'TagTextEntryThroughModel',
-    attributes: {top, bottom},
-    relationships: {},
-  },
-});
-
-const tagPayload = (tagId: number | string, textEntryId: number | string) => ({
-  data: {
-    type: 'TagTextEntryThroughModel',
-    attributes: {},
-    relationships: {
-      tag: {data: {type: 'Tag', id: tagId}},
-      text_entry: {data: {type: 'TextEntry', id: textEntryId}},
-    },
-  },
-});
 
 // Django origin: backend/tearleads/tags/tests/test_tag_entry_through_model_api.py
 describe('TestTagsEntriesApi', () => {
@@ -61,7 +44,7 @@ describe('TestTagsEntriesApi', () => {
     const textEntry = await textEntryFactory({user: base.user1});
     const response = await base.user1Client.post(
       '/api/v1/tags_entries',
-      tagPayload(tag.id, textEntry.id)
+      taggingDocument(tag.id, textEntry.id)
     );
     expect(response.status).toBe(201);
   });
@@ -120,7 +103,7 @@ describe('TestTagsEntriesApi', () => {
     // Perform reorder
     const response = await base.user1Client.post(
       '/api/v1/tags_entries/reorder',
-      reorderPayload(tagEntry2.id, tagEntry1.id)
+      reorderDocument('TagTextEntryThroughModel', tagEntry2.id, tagEntry1.id)
     );
     expect(response.status).toBe(200);
 
@@ -163,7 +146,7 @@ describe('TestTagsEntriesApi', () => {
 
     const response = await base.user1Client.post(
       '/api/v1/tags_entries/reorder',
-      reorderPayload(tagEntry2.id, tagEntry1.id)
+      reorderDocument('TagTextEntryThroughModel', tagEntry2.id, tagEntry1.id)
     );
     expect(response.status).toBe(403);
 
@@ -203,7 +186,7 @@ describe('TestTagsEntriesApi', () => {
 
     const response = await base.user1Client.post(
       '/api/v1/tags_entries/reorder',
-      reorderPayload(tagEntry2.id, tagEntry1.id)
+      reorderDocument('TagTextEntryThroughModel', tagEntry2.id, tagEntry1.id)
     );
     expect(response.status).toBe(403);
 
@@ -326,7 +309,7 @@ describe('TestTagsEntriesApi v2', () => {
     const textEntry = await textEntryFactory({user: base.user1});
     const response = await base.user1Client.post(
       '/api/v1/tags_entries',
-      tagPayload(String(tag.id), String(textEntry.id))
+      taggingDocument(tag.id, textEntry.id)
     );
     const body = await json(response);
     expect(response.status).toBe(201);
@@ -361,12 +344,12 @@ describe('TestTagsEntriesApi v2', () => {
     const first = await json(
       await base.user1Client.post(
         '/api/v1/tags_entries',
-        tagPayload(tag.id, textEntry.id)
+        taggingDocument(tag.id, textEntry.id)
       )
     );
     const response = await base.user1Client.post(
       '/api/v1/tags_entries',
-      tagPayload(tag.id, textEntry.id)
+      taggingDocument(tag.id, textEntry.id)
     );
     const second = await json(response);
     expect(response.status).toBe(200);
@@ -395,7 +378,7 @@ describe('TestTagsEntriesApi v2', () => {
       const body = await json(
         await base.user1Client.post(
           '/api/v1/tags_entries',
-          tagPayload(tag.id, entry.id)
+          taggingDocument(tag.id, entry.id)
         )
       );
       orders.push(body.data.attributes.order);
@@ -413,7 +396,7 @@ describe('TestTagsEntriesApi v2', () => {
 
     let response = await base.user1Client.post(
       '/api/v1/tags_entries',
-      tagPayload(otherTag.id, ownEntry.id)
+      taggingDocument(otherTag.id, ownEntry.id)
     );
     let body = await json(response);
     expect(response.status).toBe(400);
@@ -428,7 +411,7 @@ describe('TestTagsEntriesApi v2', () => {
 
     response = await base.user1Client.post(
       '/api/v1/tags_entries',
-      tagPayload(ownTag.id, otherEntry.id)
+      taggingDocument(ownTag.id, otherEntry.id)
     );
     body = await json(response);
     expect(response.status).toBe(400);
@@ -504,7 +487,7 @@ describe('TestTagsEntriesApi v2', () => {
     });
     const response = await base.user1Client.post(
       '/api/v1/tags_entries/reorder',
-      reorderPayload(junction2.id, junction1.id)
+      reorderDocument('TagTextEntryThroughModel', junction2.id, junction1.id)
     );
     const body = await json(response);
     expect(response.status).toBe(400);

@@ -1,7 +1,14 @@
 import {eq} from 'drizzle-orm';
 import {describe, expect, it} from 'vitest';
 import {users} from '../../src/db/schema';
-import {ApiClient, db, refreshUser, tokenFor, userFactory} from '../helpers';
+import {
+  ApiClient,
+  clientFor,
+  db,
+  refreshUser,
+  tokenFor,
+  userFactory,
+} from '../helpers';
 import {googlePayload, googleRoutes, mockFetch} from '../support/auth';
 
 /** A user's stored last_active, which every account has from creation on. */
@@ -25,7 +32,7 @@ describe('LastActive', () => {
     const user = await userFactory();
     const before = await refreshUser(user.id);
     const joined = await lastActive(user.id);
-    const client = new ApiClient(await tokenFor(user.id));
+    const client = await clientFor(user);
 
     expect((await client.get('/api/v1/user/')).status).toBe(200);
     const first = await lastActive(user.id);

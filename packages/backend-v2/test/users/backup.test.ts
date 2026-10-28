@@ -3,8 +3,9 @@ import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {tags, tagsEntries, textEntries} from '../../src/db/schema';
 import {
-  ApiClient,
+  type ApiClient,
   type Base,
+  clientFor,
   db,
   entriesOf,
   isoformat,
@@ -15,7 +16,6 @@ import {
   tagTextEntryFactory,
   textEntryFactory,
   textEntryReusedFactory,
-  tokenFor,
   userFactory,
 } from '../helpers';
 
@@ -112,9 +112,7 @@ describe('GET /api/v1/user/backup', () => {
     for (const entry of otherEntries) {
       expect(ids(backup.entries)).not.toContain(entry.id);
     }
-    const user2Backup = await backupOf(
-      new ApiClient(await tokenFor(base.user2.id))
-    );
+    const user2Backup = await backupOf(await clientFor(base.user2));
     expect(ids(user2Backup.tags).sort()).toEqual(
       otherTags.map(tag => tag.id).sort()
     );
@@ -123,7 +121,7 @@ describe('GET /api/v1/user/backup', () => {
 
   it('leaves out deleted rows, and the taggings and reuses of them', async () => {
     const user = await userFactory({}, {examples: false});
-    const client = new ApiClient(await tokenFor(user.id));
+    const client = await clientFor(user);
     const kept = await tagFactory({user, name: 'kept'});
     const deletedTag = await tagFactory({user, name: 'gone'});
     const entry = await textEntryFactory({user});
@@ -168,7 +166,7 @@ describe('GET /api/v1/user/backup', () => {
 
   it('is an empty backup for a user with no data', async () => {
     const user = await userFactory({}, {examples: false});
-    const backup = await backupOf(new ApiClient(await tokenFor(user.id)));
+    const backup = await backupOf(await clientFor(user));
     expect(backup).toMatchObject({
       tags: [],
       entries: [],

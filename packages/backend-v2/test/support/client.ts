@@ -3,6 +3,7 @@
 import {env} from 'cloudflare:workers';
 import {DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
 import {app} from '../../src/app';
+import {tokenFor} from './db';
 
 /** The methods that only read: their requests name no data version. */
 const READS = ['GET', 'HEAD', 'OPTIONS'];
@@ -120,4 +121,12 @@ export class ApiClient {
   options(path: string, headers: Record<string, string>) {
     return this.request('OPTIONS', path, undefined, headers);
   }
+}
+
+/** A client signed in as `user` (with their token), calling `bindings`. */
+export async function clientFor(
+  user: {id: number},
+  bindings?: Cloudflare.Env
+): Promise<ApiClient> {
+  return new ApiClient(await tokenFor(user.id), bindings);
 }

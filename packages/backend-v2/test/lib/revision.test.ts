@@ -5,6 +5,7 @@ import {
   db,
   json,
   refreshEntry,
+  reorderDocument,
   setUpBase,
   tagFactory,
   textEntryFactory,
@@ -81,13 +82,10 @@ describe('database-assigned revisions', () => {
       .update(tags)
       .set({date_updated: '2999-01-01T00:00:00.000000'})
       .where(eq(tags.id, a.id));
-    const response = await user1Client.post('/api/v1/tags/reorder', {
-      data: {
-        type: 'Tag',
-        attributes: {top: b.id, bottom: a.id},
-        relationships: {},
-      },
-    });
+    const response = await user1Client.post(
+      '/api/v1/tags/reorder',
+      reorderDocument('Tag', b.id, a.id)
+    );
     expect(response.status).toBe(200);
     const rows = await db()
       .select()

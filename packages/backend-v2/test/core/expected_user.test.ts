@@ -6,11 +6,11 @@ import {
 import {describe, expect, it} from 'vitest';
 import {
   ApiClient,
+  clientFor,
   json,
   refreshTag,
   setUpBase,
   tagFactory,
-  tokenFor,
   userFactory,
 } from '../helpers';
 
@@ -74,7 +74,7 @@ describe('a request naming the user it acts for', () => {
 
   it('matches a username of any script, URI-encoded', async () => {
     const user = await userFactory({username: 'jörg-ユーザー'});
-    const client = new ApiClient(await tokenFor(user.id));
+    const client = await clientFor(user);
     const response = await as(client, 'POST', '/api/v1/tags', user.username, {
       data: {type: 'Tag', attributes: {name: 'unicode'}},
     });

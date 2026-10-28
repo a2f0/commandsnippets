@@ -1,11 +1,13 @@
 /**
  * Test support for the auth tests: a `responses`-style outbound HTTP mock,
- * canned OAuth provider answers, a way to call the app with a modified
- * environment, and the auth cookies' expected attributes.
+ * a fake fetcher for the OAuth services, canned OAuth provider answers, a
+ * way to call the app with a modified environment, and the auth cookies'
+ * expected attributes.
  */
 import {env} from 'cloudflare:workers';
 import {expect, vi} from 'vitest';
 import {
+  type Fetcher,
   GITHUB_EMAILS_URL,
   GITHUB_TOKEN_URL,
   GITHUB_USER_URL,
@@ -74,6 +76,31 @@ export function mockFetch(routes: MockRoute[]): MockCall[] {
     );
   });
   return calls;
+}
+
+/** A call to a `fakeFetch` fetcher. */
+export interface FetcherCall {
+  url: string;
+  init: RequestInit | undefined;
+}
+
+/**
+ * A fetcher to hand an OAuth service: one canned response (`body`, as JSON
+ * unless a string), every call recorded.
+ */
+export function fakeFetch(
+  body: string | object,
+  contentType = 'application/json'
+): {fetcher: Fetcher; calls: FetcherCall[]} {
+  const calls: FetcherCall[] = [];
+  const fetcher: Fetcher = async (url, init) => {
+    calls.push({url, init});
+    return new Response(
+      typeof body === 'string' ? body : JSON.stringify(body),
+      {status: 200, headers: {'Content-Type': contentType}}
+    );
+  };
+  return {fetcher, calls};
 }
 
 /** Google's code exchange and userinfo answering for a verified `email`. */

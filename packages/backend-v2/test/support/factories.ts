@@ -48,6 +48,24 @@ export async function userFactory(
   return user;
 }
 
+/** `user` made staff (`is_staff`), as stored. */
+export async function makeStaff(user: User): Promise<User> {
+  const [staff] = await db()
+    .update(users)
+    .set({is_staff: true})
+    .where(eq(users.id, user.id))
+    .returning();
+  return staff as User;
+}
+
+/** UserFactory, for a staff account. */
+export async function staffFactory(
+  overrides: {username?: string; email?: string} = {},
+  options: {examples?: boolean} = {}
+): Promise<User> {
+  return makeStaff(await userFactory(overrides, options));
+}
+
 const EXAMPLE_ENTRIES = [
   {
     subject: 'close all postgres connections other than the current one',

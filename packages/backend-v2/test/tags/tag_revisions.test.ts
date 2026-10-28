@@ -12,8 +12,10 @@ import {
   db,
   json,
   refreshTag,
+  reorderDocument,
   setUpBase,
   tagFactory,
+  taggingDocument,
   tagsOf,
   tagTextEntryFactory,
   textEntryFactory,
@@ -42,17 +44,6 @@ async function syncFrom(client: ApiClient, since: string): Promise<number[]> {
 }
 
 const ids = (...rows: Tag[]) => rows.map(row => row.id).sort();
-
-const tagging = (tagId: number, entryId: number) => ({
-  data: {
-    type: 'TagTextEntryThroughModel',
-    attributes: {},
-    relationships: {
-      tag: {data: {type: 'Tag', id: tagId}},
-      text_entry: {data: {type: 'TextEntry', id: entryId}},
-    },
-  },
-});
 
 const edit = (entry: TextEntry, body: string) => ({
   data: {type: 'TextEntry', id: String(entry.id), attributes: {body}},
@@ -109,7 +100,7 @@ describe('tag revisions follow their entries', () => {
     const before = await latest(user1);
     const response = await user1Client.post(
       '/api/v1/tags_entries',
-      tagging(c.id, entry.id)
+      taggingDocument(c.id, entry.id)
     );
     expect(response.status).toBe(201);
     expect(await syncFrom(user1Client, before)).toEqual(ids(a, b, c));
@@ -121,7 +112,7 @@ describe('tag revisions follow their entries', () => {
     const before = await latest(user1);
     const response = await user1Client.post(
       '/api/v1/tags_entries',
-      tagging(a.id, entry.id)
+      taggingDocument(a.id, entry.id)
     );
     expect(response.status).toBe(200);
     expect(await syncFrom(user1Client, before)).toEqual([]);
@@ -169,13 +160,10 @@ describe('tag revisions follow their entries', () => {
       order: 1,
     });
     const before = await latest(user1);
-    const response = await user1Client.post('/api/v1/tags_entries/reorder', {
-      data: {
-        type: 'TagTextEntryThroughModel',
-        attributes: {top: j2.id, bottom: j1.id},
-        relationships: {},
-      },
-    });
+    const response = await user1Client.post(
+      '/api/v1/tags_entries/reorder',
+      reorderDocument('TagTextEntryThroughModel', j2.id, j1.id)
+    );
     expect(response.status).toBe(200);
     expect(await syncFrom(user1Client, before)).toEqual(ids(tag));
   });

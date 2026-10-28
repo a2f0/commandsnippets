@@ -1,14 +1,13 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
-  ApiClient,
   type Base,
+  clientFor,
   type Json,
   json,
   refreshEntry,
   setUpBase,
   textEntryFactory,
   textEntryReusedFactory,
-  tokenFor,
 } from '../helpers';
 
 const reusePayload = (textEntryId: number | string, clientId?: string) => ({
@@ -353,7 +352,7 @@ describe('EntryReusesApi v2', () => {
     const {user1, user2, user1Client} = base;
     const mine = await textEntryFactory({user: user1});
     const theirs = await textEntryFactory({user: user2});
-    const user2Client = new ApiClient(await tokenFor(user2.id));
+    const user2Client = await clientFor(user2);
     const made = await json(
       await user1Client.post(
         '/api/v1/entry_reuses',
