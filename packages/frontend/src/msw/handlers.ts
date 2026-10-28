@@ -9,6 +9,7 @@ import {
   backupSchema,
   CLIENT_WRITE_ID_HEADER,
   CODES,
+  type Cursor,
   DATA_OWNER_ID_HEADER,
   DATA_VERSION_HEADER,
   type DataVersion,
@@ -27,11 +28,8 @@ import {
   type TagDocument,
   type TagListDocument,
   type TagTextEntry,
-  type TagTextEntryCursorListDocument,
   type TagTextEntryDocument,
-  type TagTextEntryListDocument,
   type TextEntry,
-  type TextEntryCursorListDocument,
   type TextEntryDocument,
   type TextEntryListDocument,
   type TextEntryReused,
@@ -47,14 +45,8 @@ import {
   type User,
 } from '@commandsnippets/api-shared';
 import invariant from 'invariant';
-import {HttpResponse, http} from 'msw/http';
-import {
-  errorDocument,
-  nextRevision,
-  now,
-  onePage,
-  pagination,
-} from './documents';
+import {HttpResponse, type HttpResponseResolver, http} from 'msw/http';
+import {nextRevision, now, onePage, pagination} from './documents';
 import {afterOf, byRevision, keysetPage, positionOf} from './keyset';
 import {recordRequest} from './requestCounter';
 import {
@@ -303,6 +295,10 @@ const compare = (a: string | number, b: string | number) =>
 const byTypeAndId = (a: IncludedResource, b: IncludedResource) =>
   compare(a.type, b.type) || compare(a.id, b.id);
 
+/** The API's 404 for a `type` that is not there. */
+const notFound = (type: string) =>
+  apiError(404, CODES.notFound, `No ${type} matches the given query.`);
+
 /** The resource of `resources` with `id`, or the API's 404 for `type`. */
 function findOr404<R extends {id: string}>(
   resources: readonly R[],
@@ -311,7 +307,7 @@ function findOr404<R extends {id: string}>(
 ): R {
   const resource = resources.find(candidate => candidate.id === id);
   if (resource === undefined) {
-    throw apiError(404, CODES.notFound, `No ${type} matches the given query.`);
+    throw notFound(type);
   }
   return resource;
 }
@@ -406,6 +402,10 @@ function moveAbove<
 const nextTagRevision = () =>
   nextRevision(tags.map(tag => tag.attributes.date_updated));
 
+/** The next revision of `state`'s entries. */
+const nextEntryRevision = (state: EntriesState) =>
+  nextRevision(state.data.map(entry => entry.attributes.date_updated));
+
 /** Every junction, deleted ones too. */
 const allJunctions = (state: EntriesState) => [
   ...junctionsOf(state),
@@ -459,31 +459,10 @@ function touchTagsOf(state: EntriesState, entry: TextEntry) {
 function touchEntry(state: EntriesState, entry: TextEntry) {
   entry.attributes = {
     ...entry.attributes,
-    date_updated: nextRevision(
-      state.data.map(candidate => candidate.attributes.date_updated)
-    ),
+    date_updated: nextEntryRevision(state),
   };
   touchTagsOf(state, entry);
   touchJunctionsOf(state, entry);
-}
-
-/**
- * An entry's default `included`: its junctions, their tags and its owner
- * (`text_entry_to_tag`, `text_entry_to_tag.tag`, `user`).
- */
-function entryIncluded(state: EntriesState, entry: TextEntry) {
-  const junctions = junctionsOf(state).filter(
-    junction => junction.relationships.text_entry.data.id === entry.id
-  );
-  const tagIds = new Set(
-    junctions.map(junction => junction.relationships.tag.data.id)
-  );
-  const included: IncludedResource[] = [
-    ...tags.filter(tag => tagIds.has(tag.id)),
-    ...junctions,
-    testUser,
-  ];
-  return included.sort(byTypeAndId);
 }
 
 /**
@@ -618,6 +597,9 @@ interface MockOwner {
   deleted: readonly TagTextEntry[];
 }
 
+/** A row of a user's data: a tag, an entry or a junction. */
+type Row = Tag | TextEntry | TagTextEntry;
+
 /** The signed-in test user's data (what the owner-only routes answer). */
 const testOwner = (): MockOwner => ({
   user: testUser,
@@ -636,7 +618,7 @@ const testOwner = (): MockOwner => ({
  */
 function includedFor(
   state: EntriesState,
-  primary: ReadonlyArray<Tag | TextEntry | TagTextEntry>,
+  primary: readonly Row[],
   paths: readonly string[],
   owner: Pick<MockOwner, 'user' | 'tags'> = testOwner()
 ): {included?: IncludedResource[]} {
@@ -702,6 +684,121 @@ const includePaths = (url: URL, defaults: readonly string[]) => {
     : include.split(',').filter(path => path !== '');
 };
 
+/** A collection of the user's data, by its path. */
+type Collection = 'tags' | 'entries' | 'tags_entries';
+
+/**
+ * Each collection's default `include` paths, as the API's: a tag's owner;
+ * an entry's junctions, their tags and its owner; a junction's three ends.
+ */
+const DEFAULT_INCLUDE: Record<Collection, readonly string[]> = {
+  tags: ['user'],
+  entries: ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user'],
+  tags_entries: ['user', 'tag', 'text_entry'],
+};
+
+/** `entry`'s document, with its default `included`. */
+const entryDocument = (
+  state: EntriesState,
+  entry: TextEntry
+): TextEntryDocument => ({
+  data: entry,
+  ...includedFor(state, [entry], DEFAULT_INCLUDE.entries),
+});
+
+/** A numbered page of a collection (`page[number]`), without `included`. */
+type NumberedPage<R extends Row> = Pick<TagListDocument, 'links' | 'meta'> & {
+  data: R[];
+};
+
+/**
+ * What the request's `include` (or `collection`'s default) adds to a page of
+ * `data`, from `owner`'s data.
+ */
+const includedOf = (
+  url: URL,
+  owner: MockOwner,
+  collection: Collection,
+  data: readonly Row[]
+) =>
+  includedFor(
+    owner.state,
+    data,
+    includePaths(url, DEFAULT_INCLUDE[collection]),
+    owner
+  );
+
+/**
+ * The keyset page of `rows` (those of `collection` the request matches)
+ * after `after`, the request's cursor (the sync's reads), as the API
+ * renders it.
+ */
+function keysetResponse<R extends Row>(
+  url: URL,
+  after: Cursor,
+  owner: MockOwner,
+  collection: Collection,
+  rows: readonly R[]
+): Response {
+  const {data, links} = keysetPage(url, rows, after);
+  const body: Pick<TagCursorListDocument, 'links' | 'included'> & {
+    data: R[];
+  } = {links, data, ...includedOf(url, owner, collection, data)};
+  return HttpResponse.json(body);
+}
+
+/**
+ * A page of `rows` (those of `collection` the request matches) as the API
+ * renders it: the keyset page after the request's cursor (`page[after]`),
+ * or else the numbered page `numbered` makes.
+ */
+function collectionResponse<R extends Row>(
+  url: URL,
+  owner: MockOwner,
+  collection: Collection,
+  rows: readonly R[],
+  numbered: () => NumberedPage<R>
+): Response {
+  const after = afterOf(url);
+  if (after !== null) {
+    return keysetResponse(url, after, owner, collection, rows);
+  }
+  const page = numbered();
+  const body: NumberedPage<R> & Pick<TagListDocument, 'included'> = {
+    ...page,
+    ...includedOf(url, owner, collection, page.data),
+  };
+  return HttpResponse.json(body);
+}
+
+/**
+ * Page `page` of `rows` in revision order (newest first with
+ * `sort=-date_updated`), `page[size]` to a page (50 by default, 100 at
+ * most), as the API numbers them; the API's 404 for a page there is not.
+ */
+function revisionPage<R extends Row>(
+  url: URL,
+  rows: readonly R[],
+  page: number
+): NumberedPage<R> {
+  const sorted = [...rows].sort(byRevision);
+  if (url.searchParams.get('sort') === '-date_updated') {
+    sorted.reverse();
+  }
+  const size = Math.min(
+    Number(url.searchParams.get('page[size]') ?? 50) || 50,
+    100
+  );
+  const pages = Math.max(1, Math.ceil(sorted.length / size));
+  if (!Number.isInteger(page) || page < 1 || page > pages) {
+    throw apiError(404, CODES.notFound, 'Invalid page.');
+  }
+  return {
+    ...pagination(url.href, page, pages, sorted.length),
+    data: sorted.slice((page - 1) * size, page * size),
+  };
+}
+
 /**
  * The signed-in user's own lists take no username filter: refused as an
  * invalid filter, as the API refuses it (400).
@@ -728,7 +825,7 @@ const booleanFilter = (url: URL, name: string) => {
  * Whether `resource` passes `filter[date_updated.gt]`, when given: a revision
  * strictly newer (by the timestamp alone, as the API compares).
  */
-const changedSince = (url: URL, resource: TagTextEntry | Tag | TextEntry) => {
+const changedSince = (url: URL, resource: Row) => {
   const since = url.searchParams.get('filter[date_updated.gt]');
   return (
     since === null ||
@@ -821,7 +918,7 @@ function adminDataOf(id: string): MockOwner {
   if (id === '7') {
     return {user: aliceUser, tags: aliceTags, state: aliceEntries, deleted: []};
   }
-  throw apiError(404, CODES.notFound, 'No AdminUser matches the given query.');
+  throw notFound('AdminUser');
 }
 
 // Public reads use the same owner models as admin reads, with filtered linkage.
@@ -916,67 +1013,39 @@ function publicOwner(username: string): {owner: MockOwner; revision: number} {
 function publicResponse(
   request: Request,
   username: string,
-  collection?: string
+  collection?: Collection
 ): Response {
-  recordRequest('GET', request.url);
-  try {
-    const {owner, revision} = publicOwner(username);
-    const expected = request.headers.get(PUBLIC_REVISION_HEADER);
-    const expectedOwner = request.headers.get(DATA_OWNER_ID_HEADER);
-    if (
-      (expected !== null && expected !== String(revision)) ||
-      (expectedOwner !== null && expectedOwner !== owner.user.id)
-    )
-      throw apiError(409, CODES.viewChanged, 'The public view changed.');
-    if (collection === undefined)
-      return HttpResponse.json({
-        data: {
-          type: 'DataOwner',
-          id: owner.user.id,
-          attributes: {username, access: 'public', public_revision: revision},
-        },
-      });
-    const url = new URL(request.url);
-    const tagId = url.searchParams.get('filter[tag.id]');
-    const rows: readonly (Tag | TextEntry | TagTextEntry)[] =
-      collection === 'tags'
-        ? owner.tags
-        : collection === 'entries'
-          ? owner.state.data
-          : junctionsOf(owner.state).filter(
-              j => tagId === null || j.relationships.tag.data.id === tagId
-            );
-    const paths = includePaths(
-      url,
-      collection === 'tags'
-        ? ['user']
-        : collection === 'entries'
-          ? ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user']
-          : ['user', 'tag', 'text_entry']
-    );
-    const after = afterOf(url);
-    if (after !== null) {
-      const {data, links} = keysetPage(url, rows, after);
-      return HttpResponse.json({
-        data,
-        links,
-        ...includedFor(owner.state, data, paths, owner),
-      });
-    }
-    const sorted = [...rows].sort(byRevision);
-    if (url.searchParams.get('sort') === '-date_updated') sorted.reverse();
-    const size = Math.min(
-      Number(url.searchParams.get('page[size]') ?? 50) || 50,
-      100
-    );
+  const {owner, revision} = publicOwner(username);
+  const expected = request.headers.get(PUBLIC_REVISION_HEADER);
+  const expectedOwner = request.headers.get(DATA_OWNER_ID_HEADER);
+  if (
+    (expected !== null && expected !== String(revision)) ||
+    (expectedOwner !== null && expectedOwner !== owner.user.id)
+  )
+    throw apiError(409, CODES.viewChanged, 'The public view changed.');
+  if (collection === undefined)
     return HttpResponse.json({
-      ...onePage(request.url, sorted.length),
-      data: sorted.slice(0, size),
-      ...includedFor(owner.state, sorted.slice(0, size), paths, owner),
+      data: {
+        type: 'DataOwner',
+        id: owner.user.id,
+        attributes: {username, access: 'public', public_revision: revision},
+      },
     });
-  } catch (error) {
-    return errorResponse(error);
-  }
+  const url = new URL(request.url);
+  const tagId = url.searchParams.get('filter[tag.id]');
+  const rows: readonly Row[] =
+    collection === 'tags'
+      ? owner.tags
+      : collection === 'entries'
+        ? owner.state.data
+        : junctionsOf(owner.state).filter(
+            j => tagId === null || j.relationships.tag.data.id === tagId
+          );
+  // The first page, counted as the only one.
+  return collectionResponse(url, owner, collection, rows, () => ({
+    ...onePage(url.href, rows.length),
+    data: revisionPage(url, rows, 1).data,
+  }));
 }
 
 // The reorders made, by the id the client named each by: a retry is made
@@ -1070,10 +1139,10 @@ const listDocument = <T>(url: string, data: T[]) => ({
   data,
 });
 
-const apiBaseUrls = [
-  'http://localhost:9001/api/v1',
-  'https://api-staging.commandsnippets.com/api/v1',
-  'https://api.commandsnippets.com/api/v1',
+const apiHosts = [
+  'http://localhost:9001',
+  'https://api-staging.commandsnippets.com',
+  'https://api.commandsnippets.com',
 ] as const;
 
 /** The user the mock API is signed in as (what `/user/` answers). */
@@ -1092,18 +1161,12 @@ function refuseAnotherUsersRequest(request: Request) {
   ) {
     return undefined;
   }
-  return HttpResponse.json(
-    {
-      errors: [
-        {
-          detail: 'The request is not signed in as the user it names.',
-          status: '409',
-          source: {pointer: '/data'},
-          code: CODES.userMismatch,
-        },
-      ],
-    },
-    {status: 409}
+  return errorResponse(
+    apiError(
+      409,
+      CODES.userMismatch,
+      'The request is not signed in as the user it names.'
+    )
   );
 }
 
@@ -1212,26 +1275,35 @@ function refuseAnotherVersion(request: Request) {
   if (named === null) {
     return request.method === 'GET'
       ? undefined
-      : HttpResponse.json(
-          errorDocument(
+      : errorResponse(
+          apiError(
             400,
             CODES.invalid,
             `${DATA_VERSION_HEADER} must name the data version a write was made against.`
-          ),
-          {status: 400}
+          )
         );
   }
   if (Number(named) === activeVersion) {
     return undefined;
   }
-  return HttpResponse.json(
-    errorDocument(
+  return errorResponse(
+    apiError(
       409,
       CODES.dataVersionChanged,
       'The data version changed. Sync the data again.'
-    ),
-    {status: 409}
+    )
   );
+}
+
+/** The data version numbered `named`, or the API's 404. */
+function versionNamed(named: string): MockVersion {
+  const version = versions.find(
+    candidate => String(candidate.version) === named
+  );
+  if (version === undefined) {
+    throw notFound('DataVersion');
+  }
+  return version;
 }
 
 /**
@@ -1299,13 +1371,6 @@ function backupOf(data: MockData = currentData()): Backup {
 }
 
 /**
- * Replace the signed-in user's data with `backup`'s, as the API does
- * (`POST /user/restore`): every junction, entry and tag soft-deleted (with
- * new revisions), then the backup's made anew, ranked after the user's (a
- * tag of a name the user has brought back in place), with the counters the
- * database's triggers keep. The mock keeps no reuses: they are only counted.
- */
-/**
  * Make `backup` the signed-in user's data, as the API does (`POST
  * /user/restore`): a new version, made active, of the backup's rows made
  * anew (new ids, the backup's order), with the counters the database's
@@ -1372,9 +1437,7 @@ function restoreBackup(backup: Backup): RestoreResult {
         subject: row.subject,
         body: row.body,
         date_created: row.date_created,
-        date_updated: nextRevision(
-          state.data.map(candidate => candidate.attributes.date_updated)
-        ),
+        date_updated: nextEntryRevision(state),
         is_public: row.is_public,
         reused_count: backup.entry_reuses.filter(
           reuse => reuse.text_entry_id === row.id
@@ -1424,11 +1487,42 @@ function restoreBackup(backup: Backup): RestoreResult {
   };
 }
 
+/** What a route's resolver is given: the request and its path parameters. */
+type RouteInfo = Parameters<HttpResponseResolver>[0];
+
+const methodHandlers = {
+  GET: http.get,
+  POST: http.post,
+  PATCH: http.patch,
+  DELETE: http.delete,
+};
+
+/**
+ * The handler of `method` requests to `path`: each request is counted
+ * (`requestCounter.ts`) before `resolve` answers it, and an API error it
+ * throws (`MockApiError`) is answered with its error document.
+ */
+function route(
+  method: keyof typeof methodHandlers,
+  path: string,
+  resolve: (info: RouteInfo) => Response | Promise<Response>
+) {
+  return methodHandlers[method](path, async info => {
+    recordRequest(method, info.request.url);
+    try {
+      return await resolve(info);
+    } catch (error) {
+      return errorResponse(error);
+    }
+  });
+}
+
 // Create handlers for all URLs
 const createHandlers = () => {
   const handlers = [];
 
-  for (const baseUrl of apiBaseUrls) {
+  for (const host of apiHosts) {
+    const baseUrl = `${host}/api/v1`;
     handlers.push(
       http.all(
         `${baseUrl}/*`,
@@ -1436,9 +1530,8 @@ const createHandlers = () => {
           refuseAnotherUsersRequest(request) ?? refuseAnotherVersion(request)
       ),
       // The signed-in user (read by the admin page)
-      http.get(`${baseUrl}/user/`, ({request}) => {
-        recordRequest('GET', request.url);
-        return HttpResponse.json({
+      route('GET', `${baseUrl}/user/`, () =>
+        HttpResponse.json({
           data: {
             type: 'User',
             id: '1',
@@ -1449,33 +1542,19 @@ const createHandlers = () => {
               data_version: activeVersion,
             },
           },
-        });
-      }),
+        })
+      ),
 
       // A version's backup: the active one's, or `?version=`'s.
-      http.get(`${baseUrl}/user/backup`, ({request}) => {
-        recordRequest('GET', request.url);
+      route('GET', `${baseUrl}/user/backup`, ({request}) => {
         const named = new URL(request.url).searchParams.get('version');
-        const version =
-          named === null
-            ? undefined
-            : versions.find(candidate => String(candidate.version) === named);
-        if (named !== null && version === undefined) {
-          return errorResponse(
-            apiError(
-              404,
-              CODES.notFound,
-              'No DataVersion matches the given query.'
-            )
-          );
-        }
+        const version = named === null ? undefined : versionNamed(named);
         return HttpResponse.json(backupOf(version?.saved ?? currentData()), {
           headers: {'Cache-Control': 'no-store'},
         });
       }),
       // The data versions: listed, made active, and deleted.
-      http.get(`${baseUrl}/user/data_versions`, ({request}) => {
-        recordRequest('GET', request.url);
+      route('GET', `${baseUrl}/user/data_versions`, () => {
         const body: DataVersionListDocument = {
           data: [...versions]
             .sort((a, b) => b.version - a.version)
@@ -1483,22 +1562,11 @@ const createHandlers = () => {
         };
         return HttpResponse.json(body);
       }),
-      http.post(
+      route(
+        'POST',
         `${baseUrl}/user/data_versions/:version/activate`,
-        ({request, params}) => {
-          recordRequest('POST', request.url);
-          const version = versions.find(
-            candidate => String(candidate.version) === params['version']
-          );
-          if (version === undefined) {
-            return errorResponse(
-              apiError(
-                404,
-                CODES.notFound,
-                'No DataVersion matches the given query.'
-              )
-            );
-          }
+        ({params}) => {
+          const version = versionNamed(String(params['version']));
           if (version.version !== activeVersion && version.saved !== null) {
             switchTo(version, version.saved);
           }
@@ -1508,72 +1576,54 @@ const createHandlers = () => {
           return HttpResponse.json(body);
         }
       ),
-      http.delete(
-        `${baseUrl}/user/data_versions/:version`,
-        ({request, params}) => {
-          recordRequest('DELETE', request.url);
-          const version = versions.find(
-            candidate => String(candidate.version) === params['version']
+      route('DELETE', `${baseUrl}/user/data_versions/:version`, ({params}) => {
+        const version = versionNamed(String(params['version']));
+        if (version.version === activeVersion) {
+          throw apiError(
+            400,
+            CODES.invalid,
+            'The active data version cannot be deleted.'
           );
-          if (version === undefined) {
-            return errorResponse(
-              apiError(
-                404,
-                CODES.notFound,
-                'No DataVersion matches the given query.'
-              )
-            );
-          }
-          if (version.version === activeVersion) {
-            return errorResponse(
-              apiError(
-                400,
-                CODES.invalid,
-                'The active data version cannot be deleted.'
-              )
-            );
-          }
-          versions = versions.filter(candidate => candidate !== version);
-          return new HttpResponse(null, {status: 204});
         }
-      ),
-      http.post(`${baseUrl}/user/restore`, async ({request}) => {
-        recordRequest('POST', request.url);
-        try {
-          const body: unknown = await request.json().catch(() => undefined);
-          const parsed = backupSchema.safeParse(body);
-          if (!parsed.success) {
-            const [issue] = parsed.error.issues;
-            const pointer = `/${(issue?.path ?? []).map(String).join('/')}`;
-            throw apiError(
-              400,
-              CODES.invalid,
-              `Invalid backup at ${pointer}: ${issue?.message ?? 'invalid'}`
-            );
-          }
-          return HttpResponse.json(restoreBackup(parsed.data), {
-            headers: {'Cache-Control': 'no-store'},
-          });
-        } catch (error) {
-          return errorResponse(error);
+        versions = versions.filter(candidate => candidate !== version);
+        return new HttpResponse(null, {status: 204});
+      }),
+      route('POST', `${baseUrl}/user/restore`, async ({request}) => {
+        const body: unknown = await request.json().catch(() => undefined);
+        const parsed = backupSchema.safeParse(body);
+        if (!parsed.success) {
+          const [issue] = parsed.error.issues;
+          const pointer = `/${(issue?.path ?? []).map(String).join('/')}`;
+          throw apiError(
+            400,
+            CODES.invalid,
+            `Invalid backup at ${pointer}: ${issue?.message ?? 'invalid'}`
+          );
         }
+        return HttpResponse.json(restoreBackup(parsed.data), {
+          headers: {'Cache-Control': 'no-store'},
+        });
       }),
 
-      // Admin API
-      http.get(`${baseUrl}/users/:username`, ({request, params}) =>
+      // Public user data
+      route('GET', `${baseUrl}/users/:username`, ({request, params}) =>
         publicResponse(request, String(params['username']))
       ),
-      http.get(`${baseUrl}/users/:username/tags`, ({request, params}) =>
+      route('GET', `${baseUrl}/users/:username/tags`, ({request, params}) =>
         publicResponse(request, String(params['username']), 'tags')
       ),
-      http.get(`${baseUrl}/users/:username/entries`, ({request, params}) =>
+      route('GET', `${baseUrl}/users/:username/entries`, ({request, params}) =>
         publicResponse(request, String(params['username']), 'entries')
       ),
-      http.get(`${baseUrl}/users/:username/tags_entries`, ({request, params}) =>
-        publicResponse(request, String(params['username']), 'tags_entries')
+      route(
+        'GET',
+        `${baseUrl}/users/:username/tags_entries`,
+        ({request, params}) =>
+          publicResponse(request, String(params['username']), 'tags_entries')
       ),
-      http.get(`${baseUrl}/admin/users`, ({request}) => {
-        recordRequest('GET', request.url);
+
+      // Admin API
+      route('GET', `${baseUrl}/admin/users`, ({request}) => {
         const params = new URL(request.url).searchParams;
         const search = params.get('filter[search]')?.toLowerCase();
         const active = params.get('filter[is_active]');
@@ -1593,118 +1643,52 @@ const createHandlers = () => {
       // A user's data, read-only, as the admin API renders it: the same
       // pages as the owner-only lists (the sync's keyset reads, and the
       // newest junction).
-      http.get(`${baseUrl}/admin/users/:id/tags`, ({params, request}) => {
-        recordRequest('GET', request.url);
-        try {
-          const owner = adminDataOf(String(params['id']));
-          const url = new URL(request.url);
-          const rows = owner.tags.filter(tag => changedSince(url, tag));
-          const paths = includePaths(url, ['user']);
-          const after = afterOf(url);
-          if (after !== null) {
-            const {data, links} = keysetPage(url, rows, after);
-            const body: TagCursorListDocument = {
-              links,
-              data,
-              ...includedFor(owner.state, data, paths, owner),
-            };
-            return HttpResponse.json(body);
-          }
-          const body: TagListDocument = {
-            ...listDocument(request.url, rows),
-            ...includedFor(owner.state, rows, paths, owner),
-          };
-          return HttpResponse.json(body);
-        } catch (error) {
-          return errorResponse(error);
-        }
+      route('GET', `${baseUrl}/admin/users/:id/tags`, ({params, request}) => {
+        const owner = adminDataOf(String(params['id']));
+        const url = new URL(request.url);
+        const rows = owner.tags.filter(tag => changedSince(url, tag));
+        return collectionResponse(url, owner, 'tags', rows, () =>
+          listDocument(request.url, rows)
+        );
       }),
-      http.get(`${baseUrl}/admin/users/:id/entries`, ({params, request}) => {
-        recordRequest('GET', request.url);
-        try {
+      route(
+        'GET',
+        `${baseUrl}/admin/users/:id/entries`,
+        ({params, request}) => {
           const owner = adminDataOf(String(params['id']));
           const url = new URL(request.url);
           const rows = owner.state.data.filter(entry =>
             changedSince(url, entry)
           );
-          const paths = includePaths(url, [
-            'text_entry_to_tag',
-            'text_entry_to_tag.tag',
-            'user',
-          ]);
-          const after = afterOf(url);
-          if (after !== null) {
-            const {data, links} = keysetPage(url, rows, after);
-            const body: TextEntryCursorListDocument = {
-              links,
-              data,
-              ...includedFor(owner.state, data, paths, owner),
-            };
-            return HttpResponse.json(body);
-          }
-          const body: TextEntryListDocument = {
-            ...listDocument(request.url, rows),
-            ...includedFor(owner.state, rows, paths, owner),
-          };
-          return HttpResponse.json(body);
-        } catch (error) {
-          return errorResponse(error);
+          return collectionResponse(url, owner, 'entries', rows, () =>
+            listDocument(request.url, rows)
+          );
         }
-      }),
-      http.get(
+      ),
+      route(
+        'GET',
         `${baseUrl}/admin/users/:id/tags_entries`,
         ({params, request}) => {
-          recordRequest('GET', request.url);
-          try {
-            const owner = adminDataOf(String(params['id']));
-            const url = new URL(request.url);
-            const tagId = url.searchParams.get('filter[tag.id]');
-            const rows = [...junctionsOf(owner.state), ...owner.deleted].filter(
-              junction =>
-                changedSince(url, junction) &&
-                (tagId === null || junction.relationships.tag.data.id === tagId)
-            );
-            const paths = includePaths(url, ['user', 'tag', 'text_entry']);
-            const after = afterOf(url);
-            if (after !== null) {
-              const {data, links} = keysetPage(url, rows, after);
-              const body: TagTextEntryCursorListDocument = {
-                links,
-                data,
-                ...includedFor(owner.state, data, paths, owner),
-              };
-              return HttpResponse.json(body);
-            }
-            const sorted = [...rows].sort(byRevision);
-            if (url.searchParams.get('sort') === '-date_updated') {
-              sorted.reverse();
-            }
-            const size = Math.min(
-              Number(url.searchParams.get('page[size]') ?? 50) || 50,
-              100
-            );
-            const data = sorted.slice(0, size);
-            const body: TagTextEntryListDocument = {
-              ...pagination(
-                request.url,
-                1,
-                Math.max(1, Math.ceil(sorted.length / size)),
-                sorted.length
-              ),
-              data,
-              ...includedFor(owner.state, data, paths, owner),
-            };
-            return HttpResponse.json(body);
-          } catch (error) {
-            return errorResponse(error);
-          }
+          const owner = adminDataOf(String(params['id']));
+          const url = new URL(request.url);
+          const tagId = url.searchParams.get('filter[tag.id]');
+          const rows = [...junctionsOf(owner.state), ...owner.deleted].filter(
+            junction =>
+              changedSince(url, junction) &&
+              (tagId === null || junction.relationships.tag.data.id === tagId)
+          );
+          // The first page, whichever is asked for.
+          return collectionResponse(url, owner, 'tags_entries', rows, () =>
+            revisionPage(url, rows, 1)
+          );
         }
       ),
       // Deactivate, reactivate, or (un)mark for deletion, as the API does
       // (marking deactivates too); staff cannot do either to themselves.
-      http.patch(`${baseUrl}/admin/users/:id`, async ({params, request}) => {
-        recordRequest('PATCH', request.url);
-        try {
+      route(
+        'PATCH',
+        `${baseUrl}/admin/users/:id`,
+        async ({params, request}) => {
           const user = findOr404(adminUsers, String(params['id']), 'AdminUser');
           const {attributes} = await parseResource(request, {
             type: 'AdminUser',
@@ -1762,20 +1746,16 @@ const createHandlers = () => {
             ? (user.date_marked_for_deletion ?? '2026-09-28T12:00:00.000000')
             : null;
           return HttpResponse.json({data: adminUserResource(user)});
-        } catch (error) {
-          return errorResponse(error);
         }
-      }),
-      http.get(`${baseUrl}/admin/audit_log`, ({request}) => {
-        recordRequest('GET', request.url);
-        return HttpResponse.json(
+      ),
+      route('GET', `${baseUrl}/admin/audit_log`, ({request}) =>
+        HttpResponse.json(
           listDocument(request.url, adminAuditLog.map(adminAuditLogResource))
-        );
-      }),
+        )
+      ),
 
       // Health check endpoint
-      http.get(`${baseUrl}/health`, ({request}) => {
-        recordRequest('GET', request.url);
+      route('GET', `${baseUrl}/health`, () => {
         console.log('OK: MSW intercepted health check request');
         return HttpResponse.json(
           {status: 'ok'},
@@ -1786,36 +1766,23 @@ const createHandlers = () => {
       }),
 
       // Tags endpoint (with optional query parameters)
-      http.get(`${baseUrl}/tags`, req => {
-        recordRequest('GET', req.request.url);
-        console.log('OK: MSW intercepted tags request:', req.request.url);
-        const url = new URL(req.request.url);
-        try {
-          refuseUsernameFilter(url);
-          // A keyset page, as the API renders it (the sync's reads).
-          const after = afterOf(url);
-          if (after !== null) {
-            const {data, links} = keysetPage(
-              url,
-              tags.filter(tag => changedSince(url, tag)),
-              after
-            );
-            const body: TagCursorListDocument = {
-              links,
-              data,
-              ...includedFor(
-                activeEntries(),
-                data,
-                includePaths(url, ['user'])
-              ),
-            };
-            return HttpResponse.json(body, {status: 200});
-          }
-        } catch (error) {
-          return errorResponse(error);
+      route('GET', `${baseUrl}/tags`, ({request}) => {
+        console.log('OK: MSW intercepted tags request:', request.url);
+        const url = new URL(request.url);
+        refuseUsernameFilter(url);
+        // A keyset page, as the API renders it (the sync's reads).
+        const after = afterOf(url);
+        if (after !== null) {
+          return keysetResponse(
+            url,
+            after,
+            testOwner(),
+            'tags',
+            tags.filter(tag => changedSince(url, tag))
+          );
         }
         const tagsResponse: TagListDocument = {
-          ...listDocument(req.request.url, tags),
+          ...listDocument(request.url, tags),
           included: [testUser],
         };
         return HttpResponse.json(tagsResponse, {
@@ -1827,192 +1794,137 @@ const createHandlers = () => {
       // bringing back a deleted one), as the API does; a create naming a
       // client id a tag has answers with that tag, whatever it is called now,
       // as its first attempt was answered (201 when that attempt made it)
-      http.post(`${baseUrl}/tags`, async ({request}) => {
-        recordRequest('POST', request.url);
+      route('POST', `${baseUrl}/tags`, async ({request}) => {
         console.log('OK: MSW intercepted tags POST request');
-        try {
-          const {attributes} = await parseResource(request, {type: 'Tag'});
-          const {name, client_id: clientId} = validateFields(
-            tagCreateAttributesSchema,
-            attributes
-          );
-          const answered =
-            clientId === undefined ? undefined : tagsByClientId.get(clientId);
-          const made =
-            clientId === undefined
-              ? undefined
-              : tags.find(
-                  candidate =>
-                    candidate.attributes.client_id === clientId ||
-                    candidate.id === answered
-                );
-          if (made !== undefined) {
-            const again: TagDocument = {data: made, included: [testUser]};
-            return HttpResponse.json(again, {
-              status: made.attributes.client_id === clientId ? 201 : 200,
-            });
-          }
-          let tag = tags.find(candidate => candidate.attributes.name === name);
-          if (tag !== undefined && clientId !== undefined) {
-            tagsByClientId.set(clientId, tag.id);
-          }
-          const isNew = tag === undefined;
-          if (tag === undefined) {
-            const created = now();
-            tag = {
-              type: 'Tag',
-              id: nextId('Tag', tags),
-              attributes: {
-                name,
-                date_updated: nextTagRevision(),
-                date_created: created,
-                date_last_used: created,
-                is_deleted: false,
-                is_public: false,
-                entry_count: 0,
-                order:
-                  Math.max(-1, ...tags.map(other => other.attributes.order)) +
-                  1,
-                client_id: clientId ?? null,
-              },
-              relationships: ownedByTestUser,
-            };
-            tags = [...tags, tag];
-          } else if (tag.attributes.is_deleted) {
-            tag.attributes = {
-              ...tag.attributes,
-              is_deleted: false,
-              date_updated: nextTagRevision(),
-            };
-          }
-          const body: TagDocument = {data: tag, included: [testUser]};
-          return HttpResponse.json(body, {status: isNew ? 201 : 200});
-        } catch (error) {
-          return errorResponse(error);
+        const {attributes} = await parseResource(request, {type: 'Tag'});
+        const {name, client_id: clientId} = validateFields(
+          tagCreateAttributesSchema,
+          attributes
+        );
+        const answered =
+          clientId === undefined ? undefined : tagsByClientId.get(clientId);
+        const made =
+          clientId === undefined
+            ? undefined
+            : tags.find(
+                candidate =>
+                  candidate.attributes.client_id === clientId ||
+                  candidate.id === answered
+              );
+        if (made !== undefined) {
+          const again: TagDocument = {data: made, included: [testUser]};
+          return HttpResponse.json(again, {
+            status: made.attributes.client_id === clientId ? 201 : 200,
+          });
         }
+        let tag = tags.find(candidate => candidate.attributes.name === name);
+        if (tag !== undefined && clientId !== undefined) {
+          tagsByClientId.set(clientId, tag.id);
+        }
+        const isNew = tag === undefined;
+        if (tag === undefined) {
+          const created = now();
+          tag = {
+            type: 'Tag',
+            id: nextId('Tag', tags),
+            attributes: {
+              name,
+              date_updated: nextTagRevision(),
+              date_created: created,
+              date_last_used: created,
+              is_deleted: false,
+              is_public: false,
+              entry_count: 0,
+              order:
+                Math.max(-1, ...tags.map(other => other.attributes.order)) + 1,
+              client_id: clientId ?? null,
+            },
+            relationships: ownedByTestUser,
+          };
+          tags = [...tags, tag];
+        } else if (tag.attributes.is_deleted) {
+          tag.attributes = {
+            ...tag.attributes,
+            is_deleted: false,
+            date_updated: nextTagRevision(),
+          };
+        }
+        const body: TagDocument = {data: tag, included: [testUser]};
+        return HttpResponse.json(body, {status: isNew ? 201 : 200});
       }),
 
       // One tag, or one entry (deleted ones too)
-      http.get(`${baseUrl}/tags/:id`, ({params, request}) => {
-        recordRequest('GET', request.url);
-        try {
-          const tag = findOr404(tags, String(params['id']), 'Tag');
-          const body: TagDocument = {data: tag, included: [testUser]};
-          return HttpResponse.json(body);
-        } catch (error) {
-          return errorResponse(error);
-        }
+      route('GET', `${baseUrl}/tags/:id`, ({params}) => {
+        const tag = findOr404(tags, String(params['id']), 'Tag');
+        const body: TagDocument = {data: tag, included: [testUser]};
+        return HttpResponse.json(body);
       }),
-      http.get(`${baseUrl}/entries/:id`, ({params, request}) => {
-        recordRequest('GET', request.url);
-        try {
-          const state = activeEntries();
-          const entry = findOr404(
-            state.data,
-            String(params['id']),
-            'TextEntry'
-          );
-          const body: TextEntryDocument = {
-            data: entry,
-            ...includedFor(
-              state,
-              [entry],
-              ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user']
-            ),
-          };
-          return HttpResponse.json(body);
-        } catch (error) {
-          return errorResponse(error);
-        }
+      route('GET', `${baseUrl}/entries/:id`, ({params}) => {
+        const state = activeEntries();
+        const entry = findOr404(state.data, String(params['id']), 'TextEntry');
+        return HttpResponse.json(entryDocument(state, entry));
       }),
 
       // Rename or (un)delete a tag: the attributes sent, and a new revision
-      http.patch(`${baseUrl}/tags/:id`, async ({params, request}) => {
-        recordRequest('PATCH', request.url);
+      route('PATCH', `${baseUrl}/tags/:id`, async ({params, request}) => {
         console.log('OK: MSW intercepted tag PATCH request:', request.url);
-        try {
-          const tag = findOr404(tags, String(params['id']), 'Tag');
-          const {attributes} = await parseResource(request, {
-            type: 'Tag',
-            id: tag.id,
-          });
-          const changes = validateFields(tagUpdateAttributesSchema, attributes);
-          // A user's tags have unique names, the deleted ones' included.
-          if (
-            tags.some(
-              other =>
-                other.id !== tag.id && other.attributes.name === changes.name
-            )
-          ) {
-            throw apiError(
-              400,
-              CODES.unique,
-              'The fields name, user must make a unique set.'
-            );
-          }
-          tag.attributes = {
-            ...tag.attributes,
-            ...(changes.name === undefined ? {} : {name: changes.name}),
-            ...(changes.is_public === undefined
-              ? {}
-              : {is_public: changes.is_public}),
-            ...(changes.is_deleted === undefined
-              ? {}
-              : {is_deleted: changes.is_deleted}),
-            date_updated: nextRevision(
-              tags.map(candidate => candidate.attributes.date_updated)
-            ),
-          };
-          const body: TagDocument = {data: tag, included: [testUser]};
-          return HttpResponse.json(body, {status: 200});
-        } catch (error) {
-          return errorResponse(error);
+        const tag = findOr404(tags, String(params['id']), 'Tag');
+        const {attributes} = await parseResource(request, {
+          type: 'Tag',
+          id: tag.id,
+        });
+        const changes = validateFields(tagUpdateAttributesSchema, attributes);
+        // A user's tags have unique names, the deleted ones' included.
+        if (
+          tags.some(
+            other =>
+              other.id !== tag.id && other.attributes.name === changes.name
+          )
+        ) {
+          throw apiError(
+            400,
+            CODES.unique,
+            'The fields name, user must make a unique set.'
+          );
         }
+        tag.attributes = {
+          ...tag.attributes,
+          ...(changes.name === undefined ? {} : {name: changes.name}),
+          ...(changes.is_public === undefined
+            ? {}
+            : {is_public: changes.is_public}),
+          ...(changes.is_deleted === undefined
+            ? {}
+            : {is_deleted: changes.is_deleted}),
+          date_updated: nextTagRevision(),
+        };
+        const body: TagDocument = {data: tag, included: [testUser]};
+        return HttpResponse.json(body, {status: 200});
       }),
 
       // Entries endpoint (with optional query parameters)
-      http.get(`${baseUrl}/entries`, req => {
-        recordRequest('GET', req.request.url);
-
-        try {
-          // A keyset page, as the API renders it (the sync's reads): deleted
-          // entries too, filtered by tag, deletion and revision.
-          const url = new URL(req.request.url);
-          refuseUsernameFilter(url);
-          const after = afterOf(url);
-          if (after !== null) {
-            const state = activeEntries();
-            const tagId = url.searchParams.get('filter[tags.id]');
-            const deleted = booleanFilter(url, 'is_deleted');
-            const rows = state.data.filter(
-              entry =>
-                changedSince(url, entry) &&
-                (deleted === null || entry.attributes.is_deleted === deleted) &&
-                (tagId === null ||
-                  junctionsOf(state).some(
-                    junction =>
-                      junction.relationships.text_entry.data.id === entry.id &&
-                      junction.relationships.tag.data.id === tagId
-                  ))
-            );
-            const {data, links} = keysetPage(url, rows, after);
-            const body: TextEntryCursorListDocument = {
-              links,
-              data,
-              ...includedFor(
-                state,
-                data,
-                includePaths(url, [
-                  'text_entry_to_tag',
-                  'text_entry_to_tag.tag',
-                  'user',
-                ])
-              ),
-            };
-            return HttpResponse.json(body, {status: 200});
-          }
-        } catch (error) {
-          return errorResponse(error);
+      route('GET', `${baseUrl}/entries`, ({request}) => {
+        // A keyset page, as the API renders it (the sync's reads): deleted
+        // entries too, filtered by tag, deletion and revision.
+        const url = new URL(request.url);
+        refuseUsernameFilter(url);
+        const after = afterOf(url);
+        if (after !== null) {
+          const state = activeEntries();
+          const tagId = url.searchParams.get('filter[tags.id]');
+          const deleted = booleanFilter(url, 'is_deleted');
+          const rows = state.data.filter(
+            entry =>
+              changedSince(url, entry) &&
+              (deleted === null || entry.attributes.is_deleted === deleted) &&
+              (tagId === null ||
+                junctionsOf(state).some(
+                  junction =>
+                    junction.relationships.text_entry.data.id === entry.id &&
+                    junction.relationships.tag.data.id === tagId
+                ))
+          );
+          return keysetResponse(url, after, testOwner(), 'entries', rows);
         }
 
         // Use runtime override if available, otherwise use default entries
@@ -2020,7 +1932,6 @@ const createHandlers = () => {
           runtimeEntriesOverride || entriesResponse;
 
         // Handle date filtering if specified
-        const url = new URL(req.request.url);
         const dateFilter = url.searchParams.get('filter[date_updated.gt]');
 
         if (dateFilter && runtimeEntriesOverride) {
@@ -2053,7 +1964,7 @@ const createHandlers = () => {
         }
 
         const body: TextEntryListDocument = {
-          ...onePage(req.request.url, responseData.data.length),
+          ...onePage(request.url, responseData.data.length),
           ...responseData,
         };
         return HttpResponse.json(body, {
@@ -2063,73 +1974,59 @@ const createHandlers = () => {
 
       // Create an entry from the attributes sent (untagged: tagging it is
       // POST /tags_entries)
-      http.post(`${baseUrl}/entries`, async ({request}) => {
-        recordRequest('POST', request.url);
+      route('POST', `${baseUrl}/entries`, async ({request}) => {
         console.log('OK: MSW intercepted entries POST request');
-        try {
-          const state = activeEntries();
-          const {attributes} = await parseResource(request, {
-            type: 'TextEntry',
+        const state = activeEntries();
+        const {attributes} = await parseResource(request, {
+          type: 'TextEntry',
+        });
+        const {
+          subject,
+          body,
+          client_id: clientId,
+        } = validateFields(textEntryCreateAttributesSchema, attributes);
+        const existing =
+          clientId === undefined
+            ? undefined
+            : state.data.find(
+                candidate => candidate.attributes.client_id === clientId
+              );
+        if (existing !== undefined) {
+          // As the API answers: with the entry's junctions and tags.
+          return HttpResponse.json(entryDocument(state, existing), {
+            status: 201,
           });
-          const {
-            subject,
-            body,
-            client_id: clientId,
-          } = validateFields(textEntryCreateAttributesSchema, attributes);
-          const existing =
-            clientId === undefined
-              ? undefined
-              : state.data.find(
-                  candidate => candidate.attributes.client_id === clientId
-                );
-          if (existing !== undefined) {
-            // As the API answers: with the entry's junctions and tags.
-            const again: TextEntryDocument = {
-              data: existing,
-              ...includedFor(
-                state,
-                [existing],
-                ['text_entry_to_tag', 'text_entry_to_tag.tag', 'user']
-              ),
-            };
-            return HttpResponse.json(again, {status: 201});
-          }
-          const entry: TextEntry = {
-            type: 'TextEntry',
-            id: nextId('TextEntry', state.data),
-            attributes: {
-              body,
-              subject,
-              date_updated: nextRevision(
-                state.data.map(candidate => candidate.attributes.date_updated)
-              ),
-              date_created: now(),
-              is_public: false,
-              reused_count: 0,
-              is_deleted: false,
-              tag_count: 0,
-              client_id: clientId ?? null,
-            },
-            relationships: {
-              ...ownedByTestUser,
-              text_entry_to_tag: {data: [], meta: {count: 0}},
-            },
-          };
-          state.data = [...state.data, entry];
-          const newEntry: TextEntryDocument = {
-            data: entry,
-            included: [testUser],
-          };
-          return HttpResponse.json(newEntry, {status: 201});
-        } catch (error) {
-          return errorResponse(error);
         }
+        const entry: TextEntry = {
+          type: 'TextEntry',
+          id: nextId('TextEntry', state.data),
+          attributes: {
+            body,
+            subject,
+            date_updated: nextEntryRevision(state),
+            date_created: now(),
+            is_public: false,
+            reused_count: 0,
+            is_deleted: false,
+            tag_count: 0,
+            client_id: clientId ?? null,
+          },
+          relationships: {
+            ...ownedByTestUser,
+            text_entry_to_tag: {data: [], meta: {count: 0}},
+          },
+        };
+        state.data = [...state.data, entry];
+        const newEntry: TextEntryDocument = {
+          data: entry,
+          included: [testUser],
+        };
+        return HttpResponse.json(newEntry, {status: 201});
       }),
 
       // One entry's or the whole profile's reuses, newest first with
       // `sort=-date_created`, a page at a time, as the API lists them.
-      http.get(`${baseUrl}/entry_reuses`, ({request}) => {
-        recordRequest('GET', request.url);
+      route('GET', `${baseUrl}/entry_reuses`, ({request}) => {
         const url = new URL(request.url);
         const entryId = url.searchParams.get('filter[text_entry.id]');
         const descending = url.searchParams.get('sort') === '-date_created';
@@ -2167,309 +2064,226 @@ const createHandlers = () => {
       // Record a reuse: the entry's reused_count goes up (as the API's trigger
       // does), its revision stays. A client id already recorded answers with
       // its reuse, counted once.
-      http.post(`${baseUrl}/entry_reuses`, async ({request}) => {
-        recordRequest('POST', request.url);
-        try {
-          const state = activeEntries();
-          const {attributes, relationships} = await parseResource(request, {
-            type: 'TextEntryReused',
-          });
-          const {client_id: clientId} = validateFields(
-            textEntryReusedCreateAttributesSchema,
-            attributes
-          );
-          const errors: ErrorObject[] = [];
-          const entryId = relatedId(
-            textEntryReusedCreateRelationshipsSchema.shape.text_entry,
-            'text_entry',
-            relationships,
-            id => state.data.some(entry => entry.id === id),
-            errors
-          );
-          if (entryId === undefined) {
-            throw new MockApiError(400, errors);
-          }
-          let recorded =
-            clientId === undefined
-              ? undefined
-              : reuses.find(candidate => candidate.clientId === clientId)
-                  ?.reuse;
-          if (recorded === undefined) {
-            recorded = {
-              type: 'TextEntryReused',
-              id: nextId(
-                'TextEntryReused',
-                reuses.map(({reuse}) => reuse)
-              ),
-              // After every reuse before it, as the API's clock never repeats.
-              attributes: {
-                date_created: nextRevision(
-                  reuses.map(({reuse}) => reuse.attributes.date_created)
-                ),
-              },
-              relationships: {
-                text_entry: {data: {type: 'TextEntry', id: entryId}},
-                ...ownedByTestUser,
-              },
-            };
-            reuses = [...reuses, {reuse: recorded, clientId: clientId ?? null}];
-            state.data = state.data.map(entry =>
-              entry.id === entryId
-                ? {
-                    ...entry,
-                    attributes: {
-                      ...entry.attributes,
-                      reused_count: entry.attributes.reused_count + 1,
-                    },
-                  }
-                : entry
-            );
-          }
-          const reusedId = recorded.relationships.text_entry.data.id;
-          const include = new URL(request.url).searchParams.get('include');
-          const body: TextEntryReusedDocument = {
-            data: recorded,
-            ...(include?.split(',').includes('text_entry')
-              ? {included: state.data.filter(entry => entry.id === reusedId)}
-              : {}),
-          };
-          return HttpResponse.json(body, {status: 201});
-        } catch (error) {
-          return errorResponse(error);
+      route('POST', `${baseUrl}/entry_reuses`, async ({request}) => {
+        const state = activeEntries();
+        const {attributes, relationships} = await parseResource(request, {
+          type: 'TextEntryReused',
+        });
+        const {client_id: clientId} = validateFields(
+          textEntryReusedCreateAttributesSchema,
+          attributes
+        );
+        const errors: ErrorObject[] = [];
+        const entryId = relatedId(
+          textEntryReusedCreateRelationshipsSchema.shape.text_entry,
+          'text_entry',
+          relationships,
+          id => state.data.some(entry => entry.id === id),
+          errors
+        );
+        if (entryId === undefined) {
+          throw new MockApiError(400, errors);
         }
+        let recorded =
+          clientId === undefined
+            ? undefined
+            : reuses.find(candidate => candidate.clientId === clientId)?.reuse;
+        if (recorded === undefined) {
+          recorded = {
+            type: 'TextEntryReused',
+            id: nextId(
+              'TextEntryReused',
+              reuses.map(({reuse}) => reuse)
+            ),
+            // After every reuse before it, as the API's clock never repeats.
+            attributes: {
+              date_created: nextRevision(
+                reuses.map(({reuse}) => reuse.attributes.date_created)
+              ),
+            },
+            relationships: {
+              text_entry: {data: {type: 'TextEntry', id: entryId}},
+              ...ownedByTestUser,
+            },
+          };
+          reuses = [...reuses, {reuse: recorded, clientId: clientId ?? null}];
+          state.data = state.data.map(entry =>
+            entry.id === entryId
+              ? {
+                  ...entry,
+                  attributes: {
+                    ...entry.attributes,
+                    reused_count: entry.attributes.reused_count + 1,
+                  },
+                }
+              : entry
+          );
+        }
+        const reusedId = recorded.relationships.text_entry.data.id;
+        const include = new URL(request.url).searchParams.get('include');
+        const body: TextEntryReusedDocument = {
+          data: recorded,
+          ...(include?.split(',').includes('text_entry')
+            ? {included: state.data.filter(entry => entry.id === reusedId)}
+            : {}),
+        };
+        return HttpResponse.json(body, {status: 201});
       }),
 
       // Edit or (un)delete an entry: the attributes sent, and a new revision
       // (its tags' too)
-      http.patch(`${baseUrl}/entries/:id`, async ({params, request}) => {
-        recordRequest('PATCH', request.url);
+      route('PATCH', `${baseUrl}/entries/:id`, async ({params, request}) => {
         console.log('OK: MSW intercepted entry PATCH request:', request.url);
-        try {
-          const state = activeEntries();
-          const entry = findOr404(
-            state.data,
-            String(params['id']),
-            'TextEntry'
-          );
-          const {attributes} = await parseResource(request, {
-            type: 'TextEntry',
-            id: entry.id,
-          });
-          const changes = validateFields(
-            textEntryUpdateAttributesSchema,
-            attributes
-          );
-          entry.attributes = {
-            ...entry.attributes,
-            ...(changes.subject === undefined
-              ? {}
-              : {subject: changes.subject}),
-            ...(changes.body === undefined ? {} : {body: changes.body}),
-            ...(changes.is_public === undefined
-              ? {}
-              : {is_public: changes.is_public}),
-            ...(changes.is_deleted === undefined
-              ? {}
-              : {is_deleted: changes.is_deleted}),
-            date_updated: nextRevision(
-              state.data.map(candidate => candidate.attributes.date_updated)
-            ),
-          };
-          touchTagsOf(state, entry);
-          touchJunctionsOf(state, entry);
-          const body: TextEntryDocument = {
-            data: entry,
-            included: entryIncluded(state, entry),
-          };
-          return HttpResponse.json(body, {status: 200});
-        } catch (error) {
-          return errorResponse(error);
-        }
+        const state = activeEntries();
+        const entry = findOr404(state.data, String(params['id']), 'TextEntry');
+        const {attributes} = await parseResource(request, {
+          type: 'TextEntry',
+          id: entry.id,
+        });
+        const changes = validateFields(
+          textEntryUpdateAttributesSchema,
+          attributes
+        );
+        entry.attributes = {
+          ...entry.attributes,
+          ...(changes.subject === undefined ? {} : {subject: changes.subject}),
+          ...(changes.body === undefined ? {} : {body: changes.body}),
+          ...(changes.is_public === undefined
+            ? {}
+            : {is_public: changes.is_public}),
+          ...(changes.is_deleted === undefined
+            ? {}
+            : {is_deleted: changes.is_deleted}),
+          date_updated: nextEntryRevision(state),
+        };
+        touchTagsOf(state, entry);
+        touchJunctionsOf(state, entry);
+        return HttpResponse.json(entryDocument(state, entry), {status: 200});
       }),
 
       // The junctions, deleted ones too: numbered (newest first with
       // `sort=-date_updated`) or keyset pages, by tag, entry and deletion
-      http.get(`${baseUrl}/tags_entries`, ({request}) => {
-        recordRequest('GET', request.url);
-        try {
-          const url = new URL(request.url);
-          const state = activeEntries();
-          const tagId = url.searchParams.get('filter[tag.id]');
-          const entryId = url.searchParams.get('filter[text_entry.id]');
-          const deleted = booleanFilter(url, 'is_deleted');
-          const rows = allJunctions(state).filter(
-            junction =>
-              changedSince(url, junction) &&
-              (tagId === null ||
-                junction.relationships.tag.data.id === tagId) &&
-              (entryId === null ||
-                junction.relationships.text_entry.data.id === entryId) &&
-              (deleted === null || junction.attributes.is_deleted === deleted)
-          );
-          const paths = includePaths(url, ['user', 'tag', 'text_entry']);
-          const after = afterOf(url);
-          if (after !== null) {
-            const {data, links} = keysetPage(url, rows, after);
-            const body: TagTextEntryCursorListDocument = {
-              links,
-              data,
-              ...includedFor(state, data, paths),
-            };
-            return HttpResponse.json(body, {status: 200});
-          }
-          const sorted = [...rows].sort(byRevision);
-          if (url.searchParams.get('sort') === '-date_updated') {
-            sorted.reverse();
-          }
-          const size = Math.min(
-            Number(url.searchParams.get('page[size]') ?? 50) || 50,
-            100
-          );
-          const page = Number(url.searchParams.get('page[number]') ?? 1);
-          const pages = Math.max(1, Math.ceil(sorted.length / size));
-          if (!Number.isInteger(page) || page < 1 || page > pages) {
-            throw apiError(404, CODES.notFound, 'Invalid page.');
-          }
-          const data = sorted.slice((page - 1) * size, page * size);
-          const body: TagTextEntryListDocument = {
-            ...pagination(request.url, page, pages, sorted.length),
-            data,
-            ...includedFor(state, data, paths),
-          };
-          return HttpResponse.json(body, {status: 200});
-        } catch (error) {
-          return errorResponse(error);
-        }
+      route('GET', `${baseUrl}/tags_entries`, ({request}) => {
+        const url = new URL(request.url);
+        const state = activeEntries();
+        const tagId = url.searchParams.get('filter[tag.id]');
+        const entryId = url.searchParams.get('filter[text_entry.id]');
+        const deleted = booleanFilter(url, 'is_deleted');
+        const rows = allJunctions(state).filter(
+          junction =>
+            changedSince(url, junction) &&
+            (tagId === null || junction.relationships.tag.data.id === tagId) &&
+            (entryId === null ||
+              junction.relationships.text_entry.data.id === entryId) &&
+            (deleted === null || junction.attributes.is_deleted === deleted)
+        );
+        const page = Number(url.searchParams.get('page[number]') ?? 1);
+        return collectionResponse(url, testOwner(), 'tags_entries', rows, () =>
+          revisionPage(url, rows, page)
+        );
       }),
 
       // Tag an entry: get-or-create its junction with the tag (restoring the
       // pair's deleted one): 201 for a new junction, 200 for the one there is
-      http.post(`${baseUrl}/tags_entries`, async ({request}) => {
-        recordRequest('POST', request.url);
+      route('POST', `${baseUrl}/tags_entries`, async ({request}) => {
         console.log('OK: MSW intercepted tags_entries POST request');
-        try {
-          const state = activeEntries();
-          const {relationships} = await parseResource(request, {
-            type: 'TagTextEntryThroughModel',
-          });
-          const fields = tagTextEntryCreateRelationshipsSchema.shape;
-          const errors: ErrorObject[] = [];
-          const tagId = relatedId(
-            fields.tag,
-            'tag',
-            relationships,
-            id => tags.some(tag => tag.id === id),
-            errors
-          );
-          const entryId = relatedId(
-            fields.text_entry,
-            'text_entry',
-            relationships,
-            id => state.data.some(entry => entry.id === id),
-            errors
-          );
-          if (tagId === undefined || entryId === undefined) {
-            throw new MockApiError(400, errors);
-          }
-          const tag = findOr404(tags, tagId, 'Tag');
-          const entry = findOr404(state.data, entryId, 'TextEntry');
-          let junction = junctionsOf(state).find(
+        const state = activeEntries();
+        const {relationships} = await parseResource(request, {
+          type: 'TagTextEntryThroughModel',
+        });
+        const fields = tagTextEntryCreateRelationshipsSchema.shape;
+        const errors: ErrorObject[] = [];
+        const tagId = relatedId(
+          fields.tag,
+          'tag',
+          relationships,
+          id => tags.some(tag => tag.id === id),
+          errors
+        );
+        const entryId = relatedId(
+          fields.text_entry,
+          'text_entry',
+          relationships,
+          id => state.data.some(entry => entry.id === id),
+          errors
+        );
+        if (tagId === undefined || entryId === undefined) {
+          throw new MockApiError(400, errors);
+        }
+        const tag = findOr404(tags, tagId, 'Tag');
+        const entry = findOr404(state.data, entryId, 'TextEntry');
+        let junction = junctionsOf(state).find(
+          candidate =>
+            candidate.relationships.tag.data.id === tagId &&
+            candidate.relationships.text_entry.data.id === entryId
+        );
+        // New only when the pair has no junction, not even a deleted one
+        // (which tagging restores).
+        const fresh =
+          junction === undefined &&
+          !deletedJunctions.some(
             candidate =>
               candidate.relationships.tag.data.id === tagId &&
               candidate.relationships.text_entry.data.id === entryId
           );
-          // New only when the pair has no junction, not even a deleted one
-          // (which tagging restores).
-          const fresh =
-            junction === undefined &&
-            !deletedJunctions.some(
-              candidate =>
-                candidate.relationships.tag.data.id === tagId &&
-                candidate.relationships.text_entry.data.id === entryId
-            );
-          if (junction === undefined) {
-            junction = createJunction(state, tag, entry);
-          }
-          const body: TagTextEntryDocument = {
-            data: junction,
-            included: [tag, entry, testUser].sort(byTypeAndId),
-          };
-          return HttpResponse.json(body, {status: fresh ? 201 : 200});
-        } catch (error) {
-          return errorResponse(error);
+        if (junction === undefined) {
+          junction = createJunction(state, tag, entry);
         }
+        const body: TagTextEntryDocument = {
+          data: junction,
+          included: [tag, entry, testUser].sort(byTypeAndId),
+        };
+        return HttpResponse.json(body, {status: fresh ? 201 : 200});
       }),
 
       // Reorder: move `top` directly above `bottom`, 200 with no body
-      http.post(`${baseUrl}/tags_entries/reorder`, async ({request}) => {
-        recordRequest('POST', request.url);
-        try {
-          if (madeAlready(request)) {
-            return new HttpResponse(null, {status: 200});
-          }
-          const state = activeEntries();
-          // A deleted junction is out of the order.
-          const [top, bottom] = await reorderPair(
-            request,
-            'TagTextEntryThroughModel',
-            junctionsOf(state)
-          );
-          const scope = top.relationships.tag.data.id;
-          if (bottom.relationships.tag.data.id !== scope) {
-            throw apiError(
-              400,
-              CODES.invalid,
-              'top and bottom must share the same ordering scope.'
-            );
-          }
-          moveAbove(
-            junctionsOf(state).filter(
-              junction => junction.relationships.tag.data.id === scope
-            ),
-            top,
-            bottom,
-            nextJunctionRevision(state)
-          );
-          recordMade(request);
+      route('POST', `${baseUrl}/tags_entries/reorder`, async ({request}) => {
+        if (madeAlready(request)) {
           return new HttpResponse(null, {status: 200});
-        } catch (error) {
-          return errorResponse(error);
         }
+        const state = activeEntries();
+        // A deleted junction is out of the order.
+        const [top, bottom] = await reorderPair(
+          request,
+          'TagTextEntryThroughModel',
+          junctionsOf(state)
+        );
+        const scope = top.relationships.tag.data.id;
+        if (bottom.relationships.tag.data.id !== scope) {
+          throw apiError(
+            400,
+            CODES.invalid,
+            'top and bottom must share the same ordering scope.'
+          );
+        }
+        moveAbove(
+          junctionsOf(state).filter(
+            junction => junction.relationships.tag.data.id === scope
+          ),
+          top,
+          bottom,
+          nextJunctionRevision(state)
+        );
+        recordMade(request);
+        return new HttpResponse(null, {status: 200});
       }),
 
-      http.post(`${baseUrl}/tags/reorder`, async ({request}) => {
-        recordRequest('POST', request.url);
-        try {
-          if (madeAlready(request)) {
-            return new HttpResponse(null, {status: 200});
-          }
-          const [top, bottom] = await reorderPair(request, 'Tag', tags);
-          moveAbove(tags, top, bottom, nextTagRevision());
-          recordMade(request);
+      route('POST', `${baseUrl}/tags/reorder`, async ({request}) => {
+        if (madeAlready(request)) {
           return new HttpResponse(null, {status: 200});
-        } catch (error) {
-          return errorResponse(error);
         }
+        const [top, bottom] = await reorderPair(request, 'Tag', tags);
+        moveAbove(tags, top, bottom, nextTagRevision());
+        recordMade(request);
+        return new HttpResponse(null, {status: 200});
       }),
 
       // Delete tag endpoint with stateful behavior
-      http.delete(`${baseUrl}/tags/:id`, ({params, request}) => {
-        recordRequest('DELETE', request.url);
+      route('DELETE', `${baseUrl}/tags/:id`, ({params}) => {
         const tagId = `${params['id']}`;
         console.log('OK: MSW intercepted tag DELETE request for id:', tagId);
 
-        // Find the tag to delete
-        const tagToDelete = tags.find(tag => tag.id === tagId);
-        if (!tagToDelete) {
-          return HttpResponse.json(
-            errorDocument(
-              404,
-              CODES.notFound,
-              'No Tag matches the given query.'
-            ),
-            {status: 404}
-          );
-        }
+        const tagToDelete = findOr404(tags, tagId, 'Tag');
 
         // Tags are soft-deleted, with a new revision.
         tagToDelete.attributes = {
@@ -2486,8 +2300,7 @@ const createHandlers = () => {
       }),
 
       // Delete entry endpoint
-      http.delete(`${baseUrl}/entries/:id`, ({params, request}) => {
-        recordRequest('DELETE', request.url);
+      route('DELETE', `${baseUrl}/entries/:id`, ({params}) => {
         const entryId = `${params['id']}`;
         console.log(
           'OK: MSW intercepted entry DELETE request for id:',
@@ -2495,17 +2308,7 @@ const createHandlers = () => {
         );
 
         const state = activeEntries();
-        const entryToDelete = state.data.find(entry => entry.id === entryId);
-        if (!entryToDelete) {
-          return HttpResponse.json(
-            errorDocument(
-              404,
-              CODES.notFound,
-              'No TextEntry matches the given query.'
-            ),
-            {status: 404}
-          );
-        }
+        const entryToDelete = findOr404(state.data, entryId, 'TextEntry');
 
         // Entries are soft-deleted, with a new revision (their tags' and
         // junctions' too); the API answers with the deleted entry.
@@ -2522,70 +2325,47 @@ const createHandlers = () => {
       }),
 
       // Untag entry endpoint (tags_entries)
-      http.delete(`${baseUrl}/tags_entries/:id`, ({params, request}) => {
-        recordRequest('DELETE', request.url);
+      route('DELETE', `${baseUrl}/tags_entries/:id`, ({params}) => {
         const tagEntryId = `${params['id']}`;
         console.log(
           'OK: MSW intercepted untag (tags_entries) DELETE request for id:',
           tagEntryId
         );
-        try {
-          const state = activeEntries();
-          const active = junctionsOf(state).find(
-            junction => junction.id === tagEntryId
-          );
-          if (active !== undefined) {
-            deleteJunction(state, active);
-          }
-          // The junction, deleted: untagging one already untagged changes
-          // nothing, and is answered alike (a retried untag).
-          const junction = findOr404(
-            [...deletedJunctions].reverse(),
-            tagEntryId,
-            'TagTextEntryThroughModel'
-          );
-          const body: TagTextEntryDocument = {
-            data: junction,
-            ...includedFor(state, [junction], ['user', 'tag', 'text_entry']),
-          };
-          return HttpResponse.json(body, {status: 200});
-        } catch (error) {
-          return errorResponse(error);
+        const state = activeEntries();
+        const active = junctionsOf(state).find(
+          junction => junction.id === tagEntryId
+        );
+        if (active !== undefined) {
+          deleteJunction(state, active);
         }
+        // The junction, deleted: untagging one already untagged changes
+        // nothing, and is answered alike (a retried untag).
+        const junction = findOr404(
+          [...deletedJunctions].reverse(),
+          tagEntryId,
+          'TagTextEntryThroughModel'
+        );
+        const body: TagTextEntryDocument = {
+          data: junction,
+          ...includedFor(state, [junction], DEFAULT_INCLUDE.tags_entries),
+        };
+        return HttpResponse.json(body, {status: 200});
       })
     );
   }
 
   // Auth endpoint (different pattern): the API answers `{}`
-  handlers.push(
-    http.post('http://localhost:9001/api-token-deauth/', ({request}) => {
-      recordRequest('POST', request.url);
-      return (
-        refuseAnotherUsersRequest(request) ??
-        HttpResponse.json({}, {status: 200})
-      );
-    }),
-    http.post(
-      'https://api-staging.commandsnippets.com/api-token-deauth/',
-      ({request}) => {
-        recordRequest('POST', request.url);
-        return (
+  for (const host of apiHosts) {
+    handlers.push(
+      route(
+        'POST',
+        `${host}/api-token-deauth/`,
+        ({request}) =>
           refuseAnotherUsersRequest(request) ??
           HttpResponse.json({}, {status: 200})
-        );
-      }
-    ),
-    http.post(
-      'https://api.commandsnippets.com/api-token-deauth/',
-      ({request}) => {
-        recordRequest('POST', request.url);
-        return (
-          refuseAnotherUsersRequest(request) ??
-          HttpResponse.json({}, {status: 200})
-        );
-      }
-    )
-  );
+      )
+    );
+  }
 
   return handlers;
 };
