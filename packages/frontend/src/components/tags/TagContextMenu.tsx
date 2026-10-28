@@ -1,10 +1,10 @@
-import {Menu} from '@mui/material';
 import React, {useCallback} from 'react';
 import {useSession} from '../../lib/data/hooks';
 import {setTagPublic} from '../../lib/data/writes';
 import {appMode, type IMouse} from '../../lib/shared';
 import {useAppState} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
+import {ContextMenu} from '../ContextMenu';
 import {TagDeleteDialog} from './TagDeleteDialog';
 
 interface ITagContextMenuProps {
@@ -21,44 +21,6 @@ interface ITagContextMenuProps {
   deleteTagParent: () => void;
   handleBeginEditParent: () => void;
 }
-
-interface IStyledMenuProps {
-  id: string;
-  mousePosition: IMouse;
-  open: boolean;
-  onClose: () => void;
-  anchorReference: 'anchorPosition';
-  children: React.ReactNode;
-}
-
-/**
- * Not kept mounted: a closed menu renders nothing, so the tag list does not
- * carry a whole menu (in a portal of its own) for every tag.
- */
-const StyledMenu = ({
-  id,
-  mousePosition,
-  open,
-  onClose,
-  anchorReference,
-  children,
-}: IStyledMenuProps) => {
-  return (
-    <Menu
-      id={id}
-      open={open}
-      onClose={onClose}
-      anchorReference={anchorReference}
-      anchorPosition={
-        mousePosition.mouseY !== null && mousePosition.mouseX !== null
-          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : {top: 0, left: 0}
-      }
-    >
-      {children}
-    </Menu>
-  );
-};
 
 const TagContextMenu = ({
   id,
@@ -114,12 +76,10 @@ const TagContextMenu = ({
 
   return (
     <>
-      <StyledMenu
+      <ContextMenu
         id={`tagContextMenu-${id}`}
-        mousePosition={mouse}
-        open={mouse.mouseY !== null}
+        mouse={mouse}
         onClose={handleClose}
-        anchorReference="anchorPosition"
       >
         <StyledMenuItem
           id={`tag-context-menu-${id}-new-tag`}
@@ -152,7 +112,7 @@ const TagContextMenu = ({
         >
           {isPublic ? 'Make private' : 'Make public'}
         </StyledMenuItem>
-      </StyledMenu>
+      </ContextMenu>
       <TagDeleteDialog
         id={id}
         open={dialogOpen}

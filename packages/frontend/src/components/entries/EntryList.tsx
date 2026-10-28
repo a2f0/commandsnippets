@@ -17,6 +17,7 @@ import React, {
   useState,
 } from 'react';
 import {useDrop} from 'react-dnd';
+import {useContextMenu} from '../../hooks/useContextMenu';
 import {copyEntry} from '../../lib/data/copyEntry';
 import {NO_TAG_NAMES} from '../../lib/data/entryTags';
 import {
@@ -34,7 +35,7 @@ import {useRenderTiming} from '../../lib/metrics/hooks';
 import {listKey, listShown} from '../../lib/metrics/timings';
 import {useRouteParam, useSearchParam} from '../../lib/router/navigation';
 import {needsScrollingIntoView} from '../../lib/scroll';
-import {appMode, type IMouse, initialMouse} from '../../lib/shared';
+import {appMode} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
 import {Entry} from './Entry';
@@ -332,27 +333,13 @@ const EntryList = () => {
     drop(el);
   };
 
-  const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const mouseData: IMouse = {...mouse};
-    mouseData.mouseX = event.clientX - 2;
-    mouseData.mouseY = event.clientY - 4;
-    setMouse(mouseData);
-  };
-
   const onMouseDown = () => {
     appConfig.setEntrySelectedID('');
   };
 
-  const [mouse, setMouse] = useState(initialMouse);
+  const menu = useContextMenu();
 
   useRenderTiming('EntryList', renderStart, `${entries.length} rows`);
-
-  const contextMenu = useMemo(
-    () => <EntryListContextMenu mouse={mouse} />,
-    [mouse]
-  );
 
   /** The row of `element`, at `index` (measured and placed, in a long list). */
   const renderRow = (
@@ -448,12 +435,14 @@ const EntryList = () => {
         <EntryNew id="textEntryNewBottom" tagId={currentTag?.id} />
       )}
       <Box
-        onContextMenu={readOnly ? undefined : handleContextClick}
+        onContextMenu={readOnly ? undefined : menu.onContextMenu}
         sx={{
           flexGrow: '1',
         }}
       />
-      {appConfig.loggedInUser && !readOnly && <>{contextMenu}</>}
+      {appConfig.loggedInUser && !readOnly && (
+        <EntryListContextMenu mouse={menu.mouse} onClose={menu.close} />
+      )}
     </Box>
   );
 };

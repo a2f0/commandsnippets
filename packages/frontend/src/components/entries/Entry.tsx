@@ -2,8 +2,9 @@ import type {TextEntry} from '@commandsnippets/api-shared';
 import Check from '@mui/icons-material/Check';
 import FileCopySharp from '@mui/icons-material/FileCopySharp';
 import {styled} from '@mui/material/styles';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
+import {useContextMenu} from '../../hooks/useContextMenu';
 import {copyEntry} from '../../lib/data/copyEntry';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {
@@ -13,7 +14,7 @@ import {
   untagEntry,
 } from '../../lib/data/writes';
 import {useSearchParam} from '../../lib/router/navigation';
-import {appMode, getSelection, initialMouse} from '../../lib/shared';
+import {appMode, getSelection} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
@@ -108,7 +109,7 @@ const Entry = ({
   });
   const entriesFilter = useSearchParam('entries');
   const previewRef = useRef<HTMLDivElement>(null);
-  const [mouse, setMouse] = useState(initialMouse);
+  const menu = useContextMenu();
   const [isEditing, setIsEditing] = useState(false);
   const [{isDragging}, drag, preview] = useDrag<
     DraggableItem,
@@ -325,22 +326,6 @@ const Entry = ({
     [held, keepRendered, rowKey]
   );
 
-  const handleContextClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-      setMouse({
-        mouseX: event.clientX - 2,
-        mouseY: event.clientY - 4,
-      });
-    },
-    []
-  );
-
-  const closeContextMenu = useCallback(() => {
-    setMouse(initialMouse);
-  }, []);
-
   const handleNewEntry = useCallback(() => {
     appConfig.setEntryNew(`textEntry-${rowKey}-top`);
   }, [appConfig, rowKey]);
@@ -380,33 +365,6 @@ const Entry = ({
     copyToClipboard(textEntryObject.attributes.body);
   }, [copyToClipboard, textEntryObject.attributes.body]);
 
-  const contextMenu = useMemo(
-    () => (
-      <EntryContextMenu
-        mouse={mouse}
-        onClose={closeContextMenu}
-        id={id}
-        text_entry={textEntryObject}
-        handleRemoveFromListParent={handleRemoveFromList}
-        handleNewEntryParent={handleNewEntry}
-        handleBeginEditParent={handleBeginEdit}
-        handleCopyParent={handleCopyClick}
-        readOnly={readOnly}
-      />
-    ),
-    [
-      readOnly,
-      mouse,
-      closeContextMenu,
-      id,
-      textEntryObject,
-      handleRemoveFromList,
-      handleNewEntry,
-      handleBeginEdit,
-      handleCopyClick,
-    ]
-  );
-
   const handleBodyClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.preventDefault();
@@ -444,7 +402,7 @@ const Entry = ({
           role="entry"
           ref={dropRef}
           style={{opacity}}
-          onContextMenu={handleContextClick}
+          onContextMenu={menu.onContextMenu}
           id={`tagsEntries-${id}`}
         >
           <EntryContainer ref={previewBoxRef}>
@@ -518,7 +476,19 @@ const Entry = ({
         <EntryNew id={`textEntryNew-${object.id}-bottom`} tagId={tagId} />
       )}
 
-      {(appConfig.loggedInUser !== null || readOnly) && contextMenu}
+      {(appConfig.loggedInUser !== null || readOnly) && (
+        <EntryContextMenu
+          mouse={menu.mouse}
+          onClose={menu.close}
+          id={id}
+          text_entry={textEntryObject}
+          handleRemoveFromListParent={handleRemoveFromList}
+          handleNewEntryParent={handleNewEntry}
+          handleBeginEditParent={handleBeginEdit}
+          handleCopyParent={handleCopyClick}
+          readOnly={readOnly}
+        />
+      )}
 
       {isEditing && !readOnly && (
         <EntryEdit

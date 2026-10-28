@@ -2,8 +2,9 @@ import type {StyledComponent} from '@emotion/styled';
 import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {styled, useTheme} from '@mui/material/styles';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
+import {useContextMenu} from '../../hooks/useContextMenu';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {deleteTag as deleteStoredTag, reorderTags} from '../../lib/data/writes';
@@ -14,12 +15,7 @@ import {
   useRouteParam,
 } from '../../lib/router/navigation';
 import {needsScrollingIntoView} from '../../lib/scroll';
-import {
-  activeSearch,
-  appMode,
-  type IMouse,
-  initialMouse,
-} from '../../lib/shared';
+import {activeSearch, appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
@@ -276,7 +272,7 @@ const Tag = ({
     setShowDragHandle(false);
   };
 
-  const [mouse, setMouse] = useState(initialMouse);
+  const menu = useContextMenu();
   const [isEditing, setIsEditing] = useState(false);
 
   const handleCancelEdit = () => {
@@ -304,15 +300,6 @@ const Tag = ({
     setIsEditing(true);
   }, []);
 
-  const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const mouseData: IMouse = {...mouse};
-    mouseData.mouseX = event.clientX - 2;
-    mouseData.mouseY = event.clientY - 4;
-    setMouse(mouseData);
-  };
-
   const opacity = isDragging ? 0 : 1;
 
   const dragHandleRef = (el: HTMLDivElement | null) => {
@@ -328,31 +315,6 @@ const Tag = ({
   const previewRef = (el: HTMLDivElement | null) => {
     preview(el);
   };
-
-  const closeContextMenu = useCallback(() => {
-    setMouse(initialMouse);
-  }, []);
-
-  const contextMenu = useMemo(
-    () => (
-      <TagContextMenu
-        id={id}
-        isPublic={object.attributes.is_public}
-        mouse={mouse}
-        onClose={closeContextMenu}
-        deleteTagParent={deleteTag}
-        handleBeginEditParent={handleBeginEdit}
-      />
-    ),
-    [
-      id,
-      mouse,
-      object.attributes.is_public,
-      closeContextMenu,
-      deleteTag,
-      handleBeginEdit,
-    ]
-  );
 
   const handleTagClick = (object: ITagJsonApi): void => {
     beginInteraction('tag switch', listKey({tag: object.attributes.name}));
@@ -397,7 +359,7 @@ const Tag = ({
             <Box
               ref={dropBoxRef}
               style={{opacity}}
-              onContextMenu={readOnly ? undefined : handleContextClick}
+              onContextMenu={readOnly ? undefined : menu.onContextMenu}
               onClick={() => {
                 handleTagClick(object);
               }}
@@ -440,7 +402,16 @@ const Tag = ({
           </ListItemButton>
         </ListItem>
       )}
-      {appConfig.loggedInUser && !readOnly && <>{contextMenu}</>}
+      {appConfig.loggedInUser && !readOnly && (
+        <TagContextMenu
+          id={id}
+          isPublic={object.attributes.is_public}
+          mouse={menu.mouse}
+          onClose={menu.close}
+          deleteTagParent={deleteTag}
+          handleBeginEditParent={handleBeginEdit}
+        />
+      )}
       {isEditing && !readOnly && (
         <TagEdit
           object={tagObject}
