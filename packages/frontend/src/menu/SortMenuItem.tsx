@@ -1,4 +1,5 @@
-import {ArrowDownward, ArrowUpward} from '@mui/icons-material';
+import ArrowDownward from '@mui/icons-material/ArrowDownward';
+import ArrowUpward from '@mui/icons-material/ArrowUpward';
 import {ListItemIcon} from '@mui/material';
 import React from 'react';
 
