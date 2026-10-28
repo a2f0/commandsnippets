@@ -111,4 +111,36 @@ describe('Sorting the entries list from the Entries menu', () => {
     const item = await openSortItem('Sort by Subject', 'ArrowDownwardIcon');
     expect(within(item).getByTestId('CheckIcon')).toBeInTheDocument();
   });
+
+  it('sorts the all-entries list by tag count, ties by subject', async () => {
+    // The mock API's fixtures are all in tag 1: one in tag 2 as well, and
+    // two in no tag.
+    await apiClient.forVersion(1).tagEntry('2', '3');
+    await apiClient.forVersion(1).createEntry('entry-9-subject', 'body');
+    await apiClient.forVersion(1).createEntry('entry-8-subject', 'body');
+    renderApp('/test?entries=all');
+
+    await sortBy('Sort by Tag Count', 'ArrowDownwardIcon');
+    await expectListed([
+      'entry-3-subject',
+      ...ascending.filter(subject => subject !== 'entry-3-subject'),
+      'entry-8-subject',
+      'entry-9-subject',
+    ]);
+
+    await sortBy('Sort by Tag Count', 'ArrowUpwardIcon');
+    await expectListed([
+      'entry-8-subject',
+      'entry-9-subject',
+      ...ascending.filter(subject => subject !== 'entry-3-subject'),
+      'entry-3-subject',
+    ]);
+
+    const item = await openSortItem('Sort by Tag Count', 'ArrowUpwardIcon');
+    expect(item).toHaveAttribute(
+      'id',
+      'tagged-entries-menu-sort-tag-count-ascending'
+    );
+    expect(within(item).getByTestId('CheckIcon')).toBeInTheDocument();
+  });
 });

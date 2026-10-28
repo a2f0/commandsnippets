@@ -113,6 +113,20 @@ describe('sortEntries', () => {
     expect(sortEntries(texts, order, '').map(({id}) => id)).toEqual(expected);
   });
 
+  it.each([
+    ['tag_count', ['3', '1', '4', '2']],
+    ['-tag_count', ['2', '1', '4', '3']],
+  ])('sorts by %s, those with as many tags by subject', (order, expected) => {
+    // As IndexedDB may read them: those tied on tag count not by subject.
+    const counted = [
+      entry('4', {subject: 'Beta', tag_count: 1}),
+      entry('2', {subject: 'bravo', tag_count: 3}),
+      entry('3', {subject: 'charlie', tag_count: 0}),
+      entry('1', {subject: 'alpha', tag_count: 1}),
+    ];
+    expect(sortEntries(counted, order, '').map(({id}) => id)).toEqual(expected);
+  });
+
   it('sorts by the microsecond, as the API stamps them', () => {
     // One millisecond apart and less; the API gives six fractional digits.
     const close = [

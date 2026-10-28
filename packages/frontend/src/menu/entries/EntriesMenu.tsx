@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {useEntrySortOrder} from '../../hooks/useEntrySortOrder';
+import {useSearchParam} from '../../lib/router/navigation';
 import {StyledDivider} from '../../styled/StyledDivider';
 import {StyledMenu} from '../StyledMenu';
 import {AllEntries} from './menuItems/AllEntries';
@@ -23,11 +24,12 @@ interface IProps {
 }
 
 const EntriesMenu = ({onClose, anchorEl}: IProps) => {
-  // The subject, body and date created items sort the list on screen
-  // (useEntrySortOrder). The untagged and all-entries lists have no tag
-  // order, and the API, which sorts the all-entries list, cannot sort by tag
-  // count, so only a tag's list offers those sorts.
+  // The subject, body, date created and tag count items sort the list on
+  // screen (useEntrySortOrder). The untagged and all-entries lists have no
+  // tag order, so only a tag's list offers those sorts; the untagged list's
+  // entries all have no tags, so it has no tag count sort.
   const {tagList} = useEntrySortOrder();
+  const untaggedList = useSearchParam('entries') === 'untagged';
   return (
     <StyledMenu
       id="entries-menu"
@@ -49,7 +51,7 @@ const EntriesMenu = ({onClose, anchorEl}: IProps) => {
       <SortByBodyAscending onClose={onClose} />
       <SortByDateCreatedDescending onClose={onClose} />
       <SortByDateCreatedAscending onClose={onClose} />
-      {tagList && [
+      {!untaggedList && [
         <SortByTagCountDescending
           onClose={onClose}
           key="SortTagCountDescending"

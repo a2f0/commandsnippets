@@ -66,19 +66,26 @@ describe('EntriesMenu', () => {
     expect(checked.map(label)).toEqual(['Sort by User-Defined Order']);
   });
 
-  // They sort by entrySortOrder, and the API sorts the all-entries list: it
-  // has no tag-only sorts, and cannot sort by tag count.
-  it.each([untaggedList, allEntriesList])(
-    'offers the entry sorts on %s, checking none by default',
-    route => {
-      renderEntriesMenu(route);
-
-      const {labels, checked} = sortItems();
-      expect(labels).toEqual([
+  // They sort by entrySortOrder, with no tag-only sorts; the untagged
+  // list's entries all have no tags, so it has no tag count sort.
+  it.each([
+    [untaggedList, ['Sort by Subject', 'Sort by Body', 'Sort by Date Created']],
+    [
+      allEntriesList,
+      [
         'Sort by Subject',
         'Sort by Body',
         'Sort by Date Created',
-      ]);
+        'Sort by Tag Count',
+      ],
+    ],
+  ])(
+    'offers the entry sorts on %s, checking none by default',
+    (route, sorts) => {
+      renderEntriesMenu(route);
+
+      const {labels, checked} = sortItems();
+      expect(labels).toEqual(sorts);
       // The list sorts by date updated, which has no item.
       expect(checked).toEqual([]);
     }
@@ -108,4 +115,22 @@ describe('EntriesMenu', () => {
       expect(sortItems().checked).toEqual([bodyDescending()]);
     }
   );
+
+  it.each<[string, 'tagTextEntryThroughModelSortOrder' | 'entrySortOrder']>([
+    [tagList, 'tagTextEntryThroughModelSortOrder'],
+    [allEntriesList, 'entrySortOrder'],
+  ])('on %s sorts by tag count in %s', async (route, field) => {
+    renderEntriesMenu(route);
+    const [descending, ascending] = screen.getAllByRole('menuitem', {
+      name: 'Sort by Tag Count',
+    });
+    invariant(descending && ascending, 'no Sort by Tag Count items');
+    expect(within(descending).getByTestId('ArrowDownwardIcon')).toBeVisible();
+
+    await userEvent.click(descending);
+    expect(store[field]).toBe('-tag_count');
+
+    await userEvent.click(ascending);
+    expect(store[field]).toBe('tag_count');
+  });
 });
