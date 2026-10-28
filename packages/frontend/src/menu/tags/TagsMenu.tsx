@@ -1,39 +1,49 @@
 import React from 'react';
 
+import {useAppState} from '../../lib/state/appState';
+import {
+  type ISort,
+  type ISorting,
+  SortMenuItem,
+  sortMenuItems,
+} from '../SortMenuItem';
 import {StyledMenu} from '../StyledMenu';
-import {SortByDateCreatedAscending} from './menuItems/SortByDateCreatedAscending';
-import {SortByDateCreatedDescending} from './menuItems/SortByDateCreatedDescending';
-import {SortByDateLastUsedAscending} from './menuItems/SortByDateLastUsedAscending';
-import {SortByDateLastUsedDescending} from './menuItems/SortByDateLastUsedDescending';
-import {SortByEntryCountAscending} from './menuItems/SortByEntryCountAscending';
-import {SortByEntryCountDescending} from './menuItems/SortByEntryCountDescending';
-import {SortByNameAscending} from './menuItems/SortByNameAscending';
-import {SortByNameDescending} from './menuItems/SortByNameDescending';
-import {SortByUserDefinedOrder} from './menuItems/SortByUserDefinedOrder';
 
 interface IProps {
   onClose: () => void;
   anchorEl: HTMLElement | null;
 }
 
-const TagsMenu = ({onClose, anchorEl}: IProps) => (
-  <StyledMenu
-    id="tags-menu"
-    anchorEl={anchorEl}
-    open={Boolean(anchorEl)}
-    onClose={onClose}
-  >
-    <SortByUserDefinedOrder onClose={onClose} />
-    <SortByNameDescending onClose={onClose} />
-    <SortByNameAscending onClose={onClose} />
-    <SortByDateCreatedDescending onClose={onClose} />
-    <SortByDateCreatedAscending onClose={onClose} />
-    <SortByEntryCountDescending onClose={onClose} />
-    <SortByEntryCountAscending onClose={onClose} />
-    <SortByDateLastUsedDescending onClose={onClose} />
-    <SortByDateLastUsedAscending onClose={onClose} />
-  </StyledMenu>
-);
+/** The tag list's sorts after the user-defined order. */
+const SORTS: ISort[] = [
+  {field: 'name', label: 'sortByTagName'},
+  {field: 'date_created', label: 'sortByDateCreated'},
+  {field: 'entry_count', label: 'sortByEntryCount'},
+  {field: 'date_last_used', label: 'sortByDateLastUsed'},
+];
+
+const TagsMenu = ({onClose, anchorEl}: IProps) => {
+  const tagSortOrder = useAppState(state => state.tagSortOrder);
+  const setTagSortOrder = useAppState(state => state.setTagSortOrder);
+  const sorting: ISorting = {
+    idPrefix: 'tags-menu-sort',
+    current: tagSortOrder,
+    onSelect: setTagSortOrder,
+    onClose,
+  };
+
+  return (
+    <StyledMenu
+      id="tags-menu"
+      anchorEl={anchorEl}
+      open={Boolean(anchorEl)}
+      onClose={onClose}
+    >
+      <SortMenuItem field="order" label="sortByUserDefinedOrder" {...sorting} />
+      {sortMenuItems(SORTS, sorting)}
+    </StyledMenu>
+  );
+};
 
 const memoizedTagsMenu = React.memo(TagsMenu);
 
