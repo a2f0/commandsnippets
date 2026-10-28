@@ -24,11 +24,9 @@ const TagSearchField = () => {
   useEffect(() => {
     document.addEventListener('keydown', escFunction, false);
     document.addEventListener('visibilitychange', useVisibility, false);
-    document.addEventListener('focus', useWindowFocus, false);
     return () => {
-      document.addEventListener('keydown', escFunction, false);
+      document.removeEventListener('keydown', escFunction, false);
       document.removeEventListener('visibilitychange', useVisibility, false);
-      document.removeEventListener('focus', useWindowFocus, false);
     };
   }, []);
 
@@ -44,12 +42,6 @@ const TagSearchField = () => {
         inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
       }
     }
-  }, []);
-
-  const useWindowFocus = useCallback(() => {
-    console.info('useWindowFocus');
-    inputRef.current?.focus();
-    inputRef.current?.setSelectionRange(0, inputRef.current?.value.length);
   }, []);
 
   const setTextInputRef = (element: HTMLInputElement) => {
