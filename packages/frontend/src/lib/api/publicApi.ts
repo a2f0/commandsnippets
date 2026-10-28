@@ -54,7 +54,8 @@ export function publicSyncApi(username: string): SyncApi {
     if (!response.ok) {
       if (response.status === 404) throw new PublicViewChangedError(false);
       if (response.status === 409) {
-        const body: unknown = await response.json();
+        // A body that is not JSON (a proxy's page, say) is no view change.
+        const body: unknown = await response.json().catch(() => undefined);
         if (firstError(body).code === CODES.viewChanged)
           throw new PublicViewChangedError();
       }
