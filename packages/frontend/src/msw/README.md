@@ -45,11 +45,10 @@ if (import.meta.env.MODE === 'test') {
 // window.resetMSWState - Function to reset mock data
 // window.setRuntimeEntriesOverride - Function to replace the entries response
 // window.__MSW_REQUESTS__ - Request counts (getCount, getAll, reset)
-
-afterEach(async () => {
-  await browser.resetMSWHandlers();
-});
 ```
+
+The WebdriverIO harness (`test/wdio.shared.conf.ts`) resets the mock data
+after every test.
 
 ## Key Components
 
@@ -119,10 +118,3 @@ Provides request counting utilities for test assertions:
 - Tracks API calls by method and URL
 - Used in E2E tests to verify API interactions
 
-## Benefits of This Structure
-
-1. **Separation of Concerns**: Each file has a single responsibility
-2. **Reusable Components**: Individual functions can be imported as needed
-3. **Testable**: Each module can be tested independently
-4. **Maintainable**: Clear organization makes updates easier
-5. **Type Safe**: Full TypeScript support throughout

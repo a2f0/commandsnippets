@@ -528,9 +528,8 @@ The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
 `api.commandsnippets.com` for production. workers.dev is off for both.
 
 CI: pull requests run lint, typecheck, and the coverage-gated tests as the
-`backend-v2` lane of the required `CI gate` (see `../../docs/ci-merge-gate.md`),
-for changes here or in `../api-shared`. Pushes to `staging`/`main` that change
-either run `Backend v2 CI`, whose deploy job would apply D1 migrations and
-deploy, but only once the `BACKEND_V2_DEPLOY` repository variable is `true`
-and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist.
-Without that configuration, releases are deployed by hand as above.
+`backend-v2` lane of the required `CI gate`, for changes here or in
+`../api-shared`. `Backend v2 CI` also has a deploy job for pushes to
+`staging`/`main`, off unless configured; see
+[CI and merge requirements](../../docs/ci-merge-gate.md) for when it runs.
+Without it, releases are deployed by hand as above.
