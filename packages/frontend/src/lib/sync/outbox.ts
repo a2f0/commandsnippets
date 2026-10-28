@@ -688,6 +688,29 @@ export class AccountChangedError extends Error {
   }
 }
 
+/** The account `owner`'s data is bound to (`bindOwner`), if it is. */
+export const boundAccount = async (
+  db: CommandsnippetsDatabase,
+  owner: string
+): Promise<string | undefined> =>
+  (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+
+/**
+ * `api` naming the account `owner`'s data is bound to, and that account:
+ * refused when signed in as another account, though of the same username.
+ */
+async function forBoundAccount(
+  db: CommandsnippetsDatabase,
+  api: OutboxApi,
+  owner: string
+): Promise<{account: OutboxApi; accountId: string | undefined}> {
+  const accountId = await boundAccount(db, owner);
+  return {
+    account: accountId === undefined ? api : api.forAccount(accountId),
+    accountId,
+  };
+}
+
 /**
  * Refuse (`AccountChangedError`) unless `owner`'s data is still bound to
  * `accountId` (in a transaction including `cursors`, before storing).
@@ -697,7 +720,7 @@ export async function assertBound(
   owner: string,
   accountId: string | undefined
 ): Promise<void> {
-  const held = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
+  const held = await boundAccount(db, owner);
   if (held !== accountId) {
     throw new AccountChangedError(owner);
   }
@@ -870,10 +893,8 @@ export async function flushOutbox(
   api: OutboxApi,
   owner: string
 ): Promise<void> {
-  // Each request names the account the data is bound to: refused when
-  // signed in as another account, though of the same username.
-  const accountId = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
-  const account = accountId === undefined ? api : api.forAccount(accountId);
+  // Each request names the account the data is bound to.
+  const {account, accountId} = await forBoundAccount(db, api, owner);
   for (;;) {
     // Bound to another account since (a sign-in here): its queue is not
     // this flush's to send.
@@ -1061,8 +1082,7 @@ async function readerOf(
   accountId: string | undefined;
   version: number | undefined;
 }> {
-  const accountId = (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
-  const account = accountId === undefined ? api : api.forAccount(accountId);
+  const {account, accountId} = await forBoundAccount(db, api, owner);
   const version = await heldVersion(db, owner);
   const named = version === undefined ? account : account.forVersion(version);
   return {named, accountId, version};

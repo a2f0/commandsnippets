@@ -43,7 +43,7 @@ import {
 } from '../sync/outbox';
 import {type SyncSession, withDataLock} from '../sync/session';
 import {SyncUserError} from '../sync/sync';
-import {junctionOf} from './hooks';
+import {junctionOf, tagJunctions} from './hooks';
 
 /**
  * A write the API would refuse (a blank or too long field, a tag name the
@@ -178,6 +178,32 @@ async function idNow<R extends {id: string}>(
   return (await rowNamed(table, owner, id))?.id ?? id;
 }
 
+/**
+ * Write the row `id` names in `table` (see `rowNamed`) with the attributes
+ * `patch` gives it, queueing the write `queued` makes of the row's id: the
+ * row as written, or null when there is no such row (nothing is written).
+ */
+async function patchRow<R extends {id: string; attributes: object}>(
+  session: SyncSession,
+  table: Table<Stored<R>, RowKey>,
+  id: string,
+  patch: (attributes: R['attributes']) => Partial<R['attributes']>,
+  queued: (id: string) => QueuedWrite
+): Promise<Stored<R> | null> {
+  return write<Stored<R> | null>(session, async () => {
+    const row = await rowNamed(table, session.owner, id);
+    if (row === undefined) {
+      return {writes: [], result: null};
+    }
+    const patched = {
+      ...row,
+      attributes: {...row.attributes, ...patch(row.attributes)},
+    };
+    await table.put(patched);
+    return {writes: [queued(row.id)], result: patched};
+  });
+}
+
 /** The owner's user id, for a row made here (a stored row's, if any). */
 async function ownerIdOf(session: SyncSession): Promise<string> {
   const {db, owner} = session;
@@ -190,6 +216,12 @@ async function ownerIdOf(session: SyncSession): Promise<string> {
 /** The order after the last of `orders` (the bottom), 0 for none. */
 const bottomOf = (orders: number[]) =>
   orders.length === 0 ? 0 : Math.max(...orders) + 1;
+
+/** The order at the bottom of tag `tagId` (below its junctions not deleted). */
+const bottomOfTag = async (session: SyncSession, tagId: string) =>
+  bottomOf(
+    (await tagJunctions(session, tagId)).map(other => other.attributes.order)
+  );
 
 /**
  * The order that puts a row directly above `bottom` among `ranked` (sorted
@@ -293,22 +325,13 @@ export async function setTagPublic(
   tagId: string,
   isPublic: boolean
 ): Promise<void> {
-  await write(session, async () => {
-    const tag = await rowNamed(session.db.tags, session.owner, tagId);
-    if (tag === undefined) return {writes: [], result: undefined};
-    await session.db.tags.put({
-      ...tag,
-      attributes: {
-        ...tag.attributes,
-        is_public: isPublic,
-        date_updated: madeNow(),
-      },
-    });
-    return {
-      writes: [{kind: 'setTagPublic', tagId: tag.id, isPublic}],
-      result: undefined,
-    };
-  });
+  await patchRow(
+    session,
+    session.db.tags,
+    tagId,
+    () => ({is_public: isPublic, date_updated: madeNow()}),
+    id => ({kind: 'setTagPublic', tagId: id, isPublic})
+  );
 }
 
 export async function setEntryPublic(
@@ -316,40 +339,26 @@ export async function setEntryPublic(
   entryId: string,
   isPublic: boolean
 ): Promise<void> {
-  await write(session, async () => {
-    const entry = await rowNamed(session.db.entries, session.owner, entryId);
-    if (entry === undefined) return {writes: [], result: undefined};
-    await session.db.entries.put({
-      ...entry,
-      attributes: {
-        ...entry.attributes,
-        is_public: isPublic,
-        date_updated: madeNow(),
-      },
-    });
-    return {
-      writes: [{kind: 'setEntryPublic', entryId: entry.id, isPublic}],
-      result: undefined,
-    };
-  });
+  await patchRow(
+    session,
+    session.db.entries,
+    entryId,
+    () => ({is_public: isPublic, date_updated: madeNow()}),
+    id => ({kind: 'setEntryPublic', entryId: id, isPublic})
+  );
 }
 
 export async function deleteTag(
   session: SyncSession,
   tagId: string
 ): Promise<void> {
-  const {db, owner} = session;
-  await write(session, async () => {
-    const tag = await rowNamed(db.tags, owner, tagId);
-    if (tag === undefined) {
-      return {writes: [], result: undefined};
-    }
-    await db.tags.put({
-      ...tag,
-      attributes: {...tag.attributes, is_deleted: true},
-    });
-    return {writes: [{kind: 'deleteTag', tagId: tag.id}], result: undefined};
-  });
+  await patchRow(
+    session,
+    session.db.tags,
+    tagId,
+    () => ({is_deleted: true}),
+    id => ({kind: 'deleteTag', tagId: id})
+  );
 }
 
 /** Move tag `top` directly above tag `bottom`. */
@@ -426,17 +435,13 @@ async function newJunction(
   made: string
 ): Promise<Stored<TagTextEntry>> {
   const {db, owner} = session;
-  const inTag = await db.junctions
-    .where('[owner+relationships.tag.data.id]')
-    .equals([owner, tagId])
-    .filter(junction => !junction.attributes.is_deleted)
-    .toArray();
+  const order = await bottomOfTag(session, tagId);
   const junction: Stored<TagTextEntry> = {
     type: 'TagTextEntryThroughModel',
     id: localId(),
     owner,
     attributes: {
-      order: bottomOf(inTag.map(other => other.attributes.order)),
+      order,
       date_created: made,
       date_updated: made,
       is_deleted: false,
@@ -514,27 +519,18 @@ export async function updateEntry(
   rawSubject: string,
   rawBody: string
 ): Promise<TextEntry | null> {
-  const {db, owner} = session;
   refuseReadOnly(session);
   const {subject = '', body = ''} = checked(textEntryUpdateAttributesSchema, {
     subject: rawSubject,
     body: rawBody,
   });
-  return write(session, async () => {
-    const entry = await rowNamed(db.entries, owner, entryId);
-    if (entry === undefined) {
-      return {writes: [], result: null};
-    }
-    const edited = {
-      ...entry,
-      attributes: {...entry.attributes, subject, body, date_updated: madeNow()},
-    };
-    await db.entries.put(edited);
-    return {
-      writes: [{kind: 'updateEntry', entryId: entry.id, subject, body}],
-      result: edited,
-    };
-  });
+  return patchRow(
+    session,
+    session.db.entries,
+    entryId,
+    () => ({subject, body, date_updated: madeNow()}),
+    id => ({kind: 'updateEntry', entryId: id, subject, body})
+  );
 }
 
 /** Delete an entry (the API keeps it, deleted): it leaves every list. */
@@ -542,25 +538,13 @@ export async function deleteEntry(
   session: SyncSession,
   entryId: string
 ): Promise<void> {
-  const {db, owner} = session;
-  await write(session, async () => {
-    const entry = await rowNamed(db.entries, owner, entryId);
-    if (entry === undefined) {
-      return {writes: [], result: undefined};
-    }
-    await db.entries.put({
-      ...entry,
-      attributes: {
-        ...entry.attributes,
-        is_deleted: true,
-        date_updated: madeNow(),
-      },
-    });
-    return {
-      writes: [{kind: 'deleteEntry', entryId: entry.id}],
-      result: undefined,
-    };
-  });
+  await patchRow(
+    session,
+    session.db.entries,
+    entryId,
+    () => ({is_deleted: true, date_updated: madeNow()}),
+    id => ({kind: 'deleteEntry', entryId: id})
+  );
 }
 
 /**
@@ -572,30 +556,17 @@ export async function reuseEntry(
   session: SyncSession,
   entryId: string
 ): Promise<void> {
-  const {db, owner} = session;
-  await write(session, async () => {
-    const entry = await rowNamed(db.entries, owner, entryId);
-    if (entry === undefined) {
-      return {writes: [], result: undefined};
-    }
-    await db.entries.put({
-      ...entry,
-      attributes: {
-        ...entry.attributes,
-        reused_count: entry.attributes.reused_count + 1,
-      },
-    });
-    return {
-      writes: [
-        {
-          kind: 'reuseEntry',
-          entryId: entry.id,
-          reuseId: globalThis.crypto.randomUUID(),
-        },
-      ],
-      result: undefined,
-    };
-  });
+  await patchRow(
+    session,
+    session.db.entries,
+    entryId,
+    attributes => ({reused_count: attributes.reused_count + 1}),
+    id => ({
+      kind: 'reuseEntry',
+      entryId: id,
+      reuseId: globalThis.crypto.randomUUID(),
+    })
+  );
 }
 
 /** Put entry `entryId` in tag `tagId` (at the bottom), unless it is there. */
@@ -627,17 +598,13 @@ export async function tagEntry(
       junction = await newJunction(session, tagId, entryId, made);
     } else {
       // The pair's deleted junction comes back, at the bottom (as on the API).
-      const inTag = await db.junctions
-        .where('[owner+relationships.tag.data.id]')
-        .equals([owner, tagId])
-        .filter(other => !other.attributes.is_deleted)
-        .toArray();
+      const order = await bottomOfTag(session, tagId);
       junction = {
         ...pair,
         attributes: {
           ...pair.attributes,
           is_deleted: false,
-          order: bottomOf(inTag.map(other => other.attributes.order)),
+          order,
           date_created: made,
         },
       };
@@ -657,7 +624,6 @@ export async function untagEntry(
   tagIdGiven: string,
   entryIdGiven: string
 ): Promise<void> {
-  refuseReadOnly(session);
   const {db, owner} = session;
   await write(session, async () => {
     const tagId = await idNow(db.tags, owner, tagIdGiven);
@@ -685,19 +651,12 @@ export async function reorderEntries(
   topEntryIdGiven: string,
   bottomEntryIdGiven: string
 ): Promise<void> {
-  refuseReadOnly(session);
   const {db, owner} = session;
   await write(session, async () => {
     const tagId = await idNow(db.tags, owner, tagIdGiven);
     const topEntryId = await idNow(db.entries, owner, topEntryIdGiven);
     const bottomEntryId = await idNow(db.entries, owner, bottomEntryIdGiven);
-    const inTag = (
-      await session.db.junctions
-        .where('[owner+relationships.tag.data.id]')
-        .equals([session.owner, tagId])
-        .filter(junction => !junction.attributes.is_deleted)
-        .toArray()
-    ).sort(byOrder);
+    const inTag = (await tagJunctions(session, tagId)).sort(byOrder);
     const ofEntry = (entryId: string) =>
       inTag.find(
         junction => junction.relationships.text_entry.data.id === entryId
