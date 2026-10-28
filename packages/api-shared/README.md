@@ -102,7 +102,8 @@ load them from `../api-shared`, whose own development copy of zod may differ
 sit in the store next to the zod its devDependencies brought in. So each
 consumer points `zod` at its own copy:
 
-- TypeScript (`tsconfig.json`, or the web app's `tsconfig-base.json`):
+- TypeScript (backend-v2's `tsconfig.base.json`, the web app's
+  `tsconfig-base.json`):
   `"paths": {"zod": ["./node_modules/zod"], "zod/*": ["./node_modules/zod/*"]}`
   (the second covers `zod/mini`)
 - Vite and Vitest: `resolve: {dedupe: ['zod']}` (subpaths included)

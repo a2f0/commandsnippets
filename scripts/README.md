@@ -18,8 +18,9 @@ use `agent-tool run`; shared validation groups use `agent-tool run-group`.
 
 Application-specific scripts stay with their package. Backend administration is
 in `packages/backend-v2/scripts/admin/` (`bun run manage` there); its schema and
-configuration checks live in `scripts/checks/`, with shared migration fixtures
-in `scripts/lib/`. Frontend single-spec launchers live in its `scripts/testing/`
+configuration checks live in `packages/backend-v2/scripts/checks/`, with shared
+migration fixtures in `packages/backend-v2/scripts/lib/`. Frontend single-spec
+launchers live in `packages/frontend/scripts/testing/`
 (`bun run test:spec` / `bun run test:spec:headless`). Terraform retains its
 stack-aware `terraform/scripts/tf` entrypoint and infrastructure layout.
 
