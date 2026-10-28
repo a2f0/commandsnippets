@@ -196,7 +196,12 @@ const server = setupServer(
   )
 );
 
-beforeAll(() => server.listen());
+beforeAll(async () => {
+  server.listen();
+  // The route loads the page's module when first shown (React.lazy): load
+  // it here, so the first test waits for the page, not for its import.
+  await import('../../../src/pages/AdminPage');
+});
 afterAll(() => server.close());
 
 beforeEach(() => {

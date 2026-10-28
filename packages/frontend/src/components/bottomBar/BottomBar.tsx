@@ -1,7 +1,7 @@
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {Suspense, useCallback, useMemo, useState} from 'react';
 import {useErrorStore} from '../../hooks/useErrorStore';
 import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
@@ -9,8 +9,15 @@ import {environment} from '../../lib/environment';
 import {TextEntrySearchField} from '../entries/TextEntrySearchField';
 import {LanguageSwitcher} from '../LanguageSwitcher';
 import {TagSearch} from '../tags/TagSearch';
-import {TimingAnalytics} from './analytics/TimingAnalytics';
 import {Mode} from './Mode';
+
+// The Analytics tab's charts load when the tab is first shown: only
+// non-production pages have a HUD, so the app's own bundle leaves them out.
+const TimingAnalytics = React.lazy(() =>
+  import('./analytics/TimingAnalytics').then(module => ({
+    default: module.TimingAnalytics,
+  }))
+);
 
 /** How far the expanded HUD keeps from the window's edges, in px. */
 const EXPANDED_MARGIN = 16;
@@ -325,7 +332,9 @@ const BottomBar = () => {
                     </Box>
                   </CustomTabPanel>
                   <CustomTabPanel value={selectedTab} index={1}>
-                    <TimingAnalytics />
+                    <Suspense fallback={null}>
+                      <TimingAnalytics />
+                    </Suspense>
                   </CustomTabPanel>
                 </Box>
               </Box>

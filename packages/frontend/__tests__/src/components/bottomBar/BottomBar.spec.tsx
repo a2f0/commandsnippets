@@ -13,6 +13,12 @@ import * as envModule from '../../../../src/lib/environment';
 import {darkTheme} from '../../../../src/theme/themes';
 import {signIn} from '../../../util/signIn';
 
+// The Analytics tab loads its module when first shown (React.lazy): load
+// it here, so a test waits for the tab, not for its import.
+beforeAll(
+  () => import('../../../../src/components/bottomBar/analytics/TimingAnalytics')
+);
+
 beforeEach(() => signIn());
 
 const BottomBarWithProviders = () => (
@@ -201,8 +207,9 @@ describe('BottomBar Component', () => {
 
       await user.click(screen.getByRole('tab', {name: /Analytics/i}));
 
+      // The tab's charts load when it is first shown
       expect(
-        screen.getByRole('heading', {name: 'All timings'})
+        await screen.findByRole('heading', {name: 'All timings'})
       ).toBeInTheDocument();
       expect(screen.queryByText('No logs available')).not.toBeInTheDocument();
     });
@@ -389,7 +396,7 @@ describe('BottomBar Component', () => {
         await user.click(await screen.findByRole('tab', {name: /Analytics/i}));
 
         expect(
-          screen.getByRole('heading', {name: 'Interaction'})
+          await screen.findByRole('heading', {name: 'Interaction'})
         ).toBeInTheDocument();
         expect(
           screen.getByRole('heading', {name: 'All timings'})
@@ -443,7 +450,7 @@ describe('BottomBar Component', () => {
 
         // The timings of the network, IndexedDB and renders
         expect(
-          screen.getByRole('heading', {name: 'All timings'})
+          await screen.findByRole('heading', {name: 'All timings'})
         ).toBeInTheDocument();
         expect(
           screen.queryByText(/ERROR: Uncaught Error: boom/)
