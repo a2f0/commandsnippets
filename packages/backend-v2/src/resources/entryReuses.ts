@@ -3,10 +3,9 @@ import {
   textEntryReusedCreateRelationshipsSchema,
   textEntryReusedListQuerySchema,
 } from '@commandsnippets/api-shared';
-import {and, eq, sql} from 'drizzle-orm';
+import {eq, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
-import {isUniqueViolation} from '../db/errors';
 import {entryReuses, type TextEntryReused} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
@@ -17,24 +16,22 @@ import {versionOf} from './dataVersions';
 import {textEntryResource, textEntryReusedResource} from './owned';
 import {resolveRelated} from './related';
 import {TEXT_ENTRY_REUSED} from './resourceTypes';
-import {getOwned, listResponse, resourceResponse} from './viewset';
+import {createOnce, getOwned, listResponse, resourceResponse} from './viewset';
 
 export const entryReuseRoutes = new Hono<AppEnv>();
 
-entryReuseRoutes.get('/', c => {
-  const user = requireUser(c);
-  return listResponse(c, {
+entryReuseRoutes.get('/', c =>
+  listResponse(c, {
     ...textEntryReusedResource,
-    user,
-    dataVersion: versionOf(c, user),
+    user: requireUser(c),
     query: textEntryReusedListQuerySchema,
     filters: {
       text_entry__id: value => eq(entryReuses.text_entry_id, value),
     },
     ordering: {date_created: sql`${entryReuses.date_created}`},
     defaultOrdering: [entryReuses.date_created, entryReuses.id],
-  });
-});
+  })
+);
 
 entryReuseRoutes.get('/:id', async c => {
   const reuse = await getOwned<TextEntryReused>(c, textEntryReusedResource);
@@ -66,51 +63,22 @@ entryReuseRoutes.post('/', async c => {
     textEntryReusedCreateRelationshipsSchema,
     {text_entry: textEntryResource}
   );
-  const made = async () =>
-    clientId === undefined
-      ? undefined
-      : (
-          await db
-            .select()
-            .from(entryReuses)
-            .where(
-              and(
-                eq(entryReuses.user_id, user.id),
-                eq(entryReuses.version, version),
-                eq(entryReuses.client_id, clientId)
-              )
-            )
-            .limit(1)
-        )[0];
-  const existing = await made();
-  if (existing !== undefined) {
-    return resourceResponse(c, TEXT_ENTRY_REUSED, existing, 201);
-  }
-  try {
-    const [created] = await db
-      .insert(entryReuses)
-      .values({
-        text_entry_id: ids.text_entry,
-        user_id: user.id,
-        version,
-        client_id: clientId ?? null,
-        date_created: now(),
-      })
-      .returning();
-    return resourceResponse(
-      c,
-      TEXT_ENTRY_REUSED,
-      created as TextEntryReused,
-      201
-    );
-  } catch (error) {
-    // Lost a race with the same reuse, retried.
-    const raced = isUniqueViolation(error) ? await made() : undefined;
-    if (raced === undefined) {
-      throw error;
-    }
-    return resourceResponse(c, TEXT_ENTRY_REUSED, raced, 201);
-  }
+  return createOnce(
+    c,
+    {...textEntryReusedResource, clientId: entryReuses.client_id},
+    {userId: user.id, version, clientId},
+    () =>
+      db
+        .insert(entryReuses)
+        .values({
+          text_entry_id: ids.text_entry,
+          user_id: user.id,
+          version,
+          client_id: clientId ?? null,
+          date_created: now(),
+        })
+        .returning()
+  );
 });
 
 entryReuseRoutes.delete('/:id', async c => {

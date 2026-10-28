@@ -112,7 +112,6 @@ export const listTagEntries = (
   listResponse(c, {
     ...tagTextEntryResource,
     user: owner,
-    dataVersion: versionOf(c, owner),
     publicOnly,
     ...(publicOnly ? {visibility: publicJunction(owner.id)} : {}),
     query: tagTextEntryListQuerySchema,
