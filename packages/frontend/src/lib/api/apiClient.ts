@@ -7,6 +7,7 @@ import {
   EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
 import type {
+  AnalyticsParams,
   GithubLoginDocument,
   GoogleLoginDocument,
   TagCreateDocument,
@@ -21,6 +22,8 @@ import type {
   TextEntryUpdateDocument,
 } from '@commandsnippets/api-shared/requests';
 import {
+  type AnalyticsDocument,
+  analyticsDocumentSchema,
   type Backup,
   backupSchema,
   type DataVersionDocument,
@@ -615,6 +618,18 @@ class ApiClient {
 
   // The sync's reads (lib/sync/): keyset pages of the user's data in
   // revision order, as every client reads them (`syncReads.ts`).
+
+  public getAnalytics(
+    params: AnalyticsParams,
+    signal?: AbortSignal
+  ): Promise<AnalyticsDocument> {
+    return this.requestDocument(
+      urlWithQuery(`${baseURL}/user/analytics`, params),
+      {method: 'GET', signal},
+      'Failed to read analytics',
+      analyticsDocumentSchema
+    );
+  }
 
   private readonly reads: SyncReads = syncReads(
     async (path, params, schema, failure) =>

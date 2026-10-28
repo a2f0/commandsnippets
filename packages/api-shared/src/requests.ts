@@ -13,6 +13,7 @@ export * from './issues';
 export * from './jsonapi/request';
 export * from './query';
 export * from './resources/requests/admin';
+export * from './resources/requests/analytics';
 export * from './resources/requests/auth';
 export * from './resources/requests/reorder';
 export * from './resources/requests/tag';

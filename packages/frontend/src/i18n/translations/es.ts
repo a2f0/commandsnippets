@@ -1,6 +1,62 @@
 import type {I18NextTranslations} from './types';
 
 export const es: I18NextTranslations = {
+  analytics: {
+    title: 'Estadísticas',
+    description: 'Una perspectiva de los fragmentos que guardas y utilizas.',
+    created: 'Entradas creadas',
+    tags_created: 'Etiquetas creadas',
+    tagged: 'Entradas etiquetadas',
+    reused: 'Entradas reutilizadas',
+    activity: 'Fecha a analizar',
+    from: 'Desde',
+    to: 'Hasta',
+    interval: 'Agrupar por',
+    day: 'Día',
+    week: 'Semana',
+    month: 'Mes',
+    tag: 'Etiqueta',
+    allTags: 'Todas las etiquetas',
+    last30: 'Últimos 30 días',
+    last90: 'Últimos 90 días',
+    last365: 'Último año',
+    refresh: 'Actualizar',
+    events: 'Eventos',
+    entries: 'Entradas distintas',
+    tags: 'Etiquetas distintas',
+    timeline: 'Actividad a lo largo del tiempo',
+    topTags: 'Etiquetas principales',
+    topEntries: 'Entradas principales',
+    rankNote: 'Hasta 10, ordenadas por eventos en este intervalo.',
+    empty:
+      'No hay actividad en este intervalo. Prueba otras fechas o etiquetas.',
+    loading: 'Cargando estadísticas…',
+    failed:
+      'No se pudieron cargar las estadísticas. Revisa tu conexión e inténtalo de nuevo.',
+    retry: 'Reintentar',
+    invalidRange:
+      'Elige fechas válidas en orden, con una separación máxima de diez años.',
+    counting:
+      'Las fechas usan UTC e incluyen ambos extremos. Las semanas empiezan el lunes. Solo se cuentan los datos actuales no eliminados.',
+    createdNote:
+      'Cada entrada cuenta una vez en su fecha de creación. Las clasificaciones usan sus etiquetas actuales; una entrada puede contar en varias etiquetas.',
+    tags_createdNote:
+      'Cada etiqueta cuenta una vez en su fecha de creación, incluso si no tiene entradas.',
+    taggedNote:
+      'Cada asignación actual cuenta una vez, en su fecha de creación original. Se excluyen las asignaciones eliminadas; volver a etiquetar no crea un nuevo evento histórico.',
+    reusedNote:
+      'Cada copia registrada cuenta una vez, en la fecha registrada por el servidor. Se usan las etiquetas actuales, que pueden diferir de las del momento de la reutilización.',
+    showData: 'Mostrar datos del gráfico',
+    hideData: 'Ocultar datos del gráfico',
+    period: 'Inicio del período (UTC)',
+    count: 'Eventos',
+    chartDescription:
+      '{{count}} eventos en {{periods}} períodos. Los valores exactos están disponibles en Mostrar datos del gráfico.',
+    back: 'Volver a las entradas',
+    tagFiltered: 'Filtrar por {{name}}',
+    partialPeriods:
+      'El primer y el último período incluyen solo las fechas dentro del intervalo.',
+  },
   common: {
     welcome: 'Bienvenido',
     logout: 'Cerrar sesión',

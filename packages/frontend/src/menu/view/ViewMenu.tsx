@@ -2,7 +2,7 @@ import React from 'react';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {useOwner} from '../../lib/data/hooks';
 import {navigate} from '../../lib/router/navigation';
-import {reusesPath} from '../../lib/router/route';
+import {analyticsPath, reusesPath} from '../../lib/router/route';
 import {StyledDivider} from '../../styled/StyledDivider';
 import {StyledMenu} from '../StyledMenu';
 import {StyledMenuItem} from '../StyledMenuItem';
@@ -18,6 +18,7 @@ interface IProps {
 const ViewMenu = ({onClose, anchorEl}: IProps) => {
   const owner = useOwner();
   const {t} = useTypedTranslation('entries');
+  const {t: tAnalytics} = useTypedTranslation('analytics');
   return (
     <StyledMenu
       id="view-menu"
@@ -25,6 +26,17 @@ const ViewMenu = ({onClose, anchorEl}: IProps) => {
       open={Boolean(anchorEl)}
       onClose={onClose}
     >
+      {owner && !owner.readOnly && (
+        <StyledMenuItem
+          id="view-menu-analytics"
+          onClick={() => {
+            onClose();
+            navigate(analyticsPath(owner.owner));
+          }}
+        >
+          {tAnalytics('title')}
+        </StyledMenuItem>
+      )}
       {owner && !owner.readOnly && (
         <StyledMenuItem
           id="view-menu-reuses"

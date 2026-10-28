@@ -3,6 +3,7 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   adminUserUpdateAttributesSchema,
+  analyticsQuerySchema,
   BACKUP_FORMAT,
   BACKUP_VERSION,
   type Backup,
@@ -46,6 +47,7 @@ import {
 } from '@commandsnippets/api-shared';
 import invariant from 'invariant';
 import {HttpResponse, type HttpResponseResolver, http} from 'msw/http';
+import {mockAnalytics} from './analytics';
 import {nextRevision, now, onePage, pagination} from './documents';
 import {afterOf, byRevision, keysetPage, positionOf} from './keyset';
 import {recordRequest} from './requestCounter';
@@ -1544,6 +1546,23 @@ const createHandlers = () => {
           },
         })
       ),
+
+      route('GET', `${baseUrl}/user/analytics`, ({request}) => {
+        const params = analyticsQuerySchema.parse(
+          Object.fromEntries(new URL(request.url).searchParams)
+        );
+        const state = activeEntries();
+        return HttpResponse.json(
+          mockAnalytics(
+            params,
+            activeVersion,
+            tags,
+            state.data,
+            junctionsOf(state),
+            reuses.map(row => row.reuse)
+          )
+        );
+      }),
 
       // A version's backup: the active one's, or `?version=`'s.
       route('GET', `${baseUrl}/user/backup`, ({request}) => {

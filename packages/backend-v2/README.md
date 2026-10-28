@@ -533,3 +533,21 @@ CI: pull requests run lint, typecheck, and the coverage-gated tests as the
 `staging`/`main`, off unless configured; see
 [CI and merge requirements](../../docs/ci-merge-gate.md) for when it runs.
 Without it, releases are deployed by hand as above.
+
+## Activity analytics
+
+`GET /api/v1/user/analytics` returns owner-only aggregates for the active data
+version. It accepts `activity=created|tags_created|tagged|reused`,
+`interval=day|week|month`, inclusive UTC `from` and `to` calendar dates (at most
+3660 days apart), and an optional `tag` id. Unknown parameters and invalid
+ranges are rejected. The response contains event/entry/tag totals, nonempty
+time buckets, and the top ten tags and entries. Weeks start Monday; the
+first and last buckets can be partial. Responses are private and not cached.
+
+One D1 statement reads all aggregates from the same snapshot. Totals count
+entry creation or reuse once even when an entry has several tags. Tag
+creation includes empty tags. Tagging counts current assignments using their
+original creation dates; removed assignments are excluded and retagging is
+not a historical event. Entry creation and reuse rankings use current tag
+membership. Deleted tags and entries are excluded. No history is downloaded
+to calculate these aggregates, and no schema migration is required.

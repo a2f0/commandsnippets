@@ -197,6 +197,18 @@ API; everything else the app keeps is a zustand store.
   list or history the entry was opened from (`entryReturnPath`), falling
   back to the user's page. Its data syncs with `useCollectionSync`; an entry
   not found during the first load is still loading (`useEntry`).
+- **Analytics** (`/:user/activity/analytics`, `AnalyticsPage.tsx`): View >
+  Analytics opens the owner's private grayscale charts. Entry creation, tag
+  creation, tagging and reuse have separate slices, with inclusive UTC date
+  bounds (up to ten years), a tag filter and day/week/month buckets. Weeks
+  start Monday; empty periods are filled in the chart. Rankings show ten tags
+  and entries; tag bars filter and entry bars open details. The exact chart
+  values are available as a table. `readAnalytics` flushes queued writes,
+  reads `GET /user/analytics` with the bound account and data version, and
+  refuses stale answers. Filter changes abort the previous read; version
+  changes clear the charts. Refresh and reconnect reload totals. Only live
+  data is counted: tag assignments use their original creation dates, and
+  entry creation/reuse attribution uses current tags, not historical tags.
 - **All reuses** (`/:user/activity/reuses`, `ReusesPage.tsx`): View > All
   reuses, or an entry's history link, opens the owner's private history
   across all entries. Guests and other users (staff included) are redirected
