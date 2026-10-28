@@ -38,6 +38,7 @@ import {needsScrollingIntoView} from '../../lib/scroll';
 import {appMode} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
+import {useDraggedRows} from '../dnd/useDraggedRows';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
@@ -57,6 +58,8 @@ export const VIRTUALIZE_FROM = 100;
 
 /** A row's height until it is measured. */
 const ROW_ESTIMATE = 72;
+
+const subjectOf = (entry: TextEntry) => entry.attributes.subject;
 
 /**
  * The entries shown: a tag's (`/:user/:tag`), or all or the untagged ones
@@ -132,20 +135,13 @@ const EntryList = () => {
     }
   }, [ownRows, shownList]);
 
-  // The list as the database has it now, rendered as soon as it is read: a
-  // drag reorders a copy of it (`dragged`), which a newer list (the drop
-  // stored) replaces.
-  const [dragged, setDragged] = useState<{
-    of: TextEntry[];
-    entries: TextEntry[];
-  } | null>(null);
-  const entries = useMemo(
-    () =>
-      dragged !== null && dragged.of === shown
-        ? dragged.entries
-        : (shown ?? []),
-    [dragged, shown]
-  );
+  // The list as a drag reorders it.
+  const {
+    rows: entries,
+    findEntry,
+    findEntryByIndex,
+    moveEntry,
+  } = useDraggedRows(shown, subjectOf);
   useEffect(() => {
     const [first] = shown ?? [];
     if (
@@ -282,49 +278,6 @@ const EntryList = () => {
       document.removeEventListener('keydown', keyListener, false);
     };
   }, [keyListener]);
-
-  // The list as last rendered, which the rows' drag and drop reads: the
-  // functions they are given stay the same as the list changes (new ones
-  // would render every row again on every write).
-  const rendered = useRef({entries, shown});
-  useLayoutEffect(() => {
-    rendered.current = {entries, shown};
-  });
-
-  const findEntry = useCallback((id: string) => {
-    const {entries} = rendered.current;
-    const entry = entries.filter(c => c.id === id)[0];
-    invariant(entry, 'entry is undefined');
-    return {
-      entry,
-      index: entries.indexOf(entry),
-    };
-  }, []);
-
-  const moveEntry = useCallback(
-    (id: string, atIndex: number) => {
-      const {entries, shown} = rendered.current;
-      const {entry, index} = findEntry(id);
-      console.debug(
-        `moveEntry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
-      );
-      const newEntries = [...entries];
-      newEntries.splice(index, 1);
-      newEntries.splice(atIndex, 0, entry);
-      setDragged({of: shown ?? [], entries: newEntries});
-    },
-    [findEntry]
-  );
-
-  const findEntryByIndex = useCallback((index: number): TextEntry | null => {
-    const {entries} = rendered.current;
-    if (index > entries.length - 1) {
-      return null;
-    }
-    const entry = entries[index];
-    invariant(entry, 'entry is undefined');
-    return entry;
-  }, []);
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 

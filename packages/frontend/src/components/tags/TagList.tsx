@@ -18,6 +18,7 @@ import {navigate} from '../../lib/router/navigation';
 import {activeSearch, appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
+import {useDraggedRows} from '../dnd/useDraggedRows';
 import {Tag} from './Tag';
 import {TagListContextMenu} from './TagListContextMenu';
 import {TagNew} from './TagNew';
@@ -35,6 +36,8 @@ export const LeftToRight: React.FC<React.HTMLAttributes<HTMLDivElement>> =
     direction: 'ltr',
   }));
 
+const nameOf = (tag: ITagJsonApi) => tag.attributes.name;
+
 interface IProps {
   tagsFromWrapper: ITagJsonApi[];
   username: string;
@@ -48,17 +51,13 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
   const menu = useContextMenu();
 
-  // The list as the database has it now, rendered as soon as it is read: a
-  // drag reorders a copy of it (`dragged`), which a newer list (the drop
-  // stored) replaces.
-  const [dragged, setDragged] = useState<{
-    of: ITagJsonApi[];
-    tags: ITagJsonApi[];
-  } | null>(null);
-  const tags =
-    dragged !== null && dragged.of === tagsFromWrapper
-      ? dragged.tags
-      : tagsFromWrapper;
+  // The list as a drag reorders it.
+  const {
+    rows: tags,
+    findEntry,
+    findEntryByIndex,
+    moveEntry,
+  } = useDraggedRows(tagsFromWrapper, nameOf);
 
   // The tag highlighted: the one chosen in the list (the arrow keys, a
   // click) while the list and the tag selected (the tag shown) are those it
@@ -86,45 +85,6 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   const setSelectedTag = useCallback((id: string) => {
     setChosen({id, ...choosingWith.current});
   }, []);
-
-  const findEntry = useCallback(
-    (id: string) => {
-      const entry = tags.filter(c => c.id === id)[0];
-      invariant(entry, 'entry is not defined');
-      return {
-        entry,
-        index: tags.indexOf(entry),
-      };
-    },
-    [tags]
-  );
-
-  const findEntryByIndex = useCallback(
-    (index: number): ITagJsonApi | null => {
-      if (index > tags.length - 1) {
-        return null;
-      }
-      const tag = tags[index];
-      invariant(tag, 'tag is undefined');
-      return tag;
-    },
-    [tags]
-  );
-
-  const moveEntry = useCallback(
-    (id: string, atIndex: number) => {
-      const {entry, index} = findEntry(id);
-      invariant(entry, 'entry is undefined');
-      console.debug(
-        `moveEntry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
-      );
-      const newTags = [...tags];
-      newTags.splice(index, 1);
-      newTags.splice(atIndex, 0, entry);
-      setDragged({of: tagsFromWrapper, tags: newTags});
-    },
-    [findEntry, tags, tagsFromWrapper]
-  );
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 

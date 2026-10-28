@@ -3,7 +3,7 @@ import Check from '@mui/icons-material/Check';
 import FileCopySharp from '@mui/icons-material/FileCopySharp';
 import {styled} from '@mui/material/styles';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {useDrag, useDrop} from 'react-dnd';
+import {useDrop} from 'react-dnd';
 import {useContextMenu} from '../../hooks/useContextMenu';
 import {copyEntry} from '../../lib/data/copyEntry';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
@@ -19,6 +19,7 @@ import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
 import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/itemTypes';
+import {useSortableRow} from '../dnd/useSortableRow';
 import {MemoizedEntryBody} from './EntryBody';
 import {EntryContextMenu} from './EntryContextMenu';
 import {EntryEdit} from './EntryEdit';
@@ -32,20 +33,7 @@ const EntryText = styled('div')(() => ({
   verticalAlign: 'top',
 }));
 
-type EntryContainerProps = React.HTMLAttributes<HTMLDivElement> &
-  React.RefAttributes<HTMLDivElement>;
-
-const EntryContainerBase = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->((props, ref) => {
-  const refValue = ref;
-  return <div {...props} ref={refValue} />;
-});
-
-export const EntryContainer: React.ComponentType<EntryContainerProps> = styled(
-  EntryContainerBase
-)(() => ({
+const EntryContainer = styled('div')(() => ({
   marginBottom: '16px',
   whiteSpace: 'pre',
 }));
@@ -58,6 +46,10 @@ const CopyIndicator = styled('div')(() => ({
   fontSize: '13px',
   cursor: 'pointer',
 }));
+
+/** Whether the tag's entries are in the user's order: only then reordered. */
+const inUserOrder = () =>
+  useAppState.getState().tagTextEntryThroughModelSortOrder === 'order';
 
 interface IEntryProps {
   id: string;
@@ -101,7 +93,6 @@ const Entry = ({
   // tagged, edited or removed.
   const readOnly = useReadOnly();
   const textEntryObject = object;
-  const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const [hoverState, setHoverState] = useState({
     showDragHandle: false,
@@ -111,163 +102,54 @@ const Entry = ({
   const previewRef = useRef<HTMLDivElement>(null);
   const menu = useContextMenu();
   const [isEditing, setIsEditing] = useState(false);
-  const [{isDragging}, drag, preview] = useDrag<
-    DraggableItem,
-    DropResult,
-    {isDragging: boolean}
-  >(
-    {
-      item: (): DraggableItem => ({
-        id,
-        originalIndex: index,
-        type: ItemTypes.ENTRY,
-        index,
-      }),
-      type: ItemTypes.ENTRY,
-      canDrag: () => !readOnly,
-      collect: monitor => ({
-        isDragging: monitor.isDragging(),
-      }),
-      end: async (draggedItem, monitor) => {
-        const {id: droppedId, originalIndex} = monitor.getItem();
-        console.debug(
-          `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
-        );
-        console.debug(
-          `useDrag end: droppedId: ${droppedId} originalIndex ${originalIndex}`
-        );
-        const didDrop = monitor.didDrop();
-        if (!didDrop) {
-          console.debug('!didDrop');
-          // Then the target did not handle the drop.
-          // Move the entry in the state of the list.
-          moveEntry(droppedId, originalIndex);
-        } else {
-          // Then it was dropped on something.
-          const dropResult = monitor.getDropResult();
-          if (dropResult) {
-            if (dropResult.type === 'Tag') {
-              // Stored with the entry as it is now: the untagged list drops
-              // it, and the tag lists it.
-              if (session !== null) {
-                tagEntry(session, dropResult.id, findEntry(id).entry.id).catch(
-                  (error: unknown) => {
-                    console.error('Failed to tag entry:', error);
-                  }
-                );
-              }
-            } else if (draggedItem.type === 'entry') {
-              // Then it was dropped on an entry (this is being reordered in the list).
-              const {index} = draggedItem;
-              if (originalIndex !== index) {
-                console.info(
-                  `it moved from index ${originalIndex} to ${index}`
-                );
-                const entry = findEntry(id).entry;
-                const entry_below = findEntryByIndex(index + 1);
-                let ordered_top: TextEntry | null;
-                let ordered_bottom: TextEntry | null;
-                if (entry_below === null) {
-                  //Then it was moved to the bottom position, get the entry before it.
-                  ordered_top = findEntryByIndex(index - 1);
-                  ordered_bottom = entry;
-                } else {
-                  ordered_top = entry;
-                  ordered_bottom = entry_below;
-                }
-                if (
-                  ordered_top !== null &&
-                  ordered_bottom !== null &&
-                  session !== null &&
-                  tagId !== undefined
-                ) {
-                  // The list shows the new order already; the tag's sync
-                  // stores the new ranks.
-                  await reorderEntries(
-                    session,
-                    tagId,
-                    ordered_top.id,
-                    ordered_bottom.id
-                  ).catch((error: unknown) => {
-                    console.error('Failed to reorder entries:', error);
-                  });
-                }
-              } else {
-                console.debug('useDrag end: it was not moved within the list.');
-              }
-            } else {
-              throw new Error(`Unknown drop result type: ${dropResult.type}`);
-            }
-          }
-        }
-      },
+  // A drop on a tag tags the entry with it: the untagged list drops it,
+  // and the tag lists it.
+  const tagWith = useCallback(
+    (droppedOn: string) => {
+      if (session === null) {
+        return;
+      }
+      tagEntry(session, droppedOn, id).catch((error: unknown) => {
+        console.error('Failed to tag entry:', error);
+      });
     },
-    [
-      id,
-      index,
-      moveEntry,
-      findEntry,
-      findEntryByIndex,
-      readOnly,
-      session,
-      tagId,
-    ]
+    [session, id]
   );
-  // Make sure opacity is above the useDrag call above
+
+  // The list shows the new order already; the tag's sync stores the new
+  // ranks.
+  const reorder = useCallback(
+    async (topId: string, bottomId: string) => {
+      if (session === null || tagId === undefined) {
+        return;
+      }
+      await reorderEntries(session, tagId, topId, bottomId).catch(
+        (error: unknown) => {
+          console.error('Failed to reorder entries:', error);
+        }
+      );
+    },
+    [session, tagId]
+  );
+
+  const {isDragging, handleRef, preview, hover} = useSortableRow({
+    type: ItemTypes.ENTRY,
+    id,
+    index,
+    readOnly,
+    findEntry,
+    findEntryByIndex,
+    moveEntry,
+    reorder,
+    onDropOnTag: tagWith,
+    canMoveHere: inUserOrder,
+  });
   const opacity = isDragging ? 0 : 1;
-  const [, drop] = useDrop(
-    {
-      accept: ItemTypes.ENTRY,
-      hover: (item: DraggableItem, monitor) => {
-        console.debug(
-          `hover: index ${index} originalIndex ${item.originalIndex}`
-        );
-        if (!dragRef.current) {
-          return;
-        }
-        const dragIndex = item.index;
-        const hoverIndex = index;
-        if (dragIndex === hoverIndex) {
-          return;
-        }
-        if (appConfig.tagTextEntryThroughModelSortOrder !== 'order') {
-          return;
-        }
-        // Determine rectangle on screen
-        const hoverBoundingRect = dragRef.current?.getBoundingClientRect();
-        // Get vertical middle
-        const hoverMiddleY =
-          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-        // Determine mouse position
-        const clientOffset = monitor.getClientOffset();
-        // Get pixels to the top
-        if (clientOffset !== null) {
-          const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-          // Only perform the move when the mouse has crossed half of the items height
-          // When dragging downwards, only move when the cursor is below 50%
-          // When dragging upwards, only move when the cursor is above 50%
-          // Dragging downwards
-          if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-            return;
-          }
-          // Dragging upwards
-          if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-            return;
-          }
-          moveEntry(item.id, hoverIndex);
-          // Note: we're mutating the monitor item here!
-          // Generally it's better to avoid mutations,
-          // but it's good here for the sake of performance
-          // to avoid expensive index searches.
-          item.index = hoverIndex;
-        }
-      },
-    },
-    [index, moveEntry]
+  const [, drop] = useDrop<DraggableItem, DropResult>(
+    {accept: ItemTypes.ENTRY, hover},
+    [hover]
   );
 
-  drag(dragRef);
   drop(dropRef);
 
   // Whether this entry is the one copied last (its check mark shows):
@@ -414,7 +296,7 @@ const Entry = ({
               >
                 <DragHandle
                   role="entryDragHandle"
-                  ref={dragRef}
+                  ref={handleRef}
                   onMouseEnter={mouseEnter}
                   onMouseLeave={mouseLeave}
                   style={{
