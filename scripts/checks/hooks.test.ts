@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
 import {
   appendFileSync,
   chmodSync,
@@ -16,6 +16,10 @@ import path from "node:path";
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const TOOL = path.join(REPO_ROOT, "node_modules/.bin/agent-tool");
 
+// Each test signs commits in fresh repositories and runs the real hook, which
+// takes a few seconds and longer on a busy machine than bun's 5s default.
+setDefaultTimeout(30_000);
+
 const temporary: string[] = [];
 function tempDir(): string {
   const dir = mkdtempSync(path.join(tmpdir(), "hooks-test-"));
@@ -28,11 +32,20 @@ afterEach(() => {
   }
 });
 
+/**
+ * The environment without Git's repository variables. A hook run exports them
+ * (pre-push from a linked worktree sets GIT_DIR), and they would point every
+ * test repository's git commands at the repository being pushed.
+ */
+const testEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")),
+);
+
 function run(command: string[], cwd: string) {
   const result = Bun.spawnSync(command, {
     cwd,
     env: {
-      ...process.env,
+      ...testEnv,
       GIT_CONFIG_GLOBAL: "/dev/null",
       GIT_CONFIG_NOSYSTEM: "1",
     },
@@ -153,7 +166,7 @@ describe("pre-push", () => {
       cwd: repo,
       stdin: Buffer.from(`refs/heads/feat/x ${sha} ${destination} ${remoteSha}\n`),
       env: {
-        ...process.env,
+        ...testEnv,
         GIT_CONFIG_GLOBAL: "/dev/null",
         GIT_CONFIG_NOSYSTEM: "1",
         PUSH_GATE_TIMINGS_LOG: path.join(tempDir(), "timings.tsv"),
@@ -171,6 +184,16 @@ describe("pre-push", () => {
     const repo = hookRepo();
     git(repo, "mv", "scripts/notes.txt", "notes.txt");
     commitAll(repo, "chore: move notes");
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("LANE:tooling");
+  });
+
+  test("the frontend's spec launchers run the tooling checks", () => {
+    const repo = hookRepo();
+    mkdirSync(path.join(repo, "packages/frontend/scripts/testing"), { recursive: true });
+    writeFileSync(path.join(repo, "packages/frontend/scripts/testing/runSpec.sh"), "#!/bin/sh\n");
+    commitAll(repo, "test: add a spec launcher");
     const result = prePush(repo);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("LANE:tooling");

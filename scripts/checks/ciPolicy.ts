@@ -7,11 +7,12 @@
  * Path patterns that make each scope of checks applicable. api-shared (the API
  * contract) also runs the lanes of the packages that consume it, and the brand
  * sources and their image settings (`agent-tool.json`) run the lanes of the web
- * packages that render icons from them.
+ * packages that render icons from them. The frontend's spec launchers
+ * (`packages/frontend/scripts/`) are shell-linted and tested with the tooling.
  */
 export const CI_SCOPES = {
   tooling:
-    /^(scripts\/|\.agents\/|\.claude\/|agent-tool\.json$|\.agent-tool-skills\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
+    /^(scripts\/|packages\/frontend\/scripts\/|\.agents\/|\.claude\/|agent-tool\.json$|\.agent-tool-skills\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   frontend:
     /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests)\.sh$|assets\/brand\/|agent-tool\.json$)/,
   backendV2: /^packages\/(backend-v2|api-shared)\//,

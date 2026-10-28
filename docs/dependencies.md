@@ -25,7 +25,7 @@ and verify that unrelated package identities did not change.
 The root `.mise.toml` pins Bun 1.4.3 and Node 24.22.1 for development and CI.
 Keep its Bun pin and all five install roots' `packageManager` declarations
 together. Keep its Node pin, frontend `engines.node` and Node types compatible.
-Python and Terraform retain their specialized setup.
+Terraform retains its specialized setup.
 Preserve the frontend's exact dependency pins and one-day minimum release age.
 That age policy also applies to api-shared's development dependencies when Bun
 refreshes the frontend's local package snapshot; select that tooling together.

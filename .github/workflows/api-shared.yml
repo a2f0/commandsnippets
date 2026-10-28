@@ -2,7 +2,6 @@
 name: API Shared CI
 # Pull requests run this through `CI` (ci.yml, the required `CI gate`), which
 # also runs the lanes of the packages that consume api-shared.
-# yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
   workflow_call:

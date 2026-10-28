@@ -4,7 +4,6 @@
 # they apply, and the gate fails closed on anything else.
 name: CI
 
-# yamllint disable-line rule:truthy
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
