@@ -20,7 +20,7 @@ classification remains repository-owned.
 
 | Lane | Workflow | Scope |
 |---|---|---|
-| `tooling` | inline in `ci.yml` | `scripts/`, managed skills, tooling config |
+| `tooling` | inline in `ci.yml` | `scripts/`, `packages/frontend/scripts/`, managed skills, tooling config |
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/`, `packages/api-shared/` |
 | `api-shared` | `api-shared.yml` (API Shared CI) | `packages/api-shared/` |
 | `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts, `assets/brand/`, `agent-tool.json` |

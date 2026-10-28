@@ -1,7 +1,6 @@
 ---
 name: Website CI
 # Pull requests run this through `CI` (ci.yml, the required `CI gate`).
-# yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
   workflow_call:

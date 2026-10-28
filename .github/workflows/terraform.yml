@@ -3,7 +3,6 @@ name: Terraform CI
 # Pull requests run this through `CI` (ci.yml, the required `CI gate`). Plans
 # and applies need the credentials in the gitignored `.secrets` link and run
 # locally (terraform/scripts/tf); CI checks formatting, validity and lint.
-# yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
   workflow_call:

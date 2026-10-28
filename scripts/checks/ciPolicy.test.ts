@@ -77,6 +77,11 @@ describe("ciScopes", () => {
       terraform: false,
     });
     expect(ciScopes(["scripts/testing/runWebdriverTests.sh"]).frontend).toBe(true);
+    // The spec launchers are linted and tested by the tooling lane.
+    expect(ciScopes(["packages/frontend/scripts/testing/runSpec.sh"])).toMatchObject({
+      tooling: true,
+      frontend: true,
+    });
     expect(ciScopes(["terraform/stacks/zone/main.tf"])).toEqual({
       tooling: false,
       frontend: false,

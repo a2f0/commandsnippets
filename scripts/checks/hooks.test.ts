@@ -176,6 +176,16 @@ describe("pre-push", () => {
     expect(result.stdout).toContain("LANE:tooling");
   });
 
+  test("the frontend's spec launchers run the tooling checks", () => {
+    const repo = hookRepo();
+    mkdirSync(path.join(repo, "packages/frontend/scripts/testing"), { recursive: true });
+    writeFileSync(path.join(repo, "packages/frontend/scripts/testing/runSpec.sh"), "#!/bin/sh\n");
+    commitAll(repo, "test: add a spec launcher");
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("LANE:tooling");
+  });
+
   test("skips area checks for pushes outside every checked area", () => {
     const repo = hookRepo();
     writeFileSync(path.join(repo, "README.md"), "readme\n");

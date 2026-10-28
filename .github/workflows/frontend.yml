@@ -1,9 +1,10 @@
 ---
 
 name: Frontend CI
-# yamllint disable-line rule:truthy
 # Pull requests run this through `CI` (ci.yml, the required `CI gate`); pushes to
-# the long-lived branches rerun the checks.
+# the long-lived branches rerun the checks. The static checks, the unit suite and
+# the WebdriverIO suite are separate jobs, so they run in parallel; the caller
+# sees their combined result.
 on:
   workflow_dispatch:
   workflow_call:
@@ -23,44 +24,64 @@ on:
 jobs:
   code-quality:
     runs-on: ubuntu-latest
-    continue-on-error: false
     defaults:
       run:
         working-directory: packages/frontend
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Bun and Node with mise
         uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
         with:
           version: 2026.10.17
-      - name: Set up Python
-        uses: actions/setup-python@v7.0.0
-        with:
-          python-version: '3.15'
-          architecture: 'x64'
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      # The pinned agent-tool renders the icons from assets/brand.
-      - name: Install root tooling
-        working-directory: .
-        run: bun install --frozen-lockfile
-      - name: Install Python code-quality tools
-        run: pip install yamllint
       - name: Lint source
         run: bun run lint
       - name: Check formatting
         run: bun run format
       - name: Compile TypeScript
         run: bun run compile
-      - name: Lint shell scripts
-        run: >-
-          find scripts ../../scripts -type f -name '*.sh' -print0 |
-          xargs -0 shellcheck
-      - name: Lint YAML
-        run: yamllint -c .yamllint .
-      - run: ../../scripts/testing/runUnitTests.sh
-      - run: ../../scripts/testing/runWebdriverTests.sh
-      - uses: actions/upload-artifact@v7.0.2
+
+  unit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Bun and Node with mise
+        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
+        with:
+          version: 2026.10.17
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      # The pinned agent-tool renders the icons from assets/brand.
+      - name: Install root tooling
+        working-directory: .
+        run: bun install --frozen-lockfile
+      - name: Unit tests
+        run: ../../scripts/testing/runUnitTests.sh
+
+  webdriver:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Bun and Node with mise
+        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
+        with:
+          version: 2026.10.17
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      # The pinned agent-tool renders the icons from assets/brand.
+      - name: Install root tooling
+        working-directory: .
+        run: bun install --frozen-lockfile
+      - name: WebdriverIO tests
+        run: ../../scripts/testing/runWebdriverTests.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: wdio-video-reporter
