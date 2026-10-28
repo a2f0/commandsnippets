@@ -57,7 +57,6 @@ export interface UiState {
   tagSelectedID: string;
   entrySearchString: string;
   tagSearchString: string;
-  mostRecentCopyType: string | null;
   mostRecentCopyID: string | null;
   clickCount: number;
   /**
@@ -87,7 +86,6 @@ export interface AppActions {
   setTagSelectedID(value: string): void;
   setEntrySearchString(value: string): void;
   setTagSearchString(value: string): void;
-  setMostRecentCopyType(value: string): void;
   setMostRecentCopyID(value: string): void;
   setEntryReturnPath(entryPage: string, returnPath: string): void;
   incrementClickCount(): void;
@@ -117,7 +115,6 @@ export const defaultUiState: UiState = {
   tagSelectedID: '',
   entrySearchString: '',
   tagSearchString: '',
-  mostRecentCopyType: null,
   mostRecentCopyID: null,
   clickCount: 0,
   entryReturnPaths: {},
@@ -210,7 +207,6 @@ export const useAppState = create<AppState>()(
       setTagSelectedID: tagSelectedID => set({tagSelectedID}),
       setEntrySearchString: entrySearchString => set({entrySearchString}),
       setTagSearchString: tagSearchString => set({tagSearchString}),
-      setMostRecentCopyType: mostRecentCopyType => set({mostRecentCopyType}),
       setMostRecentCopyID: mostRecentCopyID => set({mostRecentCopyID}),
       setEntryReturnPath: (entryPage, returnPath) =>
         set(state => ({

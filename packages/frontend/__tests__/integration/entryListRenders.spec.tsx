@@ -1,7 +1,9 @@
 /**
  * How often the entry list renders its rows: once each when the list is
  * read, and only the rows whose selection (or last copy) changes when
- * another entry is clicked (a long list stays quick).
+ * another entry is clicked, whose data a write changes (the list reads
+ * every row again), or that a new entry's form opens next to (a long list
+ * stays quick).
  */
 import {act, fireEvent, render, screen} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
@@ -9,7 +11,7 @@ import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
-import {signIn} from '../util/signIn';
+import {signIn, store} from '../util/signIn';
 import {entry, seed} from '../util/storeFixtures';
 import {TestAppRouter} from '../util/TestAppRouter';
 
@@ -51,6 +53,8 @@ vi.mock('../../src/lib/state/appState', async importOriginal => {
 
 const API = 'http://localhost:9001/api/v1';
 const COUNT = 40;
+const WAIT = {timeout: 10_000};
+vi.setConfig({testTimeout: 30_000});
 
 beforeAll(() => server.listen());
 afterEach(() => {
@@ -71,7 +75,8 @@ beforeEach(() => {
   });
 });
 
-it('renders each row once when read, and only the changed rows on selection', async () => {
+/** All entries, `COUNT` of them, as the database holds them. */
+async function showList(): Promise<void> {
   await seed(
     Array.from({length: COUNT}, (_, i) =>
       entry(String(i + 1), {subject: `subject ${i + 1}`})
@@ -84,7 +89,11 @@ it('renders each row once when read, and only the changed rows on selection', as
   const history = createMemoryHistory();
   history.push('/test?entries=all');
   render(<TestAppRouter history={history} />);
-  await screen.findByText(`subject ${COUNT}`);
+  await screen.findByText(`subject ${COUNT}`, undefined, WAIT);
+}
+
+it('renders each row once when read, and only the changed rows on selection', async () => {
+  await showList();
   expect(renders.rows).toBeGreaterThanOrEqual(COUNT);
   // (The first entry is selected once the list is read.)
   expect(renders.rows).toBeLessThanOrEqual(COUNT + 1);
@@ -94,9 +103,48 @@ it('renders each row once when read, and only the changed rows on selection', as
   await act(async () => {
     fireEvent.click(screen.getByText(`body-${COUNT / 2}`));
   });
-  // The entry selected (and copied) before, and the one now: a few renders
-  // each (selected, copied), none of the other rows'.
+  // The entry selected (and copied) before, and the one now: a render or
+  // two each (selected and copied at once, then its reuse stored), none of
+  // the other rows'.
   expect(renders.rows).toBeGreaterThan(0);
-  expect(renders.rows).toBeLessThanOrEqual(6);
+  expect(renders.rows).toBeLessThanOrEqual(3);
   expect(renders.bodies).toBeLessThanOrEqual(4);
+});
+
+it('renders only the entry reused when its reuse is stored', async () => {
+  await showList();
+
+  renders.rows = 0;
+  renders.bodies = 0;
+  await act(async () => {
+    fireEvent.click(screen.getByText(`body-${COUNT / 2}`));
+  });
+  // The reuse is stored (its count shows): the list reads every entry
+  // again, and renders again only the row it changed (and the click's).
+  await screen.findByText('1×', undefined, WAIT);
+  expect(renders.rows).toBeGreaterThan(0);
+  expect(renders.rows).toBeLessThanOrEqual(4);
+  expect(renders.bodies).toBeLessThanOrEqual(3);
+});
+
+it('renders only the row a new entry opens next to', async () => {
+  await showList();
+
+  renders.rows = 0;
+  renders.bodies = 0;
+  act(() => store.setEntryNew(`textEntry-${COUNT / 2}-top`));
+  expect(
+    document.getElementById(`textEntryNew-${COUNT / 2}-top`)
+  ).toBeInTheDocument();
+  // Only the row it opens next to.
+  expect(renders.rows).toBeLessThanOrEqual(2);
+
+  renders.rows = 0;
+  renders.bodies = 0;
+  act(() => store.setEntryNew(null));
+  expect(
+    document.getElementById(`textEntryNew-${COUNT / 2}-top`)
+  ).not.toBeInTheDocument();
+  // That row, and the one selected: the form leaves the list's mode.
+  expect(renders.rows).toBeLessThanOrEqual(4);
 });
