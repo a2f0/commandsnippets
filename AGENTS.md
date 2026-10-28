@@ -26,15 +26,7 @@ Monorepo for the Command Snippets app.
   `CI gate` (see `docs/ci-merge-gate.md`).
 - Ship work with the managed `ship-pr` skill (`.agents/skills/`, `.claude/skills/`):
   commit, cross-agent review and repair, open the PR, squash-merge, reset.
-- Capture noisy finite checks, installs, builds, and hook-running pushes with
-  `bun run agent:run --label <check> -- <command> [args...]`. The exact pinned
-  `@a2f0/agent-tool` keeps full private logs and preserves exit status while
-  returning a compact receipt and a bounded failure excerpt. Use
-  `node_modules/.bin/agent-tool logs <log-path>` or targeted searches to inspect
-  required warnings, coverage, timings, and artifacts before accepting a check.
-  Keep review findings, version decisions, audits, and other structured decision
-  output visible. Run interactive tools and persistent servers directly.
-  Shared commands and policy are configured in `agent-tool.json`. Do not edit
+- Shared commands and policy are configured in `agent-tool.json`. Do not edit
   managed skills: after changing the exact tool pin, run `bun run agents:sync`
   and commit the lockfile, skills, and `.agent-tool-skills.json` together.
 - Validate root tooling with `bun run check`, which records shell lint,
@@ -52,6 +44,23 @@ Monorepo for the Command Snippets app.
   scoped checks, hook setup, timing evidence, and deploy conditions. Inspect
   unresolved review threads and reply in each original thread before resolving
   a fully addressed finding.
+
+## Output capture
+
+Run finite, noisy commands, such as installs, builds, tests, linters, and Git
+commands that run hooks, through
+`bun run agent:run --label <name> -- <command> [args...]`, for example
+`bun run agent:run --label unit -- bun run test:unit`. It keeps complete output
+in a private log, preserves the exit status, and prints a compact receipt, with
+a bounded excerpt of the log on failure. Read more with
+`bun run agent:logs <log-path>`, raising `--tail-lines` or `--max-bytes` as
+needed, or with a targeted search of the log. A zero exit does not rule out
+warnings: inspect required warnings, coverage, timings, and artifacts before
+accepting a check. Run reviews, version preparation, audits, infrastructure
+previews, and run-group checks such as `bun run check` directly so their
+results stay visible, and run interactive tools and servers directly too. Never
+narrow a suite or silence warnings to reduce output. Keep other structured
+decision output visible as well.
 
 ## Dependency documentation
 
