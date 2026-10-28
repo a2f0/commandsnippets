@@ -1,12 +1,10 @@
-import Grid from '@mui/material/Grid';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef} from 'react';
+import {tagEditFields, useEditFieldCycle} from '../../hooks/useEditFieldCycle';
 import {useSession} from '../../lib/data/hooks';
 import {createTag} from '../../lib/data/writes';
-import {activeTagEditField, appMode} from '../../lib/shared';
+import {activeTagEditField} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
-import {StyledTagButton} from './StyledTagButton';
-import {StyledTagFormContainer} from './StyledTagFormContainer';
-import {StyledTextFieldTags} from './StyledTextFieldTags';
+import {TagForm} from './TagForm';
 
 interface IProps {
   id: string;
@@ -14,30 +12,18 @@ interface IProps {
 
 const TagNew = ({id}: IProps) => {
   const session = useSession();
-  const [tagName, setTagName] = useState<string>('');
   const appConfig = useAppConfig();
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
-  const inputTagNameRef = React.useRef<HTMLInputElement>(null);
+  const inputTagNameRef = useRef<HTMLInputElement>(null);
 
-  const setInputTagNameRef = (element: HTMLInputElement) => {
-    inputTagNameRef.current = element;
-  };
+  useEditFieldCycle(tagEditFields, {
+    save: inputSaveRef,
+    cancel: inputCancelRef,
+  });
 
-  const escFunction = useCallback((event: KeyboardEvent) => {
-    if (event.code === 'Escape') {
-      handleCancel();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (appConfig.activeTagEditField === activeTagEditField.save) {
-      inputSaveRef.current?.focus();
-    } else if (appConfig.activeTagEditField === activeTagEditField.cancel) {
-      inputCancelRef.current?.focus();
-    }
-  }, [appConfig.activeTagEditField]);
-
+  // The cleanup runs whenever the active field changes, not only on close,
+  // so it makes the name active again at once: Tab never leaves the name.
   useEffect(() => {
     if (appConfig.activeTagEditField === activeTagEditField.name) {
       inputTagNameRef.current?.focus();
@@ -47,24 +33,11 @@ const TagNew = ({id}: IProps) => {
     };
   }, [appConfig.activeTagEditField, appConfig.setActiveTagEditField]);
 
-  useEffect(() => {
-    document.addEventListener('keydown', escFunction, false);
-
-    return () => {
-      document.removeEventListener('keydown', escFunction, false);
-    };
-  }, [escFunction]);
-
-  const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTagName(event.currentTarget.value);
-  };
-
   const handleCancel = () => {
-    setTagName('');
     appConfig.setTagNew(null);
   };
 
-  const handleSave = () => {
+  const handleSave = (tagName: string) => {
     if (session === null) {
       return;
     }
@@ -77,74 +50,21 @@ const TagNew = ({id}: IProps) => {
       });
   };
 
-  const keyListener = useCallback(
-    (event: KeyboardEvent) => {
-      const trappedKeyCodes = ['Tab'];
-      if (
-        trappedKeyCodes.includes(event.code) &&
-        appConfig.appMode === appMode.tagEditor
-      ) {
-        if (appConfig.activeTagEditField === activeTagEditField.name) {
-          appConfig.setActiveTagEditField(activeTagEditField.save);
-        } else if (appConfig.activeTagEditField === activeTagEditField.save) {
-          appConfig.setActiveTagEditField(activeTagEditField.cancel);
-        } else if (appConfig.activeTagEditField === activeTagEditField.cancel) {
-          appConfig.setActiveTagEditField(activeTagEditField.name);
-          inputTagNameRef.current?.focus();
-        }
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    },
-    [
-      appConfig.activeTagEditField,
-      appConfig.setActiveTagEditField,
-      appConfig.appMode,
-    ]
-  );
-
-  useEffect(() => {
-    document.addEventListener('keydown', keyListener, false);
-    return () => {
-      document.removeEventListener('keydown', keyListener, false);
-    };
-  }, [keyListener]);
-
   return (
-    <StyledTagFormContainer id={id}>
-      <StyledTextFieldTags
-        ref={setInputTagNameRef}
-        value={tagName}
-        id={`${id}TextField`}
-        onChange={e => {
-          handleTagNameChange(e);
-        }}
-      />
-      <Grid container spacing={0}>
-        <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
-          <StyledTagButton
-            ref={inputSaveRef}
-            id={`${id}Save`}
-            onClick={() => {
-              handleSave();
-            }}
-          >
-            Save
-          </StyledTagButton>
-        </Grid>
-        <Grid sx={{paddingLeft: '1px'}} size={{xs: 6}}>
-          <StyledTagButton
-            ref={inputCancelRef}
-            id={`${id}Cancel`}
-            onClick={() => {
-              handleCancel();
-            }}
-          >
-            Cancel
-          </StyledTagButton>
-        </Grid>
-      </Grid>
-    </StyledTagFormContainer>
+    <TagForm
+      ids={{
+        form: id,
+        name: `${id}TextField`,
+        save: `${id}Save`,
+        cancel: `${id}Cancel`,
+      }}
+      name=""
+      onSave={handleSave}
+      onCancel={handleCancel}
+      nameRef={inputTagNameRef}
+      saveRef={inputSaveRef}
+      cancelRef={inputCancelRef}
+    />
   );
 };
 

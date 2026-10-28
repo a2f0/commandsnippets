@@ -1,17 +1,8 @@
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import {useTheme} from '@mui/material/styles';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {useTypedTranslation} from '../../i18n/hooks';
+import React from 'react';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
 import {updateEntry} from '../../lib/data/writes';
-import {needsScrollingIntoView} from '../../lib/scroll';
-import {activeEntryEditField, appMode} from '../../lib/shared';
-import {useAppConfig} from '../../lib/state/appState';
-import {commonButtonSx} from '../../theme/sx';
-import {InputEntryBody} from './InputEntryBody';
-import {InputEntrySubject} from './InputEntrySubject';
+import {EntryForm} from './EntryForm';
 
 export interface IEntryEdit {
   object: ITextEntryJsonApi;
@@ -27,41 +18,9 @@ const EntryEdit = ({
   handleCancelEditParent,
   id,
 }: IEntryEdit) => {
-  const {t} = useTypedTranslation('common');
-  const [subject, setSubject] = useState<string>(object.attributes.subject);
-  const [body, setBody] = useState<string>(object.attributes.body);
-  const appConfig = useAppConfig();
   const session = useSession();
-  const inputSaveRef = useRef<HTMLButtonElement>(null);
-  const inputCancelRef = useRef<HTMLButtonElement>(null);
-  const theme = useTheme();
 
-  const setInputSaveRef = (element: HTMLButtonElement) => {
-    inputSaveRef.current = element;
-  };
-
-  const setInputCancelRef = (element: HTMLButtonElement) => {
-    inputCancelRef.current = element;
-  };
-
-  useEffect(() => {
-    return () => {
-      appConfig.setActiveEntryEditField(activeEntryEditField.subject);
-      appConfig.setAppMode(appMode.entriesList);
-    };
-  }, [appConfig.setActiveEntryEditField, appConfig.setAppMode]);
-
-  // The editor opens with its Save button in view (above the footer).
-  useEffect(() => {
-    if (inputSaveRef.current && needsScrollingIntoView(inputSaveRef, theme)) {
-      inputSaveRef.current.scrollIntoView({
-        behavior: 'auto',
-        block: 'end',
-      });
-    }
-  }, [theme]);
-
-  const handleSave = () => {
+  const handleSave = (subject: string, body: string) => {
     if (session === null) {
       return;
     }
@@ -72,127 +31,15 @@ const EntryEdit = ({
       });
   };
 
-  const handleCancel = () => {
-    setBody(object.attributes.body);
-    setSubject(object.attributes.subject);
-    handleCancelEditParent();
-  };
-
-  const handleBodyChange = (value: string) => {
-    setBody(value);
-  };
-
-  const handleSubjectChange = (value: string) => {
-    setSubject(value);
-  };
-
-  const keyListener = useCallback(
-    (event: KeyboardEvent) => {
-      const trappedKeyCodes = ['Tab'];
-      if (
-        trappedKeyCodes.includes(event.code) &&
-        appConfig.appMode === appMode.entryEditor
-      ) {
-        if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
-          appConfig.setActiveEntryEditField(activeEntryEditField.body);
-        } else if (
-          appConfig.activeEntryEditField === activeEntryEditField.body
-        ) {
-          appConfig.setActiveEntryEditField(activeEntryEditField.save);
-        } else if (
-          appConfig.activeEntryEditField === activeEntryEditField.save
-        ) {
-          appConfig.setActiveEntryEditField(activeEntryEditField.cancel);
-        } else if (
-          appConfig.activeEntryEditField === activeEntryEditField.cancel
-        ) {
-          appConfig.setActiveEntryEditField(activeEntryEditField.subject);
-        }
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    },
-    [
-      appConfig.activeEntryEditField,
-      appConfig.appMode,
-      appConfig.setActiveEntryEditField,
-    ]
-  );
-
-  useEffect(() => {
-    document.addEventListener('keydown', keyListener, false);
-    return () => {
-      document.removeEventListener('keydown', keyListener, false);
-    };
-  }, [keyListener]);
-
-  useEffect(() => {
-    if (appConfig.activeEntryEditField === activeEntryEditField.save) {
-      inputSaveRef.current?.focus();
-    } else if (appConfig.activeEntryEditField === activeEntryEditField.cancel) {
-      inputCancelRef.current?.focus();
-    }
-  }, [appConfig.activeEntryEditField]);
-
-  const buttonSx = {
-    // Scrolled into view clear of the footer, which covers the bottom of
-    // the window: Save as the editor opens, either button when focused.
-    scrollMarginBottom: `${theme.footer.height + 10}px`,
-    marginBottom: '10px',
-    ...commonButtonSx,
-  };
-
   return (
-    <Box
+    <EntryForm
       id={id}
-      sx={{
-        ml: theme => `${theme.main.dragIndicatorWidth}px`,
-      }}
-    >
-      <div>
-        <InputEntrySubject
-          id={`${id}Subject`}
-          placeholder="subject"
-          valueParent={subject}
-          handleChangeParent={handleSubjectChange}
-        />
-      </div>
-      <div>
-        <InputEntryBody
-          id={`${id}Body`}
-          placeholder="body"
-          valueParent={body}
-          handleChangeParent={handleBodyChange}
-        />
-      </div>
-      <Button
-        ref={setInputSaveRef}
-        id={`${id}Save`}
-        sx={{
-          ...buttonSx,
-          marginRight: '2px',
-        }}
-        size="small"
-        variant="outlined"
-        onClick={() => {
-          handleSave();
-        }}
-      >
-        {t('save')}
-      </Button>
-      <Button
-        ref={setInputCancelRef}
-        id={`${id}Cancel`}
-        size="small"
-        variant="outlined"
-        onClick={() => {
-          handleCancel();
-        }}
-        sx={buttonSx}
-      >
-        {t('cancel')}
-      </Button>
-    </Box>
+      kind="edit"
+      subject={object.attributes.subject}
+      body={object.attributes.body}
+      onSave={handleSave}
+      onCancel={handleCancelEditParent}
+    />
   );
 };
 
