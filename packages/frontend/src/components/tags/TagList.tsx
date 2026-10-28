@@ -1,7 +1,14 @@
 import {List} from '@mui/material';
 import {styled} from '@mui/material/styles';
 import invariant from 'invariant';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {useDrop} from 'react-dnd';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly} from '../../lib/data/hooks';
@@ -42,27 +49,48 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
   // Another user's tags (staff reading them): no New Tag.
   const readOnly = useReadOnly();
 
-  const [selectedTag, setSelectedTag] = useState<string>();
   const [movedSelectedUp, setMovedSelectedUp] = useState<boolean>(false);
-  const [tags, setTags] = useState<Array<ITagJsonApi>>(tagsFromWrapper);
 
   const [mouse, setMouse] = useState(initialMouse);
 
-  // The list as the database has it now (a drag reorders this copy until
-  // the drop is stored), and the tag selected in it.
+  // The list as the database has it now, rendered as soon as it is read: a
+  // drag reorders a copy of it (`dragged`), which a newer list (the drop
+  // stored) replaces.
+  const [dragged, setDragged] = useState<{
+    of: ITagJsonApi[];
+    tags: ITagJsonApi[];
+  } | null>(null);
+  const tags =
+    dragged !== null && dragged.of === tagsFromWrapper
+      ? dragged.tags
+      : tagsFromWrapper;
+
+  // The tag highlighted: the one chosen in the list (the arrow keys, a
+  // click) while the list and the tag selected (the tag shown) are those it
+  // was chosen with; otherwise the tag selected, or the first.
   const {tagSelectedID} = appConfig;
-  useEffect(() => {
-    setTags(tagsFromWrapper);
-    const current = tagsFromWrapper.find(
-      element => element.id === tagSelectedID
-    );
-    const [first] = tagsFromWrapper;
-    if (current !== undefined) {
-      setSelectedTag(current.id);
-    } else if (first !== undefined) {
-      setSelectedTag(first.id);
-    }
-  }, [tagsFromWrapper, tagSelectedID]);
+  const [chosen, setChosen] = useState<{
+    id: string;
+    of: ITagJsonApi[];
+    selected: string;
+  } | null>(null);
+  const selectedTag =
+    chosen !== null &&
+    chosen.of === tagsFromWrapper &&
+    chosen.selected === tagSelectedID
+      ? chosen.id
+      : tags.some(tag => tag.id === tagSelectedID)
+        ? tagSelectedID
+        : tags[0]?.id;
+  // The list and selection a choice is made with, which the rows' clicks
+  // read: the function they are given stays the same.
+  const choosingWith = useRef({of: tagsFromWrapper, selected: tagSelectedID});
+  useLayoutEffect(() => {
+    choosingWith.current = {of: tagsFromWrapper, selected: tagSelectedID};
+  });
+  const setSelectedTag = useCallback((id: string) => {
+    setChosen({id, ...choosingWith.current});
+  }, []);
 
   const findEntry = useCallback(
     (id: string) => {
@@ -98,9 +126,9 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       const newTags = [...tags];
       newTags.splice(index, 1);
       newTags.splice(atIndex, 0, entry);
-      setTags(newTags);
+      setDragged({of: tagsFromWrapper, tags: newTags});
     },
-    [findEntry, tags]
+    [findEntry, tags, tagsFromWrapper]
   );
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});

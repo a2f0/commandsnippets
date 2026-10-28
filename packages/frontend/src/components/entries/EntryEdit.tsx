@@ -28,7 +28,6 @@ const EntryEdit = ({
   id,
 }: IEntryEdit) => {
   const {t} = useTypedTranslation('common');
-  const saveRef = useRef<HTMLButtonElement>(null);
   const [subject, setSubject] = useState<string>(object.attributes.subject);
   const [body, setBody] = useState<string>(object.attributes.body);
   const appConfig = useAppConfig();
@@ -52,9 +51,10 @@ const EntryEdit = ({
     };
   }, [appConfig.setActiveEntryEditField, appConfig.setAppMode]);
 
+  // The editor opens with its Save button in view (above the footer).
   useEffect(() => {
-    if (saveRef.current && needsScrollingIntoView(saveRef, theme)) {
-      saveRef.current?.scrollIntoView({
+    if (inputSaveRef.current && needsScrollingIntoView(inputSaveRef, theme)) {
+      inputSaveRef.current.scrollIntoView({
         behavior: 'auto',
         block: 'end',
       });
@@ -74,7 +74,7 @@ const EntryEdit = ({
 
   const handleCancel = () => {
     setBody(object.attributes.body);
-    setSubject(object.attributes.body);
+    setSubject(object.attributes.subject);
     handleCancelEditParent();
   };
 
@@ -135,7 +135,9 @@ const EntryEdit = ({
   }, [appConfig.activeEntryEditField]);
 
   const buttonSx = {
-    scrollMarginBottom: '10px',
+    // Scrolled into view clear of the footer, which covers the bottom of
+    // the window: Save as the editor opens, either button when focused.
+    scrollMarginBottom: `${theme.footer.height + 10}px`,
     marginBottom: '10px',
     ...commonButtonSx,
   };

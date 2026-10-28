@@ -40,6 +40,7 @@ import {ItemTypes} from '../dnd/itemTypes';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
+import {keepUnchanged} from './unchangedRows';
 
 export interface IParamTypes {
   user: string;
@@ -93,16 +94,27 @@ const EntryList = () => {
   );
   const entryOrder = useAppState(state => state.entrySortOrder);
   const search = useAppState(state => state.entrySearchString);
+  // The rows last shown, by key: an entry that the next read (a write's,
+  // which reads every row again) finds unchanged keeps its object, so only
+  // the rows the write changed render again.
+  const lastShown = useRef<ReadonlyMap<string, TextEntry>>(new Map());
   const shown = useMemo(() => {
-    if (listsAll) {
-      return listed === undefined
+    const sorted = listsAll
+      ? listed === undefined
         ? undefined
-        : sortEntries(listed.entries, entryOrder, search);
-    }
-    return tagged === undefined
+        : sortEntries(listed.entries, entryOrder, search)
+      : tagged === undefined
+        ? undefined
+        : sortTagEntries(tagged.entries, tagOrder, search);
+    return sorted === undefined
       ? undefined
-      : sortTagEntries(tagged.entries, tagOrder, search);
+      : keepUnchanged(sorted, lastShown.current, keyOfRow);
   }, [listsAll, listed, tagged, entryOrder, tagOrder, search]);
+  useLayoutEffect(() => {
+    lastShown.current = new Map(
+      (shown ?? []).map(entry => [keyOfRow(entry), entry])
+    );
+  }, [shown]);
   // The list asked for, with its own rows: not the last list's, which the
   // queries answer with until they read the next.
   const shownList = listsAll
@@ -255,7 +267,6 @@ const EntryList = () => {
           } else if (event.key === 'Enter') {
             copyEntry(session, selected.id, selected.attributes.body);
             appConfig.setMostRecentCopyID(selected.id);
-            appConfig.setMostRecentCopyType(selected.type);
           }
         }
       }
@@ -271,20 +282,27 @@ const EntryList = () => {
     };
   }, [keyListener]);
 
-  const findEntry = useCallback(
-    (id: string) => {
-      const entry = entries.filter(c => c.id === id)[0];
-      invariant(entry, 'entry is undefined');
-      return {
-        entry,
-        index: entries.indexOf(entry),
-      };
-    },
-    [entries]
-  );
+  // The list as last rendered, which the rows' drag and drop reads: the
+  // functions they are given stay the same as the list changes (new ones
+  // would render every row again on every write).
+  const rendered = useRef({entries, shown});
+  useLayoutEffect(() => {
+    rendered.current = {entries, shown};
+  });
+
+  const findEntry = useCallback((id: string) => {
+    const {entries} = rendered.current;
+    const entry = entries.filter(c => c.id === id)[0];
+    invariant(entry, 'entry is undefined');
+    return {
+      entry,
+      index: entries.indexOf(entry),
+    };
+  }, []);
 
   const moveEntry = useCallback(
     (id: string, atIndex: number) => {
+      const {entries, shown} = rendered.current;
       const {entry, index} = findEntry(id);
       console.debug(
         `moveEntry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
@@ -294,20 +312,18 @@ const EntryList = () => {
       newEntries.splice(atIndex, 0, entry);
       setDragged({of: shown ?? [], entries: newEntries});
     },
-    [findEntry, entries, shown]
+    [findEntry]
   );
 
-  const findEntryByIndex = useCallback(
-    (index: number): TextEntry | null => {
-      if (index > entries.length - 1) {
-        return null;
-      }
-      const entry = entries[index];
-      invariant(entry, 'entry is undefined');
-      return entry;
-    },
-    [entries]
-  );
+  const findEntryByIndex = useCallback((index: number): TextEntry | null => {
+    const {entries} = rendered.current;
+    if (index > entries.length - 1) {
+      return null;
+    }
+    const entry = entries[index];
+    invariant(entry, 'entry is undefined');
+    return entry;
+  }, []);
 
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 

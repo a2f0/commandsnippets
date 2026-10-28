@@ -1,17 +1,10 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect} from 'react';
 
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledTextFieldEntries} from './StyledTextFieldTextEntries';
 
 const TextEntrySearchField = () => {
   const appConfig = useAppConfig();
-  const [textEntrySearch, setTextEntrySearch] = useState<string>(
-    appConfig.entrySearchString
-  );
-
-  useEffect(() => {
-    setTextEntrySearch(appConfig.entrySearchString);
-  }, [appConfig.entrySearchString]);
 
   const escFunction = useCallback((event: KeyboardEvent) => {
     if (event.code === 'Escape') {
@@ -32,13 +25,12 @@ const TextEntrySearchField = () => {
   };
 
   const handleClear = () => {
-    setTextEntrySearch('');
     appConfig.setEntrySearchString('');
   };
 
   return (
     <StyledTextFieldEntries
-      value={textEntrySearch}
+      value={appConfig.entrySearchString}
       id="textEntrySearch"
       onChange={handleChange}
     />

@@ -54,8 +54,6 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
   };
 
   const handleCancel = () => {
-    setBody(body);
-    setSubject(subject);
     appConfig.setEntryNew(null);
   };
 

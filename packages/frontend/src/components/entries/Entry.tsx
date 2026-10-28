@@ -101,12 +101,10 @@ const Entry = ({
   const textEntryObject = object;
   const dragRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
-  const originalIndex = findEntry(id).index;
   const [hoverState, setHoverState] = useState({
     showDragHandle: false,
     showCopyIcon: false,
   });
-  const [showCheckIcon, setShowCheckIcon] = useState(false);
   const entriesFilter = useSearchParam('entries');
   const previewRef = useRef<HTMLDivElement>(null);
   const [mouse, setMouse] = useState(initialMouse);
@@ -119,7 +117,7 @@ const Entry = ({
     {
       item: (): DraggableItem => ({
         id,
-        originalIndex,
+        originalIndex: index,
         type: ItemTypes.ENTRY,
         index,
       }),
@@ -202,7 +200,16 @@ const Entry = ({
         }
       },
     },
-    [id, originalIndex, moveEntry, readOnly]
+    [
+      id,
+      index,
+      moveEntry,
+      findEntry,
+      findEntryByIndex,
+      readOnly,
+      session,
+      tagId,
+    ]
   );
   // Make sure opacity is above the useDrag call above
   const opacity = isDragging ? 0 : 1;
@@ -210,7 +217,9 @@ const Entry = ({
     {
       accept: ItemTypes.ENTRY,
       hover: (item: DraggableItem, monitor) => {
-        console.debug(`hover: index ${index} originalIndex ${originalIndex}`);
+        console.debug(
+          `hover: index ${index} originalIndex ${item.originalIndex}`
+        );
         if (!dragRef.current) {
           return;
         }
@@ -253,14 +262,15 @@ const Entry = ({
         }
       },
     },
-    [findEntry, moveEntry]
+    [index, moveEntry]
   );
 
   drag(dragRef);
   drop(dropRef);
 
-  // Whether this entry is the one copied last: watched alone, so copying
-  // another entry renders only the rows it changes.
+  // Whether this entry is the one copied last (its check mark shows):
+  // watched alone, so copying another entry renders only the rows it
+  // changes.
   const copiedLast = useAppState(state => state.mostRecentCopyID === object.id);
   // Whether this entry is the one selected in the list: watched alone, so
   // selecting another entry renders only the rows it changes.
@@ -269,10 +279,6 @@ const Entry = ({
       state.entrySelectedID === object.id &&
       state.appMode === appMode.entriesList
   );
-  useEffect(() => {
-    setShowCheckIcon(copiedLast);
-  }, [copiedLast]);
-
   const mouseEnter = useCallback(() => {
     setHoverState({
       showDragHandle: appConfig.loggedInUser !== null && !readOnly,
@@ -300,13 +306,19 @@ const Entry = ({
     setIsEditing(false);
   }, []);
 
+  // Where a new entry's form is open next to the row, if it is: watched
+  // alone, so opening or closing one renders only the row it is next to.
+  const newEntryAt = useAppState(state =>
+    state.entryNew === `textEntry-${rowKey}-top`
+      ? 'top'
+      : state.entryNew === `textEntry-${rowKey}-bottom`
+        ? 'bottom'
+        : null
+  );
   // A form open in the row (its editor, or a new entry's), or a drag of it,
   // keeps the row rendered wherever the list scrolls: unrendered, its text
   // would be lost, or the drag would lose its source.
-  const newEntryHere =
-    appConfig.entryNew === `textEntry-${rowKey}-top` ||
-    appConfig.entryNew === `textEntry-${rowKey}-bottom`;
-  const held = isDragging || (!readOnly && (isEditing || newEntryHere));
+  const held = isDragging || (!readOnly && (isEditing || newEntryAt !== null));
   useEffect(
     () => (held ? keepRendered(rowKey) : undefined),
     [held, keepRendered, rowKey]
@@ -357,12 +369,10 @@ const Entry = ({
   const copyToClipboard = useCallback(
     (text: string) => {
       setHoverState(prev => ({...prev, showCopyIcon: false}));
-      setShowCheckIcon(true);
       copyEntry(session, textEntryObject.id, text);
-      appConfig.setMostRecentCopyType(textEntryObject.type);
       appConfig.setMostRecentCopyID(textEntryObject.id);
     },
-    [appConfig, session, textEntryObject.type, textEntryObject.id]
+    [appConfig, session, textEntryObject.id]
   );
 
   const handleCopyClick = useCallback(() => {
@@ -424,7 +434,7 @@ const Entry = ({
 
   return (
     <>
-      {appConfig.entryNew === `textEntry-${rowKey}-top` && !readOnly && (
+      {newEntryAt === 'top' && !readOnly && (
         <EntryNew id={`textEntryNew-${object.id}-top`} tagId={tagId} />
       )}
       {!isEditing && (
@@ -477,17 +487,15 @@ const Entry = ({
                   style={{
                     visibility: hoverState.showCopyIcon ? 'visible' : 'hidden',
                     display:
-                      hoverState.showCopyIcon && !showCheckIcon
-                        ? 'block'
-                        : 'none',
+                      hoverState.showCopyIcon && !copiedLast ? 'block' : 'none',
                   }}
                 >
                   <FileCopySharp fontSize="inherit" />
                 </CopyIndicator>
                 <CheckIndicator
                   style={{
-                    visibility: showCheckIcon ? 'visible' : 'hidden',
-                    display: showCheckIcon ? 'block' : 'none',
+                    visibility: copiedLast ? 'visible' : 'hidden',
+                    display: copiedLast ? 'block' : 'none',
                   }}
                 >
                   <Check fontSize="inherit" />
@@ -505,7 +513,7 @@ const Entry = ({
           </EntryContainer>
         </div>
       )}
-      {appConfig.entryNew === `textEntry-${rowKey}-bottom` && !readOnly && (
+      {newEntryAt === 'bottom' && !readOnly && (
         <EntryNew id={`textEntryNew-${object.id}-bottom`} tagId={tagId} />
       )}
 
