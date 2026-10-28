@@ -12,6 +12,7 @@
     "test:scripts": "bun test ./scripts/",
     "typecheck": "tsc -p tsconfig.scripts.json",
     "agent:run": "agent-tool run",
+    "agent:logs": "agent-tool logs",
     "agent-tool": "agent-tool",
     "hooks:check": "agent-tool hooks check",
     "lint:pr-title": "bun scripts/checks/lintPrTitle.ts",
