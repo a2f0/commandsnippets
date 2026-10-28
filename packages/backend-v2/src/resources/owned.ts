@@ -3,9 +3,15 @@
  * behavior needs to scope reads to their owner, check ownership, and stamp
  * revisions.
  */
-import type {SQL} from 'drizzle-orm';
+import {getTableColumns, type SQL} from 'drizzle-orm';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
-import {entryReuses, tags, tagsEntries, textEntries} from '../db/schema';
+import {
+  entryReuses,
+  type TextEntry,
+  tags,
+  tagsEntries,
+  textEntries,
+} from '../db/schema';
 import {revision} from '../lib/revision';
 import {
   TAG,
@@ -42,6 +48,22 @@ export const tagResource = {
   dateUpdated: tags.date_updated,
   clientUpdated: tags.client_updated,
 } satisfies RevisedResource;
+
+const {
+  subject_folded: _subjectFolded,
+  body_folded: _bodyFolded,
+  ...renderedEntryColumns
+} = getTableColumns(textEntries);
+
+/**
+ * An entry's columns but its search folds (`subject_folded`, `body_folded`;
+ * lib/search.ts), which only searches use, in SQL: what reads that render
+ * entries select.
+ */
+export const entryColumns = renderedEntryColumns;
+
+/** An entry as `entryColumns` reads it. */
+export type EntryRow = Omit<TextEntry, 'subject_folded' | 'body_folded'>;
 
 export const textEntryResource = {
   type: TEXT_ENTRY,

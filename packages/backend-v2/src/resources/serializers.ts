@@ -14,16 +14,15 @@ import {
   entryReuses,
   type Tag,
   type TagTextEntry,
-  type TextEntry,
   type TextEntryReused,
   tags,
   tagsEntries,
   textEntries,
   type User,
-  users,
 } from '../db/schema';
 import {isoformat} from '../lib/clock';
 import type {Registry, ResourceDef, ToMany, ToOne} from '../lib/jsonapi';
+import {type EntryRow, entryColumns} from './owned';
 import {
   publicEntry,
   publicEntryFields,
@@ -57,24 +56,24 @@ type RelationshipsOf<T extends keyof Relationships, Row> = {
 };
 
 /**
- * Every loader is scoped to `userId`, the requesting user, and to the data
- * version read: reads are owner-only, and a relationship must not become a
- * way around that (nor into another version). A relationship never links two
+ * Every loader is scoped to `owner`, whose data is read (the requesting
+ * user, or the user a staff or public read names), and to the data version
+ * read: reads are owner-only, and a relationship must not become a way
+ * around that (nor into another version). A relationship never links two
  * users' rows (migrations/0021_own_links.sql).
  */
 export function createRegistry(
   db: Db,
-  userId: number,
+  owner: User,
   version: number,
   publicOnly = false
 ): Registry {
+  const userId = owner.id;
   const user: ResourceDef<User> = {
     type: USER,
-    load: ids =>
-      db
-        .select()
-        .from(users)
-        .where(and(inIds(users.id, ids), eq(users.id, userId))),
+    // The owner's row as the request read it, not read again: what renders
+    // of it changes only through routes that render no `User`.
+    load: async ids => (ids.includes(userId) ? [owner] : []),
     // Only ever the requester's own row (see `load`), so is_staff tells the
     // web app whether to offer the admin page; the admin API checks it again.
     attributes: row => ({
@@ -118,13 +117,11 @@ export function createRegistry(
     defaultIncludes: DEFAULT_INCLUDES[TAG],
   };
 
-  const textEntry: ResourceDef<TextEntry> = {
+  const textEntry: ResourceDef<EntryRow> = {
     type: TEXT_ENTRY,
     load: ids =>
       db
-        .select(
-          publicOnly ? publicEntryFields(userId) : getTableColumns(textEntries)
-        )
+        .select(publicOnly ? publicEntryFields(userId) : entryColumns)
         .from(textEntries)
         .where(
           and(
@@ -168,7 +165,7 @@ export function createRegistry(
             .orderBy(asc(tagsEntries.date_updated), asc(tagsEntries.id)),
         parentKey: (row: TagTextEntry) => row.text_entry_id,
       },
-    } satisfies RelationshipsOf<typeof TEXT_ENTRY, TextEntry>,
+    } satisfies RelationshipsOf<typeof TEXT_ENTRY, EntryRow>,
     defaultIncludes: DEFAULT_INCLUDES[TEXT_ENTRY],
   };
 

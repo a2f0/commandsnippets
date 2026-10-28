@@ -97,8 +97,11 @@ function versionResource(row: VersionRow, active: number) {
   return {type: DATA_VERSION, id: String(row.version), attributes};
 }
 
+const versionWhere = (userId: number, version: number) =>
+  and(eq(dataVersions.user_id, userId), eq(dataVersions.version, version));
+
 /** `userId`'s version `version`, with its counts, if they have it. */
-export async function findVersion(
+async function findVersion(
   db: Db,
   userId: number,
   version: number
@@ -106,36 +109,41 @@ export async function findVersion(
   const [row] = await db
     .select(versionFields)
     .from(dataVersions)
-    .where(
-      and(eq(dataVersions.user_id, userId), eq(dataVersions.version, version))
-    )
+    .where(versionWhere(userId, version))
     .limit(1);
   return row;
 }
 
-/** The `:version` route parameter: one of the user's versions, else a 404. */
-async function routeVersion(
+/** `version`, if `userId` has it: `findVersion` without its counts. */
+export async function findVersionNumber(
+  db: Db,
+  userId: number,
+  version: number
+): Promise<number | undefined> {
+  const [row] = await db
+    .select({version: dataVersions.version})
+    .from(dataVersions)
+    .where(versionWhere(userId, version))
+    .limit(1);
+  return row?.version;
+}
+
+/**
+ * The `:version` route parameter, as `find` finds it among the user's
+ * versions, else a 404.
+ */
+async function routeVersion<T>(
   c: Context<AppEnv>,
-  user: User
-): Promise<VersionRow> {
+  find: (version: number) => Promise<T | undefined>
+): Promise<T> {
   const param = c.req.param('version') ?? '';
-  const row = /^[1-9]\d*$/.test(param)
-    ? await findVersion(c.get('db'), user.id, Number(param))
+  const found = /^[1-9]\d*$/.test(param)
+    ? await find(Number(param))
     : undefined;
-  if (row === undefined) {
+  if (found === undefined) {
     throw notFound(`No ${DATA_VERSION} matches the given query.`);
   }
-  return row;
-}
-
-/** The user's active version now (it may have changed since they were read). */
-async function activeVersion(db: Db, userId: number): Promise<number> {
-  const [row] = await db
-    .select({active: users.active_version})
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  return row?.active ?? 1;
+  return found;
 }
 
 export const dataVersionRoutes = new Hono<AppEnv>();
@@ -143,12 +151,21 @@ export const dataVersionRoutes = new Hono<AppEnv>();
 dataVersionRoutes.get('/', async c => {
   const user = requireUser(c);
   const db = c.get('db');
-  const rows = await db
-    .select(versionFields)
-    .from(dataVersions)
-    .where(eq(dataVersions.user_id, user.id))
-    .orderBy(desc(dataVersions.version));
-  const active = await activeVersion(db, user.id);
+  // One batch: the versions, and which is active now (it may have changed
+  // since the user was read), as of one moment.
+  const [rows, [current]] = await db.batch([
+    db
+      .select(versionFields)
+      .from(dataVersions)
+      .where(eq(dataVersions.user_id, user.id))
+      .orderBy(desc(dataVersions.version)),
+    db
+      .select({active: users.active_version})
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1),
+  ]);
+  const active = current?.active ?? 1;
   const body = {data: rows.map(row => versionResource(row, active))};
   return c.body(JSON.stringify(body), 200, {
     'Content-Type': 'application/vnd.api+json',
@@ -163,7 +180,9 @@ dataVersionRoutes.get('/', async c => {
 dataVersionRoutes.post('/:version/activate', async c => {
   const user = requireUser(c);
   const db = c.get('db');
-  const row = await routeVersion(c, user);
+  const row = await routeVersion(c, version =>
+    findVersion(db, user.id, version)
+  );
   const {version} = row;
   try {
     await db
@@ -191,19 +210,17 @@ dataVersionRoutes.post('/:version/activate', async c => {
 /**
  * Delete a version that is not active, rows and all. Its users_dataversion
  * row goes first, so its rows (which nothing writes while it is not active)
- * may change and go: their deletes' counter triggers write them. Each delete
- * names that the row is gone, so none happens if the version was made
- * active meanwhile.
+ * may change and go: their deletes' counter triggers write them. That delete
+ * names that the version is not active, and each of the others that the row
+ * is gone, so the active version (active all along, or made active
+ * meanwhile) loses nothing: a 400.
  */
 dataVersionRoutes.delete('/:version', async c => {
   const user = requireUser(c);
   const db = c.get('db');
-  const {version} = await routeVersion(c, user);
-  const notActive = () =>
-    validationError('The active data version cannot be deleted.');
-  if (version === (await activeVersion(db, user.id))) {
-    throw notActive();
-  }
+  const version = await routeVersion(c, version =>
+    findVersionNumber(db, user.id, version)
+  );
   const gone = sql`NOT EXISTS (SELECT 1 FROM ${dataVersions} WHERE ${dataVersions.user_id} = ${user.id} AND ${dataVersions.version} = ${version})`;
   const ofVersion = (
     table:
@@ -229,7 +246,7 @@ dataVersionRoutes.delete('/:version', async c => {
     db.delete(tags).where(ofVersion(tags)),
   ]);
   if (deleted.length === 0) {
-    throw notActive();
+    throw validationError('The active data version cannot be deleted.');
   }
   return c.body(null, 204);
 });

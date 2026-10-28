@@ -1,6 +1,7 @@
 /** Public predicates apply to primary rows, relationship linkage, and includes. */
 import {and, eq, getTableColumns, sql} from 'drizzle-orm';
 import {tags, tagsEntries, textEntries} from '../db/schema';
+import {entryColumns} from './owned';
 
 export const publicTag = (ownerId: number) =>
   and(
@@ -55,6 +56,6 @@ export const publicTagFields = (ownerId: number) => ({
   date_last_used: publicLastUsed(ownerId),
 });
 export const publicEntryFields = (ownerId: number) => ({
-  ...getTableColumns(textEntries),
+  ...entryColumns,
   tag_count: publicTagCount(ownerId),
 });

@@ -194,6 +194,13 @@ export async function serialize(
     bucket(type).set(row.id, row);
   }
 
+  // Each load in flight (or done), by what it loads for (a type, or a to-many
+  // relationship) and id: include paths walked at once wait for the same
+  // load rather than make it twice.
+  const loads = new Map<string, Promise<void>>();
+  const loaded = (keys: string[]) =>
+    Promise.all(keys.map(key => loads.get(key)));
+
   // Load (and cache) to-many linkage for parents of `parentType`.
   const loadMany = async (
     parentType: string,
@@ -202,41 +209,53 @@ export async function serialize(
     parentIds: number[]
   ) => {
     const cacheKey = `${parentType}.${name}`;
-    let links = manyLinks.get(cacheKey);
-    if (links === undefined) {
-      links = new Map();
-      manyLinks.set(cacheKey, links);
-    }
+    const links = manyLinks.get(cacheKey) ?? new Map<number, number[]>();
+    manyLinks.set(cacheKey, links);
     const missing = parentIds.filter(id => !links.has(id));
     if (missing.length > 0) {
       for (const id of missing) {
         links.set(id, []);
       }
-      const related = (await relationship.load(missing)) as Identified[];
-      const relatedBucket = bucket(relationship.type);
-      for (const row of related) {
-        relatedBucket.set(row.id, row);
-        links.get(relationship.parentKey(row as never))?.push(row.id);
+      const load = relationship.load(missing).then(related => {
+        const relatedBucket = bucket(relationship.type);
+        for (const row of related as Identified[]) {
+          relatedBucket.set(row.id, row);
+          links.get(relationship.parentKey(row as never))?.push(row.id);
+        }
+      });
+      for (const id of missing) {
+        loads.set(`${cacheKey}:${id}`, load);
       }
     }
+    await loaded(parentIds.map(id => `${cacheKey}:${id}`));
     return links;
   };
 
   const loadType = async (t: string, ids: number[]) => {
     const rowsOfType = bucket(t);
-    const missing = [...new Set(ids)].filter(id => !rowsOfType.has(id));
+    const missing = [...new Set(ids)].filter(
+      id => !rowsOfType.has(id) && !loads.has(`${t}:${id}`)
+    );
     if (missing.length > 0) {
-      for (const row of (await def(t).load(missing)) as Identified[]) {
-        rowsOfType.set(row.id, row);
+      const load = def(t)
+        .load(missing)
+        .then(found => {
+          for (const row of found as Identified[]) {
+            rowsOfType.set(row.id, row);
+          }
+        });
+      for (const id of missing) {
+        loads.set(`${t}:${id}`, load);
       }
     }
+    await loaded(ids.map(id => `${t}:${id}`));
     return ids
       .map(id => rowsOfType.get(id))
       .filter((row): row is Identified => row !== undefined);
   };
 
-  // Walk each include path from the primary rows, loading as we go.
-  for (const path of resolveIncludes(registry, type, include)) {
+  // Walk an include path from the primary rows, loading as we go.
+  const walk = async (path: string[]) => {
     let currentType = type;
     let current: Identified[] = rows;
     for (const segment of path) {
@@ -267,6 +286,15 @@ export async function serialize(
       currentType = relationship.type;
       current = next;
     }
+  };
+  // Paths come shortest first, after their prefixes (`a` before `a.b`),
+  // whose loads a longer path finds done: so the paths of each length are
+  // walked at once, their loads in parallel.
+  const paths = resolveIncludes(registry, type, include);
+  for (const length of new Set(paths.map(path => path.length))) {
+    await Promise.all(
+      paths.filter(path => path.length === length).map(path => walk(path))
+    );
   }
 
   // Every rendered resource needs linkage for its to-many relationships.

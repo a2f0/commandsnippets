@@ -25,7 +25,7 @@ import {
 import type {AppEnv} from '../env';
 import {isoformat, now} from '../lib/clock';
 import {notFound} from '../lib/errors';
-import {findVersion, versionOf} from './dataVersions';
+import {findVersionNumber, versionOf} from './dataVersions';
 
 export const backupRoutes = new Hono<AppEnv>();
 
@@ -41,12 +41,12 @@ async function backupVersion(c: Context<AppEnv>, user: User): Promise<number> {
     return versionOf(c, user);
   }
   const found = /^[1-9]\d*$/.test(param)
-    ? await findVersion(c.get('db'), user.id, Number(param))
+    ? await findVersionNumber(c.get('db'), user.id, Number(param))
     : undefined;
   if (found === undefined) {
     throw notFound(`No ${DATA_VERSION} matches the given query.`);
   }
-  return found.version;
+  return found;
 }
 
 backupRoutes.get('/', async c => {
@@ -57,7 +57,14 @@ backupRoutes.get('/', async c => {
   // every tagging's tag and entry is among the tags and entries read.
   const [tagRows, entryRows, taggingRows, reuseRows] = await db.batch([
     db
-      .select()
+      .select({
+        id: tags.id,
+        name: tags.name,
+        order: tags.order,
+        is_public: tags.is_public,
+        date_created: tags.date_created,
+        date_updated: tags.date_updated,
+      })
       .from(tags)
       .where(
         and(
@@ -68,7 +75,14 @@ backupRoutes.get('/', async c => {
       )
       .orderBy(asc(tags.order), asc(tags.id)),
     db
-      .select()
+      .select({
+        id: textEntries.id,
+        subject: textEntries.subject,
+        body: textEntries.body,
+        is_public: textEntries.is_public,
+        date_created: textEntries.date_created,
+        date_updated: textEntries.date_updated,
+      })
       .from(textEntries)
       .where(
         and(

@@ -9,6 +9,7 @@ import type {
   ListQuery as SharedListQuery,
 } from '@commandsnippets/api-shared';
 import {and, asc, count, eq, getTableColumns, type SQL, sql} from 'drizzle-orm';
+import type {RunnableQuery} from 'drizzle-orm/runnable-query';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
@@ -59,6 +60,13 @@ interface RevisionOrder<Row> {
   cursor: (row: Row) => string;
 }
 
+/**
+ * A page's query: run on its own, or batched with its count. Drizzle reads a
+ * batch's rows by column name, so its columns must be named apart.
+ */
+export type PageQuery<Row> = RunnableQuery<Row[], 'sqlite'> &
+  PromiseLike<Row[]>;
+
 interface ListPageSpec<
   Row,
   F extends FilterSchemas,
@@ -71,21 +79,22 @@ interface ListPageSpec<
   table: SQLiteTable;
   /** Where the query schema supports `page[after]`. */
   revisions?: RevisionOrder<Row>;
-  /** Read one page of rows, in `orderBy` when given (a keyset page's). */
+  /** The query for one page of rows, in `orderBy` when given (a keyset page's). */
   fetch: (page: {
     query: ListQuery;
     where: SQL | undefined;
     limit: number;
     offset: number;
     orderBy?: SQL[];
-  }) => Promise<Row[]>;
+  }) => PageQuery<Row>;
 }
 
 /**
  * The list pipeline every collection shares: validate the query, count the
- * matching rows, 404 on a page past the end, then fetch the page. A keyset
- * page (`page[after]`) instead reads the rows past its cursor in revision
- * order, uncounted, and one more to tell whether a page follows.
+ * matching rows and fetch the page, in one D1 batch, then 404 on a page past
+ * the end. A keyset page (`page[after]`) instead reads the rows past its
+ * cursor in revision order, uncounted, and one more to tell whether a page
+ * follows.
  */
 export async function listPage<
   Row,
@@ -125,18 +134,24 @@ export async function listPage<
       ),
     };
   }
-  const [total] = await c
-    .get('db')
-    .select({value: count()})
-    .from(spec.table)
-    .where(where);
+  // A page's offset does not depend on the count, so both are read in one
+  // round trip (and as of one moment); the count then tells whether the page
+  // is past the end. An offset past what D1 binds exactly is past the end of
+  // any table, so it reads no rows either way.
+  const db = c.get('db');
+  const [[total], rows] = await db.batch([
+    db.select({value: count()}).from(spec.table).where(where),
+    spec.fetch({
+      query,
+      where,
+      limit: query.pageSize,
+      offset: Math.min(
+        (query.page - 1) * query.pageSize,
+        Number.MAX_SAFE_INTEGER
+      ),
+    }),
+  ]);
   const pagination = paginate(url, query, total?.value ?? 0);
-  const rows = await spec.fetch({
-    query,
-    where,
-    limit: query.pageSize,
-    offset: pagination.offset,
-  });
   return {query, rows, pagination};
 }
 
@@ -216,8 +231,8 @@ export async function listResponse<
         }),
     // The requested fields (or the model's Meta.ordering), then the primary
     // key.
-    fetch: async ({query, where, limit, offset, orderBy}) =>
-      (await db
+    fetch: ({query, where, limit, offset, orderBy}) =>
+      db
         .select(options.fields ?? getTableColumns(options.table))
         .from(options.table)
         .where(where)
@@ -230,16 +245,11 @@ export async function listResponse<
             ))
         )
         .limit(limit)
-        .offset(offset)) as unknown as RevisedRow[],
+        .offset(offset) as unknown as PageQuery<RevisedRow>,
   });
 
   const {data, included} = await serialize(
-    createRegistry(
-      db,
-      options.user.id,
-      options.dataVersion,
-      options.publicOnly
-    ),
+    createRegistry(db, options.user, options.dataVersion, options.publicOnly),
     options.type,
     rows,
     query.include
@@ -298,7 +308,7 @@ export async function resourceResponse(
   const include = new URL(c.req.url).searchParams.get('include');
   const user = requireUser(c);
   const {data, included} = await serialize(
-    createRegistry(c.get('db'), user.id, versionOf(c, user)),
+    createRegistry(c.get('db'), user, versionOf(c, user)),
     type,
     [row],
     include
