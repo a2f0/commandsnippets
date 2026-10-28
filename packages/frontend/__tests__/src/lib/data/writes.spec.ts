@@ -43,6 +43,8 @@ import {
   reorderEntries,
   reorderTags,
   reuseEntry,
+  setEntryPublic,
+  setTagPublic,
   tagEntry,
   untagEntry,
   updateEntry,
@@ -262,6 +264,24 @@ describe('a write', () => {
       entry.id,
       expect.any(String)
     );
+  });
+
+  it('to a row there is none of changes and queues nothing', async () => {
+    await session().sync.syncAll();
+    const writes = sent();
+
+    expect(await updateEntry(session(), 'none', 'subject', 'body')).toBeNull();
+    await setEntryPublic(session(), 'none', true);
+    await deleteEntry(session(), 'none');
+    await reuseEntry(session(), 'none');
+    await setTagPublic(session(), 'none', true);
+    await deleteTag(session(), 'none');
+    await session().sync.flush();
+
+    expect(await entryRow('none')).toBeUndefined();
+    expect(await tagRow('none')).toBeUndefined();
+    expect(await queued()).toBe(0);
+    expect(writes).toEqual([]);
   });
 });
 
@@ -890,8 +910,17 @@ describe('the writes', () => {
 
     for (const write of [
       () => createTag(theirs, 'mine now'),
+      // Refused as read-only before it is checked.
+      () => createTag(theirs, '   '),
       () => renameTag(theirs, '70', 'renamed'),
+      () => updateEntry(theirs, '71', '', 'body'),
+      () => setTagPublic(theirs, '70', true),
+      () => setEntryPublic(theirs, '71', true),
+      () => deleteTag(theirs, '70'),
+      () => reorderTags(theirs, '70', '73'),
       () => deleteEntry(theirs, '71'),
+      () => reuseEntry(theirs, '71'),
+      () => tagEntry(theirs, '70', '71'),
       () => untagEntry(theirs, '70', '71'),
       () => reorderEntries(theirs, '70', '71', '72'),
     ]) {

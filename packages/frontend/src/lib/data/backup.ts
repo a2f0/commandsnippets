@@ -24,8 +24,9 @@ import {
 import {apiClient} from '../api/apiClient';
 import {describeIssues} from '../api/parseResponse';
 import {heldVersion} from '../sync/dataVersion';
+import {boundAccount} from '../sync/outbox';
 import {syncSession} from '../sync/session';
-import {boundAccount, type SyncEngine} from '../sync/sync';
+import type {SyncEngine} from '../sync/sync';
 
 /**
  * No account to act as (the data is bound to none), or a backup the API

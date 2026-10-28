@@ -241,7 +241,7 @@ export function useTagNamed(name: string | undefined): TagNamed | undefined {
 }
 
 /** Tag `tagId`'s junctions not deleted. */
-const tagJunctions = ({db, owner}: OwnedData, tagId: string) =>
+export const tagJunctions = ({db, owner}: OwnedData, tagId: string) =>
   db.junctions
     .where('[owner+relationships.tag.data.id]')
     .equals([owner, tagId])
