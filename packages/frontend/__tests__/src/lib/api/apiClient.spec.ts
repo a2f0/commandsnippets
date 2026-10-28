@@ -1,16 +1,23 @@
-import type {
-  TagDocument,
-  TagTextEntryDocument,
-  TextEntryDocument,
-  UserDocument,
+import {
+  CODES,
+  type TagDocument,
+  type TagTextEntryDocument,
+  type TextEntryDocument,
+  type UserDocument,
 } from '@commandsnippets/api-shared';
 import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import invariant from 'invariant';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
-import {apiClient} from '../../../../src/lib/api/apiClient';
+import {
+  ApiRequestError,
+  apiClient,
+  DataVersionChangedError,
+  UserMismatchError,
+} from '../../../../src/lib/api/apiClient';
 import {InvalidResponseError} from '../../../../src/lib/api/parseResponse';
 import {setUnauthorizedHandler} from '../../../../src/lib/auth/authUtils';
+import {errorDocument} from '../../../../src/msw/documents';
 import {entriesResponse} from '../../../../test/mocks/entries/entriesResponse';
 import {tagsResponse} from '../../../../test/mocks/tags/tagsResponse';
 
@@ -516,5 +523,36 @@ describe('apiClient responses', () => {
       reply(status, status === 204 ? undefined : {unexpected: true});
       await expect(call()).resolves.toBeUndefined();
     }
+  });
+});
+
+describe('apiClient conflicts', () => {
+  const conflict = (code: string) =>
+    reply(409, errorDocument(409, code, 'Refused.'));
+
+  it("raises UserMismatchError when the session is not the named user's", async () => {
+    conflict(CODES.userMismatch);
+    const write = apiClient.writesAs('alice').createTag('name');
+    await expect(write).rejects.toBeInstanceOf(UserMismatchError);
+    await expect(write).rejects.toThrow(
+      "Failed to create tag: the session is not alice's"
+    );
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
+  it('fails a request that named no user as refused, whatever the code', async () => {
+    conflict(CODES.userMismatch);
+    const read = apiClient.getTag('1');
+    await expect(read).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(read).rejects.toMatchObject({status: 409, detail: 'Refused.'});
+  });
+
+  it('raises DataVersionChangedError once the version named is not active', async () => {
+    conflict(CODES.dataVersionChanged);
+    const read = apiClient.forVersion(2).getTagsAfter(CURSOR_START);
+    await expect(read).rejects.toBeInstanceOf(DataVersionChangedError);
+    await expect(read).rejects.toThrow(
+      'Failed to sync tags: the data version changed'
+    );
   });
 });

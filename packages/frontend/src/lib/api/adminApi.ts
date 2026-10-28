@@ -33,9 +33,6 @@ import type {
   AdminUserSortField,
   AdminUserUpdateAttributes,
   AdminUserUpdateDocument,
-  TagListParams,
-  TagTextEntryListParams,
-  TextEntryListParams,
 } from '@commandsnippets/api-shared/requests';
 import {
   type AdminAuditLogEntry,
@@ -43,24 +40,19 @@ import {
   adminAuditLogListDocumentSchema,
   adminUserDocumentSchema,
   adminUserListDocumentSchema,
-  tagCursorListDocumentSchema,
-  tagTextEntryCursorListDocumentSchema,
-  tagTextEntryListDocumentSchema,
-  textEntryCursorListDocumentSchema,
-  textEntryListDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
 import {handleUnauthorized, signedInUser} from '../auth/authUtils';
-import {SYNC_PAGE_SIZE} from '../sync/pageSize';
 import type {SyncApi} from '../sync/sync';
-import {DataVersionChangedError, UserMismatchError} from './apiClient';
+import {throwConflict} from './apiClient';
 import {fetchApi} from './apiVersion';
 import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {isSignedOutResponse} from './fetchWithAuth';
 import {describeIssues} from './parseResponse';
 import {toSearchParams} from './searchParams';
+import {syncReads} from './syncReads';
 
 export type {AdminUserSortField};
 
@@ -219,12 +211,7 @@ async function adminFetch(
     return body;
   }
   const {code, detail} = firstError(body);
-  if (named !== null && code === CODES.userMismatch) {
-    throw new UserMismatchError('Admin request failed', named);
-  }
-  if (response.status === 409 && code === CODES.dataVersionChanged) {
-    throw new DataVersionChangedError('Admin request failed');
-  }
+  throwConflict('Admin request failed', response.status, code, named);
   if (response.status === 403 && code === CODES.permissionDenied) {
     throw new AdminForbiddenError();
   }
@@ -342,66 +329,16 @@ export function adminSyncApi(username: string, version?: number): SyncApi {
       };
     },
     atVersion: dataVersion => adminSyncApi(username, dataVersion),
-    getTagsAfter: async after => {
-      const params: TagListParams = {
-        'page[after]': after,
-        'page[size]': SYNC_PAGE_SIZE,
-      };
-      const body = await adminFetch(
-        `${await base()}/tags?${toSearchParams(params)}`,
-        {},
-        version
-      );
-      return parse(tagCursorListDocumentSchema, body);
-    },
-    getEntriesAfter: async after => {
-      const params: TextEntryListParams = {
-        'page[after]': after,
-        'page[size]': SYNC_PAGE_SIZE,
-        include: 'text_entry_to_tag',
-      };
-      const body = await adminFetch(
-        `${await base()}/entries?${toSearchParams(params)}`,
-        {},
-        version
-      );
-      return parse(textEntryCursorListDocumentSchema, body);
-    },
-    getEntryCount: async () => {
-      const params: TextEntryListParams = {'page[size]': 1};
-      const body = await adminFetch(
-        `${await base()}/entries?${toSearchParams(params)}`,
-        {},
-        version
-      );
-      return parse(textEntryListDocumentSchema, body).meta.pagination.count;
-    },
-    getTagJunctionsAfter: async (tagId, after) => {
-      const params: TagTextEntryListParams = {
-        'filter[tag.id]': Number(tagId),
-        'page[after]': after,
-        'page[size]': SYNC_PAGE_SIZE,
-        include: 'text_entry,text_entry.text_entry_to_tag',
-      };
-      const body = await adminFetch(
-        `${await base()}/tags_entries?${toSearchParams(params)}`,
-        {},
-        version
-      );
-      return parse(tagTextEntryCursorListDocumentSchema, body);
-    },
-    getNewestJunction: async () => {
-      const params: TagTextEntryListParams = {
-        sort: '-date_updated',
-        'page[size]': 1,
-      };
-      const body = await adminFetch(
-        `${await base()}/tags_entries?${toSearchParams(params)}`,
-        {},
-        version
-      );
-      return parse(tagTextEntryListDocumentSchema, body);
-    },
+    ...syncReads(async (path, params, schema) =>
+      parse(
+        schema,
+        await adminFetch(
+          `${await base()}${path}?${toSearchParams(params)}`,
+          {},
+          version
+        )
+      )
+    ),
   };
 }
 

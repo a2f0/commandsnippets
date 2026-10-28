@@ -10,14 +10,12 @@ import type {
   GithubLoginDocument,
   GoogleLoginDocument,
   TagCreateDocument,
-  TagListParams,
   TagReorderDocument,
   TagTextEntryCreateDocument,
   TagTextEntryListParams,
   TagTextEntryReorderDocument,
   TagUpdateDocument,
   TextEntryCreateDocument,
-  TextEntryListParams,
   TextEntryReusedCreateDocument,
   TextEntryReusedListParams,
   TextEntryUpdateDocument,
@@ -41,14 +39,10 @@ import {
   type TextEntryDocument,
   type TextEntryReusedDocument,
   type TextEntryReusedListDocument,
-  tagCursorListDocumentSchema,
   tagDocumentSchema,
-  tagTextEntryCursorListDocumentSchema,
   tagTextEntryDocumentSchema,
   tagTextEntryListDocumentSchema,
-  textEntryCursorListDocumentSchema,
   textEntryDocumentSchema,
-  textEntryListDocumentSchema,
   textEntryReusedDocumentSchema,
   textEntryReusedListDocumentSchema,
   type UserDocument,
@@ -56,13 +50,14 @@ import {
 } from '@commandsnippets/api-shared/responses';
 import type * as z from 'zod/mini';
 import {signedInUser} from '../auth/authUtils';
-import {REUSE_PAGE_SIZE, SYNC_PAGE_SIZE} from '../sync/pageSize';
+import {REUSE_PAGE_SIZE} from '../sync/pageSize';
 import {fetchApi} from './apiVersion';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
 import {fetchWithAuth} from './fetchWithAuth';
 import {parseBody, readJson} from './parseResponse';
 import {urlWithQuery} from './searchParams';
+import {type SyncReads, syncReads} from './syncReads';
 
 type LogoutResponse = z.output<typeof emptyObjectSchema>;
 
@@ -114,6 +109,30 @@ export class DataVersionChangedError extends Error {
   }
 }
 
+/**
+ * Throws what a refused request's first error `code` means to every client
+ * (`apiClient`, `adminApi`), both 409s: `UserMismatchError` when the request
+ * named `user` but is signed in as someone else, `DataVersionChangedError`
+ * when the data version it named is no longer active. Any other answer is
+ * the client's to raise.
+ */
+export function throwConflict(
+  failure: string,
+  status: number,
+  code: string | undefined,
+  user: string | null
+): void {
+  if (status !== 409) {
+    return;
+  }
+  if (user !== null && code === CODES.userMismatch) {
+    throw new UserMismatchError(failure, user);
+  }
+  if (code === CODES.dataVersionChanged) {
+    throw new DataVersionChangedError(failure);
+  }
+}
+
 interface RequestOptions {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   /** Sent as JSON. */
@@ -133,14 +152,6 @@ interface RequestOptions {
   made?: string | undefined;
 }
 
-/**
- * The API client. Request bodies are api-shared's request documents, and
- * every response the client returns is parsed with its endpoint's document
- * schema first. An OK response that does not fit throws InvalidResponseError
- * (`${failure}: invalid response (...)`, see parseResponse.ts), so callers
- * handle it as a failed request and the store never sees the body. The calls
- * that return nothing (the logins, deletes and reorders) do not read it.
- */
 /** Whom and what a client's requests name (see the methods setting each). */
 interface ClientOptions {
   /** The user every write names (`writesAs`), read at each request. */
@@ -155,6 +166,14 @@ interface ClientOptions {
   dataVersion: number | null;
 }
 
+/**
+ * The API client. Request bodies are api-shared's request documents, and
+ * every response the client returns is parsed with its endpoint's document
+ * schema first. An OK response that does not fit throws InvalidResponseError
+ * (`${failure}: invalid response (...)`, see parseResponse.ts), so callers
+ * handle it as a failed request and the store never sees the body. The calls
+ * that return nothing (the logins, deletes and reorders) do not read it.
+ */
 class ApiClient {
   constructor(
     private readonly options: ClientOptions = {
@@ -228,8 +247,6 @@ class ApiClient {
     }: RequestOptions,
     failure: string
   ): Promise<Response> {
-    // Writes name the signed-in user: the API refuses one signed in as
-    // anyone else (`UserMismatchError`).
     const {actingUser, writeId, readsAsUser, accountId, dataVersion} =
       this.options;
     const user =
@@ -262,12 +279,7 @@ class ApiClient {
     if (!resp.ok) {
       const body: unknown = await resp.json().catch(() => undefined);
       const {code, detail} = firstError(body);
-      if (user !== null && resp.status === 409 && code === CODES.userMismatch) {
-        throw new UserMismatchError(failure, user);
-      }
-      if (resp.status === 409 && code === CODES.dataVersionChanged) {
-        throw new DataVersionChangedError(failure);
-      }
+      throwConflict(failure, resp.status, code, user);
       throw new ApiRequestError(failure, resp.status, resp.statusText, detail);
     }
     return resp;
@@ -466,7 +478,6 @@ class ApiClient {
     );
   }
 
-  // Entry methods
   public setTagPublic(
     tagId: string,
     isPublic: boolean,
@@ -483,6 +494,7 @@ class ApiClient {
     );
   }
 
+  // Entry methods
   public setEntryPublic(
     entryId: string,
     isPublic: boolean,
@@ -601,85 +613,40 @@ class ApiClient {
     );
   }
 
-  // The sync's reads (lib/sync/): keyset pages in revision order.
+  // The sync's reads (lib/sync/): keyset pages of the user's data in
+  // revision order, as every client reads them (`syncReads.ts`).
 
-  /** The page of the user's tags after `after`. */
-  public async getTagsAfter(after: string): Promise<TagCursorListDocument> {
-    const params: TagListParams = {
-      'page[after]': after,
-      'page[size]': SYNC_PAGE_SIZE,
-    };
-    return this.requestDocument(
-      urlWithQuery(`${baseURL}/tags`, params),
-      {method: 'GET'},
-      'Failed to sync tags',
-      tagCursorListDocumentSchema
-    );
+  private readonly reads: SyncReads = syncReads(
+    async (path, params, schema, failure) =>
+      this.requestDocument(
+        urlWithQuery(`${baseURL}${path}`, params),
+        {method: 'GET'},
+        failure,
+        schema
+      )
+  );
+
+  public getTagsAfter(after: string): Promise<TagCursorListDocument> {
+    return this.reads.getTagsAfter(after);
   }
 
-  /** The page of the user's entries after `after`, with their junctions. */
-  public async getEntriesAfter(
-    after: string
-  ): Promise<TextEntryCursorListDocument> {
-    const params: TextEntryListParams = {
-      'page[after]': after,
-      'page[size]': SYNC_PAGE_SIZE,
-      include: 'text_entry_to_tag',
-    };
-    return this.requestDocument(
-      urlWithQuery(`${baseURL}/entries`, params),
-      {method: 'GET'},
-      'Failed to sync entries',
-      textEntryCursorListDocumentSchema
-    );
+  public getEntriesAfter(after: string): Promise<TextEntryCursorListDocument> {
+    return this.reads.getEntriesAfter(after);
   }
 
-  /** All entry rows (deleted ones too), for the first load's page total. */
-  public async getEntryCount(): Promise<number> {
-    const params: TextEntryListParams = {'page[size]': 1};
-    const page = await this.requestDocument(
-      urlWithQuery(`${baseURL}/entries`, params),
-      {method: 'GET'},
-      'Failed to count entries',
-      textEntryListDocumentSchema
-    );
-    return page.meta.pagination.count;
+  public getEntryCount(): Promise<number> {
+    return this.reads.getEntryCount();
   }
 
-  /**
-   * The page of tag `tagId`'s junctions (deleted ones too) after `after`,
-   * with their entries and the entries' junctions.
-   */
-  public async getTagJunctionsAfter(
+  public getTagJunctionsAfter(
     tagId: string,
     after: string
   ): Promise<TagTextEntryCursorListDocument> {
-    const params: TagTextEntryListParams = {
-      'filter[tag.id]': Number(tagId),
-      'page[after]': after,
-      'page[size]': SYNC_PAGE_SIZE,
-      include: 'text_entry,text_entry.text_entry_to_tag',
-    };
-    return this.requestDocument(
-      urlWithQuery(`${baseURL}/tags_entries`, params),
-      {method: 'GET'},
-      'Failed to sync tag',
-      tagTextEntryCursorListDocumentSchema
-    );
+    return this.reads.getTagJunctionsAfter(tagId, after);
   }
 
-  /** The user's newest junction revision, of any tag's (none: null). */
-  public async getNewestJunction(): Promise<TagTextEntryListDocument> {
-    const params: TagTextEntryListParams = {
-      sort: '-date_updated',
-      'page[size]': 1,
-    };
-    return this.requestDocument(
-      urlWithQuery(`${baseURL}/tags_entries`, params),
-      {method: 'GET'},
-      'Failed to read the newest junction',
-      tagTextEntryListDocumentSchema
-    );
+  public getNewestJunction(): Promise<TagTextEntryListDocument> {
+    return this.reads.getNewestJunction();
   }
 
   public async tagEntry(
