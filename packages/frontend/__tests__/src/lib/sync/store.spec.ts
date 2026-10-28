@@ -86,7 +86,7 @@ describe('putNewer', () => {
       own(entry('1', '2024-01-01T00:00:00.5', [])),
       own(entry('2', '2024-01-01T00:00:00', [])),
     ]);
-    const stored = await putNewer(db, db.entries, OWNER, [
+    const {stored} = await putNewer(db, db.entries, OWNER, [
       // Older than the stored one: `.5` is past the whole second.
       entry('1', '2024-01-01T00:00:00', []),
       entry('2', '2024-01-01T00:00:01', []),
@@ -117,6 +117,52 @@ describe('putEntries', () => {
     expect((await db.junctions.get(key('2')))?.attributes.is_deleted).toBe(
       false
     );
+  });
+
+  it("decides each entry's junctions, in a page of several", async () => {
+    await db.entries.put(own(entry('3', '2024-01-05T00:00:00', ['5'])));
+    await db.junctions.bulkPut([
+      own(junction('1', '1')),
+      own(junction('2', '1')),
+      own(junction('3', '2')),
+      own(junction('4', '2')),
+      own(junction('5', '3')),
+      own(junction('local-6', '2')),
+      {...junction('7', '1'), owner: 'alice'},
+    ]);
+    // A tagging of entry 2 not on the API yet.
+    await db.outbox.add({
+      owner: OWNER,
+      made: '2024-01-01T00:00:00.000000',
+      writeId: 'write-1',
+      write: {
+        kind: 'tagEntry',
+        junctionId: 'local-6',
+        tagId: '1',
+        entryId: '2',
+      },
+      rows: [`${OWNER}|TagTextEntryThroughModel|local-6`],
+    });
+
+    await putEntries(db, OWNER, [
+      entry('1', '2024-01-01T00:00:00', ['2']),
+      entry('2', '2024-01-01T00:00:00', ['3']),
+      // Older than the copy held: its junctions are left alone.
+      entry('3', '2024-01-01T00:00:00', []),
+    ]);
+
+    const deleted = (await db.junctions.toArray()).map(
+      ({owner, id, attributes}) => [owner, id, attributes.is_deleted]
+    );
+    expect(deleted).toEqual([
+      ['alice', '7', false],
+      [OWNER, '1', true],
+      [OWNER, '2', false],
+      [OWNER, '3', false],
+      [OWNER, '4', true],
+      [OWNER, '5', false],
+      [OWNER, 'local-6', false],
+    ]);
   });
 
   it("leaves the junctions alone when the entry's copy is older", async () => {

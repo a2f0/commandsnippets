@@ -127,6 +127,22 @@ describe('sortEntries', () => {
     expect(sortEntries(counted, order, '').map(({id}) => id)).toEqual(expected);
   });
 
+  it.each(['date_updated', '-date_updated'])(
+    'sorts those tied on %s by subject, ascending',
+    order => {
+      const tied = [
+        entry('1', {subject: 'charlie'}),
+        entry('2', {subject: 'Alpha'}),
+        entry('3', {subject: 'bravo'}),
+      ];
+      expect(sortEntries(tied, order, '').map(({id}) => id)).toEqual([
+        '2',
+        '3',
+        '1',
+      ]);
+    }
+  );
+
   it('sorts by the microsecond, as the API stamps them', () => {
     // One millisecond apart and less; the API gives six fractional digits.
     const close = [
@@ -195,5 +211,23 @@ describe('sortTagEntries', () => {
     expect(subjects(sortTagEntries(rows, 'order', 'ENTRY-3'))).toEqual([
       'entry-3',
     ]);
+  });
+});
+
+describe('with no search', () => {
+  // The lists sort the live queries' rows, which every reader shares.
+  it('sorts a copy, leaving the rows read as they were', () => {
+    const tags = [tag('2', {name: 'b'}), tag('1', {name: 'a'})];
+    const entries = [entry('2', {subject: 'b'}), entry('1', {subject: 'a'})];
+    const rows = entries.map(listed => ({
+      entry: listed,
+      junction: junction(listed.id, '5', listed.id),
+    }));
+    expect(names(sortTags(tags, 'name', ''))).toEqual(['a', 'b']);
+    expect(subjects(sortEntries(entries, 'subject', ''))).toEqual(['a', 'b']);
+    expect(subjects(sortTagEntries(rows, 'order', ''))).toEqual(['a', 'b']);
+    expect(names(tags)).toEqual(['b', 'a']);
+    expect(subjects(entries)).toEqual(['b', 'a']);
+    expect(subjects(rows.map(row => row.entry))).toEqual(['b', 'a']);
   });
 });

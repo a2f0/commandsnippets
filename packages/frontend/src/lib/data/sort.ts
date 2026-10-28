@@ -11,13 +11,25 @@ import type {
 
 type Key = string | number;
 
-/** Compare `a` and `b` by `key`, ascending, or descending for `-`. */
-function by<T>(order: string, key: (item: T) => Key) {
+const compare = (x: Key, y: Key) => (x < y ? -1 : x > y ? 1 : 0);
+
+/**
+ * `items` by `key`, ascending, or descending for `-`, then by `tie`
+ * (ascending) where they tie, as a new array. Each item's keys are worked
+ * out once, not in every comparison: a date key parses its date, and a list
+ * is sorted again on every keystroke of a search.
+ */
+function sortBy<T>(
+  items: readonly T[],
+  order: string,
+  key: (item: T) => Key,
+  tie?: (item: T) => Key
+): T[] {
   const direction = order.startsWith('-') ? -1 : 1;
-  return (a: T, b: T) => {
-    const [x, y] = [key(a), key(b)];
-    return direction * (x < y ? -1 : x > y ? 1 : 0);
-  };
+  return items
+    .map(item => ({item, key: key(item), tie: tie?.(item) ?? 0}))
+    .sort((a, b) => direction * compare(a.key, b.key) || compare(a.tie, b.tie))
+    .map(({item}) => item);
 }
 
 /**
@@ -62,29 +74,45 @@ export function sortTags(
 ): Tag[] {
   const key = TAG_KEYS[field(order)] ?? ((tag: Tag) => tag.attributes.order);
   const term = fold(search);
-  return tags
-    .filter(
+  return sortBy(
+    tags.filter(
       tag =>
-        !tag.attributes.is_deleted && fold(tag.attributes.name).includes(term)
-    )
-    .sort(by(order, key));
-}
-
-/** Whether `entry`'s subject or body holds `search`. */
-export function entryMatches(entry: TextEntry, search: string): boolean {
-  const term = fold(search);
-  return (
-    fold(entry.attributes.subject).includes(term) ||
-    fold(entry.attributes.body).includes(term)
+        !tag.attributes.is_deleted &&
+        (term === '' || fold(tag.attributes.name).includes(term))
+    ),
+    order,
+    key
   );
 }
 
-/** Entries that tie in a sort (many share a tag count): by subject. */
-const bySubject = by('subject', subject);
+/** Whether `entry`'s subject or body holds `term`, already folded. */
+const holds = (entry: TextEntry, term: string) =>
+  fold(entry.attributes.subject).includes(term) ||
+  fold(entry.attributes.body).includes(term);
+
+/** Whether `entry`'s subject or body holds `search`. */
+export function entryMatches(entry: TextEntry, search: string): boolean {
+  return holds(entry, fold(search));
+}
+
+/** The `items` whose entries hold `search`: all of them for no search. */
+function matching<T>(
+  items: readonly T[],
+  entryOf: (item: T) => TextEntry,
+  search: string
+): readonly T[] {
+  if (search === '') {
+    return items;
+  }
+  const term = fold(search);
+  return items.filter(item => holds(entryOf(item), term));
+}
+
+const itself = (entry: TextEntry) => entry;
 
 /**
  * `entries` that match `search`, in `order` (one of the entry fields), and
- * by subject where they tie.
+ * by subject where they tie (many share a tag count).
  */
 export function sortEntries(
   entries: readonly TextEntry[],
@@ -94,10 +122,7 @@ export function sortEntries(
   const key =
     ENTRY_KEYS[field(order)] ??
     ((entry: TextEntry) => time(entry.attributes.date_updated));
-  const byOrder = by(order, key);
-  return entries
-    .filter(entry => entryMatches(entry, search))
-    .sort((a, b) => byOrder(a, b) || bySubject(a, b));
+  return sortBy(matching(entries, itself, search), order, key, subject);
 }
 
 /** A tag's entry, with the junction that puts it there. */
@@ -105,6 +130,8 @@ export interface TaggedEntry {
   entry: TextEntry;
   junction: TagTextEntry;
 }
+
+const entryOf = ({entry}: TaggedEntry) => entry;
 
 /**
  * A tag's entries that match `search`, in `order`: the user's (`order`),
@@ -115,17 +142,13 @@ export function sortTagEntries(
   order: string,
   search: string
 ): TextEntry[] {
-  const matching = tagged.filter(({entry}) => entryMatches(entry, search));
+  const shown = matching(tagged, entryOf, search);
   if (field(order) === 'order' || field(order) === 'date_tagged') {
     const key =
       field(order) === 'order'
         ? ({junction}: TaggedEntry) => junction.attributes.order
         : ({junction}: TaggedEntry) => time(junction.attributes.date_created);
-    return matching.sort(by(order, key)).map(({entry}) => entry);
+    return sortBy(shown, order, key).map(entryOf);
   }
-  return sortEntries(
-    matching.map(({entry}) => entry),
-    order,
-    ''
-  );
+  return sortEntries(shown.map(entryOf), order, '');
 }

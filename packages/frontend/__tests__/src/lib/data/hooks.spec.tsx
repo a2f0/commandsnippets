@@ -2,7 +2,12 @@ import {act, render, waitFor} from '@testing-library/react';
 import {Dexie} from 'dexie';
 import {describe, expect, it, vi} from 'vitest';
 
-import {useSession, useTagNamed, useTags} from '../../../../src/lib/data/hooks';
+import {
+  useEntries,
+  useSession,
+  useTagNamed,
+  useTags,
+} from '../../../../src/lib/data/hooks';
 import {
   clearMetrics,
   metricsSnapshot,
@@ -10,7 +15,7 @@ import {
 } from '../../../../src/lib/metrics/timings';
 import {type SyncSession, syncSession} from '../../../../src/lib/sync/session';
 import {signIn, TEST_USER} from '../../../util/signIn';
-import {seed, tag} from '../../../util/storeFixtures';
+import {entry, junction, seed, tag} from '../../../util/storeFixtures';
 
 /** How many times the tags were read from the database. */
 const tagReads = () =>
@@ -108,6 +113,53 @@ describe('useTags, as readers come and go', () => {
     render(<Fresh />);
     expect(fresh[0]).toBeUndefined();
     await waitFor(() => expect(fresh.at(-1)).toBe(3));
+  });
+});
+
+describe('useEntries', () => {
+  /** How many times `which` entries were read, once the HUD knows them all. */
+  const settledReads = async (which: 'all' | 'untagged') => {
+    await new Promise(resolve => setTimeout(resolve, NOTIFY_MS + 150));
+    return metricsSnapshot().timings.filter(
+      ({name}) => name === `useEntries(${which})`
+    ).length;
+  };
+
+  it('lists all the entries or the untagged, which alone read junctions', async () => {
+    signIn();
+    const untagging = junction('11', '1', '2');
+    await seed([
+      entry('1', {}),
+      entry('2', {}),
+      entry('3', {is_deleted: true}),
+      junction('10', '1', '1'),
+      {...untagging, attributes: {...untagging.attributes, is_deleted: true}},
+    ]);
+    clearMetrics();
+    const seen: Record<string, string[] | undefined> = {};
+    const Reader = ({which}: {which: 'all' | 'untagged'}) => {
+      seen[which] = useEntries(which)?.entries.map(({id}) => id);
+      return null;
+    };
+    render(
+      <>
+        <Reader which="all" />
+        <Reader which="untagged" />
+      </>
+    );
+    await waitFor(() =>
+      expect(seen).toEqual({all: ['1', '2'], untagged: ['2']})
+    );
+    const all = await settledReads('all');
+    const untagged = await settledReads('untagged');
+
+    // A tagging: the untagged are read again, all of them are not.
+    await act(() => seed([junction('12', '1', '2')]));
+
+    await waitFor(() => expect(seen['untagged']).toEqual([]));
+    expect(await settledReads('untagged')).toBeGreaterThan(untagged);
+    expect(await settledReads('all')).toBe(all);
+    expect(seen['all']).toEqual(['1', '2']);
   });
 });
 

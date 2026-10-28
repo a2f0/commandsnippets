@@ -473,14 +473,15 @@ async function syncAll(
   }
   // Every change there was when the sync began is stored now.
   await db.transaction('rw', [db.tags, db.cursors], async () => {
-    for (const tag of await db.tags.where('owner').equals(owner).toArray()) {
-      await db.cursors.put({
+    const tags = await db.tags.where('owner').equals(owner).toArray();
+    await db.cursors.bulkPut(
+      tags.map(tag => ({
         owner,
         key: tagCursorKey(tag.id),
         after: mark,
         revision: tag.attributes.date_updated,
-      });
-    }
+      }))
+    );
   });
   return true;
 }
