@@ -62,6 +62,7 @@ import {
   adoptCreates,
   announceRemaps,
   assertBound,
+  boundAccount,
   flushOutbox,
   isLocalId,
   type OutboxApi,
@@ -216,13 +217,6 @@ async function accountOfRows(
     (await accountIn(db.junctions, owner))
   );
 }
-
-/** The account `owner`'s data is bound to (`bindOwner`), if it is. */
-export const boundAccount = async (
-  db: CommandsnippetsDatabase,
-  owner: string
-): Promise<string | undefined> =>
-  (await db.cursors.get([owner, OWNER_ID_KEY]))?.after;
 
 /**
  * Bind `owner`'s data to the account the API reads under that name

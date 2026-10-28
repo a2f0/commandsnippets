@@ -9,12 +9,9 @@ import {Dexie} from 'dexie';
 import {adminSyncApi} from '../api/adminApi';
 import {apiClient} from '../api/apiClient';
 import {publicSyncApi} from '../api/publicApi';
-import {
-  CommandsnippetsDatabase,
-  databaseName,
-  OWNER_ID_KEY,
-} from '../db/database';
+import {CommandsnippetsDatabase, databaseName} from '../db/database';
 import {environment} from '../environment';
+import {boundAccount} from './outbox';
 import {
   bindOwner,
   createSyncEngine,
@@ -218,7 +215,7 @@ export async function claimData(
       const kept = new CommandsnippetsDatabase(name);
       let held: string | undefined;
       try {
-        held = (await kept.cursors.get([username, OWNER_ID_KEY]))?.after;
+        held = await boundAccount(kept, username);
       } finally {
         kept.close();
       }
