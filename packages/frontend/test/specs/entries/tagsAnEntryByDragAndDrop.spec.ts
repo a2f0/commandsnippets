@@ -3,10 +3,6 @@ import {BasePage} from '../../pageobjects/base';
 const TAGS_ENTRIES = 'http://localhost:9001/api/v1/tags_entries';
 
 describe('Entry Drag and Drop', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('tags an entry dropped on a tag', async () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();

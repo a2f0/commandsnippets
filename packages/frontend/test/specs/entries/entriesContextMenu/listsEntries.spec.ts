@@ -1,18 +1,8 @@
 import {BasePage} from '../../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should list entries', async () => {
-    // Navigate to page first, then login (exactly like search test)
-    await BasePage.open('');
-    await browser.login();
-    await expect(BasePage.signInPage).toBeDisplayed();
-
-    // Navigate to the tag page
-    await BasePage.open('test/test-tag-1');
+    await BasePage.signIn('test/test-tag-1');
 
     // Verify we're on the correct tag page
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');

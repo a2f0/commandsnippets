@@ -1,10 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tab Switching Behavior', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should allow tab switching while editing', async () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();

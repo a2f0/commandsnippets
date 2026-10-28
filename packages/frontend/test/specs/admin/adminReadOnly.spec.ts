@@ -1,15 +1,8 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe("Another user's data", () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it("lets staff read a user's data, read-only", async () => {
-    await BasePage.open('');
-    await expect(BasePage.signInPage).toBeDisplayed();
-    await browser.login();
-    await BasePage.open('admin');
+    await BasePage.signIn('admin');
     await expect(BasePage.adminUserRow('7')).toBeDisplayed();
 
     await BasePage.adminUserMenuButton('7').waitAndLeftClick();

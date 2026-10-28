@@ -1,17 +1,10 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Logging Out', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should send the user to the sign-in page', async () => {
-    // Navigate to page first, then login (using MSW)
-    await BasePage.open('');
-    await browser.login();
-    await BasePage.open('');
+    await BasePage.signIn('');
 
-    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     // Establish initial view - MSW provides 4 tags but entries count may vary
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.googleAuthButton).not.toBeExisting();

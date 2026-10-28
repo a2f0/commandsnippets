@@ -1,10 +1,6 @@
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Tag Context Menu', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('allows deleting a tag', async () => {
     // Reset MSW counters
     await browser.resetMSWRequestCounts();

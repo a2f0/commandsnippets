@@ -1,4 +1,15 @@
+import type {TextEntryListDocument} from '@commandsnippets/api-shared';
 import {entrySearchMethod} from '../../src/lib/shared';
+
+declare global {
+  interface Window {
+    /** The drag `Base.dragAndDrop` started, to go on with. */
+    __E2E_DRAG__?: {
+      from: Element;
+      fire: (element: Element, type: string) => Promise<void>;
+    };
+  }
+}
 
 export class Base {
   // signed-out home screen
@@ -30,9 +41,6 @@ export class Base {
   }
   get adminUserMenuMarkForDeletion(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#adminUserMenuMarkForDeletion');
-  }
-  get adminUserMenuUnmarkForDeletion(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#adminUserMenuUnmarkForDeletion');
   }
   get adminUserMenuViewData(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#adminUserMenuViewData');
@@ -193,9 +201,6 @@ export class Base {
   get entryNewTopBody(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewTopBody');
   }
-  get entryNewTopCancel(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#textEntryNewTopCancel');
-  }
   get entryNewTopSave(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewTopSave');
   }
@@ -207,12 +212,6 @@ export class Base {
   }
   get entryNewBottomBody(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryNewBottomBody');
-  }
-  get entryNewBottomSave(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#textEntryNewBottomSave');
-  }
-  get entryNewBottomCancel(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#textEntryNewBottomCancel');
   }
   get entryListContextMenu(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#entryListContextMenu');
@@ -229,12 +228,6 @@ export class Base {
   get tagsEntries(): ReturnType<WebdriverIO.Browser['$$']> {
     return $$('div[id^="tagsEntries-"]');
   }
-  get entry1(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#tagsEntries-1');
-  }
-  get entryBodyOuterDiv3(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#entryBodyOuterDiv3');
-  }
   get tagsEntriesContextMenu1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntriesContextMenu-1');
   }
@@ -243,9 +236,6 @@ export class Base {
   }
   get tagsEntriesContextMenu1Untag(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntriesContextMenu1Untag');
-  }
-  get tagsEntriesContextMenu1Delete(): ReturnType<WebdriverIO.Browser['$']> {
-    return $('#tagsEntriesContextMenu1Delete');
   }
   get textEntryEdit1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryEdit1');
@@ -280,11 +270,55 @@ export class Base {
   get entrySearch(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntrySearch');
   }
-  async open(path: string): Promise<ReturnType<WebdriverIO.Browser['url']>> {
-    await browser.url(`http://localhost:8081/${path}`);
+  async open(
+    path: string,
+    options: Parameters<WebdriverIO.Browser['url']>[1] = {}
+  ): Promise<void> {
+    await browser.url(`http://localhost:8081/${path}`, options);
 
     // Wait for MSW to be ready after page load
     await browser.waitForMSW();
+  }
+
+  /**
+   * Open `path` signed in as the mock API's user (`test`), from the sign-in
+   * page (`login()` needs a page of the app). The sign-in page loads signed
+   * out, whatever an earlier test of the spec saved: signed in, it would
+   * start its sync, and leaving it for `path` cuts those requests off, which
+   * the mock service worker, its page gone, sends to the network (a
+   * `TypeError: Failed to fetch` logged). With `entries`, the mock API lists
+   * those entries (`overrideEntries`), which the page at `path` syncs.
+   */
+  async signIn(
+    path: string,
+    {entries}: {entries?: TextEntryListDocument} = {}
+  ): Promise<void> {
+    await this.open('', {onBeforeLoad: () => localStorage.clear()});
+    await this.signInPage.waitForDisplayed();
+    if (entries !== undefined) {
+      await this.overrideEntries(entries);
+    }
+    await browser.login();
+    await this.open(path);
+  }
+
+  /**
+   * Have the mock API list `entries`, across page loads, until MSW is reset
+   * after the test.
+   */
+  async overrideEntries(entries: TextEntryListDocument): Promise<void> {
+    // As one JSON string: WebDriver serializes an object argument node by
+    // node, which takes tens of seconds for this many entries.
+    const overridden = await browser.execute(json => {
+      if (!window.setRuntimeEntriesOverride) {
+        return false;
+      }
+      window.setRuntimeEntriesOverride(JSON.parse(json));
+      return true;
+    }, JSON.stringify(entries));
+    if (!overridden) {
+      throw new Error('setRuntimeEntriesOverride not available');
+    }
   }
 
   /**
@@ -292,41 +326,52 @@ export class Base {
    * drag events React DnD's HTML5 backend listens for. WebDriver's pointer
    * actions cannot start a native drag in Chrome, so the page dispatches
    * them, a moment apart (the backend publishes the drag source a tick after
-   * `dragstart`).
+   * `dragstart`). `whileDragging` runs once the drag has started, before it
+   * enters the target. Resolves whether the source was still in the page
+   * then (a list can unmount the rows it scrolls away).
    */
-  async dragAndDrop(source: string, target: string): Promise<void> {
-    await browser.execute(
-      async (sourceSelector: string, targetSelector: string) => {
-        const from = document.querySelector(sourceSelector);
-        const to = document.querySelector(targetSelector);
-        if (from === null || to === null) {
-          throw new Error(
-            `No ${from === null ? sourceSelector : targetSelector}`
-          );
-        }
-        const dataTransfer = new DataTransfer();
-        const fire = async (element: Element, type: string) => {
-          const {left, top, width, height} = element.getBoundingClientRect();
-          element.dispatchEvent(
-            new DragEvent(type, {
-              bubbles: true,
-              cancelable: true,
-              dataTransfer,
-              clientX: left + width / 2,
-              clientY: top + height / 2,
-            })
-          );
-          await new Promise(resolve => setTimeout(resolve, 50));
-        };
-        await fire(from, 'dragstart');
-        await fire(to, 'dragenter');
-        await fire(to, 'dragover');
-        await fire(to, 'drop');
-        await fire(from, 'dragend');
-      },
-      source,
-      target
-    );
+  async dragAndDrop(
+    source: string,
+    target: string,
+    {whileDragging}: {whileDragging?: () => Promise<unknown>} = {}
+  ): Promise<boolean> {
+    await browser.execute(async (sourceSelector: string) => {
+      const from = document.querySelector(sourceSelector);
+      if (from === null) {
+        throw new Error(`No ${sourceSelector}`);
+      }
+      const dataTransfer = new DataTransfer();
+      const fire = async (element: Element, type: string) => {
+        const {left, top, width, height} = element.getBoundingClientRect();
+        element.dispatchEvent(
+          new DragEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            dataTransfer,
+            clientX: left + width / 2,
+            clientY: top + height / 2,
+          })
+        );
+        await new Promise(resolve => setTimeout(resolve, 50));
+      };
+      window.__E2E_DRAG__ = {from, fire};
+      await fire(from, 'dragstart');
+    }, source);
+    await whileDragging?.();
+    return browser.execute(async (targetSelector: string) => {
+      const drag = window.__E2E_DRAG__;
+      delete window.__E2E_DRAG__;
+      const to = document.querySelector(targetSelector);
+      if (drag === undefined || to === null) {
+        throw new Error(`No drag started, or no ${targetSelector}`);
+      }
+      const sourceKept = drag.from.isConnected;
+      await drag.fire(to, 'dragenter');
+      await drag.fire(to, 'dragover');
+      await drag.fire(to, 'drop');
+      await drag.fire(drag.from, 'dragend');
+      return sourceKept;
+    }, target);
   }
 
   /** GET `path` from the (mocked) API, from the page, as JSON. */

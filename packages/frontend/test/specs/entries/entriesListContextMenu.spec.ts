@@ -1,17 +1,8 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entry Main Menu Behavior', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should having a working context menu to create new entries', async () => {
-    // Navigate to page first, then login (using MSW)
-    await BasePage.open('');
-    await browser.login();
-    // Reset counters right before the navigational load we want to assert
-    await browser.resetMSWRequestCounts();
-    await BasePage.open('');
+    await BasePage.signIn('');
 
     // Verify basic page elements exist and MSW is working
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
@@ -36,12 +27,12 @@ describe('Entry Main Menu Behavior', () => {
     // Test basic form functionality - focus and input
     await expect(BasePage.entryNewBottomSubject).toBeFocused();
     await browser.keys('Test Subject');
-    expect(BasePage.entryNewBottomSubject).toHaveValue('Test Subject');
+    await expect(BasePage.entryNewBottomSubject).toHaveValue('Test Subject');
 
     await BasePage.entryNewBottomBody.waitAndLeftClick();
     await expect(BasePage.entryNewBottomBody).toBeFocused();
     await browser.keys('Test Body Content');
-    expect(BasePage.entryNewBottomBody).toHaveValue('Test Body Content');
+    await expect(BasePage.entryNewBottomBody).toHaveValue('Test Body Content');
 
     console.log(
       'OK: Entry context menu test completed: all basic MSW-integrated functionality verified'

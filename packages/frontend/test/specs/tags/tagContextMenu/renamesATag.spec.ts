@@ -1,15 +1,8 @@
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Tag Context Menu', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('renames a tag', async () => {
-    await BasePage.open('');
-    await expect(BasePage.signInPage).toBeDisplayed();
-    await browser.login();
-    await BasePage.open('test/test-tag-1');
+    await BasePage.signIn('test/test-tag-1');
     await expect(BasePage.tagLabelWrapper('2')).toHaveText('test-tag-2');
 
     // Edit Tag, from the tag's context menu

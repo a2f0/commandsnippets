@@ -2,12 +2,7 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Search Menu Behavior', () => {
   it('should have a functional search bar', async () => {
-    // Navigate to page first, then login (relying on application MSW)
-    await BasePage.open('');
-    await browser.login();
-    // Reset before asserting counts for authenticated load
-    await browser.resetMSWRequestCounts();
-    await BasePage.open('');
+    await BasePage.signIn('');
 
     const pageTitle = await browser.getTitle();
     expect(pageTitle).toBe(
