@@ -1,4 +1,4 @@
-import {asc, eq, sql} from 'drizzle-orm';
+import {and, asc, eq, sql} from 'drizzle-orm';
 import type {Db} from '../db/client';
 import {isEmailViolation, isUniqueViolation} from '../db/errors';
 import {tokens, type User, users} from '../db/schema';
@@ -100,12 +100,14 @@ export async function getOrCreateUser(
   username: string,
   email: string
 ): Promise<{user: User; created: boolean}> {
+  // No email is no account's (`users_user_email_unique`'s condition, which
+  // lets the lookup use it).
   const find = async () =>
     (
       await db
         .select()
         .from(users)
-        .where(eq(users.email, email))
+        .where(and(eq(users.email, email), sql`${users.email} != ''`))
         .orderBy(asc(users.id))
         .limit(1)
     )[0];

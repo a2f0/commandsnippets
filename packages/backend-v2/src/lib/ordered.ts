@@ -19,15 +19,9 @@
  */
 import {CODES} from '@commandsnippets/api-shared';
 import {type SQL, sql} from 'drizzle-orm';
-import {
-  SQLiteAsyncDialect,
-  type SQLiteColumn,
-  type SQLiteTable,
-} from 'drizzle-orm/sqlite-core';
-import type {Db} from '../db/client';
+import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
+import {type Db, rawBatch} from '../db/client';
 import {ApiError, notFound} from './errors';
-
-const dialect = new SQLiteAsyncDialect();
 
 export interface OrderedSpec {
   table: SQLiteTable;
@@ -212,16 +206,9 @@ export class OrderedModel {
     if (touch === undefined && record === undefined) {
       return (await this.db.run(move)).meta.changes > 0;
     }
-    // Drizzle (0.45) cannot batch raw statements with parameters, so they are
-    // prepared on the D1 binding.
-    const d1 = this.db.$client;
-    const [moved] = await d1.batch(
-      [move, record, touch]
-        .filter(statement => statement !== undefined)
-        .map(statement => {
-          const query = dialect.sqlToQuery(statement);
-          return d1.prepare(query.sql).bind(...query.params);
-        })
+    const [moved] = await rawBatch(
+      this.db,
+      [move, record, touch].filter(statement => statement !== undefined)
     );
     return (moved?.meta.changes ?? 0) > 0;
   }

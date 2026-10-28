@@ -3,26 +3,26 @@
  * be on the error itself or on its `cause`.
  */
 
-/** Any unique-constraint failure, e.g. a lost create race. */
-export function isUniqueViolation(error: unknown): boolean {
+/** The error's message and its cause's, which the checks below read. */
+function messages(error: unknown): string {
   const message = String((error as Error)?.message ?? error);
   const cause = String((error as {cause?: Error})?.cause?.message ?? '');
-  return /UNIQUE constraint failed/.test(message + cause);
+  return `${message} ${cause}`;
+}
+
+/** Any unique-constraint failure, e.g. a lost create race. */
+export function isUniqueViolation(error: unknown): boolean {
+  return /UNIQUE constraint failed/.test(messages(error));
 }
 
 /** A clash on the unique user email: the account already exists. */
 export function isEmailViolation(error: unknown): boolean {
-  const message = `${(error as Error)?.message ?? ''} ${
-    (error as {cause?: Error})?.cause?.message ?? ''
-  }`;
-  return /UNIQUE constraint failed: users_user\.email/.test(message);
+  return /UNIQUE constraint failed: users_user\.email/.test(messages(error));
 }
 
 /** A NOT NULL failure on `column` (`table.column`). */
 export function isNotNullViolation(error: unknown, column: string): boolean {
-  const message = String((error as Error)?.message ?? error);
-  const cause = String((error as {cause?: Error})?.cause?.message ?? '');
-  return (message + cause).includes(`NOT NULL constraint failed: ${column}`);
+  return messages(error).includes(`NOT NULL constraint failed: ${column}`);
 }
 
 /**
@@ -30,9 +30,7 @@ export function isNotNullViolation(error: unknown, column: string): boolean {
  * user's active one (`0019_data_versions.sql`).
  */
 export function isDataVersionChanged(error: unknown): boolean {
-  const message = String((error as Error)?.message ?? error);
-  const cause = String((error as {cause?: Error})?.cause?.message ?? '');
-  return (message + cause).includes('data_version_changed:');
+  return messages(error).includes('data_version_changed:');
 }
 
 /**
@@ -41,9 +39,7 @@ export function isDataVersionChanged(error: unknown): boolean {
  * (`resources/restore.ts`).
  */
 export function isVersionClash(error: unknown): boolean {
-  const message = String((error as Error)?.message ?? error);
-  const cause = String((error as {cause?: Error})?.cause?.message ?? '');
   return /UNIQUE constraint failed: users_dataversion\.user_id/.test(
-    message + cause
+    messages(error)
   );
 }

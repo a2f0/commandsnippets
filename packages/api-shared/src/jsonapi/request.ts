@@ -10,9 +10,7 @@
 import * as z from 'zod/mini';
 import {DOCUMENT_POINTER, type ErrorMeta, fail, forward} from '../issues';
 import {CODES, MESSAGES} from '../messages';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+import {isRecord} from '../records';
 
 const PARSE_ERROR: ErrorMeta = {
   code: CODES.parseError,

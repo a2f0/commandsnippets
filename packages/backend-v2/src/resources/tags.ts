@@ -171,9 +171,11 @@ tagRoutes.post('/', async c => {
         .limit(1)
     )[0];
 
+  // As the name field reads it (a number is its string).
   const named =
-    typeof attributes['name'] === 'string'
-      ? attributes['name'].trim()
+    typeof attributes['name'] === 'string' ||
+    typeof attributes['name'] === 'number'
+      ? String(attributes['name']).trim()
       : undefined;
   // The user's tag of the name, as read, written only while still so (named
   // so, deleted or not as read): a write landing between the read and this

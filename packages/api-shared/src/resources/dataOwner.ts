@@ -1,10 +1,11 @@
 /** Identity and cache generation of a user-scoped read. Never an admin profile. */
 import * as z from 'zod/mini';
 import {countSchema, documentSchema, resourceSchema} from '../jsonapi/response';
+import {DATA_OWNER} from './types';
 
 export const dataOwnerDocumentSchema = documentSchema(
   resourceSchema(
-    'DataOwner',
+    DATA_OWNER,
     z.object({
       username: z.string(),
       access: z.enum(['full', 'public']),
