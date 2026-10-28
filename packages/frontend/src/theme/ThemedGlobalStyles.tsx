@@ -18,9 +18,6 @@ const ThemedGlobalStyle = () => {
           '--text-selection-color': `var(--text-selection-${theme.palette.mode}-color)`,
         },
         ':focus-visible': {outlineColor: theme.palette.text.primary},
-        '#©': {
-          height: '100%',
-        },
       }}
     />
   );

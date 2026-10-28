@@ -1,6 +1,5 @@
 import {Button} from '@mui/material';
-// biome-ignore lint: style/useImportType
-import React from 'react';
+import type React from 'react';
 
 interface IButtonItemProps {
   id: string;

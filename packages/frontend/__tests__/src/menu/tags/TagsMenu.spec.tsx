@@ -24,6 +24,80 @@ function renderTagsMenu() {
 }
 
 type Arrow = 'ArrowUpwardIcon' | 'ArrowDownwardIcon';
+const arrows: Arrow[] = ['ArrowUpwardIcon', 'ArrowDownwardIcon'];
+
+const arrowOf = (item: HTMLElement) =>
+  arrows.find(arrow => within(item).queryByTestId(arrow) !== null) ?? null;
+
+/**
+ * Every item, in menu order: its id (the E2E specs find items by id), label,
+ * arrow, and the order it sets.
+ */
+const sorts: [string, string, Arrow | null, string][] = [
+  ['tags-menu-sort-order', 'Sort by User-Defined Order', null, 'order'],
+  [
+    'tags-menu-sort-name-descending',
+    'Sort by Tag Name',
+    'ArrowDownwardIcon',
+    '-name',
+  ],
+  [
+    'tags-menu-sort-name-ascending',
+    'Sort by Tag Name',
+    'ArrowUpwardIcon',
+    'name',
+  ],
+  [
+    'tags-menu-sort-date-created-descending',
+    'Sort by Date Created',
+    'ArrowDownwardIcon',
+    '-date_created',
+  ],
+  [
+    'tags-menu-sort-date-created-ascending',
+    'Sort by Date Created',
+    'ArrowUpwardIcon',
+    'date_created',
+  ],
+  [
+    'tags-menu-sort-entry-count-descending',
+    'Sort by Entry Count',
+    'ArrowDownwardIcon',
+    '-entry_count',
+  ],
+  [
+    'tags-menu-sort-entry-count-ascending',
+    'Sort by Entry Count',
+    'ArrowUpwardIcon',
+    'entry_count',
+  ],
+  [
+    'tags-menu-sort-date-last-used-descending',
+    'Sort by Date Last Used',
+    'ArrowDownwardIcon',
+    '-date_last_used',
+  ],
+  [
+    'tags-menu-sort-date-last-used-ascending',
+    'Sort by Date Last Used',
+    'ArrowUpwardIcon',
+    'date_last_used',
+  ],
+];
+
+function itemById(id: string) {
+  const item = screen
+    .getAllByRole('menuitem')
+    .find(element => element.id === id);
+  invariant(item, `no item ${id}`);
+  return item;
+}
+
+const checkedIds = () =>
+  screen
+    .getAllByRole('menuitem')
+    .filter(item => within(item).queryByTestId('CheckIcon') !== null)
+    .map(item => item.id);
 
 /** The sort item with this label and arrow, as the user tells them apart. */
 function sortItem(label: string, arrow: Arrow) {
@@ -40,6 +114,35 @@ function tagNames(tags: ITagJsonApi[]) {
 }
 
 describe('TagsMenu', () => {
+  it('names each item by id, label and arrow', () => {
+    renderTagsMenu();
+
+    expect(
+      screen
+        .getAllByRole('menuitem')
+        .map(item => [item.id, item.textContent?.trim(), arrowOf(item)])
+    ).toEqual(sorts.map(([id, label, arrow]) => [id, label, arrow]));
+    expect(checkedIds()).toEqual(['tags-menu-sort-order']);
+  });
+
+  it.each(sorts)(
+    '%s sets and checks its order',
+    async (id, _label, _arrow, order) => {
+      // An order no item sets, so each item must set its own.
+      store.setTagSortOrder('date_updated');
+      const {unmount} = renderTagsMenu();
+      expect(checkedIds()).toEqual([]);
+
+      await userEvent.click(itemById(id));
+
+      expect(store.tagSortOrder).toBe(order);
+      // The items read the order when the menu renders again (reopens).
+      unmount();
+      renderTagsMenu();
+      expect(checkedIds()).toEqual([id]);
+    }
+  );
+
   describe('Sort by Tag Name', () => {
     const tags = [
       tag('1', {name: 'bravo'}),

@@ -30,7 +30,13 @@ function renderEntriesMenu(route: string) {
 
 const label = (item: HTMLElement) => item.textContent?.trim();
 
-/** The sort items' labels, and the checked items. */
+type Arrow = 'ArrowUpwardIcon' | 'ArrowDownwardIcon';
+const arrows: Arrow[] = ['ArrowUpwardIcon', 'ArrowDownwardIcon'];
+
+const arrowOf = (item: HTMLElement) =>
+  arrows.find(arrow => within(item).queryByTestId(arrow) !== null) ?? null;
+
+/** The sort items, their labels, and the checked items. */
 function sortItems() {
   const items = screen
     .getAllByRole('menuitem')
@@ -39,8 +45,95 @@ function sortItems() {
   const checked = items.filter(
     item => within(item).queryByTestId('CheckIcon') !== null
   );
-  return {labels, checked};
+  return {items, labels, checked};
 }
+
+/**
+ * Every sort item of a tag's list, in menu order: its id (the E2E specs find
+ * items by id), label, arrow, and the order it sets.
+ */
+const tagListSorts: [string, string, Arrow | null, string][] = [
+  [
+    'tagged-entries-menu-sort-order',
+    'Sort by User-Defined Order',
+    null,
+    'order',
+  ],
+  [
+    'tagged-entries-menu-sort-date-tagged-descending',
+    'Sort by Date Tagged',
+    'ArrowDownwardIcon',
+    '-date_tagged',
+  ],
+  [
+    'tagged-entries-menu-sort-date-tagged-ascending',
+    'Sort by Date Tagged',
+    'ArrowUpwardIcon',
+    'date_tagged',
+  ],
+  [
+    'tagged-entries-menu-sort-subject-descending',
+    'Sort by Subject',
+    'ArrowDownwardIcon',
+    '-subject',
+  ],
+  [
+    'tagged-entries-menu-sort-subject-ascending',
+    'Sort by Subject',
+    'ArrowUpwardIcon',
+    'subject',
+  ],
+  [
+    'tagged-entries-menu-sort-body-descending',
+    'Sort by Body',
+    'ArrowDownwardIcon',
+    '-body',
+  ],
+  [
+    'tagged-entries-menu-sort-body-ascending',
+    'Sort by Body',
+    'ArrowUpwardIcon',
+    'body',
+  ],
+  [
+    'tagged-entries-menu-sort-date-created-descending',
+    'Sort by Date Created',
+    'ArrowDownwardIcon',
+    '-date_created',
+  ],
+  [
+    'tagged-entries-menu-sort-date-created-ascending',
+    'Sort by Date Created',
+    'ArrowUpwardIcon',
+    'date_created',
+  ],
+  [
+    'tagged-entries-menu-sort-tag-count-descending',
+    'Sort by Tag Count',
+    'ArrowDownwardIcon',
+    '-tag_count',
+  ],
+  [
+    'tagged-entries-menu-sort-tag-count-ascending',
+    'Sort by Tag Count',
+    'ArrowUpwardIcon',
+    'tag_count',
+  ],
+];
+
+type SortField = 'tagTextEntryThroughModelSortOrder' | 'entrySortOrder';
+
+function sortItemById(id: string) {
+  const item = sortItems().items.find(element => element.id === id);
+  invariant(item, `no sort item ${id}`);
+  return item;
+}
+
+/** The all-entries list's: no user-defined order, nor date tagged. */
+const allEntriesSorts = tagListSorts.slice(3);
+
+/** The untagged list's: no tag count either. */
+const untaggedSorts = allEntriesSorts.slice(0, -2);
 
 function bodyDescending() {
   const item = screen
@@ -90,6 +183,61 @@ describe('EntriesMenu', () => {
       expect(checked).toEqual([]);
     }
   );
+
+  it.each([
+    [tagList, tagListSorts],
+    [untaggedList, untaggedSorts],
+    [allEntriesList, allEntriesSorts],
+  ])('names each sort item on %s by id, label and arrow', (route, sorts) => {
+    renderEntriesMenu(route);
+
+    expect(
+      sortItems().items.map(item => [item.id, label(item), arrowOf(item)])
+    ).toEqual(sorts.map(([id, name, arrow]) => [id, name, arrow]));
+  });
+
+  describe.each<[string, SortField, SortField, typeof tagListSorts]>([
+    [
+      tagList,
+      'tagTextEntryThroughModelSortOrder',
+      'entrySortOrder',
+      tagListSorts,
+    ],
+    [
+      untaggedList,
+      'entrySortOrder',
+      'tagTextEntryThroughModelSortOrder',
+      untaggedSorts,
+    ],
+    [
+      allEntriesList,
+      'entrySortOrder',
+      'tagTextEntryThroughModelSortOrder',
+      allEntriesSorts,
+    ],
+  ])('on %s, in %s', (route, field, other, sorts) => {
+    it.each(sorts)(
+      '%s sets and checks its order',
+      async (id, _label, _arrow, order) => {
+        // An order no item sets (the untagged and all-entries lists'
+        // default), so each item must set its own.
+        store.setTagTextEntryThroughModelSortOrder('date_updated');
+        store.setEntrySortOrder('date_updated');
+        const {unmount} = renderEntriesMenu(route);
+        expect(sortItems().checked).toEqual([]);
+        const otherBefore = store[other];
+
+        await userEvent.click(sortItemById(id));
+
+        expect(store[field]).toBe(order);
+        expect(store[other]).toBe(otherBefore);
+        // The items read the store when the menu renders again (reopens).
+        unmount();
+        renderEntriesMenu(route);
+        expect(sortItems().checked.map(item => item.id)).toEqual([id]);
+      }
+    );
+  });
 
   it.each<[string, 'tagTextEntryThroughModelSortOrder' | 'entrySortOrder']>([
     [tagList, 'tagTextEntryThroughModelSortOrder'],
