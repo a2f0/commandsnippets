@@ -10,12 +10,17 @@ import type {
 } from '@commandsnippets/api-shared';
 import {and, asc, count, eq, getTableColumns, type SQL, sql} from 'drizzle-orm';
 import type {RunnableQuery} from 'drizzle-orm/runnable-query';
-import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
+import type {
+  SQLiteColumn,
+  SQLiteTable,
+  SQLiteUpdateSetSource,
+} from 'drizzle-orm/sqlite-core';
 import type {Context} from 'hono';
 import type {ContentfulStatusCode} from 'hono/utils/http-status';
 import type * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
-import type {tags, textEntries, User} from '../db/schema';
+import {isUniqueViolation} from '../db/errors';
+import type {entryReuses, tags, textEntries, User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {isoformat} from '../lib/clock';
 import {notFound, permissionDenied} from '../lib/errors';
@@ -181,9 +186,11 @@ interface ListOptions<
     CollectionQuery<F, S, Search> {
   /** The rows' revision, for keyset pages (where the query supports them). */
   dateUpdated?: SQLiteColumn;
+  /**
+   * Whose rows are listed, of the data version the request reads them at
+   * (`versionOf`).
+   */
   user: User;
-  /** The data version read (`versionOf`). */
-  dataVersion: number;
   publicOnly?: boolean;
   visibility?: SQL;
   fields?: Record<string, SQLiteColumn | SQL>;
@@ -202,6 +209,7 @@ export async function listResponse<
   Search extends SearchMode,
 >(c: Context<AppEnv>, options: ListOptions<F, S, Search>): Promise<Response> {
   const db = c.get('db');
+  const dataVersion = versionOf(c, options.user);
   const {query, rows, pagination} = await listPage(c, {
     query: options.query,
     filters: options.filters,
@@ -210,7 +218,7 @@ export async function listResponse<
     where: query => {
       const conditions = [
         eq(options.userId, options.user.id),
-        eq(options.version, options.dataVersion),
+        eq(options.version, dataVersion),
         ...(options.visibility === undefined ? [] : [options.visibility]),
         ...query.filters,
       ];
@@ -249,7 +257,7 @@ export async function listResponse<
   });
 
   const {data, included} = await serialize(
-    createRegistry(db, options.user, options.dataVersion, options.publicOnly),
+    createRegistry(db, options.user, dataVersion, options.publicOnly),
     options.type,
     rows,
     query.include
@@ -316,30 +324,34 @@ export async function resourceResponse(
   return jsonApi(c, document(data[0] ?? null, included), status);
 }
 
+type SoftDeletedTable = typeof tags | typeof textEntries;
+
 /** A resource whose rows are soft-deleted (`is_deleted`), never removed. */
-interface SoftDeletedResource extends RevisedResource {
-  table: typeof tags | typeof textEntries;
+interface SoftDeletedResource<T extends SoftDeletedTable = SoftDeletedTable>
+  extends RevisedResource {
+  table: T;
 }
 
+/** A row as `getOwned` reads it. */
+type OwnedRow = {id: number; user_id: number; version: number};
+
 /**
- * DELETE that flags the row `is_deleted` and advances its revision, unless a
- * newer client write stands (resources/lww.ts): the response is the row
- * either way.
+ * Write `changes` to `row` (as `getOwned` read it) and advance its revision,
+ * unless a newer client write stands (resources/lww.ts): the response is the
+ * row either way, as written or as it stands.
  */
-export async function softDelete(
+export async function writeOwned<T extends SoftDeletedTable>(
   c: Context<AppEnv>,
-  resource: SoftDeletedResource
+  resource: SoftDeletedResource<T>,
+  row: OwnedRow,
+  changes: SQLiteUpdateSetSource<T>
 ): Promise<Response> {
-  const row = await getOwned<{id: number; user_id: number; version: number}>(
-    c,
-    resource
-  );
   const at = await clientUpdated(c);
-  const [deleted] = await c
+  const [written] = await c
     .get('db')
     .update(resource.table)
     .set({
-      is_deleted: true,
+      ...changes,
       client_updated: at,
       date_updated: nextRevision(resource, row.user_id),
     })
@@ -350,10 +362,71 @@ export async function softDelete(
   return resourceResponse(
     c,
     resource.type,
-    (deleted as {id: number} | undefined) ??
-      (await getOwned<{id: number; user_id: number; version: number}>(
-        c,
-        resource
-      ))
+    written ?? (await getOwned<OwnedRow>(c, resource))
   );
+}
+
+/** DELETE that flags the row `is_deleted` (`writeOwned`). */
+export async function softDelete(
+  c: Context<AppEnv>,
+  resource: SoftDeletedResource
+): Promise<Response> {
+  const row = await getOwned<OwnedRow>(c, resource);
+  return writeOwned(c, resource, row, {is_deleted: true});
+}
+
+/** A resource whose creates name the client's id for the row (`clientId`). */
+interface ClientCreatedResource extends OwnedResource {
+  table: typeof textEntries | typeof entryReuses;
+  clientId: SQLiteColumn;
+}
+
+/**
+ * POST that makes a row (201) with `insert`, once per client id: a create
+ * naming one the owner's rows (of the version) already have answers with
+ * that row, as its first attempt was answered (201), so a queued create
+ * retried after a lost answer is made once.
+ */
+export async function createOnce(
+  c: Context<AppEnv>,
+  resource: ClientCreatedResource,
+  {
+    userId,
+    version,
+    clientId,
+  }: {userId: number; version: number; clientId: string | undefined},
+  insert: () => PromiseLike<{id: number}[]>
+): Promise<Response> {
+  const db = c.get('db');
+  const made = async () =>
+    clientId === undefined
+      ? undefined
+      : (
+          await db
+            .select()
+            .from(resource.table)
+            .where(
+              and(
+                eq(resource.userId, userId),
+                eq(resource.version, version),
+                eq(resource.clientId, clientId)
+              )
+            )
+            .limit(1)
+        )[0];
+  const existing = await made();
+  if (existing !== undefined) {
+    return resourceResponse(c, resource.type, existing, 201);
+  }
+  try {
+    const [created] = await insert();
+    return resourceResponse(c, resource.type, created as {id: number}, 201);
+  } catch (error) {
+    // Lost a race with the same create, retried.
+    const raced = isUniqueViolation(error) ? await made() : undefined;
+    if (raced === undefined) {
+      throw error;
+    }
+    return resourceResponse(c, resource.type, raced, 201);
+  }
 }

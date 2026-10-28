@@ -3,10 +3,9 @@ import {
   textEntryListQuerySchema,
   textEntryUpdateAttributesSchema,
 } from '@commandsnippets/api-shared';
-import {and, eq, or, sql} from 'drizzle-orm';
+import {eq, or, sql} from 'drizzle-orm';
 import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
-import {isUniqueViolation} from '../db/errors';
 import {type TextEntry, textEntries, type User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
@@ -15,11 +14,18 @@ import {fold, searchColumns} from '../lib/search';
 import {validateFields} from '../lib/validate';
 import {versionOf} from './dataVersions';
 import {icontains} from './filters';
-import {clientUpdated, writtenBefore} from './lww';
+import {clientUpdated} from './lww';
 import {entryColumns, nextRevision, textEntryResource} from './owned';
 import {publicEntry, publicEntryFields, publicTagCount} from './publicPolicy';
 import {TEXT_ENTRY} from './resourceTypes';
-import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
+import {
+  createOnce,
+  getOwned,
+  listResponse,
+  resourceResponse,
+  softDelete,
+  writeOwned,
+} from './viewset';
 
 /**
  * Entries tagged with a tag matching `condition`, through the requester's own
@@ -56,7 +62,6 @@ export const listEntries = (
   listResponse(c, {
     ...textEntryResource,
     user: owner,
-    dataVersion: versionOf(c, owner),
     publicOnly,
     ...(publicOnly
       ? {visibility: publicEntry(owner.id), fields: publicEntryFields(owner.id)}
@@ -111,50 +116,25 @@ entryRoutes.post('/', async c => {
     attributes
   );
   const at = await clientUpdated(c);
-  const made = async () =>
-    clientId === undefined
-      ? undefined
-      : (
-          await db
-            .select()
-            .from(textEntries)
-            .where(
-              and(
-                eq(textEntries.user_id, user.id),
-                eq(textEntries.version, version),
-                eq(textEntries.client_id, clientId)
-              )
-            )
-            .limit(1)
-        )[0];
-  const existing = await made();
-  if (existing !== undefined) {
-    return resourceResponse(c, TEXT_ENTRY, existing, 201);
-  }
-  const timestamp = now();
-  try {
-    const [created] = await db
-      .insert(textEntries)
-      .values({
-        ...fields,
-        ...searchColumns(fields),
-        user_id: user.id,
-        version,
-        client_id: clientId ?? null,
-        client_updated: at,
-        date_created: timestamp,
-        date_updated: nextRevision(textEntryResource, user.id),
-      })
-      .returning();
-    return resourceResponse(c, TEXT_ENTRY, created as TextEntry, 201);
-  } catch (error) {
-    // Lost a race with the same create, retried.
-    const raced = isUniqueViolation(error) ? await made() : undefined;
-    if (raced === undefined) {
-      throw error;
-    }
-    return resourceResponse(c, TEXT_ENTRY, raced, 201);
-  }
+  return createOnce(
+    c,
+    {...textEntryResource, clientId: textEntries.client_id},
+    {userId: user.id, version, clientId},
+    () =>
+      db
+        .insert(textEntries)
+        .values({
+          ...fields,
+          ...searchColumns(fields),
+          user_id: user.id,
+          version,
+          client_id: clientId ?? null,
+          client_updated: at,
+          date_created: now(),
+          date_updated: nextRevision(textEntryResource, user.id),
+        })
+        .returning()
+  );
 });
 
 entryRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
@@ -164,34 +144,15 @@ entryRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
     id: String(entry.id),
   });
   const changes = validateFields(textEntryUpdateAttributesSchema, attributes);
-  const at = await clientUpdated(c);
-  // Unless a newer client write stands: then the entry as it is.
-  const [updated] = await c
-    .get('db')
-    .update(textEntries)
-    .set({
-      ...changes,
-      client_updated: at,
-      // Only the submitted fields' folds: recomputing an untouched field from
-      // this request's earlier read could clobber a concurrent edit's fold.
-      ...(changes.subject === undefined
-        ? {}
-        : {subject_folded: fold(changes.subject)}),
-      ...(changes.body === undefined ? {} : {body_folded: fold(changes.body)}),
-      date_updated: nextRevision(textEntryResource, entry.user_id),
-    })
-    .where(
-      and(
-        eq(textEntries.id, entry.id),
-        writtenBefore(textEntries.client_updated, at)
-      )
-    )
-    .returning();
-  return resourceResponse(
-    c,
-    TEXT_ENTRY,
-    updated ?? (await getOwned<TextEntry>(c, textEntryResource))
-  );
+  return writeOwned(c, textEntryResource, entry, {
+    ...changes,
+    // Only the submitted fields' folds: recomputing an untouched field from
+    // this request's earlier read could clobber a concurrent edit's fold.
+    ...(changes.subject === undefined
+      ? {}
+      : {subject_folded: fold(changes.subject)}),
+    ...(changes.body === undefined ? {} : {body_folded: fold(changes.body)}),
+  });
 });
 
 /** Entries are soft-deleted. */

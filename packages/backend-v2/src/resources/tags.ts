@@ -32,7 +32,13 @@ import {
 } from './publicPolicy';
 import {reorder} from './reorder';
 import {TAG} from './resourceTypes';
-import {getOwned, listResponse, resourceResponse, softDelete} from './viewset';
+import {
+  getOwned,
+  listResponse,
+  resourceResponse,
+  softDelete,
+  writeOwned,
+} from './viewset';
 
 export const tagOrdering: OrderedSpec = {
   table: tags,
@@ -52,7 +58,6 @@ export const listTags = (c: Context<AppEnv>, owner: User, publicOnly = false) =>
   listResponse(c, {
     ...tagResource,
     user: owner,
-    dataVersion: versionOf(c, owner),
     publicOnly,
     ...(publicOnly
       ? {visibility: publicTag(owner.id), fields: publicTagFields(owner.id)}
@@ -289,30 +294,14 @@ tagRoutes.post('/', async c => {
 });
 
 tagRoutes.on(['PATCH', 'PUT'], '/:id', async c => {
-  const db = c.get('db');
   const tag = await getOwned<Tag>(c, tagResource);
   const {attributes} = await parseResource(c.req.raw, {
     type: TAG,
     id: String(tag.id),
   });
   const changes = validateFields(tagUpdateAttributesSchema, attributes);
-  const at = await clientUpdated(c);
   try {
-    // Unless a newer client write stands: then the tag as it is.
-    const [updated] = await db
-      .update(tags)
-      .set({
-        ...changes,
-        client_updated: at,
-        date_updated: nextRevision(tagResource, tag.user_id),
-      })
-      .where(and(eq(tags.id, tag.id), writtenBefore(tags.client_updated, at)))
-      .returning();
-    return resourceResponse(
-      c,
-      TAG,
-      updated ?? (await getOwned<Tag>(c, tagResource))
-    );
+    return await writeOwned(c, tagResource, tag, changes);
   } catch (error) {
     if (isUniqueViolation(error)) {
       throw uniqueTogether('name', 'user');
