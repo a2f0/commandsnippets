@@ -1,16 +1,8 @@
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should having a working menu bar', async () => {
-    await browser.resetMSWRequestCounts();
-    // Navigate to page first, then login (using MSW)
-    await BasePage.open('');
-    await browser.login();
-    await BasePage.open('');
+    await BasePage.signIn('');
     await expect(BasePage.entriesMenu).toBeExisting();
     await expect(BasePage.entriesMenu).not.toBeDisplayed();
     await BasePage.entriesMenuButton.waitAndLeftClick();

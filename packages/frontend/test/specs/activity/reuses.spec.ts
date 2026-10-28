@@ -43,9 +43,7 @@ const nearBottom = () =>
 describe('Infinite reuse history', () => {
   beforeEach(async () => {
     await browser.setViewport({width: 1100, height: 700});
-    await BasePage.open('');
-    await browser.login();
-    await BasePage.open('test?entries=all');
+    await BasePage.signIn('test?entries=all');
     await $('#tagsEntries-1').waitForDisplayed();
     // Seed the page's mock API, then navigate within the app so it is retained.
     await browser.execute(async () => {
@@ -79,10 +77,6 @@ describe('Infinite reuse history', () => {
     await $('#view-menu-button').click();
     await $('#view-menu-reuses').click();
     await browser.waitUntil(async () => (await rendered()) === 50);
-  });
-
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
   });
 
   for (const scope of ['all', 'entry']) {

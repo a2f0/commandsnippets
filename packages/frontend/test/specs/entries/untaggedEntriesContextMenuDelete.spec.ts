@@ -1,10 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Delete Entry', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('Should allow delete entries from untagged entries', async () => {
     await browser.resetMSWRequestCounts();
     await BasePage.open('');

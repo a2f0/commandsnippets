@@ -1,15 +1,8 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tag List Context Menu Behavior', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('tag should have a working context menu', async () => {
-    // Navigate to page first, then login (relying on application MSW)
-    await BasePage.open('');
-    await browser.login();
-    await BasePage.open('');
+    await BasePage.signIn('');
 
     // Ensure tag list UI is present
     await expect(BasePage.tagList).toBeDisplayed();

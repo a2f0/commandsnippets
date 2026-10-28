@@ -5,10 +5,6 @@ describe('MSW Verification Tests', () => {
     await BasePage.open('');
   });
 
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should verify MSW worker is actually started', async () => {
     // Check if MSW worker is available in the browser
     const workerStatus = await browser.execute(() => {
@@ -86,9 +82,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify API calls are being intercepted by MSW', async () => {
-    // First, let's check if the application is making API calls and if they're being handled
-    await BasePage.open('');
-
     // Check if the page loaded (could be either public or authenticated)
     const pageLoaded = await browser.execute(() => {
       return document.body.textContent && document.body.textContent.length > 0;
@@ -195,19 +188,8 @@ describe('MSW Verification Tests', () => {
 
     console.log('Entries endpoint response:', entriesResponse);
 
-    // If MSW is working, we should get a successful response
-    // If MSW is not working, we might get a network error or CORS error
-    if (entriesResponse?.ok) {
-      console.log('OK: Entries endpoint successfully intercepted by MSW');
-      expect(entriesResponse.status).toBe(200);
-    } else if (entriesResponse && 'error' in entriesResponse) {
-      console.log(
-        'WARNING: Entries endpoint request failed:',
-        entriesResponse.error
-      );
-      // This might be expected if MSW isn't running, so we won't fail the test
-      // but we'll log it for information
-    }
+    // MSW answers it: a request it let through would fail (no API runs).
+    expect(entriesResponse).toMatchObject({ok: true, status: 200});
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });
@@ -266,8 +248,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify network errors are handled gracefully', async () => {
-    await BasePage.open('');
-
     // The page should still load even with potential network issues
     await expect(BasePage.signInPage).toBeDisplayed();
 
@@ -286,7 +266,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify different HTTP status codes are handled', async () => {
-    await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
 
     // Check for any HTTP-related errors
@@ -303,8 +282,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify the application loads successfully with mock data', async () => {
-    await BasePage.open('');
-
     // Check if the page loaded (could be either public or authenticated)
     const pageLoaded = await browser.execute(() => {
       return document.body.textContent && document.body.textContent.length > 0;
@@ -328,8 +305,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify MSW service worker file is accessible', async () => {
-    await BasePage.open('');
-
     // Check if the page loaded (could be either public or authenticated)
     const pageLoaded = await browser.execute(() => {
       return document.body.textContent && document.body.textContent.length > 0;

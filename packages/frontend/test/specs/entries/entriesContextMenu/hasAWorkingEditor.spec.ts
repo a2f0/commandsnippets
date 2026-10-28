@@ -1,18 +1,8 @@
 import {BasePage} from '../../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('has a working editor', async () => {
-    // Navigate to page first, then login (using MSW)
-    await BasePage.open('');
-    await browser.login();
-    await expect(BasePage.signInPage).toBeDisplayed();
-
-    // Navigate to the tag page
-    await BasePage.open('test/test-tag-1');
+    await BasePage.signIn('test/test-tag-1');
 
     // Verify basic page elements exist - entries list should be displayed
     await expect(BasePage.tagsEntriesList).toBeExisting();

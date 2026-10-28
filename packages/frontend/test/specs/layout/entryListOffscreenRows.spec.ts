@@ -31,21 +31,7 @@ const inView = (id: string) =>
 
 describe('A long entry list', () => {
   beforeEach(async () => {
-    await BasePage.open('');
-    await browser.login();
-    // As one JSON string: WebDriver serializes an object argument node by
-    // node, which takes tens of seconds for this many entries.
-    const result = await browser.execute(json => {
-      if (!window.setRuntimeEntriesOverride) {
-        return false;
-      }
-      window.setRuntimeEntriesOverride(JSON.parse(json));
-      return true;
-    }, JSON.stringify(entries));
-    if (!result) {
-      throw new Error('setRuntimeEntriesOverride not available');
-    }
-    await BasePage.open('test/test-tag-1');
+    await BasePage.signIn('test/test-tag-1', {entries});
     await browser.waitUntil(
       async () =>
         (await browser.execute(
@@ -53,10 +39,6 @@ describe('A long entry list', () => {
         )) === COUNT,
       {timeout: 15000, timeoutMsg: `Expected all ${COUNT} entries listed`}
     );
-  });
-
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
   });
 
   it('scrolls straight to its last row, whatever the heights above it', async () => {

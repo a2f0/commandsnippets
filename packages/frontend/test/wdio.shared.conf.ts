@@ -1,5 +1,6 @@
 import type {Capabilities} from '@wdio/types';
 import video from 'wdio-video-reporter';
+import type {HttpMethod} from '../src/msw/requestCounter';
 
 // Define LogEntry type to match webdriver's actual type
 type LogEntry = {
@@ -26,39 +27,15 @@ declare global {
       login: () => Promise<void>;
       waitForMSW: () => Promise<void>;
       resetMSWHandlers: () => Promise<void>;
-      getMSWRequestCount: (
-        method:
-          | 'GET'
-          | 'POST'
-          | 'PUT'
-          | 'PATCH'
-          | 'DELETE'
-          | 'OPTIONS'
-          | 'HEAD',
-        url: string
-      ) => Promise<number>;
+      getMSWRequestCount: (method: HttpMethod, url: string) => Promise<number>;
       resetMSWRequestCounts: () => Promise<void>;
       toBeRequestedTimes: (
-        method:
-          | 'GET'
-          | 'POST'
-          | 'PUT'
-          | 'PATCH'
-          | 'DELETE'
-          | 'OPTIONS'
-          | 'HEAD',
+        method: HttpMethod,
         url: string,
         expected: number
       ) => Promise<void>;
       toBeRequestedAtLeastTimes: (
-        method:
-          | 'GET'
-          | 'POST'
-          | 'PUT'
-          | 'PATCH'
-          | 'DELETE'
-          | 'OPTIONS'
-          | 'HEAD',
+        method: HttpMethod,
         url: string,
         minExpected: number
       ) => Promise<void>;
@@ -169,66 +146,56 @@ export const config: WebdriverIO.Config = {
       });
     });
 
-    // Add helper to fetch request count for a method+url
+    // The requests the page has made, as the mock API counted them.
+    const requests = (method: HttpMethod, url: string) =>
+      browser.execute(
+        (m: HttpMethod, u: string) => ({
+          count: window.__MSW_REQUESTS__?.getCount(m, u) ?? -1,
+          all: window.__MSW_REQUESTS__?.getAll() ?? [],
+        }),
+        method,
+        url
+      );
+
+    /**
+     * Wait until `method url` has been requested `expected` times, then (if
+     * `exactly`) check it has not been requested more: a page makes its
+     * requests as it syncs, after it renders, so a count read at once can
+     * come before them.
+     */
+    const expectRequested = async (
+      method: HttpMethod,
+      url: string,
+      expected: number,
+      exactly: boolean
+    ) => {
+      let result = await requests(method, url);
+      const failure = () =>
+        `Expected ${method} ${url} to be requested ${exactly ? '' : 'at least '}${expected} times, but was ${result.count}. All counts: ${JSON.stringify(
+          result.all
+        )}`;
+      await browser.waitUntil(
+        async () => {
+          result = await requests(method, url);
+          return result.count >= expected;
+        },
+        {timeoutMsg: failure}
+      );
+      if (exactly && result.count !== expected) {
+        throw new Error(failure());
+      }
+    };
+
     browser.addCommand(
       'getMSWRequestCount',
-      async (
-        method:
-          | 'GET'
-          | 'POST'
-          | 'PUT'
-          | 'PATCH'
-          | 'DELETE'
-          | 'OPTIONS'
-          | 'HEAD',
-        url: string
-      ) => {
-        const count = await browser.execute(
-          (m: typeof method, u: string) => {
-            if (window.__MSW_REQUESTS__) {
-              return window.__MSW_REQUESTS__.getCount(m, u);
-            }
-            return -1;
-          },
-          method,
-          url
-        );
-        return count as number;
-      }
+      async (method: HttpMethod, url: string) =>
+        (await requests(method, url)).count
     );
 
-    // Assert helper for at-least semantics
     browser.addCommand(
       'toBeRequestedAtLeastTimes',
-      async (
-        method:
-          | 'GET'
-          | 'POST'
-          | 'PUT'
-          | 'PATCH'
-          | 'DELETE'
-          | 'OPTIONS'
-          | 'HEAD',
-        url: string,
-        minExpected: number
-      ) => {
-        const result = await browser.execute(
-          (m: typeof method, u: string) => {
-            const count = window.__MSW_REQUESTS__?.getCount?.(m, u) ?? -1;
-            const all = window.__MSW_REQUESTS__?.getAll?.() ?? [];
-            return {count, all};
-          },
-          method,
-          url
-        );
-        if (result.count < minExpected) {
-          throw new Error(
-            `Expected ${method} ${url} to be requested at least ${minExpected} times, but was ${result.count}. All counts: ${JSON.stringify(
-              result.all
-            )}`
-          );
-        }
-      }
+      (method: HttpMethod, url: string, minExpected: number) =>
+        expectRequested(method, url, minExpected, false)
     );
 
     // Add helper to reset only request counters
@@ -240,38 +207,10 @@ export const config: WebdriverIO.Config = {
       });
     });
 
-    // Assert helper similar to base branch usage
     browser.addCommand(
       'toBeRequestedTimes',
-      async (
-        method:
-          | 'GET'
-          | 'POST'
-          | 'PUT'
-          | 'PATCH'
-          | 'DELETE'
-          | 'OPTIONS'
-          | 'HEAD',
-        url: string,
-        expected: number
-      ) => {
-        const result = await browser.execute(
-          (m: typeof method, u: string) => {
-            const count = window.__MSW_REQUESTS__?.getCount?.(m, u) ?? -1;
-            const all = window.__MSW_REQUESTS__?.getAll?.() ?? [];
-            return {count, all};
-          },
-          method,
-          url
-        );
-        if (result.count !== expected) {
-          throw new Error(
-            `Expected ${method} ${url} to be requested ${expected} times, but was ${result.count}. All counts: ${JSON.stringify(
-              result.all
-            )}`
-          );
-        }
-      }
+      (method: HttpMethod, url: string, expected: number) =>
+        expectRequested(method, url, expected, true)
     );
 
     // Create a properly typed wrapper for the log event handler
@@ -321,7 +260,10 @@ export const config: WebdriverIO.Config = {
       });
     });
   },
+  // Each test starts with the mock API's data, handlers and counts reset,
+  // and counts the errors logged from the end of the last test on.
   afterTest: async () => {
-    await browser.mockRestoreAll();
+    await browser.resetMSWHandlers();
+    browser.currentTestErrors.length = 0;
   },
 };

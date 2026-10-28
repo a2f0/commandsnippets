@@ -1,15 +1,8 @@
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Entry Main Menu', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should having a working new entry from the file menu', async () => {
-    // Navigate to page first, then login (using MSW)
-    await BasePage.open('');
-    await browser.login();
-    await BasePage.open('');
+    await BasePage.signIn('');
 
     // Test basic file menu functionality
     await expect(BasePage.fileMenu).toBeExisting();
@@ -32,14 +25,14 @@ describe('Entry Main Menu', () => {
     // Test basic form functionality
     await expect(BasePage.entryNewTopSubject).toBeFocused();
     await browser.keys('Test Subject from File Menu');
-    expect(BasePage.entryNewTopSubject).toHaveValue(
+    await expect(BasePage.entryNewTopSubject).toHaveValue(
       'Test Subject from File Menu'
     );
 
     await BasePage.entryNewTopBody.waitAndLeftClick();
     await expect(BasePage.entryNewTopBody).toBeFocused();
     await browser.keys('Test body content from file menu');
-    expect(BasePage.entryNewTopBody).toHaveValue(
+    await expect(BasePage.entryNewTopBody).toHaveValue(
       'Test body content from file menu'
     );
 

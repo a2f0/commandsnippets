@@ -110,9 +110,7 @@ describe('Resizable tag sidebar', () => {
 
   it('aligns the narrower search, resizes and remembers the width within viewport limits', async () => {
     await resizeViewport(1200);
-    await BasePage.open('');
-    await browser.login();
-    await BasePage.open('');
+    await BasePage.signIn('');
     await BasePage.tagList.waitForDisplayed();
     await BasePage.tagsEntriesList.waitForDisplayed();
     await expectAligned(200);

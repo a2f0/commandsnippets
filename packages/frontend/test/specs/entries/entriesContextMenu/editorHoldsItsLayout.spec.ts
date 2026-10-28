@@ -21,15 +21,8 @@ const saveOffset = () =>
   });
 
 describe('The entry editor', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('keeps its buttons in place when the body is hovered or focused', async () => {
-    await BasePage.open('');
-    await browser.login();
-    await expect(BasePage.signInPage).toBeDisplayed();
-    await BasePage.open('test/test-tag-1');
+    await BasePage.signIn('test/test-tag-1');
 
     await BasePage.tagsEntries1.waitAndRightClick();
     await BasePage.tagsEntriesContextMenu1Edit.waitAndLeftClick();

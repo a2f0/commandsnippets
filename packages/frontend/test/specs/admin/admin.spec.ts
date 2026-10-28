@@ -1,15 +1,8 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Admin page', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('lets staff deactivate and mark a user from its menu, and see it in the audit log', async () => {
-    await BasePage.open('');
-    await expect(BasePage.signInPage).toBeDisplayed();
-    await browser.login();
-    await BasePage.open('admin');
+    await BasePage.signIn('admin');
 
     // /admin is the admin page, not the page of a user named "admin".
     await expect(BasePage.adminPage).toBeDisplayed();

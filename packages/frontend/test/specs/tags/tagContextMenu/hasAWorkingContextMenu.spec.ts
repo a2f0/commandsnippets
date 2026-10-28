@@ -1,10 +1,6 @@
 import {BasePage} from '../../../pageobjects/base';
 
 describe('Tag Context Menu', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('has a working context menu', async () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();

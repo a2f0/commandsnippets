@@ -1,10 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('TagsEntries Behavior', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should list tags_entries', async () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
@@ -31,27 +27,22 @@ describe('TagsEntries Behavior', () => {
 
     // Wait for the page to fully load
 
+    // test-tag-1 lists entries 1 and 2; the search keeps entry 1 only
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(2);
     // Test entry search functionality by directly interacting with search field
     // Skip complex Tab navigation testing in headless mode - focus on core functionality
     await BasePage.entrySearch.click();
-    await BasePage.entrySearch.setValue('entry-1');
-
-    // Check if entries exist after filtering
-    const filteredEntries = await BasePage.tagsEntries;
-    const filteredLength = await filteredEntries.length;
-    if (filteredEntries && filteredLength > 0) {
-      console.log('Search filtered entries successfully');
-
-      // If first entry exists, verify it's displayed
-      const firstEntry = BasePage.tagsEntries1;
-      if (await firstEntry.isExisting()) {
-        await expect(firstEntry).toBeDisplayed();
-      }
-    } else {
-      console.log(
-        'Search filter applied - no matching entries or entries not yet loaded'
-      );
+    // A key at a time, each shown before the next: the field drops keys
+    // typed faster than it renders (TextEntrySearchField takes its value
+    // from the store in an effect, not in its change handler).
+    let typed = '';
+    for (const key of 'entry-1') {
+      typed += key;
+      await browser.keys(key);
+      await expect(BasePage.entrySearch).toHaveValue(typed);
     }
+    await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
+    await expect(BasePage.tagsEntries1).toBeDisplayed();
 
     // Test Escape key clears search
     await browser.keys('Escape');

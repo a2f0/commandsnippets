@@ -50,15 +50,8 @@ function countRows(): Promise<Record<string, number>> {
 }
 
 describe('Debug: Sync IndexedDB', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it("syncs the user's collection into IndexedDB", async () => {
-    await BasePage.open('');
-    await expect(BasePage.signInPage).toBeDisplayed();
-    await browser.login();
-    await BasePage.open('');
+    await BasePage.signIn('');
 
     await BasePage.debugMenuButton.waitAndLeftClick();
     await BasePage.debugMenuSyncIndexedDB.waitAndLeftClick();

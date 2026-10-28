@@ -1,10 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tag List Context Menu Behavior', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('tag should have a working context menu', async () => {
     // Reset MSW request counters for deterministic assertions
     await browser.resetMSWRequestCounts();

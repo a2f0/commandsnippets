@@ -5,39 +5,8 @@ import {BasePage} from '../../pageobjects/base';
 
 describe('Holy Grail Layout with Many Entries', () => {
   it('should keep bottom bar at bottom of screen with many entries', async () => {
-    // Navigate to page and login
-    await BasePage.open('');
-    await browser.login();
-
-    // Override MSW handlers to use manyEntriesResponse mock, before the
-    // signed-in page loads: its first sync reads them (the override holds
-    // across the load).
-    // As one JSON string: WebDriver serializes an object argument node by
-    // node, which takes seconds for this many entries.
-    const mswResult = await browser.execute(json => {
-      const mockData = JSON.parse(json);
-      if (!window.setRuntimeEntriesOverride) {
-        return {
-          success: false,
-          error: 'setRuntimeEntriesOverride not available',
-        };
-      }
-
-      try {
-        window.setRuntimeEntriesOverride(mockData);
-        return {success: true, entriesCount: mockData.data.length};
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        return {success: false, error: errorMessage};
-      }
-    }, JSON.stringify(manyEntriesResponse));
-
-    if (!mswResult.success) {
-      throw new Error(`Failed to override MSW handlers: ${mswResult.error}`);
-    }
-
-    await BasePage.open('test/test-tag-2');
+    // The mock API lists manyEntriesResponse's entries, in test-tag-1.
+    await BasePage.signIn('test/test-tag-2', {entries: manyEntriesResponse});
 
     // Wait for elements to load
     await BasePage.tagList.waitForDisplayed({timeout: 10000});
@@ -191,10 +160,5 @@ describe('Holy Grail Layout with Many Entries', () => {
     } else {
       // Test completed successfully for large viewport
     }
-  });
-
-  afterEach(async () => {
-    // Reset MSW handlers after the test
-    await browser.resetMSWHandlers();
   });
 });

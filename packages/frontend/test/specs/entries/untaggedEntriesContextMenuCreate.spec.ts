@@ -1,10 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entry Main Menu Behavior', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should having a working context menu to create new entries', async () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();

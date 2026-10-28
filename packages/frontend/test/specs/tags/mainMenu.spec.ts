@@ -1,10 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tag Main Menu', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should have a working menu bar', async () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
@@ -49,7 +45,7 @@ describe('Tag Main Menu', () => {
     ).toBe('#484848');
 
     // Verify URL routing is working
-    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
     // Verify initial state - default order by 'order' field (tag-1 should be first)
     await browser.waitUntil(
@@ -133,7 +129,7 @@ describe('Tag Main Menu', () => {
     ).toBe('#484848');
 
     // Verify URL is still pointing to selected tag
-    expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

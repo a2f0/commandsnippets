@@ -1,10 +1,6 @@
 import {BasePage} from '../../pageobjects/base';
 
 describe('Entries Context Menu Untag', () => {
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('should untag', async () => {
     await browser.resetMSWRequestCounts();
     await BasePage.open('');

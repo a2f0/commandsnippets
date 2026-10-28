@@ -38,47 +38,32 @@ const inView = (id: string) =>
     return top >= 0 && bottom <= window.innerHeight;
   }, id);
 
+/** Scroll to the end of the page, which grows as rows are measured. */
+const scrollToEnd = () =>
+  browser.waitUntil(
+    async () => {
+      await browser.execute(() =>
+        window.scrollTo(0, document.documentElement.scrollHeight)
+      );
+      return inView(String(COUNT));
+    },
+    {timeoutMsg: 'Expected the last entry scrolled into view'}
+  );
+
 describe('A long, virtualized entry list', () => {
   beforeEach(async () => {
-    await BasePage.open('');
-    await browser.login();
-    // As one JSON string: WebDriver serializes an object argument node by
-    // node, which takes tens of seconds for this many entries.
-    const result = await browser.execute(json => {
-      if (!window.setRuntimeEntriesOverride) {
-        return false;
-      }
-      window.setRuntimeEntriesOverride(JSON.parse(json));
-      return true;
-    }, JSON.stringify(entries));
-    if (!result) {
-      throw new Error('setRuntimeEntriesOverride not available');
-    }
-    await BasePage.open('test/test-tag-1');
+    await BasePage.signIn('test/test-tag-1', {entries});
     await browser.waitUntil(async () => (await rendered()) > 0, {
       timeout: 15000,
       timeoutMsg: 'Expected the entries listed',
     });
   });
 
-  afterEach(async () => {
-    await browser.resetMSWHandlers();
-  });
-
   it('renders only the rows in view, and scrolls to its last row', async () => {
     expect(await rendered()).toBeLessThan(COUNT / 3);
     expect(await inView(String(COUNT))).toBe(false);
 
-    // To the end of the page (which grows as rows are measured).
-    await browser.waitUntil(
-      async () => {
-        await browser.execute(() =>
-          window.scrollTo(0, document.documentElement.scrollHeight)
-        );
-        return inView(String(COUNT));
-      },
-      {timeoutMsg: 'Expected the last entry scrolled into view'}
-    );
+    await scrollToEnd();
     expect(await rendered()).toBeLessThan(COUNT / 3);
   });
 
@@ -101,15 +86,7 @@ describe('A long, virtualized entry list', () => {
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
     await browser.keys('-draft');
 
-    await browser.waitUntil(
-      async () => {
-        await browser.execute(() =>
-          window.scrollTo(0, document.documentElement.scrollHeight)
-        );
-        return inView(String(COUNT));
-      },
-      {timeoutMsg: 'Expected the last entry scrolled into view'}
-    );
+    await scrollToEnd();
     await browser.execute(() => window.scrollTo(0, 0));
 
     await expect(BasePage.textEntryEdit1Subject).toBeDisplayed();
@@ -121,39 +98,11 @@ describe('A long, virtualized entry list', () => {
   it('keeps the row dragged rendered while the window scrolls, and drops it', async () => {
     // Drag entry 1 by its handle, scroll to the end of the list mid-drag,
     // and drop it on test-tag-2.
-    const kept = await browser.execute(async () => {
-      const handle = document.querySelector(
-        '#tagsEntries-1 [role="entryDragHandle"]'
-      );
-      const to = document.querySelector('#tag-2');
-      if (handle === null || to === null) {
-        throw new Error('No drag handle or tag');
-      }
-      const dataTransfer = new DataTransfer();
-      const pause = () => new Promise(resolve => setTimeout(resolve, 100));
-      const fire = async (element: Element, type: string) => {
-        const {left, top, width, height} = element.getBoundingClientRect();
-        element.dispatchEvent(
-          new DragEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            dataTransfer,
-            clientX: left + width / 2,
-            clientY: top + height / 2,
-          })
-        );
-        await pause();
-      };
-      await fire(handle, 'dragstart');
-      window.scrollTo(0, document.documentElement.scrollHeight);
-      await pause();
-      const connected = handle.isConnected;
-      await fire(to, 'dragenter');
-      await fire(to, 'dragover');
-      await fire(to, 'drop');
-      await fire(handle, 'dragend');
-      return connected;
-    });
+    const kept = await BasePage.dragAndDrop(
+      '#tagsEntries-1 [role="entryDragHandle"]',
+      '#tag-2',
+      {whileDragging: scrollToEnd}
+    );
 
     expect(kept).toBe(true);
     await browser.waitUntil(
