@@ -104,10 +104,17 @@ interface PutOptions<R> {
   force?: boolean;
 }
 
+interface Put<R> {
+  /** The resources stored. */
+  stored: R[];
+  /** The keys (`rowKey`) of those left as they are for a write queued. */
+  queued: Set<string>;
+}
+
 /**
  * Store `resources` in `table` under `owner`: none with a write queued, and
  * (unless `force`) none where the table holds a newer revision (or the same
- * one, where `tie` keeps it). Returns the ones stored.
+ * one, where `tie` keeps it). Returns the ones stored, and those queued.
  */
 export async function putNewer<R extends Revised>(
   db: CommandsnippetsDatabase,
@@ -115,7 +122,7 @@ export async function putNewer<R extends Revised>(
   owner: string,
   resources: readonly R[],
   {tie = () => true, force = false}: PutOptions<R> = {}
-): Promise<R[]> {
+): Promise<Put<R>> {
   const newest = new Map<string, R>();
   for (const resource of resources) {
     const other = newest.get(resource.id);
@@ -144,7 +151,7 @@ export async function putNewer<R extends Revised>(
       ...(held?.localId === undefined ? {} : {localId: held.localId}),
     }))
   );
-  return newer.map(({resource}) => resource);
+  return {stored: newer.map(({resource}) => resource), queued};
 }
 
 /**
@@ -188,48 +195,66 @@ export async function putEntries(
   included: readonly IncludedResource[] = [],
   force = false
 ): Promise<void> {
-  const queuedEntries = await queuedFor(db, owner, entries);
-  const stored = await putNewer(db, db.entries, owner, entries, {
-    tie: deletedStays,
-    force,
-  });
-  const storedIds = new Set(stored.map(({id}) => id));
+  const {stored, queued: queuedEntries} = await putNewer(
+    db,
+    db.entries,
+    owner,
+    entries,
+    {tie: deletedStays, force}
+  );
+  // The junctions each entry stored lists (not deleted).
+  const listed = new Map(
+    stored.map(entry => [
+      entry.id,
+      new Set(entry.relationships.text_entry_to_tag.data.map(({id}) => id)),
+    ])
+  );
   await putJunctionsNewer(
     db,
     owner,
     included.filter(isJunction).filter(junction => {
       const entryId = junction.relationships.text_entry.data.id;
       return (
-        storedIds.has(entryId) ||
+        listed.has(entryId) ||
         queuedEntries.has(rowKey(owner, 'TextEntry', entryId))
       );
     }),
     force
   );
-  for (const entry of stored) {
-    const listed = new Set(
-      entry.relationships.text_entry_to_tag.data.map(({id}) => id)
-    );
-    const left = (
-      await db.junctions
-        .where('[owner+relationships.text_entry.data.id]')
-        .equals([owner, entry.id])
-        .toArray()
-    ).filter(
-      junction => !junction.attributes.is_deleted && !listed.has(junction.id)
-    );
-    const queued = await queuedFor(db, owner, left);
-    await db.junctions.bulkPut(
-      left
-        .filter(
-          junction => !queued.has(rowKey(owner, junction.type, junction.id))
-        )
-        .map(junction => ({
-          ...junction,
-          attributes: {...junction.attributes, is_deleted: true},
-        }))
-    );
+  if (stored.length === 0) {
+    return;
   }
+  // Every entry's at once (a junction is of one entry, which alone decides
+  // it): the reads all asked for together, not one awaited after another.
+  // One `anyOf` read of them all was slower in Chrome: Dexie walks a cursor
+  // a row at a time across the entries.
+  const left = (
+    await Promise.all(
+      stored.map(({id}) =>
+        db.junctions
+          .where('[owner+relationships.text_entry.data.id]')
+          .equals([owner, id])
+          .toArray()
+      )
+    )
+  )
+    .flat()
+    .filter(
+      junction =>
+        !junction.attributes.is_deleted &&
+        !listed.get(junction.relationships.text_entry.data.id)?.has(junction.id)
+    );
+  const queued = await queuedFor(db, owner, left);
+  await db.junctions.bulkPut(
+    left
+      .filter(
+        junction => !queued.has(rowKey(owner, junction.type, junction.id))
+      )
+      .map(junction => ({
+        ...junction,
+        attributes: {...junction.attributes, is_deleted: true},
+      }))
+  );
 }
 
 /** Store `owner`'s `tags`. */

@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 
 import {
   formatTimestamp,
@@ -26,6 +26,32 @@ describe('formatTimestamp', () => {
 
   it('returns anything unparseable as is', () => {
     expect(formatTimestamp('not a date', 'en-US')).toBe('not a date');
+  });
+
+  it.each([
+    ['en-US', 'short'],
+    ['de-DE', 'short'],
+    ['en-US', 'medium'],
+    ['de-DE', 'medium'],
+  ] as const)('formats in %s with the %s time style', (locale, timeStyle) => {
+    expect(formatTimestamp('2026-01-02T03:04:05', locale, timeStyle)).toBe(
+      new Intl.DateTimeFormat(locale, {dateStyle: 'medium', timeStyle}).format(
+        new Date(Date.UTC(2026, 0, 2, 3, 4, 5))
+      )
+    );
+  });
+
+  it('makes one formatter for each locale and time style', () => {
+    const made = vi.spyOn(Intl, 'DateTimeFormat');
+    try {
+      formatTimestamp('2026-01-02T03:04:05', 'fr-FR');
+      formatTimestamp('2026-01-03T03:04:05', 'fr-FR');
+      formatTimestamp('2026-01-03T03:04:05', 'fr-FR', 'medium');
+      formatTimestamp('2026-01-04T03:04:05', 'fr-FR', 'medium');
+      expect(made).toHaveBeenCalledTimes(2);
+    } finally {
+      made.mockRestore();
+    }
   });
 });
 

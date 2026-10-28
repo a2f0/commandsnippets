@@ -292,17 +292,25 @@ export function useTagEntries(
   );
 }
 
-/** The entries not deleted, and whether each is in any tag. */
-async function liveEntries({
-  db,
-  owner,
-}: OwnedData): Promise<Array<{entry: TextEntry; tagged: boolean}>> {
+/**
+ * The entries not deleted: all of them, or those in no tag. Only the
+ * untagged read the junctions: the live query of all of them, which reads
+ * none, does not run again when a junction changes.
+ */
+async function liveEntries(
+  {db, owner}: OwnedData,
+  which: 'all' | 'untagged'
+): Promise<TextEntry[]> {
+  const live = db.entries
+    .where('owner')
+    .equals(owner)
+    .filter(entry => !entry.attributes.is_deleted)
+    .toArray();
+  if (which === 'all') {
+    return live;
+  }
   const [entries, junctions] = await Promise.all([
-    db.entries
-      .where('owner')
-      .equals(owner)
-      .filter(entry => !entry.attributes.is_deleted)
-      .toArray(),
+    live,
     db.junctions
       .where('owner')
       .equals(owner)
@@ -312,7 +320,7 @@ async function liveEntries({
   const tagged = new Set(
     junctions.map(junction => junction.relationships.text_entry.data.id)
   );
-  return entries.map(entry => ({entry, tagged: tagged.has(entry.id)}));
+  return entries.filter(entry => !tagged.has(entry.id));
 }
 
 /**
@@ -329,16 +337,12 @@ export function useEntries(
       entries:
         session === null || which === null
           ? []
-          : (
-              await timed(
-                'idb',
-                `useEntries(${which})`,
-                () => liveEntries(session),
-                rows
-              )
-            )
-              .filter(({tagged}) => which === 'all' || !tagged)
-              .map(({entry}) => entry),
+          : await timed(
+              'idb',
+              `useEntries(${which})`,
+              () => liveEntries(session, which),
+              rows
+            ),
     }),
     [session, which]
   );
