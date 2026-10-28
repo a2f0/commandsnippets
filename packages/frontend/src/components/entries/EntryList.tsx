@@ -18,8 +18,10 @@ import React, {
 } from 'react';
 import {useDrop} from 'react-dnd';
 import {copyEntry} from '../../lib/data/copyEntry';
+import {NO_TAG_NAMES} from '../../lib/data/entryTags';
 import {
   useEntries,
+  useEntryTagNames,
   useReadOnly,
   useSession,
   useTagEntries,
@@ -83,6 +85,9 @@ const EntryList = () => {
   const listed = useEntries(
     listsAll ? (entriesList === 'all' ? 'all' : 'untagged') : null
   );
+  // The tags shown under each entry: all of its tags, but the one the rows
+  // are of in a tag's list.
+  const tagNames = useEntryTagNames(listsAll ? undefined : tagged?.tagId);
   const tagOrder = useAppState(
     state => state.tagTextEntryThroughModelSortOrder
   );
@@ -368,6 +373,7 @@ const EntryList = () => {
         // next tag's are read (its rows render again only once they are),
         // and none in the all or untagged list.
         tagId={listsAll ? undefined : tagged?.tagId}
+        tagNames={tagNames.get(element.id) ?? NO_TAG_NAMES}
         findEntryByIndex={findEntryByIndex}
         keepRendered={keepRendered}
       />

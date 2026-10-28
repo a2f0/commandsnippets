@@ -189,6 +189,7 @@ export interface EntriesTranslations {
   entryInfoTitle: string;
   infoSubject: string;
   infoTags: string;
+  entryTags: string;
   infoNoTags: string;
   infoVisibility: string;
   infoPublic: string;

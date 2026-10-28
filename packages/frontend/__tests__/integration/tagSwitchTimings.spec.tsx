@@ -51,12 +51,20 @@ const paintedSwitch = (tag: string) =>
     {timeout: 3000}
   );
 
+/** The tag named `name` in the tag list, not under an entry in its list. */
+const tagInList = (name: string) =>
+  waitFor(() => {
+    const tag = screen
+      .getAllByText(name)
+      .map(label => label.closest('[role="tag"]'))
+      .find(element => element !== null);
+    invariant(tag, `${name} is in the tag list`);
+    return tag;
+  });
+
 /** Click the tag named `name` in the tag list. */
 async function clickTag(name: string) {
-  const label = await screen.findByText(name);
-  const tag = label.closest('[role="tag"]');
-  invariant(tag, `${name} is in the tag list`);
-  fireEvent.click(tag);
+  fireEvent.click(await tagInList(name));
 }
 
 describe('Switching tags', () => {
@@ -121,7 +129,7 @@ describe('Switching tags', () => {
     const history = createMemoryHistory();
     history.push('/test?entries=all');
     render(<TestAppRouter history={history} />);
-    await screen.findByText('test-tag-1');
+    await tagInList('test-tag-1');
     await waitFor(() =>
       expect(screen.queryAllByRole('entry').length).toBeGreaterThan(0)
     );
