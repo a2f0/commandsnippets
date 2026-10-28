@@ -1,14 +1,23 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type {ReactNode} from 'react';
 import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 
 import {BottomBar} from '../../../../src/components/bottomBar/BottomBar';
+import {ErrorBoundary} from '../../../../src/components/errorBoundary';
+import {recordError} from '../../../../src/hooks/useErrorStore';
 import {i18n} from '../../../../src/i18n/i18n';
 import * as envModule from '../../../../src/lib/environment';
 import {darkTheme} from '../../../../src/theme/themes';
 import {signIn} from '../../../util/signIn';
+
+// The Analytics tab loads its module when first shown (React.lazy): load
+// it here, so a test waits for the tab, not for its import.
+beforeAll(
+  () => import('../../../../src/components/bottomBar/analytics/TimingAnalytics')
+);
 
 beforeEach(() => signIn());
 
@@ -19,6 +28,28 @@ const BottomBarWithProviders = () => (
     </ThemeProvider>
   </I18nextProvider>
 );
+
+const Throws = (): ReactNode => {
+  throw new Error('boom');
+};
+
+/**
+ * An error the app's error boundary catches and records, in a tree of its
+ * own (the HUD's is elsewhere, or not mounted).
+ */
+const crash = () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+  render(
+    <ErrorBoundary onError={recordError}>
+      <Throws />
+    </ErrorBoundary>
+  );
+  expect(consoleError).toHaveBeenCalledWith(
+    'ErrorBoundary caught an error:',
+    expect.objectContaining({message: 'boom'}),
+    expect.anything()
+  );
+};
 
 describe('BottomBar Component', () => {
   afterEach(() => {
@@ -139,40 +170,30 @@ describe('BottomBar Component', () => {
       expect(hudButton).toHaveAttribute('aria-expanded', 'true');
     });
 
-    it('renders all three tabs when menu is open', async () => {
+    it('renders the Logs and Analytics tabs when menu is open', async () => {
       const user = userEvent.setup();
       render(<BottomBarWithProviders />);
 
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      const performanceTab = await screen.findByRole('tab', {
-        name: /Performance/i,
-      });
-      expect(performanceTab).toBeInTheDocument();
-      expect(screen.getByRole('tab', {name: /Logs/i})).toBeInTheDocument();
-      expect(screen.getByRole('tab', {name: /Analytics/i})).toBeInTheDocument();
+      const tabs = await screen.findAllByRole('tab');
+      expect(tabs.map(tab => tab.textContent)).toEqual(['Logs', 'Analytics']);
     });
 
-    it('displays Performance tab content by default', async () => {
+    it('displays the Logs tab by default, with no logs at first', async () => {
       const user = userEvent.setup();
       render(<BottomBarWithProviders />);
 
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      const performanceContent = await screen.findByText(
-        'Performance metrics will be displayed here'
-      );
-      expect(performanceContent).toBeInTheDocument();
-
-      // Logs tab should not show any content when not expanded and no logs
       const logsTab = await screen.findByRole('tab', {name: /Logs/i});
-      await user.click(logsTab);
-
-      // Should show log count when there are logs (the 3 from default
-      // initialization), in the plural
-      expect(screen.getByText('3 log entries')).toBeInTheDocument();
+      expect(logsTab).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tabpanel')).toHaveTextContent(
+        'No logs available'
+      );
+      expect(screen.queryByText(/log entr/)).not.toBeInTheDocument();
     });
 
     it('switches tab content when different tab is clicked', async () => {
@@ -182,19 +203,15 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      const logsTab = await screen.findByRole('tab', {name: /Logs/i});
-      await user.click(logsTab);
+      expect(await screen.findByText('No logs available')).toBeInTheDocument();
 
-      // When logs tab is active and not expanded, should show log summary
-      expect(screen.getByText(/\d+ log entr/)).toBeInTheDocument();
+      await user.click(screen.getByRole('tab', {name: /Analytics/i}));
 
-      // Performance content should not be visible
+      // The tab's charts load when it is first shown
       expect(
-        screen.queryByText('Performance metrics will be displayed here')
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByText('Analytics data will be displayed here')
-      ).not.toBeInTheDocument();
+        await screen.findByRole('heading', {name: 'All timings'})
+      ).toBeInTheDocument();
+      expect(screen.queryByText('No logs available')).not.toBeInTheDocument();
     });
 
     it('maintains proper ARIA relationships between tabs and panels', async () => {
@@ -204,15 +221,54 @@ describe('BottomBar Component', () => {
       const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
       await user.click(hudButton);
 
-      const performanceTab = await screen.findByRole('tab', {
-        name: /Performance/i,
-      });
-      expect(performanceTab).toHaveAttribute('id', 'hud-tab-0');
-      expect(performanceTab).toHaveAttribute('aria-controls', 'hud-tabpanel-0');
+      const logsTab = await screen.findByRole('tab', {name: /Logs/i});
+      expect(logsTab).toHaveAttribute('id', 'hud-tab-0');
+      expect(logsTab).toHaveAttribute('aria-controls', 'hud-tabpanel-0');
 
-      const performancePanel = screen.getByRole('tabpanel');
-      expect(performancePanel).toHaveAttribute('id', 'hud-tabpanel-0');
-      expect(performancePanel).toHaveAttribute('aria-labelledby', 'hud-tab-0');
+      const logsPanel = screen.getByRole('tabpanel');
+      expect(logsPanel).toHaveAttribute('id', 'hud-tabpanel-0');
+      expect(logsPanel).toHaveAttribute('aria-labelledby', 'hud-tab-0');
+
+      const analyticsTab = screen.getByRole('tab', {name: /Analytics/i});
+      expect(analyticsTab).toHaveAttribute('id', 'hud-tab-1');
+      expect(analyticsTab).toHaveAttribute('aria-controls', 'hud-tabpanel-1');
+
+      await user.click(analyticsTab);
+
+      const analyticsPanel = screen.getByRole('tabpanel');
+      expect(analyticsPanel).toHaveAttribute('id', 'hud-tabpanel-1');
+      expect(analyticsPanel).toHaveAttribute('aria-labelledby', 'hud-tab-1');
+    });
+
+    it('shows an error caught before the HUD was mounted', async () => {
+      crash();
+      const user = userEvent.setup();
+      render(<BottomBarWithProviders />);
+
+      await user.click(screen.getByRole('button', {name: /Open HUD menu/i}));
+
+      expect(
+        await screen.findByText('1 log entry • 1 error captured')
+      ).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', {name: /Expand HUD/i}));
+
+      expect(
+        screen.getByText(/ERROR: Uncaught Error: boom/)
+      ).toBeInTheDocument();
+    });
+
+    it('shows an error caught elsewhere while it is open', async () => {
+      const user = userEvent.setup();
+      render(<BottomBarWithProviders />);
+      await user.click(screen.getByRole('button', {name: /Open HUD menu/i}));
+      expect(await screen.findByText('No logs available')).toBeInTheDocument();
+
+      crash();
+
+      expect(
+        await screen.findByText('1 log entry • 1 error captured')
+      ).toBeInTheDocument();
     });
 
     it('closes menu when clicking outside', async () => {
@@ -286,16 +342,21 @@ describe('BottomBar Component', () => {
         expect(expandButtonAgain).toBeInTheDocument();
       });
 
-      it('shows enhanced content only when expanded', async () => {
+      it('lists the logs only when expanded', async () => {
+        crash();
         const user = userEvent.setup();
         render(<BottomBarWithProviders />);
 
         const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
         await user.click(hudButton);
 
-        // Wait for menu to open and check that enhanced content is NOT visible initially
-        await screen.findByRole('tablist', {name: /HUD navigation tabs/i});
-        expect(screen.queryByText('CPU Usage: 45%')).not.toBeInTheDocument();
+        // Collapsed, the Logs tab counts them
+        expect(
+          await screen.findByText('1 log entry • 1 error captured')
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByText(/ERROR: Uncaught Error: boom/)
+        ).not.toBeInTheDocument();
 
         // Expand the menu
         const expandButton = await screen.findByRole('button', {
@@ -303,10 +364,12 @@ describe('BottomBar Component', () => {
         });
         await user.click(expandButton);
 
-        // Now enhanced content should be visible
-        expect(screen.getByText('CPU Usage: 45%')).toBeInTheDocument();
-        expect(screen.getByText('Memory: 2.3GB / 8GB')).toBeInTheDocument();
-        expect(screen.getByText('Network: 125 KB/s')).toBeInTheDocument();
+        // Expanded, it lists them, with the details
+        expect(
+          screen.getByText(/ERROR: Uncaught Error: boom/)
+        ).toBeInTheDocument();
+        expect(screen.getByText('Details')).toBeInTheDocument();
+        expect(screen.queryByText(/log entr/)).not.toBeInTheDocument();
       });
 
       it('expands to nearly the whole window', async () => {
@@ -333,7 +396,7 @@ describe('BottomBar Component', () => {
         await user.click(await screen.findByRole('tab', {name: /Analytics/i}));
 
         expect(
-          screen.getByRole('heading', {name: 'Interaction'})
+          await screen.findByRole('heading', {name: 'Interaction'})
         ).toBeInTheDocument();
         expect(
           screen.getByRole('heading', {name: 'All timings'})
@@ -347,18 +410,17 @@ describe('BottomBar Component', () => {
         const hudButton = screen.getByRole('button', {name: /Open HUD menu/i});
         await user.click(hudButton);
 
-        const performanceTab = await screen.findByRole('tabpanel');
-        expect(performanceTab).toBeInTheDocument();
+        const logsPanel = await screen.findByRole('tabpanel');
+        expect(logsPanel).toBeInTheDocument();
 
         // Check that the tabpanel has transparent background
-        expect(performanceTab).toHaveStyle(
-          'background-color: rgba(0, 0, 0, 0)'
-        );
-        expect(performanceTab).toHaveStyle('display: block');
-        expect(performanceTab).toHaveStyle('height: 100%');
+        expect(logsPanel).toHaveStyle('background-color: rgba(0, 0, 0, 0)');
+        expect(logsPanel).toHaveStyle('display: block');
+        expect(logsPanel).toHaveStyle('height: 100%');
       });
 
       it('switches enhanced content between tabs when expanded', async () => {
+        crash();
         const user = userEvent.setup();
         render(<BottomBarWithProviders />);
 
@@ -377,9 +439,8 @@ describe('BottomBar Component', () => {
 
         // Check logs enhanced content - should show actual log entries
         expect(
-          screen.getByText(/INFO: Application started/)
+          screen.getByText(/ERROR: Uncaught Error: boom/)
         ).toBeInTheDocument();
-        expect(screen.queryByText('CPU Usage: 45%')).not.toBeInTheDocument();
 
         // Switch to analytics tab
         const analyticsTab = await screen.findByRole('tab', {
@@ -389,10 +450,10 @@ describe('BottomBar Component', () => {
 
         // The timings of the network, IndexedDB and renders
         expect(
-          screen.getByRole('heading', {name: 'All timings'})
+          await screen.findByRole('heading', {name: 'All timings'})
         ).toBeInTheDocument();
         expect(
-          screen.queryByText(/INFO: Application started/)
+          screen.queryByText(/ERROR: Uncaught Error: boom/)
         ).not.toBeInTheDocument();
       });
     });

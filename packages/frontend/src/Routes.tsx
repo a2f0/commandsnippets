@@ -1,14 +1,18 @@
-import React, {useEffect, useRef} from 'react';
+import React, {Suspense, useEffect, useRef} from 'react';
 import {GithubAuth} from './components/auth/GithubAuth';
 import {GoogleAuth} from './components/auth/GoogleAuth';
 import {currentRoute, navigate, useRoute} from './lib/router/navigation';
 import {Navigate} from './lib/router/Router';
 import {useAppConfig} from './lib/state/appState';
-import {AdminPage} from './pages/AdminPage';
 import {EntriesPage} from './pages/EntriesPage';
 import {EntryPage} from './pages/EntryPage';
 import {ReusesPage} from './pages/ReusesPage';
 import {SignInPage} from './pages/SignInPage';
+
+// The admin page, for staff only, loads when it is opened.
+const AdminPage = React.lazy(() =>
+  import('./pages/AdminPage').then(module => ({default: module.AdminPage}))
+);
 
 /**
  * User URLs are public read-only views for guests. The root and admin page
@@ -40,7 +44,13 @@ const Routes = () => {
     case 'googleOAuth':
       return <GoogleAuth />;
     case 'admin':
-      return username ? <AdminPage /> : <Navigate to="/" replace />;
+      return username ? (
+        <Suspense fallback={null}>
+          <AdminPage />
+        </Suspense>
+      ) : (
+        <Navigate to="/" replace />
+      );
     case 'user':
       return <EntriesPage />;
     case 'reuses':

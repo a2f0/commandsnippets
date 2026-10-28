@@ -83,10 +83,12 @@ describe('UserProfileCircle', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Profile')).toBeInTheDocument();
-        expect(screen.getByText('Settings')).toBeInTheDocument();
         expect(screen.getByText('Logout')).toBeInTheDocument();
       });
+      // The username, then Logout: no Profile or Settings, which did nothing
+      expect(
+        screen.getAllByRole('menuitem').map(item => item.textContent)
+      ).toEqual(['testuser', 'Logout']);
     });
 
     it('displays username in dropdown', async () => {
@@ -105,7 +107,7 @@ describe('UserProfileCircle', () => {
       });
     });
 
-    it('closes dropdown when menu item is clicked', async () => {
+    it('closes dropdown on Escape', async () => {
       renderWithContext('testuser');
 
       const profileButton = screen.getByLabelText('testuser');
@@ -114,18 +116,14 @@ describe('UserProfileCircle', () => {
         fireEvent.click(profileButton);
       });
 
-      await waitFor(() => {
-        expect(screen.getByText('Profile')).toBeInTheDocument();
-      });
-
-      const profileMenuItem = screen.getByText('Profile');
+      const menu = await screen.findByRole('menu');
 
       await act(async () => {
-        fireEvent.click(profileMenuItem);
+        fireEvent.keyDown(menu, {key: 'Escape'});
       });
 
       await waitFor(() => {
-        expect(screen.queryByText('Profile')).not.toBeInTheDocument();
+        expect(screen.queryByText('Logout')).not.toBeInTheDocument();
       });
     });
   });

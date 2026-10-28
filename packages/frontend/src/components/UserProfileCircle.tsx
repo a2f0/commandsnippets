@@ -60,16 +60,6 @@ const UserProfileCircle: React.FC = () => {
     await requestSignOut();
   };
 
-  const handleProfile = () => {
-    // TODO: Navigate to profile page
-    handleClose();
-  };
-
-  const handleSettings = () => {
-    // TODO: Navigate to settings page
-    handleClose();
-  };
-
   const getUserInitials = () => {
     const username = appConfig.loggedInUser;
     if (!username) return '';
@@ -123,31 +113,6 @@ const UserProfileCircle: React.FC = () => {
       >
         <MenuItem disabled sx={{fontSize: 'caption.fontSize', fontWeight: 500}}>
           {username}
-        </MenuItem>
-        <Divider />
-        <MenuItem
-          onClick={handleProfile}
-          sx={theme => ({
-            fontSize: 'caption.fontSize',
-            background: theme.palette.background.default,
-            '&:hover': {
-              backgroundColor: theme.selected.background,
-            },
-          })}
-        >
-          Profile
-        </MenuItem>
-        <MenuItem
-          onClick={handleSettings}
-          sx={theme => ({
-            fontSize: 'caption.fontSize',
-            background: theme.palette.background.default,
-            '&:hover': {
-              backgroundColor: theme.selected.background,
-            },
-          })}
-        >
-          Settings
         </MenuItem>
         <Divider />
         <MenuItem
