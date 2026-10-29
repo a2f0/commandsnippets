@@ -147,6 +147,27 @@ it('shows all retained history, preserves filters and links, and returns to cust
   );
 });
 
+it('labels combined daily periods in the chart and exact data table', async () => {
+  const entries = structuredClone(entriesResponse);
+  for (const entry of entries.data)
+    entry.attributes.date_created = '2000-01-01T12:00:00.000000';
+  setRuntimeEntriesOverride(entries);
+  mount('/test/activity/analytics?from=all&to=2010-01-10&interval=day');
+  const chart = await screen.findByRole('img', {name: /Activity over time/});
+  expect(chart).toHaveTextContent('4 events');
+  expect(
+    screen.getByText(/For long ranges, adjacent periods are combined/)
+  ).toBeInTheDocument();
+  expect(chart.querySelector('rect title')).toHaveTextContent(
+    'Jan 1, 2000 – Jan 2, 2000: 4'
+  );
+  fireEvent.click(screen.getByRole('button', {name: 'Show chart data'}));
+  const table = await screen.findByRole('table', {name: 'Activity over time'});
+  expect(
+    within(table).getByText('Jan 1, 2000 – Jan 2, 2000').closest('tr')
+  ).toHaveTextContent('4');
+});
+
 it('ignores a late response for the previous slice', async () => {
   const gate = Promise.withResolvers<void>();
   let started = false;
