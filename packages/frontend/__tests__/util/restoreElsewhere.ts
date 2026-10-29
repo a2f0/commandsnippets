@@ -10,8 +10,7 @@ import {
   userDocumentSchema,
 } from '@commandsnippets/api-shared';
 import {expect} from 'vitest';
-
-const API = 'http://localhost:9001/api/v1';
+import {API} from './msw';
 
 /**
  * Restore `backup` (by default the user's own) on another device: a new

@@ -1,42 +1,21 @@
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {setEntryPublic, setTagPublic} from '../../src/lib/data/writes';
 import {useAppState} from '../../src/lib/state/appState';
 import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
 import {entry, tag} from '../util/storeFixtures';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterAll(() => server.close());
-afterEach(() => {
-  server.resetHandlers();
-  server.events.removeAllListeners();
-  vi.restoreAllMocks();
-});
+serveMockApi({onUnhandledFrame: 'error'});
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
-const mount = (url: string) => {
-  const history = createMemoryHistory();
-  history.push(url);
-  render(<TestAppRouter history={history} />);
-  return history;
-};
 const publish = async () => {
   await apiClient.forVersion(1).setTagPublic('1', true);
   await apiClient.forVersion(1).setEntryPublic('1', true);
@@ -71,7 +50,7 @@ describe('public user pages', () => {
   it('lets an owner publish and hide tags and entries from their context menus', async () => {
     signIn();
     assignLoggedInCookie();
-    mount('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     const subject = await screen.findByText('entry-1-subject');
     fireEvent.contextMenu(screen.getByText('test-tag-1'));
     fireEvent.click(await screen.findByRole('menuitem', {name: 'Make public'}));
@@ -115,7 +94,7 @@ describe('public user pages', () => {
     server.events.on('request:start', ({request}) => {
       if (request.method !== 'GET') writes.push(request.method);
     });
-    const history = mount('/test/test-tag-1');
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
     expect(history.location.pathname).toBe('/test/test-tag-1');
     expect(screen.queryByText('test-tag-2')).toBeNull();
@@ -143,7 +122,7 @@ describe('public user pages', () => {
     act(() => {
       useAppState.setState({loggedInUser: 'someone-else', isStaff: false});
     });
-    const history = mount('/test?entries=all');
+    const {history} = renderAppAt('/test?entries=all');
     expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
     expect(screen.getAllByText('entry-1-subject')).toHaveLength(1);
     expect(history.location.pathname).toBe('/test');
@@ -154,7 +133,7 @@ describe('public user pages', () => {
 
   it('removes cached entries when hidden, and reloads historical rows when their tag becomes public', async () => {
     await publish();
-    mount('/test?entries=all');
+    renderAppAt('/test?entries=all');
     const subject = 'entry-1-subject';
     expect(await screen.findByText(subject)).toBeInTheDocument();
     const session = publicSyncSession('test');

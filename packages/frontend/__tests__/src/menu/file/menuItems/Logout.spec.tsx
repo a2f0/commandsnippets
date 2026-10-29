@@ -1,15 +1,12 @@
-import {render, screen, waitFor} from '@testing-library/react';
+import {screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createMemoryHistory} from 'history';
 
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
-import {server} from '../../../../util/msw';
+import {serveMockApi} from '../../../../util/msw';
 import {signIn} from '../../../../util/signIn';
-import {TestAppRouter} from '../../../../util/TestAppRouter';
+import {renderAppAt} from '../../../../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -18,10 +15,7 @@ beforeEach(() => {
 describe('File Menu', () => {
   it('Logs out to the sign-in page', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
     const fileMenu = screen.getByRole('menu', {name: 'File'});
     await user.pointer({target: fileMenu, keys: '[MouseLeft]'});

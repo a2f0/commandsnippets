@@ -4,43 +4,23 @@
  * that user's name, shown read-only (a badge in the menu bar; nothing on the
  * page creates, edits or reorders), and never written.
  */
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import invariant from 'invariant';
 import {vi} from 'vitest';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi, server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  server.events.removeAllListeners();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
   // The mock API announces each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
-
-function renderAt(route: string) {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-  return history;
-}
 
 /** The element `#id`, which must be rendered. */
 function byId(id: string): HTMLElement {
@@ -65,7 +45,7 @@ describe("Another user's page", () => {
     act(() => store.setIsStaff(true));
     const writes = writesSent();
 
-    const history = renderAt('/alice');
+    const {history} = renderAppAt('/alice');
 
     expect(await screen.findByText('alices-tag')).toBeInTheDocument();
     expect(await screen.findByText('alices-entry')).toBeInTheDocument();
@@ -89,7 +69,7 @@ describe("Another user's page", () => {
   it('offers nothing that creates, edits or reorders', async () => {
     act(() => store.setIsStaff(true));
     const writes = writesSent();
-    renderAt('/alice/alices-tag');
+    renderAppAt('/alice/alices-tag');
     const entry = await screen.findByText('alices-entry');
 
     // File: no New Tag or New Entry, and no Export or Restore Backup or
@@ -139,7 +119,7 @@ describe("Another user's page", () => {
   it('keeps non-staff on the requested public page', async () => {
     act(() => store.setIsStaff(false));
 
-    const history = renderAt('/alice');
+    const {history} = renderAppAt('/alice');
 
     await waitFor(() => expect(history.location.pathname).toBe('/alice'));
     expect(await screen.findByText('Read-only: alice')).toBeInTheDocument();
@@ -150,7 +130,7 @@ describe("Another user's page", () => {
   it("leaves staff's own page as it was: editable, with no badge", async () => {
     act(() => store.setIsStaff(true));
 
-    renderAt(`/${TEST_USER}`);
+    renderAppAt(`/${TEST_USER}`);
 
     expect(await screen.findByText('test-tag-1')).toBeInTheDocument();
     expect(document.getElementById('readOnlyBadge')).toBeNull();

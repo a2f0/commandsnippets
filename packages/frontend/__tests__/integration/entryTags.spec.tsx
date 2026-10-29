@@ -1,15 +1,12 @@
-import {render, screen, waitFor, within} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {screen, waitFor, within} from '@testing-library/react';
 import invariant from 'invariant';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(async () => {
   signIn();
   assignLoggedInCookie();
@@ -19,12 +16,6 @@ beforeEach(async () => {
   await apiClient.forVersion(1).tagEntry('2', '1');
   await apiClient.forVersion(1).createEntry('entry-9-subject', 'body');
 });
-
-function renderApp(route: string) {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-}
 
 /** The row of the entry with this subject. */
 async function rowOf(subject: string) {
@@ -47,14 +38,12 @@ async function tagsUnder(subject: string) {
 
 async function expectTags(subject: string, names: string[]) {
   // The first load syncs the tags, entries and junctions before any show.
-  await waitFor(async () => expect(await tagsUnder(subject)).toEqual(names), {
-    timeout: 3000,
-  });
+  await waitFor(async () => expect(await tagsUnder(subject)).toEqual(names));
 }
 
 describe('The tags under each entry in the list', () => {
   it('on a tag list, are the entry’s other tags, by name', async () => {
-    renderApp('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
 
     await expectTags('entry-1-subject', ['test-tag-2', 'test-tag-3']);
     // In this tag alone: no tags under it.
@@ -62,13 +51,13 @@ describe('The tags under each entry in the list', () => {
   });
 
   it('on another tag’s list, leave that tag out', async () => {
-    renderApp('/test/test-tag-2');
+    renderAppAt('/test/test-tag-2');
 
     await expectTags('entry-1-subject', ['test-tag-1', 'test-tag-3']);
   });
 
   it('on the all-entries list, are all of the entry’s tags', async () => {
-    renderApp('/test?entries=all');
+    renderAppAt('/test?entries=all');
 
     await expectTags('entry-1-subject', [
       'test-tag-1',
@@ -80,7 +69,7 @@ describe('The tags under each entry in the list', () => {
   });
 
   it('are labels, not buttons or links', async () => {
-    renderApp('/test?entries=all');
+    renderAppAt('/test?entries=all');
     await expectTags('entry-2-subject', ['test-tag-1']);
 
     const list = within(await rowOf('entry-2-subject')).getByRole('list', {
@@ -91,7 +80,7 @@ describe('The tags under each entry in the list', () => {
   });
 
   it('are none on the untagged list', async () => {
-    renderApp('/test?entries=untagged');
+    renderAppAt('/test?entries=untagged');
 
     expect(await tagsUnder('entry-9-subject')).toEqual([]);
   });

@@ -1,16 +1,13 @@
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt, TestAppRouter} from '../util/TestAppRouter';
 
 // The mock API tags entry 1 with test-tag-2 as the API would.
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -19,15 +16,12 @@ beforeEach(() => {
 describe('Tag An Entry', () => {
   it('Is Taggable', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    const {rerender} = render(<TestAppRouter history={history} />);
+    const {history, rerender} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-subject/i));
+    await waitFor(() => screen.getByText(/entry-1-body/i));
+    await waitFor(() => screen.getByText(/entry-2-subject/i));
+    await waitFor(() => screen.getByText(/entry-2-body/i));
     expect(history.location.pathname).toBe('/test/test-tag-1');
     const entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
@@ -46,10 +40,7 @@ describe('Tag An Entry', () => {
     await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-2');
     rerender(<TestAppRouter history={history} />);
-    await waitFor(
-      () => expect(screen.queryAllByRole('entry')).toHaveLength(0),
-      {timeout: 3000}
-    );
+    await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(0));
     tagLabelWrappers = screen.getAllByRole('tagLabelWrapper');
     expect(tagLabelWrappers).toHaveLength(4);
     invariant(tagLabelWrappers[0], 'tagLabelWrapper is undefined');
@@ -57,10 +48,7 @@ describe('Tag An Entry', () => {
     expect(history.location.pathname).toBe('/test/test-tag-1');
 
     rerender(<TestAppRouter history={history} />);
-    await waitFor(
-      () => expect(screen.queryAllByRole('entry')).toHaveLength(4),
-      {timeout: 3000}
-    );
+    await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(4));
     const entryDragHandleContainers = screen.getAllByRole(
       'entryDragHandleContainer'
     );
@@ -87,10 +75,7 @@ describe('Tag An Entry', () => {
     await user.pointer({target: tagLabelWrappers[1], keys: '[MouseLeft]'});
     expect(history.location.pathname).toBe('/test/test-tag-2');
     rerender(<TestAppRouter history={history} />);
-    await waitFor(
-      () => expect(screen.queryAllByRole('entry')).toHaveLength(1),
-      {timeout: 3000}
-    );
+    await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(1));
     invariant(tags[1], 'tag is undefined');
   });
 });

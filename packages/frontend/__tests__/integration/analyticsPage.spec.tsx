@@ -1,12 +1,4 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {recentRange} from '../../src/components/analytics/buckets';
@@ -16,30 +8,24 @@ import {routeOf} from '../../src/lib/router/route';
 import {syncSession} from '../../src/lib/sync/session';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi, server} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
 const API = 'http://localhost:9001/api/v1/user/analytics';
-beforeAll(() => server.listen());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
+afterEach(() => vi.restoreAllMocks());
 
 function mount(path = '/test/activity/analytics', signedIn = true) {
   if (signedIn) {
     signIn();
     assignLoggedInCookie();
   }
-  const history = createMemoryHistory({initialEntries: [path]});
-  render(<TestAppRouter history={history} />);
-  return history;
+  return renderAppAt(path).history;
 }
 
 async function select(label: string, option: string) {

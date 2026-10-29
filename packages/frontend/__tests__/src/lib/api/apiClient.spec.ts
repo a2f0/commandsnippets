@@ -20,8 +20,7 @@ import {setUnauthorizedHandler} from '../../../../src/lib/auth/authUtils';
 import {errorDocument} from '../../../../src/msw/documents';
 import {entriesResponse} from '../../../../test/mocks/entries/entriesResponse';
 import {tagsResponse} from '../../../../test/mocks/tags/tagsResponse';
-
-const API = 'http://localhost:9001/api/v1';
+import {API} from '../../../util/msw';
 
 // Documents the API could answer with (see test/mocks), one per endpoint.
 const [tag] = tagsResponse.data;

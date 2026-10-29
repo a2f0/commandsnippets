@@ -1,20 +1,11 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterAll(() => server.close());
+serveMockApi();
 
 // Define color constants for better maintainability
 const DARK_MODE_BG_COLOR = 'rgb(18, 18, 18)';
@@ -23,13 +14,7 @@ const LIGHT_MODE_BG_COLOR = 'rgb(255, 255, 255)';
 describe('Dark Mode Toggle', () => {
   // Setup helper function to reduce duplication
   async function setupTest() {
-    const history = createMemoryHistory();
-    const route = '/test/test';
-    history.push(route);
-
-    await act(async () => {
-      render(<TestAppRouter history={history} />);
-    });
+    const {history} = await renderAppAt('/test/test', {act: true});
 
     await waitFor(() => {
       expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
@@ -39,9 +24,6 @@ describe('Dark Mode Toggle', () => {
   }
 
   beforeEach(() => {
-    // Reset MSW handlers
-    server.resetHandlers();
-
     // Assign logged in cookie
     assignLoggedInCookie();
 

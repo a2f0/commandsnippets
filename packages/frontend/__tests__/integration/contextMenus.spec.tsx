@@ -1,26 +1,17 @@
 /** The tags' and entries' context menus: rendered only while open. */
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {fireEvent, screen, waitFor} from '@testing-library/react';
 import {appMode} from '../../src/lib/shared';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn, store} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
-
-function renderAt(route: string) {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-}
 
 /** The context menus in the document, by id. */
 const menus = () =>
@@ -32,7 +23,7 @@ const menus = () =>
 
 describe('Context menus', () => {
   it('are rendered only while open, for a row of either list', async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     const subject = await screen.findByText('entry-1-subject');
     expect(menus()).toEqual([]);
 
@@ -52,7 +43,7 @@ describe('Context menus', () => {
   });
 
   it("open a new tag's form from a tag's New Tag, as File > New Tag does", async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     fireEvent.contextMenu(await screen.findByText('test-tag-2'));
     expect(document.getElementById('tagNewTop')).toBeNull();
 
@@ -64,7 +55,7 @@ describe('Context menus', () => {
   });
 
   it("offer to make a tag private once it is public, from the tag's own state", async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     const tag = await screen.findByText('test-tag-1');
     const own = syncSession('test');
 
