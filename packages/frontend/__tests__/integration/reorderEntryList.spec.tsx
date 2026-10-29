@@ -1,9 +1,16 @@
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import invariant from 'invariant';
 import {type MockInstance, vi} from 'vitest';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {
+  dragEnter,
+  dragStart,
+  drop,
+  expectRows,
+  pointAtHandle,
+  rowAt,
+} from '../util/dragReorder';
 import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
@@ -13,6 +20,26 @@ beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
+
+/** The subjects of the mock API's entries `numbers`, in that order. */
+const subjects = (...numbers: number[]) =>
+  numbers.map(number => `entry-${number}-subject`);
+
+/** The tag's four entries, in their saved order, and a user to drag them. */
+async function renderEntries() {
+  const user = userEvent.setup();
+  const {history} = renderAppAt('/test/test-tag-1');
+  expect(history.location.pathname).toBe('/test/test-tag-1');
+  await waitFor(() => screen.getByText(/entry-1-subject/i));
+  await waitFor(() => screen.getByText(/entry-1-body/i));
+  await waitFor(() => screen.getByText(/entry-2-subject/i));
+  await waitFor(() => screen.getByText(/entry-2-body/i));
+  const entries = expectRows('entry', subjects(1, 2, 3, 4));
+  entries.forEach((entry, index) => {
+    expect(entry).toHaveTextContent(`entry-${index + 1}-body`);
+  });
+  return {user, entries};
+}
 
 describe('Entries List', () => {
   let reorderEntrySpy: MockInstance;
@@ -28,455 +55,131 @@ describe('Entries List', () => {
     consoleMock.mockReset();
   });
   it('Hovers', async () => {
-    const user = userEvent.setup();
-    const {history} = renderAppAt('/test/test-tag-1');
-    expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i));
-    await waitFor(() => screen.getByText(/entry-1-body/i));
-    await waitFor(() => screen.getByText(/entry-2-subject/i));
-    await waitFor(() => screen.getByText(/entry-2-body/i));
-    const entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[0]).toHaveTextContent('entry-1-body');
-    expect(entries[1]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-2-body');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-body');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-body');
-    const entryDragHandleContainers = screen.getAllByRole(
-      'entryDragHandleContainer'
-    );
-    expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(
-      entryDragHandleContainers[0],
-      'entryDragHandleContainer is undefined'
-    );
-    await user.pointer({target: entryDragHandleContainers[0]});
-    const entryDragHandle = screen.getByRole('entryDragHandle');
+    const {user, entries} = await renderEntries();
+    const handle = await pointAtHandle(user, 'entry', 0, 4);
     expect(reorderEntrySpy).not.toBeCalled();
-    await act(async () => {
-      fireEvent.dragStart(entryDragHandle);
-    });
-
-    await act(async () => {
-      invariant(entries[0], 'entry is undefined');
-      fireEvent.dragEnter(entries[0]);
-    });
+    await dragStart(handle);
+    await dragEnter(rowAt(entries, 0));
     expect(consoleMock).toHaveBeenLastCalledWith(
       'hover: index 0 originalIndex 0'
     );
   });
   it('Reorders 0 -> 0', async () => {
-    const user = userEvent.setup();
-    const {history} = renderAppAt('/test/test-tag-1');
-    expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/test-tag-1/i));
-    await waitFor(() => screen.getByText(/test-tag-2/i));
-    await waitFor(() => screen.getByText(/test-tag-3/i));
-    await waitFor(() => screen.getByText(/test-tag-4/i));
-    // The tags sync first; the entries after.
-    await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(4));
-    let entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[0]).toHaveTextContent('entry-1-body');
-    expect(entries[1]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-2-body');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-body');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-body');
-
-    const entryDragHandleContainers = screen.getAllByRole(
-      'entryDragHandleContainer'
-    );
-    expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(
-      entryDragHandleContainers[0],
-      'entryDragHandleContainer is undefined'
-    );
-
-    await user.pointer({target: entryDragHandleContainers[0]});
-    const entryDragHandle = screen.getByRole('entryDragHandle');
+    const {user, entries} = await renderEntries();
+    const handle = await pointAtHandle(user, 'entry', 0, 4);
     expect(reorderEntrySpy).not.toBeCalled();
     await act(async () => {
-      fireEvent.dragStart(entryDragHandle);
-      invariant(entries[0], 'entry is undefined');
-      fireEvent.dragEnter(entries[0]);
-      fireEvent.dragOver(entries[0]);
+      fireEvent.dragStart(handle);
+      fireEvent.dragEnter(rowAt(entries, 0));
+      fireEvent.dragOver(rowAt(entries, 0));
       await new Promise(res => setTimeout(res, 0));
     });
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[0]).toHaveTextContent('entry-1-body');
-    expect(entries[1]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-2-body');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-body');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-body');
-
-    // This is dropping it onto itself after reordering the list.
-    // To my knowledge, this emulates what is going on in the screen in a real world scenario.
-    await act(async () => {
-      invariant(entries[0], 'entry is undefined');
-      fireEvent.drop(entries[0]);
-    });
+    const after = expectRows('entry', subjects(1, 2, 3, 4));
+    // Dropping it onto itself, as the screen does in a real drag.
+    await drop(rowAt(after, 0));
     expect(reorderEntrySpy).not.toBeCalled();
     expect(consoleMock).toHaveBeenLastCalledWith(
       'useDrag end: it was not moved within the list.'
     );
   });
-  it('Reorders 0 -> 1', async () => {
-    const user = userEvent.setup();
-    const {history} = renderAppAt('/test/test-tag-1');
-    expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i));
-    await waitFor(() => screen.getByText(/entry-1-body/i));
-    await waitFor(() => screen.getByText(/entry-2-subject/i));
-    await waitFor(() => screen.getByText(/entry-2-body/i));
-    let entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[0]).toHaveTextContent('entry-1-body');
-    expect(entries[1]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-2-body');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-body');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-body');
-    const entryDragHandleContainers = screen.getAllByRole(
-      'entryDragHandleContainer'
-    );
-    expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(
-      entryDragHandleContainers[0],
-      'entryDragHandleContainer is undefined'
-    );
-    await user.pointer({target: entryDragHandleContainers[0]});
-    const entryDragHandle = screen.getByRole('entryDragHandle');
-    await act(async () => {
-      fireEvent.dragStart(entryDragHandle);
-    });
 
-    await act(async () => {
-      invariant(entries[1], 'entry is undefined');
-      fireEvent.dragEnter(entries[1]);
-    });
-
-    expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: entry-1-subject index 0 moving to 1'
-    );
-
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-1-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-
-    // This is dropping it onto itself after reordering the list.
-    await act(async () => {
-      invariant(entries[1], 'entry is undefined');
-      fireEvent.drop(entries[1]);
-    });
-
+  // Each drag enters `steps` in turn (each moving the entry one place, which
+  // it logs), then drops it where it ended up, which saves the move as the
+  // entries now above and below it (`reorder`).
+  it.each([
+    {
+      name: '0 -> 1',
+      from: 0,
+      steps: [
+        {
+          enter: 1,
+          log: 'moveEntry: entry-1-subject index 0 moving to 1',
+          order: [2, 1, 3, 4],
+        },
+      ],
+      reorder: ['1', '3'],
+    },
+    {
+      name: '0 -> 2',
+      from: 0,
+      steps: [
+        {
+          enter: 1,
+          log: 'moveEntry: entry-1-subject index 0 moving to 1',
+          order: [2, 1, 3, 4],
+        },
+        {
+          enter: 2,
+          log: 'moveEntry: entry-1-subject index 1 moving to 2',
+          order: [2, 3, 1, 4],
+        },
+      ],
+      reorder: ['1', '4'],
+    },
+    {
+      name: '0 -> 3',
+      from: 0,
+      steps: [
+        {
+          enter: 1,
+          log: 'moveEntry: entry-1-subject index 0 moving to 1',
+          order: [2, 1, 3, 4],
+        },
+        {
+          enter: 2,
+          log: 'moveEntry: entry-1-subject index 1 moving to 2',
+          order: [2, 3, 1, 4],
+        },
+        {
+          enter: 3,
+          log: 'moveEntry: entry-1-subject index 2 moving to 3',
+          order: [2, 3, 4, 1],
+        },
+      ],
+      reorder: ['4', '1'],
+    },
+    {
+      name: '1 -> 2',
+      from: 1,
+      steps: [
+        {
+          enter: 2,
+          log: 'moveEntry: entry-2-subject index 1 moving to 2',
+          order: [1, 3, 2, 4],
+        },
+      ],
+      reorder: ['2', '4'],
+    },
+    {
+      name: '2 -> 1',
+      from: 2,
+      steps: [
+        {
+          enter: 1,
+          log: 'moveEntry: entry-3-subject index 2 moving to 1',
+          order: [1, 3, 2, 4],
+        },
+      ],
+      reorder: ['3', '2'],
+    },
+  ])('Reorders $name', async ({from, steps, reorder}) => {
+    const {user, entries: initial} = await renderEntries();
+    const handle = await pointAtHandle(user, 'entry', from, 4);
+    expect(reorderEntrySpy).not.toBeCalled();
+    await dragStart(handle);
+    let entries = initial;
+    let at = from;
+    for (const step of steps) {
+      await dragEnter(rowAt(entries, step.enter));
+      expect(consoleMock).toHaveBeenLastCalledWith(step.log);
+      entries = expectRows('entry', subjects(...step.order));
+      at = step.enter;
+    }
+    // Dropping it onto itself after reordering the list.
+    await drop(rowAt(entries, at));
     // The reorder reads the junctions from IndexedDB first.
-
     await waitFor(() =>
-      expect(reorderEntrySpy).toBeCalledWith('1', '3', expect.any(String))
-    );
-  });
-  it('Reorders 0 -> 2', async () => {
-    const user = userEvent.setup();
-    const {history} = renderAppAt('/test/test-tag-1');
-    expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i));
-    await waitFor(() => screen.getByText(/entry-1-body/i));
-    await waitFor(() => screen.getByText(/entry-2-subject/i));
-    await waitFor(() => screen.getByText(/entry-2-body/i));
-    let entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[0]).toHaveTextContent('entry-1-body');
-    expect(entries[1]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-2-body');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-body');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-body');
-    const entryDragHandleContainers = screen.getAllByRole(
-      'entryDragHandleContainer'
-    );
-    expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(
-      entryDragHandleContainers[0],
-      'entryDragHandleContainer is undefined'
-    );
-    await user.pointer({target: entryDragHandleContainers[0]});
-    const entryDragHandle = screen.getByRole('entryDragHandle');
-    await act(async () => {
-      fireEvent.dragStart(entryDragHandle);
-    });
-
-    await act(async () => {
-      invariant(entries[1], 'entry is undefined');
-      fireEvent.dragEnter(entries[1]);
-    });
-
-    expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: entry-1-subject index 0 moving to 1'
-    );
-
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-1-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-
-    await act(async () => {
-      invariant(entries[2], 'entry is undefined');
-      fireEvent.dragEnter(entries[2]);
-    });
-
-    expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: entry-1-subject index 1 moving to 2'
-    );
-
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-1-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-
-    // This is dropping it onto itself after reordering the list.
-    await act(async () => {
-      invariant(entries[2], 'entry is undefined');
-      fireEvent.drop(entries[2]);
-    });
-
-    // The reorder reads the junctions from IndexedDB first.
-
-    await waitFor(() =>
-      expect(reorderEntrySpy).toBeCalledWith('1', '4', expect.any(String))
-    );
-  });
-  it('Reorders 0 -> 3', async () => {
-    const user = userEvent.setup();
-    const {history} = renderAppAt('/test/test-tag-1');
-    expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i));
-    await waitFor(() => screen.getByText(/entry-1-body/i));
-    await waitFor(() => screen.getByText(/entry-2-subject/i));
-    await waitFor(() => screen.getByText(/entry-2-body/i));
-    let entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[0]).toHaveTextContent('entry-1-body');
-    expect(entries[1]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-2-body');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-body');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-body');
-    const entryDragHandleContainers = screen.getAllByRole(
-      'entryDragHandleContainer'
-    );
-    expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(
-      entryDragHandleContainers[0],
-      'entryDragHandleContainer is undefined'
-    );
-    await user.pointer({target: entryDragHandleContainers[0]});
-    const entryDragHandle = screen.getByRole('entryDragHandle');
-    await act(async () => {
-      fireEvent.dragStart(entryDragHandle);
-    });
-
-    await act(async () => {
-      invariant(entries[1], 'entry is undefined');
-      fireEvent.dragEnter(entries[1]);
-    });
-
-    expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: entry-1-subject index 0 moving to 1'
-    );
-
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-1-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-
-    await act(async () => {
-      invariant(entries[2], 'entry is undefined');
-      fireEvent.dragEnter(entries[2]);
-    });
-
-    expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: entry-1-subject index 1 moving to 2'
-    );
-
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-1-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-
-    await act(async () => {
-      invariant(entries[3], 'entry is undefined');
-      fireEvent.dragEnter(entries[3]);
-    });
-
-    expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: entry-1-subject index 2 moving to 3'
-    );
-
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-1-subject');
-
-    // This is dropping it onto itself after reordering the list.
-    await act(async () => {
-      invariant(entries[3], 'entry is undefined');
-      fireEvent.drop(entries[3]);
-    });
-
-    // The reorder reads the junctions from IndexedDB first.
-
-    await waitFor(() =>
-      expect(reorderEntrySpy).toBeCalledWith('4', '1', expect.any(String))
-    );
-  });
-  it('Reorders 1 -> 2', async () => {
-    const user = userEvent.setup();
-    const {history} = renderAppAt('/test/test-tag-1');
-    expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i));
-    await waitFor(() => screen.getByText(/entry-1-body/i));
-    await waitFor(() => screen.getByText(/entry-2-subject/i));
-    await waitFor(() => screen.getByText(/entry-2-body/i));
-    let entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[0]).toHaveTextContent('entry-1-body');
-    expect(entries[1]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-2-body');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-body');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-body');
-    const entryDragHandleContainers = screen.getAllByRole(
-      'entryDragHandleContainer'
-    );
-    expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(
-      entryDragHandleContainers[1],
-      'entryDragHandleContainer is undefined'
-    );
-    await user.pointer({target: entryDragHandleContainers[1]});
-    const entryDragHandle = screen.getByRole('entryDragHandle');
-    await act(async () => {
-      fireEvent.dragStart(entryDragHandle);
-    });
-
-    await act(async () => {
-      invariant(entries[2], 'entry is undefined');
-      fireEvent.dragEnter(entries[2]);
-    });
-
-    expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: entry-2-subject index 1 moving to 2'
-    );
-
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[1]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-2-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-
-    // This is dropping it onto itself after reordering the list.
-    await act(async () => {
-      invariant(entries[2], 'entry is undefined');
-      fireEvent.drop(entries[2]);
-    });
-
-    // The reorder reads the junctions from IndexedDB first.
-
-    await waitFor(() =>
-      expect(reorderEntrySpy).toBeCalledWith('2', '4', expect.any(String))
-    );
-  });
-
-  it('Reorders 2 -> 1', async () => {
-    const user = userEvent.setup();
-    const {history} = renderAppAt('/test/test-tag-1');
-    expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i));
-    await waitFor(() => screen.getByText(/entry-1-body/i));
-    await waitFor(() => screen.getByText(/entry-2-subject/i));
-    await waitFor(() => screen.getByText(/entry-2-body/i));
-    let entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[0]).toHaveTextContent('entry-1-body');
-    expect(entries[1]).toHaveTextContent('entry-2-subject');
-    expect(entries[1]).toHaveTextContent('entry-2-body');
-    expect(entries[2]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-3-body');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-body');
-    const entryDragHandleContainers = screen.getAllByRole(
-      'entryDragHandleContainer'
-    );
-    expect(entryDragHandleContainers).toHaveLength(4);
-    invariant(
-      entryDragHandleContainers[2],
-      'entryDragHandleContainer is undefined'
-    );
-    await user.pointer({target: entryDragHandleContainers[2]});
-    const entryDragHandle = screen.getByRole('entryDragHandle');
-    await act(async () => {
-      fireEvent.dragStart(entryDragHandle);
-    });
-
-    await act(async () => {
-      invariant(entries[1], 'entry is undefined');
-      fireEvent.dragEnter(entries[1]);
-    });
-
-    expect(consoleMock).toHaveBeenLastCalledWith(
-      'moveEntry: entry-3-subject index 2 moving to 1'
-    );
-
-    entries = screen.getAllByRole('entry');
-    expect(entries).toHaveLength(4);
-    expect(entries[0]).toHaveTextContent('entry-1-subject');
-    expect(entries[1]).toHaveTextContent('entry-3-subject');
-    expect(entries[2]).toHaveTextContent('entry-2-subject');
-    expect(entries[3]).toHaveTextContent('entry-4-subject');
-
-    // This is dropping it onto itself after reordering the list.
-    await act(async () => {
-      invariant(entries[1], 'entry is undefined');
-      fireEvent.drop(entries[1]);
-    });
-
-    // The reorder reads the junctions from IndexedDB first.
-
-    await waitFor(() =>
-      expect(reorderEntrySpy).toBeCalledWith('3', '2', expect.any(String))
+      expect(reorderEntrySpy).toBeCalledWith(...reorder, expect.any(String))
     );
   });
 });
