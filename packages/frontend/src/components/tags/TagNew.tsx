@@ -22,16 +22,20 @@ const TagNew = ({id}: IProps) => {
     cancel: inputCancelRef,
   });
 
-  // The cleanup runs whenever the active field changes, not only on close,
-  // so it makes the name active again at once: Tab never leaves the name.
   useEffect(() => {
     if (appConfig.activeTagEditField === activeTagEditField.name) {
       inputTagNameRef.current?.focus();
     }
-    return () => {
+  }, [appConfig.activeTagEditField]);
+
+  // Closing leaves the name active for the next form. Only on close: a reset
+  // whenever the active field changed sent Tab straight back to the name.
+  useEffect(
+    () => () => {
       appConfig.setActiveTagEditField(activeTagEditField.name);
-    };
-  }, [appConfig.activeTagEditField, appConfig.setActiveTagEditField]);
+    },
+    []
+  );
 
   const handleCancel = () => {
     appConfig.setTagNew(null);
