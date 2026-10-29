@@ -1,0 +1,6 @@
+[install]
+# One install for the root tooling and every workspace in packages/. Carried
+# over from pnpm: an isolated node_modules (code can import only the packages
+# it declares) and no versions published less than a day ago.
+linker = "isolated"
+minimumReleaseAge = 86400 # seconds

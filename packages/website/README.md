@@ -30,8 +30,8 @@ directories and checks the generated HTML, and tests the redirect Worker.
 image (`og-image.png`, 1200×630) into `public/` from the repository's brand
 sources (`../../assets/brand/`), using the pinned agent-tool and the
 `favicons` and `social` targets in `../../agent-tool.json`. The
-dev, build and test scripts run it first, so it needs the repository root's
-`bun install`; the outputs are gitignored.
+dev, build and test scripts run it first; the workspace install (`bun install`
+here or at the repository root) provides it. The outputs are gitignored.
 
 Deployed pages use CT for click analytics. See
 [click tracking](../../docs/click-tracking.md) for environments, privacy behavior

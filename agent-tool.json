@@ -61,7 +61,7 @@
       "packages/frontend",
       "packages/backend-v2"
     ],
-    "lockfile": null
+    "lockfile": "bun.lock"
   },
   "pr": {
     "rejectClaudeBranding": true

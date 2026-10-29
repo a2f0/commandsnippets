@@ -18,7 +18,8 @@ Run these from `packages/frontend`.
 ### Setup
 - Requires Bun and Node.js from the root `.mise.toml` (Vite, Vitest,
   WebdriverIO and wrangler run on Node); see the root README for mise setup
-- `bun install` - Install dependencies
+- `bun install` - Install dependencies (the whole workspace, from the root
+  `bun.lock`)
 - `bun run dev` - Start the development server on http://localhost:8085
 - `bun run server-test` - Start the server in test mode on
   http://localhost:8081, with the API mocked by MSW (what the E2E tests use)
@@ -60,7 +61,8 @@ Run these from `packages/frontend`.
 
 ### Build and Deploy
 - `bun run images` - Render the favicons and PWA icons into `public/` from
-  `../../assets/brand/` (gitignored; needs the root `bun install`). `dev`,
+  `../../assets/brand/` (gitignored; uses the root's agent-tool, which the
+  workspace install provides). `dev`,
   `server-test` and every `build` script run it first
 - `bun run build` - Production bundle in `build/`
 - `bun run build:staging` / `bun run build:production` - Build in that mode
@@ -382,7 +384,7 @@ list is shown by then. Its timings
 
 ### API
 The API's contract is `@commandsnippets/api-shared` (`packages/api-shared`, a
-`file:` dependency; see the README's "The API contract"): zod schemas for
+workspace dependency; see the README's "The API contract"): zod schemas for
 every request and response document, the error `CODES`, and the types
 inferred from them. Take anything that crosses the wire from it rather than
 writing its type by hand.
@@ -594,12 +596,12 @@ per-row work multiplies (the HUD's Analytics tab times it).
 - Use `bun add --exact <package>` for new dependencies
 - Use `bun add -d --exact <package>` for new dev dependencies
 - When manually editing package.json, ensure version numbers have no range specifiers
-- Always run `bun install` after modifying package.json to update bun.lock
-- Never commit package.json changes without the corresponding bun.lock updates
-- When removing dependencies, use `bun remove <package>` to update both package.json and bun.lock
-- A new dependency with an install script it needs must be added to `trustedDependencies`; see the README's Dependencies section
-- `@commandsnippets/api-shared` is `file:../api-shared`: run `bun install` here after adding, moving or removing a file there or changing its `package.json`, or after editing one with an editor that saves by replacing the file (see the README's "The API contract")
-- Vite pre-bundles api-shared into `node_modules/.vite` and does not notice when it changes: if the dev or test server (and so the E2E suite, as "MSW not ready") fails with `does not provide an export named ...` from `.vite/deps/@commandsnippets_api-shared_...`, delete `node_modules/.vite`
+- Always run `bun install` after modifying package.json to update the root bun.lock
+- Never commit package.json changes without the corresponding root bun.lock updates
+- When removing dependencies, use `bun remove <package>` to update both package.json and the root bun.lock
+- A new dependency with an install script it needs must be added to the root package.json's `trustedDependencies`; see the README's Dependencies section
+- `@commandsnippets/api-shared` is `workspace:*`, a link to `../api-shared`: its edits show at once; run `bun install` after changing its `package.json` (see the README's "The API contract")
+- Vite treats the linked api-shared as source: it is not pre-bundled into `node_modules/.vite`, and the dev and test servers serve it from `../api-shared` (inside the workspace root that `server.fs.allow` admits)
 
 ### TypeScript
 - Always run `bun run compile` after making changes to ensure TypeScript compiles (not a bare `tsc -b`, which can reuse stale output; see Code Quality)
