@@ -601,7 +601,7 @@ per-row work multiplies (the HUD's Analytics tab times it).
 - When removing dependencies, use `bun remove <package>` to update both package.json and the root bun.lock
 - A new dependency with an install script it needs must be added to the root package.json's `trustedDependencies`; see the README's Dependencies section
 - `@commandsnippets/api-shared` is `workspace:*`, a link to `../api-shared`: its edits show at once; run `bun install` after changing its `package.json` (see the README's "The API contract")
-- Vite treats the linked api-shared as source: it is not pre-bundled into `node_modules/.vite`, and the dev and test servers serve it from `../api-shared` (inside the workspace root that `server.fs.allow` admits)
+- Vite treats the linked api-shared as source: it is not pre-bundled into `node_modules/.vite`, and the dev and test servers serve it from `../api-shared`. `server.fs.allow` in `vite.config.ts` admits only this package, `../api-shared`, the workspace's package store and the brand sources, never the whole workspace (`__tests__/infra/devServer.spec.ts`)
 
 ### TypeScript
 - Always run `bun run compile` after making changes to ensure TypeScript compiles (not a bare `tsc -b`, which can reuse stale output; see Code Quality)

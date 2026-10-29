@@ -51,4 +51,11 @@ export default defineConfig({
   output: 'static',
   build: {format: 'directory'},
   integrations: [modeFilesIntegration()],
+  vite: {
+    // What the dev server may serve outside this package (relative to it):
+    // the workspace's package store and the repository's brand sources.
+    // Never the whole workspace, which holds other packages' secrets
+    // (backend-v2's .dev.vars) and the .secrets link.
+    server: {fs: {allow: ['.', '../../node_modules', '../../assets/brand']}},
+  },
 });
