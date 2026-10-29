@@ -1,26 +1,16 @@
 /** The tag shown, and the one the tag list highlights. */
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory, type MemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn, store} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
-
-function renderAt(route: string): MemoryHistory {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-  return history;
-}
 
 /** The element `#id`, which must be rendered. */
 function byId(id: string): HTMLElement {
@@ -37,7 +27,7 @@ const highlighted = () =>
 
 describe('The tag list', () => {
   it('highlights the tag selected, as Back and Forward change it', async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     await screen.findByText('test-tag-2');
     act(() => store.setTagSelectedID('1'));
     await waitFor(() => expect(highlighted()).toEqual(['tag-1']));
@@ -48,7 +38,7 @@ describe('The tag list', () => {
   });
 
   it('follows the tag shown to its new name', async () => {
-    const history = renderAt('/test/test-tag-1');
+    const {history} = renderAppAt('/test/test-tag-1');
     await waitFor(() =>
       expect(screen.getAllByRole('entry').length).toBeGreaterThan(0)
     );

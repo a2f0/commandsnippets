@@ -32,15 +32,8 @@ describe('TagsEntries Behavior', () => {
     // Test entry search functionality by directly interacting with search field
     // Skip complex Tab navigation testing in headless mode - focus on core functionality
     await BasePage.entrySearch.click();
-    // A key at a time, each shown before the next: the field drops keys
-    // typed faster than it renders (TextEntrySearchField takes its value
-    // from the store in an effect, not in its change handler).
-    let typed = '';
-    for (const key of 'entry-1') {
-      typed += key;
-      await browser.keys(key);
-      await expect(BasePage.entrySearch).toHaveValue(typed);
-    }
+    await browser.keys('entry-1');
+    await expect(BasePage.entrySearch).toHaveValue('entry-1');
     await expect(BasePage.tagsEntries).toBeElementsArrayOfSize(1);
     await expect(BasePage.tagsEntries1).toBeDisplayed();
 

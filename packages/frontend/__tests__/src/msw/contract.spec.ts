@@ -59,10 +59,7 @@ import {
 import {entriesResponse} from '../../../test/mocks/entries/entriesResponse';
 import {manyEntriesResponse} from '../../../test/mocks/entries/manyEntriesResponse';
 import {tagsResponse} from '../../../test/mocks/tags/tagsResponse';
-import {server as unitServer} from '../../util/msw';
-
-const HOST = 'http://localhost:9001';
-const API = `${HOST}/api/v1`;
+import {API, HOST, server as unitServer} from '../../util/msw';
 
 /** `body` parses with `schema`, and parsing drops nothing from it. */
 function expectContract(schema: z.ZodMiniType, body: unknown) {

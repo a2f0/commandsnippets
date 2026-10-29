@@ -6,34 +6,21 @@
 import {CURSOR_START} from '@commandsnippets/api-shared';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {InvalidResponseError} from '../../src/lib/api/parseResponse';
 import {syncSession} from '../../src/lib/sync/session';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
-import {server} from '../util/msw';
+import {serveMockApi, server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterAll(() => server.close());
+serveMockApi({onUnhandledFrame: 'error'});
 beforeEach(() => {
   signIn();
   // The mock API announces each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
+afterEach(() => vi.restoreAllMocks());
 
 /** The database's rows and cursors, to compare before and after. */
 async function contents() {

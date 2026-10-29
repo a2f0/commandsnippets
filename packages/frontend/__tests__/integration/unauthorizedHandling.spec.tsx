@@ -7,9 +7,8 @@ import {vi} from 'vitest';
 import {listUsers} from '../../src/lib/api/adminApi';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {API} from '../util/msw';
 import {signIn, store} from '../util/signIn';
-
-const API = 'http://localhost:9001/api/v1';
 
 /** A backend-v2 error document (JSON:API) with one error. */
 const apiError = (status: number, code: string, detail: string) =>

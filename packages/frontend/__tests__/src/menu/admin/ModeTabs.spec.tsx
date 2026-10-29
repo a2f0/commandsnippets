@@ -1,31 +1,19 @@
-import {act, fireEvent, render, screen} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen} from '@testing-library/react';
 
 import {assignLoggedInCookie} from '../../../util/assignLoggedInCookie';
-import {server} from '../../../util/msw';
+import {serveMockApi} from '../../../util/msw';
 import {signIn, store} from '../../../util/signIn';
-import {TestAppRouter} from '../../../util/TestAppRouter';
+import {renderAppAt} from '../../../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
-afterEach(() => server.resetHandlers());
-
-async function renderAt(path: string) {
-  const history = createMemoryHistory();
-  history.push(path);
-  await act(async () => {
-    render(<TestAppRouter history={history} />);
-  });
-  return history;
-}
 
 describe('ModeTabs', () => {
   it('is not shown to users who are not staff', async () => {
-    await renderAt('/test/test');
+    await renderAppAt('/test/test', {act: true});
 
     expect(await screen.findByRole('menu', {name: 'File'})).toBeInTheDocument();
     expect(document.getElementById('modeTabs')).toBeNull();
@@ -34,7 +22,7 @@ describe('ModeTabs', () => {
 
   it('shows staff on their entries in User mode, with Admin a click away', async () => {
     act(() => store.setIsStaff(true));
-    const history = await renderAt('/test/test');
+    const {history} = await renderAppAt('/test/test', {act: true});
 
     expect(
       screen.getByRole('tablist', {name: 'User or admin'})
@@ -53,7 +41,7 @@ describe('ModeTabs', () => {
 
   it('keeps the page when the selected tab is clicked again', async () => {
     act(() => store.setIsStaff(true));
-    const history = await renderAt('/test/test');
+    const {history} = await renderAppAt('/test/test', {act: true});
 
     fireEvent.click(screen.getByRole('tab', {name: 'User'}));
 

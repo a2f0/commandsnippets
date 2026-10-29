@@ -1,6 +1,5 @@
 /** A tag switch, timed for the HUD from the click to its entries' paint. */
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import * as timings from '../../src/lib/metrics/timings';
 import {
@@ -10,13 +9,11 @@ import {
   timingsOf,
 } from '../../src/lib/metrics/timings';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -39,17 +36,14 @@ function watchListsShown(): Array<{target: string; entries: number}> {
 
 /** The tag switch to `tag`, once painted. */
 const paintedSwitch = (tag: string) =>
-  waitFor(
-    () => {
-      const interaction = metricsSnapshot().interactions.find(
-        ({target}) => target === `tag:${tag}`
-      );
-      expect(interaction?.painted).toEqual(expect.any(Number));
-      invariant(interaction, 'the switch is timed');
-      return interaction;
-    },
-    {timeout: 3000}
-  );
+  waitFor(() => {
+    const interaction = metricsSnapshot().interactions.find(
+      ({target}) => target === `tag:${tag}`
+    );
+    expect(interaction?.painted).toEqual(expect.any(Number));
+    invariant(interaction, 'the switch is timed');
+    return interaction;
+  });
 
 /** The tag named `name` in the tag list, not under an entry in its list. */
 const tagInList = (name: string) =>
@@ -69,10 +63,8 @@ async function clickTag(name: string) {
 
 describe('Switching tags', () => {
   it('is timed from the click to the paint of the new tag’s entries', async () => {
-    const history = createMemoryHistory();
     // Tag 2 has no entries; tag 1 has some.
-    history.push('/test/test-tag-2');
-    render(<TestAppRouter history={history} />);
+    renderAppAt('/test/test-tag-2');
     await screen.findByText('test-tag-1');
     await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(0));
     clearMetrics();
@@ -109,9 +101,7 @@ describe('Switching tags', () => {
   });
 
   it('renders what shows the tag, not the whole page', async () => {
-    const history = createMemoryHistory();
-    history.push('/test/test-tag-2');
-    render(<TestAppRouter history={history} />);
+    renderAppAt('/test/test-tag-2');
     await screen.findByText('test-tag-1');
     clearMetrics();
 
@@ -126,9 +116,7 @@ describe('Switching tags', () => {
   });
 
   it('from all the entries, is timed to the paint of the tag’s own', async () => {
-    const history = createMemoryHistory();
-    history.push('/test?entries=all');
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test?entries=all');
     await tagInList('test-tag-1');
     await waitFor(() =>
       expect(screen.queryAllByRole('entry').length).toBeGreaterThan(0)

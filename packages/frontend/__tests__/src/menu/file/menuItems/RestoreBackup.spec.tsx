@@ -13,9 +13,8 @@ import {
   type Backup,
   dataVersionListDocumentSchema,
 } from '@commandsnippets/api-shared/responses';
-import {act, render, screen, waitFor} from '@testing-library/react';
+import {act, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
@@ -25,12 +24,16 @@ import {useAppState} from '../../../../../src/lib/state/appState';
 import {heldVersion} from '../../../../../src/lib/sync/dataVersion';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
-import {server} from '../../../../util/msw';
+import {
+  API,
+  offlineForWrites,
+  serveMockApi,
+  server,
+} from '../../../../util/msw';
 import {restoreElsewhere} from '../../../../util/restoreElsewhere';
 import {signIn, TEST_USER} from '../../../../util/signIn';
-import {TestAppRouter} from '../../../../util/TestAppRouter';
+import {renderAppAt} from '../../../../util/TestAppRouter';
 
-const API = 'http://localhost:9001/api/v1';
 const AT = '2026-10-01T09:30:00.000000';
 
 /** Another account's backup: one tag, two entries, one of them tagged. */
@@ -110,13 +113,8 @@ function restoreRequests(): RestoreRequest[] {
   return requests;
 }
 
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  server.events.removeAllListeners();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -126,9 +124,7 @@ beforeEach(() => {
 });
 
 async function renderEntries() {
-  const history = createMemoryHistory();
-  history.push('/test/test-tag-1');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
   // All of the user's data is here: the warning counts it.
   await syncSession(TEST_USER).sync.syncAll();
@@ -239,11 +235,7 @@ describe('Restore Backup', () => {
   it('sends the writes queued here first', async () => {
     await renderEntries();
     const session = syncSession(TEST_USER);
-    server.use(
-      http.all(`${API}/*`, ({request}) =>
-        request.method === 'GET' ? undefined : HttpResponse.error()
-      )
-    );
+    offlineForWrites();
     await createEntry(session, 'queued-subject', 'body');
     await expect(session.sync.flush()).rejects.toThrow();
     server.resetHandlers();
@@ -273,11 +265,7 @@ describe('Restore Backup', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     await renderEntries();
     const requests = restoreRequests();
-    server.use(
-      http.all(`${API}/*`, ({request}) =>
-        request.method === 'GET' ? undefined : HttpResponse.error()
-      )
-    );
+    offlineForWrites();
     await createEntry(syncSession(TEST_USER), 'unsent-subject', 'body');
 
     await chooseFile(fileOf(backup));
@@ -344,9 +332,7 @@ describe('Restore Backup', () => {
 
   it('closes the warning when another user signs in meanwhile, restoring nothing', async () => {
     // The admin page keeps the menu bar when the signed-in user changes.
-    const history = createMemoryHistory();
-    history.push('/admin');
-    render(<TestAppRouter history={history} />);
+    renderAppAt('/admin');
     await screen.findByRole('table', {name: 'Users'});
     const requests = restoreRequests();
     await chooseFile(fileOf(backup));

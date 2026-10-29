@@ -3,27 +3,21 @@
  * opening it stays quick however many entries there are. jsdom lays nothing
  * out, so each row reports a fixed height here.
  */
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {VIRTUALIZE_FROM} from '../../src/components/entries/EntryList';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {API, serveMockApi, server} from '../util/msw';
 import {signIn} from '../util/signIn';
 import {entry, seed, testUser} from '../util/storeFixtures';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-const API = 'http://localhost:9001/api/v1';
 const ROW_HEIGHT = 72;
 
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -55,9 +49,7 @@ async function openWith(count: number) {
     )
   );
   server.use(http.all(`${API}/*`, () => HttpResponse.error()));
-  const history = createMemoryHistory();
-  history.push('/test?entries=all');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test?entries=all');
   // (Seeding and reading hundreds of entries is slow alongside other suites.)
   await screen.findByText('subject 1', {}, {timeout: 10000});
 }

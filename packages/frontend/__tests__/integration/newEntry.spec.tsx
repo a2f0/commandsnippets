@@ -2,35 +2,24 @@
  * A new entry, saved from the entry list's editor: stored in the user's
  * IndexedDB database and listed at once, in the tag shown when there is one.
  */
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {vi} from 'vitest';
 import {syncSession} from '../../src/lib/sync/session';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
   // The mock API announces each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
-
-function renderAt(route: string) {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-}
 
 /** The element `#id`, which must be rendered. */
 function byId(id: string): HTMLElement {
@@ -70,7 +59,7 @@ async function storedEntry(subject: string) {
 
 describe('A new entry', () => {
   it('saved from the untagged entries is stored in no tag, and listed there', async () => {
-    renderAt('/test?entries=untagged');
+    renderAppAt('/test?entries=untagged');
     // (The mock API's entries are all in tag 1: the list starts empty.)
     await screen.findByText('test-tag-1');
     const tagEntry = vi.spyOn(apiClientMethods, 'tagEntry');
@@ -84,7 +73,7 @@ describe('A new entry', () => {
   });
 
   it("saved from a tag's entries is stored in it, and listed there", async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     await screen.findByText('entry-1-subject');
     const tagEntry = vi.spyOn(apiClientMethods, 'tagEntry');
 

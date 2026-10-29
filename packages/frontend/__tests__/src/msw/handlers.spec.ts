@@ -49,8 +49,8 @@ import {
   setRuntimeEntriesOverride,
 } from '../../../src/msw/handlers';
 import {manyEntriesResponse} from '../../../test/mocks/entries/manyEntriesResponse';
+import {API} from '../../util/msw';
 
-const API = 'http://localhost:9001/api/v1';
 const JSON_API = {'Content-Type': 'application/vnd.api+json'};
 
 const server = setupServer(...handlers);

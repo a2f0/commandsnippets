@@ -5,7 +5,7 @@ import {type MockInstance, vi} from 'vitest';
 import {UserProfileCircle} from '../../../src/components/UserProfileCircle';
 import {apiClient} from '../../../src/lib/api/apiClient';
 import {darkTheme} from '../../../src/theme/themes';
-import {server} from '../../util/msw';
+import {serveMockApi, server} from '../../util/msw';
 import {store} from '../../util/signIn';
 
 // Mock the environment module to ensure it's not production
@@ -23,9 +23,7 @@ const renderWithContext = (loggedInUser: string | null = 'testuser') => {
 };
 
 // Setup MSW server
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 
 describe('UserProfileCircle', () => {
   let consoleMock: MockInstance;

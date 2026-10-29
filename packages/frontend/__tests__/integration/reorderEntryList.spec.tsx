@@ -1,17 +1,14 @@
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {type MockInstance, vi} from 'vitest';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -32,15 +29,12 @@ describe('Entries List', () => {
   });
   it('Hovers', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-subject/i));
+    await waitFor(() => screen.getByText(/entry-1-body/i));
+    await waitFor(() => screen.getByText(/entry-2-subject/i));
+    await waitFor(() => screen.getByText(/entry-2-body/i));
     const entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-1-subject');
@@ -76,15 +70,12 @@ describe('Entries List', () => {
   });
   it('Reorders 0 -> 0', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/test-tag-1/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/test-tag-2/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/test-tag-3/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/test-tag-4/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/test-tag-1/i));
+    await waitFor(() => screen.getByText(/test-tag-2/i));
+    await waitFor(() => screen.getByText(/test-tag-3/i));
+    await waitFor(() => screen.getByText(/test-tag-4/i));
     // The tags sync first; the entries after.
     await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(4));
     let entries = screen.getAllByRole('entry');
@@ -141,15 +132,12 @@ describe('Entries List', () => {
   });
   it('Reorders 0 -> 1', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-subject/i));
+    await waitFor(() => screen.getByText(/entry-1-body/i));
+    await waitFor(() => screen.getByText(/entry-2-subject/i));
+    await waitFor(() => screen.getByText(/entry-2-body/i));
     let entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-1-subject');
@@ -204,15 +192,12 @@ describe('Entries List', () => {
   });
   it('Reorders 0 -> 2', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-subject/i));
+    await waitFor(() => screen.getByText(/entry-1-body/i));
+    await waitFor(() => screen.getByText(/entry-2-subject/i));
+    await waitFor(() => screen.getByText(/entry-2-body/i));
     let entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-1-subject');
@@ -283,15 +268,12 @@ describe('Entries List', () => {
   });
   it('Reorders 0 -> 3', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-subject/i));
+    await waitFor(() => screen.getByText(/entry-1-body/i));
+    await waitFor(() => screen.getByText(/entry-2-subject/i));
+    await waitFor(() => screen.getByText(/entry-2-body/i));
     let entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-1-subject');
@@ -378,15 +360,12 @@ describe('Entries List', () => {
   });
   it('Reorders 1 -> 2', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-subject/i));
+    await waitFor(() => screen.getByText(/entry-1-body/i));
+    await waitFor(() => screen.getByText(/entry-2-subject/i));
+    await waitFor(() => screen.getByText(/entry-2-body/i));
     let entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-1-subject');
@@ -442,15 +421,12 @@ describe('Entries List', () => {
 
   it('Reorders 2 -> 1', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test-tag-1';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    const {history} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-1-body/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-subject/i), {timeout: 3000});
-    await waitFor(() => screen.getByText(/entry-2-body/i), {timeout: 3000});
+    await waitFor(() => screen.getByText(/entry-1-subject/i));
+    await waitFor(() => screen.getByText(/entry-1-body/i));
+    await waitFor(() => screen.getByText(/entry-2-subject/i));
+    await waitFor(() => screen.getByText(/entry-2-body/i));
     let entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);
     expect(entries[0]).toHaveTextContent('entry-1-subject');

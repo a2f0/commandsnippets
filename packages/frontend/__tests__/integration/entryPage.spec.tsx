@@ -4,29 +4,17 @@
  * first. The reuses are private: its owner sees them, staff their count only,
  * and a public page neither.
  */
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
-import {createMemoryHistory, type MemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   Object.defineProperty(navigator, 'clipboard', {
@@ -34,13 +22,6 @@ beforeEach(() => {
     configurable: true,
   });
 });
-
-const mount = (url: string): MemoryHistory => {
-  const history = createMemoryHistory();
-  history.push(url);
-  render(<TestAppRouter history={history} />);
-  return history;
-};
 
 const signInHere = () => {
   signIn();
@@ -63,7 +44,7 @@ it('opens from Get Info, shows the entry and its reuses, and goes back to the li
   // Two copies recorded before (another device's).
   await apiClient.forVersion(1).reuseEntry('1', 'earlier');
   await apiClient.forVersion(1).reuseEntry('1', 'later');
-  const history = mount('/test/test-tag-1');
+  const {history} = renderAppAt('/test/test-tag-1');
 
   fireEvent.contextMenu(await screen.findByText('entry-1-subject'));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'Get Info'}));
@@ -93,7 +74,7 @@ it('opens from Get Info, shows the entry and its reuses, and goes back to the li
 
 it('counts a copy made on the page, which joins its reuses', async () => {
   signInHere();
-  mount('/test/entries/2');
+  renderAppAt('/test/entries/2');
   expect(await screen.findByText('Not reused yet.')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', {name: 'Copy'}));
@@ -115,7 +96,7 @@ it('loads the next page of an individual entry history with Show more', async ()
     await apiClient.forVersion(1).reuseEntry('1', `copy-${index}`);
   }
   await apiClient.forVersion(1).reuseEntry('2', 'another-entry');
-  mount('/test/entries/1');
+  renderAppAt('/test/entries/1');
   await waitFor(async () =>
     expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(50)
   );
@@ -132,7 +113,7 @@ it("lists a deep link's reuses, and goes back to the user's page", async () => {
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'first');
   await apiClient.forVersion(1).reuseEntry('1', 'second');
-  const history = mount('/test/entries/1');
+  const {history} = renderAppAt('/test/entries/1');
 
   expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(2);
   // Opened by a link, not from a list: Back goes to the user's page.
@@ -142,7 +123,7 @@ it("lists a deep link's reuses, and goes back to the user's page", async () => {
 
 it('says when there is no such entry', async () => {
   signInHere();
-  mount('/test/entries/999');
+  renderAppAt('/test/entries/999');
   expect(
     await screen.findByText('There is no such entry.')
   ).toBeInTheDocument();
@@ -151,7 +132,7 @@ it('says when there is no such entry', async () => {
 it("shows staff another user's entry and its count, not its reuses", async () => {
   signInHere();
   act(() => store.setIsStaff(true));
-  mount('/alice/entries/71');
+  renderAppAt('/alice/entries/71');
 
   expect(
     await screen.findByRole('heading', {name: 'alices-entry'})
@@ -166,7 +147,7 @@ it('shows a guest a public entry without its reuses', async () => {
   await apiClient.forVersion(1).setTagPublic('1', true);
   await apiClient.forVersion(1).setEntryPublic('1', true);
   await apiClient.forVersion(1).reuseEntry('1', 'private');
-  mount('/test/entries/1');
+  renderAppAt('/test/entries/1');
 
   expect(
     await screen.findByRole('heading', {name: 'entry-1-subject'})
@@ -178,7 +159,7 @@ it('shows a guest a public entry without its reuses', async () => {
 
 it("goes back to the list each entry's page was opened from", async () => {
   signInHere();
-  const history = mount('/test/test-tag-1');
+  const {history} = renderAppAt('/test/test-tag-1');
   fireEvent.contextMenu(await screen.findByText('entry-1-subject'));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'Get Info'}));
   await screen.findByRole('heading', {name: 'entry-1-subject'});
@@ -200,7 +181,7 @@ it('signs out when the login cookie is gone, showing nothing private', async () 
   // Signed in here, but the user has cleared their cookies since.
   signIn();
   assignLoggedInCookie('');
-  mount('/test/entries/1');
+  renderAppAt('/test/entries/1');
 
   await waitFor(() => expect(store.loggedInUser).toBeNull());
   expect(screen.queryByRole('heading', {name: 'entry-1-subject'})).toBeNull();
@@ -209,7 +190,7 @@ it('signs out when the login cookie is gone, showing nothing private', async () 
 it("shows none of the last entry's reuses on another entry's page", async () => {
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'one');
-  const history = mount('/test/entries/1');
+  const {history} = renderAppAt('/test/entries/1');
   expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(1);
   server.use(
     http.get('http://localhost:9001/api/v1/entry_reuses', () =>
@@ -228,7 +209,7 @@ it("shows none of the last entry's reuses on another entry's page", async () => 
 
 it('reads the reuses again once back online: a copy made offline', async () => {
   signInHere();
-  mount('/test/entries/2');
+  renderAppAt('/test/entries/2');
   expect(await screen.findByText('Not reused yet.')).toBeInTheDocument();
   // Offline: the copy is counted here, but neither sent nor listed.
   server.use(

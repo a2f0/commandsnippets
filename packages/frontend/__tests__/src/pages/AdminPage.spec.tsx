@@ -2,24 +2,15 @@ import {
   adminUserUpdateDocumentSchema,
   CODES,
 } from '@commandsnippets/api-shared';
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {setupServer} from 'msw/node';
 
 import {errorDocument, onePage, pagination} from '../../../src/msw/documents';
 import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
+import {API} from '../../util/msw';
 import {signIn, store} from '../../util/signIn';
-import {TestAppRouter} from '../../util/TestAppRouter';
-
-const API = 'http://localhost:9001/api/v1';
+import {renderAppAt} from '../../util/TestAppRouter';
 
 interface MockUser {
   id: string;
@@ -233,15 +224,6 @@ afterEach(() => {
   server.resetHandlers();
 });
 
-async function renderAt(path: string) {
-  const history = createMemoryHistory();
-  history.push(path);
-  await act(async () => {
-    render(<TestAppRouter history={history} />);
-  });
-  return history;
-}
-
 const usersTable = () => screen.findByRole('table', {name: 'Users'});
 
 function present<T>(value: T | null | undefined, what: string): T {
@@ -280,7 +262,7 @@ async function confirm(button: string) {
 
 describe('AdminPage', () => {
   it('serves /admin as the admin page, not the page of a user named "admin"', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
 
     const table = await usersTable();
     expect(document.getElementById('adminPage')).toBeInTheDocument();
@@ -301,7 +283,7 @@ describe('AdminPage', () => {
     viewerIsStaff = false;
     act(() => store.setIsStaff(true));
 
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
 
     expect(
       await screen.findByText('You do not have access to this page.')
@@ -324,7 +306,7 @@ describe('AdminPage', () => {
       )
     );
 
-    const history = await renderAt('/admin');
+    const {history} = await renderAppAt('/admin', {act: true});
 
     await waitFor(() => {
       expect(document.getElementById('signInPage')).toBeInTheDocument();
@@ -337,7 +319,7 @@ describe('AdminPage', () => {
   it('sends signed-out visitors to the sign-in page', async () => {
     act(() => store.setLoggedInUser(null));
 
-    const history = await renderAt('/admin');
+    const {history} = await renderAppAt('/admin', {act: true});
 
     expect(history.location.pathname).toBe('/');
     expect(document.getElementById('signInPage')).toBeInTheDocument();
@@ -347,7 +329,7 @@ describe('AdminPage', () => {
   it('says so when access is revoked while the page is open', async () => {
     adminForbidden = true;
 
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
 
     expect(
       await screen.findByText('You do not have access to this page.')
@@ -356,7 +338,7 @@ describe('AdminPage', () => {
   });
 
   it('deactivates a user from their menu, after confirmation', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     expect(await openMenu('7')).toEqual([
@@ -384,7 +366,7 @@ describe('AdminPage', () => {
   });
 
   it('opens the same menu on a right-click of the row', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     fireEvent.contextMenu(row('7'), {clientX: 200, clientY: 300});
@@ -404,7 +386,7 @@ describe('AdminPage', () => {
   });
 
   it('marks a user for deletion after confirmation', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     await choose('7', 'Mark for deletion');
@@ -439,7 +421,7 @@ describe('AdminPage', () => {
           }
         : user
     );
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
     expect(
       within(row('7')).getByText('Marked for deletion')
@@ -472,7 +454,7 @@ describe('AdminPage', () => {
         )
       )
     );
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     await choose('7', 'Deactivate');
@@ -483,7 +465,7 @@ describe('AdminPage', () => {
   });
 
   it("shows nothing of the last user's once the tab takes up another's sign-in", async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     // Another tab signed in as someone who is not staff; this one takes it up.
@@ -498,7 +480,7 @@ describe('AdminPage', () => {
   });
 
   it('reloads after a change, so a status filter stays accurate', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
     fireEvent.click(screen.getByRole('button', {name: 'Active'}));
     await waitFor(() => {
@@ -525,7 +507,7 @@ describe('AdminPage', () => {
         is_active: true,
       })),
     ];
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
     fireEvent.click(screen.getByRole('button', {name: 'Active'}));
     await waitFor(() => {
@@ -549,7 +531,7 @@ describe('AdminPage', () => {
   });
 
   it('changes nothing when the confirmation is cancelled', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     await choose('7', 'Mark for deletion');
@@ -562,7 +544,7 @@ describe('AdminPage', () => {
   });
 
   it("won't let staff deactivate or mark their own account", async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     expect(document.getElementById('adminUserMenuButton1')).toBeDisabled();
@@ -575,7 +557,7 @@ describe('AdminPage', () => {
   });
 
   it('searches and filters by status', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     fireEvent.change(screen.getByLabelText('Search username or email'), {
@@ -596,7 +578,7 @@ describe('AdminPage', () => {
   });
 
   it('sorts by a column', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
     expect(listRequests.at(-1)?.get('sort')).toBe('-date_joined');
 
@@ -625,7 +607,7 @@ describe('AdminPage', () => {
         is_active: false,
       },
     ];
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     const table = await usersTable();
     await within(table).findByText('alice');
 
@@ -644,7 +626,7 @@ describe('AdminPage', () => {
   });
 
   it('offers only menus that work here, and the User tab back to the entries', async () => {
-    const history = await renderAt('/admin');
+    const {history} = await renderAppAt('/admin', {act: true});
     await usersTable();
 
     // Staff have the mode tabs, so no separate link.
@@ -669,7 +651,7 @@ describe('AdminPage', () => {
   });
 
   it("opens a user's data, read-only, on their page", async () => {
-    const history = await renderAt('/admin');
+    const {history} = await renderAppAt('/admin', {act: true});
     await usersTable();
 
     await choose('7', 'View data');
@@ -680,7 +662,7 @@ describe('AdminPage', () => {
   });
 
   it('shows the audit log', async () => {
-    await renderAt('/admin');
+    await renderAppAt('/admin', {act: true});
     await usersTable();
 
     fireEvent.click(screen.getByRole('tab', {name: 'Audit log'}));

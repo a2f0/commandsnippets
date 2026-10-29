@@ -1,31 +1,21 @@
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {fireEvent, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
 
-/** Open `route` in the app. */
-function renderAt(route: string) {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-}
-
 /** Open `subject`'s context menu. */
 async function openContextMenu(subject: string) {
-  fireEvent.contextMenu(await screen.findByText(subject, {}, {timeout: 3000}));
+  fireEvent.contextMenu(await screen.findByText(subject));
 }
 
 describe('Delete Untagged Entry', () => {
@@ -47,7 +37,7 @@ describe('Delete Untagged Entry', () => {
   });
 
   it('deletes an entry from the untagged entries', async () => {
-    renderAt('/test?entries=untagged');
+    renderAppAt('/test?entries=untagged');
     await openContextMenu('untagged-subject');
     fireEvent.click(await screen.findByRole('menuitem', {name: 'Delete'}));
 
@@ -59,7 +49,7 @@ describe('Delete Untagged Entry', () => {
   });
 
   it("takes an entry out of a tag's entries", async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     await openContextMenu('entry-1-subject');
     fireEvent.click(await screen.findByRole('menuitem', {name: 'Untag'}));
 
@@ -75,7 +65,7 @@ describe('Delete Untagged Entry', () => {
   });
 
   it('offers Delete, not Untag, for an untagged entry', async () => {
-    renderAt('/test?entries=untagged');
+    renderAppAt('/test?entries=untagged');
     await openContextMenu('untagged-subject');
 
     expect(
@@ -85,7 +75,7 @@ describe('Delete Untagged Entry', () => {
   });
 
   it("offers Untag, not Delete, for a tag's entry", async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     await openContextMenu('entry-1-subject');
 
     expect(

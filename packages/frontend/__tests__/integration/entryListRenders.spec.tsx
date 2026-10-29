@@ -5,15 +5,14 @@
  * every row again), or that a new entry's form opens next to (a long list
  * stays quick).
  */
-import {act, fireEvent, render, screen} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {API, serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
 import {entry, seed} from '../util/storeFixtures';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
 const renders = vi.hoisted(() => ({rows: 0, bodies: 0}));
 
@@ -51,17 +50,12 @@ vi.mock('../../src/lib/state/appState', async importOriginal => {
   };
 });
 
-const API = 'http://localhost:9001/api/v1';
 const COUNT = 40;
 const WAIT = {timeout: 10_000};
 vi.setConfig({testTimeout: 30_000});
 
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -86,9 +80,7 @@ async function showList(): Promise<void> {
   server.use(http.all(`${API}/*`, () => HttpResponse.error()));
   renders.rows = 0;
   renders.bodies = 0;
-  const history = createMemoryHistory();
-  history.push('/test?entries=all');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test?entries=all');
   await screen.findByText(`subject ${COUNT}`, undefined, WAIT);
 }
 

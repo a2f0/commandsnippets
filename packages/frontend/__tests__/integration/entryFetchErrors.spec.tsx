@@ -1,16 +1,13 @@
-import {act, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -38,17 +35,11 @@ function settle() {
   return new Promise(resolve => setTimeout(resolve, 50));
 }
 
-function renderApp(route: string) {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-}
-
 const syncError = ['ERROR: sync failed:', expect.any(Error)];
 
 describe('The entry lists', () => {
   it('search the entries the database holds, asking the API nothing', async () => {
-    renderApp('/test?entries=all');
+    renderAppAt('/test?entries=all');
     await screen.findByText('entry-1-subject');
     const reads = vi.spyOn(apiClient, 'getEntriesAfter');
 
@@ -72,7 +63,7 @@ describe('The entry lists', () => {
         HttpResponse.json({errors: []}, {status: 500})
       )
     );
-    renderApp(route);
+    renderAppAt(route);
 
     await waitFor(() =>
       expect(consoleError).toHaveBeenCalledWith(...syncError)

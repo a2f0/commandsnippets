@@ -29,10 +29,10 @@ import {enqueue} from '../../../../src/lib/sync/outbox';
 import {ownSyncApi} from '../../../../src/lib/sync/session';
 import {createSyncEngine} from '../../../../src/lib/sync/sync';
 import {handlers, resetMSWState} from '../../../../src/msw/handlers';
+import {API} from '../../../util/msw';
 import {restoreElsewhere} from '../../../util/restoreElsewhere';
 import {entry, tag} from '../../../util/storeFixtures';
 
-const API = 'http://localhost:9001/api/v1';
 const OWNER = 'test';
 
 const server = setupServer(...handlers);

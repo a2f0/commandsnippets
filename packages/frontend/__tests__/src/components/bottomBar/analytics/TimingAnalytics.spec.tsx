@@ -74,9 +74,9 @@ async function switchTags({painted = true} = {}) {
   recordTiming('idb', 'useTagEntries', start + 1, start + 9, '12 rows');
   recordTiming('render', 'EntryList', start + 10, start + 14, '12 rows');
   // Told the HUD, and the paint.
-  await screen.findAllByText('GET /tags_entries', {}, {timeout: 2000});
+  await screen.findAllByText('GET /tags_entries');
   if (painted) {
-    await screen.findByText(/^painted /, {}, {timeout: 2000});
+    await screen.findByText(/^painted /);
   }
 }
 
