@@ -46,7 +46,10 @@ async function tagsUnder(subject: string) {
 }
 
 async function expectTags(subject: string, names: string[]) {
-  await waitFor(async () => expect(await tagsUnder(subject)).toEqual(names));
+  // The first load syncs the tags, entries and junctions before any show.
+  await waitFor(async () => expect(await tagsUnder(subject)).toEqual(names), {
+    timeout: 3000,
+  });
 }
 
 describe('The tags under each entry in the list', () => {

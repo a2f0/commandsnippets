@@ -13,6 +13,14 @@
         "useValidAriaRole": "off"
       },
       "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "@mui/icons-material": "Import each icon from its own path ('@mui/icons-material/Check'): the package index loads every icon in dev and tests."
+            }
+          }
+        },
         "noDefaultExport": "error",
         "noParameterAssign": "error",
         "useAsConstAssertion": "error",

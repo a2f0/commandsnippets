@@ -1,4 +1,4 @@
-import {ArrowBack} from '@mui/icons-material';
+import ArrowBack from '@mui/icons-material/ArrowBack';
 import {Box, Button} from '@mui/material';
 import type {ReactNode} from 'react';
 import {Link} from '../lib/router/Router';

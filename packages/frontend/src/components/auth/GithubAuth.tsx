@@ -1,4 +1,4 @@
-import {GitHub} from '@mui/icons-material';
+import GitHub from '@mui/icons-material/GitHub';
 import React from 'react';
 
 import {useOAuth} from '../../hooks/useOAuth';

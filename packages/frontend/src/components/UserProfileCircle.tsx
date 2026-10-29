@@ -1,4 +1,4 @@
-import {Person as PersonIcon} from '@mui/icons-material';
+import PersonIcon from '@mui/icons-material/Person';
 import {Avatar, Button, Divider, Menu, MenuItem} from '@mui/material';
 import {styled} from '@mui/material/styles';
 import type React from 'react';
