@@ -83,7 +83,8 @@ export function entry(
 export function junction(
   id: string,
   tagId: string,
-  entryId: string
+  entryId: string,
+  attributes: Partial<ITagTextEntryThroughModelJsonApi['attributes']> = {}
 ): ITagTextEntryThroughModelJsonApi {
   return {
     id,
@@ -93,6 +94,7 @@ export function junction(
       date_updated: date,
       date_created: date,
       is_deleted: false,
+      ...attributes,
     },
     relationships: {
       tag: {data: {id: tagId, type: 'Tag'}},

@@ -5,7 +5,6 @@ import {
   waitForElementToBeRemoved,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createMemoryHistory} from 'history';
 import {I18nextProvider} from 'react-i18next';
 import {describe, expect, it} from 'vitest';
 
@@ -14,13 +13,11 @@ import {i18n} from '../../../../../src/i18n/i18n';
 import {useApiVersion} from '../../../../../src/lib/api/apiVersion';
 import {AboutDialog} from '../../../../../src/menu/help/menuItems/AboutDialog';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
-import {server} from '../../../../util/msw';
+import {serveMockApi} from '../../../../util/msw';
 import {signIn} from '../../../../util/signIn';
-import {TestAppRouter} from '../../../../util/TestAppRouter';
+import {renderAppAt} from '../../../../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -29,10 +26,7 @@ beforeEach(() => {
 describe('Help Menu', () => {
   it('Is clickable', async () => {
     const user = userEvent.setup();
-    const history = createMemoryHistory();
-    const route = '/test/test';
-    history.push(route);
-    render(<TestAppRouter history={history} />);
+    renderAppAt('/test/test');
     const helpMenu = screen.getByRole('menu', {name: 'Help'});
     await user.pointer({target: helpMenu, keys: '[MouseLeft]'});
     const about = screen.getByText('About');

@@ -51,17 +51,10 @@ export interface AnalyticsTranslations {
 export interface CommonTranslations {
   welcome: string;
   logout: string;
-  login: string;
   save: string;
   cancel: string;
   delete: string;
-  search: string;
   loading: string;
-  error: string;
-  success: string;
-  confirm: string;
-  yes: string;
-  no: string;
   languageName: string;
   selectLanguage: string;
   logoAlt: string;
@@ -131,11 +124,8 @@ export interface MenuTranslations {
   dataVersionsLoading: string;
   dataVersionsFailed: string;
   hud: string;
-  performance: string;
   logs: string;
   analytics: string;
-  performanceMetrics: string;
-  applicationLogs: string;
   openHudMenu: string;
   expandHud: string;
   collapseHud: string;
@@ -179,9 +169,6 @@ export interface MenuTranslations {
   logEntry_other: string;
   errorCaptured_one: string;
   errorCaptured_other: string;
-  cpuUsage: string;
-  memory: string;
-  network: string;
   darkMode: string;
   lightMode: string;
   showTagCounts: string;

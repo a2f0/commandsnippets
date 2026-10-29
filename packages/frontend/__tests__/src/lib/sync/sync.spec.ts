@@ -44,9 +44,9 @@ import {
   resetMSWState,
   setRuntimeEntriesOverride,
 } from '../../../../src/msw/handlers';
+import {API} from '../../../util/msw';
 import {entry} from '../../../util/storeFixtures';
 
-const API = 'http://localhost:9001/api/v1';
 const JSON_API = {'Content-Type': 'application/vnd.api+json'};
 
 const server = setupServer(...handlers);

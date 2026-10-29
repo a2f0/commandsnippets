@@ -4,21 +4,18 @@
  * another), and any exported.
  */
 import {backupSchema} from '@commandsnippets/api-shared/responses';
-import {render, screen, waitFor, within} from '@testing-library/react';
+import {screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {heldVersion} from '../../../../../src/lib/sync/dataVersion';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
-import {server} from '../../../../util/msw';
+import {API, serveMockApi, server} from '../../../../util/msw';
 import {restoreElsewhere} from '../../../../util/restoreElsewhere';
 import {signIn, TEST_USER} from '../../../../util/signIn';
-import {TestAppRouter} from '../../../../util/TestAppRouter';
-
-const API = 'http://localhost:9001/api/v1';
+import {renderAppAt} from '../../../../util/TestAppRouter';
 
 interface Download {
   name: string;
@@ -52,15 +49,12 @@ function captureDownloads(): Download[] {
   return downloads;
 }
 
-beforeAll(() => server.listen());
+serveMockApi();
 afterEach(() => {
-  server.resetHandlers();
-  server.events.removeAllListeners();
   vi.restoreAllMocks();
   Reflect.deleteProperty(URL, 'createObjectURL');
   Reflect.deleteProperty(URL, 'revokeObjectURL');
 });
-afterAll(() => server.close());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -69,9 +63,7 @@ beforeEach(() => {
 });
 
 async function openVersions() {
-  const history = createMemoryHistory();
-  history.push('/test/test-tag-1');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
   await syncSession(TEST_USER).sync.syncAll();
   const user = userEvent.setup();

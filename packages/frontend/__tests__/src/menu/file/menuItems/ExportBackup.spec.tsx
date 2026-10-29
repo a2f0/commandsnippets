@@ -8,9 +8,8 @@ import {
   EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
 import {backupSchema} from '@commandsnippets/api-shared/responses';
-import {render, screen, waitFor} from '@testing-library/react';
+import {screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {backupFileName} from '../../../../../src/lib/data/backup';
@@ -19,11 +18,14 @@ import {OWNER_ID_KEY} from '../../../../../src/lib/db/database';
 import {isLocalId} from '../../../../../src/lib/sync/outbox';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
-import {server} from '../../../../util/msw';
+import {
+  API,
+  offlineForWrites,
+  serveMockApi,
+  server,
+} from '../../../../util/msw';
 import {signIn, TEST_USER} from '../../../../util/signIn';
-import {TestAppRouter} from '../../../../util/TestAppRouter';
-
-const API = 'http://localhost:9001/api/v1';
+import {renderAppAt} from '../../../../util/TestAppRouter';
 
 interface Download {
   name: string;
@@ -62,15 +64,12 @@ function captureDownloads(): Download[] {
 
 let downloads: Download[];
 
-beforeAll(() => server.listen());
+serveMockApi();
 afterEach(() => {
-  server.resetHandlers();
-  server.events.removeAllListeners();
   vi.restoreAllMocks();
   Reflect.deleteProperty(URL, 'createObjectURL');
   Reflect.deleteProperty(URL, 'revokeObjectURL');
 });
-afterAll(() => server.close());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -81,9 +80,7 @@ beforeEach(() => {
 });
 
 async function renderEntries() {
-  const history = createMemoryHistory();
-  history.push('/test/test-tag-1');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
 }
 
@@ -149,11 +146,7 @@ describe('Export Backup', () => {
   it('sends the writes queued here first, so the backup holds them', async () => {
     await renderEntries();
     const session = syncSession(TEST_USER);
-    server.use(
-      http.all(`${API}/*`, ({request}) =>
-        request.method === 'GET' ? undefined : HttpResponse.error()
-      )
-    );
+    offlineForWrites();
     await createEntry(session, 'queued-subject', 'body');
     await expect(session.sync.flush()).rejects.toThrow();
     server.resetHandlers();
@@ -174,11 +167,7 @@ describe('Export Backup', () => {
     await renderEntries();
     const session = syncSession(TEST_USER);
     const backupsRead = backupRequests();
-    server.use(
-      http.all(`${API}/*`, ({request}) =>
-        request.method === 'GET' ? undefined : HttpResponse.error()
-      )
-    );
+    offlineForWrites();
     await createEntry(session, 'unsent-subject', 'body');
 
     await exportBackup();

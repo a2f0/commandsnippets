@@ -4,9 +4,8 @@
  * chooses to stay, to sign out keeping them on this device, or to discard
  * them.
  */
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {Dexie} from 'dexie';
-import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {createTag} from '../../src/lib/data/writes';
@@ -19,19 +18,12 @@ import {
 } from '../../src/lib/state/signOutWarning';
 import {hasQueuedWrites, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {API, HOST, offlineForWrites, serveMockApi, server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-const HOST = 'http://localhost:9001';
-const API = `${HOST}/api/v1`;
-
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -40,18 +32,8 @@ beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
-/** The API unreachable for writes (offline) until the handlers reset. */
-const offline = () =>
-  server.use(
-    http.all(`${API}/*`, ({request}) =>
-      request.method === 'GET' ? undefined : HttpResponse.error()
-    )
-  );
-
 async function logOut() {
-  const history = createMemoryHistory();
-  history.push('/test/test-tag-1');
-  render(<TestAppRouter history={history} />);
+  const {history} = renderAppAt('/test/test-tag-1');
   await screen.findByText('test-tag-1');
   return {
     history,
@@ -66,7 +48,7 @@ async function logOut() {
 
 /** A write queued while the API cannot be reached. */
 async function queueOffline() {
-  offline();
+  offlineForWrites();
   const session = syncSession(TEST_USER);
   await createTag(session, 'unsent');
   await expect(session.sync.flush()).rejects.toThrow();

@@ -4,9 +4,8 @@
  * stores them.
  */
 import {DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
-import {act, render, screen, waitFor} from '@testing-library/react';
+import {act, screen, waitFor} from '@testing-library/react';
 import {Dexie} from 'dexie';
-import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw/http';
 import {delay} from 'msw/utils/delay';
 import {type MockInstance, vi} from 'vitest';
@@ -15,19 +14,16 @@ import {tagCursorKey} from '../../src/lib/db/database';
 import {STORAGE_KEY} from '../../src/lib/state/appState';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {API, serveMockApi, server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {entry, junction, seed, tag} from '../util/storeFixtures';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-const API = 'http://localhost:9001/api/v1';
 const JSON_API = {'Content-Type': 'application/vnd.api+json'};
 /** Another device's writes name the data version it holds: the first. */
 const ELSEWHERE = {[DATA_VERSION_HEADER]: '1'};
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 
 let consoleError: MockInstance<typeof console.error>;
 beforeEach(() => {
@@ -41,12 +37,6 @@ afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
-
-function renderAt(route: string) {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-}
 
 /** The entries the list shows (drag handle, subject, body), in order. */
 const listed = () =>
@@ -83,13 +73,13 @@ describe('The entries page', () => {
       })
     );
 
-    renderAt('/test/held');
+    renderAppAt('/test/held');
 
     await waitFor(() => expect(listed()).toEqual(['::held-subjectbody-70']));
   });
 
   it('shows a change made elsewhere when the app comes back into view', async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     await waitFor(() => expect(listed()).toHaveLength(4));
 
     // Another device edits entry 1.
@@ -111,7 +101,7 @@ describe('The entries page', () => {
         HttpResponse.json({errors: []}, {status: 500})
       )
     );
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
 
     await waitFor(() => expect(listed()).toHaveLength(4));
     expect(consoleError).toHaveBeenCalledWith(
@@ -144,7 +134,7 @@ describe('The entries page', () => {
       consoleError.mock.calls.filter(([message]) =>
         String(message).startsWith('ERROR: sync failed:')
       ).length;
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     // The collection's sync failed, and the tag's.
     // (vi.waitFor: its polling runs under the fake interval.)
     await vi.waitFor(() => expect(failures()).toBe(2));
@@ -160,7 +150,7 @@ describe('The entries page', () => {
   });
 
   it('drops an entry untagged elsewhere from the tag shown', async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     await waitFor(() => expect(listed()).toHaveLength(4));
 
     const untagged = await fetch(`${API}/tags_entries/2`, {
@@ -175,7 +165,7 @@ describe('The entries page', () => {
   });
 
   it("shows none of the last user's tags or entries once another signs in", async () => {
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     await waitFor(() => expect(listed()).toHaveLength(4));
     expect(screen.queryAllByRole('tag')).not.toEqual([]);
 
@@ -204,7 +194,7 @@ describe('The entries page', () => {
         })
       )
     );
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
 
     await waitFor(() => expect(store.loggedInUser).toBeNull());
     expect(listed()).toEqual([]);
@@ -239,7 +229,7 @@ describe('The entries page', () => {
       )
     );
     const test = syncSession(TEST_USER).db.name;
-    renderAt('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
 
     await waitFor(() => expect(store.loggedInUser).toBe('someone-else'));
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject(

@@ -17,10 +17,16 @@ if (typeof Element !== 'undefined') {
 // API's data as __tests__/util/msw.ts has it. (The app's modules read
 // `window` when they load, so node-environment specs skip this.)
 if (typeof window !== 'undefined') {
-  const [{resetApp}, {resetMockApi}] = await Promise.all([
+  const [{configure}, {resetApp}, {resetMockApi}] = await Promise.all([
+    import('@testing-library/react'),
     import('./util/signIn'),
     import('./util/msw'),
   ]);
+  // How long `findBy*` and `waitFor` wait: the app's first load (the sync of
+  // the tags, entries and junctions into IndexedDB) can take longer than
+  // Testing Library's default second while other suites run. Below Vitest's
+  // 5 second test timeout, so a wait in vain fails with what it waited for.
+  configure({asyncUtilTimeout: 3000});
   beforeEach(() => resetMockApi());
   afterEach(() => resetApp());
 }

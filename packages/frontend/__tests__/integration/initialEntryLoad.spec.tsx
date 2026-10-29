@@ -1,6 +1,5 @@
 import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
@@ -10,31 +9,21 @@ import {syncSession} from '../../src/lib/sync/session';
 import {onePage} from '../../src/msw/documents';
 import {afterOf, keysetPage} from '../../src/msw/keyset';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
 import {entry} from '../util/storeFixtures';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
 // Hundreds of IndexedDB writes take longer alongside the full test suite.
 const loadingWait = {timeout: 10000};
 vi.setConfig({testTimeout: 30000});
 
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterAll(() => server.close());
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
+serveMockApi({onUnhandledFrame: 'error'});
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
-
-function renderApp() {
-  const history = createMemoryHistory();
-  history.push('/test?entries=all');
-  return render(<TestAppRouter history={history} />);
-}
 
 const entries = Array.from({length: 205}, (_, index) =>
   entry(String(index + 1), {})
@@ -61,7 +50,7 @@ it('keeps a legacy cursor background failure out of the first-load UI', async ()
       HttpResponse.json({errors: []}, {status: 500})
     )
   );
-  renderApp();
+  renderAppAt('/test?entries=all');
   await waitFor(
     () =>
       expect(logged).toHaveBeenCalledWith(
@@ -88,7 +77,7 @@ it('offers retry when the first load fails before it creates a cursor', async ()
       HttpResponse.json({errors: []}, {status: 500})
     )
   );
-  renderApp();
+  renderAppAt('/test?entries=all');
   await screen.findByText(
     'Entry loading interrupted. Your saved pages are kept.',
     {},
@@ -123,7 +112,7 @@ it('shows each page and loads all 205 entries without scrolling', async () => {
       return HttpResponse.json(keysetPage(url, entries, after));
     })
   );
-  const app = renderApp();
+  const app = renderAppAt('/test?entries=all');
   try {
     await screen.findByText('Loading entries: page 2 of 3', {}, loadingWait);
     expect(
@@ -186,7 +175,7 @@ it('shows an interrupted load and retries from the saved cursor', async () => {
       return HttpResponse.json(keysetPage(url, entries, after));
     })
   );
-  renderApp();
+  renderAppAt('/test?entries=all');
   await screen.findByText(
     'Entry loading interrupted. Your saved pages are kept.',
     {},
@@ -224,7 +213,7 @@ it('loads entries with an indeterminate bar when the count is unavailable', asyn
       return HttpResponse.json(keysetPage(url, entries, after));
     })
   );
-  const app = renderApp();
+  const app = renderAppAt('/test?entries=all');
   try {
     await screen.findByText('Loading entries…', {}, loadingWait);
     expect(screen.getByRole('progressbar')).not.toHaveAttribute(

@@ -2,13 +2,11 @@ import {act, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {type MockInstance, vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -45,13 +43,7 @@ describe('MenuBar', () => {
 
   describe('Rendering', () => {
     it('renders all menu buttons when user is logged in', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         expect(screen.getByRole('menu', {name: 'File'})).toBeInTheDocument();
@@ -64,13 +56,7 @@ describe('MenuBar', () => {
     });
 
     it('renders logo with correct styling', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         const logo = screen.getByRole('img', {name: 'Command Snippets Logo'});
@@ -85,13 +71,7 @@ describe('MenuBar', () => {
     });
 
     it('renders auth components', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         // Check that auth components are rendered (they might be hidden or have specific styling)
@@ -103,13 +83,7 @@ describe('MenuBar', () => {
 
   describe('Menu Button Functionality', () => {
     it('has clickable menu buttons', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         const fileButton = screen.getByRole('menu', {name: 'File'});
@@ -137,13 +111,7 @@ describe('MenuBar', () => {
     });
 
     it('has proper button IDs', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         expect(screen.getByRole('menu', {name: 'File'})).toHaveAttribute(
@@ -176,13 +144,7 @@ describe('MenuBar', () => {
 
   describe('Environment-specific Behavior', () => {
     it('shows Debug menu in non-production environment', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         expect(screen.getByRole('menu', {name: 'Debug'})).toBeInTheDocument();
@@ -261,13 +223,7 @@ describe('MenuBar', () => {
 
   describe('Layout and Structure', () => {
     it('renders menu bar with correct layout structure', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         // Check that the menu bar container exists
@@ -281,13 +237,7 @@ describe('MenuBar', () => {
     });
 
     it('has proper menu button styling', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         const fileButton = screen.getByRole('menu', {name: 'File'});
@@ -301,13 +251,7 @@ describe('MenuBar', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA labels', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         expect(screen.getByRole('menu', {name: 'File'})).toHaveAttribute(
@@ -338,13 +282,7 @@ describe('MenuBar', () => {
     });
 
     it('has proper ARIA controls', async () => {
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt('/test/test', {act: true});
 
       await waitFor(() => {
         expect(screen.getByRole('menu', {name: 'File'})).toHaveAttribute(

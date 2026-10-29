@@ -1,12 +1,4 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
@@ -14,15 +6,12 @@ import {syncSession} from '../../src/lib/sync/session';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {mockIntersectionObserver} from '../util/intersectionObserver';
-import {server} from '../util/msw';
+import {API, serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-const API = 'http://localhost:9001/api/v1';
-beforeAll(() => server.listen());
-afterAll(() => server.close());
+serveMockApi();
 afterEach(() => {
-  server.resetHandlers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -33,11 +22,6 @@ beforeEach(() => {
 const signInHere = () => {
   signIn();
   assignLoggedInCookie();
-};
-const mount = (path = '/test/activity/reuses') => {
-  const history = createMemoryHistory({initialEntries: [path]});
-  render(<TestAppRouter history={history} />);
-  return history;
 };
 const list = () => screen.findByRole('list', {name: 'Reuses'});
 
@@ -54,7 +38,7 @@ describe('infinite scrolling', () => {
       signInHere();
       await seedReuses(51);
       const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
-      mount(path);
+      renderAppAt(path);
       const rows = within(await list()).getAllByRole('listitem');
       expect(rows).toHaveLength(50);
       await waitFor(() => expect(observer.observers.length).toBeGreaterThan(0));
@@ -93,7 +77,7 @@ describe('infinite scrolling', () => {
         if (page === 2) await gate.promise;
         return original(id, page);
       });
-    mount();
+    renderAppAt('/test/activity/reuses');
     await list();
     await waitFor(() => expect(observer.observers).toHaveLength(1));
     const first = observer.latest();
@@ -127,7 +111,7 @@ describe('infinite scrolling', () => {
     signInHere();
     await seedReuses(51);
     const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
-    mount();
+    renderAppAt('/test/activity/reuses');
     await list();
     await waitFor(() => expect(observer.observers).toHaveLength(1));
     const first = observer.latest();
@@ -165,7 +149,7 @@ describe('infinite scrolling', () => {
         if (page === 2) await gate.promise;
         return original(id, page);
       });
-    const history = mount();
+    const {history} = renderAppAt('/test/activity/reuses');
     await list();
     await waitFor(() => expect(observer.observers).toHaveLength(1));
     const first = observer.latest();
@@ -197,7 +181,7 @@ describe('infinite scrolling', () => {
         if (page === 2) await gate.promise;
         return original(id, page);
       });
-    mount();
+    renderAppAt('/test/activity/reuses');
     await list();
     await waitFor(() => expect(observer.observers).toHaveLength(1));
     const first = observer.latest();
@@ -222,7 +206,7 @@ describe('infinite scrolling', () => {
     signInHere();
     await seedReuses(51);
     const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
-    mount();
+    renderAppAt('/test/activity/reuses');
     await list();
     await waitFor(() => expect(observer.observers).toHaveLength(1));
     const first = observer.latest();
@@ -242,7 +226,7 @@ it('opens from View, combines entries newest first, and returns after drilling i
   await apiClient.forVersion(1).reuseEntry('1', 'first');
   await apiClient.forVersion(1).reuseEntry('1', 'second');
   await apiClient.forVersion(1).reuseEntry('2', 'third');
-  const history = mount('/test?entries=all');
+  const {history} = renderAppAt('/test?entries=all');
   fireEvent.click(await screen.findByRole('menu', {name: 'View'}));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'All reuses'}));
   expect(
@@ -275,7 +259,7 @@ it('opens from View, combines entries newest first, and returns after drilling i
 
 it('opens all reuses from the individual history', async () => {
   signInHere();
-  mount('/test/entries/1');
+  renderAppAt('/test/entries/1');
   fireEvent.click(await screen.findByRole('link', {name: 'All reuses'}));
   expect(
     await screen.findByRole('heading', {name: 'All reuses'})
@@ -292,7 +276,7 @@ it('shows the whole history in manageable batches', async () => {
   for (let index = 0; index < 51; index += 1)
     await apiClient.forVersion(1).reuseEntry('1', `copy-${index}`);
   const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
-  mount();
+  renderAppAt('/test/activity/reuses');
   expect(within(await list()).getAllByRole('listitem')).toHaveLength(50);
   expect(screen.getByText('51 reuses')).toBeInTheDocument();
   expect(pages.mock.calls.map(([, page]) => page)).toEqual([1]);
@@ -307,7 +291,7 @@ it('shows the whole history in manageable batches', async () => {
 it('retries initial errors and refreshes copies from another device', async () => {
   signInHere();
   server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
-  mount();
+  renderAppAt('/test/activity/reuses');
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'The reuses could not be read.'
   );
@@ -325,7 +309,7 @@ it('offers Retry when the first sync cannot determine a data version offline', a
   signInHere();
   vi.spyOn(console, 'error').mockImplementation(() => {});
   server.use(http.all(`${API}/*`, () => HttpResponse.error()));
-  mount();
+  renderAppAt('/test/activity/reuses');
   const warning = await screen.findByRole('alert');
   expect(warning).toHaveTextContent('The reuses could not be read.');
   expect(screen.queryByText('Loading the reuses…')).toBeNull();
@@ -343,7 +327,7 @@ it('retries the next page without dropping loaded rows or duplicating a shifted 
   for (let index = 0; index < 51; index += 1)
     await apiClient.forVersion(1).reuseEntry('1', `copy-${index}`);
   const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
-  mount();
+  renderAppAt('/test/activity/reuses');
   await list();
   // A new copy shifts the last row of page one onto page two.
   await apiClient.forVersion(1).reuseEntry('2', 'between-pages');
@@ -382,7 +366,7 @@ it('coalesces reconnects during a read and refreshes only the newest page', asyn
       await gate.promise;
       return original(...args);
     });
-  mount();
+  renderAppAt('/test/activity/reuses');
   await waitFor(() => expect(reads).toHaveBeenCalledTimes(1));
   act(() => {
     window.dispatchEvent(new Event('online'));
@@ -404,7 +388,7 @@ it('coalesces reconnects during a read and refreshes only the newest page', asyn
 it('keeps the last history visible on refresh failure and offers Retry', async () => {
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'first');
-  mount();
+  renderAppAt('/test/activity/reuses');
   await list();
   server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
   fireEvent.click(screen.getByRole('button', {name: 'Refresh'}));
@@ -422,7 +406,7 @@ it('retains a reuse of a deleted entry without linking to a missing page', async
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'first');
   await apiClient.forVersion(1).deleteEntry('1');
-  mount();
+  renderAppAt('/test/activity/reuses');
   expect(
     within(await list()).getByText('Unavailable entry #1')
   ).toBeInTheDocument();
@@ -432,7 +416,7 @@ it('retains a reuse of a deleted entry without linking to a missing page', async
 it('clears displayed history when a different data version is adopted', async () => {
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'old-version');
-  mount();
+  renderAppAt('/test/activity/reuses');
   await list();
   server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
   await act(() => syncSession('test').sync.adopt(2));
@@ -453,7 +437,7 @@ it.each(['guest', 'other user', 'staff'])(
         return HttpResponse.error();
       })
     );
-    const history = mount(
+    const {history} = renderAppAt(
       viewer === 'guest' ? '/test/activity/reuses' : '/alice/activity/reuses'
     );
     await waitFor(() =>
@@ -469,7 +453,7 @@ it.each(['guest', 'other user', 'staff'])(
 it('signs out and removes the private history when the cookie is cleared', async () => {
   signIn();
   assignLoggedInCookie('');
-  mount();
+  renderAppAt('/test/activity/reuses');
   await waitFor(() => expect(store.loggedInUser).toBeNull());
   expect(screen.queryByRole('heading', {name: 'All reuses'})).toBeNull();
 });

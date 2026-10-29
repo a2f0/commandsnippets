@@ -1,22 +1,10 @@
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn, store} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
-async function renderAt(path: string) {
-  const history = createMemoryHistory();
-  history.push(path);
-  await act(async () => {
-    render(<TestAppRouter history={history} />);
-  });
-  return history;
-}
+serveMockApi();
 
 async function expectSignInPage(history: {location: {pathname: string}}) {
   await waitFor(() => {
@@ -44,7 +32,7 @@ describe('Signing out', () => {
   });
 
   it('goes from File > Logout on a user page to the sign-in page', async () => {
-    const history = await renderAt('/test/test-tag-1');
+    const {history} = await renderAppAt('/test/test-tag-1', {act: true});
     const fileMenuButton = await waitFor(() => {
       const button = document.getElementById('file-menu-button');
       expect(button).toBeInTheDocument();
@@ -61,7 +49,7 @@ describe('Signing out', () => {
 
   it('goes from the admin page to the sign-in page', async () => {
     store.setIsStaff(true);
-    const history = await renderAt('/admin');
+    const {history} = await renderAppAt('/admin', {act: true});
     await act(async () => {
       store.setLoggedInUser(null);
     });
@@ -70,7 +58,7 @@ describe('Signing out', () => {
   });
 
   it('goes to the sign-in page however the session ends', async () => {
-    const history = await renderAt('/test');
+    const {history} = await renderAppAt('/test', {act: true});
     await act(async () => {
       store.setLoggedInUser(null);
     });
@@ -81,7 +69,7 @@ describe('Signing out', () => {
 
 describe('Signed-out visitors', () => {
   it('can open a public user page without signing in', async () => {
-    const history = await renderAt('/alice/some-tag');
+    const {history} = await renderAppAt('/alice/some-tag', {act: true});
     expect(history.location.pathname).toBe('/alice/some-tag');
     expect(document.getElementById('signInPage')).toBeNull();
     expect(screen.getByText('Read-only: alice')).toBeInTheDocument();
@@ -93,11 +81,12 @@ describe('Signed-out visitors', () => {
   });
 
   it('is sent from the admin page to sign-in', async () => {
-    await expectSignInPage(await renderAt('/admin'));
+    const {history} = await renderAppAt('/admin', {act: true});
+    await expectSignInPage(history);
   });
 
   it('still reach the OAuth callbacks', async () => {
-    const history = await renderAt('/oauth/github');
+    const {history} = await renderAppAt('/oauth/github', {act: true});
 
     expect(history.location.pathname).toBe('/oauth/github');
     expect(screen.getByText('Login with GitHub')).toBeInTheDocument();

@@ -19,16 +19,7 @@ import {Dexie} from 'dexie';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {delay} from 'msw/utils/delay';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {apiClient, UserMismatchError} from '../../../../src/lib/api/apiClient';
 import {setSignedInUser} from '../../../../src/lib/auth/authUtils';
 import {entriesOfTag} from '../../../../src/lib/data/hooks';
@@ -58,18 +49,11 @@ import {
 import {claimData, syncSession} from '../../../../src/lib/sync/session';
 import {errorDocument} from '../../../../src/msw/documents';
 import {apiClientMethods} from '../../../util/apiClientMethods';
-import {server} from '../../../util/msw';
+import {API, offlineForWrites, serveMockApi, server} from '../../../util/msw';
 import {signIn, store, TEST_USER} from '../../../util/signIn';
 import {tag} from '../../../util/storeFixtures';
 
-const API = 'http://localhost:9001/api/v1';
-
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterEach(() => {
-  server.resetHandlers();
-  server.events.removeAllListeners();
-});
-afterAll(() => server.close());
+serveMockApi({onUnhandledFrame: 'error'});
 beforeEach(() => {
   signIn();
   // The mock API announces each request; a flush that fails warns.
@@ -99,14 +83,6 @@ function sent(): string[] {
   });
   return writes;
 }
-
-/** The API unreachable (offline) for writes until the handlers reset. */
-const offline = () =>
-  server.use(
-    http.all(`${API}/*`, ({request}) =>
-      request.method === 'GET' ? undefined : HttpResponse.error()
-    )
-  );
 
 describe('a write', () => {
   it('is stored and queued at once, before the API answers', async () => {
@@ -178,7 +154,7 @@ describe('a write', () => {
         ]);
       }
     });
-    offline();
+    offlineForWrites();
     await renameTag(session(), '2', 'renamed');
     await renameTag(session(), '3', 'renamed-too');
     const [first, second] = await db().outbox.toArray();
@@ -206,7 +182,7 @@ describe('a write', () => {
 
   it('is made after every write made before it here, though the clock is set back', async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
     const now = Date.now();
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 60_000);
     await renameTag(session(), '2', 'first');
@@ -229,7 +205,7 @@ describe('a write', () => {
 
   it('is made after every write queued before it, by any tab at once', async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
     // Two tabs read the same clock, and neither sees the other's last time
     // in the browser's storage yet.
     vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 86_400_000);
@@ -336,7 +312,7 @@ describe('a write naming a local id', () => {
         named.push(request.headers.get(EXPECTED_USER_HEADER));
       }
     });
-    offline();
+    offlineForWrites();
     await createTag(session(), 'mine');
     await expect(session().sync.flush()).rejects.toThrow();
     server.resetHandlers();
@@ -356,7 +332,7 @@ describe('a write naming a local id', () => {
 describe('offline', () => {
   it('keeps every write, and sends them all once back online', async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
 
     const tag = await createTag(session(), 'offline');
     await renameTag(session(), '2', 'renamed offline');
@@ -382,7 +358,7 @@ describe('offline', () => {
 
   it('is never undone by a sync before the write is sent', async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
     await renameTag(session(), '2', 'mine');
     await untagEntry(session(), '1', '3');
 
@@ -438,7 +414,7 @@ describe('a write a newer one beat (last writer wins)', () => {
 
   it('a create of a tag another device made is that tag', async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
     // Made here offline...
     const local = await createTag(session(), 'elsewhere');
     const entry = await createEntry(session(), 'in it', 'body', local.id);
@@ -589,7 +565,7 @@ describe('the writes', () => {
   it('keep a tag asked for again by id, never making another of the name', async () => {
     await session().sync.syncAll();
     const before = await inTag('1');
-    offline();
+    offlineForWrites();
     await createTag(session(), 'test-tag-1');
     await expect(session().sync.flush()).rejects.toThrow();
     server.resetHandlers();
@@ -775,7 +751,7 @@ describe('the writes', () => {
       };
     };
     const before = await counts();
-    offline();
+    offlineForWrites();
 
     await tagEntry(session(), '2', '1');
     const tagged = {tag: before.tag + 1, entry: before.entry + 1};
@@ -806,7 +782,7 @@ describe('the writes', () => {
     const before = (await tag()).entry_count;
     // Another device renames the tag.
     await apiClient.forVersion(1).updateTag('2', 'renamed-elsewhere');
-    offline();
+    offlineForWrites();
     await tagEntry(session(), '2', '1');
 
     // Reads still reach the API: the tag it reads is counted without the
@@ -872,7 +848,7 @@ describe('the writes', () => {
     await session().sync.syncAll();
     // Another device renames the tag, which this one moves meanwhile.
     await apiClient.forVersion(1).updateTag('3', 'renamed-elsewhere');
-    offline();
+    offlineForWrites();
     await reorderTags(session(), '3', '1');
     await session().sync.syncAll();
     expect((await tagRow('3'))?.attributes.name).toBe('test-tag-3');
@@ -891,7 +867,7 @@ describe('the writes', () => {
       .sort((a, b) => a.junction.attributes.order - b.junction.attributes.order)
       .map(({entry}) => entry.id);
     invariant(first && third, 'tag 1 should hold three entries');
-    offline();
+    offlineForWrites();
     await reorderEntries(session(), '1', third, first);
     await session().sync.syncAll();
 
@@ -945,7 +921,7 @@ describe('the writes', () => {
       )[0]?.entry.id;
     const [top, bottom] = [await lastOf(), await firstOf()];
     invariant(top && bottom, 'tag 1 should hold entries');
-    offline();
+    offlineForWrites();
     await reorderTags(session(), '4', '2');
     await reorderEntries(session(), '1', top, bottom);
     await expect(session().sync.flush()).rejects.toThrow();
@@ -984,7 +960,7 @@ describe('the writes', () => {
     const listed = await apiClient.getTagsAfter(CURSOR_START);
     const [first] = listed.data;
     invariant(first, 'the API should list a tag');
-    offline();
+    offlineForWrites();
     await reorderTags(session(), '4', '2');
     // The reorder reaches the API; then another tab signs in as someone
     // else, whose cookie it is: a read naming this tab's user is refused, as
@@ -1164,7 +1140,7 @@ describe('the writes', () => {
 
   it("never sign out an account that took the data while an older account's flush sent its queue", async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
     await createTag(session(), 'one');
     await createTag(session(), 'two');
     await expect(session().sync.flush()).rejects.toThrow();
@@ -1322,7 +1298,7 @@ describe('a reuse (a copy)', () => {
   it('is counted at once, and the API counts it once, though retried', async () => {
     await session().sync.syncAll();
     const reuse = vi.spyOn(apiClientMethods, 'reuseEntry');
-    offline();
+    offlineForWrites();
 
     await reuseEntry(session(), '1');
     expect(await reusedCount('1')).toBe(1);
@@ -1356,7 +1332,7 @@ describe('a reuse (a copy)', () => {
 
   it('keeps its count through a sync before it is sent', async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
     await reuseEntry(session(), '1');
     await session().sync.syncAll();
     expect(await reusedCount('1')).toBe(1);
@@ -1397,7 +1373,7 @@ describe('a reuse (a copy)', () => {
 
   it("are listed newest first, this device's queued ones too", async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
     await reuseEntry(session(), '1');
     await reuseEntry(session(), '1');
     await reuseEntry(session(), '2');
@@ -1417,7 +1393,7 @@ describe('a reuse (a copy)', () => {
 
   it('flushes copies across the whole profile without an entry filter', async () => {
     await session().sync.syncAll();
-    offline();
+    offlineForWrites();
     await reuseEntry(session(), '1');
     await reuseEntry(session(), '2');
     server.resetHandlers();

@@ -4,8 +4,7 @@
  * before every sync).
  */
 import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
@@ -14,18 +13,12 @@ import {createEntry, createTag} from '../../src/lib/data/writes';
 import {isLocalId} from '../../src/lib/sync/outbox';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {API, offlineForWrites, serveMockApi, server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-const API = 'http://localhost:9001/api/v1';
-
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -35,9 +28,7 @@ beforeEach(() => {
 });
 
 it('shows a write made offline at once, and sends it once back online', async () => {
-  const history = createMemoryHistory();
-  history.push('/test/test-tag-1');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
   const session = syncSession(TEST_USER);
   const posted: string[] = [];
@@ -46,11 +37,7 @@ it('shows a write made offline at once, and sends it once back online', async ()
       posted.push(new URL(request.url).pathname);
     }
   });
-  server.use(
-    http.all(`${API}/*`, ({request}) =>
-      request.method === 'GET' ? undefined : HttpResponse.error()
-    )
-  );
+  offlineForWrites();
 
   const entry = await createEntry(session, 'offline-subject', 'body', '1');
 
@@ -80,16 +67,10 @@ it('shows a write made offline at once, and sends it once back online', async ()
 });
 
 it('keeps writes queued when the session expires, and sends them at the next sign-in', async () => {
-  const history = createMemoryHistory();
-  history.push('/test/test-tag-1');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
   const session = syncSession(TEST_USER);
-  server.use(
-    http.all(`${API}/*`, ({request}) =>
-      request.method === 'GET' ? undefined : HttpResponse.error()
-    )
-  );
+  offlineForWrites();
   await createEntry(session, 'kept-subject', 'body');
   await expect(session.sync.flush()).rejects.toThrow();
 
@@ -118,16 +99,10 @@ it('keeps writes queued when the session expires, and sends them at the next sig
 });
 
 it("keeps an editor open on an entry made offline, with its text, when the API's id replaces its own", async () => {
-  const history = createMemoryHistory();
-  history.push('/test?entries=untagged');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test?entries=untagged');
   await screen.findByText('test-tag-1');
   const session = syncSession(TEST_USER);
-  server.use(
-    http.all(`${API}/*`, ({request}) =>
-      request.method === 'GET' ? undefined : HttpResponse.error()
-    )
-  );
+  offlineForWrites();
   await createEntry(session, 'draft-subject', 'body');
   await expect(session.sync.flush()).rejects.toThrow();
 
@@ -157,16 +132,10 @@ it("keeps an editor open on an entry made offline, with its text, when the API's
 });
 
 it("keeps a new entry's form opened next to an entry made offline, with its text, when the API's id replaces its own", async () => {
-  const history = createMemoryHistory();
-  history.push('/test?entries=untagged');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test?entries=untagged');
   await screen.findByText('test-tag-1');
   const session = syncSession(TEST_USER);
-  server.use(
-    http.all(`${API}/*`, ({request}) =>
-      request.method === 'GET' ? undefined : HttpResponse.error()
-    )
-  );
+  offlineForWrites();
   await createEntry(session, 'anchor', 'body');
   await expect(session.sync.flush()).rejects.toThrow();
 
@@ -200,9 +169,7 @@ it("keeps an editor open on an entry when a tag made offline gets the entry's id
   const {data: entry} = await apiClient
     .forVersion(1)
     .createEntry('five', 'body');
-  const history = createMemoryHistory();
-  history.push('/test?entries=untagged');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test?entries=untagged');
   const session = syncSession(TEST_USER);
   fireEvent.contextMenu(await screen.findByText('five'));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'Edit'}));
@@ -225,9 +192,7 @@ it("keeps an editor open on an entry when a tag made offline gets the entry's id
 });
 
 it('adopts the entry a create whose answer was lost made, when a sync brings it', async () => {
-  const history = createMemoryHistory();
-  history.push('/test?entries=untagged');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test?entries=untagged');
   await screen.findByText('test-tag-1');
   const session = syncSession(TEST_USER);
   // The API makes the entry, but its answer never arrives.
@@ -276,9 +241,7 @@ it('adopts the entry a create whose answer was lost made, when a sync brings it'
 });
 
 it('adopts the tag a create whose answer was lost made, renamed since', async () => {
-  const history = createMemoryHistory();
-  history.push('/test?entries=untagged');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test?entries=untagged');
   await screen.findByText('test-tag-1');
   const session = syncSession(TEST_USER);
   server.use(

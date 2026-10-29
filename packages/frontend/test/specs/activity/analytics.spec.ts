@@ -36,7 +36,11 @@ describe('Analytics', () => {
     await $('#view-menu-analytics').click();
     await $('#analyticsPage').waitForDisplayed();
     await $('#analyticsPage [role="combobox"]').click();
+    await $('[role="option"][data-value="reused"]').waitForStable();
     await $('[role="option"][data-value="reused"]').click();
+    await expect($('#analyticsPage [role="combobox"]')).toHaveText(
+      'Entries reused'
+    );
     await $('#analyticsPage svg[role="img"]').waitForDisplayed();
     expect(
       await $('#analyticsPage svg[role="img"] desc').getProperty('textContent')

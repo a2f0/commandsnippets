@@ -1,17 +1,14 @@
-import {render, screen, waitFor, within} from '@testing-library/react';
+import {screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -21,12 +18,6 @@ afterEach(() => {
 });
 
 type Arrow = 'ArrowUpwardIcon' | 'ArrowDownwardIcon';
-
-function renderApp(route: string) {
-  const history = createMemoryHistory();
-  history.push(route);
-  render(<TestAppRouter history={history} />);
-}
 
 /** The entry subjects in the order the list shows them. */
 function listedSubjects() {
@@ -65,7 +56,7 @@ const descending = [...ascending].reverse();
 
 describe('Sorting the entries list from the Entries menu', () => {
   it('sorts a tag list by subject in the direction of the arrow', async () => {
-    renderApp('/test/test-tag-1');
+    renderAppAt('/test/test-tag-1');
     await expectListed(ascending);
 
     await sortBy('Sort by Subject', 'ArrowDownwardIcon');
@@ -86,7 +77,7 @@ describe('Sorting the entries list from the Entries menu', () => {
     // The mock API's fixtures are all in tag 1: two in no tag.
     await apiClient.forVersion(1).createEntry('entry-8-subject', 'body');
     await apiClient.forVersion(1).createEntry('entry-9-subject', 'body');
-    renderApp('/test?entries=untagged');
+    renderAppAt('/test?entries=untagged');
 
     await sortBy('Sort by Subject', 'ArrowDownwardIcon');
     await expectListed(['entry-9-subject', 'entry-8-subject']);
@@ -99,7 +90,7 @@ describe('Sorting the entries list from the Entries menu', () => {
   });
 
   it('sorts the all-entries list by the chosen sort, here', async () => {
-    renderApp('/test?entries=all');
+    renderAppAt('/test?entries=all');
     await sortBy('Sort by Subject', 'ArrowUpwardIcon');
     await expectListed(ascending);
     const reads = vi.spyOn(apiClient, 'getEntriesAfter');
@@ -118,7 +109,7 @@ describe('Sorting the entries list from the Entries menu', () => {
     await apiClient.forVersion(1).tagEntry('2', '3');
     await apiClient.forVersion(1).createEntry('entry-9-subject', 'body');
     await apiClient.forVersion(1).createEntry('entry-8-subject', 'body');
-    renderApp('/test?entries=all');
+    renderAppAt('/test?entries=all');
 
     await sortBy('Sort by Tag Count', 'ArrowDownwardIcon');
     await expectListed([

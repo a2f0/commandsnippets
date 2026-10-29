@@ -4,17 +4,14 @@
  * `CookiesProvider`) has loaded: the entries page must see it, not take the
  * missing cookie for a sign-out and send the user back to sign in again.
  */
-import {act, render, screen} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {screen} from '@testing-library/react';
 import {type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
-import {server} from '../util/msw';
+import {serveMockApi} from '../util/msw';
 import {store, TEST_USER} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+serveMockApi();
 
 /** Store `cookie` as the browser stores a response's Set-Cookie. */
 function storeCookie(cookie: string) {
@@ -54,17 +51,10 @@ describe('Signing in', () => {
       const path = `/oauth/${provider}?${callbacks[provider]}`;
       window.history.pushState({}, '', path);
       window.sessionStorage.setItem('oauth_state', 'xyz');
-      const history = createMemoryHistory();
-      history.push(path);
-
-      await act(async () => {
-        render(<TestAppRouter history={history} />);
-      });
+      await renderAppAt(path, {act: true});
 
       // The user's data syncs: they are still signed in.
-      expect(
-        await screen.findByText('test-tag-1', {}, {timeout: 3000})
-      ).toBeInTheDocument();
+      expect(await screen.findByText('test-tag-1')).toBeInTheDocument();
       expect(store.loggedInUser).toBe(TEST_USER);
       expect(document.getElementById('signInPage')).toBeNull();
       expect(consoleWarn).not.toHaveBeenCalledWith('Cookie logout occurred.');

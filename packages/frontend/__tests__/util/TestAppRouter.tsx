@@ -1,4 +1,5 @@
-import type {MemoryHistory} from 'history';
+import {act, type RenderResult, render} from '@testing-library/react';
+import {createMemoryHistory, type MemoryHistory} from 'history';
 import {CookiesProvider} from 'react-cookie';
 import {App} from '../../src/App';
 import {Router} from '../../src/lib/router/Router';
@@ -24,4 +25,27 @@ const TestAppRouter = ({history}: IProps) => (
   </Router>
 );
 
-export {TestAppRouter};
+/** The app as rendered (`render`'s result), and the history it follows. */
+export type RenderedApp = RenderResult & {history: MemoryHistory};
+
+/**
+ * Render the app (`TestAppRouter`) at `route`, pushed onto a new memory
+ * history. With `act`, the render is awaited inside `act`: the effects it
+ * starts have run when it resolves.
+ */
+function renderAppAt(route: string, options?: {act?: false}): RenderedApp;
+function renderAppAt(route: string, options: {act: true}): Promise<RenderedApp>;
+function renderAppAt(
+  route: string,
+  options: {act?: boolean} = {}
+): RenderedApp | Promise<RenderedApp> {
+  const history = createMemoryHistory();
+  history.push(route);
+  const app = <TestAppRouter history={history} />;
+  if (options.act === true) {
+    return act(async () => ({history, ...render(app)}));
+  }
+  return {history, ...render(app)};
+}
+
+export {renderAppAt, TestAppRouter};

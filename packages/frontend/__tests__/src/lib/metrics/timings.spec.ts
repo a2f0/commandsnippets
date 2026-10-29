@@ -20,7 +20,24 @@ import {
 } from '../../../../src/lib/metrics/timings';
 
 beforeEach(() => clearMetrics());
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+
+/**
+ * A fake clock for the HUD's notifications (`NOTIFY_MS`) and the paints, which
+ * a test moves past at once (`vi.advanceTimersByTimeAsync`).
+ */
+const fakeTimers = () =>
+  vi.useFakeTimers({
+    toFake: [
+      'setTimeout',
+      'clearTimeout',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+    ],
+  });
 
 /** The timings once the HUD has been told of them. */
 const told = () =>
@@ -49,7 +66,9 @@ describe('recordTiming', () => {
         ).length
       )
     );
-    const now = performance.now();
+    // Synthetic integer durations need integral timestamps: adding 15 to
+    // a fractional performance.now() can subtract back to 15.000000000000057.
+    const now = Math.ceil(performance.now());
     recordTiming('network', 'GET /tags', now, now + 15, '200');
     recordTiming('idb', 'useTags', now + 20, now + 21);
 
@@ -92,11 +111,12 @@ describe('recordTiming', () => {
   });
 
   it('records nothing in production, which has no HUD', async () => {
+    fakeTimers();
     vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
     recordTiming('network', 'GET /tags', 0, 1);
     beginInteraction('tag switch', listKey({tag: 'a'}));
 
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await vi.advanceTimersByTimeAsync(NOTIFY_MS + 50);
 
     expect(metricsSnapshot()).toEqual({timings: [], interactions: []});
   });
@@ -179,11 +199,12 @@ describe('interactions', () => {
 
   /** The interactions once the paints they waited for are past. */
   const settled = async () => {
-    await new Promise(resolve => setTimeout(resolve, NOTIFY_MS + 100));
+    await vi.advanceTimersByTimeAsync(NOTIFY_MS + 100);
     return metricsSnapshot().interactions;
   };
 
   it('is not painted when another began before the paint', async () => {
+    fakeTimers();
     listShown(listKey({tag: 'a'}));
     beginInteraction('tag switch', listKey({tag: 'a'}));
     beginInteraction('tag switch', listKey({tag: 'b'}));
@@ -192,6 +213,7 @@ describe('interactions', () => {
   });
 
   it('is not painted when another list is shown by the paint', async () => {
+    fakeTimers();
     listShown(listKey({tag: 'a'}));
     beginInteraction('tag switch', listKey({tag: 'a'}));
     listShown(listKey({tag: 'c'}));

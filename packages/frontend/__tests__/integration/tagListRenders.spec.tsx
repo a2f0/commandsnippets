@@ -3,16 +3,15 @@
  * (none for a copy of it an effect sets afterwards), with the tag selected
  * highlighted from the first.
  */
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {appMode} from '../../src/lib/shared';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {API, serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
 import {seed, tag} from '../util/storeFixtures';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
 const renders = vi.hoisted(() => ({lists: 0, rows: 0}));
 
@@ -38,17 +37,12 @@ vi.mock('../../src/lib/data/hooks', async importOriginal => {
   };
 });
 
-const API = 'http://localhost:9001/api/v1';
 const COUNT = 20;
 const WAIT = {timeout: 10_000};
 vi.setConfig({testTimeout: 30_000});
 
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -74,9 +68,7 @@ async function showTags(): Promise<void> {
   server.use(http.all(`${API}/*`, () => HttpResponse.error()));
   renders.lists = 0;
   renders.rows = 0;
-  const history = createMemoryHistory();
-  history.push('/test/name-3');
-  render(<TestAppRouter history={history} />);
+  renderAppAt('/test/name-3');
   await screen.findByText(`name-${COUNT}`, undefined, WAIT);
 }
 

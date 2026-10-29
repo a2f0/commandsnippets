@@ -5,25 +5,19 @@
  * API, so a guest sees none, and a guest's copy counts nothing. (An entry's
  * page, Get Info, is `entryPage.spec.tsx`.)
  */
-import {fireEvent, render, screen, within} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {fireEvent, screen, within} from '@testing-library/react';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {setRuntimeEntriesOverride} from '../../src/msw/handlers';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {server} from '../util/msw';
+import {serveMockApi, server} from '../util/msw';
 import {signIn, TEST_USER} from '../util/signIn';
-import {TestAppRouter} from '../util/TestAppRouter';
+import {renderAppAt} from '../util/TestAppRouter';
 
-beforeAll(() => server.listen());
-afterEach(() => {
-  server.resetHandlers();
-  server.events.removeAllListeners();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi();
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   // Clicking an entry's body copies it.
@@ -41,12 +35,6 @@ beforeEach(() => {
     })),
   });
 });
-
-const mount = (url: string) => {
-  const history = createMemoryHistory();
-  history.push(url);
-  render(<TestAppRouter history={history} />);
-};
 
 const signInHere = () => {
   signIn();
@@ -78,7 +66,7 @@ async function openMenu(subject: string, id: string): Promise<string[]> {
 
 it("shows the owner each entry's reuse count beside its subject", async () => {
   signInHere();
-  mount('/test/test-tag-1');
+  renderAppAt('/test/test-tag-1');
 
   expect(await screen.findByTitle('Reused 3 times')).toHaveTextContent('3×');
   expect(screen.getByTitle('Reused 1 time')).toHaveTextContent('1×');
@@ -93,7 +81,7 @@ it("shows the owner each entry's reuse count beside its subject", async () => {
 it('counts a copy as a reuse at once, and sends it once', async () => {
   signInHere();
   const sent = reusesSent();
-  mount('/test/test-tag-1');
+  renderAppAt('/test/test-tag-1');
 
   fireEvent.click(await screen.findByText('entry-1-body'));
 
@@ -107,7 +95,7 @@ it('counts a copy as a reuse at once, and sends it once', async () => {
 
 it('counts a copy made with Enter in the list', async () => {
   signInHere();
-  mount('/test/test-tag-1');
+  renderAppAt('/test/test-tag-1');
   // Selected (and copied) by a click on its body.
   fireEvent.click(await screen.findByText('entry-1-body'));
   expect(await screen.findByTitle('Reused 4 times')).toBeInTheDocument();
@@ -124,7 +112,7 @@ it('shows a guest no reuse counts on a public page, and counts no copy', async (
   await apiClient.forVersion(1).setTagPublic('1', true);
   await apiClient.forVersion(1).setEntryPublic('1', true);
   const sent = reusesSent();
-  mount('/test/test-tag-1');
+  renderAppAt('/test/test-tag-1');
 
   fireEvent.click(await screen.findByText('entry-1-body'));
 
