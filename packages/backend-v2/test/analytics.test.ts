@@ -261,3 +261,21 @@ it('returns the top ten rankings in descending event order with stable ties', as
   for (const rows of [data.top_entries, data.top_tags])
     expect(rows.map(({name, count}) => ({name, count}))).toEqual(expected);
 });
+
+it('breaks identical entry names and counts by numeric id before and after the top-ten limit', async () => {
+  const user = await userFactory({}, {examples: false});
+  client = await clientFor(user);
+  const ids: string[] = [];
+  for (let index = 0; index < 12; index += 1) {
+    const entry = await textEntryFactory({user, subject: 'same name'});
+    ids.push(String(entry.id));
+    const reuse = await textEntryReusedFactory({user, text_entry: entry});
+    await db()
+      .update(entryReuses)
+      .set({date_created: '2024-01-01T00:00:00.000000'})
+      .where(eq(entryReuses.id, reuse.id));
+  }
+  expect((await read('reused')).top_entries.map(row => row.id)).toEqual(
+    ids.slice(0, 10)
+  );
+});

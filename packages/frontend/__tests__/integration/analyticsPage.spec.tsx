@@ -10,7 +10,8 @@ import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {recentRange} from '../../src/components/analytics/buckets';
-import {apiClient} from '../../src/lib/api/apiClient';
+import {apiClient, DataVersionChangedError} from '../../src/lib/api/apiClient';
+import {readAnalytics} from '../../src/lib/data/analytics';
 import {routeOf} from '../../src/lib/router/route';
 import {syncSession} from '../../src/lib/sync/session';
 import {apiClientMethods} from '../util/apiClientMethods';
@@ -143,7 +144,7 @@ it('ignores a late response for the previous slice', async () => {
   ).not.toHaveTextContent('999');
 });
 
-it('drops charts and reloads after a data-version switch', async () => {
+it('resyncs stale analytics after a restore on another device', async () => {
   mount();
   await screen.findByText(/No activity in this slice/);
   const session = syncSession('test');
@@ -153,8 +154,10 @@ it('drops charts and reloads after a data-version switch', async () => {
   const backup = await apiClient.getBackup();
   backup.entry_reuses = [];
   await apiClient.forVersion(1).restoreBackup(backup);
-  await act(async () => session.sync.syncAll());
+  const sync = vi.spyOn(session.sync, 'syncAll');
+  fireEvent.click(screen.getByRole('button', {name: 'Refresh'}));
   await screen.findByText(/No activity in this slice/);
+  expect(sync).toHaveBeenCalled();
   expect(screen.queryByRole('img', {name: /Activity over time/})).toBeNull();
 });
 
@@ -215,3 +218,33 @@ it.each(['abc', '0'])(
     );
   }
 );
+
+it('refuses a mismatched response version and preserves that error when resync fails', async () => {
+  mount();
+  await screen.findByText(/No activity in this slice/);
+  const session = syncSession('test');
+  const params = {
+    activity: 'created',
+    interval: 'day',
+    ...recentRange(30),
+  } as const;
+  vi.spyOn(apiClientMethods, 'getAnalytics').mockResolvedValue({
+    data: {
+      ...params,
+      version: 2,
+      total: 0,
+      entries: 0,
+      tags: 0,
+      timeline: [],
+      top_tags: [],
+      top_entries: [],
+    },
+  });
+  const sync = vi
+    .spyOn(session.sync, 'syncAll')
+    .mockRejectedValue(new Error('Offline'));
+  await expect(
+    readAnalytics(session, params, new AbortController().signal)
+  ).rejects.toBeInstanceOf(DataVersionChangedError);
+  expect(sync).toHaveBeenCalled();
+});

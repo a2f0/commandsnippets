@@ -154,6 +154,14 @@ const exchanges: Exchange[] = [
   {
     handler: `GET ${API}/user/analytics`,
     method: 'GET',
+    url: `${API}/user/analytics?activity=created&interval=day&from=2024-01-01&to=2024-12-31`,
+    headers: {[DATA_VERSION_HEADER]: '999'},
+    status: 409,
+    schema: errorDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/user/analytics`,
+    method: 'GET',
     url: `${API}/user/analytics?activity=created&activity=reused`,
     status: 400,
     schema: errorDocumentSchema,

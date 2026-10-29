@@ -1268,7 +1268,7 @@ function refuseAnotherVersion(request: Request) {
   const named = request.headers.get(DATA_VERSION_HEADER);
   const path = new URL(request.url).pathname;
   if (
-    !/\/api\/v1\/(tags|entries|tags_entries|user\/backup|user\/restore)\b/.test(
+    !/\/api\/v1\/(tags|entries|tags_entries|user\/backup|user\/restore|user\/analytics)\b/.test(
       path
     )
   ) {

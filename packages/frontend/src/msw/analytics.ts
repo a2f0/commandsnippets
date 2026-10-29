@@ -87,7 +87,7 @@ export function mockAnalytics(
         (a, b) =>
           b.count - a.count ||
           (a.name < b.name ? -1 : a.name > b.name ? 1 : 0) ||
-          (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+          Number(a.id) - Number(b.id)
       )
       .slice(0, 10);
   return {
