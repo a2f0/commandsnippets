@@ -44,6 +44,37 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": [
+        "src/*.tsx",
+        "src/components/**",
+        "src/hooks/**",
+        "src/menu/**",
+        "src/pages/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@mui/icons-material": "Import each icon from its own path ('@mui/icons-material/Check'): the package index loads every icon in dev and tests."
+                },
+                "patterns": [
+                  {
+                    "group": ["**/lib/db", "**/lib/db/**"],
+                    "message": "The UI reaches IndexedDB only through lib/data (its hooks, writes and helpers such as keyOfRow), never the Dexie database module."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",

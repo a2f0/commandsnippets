@@ -12,7 +12,7 @@ import {useDrop} from 'react-dnd';
 import {useContextMenu} from '../../hooks/useContextMenu';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly} from '../../lib/data/hooks';
-import {keyOfRow} from '../../lib/db/database';
+import {keyOfRow} from '../../lib/data/rowKey';
 import {beginInteraction, listKey} from '../../lib/metrics/timings';
 import {navigate} from '../../lib/router/navigation';
 import {activeSearch, appMode} from '../../lib/shared';

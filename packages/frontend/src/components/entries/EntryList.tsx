@@ -28,9 +28,9 @@ import {
   useTagEntries,
   useTagNamed,
 } from '../../lib/data/hooks';
+import {keyOfRow} from '../../lib/data/rowKey';
 import {sortEntries, sortTagEntries} from '../../lib/data/sort';
 import {useTagSync} from '../../lib/data/useSync';
-import {keyOfRow} from '../../lib/db/database';
 import {useRenderTiming} from '../../lib/metrics/hooks';
 import {listKey, listShown} from '../../lib/metrics/timings';
 import {useRouteParam, useSearchParam} from '../../lib/router/navigation';
