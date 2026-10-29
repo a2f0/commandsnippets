@@ -549,8 +549,10 @@ per-row work multiplies (the HUD's Analytics tab times it).
   soft, and untagging keeps the junction for the junction list; reorders
   move rows as django-ordered-model does, so the fixtures' ranks are
   distinct);
-  `__tests__/src/msw/handlers.spec.ts` checks them. Keyset pages
-  (`page[after]`, `src/msw/keyset.ts`) of `/tags`, `/entries` and
+  `__tests__/src/msw/handlers.spec.ts` checks them. `handlers.ts` assembles
+  one route module per resource (`src/msw/routes/`) over `state.ts`, whose
+  `let` bindings change only through its setters (`src/msw/README.md`).
+  Keyset pages (`page[after]`, `src/msw/keyset.ts`) of `/tags`, `/entries` and
   `/tags_entries` answer as the API does. The mock's data: four tags, entries
   1 and 2 in tag 1, and entry 3 in no tag.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
