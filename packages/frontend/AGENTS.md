@@ -430,19 +430,30 @@ writing its type by hand.
   `AppRouter.tsx`, `App.tsx` (the providers), `Routes.tsx` and
   `routePaths.ts`
 - **Pages**: `src/pages/`, one component per route: `EntriesPage.tsx`
-  (`/:user/:tag`), `EntryPage.tsx` (`/:user/entries/:id`), `AdminPage.tsx`
-  (`/admin`) and `SignInPage.tsx` (`/` when signed out)
+  (`/:user/:tag`), `EntryPage.tsx` (`/:user/entries/:id`), `ReusesPage.tsx`
+  and `AnalyticsPage.tsx` (`/:user/activity/...`), `AdminPage.tsx`
+  (`/admin`) and `SignInPage.tsx` (`/` when signed out). `Routes.tsx` loads
+  the admin and analytics pages with `React.lazy` (most visitors never open
+  them), as `BottomBar` does the HUD's Analytics tab.
 - **Components**: `src/components/<feature>/`: `entries/` and `tags/` (the
-  lists, their editors, context menus and styled fields), `admin/` (the admin
-  page's tabs), `auth/` (the GitHub and Google sign-in buttons, which are also
-  the OAuth callback routes), `bottomBar/`, `drawer/`, `dnd/` (drag handles
-  and the React DnD item types) and `errorBoundary/`. Components shared by
-  several features (`AppHeader`, `LanguageSwitcher`, `UserProfileCircle`) sit
-  at the root of `src/components/`.
+  lists, their context menus and styled fields, and the editors:
+  `EntryNew`/`EntryEdit` render `EntryForm`, `TagNew`/`TagEdit` render
+  `TagForm`), `admin/` (the admin page's tabs), `analytics/`, `auth/` (the
+  GitHub and Google sign-in buttons, which are also the OAuth callback
+  routes), `bottomBar/`, `drawer/`, `dnd/` (drag handles, the React DnD item
+  types, and the rows' and lists' shared drag and drop: `useSortableRow`,
+  `useDraggedRows`) and `errorBoundary/`. Components shared by several
+  features (`AppHeader`, `ContextMenu`, `DetailPage`, `LanguageSwitcher`,
+  `UserProfileCircle`) sit at the root of `src/components/`.
 - **Menu bar**: `src/menu/MenuBar.tsx`; each menu is in `src/menu/<name>/`
-  (its items in `menuItems/`), and `src/menu/StyledMenu.tsx` and
-  `StyledMenuItem.tsx` are their shared drop-down and item (the context menus
-  use the item too)
+  (most with their items in `menuItems/`). The Tags and Entries menus list
+  their sorts as data rendered by `src/menu/SortMenuItem.tsx`.
+  `src/menu/StyledMenu.tsx` and `StyledMenuItem.tsx` are the menus' shared
+  drop-down and item (the context menus use the item too)
+- **Hooks**: `src/hooks/`, among them `useContextMenu` (where a context menu
+  was opened, for `ContextMenu`), `useEditFieldCycle` (Tab through an
+  editor's fields) and `useErrorStore` (the errors the error boundary caught,
+  which the HUD's Logs tab lists; `recordError` is the boundary's `onError`)
 - **Shared styling**: `src/styled/` holds small styled components used across
   features; `src/theme/` the MUI themes, the theme provider, the global
   styles and the shared `sx` objects (`sx.ts`). The app is grayscale: the
@@ -452,7 +463,7 @@ writing its type by hand.
   brand sources (`../../assets/brand/`) or `../../agent-tool.json`
 - **Non-UI code**: `src/lib/` (the API clients, auth, the app state
   (`state/`), the Dexie database (`db/`), its sync (`sync/`), what the UI
-  reads and writes (`data/`), the router (`router/`), and helpers), `src/hooks/`, `src/providers/`,
+  reads and writes (`data/`), the router (`router/`), and helpers),
   `src/i18n/` and `src/msw/`
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
   (`/:user/:tag`, `/:user/entries/:id`)
@@ -486,10 +497,17 @@ per-row work multiplies (the HUD's Analytics tab times it).
 - Rows (`Tag`, `Entry`) are `React.memo`, and render again only for what
   they show: narrow store selectors (`useAppState(state => state.x === id)`),
   route values (`useRouteParam`), stable callbacks.
-- A row's context menu is rendered only while it is open (MUI's
-  `keepMounted` off), and takes where it was opened (`mouse`) and `onClose`
-  from the row: never a copy of a prop in state, set again by an effect,
-  which renders every row a second time after it mounts.
+- A row's context menu (`ContextMenu`) is rendered only while it is open
+  (MUI's `keepMounted` off), and takes where it was opened (`mouse`, from the
+  row's `useContextMenu`) and `onClose` from the row: never a copy of a prop
+  in state, set again by an effect, which renders every row a second time
+  after it mounts.
+- A list's callbacks for its rows stay the same across renders: what they
+  need of the list they read through a ref (`TagList`'s `choosingWith`), not
+  a new closure. A live query reads every row afresh after any write, so the
+  entry list keeps the object of each row the read left unchanged
+  (`keepUnchanged`, `entries/unchangedRows.ts`), and only the rows a write
+  changed render again.
 - What a row needs of its data comes from its props (the tag's
   `is_public`), not a live query of its own: one query per row is one
   IndexedDB transaction per row.
@@ -566,6 +584,10 @@ per-row work multiplies (the HUD's Analytics tab times it).
 - Run `bun run lint` and `bun run format` to check changes
 - Use `bun run fix` (`biome check --write`) to fix issues
 - Never add linting or formatting exceptions in code
+- Import each MUI icon from its own path
+  (`import Check from '@mui/icons-material/Check'`): the package index loads
+  every icon in the dev server and Vitest, and Biome refuses it
+  (`noRestrictedImports`)
 
 ### Dependencies
 - Always pin dependencies to exact versions (no ^ or ~ prefix) when adding or updating packages
@@ -644,8 +666,12 @@ console.error('ERROR: Build failed');
 - Prefer `screen.findBy*` over `waitFor(() => screen.getBy*)` for async
   elements
 - Use `act()` for async renders: `await act(async () => render(<Component />))`
-- E2E specs open pages with `BasePage.open()` (`test/pageobjects/base.ts`),
-  which waits for MSW, sign in with `browser.login()`, and reset MSW in
-  `afterEach` with `browser.resetMSWHandlers()`; the custom commands are in
-  `test/wdio.shared.conf.ts`. Check the sign-in page before logging in, not
-  after, and use `browser.waitUntil()` for async conditions.
+- E2E specs open a page signed in with `BasePage.signIn(path, {entries})`
+  (`test/pageobjects/base.ts`: it loads the sign-in page signed out, logs in,
+  then opens `path`; `entries` replaces the mock API's entries), or a page as
+  it is with `BasePage.open()`, which waits for MSW. The harness
+  (`test/wdio.shared.conf.ts`, with the custom commands) resets MSW and
+  `browser.currentTestErrors` after every test, so specs need no
+  `afterEach` for it. `browser.toBeRequestedTimes` and
+  `toBeRequestedAtLeastTimes` wait for the count (a page makes its requests
+  as it syncs). Use `browser.waitUntil()` for other async conditions.
