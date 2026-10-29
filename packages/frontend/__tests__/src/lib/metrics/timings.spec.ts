@@ -49,7 +49,9 @@ describe('recordTiming', () => {
         ).length
       )
     );
-    const now = performance.now();
+    // Synthetic integer durations need integral timestamps: adding 15 to
+    // a fractional performance.now() can subtract back to 15.000000000000057.
+    const now = Math.ceil(performance.now());
     recordTiming('network', 'GET /tags', now, now + 15, '200');
     recordTiming('idb', 'useTags', now + 20, now + 21);
 

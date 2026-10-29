@@ -13,6 +13,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
+import {remote} from 'webdriverio';
 
 // The deployed hosting, end to end: a real build of each environment served
 // by `wrangler dev` with wrangler.jsonc (single-page-app fallback) and
@@ -143,6 +144,69 @@ describe.each(['staging', 'production'])('the %s build', mode => {
     }
     rmSync(outDir, {recursive: true, force: true});
   });
+
+  it('boots the release bundle on first load and reloads', async () => {
+    // Use the deployed hostname so the app selects the real environment,
+    // but resolve it only to this test's local hosting server. Other hosts
+    // cannot reach the network. Each browser has an empty, temporary profile.
+    const hostname =
+      mode === 'production'
+        ? 'app.commandsnippets.com'
+        : 'app-staging.commandsnippets.com';
+    const origin = `http://${hostname}:${port}`;
+    const browser = await remote({
+      logLevel: 'error',
+      capabilities: {
+        browserName: 'chrome',
+        'goog:chromeOptions': {
+          args: [
+            '--headless',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--no-proxy-server',
+            `--host-resolver-rules=MAP ${hostname} 127.0.0.1, MAP * ~NOTFOUND`,
+            `--unsafely-treat-insecure-origin-as-secure=${origin}`,
+          ],
+        },
+      },
+    });
+    try {
+      const errors: string[] = [];
+      await browser.sessionSubscribe({events: ['log.entryAdded']});
+      browser.on('log.entryAdded', entry => {
+        if (entry.type === 'javascript' && entry.level === 'error') {
+          errors.push(entry.text ?? 'JavaScript error');
+        }
+      });
+      const rendered = async () => {
+        await browser.waitUntil(
+          async () =>
+            errors.length > 0 || (await browser.$('#signInPage').isDisplayed()),
+          {timeout: 10_000}
+        );
+        expect(errors).toEqual([]);
+        expect(await browser.$('#signInPage').isDisplayed()).toBe(true);
+      };
+      await browser.url(origin);
+      await rendered();
+      // Disable the HTTP cache for a reload, then exercise the PWA's normal
+      // controlled reload as well. A successful HTTP/build check alone does
+      // not catch initialization cycles between emitted JavaScript chunks.
+      await browser.networkSetCacheBehavior({cacheBehavior: 'bypass'});
+      await browser.refresh();
+      await rendered();
+      await browser.waitUntil(
+        () =>
+          browser.execute(() => navigator.serviceWorker.controller !== null),
+        {timeout: 10_000}
+      );
+      await browser.networkSetCacheBehavior({cacheBehavior: 'default'});
+      await browser.refresh();
+      await rendered();
+    } finally {
+      await browser.deleteSession();
+    }
+  }, 90_000);
 
   describe.each([false, true])('with navigate=%s', navigate => {
     // The root, then users' pages (each also with the trailing slash the
