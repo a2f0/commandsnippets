@@ -125,11 +125,12 @@ done <"$refs_file"
 step_timings_end
 
 if touches 'scripts/' || touches 'packages/frontend/scripts/' || touches '.agents/' ||
-  touches '.claude/' || touches 'agent-tool.json' ||
-  touches '.agent-tool-skills.json' || touches 'commitlint.config.mts' ||
-  touches 'package.json' || touches 'bun.lock' || touches 'tsconfig'; then
-  require_worktree_is_push scripts packages/frontend/scripts .agents .claude agent-tool.json \
-    .agent-tool-skills.json commitlint.config.mts package.json bun.lock
+  touches '.claude/' || touches '.codex/' || touches 'agent-tool.json' ||
+  touches '.agent-tool-skills.json' || touches '.agent-tool-permissions.json' ||
+  touches 'commitlint.config.mts' || touches 'package.json' || touches 'bun.lock' ||
+  touches 'tsconfig'; then
+  require_worktree_is_push scripts packages/frontend/scripts .agents .claude .codex agent-tool.json \
+    .agent-tool-skills.json .agent-tool-permissions.json commitlint.config.mts package.json bun.lock
   step_timings_run tooling-shell bun run lint:shell
   step_timings_run tooling-typecheck bun run typecheck
   step_timings_run tooling-tests sh -c 'bun run test:agent-tool && bun run test:scripts'

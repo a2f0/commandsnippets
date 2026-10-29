@@ -13,14 +13,14 @@ skipped lane fails the gate. Changes to a workflow, to the CI policy itself
 (`scripts/checks/ci*`), or to the root `.mise.toml`, `package.json` or `bun.lock` exercise
 every lane.
 
-The gate always checks managed skill drift and lints the actual PR title with
-commitlint, including on documentation-only PRs. It evaluates the local
-`scripts/checks/ciGate.json` policy through `agent-tool ci gate`; path-to-lane
-classification remains repository-owned.
+The gate always checks managed skill and permission-rule drift and lints the
+actual PR title with commitlint, including on documentation-only PRs. It
+evaluates the local `scripts/checks/ciGate.json` policy through
+`agent-tool ci gate`; path-to-lane classification remains repository-owned.
 
 | Lane | Workflow | Scope |
 |---|---|---|
-| `tooling` | inline in `ci.yml` | `scripts/`, `packages/frontend/scripts/`, managed skills, tooling config |
+| `tooling` | inline in `ci.yml` | `scripts/`, `packages/frontend/scripts/`, managed skills and permission rules, tooling config |
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/`, `packages/api-shared/` |
 | `api-shared` | `api-shared.yml` (API Shared CI) | `packages/api-shared/` |
 | `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts, `assets/brand/`, `agent-tool.json` |

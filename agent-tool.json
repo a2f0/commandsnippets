@@ -66,6 +66,12 @@
   "pr": {
     "rejectClaudeBranding": true
   },
+  "permissions": {
+    "executables": {
+      "commitlint": "local",
+      "tsc": "local"
+    }
+  },
   "images": {
     "targets": {
       "favicons": {

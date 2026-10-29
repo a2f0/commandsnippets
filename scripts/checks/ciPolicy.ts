@@ -12,7 +12,7 @@
  */
 export const CI_SCOPES = {
   tooling:
-    /^(scripts\/|packages\/frontend\/scripts\/|\.agents\/|\.claude\/|agent-tool\.json$|\.agent-tool-skills\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
+    /^(scripts\/|packages\/frontend\/scripts\/|\.agents\/|\.claude\/|\.codex\/|agent-tool\.json$|\.agent-tool-(skills|permissions)\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   frontend:
     /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests)\.sh$|assets\/brand\/|agent-tool\.json$)/,
   backendV2: /^packages\/(backend-v2|api-shared)\//,
