@@ -64,6 +64,27 @@ describe('TagNew', () => {
     );
   });
 
+  it('moves Tab from the name to Save, Cancel and back', () => {
+    renderForm();
+    const tab = () =>
+      act(() => {
+        fireEvent.keyDown(document.activeElement ?? document, {
+          key: 'Tab',
+          code: 'Tab',
+        });
+      });
+
+    tab();
+    expect(store.activeTagEditField).toBe(activeTagEditField.save);
+    expect(document.activeElement).toBe(byId('tagNewTopSave'));
+    tab();
+    expect(store.activeTagEditField).toBe(activeTagEditField.cancel);
+    expect(document.activeElement).toBe(byId('tagNewTopCancel'));
+    tab();
+    expect(store.activeTagEditField).toBe(activeTagEditField.name);
+    expect(document.activeElement).toBe(byId('tagNewTopTextField'));
+  });
+
   it('saves the name, and closes', async () => {
     renderForm();
     fireEvent.change(byId('tagNewTopTextField'), {target: {value: 'fresh'}});
