@@ -144,6 +144,13 @@ const exchanges: Exchange[] = [
   {
     handler: `GET ${API}/user/analytics`,
     method: 'GET',
+    url: `${API}/user/analytics?activity=created&interval=month&from=all&to=2024-12-31`,
+    status: 200,
+    schema: analyticsDocumentSchema,
+  },
+  {
+    handler: `GET ${API}/user/analytics`,
+    method: 'GET',
     url: `${API}/user/analytics?activity=created&interval=day&from=2024-01-01&to=2024-12-31`,
     status: 200,
     schema: analyticsDocumentSchema,

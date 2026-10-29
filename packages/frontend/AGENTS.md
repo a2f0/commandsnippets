@@ -202,7 +202,9 @@ API; everything else the app keeps is a zustand store.
   creation, tagging and reuse have separate slices, with inclusive UTC date
   bounds (up to ten years), an All time preset without a lower date bound,
   a tag filter and day/week/month buckets. All time defaults to monthly
-  buckets through today; choosing a From date returns to a custom range. Weeks
+  buckets through today; choosing a From date returns to a custom range.
+  Very long charts combine adjacent periods into at most 3661 bars, retaining
+  every event and labeling the combined ranges in tooltips and the table. Weeks
   start Monday; empty periods are filled in the chart. Rankings show ten tags
   and entries; tag bars filter and entry bars open details. Filters are kept
   in the URL, including when returning from an entry. The exact chart

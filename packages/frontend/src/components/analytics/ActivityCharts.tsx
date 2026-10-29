@@ -18,7 +18,7 @@ import {currentPath} from '../../lib/router/navigation';
 import {Link} from '../../lib/router/Router';
 import {entryPath} from '../../lib/router/route';
 import {useAppState} from '../../lib/state/appState';
-import {timelineBuckets} from './buckets';
+import {type TimelinePoint, timelineBuckets} from './buckets';
 
 const panel = {
   p: {xs: 2, sm: 3},
@@ -50,6 +50,10 @@ export const ActivityCharts = ({
       year: 'numeric',
       timeZone: 'UTC',
     }).format(new Date(`${date}T00:00:00Z`));
+  const periodLabel = (point: TimelinePoint) =>
+    point.through
+      ? `${dateLabel(point.date)} – ${dateLabel(point.through)}`
+      : dateLabel(point.date);
   const {width} = useWindowSize();
   const chartWidth = Math.min(900, Math.max(280, width - 96));
   const plotWidth = chartWidth - 76;
@@ -114,6 +118,7 @@ export const ActivityCharts = ({
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{mt: 0.5}}>
               {t('partialPeriods')}
+              {points[0]?.through && ` ${t('combinedPeriods')}`}
             </Typography>
             <Box sx={{overflowX: 'auto', mt: 2}}>
               <Box
@@ -167,7 +172,7 @@ export const ActivityCharts = ({
                     rx={Math.min(2, step / 8)}
                   >
                     <title>
-                      {dateLabel(point.date)}: {number(point.count)}
+                      {periodLabel(point)}: {number(point.count)}
                     </title>
                   </rect>
                 ))}
@@ -212,7 +217,7 @@ export const ActivityCharts = ({
                     {points.map(point => (
                       <TableRow key={point.date}>
                         <TableCell component="th" scope="row">
-                          {dateLabel(point.date)}
+                          {periodLabel(point)}
                         </TableCell>
                         <TableCell align="right">
                           {number(point.count)}

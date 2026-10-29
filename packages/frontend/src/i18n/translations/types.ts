@@ -18,6 +18,7 @@ export interface AnalyticsTranslations {
   last90: string;
   last365: string;
   allTime: string;
+  combinedPeriods: string;
   refresh: string;
   events: string;
   entries: string;

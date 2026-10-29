@@ -21,6 +21,8 @@ export const es: I18NextTranslations = {
     last90: 'Últimos 90 días',
     last365: 'Último año',
     allTime: 'Todo el tiempo',
+    combinedPeriods:
+      'En rangos largos se combinan períodos contiguos; se incluyen todos los eventos. Mostrar datos del gráfico indica cada rango de fechas combinado.',
     refresh: 'Actualizar',
     events: 'Eventos',
     entries: 'Entradas distintas',

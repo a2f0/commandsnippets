@@ -50,6 +50,7 @@ analyticsRoutes.get('/', async c => {
     count: number;
     entries: number | null;
     tags: number | null;
+    first_date: string | null;
   }>(sql`WITH
     live_entries AS (
       SELECT id, subject, date_created FROM text_entries_textentry
@@ -83,11 +84,12 @@ analyticsRoutes.get('/', async c => {
       FROM events a JOIN live_entries e ON e.id = a.entry_id
       GROUP BY e.id ORDER BY count DESC, e.subject, e.id LIMIT 10
     )
-    SELECT 'total' AS kind, '' AS id, COALESCE(MIN(substr(at, 1, 10)), ${to}) AS name, COUNT(*) AS count,
-      COUNT(DISTINCT entry_id) AS entries, (SELECT COUNT(DISTINCT tag_id) FROM tag_events) AS tags, 0 AS sort_id FROM events
-    UNION ALL SELECT 'timeline', '', ${bucket}, COUNT(*), NULL, NULL, 0 FROM events GROUP BY ${bucket}
-    UNION ALL SELECT 'tag', id, name, count, NULL, NULL, CAST(id AS INTEGER) FROM ranked_tags
-    UNION ALL SELECT 'entry', id, name, count, NULL, NULL, CAST(id AS INTEGER) FROM ranked_entries
+    SELECT 'total' AS kind, '' AS id, '' AS name, COUNT(*) AS count,
+      COUNT(DISTINCT entry_id) AS entries, (SELECT COUNT(DISTINCT tag_id) FROM tag_events) AS tags,
+      0 AS sort_id, MIN(substr(at, 1, 10)) AS first_date FROM events
+    UNION ALL SELECT 'timeline', '', ${bucket}, COUNT(*), NULL, NULL, 0, NULL FROM events GROUP BY ${bucket}
+    UNION ALL SELECT 'tag', id, name, count, NULL, NULL, CAST(id AS INTEGER), NULL FROM ranked_tags
+    UNION ALL SELECT 'entry', id, name, count, NULL, NULL, CAST(id AS INTEGER), NULL FROM ranked_entries
     ORDER BY kind, count DESC, name, sort_id
   `);
   const summary = rows.find(row => row.kind === 'total');
@@ -100,7 +102,7 @@ analyticsRoutes.get('/', async c => {
       version,
       activity,
       interval,
-      from: from === 'all' ? (summary?.name ?? to) : from,
+      from: from === 'all' ? (summary?.first_date ?? to) : from,
       to,
       total: summary?.count ?? 0,
       entries: summary?.entries ?? 0,

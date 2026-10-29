@@ -121,6 +121,13 @@ it.each(['created', 'tags_created', 'tagged', 'reused'])(
         .set({date_created: '2001-02-03T12:00:00.000000'});
     }
     expect((await read(activity)).total).toBe(0);
+    const totals: Record<string, number> = {
+      created: 2,
+      tags_created: 2,
+      tagged: 2,
+      reused: 3,
+    };
+    expect((await read(activity, '&from=all')).total).toBe(totals[activity]);
     const data = await read(activity, `&from=all&interval=month&tag=${tagId}`);
     const total = activity === 'reused' ? 3 : 1;
     expect(data).toMatchObject({
