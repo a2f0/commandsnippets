@@ -12,7 +12,14 @@ src/msw/
 ├── enableMocking.ts  # Main initialization function
 ├── config.ts         # Configuration constants and utilities
 ├── worker.ts         # MSW service worker setup
-├── handlers.ts       # All API mock handlers
+├── handlers.ts       # All API mock handlers, assembled from routes/
+├── routes/           # One module of routes per resource (tags, entries, ...)
+├── route.ts          # route(), the API hosts and the other-user guard
+├── state.ts          # The mock API's mutable state, setters and reset
+├── fixtures.ts       # The starting data the state is copied from
+├── rows.ts           # Junctions, revisions and reorders, as backend-v2 keeps them
+├── reads.ts          # Owners' data, `included`, and numbered and keyset pages
+├── versions.ts       # Data versions, the version guard, backups and restores
 ├── documents.ts      # Pagination, timestamps and errors as the API renders them
 ├── keyset.ts         # Keyset pages (`page[after]`) as the API renders them
 ├── requests.ts       # Request documents parsed (and refused) as the API does
@@ -62,8 +69,11 @@ Main initialization function that:
 4. Performs health check
 
 ### `handlers.ts`
-Contains all API mock handlers, over stateful mock data with reset
-capability:
+Contains all API mock handlers: the guards, then each resource's routes from
+`routes/` (`account`, `public`, `admin`, `tags`, `entries`, `reuses`,
+`junctions`), over the stateful mock data in `state.ts`. Other modules read
+its `let` bindings and replace them only through its setters;
+`resetMSWState` restores the starting data (`fixtures.ts`). The routes:
 - Tags and entries: list (keyset pages too), retrieve, create, update, delete,
   and tag reorders
 - Tagging, untagging and junction reorders (`/tags_entries`)

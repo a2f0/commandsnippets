@@ -23,10 +23,6 @@ import {Dexie, type Table} from 'dexie';
  */
 export type Stored<R> = R & {owner: string; localId?: string | undefined};
 
-/** The key the UI gives a stored row: its local id, if it had one. */
-export const keyOfRow = (row: {id: string; localId?: string | undefined}) =>
-  row.localId ?? row.id;
-
 /** A row's primary key: its owner's username, then its id (or cursor key). */
 export type RowKey = [owner: string, id: string];
 

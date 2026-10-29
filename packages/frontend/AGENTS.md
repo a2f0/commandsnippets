@@ -472,8 +472,12 @@ writing its type by hand.
   reads and writes (`data/`), the router (`router/`), and helpers),
   `src/i18n/` and `src/msw/`
 - **Layering**: `src/lib/` never imports `components/`, `pages/`, `menu/` or
-  `hooks/`. `lib/sync/` takes the API errors from `lib/api/errors.ts`, never
-  from a client module, since `apiClient` imports the sync's reads. Biome's
+  `hooks/`. The UI (those folders and the app shell) reaches IndexedDB only
+  through `lib/data/` (`keyOfRow` is in `lib/data/rowKey.ts`), never
+  `lib/db/`: a `biome.json` override's `noRestrictedImports` refuses it
+  (Biome does not merge override options, so it repeats the MUI icon rule).
+  `lib/sync/` takes the API errors from `lib/api/errors.ts`, never from a
+  client module, since `apiClient` imports the sync's reads. Biome's
   `noImportCycles` (`ignoreTypes: false`, in `biome.json`) fails `bun run lint`
   on any import cycle, type-only imports included
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
@@ -545,8 +549,10 @@ per-row work multiplies (the HUD's Analytics tab times it).
   soft, and untagging keeps the junction for the junction list; reorders
   move rows as django-ordered-model does, so the fixtures' ranks are
   distinct);
-  `__tests__/src/msw/handlers.spec.ts` checks them. Keyset pages
-  (`page[after]`, `src/msw/keyset.ts`) of `/tags`, `/entries` and
+  `__tests__/src/msw/handlers.spec.ts` checks them. `handlers.ts` assembles
+  one route module per resource (`src/msw/routes/`) over `state.ts`, whose
+  `let` bindings change only through its setters (`src/msw/README.md`).
+  Keyset pages (`page[after]`, `src/msw/keyset.ts`) of `/tags`, `/entries` and
   `/tags_entries` answer as the API does. The mock's data: four tags, entries
   1 and 2 in tag 1, and entry 3 in no tag.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
