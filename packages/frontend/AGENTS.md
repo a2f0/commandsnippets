@@ -530,7 +530,10 @@ per-row work multiplies (the HUD's Analytics tab times it).
     behavior across modules, such as reordering or signing out when the
     session is gone
   - `__tests__/infra/` checks the hosting and the build: `hosting.spec.ts`
-    builds the app and serves it with `wrangler dev`,
+    builds both release modes, serves them with `wrangler dev`, and launches
+    headless Chrome to verify startup and reloads (including PWA control).
+    Its browser resolves the app hostnames to the local server and blocks
+    other hosts; it never contacts the deployed app or API.
     `wranglerConfig.spec.ts` checks `wrangler.jsonc`, and `compile.spec.ts`
     runs `bun run compile` in a copy of the package across a type change
 - **WebdriverIO**: specs in `test/specs/`, run in Chrome only
