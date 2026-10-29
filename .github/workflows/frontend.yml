@@ -15,6 +15,7 @@ on:
       - 'agent-tool.json'
       - 'assets/brand/**'
       - 'bun.lock'
+      - 'bunfig.toml'
       - 'package.json'
       - 'packages/frontend/**'
       - 'packages/api-shared/**'
@@ -53,11 +54,9 @@ jobs:
         uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
         with:
           version: 2026.10.17
+      # One workspace install from the root bun.lock, including the root's
+      # pinned agent-tool, which renders the icons from assets/brand.
       - name: Install dependencies
-        run: bun install --frozen-lockfile
-      # The pinned agent-tool renders the icons from assets/brand.
-      - name: Install root tooling
-        working-directory: .
         run: bun install --frozen-lockfile
       - name: Unit tests
         run: ../../scripts/testing/runUnitTests.sh
@@ -73,11 +72,9 @@ jobs:
         uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
         with:
           version: 2026.10.17
+      # One workspace install from the root bun.lock, including the root's
+      # pinned agent-tool, which renders the icons from assets/brand.
       - name: Install dependencies
-        run: bun install --frozen-lockfile
-      # The pinned agent-tool renders the icons from assets/brand.
-      - name: Install root tooling
-        working-directory: .
         run: bun install --frozen-lockfile
       - name: WebdriverIO tests
         run: ../../scripts/testing/runWebdriverTests.sh

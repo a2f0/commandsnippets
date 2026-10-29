@@ -4,6 +4,9 @@
   "packageManager": "bun@1.4.3",
   "license": "UNLICENSED",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "hooks:install": "agent-tool hooks install --apply",
     "lint:branch-name": "agent-tool branch check",
@@ -30,5 +33,23 @@
     "@tsconfig/strictest": "2.0.8",
     "@types/bun": "1.4.3",
     "typescript": "7.0.2"
-  }
+  },
+  "overrides": {
+    "@puppeteer/browsers": "3.2.5",
+    "serialize-javascript": "7.1.2"
+  },
+  "trustedDependencies": [
+    "@ffmpeg-installer/darwin-arm64",
+    "@ffmpeg-installer/darwin-x64",
+    "@ffmpeg-installer/linux-arm",
+    "@ffmpeg-installer/linux-arm64",
+    "@ffmpeg-installer/linux-ia32",
+    "@ffmpeg-installer/linux-x64",
+    "@ffmpeg-installer/win32-ia32",
+    "@ffmpeg-installer/win32-x64",
+    "edgedriver",
+    "esbuild",
+    "geckodriver",
+    "workerd"
+  ]
 }

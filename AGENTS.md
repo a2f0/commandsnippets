@@ -4,10 +4,10 @@ Monorepo for the Command Snippets app.
 
 | Path | What |
 |---|---|
-| `packages/frontend/` | React web client; bun (Vite and Vitest on Node), own lockfile |
-| `packages/backend-v2/` | Cloudflare Workers API; bun, own lockfile |
-| `packages/api-shared/` | The API contract: zod schemas and types shared by the API and its clients; bun, own lockfile |
-| `packages/website/` | Public website (Astro); bun, own lockfile |
+| `packages/frontend/` | React web client; bun workspace (Vite and Vitest on Node) |
+| `packages/backend-v2/` | Cloudflare Workers API; bun workspace |
+| `packages/api-shared/` | The API contract: zod schemas and types shared by the API and its clients; bun workspace |
+| `packages/website/` | Public website (Astro); bun workspace |
 | `assets/brand/` | Shared brand SVGs and selection styles; `agent-tool images build` renders the web icons and the link-preview image (`images` in `agent-tool.json`) |
 | `scripts/` | git hooks, CI policy, test entrypoints |
 | `docs/` | CI merge gate and dependency update guidance |
@@ -39,8 +39,10 @@ Monorepo for the Command Snippets app.
   runs in `CI gate`.
 - Before each review, use `agent-tool versions prepare <base-oid>` to keep
   changed `packages/frontend` and `packages/backend-v2` one patch beyond the
-  pinned base, preserving deliberate major/minor releases. Their lockfiles are
-  independent; the root manifest is tooling only.
+  pinned base, preserving deliberate major/minor releases. The packages are
+  Bun workspaces of the root manifest, which also holds the shared tooling,
+  and share its `bun.lock` and `bunfig.toml`; `versions prepare` records
+  their bumped versions in that lockfile.
 - Keep repository checks in `scripts/checks`, hooks in `scripts/git/hooks`,
   and test launchers in `scripts/testing`; see [script layout](scripts/README.md).
   Put reusable mechanics in agent-tool and application-specific policy here.
@@ -52,17 +54,17 @@ Monorepo for the Command Snippets app.
 
 ## Output capture
 
-Run Bun tests at the root through
-`bun run agent-tool bun test --log [-- args...]`, for example
+Run Bun tests at the root or in a workspace package through
+`bun run agent-tool bun test [--cwd <package>] --log [-- args...]`, for example
 `bun run agent-tool bun test --log -- ./scripts/`, and other finite, noisy
 commands, such as installs, builds, linters, package scripts, and Git commands
 that run hooks, through
 `bun run agent:run --label <name> -- <command> [args...]`, for example
 `bun run agent:run --label unit -- bun run test:unit`. Each keeps complete
 output in a private log, preserves the exit status, and prints a compact
-receipt, with a bounded excerpt of the log on failure. The packages keep their
-own lockfiles, which `agent-tool bun test` refuses, so run their tests through
-their package scripts with `agent:run`. Read more with
+receipt, with a bounded excerpt of the log on failure. Package scripts that
+add options, such as coverage gates, stay the entry points for those packages'
+suites: run them with `agent:run`. Read more with
 `bun run agent:logs <log-path>`, raising `--tail-lines` or `--max-bytes` as
 needed, or with a targeted search of the log. A zero exit does not rule out
 warnings: inspect required warnings, coverage, timings, and artifacts before

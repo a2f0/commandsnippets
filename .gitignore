@@ -1,4 +1,4 @@
-# JavaScript tooling (root tooling)
+# JavaScript dependencies (one Bun workspace install for the root and packages/)
 node_modules/
 
 # macOS Finder metadata, at every depth

@@ -87,20 +87,17 @@ peer dependency):
 
 ```json
 "dependencies": {
-  "@commandsnippets/api-shared": "file:../api-shared",
+  "@commandsnippets/api-shared": "workspace:*",
   "zod": "^4.6.5"
 }
 ```
 
-Bun installs a `file:` dependency as a tree of per-file symlinks into
-`../api-shared` (with the isolated linker, the web app's, as hard links into
-its `node_modules/.bun/` store), and installs its devDependencies alongside.
-Either way, `import 'zod'` in api-shared's sources resolves from where they
-are, not from the consumer: tools that follow symlinks, which is all of them,
-load them from `../api-shared`, whose own development copy of zod may differ
-(and is missing in CI, where only the consumer is installed), and hard links
-sit in the store next to the zod its devDependencies brought in. So each
-consumer points `zod` at its own copy:
+The packages are Bun workspaces of the repository root, so Bun links a
+consumer's `node_modules/@commandsnippets/api-shared` to this directory.
+`import 'zod'` in api-shared's sources therefore resolves from here, not from
+the consumer: tools that follow symlinks, which is all of them, load this
+package's development copy of zod, which may differ from the consumer's. So
+each consumer points `zod` at its own copy:
 
 - TypeScript (backend-v2's `tsconfig.base.json`, the web app's
   `tsconfig-base.json`):
@@ -122,14 +119,11 @@ test checks): code that runs outside a bundler, where zod would not resolve,
 can load it. Nothing does today; the backend's Bun scripts import nothing from
 api-shared.
 
-**After changing api-shared, run `bun install` in each consumer**
-(`packages/backend-v2`, `packages/frontend`) when you add, move or remove a
-file or change `package.json`: edits to existing files show through the links
-at once, but the tree of links is only rebuilt by an install. In the web app,
-also reinstall after an edit if your editor saves by replacing the file: its
-hard link keeps the old one. Commit a consumer's `bun.lock` if the install
-changes it. The pre-push hook and CI reinstall and check `backend-v2` whenever
-`packages/api-shared/` changes, and CI runs the web app's checks as well.
+**Consumers see api-shared's edits at once** through the link, including
+added, moved and removed files. After changing its `package.json`, run
+`bun install` and commit the root `bun.lock` if it changes. The pre-push hook
+and CI check `backend-v2` whenever `packages/api-shared/` changes, and CI runs
+the web app's checks as well.
 
 ### Clients
 
@@ -256,15 +250,14 @@ For a consumer, that means:
    `...Schema` or `...Field`) `// @__NO_SIDE_EFFECTS__`; a test checks.
 4. Test it in `test/`, and in the backend: validate with it there, and cover
    its responses in `test/contract/`.
-5. Run `bun install` in `packages/backend-v2` if you added a file (see above).
 
 Keep the source strictest-clean (`@tsconfig/strictest`, `verbatimModuleSyntax`)
 and free of runtime-specific APIs (no DOM, Node or Bun globals): consumers
 compile it under their own settings, including the web app's. `tsconfig.json`
 spells out strictest's options instead of extending the package, because
-consumers' bundlers (Vite, esbuild) read it for these sources, and where only
-the consumer is installed the package is not there; a test keeps the copy in
-step.
+consumers' bundlers (Vite, esbuild) read it for these sources, and they should
+not depend on this package's development dependencies; a test keeps the copy
+in step.
 
 ## Development
 

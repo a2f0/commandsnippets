@@ -66,13 +66,13 @@ api-shared's `RELATIONSHIPS`). `test/contract/` checks both directions: that
 documents the schemas accept, the API accepts (and rejects the rest with the
 schemas' messages), and that every response parses with its schema.
 
-api-shared is a `file:` dependency, which Bun installs as symlinks into
-`../api-shared`. So `tsconfig.base.json` (`paths`), `vitest.config.ts`
-(`resolve.dedupe`) and `wrangler.jsonc` (`alias`, one entry per import:
-`zod/mini`, and `zod`) resolve its zod imports to this package's copy. (The
-Bun scripts import nothing from it.) After adding or removing files in `../api-shared`, or
-changing its `package.json`, run `bun install` here (see
-`../api-shared/README.md`).
+api-shared is a workspace dependency (`workspace:*`), which Bun links to
+`../api-shared`, so its sources import zod from there. So `tsconfig.base.json`
+(`paths`), `vitest.config.ts` (`resolve.dedupe`) and `wrangler.jsonc`
+(`alias`, one entry per import: `zod/mini`, and `zod`) resolve its zod
+imports to this package's copy. (The Bun scripts import nothing from it.)
+Edits to `../api-shared` show through the link at once; after changing its
+`package.json`, run `bun install` (see `../api-shared/README.md`).
 
 The schemas are `zod/mini` schemas, so code here types them as
 `z.ZodMiniType` (`import type * as z from 'zod/mini'`), and

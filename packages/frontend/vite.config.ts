@@ -1,7 +1,7 @@
 import {readdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {join, relative, resolve, sep} from 'node:path';
 import react from '@vitejs/plugin-react';
-import {type Plugin, type PluginOption, searchForWorkspaceRoot} from 'vite';
+import type {Plugin, PluginOption} from 'vite';
 import {analyzer} from 'vite-bundle-analyzer';
 import {createHtmlPlugin} from 'vite-plugin-html';
 import {VitePWA} from 'vite-plugin-pwa';
@@ -13,6 +13,30 @@ import packageJson from './package.json' with {type: 'json'};
 // _headers, on every response; production says it on every other page
 // (robotsHeaders). src/components/RobotsNoindex.tsx says it on users' pages.
 const NOINDEX = 'noindex, nofollow';
+
+/** The directories the dev server serves files from (`server.fs.allow`). */
+const DEV_SERVER_ALLOW = [
+  '.',
+  '../api-shared',
+  '../../node_modules',
+  '../../assets/brand',
+];
+
+/**
+ * Files it never serves, wherever a path reaches them (`server.fs.deny`):
+ * Vite's defaults and the workspace's secrets. Vite checks the requested
+ * path, not where a symlink in an allowed directory leads.
+ */
+const DEV_SERVER_DENY = [
+  '.env',
+  '.env.*',
+  '*.{crt,pem}',
+  '**/.git/**',
+  '.dev.vars',
+  '.dev.vars.*',
+  '.secrets',
+  '**/.secrets/**',
+];
 
 /**
  * `headers` (a _headers file) with `line` added to the rule for `pattern`,
@@ -212,10 +236,14 @@ export default defineConfig(({command, mode}) => {
       port: 8085,
       host: true, // Listen on all network interfaces
       hmr: true,
-      // The logo and shared selection styles come from the repository's
-      // brand sources, outside this package.
+      // What the dev server may serve outside this package (relative to it):
+      // the API contract it links, the workspace's package store, and the
+      // repository's brand sources (the logo and shared selection styles).
+      // Never the whole workspace, which holds other packages' secrets
+      // (backend-v2's .dev.vars) and the .secrets link.
       fs: {
-        allow: [searchForWorkspaceRoot(process.cwd()), '../../assets/brand'],
+        allow: DEV_SERVER_ALLOW,
+        deny: DEV_SERVER_DENY,
       },
     },
     test: {

@@ -133,10 +133,11 @@ describe("ciScopes", () => {
     });
   });
 
-  test("workflow, toolchain and lockfile changes run every lane", () => {
+  test("workflow, toolchain and workspace install changes run every lane", () => {
     for (const path of [
       ".github/workflows/frontend.yml",
       "bun.lock",
+      "bunfig.toml",
       ".mise.toml",
       "package.json",
       "scripts/checks/ciPolicy.ts",

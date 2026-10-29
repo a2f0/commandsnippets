@@ -124,19 +124,29 @@ while read -r _ local_sha _ remote_sha; do
 done <"$refs_file"
 step_timings_end
 
+# The packages are Bun workspaces: the root package.json, bunfig.toml and
+# bun.lock install all of them, so a change to those checks every package.
+workspace_install_changed() {
+  touches 'package.json' || touches 'bunfig.toml' || touches 'bun.lock'
+}
+
 if touches 'scripts/' || touches 'packages/frontend/scripts/' || touches '.agents/' ||
   touches '.claude/' || touches '.codex/' || touches 'agent-tool.json' ||
   touches '.agent-tool-skills.json' || touches '.agent-tool-permissions.json' ||
-  touches 'commitlint.config.mts' || touches 'package.json' || touches 'bun.lock' ||
+  touches 'commitlint.config.mts' || workspace_install_changed ||
   touches 'tsconfig'; then
   require_worktree_is_push scripts packages/frontend/scripts .agents .claude .codex agent-tool.json \
-    .agent-tool-skills.json .agent-tool-permissions.json commitlint.config.mts package.json bun.lock
+    .agent-tool-skills.json .agent-tool-permissions.json commitlint.config.mts package.json \
+    bunfig.toml bun.lock
   step_timings_run tooling-shell bun run lint:shell
   step_timings_run tooling-typecheck bun run typecheck
   step_timings_run tooling-tests sh -c 'bun run test:agent-tool && bun run test:scripts'
 fi
 
-if touches 'packages/api-shared/' && [ -d "$REPO_ROOT/packages/api-shared" ]; then
+# Installing from a workspace package installs every package from the root
+# bun.lock, so this one install serves the package checks after it.
+if { touches 'packages/api-shared/' || workspace_install_changed; } &&
+  [ -d "$REPO_ROOT/packages/api-shared" ]; then
   require_worktree_is_push packages/api-shared
   step_timings_run api-shared-install sh -c 'cd packages/api-shared && bun install --frozen-lockfile'
   step_timings_run api-shared-lint sh -c 'cd packages/api-shared && bun run lint'
@@ -144,14 +154,11 @@ if touches 'packages/api-shared/' && [ -d "$REPO_ROOT/packages/api-shared" ]; th
   step_timings_run api-shared-tests sh -c 'cd packages/api-shared && bun run test'
 fi
 
-# backend-v2 bundles api-shared, so a change to either checks backend-v2, after
-# reinstalling it (api-shared is installed from ../api-shared).
-if { touches 'packages/backend-v2/' || touches 'packages/api-shared/'; } &&
-  [ -d "$REPO_ROOT/packages/backend-v2" ]; then
+# backend-v2 bundles api-shared, so a change to either checks backend-v2. Its
+# workspace link to api-shared shows every change without a reinstall.
+if { touches 'packages/backend-v2/' || touches 'packages/api-shared/' ||
+  workspace_install_changed; } && [ -d "$REPO_ROOT/packages/backend-v2" ]; then
   require_worktree_is_push packages/backend-v2
-  if touches 'packages/api-shared/'; then
-    step_timings_run backend-v2-install sh -c 'cd packages/backend-v2 && bun install --frozen-lockfile'
-  fi
   step_timings_run backend-v2-lint sh -c 'cd packages/backend-v2 && bun run lint'
   step_timings_run backend-v2-typecheck sh -c 'cd packages/backend-v2 && bun run typecheck'
   step_timings_run backend-v2-tests sh -c 'cd packages/backend-v2 && bun run test:coverage'
@@ -166,8 +173,8 @@ fi
 
 # The website renders its icons from the brand sources with the settings in
 # agent-tool.json, so a change to either checks it too.
-if { touches 'packages/website/' || touches 'assets/brand/' || touches 'agent-tool.json'; } &&
-  [ -d "$REPO_ROOT/packages/website" ]; then
+if { touches 'packages/website/' || touches 'assets/brand/' || touches 'agent-tool.json' ||
+  workspace_install_changed; } && [ -d "$REPO_ROOT/packages/website" ]; then
   require_worktree_is_push packages/website assets/brand agent-tool.json
   step_timings_run website-lint sh -c 'cd packages/website && bun run lint'
   step_timings_run website-check sh -c 'cd packages/website && bun run check'

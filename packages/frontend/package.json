@@ -81,7 +81,7 @@
   },
   "dependencies": {
     "@a2f0/ct-client": "0.1.5",
-    "@commandsnippets/api-shared": "file:../api-shared",
+    "@commandsnippets/api-shared": "workspace:*",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@mui/icons-material": "9.5.0",
@@ -102,24 +102,6 @@
     "zod": "4.6.7",
     "zustand": "5.0.15"
   },
-  "overrides": {
-    "@puppeteer/browsers": "3.2.5",
-    "serialize-javascript": "7.1.2"
-  },
-  "trustedDependencies": [
-    "@ffmpeg-installer/darwin-arm64",
-    "@ffmpeg-installer/darwin-x64",
-    "@ffmpeg-installer/linux-arm",
-    "@ffmpeg-installer/linux-arm64",
-    "@ffmpeg-installer/linux-ia32",
-    "@ffmpeg-installer/linux-x64",
-    "@ffmpeg-installer/win32-ia32",
-    "@ffmpeg-installer/win32-x64",
-    "edgedriver",
-    "esbuild",
-    "geckodriver",
-    "workerd"
-  ],
   "msw": {
     "workerDirectory": [
       "public"

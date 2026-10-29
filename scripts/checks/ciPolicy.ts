@@ -25,7 +25,7 @@ export type CiScope = keyof typeof CI_SCOPES;
 
 /** Changes that can affect every lane run them all. */
 const COMMON =
-  /^(\.github\/workflows\/|scripts\/checks\/ci|package\.json$|bun\.lock$|\.mise\.toml$)/;
+  /^(\.github\/workflows\/|scripts\/checks\/ci|package\.json$|bun\.lock$|bunfig\.toml$|\.mise\.toml$)/;
 
 export function ciDiffRange(
   base: string | undefined,
