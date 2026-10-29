@@ -50,7 +50,7 @@ export function mockAnalytics(
   };
   const events = sources[params.activity].filter(
     row =>
-      row.date.slice(0, 10) >= params.from &&
+      (params.from === 'all' || row.date.slice(0, 10) >= params.from) &&
       row.date.slice(0, 10) <= params.to &&
       (!params.tag ||
         (row.tag
@@ -95,7 +95,16 @@ export function mockAnalytics(
       version,
       activity: params.activity,
       interval: params.interval,
-      from: params.from,
+      from:
+        params.from === 'all'
+          ? events.reduce(
+              (first, event) =>
+                event.date.slice(0, 10) < first
+                  ? event.date.slice(0, 10)
+                  : first,
+              params.to
+            )
+          : params.from,
       to: params.to,
       total: events.length,
       entries: entryCounts.size,

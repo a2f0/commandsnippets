@@ -18,6 +18,31 @@ test('accepts inclusive leap-day ranges and optional tag ids', () => {
   expect(analyticsQuerySchema.parse({...query, tag: '12'}).tag).toBe('12');
 });
 
+test('accepts all history only as the lower bound and keeps response dates concrete', () => {
+  const all = {...query, from: 'all'};
+  expect(analyticsQuerySchema.parse(all)).toEqual(all);
+  expect(analyticsSearchQuerySchema.parse(Object.entries(all))).toEqual(all);
+  expect(isAnalyticsRange('all', '2024-02-29')).toBe(true);
+  for (const to of ['all', 'bad', '2023-02-29']) {
+    expect(isAnalyticsRange('all', to)).toBe(false);
+    expect(analyticsQuerySchema.safeParse({...all, to}).success).toBe(false);
+  }
+  expect(
+    analyticsDocumentSchema.safeParse({
+      data: {
+        ...all,
+        version: 1,
+        total: 0,
+        entries: 0,
+        tags: 0,
+        timeline: [],
+        top_tags: [],
+        top_entries: [],
+      },
+    }).success
+  ).toBe(false);
+});
+
 test('refuses malformed dates, reversed or oversized ranges, and unknown filters', () => {
   for (const change of [
     {from: '2023-02-29'},

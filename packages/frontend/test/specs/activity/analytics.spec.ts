@@ -49,6 +49,12 @@ describe('Analytics', () => {
     await $('button=Show chart data').click();
     await $('#analyticsPage table').waitForDisplayed();
     await $('button=Hide chart data').click();
+    await $('button=All time').click();
+    await expect($('button=All time')).toHaveAttribute('aria-pressed', 'true');
+    await expect(browser).toHaveUrl(expect.stringContaining('from=all'));
+    await expect($('#analyticsPage svg[role="img"] desc')).toHaveText(
+      expect.stringContaining('4 events')
+    );
     await browser.setViewport({width: 390, height: 844});
     await browser.execute(() => window.scrollTo(0, 0));
     expect(

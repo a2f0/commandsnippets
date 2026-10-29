@@ -1,4 +1,5 @@
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
+import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {recentRange} from '../../src/components/analytics/buckets';
@@ -6,6 +7,8 @@ import {apiClient, DataVersionChangedError} from '../../src/lib/api/apiClient';
 import {readAnalytics} from '../../src/lib/data/analytics';
 import {routeOf} from '../../src/lib/router/route';
 import {syncSession} from '../../src/lib/sync/session';
+import {setRuntimeEntriesOverride} from '../../src/msw/handlers';
+import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi, server} from '../util/msw';
@@ -86,6 +89,62 @@ it('does not fetch invalid ranges, and clears old charts on filter changes and f
   expect(
     await screen.findByText(/No activity in this slice/)
   ).toBeInTheDocument();
+});
+
+it('shows all retained history, preserves filters and links, and returns to custom ranges', async () => {
+  const entries = structuredClone(entriesResponse);
+  for (const entry of entries.data)
+    entry.attributes.date_created = '2001-02-03T12:00:00.000000';
+  setRuntimeEntriesOverride(entries);
+  const history = mount('/test/activity/analytics?activity=created&tag=1');
+  await screen.findByText(/No activity in this slice/);
+  fireEvent.click(screen.getByRole('button', {name: 'All time'}));
+  expect(
+    await screen.findByRole('img', {name: /Activity over time/})
+  ).toHaveTextContent('4 events');
+  expect(screen.getByRole('button', {name: 'All time'})).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  expect(screen.getByRole('combobox', {name: 'Group by'})).toHaveTextContent(
+    'Month'
+  );
+  const params = new URLSearchParams(history.location.search);
+  expect(Object.fromEntries(params)).toMatchObject({
+    activity: 'created',
+    tag: '1',
+    from: 'all',
+    interval: 'month',
+  });
+  expect(params.get('to')).toBe(recentRange(1).to);
+  fireEvent.click(screen.getByRole('button', {name: 'Show chart data'}));
+  expect(
+    await screen.findByRole('table', {name: 'Activity over time'})
+  ).toHaveTextContent('Feb 1, 2001');
+  const before = history.location.pathname + history.location.search;
+  const entryLink = within(
+    screen.getByRole('list', {name: 'Top entries'})
+  ).getAllByRole('link')[0];
+  invariant(entryLink, 'Missing ranked entry');
+  fireEvent.click(entryLink);
+  fireEvent.click(await screen.findByRole('link', {name: 'Back to analytics'}));
+  await screen.findByRole('img', {name: /Activity over time/});
+  expect(history.location.pathname + history.location.search).toBe(before);
+  fireEvent.change(screen.getByLabelText('From'), {
+    target: {value: recentRange(30).from},
+  });
+  await screen.findByText(/No activity in this slice/);
+  expect(screen.getByRole('button', {name: 'All time'})).toHaveAttribute(
+    'aria-pressed',
+    'false'
+  );
+  fireEvent.click(screen.getByRole('button', {name: 'All time'}));
+  await screen.findByRole('img', {name: /Activity over time/});
+  fireEvent.click(screen.getByRole('button', {name: 'Last 30 days'}));
+  await screen.findByText(/No activity in this slice/);
+  expect(new URLSearchParams(history.location.search).get('from')).toBe(
+    recentRange(30).from
+  );
 });
 
 it('ignores a late response for the previous slice', async () => {

@@ -20,6 +20,7 @@ export const en: I18NextTranslations = {
     last30: 'Last 30 days',
     last90: 'Last 90 days',
     last365: 'Last year',
+    allTime: 'All time',
     refresh: 'Refresh',
     events: 'Events',
     entries: 'Distinct entries',
