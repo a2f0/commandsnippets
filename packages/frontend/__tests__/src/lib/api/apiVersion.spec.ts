@@ -12,6 +12,7 @@ import * as envModule from '../../../../src/lib/environment';
 import {
   clearMetrics,
   metricsSnapshot,
+  NOTIFY_MS,
 } from '../../../../src/lib/metrics/timings';
 
 const user = JSON.stringify({
@@ -48,7 +49,10 @@ function answer(version: string | null, status = 200, body = user) {
 const apiVersion = () => useApiVersion.getState().version;
 
 beforeEach(() => useApiVersion.setState({version: null}));
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe('fetchApi', () => {
   it('keeps the version a response names', async () => {
@@ -129,12 +133,14 @@ describe('fetchApi timings', () => {
   });
 
   it('neither copies a body nor times a request in production', async () => {
+    // A fake clock for the HUD's notification (`NOTIFY_MS`), moved past it.
+    vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']});
     vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
     const clone = vi.spyOn(Response.prototype, 'clone');
     answer('0.2.1');
 
     await fetchApi('http://localhost:9001/api/v1/user/');
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await vi.advanceTimersByTimeAsync(NOTIFY_MS + 50);
 
     expect(clone).not.toHaveBeenCalled();
     expect(metricsSnapshot().timings).toEqual([]);
