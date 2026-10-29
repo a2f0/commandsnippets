@@ -539,7 +539,10 @@ Without it, releases are deployed by hand as above.
 `GET /api/v1/user/analytics` returns owner-only aggregates for the active data
 version. It accepts `activity=created|tags_created|tagged|reused`,
 `interval=day|week|month`, inclusive UTC `from` and `to` calendar dates (at most
-3660 days apart), and an optional `tag` id. Unknown parameters and invalid
+3660 days apart), and an optional `tag` id. `from=all` removes the lower bound,
+including history older than ten years through `to`. The response's `from`
+is the earliest matching event date (or `to` for an empty slice), so chart
+padding starts with the retained history. Unknown parameters and invalid
 ranges are rejected. The response contains event/entry/tag totals, nonempty
 time buckets, and the top ten tags and entries. Weeks start Monday; the
 first and last buckets can be partial. Responses are private and not cached.

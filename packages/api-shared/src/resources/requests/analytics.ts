@@ -8,12 +8,12 @@ import {
   isAnalyticsRange,
 } from '../analytics';
 
-/** At most ten years per slice; bounds include the entire UTC calendar day. */
+/** Explicit slices span at most ten years; `from=all` includes all history. */
 export const analyticsQuerySchema = z
   .strictObject({
     activity: analyticsActivitySchema,
     interval: analyticsIntervalSchema,
-    from: analyticsDateSchema,
+    from: z.union([analyticsDateSchema, z.literal('all')]),
     to: analyticsDateSchema,
     tag: z.optional(z.string().check(z.regex(/^[1-9]\d*$/))),
   })

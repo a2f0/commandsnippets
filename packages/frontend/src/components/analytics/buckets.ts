@@ -9,21 +9,51 @@ export function recentRange(days: number) {
   return {from: utcDay(start), to: utcDay(end)};
 }
 
-/** Include silent periods so bar spacing always represents elapsed time. */
+export type TimelinePoint = Analytics['timeline'][number] & {through?: string};
+
+/** Fill silent periods, combining adjacent buckets to keep long charts bounded. */
 export function timelineBuckets(data: Analytics) {
-  const date = new Date(`${data.from}T00:00:00Z`);
-  if (data.interval === 'month') date.setUTCDate(1);
+  const start = new Date(`${data.from}T00:00:00Z`);
+  if (data.interval === 'month') start.setUTCDate(1);
   if (data.interval === 'week')
-    date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
-  const values = new Map(data.timeline.map(point => [point.date, point.count]));
-  const result: Analytics['timeline'] = [];
+    start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7));
+  const days = data.interval === 'week' ? 7 : 1;
+  const offset = (date: Date) =>
+    data.interval === 'month'
+      ? (date.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+        date.getUTCMonth() -
+        start.getUTCMonth()
+      : Math.floor((date.getTime() - start.getTime()) / (days * 86_400_000));
+  const at = (index: number) => {
+    const date = new Date(start);
+    if (data.interval === 'month') date.setUTCMonth(date.getUTCMonth() + index);
+    else date.setUTCDate(date.getUTCDate() + index * days);
+    return date;
+  };
   const end = Date.parse(data.to);
-  while (date.getTime() <= end) {
-    const day = utcDay(date);
-    result.push({date: day, count: values.get(day) ?? 0});
-    if (data.interval === 'month') date.setUTCMonth(date.getUTCMonth() + 1);
-    else
-      date.setUTCDate(date.getUTCDate() + (data.interval === 'week' ? 7 : 1));
+  const periods = offset(new Date(end)) + 1;
+  // Preserve the old ten-year daily maximum even for millennia of imported data.
+  const stride = Math.max(1, Math.ceil(periods / 3661));
+  const result = Array.from(
+    {length: Math.ceil(periods / stride)},
+    (_, index): TimelinePoint => ({
+      date: utcDay(at(index * stride)),
+      count: 0,
+      ...(stride > 1
+        ? {
+            through: utcDay(
+              new Date(
+                Math.min(end, at((index + 1) * stride).getTime() - 86_400_000)
+              )
+            ),
+          }
+        : {}),
+    })
+  );
+  for (const point of data.timeline) {
+    const bucket =
+      result[Math.floor(offset(new Date(`${point.date}T00:00:00Z`)) / stride)];
+    if (bucket) bucket.count += point.count;
   }
   return result;
 }

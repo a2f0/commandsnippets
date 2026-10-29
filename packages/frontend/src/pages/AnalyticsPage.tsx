@@ -18,7 +18,7 @@ import {
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useEffect, useMemo, useState} from 'react';
 import {ActivityCharts} from '../components/analytics/ActivityCharts';
-import {recentRange} from '../components/analytics/buckets';
+import {recentRange, utcDay} from '../components/analytics/buckets';
 import {DetailPage} from '../components/DetailPage';
 import {useCookieLogout} from '../hooks/useCookieLogout';
 import {useTypedTranslation} from '../i18n/hooks';
@@ -186,6 +186,21 @@ const Dashboard = ({
               {t(days === 30 ? 'last30' : days === 90 ? 'last90' : 'last365')}
             </Button>
           ))}
+          <Button
+            size="small"
+            variant={params.from === 'all' ? 'contained' : 'outlined'}
+            aria-pressed={params.from === 'all'}
+            onClick={() =>
+              setParams(current => ({
+                ...current,
+                from: 'all',
+                to: utcDay(new Date()),
+                interval: 'month',
+              }))
+            }
+          >
+            {t('allTime')}
+          </Button>
         </Box>
         <Box
           sx={{
@@ -221,7 +236,8 @@ const Dashboard = ({
             type="date"
             label={t('from')}
             sx={{colorScheme: theme => theme.palette.mode}}
-            value={params.from}
+            value={params.from === 'all' ? '' : params.from}
+            helperText={params.from === 'all' ? t('allTime') : undefined}
             slotProps={{
               inputLabel: {shrink: true},
               htmlInput: {'aria-label': t('from')},

@@ -15,8 +15,9 @@ export const analyticsActivitySchema = z.enum([
 export const analyticsIntervalSchema = z.enum(['day', 'week', 'month']);
 export const analyticsDateSchema = z.iso.date();
 
-/** Shared by the date controls and the request validator. */
+/** `all` removes the lower bound; explicit date ranges stay bounded. */
 export function isAnalyticsRange(from: string, to: string): boolean {
+  if (from === 'all') return analyticsDateSchema.safeParse(to).success;
   const days = (Date.parse(to) - Date.parse(from)) / 86_400_000;
   return (
     analyticsDateSchema.safeParse(from).success &&

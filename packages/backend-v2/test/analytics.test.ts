@@ -112,6 +112,43 @@ it('counts entry creations once across current tags and includes untagged entrie
   ).toEqual([1, 1]);
 });
 
+it.each(['created', 'tags_created', 'tagged', 'reused'])(
+  'includes history older than ten years for %s and resolves concrete bounds',
+  async activity => {
+    for (const table of [textEntries, tags, tagsEntries, entryReuses]) {
+      await db()
+        .update(table)
+        .set({date_created: '2001-02-03T12:00:00.000000'});
+    }
+    expect((await read(activity)).total).toBe(0);
+    const totals: Record<string, number> = {
+      created: 2,
+      tags_created: 2,
+      tagged: 2,
+      reused: 3,
+    };
+    expect((await read(activity, '&from=all')).total).toBe(totals[activity]);
+    const data = await read(activity, `&from=all&interval=month&tag=${tagId}`);
+    const total = activity === 'reused' ? 3 : 1;
+    expect(data).toMatchObject({
+      from: '2001-02-03',
+      to: '2024-02-29',
+      total,
+      timeline: [{date: '2001-02-01', count: total}],
+    });
+    expect(await read(activity, '&from=all&tag=99999999')).toMatchObject({
+      from: '2024-02-29',
+      to: '2024-02-29',
+      total: 0,
+      timeline: [],
+    });
+    expect(await read(activity, '&from=all&to=2001-02-02')).toMatchObject({
+      from: '2001-02-02',
+      total: 0,
+    });
+  }
+);
+
 it('slices tag creation separately, including empty tags, and groups Monday weeks', async () => {
   const data = await read('tags_created', '&interval=week');
   expect(data).toMatchObject({
@@ -164,37 +201,43 @@ it('counts actual reuse events by date, filters tags without multiplying totals,
   expect((await read('reused', '&tag=99999999')).total).toBe(0);
 });
 
-it('excludes deleted tags and entries from every chart', async () => {
-  await db()
-    .update(tags)
-    .set({is_deleted: true})
-    .where(eq(tags.id, otherTagId));
-  expect((await read('created')).tags).toBe(1);
-  expect((await read('tags_created')).total).toBe(1);
-  await db()
-    .update(textEntries)
-    .set({is_deleted: true})
-    .where(eq(textEntries.id, entryId));
-  expect((await read('created')).total).toBe(1);
-  expect((await read('tagged')).total).toBe(0);
-  expect((await read('reused')).total).toBe(0);
-});
+it.each(['', '&from=all'])(
+  'excludes deleted tags and entries from every chart (%s)',
+  async range => {
+    await db()
+      .update(tags)
+      .set({is_deleted: true})
+      .where(eq(tags.id, otherTagId));
+    expect((await read('created', range)).tags).toBe(1);
+    expect((await read('tags_created', range)).total).toBe(1);
+    await db()
+      .update(textEntries)
+      .set({is_deleted: true})
+      .where(eq(textEntries.id, entryId));
+    expect((await read('created', range)).total).toBe(1);
+    expect((await read('tagged', range)).total).toBe(0);
+    expect((await read('reused', range)).total).toBe(0);
+  }
+);
 
-it('refuses anonymous reads and stale account/version headers; staff see only their own data', async () => {
-  const path = `${query}&activity=created`;
-  expect((await new ApiClient().get(path)).status).toBe(403);
-  expect(
-    (await client.get(path, {[EXPECTED_USER_HEADER]: 'someone-else'})).status
-  ).toBe(409);
-  expect((await client.get(path, {[DATA_VERSION_HEADER]: '2'})).status).toBe(
-    409
-  );
-  const staff = await staffClient();
-  expect(
-    analyticsDocumentSchema.parse(await (await staff.client.get(path)).json())
-      .data.total
-  ).toBe(0);
-});
+it.each(['2024-01-01', 'all'])(
+  'refuses anonymous reads and stale account/version headers; staff see only their own data (%s)',
+  async from => {
+    const path = pathWith(`activity=created&from=${from}`);
+    expect((await new ApiClient().get(path)).status).toBe(403);
+    expect(
+      (await client.get(path, {[EXPECTED_USER_HEADER]: 'someone-else'})).status
+    ).toBe(409);
+    expect((await client.get(path, {[DATA_VERSION_HEADER]: '2'})).status).toBe(
+      409
+    );
+    const staff = await staffClient();
+    expect(
+      analyticsDocumentSchema.parse(await (await staff.client.get(path)).json())
+        .data.total
+    ).toBe(0);
+  }
+);
 
 it.each([
   'activity=unknown',
@@ -208,23 +251,26 @@ it.each([
   expect((await client.get(pathWith(suffix))).status).toBe(400);
 });
 
-it('reads only the active data version after restoring, without combining histories', async () => {
-  const backup = backupSchema.parse(
-    await (await client.get('/api/v1/user/backup')).json()
-  );
-  backup.entry_reuses = [];
-  const restored = await client.post('/api/v1/user/restore', backup);
-  expect(restored.status).toBe(200);
-  expect(await read('reused')).toMatchObject({version: 2, total: 0});
-  expect(await read('created')).toMatchObject({version: 2, total: 2});
-  expect(
-    (
-      await client.get(`${query}&activity=created`, {
-        [DATA_VERSION_HEADER]: '1',
-      })
-    ).status
-  ).toBe(409);
-});
+it.each(['', '&from=all'])(
+  'reads only the active data version after restoring, without combining histories (%s)',
+  async range => {
+    const backup = backupSchema.parse(
+      await (await client.get('/api/v1/user/backup')).json()
+    );
+    backup.entry_reuses = [];
+    const restored = await client.post('/api/v1/user/restore', backup);
+    expect(restored.status).toBe(200);
+    expect(await read('reused', range)).toMatchObject({version: 2, total: 0});
+    expect(await read('created', range)).toMatchObject({version: 2, total: 2});
+    expect(
+      (
+        await client.get(pathWith(`activity=created${range}`), {
+          [DATA_VERSION_HEADER]: '1',
+        })
+      ).status
+    ).toBe(409);
+  }
+);
 
 it('refuses repeated parameters with a query-level error', async () => {
   const response = await client.get(
