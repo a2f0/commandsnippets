@@ -1,9 +1,10 @@
-import {Menu} from '@mui/material';
 import React, {useCallback} from 'react';
 import {useSession} from '../../lib/data/hooks';
 import {setTagPublic} from '../../lib/data/writes';
-import type {IMouse} from '../../lib/shared';
+import {appMode, type IMouse} from '../../lib/shared';
+import {useAppState} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
+import {ContextMenu} from '../ContextMenu';
 import {TagDeleteDialog} from './TagDeleteDialog';
 
 interface ITagContextMenuProps {
@@ -21,44 +22,6 @@ interface ITagContextMenuProps {
   handleBeginEditParent: () => void;
 }
 
-interface IStyledMenuProps {
-  id: string;
-  mousePosition: IMouse;
-  open: boolean;
-  onClose: () => void;
-  anchorReference: 'anchorPosition';
-  children: React.ReactNode;
-}
-
-/**
- * Not kept mounted: a closed menu renders nothing, so the tag list does not
- * carry a whole menu (in a portal of its own) for every tag.
- */
-const StyledMenu = ({
-  id,
-  mousePosition,
-  open,
-  onClose,
-  anchorReference,
-  children,
-}: IStyledMenuProps) => {
-  return (
-    <Menu
-      id={id}
-      open={open}
-      onClose={onClose}
-      anchorReference={anchorReference}
-      anchorPosition={
-        mousePosition.mouseY !== null && mousePosition.mouseX !== null
-          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : {top: 0, left: 0}
-      }
-    >
-      {children}
-    </Menu>
-  );
-};
-
 const TagContextMenu = ({
   id,
   isPublic,
@@ -72,19 +35,35 @@ const TagContextMenu = ({
   // Open where the tag was right-clicked, from the tag's state.
   const handleClose = onClose;
 
-  const handleBeginEdit = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    handleBeginEditParent();
-    handleClose();
-  }, []);
+  // The menu lives as long as the row: each handler calls the row's as it
+  // is now (a delete goes through the session the row has now).
+  const handleBeginEdit = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handleBeginEditParent();
+      handleClose();
+    },
+    [handleBeginEditParent, handleClose]
+  );
 
-  const handleDelete = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    onClose();
-    setDialogOpen(true);
-  }, []);
+  const handleDelete = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+      setDialogOpen(true);
+    },
+    [onClose]
+  );
+
+  // A new tag's form, at the top of the list, as File > New Tag opens it.
+  const handleNewTag = useCallback(() => {
+    const {setAppMode, setTagNew} = useAppState.getState();
+    setAppMode(appMode.tagEditor);
+    handleClose();
+    setTagNew('top');
+  }, [handleClose]);
 
   const handleCancelDialog = useCallback(() => {
     setDialogOpen(false);
@@ -93,20 +72,18 @@ const TagContextMenu = ({
   const handleAcceptDialog = useCallback(() => {
     setDialogOpen(false);
     deleteTagParent();
-  }, []);
+  }, [deleteTagParent]);
 
   return (
     <>
-      <StyledMenu
+      <ContextMenu
         id={`tagContextMenu-${id}`}
-        mousePosition={mouse}
-        open={mouse.mouseY !== null}
+        mouse={mouse}
         onClose={handleClose}
-        anchorReference="anchorPosition"
       >
         <StyledMenuItem
           id={`tag-context-menu-${id}-new-tag`}
-          onClick={handleClose}
+          onClick={handleNewTag}
         >
           New Tag
         </StyledMenuItem>
@@ -135,7 +112,7 @@ const TagContextMenu = ({
         >
           {isPublic ? 'Make private' : 'Make public'}
         </StyledMenuItem>
-      </StyledMenu>
+      </ContextMenu>
       <TagDeleteDialog
         id={id}
         open={dialogOpen}

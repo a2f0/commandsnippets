@@ -5,24 +5,20 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
 import {useDrop} from 'react-dnd';
+import {useContextMenu} from '../../hooks/useContextMenu';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useReadOnly} from '../../lib/data/hooks';
 import {keyOfRow} from '../../lib/db/database';
 import {beginInteraction, listKey} from '../../lib/metrics/timings';
 import {navigate} from '../../lib/router/navigation';
-import {
-  activeSearch,
-  appMode,
-  type IMouse,
-  initialMouse,
-} from '../../lib/shared';
+import {activeSearch, appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
+import {useDraggedRows} from '../dnd/useDraggedRows';
 import {Tag} from './Tag';
 import {TagListContextMenu} from './TagListContextMenu';
 import {TagNew} from './TagNew';
@@ -40,6 +36,8 @@ export const LeftToRight: React.FC<React.HTMLAttributes<HTMLDivElement>> =
     direction: 'ltr',
   }));
 
+const nameOf = (tag: ITagJsonApi) => tag.attributes.name;
+
 interface IProps {
   tagsFromWrapper: ITagJsonApi[];
   username: string;
@@ -51,19 +49,15 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
 
   const [movedSelectedUp, setMovedSelectedUp] = useState<boolean>(false);
 
-  const [mouse, setMouse] = useState(initialMouse);
+  const menu = useContextMenu();
 
-  // The list as the database has it now, rendered as soon as it is read: a
-  // drag reorders a copy of it (`dragged`), which a newer list (the drop
-  // stored) replaces.
-  const [dragged, setDragged] = useState<{
-    of: ITagJsonApi[];
-    tags: ITagJsonApi[];
-  } | null>(null);
-  const tags =
-    dragged !== null && dragged.of === tagsFromWrapper
-      ? dragged.tags
-      : tagsFromWrapper;
+  // The list as a drag reorders it.
+  const {
+    rows: tags,
+    findEntry,
+    findEntryByIndex,
+    moveEntry,
+  } = useDraggedRows(tagsFromWrapper, nameOf);
 
   // The tag highlighted: the one chosen in the list (the arrow keys, a
   // click) while the list and the tag selected (the tag shown) are those it
@@ -92,68 +86,12 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
     setChosen({id, ...choosingWith.current});
   }, []);
 
-  const findEntry = useCallback(
-    (id: string) => {
-      const entry = tags.filter(c => c.id === id)[0];
-      invariant(entry, 'entry is not defined');
-      return {
-        entry,
-        index: tags.indexOf(entry),
-      };
-    },
-    [tags]
-  );
-
-  const findEntryByIndex = useCallback(
-    (index: number): ITagJsonApi | null => {
-      if (index > tags.length - 1) {
-        return null;
-      }
-      const tag = tags[index];
-      invariant(tag, 'tag is undefined');
-      return tag;
-    },
-    [tags]
-  );
-
-  const moveEntry = useCallback(
-    (id: string, atIndex: number) => {
-      const {entry, index} = findEntry(id);
-      invariant(entry, 'entry is undefined');
-      console.debug(
-        `moveEntry: ${entry.attributes.name} index ${index} moving to ${atIndex}`
-      );
-      const newTags = [...tags];
-      newTags.splice(index, 1);
-      newTags.splice(atIndex, 0, entry);
-      setDragged({of: tagsFromWrapper, tags: newTags});
-    },
-    [findEntry, tags, tagsFromWrapper]
-  );
-
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
   // Add this function to properly connect the drop ref
   const dropBoxRef = (el: HTMLUListElement | null) => {
     drop(el);
   };
-
-  const handleContextClick = useCallback(
-    (event: React.MouseEvent<HTMLUListElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const mouseData: IMouse = {...mouse};
-      mouseData.mouseX = event.clientX - 2;
-      mouseData.mouseY = event.clientY - 4;
-      setMouse(mouseData);
-    },
-    []
-  );
-
-  const contextMenu = useMemo(
-    () => <TagListContextMenu mouse={mouse} />,
-    [mouse]
-  );
 
   const keyListener = useCallback(
     (event: KeyboardEvent) => {
@@ -225,7 +163,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
           height: theme =>
             `calc(100vh - ${theme.appBar.height}px - ${theme.footer.height}px)`,
         }}
-        onContextMenu={readOnly ? undefined : handleContextClick}
+        onContextMenu={readOnly ? undefined : menu.onContextMenu}
       >
         <LeftToRight>
           {tags.map((object: ITagJsonApi, i) => {
@@ -253,7 +191,9 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
             <TagNew id="tagNewBottom" />
           </LeftToRight>
         )}
-        {appConfig.loggedInUser && !readOnly && <>{contextMenu}</>}
+        {appConfig.loggedInUser && !readOnly && (
+          <TagListContextMenu mouse={menu.mouse} onClose={menu.close} />
+        )}
       </List>
     </>
   );

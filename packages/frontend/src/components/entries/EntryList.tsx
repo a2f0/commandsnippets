@@ -17,6 +17,7 @@ import React, {
   useState,
 } from 'react';
 import {useDrop} from 'react-dnd';
+import {useContextMenu} from '../../hooks/useContextMenu';
 import {copyEntry} from '../../lib/data/copyEntry';
 import {NO_TAG_NAMES} from '../../lib/data/entryTags';
 import {
@@ -34,9 +35,10 @@ import {useRenderTiming} from '../../lib/metrics/hooks';
 import {listKey, listShown} from '../../lib/metrics/timings';
 import {useRouteParam, useSearchParam} from '../../lib/router/navigation';
 import {needsScrollingIntoView} from '../../lib/scroll';
-import {appMode, type IMouse, initialMouse} from '../../lib/shared';
+import {appMode} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
+import {useDraggedRows} from '../dnd/useDraggedRows';
 import {Entry} from './Entry';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
@@ -56,6 +58,8 @@ export const VIRTUALIZE_FROM = 100;
 
 /** A row's height until it is measured. */
 const ROW_ESTIMATE = 72;
+
+const subjectOf = (entry: TextEntry) => entry.attributes.subject;
 
 /**
  * The entries shown: a tag's (`/:user/:tag`), or all or the untagged ones
@@ -131,20 +135,13 @@ const EntryList = () => {
     }
   }, [ownRows, shownList]);
 
-  // The list as the database has it now, rendered as soon as it is read: a
-  // drag reorders a copy of it (`dragged`), which a newer list (the drop
-  // stored) replaces.
-  const [dragged, setDragged] = useState<{
-    of: TextEntry[];
-    entries: TextEntry[];
-  } | null>(null);
-  const entries = useMemo(
-    () =>
-      dragged !== null && dragged.of === shown
-        ? dragged.entries
-        : (shown ?? []),
-    [dragged, shown]
-  );
+  // The list as a drag reorders it.
+  const {
+    rows: entries,
+    findEntry,
+    findEntryByIndex,
+    moveEntry,
+  } = useDraggedRows(shown, subjectOf);
   useEffect(() => {
     const [first] = shown ?? [];
     if (
@@ -282,49 +279,6 @@ const EntryList = () => {
     };
   }, [keyListener]);
 
-  // The list as last rendered, which the rows' drag and drop reads: the
-  // functions they are given stay the same as the list changes (new ones
-  // would render every row again on every write).
-  const rendered = useRef({entries, shown});
-  useLayoutEffect(() => {
-    rendered.current = {entries, shown};
-  });
-
-  const findEntry = useCallback((id: string) => {
-    const {entries} = rendered.current;
-    const entry = entries.filter(c => c.id === id)[0];
-    invariant(entry, 'entry is undefined');
-    return {
-      entry,
-      index: entries.indexOf(entry),
-    };
-  }, []);
-
-  const moveEntry = useCallback(
-    (id: string, atIndex: number) => {
-      const {entries, shown} = rendered.current;
-      const {entry, index} = findEntry(id);
-      console.debug(
-        `moveEntry: ${entry.attributes.subject} index ${index} moving to ${atIndex}`
-      );
-      const newEntries = [...entries];
-      newEntries.splice(index, 1);
-      newEntries.splice(atIndex, 0, entry);
-      setDragged({of: shown ?? [], entries: newEntries});
-    },
-    [findEntry]
-  );
-
-  const findEntryByIndex = useCallback((index: number): TextEntry | null => {
-    const {entries} = rendered.current;
-    if (index > entries.length - 1) {
-      return null;
-    }
-    const entry = entries[index];
-    invariant(entry, 'entry is undefined');
-    return entry;
-  }, []);
-
   const [, drop] = useDrop({accept: ItemTypes.ENTRY});
 
   // Add this function to properly connect the drop ref
@@ -332,27 +286,13 @@ const EntryList = () => {
     drop(el);
   };
 
-  const handleContextClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const mouseData: IMouse = {...mouse};
-    mouseData.mouseX = event.clientX - 2;
-    mouseData.mouseY = event.clientY - 4;
-    setMouse(mouseData);
-  };
-
   const onMouseDown = () => {
     appConfig.setEntrySelectedID('');
   };
 
-  const [mouse, setMouse] = useState(initialMouse);
+  const menu = useContextMenu();
 
   useRenderTiming('EntryList', renderStart, `${entries.length} rows`);
-
-  const contextMenu = useMemo(
-    () => <EntryListContextMenu mouse={mouse} />,
-    [mouse]
-  );
 
   /** The row of `element`, at `index` (measured and placed, in a long list). */
   const renderRow = (
@@ -448,12 +388,14 @@ const EntryList = () => {
         <EntryNew id="textEntryNewBottom" tagId={currentTag?.id} />
       )}
       <Box
-        onContextMenu={readOnly ? undefined : handleContextClick}
+        onContextMenu={readOnly ? undefined : menu.onContextMenu}
         sx={{
           flexGrow: '1',
         }}
       />
-      {appConfig.loggedInUser && !readOnly && <>{contextMenu}</>}
+      {appConfig.loggedInUser && !readOnly && (
+        <EntryListContextMenu mouse={menu.mouse} onClose={menu.close} />
+      )}
     </Box>
   );
 };
