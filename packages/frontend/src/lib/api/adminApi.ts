@@ -45,10 +45,10 @@ import {
 import type * as z from 'zod/mini';
 import {handleUnauthorized, signedInUser} from '../auth/authUtils';
 import type {SyncApi} from '../sync/sync';
-import {throwConflict} from './apiClient';
 import {fetchApi} from './apiVersion';
 import {baseURL} from './baseUrl';
 import {firstError} from './errorDocument';
+import {throwConflict} from './errors';
 import {isSignedOutResponse} from './fetchWithAuth';
 import {describeIssues} from './parseResponse';
 import {toSearchParams} from './searchParams';

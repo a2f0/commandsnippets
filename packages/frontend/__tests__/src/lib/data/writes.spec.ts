@@ -20,7 +20,8 @@ import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {delay} from 'msw/utils/delay';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {apiClient, UserMismatchError} from '../../../../src/lib/api/apiClient';
+import {apiClient} from '../../../../src/lib/api/apiClient';
+import {UserMismatchError} from '../../../../src/lib/api/errors';
 import {setSignedInUser} from '../../../../src/lib/auth/authUtils';
 import {entriesOfTag} from '../../../../src/lib/data/hooks';
 import {

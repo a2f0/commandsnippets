@@ -44,7 +44,7 @@ import type {
   TextEntryReusedListDocument,
 } from '@commandsnippets/api-shared/responses';
 import {Dexie, type Table} from 'dexie';
-import {DataVersionChangedError} from '../api/apiClient';
+import {DataVersionChangedError} from '../api/errors';
 import {
   type CommandsnippetsDatabase,
   databaseName,

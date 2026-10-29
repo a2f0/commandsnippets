@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {ApiRequestError} from '../../../lib/api/apiClient';
+import {ApiRequestError} from '../../../lib/api/errors';
 import {
   activateVersion,
   deleteVersion,

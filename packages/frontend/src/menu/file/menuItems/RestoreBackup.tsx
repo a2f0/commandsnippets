@@ -2,7 +2,7 @@ import type {Backup} from '@commandsnippets/api-shared/responses';
 import React from 'react';
 import {createPortal} from 'react-dom';
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {ApiRequestError} from '../../../lib/api/apiClient';
+import {ApiRequestError} from '../../../lib/api/errors';
 import {
   liveCounts,
   type RestoreTarget,

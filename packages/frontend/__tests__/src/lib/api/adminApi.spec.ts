@@ -20,7 +20,7 @@ import {
 import {
   DataVersionChangedError,
   UserMismatchError,
-} from '../../../../src/lib/api/apiClient';
+} from '../../../../src/lib/api/errors';
 import {errorDocument, onePage} from '../../../../src/msw/documents';
 import {signIn, TEST_USER} from '../../../util/signIn';
 

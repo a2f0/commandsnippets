@@ -10,7 +10,7 @@
  * start. A version that is not active never changes, so rows held of the
  * active one are right however long ago they were read.
  */
-import {DataVersionChangedError} from '../api/apiClient';
+import {DataVersionChangedError} from '../api/errors';
 import {
   type CommandsnippetsDatabase,
   MADE_KEY,

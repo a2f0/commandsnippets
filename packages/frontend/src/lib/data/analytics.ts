@@ -1,5 +1,6 @@
 import type {AnalyticsParams} from '@commandsnippets/api-shared/requests';
-import {apiClient, DataVersionChangedError} from '../api/apiClient';
+import {apiClient} from '../api/apiClient';
+import {DataVersionChangedError} from '../api/errors';
 import {assertHeld, heldVersion} from '../sync/dataVersion';
 import {assertBound, boundAccount} from '../sync/outbox';
 import type {SyncSession} from '../sync/session';

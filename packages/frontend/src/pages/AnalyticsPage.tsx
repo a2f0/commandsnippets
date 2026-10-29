@@ -22,7 +22,7 @@ import {recentRange, utcDay} from '../components/analytics/buckets';
 import {DetailPage} from '../components/DetailPage';
 import {useCookieLogout} from '../hooks/useCookieLogout';
 import {useTypedTranslation} from '../i18n/hooks';
-import {UserMismatchError} from '../lib/api/apiClient';
+import {UserMismatchError} from '../lib/api/errors';
 import {toSearchParams} from '../lib/api/searchParams';
 import {readAnalytics} from '../lib/data/analytics';
 import {useOwner, useSession, useTags} from '../lib/data/hooks';

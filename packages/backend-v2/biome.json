@@ -25,6 +25,12 @@
         "noInferrableTypes": "error",
         "noUselessElse": "error"
       },
+      "suspicious": {
+        "noImportCycles": {
+          "level": "error",
+          "options": { "ignoreTypes": false }
+        }
+      },
       "complexity": {
         "useLiteralKeys": "off"
       }

@@ -29,7 +29,7 @@ import type {
 } from '@commandsnippets/api-shared/responses';
 import type {Table} from 'dexie';
 import type * as z from 'zod/mini';
-import {UserMismatchError} from '../api/apiClient';
+import {UserMismatchError} from '../api/errors';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {timed} from '../metrics/timings';
 import {leaveForeignSession} from '../state/appState';

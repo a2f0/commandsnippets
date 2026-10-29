@@ -1,6 +1,6 @@
 {
   "name": "commandsnippets-backend-v2",
-  "version": "0.2.37",
+  "version": "0.2.38",
   "license": "UNLICENSED",
   "private": true,
   "packageManager": "bun@1.4.3",
