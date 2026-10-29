@@ -14,7 +14,8 @@ import {
   persist,
   type StateStorage,
 } from 'zustand/middleware';
-import {apiClient, UserMismatchError} from '../api/apiClient';
+import {apiClient} from '../api/apiClient';
+import {UserMismatchError} from '../api/errors';
 import {setSignedInUser, setUnauthorizedHandler} from '../auth/authUtils';
 import {environment} from '../environment';
 import {clearMetrics} from '../metrics/timings';

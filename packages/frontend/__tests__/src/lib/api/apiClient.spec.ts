@@ -9,12 +9,12 @@ import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
 import invariant from 'invariant';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
+import {apiClient} from '../../../../src/lib/api/apiClient';
 import {
   ApiRequestError,
-  apiClient,
   DataVersionChangedError,
   UserMismatchError,
-} from '../../../../src/lib/api/apiClient';
+} from '../../../../src/lib/api/errors';
 import {InvalidResponseError} from '../../../../src/lib/api/parseResponse';
 import {setUnauthorizedHandler} from '../../../../src/lib/auth/authUtils';
 import {errorDocument} from '../../../../src/msw/documents';

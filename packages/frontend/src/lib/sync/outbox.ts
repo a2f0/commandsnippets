@@ -55,7 +55,7 @@ import type {
   TextEntryReusedListDocument,
 } from '@commandsnippets/api-shared/responses';
 import type {Table} from 'dexie';
-import {ApiRequestError, UserMismatchError} from '../api/apiClient';
+import {ApiRequestError, UserMismatchError} from '../api/errors';
 import {
   type CommandsnippetsDatabase,
   MADE_KEY,

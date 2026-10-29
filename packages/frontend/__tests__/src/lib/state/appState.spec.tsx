@@ -2,7 +2,8 @@ import {act, render, screen} from '@testing-library/react';
 import {Dexie} from 'dexie';
 import {useEffect} from 'react';
 import {describe, expect, it, vi} from 'vitest';
-import {apiClient, UserMismatchError} from '../../../../src/lib/api/apiClient';
+import {apiClient} from '../../../../src/lib/api/apiClient';
+import {UserMismatchError} from '../../../../src/lib/api/errors';
 import {
   beginInteraction,
   listKey,

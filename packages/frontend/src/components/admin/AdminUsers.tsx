@@ -41,7 +41,7 @@ import {
   setUserActive,
   setUserMarkedForDeletion,
 } from '../../lib/api/adminApi';
-import {UserMismatchError} from '../../lib/api/apiClient';
+import {UserMismatchError} from '../../lib/api/errors';
 import {formatTimestamp} from '../../lib/formatTimestamp';
 import {navigate} from '../../lib/router/navigation';
 import {leaveForeignSession} from '../../lib/state/appState';
