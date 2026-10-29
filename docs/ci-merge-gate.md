@@ -33,9 +33,10 @@ change there also runs the lanes of its consumers: `backend-v2` and
 `frontend`. Both web packages render their icons from the brand sources in
 `assets/brand/` with the `images` settings in `agent-tool.json`, using the
 root's pinned agent-tool, so those paths run the `frontend` and `website`
-lanes (and, on push, the website checks). Every lane that installs runs one
+lanes (and, on push, the website checks). Every application lane runs one
 `bun install --frozen-lockfile`, which installs the whole workspace, root
-tooling included, from the root `bun.lock`.
+tooling included, from the root `bun.lock`; the `tooling` lane and the gate
+install only the root workspace (`--filter commandsnippets`).
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch
