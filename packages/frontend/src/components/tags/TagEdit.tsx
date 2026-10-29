@@ -1,11 +1,8 @@
-import Grid from '@mui/material/Grid';
-import React, {useCallback, useEffect, useState} from 'react';
+import React from 'react';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
 import {renameTag} from '../../lib/data/writes';
-import {StyledTagButton} from './StyledTagButton';
-import {StyledTagFormContainer} from './StyledTagFormContainer';
-import {StyledTextFieldTags} from './StyledTextFieldTags';
+import {TagForm} from './TagForm';
 
 export interface ITagEdit {
   object: ITagJsonApi;
@@ -19,23 +16,9 @@ const TagEdit = ({
   handleCancelEditParent,
   object,
 }: ITagEdit) => {
-  const [tagName, setTagName] = useState<string>(object.attributes.name);
   const session = useSession();
-  const escFunction = useCallback((event: KeyboardEvent) => {
-    if (event.code === 'Escape') {
-      handleCancel();
-    }
-  }, []);
 
-  useEffect(() => {
-    document.addEventListener('keydown', escFunction, false);
-
-    return () => {
-      document.removeEventListener('keydown', escFunction, false);
-    };
-  }, [escFunction]);
-
-  const handleSave = () => {
+  const handleSave = (tagName: string) => {
     if (session === null) {
       return;
     }
@@ -50,46 +33,18 @@ const TagEdit = ({
       });
   };
 
-  const handleCancel = () => {
-    handleCancelEditParent();
-  };
-
-  const handleTagNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTagName(event.target.value);
-  };
-
   return (
-    <StyledTagFormContainer id={`tagEdit${object.id}`}>
-      <StyledTextFieldTags
-        id={`tagEditTagName${object.id}`}
-        value={tagName}
-        onChange={e => {
-          handleTagNameChange(e);
-        }}
-      />
-      <Grid container spacing={0}>
-        <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
-          <StyledTagButton
-            id={`tagEditSave${object.id}`}
-            onClick={() => {
-              handleSave();
-            }}
-          >
-            Save
-          </StyledTagButton>
-        </Grid>
-        <Grid sx={{paddingLeft: '1px'}} size={{xs: 6}}>
-          <StyledTagButton
-            id={`tagEditCancel${object.id}`}
-            onClick={() => {
-              handleCancel();
-            }}
-          >
-            Cancel
-          </StyledTagButton>
-        </Grid>
-      </Grid>
-    </StyledTagFormContainer>
+    <TagForm
+      ids={{
+        form: `tagEdit${object.id}`,
+        name: `tagEditTagName${object.id}`,
+        save: `tagEditSave${object.id}`,
+        cancel: `tagEditCancel${object.id}`,
+      }}
+      name={object.attributes.name}
+      onSave={handleSave}
+      onCancel={handleCancelEditParent}
+    />
   );
 };
 
