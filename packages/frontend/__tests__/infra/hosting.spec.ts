@@ -187,6 +187,18 @@ describe.each(['staging', 'production'])('the %s build', mode => {
         expect(errors).toEqual([]);
         expect(await browser.$('#signInPage').isDisplayed()).toBe(true);
       };
+      // The service worker's lifecycle as the page sees it, for the waits.
+      const serviceWorker = () =>
+        browser.execute(async () => {
+          const registration = await navigator.serviceWorker.getRegistration();
+          return {
+            controlled: navigator.serviceWorker.controller !== null,
+            registered: registration !== undefined,
+            installing: registration?.installing?.state ?? null,
+            waiting: registration?.waiting?.state ?? null,
+            active: registration?.active?.state ?? null,
+          };
+        });
       await browser.url(origin);
       await rendered();
       // Disable the HTTP cache for a reload, then exercise the PWA's normal
@@ -195,14 +207,28 @@ describe.each(['staging', 'production'])('the %s build', mode => {
       await browser.networkSetCacheBehavior({cacheBehavior: 'bypass'});
       await browser.refresh();
       await rendered();
-      await browser.waitUntil(
-        () =>
-          browser.execute(() => navigator.serviceWorker.controller !== null),
-        {timeout: 10_000}
-      );
+      // Wait for the worker to activate, not for it to control this page:
+      // whether its clientsClaim reaches a page loaded while it installed is
+      // a race. Every navigation after activation is controlled.
+      let lifecycle = await serviceWorker();
+      await browser
+        .waitUntil(
+          async () => {
+            lifecycle = await serviceWorker();
+            return lifecycle.active === 'activated';
+          },
+          {timeout: 10_000}
+        )
+        .catch((error: unknown) => {
+          throw new Error(
+            `the service worker never activated: ${JSON.stringify(lifecycle)}`,
+            {cause: error}
+          );
+        });
       await browser.networkSetCacheBehavior({cacheBehavior: 'default'});
       await browser.refresh();
       await rendered();
+      expect(await serviceWorker()).toMatchObject({controlled: true});
     } finally {
       await browser.deleteSession();
     }
