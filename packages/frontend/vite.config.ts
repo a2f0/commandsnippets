@@ -23,6 +23,22 @@ const DEV_SERVER_ALLOW = [
 ];
 
 /**
+ * Files it never serves, wherever a path reaches them (`server.fs.deny`):
+ * Vite's defaults and the workspace's secrets. Vite checks the requested
+ * path, not where a symlink in an allowed directory leads.
+ */
+const DEV_SERVER_DENY = [
+  '.env',
+  '.env.*',
+  '*.{crt,pem}',
+  '**/.git/**',
+  '.dev.vars',
+  '.dev.vars.*',
+  '.secrets',
+  '**/.secrets/**',
+];
+
+/**
  * `headers` (a _headers file) with `line` added to the rule for `pattern`,
  * or with a new rule for it: a second rule with the same pattern would
  * replace the first one's headers rather than add to them.
@@ -227,6 +243,7 @@ export default defineConfig(({command, mode}) => {
       // (backend-v2's .dev.vars) and the .secrets link.
       fs: {
         allow: DEV_SERVER_ALLOW,
+        deny: DEV_SERVER_DENY,
       },
     },
     test: {
