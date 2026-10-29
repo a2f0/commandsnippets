@@ -471,6 +471,11 @@ writing its type by hand.
   (`state/`), the Dexie database (`db/`), its sync (`sync/`), what the UI
   reads and writes (`data/`), the router (`router/`), and helpers),
   `src/i18n/` and `src/msw/`
+- **Layering**: `src/lib/` never imports `components/`, `pages/`, `menu/` or
+  `hooks/`. `lib/sync/` takes the API errors from `lib/api/errors.ts`, never
+  from a client module, since `apiClient` imports the sync's reads. Biome's
+  `noImportCycles` (`ignoreTypes: false`, in `biome.json`) fails `bun run lint`
+  on any import cycle, type-only imports included
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
   (`/:user/:tag`, `/:user/entries/:id`)
 - **Libraries**: Material UI, Emotion (styled components), React DnD
