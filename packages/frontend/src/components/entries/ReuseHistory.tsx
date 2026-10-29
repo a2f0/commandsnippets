@@ -2,7 +2,8 @@ import type {
   TextEntry,
   TextEntryReused,
 } from '@commandsnippets/api-shared/responses';
-import {History, Refresh} from '@mui/icons-material';
+import History from '@mui/icons-material/History';
+import Refresh from '@mui/icons-material/Refresh';
 import {Alert, Box, Button, Typography} from '@mui/material';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useEffect, useRef, useState} from 'react';

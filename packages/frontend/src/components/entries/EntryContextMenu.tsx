@@ -1,4 +1,3 @@
-import {Menu} from '@mui/material';
 import React from 'react';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useOwner, useSession} from '../../lib/data/hooks';
@@ -13,44 +12,7 @@ import {entryPath} from '../../lib/router/route';
 import type {IMouse} from '../../lib/shared';
 import {useAppState} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
-
-interface IStyledMenuProps {
-  id: string;
-  mousePosition: IMouse;
-  open: boolean;
-  onClose: () => void;
-  anchorReference: 'anchorPosition';
-  children: React.ReactNode;
-}
-
-/**
- * Not kept mounted: a closed menu renders nothing, so a list does not carry
- * a whole menu (in a portal of its own) for every row.
- */
-const StyledMenu = ({
-  id,
-  mousePosition,
-  open,
-  onClose,
-  anchorReference,
-  children,
-}: IStyledMenuProps) => {
-  return (
-    <Menu
-      id={id}
-      open={open}
-      onClose={onClose}
-      anchorReference={anchorReference}
-      anchorPosition={
-        mousePosition.mouseY !== null && mousePosition.mouseX !== null
-          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : {top: 0, left: 0}
-      }
-    >
-      {children}
-    </Menu>
-  );
-};
+import {ContextMenu} from '../ContextMenu';
 
 export interface IEntryContextMenu {
   /**
@@ -131,12 +93,10 @@ const EntryContextMenu = ({
   };
 
   return (
-    <StyledMenu
+    <ContextMenu
       id={`tagsEntriesContextMenu-${id}`}
-      mousePosition={mouse}
-      open={mouse.mouseY !== null}
+      mouse={mouse}
       onClose={handleClose}
-      anchorReference="anchorPosition"
     >
       <StyledMenuItem
         id={`tags-entries-context-menu-${id}-copy`}
@@ -218,7 +178,7 @@ const EntryContextMenu = ({
           Delete
         </StyledMenuItem>
       )}
-    </StyledMenu>
+    </ContextMenu>
   );
 };
 

@@ -204,3 +204,14 @@ it('keeps a date and activity slice in the URL when returning from entry details
     screen.getByRole('combobox', {name: 'Date to analyze'})
   ).toHaveTextContent('Entries reused');
 });
+
+it.each(['abc', '0'])(
+  'falls back to all tags for a malformed URL tag %s',
+  async tag => {
+    mount(`/test/activity/analytics?tag=${tag}`);
+    await screen.findByText(/No activity in this slice/);
+    expect(screen.getByRole('combobox', {name: 'Tag'})).toHaveTextContent(
+      'All tags'
+    );
+  }
+);

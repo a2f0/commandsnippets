@@ -54,7 +54,7 @@ export const en: I18NextTranslations = {
     chartDescription_other:
       '{{count}} events across {{periods}} periods. Exact values are available in Show chart data.',
     back: 'Back to entries',
-    tagFiltered: 'Filter by {{name}}',
+    tagFiltered: 'Filter by {{name}}; events: {{count}}',
     partialPeriods:
       'The first and last periods include only dates inside your range.',
   },

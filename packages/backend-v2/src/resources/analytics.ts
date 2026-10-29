@@ -47,6 +47,8 @@ analyticsRoutes.get('/', async c => {
     id: string;
     name: string;
     count: number;
+    entries: number | null;
+    tags: number | null;
   }>(sql`WITH
     live_entries AS (
       SELECT id, subject, date_created FROM text_entries_textentry
@@ -80,11 +82,12 @@ analyticsRoutes.get('/', async c => {
       FROM events a JOIN live_entries e ON e.id = a.entry_id
       GROUP BY e.id ORDER BY count DESC, e.subject, e.id LIMIT 10
     )
-    SELECT 'total' AS kind, CAST(COUNT(DISTINCT entry_id) AS TEXT) AS id,
-      CAST((SELECT COUNT(DISTINCT tag_id) FROM tag_events) AS TEXT) AS name, COUNT(*) AS count FROM events
-    UNION ALL SELECT 'timeline', '', ${bucket}, COUNT(*) FROM events GROUP BY ${bucket}
-    UNION ALL SELECT 'tag', id, name, count FROM ranked_tags
-    UNION ALL SELECT 'entry', id, name, count FROM ranked_entries
+    SELECT 'total' AS kind, '' AS id, '' AS name, COUNT(*) AS count,
+      COUNT(DISTINCT entry_id) AS entries, (SELECT COUNT(DISTINCT tag_id) FROM tag_events) AS tags FROM events
+    UNION ALL SELECT 'timeline', '', ${bucket}, COUNT(*), NULL, NULL FROM events GROUP BY ${bucket}
+    UNION ALL SELECT 'tag', id, name, count, NULL, NULL FROM ranked_tags
+    UNION ALL SELECT 'entry', id, name, count, NULL, NULL FROM ranked_entries
+    ORDER BY kind, count DESC, name, id
   `);
   const summary = rows.find(row => row.kind === 'total');
   const ranking = (kind: string) =>
@@ -99,8 +102,8 @@ analyticsRoutes.get('/', async c => {
       from,
       to,
       total: summary?.count ?? 0,
-      entries: Number(summary?.id ?? 0),
-      tags: Number(summary?.name ?? 0),
+      entries: summary?.entries ?? 0,
+      tags: summary?.tags ?? 0,
       timeline: rows
         .filter(row => row.kind === 'timeline')
         .map(row => ({date: row.name, count: row.count}))

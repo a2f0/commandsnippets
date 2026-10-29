@@ -31,3 +31,12 @@ it('anchors partial weeks on Monday and months on the first', () => {
     timelineBuckets({...data, interval: 'month'}).map(row => row.date)
   ).toEqual(['2024-02-01', '2024-03-01']);
 });
+
+it('stops at the last supported calendar year', () => {
+  expect(
+    timelineBuckets({...data, from: '9999-12-30', to: '9999-12-31'})
+  ).toEqual([
+    {date: '9999-12-30', count: 0},
+    {date: '9999-12-31', count: 0},
+  ]);
+});

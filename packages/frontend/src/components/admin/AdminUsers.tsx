@@ -1,4 +1,4 @@
-import {MoreVert} from '@mui/icons-material';
+import MoreVert from '@mui/icons-material/MoreVert';
 import {
   Alert,
   Box,
@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import React, {useCallback, useEffect, useState} from 'react';
 
+import {useContextMenu} from '../../hooks/useContextMenu';
 import type {AdminKeys} from '../../i18n/hooks';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {
@@ -43,7 +44,6 @@ import {
 import {UserMismatchError} from '../../lib/api/apiClient';
 import {formatTimestamp} from '../../lib/formatTimestamp';
 import {navigate} from '../../lib/router/navigation';
-import {type IMouse, initialMouse} from '../../lib/shared';
 import {leaveForeignSession} from '../../lib/state/appState';
 import {commonButtonSx} from '../../theme/sx';
 import {
@@ -143,7 +143,7 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
   } | null>(null);
   // The menu keeps its user while it closes; the position opens and closes it.
   const [menuUser, setMenuUser] = useState<AdminUser | null>(null);
-  const [menuMouse, setMenuMouse] = useState<IMouse>(initialMouse);
+  const menu = useContextMenu();
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
@@ -206,13 +206,6 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
       page: 1,
     }));
   };
-
-  const openMenu = (user: AdminUser, mouse: IMouse) => {
-    setMenuUser(user);
-    setMenuMouse(mouse);
-  };
-
-  const closeMenu = useCallback(() => setMenuMouse(initialMouse), []);
 
   // Their data opens on their page, read-only; a change is confirmed first.
   const chooseAction = useCallback(
@@ -382,11 +375,8 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
                     isSelf
                       ? undefined
                       : event => {
-                          event.preventDefault();
-                          openMenu(user, {
-                            mouseX: event.clientX - 2,
-                            mouseY: event.clientY - 4,
-                          });
+                          setMenuUser(user);
+                          menu.onContextMenu(event);
                         }
                   }
                 >
@@ -437,7 +427,8 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
                           onClick={event => {
                             const rect =
                               event.currentTarget.getBoundingClientRect();
-                            openMenu(user, {
+                            setMenuUser(user);
+                            menu.openAt({
                               mouseX: rect.left,
                               mouseY: rect.bottom,
                             });
@@ -487,8 +478,8 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
 
       <AdminUserContextMenu
         user={menuUser}
-        mouse={menuMouse}
-        onClose={closeMenu}
+        mouse={menu.mouse}
+        onClose={menu.close}
         onAction={chooseAction}
       />
 

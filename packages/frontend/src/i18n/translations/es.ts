@@ -57,7 +57,7 @@ export const es: I18NextTranslations = {
     chartDescription_other:
       '{{count}} eventos en {{periods}} períodos. Los valores exactos están disponibles en Mostrar datos del gráfico.',
     back: 'Volver a las entradas',
-    tagFiltered: 'Filtrar por {{name}}',
+    tagFiltered: 'Filtrar por {{name}}; eventos: {{count}}',
     partialPeriods:
       'El primer y el último período incluyen solo las fechas dentro del intervalo.',
   },

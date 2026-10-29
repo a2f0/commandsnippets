@@ -1,10 +1,10 @@
-import {Menu} from '@mui/material';
 import React from 'react';
 
 import {useTypedTranslation} from '../../i18n/hooks';
 import type {AdminUser} from '../../lib/api/adminApi';
-import type {IMouse} from '../../lib/shared';
+import {type IMouse, initialMouse} from '../../lib/shared';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
+import {ContextMenu} from '../ContextMenu';
 
 /** A change to the account, which staff confirm first. */
 export type AdminUserChange =
@@ -54,16 +54,10 @@ const AdminUserContextMenu = ({user, mouse, onClose, onAction}: IProps) => {
   const {t} = useTypedTranslation('admin');
 
   return (
-    <Menu
+    <ContextMenu
       id="adminUserMenu"
-      open={user !== null && mouse.mouseY !== null}
+      mouse={user === null ? initialMouse : mouse}
       onClose={onClose}
-      anchorReference="anchorPosition"
-      anchorPosition={
-        mouse.mouseY !== null && mouse.mouseX !== null
-          ? {top: mouse.mouseY, left: mouse.mouseX}
-          : {top: 0, left: 0}
-      }
     >
       {user !== null &&
         actionsFor(user).map(action => (
@@ -78,7 +72,7 @@ const AdminUserContextMenu = ({user, mouse, onClose, onAction}: IProps) => {
             {t(action)}
           </StyledMenuItem>
         ))}
-    </Menu>
+    </ContextMenu>
   );
 };
 

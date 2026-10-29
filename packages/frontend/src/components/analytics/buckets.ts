@@ -17,7 +17,8 @@ export function timelineBuckets(data: Analytics) {
     date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
   const values = new Map(data.timeline.map(point => [point.date, point.count]));
   const result: Analytics['timeline'] = [];
-  while (utcDay(date) <= data.to) {
+  const end = Date.parse(data.to);
+  while (date.getTime() <= end) {
     const day = utcDay(date);
     result.push({date: day, count: values.get(day) ?? 0});
     if (data.interval === 'month') date.setUTCMonth(date.getUTCMonth() + 1);

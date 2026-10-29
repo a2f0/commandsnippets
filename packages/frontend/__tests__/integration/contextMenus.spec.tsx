@@ -1,10 +1,11 @@
 /** The tags' and entries' context menus: rendered only while open. */
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
+import {appMode} from '../../src/lib/shared';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {server} from '../util/msw';
-import {signIn} from '../util/signIn';
+import {signIn, store} from '../util/signIn';
 import {TestAppRouter} from '../util/TestAppRouter';
 
 beforeAll(() => server.listen());
@@ -47,6 +48,18 @@ describe('Context menus', () => {
     ).toBeVisible();
     expect(menus()).toEqual(['tagContextMenu-1']);
     fireEvent.keyDown(screen.getByRole('menu'), {key: 'Escape'});
+    await waitFor(() => expect(menus()).toEqual([]));
+  });
+
+  it("open a new tag's form from a tag's New Tag, as File > New Tag does", async () => {
+    renderAt('/test/test-tag-1');
+    fireEvent.contextMenu(await screen.findByText('test-tag-2'));
+    expect(document.getElementById('tagNewTop')).toBeNull();
+
+    fireEvent.click(await screen.findByRole('menuitem', {name: 'New Tag'}));
+
+    expect(document.getElementById('tagNewTopTextField')).not.toBeNull();
+    expect(store.appMode).toBe(appMode.tagEditor);
     await waitFor(() => expect(menus()).toEqual([]));
   });
 

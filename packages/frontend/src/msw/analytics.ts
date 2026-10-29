@@ -86,8 +86,8 @@ export function mockAnalytics(
       .sort(
         (a, b) =>
           b.count - a.count ||
-          a.name.localeCompare(b.name) ||
-          Number(a.id) - Number(b.id)
+          (a.name < b.name ? -1 : a.name > b.name ? 1 : 0) ||
+          (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
       )
       .slice(0, 10);
   return {

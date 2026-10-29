@@ -235,3 +235,29 @@ it('refuses repeated parameters with a query-level error', async () => {
     errors: [{source: {pointer: '/data'}}],
   });
 });
+
+it('returns the top ten rankings in descending event order with stable ties', async () => {
+  const user = await userFactory({}, {examples: false});
+  client = await clientFor(user);
+  for (let index = 0; index < 12; index += 1) {
+    const name = `rank-${String(index).padStart(2, '0')}`;
+    const entry = await textEntryFactory({user, subject: name});
+    const tag = await tagFactory({user, name});
+    await tagTextEntryFactory({user, tag, text_entry: entry});
+    for (let count = 0; count < Math.floor(index / 2) + 1; count += 1) {
+      const reuse = await textEntryReusedFactory({user, text_entry: entry});
+      await db()
+        .update(entryReuses)
+        .set({date_created: '2024-01-01T00:00:00.000000'})
+        .where(eq(entryReuses.id, reuse.id));
+    }
+  }
+  const data = await read('reused');
+  const expected = [10, 11, 8, 9, 6, 7, 4, 5, 2, 3].map(index => ({
+    name: `rank-${String(index).padStart(2, '0')}`,
+    count: Math.floor(index / 2) + 1,
+  }));
+  expect(data.total).toBe(42);
+  for (const rows of [data.top_entries, data.top_tags])
+    expect(rows.map(({name, count}) => ({name, count}))).toEqual(expected);
+});

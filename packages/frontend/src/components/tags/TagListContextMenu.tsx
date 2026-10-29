@@ -1,88 +1,39 @@
-import {Menu} from '@mui/material';
-import React, {useEffect, useState} from 'react';
-import {appMode, type IMouse, initialMouse} from '../../lib/shared';
+import React from 'react';
+import {appMode, type IMouse} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
+import {ContextMenu} from '../ContextMenu';
 
-interface ITagContextMenuProps {
+interface ITagListContextMenuProps {
+  /**
+   * Where the menu was opened (a right click below the tags), or nowhere
+   * (null coordinates): closed.
+   */
   mouse: IMouse;
-}
-
-interface IStyledMenuProps {
-  id: string;
-  keepMounted: boolean;
-  mousePosition: IMouse;
-  open: boolean;
+  /** Close the menu: the list forgets where it was opened. */
   onClose: () => void;
-  anchorReference: 'anchorPosition';
-  anchorPosition: {top: number; left: number} | undefined;
-  children: React.ReactNode;
 }
 
-const StyledMenu = ({
-  id,
-  keepMounted,
-  mousePosition,
-  open,
-  onClose,
-  anchorReference,
-  children,
-}: IStyledMenuProps) => {
-  return (
-    <Menu
-      id={id}
-      keepMounted={keepMounted}
-      open={open}
-      onClose={onClose}
-      anchorReference={anchorReference}
-      anchorPosition={
-        mousePosition.mouseY !== null && mousePosition.mouseX !== null
-          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : {top: 0, left: 0}
-      }
-    >
-      {children}
-    </Menu>
-  );
-};
-
-const TagListContextMenu = ({mouse}: ITagContextMenuProps) => {
+const TagListContextMenu = ({mouse, onClose}: ITagListContextMenuProps) => {
   const appConfig = useAppConfig();
-
-  const [mousePosition, setMousePosition] = useState<IMouse>(initialMouse);
-
-  useEffect(() => {
-    setMousePosition(mouse);
-  }, [mouse]);
-
-  const handleClose = () => {
-    setMousePosition(initialMouse);
-  };
 
   const handleNewTag = () => {
     appConfig.setTagNew('bottom');
     appConfig.setAppMode(appMode.tagEditor);
-    setMousePosition(initialMouse);
+    onClose();
   };
 
   return (
-    <StyledMenu
+    <ContextMenu
       id="tagListContextMenu"
       keepMounted
-      mousePosition={mousePosition}
-      open={mousePosition.mouseY !== null}
-      onClose={handleClose}
-      anchorReference="anchorPosition"
-      anchorPosition={
-        mousePosition.mouseY !== null && mousePosition.mouseX !== null
-          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : undefined
-      }
+      mouse={mouse}
+      onClose={onClose}
     >
       <StyledMenuItem id="tagListContextMenuNew" onClick={handleNewTag}>
         New Tag
       </StyledMenuItem>
-    </StyledMenu>
+    </ContextMenu>
   );
 };
 

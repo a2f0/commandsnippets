@@ -1,97 +1,36 @@
-import {Menu} from '@mui/material';
-import React, {useEffect, useState} from 'react';
-import type {IMouse} from '../../lib/shared';
-import {appMode} from '../../lib/shared';
+import React from 'react';
+import {appMode, type IMouse} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
+import {ContextMenu} from '../ContextMenu';
 
-export interface IEntryContextMenu {
+export interface IEntryListContextMenu {
+  /**
+   * Where the menu was opened (a right click below the entries), or nowhere
+   * (null coordinates): closed.
+   */
   mouse: IMouse;
-}
-
-interface IStyledMenuProps {
-  id: string;
-  keepMounted: boolean;
-  mousePosition: IMouse;
-  open: boolean;
+  /** Close the menu: the list forgets where it was opened. */
   onClose: () => void;
-  anchorReference: 'anchorPosition';
-  anchorPosition: {top: number; left: number} | undefined;
-  children: React.ReactNode;
 }
 
-const StyledMenu = ({
-  id,
-  keepMounted,
-  mousePosition,
-  open,
-  onClose,
-  anchorReference,
-  children,
-}: IStyledMenuProps) => {
-  return (
-    <Menu
-      id={id}
-      keepMounted={keepMounted}
-      open={open}
-      onClose={onClose}
-      anchorReference={anchorReference}
-      anchorPosition={
-        mousePosition.mouseY !== null && mousePosition.mouseX !== null
-          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : {top: 0, left: 0}
-      }
-      slotProps={{
-        paper: {
-          sx: {
-            zIndex: 1400, // Higher than fixed footer
-          },
-        },
-      }}
-    >
-      {children}
-    </Menu>
-  );
-};
-
-const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
+const EntryListContextMenu = ({mouse, onClose}: IEntryListContextMenu) => {
   const appConfig = useAppConfig();
-  const initialMouse: IMouse = {
-    mouseX: null,
-    mouseY: null,
-  };
-
-  const [mousePosition, setMousePosition] = useState(initialMouse);
-
-  useEffect(() => {
-    setMousePosition(mouse);
-  }, [mouse]);
-
-  const handleClose = () => {
-    setMousePosition(initialMouse);
-  };
 
   const handleNewEntry = (event: React.MouseEvent<HTMLLIElement>) => {
     event.preventDefault();
     event.stopPropagation();
     appConfig.setAppMode(appMode.entryEditor);
     appConfig.setEntryNew('textEntry-bottom');
-    handleClose();
+    onClose();
   };
 
   return (
-    <StyledMenu
+    <ContextMenu
       id="entryListContextMenu"
       keepMounted
-      mousePosition={mousePosition}
-      open={mousePosition.mouseY !== null}
-      onClose={handleClose}
-      anchorReference="anchorPosition"
-      anchorPosition={
-        mousePosition.mouseY !== null && mousePosition.mouseX !== null
-          ? {top: mousePosition.mouseY, left: mousePosition.mouseX}
-          : undefined
-      }
+      mouse={mouse}
+      onClose={onClose}
     >
       <StyledMenuItem
         id="entryListContextMenuNewEntry"
@@ -99,7 +38,7 @@ const EntryListContextMenu = ({mouse}: IEntryContextMenu) => {
       >
         New Entry
       </StyledMenuItem>
-    </StyledMenu>
+    </ContextMenu>
   );
 };
 

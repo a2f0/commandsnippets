@@ -263,6 +263,7 @@ export const ActivityCharts = ({
                                 onClick: () => onTag(row.id),
                                 'aria-label': t('tagFiltered', {
                                   name: row.name,
+                                  count: row.count,
                                 }),
                               }
                             : {

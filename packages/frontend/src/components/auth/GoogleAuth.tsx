@@ -1,4 +1,4 @@
-import {Google} from '@mui/icons-material';
+import Google from '@mui/icons-material/Google';
 import React from 'react';
 import {useOAuth} from '../../hooks/useOAuth';
 import {getOAuthRedirectUrl} from '../../lib/oauth';

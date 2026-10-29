@@ -31,7 +31,11 @@ export async function readAnalytics(
     return document.data;
   } catch (error) {
     if (error instanceof DataVersionChangedError && !signal.aborted)
-      await sync.syncAll();
+      await sync
+        .syncAll()
+        .catch((syncError: unknown) =>
+          console.warn('WARNING: analytics version sync failed:', syncError)
+        );
     throw error;
   }
 }

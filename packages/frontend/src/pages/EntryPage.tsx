@@ -1,5 +1,6 @@
 import type {TextEntry} from '@commandsnippets/api-shared/responses';
-import {Check, FileCopySharp} from '@mui/icons-material';
+import Check from '@mui/icons-material/Check';
+import FileCopySharp from '@mui/icons-material/FileCopySharp';
 import {Box, Button, Chip, Typography} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 import {DetailPage} from '../components/DetailPage';

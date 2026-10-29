@@ -5,7 +5,7 @@ import {
   analyticsIntervalSchema,
   isAnalyticsRange,
 } from '@commandsnippets/api-shared/responses';
-import {Refresh} from '@mui/icons-material';
+import Refresh from '@mui/icons-material/Refresh';
 import {
   Alert,
   Box,
@@ -130,7 +130,7 @@ const Dashboard = ({
       interval: analyticsIntervalSchema.safeParse(interval).data ?? 'week',
       from: from ?? defaults.from,
       to: to ?? defaults.to,
-      tag: tag || undefined,
+      tag: tag && /^[1-9]\d*$/.test(tag) ? tag : undefined,
     }),
     [activity, interval, from, to, tag, defaults]
   );
