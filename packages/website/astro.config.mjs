@@ -51,4 +51,28 @@ export default defineConfig({
   output: 'static',
   build: {format: 'directory'},
   integrations: [modeFilesIntegration()],
+  vite: {
+    server: {
+      fs: {
+        // What the dev server may serve outside this package (relative to
+        // it): the workspace's package store and the repository's brand
+        // sources. Never the whole workspace, which holds other packages'
+        // secrets (backend-v2's .dev.vars) and the .secrets link.
+        allow: ['.', '../../node_modules', '../../assets/brand'],
+        // Never served, wherever a path reaches them: Vite's defaults and
+        // the workspace's secrets. Vite checks the requested path, not where
+        // a symlink in an allowed directory leads.
+        deny: [
+          '.env',
+          '.env.*',
+          '*.{crt,pem}',
+          '**/.git/**',
+          '.dev.vars',
+          '.dev.vars.*',
+          '.secrets',
+          '**/.secrets/**',
+        ],
+      },
+    },
+  },
 });

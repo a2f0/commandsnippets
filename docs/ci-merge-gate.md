@@ -10,8 +10,9 @@ job decides which lanes apply (`scripts/checks/ciPolicy.ts`), and the gate then
 requires each lane to have succeeded, or to have been skipped *because* change
 detection marked it irrelevant. A failed, cancelled, missing, or unexpectedly
 skipped lane fails the gate. Changes to a workflow, to the CI policy itself
-(`scripts/checks/ci*`), or to the root `.mise.toml`, `package.json` or `bun.lock` exercise
-every lane.
+(`scripts/checks/ci*`), or to the root `.mise.toml`, or to the workspace install
+files every package shares (the root `package.json`, `bunfig.toml` and
+`bun.lock`) exercise every lane.
 
 The gate always checks managed skill and permission-rule drift and lints the
 actual PR title with commitlint, including on documentation-only PRs. It
@@ -32,13 +33,16 @@ change there also runs the lanes of its consumers: `backend-v2` and
 `frontend`. Both web packages render their icons from the brand sources in
 `assets/brand/` with the `images` settings in `agent-tool.json`, using the
 root's pinned agent-tool, so those paths run the `frontend` and `website`
-lanes (and, on push, the website checks), and both lanes install the root
-tooling too.
+lanes (and, on push, the website checks). Every application lane runs one
+`bun install --frozen-lockfile`, which installs the whole workspace, root
+tooling included, from the root `bun.lock`; the `tooling` lane and the gate
+install only the root workspace (`--filter commandsnippets`).
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch
 pushes themselves; `Frontend CI` and `Backend v2 CI` still run on pushes to
-`main` and `staging`. `Backend v2 CI` has a deploy job for those pushes, but
+`main` and `staging`, including pushes that change the root workspace install
+files. `Backend v2 CI` has a deploy job for those pushes, but
 it is off: it runs only once the `BACKEND_V2_DEPLOY` repository variable is
 `true` and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets
 exist. Without that configuration deploys run by hand; see
@@ -88,9 +92,12 @@ changes take effect. `bun run hooks:check` reports missing or stale copies.
   checks for the areas the push touches. Those checks run against the
   worktree, so the hook first requires the pushed commit to be the checked-out
   `HEAD`, with no uncommitted tracked changes and no untracked files under the
-  checked paths. A change to `packages/api-shared/` installs and checks it, then
-  reinstalls and checks `packages/backend-v2/`, which bundles it. It refuses to
-  run when the installed copy is stale. Per-check timings are logged under
+  checked paths. A change to `packages/api-shared/` installs the workspace and
+  checks api-shared, then `packages/backend-v2/`, which bundles it through its
+  workspace link. A change to the root `package.json`, `bunfig.toml` or
+  `bun.lock` runs the tooling checks, that install, and the api-shared,
+  backend-v2 and website checks. It refuses to run when the installed copy is
+  stale. Per-check timings are logged under
   `.git/commandsnippets/pushGateTimings.tsv`
   (`scripts/git/showPushGateTimings.sh`).
 
@@ -107,8 +114,8 @@ exact-pinned package. `agent-tool.json` declares conventional types (including
 `cleanup`), a 50-character header/branch limit, `main`/`staging` exemptions,
 the `CI gate` check in workflow `CI`, and strict ruleset freshness. Commitlint
 retains its complete local rules for commits and PR titles. Changed frontend
-and backend-v2 packages receive the patch bumps configured under `versions`;
-their independent lockfiles stay with their package.
+and backend-v2 packages receive the patch bumps configured under `versions`,
+which records their new versions in the root `bun.lock`.
 
 Use `agent-tool pr checks --wait --head <reviewed-sha>` to wait for every check
 entry, `pr preflight` before the guarded merge, and `repo cleanup` after the

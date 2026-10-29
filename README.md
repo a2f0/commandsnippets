@@ -22,22 +22,23 @@ bun run hooks:install
 
 # The API, on http://localhost:9001
 cd packages/backend-v2
-bun install --frozen-lockfile
 cp .dev.vars.example .dev.vars   # fill in OAuth client ids/secrets
 bun run db:migrate:local
 bun run dev
 
 # The web app, on http://localhost:8085 (in a second terminal, from the root)
 cd packages/frontend
-bun install --frozen-lockfile
 bun run dev
 ```
 
 The root `.mise.toml` pins Bun and Node for every package and for CI. Bun
 installs dependencies and runs scripts; tools such as Vite, Vitest, WebdriverIO
-and Wrangler continue to execute on Node. The root install holds the shared
-tooling, and each application package keeps its own lockfile: run
-`bun install --frozen-lockfile` in the package you work on.
+and Wrangler continue to execute on Node. The packages are
+[Bun workspaces](https://bun.com/docs/install/workspaces) of the root
+`package.json`, which also holds the shared tooling: one
+`bun install --frozen-lockfile`, from the root or any package, installs
+everything from the root `bun.lock`, with the install settings in the root
+`bunfig.toml`.
 
 ## Layout
 
@@ -55,7 +56,7 @@ tooling, and each application package keeps its own lockfile: run
 ## Checks
 
 These root entrypoints run the frontend's tests with the commands GitHub
-Actions uses; install the frontend dependencies first:
+Actions uses, after the install above:
 
 ```sh
 bun run test:unit      # Vitest

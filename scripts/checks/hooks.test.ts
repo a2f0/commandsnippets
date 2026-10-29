@@ -392,32 +392,39 @@ describe("pre-push", () => {
     commitAll(repo, `feat: edit ${dir}`);
   }
 
-  test("api-shared changes check it, then reinstall and check backend-v2", () => {
+  /** The api-shared and backend-v2 checks, in the order the hook runs them. */
+  const PACKAGE_CHECKS = [
+    "[api-shared-install]",
+    "LANE:api-shared:lint",
+    "LANE:api-shared:typecheck",
+    "LANE:api-shared:test",
+    "LANE:backend-v2:lint",
+    "LANE:backend-v2:typecheck",
+    "LANE:backend-v2:test:coverage",
+    "LANE:backend-v2:test:scripts",
+  ];
+
+  function expectInOrder(output: string, lanes: readonly string[]): void {
+    let previous = -1;
+    for (const lane of lanes) {
+      const index = output.indexOf(lane);
+      expect(index).toBeGreaterThan(previous);
+      previous = index;
+    }
+  }
+
+  test("api-shared changes install the workspace, then check it and backend-v2", () => {
     const repo = hookRepo(packageAreas());
     editPackage(repo, "api-shared");
     const result = prePush(repo);
     const output = result.stdout + result.stderr;
     expect(result.exitCode).toBe(0);
-    for (const lane of [
-      "[api-shared-install]",
-      "LANE:api-shared:lint",
-      "LANE:api-shared:typecheck",
-      "LANE:api-shared:test",
-      "[backend-v2-install]",
-      "LANE:backend-v2:lint",
-      "LANE:backend-v2:typecheck",
-      "LANE:backend-v2:test:coverage",
-      "LANE:backend-v2:test:scripts",
-    ]) {
-      expect(output).toContain(lane);
-    }
-    expect(output.indexOf("[backend-v2-install]")).toBeGreaterThan(
-      output.indexOf("LANE:api-shared:test"),
-    );
+    expectInOrder(output, PACKAGE_CHECKS);
+    expect(output).not.toContain("[backend-v2-install]");
     expect(output).not.toContain("LANE:tooling");
   });
 
-  test("backend-v2 changes alone neither check api-shared nor reinstall", () => {
+  test("backend-v2 changes alone neither check api-shared nor install", () => {
     const repo = hookRepo(packageAreas());
     editPackage(repo, "backend-v2");
     const result = prePush(repo);
@@ -425,7 +432,17 @@ describe("pre-push", () => {
     expect(result.exitCode).toBe(0);
     expect(output).toContain("LANE:backend-v2:lint");
     expect(output).not.toContain("api-shared");
-    expect(output).not.toContain("[backend-v2-install]");
+    expect(output).not.toContain("-install]");
+  });
+
+  test("workspace install changes check the tooling and every package", () => {
+    const repo = hookRepo(packageAreas());
+    writeFileSync(path.join(repo, "bunfig.toml"), "# install settings\n");
+    commitAll(repo, "build: add install settings");
+    const result = prePush(repo);
+    const output = result.stdout + result.stderr;
+    expect(result.exitCode).toBe(0);
+    expectInOrder(output, ["LANE:tooling", ...PACKAGE_CHECKS]);
   });
 
   test("a failing api-shared check blocks the push", () => {

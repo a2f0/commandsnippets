@@ -34,18 +34,22 @@ the repository root with `bun install && bun run hooks:install`.
 
 ### Dependencies
 
-`bun install` reads `bun.lock` and `bunfig.toml`:
+This package is a Bun workspace of the repository root: `bun install`, here
+or at the root, installs every package from the root `bun.lock`, with the
+root `bunfig.toml` and the install fields of the root `package.json`, which
+Bun reads only there:
 
-- **Install layout:** an isolated `node_modules`, so code can import only the
-  packages it declares.
-- **New releases:** versions published less than a day ago are not installed.
-- **Install scripts:** only the packages in `trustedDependencies` run theirs
-  (the WebDriver and ffmpeg binaries, esbuild, workerd). This list replaces
-  Bun's default allowlist.
+- **Install layout:** an isolated `node_modules` (`bunfig.toml`), so code can
+  import only the packages it declares.
+- **New releases:** versions published less than a day ago are not installed
+  (`bunfig.toml`).
+- **Install scripts:** only the packages in the root's `trustedDependencies`
+  run theirs (the WebDriver and ffmpeg binaries, esbuild, workerd). This list
+  replaces Bun's default allowlist for every package.
   - `msw`'s would rewrite `public/mockServiceWorker.js`; regenerate that with
     `bunx msw init public` after upgrading msw.
-- **`overrides`:** these pin fixed versions of indirect dependencies that
-  `bun audit` flags:
+- **`overrides`:** these, in the root `package.json`, pin fixed versions of
+  indirect dependencies that `bun audit` flags:
   - `@puppeteer/browsers` 3.x drops `extract-zip`, which has path-traversal
     advisories (GHSA-jmr9-qjv8-65gv, GHSA-7pqw-9j4j-h8q3).
   - `serialize-javascript` 7.0.5 or later fixes GHSA-5c6j-r48x-rmvq and
@@ -54,7 +58,7 @@ the repository root with `bun install && bun run hooks:install`.
 
 ### The API contract
 
-`@commandsnippets/api-shared` (`../api-shared`, a `file:` dependency) is the
+`@commandsnippets/api-shared` (`../api-shared`, a workspace dependency) is the
 API's contract as [zod](https://zod.dev) schemas. The API client types its
 requests with it and parses every response it returns with it: a response
 that does not fit fails the call, and never reaches the app's state or signs
@@ -77,12 +81,10 @@ compiles and bundles with its own code:
 - **English messages:** zod/mini loads no locale, so `parseResponse.ts`
   loads English (`z.config(en())`) for the issues an `InvalidResponseError`
   describes.
-- **Reinstall after changing it:** the install hard-links api-shared's files
-  into `node_modules/.bun/`. Run `bun install` here after adding, moving or
-  removing a file there or changing its `package.json`, or after editing one
-  with an editor that saves by replacing the file (the old one stays linked),
-  and commit `bun.lock` if it changes. CI runs this package's checks whenever
-  `packages/api-shared/` changes.
+- **Linked, not copied:** `node_modules/@commandsnippets/api-shared` links to
+  `../api-shared`, so edits there show at once. Run `bun install` after
+  changing its `package.json`, and commit the root `bun.lock` if it changes.
+  CI runs this package's checks whenever `packages/api-shared/` changes.
 - **Size:** zod/mini and the api-shared modules the app imports add about
   43 kB to the production bundle (35 kB of it zod; measured 2026-10-07 with
   `bun run build:analyze`); classic zod and every schema took about 102 kB.
@@ -108,8 +110,8 @@ The favicons, the Apple touch icon and the PWA manifest icons are rendered
 into `public/` from the repository's brand sources (`../../assets/brand/`)
 by `bun run images`, the pinned agent-tool's `images build` with the
 settings in `../../agent-tool.json`. The dev, test-server and build scripts
-run it first, and the outputs are gitignored; it needs the repository root's
-`bun install`. The app imports the logo and shared text-selection styles
+run it first, and the outputs are gitignored; the workspace install provides
+the root's agent-tool it uses. The app imports the logo and shared text-selection styles
 from `../../assets/brand/` directly.
 
 ## Deploying
