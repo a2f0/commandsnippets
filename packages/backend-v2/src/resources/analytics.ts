@@ -1,12 +1,12 @@
 import {
   type AnalyticsDocument,
-  analyticsQuerySchema,
+  analyticsSearchQuerySchema,
 } from '@commandsnippets/api-shared';
 import {sql} from 'drizzle-orm';
 import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
 import type {AppEnv} from '../env';
-import {validateFields} from '../lib/validate';
+import {parseOrThrow} from '../lib/validate';
 import {versionOf} from './dataVersions';
 
 export const analyticsRoutes = new Hono<AppEnv>();
@@ -14,7 +14,9 @@ export const analyticsRoutes = new Hono<AppEnv>();
 analyticsRoutes.get('/', async c => {
   const user = requireUser(c);
   const version = versionOf(c, user);
-  const query = validateFields(analyticsQuerySchema, c.req.query());
+  const query = parseOrThrow(analyticsSearchQuerySchema, [
+    ...new URL(c.req.url).searchParams,
+  ]);
   const {activity, interval, from, to, tag} = query;
   const tagFilter = tag === undefined ? sql`1` : sql`tag_id = ${tag}`;
   const entryFilter =

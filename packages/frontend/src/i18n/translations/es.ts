@@ -50,7 +50,11 @@ export const es: I18NextTranslations = {
     hideData: 'Ocultar datos del gráfico',
     period: 'Inicio del período (UTC)',
     count: 'Eventos',
-    chartDescription:
+    chartDescription_one:
+      '{{count}} evento en {{periods}} períodos. Los valores exactos están disponibles en Mostrar datos del gráfico.',
+    tagCohortNote:
+      'El filtro selecciona las entradas con esta etiqueta. Las clasificaciones incluyen todas sus etiquetas actuales.',
+    chartDescription_other:
       '{{count}} eventos en {{periods}} períodos. Los valores exactos están disponibles en Mostrar datos del gráfico.',
     back: 'Volver a las entradas',
     tagFiltered: 'Filtrar por {{name}}',
@@ -270,6 +274,7 @@ export const es: I18NextTranslations = {
     infoCopy: 'Copiar',
     infoCopied: 'Copiada',
     allReuses: 'Todas las reutilizaciones',
+    backToAnalytics: 'Volver a las estadísticas',
     backToReuses: 'Volver a todas las reutilizaciones',
     profileReuseHistory: 'Historial de reutilizaciones',
     allReusesDescription:

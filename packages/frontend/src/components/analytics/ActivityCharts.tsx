@@ -14,8 +14,9 @@ import {
 import {useId, useMemo, useState} from 'react';
 import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
+import {currentPath} from '../../lib/router/navigation';
 import {Link} from '../../lib/router/Router';
-import {analyticsPath, entryPath} from '../../lib/router/route';
+import {entryPath} from '../../lib/router/route';
 import {useAppState} from '../../lib/state/appState';
 import {timelineBuckets} from './buckets';
 
@@ -272,7 +273,7 @@ export const ActivityCharts = ({
                                     .getState()
                                     .setEntryReturnPath(
                                       entryPath(owner, row.id),
-                                      analyticsPath(owner)
+                                      currentPath()
                                     ),
                               })}
                           sx={{

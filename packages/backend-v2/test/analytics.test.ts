@@ -107,6 +107,9 @@ it('counts entry creations once across current tags and includes untagged entrie
   });
   expect(data.top_tags.map(row => row.count)).toEqual([1, 1]);
   expect((await read('created', `&tag=${tagId}`)).total).toBe(1);
+  expect(
+    (await read('created', `&tag=${tagId}`)).top_tags.map(row => row.count)
+  ).toEqual([1, 1]);
 });
 
 it('slices tag creation separately, including empty tags, and groups Monday weeks', async () => {
@@ -155,6 +158,9 @@ it('counts actual reuse events by date, filters tags without multiplying totals,
     top_entries: [{id: String(entryId), name: 'First', count: 2}],
   });
   expect((await read('reused', `&tag=${tagId}`)).total).toBe(2);
+  expect(
+    (await read('reused', `&tag=${tagId}`)).top_tags.map(row => row.count)
+  ).toEqual([2, 2]);
   expect((await read('reused', '&tag=99999999')).total).toBe(0);
 });
 
@@ -218,4 +224,14 @@ it('reads only the active data version after restoring, without combining histor
       })
     ).status
   ).toBe(409);
+});
+
+it('refuses repeated parameters with a query-level error', async () => {
+  const response = await client.get(
+    `${query}&activity=created&activity=reused`
+  );
+  expect(response.status).toBe(400);
+  expect(await response.json()).toMatchObject({
+    errors: [{source: {pointer: '/data'}}],
+  });
 });

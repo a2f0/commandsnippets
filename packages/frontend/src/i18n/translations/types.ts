@@ -39,7 +39,9 @@ export interface AnalyticsTranslations {
   hideData: string;
   period: string;
   count: string;
-  chartDescription: string;
+  chartDescription_one: string;
+  chartDescription_other: string;
+  tagCohortNote: string;
   back: string;
   tagFiltered: string;
   partialPeriods: string;
@@ -243,6 +245,7 @@ export interface EntriesTranslations {
   infoCopy: string;
   infoCopied: string;
   allReuses: string;
+  backToAnalytics: string;
   backToReuses: string;
   profileReuseHistory: string;
   allReusesDescription: string;

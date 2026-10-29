@@ -9,6 +9,7 @@ import {
 import {createMemoryHistory} from 'history';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
+import {recentRange} from '../../src/components/analytics/buckets';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {routeOf} from '../../src/lib/router/route';
 import {syncSession} from '../../src/lib/sync/session';
@@ -135,7 +136,7 @@ it('ignores a late response for the previous slice', async () => {
   await select('Date to analyze', 'Entries reused');
   expect(
     await screen.findByRole('img', {name: /Activity over time/})
-  ).toHaveTextContent('1 events');
+  ).toHaveTextContent('1 event');
   await act(async () => gate.resolve());
   expect(
     screen.getByRole('img', {name: /Activity over time/})
@@ -180,4 +181,26 @@ it('preserves tags named activity and analytics', () => {
     user: 'test',
     tag: 'analytics',
   });
+});
+
+it('keeps a date and activity slice in the URL when returning from entry details', async () => {
+  const {from, to} = recentRange(90);
+  const history = mount(
+    `/test/activity/analytics?activity=reused&interval=day&from=${from}&to=${to}`
+  );
+  await screen.findByText(/No activity in this slice/);
+  await apiClient.forVersion(1).reuseEntry('1', 'return-slice');
+  fireEvent.click(screen.getByRole('button', {name: 'Refresh'}));
+  const list = await screen.findByRole('list', {name: 'Top entries'});
+  const before = history.location.pathname + history.location.search;
+  fireEvent.click(within(list).getAllByRole('link')[0] as HTMLElement);
+  await waitFor(() =>
+    expect(history.location.pathname).toBe('/test/entries/1')
+  );
+  fireEvent.click(await screen.findByRole('link', {name: 'Back to analytics'}));
+  await screen.findByRole('img', {name: /Activity over time/});
+  expect(history.location.pathname + history.location.search).toBe(before);
+  expect(
+    screen.getByRole('combobox', {name: 'Date to analyze'})
+  ).toHaveTextContent('Entries reused');
 });

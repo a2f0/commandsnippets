@@ -2,7 +2,8 @@ import type {AnalyticsParams} from '@commandsnippets/api-shared/requests';
 import {
   type Analytics,
   analyticsActivitySchema,
-  analyticsDateSchema,
+  analyticsIntervalSchema,
+  isAnalyticsRange,
 } from '@commandsnippets/api-shared/responses';
 import {Refresh} from '@mui/icons-material';
 import {
@@ -15,19 +16,23 @@ import {
   Typography,
 } from '@mui/material';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {useEffect, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {ActivityCharts} from '../components/analytics/ActivityCharts';
 import {recentRange} from '../components/analytics/buckets';
 import {DetailPage} from '../components/DetailPage';
 import {useCookieLogout} from '../hooks/useCookieLogout';
 import {useTypedTranslation} from '../i18n/hooks';
+import {UserMismatchError} from '../lib/api/apiClient';
+import {toSearchParams} from '../lib/api/searchParams';
 import {readAnalytics} from '../lib/data/analytics';
 import {useOwner, useSession, useTags} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
-import {flushFailed} from '../lib/data/writes';
+import {currentPath, navigate, useSearchParam} from '../lib/router/navigation';
 import {Navigate} from '../lib/router/Router';
+import {leaveForeignSession} from '../lib/state/appState';
 import {heldVersion} from '../lib/sync/dataVersion';
 import type {SyncSession} from '../lib/sync/session';
+import {SyncUserError} from '../lib/sync/sync';
 
 const Results = ({
   session,
@@ -52,7 +57,12 @@ const Results = ({
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
-          flushFailed(session, error);
+          if (
+            error instanceof UserMismatchError ||
+            error instanceof SyncUserError
+          )
+            void leaveForeignSession(session.username);
+          else console.warn('WARNING: analytics could not be read:', error);
           setFailed(true);
         }
       });
@@ -108,21 +118,33 @@ const Dashboard = ({
 }) => {
   const {t} = useTypedTranslation('analytics');
   const tags = useTags();
-  const [params, setParams] = useState<AnalyticsParams>(() => ({
-    activity: 'created',
-    interval: 'week',
-    ...recentRange(90),
-  }));
+  const [defaults] = useState(() => recentRange(90));
+  const activity = useSearchParam('activity');
+  const interval = useSearchParam('interval');
+  const from = useSearchParam('from');
+  const to = useSearchParam('to');
+  const tag = useSearchParam('tag');
+  const params = useMemo<AnalyticsParams>(
+    () => ({
+      activity: analyticsActivitySchema.safeParse(activity).data ?? 'created',
+      interval: analyticsIntervalSchema.safeParse(interval).data ?? 'week',
+      from: from ?? defaults.from,
+      to: to ?? defaults.to,
+      tag: tag || undefined,
+    }),
+    [activity, interval, from, to, tag, defaults]
+  );
+  const setParams = (update: (current: AnalyticsParams) => AnalyticsParams) => {
+    navigate(
+      `${currentPath().split('?')[0]}?${toSearchParams(update(params))}`,
+      {replace: true}
+    );
+  };
   const version = useLiveQuery(
     () => heldVersion(session.db, session.owner),
     [session]
   );
-  const days = (Date.parse(params.to) - Date.parse(params.from)) / 86_400_000;
-  const valid =
-    analyticsDateSchema.safeParse(params.from).success &&
-    analyticsDateSchema.safeParse(params.to).success &&
-    days >= 0 &&
-    days <= 3660;
+  const valid = isAnalyticsRange(params.from, params.to);
   const setTag = (tag: string) =>
     setParams(current => ({...current, tag: tag || undefined}));
   const tagOptions = (tags ?? []).filter(
@@ -265,6 +287,12 @@ const Dashboard = ({
         <Typography variant="body2" color="text.secondary" sx={{mt: 2}}>
           {t(`${params.activity}Note`)}
         </Typography>
+        {params.tag &&
+          (params.activity === 'created' || params.activity === 'reused') && (
+            <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>
+              {t('tagCohortNote')}
+            </Typography>
+          )}
       </Paper>
       {!valid ? (
         <Alert severity="warning" sx={{mt: 2}}>

@@ -152,6 +152,13 @@ const exchanges: Exchange[] = [
     schema: analyticsDocumentSchema,
   },
   {
+    handler: `GET ${API}/user/analytics`,
+    method: 'GET',
+    url: `${API}/user/analytics?activity=created&activity=reused`,
+    status: 400,
+    schema: errorDocumentSchema,
+  },
+  {
     handler: `GET ${API}/users/:username`,
     method: 'GET',
     url: `${API}/users/test`,

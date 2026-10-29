@@ -47,7 +47,11 @@ export const en: I18NextTranslations = {
     hideData: 'Hide chart data',
     period: 'Period starting (UTC)',
     count: 'Events',
-    chartDescription:
+    chartDescription_one:
+      '{{count}} event across {{periods}} periods. Exact values are available in Show chart data.',
+    tagCohortNote:
+      'The tag filter selects entries with this tag. Rankings include all their current tags.',
+    chartDescription_other:
       '{{count}} events across {{periods}} periods. Exact values are available in Show chart data.',
     back: 'Back to entries',
     tagFiltered: 'Filter by {{name}}',
@@ -262,6 +266,7 @@ export const en: I18NextTranslations = {
     infoCopy: 'Copy',
     infoCopied: 'Copied',
     allReuses: 'All reuses',
+    backToAnalytics: 'Back to analytics',
     backToReuses: 'Back to all reuses',
     profileReuseHistory: 'Reuse history',
     allReusesDescription:

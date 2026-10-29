@@ -202,7 +202,8 @@ API; everything else the app keeps is a zustand store.
   creation, tagging and reuse have separate slices, with inclusive UTC date
   bounds (up to ten years), a tag filter and day/week/month buckets. Weeks
   start Monday; empty periods are filled in the chart. Rankings show ten tags
-  and entries; tag bars filter and entry bars open details. The exact chart
+  and entries; tag bars filter and entry bars open details. Filters are kept
+  in the URL, including when returning from an entry. The exact chart
   values are available as a table. `readAnalytics` flushes queued writes,
   reads `GET /user/analytics` with the bound account and data version, and
   refuses stale answers. Filter changes abort the previous read; version

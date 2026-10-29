@@ -1,5 +1,10 @@
 import {expect, test} from 'bun:test';
-import {analyticsDocumentSchema, analyticsQuerySchema} from '../src';
+import {
+  analyticsDocumentSchema,
+  analyticsQuerySchema,
+  analyticsSearchQuerySchema,
+  isAnalyticsRange,
+} from '../src';
 
 const query = {
   activity: 'created',
@@ -48,4 +53,19 @@ test('requires nonnegative integer counts and a version on every aggregate', () 
     analyticsDocumentSchema.safeParse({data: {...data, version: undefined}})
       .success
   ).toBe(false);
+});
+
+test('validates query entries without discarding repetitions', () => {
+  const entries = Object.entries(query);
+  expect(analyticsSearchQuerySchema.parse(entries)).toEqual(query);
+  expect(
+    analyticsSearchQuerySchema.safeParse([...entries, ['activity', 'reused']])
+      .success
+  ).toBe(false);
+  expect(
+    analyticsSearchQuerySchema.safeParse([...entries, ['owner', 'other']])
+      .success
+  ).toBe(false);
+  expect(isAnalyticsRange('bad', '2024-02-29')).toBe(false);
+  expect(isAnalyticsRange('2024-02-28', 'bad')).toBe(false);
 });

@@ -15,6 +15,17 @@ export const analyticsActivitySchema = z.enum([
 export const analyticsIntervalSchema = z.enum(['day', 'week', 'month']);
 export const analyticsDateSchema = z.iso.date();
 
+/** Shared by the date controls and the request validator. */
+export function isAnalyticsRange(from: string, to: string): boolean {
+  const days = (Date.parse(to) - Date.parse(from)) / 86_400_000;
+  return (
+    analyticsDateSchema.safeParse(from).success &&
+    analyticsDateSchema.safeParse(to).success &&
+    days >= 0 &&
+    days <= 3660
+  );
+}
+
 const rankingSchema = z.object({
   id: resourceIdSchema,
   name: z.string(),

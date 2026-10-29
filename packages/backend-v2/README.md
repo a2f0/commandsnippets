@@ -549,5 +549,7 @@ entry creation or reuse once even when an entry has several tags. Tag
 creation includes empty tags. Tagging counts current assignments using their
 original creation dates; removed assignments are excluded and retagging is
 not a historical event. Entry creation and reuse rankings use current tag
-membership. Deleted tags and entries are excluded. No history is downloaded
+membership. In those two views, a tag filter selects entries with that tag;
+rankings include all their current tags. Tagging and tag creation filter the
+tag events themselves. Deleted tags and entries are excluded. No history is downloaded
 to calculate these aggregates, and no schema migration is required.

@@ -3,7 +3,7 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   adminUserUpdateAttributesSchema,
-  analyticsQuerySchema,
+  analyticsSearchQuerySchema,
   BACKUP_FORMAT,
   BACKUP_VERSION,
   type Backup,
@@ -1548,9 +1548,16 @@ const createHandlers = () => {
       ),
 
       route('GET', `${baseUrl}/user/analytics`, ({request}) => {
-        const params = analyticsQuerySchema.parse(
-          Object.fromEntries(new URL(request.url).searchParams)
-        );
+        const parsed = analyticsSearchQuerySchema.safeParse([
+          ...new URL(request.url).searchParams,
+        ]);
+        if (!parsed.success)
+          throw apiError(
+            400,
+            CODES.invalid,
+            parsed.error.issues[0]?.message ?? 'Invalid analytics query.'
+          );
+        const params = parsed.data;
         const state = activeEntries();
         return HttpResponse.json(
           mockAnalytics(

@@ -41,32 +41,25 @@ describe('Analytics', () => {
     expect(
       await $('#analyticsPage svg[role="img"] desc').getProperty('textContent')
     ).toContain('4 events');
-    await browser.saveScreenshot('/tmp/commandsnippets-analytics-desktop.png');
     await $('#analyticsPage svg[role="img"]').scrollIntoView();
-    await browser.saveScreenshot('/tmp/commandsnippets-analytics-charts.png');
     await $('button=Show chart data').click();
     await $('#analyticsPage table').waitForDisplayed();
     await $('button=Hide chart data').click();
     await browser.setViewport({width: 390, height: 844});
     await browser.execute(() => window.scrollTo(0, 0));
-    await browser.saveScreenshot('/tmp/commandsnippets-analytics-mobile.png');
     expect(
       await browser.execute(
         () => document.documentElement.scrollWidth <= innerWidth
       )
     ).toBe(true);
     await $('#analyticsPage svg[role="img"]').scrollIntoView();
-    await browser.saveScreenshot(
-      '/tmp/commandsnippets-analytics-mobile-charts.png'
-    );
     await browser.setViewport({width: 1100, height: 850});
     await browser.execute(() => window.scrollTo(0, 0));
     await $('#view-menu-button').click();
     await $('#view-menu-light-theme').click();
+    await expect($('#analyticsPage svg[role="img"]')).toBeDisplayed();
     await $('#analyticsPage svg[role="img"]').scrollIntoView();
-    await browser.saveScreenshot(
-      '/tmp/commandsnippets-analytics-light-charts.png'
-    );
+    await browser.execute(() => window.scrollTo(0, 0));
     await $('#analyticsBack').click();
     await $('#tagsEntries-1').waitForDisplayed();
     expect(browser.currentTestErrors).toHaveLength(0);

@@ -616,9 +616,6 @@ class ApiClient {
     );
   }
 
-  // The sync's reads (lib/sync/): keyset pages of the user's data in
-  // revision order, as every client reads them (`syncReads.ts`).
-
   public getAnalytics(
     params: AnalyticsParams,
     signal?: AbortSignal
@@ -630,6 +627,9 @@ class ApiClient {
       analyticsDocumentSchema
     );
   }
+
+  // The sync's reads (lib/sync/): keyset pages of the user's data in
+  // revision order, as every client reads them (`syncReads.ts`).
 
   private readonly reads: SyncReads = syncReads(
     async (path, params, schema, failure) =>
