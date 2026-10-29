@@ -91,6 +91,34 @@ const grayscalePalette = (strong: string, muted: string): PaletteOptions => ({
   success: {main: muted},
 });
 
+/** The dialogs and the right drawer look the same in every theme. */
+const sharedComponents: ThemeOptions['components'] = {
+  MuiDialog: {
+    styleOverrides: {
+      paper: {
+        backgroundImage: 'none',
+      },
+    },
+  },
+  MuiDrawer: {
+    styleOverrides: {
+      root: {
+        width: `${defaultThemeOptions.drawer.width}px`,
+      },
+      paper: {
+        marginTop: `${defaultThemeOptions.appBar.height}px`,
+        borderRight: 0,
+        borderLeft: 0,
+        width: `${defaultThemeOptions.drawer.width}px`,
+        overflow: 'hidden',
+        flexShrink: 0,
+        height: `calc(100vh - ${defaultThemeOptions.appBar.height}px - ${defaultThemeOptions.footer.height}px)`,
+        zIndex: 1000,
+      },
+    },
+  },
+};
+
 export const darkTheme: Theme = createTheme({
   ...defaultThemeOptions,
   palette: {
@@ -147,30 +175,7 @@ export const darkTheme: Theme = createTheme({
         },
       },
     },
-    MuiDialog: {
-      styleOverrides: {
-        paper: {
-          backgroundImage: 'none',
-        },
-      },
-    },
-    MuiDrawer: {
-      styleOverrides: {
-        root: {
-          width: `${defaultThemeOptions.drawer.width}px`,
-        },
-        paper: {
-          marginTop: `${defaultThemeOptions.appBar.height}px`,
-          borderRight: 0,
-          borderLeft: 0,
-          width: `${defaultThemeOptions.drawer.width}px`,
-          overflow: 'hidden',
-          flexShrink: 0,
-          height: `calc(100vh - ${defaultThemeOptions.appBar.height}px - ${defaultThemeOptions.footer.height}px)`,
-          zIndex: 1000,
-        },
-      },
-    },
+    ...sharedComponents,
   },
 });
 
@@ -199,30 +204,7 @@ export const lightTheme: Theme = createTheme({
         },
       },
     },
-    MuiDialog: {
-      styleOverrides: {
-        paper: {
-          backgroundImage: 'none',
-        },
-      },
-    },
-    MuiDrawer: {
-      styleOverrides: {
-        root: {
-          width: `${defaultThemeOptions.drawer.width}px`,
-        },
-        paper: {
-          marginTop: `${defaultThemeOptions.appBar.height}px`,
-          borderRight: 0,
-          borderLeft: 0,
-          width: `${defaultThemeOptions.drawer.width}px`,
-          overflow: 'hidden',
-          flexShrink: 0,
-          height: `calc(100vh - ${defaultThemeOptions.appBar.height}px - ${defaultThemeOptions.footer.height}px)`,
-          zIndex: 1000,
-        },
-      },
-    },
+    ...sharedComponents,
   },
 });
 
