@@ -41,8 +41,11 @@ describe("ciScopes", () => {
     for (const path of [
       "agent-tool.json",
       ".agent-tool-skills.json",
+      ".agent-tool-permissions.json",
       ".agents/skills/ship-pr/SKILL.md",
       ".claude/skills/ship-pr/SKILL.md",
+      ".claude/settings.json",
+      ".codex/rules/agent-tool.rules",
       "scripts/git/hooks/pre-push",
       "commitlint.config.mts",
       "tsconfig.base.json",
