@@ -20,6 +20,7 @@ export type Page =
   /** An entry's page: its info and reuses (`/:user/entries/:id`). */
   | 'entry'
   | 'reuses'
+  | 'analytics'
   | 'root'
   /** No route: a path of more segments, or an empty one. */
   | 'none';
@@ -40,6 +41,9 @@ export const entryPath = (user: string, entryId: string): string =>
 
 export const reusesPath = (user: string): string =>
   `/${encodeURIComponent(user)}/activity/reuses`;
+
+export const analyticsPath = (user: string): string =>
+  `/${encodeURIComponent(user)}/activity/analytics`;
 
 const STATIC_PAGES: ReadonlyArray<readonly [string, Page]> = [
   [ADMIN_PATH, 'admin'],
@@ -78,6 +82,14 @@ export function routeOf(pathname: string): Route {
   }
   const [user, tag, ...rest] = path.split('/').slice(1);
   const [entryId] = rest;
+  if (
+    user &&
+    tag === 'activity' &&
+    rest.length === 1 &&
+    entryId === 'analytics'
+  ) {
+    return {page: 'analytics', user: paramOf(user)};
+  }
   if (user && tag === 'activity' && rest.length === 1 && entryId === 'reuses') {
     return {page: 'reuses', user: paramOf(user)};
   }

@@ -1,6 +1,63 @@
 import type {I18NextTranslations} from './types';
 
 export const en: I18NextTranslations = {
+  analytics: {
+    title: 'Analytics',
+    description: 'A little perspective on the snippets you collect and use.',
+    created: 'Entries created',
+    tags_created: 'Tags created',
+    tagged: 'Entries tagged',
+    reused: 'Entries reused',
+    activity: 'Date to analyze',
+    from: 'From',
+    to: 'Through',
+    interval: 'Group by',
+    day: 'Day',
+    week: 'Week',
+    month: 'Month',
+    tag: 'Tag',
+    allTags: 'All tags',
+    last30: 'Last 30 days',
+    last90: 'Last 90 days',
+    last365: 'Last year',
+    refresh: 'Refresh',
+    events: 'Events',
+    entries: 'Distinct entries',
+    tags: 'Distinct tags',
+    timeline: 'Activity over time',
+    topTags: 'Top tags',
+    topEntries: 'Top entries',
+    rankNote: 'Up to 10, ranked by events in this slice.',
+    empty: 'No activity in this slice. Try another date range or tag.',
+    loading: 'Loading analytics…',
+    failed: 'Could not load analytics. Check your connection and try again.',
+    retry: 'Retry',
+    invalidRange: 'Choose valid dates in order, no more than ten years apart.',
+    counting:
+      'Dates use UTC and include both endpoints. Weeks start Monday. Only current, undeleted data is counted.',
+    createdNote:
+      'Each entry counts once on its creation date. Tag rankings use its current tags; one entry can count under several tags.',
+    tags_createdNote:
+      'Each tag counts once on its creation date, including tags with no entries.',
+    taggedNote:
+      'Each current tag assignment counts once, on its original creation date. Removed assignments are excluded; retagging does not create a new historical event.',
+    reusedNote:
+      'Each recorded copy counts once, on the date the server recorded it. Tag rankings use current tags, which may differ from the tags at reuse time.',
+    showData: 'Show chart data',
+    hideData: 'Hide chart data',
+    period: 'Period starting (UTC)',
+    count: 'Events',
+    chartDescription_one:
+      '{{count}} event across {{periods}} periods. Exact values are available in Show chart data.',
+    tagCohortNote:
+      'The tag filter selects entries with this tag. Rankings include all their current tags.',
+    chartDescription_other:
+      '{{count}} events across {{periods}} periods. Exact values are available in Show chart data.',
+    back: 'Back to entries',
+    tagFiltered: 'Filter by {{name}}; events: {{count}}',
+    partialPeriods:
+      'The first and last periods include only dates inside your range.',
+  },
   common: {
     welcome: 'Welcome',
     logout: 'Logout',
@@ -209,6 +266,7 @@ export const en: I18NextTranslations = {
     infoCopy: 'Copy',
     infoCopied: 'Copied',
     allReuses: 'All reuses',
+    backToAnalytics: 'Back to analytics',
     backToReuses: 'Back to all reuses',
     profileReuseHistory: 'Reuse history',
     allReusesDescription:

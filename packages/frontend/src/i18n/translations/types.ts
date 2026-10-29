@@ -1,3 +1,52 @@
+export interface AnalyticsTranslations {
+  title: string;
+  description: string;
+  created: string;
+  tags_created: string;
+  tagged: string;
+  reused: string;
+  activity: string;
+  from: string;
+  to: string;
+  interval: string;
+  day: string;
+  week: string;
+  month: string;
+  tag: string;
+  allTags: string;
+  last30: string;
+  last90: string;
+  last365: string;
+  refresh: string;
+  events: string;
+  entries: string;
+  tags: string;
+  timeline: string;
+  topTags: string;
+  topEntries: string;
+  rankNote: string;
+  empty: string;
+  loading: string;
+  failed: string;
+  retry: string;
+  invalidRange: string;
+  counting: string;
+  createdNote: string;
+  tags_createdNote: string;
+  taggedNote: string;
+  reusedNote: string;
+  showData: string;
+  hideData: string;
+  period: string;
+  count: string;
+  chartDescription_one: string;
+  chartDescription_other: string;
+  tagCohortNote: string;
+  back: string;
+  tagFiltered: string;
+  partialPeriods: string;
+}
+
 // Translation type definitions
 export interface CommonTranslations {
   welcome: string;
@@ -196,6 +245,7 @@ export interface EntriesTranslations {
   infoCopy: string;
   infoCopied: string;
   allReuses: string;
+  backToAnalytics: string;
   backToReuses: string;
   profileReuseHistory: string;
   allReusesDescription: string;
@@ -276,6 +326,7 @@ export interface AdminTranslations {
 }
 
 export interface Translations {
+  analytics: AnalyticsTranslations;
   common: CommonTranslations;
   menu: MenuTranslations;
   tags: TagsTranslations;
@@ -284,6 +335,7 @@ export interface Translations {
 }
 
 export type I18NextTranslations = {
+  analytics: AnalyticsTranslations;
   common: CommonTranslations;
   menu: MenuTranslations;
   tags: TagsTranslations;

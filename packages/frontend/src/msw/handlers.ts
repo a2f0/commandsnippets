@@ -3,6 +3,7 @@ import {
   type AdminAuditLogEntry,
   type AdminUser,
   adminUserUpdateAttributesSchema,
+  analyticsSearchQuerySchema,
   BACKUP_FORMAT,
   BACKUP_VERSION,
   type Backup,
@@ -46,6 +47,7 @@ import {
 } from '@commandsnippets/api-shared';
 import invariant from 'invariant';
 import {HttpResponse, type HttpResponseResolver, http} from 'msw/http';
+import {mockAnalytics} from './analytics';
 import {nextRevision, now, onePage, pagination} from './documents';
 import {afterOf, byRevision, keysetPage, positionOf} from './keyset';
 import {recordRequest} from './requestCounter';
@@ -1266,7 +1268,7 @@ function refuseAnotherVersion(request: Request) {
   const named = request.headers.get(DATA_VERSION_HEADER);
   const path = new URL(request.url).pathname;
   if (
-    !/\/api\/v1\/(tags|entries|tags_entries|user\/backup|user\/restore)\b/.test(
+    !/\/api\/v1\/(tags|entries|tags_entries|user\/backup|user\/restore|user\/analytics)\b/.test(
       path
     )
   ) {
@@ -1544,6 +1546,30 @@ const createHandlers = () => {
           },
         })
       ),
+
+      route('GET', `${baseUrl}/user/analytics`, ({request}) => {
+        const parsed = analyticsSearchQuerySchema.safeParse([
+          ...new URL(request.url).searchParams,
+        ]);
+        if (!parsed.success)
+          throw apiError(
+            400,
+            CODES.invalid,
+            parsed.error.issues[0]?.message ?? 'Invalid analytics query.'
+          );
+        const params = parsed.data;
+        const state = activeEntries();
+        return HttpResponse.json(
+          mockAnalytics(
+            params,
+            activeVersion,
+            tags,
+            state.data,
+            junctionsOf(state),
+            reuses.map(row => row.reuse)
+          )
+        );
+      }),
 
       // A version's backup: the active one's, or `?version=`'s.
       route('GET', `${baseUrl}/user/backup`, ({request}) => {

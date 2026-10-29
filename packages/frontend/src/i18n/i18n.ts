@@ -29,7 +29,7 @@ i18n
 
     supportedLngs: supportedLanguages,
 
-    ns: ['common', 'menu', 'tags', 'entries', 'admin'],
+    ns: ['common', 'menu', 'tags', 'entries', 'admin', 'analytics'],
     defaultNS: 'common',
 
     detection: {

@@ -13,6 +13,11 @@ import {SignInPage} from './pages/SignInPage';
 const AdminPage = React.lazy(() =>
   import('./pages/AdminPage').then(module => ({default: module.AdminPage}))
 );
+const AnalyticsPage = React.lazy(() =>
+  import('./pages/AnalyticsPage').then(module => ({
+    default: module.AnalyticsPage,
+  }))
+);
 
 /**
  * User URLs are public read-only views for guests. The root and admin page
@@ -55,6 +60,12 @@ const Routes = () => {
       return <EntriesPage />;
     case 'reuses':
       return <ReusesPage />;
+    case 'analytics':
+      return (
+        <Suspense fallback={null}>
+          <AnalyticsPage />
+        </Suspense>
+      );
     case 'entry':
       return <EntryPage />;
     case 'root':

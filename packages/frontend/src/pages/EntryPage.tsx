@@ -13,7 +13,7 @@ import {useCollectionSync} from '../lib/data/useSync';
 import {formatTimestamp} from '../lib/formatTimestamp';
 import {useRouteParam} from '../lib/router/navigation';
 import {Link} from '../lib/router/Router';
-import {entryPath, reusesPath} from '../lib/router/route';
+import {analyticsPath, entryPath, reusesPath} from '../lib/router/route';
 import {useAppState} from '../lib/state/appState';
 import {isLocalId} from '../lib/sync/outbox';
 import type {SyncSession} from '../lib/sync/session';
@@ -271,7 +271,11 @@ const EntryPageContent = () => {
       id="entryPage"
       backTo={returnPath ?? `/${encodeURIComponent(owner)}`}
       backLabel={
-        returnPath === reusesPath(owner) ? t('backToReuses') : t('entryBack')
+        returnPath?.split('?')[0] === analyticsPath(owner)
+          ? t('backToAnalytics')
+          : returnPath === reusesPath(owner)
+            ? t('backToReuses')
+            : t('entryBack')
       }
       syncStatus={syncStatus}
     >
