@@ -1,5 +1,5 @@
 import {act, render, waitFor} from '@testing-library/react';
-import {Dexie} from 'dexie';
+import {Dexie, liveQuery} from 'dexie';
 import {describe, expect, it, vi} from 'vitest';
 
 import {
@@ -8,10 +8,10 @@ import {
   useTagNamed,
   useTags,
 } from '../../../../src/lib/data/hooks';
+import * as timings from '../../../../src/lib/metrics/timings';
 import {
   clearMetrics,
   metricsSnapshot,
-  NOTIFY_MS,
 } from '../../../../src/lib/metrics/timings';
 import {type SyncSession, syncSession} from '../../../../src/lib/sync/session';
 import {signIn, TEST_USER} from '../../../util/signIn';
@@ -20,6 +20,16 @@ import {entry, junction, seed, tag} from '../../../util/storeFixtures';
 /** How many times the tags were read from the database. */
 const tagReads = () =>
   metricsSnapshot().timings.filter(({name}) => name === 'useTags').length;
+
+/**
+ * Count the hooks' queries from now on: how many of `name` (`useTags`,
+ * `useEntries(all)`) have started, each counted as it starts (`timed`), with
+ * no wait for the HUD's notification.
+ */
+function countQueries(): (name: string) => number {
+  const timedSpy = vi.spyOn(timings, 'timed');
+  return name => timedSpy.mock.calls.filter(([, ran]) => ran === name).length;
+}
 
 describe('useSession', () => {
   it('opens the next session when another tab signs out and in', async () => {
@@ -70,16 +80,10 @@ describe('useTags', () => {
 });
 
 describe('useTags, as readers come and go', () => {
-  /** The tag reads, once the HUD has been told of them all. */
-  const settledReads = async () => {
-    await new Promise(resolve => setTimeout(resolve, NOTIFY_MS + 150));
-    return tagReads();
-  };
-
   it('keeps reading for the readers left, and stops when none is', async () => {
     signIn();
     await seed([tag('1', {name: 'shell'})]);
-    clearMetrics();
+    const queries = countQueries();
     const seen: Record<string, number | undefined> = {};
     const Reader = ({name}: {name: string}) => {
       seen[name] = useTags()?.length;
@@ -100,9 +104,20 @@ describe('useTags, as readers come and go', () => {
 
     // The last goes: the query stops, and reads nothing on a change.
     unmount();
-    const reads = await settledReads();
+    const reads = queries('useTags');
+    expect(reads).toBeGreaterThan(0);
+    // A query of the tags of its own: once it reads the change, any other
+    // query of them told of it has started.
+    let counted = 0;
+    const others = liveQuery(() =>
+      syncSession(TEST_USER).db.tags.count()
+    ).subscribe(count => {
+      counted = count;
+    });
     await act(() => seed([tag('3', {name: 'docker'})]));
-    expect(await settledReads()).toBe(reads);
+    await waitFor(() => expect(counted).toBe(3));
+    others.unsubscribe();
+    expect(queries('useTags')).toBe(reads);
 
     // A new reader starts it afresh: unread, then the tags as they are now.
     const fresh: Array<number | undefined> = [];
@@ -117,14 +132,6 @@ describe('useTags, as readers come and go', () => {
 });
 
 describe('useEntries', () => {
-  /** How many times `which` entries were read, once the HUD knows them all. */
-  const settledReads = async (which: 'all' | 'untagged') => {
-    await new Promise(resolve => setTimeout(resolve, NOTIFY_MS + 150));
-    return metricsSnapshot().timings.filter(
-      ({name}) => name === `useEntries(${which})`
-    ).length;
-  };
-
   it('lists all the entries or the untagged, which alone read junctions', async () => {
     signIn();
     const untagging = junction('11', '1', '2');
@@ -135,7 +142,7 @@ describe('useEntries', () => {
       junction('10', '1', '1'),
       {...untagging, attributes: {...untagging.attributes, is_deleted: true}},
     ]);
-    clearMetrics();
+    const queries = countQueries();
     const seen: Record<string, string[] | undefined> = {};
     const Reader = ({which}: {which: 'all' | 'untagged'}) => {
       seen[which] = useEntries(which)?.entries.map(({id}) => id);
@@ -150,15 +157,17 @@ describe('useEntries', () => {
     await waitFor(() =>
       expect(seen).toEqual({all: ['1', '2'], untagged: ['2']})
     );
-    const all = await settledReads('all');
-    const untagged = await settledReads('untagged');
+    const all = queries('useEntries(all)');
+    const untagged = queries('useEntries(untagged)');
+    expect(all).toBeGreaterThan(0);
 
-    // A tagging: the untagged are read again, all of them are not.
+    // A tagging: the untagged are read again (by then, a query of all of
+    // them told of it would have started too), all of them are not.
     await act(() => seed([junction('12', '1', '2')]));
 
     await waitFor(() => expect(seen['untagged']).toEqual([]));
-    expect(await settledReads('untagged')).toBeGreaterThan(untagged);
-    expect(await settledReads('all')).toBe(all);
+    expect(queries('useEntries(untagged)')).toBeGreaterThan(untagged);
+    expect(queries('useEntries(all)')).toBe(all);
     expect(seen['all']).toEqual(['1', '2']);
   });
 });

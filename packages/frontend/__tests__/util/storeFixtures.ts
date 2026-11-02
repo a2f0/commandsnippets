@@ -4,6 +4,7 @@ import type {
   ITagTextEntryThroughModelJsonApi,
   ITextEntryJsonApi,
 } from '../../src/lib/api/responses/types';
+import type {RowKey} from '../../src/lib/db/database';
 import {syncSession} from '../../src/lib/sync/session';
 
 const date = '2020-01-01T00:00:00';
@@ -104,6 +105,18 @@ export function junction(
   };
 }
 
+/** `resource` as the database holds it: a row of `owner`'s (`testUser`'s). */
+export const own = <R>(
+  resource: R,
+  owner: string = testUser.attributes.username
+): R & {owner: string} => ({...resource, owner});
+
+/** The database's key of `owner`'s (`testUser`'s) row `id`. */
+export const rowKey = (
+  id: string,
+  owner: string = testUser.attributes.username
+): RowKey => [owner, id];
+
 /**
  * Store `resources` in the signed-in user's IndexedDB database, as `owner`'s
  * (the signed-in user's own by default).
@@ -115,7 +128,7 @@ export async function seed(
   owner: string = testUser.attributes.username
 ): Promise<void> {
   const {db} = syncSession(testUser.attributes.username);
-  const owned = <R>(rows: R[]) => rows.map(row => ({...row, owner}));
+  const owned = <R>(rows: R[]) => rows.map(row => own(row, owner));
   await db.tags.bulkPut(owned(resources.filter(isTag)));
   await db.entries.bulkPut(owned(resources.filter(isEntry)));
   await db.junctions.bulkPut(owned(resources.filter(isJunction)));

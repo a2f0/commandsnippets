@@ -17,7 +17,6 @@ beforeEach(() => {
   // As the menus and the context menus open an editor.
   act(() => store.setAppMode(appMode.entryEditor));
 });
-afterEach(() => vi.restoreAllMocks());
 
 /** A form of `kind` with the id `form`, opened on a subject and body. */
 function renderForm(

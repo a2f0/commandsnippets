@@ -98,8 +98,6 @@ describe('TagsEntries Behavior', () => {
     // PASS: Initial values loaded from MSW data
     // PASS: Tab navigation through all fields works
     // PASS: Text editing works (subject and body)
-    // PASS: Save button is reachable via keyboard, and saves the entry
-    console.log('OK: Editor functionality fully tested');
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });

@@ -55,7 +55,6 @@ const WAIT = {timeout: 10_000};
 vi.setConfig({testTimeout: 30_000});
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();

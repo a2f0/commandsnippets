@@ -43,6 +43,25 @@ function serveMockApi(options?: Parameters<typeof server.listen>[0]): void {
 }
 
 /**
+ * What `pick` makes of each request sent from now on (`path` is its URL's
+ * pathname), in the order they are sent, leaving out those it makes
+ * `undefined` of. Recording stops at the end of the test (`serveMockApi`).
+ */
+function recordRequests<T>(
+  pick: (
+    request: Request,
+    path: string
+  ) => T | undefined | Promise<T | undefined>
+): T[] {
+  const recorded: T[] = [];
+  server.events.on('request:start', async ({request}) => {
+    const value = await pick(request, new URL(request.url).pathname);
+    if (value !== undefined) recorded.push(value);
+  });
+  return recorded;
+}
+
+/**
  * The API unreachable (offline) for writes until the handlers reset (the end
  * of the test, or `server.resetHandlers()`); reads still answer.
  */
@@ -54,4 +73,12 @@ function offlineForWrites(): void {
   );
 }
 
-export {API, HOST, offlineForWrites, resetMockApi, serveMockApi, server};
+export {
+  API,
+  HOST,
+  offlineForWrites,
+  recordRequests,
+  resetMockApi,
+  serveMockApi,
+  server,
+};

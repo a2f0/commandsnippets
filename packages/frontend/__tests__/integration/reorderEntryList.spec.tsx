@@ -30,10 +30,10 @@ async function renderEntries() {
   const user = userEvent.setup();
   const {history} = renderAppAt('/test/test-tag-1');
   expect(history.location.pathname).toBe('/test/test-tag-1');
-  await waitFor(() => screen.getByText(/entry-1-subject/i));
-  await waitFor(() => screen.getByText(/entry-1-body/i));
-  await waitFor(() => screen.getByText(/entry-2-subject/i));
-  await waitFor(() => screen.getByText(/entry-2-body/i));
+  await screen.findByText(/entry-1-subject/i);
+  await screen.findByText(/entry-1-body/i);
+  await screen.findByText(/entry-2-subject/i);
+  await screen.findByText(/entry-2-body/i);
   const entries = expectRows('entry', subjects(1, 2, 3, 4));
   entries.forEach((entry, index) => {
     expect(entry).toHaveTextContent(`entry-${index + 1}-body`);
@@ -49,10 +49,6 @@ describe('Entries List', () => {
     consoleMock = vi
       .spyOn(global.console, 'debug')
       .mockImplementation(() => undefined);
-  });
-  afterEach(() => {
-    reorderEntrySpy.mockRestore();
-    consoleMock.mockReset();
   });
   it('Hovers', async () => {
     const {user, entries} = await renderEntries();

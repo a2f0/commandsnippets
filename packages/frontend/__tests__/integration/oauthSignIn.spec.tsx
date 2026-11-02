@@ -28,7 +28,6 @@ beforeEach(() => {
 });
 afterEach(() => {
   storeCookie('LoggedIn=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/');
-  vi.restoreAllMocks();
 });
 
 const callbacks = {

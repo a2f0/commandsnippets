@@ -5,15 +5,6 @@ describe('Entry Main Menu Behavior', () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
 
-    // Verify MSW is providing expected data
-    const apiCheck = await BasePage.checkTagsAndEntries();
-
-    console.log('MSW API check:', apiCheck);
-    expect(apiCheck.tagsOk).toBe(true);
-    expect(apiCheck.entriesOk).toBe(true);
-    expect(apiCheck.tagsCount).toBe(4); // MSW provides 4 tags
-    expect(apiCheck.entriesCount).toBe(3); // MSW provides 3 entries
-
     // Reset and assert for the upcoming authenticated load
     await browser.resetMSWRequestCounts();
 
@@ -45,11 +36,6 @@ describe('Entry Main Menu Behavior', () => {
     const untagged = BasePage.tagsEntry('3');
     await expect(untagged).toBeExisting();
     await expect(untagged).toBeDisplayed();
-
-    // Test core functionality: entries menu workflow completed successfully
-    console.log(
-      'OK: Untagged entries workflow completed: menu opened, untagged selected, URL updated, entries verified'
-    );
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });

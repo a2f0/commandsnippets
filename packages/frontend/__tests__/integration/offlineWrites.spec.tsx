@@ -13,12 +13,17 @@ import {createEntry, createTag} from '../../src/lib/data/writes';
 import {isLocalId} from '../../src/lib/sync/outbox';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {API, offlineForWrites, serveMockApi, server} from '../util/msw';
+import {
+  API,
+  offlineForWrites,
+  recordRequests,
+  serveMockApi,
+  server,
+} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -31,12 +36,9 @@ it('shows a write made offline at once, and sends it once back online', async ()
   renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
   const session = syncSession(TEST_USER);
-  const posted: string[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (request.method === 'POST') {
-      posted.push(new URL(request.url).pathname);
-    }
-  });
+  const posted = recordRequests(({method}, path) =>
+    method === 'POST' ? path : undefined
+  );
   offlineForWrites();
 
   const entry = await createEntry(session, 'offline-subject', 'body', '1');
@@ -287,13 +289,9 @@ it('adopts the tag a create whose answer was lost made, renamed since', async ()
   expect(screen.queryByText('lost-tag')).toBeNull();
 
   // Sending the queue again makes nothing more.
-  const posted: string[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (request.method === 'POST') {
-      posted.push(new URL(request.url).pathname);
-    }
-  });
+  const posted = recordRequests(({method}, path) =>
+    method === 'POST' ? path : undefined
+  );
   await session.sync.flush();
   expect(posted).toEqual([]);
-  server.events.removeAllListeners();
 });

@@ -602,11 +602,14 @@ per-row work multiplies (the HUD's Analytics tab times it).
   1 and 2 in tag 1, and entry 3 in no tag.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
-  `fake-indexeddb/auto`. Unit specs mock the API with `msw/node`
+  `fake-indexeddb/auto`, and undoes every spy (`vi.spyOn`) and stubbed global
+  (`vi.stubGlobal`) before each test (`restoreMocks`, `unstubGlobals`;
+  `setup.ts` undoes them after each jsdom test, before its cleanup), so specs
+  restore none themselves. Unit specs mock the API with `msw/node`
   (`__tests__/util/msw.ts`). The specs are in three places:
   - `__tests__/src/` mirrors `src/`: the spec for `src/pages/AdminPage.tsx` is
     `__tests__/src/pages/AdminPage.spec.tsx`
-  - `__tests__/integration/` renders the whole app (`TestAppRouter`) to test a
+  - `__tests__/integration/` renders the whole app (`renderAppAt`) to test a
     behavior across modules, such as reordering or signing out when the
     session is gone
   - `__tests__/infra/` checks the hosting and the build: `hosting.spec.ts`
@@ -711,15 +714,23 @@ console.error('ERROR: Build failed');
   - `signIn.ts` - `signIn()` (as the mock API's user, `test`), `resetApp()`,
     and `store`, the app state as components use it (`store.setIsStaff(...)`)
   - `assignLoggedInCookie.ts` - sets the `LoggedIn` cookie the UI checks
-  - `TestAppRouter.tsx` - the app in a memory router that follows its
-    history; sign in first for a signed-in app
+  - `TestAppRouter.tsx` - `renderAppAt(route)`, the app in a memory router
+    that follows its history; sign in first for a signed-in app
   - `msw.ts` - an `msw/node` server of the mock API (`src/msw/handlers.ts`),
-    with the entries of `test/mocks/entries/entriesResponse.ts`
+    with the entries of `test/mocks/entries/entriesResponse.ts`: a spec
+    serves it with `serveMockApi()` (never a server of its own), overrides a
+    route with `server.use`, and records what it sends with
+    `recordRequests(pick)`
+  - `documents.ts` - request documents and headers specs send the mock API
+    themselves (`JSON_API`, `tagEntryDocument`, `reorderDocument`)
   - `storeFixtures.ts` - builders of tags, entries and junctions, and
-    `seed()`, which stores them in the signed-in user's database
+    `seed()`, which stores them in the signed-in user's database; `own()`
+    and `rowKey()` make a resource a row and key a row as the database does
   - `apiClientMethods.ts` - the API client's methods, shared by every client
     (`apiClient` and `apiClient.writesAs`'s): spy on these to see a call
     whichever client makes it
+  - `environment.ts` - `stubEnvironment(name)`, the app's environment for
+    the rest of the test (read at call time; values derived at load stay)
   - `restoreElsewhere.ts` - another device's restore against the mock API
     (over the active data version), making a new version active
 - Every jsdom test starts signed out, with no IndexedDB data and the mock

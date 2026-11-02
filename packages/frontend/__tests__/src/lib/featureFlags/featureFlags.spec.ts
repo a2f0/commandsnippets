@@ -1,6 +1,5 @@
 import {act, renderHook} from '@testing-library/react';
-import {afterEach, describe, expect, it, vi} from 'vitest';
-import * as envModule from '../../../../src/lib/environment';
+import {afterEach, describe, expect, it} from 'vitest';
 import {
   canOverrideFeatureFlags,
   FEATURE_FLAGS_STORAGE_KEY,
@@ -16,14 +15,9 @@ import {
   FEATURE_FLAGS,
 } from '../../../../src/lib/featureFlags/flags';
 import {isRecording} from '../../../../src/lib/metrics/timings';
+import {stubEnvironment} from '../../../util/environment';
 
-const useEnvironment = (name: string) =>
-  vi.spyOn(envModule, 'environment', 'get').mockReturnValue(name);
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  resetFeatureFlagOverrides();
-});
+afterEach(() => resetFeatureFlagOverrides());
 
 describe('feature flags', () => {
   it('defines every flag it names', () => {
@@ -35,7 +29,7 @@ describe('feature flags', () => {
   it.each(['development', 'test', 'staging'])(
     'turns every flag on by default in %s',
     environment => {
-      useEnvironment(environment);
+      stubEnvironment(environment);
       for (const flag of FEATURE_FLAG_NAMES) {
         expect(featureFlagDefault(flag)).toBe(true);
         expect(isFeatureEnabled(flag)).toBe(true);
@@ -44,14 +38,14 @@ describe('feature flags', () => {
   );
 
   it('turns every flag off by default in production', () => {
-    useEnvironment('production');
+    stubEnvironment('production');
     for (const flag of FEATURE_FLAG_NAMES) {
       expect(isFeatureEnabled(flag)).toBe(false);
     }
   });
 
   it('overrides a flag on this device, and back to its default', () => {
-    useEnvironment('staging');
+    stubEnvironment('staging');
     setFeatureFlagOverride('hud', false);
     expect(isFeatureEnabled('hud')).toBe(false);
     expect(isFeatureEnabled('languageSwitcher')).toBe(true);
@@ -72,7 +66,7 @@ describe('feature flags', () => {
 
   it('ignores overrides in production, and refuses new ones', () => {
     setFeatureFlagOverride('hud', true);
-    useEnvironment('production');
+    stubEnvironment('production');
     expect(canOverrideFeatureFlags()).toBe(false);
     expect(isFeatureEnabled('hud')).toBe(false);
     setFeatureFlagOverride('userProfileMenu', true);

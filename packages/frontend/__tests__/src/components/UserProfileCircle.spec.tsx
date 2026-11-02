@@ -1,17 +1,12 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
-import {type MockInstance, vi} from 'vitest';
+import {vi} from 'vitest';
 import {UserProfileCircle} from '../../../src/components/UserProfileCircle';
 import {apiClient} from '../../../src/lib/api/apiClient';
 import {darkTheme} from '../../../src/theme/themes';
 import {serveMockApi, server} from '../../util/msw';
 import {store} from '../../util/signIn';
-
-// Mock the environment module to ensure it's not production
-vi.mock('../../../src/lib/environment', () => ({
-  environment: 'test',
-}));
 
 const renderWithContext = (loggedInUser: string | null = 'testuser') => {
   store.setLoggedInUser(loggedInUser);
@@ -26,14 +21,8 @@ const renderWithContext = (loggedInUser: string | null = 'testuser') => {
 serveMockApi();
 
 describe('UserProfileCircle', () => {
-  let consoleMock: MockInstance;
-
   beforeEach(() => {
-    consoleMock = vi.spyOn(global.console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleMock.mockRestore();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   describe('Rendering', () => {
@@ -80,9 +69,7 @@ describe('UserProfileCircle', () => {
         fireEvent.click(profileButton);
       });
 
-      await waitFor(() => {
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Logout')).toBeInTheDocument();
       // The username, then Logout: no Profile or Settings, which did nothing
       expect(
         screen.getAllByRole('menuitem').map(item => item.textContent)
@@ -174,9 +161,7 @@ describe('UserProfileCircle', () => {
       });
 
       // Wait for menu to be open
-      await waitFor(() => {
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Logout')).toBeInTheDocument();
 
       // Click logout
       const logoutButton = screen.getByText('Logout');
@@ -211,9 +196,7 @@ describe('UserProfileCircle', () => {
       });
 
       // Wait for menu to be open
-      await waitFor(() => {
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Logout')).toBeInTheDocument();
 
       // Click logout
       const logoutButton = screen.getByText('Logout');
@@ -232,8 +215,6 @@ describe('UserProfileCircle', () => {
       await waitFor(() => {
         expect(screen.queryByText('Logout')).not.toBeInTheDocument();
       });
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('ensures menu closes via finally block even if logout throws', async () => {
@@ -255,9 +236,7 @@ describe('UserProfileCircle', () => {
       });
 
       // Verify menu is open
-      await waitFor(() => {
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Logout')).toBeInTheDocument();
 
       // Click logout
       const logoutButton = screen.getByText('Logout');
@@ -278,8 +257,6 @@ describe('UserProfileCircle', () => {
       });
 
       expect(logoutSpy).toHaveBeenCalledTimes(1);
-      logoutSpy.mockRestore();
-      consoleErrorSpy.mockRestore();
     });
   });
 

@@ -10,7 +10,7 @@ import {onePage} from '../../src/msw/documents';
 import {afterOf, keysetPage} from '../../src/msw/keyset';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi, server} from '../util/msw';
-import {signIn, store} from '../util/signIn';
+import {signIn, store, TEST_USER} from '../util/signIn';
 import {entry} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -19,7 +19,6 @@ const loadingWait = {timeout: 10000};
 vi.setConfig({testTimeout: 30000});
 
 serveMockApi({onUnhandledFrame: 'error'});
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -41,9 +40,9 @@ function gate() {
 it('keeps a legacy cursor background failure out of the first-load UI', async () => {
   const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
   // A copy read (of the first data version) before cursors kept progress.
-  await syncSession('test').db.cursors.bulkPut([
-    {owner: 'test', key: 'entries', after: CURSOR_START},
-    {owner: 'test', key: VERSION_KEY, after: '1'},
+  await syncSession(TEST_USER).db.cursors.bulkPut([
+    {owner: TEST_USER, key: 'entries', after: CURSOR_START},
+    {owner: TEST_USER, key: VERSION_KEY, after: '1'},
   ]);
   server.use(
     http.get('*/api/v1/entries', () =>
@@ -60,7 +59,7 @@ it('keeps a legacy cursor background failure out of the first-load UI', async ()
     loadingWait
   );
   await act(async () => {
-    await syncSession('test')
+    await syncSession(TEST_USER)
       .sync.syncAll()
       .catch(() => {});
   });
@@ -138,13 +137,13 @@ it('shows each page and loads all 205 entries without scrolling', async () => {
       () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
       loadingWait
     );
-    expect(await syncSession('test').db.entries.count()).toBe(205);
+    expect(await syncSession(TEST_USER).db.entries.count()).toBe(205);
     expect(sizes).toEqual(['100', '100', '100']);
     // The last page's entries are already available to local search.
     act(() => store.setEntrySearchString('subject-205'));
     await screen.findByText('subject-205', {}, loadingWait);
     await act(async () => {
-      await syncSession('test').sync.syncAll();
+      await syncSession(TEST_USER).sync.syncAll();
     });
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   } finally {
@@ -182,8 +181,8 @@ it('shows an interrupted load and retries from the saved cursor', async () => {
     loadingWait
   );
   await screen.findByText('1 of 3 pages loaded', {}, loadingWait);
-  expect(await syncSession('test').db.entries.count()).toBe(100);
-  const held = await syncSession('test').db.cursors.get(['test', 'entries']);
+  expect(await syncSession(TEST_USER).db.entries.count()).toBe(100);
+  const held = await syncSession(TEST_USER).db.cursors.get(['test', 'entries']);
   invariant(held, 'the first page has a saved cursor');
   failing = false;
   fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
@@ -191,10 +190,10 @@ it('shows an interrupted load and retries from the saved cursor', async () => {
     () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
     loadingWait
   );
-  expect(await syncSession('test').db.entries.count()).toBe(205);
+  expect(await syncSession(TEST_USER).db.entries.count()).toBe(205);
   expect(cursors[2]).toBe(held.after);
   await act(async () => {
-    await syncSession('test').sync.syncAll();
+    await syncSession(TEST_USER).sync.syncAll();
   });
 });
 
@@ -226,9 +225,9 @@ it('loads entries with an indeterminate bar when the count is unavailable', asyn
       () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
       loadingWait
     );
-    expect(await syncSession('test').db.entries.count()).toBe(205);
+    expect(await syncSession(TEST_USER).db.entries.count()).toBe(205);
     await act(async () => {
-      await syncSession('test').sync.syncAll();
+      await syncSession(TEST_USER).sync.syncAll();
     });
   } finally {
     first.release();

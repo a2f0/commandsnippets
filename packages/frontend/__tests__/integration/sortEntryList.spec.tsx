@@ -13,9 +13,6 @@ beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 type Arrow = 'ArrowUpwardIcon' | 'ArrowDownwardIcon';
 

@@ -1,5 +1,4 @@
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
-import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
@@ -16,9 +15,7 @@ describe('Dark Mode Toggle', () => {
   async function setupTest() {
     const {history} = await renderAppAt('/test/test', {act: true});
 
-    await waitFor(() => {
-      expect(screen.getByRole('menu', {name: 'View'})).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('menu', {name: 'View'})).toBeInTheDocument();
 
     return {history};
   }
@@ -28,11 +25,6 @@ describe('Dark Mode Toggle', () => {
     assignLoggedInCookie();
 
     signIn();
-  });
-
-  afterEach(() => {
-    // Clean up any rendered components
-    vi.clearAllMocks();
   });
 
   it('successfully toggles from dark to light mode', async () => {
@@ -51,9 +43,7 @@ describe('Dark Mode Toggle', () => {
     });
 
     // Wait for menu to open
-    await waitFor(() => {
-      expect(screen.getByText('Light Mode')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Light Mode')).toBeInTheDocument();
 
     // Click Light Mode to switch from dark to light
     const lightModeOption = screen.getByText('Light Mode');
@@ -80,9 +70,7 @@ describe('Dark Mode Toggle', () => {
       fireEvent.click(viewButton);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('Light Mode')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Light Mode')).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByText('Light Mode'));
@@ -102,9 +90,7 @@ describe('Dark Mode Toggle', () => {
       fireEvent.click(viewButton);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('Dark Mode')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Dark Mode')).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByText('Dark Mode'));
@@ -133,10 +119,8 @@ describe('Dark Mode Toggle', () => {
     });
 
     // Wait for menu to open
-    await waitFor(() => {
-      expect(screen.getByText('Light Mode')).toBeInTheDocument();
-      expect(screen.getByText('Dark Mode')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Light Mode')).toBeInTheDocument();
+    expect(await screen.findByText('Dark Mode')).toBeInTheDocument();
 
     // Initially, Dark Mode should be checked (default state)
     const darkModeMenuItem = screen.getByRole('menuitem', {name: 'Dark Mode'});
@@ -160,9 +144,7 @@ describe('Dark Mode Toggle', () => {
       fireEvent.click(viewButton);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('Light Mode')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Light Mode')).toBeInTheDocument();
 
     // Check that Light Mode now has the checkmark
     const lightModeMenuItem = screen.getByText('Light Mode').closest('li');

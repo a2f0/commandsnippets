@@ -8,8 +8,8 @@ import {App} from '../../src/App';
 import {BottomBar} from '../../src/components/bottomBar/BottomBar';
 import {useErrorStore} from '../../src/hooks/useErrorStore';
 import {i18n} from '../../src/i18n/i18n';
-import * as envModule from '../../src/lib/environment';
 import {darkTheme} from '../../src/theme/themes';
+import {stubEnvironment} from '../util/environment';
 import {signIn} from '../util/signIn';
 
 // Every page fails to render.
@@ -21,11 +21,7 @@ vi.mock('../../src/Routes', () => ({
 
 beforeEach(() => {
   signIn();
-  vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
+  stubEnvironment('development');
 });
 
 it('records what its error boundary catches, which a HUD then lists', async () => {

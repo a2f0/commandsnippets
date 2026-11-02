@@ -1,18 +1,17 @@
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {setEntryPublic, setTagPublic} from '../../src/lib/data/writes';
 import {useAppState} from '../../src/lib/state/appState';
 import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {serveMockApi, server} from '../util/msw';
-import {signIn, store} from '../util/signIn';
+import {recordRequests, serveMockApi, server} from '../util/msw';
+import {signIn, store, TEST_USER} from '../util/signIn';
 import {entry, tag} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi({onUnhandledFrame: 'error'});
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
@@ -54,7 +53,7 @@ describe('public user pages', () => {
     const subject = await screen.findByText('entry-1-subject');
     fireEvent.contextMenu(screen.getByText('test-tag-1'));
     fireEvent.click(await screen.findByRole('menuitem', {name: 'Make public'}));
-    const own = syncSession('test');
+    const own = syncSession(TEST_USER);
     await waitFor(async () =>
       expect((await own.db.tags.get(['test', '1']))?.attributes.is_public).toBe(
         true
@@ -68,10 +67,10 @@ describe('public user pages', () => {
       ).toBe(true)
     );
     await own.sync.flush();
-    const publicSession = publicSyncSession('test');
+    const publicSession = publicSyncSession(TEST_USER);
     await publicSession.sync.syncAll();
     expect(
-      await publicSession.db.entries.where('owner').equals('test').count()
+      await publicSession.db.entries.where('owner').equals(TEST_USER).count()
     ).toBe(1);
     fireEvent.contextMenu(subject);
     fireEvent.click(
@@ -85,15 +84,14 @@ describe('public user pages', () => {
     await own.sync.flush();
     await publicSession.sync.syncAll();
     expect(
-      await publicSession.db.entries.where('owner').equals('test').count()
+      await publicSession.db.entries.where('owner').equals(TEST_USER).count()
     ).toBe(0);
   });
   it('opens the same tag URL for a guest with filtered tags, entries, and read-only controls', async () => {
     await publish();
-    const writes: string[] = [];
-    server.events.on('request:start', ({request}) => {
-      if (request.method !== 'GET') writes.push(request.method);
-    });
+    const writes = recordRequests(({method}) =>
+      method === 'GET' ? undefined : method
+    );
     const {history} = renderAppAt('/test/test-tag-1');
     expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
     expect(history.location.pathname).toBe('/test/test-tag-1');
@@ -136,13 +134,13 @@ describe('public user pages', () => {
     renderAppAt('/test?entries=all');
     const subject = 'entry-1-subject';
     expect(await screen.findByText(subject)).toBeInTheDocument();
-    const session = publicSyncSession('test');
+    const session = publicSyncSession(TEST_USER);
     await apiClient.forVersion(1).setTagPublic('1', false);
     await act(async () => session.sync.syncAll());
     await waitFor(() => expect(screen.queryByText(subject)).toBeNull());
-    expect(await session.db.entries.where('owner').equals('test').count()).toBe(
-      0
-    );
+    expect(
+      await session.db.entries.where('owner').equals(TEST_USER).count()
+    ).toBe(0);
     await apiClient.forVersion(1).setTagPublic('1', true);
     await act(async () => session.sync.syncAll());
     expect(await screen.findByText(subject)).toBeInTheDocument();
@@ -155,16 +153,16 @@ describe('public user pages', () => {
     await publish();
     signIn();
     assignLoggedInCookie();
-    const own = syncSession('test');
-    const publicSession = publicSyncSession('test');
+    const own = syncSession(TEST_USER);
+    const publicSession = publicSyncSession(TEST_USER);
     await own.sync.syncAll();
     await publicSession.sync.syncAll();
     expect(publicSession.db.name).not.toBe(own.db.name);
     expect(
-      await publicSession.db.entries.where('owner').equals('test').count()
+      await publicSession.db.entries.where('owner').equals(TEST_USER).count()
     ).toBe(1);
     expect(
-      await own.db.entries.where('owner').equals('test').count()
+      await own.db.entries.where('owner').equals(TEST_USER).count()
     ).toBeGreaterThan(1);
     await expect(setEntryPublic(publicSession, '1', true)).rejects.toThrow(
       'read-only'
@@ -182,16 +180,16 @@ describe('public user pages', () => {
     await own.sync.flush();
     await publicSession.sync.syncAll();
     expect(
-      await publicSession.db.entries.where('owner').equals('test').count()
+      await publicSession.db.entries.where('owner').equals(TEST_USER).count()
     ).toBe(0);
     expect(
-      await own.db.entries.where('owner').equals('test').count()
+      await own.db.entries.where('owner').equals(TEST_USER).count()
     ).toBeGreaterThan(1);
   });
 
   it('clears a revoked or missing public view, while leaving other owners cached', async () => {
     await publish();
-    const session = publicSyncSession('test');
+    const session = publicSyncSession(TEST_USER);
     await session.sync.syncAll();
     await session.db.tags.put({
       ...(await session.db.tags.get(['test', '1'])),
@@ -219,9 +217,9 @@ describe('public user pages', () => {
       )
     );
     await expect(session.sync.syncAll()).rejects.toThrow('unavailable');
-    expect(await session.db.entries.where('owner').equals('test').count()).toBe(
-      0
-    );
+    expect(
+      await session.db.entries.where('owner').equals(TEST_USER).count()
+    ).toBe(0);
     expect(await session.db.tags.where('owner').equals('other').count()).toBe(
       1
     );
@@ -249,12 +247,12 @@ describe('public user pages', () => {
         }
       )
     );
-    const session = publicSyncSession('test');
+    const session = publicSyncSession(TEST_USER);
     await session.sync.syncAll();
     expect(changed).toBe(true);
-    expect(await session.db.entries.where('owner').equals('test').count()).toBe(
-      0
-    );
+    expect(
+      await session.db.entries.where('owner').equals(TEST_USER).count()
+    ).toBe(0);
     expect(
       (await session.db.cursors.get(['test', 'entries']))?.initialLoad?.complete
     ).toBe(true);

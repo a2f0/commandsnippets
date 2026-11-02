@@ -120,7 +120,6 @@ describe('fetchWithAuth', () => {
 
   afterEach(() => {
     signOut.mockReset();
-    vi.restoreAllMocks();
   });
 
   async function send({status, body}: Case) {

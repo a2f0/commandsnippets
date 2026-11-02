@@ -4,7 +4,7 @@ import {
   EXPECTED_USER_HEADER,
 } from '@commandsnippets/api-shared';
 import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {
   AdminApiError,
@@ -90,10 +90,6 @@ describe('adminApi', () => {
 
   beforeEach(() => {
     vi.spyOn(console, 'info').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it('lists users with the query as JSON:API parameters, sending the cookie', async () => {

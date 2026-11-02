@@ -2,7 +2,7 @@ import {inspect} from 'node:util';
 import {act, render, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import {CookiesProvider} from 'react-cookie';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {useOAuth} from '../../../src/hooks/useOAuth';
 import {apiClient} from '../../../src/lib/api/apiClient';
@@ -101,10 +101,6 @@ describe('useOAuth', () => {
   beforeEach(() => {
     signIn();
     consoleOutput = captureConsole();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it('records whether the user who logged in is staff', async () => {

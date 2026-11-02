@@ -27,6 +27,7 @@ import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {
   API,
   offlineForWrites,
+  recordRequests,
   serveMockApi,
   server,
 } from '../../../../util/msw';
@@ -98,23 +99,19 @@ interface RestoreRequest {
   body: unknown;
 }
 
-function restoreRequests(): RestoreRequest[] {
-  const requests: RestoreRequest[] = [];
-  server.events.on('request:start', async ({request}) => {
-    if (new URL(request.url).pathname === '/api/v1/user/restore') {
-      requests.push({
-        user: request.headers.get(EXPECTED_USER_HEADER),
-        account: request.headers.get(EXPECTED_USER_ID_HEADER),
-        version: request.headers.get(DATA_VERSION_HEADER),
-        body: await request.clone().json(),
-      });
-    }
-  });
-  return requests;
-}
+const restoreRequests = () =>
+  recordRequests<RestoreRequest>(async (request, path) =>
+    path === '/api/v1/user/restore'
+      ? {
+          user: request.headers.get(EXPECTED_USER_HEADER),
+          account: request.headers.get(EXPECTED_USER_ID_HEADER),
+          version: request.headers.get(DATA_VERSION_HEADER),
+          body: await request.clone().json(),
+        }
+      : undefined
+  );
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -239,12 +236,9 @@ describe('Restore Backup', () => {
     await createEntry(session, 'queued-subject', 'body');
     await expect(session.sync.flush()).rejects.toThrow();
     server.resetHandlers();
-    const posted: string[] = [];
-    server.events.on('request:start', ({request}) => {
-      if (request.method === 'POST') {
-        posted.push(new URL(request.url).pathname);
-      }
-    });
+    const posted = recordRequests(({method}, path) =>
+      method === 'POST' ? path : undefined
+    );
 
     const user = await chooseFile(fileOf(backup));
     await user.click(
@@ -350,12 +344,11 @@ describe('Restore Backup', () => {
 
   it('restores over the version its copy is of, then holds the new one', async () => {
     await renderEntries();
-    const named: (string | null)[] = [];
-    server.events.on('request:start', ({request}) => {
-      if (new URL(request.url).pathname === '/api/v1/user/restore') {
-        named.push(request.headers.get(DATA_VERSION_HEADER));
-      }
-    });
+    const named = recordRequests(({headers}, path) =>
+      path === '/api/v1/user/restore'
+        ? headers.get(DATA_VERSION_HEADER)
+        : undefined
+    );
     const user = await chooseFile(fileOf(backup));
     await user.click(
       await screen.findByRole('button', {name: 'Restore backup'})

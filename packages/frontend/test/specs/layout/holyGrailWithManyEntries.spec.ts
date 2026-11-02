@@ -134,8 +134,6 @@ describe('Holy Grail Layout with Many Entries', () => {
 
     expect(hasSubstantialContent).toBe(true);
 
-    // Content validation passed - either scrollable or has substantial height
-
     // ASSERTION 4: Test scroll behavior - toolbar should remain at bottom during scroll
     // Only test scrolling if content is actually scrollable
     if (contentMetrics.isScrollable) {
@@ -155,10 +153,6 @@ describe('Holy Grail Layout with Many Entries', () => {
       await browser.execute(() => {
         window.scrollTo(0, 0);
       });
-
-      // Test completed successfully
-    } else {
-      // Test completed successfully for large viewport
     }
   });
 });
