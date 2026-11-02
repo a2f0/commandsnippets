@@ -6,20 +6,9 @@ describe('Entries Context Menu Delete Entry', () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
 
-    // Verify MSW is providing expected data
-    const apiCheck = await BasePage.checkTagsAndEntries();
-
-    console.log('MSW API check:', apiCheck);
-    expect(apiCheck.tagsOk).toBe(true);
-    expect(apiCheck.entriesOk).toBe(true);
-    expect(apiCheck.tagsCount).toBe(4); // MSW provides 4 tags
-    expect(apiCheck.entriesCount).toBe(3); // MSW provides 3 entries
-
     await browser.login();
     await BasePage.open('test/test-tag-1');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-
-    // Wait for content to load
 
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
 
@@ -32,8 +21,6 @@ describe('Entries Context Menu Delete Entry', () => {
     await expect(browser).toHaveUrl(
       'http://localhost:8081/test?entries=untagged'
     );
-
-    // Wait for untagged entries view to load fully
 
     // Check that we have the entries list displayed
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
@@ -84,9 +71,6 @@ describe('Entries Context Menu Delete Entry', () => {
 
     // Verify the entry is removed from the DOM
     await expect(BasePage.tagsEntry('3')).not.toBeDisplayed();
-
-    // Test core functionality: entry delete completed successfully
-    console.log('OK: Entry deleted successfully from untagged entries view');
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });

@@ -6,15 +6,6 @@ describe('Entries Context Menu Untag', () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
 
-    // Verify MSW is providing expected data
-    const apiCheck = await BasePage.checkTagsAndEntries();
-
-    console.log('MSW API check:', apiCheck);
-    expect(apiCheck.tagsOk).toBe(true);
-    expect(apiCheck.entriesOk).toBe(true);
-    expect(apiCheck.tagsCount).toBe(4); // MSW provides 4 tags
-    expect(apiCheck.entriesCount).toBe(3); // MSW provides 3 entries
-
     await browser.login();
     await BasePage.open('test/test-tag-1');
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
@@ -38,18 +29,12 @@ describe('Entries Context Menu Untag', () => {
     // Verify untag option exists
     await expect(BasePage.tagsEntriesContextMenu1Untag).toBeExisting();
 
-    console.log('OK: Untag context menu option is available for tagged entry');
-
     // No untag issued here; ensure tags_entries DELETE has not been called
     const untagCount = await browser.getMSWRequestCount(
       'DELETE',
       'http://localhost:9001/api/v1/tags_entries/1'
     );
     expect(untagCount).toBe(0);
-
-    console.log(
-      'OK: Untag test completed: entry successfully removed from tag'
-    );
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });

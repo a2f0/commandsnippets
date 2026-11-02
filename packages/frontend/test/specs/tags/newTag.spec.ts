@@ -20,7 +20,6 @@ describe('Tag List Context Menu Behavior', () => {
       }
     });
 
-    console.log('Initial API check:', initialApiCheck);
     expect(initialApiCheck.ok).toBe(true);
 
     // Store initial tag count
@@ -104,16 +103,6 @@ describe('Tag List Context Menu Behavior', () => {
       'http://localhost:9001/api/v1/tags',
       1
     );
-
-    // Debug: Check what happened with the API calls
-    const apiCallResults = await browser.execute(() => {
-      return {
-        timestamp: new Date().toISOString(),
-        message: 'Tag creation test completed',
-      };
-    });
-
-    console.log('API call results:', apiCallResults);
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });

@@ -6,20 +6,6 @@ describe('MSW Verification Tests', () => {
   });
 
   it('should verify MSW worker is actually started', async () => {
-    // Check if MSW worker is available in the browser
-    const workerStatus = await browser.execute(() => {
-      return {
-        hasWorker: !!window.__MSW_WORKER__,
-        workerType: typeof window.__MSW_WORKER__,
-        // Also check if the service worker is registered
-        hasServiceWorker: !!navigator.serviceWorker?.controller,
-        // Check if MSW is available globally
-        hasMSW: false, // MSW doesn't expose a global 'msw' object
-      };
-    });
-
-    console.log('MSW Worker Status:', workerStatus);
-
     // Check if the page loaded successfully (either public or authenticated route)
     const pageLoaded = await browser.execute(() => {
       return {
@@ -31,17 +17,8 @@ describe('MSW Verification Tests', () => {
       };
     });
 
-    console.log('Page load status:', pageLoaded);
-
     // The page should load successfully (either public home or main app)
     expect(pageLoaded.bodyHasContent).toBe(true);
-
-    // Check if there are any console errors related to MSW
-    const mswErrors = browser.currentTestErrors.filter(
-      error => error.text?.includes('MSW') || error.text?.includes('msw')
-    );
-
-    console.log('MSW-related errors:', mswErrors.length);
 
     // The test passes if the page loads successfully, even if MSW isn't manually started
     // because the application might be handling API calls differently in test mode
@@ -65,17 +42,6 @@ describe('MSW Verification Tests', () => {
       };
     });
 
-    console.log('Service Worker Status:', serviceWorkerStatus);
-
-    // Check if there are any service worker registrations
-    const registrations = await browser.execute(() => {
-      return navigator.serviceWorker
-        .getRegistrations()
-        .then(regs => regs.length);
-    });
-
-    console.log('Service Worker Registrations:', registrations);
-
     // The application should work whether or not service workers are registered
     expect(serviceWorkerStatus.serviceWorkerSupported).toBe(true);
     expect(browser.currentTestErrors).toHaveLength(0);
@@ -88,31 +54,6 @@ describe('MSW Verification Tests', () => {
     });
     expect(pageLoaded).toBe(true);
 
-    // Check if there are any network requests being made
-    const networkRequests = await browser.execute(() => {
-      // Check if there are any fetch requests or XMLHttpRequest calls
-      return {
-        hasFetch: typeof fetch !== 'undefined',
-        hasXMLHttpRequest: typeof XMLHttpRequest !== 'undefined',
-        // Check if there are any pending requests
-        pendingRequests: 0, // This was probably from a different setup
-      };
-    });
-
-    console.log('Network request status:', networkRequests);
-
-    // Check if the page content shows that data was loaded
-    const pageContent = await browser.execute(() => {
-      return document.body.textContent;
-    });
-
-    console.log('Page content length:', pageContent?.length);
-    console.log(
-      'Page content includes test data:',
-      pageContent?.includes('test-tag-1') ||
-        pageContent?.includes('test entry 1')
-    );
-
     // Verify no CORS errors or network errors
     const networkErrors = browser.currentTestErrors.filter(
       error =>
@@ -122,7 +63,6 @@ describe('MSW Verification Tests', () => {
         error.text?.includes('Failed to fetch')
     );
 
-    console.log('Network errors found:', networkErrors.length);
     expect(networkErrors).toHaveLength(0);
     expect(browser.currentTestErrors).toHaveLength(0);
   });
@@ -143,7 +83,6 @@ describe('MSW Verification Tests', () => {
     // Check that GET /tags on localhost base URL was requested at least once
     const url = 'http://localhost:9001/api/v1/tags';
     const count = await browser.getMSWRequestCount('GET', url);
-    console.log('MSW GET /tags request count =', count);
     // We expect at least 1, but avoid flakiness by asserting >= 1
     expect(count).toBeGreaterThanOrEqual(1);
   });
@@ -185,8 +124,6 @@ describe('MSW Verification Tests', () => {
 
     expect(result.pageLoaded).toBe(true);
     const entriesResponse = result.entriesResponse;
-
-    console.log('Entries endpoint response:', entriesResponse);
 
     // MSW answers it: a request it let through would fail (no API runs).
     expect(entriesResponse).toMatchObject({ok: true, status: 200});
@@ -235,8 +172,6 @@ describe('MSW Verification Tests', () => {
     expect(result.pageLoaded).toBe(true);
     const healthResponse = result.healthResponse;
 
-    console.log('Health check endpoint response:', healthResponse);
-
     // Verify that MSW intercepted the request and returned the expected mock response
     expect(healthResponse?.ok).toBe(true);
     expect(healthResponse?.status).toBe(200);
@@ -259,7 +194,6 @@ describe('MSW Verification Tests', () => {
         error.text?.includes('CORS')
     );
 
-    console.log('Network errors found:', networkErrors.length);
     // We expect no network errors since the application should handle them gracefully
     expect(networkErrors).toHaveLength(0);
     expect(browser.currentTestErrors).toHaveLength(0);
@@ -276,7 +210,6 @@ describe('MSW Verification Tests', () => {
         error.text?.includes('HTTP')
     );
 
-    console.log('HTTP errors found:', httpErrors.length);
     expect(httpErrors).toHaveLength(0);
     expect(browser.currentTestErrors).toHaveLength(0);
   });
@@ -297,8 +230,6 @@ describe('MSW Verification Tests', () => {
       };
     });
 
-    console.log('Page loaded successfully:', pageContent);
-
     // The application should load successfully
     expect(pageContent.hasContent).toBe(true);
     expect(browser.currentTestErrors).toHaveLength(0);
@@ -317,8 +248,6 @@ describe('MSW Verification Tests', () => {
         .then(response => response.ok)
         .catch(() => false);
     });
-
-    console.log('MSW Service Worker accessible:', serviceWorkerAccessible);
 
     // The service worker file should be accessible
     expect(serviceWorkerAccessible).toBe(true);

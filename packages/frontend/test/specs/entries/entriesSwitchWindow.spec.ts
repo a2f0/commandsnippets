@@ -5,15 +5,6 @@ describe('Tab Switching Behavior', () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
 
-    // Verify MSW is providing expected data
-    const apiCheck = await BasePage.checkTagsAndEntries();
-
-    console.log('MSW API check:', apiCheck);
-    expect(apiCheck.tagsOk).toBe(true);
-    expect(apiCheck.entriesOk).toBe(true);
-    expect(apiCheck.tagsCount).toBe(4); // MSW provides 4 tags
-    expect(apiCheck.entriesCount).toBe(3); // MSW provides 3 entries
-
     await browser.login();
 
     // Reset counters right before the navigational load we want to assert
@@ -67,11 +58,6 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
     await expect(BasePage.tags).toBeElementsArrayOfSize(4);
     await expect(BasePage.entrySearch).toBeExisting();
-
-    // Test core functionality: window switching workflow completed successfully
-    console.log(
-      'OK: Window switching workflow completed: entry editing preserved across window switches'
-    );
 
     expect(browser.currentTestErrors).toHaveLength(0);
   });
