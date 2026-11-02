@@ -4,7 +4,7 @@ import {type AppState, useAppConfig} from '../lib/state/appState';
 import {useDocumentKeydown} from './useDocumentKeydown';
 
 /** An editor's fields, of which the app state holds the active one. */
-export interface IEditFields<Field> {
+interface IEditFields<Field> {
   /** The app mode while the editor is open: Tab cycles its fields only then. */
   mode: appMode;
   /** The fields in Tab order; Tab on the last goes back to the first. */

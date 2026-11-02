@@ -8,7 +8,6 @@ async function init() {
     try {
       const {enableMocking} = await import('./msw');
       await enableMocking();
-      console.log('MSW initialized successfully');
 
       if ('serviceWorker' in navigator) {
         await navigator.serviceWorker.ready;

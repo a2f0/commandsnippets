@@ -4,7 +4,7 @@ import {useSession} from '../../lib/data/hooks';
 import {renameTag} from '../../lib/data/writes';
 import {TagForm} from './TagForm';
 
-export interface ITagEdit {
+interface ITagEdit {
   object: ITagJsonApi;
   /** After the rename is stored, with the renamed tag. */
   handleSaveParent: (renamed: ITagJsonApi) => void;

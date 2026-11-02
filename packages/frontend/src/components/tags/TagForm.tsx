@@ -6,7 +6,7 @@ import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
 
-export interface ITagFormProps {
+interface ITagFormProps {
   /** The ids of the form, its name field and its buttons. */
   ids: {form: string; name: string; save: string; cancel: string};
   /** The name the field opens with. */

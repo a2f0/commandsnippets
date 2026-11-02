@@ -8,7 +8,7 @@ const ReuseCount = styled('span')(({theme}) => ({
   color: theme.palette.text.secondary,
 }));
 
-export interface IProps {
+interface IProps {
   /** The entry's `reused_count`: the times it was reused. */
   count: number;
 }
