@@ -396,6 +396,9 @@ useAppState.subscribe((state, previous) => {
 subscribeRemaps(({from, to}) => {
   const {tagSelectedID, entrySelectedID, mostRecentCopyID} =
     useAppState.getState();
+  if (![tagSelectedID, entrySelectedID, mostRecentCopyID].includes(from)) {
+    return;
+  }
   useAppState.setState({
     ...(tagSelectedID === from ? {tagSelectedID: to} : {}),
     ...(entrySelectedID === from ? {entrySelectedID: to} : {}),
