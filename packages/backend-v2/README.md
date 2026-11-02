@@ -79,10 +79,8 @@ The schemas are `zod/mini` schemas, so code here types them as
 `src/lib/validate.ts` loads zod's English locale, which zod/mini leaves out.
 The API's errors do not depend on it (every failure carries its own
 message), but zod's own issues keep reading as they did under classic zod.
-zod/mini tree-shakes: it and the schemas are about 97 kB of the Worker's
-462 KiB (101 KiB gzipped; measured 2026-10-07 with `wrangler deploy
---dry-run --metafile`), where classic zod alone was about 760 kB of a
-1109 KiB Worker (194 KiB gzipped).
+zod/mini tree-shakes; api-shared's [zod/mini](../api-shared/README.md#zodmini)
+has what it and the schemas add to the Worker.
 
 ## Development
 

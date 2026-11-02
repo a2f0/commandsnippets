@@ -13,65 +13,22 @@ entries can be put in a user-defined order. The API is backend-v2
 
 ## Development Commands
 
-Run these from `packages/frontend`.
+The [README](README.md) holds the commands, run from `packages/frontend`:
+[setup](README.md#setup), [code quality](README.md#code-quality) (`lint`,
+`fix`, `compile`), [building](README.md#building),
+[testing](README.md#testing) and [deploying](README.md#deploying). When you
+change code:
 
-### Setup
-- Requires Bun and Node.js from the root `.mise.toml` (Vite, Vitest,
-  WebdriverIO and wrangler run on Node); see the root README for mise setup
-- `bun install` - Install dependencies (the whole workspace, from the root
-  `bun.lock`)
-- `bun run dev` - Start the development server on http://localhost:8085
-- `bun run server-test` - Start the server in test mode on
-  http://localhost:8081, with the API mocked by MSW (what the E2E tests use)
-
-### Code Quality
-- `bun run lint` - Biome lint, formatting and import order (`biome check .`,
-  reports only), then file names (`lint:files`) and knip on this workspace
-  (`lint:knip`)
-- `bun run fix` - Fix what Biome can (`biome check --write .`)
-- `bun run compile` - TypeScript check (`tsc -b --force`), which `bun install`
-  also runs (`prepare`). `--force` rebuilds every project each time (about 2
-  seconds) instead of reusing `.ts-out`: TypeScript 7.0.2's incremental build
-  leaves stale declarations when one build changes a global declaration file
-  (such as `types/window.d.ts`) along with other types
-  (microsoft/typescript-go#4664), so after a pull or checkout `tsc -b` failed
-  with errors like `Type 'string' is not assignable to type '"Tag"'` (and can
-  miss real errors the same way). Keep `--force` until a TypeScript release
-  has the fix (typescript-go#4665, so far only in the 7.1 dev builds);
-  `__tests__/infra/compile.spec.ts` fails if `compile` leaves stale output.
-
-### Testing
-
-#### Unit Tests (Vitest)
-- `../../scripts/testing/runUnitTests.sh` - Run all unit tests, as CI does (it disables
-  Node's experimental Web Storage, which would replace jsdom's `localStorage`)
-- Pass paths to run specific files, for example
-  `../../scripts/testing/runUnitTests.sh __tests__/integration/reorderEntryList.spec.tsx`
-- For watch mode, run
-  `NODE_OPTIONS=--no-experimental-webstorage bunx vitest` in a terminal.
-  `bun run unit -- --watch` fails: `unit` already passes `--no-watch`.
-
-#### E2E Tests (WebdriverIO, Chrome only)
-- `../../scripts/testing/runWebdriverTests.sh` - Start the test server and run the
-  headless suite, as CI does (`bun run ci-headless`)
-- `scripts/testing/runSpecHeadless.sh <spec-file>` - Run one spec headless, for
-  example `scripts/testing/runSpecHeadless.sh test/specs/tags/search.spec.ts`
-- `scripts/testing/runSpec.sh <spec-file>` - Run one spec in a visible browser
-- `bun run test-headless` / `bun run test` - Run the suite against a
-  `bun run server-test` you started yourself
-
-### Build and Deploy
-- `bun run images` - Render the favicons and PWA icons into `public/` from
-  `../../assets/brand/` (gitignored; uses the root's agent-tool, which the
-  workspace install provides). `dev`,
-  `server-test` and every `build` script run it first
-- `bun run build` - Production bundle in `build/`
-- `bun run build:staging` / `bun run build:production` - Build in that mode
-  (`.env.staging` / `.env.production`)
-- `bun run build:analyze` (or `bun run analyze`) - Build with bundle analysis
-- `bun run clean` - Remove `build/`
-- `bun run deploy:staging` / `bun run deploy:production` - Build for the
-  environment and `wrangler deploy` it (see the README's Deploying section)
+- Typecheck with `bun run compile`, never a bare `tsc -b`, which can reuse
+  stale output (the README's Code Quality says why).
+- Run `bun run lint`, and `bun run fix` for what Biome can fix.
+- Run the unit suite as CI does: `../../scripts/testing/runUnitTests.sh`,
+  with spec paths to run some (`bun run unit -- --watch` fails: `unit`
+  already passes `--no-watch`).
+- Run E2E specs through `../../scripts/testing/runWebdriverTests.sh` (the
+  suite, headless, as CI does) or `scripts/testing/runSpecHeadless.sh
+  <spec-file>`; `bun run server-test` serves the app with the API mocked on
+  http://localhost:8081.
 
 ## Architecture
 
@@ -574,9 +531,10 @@ per-row work multiplies (the HUD's Analytics tab times it).
   IndexedDB transaction per row.
 
 ### Top-level routes
-- Every top-level route in `src/routePaths.ts` must also be a reserved username
-  in backend-v2 `src/services/reserved-usernames.json` (usernames are the first
-  path segment); `__tests__/src/routePaths.spec.ts` checks this
+- A new top-level route in `src/routePaths.ts` must be a reserved username in
+  the API too (usernames are the first path segment): see backend-v2's
+  [reserved usernames](../backend-v2/README.md#access-and-auth);
+  `__tests__/src/routePaths.spec.ts` checks it
 
 ### Testing Setup
 - **Mock Service Worker (MSW)**: `src/msw/` mocks the API in the browser. Only
@@ -656,19 +614,26 @@ per-row work multiplies (the HUD's Analytics tab times it).
   (`noRestrictedImports`)
 
 ### Dependencies
-- Always pin dependencies to exact versions (no ^ or ~ prefix) when adding or updating packages
-- Use `bun add --exact <package>` for new dependencies
-- Use `bun add -d --exact <package>` for new dev dependencies
-- When manually editing package.json, ensure version numbers have no range specifiers
-- Always run `bun install` after modifying package.json to update the root bun.lock
-- Never commit package.json changes without the corresponding root bun.lock updates
-- When removing dependencies, use `bun remove <package>` to update both package.json and the root bun.lock
-- A new dependency with an install script it needs must be added to the root package.json's `trustedDependencies`; see the README's Dependencies section
-- `@commandsnippets/api-shared` is `workspace:*`, a link to `../api-shared`: its edits show at once; run `bun install` after changing its `package.json` (see the README's "The API contract")
-- Vite treats the linked api-shared as source: it is not pre-bundled into `node_modules/.vite`, and the dev and test servers serve it from `../api-shared`. `server.fs.allow` in `vite.config.ts` admits only this package, `../api-shared`, the workspace's package store and the brand sources, never the whole workspace, and `server.fs.deny` refuses `.dev.vars` and `.secrets` wherever a path reaches them (`__tests__/infra/devServer.spec.ts`)
+- Follow [dependency maintenance](../../docs/dependencies.md): exact pins,
+  `bun run agent-tool bun add <name>@<version> --exact --cwd packages/frontend`
+  (or `bun update` / `bun remove` through `agent-tool bun`), and the root
+  `bun.lock` committed with the manifest. A dependency whose install script
+  it needs goes in the root `trustedDependencies` (README, Dependencies).
+- `@commandsnippets/api-shared` is `workspace:*`, a link to `../api-shared`:
+  its edits show at once; run `bun install` after changing its
+  `package.json` (README, "The API contract").
+- Vite treats the linked api-shared as source: it is not pre-bundled into
+  `node_modules/.vite`, and the dev and test servers serve it from
+  `../api-shared`. `server.fs.allow` in `vite.config.ts` admits only this
+  package, `../api-shared`, the workspace's package store and the brand
+  sources, never the whole workspace, and `server.fs.deny` refuses
+  `.dev.vars` and `.secrets` wherever a path reaches them
+  (`__tests__/infra/devServer.spec.ts`).
 
 ### TypeScript
-- Always run `bun run compile` after making changes to ensure TypeScript compiles (not a bare `tsc -b`, which can reuse stale output; see Code Quality)
+- Always run `bun run compile` after making changes to ensure TypeScript
+  compiles (not a bare `tsc -b`, which can reuse stale output; see the
+  README's Code Quality)
 - Never use `any` as a type, or `as` for type assertion
 - **Use invariant for strict null checks**: When working with potentially null DOM elements or values that should exist but may be null according to TypeScript, use the `invariant` library for runtime assertions:
   ```typescript

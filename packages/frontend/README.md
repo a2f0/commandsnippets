@@ -48,13 +48,10 @@ Bun reads only there:
   replaces Bun's default allowlist for every package.
   - `msw`'s would rewrite `public/mockServiceWorker.js`; regenerate that with
     `bunx msw init public` after upgrading msw.
-- **`overrides`:** these, in the root `package.json`, pin fixed versions of
-  indirect dependencies that `bun audit` flags:
-  - `@puppeteer/browsers` 3.x drops `extract-zip`, which has path-traversal
-    advisories (GHSA-jmr9-qjv8-65gv, GHSA-7pqw-9j4j-h8q3).
-  - `serialize-javascript` 7.0.5 or later fixes GHSA-5c6j-r48x-rmvq and
-    GHSA-qj8w-gfj5-8c6v.
-  - Drop an override once `bun audit` passes without it.
+- **`overrides`:** the root `package.json` pins fixed versions of indirect
+  dependencies that `bun audit` flags; see
+  [dependency maintenance](../../docs/dependencies.md) for those and for
+  updating dependencies.
 
 ### The API contract
 
@@ -85,9 +82,8 @@ compiles and bundles with its own code:
   `../api-shared`, so edits there show at once. Run `bun install` after
   changing its `package.json`, and commit the root `bun.lock` if it changes.
   CI runs this package's checks whenever `packages/api-shared/` changes.
-- **Size:** zod/mini and the api-shared modules the app imports add about
-  43 kB to the production bundle (35 kB of it zod; measured 2026-10-07 with
-  `bun run build:analyze`); classic zod and every schema took about 102 kB.
+- **Size:** see api-shared's [zod/mini](../api-shared/README.md#zodmini) for
+  what the contract adds to this bundle.
 
 ## Code Quality
 
@@ -96,12 +92,32 @@ ls-lint, then knip; `bun run fix` fixes what Biome can):
 
 ```shell
 bun run lint
+bun run fix
 ```
 
-Run TypeScript compilation check:
+Typecheck (`bun install` runs it too, as `prepare`):
 
 ```shell
-bun run compile
+bun run compile   # tsc -b --force
+```
+
+`--force` rebuilds every project each time (about 2 seconds) instead of
+reusing `.ts-out`: TypeScript 7.0.2's incremental build leaves stale
+declarations when one build changes a global declaration file (such as
+`types/window.d.ts`) along with other types (microsoft/typescript-go#4664),
+so after a pull or checkout `tsc -b` failed with errors like `Type 'string'
+is not assignable to type '"Tag"'` (and can miss real errors the same way).
+Keep `--force` until a TypeScript release has the fix (typescript-go#4665,
+so far only in the 7.1 dev builds); `__tests__/infra/compile.spec.ts` fails
+if `compile` leaves stale output.
+
+## Building
+
+```shell
+bun run build                # production bundle in build/
+bun run build:staging        # or build:production: that mode's .env file
+bun run build:analyze        # with bundle analysis (also: bun run analyze)
+bun run clean                # remove build/
 ```
 
 ## Icons
@@ -160,9 +176,8 @@ on workers.dev.
 
 The first path segment is a username (`/:user/:tag`), so the app's own
 top-level routes (`src/routePaths.ts`: `/admin`, `/oauth/...`) are reserved
-usernames in the API (backend-v2 `src/services/reserved-usernames.json`).
-`__tests__/src/routePaths.spec.ts` fails if a route is missing there; add a
-new top-level route to both.
+usernames in the API: see backend-v2's
+[reserved usernames](../backend-v2/README.md#access-and-auth).
 
 `/admin` is for staff (`users.is_staff`): it lists accounts, deactivates and
 reactivates them, marks them for deletion, opens their data (View data), and
@@ -180,8 +195,13 @@ else, a link) goes back to your entries.
 
 ### E2E Tests
 
-Start the server and run tests in a single command (Chrome only;
-`../../scripts/testing/runWebdriverTests.sh` runs the headless suite as CI does):
+Run the headless suite as CI does (it starts the test server):
+
+```shell
+../../scripts/testing/runWebdriverTests.sh
+```
+
+Or start the server and run tests in a single command (Chrome only):
 
 ```shell
 bun run ci
@@ -208,6 +228,7 @@ or
 
 ```shell
 bun run test:spec test/specs/tags/tagContextMenu/allowsDeletingATag.spec.ts
+bun run test:spec:headless test/specs/tags/search.spec.ts
 ```
 
 ### Unit Tests

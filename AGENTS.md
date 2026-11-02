@@ -10,7 +10,7 @@ Monorepo for the Command Snippets app.
 | `packages/website/` | Public website (Astro); bun workspace |
 | `assets/brand/` | Shared brand SVGs and selection styles; `agent-tool images build` renders the web icons and the link-preview image (`images` in `agent-tool.json`) |
 | `scripts/` | git hooks, CI policy, test entrypoints |
-| `docs/` | CI merge gate and dependency update guidance |
+| `docs/` | [CI merge gate](docs/ci-merge-gate.md), [dependency updates](docs/dependencies.md) and [click tracking](docs/click-tracking.md) |
 | `terraform/` | Cloudflare zone and databases (Terraform stacks, state in R2) |
 
 ## Conventions
@@ -33,18 +33,23 @@ Monorepo for the Command Snippets app.
   `bun run agents:sync` and commit the lockfile, skills, rules,
   `.agent-tool-skills.json`, and `.agent-tool-permissions.json` together.
   `bun run agents:check` reports drift in either.
-- Lint is enforced, never suppressed. The root `biome.json` holds the shared
-  formatter and rules, and every package's `biome.json` extends it: a
-  cognitive complexity of at most 20, functions of at most 75 lines and files
-  of at most 800 (blank lines skipped; tests are exempt), and no import
-  cycles, type-only imports included. Split code by responsibility to stay
-  within them. `bun run lint` checks (`biome check`) and `bun run fix` writes,
-  at the root (its scripts and configs) and in each package.
-- Each `lint` also runs knip on its workspace (`knip.config.ts` at the root
-  covers the root and every package): no unused files, exports or
-  dependencies. Delete dead code rather than ignore it; configure only what a
-  tool loads by name. The frontend's lint also checks file and directory
-  names against the root `.ls-lint.yml` (`lint:files`).
+- Lint is enforced, never suppressed or loosened to pass. `bun run lint`
+  checks and `bun run fix` writes, at the root (its scripts and configs) and
+  in each package:
+  - Biome: the root `biome.json` holds the shared formatter and rules, and
+    every package's `biome.json` extends it. Budgets: cognitive complexity
+    at most 20, functions at most 75 lines, files at most 800 (blank lines
+    skipped; tests exempt); split code by responsibility to stay within
+    them. No import cycles, type-only imports included.
+  - Layers: the frontend's `src/lib` never imports `components`, `pages`,
+    `menu` or `hooks`, and its UI reaches IndexedDB only through `lib/data`
+    (`packages/frontend/biome.json`).
+  - knip (`knip.config.ts` covers the root and every package): no unused
+    files, exports or dependencies. Delete dead code rather than ignore it;
+    configure only what a tool loads by name.
+  - ls-lint (`.ls-lint.yml`): frontend file and directory names.
+  - Every manifest pins exact versions (`scripts/checks/exactPins.test.ts`;
+    see [dependency maintenance](docs/dependencies.md)).
 - Validate root tooling with `bun run check`, which records Biome, shell lint,
   typecheck, script tests, and managed-skill and permission-rule checks; run
   every affected application's documented checks. Full PR-title commitlint

@@ -205,6 +205,9 @@ of it. In the web app's production bundle, zod/mini and the api-shared
 modules the app imports come to about 43 kB (35 kB of it zod; measured
 2026-10-07 with `bun run build:analyze` there), where classic zod and all the
 schemas took about 102 kB (30 kB gzipped).
+In the API's Worker, they are about 97 kB of 462 KiB (101 KiB gzipped;
+measured 2026-10-07 with `wrangler deploy --dry-run --metafile`), where
+classic zod alone was about 760 kB of a 1109 KiB Worker (194 KiB gzipped).
 
 For a consumer, that means:
 
