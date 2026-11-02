@@ -64,7 +64,7 @@ const field = (order: string) => order.replace(/^-/, '');
  * A search that matches as the API's does (backend-v2's `lib/search.ts`):
  * case-insensitively, in any script.
  */
-export const fold = (text: string) => text.toUpperCase();
+const fold = (text: string) => text.toUpperCase();
 
 /** The tags not deleted whose names hold `search`, in `order`. */
 export function sortTags(
@@ -89,11 +89,6 @@ export function sortTags(
 const holds = (entry: TextEntry, term: string) =>
   fold(entry.attributes.subject).includes(term) ||
   fold(entry.attributes.body).includes(term);
-
-/** Whether `entry`'s subject or body holds `search`. */
-export function entryMatches(entry: TextEntry, search: string): boolean {
-  return holds(entry, fold(search));
-}
 
 /** The `items` whose entries hold `search`: all of them for no search. */
 function matching<T>(

@@ -1,6 +1,5 @@
 export enum entrySearchMethod {
   allEntries = 1,
-  currentTagOnly = 2,
   untaggedEntryList = 3,
 }
 

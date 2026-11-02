@@ -33,7 +33,7 @@ import type {SyncEngine} from '../sync/sync';
  * answered with for another account than the one this tab's data is bound
  * to: never saved as this user's.
  */
-export class BackupAccountError extends Error {
+class BackupAccountError extends Error {
   constructor(failure: string, username: string) {
     super(`${failure}: not ${username}'s account`);
     this.name = 'BackupAccountError';
@@ -41,7 +41,7 @@ export class BackupAccountError extends Error {
 }
 
 /** A file that is not a backup this app can restore. */
-export class BackupFileError extends Error {
+class BackupFileError extends Error {
   constructor(reason: string) {
     super(`Not a backup: ${reason}`);
     this.name = 'BackupFileError';
@@ -59,7 +59,7 @@ export function backupFileName(backup: Backup, version?: number): string {
 }
 
 /** Offer `text` to the user as a file named `name` (a download). */
-export function saveFile(name: string, text: string, type: string): void {
+function saveFile(name: string, text: string, type: string): void {
   const url = URL.createObjectURL(new Blob([text], {type}));
   const link = document.createElement('a');
   link.href = url;
