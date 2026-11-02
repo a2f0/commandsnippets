@@ -69,8 +69,8 @@ export const adminRoutes = (baseUrl: string) => [
     const matching = adminUsers.filter(
       user =>
         (search === undefined ||
-          user.username.includes(search) ||
-          user.email.includes(search)) &&
+          user.username.toLowerCase().includes(search) ||
+          user.email.toLowerCase().includes(search)) &&
         (active === null || String(user.is_active) === active) &&
         (username === null || user.username === username)
     );

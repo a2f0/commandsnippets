@@ -48,6 +48,7 @@ import {
   resetMSWState,
   setRuntimeEntriesOverride,
 } from '../../../src/msw/handlers';
+import {adminUsers} from '../../../src/msw/state';
 import {manyEntriesResponse} from '../../../test/mocks/entries/manyEntriesResponse';
 import {API} from '../../util/msw';
 
@@ -1143,5 +1144,31 @@ describe('/user/data_versions', () => {
       (await fetch(`${API}/tags`, {headers: {[DATA_VERSION_HEADER]: '2'}}))
         .status
     ).toBe(200);
+  });
+});
+
+describe('GET /admin/users', () => {
+  const usernames = async (search: string) => {
+    const {json} = await send(
+      'GET',
+      `/admin/users?filter[search]=${encodeURIComponent(search)}`
+    );
+    return json.data.map(
+      (user: {attributes: {username: string}}) => user.attributes.username
+    );
+  };
+
+  it('searches usernames and emails case-insensitively, as the API does', async () => {
+    adminUsers.push({
+      id: '8',
+      username: 'BobSmith',
+      email: 'Bob.Smith@Example.com',
+      is_staff: false,
+      is_active: true,
+      date_marked_for_deletion: null,
+    });
+    expect(await usernames('bobs')).toEqual(['BobSmith']);
+    expect(await usernames('SMITH@EXAMPLE')).toEqual(['BobSmith']);
+    expect(await usernames('ALICE')).toEqual(['alice']);
   });
 });

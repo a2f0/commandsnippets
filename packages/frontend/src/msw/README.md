@@ -82,7 +82,8 @@ its `let` bindings and replace them only through its setters;
   activate and delete): a restore makes a new version, as the API's does
 - Public user data (`/users/:username` and its `/tags`, `/entries`,
   `/tags_entries`)
-- The admin API (`/admin/users`, a user's data, `/admin/audit_log`)
+- The admin API (`/admin/users`, whose `filter[search]` matches usernames and
+  emails case-insensitively, a user's data, `/admin/audit_log`)
 - Health check and authentication endpoints
 
 Requests about the signed-in user's data are refused as the API refuses them
