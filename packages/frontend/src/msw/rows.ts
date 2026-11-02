@@ -170,6 +170,62 @@ export const nextTagRevision = () =>
 export const nextEntryRevision = (state: EntriesState) =>
   nextRevision(state.data.map(entry => entry.attributes.date_updated));
 
+/**
+ * A new tag of the signed-in test user's, with `attributes` (the next id
+ * and revision, not deleted, in no entry); the caller adds it to the tags.
+ */
+export const newMockTag = (
+  attributes: Pick<
+    Tag['attributes'],
+    | 'name'
+    | 'order'
+    | 'is_public'
+    | 'date_created'
+    | 'date_last_used'
+    | 'client_id'
+  >
+): Tag => ({
+  type: 'Tag',
+  id: nextId('Tag', tags),
+  attributes: {
+    ...attributes,
+    date_updated: nextTagRevision(),
+    is_deleted: false,
+    entry_count: 0,
+  },
+  relationships: ownedByTestUser,
+});
+
+/**
+ * A new entry of `state`'s, with `attributes` (the next id and revision, not
+ * deleted, untagged); the caller adds it to `state`.
+ */
+export const newMockEntry = (
+  state: EntriesState,
+  attributes: Pick<
+    TextEntry['attributes'],
+    | 'subject'
+    | 'body'
+    | 'is_public'
+    | 'date_created'
+    | 'reused_count'
+    | 'client_id'
+  >
+): TextEntry => ({
+  type: 'TextEntry',
+  id: nextId('TextEntry', state.data),
+  attributes: {
+    ...attributes,
+    date_updated: nextEntryRevision(state),
+    is_deleted: false,
+    tag_count: 0,
+  },
+  relationships: {
+    ...ownedByTestUser,
+    text_entry_to_tag: {data: [], meta: {count: 0}},
+  },
+});
+
 /** Every junction, deleted ones too. */
 export const allJunctions = (state: EntriesState) => [
   ...junctionsOf(state),

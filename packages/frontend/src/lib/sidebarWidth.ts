@@ -1,6 +1,6 @@
 export const DEFAULT_SIDEBAR_WIDTH = 200;
 export const MIN_SIDEBAR_WIDTH = 140;
-export const MAX_SIDEBAR_WIDTH = 480;
+const MAX_SIDEBAR_WIDTH = 480;
 export const SIDEBAR_WIDTH = `var(--tag-sidebar-width, ${DEFAULT_SIDEBAR_WIDTH}px)`;
 
 export const maxSidebarWidth = (viewportWidth: number): number =>

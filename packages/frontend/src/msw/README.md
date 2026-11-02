@@ -8,19 +8,19 @@ development server talks to a real API.
 
 ```
 src/msw/
-├── index.ts          # Main export file - import MSW from here
-├── enableMocking.ts  # Main initialization function
+├── enableMocking.ts  # Main initialization function (src/index.tsx imports it)
 ├── config.ts         # Configuration constants and utilities
 ├── worker.ts         # MSW service worker setup
 ├── handlers.ts       # All API mock handlers, assembled from routes/
 ├── routes/           # One module of routes per resource (tags, entries, ...)
+├── analytics.ts      # The analytics aggregate, counted from the state
 ├── route.ts          # route(), the API hosts and the other-user guard
 ├── state.ts          # The mock API's mutable state, setters and reset
 ├── fixtures.ts       # The starting data the state is copied from
 ├── rows.ts           # Junctions, revisions and reorders, as backend-v2 keeps them
 ├── reads.ts          # Owners' data, `included`, and numbered and keyset pages
 ├── versions.ts       # Data versions, the version guard, backups and restores
-├── documents.ts      # Pagination, timestamps and errors as the API renders them
+├── documents.ts      # Pagination, lists, timestamps and errors as the API renders them
 ├── keyset.ts         # Keyset pages (`page[after]`) as the API renders them
 ├── requests.ts       # Request documents parsed (and refused) as the API does
 ├── browser.ts        # Window globals the E2E tests use
@@ -39,7 +39,7 @@ src/msw/
 // src/index.tsx
 // MSW only initializes in test mode (not in development)
 if (import.meta.env.MODE === 'test') {
-  const {enableMocking} = await import('./msw');
+  const {enableMocking} = await import('./msw/enableMocking');
   await enableMocking();
 }
 ```
@@ -66,14 +66,19 @@ Main initialization function that:
    server; the test-only gate is the caller in `src/index.tsx`.
 2. Starts MSW service worker
 3. Exposes utilities globally
-4. Performs health check
+4. Performs a health check, which logs its outcome (a failure as an error)
+   and never throws, so the app starts either way
 
 ### `handlers.ts`
 Contains all API mock handlers: the guards, then each resource's routes from
 `routes/` (`account`, `public`, `admin`, `tags`, `entries`, `reuses`,
 `junctions`), over the stateful mock data in `state.ts`. Other modules read
 its `let` bindings and replace them only through its setters;
-`resetMSWState` restores the starting data (`fixtures.ts`). The routes:
+`resetMSWState` restores the starting data (`fixtures.ts`). Each route
+module is a list of `route(method, path, handler)` calls of named handler
+functions (`createTag`, `patchAdminUser`, ...); new rows are built with
+`rows.ts`'s `newMockTag` and `newMockEntry`, and single-resource documents
+with `documents.ts`'s `withUser`. The routes:
 - Tags and entries: list (keyset pages too), retrieve, create, update, delete,
   and tag reorders
 - Tagging, untagging and junction reorders (`/tags_entries`)
@@ -82,7 +87,8 @@ its `let` bindings and replace them only through its setters;
   activate and delete): a restore makes a new version, as the API's does
 - Public user data (`/users/:username` and its `/tags`, `/entries`,
   `/tags_entries`)
-- The admin API (`/admin/users`, a user's data, `/admin/audit_log`)
+- The admin API (`/admin/users`, whose `filter[search]` matches usernames and
+  emails case-insensitively, a user's data, `/admin/audit_log`)
 - Health check and authentication endpoints
 
 Requests about the signed-in user's data are refused as the API refuses them
@@ -118,7 +124,7 @@ Browser-specific utilities:
   (`window.__MSW_REQUESTS__`)
 
 ### `healthCheck.ts`
-Health check utilities to verify MSW is working
+Checks that MSW answers its health endpoint, logging the outcome
 
 ### `worker.ts`
 Creates the MSW service worker with all handlers

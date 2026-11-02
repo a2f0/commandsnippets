@@ -14,7 +14,7 @@ import {
   untagEntry,
 } from '../../lib/data/writes';
 import {useSearchParam} from '../../lib/router/navigation';
-import {appMode, getSelection} from '../../lib/shared';
+import {appMode} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
 import type {SyncSession} from '../../lib/sync/session';
 import {DragHandle} from '../dnd/DragHandle';
@@ -438,7 +438,7 @@ const Entry = (props: IEntryProps) => {
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      const selection = getSelection();
+      const selection = window.getSelection();
       const selectionString = selection?.toString();
       appConfig.setAppMode(appMode.entriesList);
 

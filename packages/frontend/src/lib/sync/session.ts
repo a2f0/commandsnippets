@@ -11,13 +11,8 @@ import {apiClient} from '../api/apiClient';
 import {publicSyncApi} from '../api/publicApi';
 import {CommandsnippetsDatabase, databaseName} from '../db/database';
 import {environment} from '../environment';
-import {boundAccount} from './outbox';
-import {
-  bindOwner,
-  createSyncEngine,
-  type SyncApi,
-  type SyncEngine,
-} from './sync';
+import {bindOwner, boundAccount} from './accountBinding';
+import {createSyncEngine, type SyncApi, type SyncEngine} from './sync';
 
 export interface SyncSession {
   /** The signed-in user, whose database it is. */
@@ -75,8 +70,10 @@ export function publicSyncSession(owner: string): SyncSession {
       `commandsnippets-public-${environment}`
     );
     db.on('versionchange', () => {
-      publicOpen = null;
-      ended();
+      if (publicOpen?.db === db) {
+        publicOpen = null;
+        ended();
+      }
     });
     publicOpen = {username: '', db, sessions: new Map()};
   }

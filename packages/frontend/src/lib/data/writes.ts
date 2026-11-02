@@ -27,23 +27,19 @@ import type {
   TagTextEntry,
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
-import type {Table} from 'dexie';
+import {Dexie, type Table} from 'dexie';
 import type * as z from 'zod/mini';
 import {UserMismatchError} from '../api/errors';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {timed} from '../metrics/timings';
 import {leaveForeignSession} from '../state/appState';
-import {
-  AccountChangedError,
-  enqueue,
-  isLocalId,
-  localId,
-  madeNow,
-  nextMade,
-} from '../sync/outbox';
+import {AccountChangedError} from '../sync/accountBinding';
+import {localId} from '../sync/localIds';
+import {madeNow, nextMade} from '../sync/made';
+import {enqueue} from '../sync/outbox';
 import {type SyncSession, withDataLock} from '../sync/session';
 import {SyncUserError} from '../sync/sync';
-import {junctionOf, tagJunctions} from './hooks';
+import {idNow, junctionOf, rowNamed, tagJunctions} from './queries';
 
 /**
  * A write the API would refuse (a blank or too long field, a tag name the
@@ -103,7 +99,7 @@ export function flushFailed(session: SyncSession, error: unknown): void {
   // another account, whose queue it is now.
   if (
     error instanceof AccountChangedError ||
-    (error instanceof Error && error.name === 'DatabaseClosedError')
+    (error instanceof Error && error.name === Dexie.errnames.DatabaseClosed)
   ) {
     return;
   }
@@ -146,36 +142,6 @@ async function write<T>(
   );
   flushSoon(session);
   return result;
-}
-
-/**
- * The row `id` names: the row of that id, or for a local id the API's id has
- * replaced meanwhile (an editor opened before its create was sent), the row
- * holding it (`localId`).
- */
-async function rowNamed<R>(
-  table: Table<Stored<R>, RowKey>,
-  owner: string,
-  id: string
-): Promise<Stored<R> | undefined> {
-  const row = await table.get([owner, id]);
-  if (row !== undefined || !isLocalId(id)) {
-    return row;
-  }
-  return table
-    .where('owner')
-    .equals(owner)
-    .filter(candidate => candidate.localId === id)
-    .first();
-}
-
-/** The id the row `id` names has now (see `rowNamed`). */
-async function idNow<R extends {id: string}>(
-  table: Table<Stored<R>, RowKey>,
-  owner: string,
-  id: string
-): Promise<string> {
-  return (await rowNamed(table, owner, id))?.id ?? id;
 }
 
 /**
