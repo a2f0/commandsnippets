@@ -1,5 +1,6 @@
 import {Dexie} from 'dexie';
 import {useErrorStore} from '../../src/hooks/useErrorStore';
+import {resetFeatureFlagOverrides} from '../../src/lib/featureFlags/featureFlags';
 /**
  * The app's state for a test: signed in as the mock API's user, or back to
  * the defaults (signed out, which deletes the user's IndexedDB data).
@@ -30,6 +31,7 @@ export function signIn(): void {
  */
 export async function resetApp(): Promise<void> {
   useErrorStore.setState({errors: [], logs: []});
+  resetFeatureFlagOverrides();
   localStorage.removeItem(STORAGE_KEY);
   await useAppState.persist.rehydrate();
   useAppState.setState({...defaultSavedState, ...defaultUiState});

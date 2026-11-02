@@ -5,7 +5,7 @@ import logoUrl from '../../../../assets/brand/logo.svg?no-inline';
 import {UserProfileCircle} from '../components/UserProfileCircle';
 import {useTypedTranslation} from '../i18n/hooks';
 import {useOwner} from '../lib/data/hooks';
-import {environment} from '../lib/environment';
+import {canOverrideFeatureFlags} from '../lib/featureFlags/featureFlags';
 import {SIDEBAR_WIDTH} from '../lib/sidebarWidth';
 import {useAppConfig} from '../lib/state/appState';
 import {EntriesLinkButton} from './admin/EntriesLinkButton';
@@ -148,7 +148,8 @@ const MenuBar = ({entriesPage = true}: IProps) => {
         <ViewMenuButton onClick={handleViewMenuClick} />
         {entriesPage && <TagsMenuButton onClick={handleTagsMenuClick} />}
         {entriesPage && <EntriesMenuButton onClick={handleEntriesMenuClick} />}
-        {environment !== 'production' && (
+        {/* The Debug menu holds the feature flags' overrides. */}
+        {canOverrideFeatureFlags() && (
           <DebugMenuButton onClick={handleDebugMenuClick} />
         )}
         <HelpMenuButton onClick={handleHelpMenuClick} />

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {StyledMenu} from '../StyledMenu';
+import {FeatureFlags} from './menuItems/FeatureFlags';
 import {SyncIndexedDB} from './menuItems/SyncIndexedDB';
 import {TriggerTestError} from './menuItems/TriggerTestError';
 
@@ -16,6 +17,7 @@ const DebugMenu = ({onClose, anchorEl}: IProps) => (
     open={Boolean(anchorEl)}
     onClose={onClose}
   >
+    <FeatureFlags onClose={onClose} />
     <SyncIndexedDB onClose={onClose} />
     <TriggerTestError onClose={onClose} />
   </StyledMenu>

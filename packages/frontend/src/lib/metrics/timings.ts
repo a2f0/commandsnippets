@@ -8,11 +8,11 @@
  * lay out what ran in between.
  *
  * Kept in memory, the latest `MAX_TIMINGS` and `MAX_INTERACTIONS`, and only
- * where there is a HUD: production records nothing. A change of the
+ * while the HUD is on (the `hud` feature flag, off in production). A change of the
  * signed-in user clears them (`appState.ts`), as it does the user's data:
  * interactions name the lists they open (a tag's name).
  */
-import {environment} from '../environment';
+import {isFeatureEnabled} from '../featureFlags/featureFlags';
 
 export type TimingKind = 'network' | 'idb' | 'render';
 
@@ -54,8 +54,8 @@ export const NOTIFY_MS = 250;
 export const listKey = (list: {tag: string} | {entries: string}): string =>
   'tag' in list ? `tag:${list.tag}` : `entries:${list.entries}`;
 
-/** Whether timings are recorded: everywhere but production. */
-export const isRecording = () => environment !== 'production';
+/** Whether timings are recorded: while the HUD that shows them is on. */
+export const isRecording = () => isFeatureEnabled('hud');
 
 let timings: Timing[] = [];
 let interactions: Interaction[] = [];

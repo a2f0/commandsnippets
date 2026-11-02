@@ -5,14 +5,14 @@ import React, {Suspense, useCallback, useMemo, useState} from 'react';
 import {useErrorStore} from '../../hooks/useErrorStore';
 import {useWindowSize} from '../../hooks/useWindowSize';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {environment} from '../../lib/environment';
+import {useFeatureFlag} from '../../lib/featureFlags/featureFlags';
 import {TextEntrySearchField} from '../entries/TextEntrySearchField';
 import {LanguageSwitcher} from '../LanguageSwitcher';
 import {TagSearch} from '../tags/TagSearch';
 import {Mode} from './Mode';
 
 // The Analytics tab's charts load when the tab is first shown: only
-// non-production pages have a HUD, so the app's own bundle leaves them out.
+// pages with the `hud` flag on (not production by default) have a HUD, so the app's own bundle leaves them out.
 const TimingAnalytics = React.lazy(() =>
   import('./analytics/TimingAnalytics').then(module => ({
     default: module.TimingAnalytics,
@@ -60,6 +60,8 @@ const a11yProps = (index: number) => ({
 
 const BottomBar = () => {
   const {t} = useTypedTranslation('menu');
+  const showHud = useFeatureFlag('hud');
+  const showLanguageSwitcher = useFeatureFlag('languageSwitcher');
   const {width: windowWidth, height: windowHeight} = useWindowSize();
   const logs = useErrorStore(state => state.logs);
   const errorCount = useErrorStore(state => state.errors.length);
@@ -124,9 +126,9 @@ const BottomBar = () => {
           gap: 1,
         }}
       >
-        {environment !== 'production' && <LanguageSwitcher />}
+        {showLanguageSwitcher && <LanguageSwitcher />}
         <Mode />
-        {environment !== 'production' && (
+        {showHud && (
           <>
             <Button
               onClick={handleClick}
