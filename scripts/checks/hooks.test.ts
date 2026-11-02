@@ -3,6 +3,7 @@ import {
   appendFileSync,
   chmodSync,
   cpSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -253,6 +254,37 @@ describe("pre-push", () => {
     const result = prePush(repo, pushed);
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("validates the checked-out commit");
+  });
+
+  /** Commit a classifier that leaves a marker file when it runs. */
+  function commitMarkingClassifier(repo: string, sign: boolean): string {
+    const marker = path.join(tempDir(), "classifier-ran");
+    writeFileSync(
+      path.join(repo, "scripts/checks/ciChanges.ts"),
+      `require("node:fs").writeFileSync(${JSON.stringify(marker)}, "");\n`,
+    );
+    git(repo, "add", "-A");
+    commit(repo, "chore: change the classifier", sign);
+    return marker;
+  }
+
+  test("runs no classifier from an unsigned push", () => {
+    const repo = hookRepo();
+    const marker = commitMarkingClassifier(repo, false);
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(1);
+    expect(existsSync(marker)).toBe(false);
+  });
+
+  test("runs no classifier from a pushed commit other than HEAD", () => {
+    const repo = hookRepo();
+    const marker = commitMarkingClassifier(repo, true);
+    const pushed = git(repo, "rev-parse", "HEAD");
+    commitAll(repo, "chore: later work");
+    const result = prePush(repo, pushed);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("validates the checked-out commit");
+    expect(existsSync(marker)).toBe(false);
   });
 
   test("rejects a pushed commit with a co-author trailer", () => {

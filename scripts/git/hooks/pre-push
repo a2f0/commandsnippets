@@ -70,10 +70,10 @@ push_range() {
 }
 
 # The scopes the pushed commits need, classified as CI classifies them, as
-# `<scope>=<bool>` lines. Each ref runs the classifier it pushes
-# (scripts/checks/ciChanges.ts and ciPolicy.ts as committed), never the
-# worktree's copy: an uncommitted edit to the policy must not decide which
-# checks vouch for the push. A push of only deletions needs none.
+# `<scope>=<bool>` lines. The classifier runs as committed
+# (scripts/checks/ciChanges.ts and ciPolicy.ts), never the worktree's copy:
+# an uncommitted edit to the policy must not decide which checks vouch for
+# the push. It runs only after the pushed commits passed the trust checks.
 classify_push() {
   classifier_dir=$(mktemp -d)
   for file in ciChanges.ts ciPolicy.ts; do
@@ -88,11 +88,6 @@ classify_push() {
   return "$classify_status"
 }
 
-while read -r _ local_sha _ remote_sha; do
-  [ "$local_sha" != "$zero_sha" ] || continue
-  classify_push "$local_sha" "$(push_range "$local_sha" "$remote_sha" | sed 's/\.\./.../')" >>"$scopes_file"
-done <"$refs_file"
-
 needs() {
   grep -qx "$1=true" "$scopes_file"
 }
@@ -101,7 +96,7 @@ needs() {
 # when the worktree *is* the pushed commit: every pushed ref must be HEAD, no
 # tracked file may differ from it, and no untracked file may sit under the
 # checked paths (it would be tested without being pushed).
-require_worktree_is_push() {
+require_pushed_refs_are_head() {
   head_sha=$(git rev-parse HEAD)
   while read -r _ local_sha _ _; do
     [ "$local_sha" != "$zero_sha" ] || continue
@@ -111,6 +106,10 @@ require_worktree_is_push() {
       exit 1
     fi
   done <"$refs_file"
+}
+
+require_worktree_is_push() {
+  require_pushed_refs_are_head
   if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
     echo "Error: uncommitted changes would be validated instead of the pushed commit:" >&2
     git status --short --untracked-files=no >&2
@@ -140,6 +139,14 @@ while read -r _ local_sha _ remote_sha; do
   "$@" </dev/null
 done <"$refs_file"
 step_timings_end
+
+# Only the checked-out commit is vouched for, so only it is classified: its
+# committed code is what runs next. A push of only deletions needs nothing.
+require_pushed_refs_are_head
+while read -r _ local_sha _ remote_sha; do
+  [ "$local_sha" != "$zero_sha" ] || continue
+  classify_push "$local_sha" "$(push_range "$local_sha" "$remote_sha" | sed 's/\.\./.../')" >>"$scopes_file"
+done <"$refs_file"
 
 # Each scope runs its CI lane's checks, except the frontend's, which take too
 # long for a push and are left to CI.
