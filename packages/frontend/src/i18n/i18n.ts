@@ -2,44 +2,25 @@ import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import {initReactI18next} from 'react-i18next';
 
-import {translations} from './translations';
+import {en, es} from './translations';
 
-// Supported languages
 export const supportedLanguages = ['en', 'es'] as const;
-
-// Convert our typed translations to i18next resources format
-const resources = {
-  en: translations.en,
-  es: translations.es,
-};
 
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
+    resources: {en, es},
     fallbackLng: 'en',
-    debug: false,
-
-    interpolation: {
-      escapeValue: false,
-    },
-
-    lng: 'en',
-
+    // React escapes what it renders.
+    interpolation: {escapeValue: false},
     supportedLngs: supportedLanguages,
-
-    ns: ['common', 'menu', 'tags', 'entries', 'admin', 'analytics'],
+    ns: Object.keys(en),
     defaultNS: 'common',
-
-    detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
-    },
-
-    react: {
-      useSuspense: false,
-    },
+    // The language chosen on this device (the language switcher saves it),
+    // else English: the browser's language is not consulted.
+    detection: {order: ['localStorage'], caches: ['localStorage']},
+    react: {useSuspense: false},
   });
 
 export {i18n};

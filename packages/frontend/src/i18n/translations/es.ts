@@ -87,6 +87,8 @@ export const es: I18NextTranslations = {
     privacyPolicy: 'Política de privacidad',
     termsOfService: 'Términos del servicio',
     serviceOperator: 'Command Snippets es operado por Tearleads, LLC.',
+    makePublic: 'Hacer pública',
+    makePrivate: 'Hacer privada',
   },
   menu: {
     file: 'Archivo',
@@ -232,6 +234,7 @@ export const es: I18NextTranslations = {
   tags: {
     createTag: 'Crear Etiqueta',
     deleteTag: 'Eliminar Etiqueta',
+    editTag: 'Editar Etiqueta',
     confirmDeleteTag: '¿Está seguro de que desea eliminar esta etiqueta?',
     tagCount_one: '{{count}} etiqueta',
     tagCount_other: '{{count}} etiquetas',
@@ -245,6 +248,10 @@ export const es: I18NextTranslations = {
     retryEntryLoad: 'Reintentar',
     createEntry: 'Crear Entrada',
     deleteEntry: 'Eliminar Entrada',
+    copyEntry: 'Copiar',
+    getInfo: 'Obtener información',
+    editEntry: 'Editar',
+    untagEntry: 'Quitar etiqueta',
     entryCount_one: '{{count}} entrada',
     entryCount_other: '{{count}} entradas',
     reusedCount_one: 'Reutilizada {{count}} vez',
@@ -360,4 +367,4 @@ export const es: I18NextTranslations = {
     rowsPerPage: 'Filas por página',
     displayedRows: '{{from}}–{{to}} de {{count}}',
   },
-} as const satisfies I18NextTranslations;
+};

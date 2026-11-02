@@ -1,12 +1,3 @@
-import {en} from './en';
-import {es} from './es';
-
-export const translations = {
-  en,
-  es,
-} as const;
-
-export type SupportedLanguage = keyof typeof translations;
-
+export {en} from './en';
+export {es} from './es';
 export * from './types';
-export {en, es};

@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTypedTranslation} from '../../i18n/hooks';
 import {appMode, type IMouse} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
@@ -15,6 +16,7 @@ interface ITagListContextMenuProps {
 }
 
 const TagListContextMenu = ({mouse, onClose}: ITagListContextMenuProps) => {
+  const {t} = useTypedTranslation('menu');
   const appConfig = useAppConfig();
 
   const handleNewTag = () => {
@@ -31,7 +33,7 @@ const TagListContextMenu = ({mouse, onClose}: ITagListContextMenuProps) => {
       onClose={onClose}
     >
       <StyledMenuItem id="tagListContextMenuNew" onClick={handleNewTag}>
-        New Tag
+        {t('newTag')}
       </StyledMenuItem>
     </ContextMenu>
   );
