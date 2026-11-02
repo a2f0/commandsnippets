@@ -15,7 +15,7 @@ import {
 } from '@commandsnippets/api-shared';
 import invariant from 'invariant';
 import {now} from './documents';
-import {ownedByTestUser, testUser} from './fixtures';
+import {testUser} from './fixtures';
 import {apiError, errorResponse} from './requests';
 import {SIGNED_IN_USER} from './route';
 import {
@@ -24,8 +24,8 @@ import {
   compare,
   createJunction,
   junctionsOf,
-  nextEntryRevision,
-  nextTagRevision,
+  newMockEntry,
+  newMockTag,
   notFound,
 } from './rows';
 import {
@@ -35,7 +35,6 @@ import {
   lastVersion,
   type MockData,
   type MockVersion,
-  nextId,
   retireId,
   setActiveVersion,
   setDeletedJunctions,
@@ -212,14 +211,10 @@ export function backupOf(data: MockData = currentData()): Backup {
 }
 
 /**
- * Make `backup` the signed-in user's data, as the API does (`POST
- * /user/restore`): a new version, made active, of the backup's rows made
- * anew (new ids, the backup's order), with the counters the database's
- * triggers keep; the version before is kept as it was. The mock keeps no
- * reuses: they are only counted.
+ * A backup's rows must name only tags and entries it holds: checked first,
+ * as the API does, so a refused backup changes nothing.
  */
-export function restoreBackup(backup: Backup): RestoreResult {
-  // Checked first, as the API does: a refused backup changes nothing.
+function checkBackup(backup: Backup): void {
   const tagIds = new Set(backup.tags.map(tag => tag.id));
   const entryIds = new Set(backup.entries.map(entry => entry.id));
   if (
@@ -234,6 +229,10 @@ export function restoreBackup(backup: Backup): RestoreResult {
       'Invalid backup: a row names a tag or entry it does not hold.'
     );
   }
+}
+
+/** A new version, made active, of no data; the active one's is kept. */
+function startVersion(backup: Backup): void {
   setLastVersion(lastVersion + 1);
   const version: MockVersion = {
     version: lastVersion,
@@ -245,56 +244,63 @@ export function restoreBackup(backup: Backup): RestoreResult {
   };
   setVersions([...versions, version]);
   switchTo(version, {tags: [], entries: {data: []}, deletedJunctions: []});
+}
 
-  const tagsMade = new Map<string, Tag>();
+/** The backup's tags made anew, in its order: by their backup ids. */
+function restoreTags(backup: Backup): Map<string, Tag> {
+  const made = new Map<string, Tag>();
   const ordered = [...backup.tags].sort((a, b) => a.order - b.order);
   for (const [order, row] of ordered.entries()) {
-    const tag: Tag = {
-      type: 'Tag',
-      id: nextId('Tag', tags),
-      attributes: {
-        name: row.name,
-        order,
-        is_public: row.is_public,
-        is_deleted: false,
-        date_created: row.date_created,
-        date_last_used: row.date_created,
-        date_updated: nextTagRevision(),
-        entry_count: 0,
-        client_id: null,
-      },
-      relationships: ownedByTestUser,
-    };
+    const tag = newMockTag({
+      name: row.name,
+      order,
+      is_public: row.is_public,
+      date_created: row.date_created,
+      date_last_used: row.date_created,
+      client_id: null,
+    });
     setTags([...tags, tag]);
-    tagsMade.set(row.id, tag);
+    made.set(row.id, tag);
   }
-  const state = activeEntries();
-  const entriesMade = new Map<string, TextEntry>();
+  return made;
+}
+
+/** The backup's entries made anew, with their reuses counted: by backup id. */
+function restoreEntries(
+  backup: Backup,
+  state: MockData['entries']
+): Map<string, TextEntry> {
+  const made = new Map<string, TextEntry>();
   for (const row of backup.entries) {
-    const entry: TextEntry = {
-      type: 'TextEntry',
-      id: nextId('TextEntry', state.data),
-      attributes: {
-        subject: row.subject,
-        body: row.body,
-        date_created: row.date_created,
-        date_updated: nextEntryRevision(state),
-        is_public: row.is_public,
-        reused_count: backup.entry_reuses.filter(
-          reuse => reuse.text_entry_id === row.id
-        ).length,
-        is_deleted: false,
-        tag_count: 0,
-        client_id: null,
-      },
-      relationships: {
-        ...ownedByTestUser,
-        text_entry_to_tag: {data: [], meta: {count: 0}},
-      },
-    };
+    const entry = newMockEntry(state, {
+      subject: row.subject,
+      body: row.body,
+      date_created: row.date_created,
+      is_public: row.is_public,
+      reused_count: backup.entry_reuses.filter(
+        reuse => reuse.text_entry_id === row.id
+      ).length,
+      client_id: null,
+    });
     state.data = [...state.data, entry];
-    entriesMade.set(row.id, entry);
+    made.set(row.id, entry);
   }
+  return made;
+}
+
+/**
+ * Make `backup` the signed-in user's data, as the API does (`POST
+ * /user/restore`): a new version, made active, of the backup's rows made
+ * anew (new ids, the backup's order), with the counters the database's
+ * triggers keep; the version before is kept as it was. The mock keeps no
+ * reuses: they are only counted.
+ */
+export function restoreBackup(backup: Backup): RestoreResult {
+  checkBackup(backup);
+  startVersion(backup);
+  const tagsMade = restoreTags(backup);
+  const state = activeEntries();
+  const entriesMade = restoreEntries(backup, state);
   const taggings = [...backup.tags_entries].sort(
     (a, b) => Number(a.tag_id) - Number(b.tag_id) || a.order - b.order
   );

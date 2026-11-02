@@ -40,15 +40,7 @@ import {
   userDocumentSchema,
 } from '@commandsnippets/api-shared';
 import {setupServer} from 'msw/node';
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
 import type * as z from 'zod/mini';
 
 import {
@@ -814,9 +806,6 @@ describe('the E2E handlers (src/msw/handlers.ts)', () => {
   afterAll(() => server.close());
   beforeEach(() => {
     resetMSWState();
-    // The handlers announce each request.
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    return () => vi.restoreAllMocks();
   });
 
   it('answer every request as the API would', async () => {

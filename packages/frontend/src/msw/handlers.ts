@@ -32,17 +32,9 @@ const createHandlers = () => {
       ...accountRoutes(baseUrl),
       ...publicRoutes(baseUrl),
       ...adminRoutes(baseUrl),
-
-      // Health check endpoint
-      route('GET', `${baseUrl}/health`, () => {
-        console.log('OK: MSW intercepted health check request');
-        return HttpResponse.json(
-          {status: 'ok'},
-          {
-            status: 200,
-          }
-        );
-      }),
+      route('GET', `${baseUrl}/health`, () =>
+        HttpResponse.json({status: 'ok'})
+      ),
       ...tagRoutes(baseUrl),
       ...entryRoutes(baseUrl),
       ...reuseRoutes(baseUrl),
