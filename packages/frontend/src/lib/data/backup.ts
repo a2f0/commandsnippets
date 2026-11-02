@@ -23,8 +23,8 @@ import {
 } from '@commandsnippets/api-shared/responses';
 import {apiClient} from '../api/apiClient';
 import {describeIssues} from '../api/parseResponse';
+import {boundAccount} from '../sync/accountBinding';
 import {heldVersion} from '../sync/dataVersion';
-import {boundAccount} from '../sync/outbox';
 import {syncSession} from '../sync/session';
 import type {SyncEngine} from '../sync/sync';
 

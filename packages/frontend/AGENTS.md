@@ -111,8 +111,8 @@ API; everything else the app keeps is a zustand store.
   still unsent bring up a warning (`SignOutWarning`): stay, sign out
   keeping them on this device, or discard them
   (`signOut({discardQueued: true})`). Kept data is bound
-  to the account's id (`bindOwner`, before any flush or sync; `claimData`
-  at sign-in): another account that takes a deleted account's name never
+  to the account's id (`bindOwner` in `src/lib/sync/accountBinding.ts`,
+  before any flush or sync; `claimData` at sign-in): another account that takes a deleted account's name never
   sees its data nor sends its queue. Writes hold the
   database's Web Lock shared and the cleanup holds it exclusively
   (`withDataLock`), so a write another tab makes meanwhile is never
@@ -166,10 +166,13 @@ API; everything else the app keeps is a zustand store.
 - **Writes, local first**: `src/lib/data/writes.ts` changes the database at
   once and queues the write in the same transaction (the `outbox` table,
   `src/lib/sync/outbox.ts`), so the app works offline and no write waits on
-  the network; then the queue is flushed, not waited for. Rows made here
-  have local ids (`local-...`) until their create reaches the API, whose id
-  then replaces it everywhere (rows, queued writes, the selection in every
-  tab: `subscribeRemaps`, over a `BroadcastChannel`). The row keeps its
+  the network; then the queue is flushed, not waited for. What a queued
+  write names is `queuedWrite.ts`, how it is sent `send.ts`, and when it
+  was made `made.ts` (all in `src/lib/sync/`). Rows made here
+  have local ids (`local-...`, `localIds.ts`) until their create reaches
+  the API, whose id then replaces it everywhere (rows, queued writes:
+  `adopt.ts`; the selection in every tab: `subscribeRemaps` in `remaps.ts`,
+  over a `BroadcastChannel`). The row keeps its
   local id (`localId`), and the lists key rows by it (`keyOfRow`), so a row,
   and an editor open on it, stays the same component. A queued tag or entry
   create sends its local id as `client_id`, so a retry makes it once, and a
@@ -268,7 +271,7 @@ API; everything else the app keeps is a zustand store.
   API's maximum (its default is 50). On a first collection load,
   `getEntryCount` reads the numbered list's count with a one-row request,
   including deleted rows just like the cursor reads. The entry cursor's
-  `initialLoad` keeps the completed page count, total and completion flag
+  `initialLoad` (`src/lib/sync/initialLoad.ts`) keeps the completed page count, total and completion flag
   with each page; `InitialLoadProgress` shows the current page and a bar
   until loading finishes, or an interruption with a retry. A failed count
   uses an indeterminate bar and still loads all pages. Older cursors without

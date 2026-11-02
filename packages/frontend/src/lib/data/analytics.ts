@@ -1,8 +1,8 @@
 import type {AnalyticsParams} from '@commandsnippets/api-shared/requests';
 import {apiClient} from '../api/apiClient';
 import {DataVersionChangedError} from '../api/errors';
+import {assertBound, boundAccount} from '../sync/accountBinding';
 import {assertHeld, heldVersion} from '../sync/dataVersion';
-import {assertBound, boundAccount} from '../sync/outbox';
 import type {SyncSession} from '../sync/session';
 
 /** Include queued writes and refuse answers from another account or version. */

@@ -29,7 +29,7 @@ import type {RowKey, Stored} from '../db/database';
 import {timed} from '../metrics/timings';
 import {useRouteParam} from '../router/navigation';
 import {useAppState} from '../state/appState';
-import {isLocalId} from '../sync/outbox';
+import {isLocalId} from '../sync/localIds';
 import {
   publicSyncSession,
   type SyncSession,

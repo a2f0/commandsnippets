@@ -42,11 +42,9 @@ import {
   updateEntry,
 } from '../../../../src/lib/data/writes';
 import {OWNER_ID_KEY} from '../../../../src/lib/db/database';
-import {
-  AccountChangedError,
-  isLocalId,
-  LAST_MADE_KEY,
-} from '../../../../src/lib/sync/outbox';
+import {AccountChangedError} from '../../../../src/lib/sync/accountBinding';
+import {isLocalId} from '../../../../src/lib/sync/localIds';
+import {LAST_MADE_KEY} from '../../../../src/lib/sync/made';
 import {claimData, syncSession} from '../../../../src/lib/sync/session';
 import {errorDocument} from '../../../../src/msw/documents';
 import {apiClientMethods} from '../../../util/apiClientMethods';
@@ -212,10 +210,11 @@ describe('a write', () => {
     vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 86_400_000);
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
     vi.resetModules();
-    const otherTab = await import('../../../../src/lib/sync/outbox');
+    const otherTab = await import('../../../../src/lib/sync/made');
+    const otherQueue = await import('../../../../src/lib/sync/outbox');
     await db().transaction('rw', [db().outbox, db().cursors], async () => {
       const made = await otherTab.nextMade(db(), TEST_USER);
-      await otherTab.enqueue(
+      await otherQueue.enqueue(
         db(),
         TEST_USER,
         {kind: 'deleteTag', tagId: '3'},

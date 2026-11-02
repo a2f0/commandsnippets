@@ -33,14 +33,10 @@ import {UserMismatchError} from '../api/errors';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {timed} from '../metrics/timings';
 import {leaveForeignSession} from '../state/appState';
-import {
-  AccountChangedError,
-  enqueue,
-  isLocalId,
-  localId,
-  madeNow,
-  nextMade,
-} from '../sync/outbox';
+import {AccountChangedError} from '../sync/accountBinding';
+import {isLocalId, localId} from '../sync/localIds';
+import {madeNow, nextMade} from '../sync/made';
+import {enqueue} from '../sync/outbox';
 import {type SyncSession, withDataLock} from '../sync/session';
 import {SyncUserError} from '../sync/sync';
 import {junctionOf, tagJunctions} from './hooks';

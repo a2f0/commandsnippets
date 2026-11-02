@@ -26,7 +26,7 @@ import {
   appMode,
 } from '../shared';
 import {clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH} from '../sidebarWidth';
-import {subscribeRemaps} from '../sync/outbox';
+import {subscribeRemaps} from '../sync/remaps';
 import {endSyncSession} from '../sync/session';
 
 /** What is saved to localStorage. */
