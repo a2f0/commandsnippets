@@ -1,8 +1,8 @@
 import {describe, expect, test} from 'bun:test';
-import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {appUrl} from '../src/lib/appUrl';
 import worker from '../worker/index';
+import {readWrangler} from './support/wrangler';
 
 const env = {APP_ORIGIN: 'https://app.commandsnippets.com'};
 const request = (path: string, method = 'GET') =>
@@ -51,24 +51,7 @@ describe('old app links', () => {
 });
 
 describe('wrangler.jsonc', () => {
-  const config = JSON.parse(
-    readFileSync(join(import.meta.dir, '..', 'wrangler.jsonc'), 'utf8')
-      .split('\n')
-      .map(line => line.replace(/^\s*\/\/.*$/, ''))
-      .join('\n')
-  ) as {
-    vars: {APP_ORIGIN: string};
-    env: Record<string, {vars: {APP_ORIGIN: string; X_ROBOTS_TAG?: string}}>;
-    assets: {directory: string; not_found_handling: string};
-    compatibility_flags: string[];
-  };
-  const envs = config.env as unknown as Record<
-    string,
-    {
-      workers_dev: boolean;
-      routes: Array<{pattern: string; custom_domain: boolean}>;
-    }
-  >;
+  const config = readWrangler(join(import.meta.dir, '..', 'wrangler.jsonc'));
 
   test('each environment redirects to the app its pages link to', () => {
     expect(config.vars.APP_ORIGIN).toBe(appUrl('development'));
@@ -90,13 +73,17 @@ describe('wrangler.jsonc', () => {
     ['staging', 'website-staging.commandsnippets.com'],
     ['production', 'commandsnippets.com'],
   ])('%s is served only on %s', (mode, host) => {
-    expect(envs[mode]?.routes).toEqual([{pattern: host, custom_domain: true}]);
-    expect(envs[mode]?.workers_dev).toBe(false);
+    expect(config.env[mode]?.routes).toEqual([
+      {pattern: host, custom_domain: true},
+    ]);
+    expect(config.env[mode]?.workers_dev).toBe(false);
   });
 
   test('serves the built pages and falls through to the Worker', () => {
-    expect(config.assets.directory).toBe('./dist');
-    expect(config.assets.not_found_handling).toBe('none');
+    expect(config.assets).toEqual({
+      directory: './dist',
+      not_found_handling: 'none',
+    });
     expect(config.compatibility_flags).toContain(
       'assets_navigation_has_no_effect'
     );

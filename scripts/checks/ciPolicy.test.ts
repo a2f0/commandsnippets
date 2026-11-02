@@ -49,9 +49,23 @@ describe("ciScopes", () => {
       "scripts/git/hooks/pre-push",
       "commitlint.config.mts",
       "tsconfig.base.json",
+      "terraform/scripts/tf.test.ts",
     ]) {
       expect(ciScopes([path]).tooling).toBe(true);
     }
+  });
+
+  // The root typecheck covers Terraform's TypeScript; the terraform lane
+  // lints and tests the wrapper.
+  test("Terraform's TypeScript runs the tooling and terraform lanes", () => {
+    expect(ciScopes(["terraform/scripts/tf.test.ts"])).toMatchObject({
+      tooling: true,
+      terraform: true,
+    });
+    expect(ciScopes(["terraform/scripts/tf"])).toMatchObject({
+      tooling: false,
+      terraform: true,
+    });
   });
 
   test("selects application lanes by their paths", () => {
@@ -136,6 +150,7 @@ describe("ciScopes", () => {
   test("workflow, toolchain and workspace install changes run every lane", () => {
     for (const path of [
       ".github/workflows/frontend.yml",
+      ".github/actions/setup/action.yml",
       "bun.lock",
       "bunfig.toml",
       ".mise.toml",

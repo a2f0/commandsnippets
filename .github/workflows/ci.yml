@@ -32,10 +32,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Set up Bun and Node with mise
-        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
+      - name: Set up Bun and Node
+        uses: ./.github/actions/setup
         with:
-          version: 2026.10.17
+          install: none
       - name: Determine required checks
         id: scopes
         env:
@@ -51,13 +51,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Bun and Node with mise
-        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
-        with:
-          version: 2026.10.17
       # The root workspace alone: the tooling, not the packages' dependencies.
-      - name: Install root tooling
-        run: bun install --frozen-lockfile --filter commandsnippets
+      - name: Set up Bun, Node and the root tooling
+        uses: ./.github/actions/setup
+        with:
+          install: root
       - name: Lint shell scripts
         run: bun run lint:shell
       - name: Typecheck
@@ -111,13 +109,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Bun and Node with mise
-        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
-        with:
-          version: 2026.10.17
       # The root workspace alone: the tooling, not the packages' dependencies.
-      - name: Install tooling dependencies
-        run: bun install --frozen-lockfile --filter commandsnippets
+      - name: Set up Bun, Node and the root tooling
+        uses: ./.github/actions/setup
+        with:
+          install: root
       - name: Check managed skills
         run: bun run agents:check
       - name: Validate PR branch and title
