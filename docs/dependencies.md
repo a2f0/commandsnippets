@@ -15,9 +15,9 @@ its `package.json`; the root holds the one `bun.lock`, and the install
 settings, `overrides` and `trustedDependencies` that apply to every package
 (Bun reads those only from the root `package.json` and `bunfig.toml`). Change a
 package's dependencies in its manifest (for example
-`bun run agent-tool bun add <name>@<version> --cwd packages/<package>`), commit
-the root `bun.lock` with that manifest, and validate every package the lockfile change reaches; a
-dependency shared with another package can resolve differently there too.
+`bun run agent-tool bun add <name>@<version> --exact --cwd packages/<package>`),
+commit the root `bun.lock` with that manifest, and validate every package the
+lockfile change reaches; a dependency shared with another package can resolve differently there too.
 Consumers reference api-shared as `workspace:*`, a link to its directory, so
 its edits need no reinstall. Preserve minimum release age and verify that
 unrelated package identities did not change.
@@ -25,10 +25,12 @@ unrelated package identities did not change.
 The root `.mise.toml` pins Bun 1.4.3 and Node 24.22.1 for development and CI.
 Keep its Bun pin and every package's `packageManager` declaration together. Keep its Node pin, frontend `engines.node` and Node types compatible.
 Terraform retains its specialized setup.
-Preserve the frontend's exact dependency pins and one-day minimum release age.
-The root `bunfig.toml` applies that age policy to every package's new
-resolutions. An offline install lacking release timestamps does not justify
-disabling that policy.
+Every manifest (the root and each package) pins its dependencies to exact
+versions, peer dependencies included: no `^` or `~` ranges
+(`scripts/checks/exactPins.test.ts` enforces it). Add with `--exact`, and keep
+the one-day minimum release age, which the root `bunfig.toml` applies to every
+package's new resolutions. An offline install lacking release timestamps does
+not justify disabling that policy.
 
 ## Compatibility groups
 

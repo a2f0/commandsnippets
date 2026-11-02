@@ -19,13 +19,13 @@
   },
   "dependencies": {
     "@a2f0/ct-client": "0.1.5",
-    "astro": "^7.4.2"
+    "astro": "7.4.2"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.12",
-    "@biomejs/biome": "^2.6.2",
+    "@astrojs/check": "0.9.12",
+    "@biomejs/biome": "2.6.2",
     "@types/bun": "1.4.3",
     "typescript": "6.0.3",
-    "wrangler": "^4.151.3"
+    "wrangler": "4.151.3"
   }
 }
