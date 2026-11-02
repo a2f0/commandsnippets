@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
-import {ApiError} from '../../src/lib/errors';
-import {parseResource, type Registry, serialize} from '../../src/lib/jsonapi';
+import {parseResource} from '../../src/lib/jsonapi/request';
+import {type Registry, serialize} from '../../src/lib/jsonapi/serialize';
+import {apiErrorOf} from '../support/errors';
 
 const post = (body: string) =>
   new Request('http://localhost/', {
@@ -9,18 +10,9 @@ const post = (body: string) =>
     headers: {'Content-Type': 'application/vnd.api+json'},
   });
 
-async function apiError(promise: Promise<unknown>): Promise<ApiError> {
-  const error = await promise.then(
-    () => undefined,
-    (caught: unknown) => caught
-  );
-  expect(error).toBeInstanceOf(ApiError);
-  return error as ApiError;
-}
-
 describe('parseResource', () => {
   it('rejects malformed JSON as a parse error', async () => {
-    const error = await apiError(
+    const error = await apiErrorOf(() =>
       parseResource(post('{not json'), {type: 'Tag'})
     );
     expect(error.status).toBe(400);
@@ -28,7 +20,9 @@ describe('parseResource', () => {
   });
 
   it('rejects an empty body as missing primary data', async () => {
-    const error = await apiError(parseResource(post(''), {type: 'Tag'}));
+    const error = await apiErrorOf(() =>
+      parseResource(post(''), {type: 'Tag'})
+    );
     expect(error.errors[0]?.detail).toBe(
       'Received document does not contain primary data'
     );
@@ -56,7 +50,7 @@ describe('serialize', () => {
       relationships: {owner: {type: 'Missing', key: () => 1}},
       defaultIncludes: [],
     },
-  } as unknown as Registry;
+  } satisfies Registry;
 
   it('throws for an unregistered primary type', async () => {
     await expect(serialize(registry, 'Nope', [], null)).rejects.toThrow(
@@ -108,7 +102,7 @@ describe('include traversal', () => {
       },
       defaultIncludes: [],
     },
-  } as unknown as Registry;
+  } satisfies Registry;
 
   it('loads each row once per step on cyclic paths', async () => {
     loaded.length = 0;

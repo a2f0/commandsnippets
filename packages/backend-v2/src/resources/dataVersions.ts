@@ -18,11 +18,13 @@ import {
   DATA_VERSION,
   DATA_VERSION_HEADER,
   type DataVersionAttributes,
+  JSON_API_MEDIA_TYPE,
 } from '@commandsnippets/api-shared';
 import {and, desc, eq, getTableColumns, sql} from 'drizzle-orm';
 import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
 import type {Db} from '../db/client';
+import {isDataVersionMissing} from '../db/errors';
 import {
   type DataVersionRow,
   dataVersions,
@@ -36,8 +38,11 @@ import {
 import type {AppEnv} from '../env';
 import {isoformat} from '../lib/clock';
 import {dataVersionChanged, notFound, validationError} from '../lib/errors';
-import {document} from '../lib/jsonapi';
+import {document} from '../lib/jsonapi/serialize';
 import {jsonApi} from './responses';
+
+/** A data version's number, as a header, a route or a query names it. */
+const VERSION_NUMBER = /^[1-9]\d*$/;
 
 /**
  * The data version a request reads or writes `owner`'s data at: the one it
@@ -57,7 +62,7 @@ export function versionOf(c: Context<AppEnv>, owner: User): number {
       `${DATA_VERSION_HEADER} must name the data version a write was made against.`
     );
   }
-  if (!/^[1-9]\d*$/.test(header)) {
+  if (!VERSION_NUMBER.test(header)) {
     throw validationError(`${DATA_VERSION_HEADER} must be a version number.`);
   }
   if (Number(header) !== owner.active_version) {
@@ -129,17 +134,17 @@ export async function findVersionNumber(
 }
 
 /**
- * The `:version` route parameter, as `find` finds it among the user's
- * versions, else a 404.
+ * The version `param` names (a route's `:version`, a backup's `?version=`),
+ * as `find` finds it among the user's versions, else a 404.
  */
-async function routeVersion<T>(
-  c: Context<AppEnv>,
+export async function versionNumber<T>(
+  param: string | undefined,
   find: (version: number) => Promise<T | undefined>
 ): Promise<T> {
-  const param = c.req.param('version') ?? '';
-  const found = /^[1-9]\d*$/.test(param)
-    ? await find(Number(param))
-    : undefined;
+  const found =
+    param !== undefined && VERSION_NUMBER.test(param)
+      ? await find(Number(param))
+      : undefined;
   if (found === undefined) {
     throw notFound(`No ${DATA_VERSION} matches the given query.`);
   }
@@ -168,7 +173,7 @@ dataVersionRoutes.get('/', async c => {
   const active = current?.active ?? 1;
   const body = {data: rows.map(row => versionResource(row, active))};
   return c.body(JSON.stringify(body), 200, {
-    'Content-Type': 'application/vnd.api+json',
+    'Content-Type': JSON_API_MEDIA_TYPE,
     'Cache-Control': 'no-store',
   });
 });
@@ -180,7 +185,7 @@ dataVersionRoutes.get('/', async c => {
 dataVersionRoutes.post('/:version/activate', async c => {
   const user = requireUser(c);
   const db = c.get('db');
-  const row = await routeVersion(c, version =>
+  const row = await versionNumber(c.req.param('version'), version =>
     findVersion(db, user.id, version)
   );
   const {version} = row;
@@ -194,11 +199,7 @@ dataVersionRoutes.post('/:version/activate', async c => {
       .where(eq(users.id, user.id));
   } catch (error) {
     // Deleted since it was read (by another request).
-    if (
-      String((error as {cause?: Error})?.cause?.message ?? error).includes(
-        'data_version_missing:'
-      )
-    ) {
+    if (isDataVersionMissing(error)) {
       throw notFound(`No ${DATA_VERSION} matches the given query.`);
     }
     throw error;
@@ -218,7 +219,7 @@ dataVersionRoutes.post('/:version/activate', async c => {
 dataVersionRoutes.delete('/:version', async c => {
   const user = requireUser(c);
   const db = c.get('db');
-  const version = await routeVersion(c, version =>
+  const version = await versionNumber(c.req.param('version'), version =>
     findVersionNumber(db, user.id, version)
   );
   const gone = sql`NOT EXISTS (SELECT 1 FROM ${dataVersions} WHERE ${dataVersions.user_id} = ${user.id} AND ${dataVersions.version} = ${version})`;

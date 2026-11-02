@@ -93,10 +93,33 @@ describe('GithubLoginFailures', () => {
       'token response without access_token',
       [{...tokenRoute, body: 'error=bad_verification_code'}],
     ],
-    ['user endpoint error', [tokenRoute, {...userRoute, status: 401}]],
+    [
+      'user endpoint error',
+      [tokenRoute, {...userRoute, status: 401}, emailsRoute],
+    ],
+    [
+      'user without a login',
+      [tokenRoute, {...userRoute, body: {}}, emailsRoute],
+    ],
+    [
+      'user that is not JSON',
+      [
+        tokenRoute,
+        {...userRoute, body: 'oops', contentType: 'text/plain'},
+        emailsRoute,
+      ],
+    ],
     [
       'emails endpoint error',
       [tokenRoute, userRoute, {...emailsRoute, status: 500}],
+    ],
+    [
+      'emails that are not a list',
+      [
+        tokenRoute,
+        userRoute,
+        {...emailsRoute, body: {email: 'user@example.com'}},
+      ],
     ],
     [
       'no primary email',

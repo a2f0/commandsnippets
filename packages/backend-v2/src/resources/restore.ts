@@ -10,20 +10,9 @@
  * version than the active one, and syncs it again; a write queued against
  * the version before is refused (`0019_data_versions.sql`).
  */
-import {
-  type Backup,
-  backupSchema,
-  CODES,
-  errorMeta,
-  MESSAGES,
-  parseDateTime,
-  type RestoreResult,
-  tagCreateAttributesSchema,
-  textEntryCreateAttributesSchema,
-} from '@commandsnippets/api-shared';
+import {backupSchema, type RestoreResult} from '@commandsnippets/api-shared';
 import {type SQL, sql} from 'drizzle-orm';
 import {Hono} from 'hono';
-import * as z from 'zod/mini';
 import {requireUser} from '../auth/permissions';
 import {type Db, rawBatch} from '../db/client';
 import {isVersionClash} from '../db/errors';
@@ -37,9 +26,8 @@ import {
 } from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
-import {ApiError, dataVersionChanged, parseError} from '../lib/errors';
-import {assertJsonMediaType} from '../lib/jsonapi';
-import {searchColumns} from '../lib/search';
+import {dataVersionChanged} from '../lib/errors';
+import {readJson} from '../lib/jsonapi/request';
 import {versionOf} from './dataVersions';
 import {
   nextRevision,
@@ -47,299 +35,26 @@ import {
   tagTextEntryResource,
   textEntryResource,
 } from './owned';
+import {
+  CHUNK_BYTES,
+  chunked,
+  parsed,
+  prepareRestore,
+  type Restore,
+} from './restorePlan';
 
 export const restoreRoutes = new Hono<AppEnv>();
-
-/**
- * The most JSON one statement binds: D1 caps a bound value at 2 MB, so the
- * rows go in runs of at most this many bytes.
- */
-export const CHUNK_BYTES = 1_000_000;
-
-const tagFields = z.pick(tagCreateAttributesSchema, {name: true});
-const entryFields = z.pick(textEntryCreateAttributesSchema, {
-  subject: true,
-  body: true,
-});
-
-/** A 400 naming where in the backup it is invalid. */
-function invalid(
-  path: readonly PropertyKey[],
-  message: string,
-  code: string = CODES.invalid
-): ApiError {
-  const pointer = `/${path.map(String).join('/')}`;
-  return ApiError.of(
-    400,
-    `Invalid backup at ${pointer}: ${message}`,
-    code,
-    pointer
-  );
-}
-
-/** `input` parsed with `schema`, or a 400 at its first issue under `path`. */
-function parsed<S extends z.ZodMiniType>(
-  schema: S,
-  input: unknown,
-  path: readonly PropertyKey[] = []
-): z.output<S> {
-  const result = schema.safeParse(input);
-  if (result.success) {
-    return result.data;
-  }
-  const [issue] = result.error.issues as [z.core.$ZodIssue];
-  throw invalid([...path, ...issue.path], issue.message, errorMeta(issue).code);
-}
-
-/** A backup timestamp in the stored, fixed-width form. */
-function stored(value: string, path: readonly PropertyKey[]): string {
-  const timestamp = parseDateTime(value);
-  if (timestamp === null) {
-    throw invalid(path, 'Not a valid date and time.');
-  }
-  return timestamp;
-}
-
-async function readBackup(request: Request): Promise<Backup> {
-  assertJsonMediaType(request);
-  let body: unknown;
-  try {
-    body = JSON.parse(await request.text());
-  } catch (error) {
-    throw parseError(MESSAGES.jsonParseError((error as Error).message));
-  }
-  return parsed(backupSchema, body);
-}
-
-interface TagRow {
-  name: string;
-  /** Its rank: its place in the backup's order. */
-  order: number;
-  is_public: boolean;
-  date_created: string;
-}
-
-interface EntryRow {
-  subject: string;
-  body: string;
-  subject_folded: string;
-  body_folded: string;
-  is_public: boolean;
-  date_created: string;
-}
-
-interface TaggingRow {
-  tag_name: string;
-  /** The entry's place in the backup's entries (and so among those made). */
-  entry_index: number;
-  /** Its rank: its place in its tag's order in the backup. */
-  order: number;
-  date_created: string;
-}
-
-interface ReuseRow {
-  entry_index: number;
-  date_created: string;
-}
-
-export interface Restore {
-  /** The backup's: whose data it was, and when it was exported. */
-  source: {username: string; exported: string};
-  /** In the backup's order. */
-  tags: TagRow[];
-  entries: EntryRow[];
-  /** By tag, each tag's in its order. */
-  taggings: TaggingRow[];
-  /** Oldest first, as they were made. */
-  reuses: ReuseRow[];
-}
-
-/** Fixed-width timestamps compare as strings. */
-const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
-
-/** By `order`, then place in the backup. */
-const byOrder = <T extends {order: number}>(
-  a: {row: T; index: number},
-  b: {row: T; index: number}
-) => a.row.order - b.row.order || a.index - b.index;
-
-/**
- * The rows to make, checked as the API checks a create of each (a tag's
- * name, an entry's subject and body), with every reference resolved within
- * the backup: a 400 at the first problem.
- */
-export function prepareRestore(backup: Backup): Restore {
-  const tagNames = new Map<string, string>();
-  const names = new Set<string>();
-  const tagRows = backup.tags
-    .map((row, index) => ({row, index}))
-    .sort(byOrder)
-    .map(({row, index}, order) => {
-      const path = ['tags', index];
-      const {name} = parsed(tagFields, {name: row.name}, path);
-      if (tagNames.has(row.id)) {
-        throw invalid([...path, 'id'], `Another tag has the id ${row.id}.`);
-      }
-      if (names.has(name)) {
-        throw invalid(
-          [...path, 'name'],
-          `Another tag is named "${name}".`,
-          CODES.unique
-        );
-      }
-      tagNames.set(row.id, name);
-      names.add(name);
-      return {
-        name,
-        order,
-        is_public: row.is_public,
-        date_created: stored(row.date_created, [...path, 'date_created']),
-      };
-    });
-
-  const entryIndexes = new Map<string, number>();
-  const entryRows = backup.entries.map((row, index) => {
-    const path = ['entries', index];
-    const fields = parsed(
-      entryFields,
-      {subject: row.subject, body: row.body},
-      path
-    );
-    if (entryIndexes.has(row.id)) {
-      throw invalid([...path, 'id'], `Another entry has the id ${row.id}.`);
-    }
-    entryIndexes.set(row.id, index);
-    return {
-      ...fields,
-      ...searchColumns(fields),
-      is_public: row.is_public,
-      date_created: stored(row.date_created, [...path, 'date_created']),
-    };
-  });
-
-  const entryOf = (id: string, path: PropertyKey[]): number => {
-    const index = entryIndexes.get(id);
-    if (index === undefined) {
-      throw invalid(path, `No entry in the backup has the id ${id}.`);
-    }
-    return index;
-  };
-
-  const pairs = new Set<string>();
-  const taggingRows = backup.tags_entries
-    .map((row, index) => {
-      const path = ['tags_entries', index];
-      const tagName = tagNames.get(row.tag_id);
-      if (tagName === undefined) {
-        throw invalid(
-          [...path, 'tag_id'],
-          `No tag in the backup has the id ${row.tag_id}.`
-        );
-      }
-      const entryIndex = entryOf(row.text_entry_id, [...path, 'text_entry_id']);
-      const pair = `${row.tag_id},${row.text_entry_id}`;
-      if (pairs.has(pair)) {
-        throw invalid(path, 'Another tagging has the same tag and entry.');
-      }
-      pairs.add(pair);
-      return {
-        row,
-        index,
-        tagging: {
-          tag_name: tagName,
-          entry_index: entryIndex,
-          date_created: stored(row.date_created, [...path, 'date_created']),
-        },
-      };
-    })
-    .sort(
-      (a, b) =>
-        Number(a.row.tag_id) - Number(b.row.tag_id) ||
-        a.row.order - b.row.order ||
-        a.index - b.index
-    )
-    .map(({tagging}) => tagging);
-  const ranks = new Map<string, number>();
-  const rankedTaggings = taggingRows.map(tagging => {
-    const order = ranks.get(tagging.tag_name) ?? 0;
-    ranks.set(tagging.tag_name, order + 1);
-    return {...tagging, order};
-  });
-
-  const reuseRows = backup.entry_reuses
-    .map((row, index) => {
-      const path = ['entry_reuses', index];
-      return {
-        index,
-        reuse: {
-          entry_index: entryOf(row.text_entry_id, [...path, 'text_entry_id']),
-          date_created: stored(row.date_created, [...path, 'date_created']),
-        },
-      };
-    })
-    .sort(
-      (a, b) =>
-        compare(a.reuse.date_created, b.reuse.date_created) || a.index - b.index
-    )
-    .map(({reuse}) => reuse);
-
-  return {
-    source: {
-      username: backup.user.username,
-      exported: stored(backup.date_exported, ['date_exported']),
-    },
-    tags: tagRows,
-    entries: entryRows,
-    taggings: rankedTaggings,
-    reuses: reuseRows,
-  };
-}
-
-/** `rows` in runs whose JSON stays under `maxBytes`, in order. */
-export function chunked<T>(rows: readonly T[], maxBytes = CHUNK_BYTES): T[][] {
-  const encoder = new TextEncoder();
-  const chunks: T[][] = [];
-  let chunk: T[] = [];
-  let size = 2;
-  for (const row of rows) {
-    const rowSize = encoder.encode(JSON.stringify(row)).length + 1;
-    if (chunk.length > 0 && size + rowSize > maxBytes) {
-      chunks.push(chunk);
-      chunk = [];
-      size = 2;
-    }
-    chunk.push(row);
-    size += rowSize;
-  }
-  if (chunk.length > 0) {
-    chunks.push(chunk);
-  }
-  return chunks;
-}
 
 const field = (name: string, from: SQL = sql`value`) =>
   sql`json_extract(${from}, ${`$.${name}`})`;
 
 /**
- * The statements of a restore into `userId`'s account, in order. The new
- * version is numbered (one past the last given out), recorded and made
- * active first, so the rows written next are of the active version, as the
- * data version triggers require. Its entries, all made here, in order, have
- * the backup's entry indexes as their row numbers.
+ * The statements that make a restore's data version: numbered (one past
+ * the last given out), recorded and made active first, so the rows written
+ * next are of the active version, as the data version triggers require.
  */
-function restoreStatements(
-  db: Db,
-  userId: number,
-  restore: Restore,
-  chunkBytes: number
-): SQL[] {
+function versionStatements(db: Db, userId: number, restore: Restore): SQL[] {
   const user = sql`${users.id} = ${userId}`;
-  const version = sql`(SELECT ${users.active_version} FROM ${users} WHERE ${user})`;
-  const madeEntries = sql`(
-    SELECT ${textEntries.id} AS id, ROW_NUMBER() OVER (ORDER BY ${textEntries.id}) - 1 AS k
-    FROM ${textEntries}
-    WHERE ${textEntries.user_id} = ${userId} AND ${textEntries.version} = ${version}
-  )`;
   return [
     db
       .update(users)
@@ -361,6 +76,26 @@ function restoreStatements(
       })
       .where(user)
       .getSQL(),
+  ];
+}
+
+/**
+ * The statements that make a restore's rows in `userId`'s active version,
+ * in runs of at most `chunkBytes` of JSON. Its entries, all made here, in
+ * order, have the backup's entry indexes as their row numbers.
+ */
+function rowInserts(
+  userId: number,
+  restore: Restore,
+  chunkBytes: number
+): SQL[] {
+  const version = sql`(SELECT ${users.active_version} FROM ${users} WHERE ${users.id} = ${userId})`;
+  const madeEntries = sql`(
+    SELECT ${textEntries.id} AS id, ROW_NUMBER() OVER (ORDER BY ${textEntries.id}) - 1 AS k
+    FROM ${textEntries}
+    WHERE ${textEntries.user_id} = ${userId} AND ${textEntries.version} = ${version}
+  )`;
+  return [
     ...chunked(restore.tags, chunkBytes).map(
       run => sql`INSERT INTO ${tags} (
           "name", "user_id", "version", "order", "is_public", "is_deleted",
@@ -433,7 +168,7 @@ const overGuard = (userId: number, over: number) =>
     WHERE ${users.id} = ${userId} AND ${users.active_version} <> ${over}`;
 
 /** How a restore runs. */
-export interface RestoreOptions {
+interface RestoreOptions {
   /** The most JSON one statement binds (`CHUNK_BYTES`). */
   chunkBytes?: number;
   /** The data version it must be made over (the one the request names). */
@@ -454,7 +189,8 @@ export async function restoreInto(
 ): Promise<number> {
   const statements = [
     ...(over === undefined ? [] : [overGuard(userId, over)]),
-    ...restoreStatements(db, userId, restore, chunkBytes),
+    ...versionStatements(db, userId, restore),
+    ...rowInserts(userId, restore, chunkBytes),
     sql`SELECT ${users.active_version} AS version FROM ${users} WHERE ${users.id} = ${userId}`,
   ];
   let results: D1Result<{version: number}>[];
@@ -479,7 +215,9 @@ restoreRoutes.post('/', async c => {
   // about): another device's restore or switch since is a 409, checked now
   // and again in the batch.
   const over = versionOf(c, user);
-  const restore = prepareRestore(await readBackup(c.req.raw));
+  const restore = prepareRestore(
+    parsed(backupSchema, await readJson(c.req.raw, false))
+  );
   const version = await restoreInto(c.get('db'), user.id, restore, {over});
   const result: RestoreResult = {
     data_version: version,

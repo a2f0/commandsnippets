@@ -1,6 +1,12 @@
 import {describe, expect, test} from 'bun:test';
 import * as z from 'zod/mini';
 import {check, errorMeta, fail, QUERY_ERROR} from '../src/issues';
+import {toErrorObject} from '../src/jsonapi/errorObject';
+import {
+  JSON_API_MEDIA_TYPE,
+  JSON_MEDIA_TYPES,
+  mediaTypeOf,
+} from '../src/jsonapi/mediaTypes';
 import {CODES, MESSAGES} from '../src/messages';
 
 describe('error metadata', () => {
@@ -44,6 +50,55 @@ describe('error metadata', () => {
 
   test('query errors point at the document', () => {
     expect(QUERY_ERROR).toEqual({code: 'invalid', pointer: '/data'});
+  });
+});
+
+describe('error objects', () => {
+  const issueOf = (schema: z.ZodMiniType, input: unknown) => {
+    const [issue] = schema.safeParse(input).error?.issues ?? [];
+    if (issue === undefined) {
+      throw new Error('Expected an issue');
+    }
+    return issue;
+  };
+  const failing = (meta: Parameters<typeof fail>[2], path?: PropertyKey[]) =>
+    z.pipe(
+      z.unknown(),
+      z.transform((_, ctx) => fail(ctx, 'no', meta, path))
+    );
+
+  test("point at the issue's own pointer, with its status", () => {
+    const issue = issueOf(failing({code: 'x', status: 409, pointer: '/p'}), 1);
+    expect(toErrorObject(issue, '/data/attributes')).toEqual({
+      detail: 'no',
+      status: '409',
+      source: {pointer: '/p'},
+      code: 'x',
+    });
+  });
+
+  test('point at the failing field under the base, else at /data', () => {
+    const issue = issueOf(failing({code: 'x'}, ['name', 0]), 1);
+    expect(toErrorObject(issue, '/data/attributes').source).toEqual({
+      pointer: '/data/attributes/name/0',
+    });
+    expect(toErrorObject(issue)).toEqual({
+      detail: 'no',
+      status: '400',
+      source: {pointer: '/data'},
+      code: 'x',
+    });
+  });
+});
+
+describe('media types', () => {
+  test('read a Content-Type without its parameters', () => {
+    expect(mediaTypeOf('Application/JSON; charset=utf-8')).toBe(
+      'application/json'
+    );
+    expect(mediaTypeOf(null)).toBe('');
+    expect(JSON_MEDIA_TYPES.has(mediaTypeOf(JSON_API_MEDIA_TYPE))).toBe(true);
+    expect(JSON_MEDIA_TYPES.has(mediaTypeOf('text/plain'))).toBe(false);
   });
 });
 

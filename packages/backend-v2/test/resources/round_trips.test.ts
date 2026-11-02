@@ -247,6 +247,22 @@ describe('entries read to be rendered', () => {
   });
 });
 
+describe('a tag create naming a client id', () => {
+  it('reads the tag it made and the tag of its name in one round trip', async () => {
+    const {bindings, calls} = recorded();
+    const response = await new ApiClient(token, bindings).post('/api/v1/tags', {
+      data: {type: 'Tag', attributes: {name: 'fresh', client_id: 'local-1'}},
+    });
+    expect(response.status).toBe(201);
+    const read = callWith(
+      calls,
+      /^select .* from "tags_tag" where .*"tags_tagclientid"/,
+      /^select .* from "tags_tag" where .*"name" = \?/
+    );
+    expect(read?.queries).toHaveLength(2);
+  });
+});
+
 describe('pks a write names', () => {
   it('are looked up in one round trip', async () => {
     const [tag] = await db()

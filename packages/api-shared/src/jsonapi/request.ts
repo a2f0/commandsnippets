@@ -45,6 +45,45 @@ export interface EnvelopeOptions<T extends string> {
   requireId?: boolean;
 }
 
+/** The envelope's id check failing: its message and metadata. */
+function idFailure(
+  id: string | undefined,
+  endpointId: string | undefined,
+  requireId: boolean
+): [string, ErrorMeta] | undefined {
+  if (id === undefined && (endpointId !== undefined || requireId)) {
+    return [MESSAGES.idMissing, PARSE_ERROR];
+  }
+  if (endpointId !== undefined && id !== endpointId) {
+    return [MESSAGES.idMismatch(String(id), endpointId), CONFLICT];
+  }
+  return undefined;
+}
+
+/**
+ * Resource linkage, `{data: {id}}` or `{data: null}`, for every
+ * relationship, whether the endpoint uses it or not: each related id, or
+ * the name of the first relationship whose linkage is malformed.
+ */
+function linkages(
+  members: unknown
+): {ids: Record<string, string | null>} | {malformed: string} {
+  const ids: Array<[string, string | null]> = [];
+  for (const [name, member] of Object.entries(
+    isRecord(members) ? members : {}
+  )) {
+    const linkage = isRecord(member) ? member['data'] : undefined;
+    if (linkage === null) {
+      ids.push([name, null]);
+    } else if (isRecord(linkage) && linkage['id'] !== undefined) {
+      ids.push([name, String(linkage['id'])]);
+    } else {
+      return {malformed: name};
+    }
+  }
+  return {ids: Object.fromEntries(ids)};
+}
+
 /**
  * The envelope of a request document (see the module comment), for an
  * endpoint that accepts `type` (and, for PATCH/PUT, has `id`).
@@ -70,36 +109,22 @@ export function requestEnvelopeSchema<const T extends string>({
         );
       }
       const id = data['id'] === undefined ? undefined : String(data['id']);
-      if (id === undefined && (endpointId !== undefined || requireId)) {
-        return fail(ctx, MESSAGES.idMissing, PARSE_ERROR);
+      const idIssue = idFailure(id, endpointId, requireId);
+      if (idIssue !== undefined) {
+        return fail(ctx, ...idIssue);
       }
-      if (endpointId !== undefined && id !== endpointId) {
-        return fail(ctx, MESSAGES.idMismatch(String(id), endpointId), CONFLICT);
-      }
-      // Resource linkage, `{data: {id}}` or `{data: null}`, for every
-      // relationship, whether the endpoint uses it or not.
-      const relationships: Array<[string, string | null]> = [];
-      const members = isRecord(data['relationships'])
-        ? data['relationships']
-        : {};
-      for (const [name, member] of Object.entries(members)) {
-        const linkage = isRecord(member) ? member['data'] : undefined;
-        if (linkage === null) {
-          relationships.push([name, null]);
-        } else if (isRecord(linkage) && linkage['id'] !== undefined) {
-          relationships.push([name, String(linkage['id'])]);
-        } else {
-          return fail(ctx, MESSAGES.invalidLinkage, {
-            code: CODES.invalid,
-            pointer: `/data/relationships/${name}`,
-          });
-        }
+      const relationships = linkages(data['relationships']);
+      if ('malformed' in relationships) {
+        return fail(ctx, MESSAGES.invalidLinkage, {
+          code: CODES.invalid,
+          pointer: `/data/relationships/${relationships.malformed}`,
+        });
       }
       return {
         type,
         id,
         attributes: isRecord(data['attributes']) ? data['attributes'] : {},
-        relationships: Object.fromEntries(relationships),
+        relationships: relationships.ids,
       };
     })
   );

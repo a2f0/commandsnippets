@@ -1,4 +1,8 @@
-/** Reading database errors in tests: Drizzle wraps D1's error as `cause`. */
+/**
+ * Reading errors in tests: the API's (`ApiError`), and the database's, which
+ * Drizzle wraps as `cause`.
+ */
+import {ApiError} from '../../src/lib/errors';
 
 /** Every message along an error's `cause` chain, joined. */
 export function errorMessages(error: unknown): string {
@@ -19,4 +23,17 @@ export async function failureOf(promise: Promise<unknown>): Promise<string> {
     return errorMessages(error);
   }
   throw new Error('Expected the query to fail');
+}
+
+/** The API error `run` throws, or whose promise it rejects with. */
+export async function apiErrorOf(run: () => unknown): Promise<ApiError> {
+  try {
+    await run();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return error;
+    }
+    throw error;
+  }
+  throw new Error('Expected an API error');
 }

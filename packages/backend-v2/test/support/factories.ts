@@ -15,13 +15,21 @@ import {
 import {now} from '../../src/lib/clock';
 import {OrderedModel} from '../../src/lib/ordered';
 import {searchColumns} from '../../src/lib/search';
-import {tagOrdering} from '../../src/resources/tags';
+import {tagOrdering} from '../../src/resources/orderings';
 import {createUser} from '../../src/services/users';
 import {db} from './db';
 
 /** The user's active data version, read as the row is written. */
 const activeVersion = (userId: number) =>
   sql<number>`(SELECT ${users.active_version} FROM ${users} WHERE ${users.id} = ${userId})`;
+
+/** `value`, which a factory just wrote or read, so is there. */
+function defined<T>(value: T | undefined, what: string): T {
+  if (value === undefined) {
+    throw new Error(`Expected ${what}`);
+  }
+  return value;
+}
 
 let sequence = 0;
 const next = () => sequence++;
@@ -55,7 +63,7 @@ export async function makeStaff(user: User): Promise<User> {
     .set({is_staff: true})
     .where(eq(users.id, user.id))
     .returning();
-  return staff as User;
+  return defined(staff, 'the staff user');
 }
 
 /** UserFactory, for a staff account. */
@@ -113,7 +121,7 @@ async function seedExampleData(user: User): Promise<void> {
         date_last_used: timestamp,
       })
       .returning();
-    tagRows.push(row as Tag);
+    tagRows.push(defined(row, 'an example tag'));
   }
   const entryRows = [];
   for (const entry of EXAMPLE_ENTRIES) {
@@ -129,15 +137,15 @@ async function seedExampleData(user: User): Promise<void> {
         date_updated: timestamp,
       })
       .returning();
-    entryRows.push(row as TextEntry);
+    entryRows.push(defined(row, 'an example entry'));
   }
   for (const [tagIndex, entryIndex, order] of EXAMPLE_JUNCTIONS) {
     const timestamp = now();
     await db()
       .insert(tagsEntries)
       .values({
-        tag_id: (tagRows[tagIndex] as Tag).id,
-        text_entry_id: (entryRows[entryIndex] as TextEntry).id,
+        tag_id: defined(tagRows[tagIndex], 'an example tag').id,
+        text_entry_id: defined(entryRows[entryIndex], 'an example entry').id,
         user_id: user.id,
         version: activeVersion(user.id),
         order,
@@ -163,7 +171,7 @@ export async function tagFactory(fields: {
       version: activeVersion(fields.user.id),
       order:
         fields.order ??
-        (await new OrderedModel(db(), tagOrdering).nextOrder(fields.user.id)),
+        new OrderedModel(db(), tagOrdering).nextOrderSql(fields.user.id),
       is_deleted: fields.is_deleted ?? false,
       client_id: fields.client_id ?? null,
       date_created: timestamp,
@@ -171,7 +179,7 @@ export async function tagFactory(fields: {
       date_last_used: timestamp,
     })
     .returning();
-  return tag as Tag;
+  return defined(tag, 'the tag');
 }
 
 export async function textEntryFactory(fields: {
@@ -197,7 +205,7 @@ export async function textEntryFactory(fields: {
       date_updated: timestamp,
     })
     .returning();
-  return entry as TextEntry;
+  return defined(entry, 'the entry');
 }
 
 export async function tagTextEntryFactory(fields: {
@@ -221,7 +229,7 @@ export async function tagTextEntryFactory(fields: {
       date_updated: timestamp,
     })
     .returning();
-  return junction as TagTextEntry;
+  return defined(junction, 'the junction');
 }
 
 export async function textEntryReusedFactory(fields: {
@@ -237,7 +245,7 @@ export async function textEntryReusedFactory(fields: {
       date_created: now(),
     })
     .returning();
-  return reuse as TextEntryReused;
+  return defined(reuse, 'the reuse');
 }
 
 /** A user with tags, entries (one public), taggings and reuses. */

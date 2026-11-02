@@ -1,10 +1,15 @@
-import {CODES, MESSAGES, type ToOneLinkage} from '@commandsnippets/api-shared';
+import {
+  CODES,
+  type ErrorObject,
+  MESSAGES,
+  type ToOneLinkage,
+} from '@commandsnippets/api-shared';
 import {and, eq} from 'drizzle-orm';
 import type {RunnableQuery} from 'drizzle-orm/runnable-query';
 import type {SQLiteColumn, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import type * as z from 'zod/mini';
 import type {Db} from '../db/client';
-import {ApiError, type ErrorObject} from '../lib/errors';
+import {ApiError} from '../lib/errors';
 import {eachField} from '../lib/validate';
 
 /**
@@ -23,7 +28,7 @@ interface RelatedTable {
  * for its row (none: the pk does not exist). Drizzle reads a batch's rows by
  * column name, so the query's columns must be named apart.
  */
-export type PkCheck<Name extends string, Row> =
+type PkCheck<Name extends string, Row> =
   | {name: Name; error: ErrorObject}
   | {name: Name; pk: string; query: RunnableQuery<Row[], 'sqlite'>};
 

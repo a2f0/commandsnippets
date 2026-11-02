@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {type Registry, serialize} from '../../src/lib/jsonapi';
+import {type Registry, serialize} from '../../src/lib/jsonapi/serialize';
 
 /** A promise and the function that settles it. */
 function deferred() {
@@ -54,7 +54,7 @@ describe('include paths of one length', () => {
         relationships: {},
         defaultIncludes: [],
       },
-    } as unknown as Registry;
+    } satisfies Registry;
 
     const {included} = await serialize(
       registry,
@@ -119,7 +119,7 @@ describe('include paths of one length', () => {
         relationships: {},
         defaultIncludes: [],
       },
-    } as unknown as Registry;
+    } satisfies Registry;
 
     const {included} = await serialize(
       registry,
@@ -172,7 +172,7 @@ describe('include paths of one length', () => {
         relationships: {},
         defaultIncludes: [],
       },
-    } as unknown as Registry;
+    } satisfies Registry;
 
     const {included} = await serialize(
       registry,

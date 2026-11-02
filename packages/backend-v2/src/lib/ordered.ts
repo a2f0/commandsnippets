@@ -71,15 +71,6 @@ export class OrderedModel {
     private readonly spec: OrderedSpec
   ) {}
 
-  /** Rank for a new row at the bottom of `scope`. */
-  async nextOrder(scope: number): Promise<number> {
-    const {order, table} = this.spec;
-    const row = await this.db.get<{max: number | null}>(
-      sql`SELECT MAX(${order}) AS max FROM ${table} WHERE ${this.spec.scope} = ${scope}`
-    );
-    return row?.max === null || row?.max === undefined ? 0 : row.max + 1;
-  }
-
   /**
    * The bottom rank of `scope` as a SQL subquery, for use inside the INSERT
    * itself. Reading `MAX` and inserting in one statement keeps concurrent

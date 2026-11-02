@@ -11,7 +11,7 @@ import {adminAuditLog, tokens, type User, users} from '../db/schema';
 import {now} from '../lib/clock';
 import {revision} from '../lib/revision';
 
-export interface AccountStatus {
+interface AccountStatus {
   active: boolean;
   marked: boolean;
 }

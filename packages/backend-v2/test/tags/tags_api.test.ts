@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vitest';
 import {
   type Base,
   isoformat,
@@ -20,6 +20,10 @@ const pyStr = (timestamp: string) =>
 describe('TestTagsApi', () => {
   let base: Base;
 
+  beforeEach(async () => {
+    base = await setUpBase();
+  });
+
   const expectIncludedUser1 = (response: {included: unknown[]}) => {
     const included = response.included as Array<{
       type: string;
@@ -37,7 +41,6 @@ describe('TestTagsApi', () => {
   };
 
   it('test_serialization_format', async () => {
-    base = await setUpBase();
     const [tag] = await tagsOf(base.user1);
     if (tag === undefined) throw new Error('missing tag');
 
@@ -64,7 +67,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_pagination', async () => {
-    base = await setUpBase();
     const tags = await tagsOf(base.user1);
     const [tag1, tag2] = tags;
     expect(tags).toHaveLength(2);
@@ -89,7 +91,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_create_requires_authentication', async () => {
-    base = await setUpBase();
     const response = await base.unauthenticatedClient.post('/api/v1/tags', {});
     const body = await json(response);
     expect(response.status).toBe(403);
@@ -100,7 +101,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_name_too_large', async () => {
-    base = await setUpBase();
     const payload = {
       data: {
         type: 'Tag',
@@ -117,7 +117,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_can_create_self_owned', async () => {
-    base = await setUpBase();
     const payload = {data: {type: 'Tag', attributes: {name: 'new tag'}}};
     const response = await base.user1Client.post('/api/v1/tags', payload);
     const body = await json(response);
@@ -128,7 +127,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_can_resurrect_self_owned', async () => {
-    base = await setUpBase();
     const deletedTag = await tagFactory({
       user: base.user1,
       name: 'deleted tag',
@@ -145,7 +143,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_delete_works_when_self_owns_object', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({
       user: base.user1,
       name: 'deleted tag',
@@ -160,7 +157,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_delete_fails_when_object_owned_by_other', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({
       user: base.user2,
       name: 'deleted tag',
@@ -175,7 +171,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_reorder_works', async () => {
-    base = await setUpBase();
     const tag1 = await tagFactory({user: base.user1, order: 1});
     const tag1Timestamp = tag1.date_updated;
     const tag2 = await tagFactory({user: base.user1, order: 2});
@@ -197,7 +192,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_reorder_fails_if_not_bottom_owner', async () => {
-    base = await setUpBase();
     const tag1 = await tagFactory({user: base.user2, order: 1});
     const tag1Timestamp = tag1.date_updated;
     const tag2 = await tagFactory({user: base.user1, order: 2});
@@ -217,7 +211,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_reorder_fails_if_not_tio_owner', async () => {
-    base = await setUpBase();
     const tag1 = await tagFactory({user: base.user1, order: 1});
     const tag1Timestamp = tag1.date_updated;
     const tag2 = await tagFactory({user: base.user2, order: 2});
@@ -237,7 +230,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_bad_filter', async () => {
-    base = await setUpBase();
     const response = await base.user1Client.get('/api/v1/tags?filter[bad]=1');
     const body = await json(response);
     expect(response.status).toBe(400);
@@ -247,7 +239,6 @@ describe('TestTagsApi', () => {
 
   // v2: the list is the requester's own, so a username filter is refused.
   it('test_filter_by_user_name', async () => {
-    base = await setUpBase();
     const response = await base.user1Client.get(
       `/api/v1/tags?filter[user.username]=${base.user1.username}`
     );
@@ -256,7 +247,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_filter_by_date_updated_gt', async () => {
-    base = await setUpBase();
     const [tag1, tag2] = await tagsOf(base.user1);
     const response = await base.user1Client.get(
       `/api/v1/tags?filter[date_updated.gt]=${pyStr(tag1?.date_updated as string)}`
@@ -268,7 +258,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_order_filter', async () => {
-    base = await setUpBase();
     const [tag1, tag2] = await tagsOf(base.user1);
 
     let response = await base.user1Client.get(
@@ -302,7 +291,6 @@ describe('TestTagsApi', () => {
   });
 
   it('test_inequality_operator', async () => {
-    base = await setUpBase();
     const [tag1, tag2] = await tagsOf(base.user1);
     const response = await base.user1Client.get(
       `/api/v1/tags?sort=-date_updated&filter[date_updated.gt]=${pyStr(tag1?.date_updated as string)}`
@@ -318,9 +306,12 @@ describe('TestTagsApi', () => {
 describe('TestTagsApi v2', () => {
   let base: Base;
 
+  beforeEach(async () => {
+    base = await setUpBase();
+  });
+
   // v2: reads are owner-only (Django allowed anonymous reads).
   it('rejects anonymous list and retrieve', async () => {
-    base = await setUpBase();
     const [tag] = await tagsOf(base.user1);
     for (const path of ['/api/v1/tags', `/api/v1/tags/${tag?.id}`]) {
       const response = await base.unauthenticatedClient.get(path);
@@ -334,7 +325,6 @@ describe('TestTagsApi v2', () => {
 
   // v2: the list is the requester's own.
   it("does not list other users' tags", async () => {
-    base = await setUpBase();
     const theirs = (await tagsOf(base.user2)).map(tag => String(tag.id));
     expect(theirs.length).toBeGreaterThan(0);
     const response = await base.user1Client.get('/api/v1/tags');
@@ -346,7 +336,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it('retrieves own tags, 403s for others, 404s for missing', async () => {
-    base = await setUpBase();
     const [own] = await tagsOf(base.user1);
     const [other] = await tagsOf(base.user2);
 
@@ -375,7 +364,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it('returns the existing tag when creating a duplicate name', async () => {
-    base = await setUpBase();
     const [existing] = await tagsOf(base.user1);
     const response = await base.user1Client.post('/api/v1/tags', {
       data: {type: 'Tag', attributes: {name: existing?.name}},
@@ -390,7 +378,6 @@ describe('TestTagsApi v2', () => {
   // v2: 201 only for a tag the create made; a retry of it (its client id) is
   // answered as the first attempt was.
   it('answers 201 for a tag made, 200 for one there was, a retry as the first', async () => {
-    base = await setUpBase();
     const create = (name: string, client_id: string) =>
       base.user1Client.post('/api/v1/tags', {
         data: {type: 'Tag', attributes: {name, client_id}},
@@ -412,7 +399,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it('assigns new tags the next rank for the user', async () => {
-    base = await setUpBase();
     const response = await base.user1Client.post('/api/v1/tags', {
       data: {type: 'Tag', attributes: {name: 'ranked'}},
     });
@@ -427,7 +413,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it('validates tag create payloads', async () => {
-    base = await setUpBase();
     const cases: Array<[unknown, number, string]> = [
       [{data: {type: 'Tag', attributes: {}}}, 400, 'This field is required.'],
       [
@@ -451,7 +436,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it('renames a tag with PATCH and PUT', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({user: base.user1, name: 'before'});
 
     let response = await base.user1Client.patch(`/api/v1/tags/${tag.id}`, {
@@ -473,7 +457,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it('rejects invalid tag renames', async () => {
-    base = await setUpBase();
     const [existing] = await tagsOf(base.user1);
     const tag = await tagFactory({user: base.user1, name: 'mine'});
     const patch = (attributes: Record<string, unknown>, id = String(tag.id)) =>
@@ -513,7 +496,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it("cannot rename another user's tag", async () => {
-    base = await setUpBase();
     const [other] = await tagsOf(base.user2);
     const response = await base.user1Client.patch(`/api/v1/tags/${other?.id}`, {
       data: {id: String(other?.id), type: 'Tag', attributes: {name: 'stolen'}},
@@ -523,7 +505,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it('validates reorder payloads', async () => {
-    base = await setUpBase();
     const [tag] = await tagsOf(base.user1);
     const cases: Array<[unknown, string, string]> = [
       [
@@ -560,7 +541,6 @@ describe('TestTagsApi v2', () => {
   });
 
   it('moves a tag down (above a lower tag) and up (above a higher tag)', async () => {
-    base = await setUpBase();
     const a = await tagFactory({user: base.user1, name: 'a', order: 10});
     const b = await tagFactory({user: base.user1, name: 'b', order: 11});
     const c = await tagFactory({user: base.user1, name: 'c', order: 12});
@@ -608,7 +588,6 @@ describe('TestTagsApi v2', () => {
 
   // v2: ranks are per user, so reordering never touches another user's tags.
   it("does not touch other users' tags when reordering", async () => {
-    base = await setUpBase();
     const [tag1, tag2] = await tagsOf(base.user1);
     const before = await tagsOf(base.user2);
     const response = await base.user1Client.post(

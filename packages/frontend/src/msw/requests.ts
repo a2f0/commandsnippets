@@ -8,17 +8,19 @@
  */
 import {
   CODES,
-  errorMeta,
-  type errorObjectSchema,
+  type ErrorObject,
+  JSON_MEDIA_TYPES,
   MESSAGES,
+  mediaTypeOf,
   type RequestResource,
   requestEnvelopeSchema,
   type ToOneLinkage,
+  toErrorObject,
 } from '@commandsnippets/api-shared';
 import {HttpResponse} from 'msw/http';
 import type * as z from 'zod/mini';
 
-export type ErrorObject = z.output<typeof errorObjectSchema>;
+export type {ErrorObject};
 
 /** An API error: its status and error objects. */
 export class MockApiError extends Error {
@@ -53,31 +55,6 @@ export function errorResponse(
 }
 
 /**
- * An issue as the API's error object (backend-v2's `toErrorObject`): the
- * issue's own pointer, else the failing field's under `base`, else `/data`.
- */
-function toErrorObject(issue: z.core.$ZodIssue, base?: string): ErrorObject {
-  const {code, status = 400, pointer} = errorMeta(issue);
-  return {
-    detail: issue.message,
-    status: String(status),
-    source: {
-      pointer:
-        pointer ??
-        (base === undefined
-          ? '/data'
-          : [base, ...issue.path.map(String)].join('/')),
-    },
-    code,
-  };
-}
-
-const JSON_MEDIA_TYPES = new Set([
-  'application/vnd.api+json',
-  'application/json',
-]);
-
-/**
  * A request document's primary data: 415 unless the body is declared JSON,
  * 400 on a JSON syntax error, then the envelope's first error (for a PATCH,
  * `id` is the endpoint's, which the document must carry).
@@ -86,11 +63,7 @@ export async function parseResource<const T extends string>(
   request: Request,
   options: {type: T; id?: string}
 ): Promise<RequestResource<T>> {
-  const mediaType =
-    (request.headers.get('Content-Type') ?? '')
-      .split(';', 1)[0]
-      ?.trim()
-      .toLowerCase() ?? '';
+  const mediaType = mediaTypeOf(request.headers.get('Content-Type'));
   if (!JSON_MEDIA_TYPES.has(mediaType)) {
     throw apiError(
       415,
