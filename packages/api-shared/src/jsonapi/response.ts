@@ -150,6 +150,9 @@ export const errorObjectSchema = z.object({
   code: z.string(),
 });
 
+/** One error of an error document, as the API sends it. */
+export type ErrorObject = z.output<typeof errorObjectSchema>;
+
 /**
  * An error response. Its `errors` are empty only for the 401s of an expired
  * session (`GET /api/v1/user`) or a failed OAuth exchange.

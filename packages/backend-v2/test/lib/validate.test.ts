@@ -4,16 +4,12 @@ import {
   fail,
   QUERY_ERROR,
   reorderAttributesSchema,
+  toErrorObject,
 } from '@commandsnippets/api-shared';
 import {describe, expect, it} from 'vitest';
 import * as z from 'zod/mini';
 import {ApiError} from '../../src/lib/errors';
-import {
-  eachField,
-  parseOrThrow,
-  toErrorObject,
-  validateFields,
-} from '../../src/lib/validate';
+import {eachField, parseOrThrow, validateFields} from '../../src/lib/validate';
 
 /** The errors `run` throws, as `[pointer, detail, code]`. */
 function errorsOf(run: () => unknown): Array<[string, string, string]> {
@@ -128,6 +124,7 @@ describe('parseOrThrow', () => {
   });
 });
 
+// With zod's English locale, which src/lib/validate.ts loads.
 describe('toErrorObject', () => {
   it('reads zod issues without metadata as 400 invalid at /data', () => {
     const [issue] = z.string().safeParse(5).error?.issues ?? [];

@@ -51,6 +51,8 @@ not the request validators beside it.
 | `src/datetime.ts` | the timestamp format and `parseDateTime` |
 | `src/cursor.ts` | keyset cursors (`page[after]`): `<date_updated>,<id>` |
 | `src/jsonapi/request.ts` | request envelopes and create/update document schemas |
+| `src/jsonapi/errorObject.ts` | `toErrorObject`: an issue as the API's error object |
+| `src/jsonapi/mediaTypes.ts` | `JSON_API_MEDIA_TYPE`, the request body types (`JSON_MEDIA_TYPES`) and `mediaTypeOf` |
 | `src/jsonapi/response.ts` | resource, document, list-document (numbered and keyset pages) and error-document schemas |
 | `src/resources/types.ts` | resource type names, `RELATIONSHIPS`, `DEFAULT_INCLUDES` |
 | `src/resources/*.ts` | per resource: the resource as the API renders it (response schemas and types) |
@@ -66,8 +68,10 @@ output types drop the suffix (`Tag`, `TagListQuery`).
 Every request-side failure is a zod `custom` issue: its `message` is the error
 `detail`, and its `params` (`ErrorMeta`: `code`, and `status` and `pointer`
 where they differ from 400 and the field's own) are the rest of the JSON:API
-error object. `errorMeta(issue)` reads them. The backend's adapter
-(`src/lib/validate.ts` there) turns issues into errors with DRF's two
+error object. `errorMeta(issue)` reads them, and `toErrorObject(issue, base?)`
+renders the error object (`ErrorObject`), pointing at the failing field under
+`base`. The backend's adapter (`src/lib/validate.ts` there) and the web app's
+mock API (`src/msw/requests.ts` there) answer with them, with DRF's two
 behaviors:
 
 - **Documents and queries fail at their first error**, in the order DRF

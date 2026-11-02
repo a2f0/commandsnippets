@@ -10,6 +10,8 @@ export * from './fields';
 export * from './filters';
 export * from './include';
 export * from './issues';
+export * from './jsonapi/errorObject';
+export * from './jsonapi/mediaTypes';
 export * from './jsonapi/request';
 export * from './query';
 export * from './resources/requests/admin';

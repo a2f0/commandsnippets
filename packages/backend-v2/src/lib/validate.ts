@@ -6,38 +6,15 @@
  * serializer fields report every failing field (one error each, in field
  * order, which is the schema's key order).
  */
-import {errorMeta} from '@commandsnippets/api-shared';
+import {type ErrorObject, toErrorObject} from '@commandsnippets/api-shared';
 import {en} from 'zod/locales';
 import * as z from 'zod/mini';
-import {ApiError, type ErrorObject} from './errors';
+import {ApiError} from './errors';
 
 // api-shared's schemas are zod/mini, which loads no locale: zod's own
 // messages (from checks the request schemas do not use, so never sent so far)
 // would all read `Invalid input`. English keeps them as classic zod wrote them.
 z.config(en());
-
-/**
- * An issue as an error object. The pointer is the issue's own, else the
- * failing field's under `base` (e.g. `/data/attributes/name`), else `/data`.
- */
-export function toErrorObject(
-  issue: z.core.$ZodIssue,
-  base?: string
-): ErrorObject {
-  const {code, status = 400, pointer} = errorMeta(issue);
-  return {
-    detail: issue.message,
-    status: String(status),
-    source: {
-      pointer:
-        pointer ??
-        (base === undefined
-          ? '/data'
-          : [base, ...issue.path.map(String)].join('/')),
-    },
-    code,
-  };
-}
 
 /** Parse `input`, or throw its first error (DRF raises at the first check). */
 export function parseOrThrow<S extends z.ZodMiniType>(
@@ -72,7 +49,7 @@ export function validateFields<S extends z.ZodMiniType>(
 }
 
 /** One field's outcome, when fields are validated one at a time. */
-export type FieldResult<Shape extends Record<string, z.ZodMiniType>> = {
+type FieldResult<Shape extends Record<string, z.ZodMiniType>> = {
   [K in keyof Shape & string]:
     | {name: K; value: z.output<Shape[K]>}
     | {name: K; error: ErrorObject};
