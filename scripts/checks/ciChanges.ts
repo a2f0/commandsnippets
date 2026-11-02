@@ -8,10 +8,10 @@
  * pushed commits instead, one `--range <base>...<head>` per ref, and reads the
  * lines from stdout.
  */
-import { execFileSync } from "node:child_process";
-import { appendFileSync } from "node:fs";
-import { parseArgs } from "node:util";
-import { allScopes, ciDiffRange, ciScopes } from "./ciPolicy";
+import {execFileSync} from 'node:child_process';
+import {appendFileSync} from 'node:fs';
+import {parseArgs} from 'node:util';
+import {allScopes, ciDiffRange, ciScopes} from './ciPolicy';
 
 /**
  * The paths a range changes. `--no-renames` lists both sides of a move, so
@@ -19,27 +19,27 @@ import { allScopes, ciDiffRange, ciScopes } from "./ciPolicy";
  */
 function changedPaths(range: string): string[] {
   return execFileSync(
-    "git",
-    ["diff", "--name-only", "--no-renames", "-z", range, "--"],
-    { encoding: "utf8" },
+    'git',
+    ['diff', '--name-only', '--no-renames', '-z', range, '--'],
+    {encoding: 'utf8'}
   )
-    .split("\0")
-    .filter((path) => path !== "");
+    .split('\0')
+    .filter(path => path !== '');
 }
 
 function scopeLines(scopes: Record<string, boolean>): string {
   return Object.entries(scopes)
     .map(([name, required]) => `${name}=${String(required)}\n`)
-    .join("");
+    .join('');
 }
 
-const { values } = parseArgs({
-  options: { range: { type: "string", multiple: true } },
+const {values} = parseArgs({
+  options: {range: {type: 'string', multiple: true}},
 });
 
 if (values.range) {
   process.stdout.write(
-    scopeLines(ciScopes(values.range.flatMap((range) => changedPaths(range)))),
+    scopeLines(ciScopes(values.range.flatMap(range => changedPaths(range))))
   );
 } else {
   const {
@@ -47,11 +47,11 @@ if (values.range) {
     CI_HEAD_SHA: head,
     GITHUB_OUTPUT: output,
   } = process.env;
-  if (!output) throw new Error("GITHUB_OUTPUT is required.");
+  if (!output) throw new Error('GITHUB_OUTPUT is required.');
   const range = ciDiffRange(base, head);
   const scopes = range ? ciScopes(changedPaths(range)) : allScopes();
   appendFileSync(output, scopeLines(scopes));
   for (const [name, required] of Object.entries(scopes)) {
-    console.log(`${name}: ${required ? "required" : "not affected"}`);
+    console.log(`${name}: ${required ? 'required' : 'not affected'}`);
   }
 }

@@ -127,11 +127,8 @@ const ranked = (counts: Map<string, number>, names: Map<string, string>) =>
 /** The first day counted: `from`, or with `all`, the earliest event's. */
 const firstDay = (params: AnalyticsParams, events: Event[]) =>
   params.from === 'all'
-    ? events.reduce(
-        (first, event) =>
-          event.date.slice(0, 10) < first ? event.date.slice(0, 10) : first,
-        params.to
-      )
+    ? ([params.to, ...events.map(event => event.date.slice(0, 10))].sort()[0] ??
+      params.to)
     : params.from;
 
 /** Stateful browser fixture for the aggregate API; production aggregates in D1. */

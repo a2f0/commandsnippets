@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
+import {afterEach, describe, expect, setDefaultTimeout, test} from 'bun:test';
 import {
   appendFileSync,
   chmodSync,
@@ -8,14 +8,14 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
-  writeFileSync,
   symlinkSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
+  writeFileSync,
+} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
 
-const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
-const TOOL = path.join(REPO_ROOT, "node_modules/.bin/agent-tool");
+const REPO_ROOT = path.resolve(import.meta.dirname, '../..');
+const TOOL = path.join(REPO_ROOT, 'node_modules/.bin/agent-tool');
 
 // Each test signs commits in fresh repositories and runs the real hook, which
 // takes a few seconds and longer on a busy machine than bun's 5s default.
@@ -23,13 +23,13 @@ setDefaultTimeout(30_000);
 
 const temporary: string[] = [];
 function tempDir(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), "hooks-test-"));
+  const dir = mkdtempSync(path.join(tmpdir(), 'hooks-test-'));
   temporary.push(dir);
   return dir;
 }
 afterEach(() => {
   for (const dir of temporary.splice(0)) {
-    rmSync(dir, { recursive: true, force: true });
+    rmSync(dir, {recursive: true, force: true});
   }
 });
 
@@ -39,7 +39,7 @@ afterEach(() => {
  * test repository's git commands at the repository being pushed.
  */
 const testEnv = Object.fromEntries(
-  Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")),
+  Object.entries(process.env).filter(([name]) => !name.startsWith('GIT_'))
 );
 
 function run(command: string[], cwd: string) {
@@ -47,8 +47,8 @@ function run(command: string[], cwd: string) {
     cwd,
     env: {
       ...testEnv,
-      GIT_CONFIG_GLOBAL: "/dev/null",
-      GIT_CONFIG_NOSYSTEM: "1",
+      GIT_CONFIG_GLOBAL: '/dev/null',
+      GIT_CONFIG_NOSYSTEM: '1',
     },
   });
   return {
@@ -61,63 +61,63 @@ function run(command: string[], cwd: string) {
 /** A scratch repo whose commits are SSH-signed with a throwaway key. */
 function signedRepo(): string {
   const dir = tempDir();
-  const key = path.join(dir, "signing-key");
+  const key = path.join(dir, 'signing-key');
   expect(
-    run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", key], dir)
-      .exitCode,
+    run(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-f', key], dir)
+      .exitCode
   ).toBe(0);
   // Without an allowed-signers file git reports SSH signatures as "N"
   // (unsigned), which the configured signature-presence check rejects.
-  const allowedSigners = path.join(dir, "allowed-signers");
+  const allowedSigners = path.join(dir, 'allowed-signers');
   writeFileSync(
     allowedSigners,
-    `test@example.com ${readFileSync(`${key}.pub`, "utf8")}`,
+    `test@example.com ${readFileSync(`${key}.pub`, 'utf8')}`
   );
-  const repo = path.join(dir, "repo");
+  const repo = path.join(dir, 'repo');
   for (const command of [
-    ["git", "init", "-q", "-b", "main", repo],
-    ["git", "-C", repo, "config", "user.name", "Test"],
-    ["git", "-C", repo, "config", "user.email", "test@example.com"],
-    ["git", "-C", repo, "config", "gpg.format", "ssh"],
-    ["git", "-C", repo, "config", "user.signingkey", key],
-    ["git", "-C", repo, "config", "commit.gpgsign", "true"],
-    ["git", "-C", repo, "config", "gpg.ssh.allowedSignersFile", allowedSigners],
+    ['git', 'init', '-q', '-b', 'main', repo],
+    ['git', '-C', repo, 'config', 'user.name', 'Test'],
+    ['git', '-C', repo, 'config', 'user.email', 'test@example.com'],
+    ['git', '-C', repo, 'config', 'gpg.format', 'ssh'],
+    ['git', '-C', repo, 'config', 'user.signingkey', key],
+    ['git', '-C', repo, 'config', 'commit.gpgsign', 'true'],
+    ['git', '-C', repo, 'config', 'gpg.ssh.allowedSignersFile', allowedSigners],
   ]) {
     expect(run(command, dir).exitCode).toBe(0);
   }
-  commit(repo, "chore: base");
+  commit(repo, 'chore: base');
   return repo;
 }
 
 function commit(repo: string, message: string, sign = true): void {
   const result = run(
     [
-      "git",
-      "commit",
-      "-q",
-      "--allow-empty",
-      ...(sign ? [] : ["--no-gpg-sign"]),
-      "-m",
+      'git',
+      'commit',
+      '-q',
+      '--allow-empty',
+      ...(sign ? [] : ['--no-gpg-sign']),
+      '-m',
       message,
     ],
-    repo,
+    repo
   );
   expect(result.exitCode).toBe(0);
 }
 
-describe("pre-push", () => {
-  const ZERO = "0".repeat(40);
+describe('pre-push', () => {
+  const ZERO = '0'.repeat(40);
 
   function git(repo: string, ...args: string[]): string {
-    const result = run(["git", ...args], repo);
+    const result = run(['git', ...args], repo);
     expect(result.exitCode).toBe(0);
     return result.stdout.trim();
   }
 
   // Commits skip the installed commit-msg hook, which needs commitlint.
   function commitAll(repo: string, message: string): void {
-    git(repo, "add", "-A");
-    git(repo, "commit", "-q", "--no-verify", "--allow-empty", "-m", message);
+    git(repo, 'add', '-A');
+    git(repo, 'commit', '-q', '--no-verify', '--allow-empty', '-m', message);
   }
 
   /**
@@ -127,55 +127,71 @@ describe("pre-push", () => {
    */
   function hookRepo(setup?: (repo: string) => void): string {
     const repo = signedRepo();
-    for (const dir of ["scripts/git", "scripts/lib"]) {
+    for (const dir of ['scripts/git', 'scripts/lib']) {
       cpSync(path.join(REPO_ROOT, dir), path.join(repo, dir), {
         recursive: true,
       });
     }
     // The hook classifies the push with CI's policy.
-    mkdirSync(path.join(repo, "scripts/checks"));
-    for (const file of ["scripts/checks/ciChanges.ts", "scripts/checks/ciPolicy.ts"]) {
+    mkdirSync(path.join(repo, 'scripts/checks'));
+    for (const file of [
+      'scripts/checks/ciChanges.ts',
+      'scripts/checks/ciPolicy.ts',
+    ]) {
       cpSync(path.join(REPO_ROOT, file), path.join(repo, file));
     }
-    cpSync(path.join(REPO_ROOT, "agent-tool.json"), path.join(repo, "agent-tool.json"));
-    cpSync(path.join(REPO_ROOT, "commitlint.config.mts"), path.join(repo, "commitlint.config.mts"));
-    writeFileSync(path.join(repo, ".gitignore"), "node_modules/\n");
-    symlinkSync(path.join(REPO_ROOT, "node_modules"), path.join(repo, "node_modules"), "dir");
+    cpSync(
+      path.join(REPO_ROOT, 'agent-tool.json'),
+      path.join(repo, 'agent-tool.json')
+    );
+    cpSync(
+      path.join(REPO_ROOT, 'commitlint.config.mts'),
+      path.join(repo, 'commitlint.config.mts')
+    );
+    writeFileSync(path.join(repo, '.gitignore'), 'node_modules/\n');
+    symlinkSync(
+      path.join(REPO_ROOT, 'node_modules'),
+      path.join(repo, 'node_modules'),
+      'dir'
+    );
     writeFileSync(
-      path.join(repo, "package.json"),
+      path.join(repo, 'package.json'),
       JSON.stringify({
         scripts: {
-          "lint:branch-name": "true",
-          "lint:shell": "echo LANE:tooling",
-          typecheck: "true",
-          "test:agent-tool": "true",
-          "test:scripts": "true",
+          lint: 'true',
+          'lint:branch-name': 'true',
+          'lint:shell': 'echo LANE:tooling',
+          typecheck: 'true',
+          'test:agent-tool': 'true',
+          'test:scripts': 'true',
         },
-      }),
+      })
     );
-    writeFileSync(path.join(repo, "scripts/notes.txt"), "notes\n");
-    commitAll(repo, "chore: add tooling");
+    writeFileSync(path.join(repo, 'scripts/notes.txt'), 'notes\n');
+    commitAll(repo, 'chore: add tooling');
     setup?.(repo);
-    expect(run([TOOL, "hooks", "install", "--apply"], repo).exitCode).toBe(0);
-    git(repo, "switch", "-q", "-c", "feat/x");
+    expect(run([TOOL, 'hooks', 'install', '--apply'], repo).exitCode).toBe(0);
+    git(repo, 'switch', '-q', '-c', 'feat/x');
     return repo;
   }
 
   function prePush(
     repo: string,
-    sha = git(repo, "rev-parse", "HEAD"),
+    sha = git(repo, 'rev-parse', 'HEAD'),
     env: Record<string, string> = {},
-    destination = "refs/heads/feat/x",
-    remoteSha = ZERO,
+    destination = 'refs/heads/feat/x',
+    remoteSha = ZERO
   ) {
-    const result = Bun.spawnSync([".git/hooks/pre-push", "origin", "url"], {
+    const result = Bun.spawnSync(['.git/hooks/pre-push', 'origin', 'url'], {
       cwd: repo,
-      stdin: Buffer.from(`refs/heads/feat/x ${sha} ${destination} ${remoteSha}\n`),
+      stdin: Buffer.from(
+        `refs/heads/feat/x ${sha} ${destination} ${remoteSha}\n`
+      ),
       env: {
         ...testEnv,
-        GIT_CONFIG_GLOBAL: "/dev/null",
-        GIT_CONFIG_NOSYSTEM: "1",
-        PUSH_GATE_TIMINGS_LOG: path.join(tempDir(), "timings.tsv"),
+        GIT_CONFIG_GLOBAL: '/dev/null',
+        GIT_CONFIG_NOSYSTEM: '1',
+        PUSH_GATE_TIMINGS_LOG: path.join(tempDir(), 'timings.tsv'),
         ...env,
       },
     });
@@ -186,89 +202,97 @@ describe("pre-push", () => {
     };
   }
 
-  test("moving a file out of a checked area still runs its checks", () => {
+  test('moving a file out of a checked area still runs its checks', () => {
     const repo = hookRepo();
-    git(repo, "mv", "scripts/notes.txt", "notes.txt");
-    commitAll(repo, "chore: move notes");
+    git(repo, 'mv', 'scripts/notes.txt', 'notes.txt');
+    commitAll(repo, 'chore: move notes');
     const result = prePush(repo);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("LANE:tooling");
+    expect(result.stdout).toContain('LANE:tooling');
   });
 
   test("the frontend's spec launchers run the tooling checks", () => {
     const repo = hookRepo();
-    mkdirSync(path.join(repo, "packages/frontend/scripts/testing"), { recursive: true });
-    writeFileSync(path.join(repo, "packages/frontend/scripts/testing/runSpec.sh"), "#!/bin/sh\n");
-    commitAll(repo, "test: add a spec launcher");
+    mkdirSync(path.join(repo, 'packages/frontend/scripts/testing'), {
+      recursive: true,
+    });
+    writeFileSync(
+      path.join(repo, 'packages/frontend/scripts/testing/runSpec.sh'),
+      '#!/bin/sh\n'
+    );
+    commitAll(repo, 'test: add a spec launcher');
     const result = prePush(repo);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("LANE:tooling");
+    expect(result.stdout).toContain('LANE:tooling');
   });
 
-  test("skips area checks for pushes outside every checked area", () => {
+  test('skips area checks for pushes outside every checked area', () => {
     const repo = hookRepo();
-    writeFileSync(path.join(repo, "README.md"), "readme\n");
-    commitAll(repo, "docs: add readme");
+    writeFileSync(path.join(repo, 'NOTICE'), 'notice\n');
+    commitAll(repo, 'docs: add notice');
     const result = prePush(repo);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).not.toContain("LANE:tooling");
+    expect(result.stdout).not.toContain('LANE:tooling');
   });
 
-  test("refuses to vouch for uncommitted tracked changes", () => {
+  test('refuses to vouch for uncommitted tracked changes', () => {
     const repo = hookRepo();
-    appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
-    commitAll(repo, "chore: edit notes");
-    appendFileSync(path.join(repo, "scripts/notes.txt"), "unpushed\n");
+    appendFileSync(path.join(repo, 'scripts/notes.txt'), 'more\n');
+    commitAll(repo, 'chore: edit notes');
+    appendFileSync(path.join(repo, 'scripts/notes.txt'), 'unpushed\n');
     const result = prePush(repo);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("uncommitted changes");
+    expect(result.stderr).toContain('uncommitted changes');
   });
 
-  test("classifies with the pushed policy, not an uncommitted edit", () => {
+  test('classifies with the pushed policy, not an uncommitted edit', () => {
     const repo = hookRepo();
-    appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
-    commitAll(repo, "chore: edit notes");
+    appendFileSync(path.join(repo, 'scripts/notes.txt'), 'more\n');
+    commitAll(repo, 'chore: edit notes');
     // An uncommitted classifier that would skip every check.
-    writeFileSync(path.join(repo, "scripts/checks/ciChanges.ts"), 'console.log("tooling=false");\n');
+    writeFileSync(
+      path.join(repo, 'scripts/checks/ciChanges.ts'),
+      'console.log("tooling=false");\n'
+    );
     const result = prePush(repo);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("uncommitted changes");
+    expect(result.stderr).toContain('uncommitted changes');
   });
 
-  test("refuses to vouch for untracked files under a checked area", () => {
+  test('refuses to vouch for untracked files under a checked area', () => {
     const repo = hookRepo();
-    appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
-    commitAll(repo, "chore: edit notes");
-    writeFileSync(path.join(repo, "scripts/stray.test.ts"), "");
+    appendFileSync(path.join(repo, 'scripts/notes.txt'), 'more\n');
+    commitAll(repo, 'chore: edit notes');
+    writeFileSync(path.join(repo, 'scripts/stray.test.ts'), '');
     const result = prePush(repo);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("untracked files");
+    expect(result.stderr).toContain('untracked files');
   });
 
-  test("refuses to vouch for a pushed commit other than HEAD", () => {
+  test('refuses to vouch for a pushed commit other than HEAD', () => {
     const repo = hookRepo();
-    appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
-    commitAll(repo, "chore: edit notes");
-    const pushed = git(repo, "rev-parse", "HEAD");
-    commitAll(repo, "chore: later work");
+    appendFileSync(path.join(repo, 'scripts/notes.txt'), 'more\n');
+    commitAll(repo, 'chore: edit notes');
+    const pushed = git(repo, 'rev-parse', 'HEAD');
+    commitAll(repo, 'chore: later work');
     const result = prePush(repo, pushed);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("validates the checked-out commit");
+    expect(result.stderr).toContain('validates the checked-out commit');
   });
 
   /** Commit a classifier that leaves a marker file when it runs. */
   function commitMarkingClassifier(repo: string, sign: boolean): string {
-    const marker = path.join(tempDir(), "classifier-ran");
+    const marker = path.join(tempDir(), 'classifier-ran');
     writeFileSync(
-      path.join(repo, "scripts/checks/ciChanges.ts"),
-      `require("node:fs").writeFileSync(${JSON.stringify(marker)}, "");\n`,
+      path.join(repo, 'scripts/checks/ciChanges.ts'),
+      `require("node:fs").writeFileSync(${JSON.stringify(marker)}, "");\n`
     );
-    git(repo, "add", "-A");
-    commit(repo, "chore: change the classifier", sign);
+    git(repo, 'add', '-A');
+    commit(repo, 'chore: change the classifier', sign);
     return marker;
   }
 
-  test("runs no classifier from an unsigned push", () => {
+  test('runs no classifier from an unsigned push', () => {
     const repo = hookRepo();
     const marker = commitMarkingClassifier(repo, false);
     const result = prePush(repo);
@@ -276,72 +300,85 @@ describe("pre-push", () => {
     expect(existsSync(marker)).toBe(false);
   });
 
-  test("runs no classifier from a pushed commit other than HEAD", () => {
+  test('runs no classifier from a pushed commit other than HEAD', () => {
     const repo = hookRepo();
     const marker = commitMarkingClassifier(repo, true);
-    const pushed = git(repo, "rev-parse", "HEAD");
-    commitAll(repo, "chore: later work");
+    const pushed = git(repo, 'rev-parse', 'HEAD');
+    commitAll(repo, 'chore: later work');
     const result = prePush(repo, pushed);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("validates the checked-out commit");
+    expect(result.stderr).toContain('validates the checked-out commit');
     expect(existsSync(marker)).toBe(false);
   });
 
-  test("rejects a pushed commit with a co-author trailer", () => {
+  test('rejects a pushed commit with a co-author trailer', () => {
     const repo = hookRepo();
-    writeFileSync(path.join(repo, "README.md"), "readme\n");
+    writeFileSync(path.join(repo, 'README.md'), 'readme\n');
     commitAll(
       repo,
-      "docs: add readme\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+      'docs: add readme\n\nCo-authored-by: Claude <noreply@anthropic.com>'
     );
     const result = prePush(repo);
     expect(result.exitCode).toBe(1);
-    expect(result.stdout + result.stderr).toContain("Co-authored-by");
+    expect(result.stdout + result.stderr).toContain('Co-authored-by');
   });
 
-  test("validates the destination instead of only the current branch", () => {
+  test('validates the destination instead of only the current branch', () => {
     const repo = hookRepo();
-    const result = prePush(repo, undefined, {}, "refs/heads/untyped");
+    const result = prePush(repo, undefined, {}, 'refs/heads/untyped');
     expect(result.exitCode).toBe(1);
-    expect(result.stdout + result.stderr).toContain("untyped");
+    expect(result.stdout + result.stderr).toContain('untyped');
   });
 
-  test("rejects a newly introduced unsigned commit", () => {
+  test('rejects a newly introduced unsigned commit', () => {
     const repo = hookRepo();
-    commit(repo, "feat: unsigned work", false);
+    commit(repo, 'feat: unsigned work', false);
     const result = prePush(repo);
     expect(result.exitCode).toBe(1);
-    expect(result.stdout + result.stderr).toContain("Signature does not meet");
+    expect(result.stdout + result.stderr).toContain('Signature does not meet');
   });
 
-  test("base integration excludes history the push remote already owns", () => {
+  test('base integration excludes history the push remote already owns', () => {
     const repo = hookRepo();
-    git(repo, "remote", "add", "origin", repo);
-    commit(repo, "feat: original work");
-    const published = git(repo, "rev-parse", "HEAD");
-    git(repo, "update-ref", "refs/remotes/origin/feat/x", published);
-    git(repo, "switch", "main");
+    git(repo, 'remote', 'add', 'origin', repo);
+    commit(repo, 'feat: original work');
+    const published = git(repo, 'rev-parse', 'HEAD');
+    git(repo, 'update-ref', 'refs/remotes/origin/feat/x', published);
+    git(repo, 'switch', 'main');
     // Simulate existing upstream history, not a new commit being introduced.
-    git(repo, "-c", "core.hooksPath=/dev/null", "commit", "--no-gpg-sign",
-      "--allow-empty", "-m", "chore: upstream work\n\nCo-authored-by: Ada <ada@example.com>");
-    git(repo, "update-ref", "refs/remotes/origin/main", git(repo, "rev-parse", "HEAD"));
-    git(repo, "switch", "feat/x");
-    git(repo, "merge", "--no-ff", "origin/main", "-m", "chore: integrate main");
+    git(
+      repo,
+      '-c',
+      'core.hooksPath=/dev/null',
+      'commit',
+      '--no-gpg-sign',
+      '--allow-empty',
+      '-m',
+      'chore: upstream work\n\nCo-authored-by: Ada <ada@example.com>'
+    );
+    git(
+      repo,
+      'update-ref',
+      'refs/remotes/origin/main',
+      git(repo, 'rev-parse', 'HEAD')
+    );
+    git(repo, 'switch', 'feat/x');
+    git(repo, 'merge', '--no-ff', 'origin/main', '-m', 'chore: integrate main');
     const result = prePush(repo, undefined, {}, undefined, published);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('"checked": 1');
-    commit(repo, "feat: new unsigned work", false);
+    commit(repo, 'feat: new unsigned work', false);
     expect(prePush(repo, undefined, {}, undefined, published).exitCode).toBe(1);
   });
 
-  test("commit-msg rejects attribution without rewriting the message", () => {
+  test('commit-msg rejects attribution without rewriting the message', () => {
     const repo = hookRepo();
-    const message = "fix: change\n\nCo-authored-by: Ada <ada@example.com>\n";
-    const file = path.join(repo, ".git/TEST_COMMIT_EDITMSG");
+    const message = 'fix: change\n\nCo-authored-by: Ada <ada@example.com>\n';
+    const file = path.join(repo, '.git/TEST_COMMIT_EDITMSG');
     writeFileSync(file, message);
-    const result = run([".git/hooks/commit-msg", file], repo);
+    const result = run(['.git/hooks/commit-msg', file], repo);
     expect(result.exitCode).toBe(1);
-    expect(readFileSync(file, "utf8")).toBe(message);
+    expect(readFileSync(file, 'utf8')).toBe(message);
   });
 
   /**
@@ -352,63 +389,65 @@ describe("pre-push", () => {
   function terraformArea(fmtExit: number, testPasses: boolean) {
     const bin = tempDir();
     writeFileSync(
-      path.join(bin, "terraform"),
-      `#!/bin/sh\necho "LANE:terraform $*"\nexit ${fmtExit}\n`,
+      path.join(bin, 'terraform'),
+      `#!/bin/sh\necho "LANE:terraform $*"\nexit ${fmtExit}\n`
     );
-    chmodSync(path.join(bin, "terraform"), 0o755);
+    chmodSync(path.join(bin, 'terraform'), 0o755);
     const setup = (repo: string) => {
-      mkdirSync(path.join(repo, "terraform/scripts"), { recursive: true });
-      writeFileSync(path.join(repo, "terraform/main.tf"), "locals {}\n");
+      mkdirSync(path.join(repo, 'terraform/scripts'), {recursive: true});
+      writeFileSync(path.join(repo, 'terraform/main.tf'), 'locals {}\n');
       writeFileSync(
-        path.join(repo, "terraform/scripts/tf.test.ts"),
+        path.join(repo, 'terraform/scripts/tf.test.ts'),
         `import {expect, test} from "bun:test";\n` +
           `test("wrapper", () => {\n` +
           `  console.log("LANE:terraform-wrapper");\n` +
           `  expect(${testPasses}).toBe(true);\n` +
-          `});\n`,
+          '});\n'
       );
-      commitAll(repo, "chore: add terraform");
+      commitAll(repo, 'chore: add terraform');
     };
-    return { setup, env: { PATH: `${bin}:${process.env["PATH"]}` } };
+    return {setup, env: {PATH: `${bin}:${process.env['PATH']}`}};
   }
 
   /** A terraform repo whose branch edits `file`. */
   function terraformPush(file: string, fmtExit = 0, testPasses = true) {
-    const { setup, env } = terraformArea(fmtExit, testPasses);
+    const {setup, env} = terraformArea(fmtExit, testPasses);
     const repo = hookRepo(setup);
-    appendFileSync(path.join(repo, file), "\n");
-    commitAll(repo, "chore: edit terraform");
+    appendFileSync(path.join(repo, file), '\n');
+    commitAll(repo, 'chore: edit terraform');
     const result = prePush(repo, undefined, env);
-    return { ...result, output: result.stdout + result.stderr };
+    return {...result, output: result.stdout + result.stderr};
   }
 
-  test("terraform-only changes run the terraform checks, not tooling", () => {
-    const result = terraformPush("terraform/main.tf");
+  test('terraform-only changes run the terraform checks, not tooling', () => {
+    const result = terraformPush('terraform/main.tf');
     expect(result.exitCode).toBe(0);
-    expect(result.output).toContain("LANE:terraform fmt -check -recursive terraform");
-    expect(result.output).toContain("LANE:terraform-wrapper");
-    expect(result.output).not.toContain("LANE:tooling");
+    expect(result.output).toContain(
+      'LANE:terraform fmt -check -recursive terraform'
+    );
+    expect(result.output).toContain('LANE:terraform-wrapper');
+    expect(result.output).not.toContain('LANE:tooling');
   });
 
   // The root typecheck covers the wrapper's TypeScript.
-  test("terraform script changes also run the tooling checks", () => {
-    const result = terraformPush("terraform/scripts/tf.test.ts");
+  test('terraform script changes also run the tooling checks', () => {
+    const result = terraformPush('terraform/scripts/tf.test.ts');
     expect(result.exitCode).toBe(0);
-    expect(result.output).toContain("LANE:terraform-wrapper");
-    expect(result.output).toContain("LANE:tooling");
+    expect(result.output).toContain('LANE:terraform-wrapper');
+    expect(result.output).toContain('LANE:tooling');
   });
 
-  test("a terraform formatting failure blocks the push", () => {
-    const result = terraformPush("terraform/main.tf", 3);
+  test('a terraform formatting failure blocks the push', () => {
+    const result = terraformPush('terraform/main.tf', 3);
     expect(result.exitCode).not.toBe(0);
-    expect(result.output).not.toContain("All checks passed.");
+    expect(result.output).not.toContain('All checks passed.');
   });
 
-  test("a failing wrapper test blocks the push", () => {
-    const result = terraformPush("terraform/main.tf", 0, false);
+  test('a failing wrapper test blocks the push', () => {
+    const result = terraformPush('terraform/main.tf', 0, false);
     expect(result.exitCode).not.toBe(0);
-    expect(result.output).toContain("LANE:terraform-wrapper");
-    expect(result.output).not.toContain("All checks passed.");
+    expect(result.output).toContain('LANE:terraform-wrapper');
+    expect(result.output).not.toContain('All checks passed.');
   });
 
   /**
@@ -419,50 +458,50 @@ describe("pre-push", () => {
     return (repo: string) => {
       const stub = (lane: string, names: string[]) =>
         Object.fromEntries(
-          names.map((name) => [
+          names.map(name => [
             name,
-            `echo LANE:${lane}:${name}${name === failing ? " && exit 1" : ""}`,
-          ]),
+            `echo LANE:${lane}:${name}${name === failing ? ' && exit 1' : ''}`,
+          ])
         );
-      writeFileSync(path.join(repo, ".gitignore"), "node_modules/\n");
+      writeFileSync(path.join(repo, '.gitignore'), 'node_modules/\n');
       for (const [dir, scripts] of [
-        ["api-shared", stub("api-shared", ["lint", "typecheck", "test"])],
+        ['api-shared', stub('api-shared', ['lint', 'typecheck', 'test'])],
         [
-          "backend-v2",
-          stub("backend-v2", [
-            "lint",
-            "typecheck",
-            "test:coverage",
-            "test:scripts",
+          'backend-v2',
+          stub('backend-v2', [
+            'lint',
+            'typecheck',
+            'test:coverage',
+            'test:scripts',
           ]),
         ],
       ] as const) {
-        mkdirSync(path.join(repo, "packages", dir, "src"), { recursive: true });
+        mkdirSync(path.join(repo, 'packages', dir, 'src'), {recursive: true});
         writeFileSync(
-          path.join(repo, "packages", dir, "package.json"),
-          JSON.stringify({ name: dir, scripts }),
+          path.join(repo, 'packages', dir, 'package.json'),
+          JSON.stringify({name: dir, scripts})
         );
-        writeFileSync(path.join(repo, "packages", dir, "src/index.ts"), "");
+        writeFileSync(path.join(repo, 'packages', dir, 'src/index.ts'), '');
       }
-      commitAll(repo, "chore: add packages");
+      commitAll(repo, 'chore: add packages');
     };
   }
 
   function editPackage(repo: string, dir: string): void {
-    appendFileSync(path.join(repo, "packages", dir, "src/index.ts"), "//\n");
+    appendFileSync(path.join(repo, 'packages', dir, 'src/index.ts'), '//\n');
     commitAll(repo, `feat: edit ${dir}`);
   }
 
   /** The api-shared and backend-v2 checks, in the order the hook runs them. */
   const PACKAGE_CHECKS = [
-    "[api-shared-install]",
-    "LANE:api-shared:lint",
-    "LANE:api-shared:typecheck",
-    "LANE:api-shared:test",
-    "LANE:backend-v2:lint",
-    "LANE:backend-v2:typecheck",
-    "LANE:backend-v2:test:coverage",
-    "LANE:backend-v2:test:scripts",
+    '[api-shared-install]',
+    'LANE:api-shared:lint',
+    'LANE:api-shared:typecheck',
+    'LANE:api-shared:test',
+    'LANE:backend-v2:lint',
+    'LANE:backend-v2:typecheck',
+    'LANE:backend-v2:test:coverage',
+    'LANE:backend-v2:test:scripts',
   ];
 
   function expectInOrder(output: string, lanes: readonly string[]): void {
@@ -474,93 +513,100 @@ describe("pre-push", () => {
     }
   }
 
-  test("api-shared changes install the workspace, then check it and backend-v2", () => {
+  test('api-shared changes install the workspace, then check it and backend-v2', () => {
     const repo = hookRepo(packageAreas());
-    editPackage(repo, "api-shared");
+    editPackage(repo, 'api-shared');
     const result = prePush(repo);
     const output = result.stdout + result.stderr;
     expect(result.exitCode).toBe(0);
     expectInOrder(output, PACKAGE_CHECKS);
-    expect(output).not.toContain("[backend-v2-install]");
-    expect(output).not.toContain("LANE:tooling");
+    expect(output).not.toContain('[backend-v2-install]');
+    expect(output).not.toContain('LANE:tooling');
   });
 
-  test("backend-v2 changes alone neither check api-shared nor install", () => {
+  test('backend-v2 changes alone neither check api-shared nor install', () => {
     const repo = hookRepo(packageAreas());
-    editPackage(repo, "backend-v2");
+    editPackage(repo, 'backend-v2');
     const result = prePush(repo);
     const output = result.stdout + result.stderr;
     expect(result.exitCode).toBe(0);
-    expect(output).toContain("LANE:backend-v2:lint");
-    expect(output).not.toContain("api-shared");
-    expect(output).not.toContain("-install]");
+    expect(output).toContain('LANE:backend-v2:lint');
+    expect(output).not.toContain('api-shared');
+    expect(output).not.toContain('-install]');
   });
 
-  test("workspace install changes check the tooling and every package", () => {
+  test('workspace install changes check the tooling and every package', () => {
     const repo = hookRepo(packageAreas());
-    writeFileSync(path.join(repo, "bunfig.toml"), "# install settings\n");
-    commitAll(repo, "build: add install settings");
+    writeFileSync(path.join(repo, 'bunfig.toml'), '# install settings\n');
+    commitAll(repo, 'build: add install settings');
     const result = prePush(repo);
     const output = result.stdout + result.stderr;
     expect(result.exitCode).toBe(0);
-    expectInOrder(output, ["LANE:tooling", ...PACKAGE_CHECKS]);
+    expectInOrder(output, ['LANE:tooling', ...PACKAGE_CHECKS]);
   });
 
   // CI runs every lane for these, so the hook runs every local one.
-  test("toolchain and workflow changes check the tooling and every package", () => {
-    for (const file of [".mise.toml", ".github/workflows/ci.yml"]) {
+  test('toolchain and workflow changes check the tooling and every package', () => {
+    for (const file of ['.mise.toml', '.github/workflows/ci.yml']) {
       const repo = hookRepo(packageAreas());
-      mkdirSync(path.dirname(path.join(repo, file)), { recursive: true });
-      writeFileSync(path.join(repo, file), "# edit\n");
+      mkdirSync(path.dirname(path.join(repo, file)), {recursive: true});
+      writeFileSync(path.join(repo, file), '# edit\n');
       commitAll(repo, `ci: edit ${file}`);
       const result = prePush(repo);
       const output = result.stdout + result.stderr;
       expect(result.exitCode).toBe(0);
-      expectInOrder(output, ["LANE:tooling", ...PACKAGE_CHECKS]);
+      expectInOrder(output, ['LANE:tooling', ...PACKAGE_CHECKS]);
     }
   });
 
-  test("a failing api-shared check blocks the push", () => {
-    const repo = hookRepo(packageAreas("typecheck"));
-    editPackage(repo, "api-shared");
+  test('a failing api-shared check blocks the push', () => {
+    const repo = hookRepo(packageAreas('typecheck'));
+    editPackage(repo, 'api-shared');
     const result = prePush(repo);
     const output = result.stdout + result.stderr;
     expect(result.exitCode).not.toBe(0);
-    expect(output).toContain("LANE:api-shared:typecheck");
-    expect(output).not.toContain("LANE:api-shared:test");
-    expect(output).not.toContain("All checks passed.");
+    expect(output).toContain('LANE:api-shared:typecheck');
+    expect(output).not.toContain('LANE:api-shared:test');
+    expect(output).not.toContain('All checks passed.');
   });
 
-  test("brand source changes check the website, which renders its icons", () => {
-    const repo = hookRepo((repo) => {
+  test('brand source changes check the website, which renders its icons', () => {
+    const repo = hookRepo(repo => {
       const scripts = Object.fromEntries(
-        ["lint", "check", "test"].map((name) => [name, `echo LANE:website:${name}`]),
+        ['lint', 'check', 'test'].map(name => [
+          name,
+          `echo LANE:website:${name}`,
+        ])
       );
-      mkdirSync(path.join(repo, "packages/website"), { recursive: true });
+      mkdirSync(path.join(repo, 'packages/website'), {recursive: true});
       writeFileSync(
-        path.join(repo, "packages/website/package.json"),
-        JSON.stringify({ name: "website", scripts }),
+        path.join(repo, 'packages/website/package.json'),
+        JSON.stringify({name: 'website', scripts})
       );
-      mkdirSync(path.join(repo, "assets/brand"), { recursive: true });
-      writeFileSync(path.join(repo, "assets/brand/logo.svg"), "<svg/>\n");
-      commitAll(repo, "chore: add website and brand");
+      mkdirSync(path.join(repo, 'assets/brand'), {recursive: true});
+      writeFileSync(path.join(repo, 'assets/brand/logo.svg'), '<svg/>\n');
+      commitAll(repo, 'chore: add website and brand');
     });
-    appendFileSync(path.join(repo, "assets/brand/logo.svg"), "<!-- edit -->\n");
-    commitAll(repo, "feat: edit the logo");
+    appendFileSync(path.join(repo, 'assets/brand/logo.svg'), '<!-- edit -->\n');
+    commitAll(repo, 'feat: edit the logo');
     const result = prePush(repo);
     const output = result.stdout + result.stderr;
     expect(result.exitCode).toBe(0);
-    for (const lane of ["LANE:website:lint", "LANE:website:check", "LANE:website:test"]) {
+    for (const lane of [
+      'LANE:website:lint',
+      'LANE:website:check',
+      'LANE:website:test',
+    ]) {
       expect(output).toContain(lane);
     }
-    expect(output).not.toContain("LANE:tooling");
+    expect(output).not.toContain('LANE:tooling');
   });
 
-  test("refuses to run a stale installed copy", () => {
+  test('refuses to run a stale installed copy', () => {
     const repo = hookRepo();
-    appendFileSync(path.join(repo, "scripts/git/hooks/pre-push"), "# edited\n");
+    appendFileSync(path.join(repo, 'scripts/git/hooks/pre-push'), '# edited\n');
     const result = prePush(repo);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("pre-push hook is stale");
+    expect(result.stderr).toContain('pre-push hook is stale');
   });
 });

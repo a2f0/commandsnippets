@@ -6,7 +6,7 @@ development server talks to a real API.
 
 ## File Structure
 
-```
+```text
 src/msw/
 ├── enableMocking.ts  # Main initialization function (src/index.tsx imports it)
 ├── config.ts         # Configuration constants and utilities
@@ -60,7 +60,9 @@ after every test.
 ## Key Components
 
 ### `enableMocking.ts`
+
 Main initialization function that:
+
 1. Returns early unless the build is development or test
    (`MSW_CONFIG.isEnabled`). This check alone would also mock the development
    server; the test-only gate is the caller in `src/index.tsx`.
@@ -70,6 +72,7 @@ Main initialization function that:
    and never throws, so the app starts either way
 
 ### `handlers.ts`
+
 Contains all API mock handlers: the guards, then each resource's routes from
 `routes/` (`account`, `public`, `admin`, `tags`, `entries`, `reuses`,
 `junctions`), over the stateful mock data in `state.ts`. Other modules read
@@ -79,6 +82,7 @@ module is a list of `route(method, path, handler)` calls of named handler
 functions (`createTag`, `patchAdminUser`, ...); new rows are built with
 `rows.ts`'s `newMockTag` and `newMockEntry`, and single-resource documents
 with `documents.ts`'s `withUser`. The routes:
+
 - Tags and entries: list (keyset pages too), retrieve, create, update, delete,
   and tag reorders
 - Tagging, untagging and junction reorders (`/tags_entries`)
@@ -110,27 +114,34 @@ api-shared's schemas, and fails on a handler it does not check: add a new
 handler's request there.
 
 ### `config.ts`
+
 Centralized configuration:
+
 - Service worker URL
 - Request handling options
 - Environment detection
 - Health check settings
 
 ### `browser.ts`
+
 Browser-specific utilities:
+
 - Exposes MSW worker to `window.__MSW_WORKER__`
 - Exposes reset function to `window.resetMSWState`
 - Exposes `window.setRuntimeEntriesOverride` and the request counters
   (`window.__MSW_REQUESTS__`)
 
 ### `healthCheck.ts`
+
 Checks that MSW answers its health endpoint, logging the outcome
 
 ### `worker.ts`
+
 Creates the MSW service worker with all handlers
 
 ### `requestCounter.ts`
+
 Provides request counting utilities for test assertions:
+
 - Tracks API calls by method and URL
 - Used in E2E tests to verify API interactions
-

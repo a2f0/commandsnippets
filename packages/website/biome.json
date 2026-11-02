@@ -1,38 +1,7 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "preset": "recommended",
-      "suspicious": {
-        "noImportCycles": {
-          "level": "error",
-          "options": { "ignoreTypes": false }
-        }
-      }
-    }
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 80
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "es5",
-      "bracketSpacing": false,
-      "arrowParentheses": "asNeeded"
-    }
-  },
+  "$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
+  "root": false,
+  "extends": "//",
   "files": {
     "includes": [
       "**",
@@ -41,5 +10,17 @@
       "!**/.astro",
       "!**/*.astro"
     ]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["astro.config.ts", "worker/index.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off"
+          }
+        }
+      }
+    }
+  ]
 }

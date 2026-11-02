@@ -1,10 +1,9 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
+  "root": false,
+  "extends": "//",
   "linter": {
-    "enabled": true,
     "rules": {
-      "preset": "recommended",
       "correctness": {
         "useExhaustiveDependencies": "off",
         "useUniqueElementIds": "off"
@@ -20,27 +19,7 @@
               "@mui/icons-material": "Import each icon from its own path ('@mui/icons-material/Check'): the package index loads every icon in dev and tests."
             }
           }
-        },
-        "noDefaultExport": "error",
-        "noParameterAssign": "error",
-        "useAsConstAssertion": "error",
-        "useDefaultParameterLast": "error",
-        "useEnumInitializers": "error",
-        "useSelfClosingElements": "error",
-        "useSingleVarDeclarator": "error",
-        "noUnusedTemplateLiteral": "error",
-        "useNumberNamespace": "error",
-        "noInferrableTypes": "error",
-        "noUselessElse": "error"
-      },
-      "suspicious": {
-        "noImportCycles": {
-          "level": "error",
-          "options": { "ignoreTypes": false }
         }
-      },
-      "complexity": {
-        "useLiteralKeys": "off"
       }
     }
   },
@@ -73,30 +52,68 @@
           }
         }
       }
+    },
+    {
+      "includes": ["src/lib/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@mui/icons-material": "Import each icon from its own path ('@mui/icons-material/Check'): the package index loads every icon in dev and tests."
+                },
+                "patterns": [
+                  {
+                    "group": [
+                      "**/components",
+                      "**/components/**",
+                      "**/pages",
+                      "**/pages/**",
+                      "**/menu",
+                      "**/menu/**",
+                      "**/hooks/**"
+                    ],
+                    "message": "src/lib sits below the UI: it never imports components, pages, menu or hooks. Move the shared code into lib, or pass it in."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["vite.config.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["__tests__/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noComponentHookFactories": "off"
+          }
+        }
+      }
     }
   ],
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 80
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "es5",
-      "bracketSpacing": false,
-      "arrowParentheses": "asNeeded"
-    }
-  },
   "files": {
     "includes": [
       "**",
-      "!**/.ts-out/**/*",
-      "!**/build",
-      "!**/dev-dist/**/*",
-      "!**/dist",
       "!**/node_modules",
+      "!**/coverage",
+      "!**/.ts-out",
+      "!**/build",
+      "!**/dev-dist",
+      "!**/dist",
       "!public/mockServiceWorker.js"
     ]
   }

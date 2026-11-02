@@ -8,8 +8,7 @@ import {
 } from '@commandsnippets/api-shared';
 import {HttpResponse} from 'msw/http';
 import {nextRevision, pagination} from '../documents';
-import type {EntriesState} from '../fixtures';
-import {ownedByTestUser} from '../fixtures';
+import {type EntriesState, ownedByTestUser} from '../fixtures';
 import {
   type ErrorObject,
   MockApiError,

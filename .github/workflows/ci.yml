@@ -56,6 +56,8 @@ jobs:
         uses: ./.github/actions/setup
         with:
           install: root
+      - name: Lint the root scripts, configs and Markdown
+        run: bun run lint
       - name: Lint shell scripts
         run: bun run lint:shell
       - name: Typecheck
@@ -116,6 +118,8 @@ jobs:
           install: root
       - name: Check managed skills
         run: bun run agents:check
+      - name: Reject committed binary files
+        run: bun run lint:binary-files
       - name: Validate PR branch and title
         if: github.event_name == 'pull_request'
         env:

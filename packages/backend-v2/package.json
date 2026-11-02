@@ -1,6 +1,6 @@
 {
   "name": "commandsnippets-backend-v2",
-  "version": "0.2.39",
+  "version": "0.2.40",
   "license": "UNLICENSED",
   "private": true,
   "packageManager": "bun@1.4.3",
@@ -14,8 +14,9 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "cf-typegen": "wrangler types",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
-    "lint": "biome check .",
-    "format": "biome format --write .",
+    "lint": "biome check . && bun run lint:knip",
+    "lint:knip": "../../node_modules/.bin/knip --directory ../.. --workspace packages/backend-v2",
+    "fix": "biome check --write .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:scripts": "bun test --coverage ./scripts/",
@@ -23,19 +24,19 @@
   },
   "dependencies": {
     "@commandsnippets/api-shared": "workspace:*",
-    "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.13",
-    "zod": "^4.6.7"
+    "drizzle-orm": "0.45.4",
+    "hono": "4.13.13",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.2",
-    "@cloudflare/vitest-plugin": "^1.4.6",
+    "@biomejs/biome": "2.6.4",
+    "@cloudflare/vitest-plugin": "1.4.6",
     "@types/bun": "1.4.3",
-    "@types/node": "^26.6.5",
-    "@vitest/coverage-istanbul": "^5.0.5",
-    "drizzle-kit": "^0.31.11",
-    "typescript": "^7.0.2",
-    "vitest": "^5.0.5",
-    "wrangler": "^4.151.3"
+    "@types/node": "26.6.5",
+    "@vitest/coverage-istanbul": "5.0.5",
+    "drizzle-kit": "0.31.11",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5",
+    "wrangler": "4.151.3"
   }
 }

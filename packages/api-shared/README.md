@@ -17,7 +17,7 @@ API (see [zod/mini](#zodmini)).
 a bundler drops any module whose exports go unused:
 
 | Import | What | Who |
-|---|---|---|
+| --- | --- | --- |
 | `@commandsnippets/api-shared` | all of it | the API |
 | `@commandsnippets/api-shared/responses` | response documents, resources and error documents: schemas and types; resource type names | clients, to parse |
 | `@commandsnippets/api-shared/requests` | request documents, fields, filters and collection queries: schemas, messages and types | the API; clients, for types |
@@ -39,7 +39,7 @@ not the request validators beside it.
 ## Layout
 
 | Path | What |
-|---|---|
+| --- | --- |
 | `src/index.ts`, `src/responses.ts`, `src/requests.ts` | the entry points (above): re-exports |
 | `src/messages.ts` | `MESSAGES` and `CODES`: the DRF-style error texts and codes, byte for byte |
 | `src/issues.ts` | how a schema failure carries an API error (`fail`, `errorMeta`) |
@@ -205,6 +205,9 @@ of it. In the web app's production bundle, zod/mini and the api-shared
 modules the app imports come to about 43 kB (35 kB of it zod; measured
 2026-10-07 with `bun run build:analyze` there), where classic zod and all the
 schemas took about 102 kB (30 kB gzipped).
+In the API's Worker, they are about 97 kB of 462 KiB (101 KiB gzipped;
+measured 2026-10-07 with `wrangler deploy --dry-run --metafile`), where
+classic zod alone was about 760 kB of a 1109 KiB Worker (194 KiB gzipped).
 
 For a consumer, that means:
 
@@ -267,7 +270,7 @@ in step.
 
 ```shell
 bun install
-bun run lint
+bun run lint        # Biome and knip; bun run fix writes Biome's fixes
 bun run typecheck   # src/ with no ambient types, then src/ and test/ with Bun's
 bun run test        # bun test, with a 98% line and function coverage gate
 ```

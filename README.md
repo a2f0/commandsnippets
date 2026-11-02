@@ -63,9 +63,11 @@ bun run test:unit      # Vitest
 bun run test:browser   # headless WebdriverIO suite (Chrome)
 ```
 
-`bun run check` runs the root shell lint, typechecking, script tests, and
-managed-skill checks. Each package README documents its own checks and, for
-the deployed packages, their deployment.
+`bun run check` runs the root lint (`bun run lint`: Biome, knip, markdownlint
+and the binary-file check; `bun run fix` writes Biome's and markdownlint's
+fixes), shell lint, typechecking, script tests, and managed-skill checks. Each
+package README documents its own checks and, for the deployed packages, their
+deployment.
 
 ## Documentation
 

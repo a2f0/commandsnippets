@@ -5,7 +5,7 @@ R2 (bucket `commandsnippets-terraform-state`), so nothing here needs AWS.
 
 ## Layout
 
-```
+```text
 modules/
   zone/            zone-wide settings, DNS records, www redirect
   environment/     one deployment's D1 database
@@ -21,7 +21,7 @@ R2), provider lock file and backend. Modules hold the resources; stacks only
 say which environment gets what.
 
 | Stack | Manages |
-|---|---|
+| --- | --- |
 | `zone` | Zone settings (strict SSL, always HTTPS, TLS 1.2+), the Google site verification TXT record, CAA records for Cloudflare's CAs, and the `www` → apex redirect |
 | `staging` | The `commandsnippets-staging` D1 database |
 | `production` | The `commandsnippets-production` D1 database |
@@ -59,7 +59,7 @@ inherited from the shell, and stops, naming the file or variable, when one is
 missing.
 
 | Variable | Used by |
-|---|---|
+| --- | --- |
 | `CLOUDFLARE_API_TOKEN` | The Cloudflare provider: the scoped user token `commandsnippets-terraform` (DNS, Zone Settings, Zone Read and Single Redirects on this zone; D1 on the account). |
 | `TF_STATE_ACCESS_KEY_ID`, `TF_STATE_SECRET_ACCESS_KEY` | The S3 backend, pointed at R2, which receives them as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`: the token `commandsnippets-terraform-state`, limited to the state bucket. The key ID is the token ID and the secret its SHA-256. |
 
@@ -71,11 +71,11 @@ Both tiers hold the same values today, so change a value in each tier's
 The `terraform` lane of `CI gate` runs `terraform fmt -check`, `terraform
 validate` for every stack, the modules' `terraform test` suites (against a
 mocked provider: the www redirect, CAA set, TXT quoting, TLS settings and D1
-read replication), `tflint --recursive` with the shared `.tflint.hcl`, and shellcheck plus `bun test` for
-`scripts/tf` (against fixture `.secrets` tiers and a fake `terraform`: each
-stack reads its tier, a missing file or credential stops it, and inherited
-credentials never reach Terraform). The pre-push
-hook runs the format check and the wrapper tests. Locally:
+read replication), `tflint --recursive` with the shared `.tflint.hcl`, and
+shellcheck plus `bun test` for `scripts/tf` (against fixture `.secrets` tiers
+and a fake `terraform`: each stack reads its tier, a missing file or credential
+stops it, and inherited credentials never reach Terraform). The pre-push hook
+runs the format check and the wrapper tests. Locally:
 
 ```shell
 terraform fmt -recursive

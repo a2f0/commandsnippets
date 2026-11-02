@@ -1,0 +1,57 @@
+# File and directory names. The frontend's rule: components are PascalCase
+# .tsx files, every other file and every directory camelCase. ls-lint checks
+# the working tree, so generated and installed directories are ignored.
+ls:
+  packages/frontend:
+    .dir: camelcase | regex:__tests__
+    .ts: camelcase
+    .tsx: camelcase | pascalcase
+    .d.ts: camelcase
+    .config.ts: camelcase
+    .md: regex:(README|AGENTS)
+    .json: camelcase | regex:tsconfig-base
+
+  # Outside the tests, only the entry point is a camelCase .tsx file.
+  packages/frontend/src:
+    .dir: camelcase
+    .ts: camelcase
+    .tsx: pascalcase | regex:index
+    .md: regex:README
+
+  # Specs are named for what they test: a component's PascalCase, a
+  # module's or a flow's camelCase.
+  packages/frontend/__tests__:
+    .dir: camelcase | regex:__tests__
+    .ts: camelcase
+    .tsx: pascalcase
+    .d.ts: camelcase
+    .spec.ts: camelcase | pascalcase
+    .spec.tsx: camelcase | pascalcase
+
+  # WebdriverIO: one conf per mode, and kebab-case module declarations named
+  # for the packages they type.
+  packages/frontend/test:
+    .dir: camelcase
+    .ts: camelcase
+    .d.ts: kebabcase
+    .shared.conf.ts: regex:wdio
+    .headless.conf.ts: regex:wdio
+    .json: camelcase
+
+ignore:
+  - .git
+  - node_modules
+  - packages/api-shared/node_modules
+  - packages/backend-v2/node_modules
+  - packages/backend-v2/.wrangler
+  - packages/website/node_modules
+  - packages/frontend/node_modules
+  - packages/frontend/.ts-out
+  - packages/frontend/.vscode
+  - packages/frontend/public
+  - packages/frontend/build
+  - packages/frontend/dev-dist
+  - packages/frontend/_results_
+  - packages/frontend/logs
+  - packages/frontend/.wrangler
+  - packages/frontend/coverage

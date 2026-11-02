@@ -1,7 +1,5 @@
 {
-  "required": [
-    "changes"
-  ],
+  "required": ["changes"],
   "conditional": [
     {
       "job": "tooling",
