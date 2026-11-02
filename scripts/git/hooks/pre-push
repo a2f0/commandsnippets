@@ -69,17 +69,29 @@ push_range() {
   fi
 }
 
-# The scopes the pushed commits need, classified as CI classifies them
-# (scripts/checks/ciPolicy.ts), as `<scope>=<bool>` lines. A push of only
-# deletions needs none.
-set --
+# The scopes the pushed commits need, classified as CI classifies them, as
+# `<scope>=<bool>` lines. Each ref runs the classifier it pushes
+# (scripts/checks/ciChanges.ts and ciPolicy.ts as committed), never the
+# worktree's copy: an uncommitted edit to the policy must not decide which
+# checks vouch for the push. A push of only deletions needs none.
+classify_push() {
+  classifier_dir=$(mktemp -d)
+  for file in ciChanges.ts ciPolicy.ts; do
+    if ! git show "$1:scripts/checks/$file" >"$classifier_dir/$file"; then
+      rm -rf "$classifier_dir"
+      return 1
+    fi
+  done
+  classify_status=0
+  bun "$classifier_dir/ciChanges.ts" --range "$2" || classify_status=$?
+  rm -rf "$classifier_dir"
+  return "$classify_status"
+}
+
 while read -r _ local_sha _ remote_sha; do
   [ "$local_sha" != "$zero_sha" ] || continue
-  set -- "$@" --range "$(push_range "$local_sha" "$remote_sha" | sed 's/\.\./.../')"
+  classify_push "$local_sha" "$(push_range "$local_sha" "$remote_sha" | sed 's/\.\./.../')" >>"$scopes_file"
 done <"$refs_file"
-if [ "$#" -gt 0 ]; then
-  bun scripts/checks/ciChanges.ts "$@" >"$scopes_file"
-fi
 
 needs() {
   grep -qx "$1=true" "$scopes_file"

@@ -223,6 +223,17 @@ describe("pre-push", () => {
     expect(result.stderr).toContain("uncommitted changes");
   });
 
+  test("classifies with the pushed policy, not an uncommitted edit", () => {
+    const repo = hookRepo();
+    appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
+    commitAll(repo, "chore: edit notes");
+    // An uncommitted classifier that would skip every check.
+    writeFileSync(path.join(repo, "scripts/checks/ciChanges.ts"), 'console.log("tooling=false");\n');
+    const result = prePush(repo);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("uncommitted changes");
+  });
+
   test("refuses to vouch for untracked files under a checked area", () => {
     const repo = hookRepo();
     appendFileSync(path.join(repo, "scripts/notes.txt"), "more\n");
