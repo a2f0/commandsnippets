@@ -477,9 +477,12 @@ writing its type by hand.
   features (`AppHeader`, `ContextMenu`, `DetailPage`, `LanguageSwitcher`,
   `SimpleDialog`, `UserProfileCircle`) sit at the root of `src/components/`.
   `admin/useAdminList` loads a page of an admin list (users, audit log).
-- **Menu bar**: `src/menu/MenuBar.tsx`; each menu is in `src/menu/<name>/`
-  (most with their items in `menuItems/`). The Tags and Entries menus list
-  their sorts as data rendered by `src/menu/SortMenuItem.tsx`.
+- **Menu bar**: `src/menu/MenuBar.tsx` renders its buttons from a table
+  (`MENUS`: each menu's button and drop-down ids) with `MenuBarButton`, and
+  keeps which one is open; each menu is in `src/menu/<name>/` (most with
+  their items in `menuItems/`). The Tags and Entries menus list their sorts
+  as data rendered by `src/menu/SortMenuItem.tsx`; `DialogMenuItem` is an
+  item that opens a dialog (Help > About, Debug > Feature Flags).
   `src/menu/StyledMenu.tsx` and `StyledMenuItem.tsx` are the menus' shared
   drop-down and item (the context menus use the item too)
 - **Hooks**: `src/hooks/`, among them `useContextMenu` (where a context menu

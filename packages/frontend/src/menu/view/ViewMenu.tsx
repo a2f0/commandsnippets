@@ -1,14 +1,13 @@
+import {Divider} from '@mui/material';
 import React from 'react';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {useOwner} from '../../lib/data/hooks';
 import {navigate} from '../../lib/router/navigation';
 import {analyticsPath, reusesPath} from '../../lib/router/route';
-import {StyledDivider} from '../../styled/StyledDivider';
 import {StyledMenu} from '../StyledMenu';
 import {StyledMenuItem} from '../StyledMenuItem';
-import {DarkMode} from './menuItems/DarkMode';
-import {LightMode} from './menuItems/LightMode';
 import {ShowTagCounts} from './menuItems/ShowTagCounts';
+import {ThemeMenuItem} from './menuItems/ThemeMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -48,9 +47,9 @@ const ViewMenu = ({onClose, anchorEl}: IProps) => {
           {t('allReuses')}
         </StyledMenuItem>
       )}
-      <LightMode onClose={onClose} />
-      <DarkMode onClose={onClose} />
-      <StyledDivider />
+      <ThemeMenuItem themeName="lightTheme" onClose={onClose} />
+      <ThemeMenuItem themeName="darkTheme" onClose={onClose} />
+      <Divider />
       <ShowTagCounts onClose={onClose} />
     </StyledMenu>
   );
