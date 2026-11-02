@@ -356,10 +356,11 @@ API; everything else the app keeps is a zustand store.
     none of them (they would read as that user's data).
 
 ### Timings (the HUD)
-Outside production, the app times its work for the HUD's Analytics tab
+While the `hud` feature flag is on (everywhere but production by default),
+the app times its work for the HUD's Analytics tab
 (`src/lib/metrics/timings.ts`, in memory: the latest 2000 timings and 20
-interactions; production records nothing, copies no response body, and has
-no HUD). A change of the signed-in user clears them (`appState.ts`), as it
+interactions; with the flag off, as in production, it records nothing,
+copies no response body, and has no HUD). A change of the signed-in user clears them (`appState.ts`), as it
 does the user's data, since interactions name tags; work begun before a
 clear is not recorded when it ends.
 - **What is timed**, by kind: `network`, every `fetchApi` (method and
@@ -385,6 +386,30 @@ list is shown by then. Its timings
   waterfall of its timings; then every timing in a window (log-scale
   scatter) and a table by name (count, p50, p95, max, total). The expanded
   HUD fills the window but for a 16px margin.
+
+### Feature flags
+Features that are not on everywhere are gated by a feature flag, never by an
+inline check of the environment (`environment !== 'production'`).
+- **The registry**: `src/lib/featureFlags/flags.ts` names every flag
+  (`FEATURE_FLAG_NAMES`) and the environments it is on in by default
+  (`FEATURE_FLAGS`): `hud` (the HUD and its timings), `languageSwitcher` and
+  `userProfileMenu`, each on in development, test and staging and off in
+  production.
+- **Reading a flag**: `useFeatureFlag(flag)` in components (renders again
+  when its override changes) and `isFeatureEnabled(flag)` elsewhere
+  (`src/lib/featureFlags/featureFlags.ts`). Both read the environment at each
+  call, so specs that spy on `environment` still apply.
+- **Overrides**: outside production, Debug > Feature Flags
+  (`src/menu/debug/menuItems/FeatureFlagsDialog.tsx`) turns a flag on or off
+  on this device, saved to localStorage per environment
+  (`commandsnippets-<environment>-feature-flags`) and shared by every tab;
+  Reset to Defaults clears them. Production has no Debug menu
+  (`canOverrideFeatureFlags`), ignores any saved override and always uses
+  the defaults. `resetApp()` clears overrides after each test.
+- **Adding a flag**: add it to `FEATURE_FLAG_NAMES` and `FEATURE_FLAGS`, name
+  it in `featureFlagNameKeys` and the `menu` translations (en, es), and gate
+  the feature with it. To ship a feature everywhere, remove its flag and its
+  checks rather than leaving a flag on in every environment.
 
 ### API
 The API's contract is `@commandsnippets/api-shared` (`packages/api-shared`, a

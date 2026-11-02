@@ -216,6 +216,18 @@ export const es: I18NextTranslations = {
     sortByEntryCount: 'Ordenar por Cantidad de Entradas',
     triggerTestError: 'Activar Error de Prueba',
     syncIndexedDB: 'Sincronizar IndexedDB',
+    featureFlags: 'Funciones Experimentales',
+    featureFlagsDialogTitle: 'Funciones Experimentales',
+    featureFlagDefault: 'Predeterminado ({{state}})',
+    featureFlagOverridden:
+      'Modificado en este dispositivo (predeterminado {{state}})',
+    featureFlagHud: 'HUD y tiempos',
+    featureFlagLanguageSwitcher: 'Selector de idioma',
+    featureFlagUserProfileMenu: 'Menú de perfil de usuario',
+    resetFeatureFlags: 'Restablecer Valores Predeterminados',
+    on: 'Activado',
+    off: 'Desactivado',
+    close: 'Cerrar',
   },
   tags: {
     createTag: 'Crear Etiqueta',

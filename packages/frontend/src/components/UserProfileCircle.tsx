@@ -3,7 +3,7 @@ import {Avatar, Button, Divider, Menu, MenuItem} from '@mui/material';
 import {styled} from '@mui/material/styles';
 import type React from 'react';
 import {useState} from 'react';
-import {environment} from '../lib/environment';
+import {useFeatureFlag} from '../lib/featureFlags/featureFlags';
 import {useAppConfig} from '../lib/state/appState';
 import {requestSignOut} from '../lib/state/signOutWarning';
 
@@ -44,6 +44,7 @@ const StyledMenu = styled(Menu)(({theme}) => ({
 
 const UserProfileCircle: React.FC = () => {
   const appConfig = useAppConfig();
+  const enabled = useFeatureFlag('userProfileMenu');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -76,8 +77,7 @@ const UserProfileCircle: React.FC = () => {
 
   const username = appConfig.loggedInUser;
 
-  // Only show in non-production environments
-  if (!username || environment === 'production') {
+  if (!username || !enabled) {
     return null;
   }
 

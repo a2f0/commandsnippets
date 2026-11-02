@@ -185,6 +185,17 @@ export interface MenuTranslations {
   sortByEntryCount: string;
   triggerTestError: string;
   syncIndexedDB: string;
+  featureFlags: string;
+  featureFlagsDialogTitle: string;
+  featureFlagDefault: string;
+  featureFlagOverridden: string;
+  featureFlagHud: string;
+  featureFlagLanguageSwitcher: string;
+  featureFlagUserProfileMenu: string;
+  resetFeatureFlags: string;
+  on: string;
+  off: string;
+  close: string;
 }
 
 export interface TagsTranslations {
