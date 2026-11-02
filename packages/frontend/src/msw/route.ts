@@ -13,7 +13,7 @@ import {recordRequest} from './requestCounter';
 import {apiError, errorResponse} from './requests';
 
 /** What a route's resolver is given: the request and its path parameters. */
-type RouteInfo = Parameters<HttpResponseResolver>[0];
+export type RouteInfo = Parameters<HttpResponseResolver>[0];
 
 const methodHandlers = {
   GET: http.get,

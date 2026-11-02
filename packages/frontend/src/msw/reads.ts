@@ -67,50 +67,15 @@ export function includedFor(
   owner: Pick<MockOwner, 'user' | 'tags'> = testOwner()
 ): {included?: IncludedResource[]} {
   const found = new Map<string, IncludedResource>();
-  const add = (resource: IncludedResource) =>
-    found.set(`${resource.type}:${resource.id}`, resource);
   for (const path of paths) {
     let current: IncludedResource[] = [...primary];
     for (const segment of path.split('.')) {
-      const next: IncludedResource[] = [];
+      current = current.flatMap(resource =>
+        related(state, owner, resource, segment)
+      );
       for (const resource of current) {
-        if (segment === 'user') {
-          next.push(owner.user);
-        } else if (
-          segment === 'text_entry_to_tag' &&
-          resource.type === 'TextEntry'
-        ) {
-          next.push(
-            ...junctionsOf(state).filter(
-              junction =>
-                junction.relationships.text_entry.data.id === resource.id
-            )
-          );
-        } else if (
-          segment === 'tag' &&
-          resource.type === 'TagTextEntryThroughModel'
-        ) {
-          const tag = owner.tags.find(
-            candidate => candidate.id === resource.relationships.tag.data.id
-          );
-          if (tag !== undefined) {
-            next.push(tag);
-          }
-        } else if (
-          segment === 'text_entry' &&
-          resource.type === 'TagTextEntryThroughModel'
-        ) {
-          const entry = state.data.find(
-            candidate =>
-              candidate.id === resource.relationships.text_entry.data.id
-          );
-          if (entry !== undefined) {
-            next.push(entry);
-          }
-        }
+        found.set(`${resource.type}:${resource.id}`, resource);
       }
-      next.forEach(add);
-      current = next;
     }
   }
   for (const resource of primary) {
@@ -118,6 +83,38 @@ export function includedFor(
   }
   const included = [...found.values()].sort(byTypeAndId);
   return included.length > 0 ? {included} : {};
+}
+
+/** What one `include` path segment reaches from `resource` (`includedFor`). */
+function related(
+  state: EntriesState,
+  owner: Pick<MockOwner, 'user' | 'tags'>,
+  resource: IncludedResource,
+  segment: string
+): IncludedResource[] {
+  if (segment === 'user') {
+    return [owner.user];
+  }
+  if (segment === 'text_entry_to_tag' && resource.type === 'TextEntry') {
+    return junctionsOf(state).filter(
+      junction => junction.relationships.text_entry.data.id === resource.id
+    );
+  }
+  if (resource.type !== 'TagTextEntryThroughModel') {
+    return [];
+  }
+  const target =
+    segment === 'tag'
+      ? owner.tags.find(
+          candidate => candidate.id === resource.relationships.tag.data.id
+        )
+      : segment === 'text_entry'
+        ? state.data.find(
+            candidate =>
+              candidate.id === resource.relationships.text_entry.data.id
+          )
+        : undefined;
+  return target === undefined ? [] : [target];
 }
 
 /** The request's `include` paths, or the resource's default ones. */

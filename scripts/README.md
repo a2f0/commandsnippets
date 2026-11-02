@@ -6,7 +6,7 @@ review, and PR mechanics come from the exact-pinned `@a2f0/agent-tool`;
 
 | Group | Purpose and entrypoints |
 | --- | --- |
-| `checks/` | CI path classification, PR-title commitlint, and policy tests; `bun run test:scripts` |
+| `checks/` | Path classification for CI and pre-push, PR-title commitlint, and policy tests; `bun run test:scripts` |
 | `git/hooks/` | Commit-message and conditional pre-push hooks; `bun run hooks:install` / `bun run hooks:check` |
 | `git/` | Push-specific timing history; `bun run timings:push -- --head <sha>` |
 | `lib/` | Timing helpers shared by the push gate and its history viewer |

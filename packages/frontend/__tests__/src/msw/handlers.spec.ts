@@ -33,21 +33,14 @@ import {
 } from '@commandsnippets/api-shared';
 import invariant from 'invariant';
 import {setupServer} from 'msw/node';
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
 
 import {
   handlers,
   resetMSWState,
   setRuntimeEntriesOverride,
 } from '../../../src/msw/handlers';
+import {adminUsers} from '../../../src/msw/state';
 import {manyEntriesResponse} from '../../../test/mocks/entries/manyEntriesResponse';
 import {API} from '../../util/msw';
 
@@ -67,9 +60,6 @@ let named: number | undefined;
 beforeEach(() => {
   resetMSWState();
   named = 1;
-  // The handlers announce each request.
-  vi.spyOn(console, 'log').mockImplementation(() => {});
-  return () => vi.restoreAllMocks();
 });
 
 async function send(
@@ -1143,5 +1133,31 @@ describe('/user/data_versions', () => {
       (await fetch(`${API}/tags`, {headers: {[DATA_VERSION_HEADER]: '2'}}))
         .status
     ).toBe(200);
+  });
+});
+
+describe('GET /admin/users', () => {
+  const usernames = async (search: string) => {
+    const {json} = await send(
+      'GET',
+      `/admin/users?filter[search]=${encodeURIComponent(search)}`
+    );
+    return json.data.map(
+      (user: {attributes: {username: string}}) => user.attributes.username
+    );
+  };
+
+  it('searches usernames and emails case-insensitively, as the API does', async () => {
+    adminUsers.push({
+      id: '8',
+      username: 'BobSmith',
+      email: 'Bob.Smith@Example.com',
+      is_staff: false,
+      is_active: true,
+      date_marked_for_deletion: null,
+    });
+    expect(await usernames('bobs')).toEqual(['BobSmith']);
+    expect(await usernames('SMITH@EXAMPLE')).toEqual(['BobSmith']);
+    expect(await usernames('ALICE')).toEqual(['alice']);
   });
 });

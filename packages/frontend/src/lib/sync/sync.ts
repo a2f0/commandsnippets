@@ -43,35 +43,28 @@ import type {
   TextEntryCursorListDocument,
   TextEntryReusedListDocument,
 } from '@commandsnippets/api-shared/responses';
-import {Dexie, type Table} from 'dexie';
 import {DataVersionChangedError} from '../api/errors';
 import {
   type CommandsnippetsDatabase,
-  databaseName,
   OWNER_ID_KEY,
-  type RowKey,
-  type Stored,
   type SyncCursor,
   tagCursorKey,
 } from '../db/database';
-import {environment} from '../environment';
 import {timed} from '../metrics/timings';
-import {adoptVersion, assertHeld} from './dataVersion';
 import {
-  AccountChangedError,
-  adoptCreates,
-  announceRemaps,
   assertBound,
+  bindOwner,
   boundAccount,
-  flushOutbox,
-  isLocalId,
-  type OutboxApi,
-  type Remap,
-  readReuses,
-  refreshEntry,
-} from './outbox';
-import {SYNC_PAGE_SIZE} from './pageSize';
+  clearPublicOwner,
+} from './accountBinding';
+import {adoptCreates} from './adopt';
+import {adoptVersion, assertHeld} from './dataVersion';
+import {advanceInitialLoad, startInitialLoad} from './initialLoad';
+import {isLocalId} from './localIds';
+import {flushOutbox, readReuses, refreshEntry} from './outbox';
 import {PublicViewChangedError} from './publicView';
+import {announceRemaps, type Remap} from './remaps';
+import type {OutboxApi} from './send';
 import {checkOwner, putEntries, putJunctions, putTags} from './store';
 
 /**
@@ -191,90 +184,6 @@ async function ownerOf(api: SyncApi, owner: string) {
   return identity;
 }
 
-/** The account a stored row of `owner`'s in `table` names, if any does. */
-const accountIn = async <
-  R extends {relationships: {user: {data: {id: string}}}},
->(
-  table: Table<Stored<R>, RowKey>,
-  owner: string
-): Promise<string | undefined> =>
-  (
-    await table
-      .where('owner')
-      .equals(owner)
-      .filter(row => row.relationships.user.data.id !== '')
-      .first()
-  )?.relationships.user.data.id;
-
-/** The account `owner`'s stored rows name, if any does. */
-async function accountOfRows(
-  db: CommandsnippetsDatabase,
-  owner: string
-): Promise<string | undefined> {
-  return (
-    (await accountIn(db.tags, owner)) ??
-    (await accountIn(db.entries, owner)) ??
-    (await accountIn(db.junctions, owner))
-  );
-}
-
-/**
- * Bind `owner`'s data to the account the API reads under that name
- * (`ownerId`): data another account of the name left here (deleted since,
- * its name taken again) goes, queued writes and all, before any of it is
- * shown again or sent as this account's; for the signed-in user's own (the
- * database is theirs), so does every other user's data it holds (staff
- * read it). With `asRead` (the binding read before asking the API which
- * account it is), a binding made since (a sign-in here) stands: refused
- * (`AccountChangedError`) rather than undone.
- */
-export async function bindOwner(
-  db: CommandsnippetsDatabase,
-  owner: string,
-  ownerId: string,
-  asRead?: {held: string | undefined}
-): Promise<void> {
-  await db.transaction(
-    'rw',
-    [db.tags, db.entries, db.junctions, db.cursors, db.outbox],
-    async () => {
-      const bound = await boundAccount(db, owner);
-      if (asRead !== undefined && bound !== asRead.held) {
-        throw new AccountChangedError(owner);
-      }
-      // Data kept from before accounts were bound (an older version's): its
-      // rows name their account.
-      const held = bound ?? (await accountOfRows(db, owner));
-      if (held === ownerId) {
-        await db.cursors.put({owner, key: OWNER_ID_KEY, after: ownerId});
-        return;
-      }
-      if (held !== undefined) {
-        if (db.name === databaseName(environment, owner)) {
-          for (const table of [
-            db.tags,
-            db.entries,
-            db.junctions,
-            db.cursors,
-            db.outbox,
-          ]) {
-            await table.clear();
-          }
-        } else {
-          for (const table of [db.tags, db.entries, db.junctions, db.outbox]) {
-            await table.where('owner').equals(owner).delete();
-          }
-          await db.cursors
-            .where('[owner+key]')
-            .between([owner, Dexie.minKey], [owner, Dexie.maxKey])
-            .delete();
-        }
-      }
-      await db.cursors.put({owner, key: OWNER_ID_KEY, after: ownerId});
-    }
-  );
-}
-
 /** What a sync read its data as (`bindToApi`). */
 interface Bound {
   /** The account the data is bound to. */
@@ -328,22 +237,6 @@ async function bindToApi(
   return {ownerId, version: dataVersion, reads};
 }
 
-/** Only a public cache uses this: never removes an owner's queued writes. */
-async function clearPublicOwner(
-  db: CommandsnippetsDatabase,
-  owner: string
-): Promise<void> {
-  await db.transaction(
-    'rw',
-    [db.tags, db.entries, db.junctions, db.cursors],
-    async () => {
-      for (const table of [db.tags, db.entries, db.junctions, db.cursors]) {
-        await table.where('owner').equals(owner).delete();
-      }
-    }
-  );
-}
-
 /**
  * The cursor past every junction revision there is now: the newest one's,
  * past any id (one write stamps many junctions alike).
@@ -364,49 +257,7 @@ async function syncAll(
 ): Promise<boolean> {
   const bound = await bindToApi(db, api, owner);
   const {ownerId, reads} = bound;
-  // Older cursors have no progress marker; their next sync still reads to
-  // the end, without starting a new first-load indicator.
-  let initialLoad = await db.transaction('rw', db.cursors, async () => {
-    await assertBound(db, owner, ownerId);
-    const held = await db.cursors.get([owner, 'entries']);
-    if (held !== undefined) {
-      return held.initialLoad;
-    }
-    const progress = {pages: 0, totalPages: null, complete: false};
-    await db.cursors.put({
-      owner,
-      key: 'entries',
-      after: CURSOR_START,
-      initialLoad: progress,
-    });
-    return progress;
-  });
-  if (
-    initialLoad !== undefined &&
-    !initialLoad.complete &&
-    initialLoad.totalPages === null
-  ) {
-    // Counting is presentation only: a failed count never prevents loading
-    // the entries. The UI uses an indeterminate bar until the total is known.
-    const count = await reads.getEntryCount().catch((error: unknown) => {
-      console.warn('WARNING: could not count entry pages:', error);
-      return null;
-    });
-    if (count !== null) {
-      const counted = {
-        ...initialLoad,
-        totalPages: Math.max(
-          Math.ceil(count / SYNC_PAGE_SIZE),
-          initialLoad.pages === 0 ? 0 : initialLoad.pages + 1
-        ),
-      };
-      await db.transaction('rw', db.cursors, async () => {
-        await assertBound(db, owner, ownerId);
-        await db.cursors.update([owner, 'entries'], {initialLoad: counted});
-      });
-      initialLoad = counted;
-    }
-  }
+  let initialLoad = await startInitialLoad(db, reads, owner, ownerId);
   const mark = await junctionsMark(reads);
   await readAfter(
     db,
@@ -440,18 +291,7 @@ async function syncAll(
       pause,
       cursor: (after, done, page) => {
         if (initialLoad !== undefined && !initialLoad.complete) {
-          const pages = initialLoad.pages + (page.data.length > 0 ? 1 : 0);
-          initialLoad = {
-            pages,
-            // Entries may change while loading. Never show 100% with a
-            // next page still to read; finishing fixes the actual total.
-            totalPages: done
-              ? pages
-              : initialLoad.totalPages === null
-                ? null
-                : Math.max(initialLoad.totalPages, pages + 1),
-            complete: done,
-          };
+          initialLoad = advanceInitialLoad(initialLoad, page.data.length, done);
         }
         return {
           owner,
@@ -602,11 +442,13 @@ export function createSyncEngine(
       try {
         return await task();
       } catch (error) {
-        if (error instanceof PublicViewChangedError)
+        if (error instanceof PublicViewChangedError) {
           await clearPublicOwner(db, owner);
+        }
         // Another version is active: hold that one (the rows of this go).
-        if (error instanceof DataVersionChangedError)
+        if (error instanceof DataVersionChangedError) {
           await bindToApi(db, api, owner);
+        }
         throw error;
       }
     };
@@ -623,8 +465,9 @@ export function createSyncEngine(
         if (
           (error instanceof PublicViewChangedError && error.restart) ||
           error instanceof DataVersionChangedError
-        )
+        ) {
           return syncAllToTheEnd();
+        }
         throw error;
       });
   // One flush at a time; one asked for while it runs runs again after it, so
@@ -676,8 +519,9 @@ export function createSyncEngine(
       }
       await flush();
       return exclusive(async () => {
-        if (entryId !== undefined && page === 1)
+        if (entryId !== undefined && page === 1) {
           await refreshEntry(db, writes, owner, entryId);
+        }
         return readReuses(db, writes, owner, entryId, page);
       });
     },

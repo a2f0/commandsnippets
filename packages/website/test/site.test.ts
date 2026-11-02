@@ -11,22 +11,12 @@ import {
   NOINDEX,
   PREVIEW_IMAGE,
   pageUrl,
-  searchable,
   siteOrigin,
 } from '../src/lib/site';
+import {readWrangler} from './support/wrangler';
 
 const root = join(import.meta.dir, '..');
 const PAGES = ['/', ...FOOTER_LINKS.map(link => link.href)];
-// Every published page now has content. Keep placeholder handling covered below.
-const CONTENT = ['/', '/privacy/', '/about/', '/terms/', '/contact/'];
-const PLACEHOLDERS: string[] = [];
-/** The production `_headers` rules for pages kept out of search. */
-const noindexRules = (paths: readonly string[]) =>
-  paths
-    .toSorted()
-    .flatMap(path => [path.slice(0, -1), `${path}*`])
-    .map(pattern => `${pattern}\n  X-Robots-Tag: ${NOINDEX}\n`)
-    .join('');
 
 /** The `content` of a `<meta>` (by name or property) in built HTML. */
 const meta = (html: string, key: string) =>
@@ -49,12 +39,7 @@ describe('appUrl', () => {
   test.each(['staging', 'production'])(
     '%s: the linked app is where OAuth returns',
     mode => {
-      const wrangler = JSON.parse(
-        readFileSync(join(root, '../backend-v2/wrangler.jsonc'), 'utf8')
-          .split('\n')
-          .map(line => line.replace(/^\s*\/\/.*$/, ''))
-          .join('\n')
-      ) as {env: Record<string, {vars: Record<string, string>}>};
+      const wrangler = readWrangler(join(root, '../backend-v2/wrangler.jsonc'));
       const vars = wrangler.env[mode]?.vars ?? {};
       for (const name of ['GITHUB_REDIRECT_URI', 'GOOGLE_REDIRECT_URI']) {
         expect(new URL(vars[name] ?? '').origin).toBe(appUrl(mode));
@@ -66,12 +51,7 @@ describe('appUrl', () => {
 describe('siteOrigin', () => {
   // The URLs search engines are given must be the hosts the Worker serves.
   test.each(['staging', 'production'])('%s is its wrangler route', mode => {
-    const wrangler = JSON.parse(
-      readFileSync(join(root, 'wrangler.jsonc'), 'utf8')
-        .split('\n')
-        .map(line => line.replace(/^\s*\/\/.*$/, ''))
-        .join('\n')
-    ) as {env: Record<string, {routes: Array<{pattern: string}>}>};
+    const wrangler = readWrangler(join(root, 'wrangler.jsonc'));
     const [route] = wrangler.env[mode]?.routes ?? [];
     expect(siteOrigin(mode)).toBe(`https://${route?.pattern}`);
   });
@@ -80,15 +60,6 @@ describe('siteOrigin', () => {
     expect(indexable('production')).toBe(true);
     for (const mode of ['staging', 'development', 'test']) {
       expect(indexable(mode)).toBe(false);
-    }
-  });
-
-  test('only production pages with content are searchable', () => {
-    expect(searchable('production', false)).toBe(true);
-    expect(searchable('production', true)).toBe(false);
-    for (const mode of ['staging', 'development', 'test']) {
-      expect(searchable(mode, false)).toBe(false);
-      expect(searchable(mode, true)).toBe(false);
     }
   });
 });
@@ -103,83 +74,46 @@ describe('builtPage', () => {
     expect(builtPage(name, '').path).toBe(path);
   });
 
-  test('reads the canonical URL and the robots meta', () => {
+  test('reads the canonical URL', () => {
     const indexed =
       '<head><link rel="canonical" href="https://commandsnippets.com/"></head>';
     expect(builtPage('index.html', indexed)).toEqual({
       path: '/',
       canonical: 'https://commandsnippets.com/',
-      robots: undefined,
     });
     const kept = `<head><meta name="robots" content="${NOINDEX}"></head>`;
     expect(builtPage('about/index.html', kept)).toEqual({
       path: '/about/',
       canonical: undefined,
-      robots: NOINDEX,
     });
   });
 });
 
 describe('modeFiles', () => {
-  const content = (path: string): BuiltPage => ({
+  const page = (path: string, canonical?: string): BuiltPage => ({
     path,
-    canonical: pageUrl('production', path),
-    robots: undefined,
-  });
-  const placeholder = (path: string): BuiltPage => ({
-    path,
-    canonical: undefined,
-    robots: NOINDEX,
+    canonical,
   });
   const locs = (files: Record<string, string>) =>
     [...(files['sitemap.xml'] ?? '').matchAll(/<loc>([^<]+)<\/loc>/g)].map(
       match => match[1]
     );
 
-  test('production lists the canonical pages and sends noindex for the rest', () => {
+  test('production lists the canonical pages, sorted, and sends no headers', () => {
     const files = modeFiles('production', [
-      placeholder('/about/'),
-      content('/privacy/'),
-      content('/'),
-      placeholder('/404'),
+      page('/privacy/', pageUrl('production', '/privacy/')),
+      page('/404'),
+      page('/', pageUrl('production', '/')),
     ]);
     expect(locs(files)).toEqual([
       'https://commandsnippets.com/',
       'https://commandsnippets.com/privacy/',
     ]);
-    // A directory page's header also covers its redirecting forms.
-    expect(files._headers).toBe(
-      [
-        `/404\n  X-Robots-Tag: ${NOINDEX}\n`,
-        `/about\n  X-Robots-Tag: ${NOINDEX}\n`,
-        `/about/*\n  X-Robots-Tag: ${NOINDEX}\n`,
-      ].join('')
-    );
+    expect(files._headers).toBeUndefined();
   });
 
-  // Nothing but the page's own markup changes when its copy lands.
-  test('a placeholder that gets its copy joins the sitemap and loses its header', () => {
-    const before = modeFiles('production', [
-      content('/'),
-      placeholder('/about/'),
-    ]);
-    expect(locs(before)).toEqual(['https://commandsnippets.com/']);
-    expect(before._headers).toBe(noindexRules(['/about/']));
-    const after = modeFiles('production', [content('/'), content('/about/')]);
-    expect(locs(after)).toEqual([
-      'https://commandsnippets.com/',
-      'https://commandsnippets.com/about/',
-    ]);
-    expect(after._headers).toBeUndefined();
-  });
-
-  test('the home page cannot be kept out of search', () => {
-    expect(() => modeFiles('production', [placeholder('/')])).toThrow();
-  });
-
-  // Staging's one rule already covers every page; another would repeat it.
   test('staging sends one noindex rule for every file and no sitemap', () => {
-    const files = modeFiles('staging', [content('/'), placeholder('/about/')]);
+    const files = modeFiles('staging', [page('/'), page('/about/')]);
     expect(files).toEqual({
       'robots.txt': 'User-agent: *\nAllow: /\n',
       _headers: `/*\n  X-Robots-Tag: ${NOINDEX}\n`,
@@ -287,9 +221,6 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     for (const link of FOOTER_LINKS) {
       const html = page(link.href);
       expect(html).toContain(`<h1>${link.text}</h1>`);
-      expect(html.includes('This page is coming soon.')).toBe(
-        PLACEHOLDERS.includes(link.href)
-      );
       expect(page('')).toContain(`href="${link.href}"`);
     }
   });
@@ -340,8 +271,6 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
     for (const path of ['/privacy/', '/terms/', '/contact/']) {
       const html = page(path);
       expect(html).toContain('mailto:support@tearleads.com');
-      expect(html).not.toContain('data-placeholder');
-      expect(html).not.toContain('being prepared');
       if (path === '/contact/') continue;
       expect(html).toContain('<time datetime="2026-10-24">');
       const sections = [...html.matchAll(/<h2 id="([^"]+)"/g)].map(
@@ -368,9 +297,7 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       expect(meta(html, 'description')?.length).toBeGreaterThan(50);
       expect(meta(html, 'theme-color')).toBeDefined();
       // A noindexed page names no URL for search engines.
-      const url = searchable(mode, PLACEHOLDERS.includes(path))
-        ? pageUrl(mode, path)
-        : undefined;
+      const url = indexable(mode) ? pageUrl(mode, path) : undefined;
       expect(canonicalOf(html)).toBe(url);
       expect(meta(html, 'og:url')).toBe(url);
       expect(meta(html, 'og:title')).toBe(title);
@@ -392,21 +319,12 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
 
   test(
     mode === 'production'
-      ? 'pages with content may be indexed; placeholders and their headers say noindex'
+      ? 'pages may be indexed and send no headers'
       : 'pages and their headers say noindex',
     () => {
-      expect([...CONTENT, ...PLACEHOLDERS].toSorted()).toEqual(
-        PAGES.toSorted()
-      );
+      const robots = indexable(mode) ? undefined : NOINDEX;
       for (const path of PAGES) {
         const html = page(path);
-        // Placeholder.astro is what keeps a page out of search.
-        expect(html.includes('data-placeholder')).toBe(
-          PLACEHOLDERS.includes(path)
-        );
-        const robots = searchable(mode, PLACEHOLDERS.includes(path))
-          ? undefined
-          : NOINDEX;
         expect(meta(html, 'robots')).toBe(robots);
         expect(html.match(/<meta name="robots"/g)?.length ?? 0).toBe(
           robots === undefined ? 0 : 1
@@ -415,12 +333,8 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
       expect(
         existsSync(file('_headers'))
           ? readFileSync(file('_headers'), 'utf8')
-          : ''
-      ).toBe(
-        mode === 'production'
-          ? noindexRules(PLACEHOLDERS)
-          : `/*\n  X-Robots-Tag: ${NOINDEX}\n`
-      );
+          : undefined
+      ).toBe(robots && `/*\n  X-Robots-Tag: ${robots}\n`);
     }
   );
 
@@ -477,7 +391,7 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
   });
 
   if (mode === 'production') {
-    test('the sitemap lists the pages with content, at their canonical URLs', () => {
+    test('the sitemap lists every page at its canonical URL', () => {
       const sitemap = readFileSync(file('sitemap.xml'), 'utf8');
       const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
         match => match[1]
@@ -489,7 +403,7 @@ describe.each(['staging', 'production'] as const)('the %s build', mode => {
         'https://commandsnippets.com/privacy/',
         'https://commandsnippets.com/terms/',
       ]);
-      for (const path of CONTENT) {
+      for (const path of PAGES) {
         expect(canonicalOf(page(path))).toBe(pageUrl(mode, path));
       }
     });

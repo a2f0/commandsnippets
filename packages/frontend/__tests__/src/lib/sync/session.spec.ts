@@ -10,6 +10,8 @@ import {
   claimData,
   endSyncSession,
   hasQueuedWrites,
+  publicSyncSession,
+  sessionsEndedCount,
   syncSession,
   withDataLock,
 } from '../../../../src/lib/sync/session';
@@ -229,5 +231,26 @@ describe('syncSession', () => {
       after: '1970-01-01T00:00:00,0',
     });
     expect(await again.db.cursors.count()).toBe(1);
+  });
+});
+
+describe('publicSyncSession', () => {
+  it("is not ended by a replaced database's versionchange", async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const first = publicSyncSession('alice');
+    // Another tab deletes the database: the sessions end, the next opens it
+    // anew.
+    first.db.on('versionchange').fire({newVersion: null});
+    const second = publicSyncSession('alice');
+    expect(second).not.toBe(first);
+    const ended = sessionsEndedCount();
+
+    // The first connection, reopened by a read of an ended session, is told
+    // of the next change too: the open one's sessions stand.
+    first.db.on('versionchange').fire({newVersion: null});
+
+    expect(sessionsEndedCount()).toBe(ended);
+    expect(publicSyncSession('alice')).toBe(second);
+    await second.db.delete();
   });
 });

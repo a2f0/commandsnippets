@@ -55,10 +55,10 @@ import {signedInUser} from '../auth/authUtils';
 import {REUSE_PAGE_SIZE} from '../sync/pageSize';
 import {fetchApi} from './apiVersion';
 import {baseHTTPURL, baseURL} from './baseUrl';
-import {firstError} from './errorDocument';
+import {errorOf} from './errorDocument';
 import {ApiRequestError, throwConflict} from './errors';
 import {fetchWithAuth} from './fetchWithAuth';
-import {parseBody, readJson} from './parseResponse';
+import {invalidResponse, parseBody, readJson} from './parseResponse';
 import {urlWithQuery} from './searchParams';
 import {type SyncReads, syncReads} from './syncReads';
 
@@ -208,8 +208,7 @@ class ApiClient {
       ? await fetchWithAuth(url, init)
       : await fetchApi(url, init);
     if (!resp.ok) {
-      const body: unknown = await resp.json().catch(() => undefined);
-      const {code, detail} = firstError(body);
+      const {code, detail} = await errorOf(resp);
       throwConflict(failure, resp.status, code, user);
       throw new ApiRequestError(failure, resp.status, resp.statusText, detail);
     }
@@ -224,7 +223,11 @@ class ApiClient {
     schema: S
   ): Promise<z.output<S>> {
     const resp = await this.request(url, options, failure);
-    return parseBody(schema, await readJson(resp, failure), failure);
+    return parseBody(
+      schema,
+      await readJson(resp, failure),
+      invalidResponse(failure)
+    );
   }
 
   // Authentication methods
@@ -338,7 +341,7 @@ class ApiClient {
     return parseBody(
       emptyObjectSchema,
       await readJson(resp, failure, {}),
-      failure
+      invalidResponse(failure)
     );
   }
 

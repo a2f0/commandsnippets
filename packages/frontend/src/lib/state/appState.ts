@@ -26,7 +26,7 @@ import {
   appMode,
 } from '../shared';
 import {clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH} from '../sidebarWidth';
-import {subscribeRemaps} from '../sync/outbox';
+import {subscribeRemaps} from '../sync/remaps';
 import {endSyncSession} from '../sync/session';
 
 /** What is saved to localStorage. */
@@ -396,6 +396,9 @@ useAppState.subscribe((state, previous) => {
 subscribeRemaps(({from, to}) => {
   const {tagSelectedID, entrySelectedID, mostRecentCopyID} =
     useAppState.getState();
+  if (![tagSelectedID, entrySelectedID, mostRecentCopyID].includes(from)) {
+    return;
+  }
   useAppState.setState({
     ...(tagSelectedID === from ? {tagSelectedID: to} : {}),
     ...(entrySelectedID === from ? {entrySelectedID: to} : {}),

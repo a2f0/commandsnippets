@@ -49,21 +49,29 @@ export function describeIssues(issues: readonly z.core.$ZodIssue[]): string {
 }
 
 /**
- * `body` parsed with `schema`; otherwise InvalidResponseError, whose message
+ * The InvalidResponseError of a body that breaks the contract, whose message
  * starts with `failure` (what the caller was doing).
+ */
+export const invalidResponse =
+  (failure: string) =>
+  (issues: readonly z.core.$ZodIssue[]): InvalidResponseError =>
+    new InvalidResponseError(
+      `${failure}: invalid response (${describeIssues(issues)})`,
+      issues
+    );
+
+/**
+ * `body` parsed with `schema`; otherwise the error `invalid` makes of where
+ * it does not fit (`invalidResponse`, or a client's own).
  */
 export function parseBody<S extends z.ZodMiniType>(
   schema: S,
   body: unknown,
-  failure: string
+  invalid: (issues: readonly z.core.$ZodIssue[]) => Error
 ): z.output<S> {
   const result = schema.safeParse(body);
   if (!result.success) {
-    const {issues} = result.error;
-    throw new InvalidResponseError(
-      `${failure}: invalid response (${describeIssues(issues)})`,
-      issues
-    );
+    throw invalid(result.error.issues);
   }
   return result.data;
 }

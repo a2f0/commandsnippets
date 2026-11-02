@@ -13,7 +13,7 @@ import {
 import {join, sep} from 'node:path';
 
 // `astro dev` serves files only from this package, the workspace's package
-// store and the brand sources (astro.config.mjs): never the rest of the
+// store and the brand sources (astro.config.ts): never the rest of the
 // workspace, which holds other packages' secrets (backend-v2's .dev.vars).
 const root = join(import.meta.dir, '..');
 const repo = join(root, '..', '..');

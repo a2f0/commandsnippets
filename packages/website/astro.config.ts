@@ -1,5 +1,6 @@
 import {readdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import type {AstroIntegration} from 'astro';
 import {defineConfig} from 'astro/config';
 import {builtPage, modeFiles} from './src/lib/site';
 
@@ -10,8 +11,8 @@ import {builtPage, modeFiles} from './src/lib/site';
  * Integration hooks are not told the mode, so a Vite plugin records the
  * resolved one.
  */
-function modeFilesIntegration() {
-  let mode;
+function modeFilesIntegration(): AstroIntegration {
+  let mode: string | undefined;
   return {
     name: 'commandsnippets:mode-files',
     hooks: {
@@ -33,7 +34,10 @@ function modeFilesIntegration() {
         if (mode === undefined) {
           throw new Error('The build mode was not recorded.');
         }
-        const pages = readdirSync(fileURLToPath(dir), {recursive: true})
+        const pages = readdirSync(fileURLToPath(dir), {
+          encoding: 'utf8',
+          recursive: true,
+        })
           .filter(file => file.endsWith('.html'))
           .map(file =>
             builtPage(file, readFileSync(new URL(file, dir), 'utf8'))
