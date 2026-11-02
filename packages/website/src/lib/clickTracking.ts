@@ -1,4 +1,5 @@
 import {createTracker, type TrackerOptions} from '@a2f0/ct-client';
+import {siteOrigin} from './site';
 
 const pages = new Set(['/', '/about/', '/contact/', '/privacy/', '/terms/']);
 
@@ -9,11 +10,7 @@ export function trackingOptions(
 ): TrackerOptions | undefined {
   if (!productionBuild) return;
   if (mode !== 'production' && mode !== 'staging') return;
-  const origin =
-    mode === 'production'
-      ? 'https://commandsnippets.com'
-      : 'https://website-staging.commandsnippets.com';
-  if (location.origin !== origin) return;
+  if (location.origin !== siteOrigin(mode)) return;
   return {
     site: 'commandsnippets',
     app: 'website',

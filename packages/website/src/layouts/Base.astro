@@ -9,27 +9,18 @@ import {
   pageUrl,
   SITE_DESCRIPTION,
   SITE_NAME,
-  searchable,
+  indexable,
 } from '../lib/site';
 
 interface Props {
   title: string;
   description?: string;
-  /**
-   * The page has no content yet (`Placeholder.astro`), so it stays out of
-   * search on every tier until it does (`searchable` in `../lib/site`).
-   */
-  placeholder?: boolean;
 }
 
-const {
-  title,
-  description = SITE_DESCRIPTION,
-  placeholder = false,
-} = Astro.props;
+const {title, description = SITE_DESCRIPTION} = Astro.props;
 const mode = import.meta.env.MODE;
 const app = appUrl(mode);
-const mayIndex = searchable(mode, placeholder);
+const mayIndex = indexable(mode);
 // Built pages are directories (`/privacy/`), the form the assets are served at.
 // Pages that may not be indexed name no URL for search engines to follow.
 const canonical = mayIndex ? pageUrl(mode, Astro.url.pathname) : undefined;

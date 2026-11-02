@@ -44,21 +44,19 @@ its description and Open Graph tags, including the preview image at the
 build's own host (`og:image`, shown as Twitter's large card). Production pages
 with content also name their canonical URL (and `og:url`), and the home page
 has JSON-LD; staging pages name no page URL. The build writes the files that
-differ by mode (`astro.config.mjs`): production gets `robots.txt` naming
+differ by mode (`astro.config.ts`): production gets `robots.txt` naming
 `sitemap.xml`, which lists the canonical URL of every built page that names
 one; staging gets a `robots.txt` without a sitemap (crawling stays allowed,
 so crawlers see the noindex), a robots `noindex` meta on every page, and a
 `_headers` that sends `X-Robots-Tag: noindex, nofollow` with every file. The
 Worker's own responses get that header from staging's `X_ROBOTS_TAG` var.
 
-All current pages have content and may be indexed in production, including
+All pages may be indexed in production, including
 privacy, terms and contact. The legal pages share `src/layouts/Legal.astro`
 for their individual revision dates and section navigation. Keep their disclosures in
 sync with authentication, storage, sharing, deletion and analytics behavior;
 update their date when policy content changes. `test/site.test.ts` checks
-published page metadata, section links and the sitemap. Any future placeholder
-can use `Placeholder.astro`, which passes `placeholder` to `Base.astro` to stay
-out of search until published.
+published page metadata, section links and the sitemap.
 
 ## Old app links
 
