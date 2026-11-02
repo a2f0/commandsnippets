@@ -11,8 +11,8 @@ import {PublicViewChangedError} from '../sync/publicView';
 import type {SyncApi} from '../sync/sync';
 import {fetchApi} from './apiVersion';
 import {baseURL} from './baseUrl';
-import {firstError} from './errorDocument';
-import {parseBody, readJson} from './parseResponse';
+import {errorOf} from './errorDocument';
+import {invalidResponse, parseBody, readJson} from './parseResponse';
 import {urlWithQuery} from './searchParams';
 import {syncReads} from './syncReads';
 
@@ -40,19 +40,22 @@ export function publicSyncApi(username: string): SyncApi {
       },
     });
     if (!response.ok) {
-      if (response.status === 404) throw new PublicViewChangedError(false);
-      if (response.status === 409) {
-        // A body that is not JSON (a proxy's page, say) is no view change.
-        const body: unknown = await response.json().catch(() => undefined);
-        if (firstError(body).code === CODES.viewChanged)
-          throw new PublicViewChangedError();
+      if (response.status === 404) {
+        throw new PublicViewChangedError(false);
+      }
+      // A body that is not JSON (a proxy's page, say) is no view change.
+      if (
+        response.status === 409 &&
+        (await errorOf(response)).code === CODES.viewChanged
+      ) {
+        throw new PublicViewChangedError();
       }
       throw new Error(`Public data request failed: ${response.status}`);
     }
     return parseBody(
       schema,
       await readJson(response, 'Read public data'),
-      'Read public data'
+      invalidResponse('Read public data')
     );
   }
   return {

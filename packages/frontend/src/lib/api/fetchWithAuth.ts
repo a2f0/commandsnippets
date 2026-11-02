@@ -1,7 +1,7 @@
 import {CODES} from '@commandsnippets/api-shared/messages';
 import {handleUnauthorized, signedInUser} from '../auth/authUtils';
 import {fetchApi} from './apiVersion';
-import {firstError} from './errorDocument';
+import {errorOf} from './errorDocument';
 
 /**
  * The 403 error codes that mean the session is gone: `not_authenticated`
@@ -15,16 +15,6 @@ const signedOutCodes: ReadonlySet<string> = new Set([
   CODES.notAuthenticated,
   CODES.authenticationFailed,
 ]);
-
-/**
- * The `code` of the first error in a JSON:API error document
- * (`{errors: [{status, code, detail, ...}]}`), or undefined when the body is
- * not one or its first error has no string code (`firstError`).
- */
-async function firstErrorCode(response: Response): Promise<string | undefined> {
-  const body: unknown = await response.json().catch(() => undefined);
-  return firstError(body).code;
-}
 
 /**
  * Whether a response means the session is gone. The code is read from a
@@ -44,7 +34,7 @@ async function meansSignedOut(response: Response): Promise<boolean> {
   }
   return isSignedOutResponse(
     response.status,
-    await firstErrorCode(response.clone())
+    (await errorOf(response.clone())).code
   );
 }
 

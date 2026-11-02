@@ -59,7 +59,7 @@ export function checkOwner(
 }
 
 /** The keys (`rowKey`) of `owner`'s `resources` that writes are queued for. */
-export async function queuedFor(
+async function queuedFor(
   db: CommandsnippetsDatabase,
   owner: string,
   resources: ReadonlyArray<{type: string; id: string}>

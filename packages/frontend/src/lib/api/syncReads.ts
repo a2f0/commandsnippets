@@ -25,7 +25,7 @@ import type {SyncApi} from '../sync/sync';
  * query `params`, returning the body parsed with `schema`. `failure` is what
  * a failed read says it was doing, for a client whose errors say so.
  */
-export type SyncRead = <S extends z.ZodMiniType>(
+type SyncRead = <S extends z.ZodMiniType>(
   path: string,
   params: TagListParams | TextEntryListParams | TagTextEntryListParams,
   schema: S,

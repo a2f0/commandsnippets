@@ -3,9 +3,8 @@
 import {MSW_CONFIG} from './config';
 
 /**
- * Performs a health check to verify MSW is working correctly
- * @returns Promise that resolves when health check passes
- * @throws Error if health check fails
+ * Checks that MSW answers its health endpoint, and logs the outcome: a failed
+ * check is logged as an error, but never thrown, so the app still starts.
  */
 export async function healthCheck(): Promise<void> {
   try {
@@ -19,6 +18,5 @@ export async function healthCheck(): Promise<void> {
     console.log('OK: MSW health check successful:', data);
   } catch (error) {
     console.error('ERROR: MSW health check failed:', error);
-    throw error;
   }
 }

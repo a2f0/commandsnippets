@@ -47,11 +47,11 @@ import {handleUnauthorized, signedInUser} from '../auth/authUtils';
 import type {SyncApi} from '../sync/sync';
 import {fetchApi} from './apiVersion';
 import {baseURL} from './baseUrl';
-import {firstError} from './errorDocument';
+import {errorOf} from './errorDocument';
 import {throwConflict} from './errors';
 import {isSignedOutResponse} from './fetchWithAuth';
-import {describeIssues} from './parseResponse';
-import {toSearchParams} from './searchParams';
+import {describeIssues, parseBody} from './parseResponse';
+import {urlWithQuery} from './searchParams';
 import {syncReads} from './syncReads';
 
 export type {AdminUserSortField};
@@ -128,19 +128,11 @@ export class AdminApiError extends Error {
 }
 
 /**
- * An OK response's body parsed with its endpoint's document schema, or
- * AdminApiError (status 0) saying where it does not fit.
+ * An OK response whose body does not fit its endpoint's document schema:
+ * AdminApiError (status 0) saying where (`parseBody`).
  */
-function parse<S extends z.ZodMiniType>(schema: S, body: unknown): z.output<S> {
-  const result = schema.safeParse(body);
-  if (!result.success) {
-    throw new AdminApiError(
-      0,
-      `Invalid admin API response: ${describeIssues(result.error.issues)}`
-    );
-  }
-  return result.data;
-}
+const invalidAdminResponse = (issues: readonly z.core.$ZodIssue[]) =>
+  new AdminApiError(0, `Invalid admin API response: ${describeIssues(issues)}`);
 
 function toUser({id, attributes}: AdminUserResource): AdminUser {
   return {
@@ -184,8 +176,10 @@ function toPage<R, T>(
   return {items: data.map(toItem), page, pages, count};
 }
 
+const ADMIN_URL = `${baseURL}/admin`;
+
 async function adminFetch(
-  path: string,
+  url: string,
   init: RequestInit = {},
   /** The data version a read of a user's data is of (`DATA_VERSION_HEADER`). */
   version?: number
@@ -193,7 +187,7 @@ async function adminFetch(
   const user = signedInUser();
   // A write names the signed-in user, as every write does (`apiClient`).
   const named = (init.method ?? 'GET') !== 'GET' ? user : null;
-  const response = await fetchApi(`${baseURL}/admin${path}`, {
+  const response = await fetchApi(url, {
     ...init,
     credentials: 'include',
     headers: {
@@ -206,11 +200,10 @@ async function adminFetch(
         : {[DATA_VERSION_HEADER]: String(version)}),
     },
   });
-  const body: unknown = await response.json().catch(() => null);
   if (response.ok) {
-    return body;
+    return response.json().catch(() => null);
   }
-  const {code, detail} = firstError(body);
+  const {code, detail} = await errorOf(response);
   throwConflict('Admin request failed', response.status, code, named);
   if (response.status === 403 && code === CODES.permissionDenied) {
     throw new AdminForbiddenError();
@@ -240,7 +233,8 @@ export async function getStaffStatus(): Promise<boolean> {
     throw new AdminApiError(response.status, response.statusText);
   }
   const body: unknown = await response.json().catch(() => null);
-  return parse(userDocumentSchema, body).data.attributes.is_staff;
+  return parseBody(userDocumentSchema, body, invalidAdminResponse).data
+    .attributes.is_staff;
 }
 
 export async function listUsers(
@@ -258,8 +252,14 @@ export async function listUsers(
       : {'filter[is_active]': query.status === 'active'}),
   };
   const init: RequestInit = signal === undefined ? {} : {signal};
-  const body = await adminFetch(`/users?${toSearchParams(params)}`, init);
-  return toPage(parse(adminUserListDocumentSchema, body), toUser);
+  const body = await adminFetch(
+    urlWithQuery(`${ADMIN_URL}/users`, params),
+    init
+  );
+  return toPage(
+    parseBody(adminUserListDocumentSchema, body, invalidAdminResponse),
+    toUser
+  );
 }
 
 async function updateUser(
@@ -269,11 +269,16 @@ async function updateUser(
   const document: AdminUserUpdateDocument = {
     data: {type: 'AdminUser', id, attributes},
   };
-  const body = await adminFetch(`/users/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(document),
-  });
-  return toUser(parse(adminUserDocumentSchema, body).data);
+  const body = await adminFetch(
+    `${ADMIN_URL}/users/${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(document),
+    }
+  );
+  return toUser(
+    parseBody(adminUserDocumentSchema, body, invalidAdminResponse).data
+  );
 }
 
 /** Deactivating an account also ends all of its sessions. */
@@ -296,10 +301,14 @@ export function setUserMarkedForDeletion(
 }
 
 /** The user named exactly `username`; AdminApiError 404 when there is none. */
-export async function findUser(username: string): Promise<AdminUser> {
+async function findUser(username: string): Promise<AdminUser> {
   const params: AdminUserListParams = {'filter[username]': username};
-  const body = await adminFetch(`/users?${toSearchParams(params)}`);
-  const [user] = parse(adminUserListDocumentSchema, body).data;
+  const body = await adminFetch(urlWithQuery(`${ADMIN_URL}/users`, params));
+  const [user] = parseBody(
+    adminUserListDocumentSchema,
+    body,
+    invalidAdminResponse
+  ).data;
   if (user === undefined) {
     throw new AdminApiError(404, `No user named ${username}.`);
   }
@@ -316,7 +325,7 @@ export function adminSyncApi(username: string, version?: number): SyncApi {
   let id: string | null = null;
   const base = async () => {
     id ??= (await findUser(username)).id;
-    return `/users/${encodeURIComponent(id)}`;
+    return `${ADMIN_URL}/users/${encodeURIComponent(id)}`;
   };
   return {
     getOwner: async () => {
@@ -330,13 +339,14 @@ export function adminSyncApi(username: string, version?: number): SyncApi {
     },
     atVersion: dataVersion => adminSyncApi(username, dataVersion),
     ...syncReads(async (path, params, schema) =>
-      parse(
+      parseBody(
         schema,
         await adminFetch(
-          `${await base()}${path}?${toSearchParams(params)}`,
+          urlWithQuery(`${await base()}${path}`, params),
           {},
           version
-        )
+        ),
+        invalidAdminResponse
       )
     ),
   };
@@ -352,6 +362,12 @@ export async function listAuditLog(
     'page[size]': pageSize,
   };
   const init: RequestInit = signal === undefined ? {} : {signal};
-  const body = await adminFetch(`/audit_log?${toSearchParams(params)}`, init);
-  return toPage(parse(adminAuditLogListDocumentSchema, body), toAuditEntry);
+  const body = await adminFetch(
+    urlWithQuery(`${ADMIN_URL}/audit_log`, params),
+    init
+  );
+  return toPage(
+    parseBody(adminAuditLogListDocumentSchema, body, invalidAdminResponse),
+    toAuditEntry
+  );
 }
