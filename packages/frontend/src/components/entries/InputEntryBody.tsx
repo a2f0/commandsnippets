@@ -6,7 +6,7 @@ import {activeEntryEditField} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import type {Theme} from '../../theme/themes';
 
-export interface StyledTextAreaIProps {
+interface StyledTextAreaIProps {
   theme: Theme;
   ref: React.Ref<HTMLTextAreaElement>;
 }
@@ -35,7 +35,7 @@ const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
   }
 `;
 
-export interface IProps {
+interface IProps {
   handleChangeParent: (value: string) => void;
   placeholder: string;
   valueParent: string;

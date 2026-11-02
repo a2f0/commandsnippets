@@ -1,6 +1,4 @@
-import type {I18NextTranslations} from './types';
-
-export const en: I18NextTranslations = {
+export const en = {
   analytics: {
     title: 'Analytics',
     description: 'A little perspective on the snippets you collect and use.',
@@ -84,6 +82,8 @@ export const en: I18NextTranslations = {
     privacyPolicy: 'Privacy Policy',
     termsOfService: 'Terms of Service',
     serviceOperator: 'Command Snippets is operated by Tearleads, LLC.',
+    makePublic: 'Make public',
+    makePrivate: 'Make private',
   },
   menu: {
     file: 'File',
@@ -224,6 +224,7 @@ export const en: I18NextTranslations = {
   tags: {
     createTag: 'Create Tag',
     deleteTag: 'Delete Tag',
+    editTag: 'Edit Tag',
     confirmDeleteTag: 'Are you sure you want to delete this tag?',
     tagCount_one: '{{count}} tag',
     tagCount_other: '{{count}} tags',
@@ -236,6 +237,10 @@ export const en: I18NextTranslations = {
     retryEntryLoad: 'Retry',
     createEntry: 'Create Entry',
     deleteEntry: 'Delete Entry',
+    copyEntry: 'Copy',
+    getInfo: 'Get Info',
+    editEntry: 'Edit',
+    untagEntry: 'Untag',
     entryCount_one: '{{count}} entry',
     entryCount_other: '{{count}} entries',
     reusedCount_one: 'Reused {{count}} time',
@@ -350,4 +355,4 @@ export const en: I18NextTranslations = {
     rowsPerPage: 'Rows per page',
     displayedRows: '{{from}}–{{to}} of {{count}}',
   },
-} as const satisfies I18NextTranslations;
+};

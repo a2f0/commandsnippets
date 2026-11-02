@@ -226,8 +226,9 @@ API; everything else the app keeps is a zustand store.
   across all entries. Guests and other users (staff included) are redirected
   without reading it. `SyncEngine.entryReuses()` omits the entry filter and
   requests `include=text_entry` so each page has its entry names, independent
-  of the collection sync. `ReuseHistory` fetches 50 rows at a time, loading
-  the next page within 400px of the bottom of the history. It keeps Show more
+  of the collection sync. `ReuseHistory` (reading with
+  `entries/useReuseHistory`) fetches 50 rows at a time, loading the next
+  page within 400px of the bottom of the history. It keeps Show more
   for keyboard access and browsers without IntersectionObserver, and
   deduplicates rows if concurrent copies shift numbered pages. Only one read
   runs at a time. A failed page pauses automatic loading and offers Retry
@@ -379,7 +380,8 @@ clear is not recorded when it ends.
   itself). Staging builds alias `react-dom/client` to `react-dom/profiling`
   (`vite.config.ts`), since Profilers do nothing in React's production build.
 - **Interactions**: a tag click (or Enter in the tag list, or All/Untagged
-  Entries) calls `beginInteraction`; `EntryList` calls `listShown` once it
+  Entries) calls `beginInteraction`; `EntryList` calls `listShown`
+  (`useShownEntries`) once it
   renders the list asked for with its own rows (the list hooks name what
   their rows are of: a live query answers with the last rows until it reads
   the next), and the interaction ends at the next paint, unless another has begun or another
@@ -470,7 +472,7 @@ writing its type by hand.
   and `AnalyticsPage.tsx` (`/:user/activity/...`), `AdminPage.tsx`
   (`/admin`) and `SignInPage.tsx` (`/` when signed out). `Routes.tsx` loads
   the admin and analytics pages with `React.lazy` (most visitors never open
-  them), as `BottomBar` does the HUD's Analytics tab.
+  them), as `HudMenu` does the HUD's Analytics tab.
 - **Components**: `src/components/<feature>/`: `entries/` and `tags/` (the
   lists, their context menus and styled fields, and the editors:
   `EntryNew`/`EntryEdit` render `EntryForm`, `TagNew`/`TagEdit` render
@@ -480,19 +482,29 @@ writing its type by hand.
   types, and the rows' and lists' shared drag and drop: `useSortableRow`,
   `useDraggedRows`) and `errorBoundary/`. Components shared by several
   features (`AppHeader`, `ContextMenu`, `DetailPage`, `LanguageSwitcher`,
-  `UserProfileCircle`) sit at the root of `src/components/`.
-- **Menu bar**: `src/menu/MenuBar.tsx`; each menu is in `src/menu/<name>/`
-  (most with their items in `menuItems/`). The Tags and Entries menus list
-  their sorts as data rendered by `src/menu/SortMenuItem.tsx`.
+  `SimpleDialog`, `UserProfileCircle`) sit at the root of `src/components/`.
+  `admin/useAdminList` loads a page of an admin list (users, audit log).
+- **Menu bar**: `src/menu/MenuBar.tsx` renders its buttons from a table
+  (`MENUS`: each menu's button and drop-down ids) with `MenuBarButton`, and
+  keeps which one is open; each menu is in `src/menu/<name>/` (most with
+  their items in `menuItems/`). The Tags and Entries menus list their sorts
+  as data rendered by `src/menu/SortMenuItem.tsx`; `DialogMenuItem` is an
+  item that opens a dialog (Help > About, Debug > Feature Flags).
   `src/menu/StyledMenu.tsx` and `StyledMenuItem.tsx` are the menus' shared
   drop-down and item (the context menus use the item too)
 - **Hooks**: `src/hooks/`, among them `useContextMenu` (where a context menu
   was opened, for `ContextMenu`), `useEditFieldCycle` (Tab through an
-  editor's fields) and `useErrorStore` (the errors the error boundary caught,
-  which the HUD's Logs tab lists; `recordError` is the boundary's `onError`)
+  editor's fields), `useDocumentKeydown` (a keydown listener on the page,
+  calling the latest render's handler), `useListKeyboard` (the arrow keys
+  and Enter in the tag and entry lists, in their app mode, leaving a key
+  another listener handled) and `useErrorStore` (the errors the error
+  boundary caught, which the HUD's Logs tab lists; `recordError` is the
+  boundary's `onError`)
 - **Shared styling**: `src/styled/` holds small styled components used across
   features; `src/theme/` the MUI themes, the theme provider, the global
-  styles and the shared `sx` objects (`sx.ts`). The app is grayscale: the
+  styles and the shared `sx` objects (`sx.ts`). Outlined buttons take their
+  grays from the themes (`MuiButton`'s `outlined` override), whatever their
+  `color`: give them no `sx` for it. The app is grayscale: the
   themes make every palette color gray (primary, secondary and the status
   colors), and `__tests__/src/theme/themes.spec.ts` fails on a color with a
   hue in the themes or hard-coded in `src/`, `public/`, `index.html`, the
@@ -548,11 +560,14 @@ per-row work multiplies (the HUD's Analytics tab times it).
   in state, set again by an effect, which renders every row a second time
   after it mounts.
 - A list's callbacks for its rows stay the same across renders: what they
-  need of the list they read through a ref (`TagList`'s `choosingWith`), not
-  a new closure. A live query reads every row afresh after any write, so the
+  need of the list they read through a ref (`TagList`'s `useHighlightedTag`),
+  not a new closure. A live query reads every row afresh after any write, so the
   entry list keeps the object of each row the read left unchanged
   (`keepUnchanged`, `entries/unchangedRows.ts`), and only the rows a write
   changed render again.
+- `EntryList` reads its rows with `entries/useShownEntries`, renders each
+  with `EntryRow`, and from `VIRTUALIZE_FROM` rows only those in view
+  (`entries/useVirtualRows`).
 - What a row needs of its data comes from its props (the tag's
   `is_public`), not a live query of its own: one query per row is one
   IndexedDB transaction per row.

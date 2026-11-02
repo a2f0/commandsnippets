@@ -1,10 +1,11 @@
 import React from 'react';
+import {useTypedTranslation} from '../../i18n/hooks';
 import {appMode, type IMouse} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 import {ContextMenu} from '../ContextMenu';
 
-export interface IEntryListContextMenu {
+interface IEntryListContextMenu {
   /**
    * Where the menu was opened (a right click below the entries), or nowhere
    * (null coordinates): closed.
@@ -15,6 +16,7 @@ export interface IEntryListContextMenu {
 }
 
 const EntryListContextMenu = ({mouse, onClose}: IEntryListContextMenu) => {
+  const {t} = useTypedTranslation('menu');
   const appConfig = useAppConfig();
 
   const handleNewEntry = (event: React.MouseEvent<HTMLLIElement>) => {
@@ -36,7 +38,7 @@ const EntryListContextMenu = ({mouse, onClose}: IEntryListContextMenu) => {
         id="entryListContextMenuNewEntry"
         onClick={handleNewEntry}
       >
-        New Entry
+        {t('newEntry')}
       </StyledMenuItem>
     </ContextMenu>
   );

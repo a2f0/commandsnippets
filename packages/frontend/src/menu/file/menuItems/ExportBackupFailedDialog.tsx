@@ -1,14 +1,7 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from '@mui/material';
+import {Button} from '@mui/material';
 import React from 'react';
+import {SimpleDialog} from '../../../components/SimpleDialog';
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {commonButtonSx} from '../../../theme/sx';
 
 interface IProps {
   open: boolean;
@@ -21,33 +14,23 @@ const ExportBackupFailedDialog = ({open, onClose}: IProps) => {
   const {t: tCommon} = useTypedTranslation('common');
 
   return (
-    <Dialog
+    <SimpleDialog
       id="exportBackupFailed"
       open={open}
       onClose={onClose}
-      aria-labelledby="exportBackupFailedTitle"
-      aria-describedby="exportBackupFailedText"
-    >
-      <DialogTitle id="exportBackupFailedTitle">
-        {t('exportBackupFailedTitle')}
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText id="exportBackupFailedText">
-          {t('exportBackupFailed')}
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
+      title={t('exportBackupFailedTitle')}
+      text={t('exportBackupFailed')}
+      actions={
         <Button
           id="exportBackupFailedDismiss"
           variant="outlined"
           onClick={onClose}
           autoFocus
-          sx={commonButtonSx}
         >
           {tCommon('dismiss')}
         </Button>
-      </DialogActions>
-    </Dialog>
+      }
+    />
   );
 };
 

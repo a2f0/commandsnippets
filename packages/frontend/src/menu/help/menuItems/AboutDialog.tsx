@@ -20,6 +20,7 @@ interface IProps {
 
 const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
   const {t} = useTypedTranslation('menu');
+  const {t: tCommon} = useTypedTranslation('common');
   // The version the API's latest answer named: it follows a deploy.
   const apiVersion = useApiVersion(state => state.version);
 
@@ -59,15 +60,8 @@ const AboutDialog = ({dialogOpen, closeDialog}: IProps) => {
           variant="outlined"
           onClick={closeDialog}
           autoFocus
-          sx={{
-            color: theme => theme.palette.text.primary,
-            borderColor: theme => theme.palette.text.secondary,
-            '&:hover': {
-              borderColor: theme => theme.palette.text.primary,
-            },
-          }}
         >
-          Dismiss
+          {tCommon('dismiss')}
         </Button>
       </DialogActions>
     </Dialog>

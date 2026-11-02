@@ -1,7 +1,9 @@
 import React from 'react';
 
+import {useTypedTranslation} from '../../i18n/hooks';
+import {DialogMenuItem} from '../DialogMenuItem';
 import {StyledMenu} from '../StyledMenu';
-import {FeatureFlags} from './menuItems/FeatureFlags';
+import {FeatureFlagsDialog} from './menuItems/FeatureFlagsDialog';
 import {SyncIndexedDB} from './menuItems/SyncIndexedDB';
 import {TriggerTestError} from './menuItems/TriggerTestError';
 
@@ -10,18 +12,27 @@ interface IProps {
   anchorEl: HTMLElement | null;
 }
 
-const DebugMenu = ({onClose, anchorEl}: IProps) => (
-  <StyledMenu
-    id="debug-menu"
-    anchorEl={anchorEl}
-    open={Boolean(anchorEl)}
-    onClose={onClose}
-  >
-    <FeatureFlags onClose={onClose} />
-    <SyncIndexedDB onClose={onClose} />
-    <TriggerTestError onClose={onClose} />
-  </StyledMenu>
-);
+const DebugMenu = ({onClose, anchorEl}: IProps) => {
+  const {t} = useTypedTranslation('menu');
+  return (
+    <StyledMenu
+      id="debug-menu"
+      anchorEl={anchorEl}
+      open={Boolean(anchorEl)}
+      onClose={onClose}
+    >
+      {/* Override the feature flags on this device. */}
+      <DialogMenuItem
+        id="debug-menu-feature-flags"
+        label={t('featureFlags')}
+        onClose={onClose}
+        Dialog={FeatureFlagsDialog}
+      />
+      <SyncIndexedDB onClose={onClose} />
+      <TriggerTestError onClose={onClose} />
+    </StyledMenu>
+  );
+};
 
 const memoizedDebugMenu = React.memo(DebugMenu);
 

@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
+import {useDocumentKeydown} from '../../hooks/useDocumentKeydown';
 import {activeSearch, appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
@@ -8,13 +9,13 @@ const TagSearchField = () => {
   const appConfig = useAppConfig();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const escFunction = useCallback((event: KeyboardEvent) => {
+  useDocumentKeydown(event => {
     if (event.code === 'Escape') {
       appConfig.setAppMode(appMode.tagsList);
       inputRef.current?.focus();
       handleClear();
     }
-  }, []);
+  });
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTagSearch(event.currentTarget.value);
@@ -22,10 +23,8 @@ const TagSearchField = () => {
   };
 
   useEffect(() => {
-    document.addEventListener('keydown', escFunction, false);
     document.addEventListener('visibilitychange', useVisibility, false);
     return () => {
-      document.removeEventListener('keydown', escFunction, false);
       document.removeEventListener('visibilitychange', useVisibility, false);
     };
   }, []);

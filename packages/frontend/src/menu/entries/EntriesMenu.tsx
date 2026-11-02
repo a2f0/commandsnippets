@@ -1,8 +1,8 @@
+import {Divider} from '@mui/material';
 import React from 'react';
 
 import {useEntrySortOrder} from '../../hooks/useEntrySortOrder';
 import {useSearchParam} from '../../lib/router/navigation';
-import {StyledDivider} from '../../styled/StyledDivider';
 import {
   type ISort,
   type ISorting,
@@ -10,8 +10,7 @@ import {
   sortMenuItems,
 } from '../SortMenuItem';
 import {StyledMenu} from '../StyledMenu';
-import {AllEntries} from './menuItems/AllEntries';
-import {UntaggedEntries} from './menuItems/UntaggedEntries';
+import {EntriesFilterMenuItem} from './menuItems/EntriesFilterMenuItem';
 
 interface IProps {
   onClose: () => void;
@@ -49,9 +48,9 @@ const EntriesMenu = ({onClose, anchorEl}: IProps) => {
       open={Boolean(anchorEl)}
       onClose={onClose}
     >
-      <AllEntries onClose={onClose} />
-      <UntaggedEntries onClose={onClose} />
-      <StyledDivider />
+      <EntriesFilterMenuItem filter="all" onClose={onClose} />
+      <EntriesFilterMenuItem filter="untagged" onClose={onClose} />
+      <Divider />
       {tagList && [
         <SortMenuItem
           key="order"

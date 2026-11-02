@@ -19,13 +19,12 @@ type Access = 'checking' | 'staff' | 'forbidden' | 'error';
 type AdminTab = 'users' | 'auditLog';
 
 /**
- * `/admin`, for staff. Access is checked against the API on every visit (the
- * stored flag can be stale), and the admin API checks it again on each call.
+ * Whether the signed-in user is staff, checked against the API on every
+ * visit (the stored flag can be stale); the admin API checks it again on
+ * each call, and `forbid` takes its word that they are not.
  */
-const AdminPage = () => {
+function useStaffAccess() {
   const appConfig = useAppConfig();
-  const {t} = useTypedTranslation('admin');
-  const {t: tCommon} = useTypedTranslation('common');
   // Each user's access is their own: checked again for another user (this
   // tab may take up another tab's sign-in), and until then nothing of the
   // last user's is shown.
@@ -33,7 +32,6 @@ const AdminPage = () => {
     user: string | null;
     access: Access;
   }>({user: null, access: 'checking'});
-  const [tab, setTab] = useState<AdminTab>('users');
   const {loggedInUser} = appConfig;
   const access = checked.user === loggedInUser ? checked.access : 'checking';
 
@@ -81,6 +79,52 @@ const AdminPage = () => {
     setChecked({user: appConfig.loggedInUser, access: 'forbidden'});
   }, [appConfig]);
 
+  return {access, loggedInUser, checkAccess, forbid};
+}
+
+/** The users and the audit log, a tab each. */
+const AdminTabs = ({
+  tab,
+  setTab,
+  loggedInUser,
+  forbid,
+}: {
+  tab: AdminTab;
+  setTab: (tab: AdminTab) => void;
+  loggedInUser: string | null;
+  forbid: () => void;
+}) => {
+  const {t} = useTypedTranslation('admin');
+  return (
+    <>
+      <Tabs
+        value={tab}
+        onChange={(_event, value: AdminTab) => setTab(value)}
+        sx={{mb: 2}}
+      >
+        <Tab id="adminUsersTab" value="users" label={t('usersTab')} />
+        <Tab id="adminAuditLogTab" value="auditLog" label={t('auditLogTab')} />
+      </Tabs>
+      {tab === 'users' ? (
+        <AdminUsers
+          key={loggedInUser}
+          currentUsername={loggedInUser}
+          onForbidden={forbid}
+        />
+      ) : (
+        <AdminAuditLog key={loggedInUser} onForbidden={forbid} />
+      )}
+    </>
+  );
+};
+
+/** `/admin`, for staff. */
+const AdminPage = () => {
+  const {t} = useTypedTranslation('admin');
+  const {t: tCommon} = useTypedTranslation('common');
+  const {access, loggedInUser, checkAccess, forbid} = useStaffAccess();
+  const [tab, setTab] = useState<AdminTab>('users');
+
   return (
     <Box sx={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>
       <AppHeader entriesPage={false} />
@@ -117,29 +161,12 @@ const AdminPage = () => {
           </Alert>
         )}
         {access === 'staff' && (
-          <>
-            <Tabs
-              value={tab}
-              onChange={(_event, value: AdminTab) => setTab(value)}
-              sx={{mb: 2}}
-            >
-              <Tab id="adminUsersTab" value="users" label={t('usersTab')} />
-              <Tab
-                id="adminAuditLogTab"
-                value="auditLog"
-                label={t('auditLogTab')}
-              />
-            </Tabs>
-            {tab === 'users' ? (
-              <AdminUsers
-                key={loggedInUser}
-                currentUsername={loggedInUser}
-                onForbidden={forbid}
-              />
-            ) : (
-              <AdminAuditLog key={loggedInUser} onForbidden={forbid} />
-            )}
-          </>
+          <AdminTabs
+            tab={tab}
+            setTab={setTab}
+            loggedInUser={loggedInUser}
+            forbid={forbid}
+          />
         )}
       </Box>
     </Box>

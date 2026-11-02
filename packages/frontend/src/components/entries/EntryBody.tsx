@@ -5,7 +5,7 @@ import Highlighter from 'react-highlight-words';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useAppConfig} from '../../lib/state/appState';
 
-export interface IProps {
+interface IProps {
   handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   object: ITextEntryJsonApi;
   /**

@@ -2,7 +2,7 @@ import type React from 'react';
 import {useCallback, useState} from 'react';
 import {type IMouse, initialMouse} from '../lib/shared';
 
-export interface ContextMenuState {
+interface ContextMenuState {
   /** Where the menu is open (`ContextMenu`'s `mouse`), or `initialMouse`. */
   mouse: IMouse;
   /**

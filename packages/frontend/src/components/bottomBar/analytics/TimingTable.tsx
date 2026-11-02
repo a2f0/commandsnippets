@@ -5,7 +5,7 @@ import {formatMs, useKindLabels} from './chartStyle';
 import {KindSwatch} from './KindSwatch';
 
 /** The most rows the table shows: those that took the most time. */
-export const MAX_TABLE_ROWS = 40;
+const MAX_TABLE_ROWS = 40;
 
 const cell = {
   px: 1,

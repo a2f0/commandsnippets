@@ -1,14 +1,5 @@
 import type {SxProps, Theme} from '@mui/material/styles';
 
-/** Outlined buttons: the entry editors, dialogs and the admin page. */
-export const commonButtonSx = {
-  color: (theme: Theme) => theme.palette.text.primary,
-  borderColor: (theme: Theme) => theme.palette.text.secondary,
-  '&:hover': {
-    borderColor: (theme: Theme) => theme.palette.text.primary,
-  },
-};
-
 /** The menu bar's text-button look, also used by its plain links. */
 export const menuBarButtonSx: SxProps<Theme> = {
   alignSelf: 'flex-end',
@@ -27,3 +18,12 @@ export const menuBarButtonSx: SxProps<Theme> = {
     },
   },
 };
+
+/** The text fields' outline: the text's grays, the darker on hover and focus. */
+export const outlinedFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {borderColor: 'text.secondary'},
+    '&:hover fieldset': {borderColor: 'text.primary'},
+    '&.Mui-focused fieldset': {borderColor: 'text.primary'},
+  },
+} as const;

@@ -1,4 +1,5 @@
 import React, {useCallback} from 'react';
+import {useTypedTranslation} from '../../i18n/hooks';
 import {useSession} from '../../lib/data/hooks';
 import {setTagPublic} from '../../lib/data/writes';
 import {appMode, type IMouse} from '../../lib/shared';
@@ -30,10 +31,11 @@ const TagContextMenu = ({
   deleteTagParent,
   handleBeginEditParent,
 }: ITagContextMenuProps) => {
+  const {t} = useTypedTranslation('tags');
+  const {t: tMenu} = useTypedTranslation('menu');
+  const {t: tCommon} = useTypedTranslation('common');
   const session = useSession();
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  // Open where the tag was right-clicked, from the tag's state.
-  const handleClose = onClose;
 
   // The menu lives as long as the row: each handler calls the row's as it
   // is now (a delete goes through the session the row has now).
@@ -42,9 +44,9 @@ const TagContextMenu = ({
       event.preventDefault();
       event.stopPropagation();
       handleBeginEditParent();
-      handleClose();
+      onClose();
     },
-    [handleBeginEditParent, handleClose]
+    [handleBeginEditParent, onClose]
   );
 
   const handleDelete = useCallback(
@@ -61,9 +63,9 @@ const TagContextMenu = ({
   const handleNewTag = useCallback(() => {
     const {setAppMode, setTagNew} = useAppState.getState();
     setAppMode(appMode.tagEditor);
-    handleClose();
+    onClose();
     setTagNew('top');
-  }, [handleClose]);
+  }, [onClose]);
 
   const handleCancelDialog = useCallback(() => {
     setDialogOpen(false);
@@ -76,33 +78,29 @@ const TagContextMenu = ({
 
   return (
     <>
-      <ContextMenu
-        id={`tagContextMenu-${id}`}
-        mouse={mouse}
-        onClose={handleClose}
-      >
+      <ContextMenu id={`tagContextMenu-${id}`} mouse={mouse} onClose={onClose}>
         <StyledMenuItem
           id={`tag-context-menu-${id}-new-tag`}
           onClick={handleNewTag}
         >
-          New Tag
+          {tMenu('newTag')}
         </StyledMenuItem>
         <StyledMenuItem
           id={`tag-context-menu-${id}-edit-tag`}
           onClick={handleBeginEdit}
         >
-          Edit Tag
+          {t('editTag')}
         </StyledMenuItem>
         <StyledMenuItem
           id={`tagContextMenu${id}DeleteTagMenuItem`}
           onClick={handleDelete}
         >
-          Delete Tag
+          {t('deleteTag')}
         </StyledMenuItem>
         <StyledMenuItem
           id={`tag-context-menu-${id}-visibility`}
           onClick={() => {
-            handleClose();
+            onClose();
             if (session !== null)
               void setTagPublic(session, id, !isPublic).catch(
                 (error: unknown) =>
@@ -110,13 +108,12 @@ const TagContextMenu = ({
               );
           }}
         >
-          {isPublic ? 'Make private' : 'Make public'}
+          {isPublic ? tCommon('makePrivate') : tCommon('makePublic')}
         </StyledMenuItem>
       </ContextMenu>
       <TagDeleteDialog
         id={id}
         open={dialogOpen}
-        handleClose={handleClose}
         handleAcceptDialog={handleAcceptDialog}
         handleCancelDialog={handleCancelDialog}
       />

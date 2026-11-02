@@ -3,7 +3,7 @@ import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type React from 'react';
 import {I18nextProvider, useTranslation} from 'react-i18next';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {LanguageSwitcher} from '../../../src/components/LanguageSwitcher';
 import {useTypedTranslation} from '../../../src/i18n/hooks';
@@ -284,5 +284,33 @@ describe('i18n fallback behavior', () => {
   it('should return key if translation is missing in all languages', () => {
     const tTest = i18n.getFixedT('en', 'test');
     expect(tTest('nonExistentKey')).toBe('nonExistentKey');
+  });
+});
+
+describe('i18n as the page loads', () => {
+  /** The app's i18n as a page load starts it, afresh. */
+  const loadI18n = async () => {
+    vi.resetModules();
+    const {i18n: loaded} = await import('../../../src/i18n/i18n');
+    return loaded;
+  };
+
+  afterEach(() => {
+    localStorage.removeItem('i18nextLng');
+    vi.restoreAllMocks();
+  });
+
+  it('uses the language saved on this device', async () => {
+    localStorage.setItem('i18nextLng', 'es');
+    const loaded = await loadI18n();
+    await waitFor(() => expect(loaded.language).toBe('es'));
+  });
+
+  it("starts in English with none saved, whatever the browser's", async () => {
+    vi.spyOn(navigator, 'language', 'get').mockReturnValue('es-ES');
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['es-ES']);
+    const loaded = await loadI18n();
+    await waitFor(() => expect(loaded.isInitialized).toBe(true));
+    expect(loaded.language).toBe('en');
   });
 });

@@ -3,7 +3,7 @@ import Highlighter from 'react-highlight-words';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useAppConfig} from '../../lib/state/appState';
 
-export interface IProps {
+interface IProps {
   object: ITextEntryJsonApi;
 }
 

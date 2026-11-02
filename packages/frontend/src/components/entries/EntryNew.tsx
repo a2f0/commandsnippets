@@ -4,7 +4,7 @@ import {createEntry} from '../../lib/data/writes';
 import {useAppConfig} from '../../lib/state/appState';
 import {EntryForm} from './EntryForm';
 
-export interface IEntryNewProps {
+interface IEntryNewProps {
   id: string;
   /** The tag the entry goes in (none: untagged). */
   tagId: string | undefined;

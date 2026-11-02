@@ -1,4 +1,3 @@
-import type {StyledComponent} from '@emotion/styled';
 import {Box, ListItem, ListItemButton} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {styled, useTheme} from '@mui/material/styles';
@@ -16,11 +15,11 @@ import {
 } from '../../lib/router/navigation';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {activeSearch, appMode} from '../../lib/shared';
-import {useAppConfig} from '../../lib/state/appState';
+import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {DragHandle} from '../dnd/DragHandle';
 import {DragHandleContainer} from '../dnd/DragHandleContainer';
 import {type DraggableItem, type DropResult, ItemTypes} from '../dnd/itemTypes';
-import {useSortableRow} from '../dnd/useSortableRow';
+import {type ISortableRow, useSortableRow} from '../dnd/useSortableRow';
 import {TagContextMenu} from './TagContextMenu';
 import {TagEdit} from './TagEdit';
 import {TagLabel} from './TagLabel';
@@ -30,25 +29,173 @@ const TagContainer = styled('div')(() => ({
   lineHeight: '20px',
 }));
 
-// Update TagLabelWrapper definition
-const TagLabelWrapper = styled('div', {
-  shouldForwardProp: prop => prop !== 'ref',
-})`
-  display: inline-block;
-  cursor: pointer;
-  width: calc(100% - ${props => props.theme.main.dragIndicatorWidth}px);
-  font-size: 14px;
-` as StyledComponent<{
-  ref?: React.RefCallback<HTMLDivElement>;
-  id?: string;
-  role?: string;
-  children?: React.ReactNode;
-}>;
+const TagLabelWrapper = styled('div')(({theme}) => ({
+  display: 'inline-block',
+  cursor: 'pointer',
+  width: `calc(100% - ${theme.main.dragIndicatorWidth}px)`,
+  fontSize: '14px',
+}));
 
 interface DroppableItem {
   isOver: boolean;
   canDrop: boolean;
 }
+
+/**
+ * Scrolls the selected tag into view when it becomes the selection, if it
+ * is not: its top when the selection moved up, else its bottom.
+ */
+function useSelectedInView(
+  isSelected: boolean,
+  movedSelectedUp: boolean
+): React.RefObject<HTMLLIElement | null> {
+  const theme: Theme = useTheme();
+  const tagRef = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    if (tagRef.current && isSelected && needsScrollingIntoView(tagRef, theme)) {
+      tagRef.current.scrollIntoView({
+        behavior: 'auto',
+        block: movedSelectedUp ? 'start' : 'end',
+      });
+    }
+  }, [isSelected]);
+  return tagRef;
+}
+
+/**
+ * A tag takes a tag dragged over it (a reorder), and an entry dropped on it
+ * (a tagging); `isActiveHover` while one is over it.
+ */
+function useTagDrop(id: string, index: number, hover: ISortableRow['hover']) {
+  const [{canDrop, isOver}, drop] = useDrop<
+    DraggableItem,
+    DropResult,
+    DroppableItem
+  >(
+    () => ({
+      accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
+      canDrop: () => true,
+      drop: (): DraggableItem => ({
+        id,
+        type: 'Tag',
+        index,
+        originalIndex: index,
+      }),
+      collect: monitor => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+      hover,
+    }),
+    [id, index, hover]
+  );
+  const dropRef = (el: HTMLDivElement | null) => {
+    drop(el);
+  };
+  return {isActiveHover: canDrop && isOver, dropRef};
+}
+
+/** Shows the tag's entries, as a click on it does. */
+function openTag(user: string | undefined, tag: ITagJsonApi) {
+  beginInteraction('tag switch', listKey({tag: tag.attributes.name}));
+  navigate(`/${user}/${tag.attributes.name}`);
+  const state = useAppState.getState();
+  // Reset the main panel in case Untagged Entries were being viewed.
+  state.setAppMode(appMode.tagsList);
+  state.incrementClickCount();
+  state.setActiveSearch(activeSearch.entries);
+  state.setEntrySearchString('');
+  state.setTagSelectedID(tag.id);
+}
+
+/** The tag's editor: open or not; a save renames the tag shown too. */
+function useTagEdit(tag: ITagJsonApi, user: string | undefined) {
+  const [isEditing, setIsEditing] = useState(false);
+  const begin = useCallback(() => setIsEditing(true), []);
+  const cancel = () => setIsEditing(false);
+  // The tag shown follows its new name.
+  const save = (renamed: ITagJsonApi) => {
+    setIsEditing(false);
+    if (currentRoute().tag === tag.attributes.name) {
+      navigate(`/${user}/${renamed.attributes.name}`, {replace: true});
+    }
+  };
+  return {isEditing, begin, cancel, save};
+}
+
+/**
+ * The drag handle shows while the pointer is over a tag the user can
+ * reorder (signed in, their own, in their order).
+ */
+function useDragHandleShown(readOnly: boolean) {
+  const [shown, setShown] = useState(false);
+  const show = () => {
+    const {loggedInUser, tagSortOrder} = useAppState.getState();
+    if (loggedInUser !== null && !readOnly && tagSortOrder === 'order') {
+      setShown(true);
+    }
+  };
+  return {shown, show, hide: () => setShown(false)};
+}
+
+/** The writes a tag row makes, through the session the row has now. */
+function useTagWrites(tagId: string) {
+  const session = useSession();
+  const reorder = useCallback(
+    async (topId: string, bottomId: string) => {
+      if (session !== null)
+        await reorderTags(session, topId, bottomId).catch((error: unknown) =>
+          console.error('Failed to reorder tags:', error)
+        );
+    },
+    [session]
+  );
+  const deleteTag = useCallback(() => {
+    if (session !== null)
+      deleteStoredTag(session, tagId).catch((error: unknown) =>
+        console.error('Failed to delete tag:', error)
+      );
+  }, [session, tagId]);
+  return {reorder, deleteTag};
+}
+
+/** The tag's drag handle, name and (when shown) entry count. */
+const TagContent = ({
+  tag,
+  previewRef,
+  handleRef,
+  dropRef,
+  handleShown,
+}: {
+  tag: ITagJsonApi;
+  previewRef: (el: HTMLDivElement | null) => void;
+  handleRef: (el: HTMLDivElement | null) => void;
+  dropRef: (el: HTMLDivElement | null) => void;
+  handleShown: boolean;
+}) => {
+  const showTagCounts = useAppState(state => state.showTagCounts);
+  return (
+    <TagContainer ref={previewRef}>
+      <DragHandleContainer role="tagDragHandleContainer">
+        <DragHandle
+          role="tagDragHandle"
+          ref={handleRef}
+          style={{visibility: handleShown ? 'visible' : 'hidden'}}
+        >
+          ::
+        </DragHandle>
+      </DragHandleContainer>
+      <TagLabelWrapper
+        id={`tagLabelWrapper-${tag.id}`}
+        role="tagLabelWrapper"
+        ref={dropRef}
+      >
+        <TagLabel label={tag.attributes.name} />
+        {showTagCounts ? ` (${tag.attributes.entry_count})` : null}
+      </TagLabelWrapper>
+    </TagContainer>
+  );
+};
 
 interface ITagProps {
   id: string;
@@ -75,49 +222,16 @@ const Tag = ({
 }: ITagProps) => {
   const tagObject = object;
   const appConfig = useAppConfig();
-  const session = useSession();
   // Another user's tags (staff reading them): no reordering, editing or
   // context menu.
   const readOnly = useReadOnly();
-  const [showDragHandle, setShowDragHandle] = useState(false);
   const theme: Theme = useTheme();
   // Whose page, not the tag shown: a tag switch renders only the two rows
   // whose selection changes.
   const user = useRouteParam('user');
-  const tagRef = useRef<HTMLLIElement>(null);
+  const tagRef = useSelectedInView(isSelected, movedSelectedUp);
 
-  useEffect(() => {
-    if (
-      tagRef.current &&
-      isSelected === true &&
-      needsScrollingIntoView(tagRef, theme)
-    ) {
-      if (movedSelectedUp === true) {
-        tagRef.current?.scrollIntoView({
-          behavior: 'auto',
-          block: 'start',
-        });
-      } else {
-        tagRef.current?.scrollIntoView({
-          behavior: 'auto',
-          block: 'end',
-        });
-      }
-    }
-  }, [isSelected]);
-
-  const reorder = useCallback(
-    async (topId: string, bottomId: string) => {
-      if (session === null) {
-        return;
-      }
-      await reorderTags(session, topId, bottomId).catch((error: unknown) => {
-        console.error('Failed to reorder tags:', error);
-      });
-    },
-    [session]
-  );
-
+  const {reorder, deleteTag} = useTagWrites(tagObject.id);
   const {isDragging, handleRef, preview, hover} = useSortableRow({
     type: ItemTypes.TAG,
     id,
@@ -129,137 +243,47 @@ const Tag = ({
     reorder,
   });
 
-  // A tag takes a tag dragged over it (a reorder), and an entry dropped on
-  // it (a tagging).
-  const [{canDrop, isOver}, drop] = useDrop<
-    DraggableItem,
-    DropResult,
-    DroppableItem
-  >(
-    () => ({
-      accept: [ItemTypes.TAG, ItemTypes.ENTRY, ItemTypes.UNTAGGEDENTRY],
-      canDrop: () => {
-        return true;
-      },
-      drop: (): DraggableItem => ({
-        id,
-        type: 'Tag',
-        index,
-        originalIndex: index,
-      }),
-      collect: monitor => ({
-        isOver: monitor.isOver(),
-        canDrop: monitor.canDrop(),
-      }),
-      hover,
-    }),
-    [id, index, hover]
-  );
+  const {isActiveHover, dropRef} = useTagDrop(id, index, hover);
 
-  const mouseEnter = () => {
-    if (
-      appConfig.loggedInUser !== null &&
-      !readOnly &&
-      appConfig.tagSortOrder === 'order'
-    ) {
-      setShowDragHandle(true);
-    }
-  };
-  const mouseLeave = () => {
-    setShowDragHandle(false);
-  };
+  const dragHandle = useDragHandleShown(readOnly);
 
   const menu = useContextMenu();
-  const [isEditing, setIsEditing] = useState(false);
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
-
-  // The tag shown follows its new name.
-  const handleSave = (renamed: ITagJsonApi) => {
-    setIsEditing(false);
-    if (currentRoute().tag === tagObject.attributes.name) {
-      navigate(`/${user}/${renamed.attributes.name}`, {replace: true});
-    }
-  };
-
-  const deleteTag = useCallback(() => {
-    if (session === null) {
-      return;
-    }
-    deleteStoredTag(session, tagObject.id).catch((error: unknown) => {
-      console.error('Failed to delete tag:', error);
-    });
-  }, [session, tagObject.id]);
-
-  const handleBeginEdit = useCallback(() => {
-    setIsEditing(true);
-  }, []);
+  const edit = useTagEdit(tagObject, user);
 
   const opacity = isDragging ? 0 : 1;
-
-  const dropBoxRef = (el: HTMLDivElement | null) => {
-    drop(el);
-  };
 
   const previewRef = (el: HTMLDivElement | null) => {
     preview(el);
   };
 
-  const handleTagClick = (object: ITagJsonApi): void => {
-    beginInteraction('tag switch', listKey({tag: object.attributes.name}));
-    navigate(`/${user}/${object.attributes.name}`);
-    // Reset the main panel in case Untagged Entries were being viewed.
-    appConfig.setAppMode(appMode.tagsList);
-    appConfig.incrementClickCount();
-    appConfig.setActiveSearch(activeSearch.entries);
-    appConfig.setEntrySearchString('');
-    appConfig.setTagSelectedID(object.id);
-    setSelectedTag(object.id);
-  };
-
-  const isActiveHover = canDrop && isOver;
-  let backgroundColor = theme.palette.background.default;
-  if (isActiveHover) {
-    backgroundColor = theme.palette.action.hover;
-  } else if (isSelected) {
-    backgroundColor = theme.selected.background;
-  }
-
-  const dropLabelRef = (el: HTMLDivElement | null) => {
-    drop(el);
-  };
+  const backgroundColor = isActiveHover
+    ? theme.palette.action.hover
+    : isSelected
+      ? theme.selected.background
+      : theme.palette.background.default;
 
   return (
     <>
-      {!isEditing && (
-        <ListItem
-          key={object.id}
-          sx={{
-            padding: 0,
-          }}
-          ref={tagRef}
-        >
+      {!edit.isEditing && (
+        <ListItem key={object.id} sx={{padding: 0}} ref={tagRef}>
           <ListItemButton
             data-testid={`tagListButton-${object.id}`}
-            sx={{
-              padding: 0,
-            }}
+            sx={{padding: 0}}
           >
             <Box
-              ref={dropBoxRef}
+              ref={dropRef}
               style={{opacity}}
               onContextMenu={readOnly ? undefined : menu.onContextMenu}
               onClick={() => {
-                handleTagClick(object);
+                openTag(user, object);
+                setSelectedTag(object.id);
               }}
               id={`tag-${id}`}
               data-testid={`tag-${id}`}
               role="tag"
               aria-current={isSelected ? 'true' : undefined}
-              onMouseEnter={mouseEnter}
-              onMouseLeave={mouseLeave}
+              onMouseEnter={dragHandle.show}
+              onMouseLeave={dragHandle.hide}
               sx={{
                 width: '100%',
                 backgroundColor,
@@ -268,27 +292,13 @@ const Tag = ({
                 },
               }}
             >
-              <TagContainer ref={previewRef}>
-                <DragHandleContainer role="tagDragHandleContainer">
-                  <DragHandle
-                    role="tagDragHandle"
-                    ref={handleRef}
-                    style={{visibility: showDragHandle ? 'visible' : 'hidden'}}
-                  >
-                    ::
-                  </DragHandle>
-                </DragHandleContainer>
-                <TagLabelWrapper
-                  id={`tagLabelWrapper-${id}`}
-                  role="tagLabelWrapper"
-                  ref={dropLabelRef}
-                >
-                  <TagLabel label={tagObject.attributes.name} />
-                  {appConfig.showTagCounts
-                    ? ` (${tagObject.attributes.entry_count})`
-                    : null}
-                </TagLabelWrapper>
-              </TagContainer>
+              <TagContent
+                tag={tagObject}
+                previewRef={previewRef}
+                handleRef={handleRef}
+                dropRef={dropRef}
+                handleShown={dragHandle.shown}
+              />
             </Box>
           </ListItemButton>
         </ListItem>
@@ -300,14 +310,14 @@ const Tag = ({
           mouse={menu.mouse}
           onClose={menu.close}
           deleteTagParent={deleteTag}
-          handleBeginEditParent={handleBeginEdit}
+          handleBeginEditParent={edit.begin}
         />
       )}
-      {isEditing && !readOnly && (
+      {edit.isEditing && !readOnly && (
         <TagEdit
           object={tagObject}
-          handleSaveParent={handleSave}
-          handleCancelEditParent={handleCancelEdit}
+          handleSaveParent={edit.save}
+          handleCancelEditParent={edit.cancel}
         />
       )}
     </>

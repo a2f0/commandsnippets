@@ -53,6 +53,161 @@ function useWidth(ref: React.RefObject<HTMLElement | null>): number {
   return width;
 }
 
+interface Point {
+  timing: Timing;
+  cx: number;
+  cy: number;
+}
+
+/** The timing nearest the pointer, within `HOVER_RADIUS` of it, if any. */
+function nearestTiming(
+  points: readonly Point[],
+  px: number,
+  py: number
+): number | null {
+  let nearest: number | null = null;
+  let best = HOVER_RADIUS * HOVER_RADIUS;
+  for (const {timing, cx, cy} of points) {
+    const distance = (cx - px) ** 2 + (cy - py) ** 2;
+    if (distance <= best) {
+      best = distance;
+      nearest = timing.id;
+    }
+  }
+  return nearest;
+}
+
+/** The duration axis's gridlines and labels (log scale). */
+const YAxis = ({plotWidth}: {plotWidth: number}) => {
+  const theme = useTheme();
+  const plotHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
+  return Y_TICKS.map(tick => (
+    <g key={tick}>
+      <line
+        x1={MARGIN.left}
+        x2={MARGIN.left + plotWidth}
+        y1={scaleY(tick, plotHeight)}
+        y2={scaleY(tick, plotHeight)}
+        stroke={theme.palette.divider}
+        strokeWidth={1}
+      />
+      <text
+        x={MARGIN.left - 6}
+        y={scaleY(tick, plotHeight)}
+        textAnchor="end"
+        dominantBaseline="middle"
+        fill={theme.palette.text.secondary}
+        style={{fontVariantNumeric: 'tabular-nums'}}
+      >
+        {yTickLabel(tick)}
+      </text>
+    </g>
+  ));
+};
+
+/**
+ * The time axis, in seconds before now, and a line at each interaction's
+ * click.
+ */
+const TimeAxis = ({
+  interactions,
+  from,
+  to,
+  plotWidth,
+}: {
+  interactions: readonly Interaction[];
+  from: number;
+  to: number;
+  plotWidth: number;
+}) => {
+  const {t} = useTypedTranslation('menu');
+  const theme = useTheme();
+  const span = Math.max(1, to - from);
+  const x = (time: number) => scaleX(time, from, span, plotWidth);
+  const secondsTicks = niceTicks(span / 1000, 4).filter(
+    seconds => seconds * 1000 <= span
+  );
+  return (
+    <>
+      {secondsTicks.map(seconds => (
+        <text
+          key={seconds}
+          x={x(to - seconds * 1000)}
+          y={HEIGHT - 6}
+          textAnchor={seconds === 0 ? 'end' : 'middle'}
+          fill={theme.palette.text.secondary}
+          style={{fontVariantNumeric: 'tabular-nums'}}
+        >
+          {seconds === 0 ? t('timingsNow') : `-${seconds} s`}
+        </text>
+      ))}
+      {interactions
+        .filter(({start}) => start >= from && start <= to)
+        .map(interaction => (
+          <line
+            key={interaction.id}
+            x1={x(interaction.start)}
+            x2={x(interaction.start)}
+            y1={MARGIN.top}
+            y2={HEIGHT - MARGIN.bottom}
+            stroke={theme.palette.text.disabled}
+            strokeWidth={1}
+          />
+        ))}
+    </>
+  );
+};
+
+/** The hovered timing: its duration, kind, name and detail. */
+const TimingTooltip = ({point, width}: {point: Point; width: number}) => {
+  const colors = useKindColors();
+  const kindLabels = useKindLabels();
+  const {timing} = point;
+  return (
+    <Box
+      role="tooltip"
+      sx={{
+        position: 'absolute',
+        left: Math.min(point.cx + 12, Math.max(0, width - 260)),
+        top: Math.max(0, point.cy - 56),
+        width: 248,
+        p: 1,
+        pointerEvents: 'none',
+        backgroundColor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        boxShadow: 2,
+        fontSize: 12,
+      }}
+    >
+      <Box sx={{fontWeight: 600, color: 'text.primary'}}>
+        {formatMs(timing.duration)}
+      </Box>
+      <Box sx={{display: 'flex', alignItems: 'center', gap: 0.75}}>
+        <Box
+          component="span"
+          aria-hidden
+          sx={{
+            width: 12,
+            height: 2,
+            backgroundColor: colors[timing.kind],
+            flexShrink: 0,
+          }}
+        />
+        <Box
+          component="span"
+          sx={{color: 'text.secondary', overflowWrap: 'anywhere'}}
+        >
+          {kindLabels[timing.kind]}: {timing.name}
+        </Box>
+      </Box>
+      {timing.detail !== undefined && (
+        <Box sx={{color: 'text.secondary'}}>{timing.detail}</Box>
+      )}
+    </Box>
+  );
+};
+
 interface Props {
   timings: readonly Timing[];
   interactions: readonly Interaction[];
@@ -70,7 +225,6 @@ export const TimingTimeline = ({timings, interactions, from, to}: Props) => {
   const {t} = useTypedTranslation('menu');
   const theme = useTheme();
   const colors = useKindColors();
-  const kindLabels = useKindLabels();
   const container = useRef<HTMLDivElement | null>(null);
   const width = useWidth(container);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -78,8 +232,6 @@ export const TimingTimeline = ({timings, interactions, from, to}: Props) => {
   const plotWidth = Math.max(1, width - MARGIN.left - MARGIN.right);
   const plotHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
   const span = Math.max(1, to - from);
-  const x = (time: number) => scaleX(time, from, span, plotWidth);
-  const y = (ms: number) => scaleY(ms, plotHeight);
   const points = useMemo(
     () =>
       timings
@@ -91,29 +243,14 @@ export const TimingTimeline = ({timings, interactions, from, to}: Props) => {
         })),
     [timings, from, to, span, plotWidth, plotHeight]
   );
-  const secondsTicks = niceTicks(span / 1000, 4).filter(
-    seconds => seconds * 1000 <= span
-  );
   const hoveredPoint = points.find(({timing}) => timing.id === hovered);
 
   const onPointerMove = (event: PointerEvent<SVGSVGElement>) => {
     const box = event.currentTarget.getBoundingClientRect();
-    const px = event.clientX - box.left;
-    const py = event.clientY - box.top;
-    let nearest: number | null = null;
-    let best = HOVER_RADIUS * HOVER_RADIUS;
-    for (const {timing, cx, cy} of points) {
-      const distance = (cx - px) ** 2 + (cy - py) ** 2;
-      if (distance <= best) {
-        best = distance;
-        nearest = timing.id;
-      }
-    }
-    setHovered(nearest);
+    setHovered(
+      nearestTiming(points, event.clientX - box.left, event.clientY - box.top)
+    );
   };
-
-  const surface = theme.palette.background.paper;
-  const muted = theme.palette.text.secondary;
 
   return (
     <Box ref={container} sx={{position: 'relative', width: '100%'}}>
@@ -126,53 +263,13 @@ export const TimingTimeline = ({timings, interactions, from, to}: Props) => {
         onPointerLeave={() => setHovered(null)}
         style={{display: 'block', fontSize: 11}}
       >
-        {Y_TICKS.map(tick => (
-          <g key={tick}>
-            <line
-              x1={MARGIN.left}
-              x2={MARGIN.left + plotWidth}
-              y1={y(tick)}
-              y2={y(tick)}
-              stroke={theme.palette.divider}
-              strokeWidth={1}
-            />
-            <text
-              x={MARGIN.left - 6}
-              y={y(tick)}
-              textAnchor="end"
-              dominantBaseline="middle"
-              fill={muted}
-              style={{fontVariantNumeric: 'tabular-nums'}}
-            >
-              {yTickLabel(tick)}
-            </text>
-          </g>
-        ))}
-        {secondsTicks.map(seconds => (
-          <text
-            key={seconds}
-            x={x(to - seconds * 1000)}
-            y={HEIGHT - 6}
-            textAnchor={seconds === 0 ? 'end' : 'middle'}
-            fill={muted}
-            style={{fontVariantNumeric: 'tabular-nums'}}
-          >
-            {seconds === 0 ? t('timingsNow') : `-${seconds} s`}
-          </text>
-        ))}
-        {interactions
-          .filter(({start}) => start >= from && start <= to)
-          .map(interaction => (
-            <line
-              key={interaction.id}
-              x1={x(interaction.start)}
-              x2={x(interaction.start)}
-              y1={MARGIN.top}
-              y2={MARGIN.top + plotHeight}
-              stroke={theme.palette.text.disabled}
-              strokeWidth={1}
-            />
-          ))}
+        <YAxis plotWidth={plotWidth} />
+        <TimeAxis
+          interactions={interactions}
+          from={from}
+          to={to}
+          plotWidth={plotWidth}
+        />
         {points.map(({timing, cx, cy}) => (
           <circle
             key={timing.id}
@@ -180,7 +277,7 @@ export const TimingTimeline = ({timings, interactions, from, to}: Props) => {
             cy={cy}
             r={5}
             fill={colors[timing.kind]}
-            stroke={surface}
+            stroke={theme.palette.background.paper}
             strokeWidth={2}
           />
         ))}
@@ -196,49 +293,7 @@ export const TimingTimeline = ({timings, interactions, from, to}: Props) => {
         )}
       </svg>
       {hoveredPoint !== undefined && (
-        <Box
-          role="tooltip"
-          sx={{
-            position: 'absolute',
-            left: Math.min(hoveredPoint.cx + 12, Math.max(0, width - 260)),
-            top: Math.max(0, hoveredPoint.cy - 56),
-            width: 248,
-            p: 1,
-            pointerEvents: 'none',
-            backgroundColor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-            boxShadow: 2,
-            fontSize: 12,
-          }}
-        >
-          <Box sx={{fontWeight: 600, color: 'text.primary'}}>
-            {formatMs(hoveredPoint.timing.duration)}
-          </Box>
-          <Box sx={{display: 'flex', alignItems: 'center', gap: 0.75}}>
-            <Box
-              component="span"
-              aria-hidden
-              sx={{
-                width: 12,
-                height: 2,
-                backgroundColor: colors[hoveredPoint.timing.kind],
-                flexShrink: 0,
-              }}
-            />
-            <Box
-              component="span"
-              sx={{color: 'text.secondary', overflowWrap: 'anywhere'}}
-            >
-              {kindLabels[hoveredPoint.timing.kind]}: {hoveredPoint.timing.name}
-            </Box>
-          </Box>
-          {hoveredPoint.timing.detail !== undefined && (
-            <Box sx={{color: 'text.secondary'}}>
-              {hoveredPoint.timing.detail}
-            </Box>
-          )}
-        </Box>
+        <TimingTooltip point={hoveredPoint} width={width} />
       )}
     </Box>
   );

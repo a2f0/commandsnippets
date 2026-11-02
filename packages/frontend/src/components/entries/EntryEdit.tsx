@@ -4,7 +4,7 @@ import {useSession} from '../../lib/data/hooks';
 import {updateEntry} from '../../lib/data/writes';
 import {EntryForm} from './EntryForm';
 
-export interface IEntryEdit {
+interface IEntryEdit {
   object: ITextEntryJsonApi;
   /** After the edit is stored. */
   handleSaveParent: () => void;

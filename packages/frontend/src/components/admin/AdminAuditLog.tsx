@@ -1,7 +1,5 @@
 import {
-  Alert,
   Box,
-  Button,
   LinearProgress,
   Table,
   TableBody,
@@ -11,18 +9,18 @@ import {
   TablePagination,
   TableRow,
 } from '@mui/material';
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 
 import {useTypedTranslation} from '../../i18n/hooks';
-import {
-  type AdminAuditEntry,
-  AdminForbiddenError,
-  type AdminPage,
-  listAuditLog,
-} from '../../lib/api/adminApi';
+import {listAuditLog} from '../../lib/api/adminApi';
 import {formatTimestamp} from '../../lib/formatTimestamp';
+import {AdminLoadError} from './AdminLoadError';
+import {useAdminList} from './useAdminList';
 
 const PAGE_SIZE = 25;
+
+const loadPage = ({page}: {page: number}, signal: AbortSignal) =>
+  listAuditLog(page, PAGE_SIZE, signal);
 
 interface IProps {
   onForbidden: () => void;
@@ -32,38 +30,11 @@ interface IProps {
 const AdminAuditLog = ({onForbidden}: IProps) => {
   const {t, i18n} = useTypedTranslation('admin');
   const {t: tCommon} = useTypedTranslation('common');
-  // A new object (including a copy, to retry) loads that page.
-  const [request, setRequest] = useState({page: 1});
-  const [entries, setEntries] = useState<AdminPage<AdminAuditEntry> | null>(
-    null
+  const {request, setRequest, page, loading, loadFailed, reload} = useAdminList(
+    {page: 1},
+    {load: loadPage, onForbidden, failure: 'Loading the audit log'}
   );
-  const [loading, setLoading] = useState(true);
-  const [loadFailed, setLoadFailed] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setLoadFailed(false);
-    listAuditLog(request.page, PAGE_SIZE, controller.signal)
-      .then(result => setEntries(result))
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        if (error instanceof AdminForbiddenError) {
-          onForbidden();
-          return;
-        }
-        console.error('Loading the audit log failed:', error);
-        setLoadFailed(true);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
-    return () => controller.abort();
-  }, [request, onForbidden]);
+  const entries = page;
 
   const actionLabel = (action: string) => {
     switch (action) {
@@ -83,21 +54,7 @@ const AdminAuditLog = ({onForbidden}: IProps) => {
   return (
     <Box id="adminAuditLog">
       {loadFailed && (
-        <Alert
-          id="adminAuditLogError"
-          severity="error"
-          action={
-            <Button
-              color="inherit"
-              onClick={() => setRequest(current => ({...current}))}
-            >
-              {t('retry')}
-            </Button>
-          }
-          sx={{mb: 2}}
-        >
-          {t('loadError')}
-        </Alert>
+        <AdminLoadError id="adminAuditLogError" onRetry={reload} />
       )}
       <Box sx={{height: 4}}>
         {loading && <LinearProgress aria-label={tCommon('loading')} />}

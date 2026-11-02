@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTypedTranslation} from '../../i18n/hooks';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useOwner, useSession} from '../../lib/data/hooks';
 import {setEntryPublic} from '../../lib/data/writes';
@@ -14,7 +15,7 @@ import {useAppState} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 import {ContextMenu} from '../ContextMenu';
 
-export interface IEntryContextMenu {
+interface IEntryContextMenu {
   /**
    * Where the menu was opened (the right click), or nowhere (null
    * coordinates): closed.
@@ -35,149 +36,123 @@ export interface IEntryContextMenu {
   readOnly: boolean;
 }
 
-const EntryContextMenu = ({
-  mouse,
-  onClose,
+interface EntryMenuItem {
+  id: string;
+  label: string;
+  action: () => void;
+  /** Keeps the click from the row, which would select it. */
+  stopsEvent?: boolean;
+}
+
+const isItem = (item: EntryMenuItem | false): item is EntryMenuItem =>
+  item !== false;
+
+/** The entry's page; its Back returns to this list. */
+function openEntryPage(owner: string, id: string) {
+  const page = entryPath(owner, id);
+  useAppState.getState().setEntryReturnPath(page, currentPath());
+  navigate(page);
+}
+
+/** What the menu offers on this entry, here, in order. */
+function useEntryMenuItems({
   id,
+  text_entry,
   handleRemoveFromListParent,
   handleNewEntryParent,
   handleBeginEditParent,
   handleCopyParent,
   readOnly,
-  text_entry,
-}: IEntryContextMenu) => {
+}: IEntryContextMenu): EntryMenuItem[] {
+  const {t} = useTypedTranslation('entries');
+  const {t: tMenu} = useTypedTranslation('menu');
+  const {t: tCommon} = useTypedTranslation('common');
   const session = useSession();
   const owner = useOwner();
-  const publicOnly = owner?.publicOnly ?? true;
   // Whether the list is a tag's, not which tag's: a tag switch renders no
   // row's menu again.
   const onTagList = useRoute(
     route => route.user !== undefined && route.tag !== undefined
   );
   const entriesFilter = useSearchParam('entries');
+  const isPublic = text_entry.attributes.is_public;
 
-  // Open where the row was right-clicked, from the row's state: no copy of
-  // it here, which an effect would set again after every row mounts,
-  // rendering every row's menu twice.
-  const handleClose = onClose;
-
-  const handleRemoveFromList = () => {
-    handleRemoveFromListParent();
-    handleClose();
+  const toggleVisibility = () => {
+    if (session !== null)
+      void setEntryPublic(session, id, !isPublic).catch((error: unknown) =>
+        console.error('Failed to change entry visibility:', error)
+      );
   };
 
-  const handleBeginEdit = () => {
-    handleBeginEditParent();
-    handleClose();
-  };
+  return [
+    {
+      id: `tags-entries-context-menu-${id}-copy`,
+      label: t('copyEntry'),
+      action: handleCopyParent,
+    },
+    !(owner?.publicOnly ?? true) && {
+      id: `tags-entries-context-menu-${id}-get-info`,
+      label: t('getInfo'),
+      action: () => owner !== null && openEntryPage(owner.owner, id),
+    },
+    !readOnly && {
+      id: `tagsEntriesContextMenu${id}Edit`,
+      label: t('editEntry'),
+      action: handleBeginEditParent,
+      stopsEvent: true,
+    },
+    !readOnly && {
+      id: `entry-context-menu-${id}-visibility`,
+      label: isPublic ? tCommon('makePrivate') : tCommon('makePublic'),
+      action: toggleVisibility,
+    },
+    !readOnly && {
+      id: `tags-entries-context-menu-${id}-new-entry`,
+      label: tMenu('newEntry'),
+      action: handleNewEntryParent,
+      stopsEvent: true,
+    },
+    !readOnly &&
+      onTagList && {
+        id: `tagsEntriesContextMenu${id}Untag`,
+        label: t('untagEntry'),
+        action: handleRemoveFromListParent,
+      },
+    !readOnly &&
+      entriesFilter === 'untagged' && {
+        id: `tagsEntriesContextMenu${id}Delete`,
+        label: tCommon('delete'),
+        action: handleRemoveFromListParent,
+      },
+  ].filter(isItem);
+}
 
-  const handleNewEntry = () => {
-    handleNewEntryParent();
-    handleClose();
-  };
-
-  const handleCopy = () => {
-    handleCopyParent();
-    handleClose();
-  };
-
-  // The entry's page; its Back returns to this list.
-  const handleGetInfo = () => {
-    handleClose();
-    if (owner === null) {
-      return;
-    }
-    const page = entryPath(owner.owner, id);
-    useAppState.getState().setEntryReturnPath(page, currentPath());
-    navigate(page);
-  };
+const EntryContextMenu = (props: IEntryContextMenu) => {
+  const {id, mouse, onClose} = props;
+  const items = useEntryMenuItems(props);
 
   return (
     <ContextMenu
       id={`tagsEntriesContextMenu-${id}`}
       mouse={mouse}
-      onClose={handleClose}
+      onClose={onClose}
     >
-      <StyledMenuItem
-        id={`tags-entries-context-menu-${id}-copy`}
-        onClick={() => {
-          handleCopy();
-        }}
-      >
-        Copy
-      </StyledMenuItem>
-      {!publicOnly && (
+      {items.map(item => (
         <StyledMenuItem
-          id={`tags-entries-context-menu-${id}-get-info`}
-          onClick={() => {
-            handleGetInfo();
-          }}
-        >
-          Get Info
-        </StyledMenuItem>
-      )}
-      {!readOnly && (
-        <StyledMenuItem
-          id={`tagsEntriesContextMenu${id}Edit`}
+          key={item.id}
+          id={item.id}
           onClick={(event: React.MouseEvent<HTMLLIElement>) => {
-            event.preventDefault();
-            event.stopPropagation();
-            handleBeginEdit();
+            if (item.stopsEvent) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            onClose();
+            item.action();
           }}
         >
-          Edit
+          {item.label}
         </StyledMenuItem>
-      )}
-      {!readOnly && (
-        <StyledMenuItem
-          id={`entry-context-menu-${id}-visibility`}
-          onClick={() => {
-            handleClose();
-            if (session !== null)
-              void setEntryPublic(
-                session,
-                id,
-                !text_entry.attributes.is_public
-              ).catch((error: unknown) =>
-                console.error('Failed to change entry visibility:', error)
-              );
-          }}
-        >
-          {text_entry.attributes.is_public ? 'Make private' : 'Make public'}
-        </StyledMenuItem>
-      )}
-      {!readOnly && (
-        <StyledMenuItem
-          id={`tags-entries-context-menu-${id}-new-entry`}
-          onClick={(event: React.MouseEvent<HTMLLIElement>) => {
-            event.preventDefault();
-            event.stopPropagation();
-            handleNewEntry();
-          }}
-        >
-          New Entry
-        </StyledMenuItem>
-      )}
-      {!readOnly && onTagList && (
-        <StyledMenuItem
-          id={`tagsEntriesContextMenu${id}Untag`}
-          onClick={() => {
-            handleRemoveFromList();
-          }}
-        >
-          Untag
-        </StyledMenuItem>
-      )}
-      {!readOnly && entriesFilter === 'untagged' && (
-        <StyledMenuItem
-          id={`tagsEntriesContextMenu${id}Delete`}
-          onClick={() => {
-            handleRemoveFromList();
-          }}
-        >
-          Delete
-        </StyledMenuItem>
-      )}
+      ))}
     </ContextMenu>
   );
 };

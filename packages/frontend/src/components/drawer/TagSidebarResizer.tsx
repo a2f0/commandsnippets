@@ -9,6 +9,47 @@ import {
 import {useAppState} from '../../lib/state/appState';
 import {useSidebarSizing} from './TagSidebarLayout';
 
+/** The width a resize key asks for, or null for any other key. */
+function widthForKey(key: string, width: number, maximum: number) {
+  switch (key) {
+    case 'ArrowLeft':
+      return width - 10;
+    case 'ArrowRight':
+      return width + 10;
+    case 'Home':
+      return MIN_SIDEBAR_WIDTH;
+    case 'End':
+      return maximum;
+    case 'Enter':
+      return DEFAULT_SIDEBAR_WIDTH;
+    default:
+      return null;
+  }
+}
+
+const separatorSx = {
+  position: 'absolute',
+  right: 0,
+  top: 0,
+  bottom: 0,
+  width: 6,
+  cursor: 'col-resize',
+  touchAction: 'none',
+  userSelect: 'none',
+  zIndex: 1,
+  borderRight: 1,
+  borderColor: 'transparent',
+  '&:hover, &:focus-visible': {
+    borderColor: 'divider',
+    backgroundColor: 'action.selected',
+  },
+  '&:focus-visible': {
+    outline: '2px solid',
+    outlineColor: 'text.secondary',
+    outlineOffset: -2,
+  },
+} as const;
+
 export const TagSidebarResizer = () => {
   const {t} = useTypedTranslation('menu');
   const setWidth = useAppState(state => state.setTagSidebarWidth);
@@ -36,29 +77,14 @@ export const TagSidebarResizer = () => {
   };
 
   const keyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    let next: number;
-    switch (event.key) {
-      case 'ArrowLeft':
-        next = width - 10;
-        break;
-      case 'ArrowRight':
-        next = width + 10;
-        break;
-      case 'Home':
-        next = MIN_SIDEBAR_WIDTH;
-        break;
-      case 'End':
-        next = maximum;
-        break;
-      case 'Enter':
-        next = DEFAULT_SIDEBAR_WIDTH;
-        break;
-      case 'Tab':
-        // Allow native focus traversal instead of the lists' Tab shortcut.
-        event.stopPropagation();
-        return;
-      default:
-        return;
+    if (event.key === 'Tab') {
+      // Allow native focus traversal instead of the lists' Tab shortcut.
+      event.stopPropagation();
+      return;
+    }
+    const next = widthForKey(event.key, width, maximum);
+    if (next === null) {
+      return;
     }
     // Handled resize keys must not also navigate the lists.
     event.stopPropagation();
@@ -97,28 +123,7 @@ export const TagSidebarResizer = () => {
       }}
       onPointerCancel={cancel}
       onLostPointerCapture={cancel}
-      sx={{
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: 6,
-        cursor: 'col-resize',
-        touchAction: 'none',
-        userSelect: 'none',
-        zIndex: 1,
-        borderRight: 1,
-        borderColor: 'transparent',
-        '&:hover, &:focus-visible': {
-          borderColor: 'divider',
-          backgroundColor: 'action.selected',
-        },
-        '&:focus-visible': {
-          outline: '2px solid',
-          outlineColor: 'text.secondary',
-          outlineOffset: -2,
-        },
-      }}
+      sx={separatorSx}
     />
   );
 };

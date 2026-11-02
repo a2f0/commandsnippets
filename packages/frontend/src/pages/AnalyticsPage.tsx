@@ -6,19 +6,12 @@ import {
   isAnalyticsRange,
 } from '@commandsnippets/api-shared/responses';
 import Refresh from '@mui/icons-material/Refresh';
-import {
-  Alert,
-  Box,
-  Button,
-  MenuItem,
-  Paper,
-  TextField,
-  Typography,
-} from '@mui/material';
+import {Alert, Box, Button, Typography} from '@mui/material';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useEffect, useMemo, useState} from 'react';
 import {ActivityCharts} from '../components/analytics/ActivityCharts';
-import {recentRange, utcDay} from '../components/analytics/buckets';
+import {AnalyticsFilters} from '../components/analytics/AnalyticsFilters';
+import {recentRange} from '../components/analytics/buckets';
 import {DetailPage} from '../components/DetailPage';
 import {useCookieLogout} from '../hooks/useCookieLogout';
 import {useTypedTranslation} from '../i18n/hooks';
@@ -147,9 +140,6 @@ const Dashboard = ({
   const valid = isAnalyticsRange(params.from, params.to);
   const setTag = (tag: string) =>
     setParams(current => ({...current, tag: tag || undefined}));
-  const tagOptions = (tags ?? []).filter(
-    tag => !tag.attributes.is_deleted && /^\d+$/.test(tag.id)
-  );
   return (
     <DetailPage
       id="analyticsPage"
@@ -167,149 +157,12 @@ const Dashboard = ({
       <Typography color="text.secondary" sx={{mt: 1, mb: 3}}>
         {t('description')}
       </Typography>
-      <Paper variant="outlined" sx={{p: {xs: 2, sm: 3}, borderRadius: 2}}>
-        <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2}}>
-          {([30, 90, 365] as const).map(days => (
-            <Button
-              key={days}
-              size="small"
-              variant="outlined"
-              onClick={() =>
-                setParams(current => ({
-                  ...current,
-                  ...recentRange(days),
-                  interval:
-                    days === 30 ? 'day' : days === 90 ? 'week' : 'month',
-                }))
-              }
-            >
-              {t(days === 30 ? 'last30' : days === 90 ? 'last90' : 'last365')}
-            </Button>
-          ))}
-          <Button
-            size="small"
-            variant={params.from === 'all' ? 'contained' : 'outlined'}
-            aria-pressed={params.from === 'all'}
-            onClick={() =>
-              setParams(current => ({
-                ...current,
-                from: 'all',
-                to: utcDay(new Date()),
-                interval: 'month',
-              }))
-            }
-          >
-            {t('allTime')}
-          </Button>
-        </Box>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, minmax(0, 1fr))',
-              md: '1.3fr 1fr 1fr 0.8fr 1fr',
-            },
-            gap: 2,
-          }}
-        >
-          <TextField
-            select
-            size="small"
-            label={t('activity')}
-            value={params.activity}
-            onChange={event =>
-              setParams(current => ({
-                ...current,
-                activity: event.target.value as AnalyticsParams['activity'],
-              }))
-            }
-          >
-            {analyticsActivitySchema.options.map(activity => (
-              <MenuItem key={activity} value={activity}>
-                {t(activity)}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            size="small"
-            type="date"
-            label={t('from')}
-            sx={{colorScheme: theme => theme.palette.mode}}
-            value={params.from === 'all' ? '' : params.from}
-            helperText={params.from === 'all' ? t('allTime') : undefined}
-            slotProps={{
-              inputLabel: {shrink: true},
-              htmlInput: {'aria-label': t('from')},
-            }}
-            onChange={event =>
-              setParams(current => ({...current, from: event.target.value}))
-            }
-          />
-          <TextField
-            size="small"
-            type="date"
-            label={t('to')}
-            sx={{colorScheme: theme => theme.palette.mode}}
-            value={params.to}
-            slotProps={{
-              inputLabel: {shrink: true},
-              htmlInput: {'aria-label': t('to')},
-            }}
-            onChange={event =>
-              setParams(current => ({...current, to: event.target.value}))
-            }
-          />
-          <TextField
-            select
-            size="small"
-            label={t('interval')}
-            value={params.interval}
-            onChange={event =>
-              setParams(current => ({
-                ...current,
-                interval: event.target.value as AnalyticsParams['interval'],
-              }))
-            }
-          >
-            {(['day', 'week', 'month'] as const).map(interval => (
-              <MenuItem key={interval} value={interval}>
-                {t(interval)}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            size="small"
-            label={t('tag')}
-            slotProps={{
-              select: {displayEmpty: true},
-              inputLabel: {shrink: true},
-            }}
-            value={params.tag ?? ''}
-            onChange={event => setTag(event.target.value)}
-          >
-            <MenuItem value="">{t('allTags')}</MenuItem>
-            {params.tag && !tagOptions.some(tag => tag.id === params.tag) && (
-              <MenuItem value={params.tag}>{params.tag}</MenuItem>
-            )}
-            {tagOptions.map(tag => (
-              <MenuItem key={tag.id} value={tag.id}>
-                {tag.attributes.name}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{mt: 2}}>
-          {t(`${params.activity}Note`)}
-        </Typography>
-        {params.tag &&
-          (params.activity === 'created' || params.activity === 'reused') && (
-            <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>
-              {t('tagCohortNote')}
-            </Typography>
-          )}
-      </Paper>
+      <AnalyticsFilters
+        params={params}
+        setParams={setParams}
+        tags={tags ?? []}
+        setTag={setTag}
+      />
       {!valid ? (
         <Alert severity="warning" sx={{mt: 2}}>
           {t('invalidRange')}

@@ -26,11 +26,6 @@ export const StyledTagButton = React.forwardRef<
         minWidth: '100%',
         marginTop: '4px',
         marginBottom: '4px',
-        color: theme => theme.palette.text.primary,
-        borderColor: theme => theme.palette.text.secondary,
-        '&:hover': {
-          borderColor: theme => theme.palette.text.primary,
-        },
       }}
     >
       {children}

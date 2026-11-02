@@ -12,17 +12,24 @@ import {EntriesLinkButton} from './admin/EntriesLinkButton';
 import {ModeTabs} from './admin/ModeTabs';
 import {ReadOnlyBadge} from './admin/ReadOnlyBadge';
 import {DebugMenu} from './debug/DebugMenu';
-import {DebugMenuButton} from './debug/DebugMenuButton';
 import {EntriesMenu} from './entries/EntriesMenu';
-import {EntriesMenuButton} from './entries/EntriesMenuButton';
 import {FileMenu} from './file/FileMenu';
-import {FileMenuButton} from './file/FileMenuButton';
 import {HelpMenu} from './help/HelpMenu';
-import {HelpMenuButton} from './help/HelpMenuButton';
+import {MenuBarButton} from './MenuBarButton';
 import {TagsMenu} from './tags/TagsMenu';
-import {TagsMenuButton} from './tags/TagsMenuButton';
 import {ViewMenu} from './view/ViewMenu';
-import {ViewMenuButton} from './view/ViewMenuButton';
+
+type MenuName = 'file' | 'view' | 'tags' | 'entries' | 'debug' | 'help';
+
+/** The menu bar's menus, in order: each one's button and drop-down ids. */
+const MENUS: readonly {name: MenuName; buttonId: string; menuId: string}[] = [
+  {name: 'file', buttonId: 'file-menu-button', menuId: 'file-menu'},
+  {name: 'view', buttonId: 'view-menu-button', menuId: 'view-menu'},
+  {name: 'tags', buttonId: 'tags-menu-button', menuId: 'tags-menu'},
+  {name: 'entries', buttonId: 'entries-menu-button', menuId: 'entries-menu'},
+  {name: 'debug', buttonId: 'debug-menu-button', menuId: 'debug-menu'},
+  {name: 'help', buttonId: 'helpMenuButton', menuId: 'help-menu'},
+];
 
 const Aligner = styled('div')`
   align-self: stretch;
@@ -38,76 +45,46 @@ interface IProps {
   entriesPage?: boolean;
 }
 
+const Logo = () => {
+  const {t} = useTypedTranslation('common');
+  return (
+    <Box
+      component="svg"
+      width={33}
+      height={33}
+      viewBox="0 0 64 64"
+      role="img"
+      aria-label={t('logoAlt')}
+      sx={{color: 'text.primary'}}
+    >
+      {/* Reuse the prompt without the favicon's tile or fixed color. */}
+      <use href={`${logoUrl}#prompt`} />
+    </Box>
+  );
+};
+
 const MenuBar = ({entriesPage = true}: IProps) => {
   const appConfig = useAppConfig();
-  const {t} = useTypedTranslation('common');
+  const {t} = useTypedTranslation('menu');
   // Another user's data (staff reading it): shown, never changed.
   const owner = useOwner();
   const readOnly = owner?.readOnly ?? false;
-
-  const [fileMenuAnchorEl, setFileMenuAnchorEl] =
-    React.useState<null | HTMLElement>(null);
-  const [viewMenuAnchorEl, setViewMenuAnchorEl] =
-    React.useState<null | HTMLElement>(null);
-  const [entriesMenuAnchorEl, setEntriesMenuAnchorEl] =
-    React.useState<null | HTMLElement>(null);
-  const [tagsMenuAnchorEl, setTagsMenuAnchorEl] =
-    React.useState<null | HTMLElement>(null);
-  const [debugMenuAnchorEl, setDebugMenuAnchorEl] =
-    React.useState<null | HTMLElement>(null);
-  const [helpMenuAnchorEl, setHelpMenuAnchorEl] =
-    React.useState<null | HTMLElement>(null);
-
   const theme = useTheme();
-
-  const handleFileMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setFileMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleFileMenuClose = () => {
-    setFileMenuAnchorEl(null);
-  };
-
-  const handleViewMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setViewMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleTagsMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setTagsMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleEntriesMenuClick = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    setEntriesMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleDebugMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setDebugMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleHelpMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setHelpMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleViewMenuClose = () => {
-    setViewMenuAnchorEl(null);
-  };
-
-  const handleTagsMenuClose = () => {
-    setTagsMenuAnchorEl(null);
-  };
-
-  const handleEntriesMenuClose = () => {
-    setEntriesMenuAnchorEl(null);
-  };
-
-  const handleDebugMenuClose = () => {
-    setDebugMenuAnchorEl(null);
-  };
-
-  const handleHelpMenuClose = () => {
-    setHelpMenuAnchorEl(null);
+  const [open, setOpen] = React.useState<{
+    menu: MenuName;
+    anchor: HTMLElement;
+  } | null>(null);
+  const close = React.useCallback(() => setOpen(null), []);
+  const anchorOf = (menu: MenuName) =>
+    open?.menu === menu ? open.anchor : null;
+  const shown: Record<MenuName, boolean> = {
+    file: Boolean(appConfig.loggedInUser),
+    view: true,
+    tags: entriesPage,
+    entries: entriesPage,
+    // The Debug menu holds the feature flags' overrides.
+    debug: canOverrideFeatureFlags(),
+    help: true,
   };
 
   return (
@@ -128,31 +105,24 @@ const MenuBar = ({entriesPage = true}: IProps) => {
           pb: 0.5,
         }}
       >
-        <Box
-          component="svg"
-          width={33}
-          height={33}
-          viewBox="0 0 64 64"
-          role="img"
-          aria-label={t('logoAlt')}
-          sx={{color: 'text.primary'}}
-        >
-          {/* Reuse the prompt without the favicon's tile or fixed color. */}
-          <use href={`${logoUrl}#prompt`} />
-        </Box>
+        <Logo />
       </Box>
       <Aligner>
-        {appConfig.loggedInUser && (
-          <FileMenuButton onClick={handleFileMenuClick} />
+        {MENUS.filter(({name}) => shown[name]).map(
+          ({name, buttonId, menuId}) => (
+            <MenuBarButton
+              key={name}
+              id={buttonId}
+              ariaControls={menuId}
+              ariaLabel={t(name)}
+              onClick={event =>
+                setOpen({menu: name, anchor: event.currentTarget})
+              }
+            >
+              {t(name)}
+            </MenuBarButton>
+          )
         )}
-        <ViewMenuButton onClick={handleViewMenuClick} />
-        {entriesPage && <TagsMenuButton onClick={handleTagsMenuClick} />}
-        {entriesPage && <EntriesMenuButton onClick={handleEntriesMenuClick} />}
-        {/* The Debug menu holds the feature flags' overrides. */}
-        {canOverrideFeatureFlags() && (
-          <DebugMenuButton onClick={handleDebugMenuClick} />
-        )}
-        <HelpMenuButton onClick={handleHelpMenuClick} />
         {/* Staff go back with the mode tabs instead. */}
         {!entriesPage && appConfig.loggedInUser && !appConfig.isStaff && (
           <EntriesLinkButton username={appConfig.loggedInUser} />
@@ -176,19 +146,16 @@ const MenuBar = ({entriesPage = true}: IProps) => {
         </Box>
       </Box>
       <FileMenu
-        onClose={handleFileMenuClose}
-        anchorEl={fileMenuAnchorEl}
+        onClose={close}
+        anchorEl={anchorOf('file')}
         entriesPage={entriesPage}
         readOnly={readOnly}
       />
-      <ViewMenu onClose={handleViewMenuClose} anchorEl={viewMenuAnchorEl} />
-      <TagsMenu onClose={handleTagsMenuClose} anchorEl={tagsMenuAnchorEl} />
-      <EntriesMenu
-        onClose={handleEntriesMenuClose}
-        anchorEl={entriesMenuAnchorEl}
-      />
-      <DebugMenu onClose={handleDebugMenuClose} anchorEl={debugMenuAnchorEl} />
-      <HelpMenu onClose={handleHelpMenuClose} anchorEl={helpMenuAnchorEl} />
+      <ViewMenu onClose={close} anchorEl={anchorOf('view')} />
+      <TagsMenu onClose={close} anchorEl={anchorOf('tags')} />
+      <EntriesMenu onClose={close} anchorEl={anchorOf('entries')} />
+      <DebugMenu onClose={close} anchorEl={anchorOf('debug')} />
+      <HelpMenu onClose={close} anchorEl={anchorOf('help')} />
     </>
   );
 };

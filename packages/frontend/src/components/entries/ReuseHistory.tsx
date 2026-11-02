@@ -1,21 +1,15 @@
-import type {
-  TextEntry,
-  TextEntryReused,
-} from '@commandsnippets/api-shared/responses';
-import History from '@mui/icons-material/History';
 import Refresh from '@mui/icons-material/Refresh';
 import {Alert, Box, Button, Typography} from '@mui/material';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {useEffect, useRef, useState} from 'react';
-import {useInfiniteScroll} from '../../hooks/useInfiniteScroll';
+import type React from 'react';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {formatTimestamp, timestampWithZone} from '../../lib/formatTimestamp';
 import {Link} from '../../lib/router/Router';
-import {entryPath, reusesPath} from '../../lib/router/route';
-import {useAppState} from '../../lib/state/appState';
+import {reusesPath} from '../../lib/router/route';
 import {heldVersion} from '../../lib/sync/dataVersion';
 import {isLocalId} from '../../lib/sync/outbox';
 import type {SyncSession} from '../../lib/sync/session';
+import {ReuseHistoryList} from './ReuseHistoryList';
+import {useReuseHistory} from './useReuseHistory';
 
 interface Props {
   session: SyncSession;
@@ -25,120 +19,41 @@ interface Props {
   count?: number;
 }
 
-interface HistoryPage {
-  reuses: TextEntryReused[];
-  entries: TextEntry[];
-  page: number;
-  total: number;
-  more: boolean;
+/** What shows in place of the reuses when there are none to list, if anything. */
+function emptyMessage(state: {
+  unsent: boolean;
+  readOnly: boolean;
+  read: boolean;
+  loading: boolean;
+  all: boolean;
+}) {
+  if (state.unsent) return 'infoNotSent';
+  if (state.readOnly) return 'reuseHistoryOwnerOnly';
+  if (!state.read) return state.loading ? 'reuseHistoryLoading' : null;
+  return state.all ? 'allReusesEmpty' : 'reuseHistoryEmpty';
 }
 
-const HistoryContent = ({session, entryId, count}: Props) => {
-  const {t, i18n} = useTypedTranslation('entries');
-  const [history, setHistory] = useState<HistoryPage | null>(null);
-  const reuses = history?.reuses ?? null;
-  const [failed, setFailed] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [failedPage, setFailedPage] = useState(1);
-  const running = useRef(false);
-  const refreshPending = useRef(false);
-  const readPage = useRef<(page: number) => void>(() => {});
-  const unsent = entryId !== undefined && isLocalId(entryId);
-  const all = entryId === undefined;
-  const nextPage = history?.more ? history.page + 1 : null;
-
-  useEffect(() => {
-    if (unsent || session.readOnly) return undefined;
-    let current = true;
-    const read = (page: number) => {
-      if (running.current) {
-        // A changed count waits for the in-flight read, then refreshes once.
-        if (page === 1) refreshPending.current = true;
-        return;
-      }
-      running.current = true;
-      setLoading(true);
-      setFailed(false);
-      session.sync
-        .entryReuses(entryId, page)
-        .then(result => {
-          if (!current || result === null) return;
-          setHistory(previous => {
-            const reuses = new Map(
-              (page === 1 ? [] : (previous?.reuses ?? [])).map(reuse => [
-                reuse.id,
-                reuse,
-              ])
-            );
-            for (const reuse of result.data) reuses.set(reuse.id, reuse);
-            const entries = new Map(
-              (page === 1 ? [] : (previous?.entries ?? [])).map(entry => [
-                entry.id,
-                entry,
-              ])
-            );
-            for (const resource of result.included ?? []) {
-              if (
-                resource.type === 'TextEntry' &&
-                !resource.attributes.is_deleted
-              )
-                entries.set(resource.id, resource);
-            }
-            return {
-              reuses: [...reuses.values()],
-              entries: [...entries.values()],
-              page,
-              total: result.meta.pagination.count,
-              more: result.links.next !== null && result.data.length > 0,
-            };
-          });
-        })
-        .catch((error: unknown) => {
-          console.warn('WARNING: the reuses could not be read:', error);
-          if (current) {
-            setFailed(true);
-            setFailedPage(page);
-          }
-        })
-        .finally(() => {
-          running.current = false;
-          if (current) setLoading(false);
-          if (refreshPending.current) {
-            refreshPending.current = false;
-            readPage.current(1);
-          }
-        });
-    };
-    readPage.current = read;
-    const refresh = () => read(1);
-    refresh();
-    window.addEventListener('online', refresh);
-    return () => {
-      current = false;
-      readPage.current = () => {};
-      window.removeEventListener('online', refresh);
-    };
-  }, [session, entryId, count, unsent]);
-
-  const loadMoreTarget = useInfiniteScroll(
-    () => {
-      if (nextPage !== null) readPage.current(nextPage);
-    },
-    nextPage !== null && !loading && !failed && !unsent && !session.readOnly
-  );
-
-  const entryById = new Map(history?.entries.map(entry => [entry.id, entry]));
-  const refresh = () => readPage.current(1);
-  const errorNotice = failed && (
+/** A failed read, with Retry. */
+const ReadFailed = ({
+  onRetry,
+  disabled = false,
+  sx,
+}: {
+  onRetry: () => void;
+  disabled?: boolean;
+  sx: {m: number} | {mt: number};
+}) => {
+  const {t} = useTypedTranslation('entries');
+  return (
     <Alert
       severity="warning"
-      sx={{m: 2}}
+      sx={sx}
       action={
         <Button
           color="inherit"
           size="small"
-          disabled={loading}
-          onClick={() => readPage.current(failedPage)}
+          disabled={disabled}
+          onClick={onRetry}
         >
           {t('reuseHistoryRetry')}
         </Button>
@@ -147,59 +62,170 @@ const HistoryContent = ({session, entryId, count}: Props) => {
       {t('reuseHistoryFailed')}
     </Alert>
   );
+};
+
+const HistoryHeader = ({
+  session,
+  all,
+  total,
+  canRefresh,
+  loading,
+  onRefresh,
+}: {
+  session: SyncSession;
+  all: boolean;
+  /** How many reuses there are, once read. */
+  total: number | null;
+  canRefresh: boolean;
+  loading: boolean;
+  onRefresh: () => void;
+}) => {
+  const {t} = useTypedTranslation('entries');
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 1,
+        px: {xs: 2, sm: 3},
+        py: 2,
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}
+    >
+      <Box>
+        <Typography id="entryReuseHistory" variant="h6" component="h2">
+          {all ? t('profileReuseHistory') : t('reuseHistory')}
+        </Typography>
+        {total !== null && (
+          <Typography variant="body2" color="text.secondary">
+            {t('reuseTotal', {count: total})}
+          </Typography>
+        )}
+      </Box>
+      <Box sx={{display: 'flex', gap: 1}}>
+        {!all && !session.readOnly && (
+          <Button component={Link} to={reusesPath(session.owner)} size="small">
+            {t('allReuses')}
+          </Button>
+        )}
+        {canRefresh && (
+          <Button
+            size="small"
+            startIcon={<Refresh />}
+            disabled={loading}
+            onClick={onRefresh}
+          >
+            {t('reuseRefresh')}
+          </Button>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+/**
+ * Below the list: the next page's Show more (as the list's end comes into
+ * view, it is read anyway), what is being read, or the end.
+ */
+const HistoryPagination = ({
+  loadMoreTarget,
+  errorNotice,
+  nextPage,
+  loading,
+  failed,
+  onMore,
+}: {
+  loadMoreTarget: (element: Element | null) => void;
+  errorNotice: React.ReactNode;
+  nextPage: number | null;
+  loading: boolean;
+  failed: boolean;
+  onMore: (page: number) => void;
+}) => {
+  const {t} = useTypedTranslation('entries');
+  return (
+    <Box
+      ref={loadMoreTarget}
+      id="entryReusePagination"
+      sx={{p: 2, borderTop: 1, borderColor: 'divider', textAlign: 'center'}}
+    >
+      {errorNotice}
+      {nextPage !== null && (
+        <Button
+          variant="outlined"
+          loading={loading}
+          disabled={failed}
+          aria-controls="entryReuses"
+          onClick={() => onMore(nextPage)}
+        >
+          {t('reuseShowMore')}
+        </Button>
+      )}
+      <Typography
+        role="status"
+        variant="body2"
+        color="text.secondary"
+        sx={{mt: nextPage !== null ? 1 : 0}}
+      >
+        {loading
+          ? t('reuseHistoryLoading')
+          : nextPage === null && !failed
+            ? t('reuseHistoryEnd')
+            : null}
+      </Typography>
+    </Box>
+  );
+};
+
+const HistoryContent = ({session, entryId, count}: Props) => {
+  const {t} = useTypedTranslation('entries');
+  const {
+    history,
+    failed,
+    loading,
+    failedPage,
+    readPage,
+    unsent,
+    nextPage,
+    loadMoreTarget,
+  } = useReuseHistory(session, entryId, count);
+  const reuses = history?.reuses ?? null;
+  const all = entryId === undefined;
+  const errorNotice = failed && (
+    <ReadFailed
+      sx={{m: 2}}
+      disabled={loading}
+      onRetry={() => readPage.current(failedPage)}
+    />
+  );
+  const empty =
+    unsent || session.readOnly || reuses === null || reuses.length === 0;
+  const emptyKey = emptyMessage({
+    unsent,
+    readOnly: session.readOnly,
+    read: reuses !== null,
+    loading,
+    all,
+  });
   return (
     <Box
       component="section"
       aria-labelledby="entryReuseHistory"
       sx={{border: 1, borderColor: 'divider', mt: 3}}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 1,
-          px: {xs: 2, sm: 3},
-          py: 2,
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <Box>
-          <Typography id="entryReuseHistory" variant="h6" component="h2">
-            {all ? t('profileReuseHistory') : t('reuseHistory')}
-          </Typography>
-          {reuses !== null && (
-            <Typography variant="body2" color="text.secondary">
-              {t('reuseTotal', {count: history?.total ?? 0})}
-            </Typography>
-          )}
-        </Box>
-        <Box sx={{display: 'flex', gap: 1}}>
-          {!all && !session.readOnly && (
-            <Button
-              component={Link}
-              to={reusesPath(session.owner)}
-              size="small"
-            >
-              {t('allReuses')}
-            </Button>
-          )}
-          {!session.readOnly && !unsent && (
-            <Button
-              size="small"
-              startIcon={<Refresh />}
-              disabled={loading}
-              onClick={refresh}
-            >
-              {t('reuseRefresh')}
-            </Button>
-          )}
-        </Box>
-      </Box>
+      <HistoryHeader
+        session={session}
+        all={all}
+        total={reuses === null ? null : (history?.total ?? 0)}
+        canRefresh={!session.readOnly && !unsent}
+        loading={loading}
+        onRefresh={() => readPage.current(1)}
+      />
       {failedPage === 1 && errorNotice}
-      {unsent || session.readOnly || reuses === null || reuses.length === 0 ? (
+      {empty ? (
         <Box sx={{p: 3}}>
           <Typography
             color="text.secondary"
@@ -207,134 +233,26 @@ const HistoryContent = ({session, entryId, count}: Props) => {
               loading && !unsent && !session.readOnly ? 'status' : undefined
             }
           >
-            {unsent
-              ? t('infoNotSent')
-              : session.readOnly
-                ? t('reuseHistoryOwnerOnly')
-                : reuses === null
-                  ? loading
-                    ? t('reuseHistoryLoading')
-                    : null
-                  : all
-                    ? t('allReusesEmpty')
-                    : t('reuseHistoryEmpty')}
+            {emptyKey === null ? null : t(emptyKey)}
           </Typography>
         </Box>
       ) : (
         <>
-          <Box
-            component="ol"
-            id="entryReuses"
-            aria-label={t('reuseHistory')}
-            aria-busy={loading}
-            sx={{listStyle: 'none', p: 0, m: 0}}
-          >
-            {reuses.map(reuse => {
-              const id = reuse.relationships.text_entry.data.id;
-              const entry = entryById.get(id);
-              const path = entryPath(session.owner, id);
-              return (
-                <Box
-                  component="li"
-                  key={reuse.id}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 2,
-                    px: {xs: 2, sm: 3},
-                    py: 2,
-                    '& + li': {borderTop: 1, borderColor: 'divider'},
-                  }}
-                >
-                  <History
-                    sx={{fontSize: 20, color: 'text.secondary', mt: 0.25}}
-                  />
-                  <Box sx={{minWidth: 0}}>
-                    {all && (
-                      <Typography
-                        sx={{
-                          fontWeight: 500,
-                          mb: 0.5,
-                          overflowWrap: 'anywhere',
-                        }}
-                      >
-                        {entry ? (
-                          <Link
-                            to={path}
-                            style={{
-                              color: 'inherit',
-                              textUnderlineOffset: '3px',
-                            }}
-                            onClick={() =>
-                              useAppState
-                                .getState()
-                                .setEntryReturnPath(
-                                  path,
-                                  reusesPath(session.owner)
-                                )
-                            }
-                          >
-                            {entry.attributes.subject}
-                          </Link>
-                        ) : (
-                          t('reuseUnavailableEntry', {id})
-                        )}
-                      </Typography>
-                    )}
-                    <Typography
-                      component="time"
-                      variant="body2"
-                      dateTime={timestampWithZone(
-                        reuse.attributes.date_created
-                      )}
-                      color={all ? 'text.secondary' : 'text.primary'}
-                    >
-                      {formatTimestamp(
-                        reuse.attributes.date_created,
-                        i18n.language,
-                        'medium'
-                      )}
-                    </Typography>
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
-          <Box
-            ref={loadMoreTarget}
-            id="entryReusePagination"
-            sx={{
-              p: 2,
-              borderTop: 1,
-              borderColor: 'divider',
-              textAlign: 'center',
-            }}
-          >
-            {failedPage > 1 && errorNotice}
-            {nextPage !== null && (
-              <Button
-                variant="outlined"
-                loading={loading}
-                disabled={failed}
-                aria-controls="entryReuses"
-                onClick={() => readPage.current(nextPage)}
-              >
-                {t('reuseShowMore')}
-              </Button>
-            )}
-            <Typography
-              role="status"
-              variant="body2"
-              color="text.secondary"
-              sx={{mt: nextPage !== null ? 1 : 0}}
-            >
-              {loading
-                ? t('reuseHistoryLoading')
-                : nextPage === null && !failed
-                  ? t('reuseHistoryEnd')
-                  : null}
-            </Typography>
-          </Box>
+          <ReuseHistoryList
+            reuses={reuses}
+            entries={history?.entries ?? []}
+            owner={session.owner}
+            all={all}
+            loading={loading}
+          />
+          <HistoryPagination
+            loadMoreTarget={loadMoreTarget}
+            errorNotice={failedPage > 1 && errorNotice}
+            nextPage={nextPage}
+            loading={loading}
+            failed={failed}
+            onMore={page => readPage.current(page)}
+          />
         </>
       )}
     </Box>
@@ -354,21 +272,7 @@ export const ReuseHistory = (props: Props) => {
     !(props.entryId && isLocalId(props.entryId))
   )
     return props.initialSync.failed ? (
-      <Alert
-        severity="warning"
-        sx={{mt: 3}}
-        action={
-          <Button
-            color="inherit"
-            size="small"
-            onClick={props.initialSync.retry}
-          >
-            {t('reuseHistoryRetry')}
-          </Button>
-        }
-      >
-        {t('reuseHistoryFailed')}
-      </Alert>
+      <ReadFailed sx={{mt: 3}} onRetry={props.initialSync.retry} />
     ) : (
       <Typography role="status" sx={{mt: 3}}>
         {t('reuseHistoryLoading')}
