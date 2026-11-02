@@ -17,7 +17,9 @@ import {
   STORAGE_KEY,
   signOut,
   useAppConfig,
+  useAppState,
 } from '../../../../src/lib/state/appState';
+import {announceRemaps} from '../../../../src/lib/sync/remaps';
 import {syncSession} from '../../../../src/lib/sync/session';
 import {signIn, store, TEST_USER} from '../../../util/signIn';
 
@@ -212,6 +214,33 @@ describe('signOut', () => {
       {state: {loggedInUser: TEST_USER}}
     );
     vi.restoreAllMocks();
+  });
+});
+
+describe("a local id replaced by the API's", () => {
+  const remap = {owner: TEST_USER, type: 'Tag', from: 'local-1', to: '9'};
+
+  it('moves the selection that holds it', () => {
+    act(() => {
+      store.setTagSelectedID('local-1');
+      store.setEntrySelectedID('local-1');
+    });
+    announceRemaps([remap]);
+    const {tagSelectedID, entrySelectedID} = useAppState.getState();
+    expect({tagSelectedID, entrySelectedID}).toEqual({
+      tagSelectedID: '9',
+      entrySelectedID: '9',
+    });
+  });
+
+  it('changes nothing, and tells no one, when no selection holds it', () => {
+    act(() => store.setTagSelectedID('2'));
+    const listener = vi.fn();
+    const unsubscribe = useAppState.subscribe(listener);
+    announceRemaps([remap]);
+    unsubscribe();
+    expect(listener).not.toHaveBeenCalled();
+    expect(useAppState.getState().tagSelectedID).toBe('2');
   });
 });
 

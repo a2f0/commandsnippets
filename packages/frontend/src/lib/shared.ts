@@ -1,6 +1,5 @@
 export enum entrySearchMethod {
   allEntries = 1,
-  currentTagOnly = 2,
   untaggedEntryList = 3,
 }
 
@@ -27,16 +26,6 @@ export enum activeTagEditField {
   name = 1,
   save = 2,
   cancel = 3,
-}
-
-export function getSelection() {
-  let selection: Selection | null = null;
-  if (window.getSelection) {
-    selection = window.getSelection();
-  } else if (window.document.getSelection) {
-    selection = window.document.getSelection();
-  }
-  return selection;
 }
 
 export interface IMouse {

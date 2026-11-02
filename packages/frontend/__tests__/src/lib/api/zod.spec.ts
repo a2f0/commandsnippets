@@ -6,7 +6,10 @@ import {errorObjectSchema} from '@commandsnippets/api-shared/responses';
 import {describe, expect, it} from 'vitest';
 import * as z from 'zod/mini';
 
-import {parseBody} from '../../../../src/lib/api/parseResponse';
+import {
+  invalidResponse,
+  parseBody,
+} from '../../../../src/lib/api/parseResponse';
 
 const SRC = fileURLToPath(new URL('../../../../src/', import.meta.url));
 
@@ -36,7 +39,7 @@ describe('zod in the bundle', () => {
   });
 
   it("describes issues in English (zod/mini's own messages)", () => {
-    expect(() => parseBody(z.string(), 5, 'Failed')).toThrow(
+    expect(() => parseBody(z.string(), 5, invalidResponse('Failed'))).toThrow(
       'Failed: invalid response ((document): Invalid input: expected string, ' +
         'received number)'
     );

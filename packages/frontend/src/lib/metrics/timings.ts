@@ -229,9 +229,9 @@ export function listShown(target: string): void {
 }
 
 /** How long after an interaction its timings are counted at most. */
-export const INTERACTION_WINDOW_MS = 10_000;
+const INTERACTION_WINDOW_MS = 10_000;
 /** How long the app idles after an interaction's paint before it is over. */
-export const INTERACTION_IDLE_MS = 100;
+const INTERACTION_IDLE_MS = 100;
 
 /**
  * The timings that began while `interaction` ran, in the order they began:

@@ -30,7 +30,7 @@ const firstErrorSchema = z.object({
   ),
 });
 
-export interface FirstError {
+interface FirstError {
   code: string | undefined;
   detail: string | undefined;
 }
@@ -40,4 +40,12 @@ export function firstError(body: unknown): FirstError {
   const result = firstErrorSchema.safeParse(body);
   const error = result.success ? result.data.errors[0] : undefined;
   return {code: error?.code, detail: error?.detail};
+}
+
+/**
+ * The first error of `response`'s body (unread so far): none when the body
+ * is not JSON (a proxy's page, say).
+ */
+export async function errorOf(response: Response): Promise<FirstError> {
+  return firstError(await response.json().catch(() => undefined));
 }
