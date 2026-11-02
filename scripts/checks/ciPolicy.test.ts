@@ -150,6 +150,7 @@ describe("ciScopes", () => {
   test("workflow, toolchain and workspace install changes run every lane", () => {
     for (const path of [
       ".github/workflows/frontend.yml",
+      ".github/actions/setup/action.yml",
       "bun.lock",
       "bunfig.toml",
       ".mise.toml",
