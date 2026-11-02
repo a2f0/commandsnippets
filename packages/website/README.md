@@ -20,7 +20,7 @@ per build mode
 bun install
 bun run dev                 # http://localhost:4321
 bun run build:staging       # or build:production; output in dist/
-bun run lint && bun run check && bun run test
+bun run lint && bun run check && bun run test   # lint: Biome and knip
 ```
 
 `bun run test` builds the staging and production sites into temporary

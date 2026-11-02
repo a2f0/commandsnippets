@@ -40,6 +40,10 @@ Monorepo for the Command Snippets app.
   cycles, type-only imports included. Split code by responsibility to stay
   within them. `bun run lint` checks (`biome check`) and `bun run fix` writes,
   at the root (its scripts and configs) and in each package.
+- Each `lint` also runs knip on its workspace (`knip.config.ts` at the root
+  covers the root and every package): no unused files, exports or
+  dependencies. Delete dead code rather than ignore it; configure only what a
+  tool loads by name.
 - Validate root tooling with `bun run check`, which records Biome, shell lint,
   typecheck, script tests, and managed-skill and permission-rule checks; run
   every affected application's documented checks. Full PR-title commitlint

@@ -26,7 +26,7 @@ Run these from `packages/frontend`.
 
 ### Code Quality
 - `bun run lint` - Biome lint, formatting and import order (`biome check .`,
-  reports only)
+  reports only), then knip on this workspace (`lint:knip`)
 - `bun run fix` - Fix what Biome can (`biome check --write .`)
 - `bun run compile` - TypeScript check (`tsc -b --force`), which `bun install`
   also runs (`prepare`). `--force` rebuilds every project each time (about 2

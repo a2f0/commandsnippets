@@ -63,8 +63,8 @@ bun run test:unit      # Vitest
 bun run test:browser   # headless WebdriverIO suite (Chrome)
 ```
 
-`bun run check` runs the root Biome check (`bun run lint`; `bun run fix`
-writes its fixes), shell lint, typechecking, script tests, and managed-skill
+`bun run check` runs the root lint (`bun run lint`: Biome and knip;
+`bun run fix` writes Biome's fixes), shell lint, typechecking, script tests, and managed-skill
 checks. Each package README documents its own checks and, for
 the deployed packages, their deployment.
 

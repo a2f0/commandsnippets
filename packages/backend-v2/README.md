@@ -98,7 +98,7 @@ bun run test             # vitest inside workerd, against a real (local) D1
 bun run test:coverage    # the same, with the src/ coverage gate
 bun run test:scripts     # management scripts and migrations (bun test), own gate
 bun run typecheck
-bun run lint
+bun run lint             # Biome and knip; bun run fix writes Biome's fixes
 ```
 
 CI runs both coverage gates:

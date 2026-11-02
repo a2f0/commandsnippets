@@ -153,8 +153,8 @@ done <"$refs_file"
 if needs tooling; then
   require_worktree_is_push scripts packages/frontend/scripts terraform/scripts .agents .claude \
     .codex agent-tool.json .agent-tool-skills.json .agent-tool-permissions.json \
-    biome.json commitlint.config.mts package.json bunfig.toml bun.lock tsconfig.base.json \
-    tsconfig.scripts.json
+    biome.json commitlint.config.mts knip.config.ts package.json bunfig.toml bun.lock \
+    tsconfig.base.json tsconfig.scripts.json
   step_timings_run tooling-lint bun run lint
   step_timings_run tooling-shell bun run lint:shell
   step_timings_run tooling-typecheck bun run typecheck

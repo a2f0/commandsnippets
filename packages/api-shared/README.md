@@ -267,7 +267,7 @@ in step.
 
 ```shell
 bun install
-bun run lint
+bun run lint        # Biome and knip; bun run fix writes Biome's fixes
 bun run typecheck   # src/ with no ambient types, then src/ and test/ with Bun's
 bun run test        # bun test, with a 98% line and function coverage gate
 ```

@@ -18,7 +18,8 @@
     "src"
   ],
   "scripts": {
-    "lint": "biome check .",
+    "lint": "biome check . && bun run lint:knip",
+    "lint:knip": "../../node_modules/.bin/knip --directory ../.. --workspace packages/api-shared",
     "fix": "biome check --write .",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json",
     "test": "bun test --coverage"

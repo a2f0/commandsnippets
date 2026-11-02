@@ -26,10 +26,11 @@ export type CiScope = keyof typeof CI_SCOPES;
 
 /**
  * Changes that can affect every lane run them all, including the root
- * `biome.json`, which every package's config extends.
+ * `biome.json`, which every package's config extends, and `knip.config.ts`,
+ * which every package's lint reads.
  */
 const COMMON =
-  /^(\.github\/(workflows|actions)\/|scripts\/checks\/ci|package\.json$|bun\.lock$|bunfig\.toml$|\.mise\.toml$|biome\.json$)/;
+  /^(\.github\/(workflows|actions)\/|scripts\/checks\/ci|package\.json$|bun\.lock$|bunfig\.toml$|\.mise\.toml$|biome\.json$|knip\.config\.ts$)/;
 
 export function ciDiffRange(
   base: string | undefined,

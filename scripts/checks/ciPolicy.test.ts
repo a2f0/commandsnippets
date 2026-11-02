@@ -168,6 +168,7 @@ describe('ciScopes', () => {
       '.mise.toml',
       'package.json',
       'biome.json',
+      'knip.config.ts',
       'scripts/checks/ciPolicy.ts',
     ]) {
       expect(Object.values(ciScopes([path])).every(Boolean)).toBe(true);
